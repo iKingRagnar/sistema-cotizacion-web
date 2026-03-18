@@ -427,6 +427,10 @@ app.delete('/api/bitacoras/:id', async (req, res) => {
 });
 
 // --- Cargar datos demo (desde seed-demo.json) ---
+function norm(s) {
+  if (!s || typeof s !== 'string') return '';
+  return s.toLowerCase().replace(/\s+/g, ' ').trim();
+}
 app.post('/api/seed-demo', async (req, res) => {
   try {
     const [cCount] = await db.getAll('SELECT COUNT(*) as n FROM clientes');
@@ -440,8 +444,10 @@ app.post('/api/seed-demo', async (req, res) => {
     const clientes = seed.clientes || [];
     const refacciones = seed.refacciones || [];
     const maquinas = seed.maquinas || [];
+    const incidentes = seed.incidentes || [];
+    const bitacoras = seed.bitacoras || [];
 
-    const idMap = {}; // Excel cliente index -> nuevo id
+    const idMap = {};
     for (const c of clientes) {
       await db.runQuery(
         `INSERT INTO clientes (codigo, nombre, rfc, contacto, direccion, telefono, email, ciudad) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -464,7 +470,126 @@ app.post('/api/seed-demo', async (req, res) => {
         [cid, m.nombre, m.marca || null, m.modelo || null, m.numero_serie || null, m.ubicacion || null]
       );
     }
-    res.json({ ok: true, clientes: clientes.length, refacciones: refacciones.length, maquinas: maquinas.length });
+
+    const clientesDb = await db.getAll('SELECT id, nombre FROM clientes');
+    const maquinasDb = await db.getAll('SELECT id, cliente_id, nombre FROM maquinas');
+    const clienteByNombre = {};
+    clientesDb.forEach(c => { clienteByNombre[norm(c.nombre)] = c.id; });
+    const maquinaByClienteYNombre = {};
+    maquinasDb.forEach(m => { maquinaByClienteYNombre[m.cliente_id + '|' + norm(m.nombre)] = m.id; });
+
+    let incidentesCount = 0;
+    const incidenteByFolio = {};
+    for (const inc of incidentes) {
+      const clienteId = clienteByNombre[norm(inc.cliente_nombre)];
+      if (!clienteId) continue;
+      let maquinaId = null;
+      if (inc.maquina_nombre) {
+        maquinaId = maquinaByClienteYNombre[clienteId + '|' + norm(inc.maquina_nombre)];
+      }
+      await db.runQuery(
+        `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [inc.folio || null, clienteId, maquinaId, inc.descripcion || '-', inc.prioridad || 'media', inc.fecha_reporte || new Date().toISOString().slice(0, 10), inc.tecnico_responsable || null, inc.estatus || 'abierto']
+      );
+      const r = await db.getOne('SELECT id FROM incidentes ORDER BY id DESC LIMIT 1');
+      if (r) { incidenteByFolio[(inc.folio || '').toUpperCase()] = r.id; incidentesCount++; }
+    }
+
+    let bitacorasCount = 0;
+    for (const bit of bitacoras) {
+      const incidenteId = incidenteByFolio[(bit.folio_incidente || '').toUpperCase()];
+      if (!incidenteId) continue;
+      await db.runQuery(
+        `INSERT INTO bitacoras (incidente_id, cotizacion_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [incidenteId, null, bit.fecha || new Date().toISOString().slice(0, 10), bit.tecnico || null, bit.actividades || null, Number(bit.tiempo_horas) || 0, bit.materiales_usados || null]
+      );
+      bitacorasCount++;
+    }
+
+    let cotizacionesCount = 0;
+    const tipos = ['refacciones', 'mano_obra'];
+    for (let i = 0; i < Math.min(5, clientesDb.length); i++) {
+      const clienteId = clientesDb[i].id;
+      const tipo = tipos[i % 2];
+      const subtotal = 5000 + (i * 1500);
+      const iva = Math.round(subtotal * 0.16);
+      const total = subtotal + iva;
+      const folio = (tipo === 'mano_obra' ? 'COT-MO' : 'COT-REF') + '-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + String(1001 + i);
+      await db.runQuery(
+        `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [folio, clienteId, tipo, new Date().toISOString().slice(0, 10), subtotal, iva, total]
+      );
+      cotizacionesCount++;
+    }
+
+    res.json({
+      ok: true,
+      clientes: clientes.length,
+      refacciones: refacciones.length,
+      maquinas: maquinas.length,
+      incidentes: incidentesCount,
+      bitacoras: bitacorasCount,
+      cotizaciones: cotizacionesCount,
+    });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+// Cargar solo incidentes, bitácoras y cotizaciones demo (cuando ya tienes clientes/máquinas)
+app.post('/api/seed-demo-extra', async (req, res) => {
+  try {
+    const seedPath = path.join(__dirname, 'seed-demo.json');
+    if (!fs.existsSync(seedPath)) return res.status(404).json({ error: 'No existe seed-demo.json' });
+    const seed = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
+    const incidentes = seed.incidentes || [];
+    const bitacoras = seed.bitacoras || [];
+    const clientesDb = await db.getAll('SELECT id, nombre FROM clientes');
+    const maquinasDb = await db.getAll('SELECT id, cliente_id, nombre FROM maquinas');
+    const clienteByNombre = {};
+    clientesDb.forEach(c => { clienteByNombre[norm(c.nombre)] = c.id; });
+    const maquinaByClienteYNombre = {};
+    maquinasDb.forEach(m => { maquinaByClienteYNombre[m.cliente_id + '|' + norm(m.nombre)] = m.id; });
+    let incidentesCount = 0;
+    const incidenteByFolio = {};
+    for (const inc of incidentes) {
+      const clienteId = clienteByNombre[norm(inc.cliente_nombre)];
+      if (!clienteId) continue;
+      let maquinaId = null;
+      if (inc.maquina_nombre) maquinaId = maquinaByClienteYNombre[clienteId + '|' + norm(inc.maquina_nombre)];
+      await db.runQuery(
+        `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [inc.folio || null, clienteId, maquinaId, inc.descripcion || '-', inc.prioridad || 'media', inc.fecha_reporte || new Date().toISOString().slice(0, 10), inc.tecnico_responsable || null, inc.estatus || 'abierto']
+      );
+      const r = await db.getOne('SELECT id FROM incidentes ORDER BY id DESC LIMIT 1');
+      if (r) { incidenteByFolio[(inc.folio || '').toUpperCase()] = r.id; incidentesCount++; }
+    }
+    let bitacorasCount = 0;
+    for (const bit of bitacoras) {
+      const incidenteId = incidenteByFolio[(bit.folio_incidente || '').toUpperCase()];
+      if (!incidenteId) continue;
+      await db.runQuery(
+        `INSERT INTO bitacoras (incidente_id, cotizacion_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [incidenteId, null, bit.fecha || new Date().toISOString().slice(0, 10), bit.tecnico || null, bit.actividades || null, Number(bit.tiempo_horas) || 0, bit.materiales_usados || null]
+      );
+      bitacorasCount++;
+    }
+    let cotizacionesCount = 0;
+    const tipos = ['refacciones', 'mano_obra'];
+    for (let i = 0; i < Math.min(5, clientesDb.length); i++) {
+      const clienteId = clientesDb[i].id;
+      const tipo = tipos[i % 2];
+      const subtotal = 5000 + (i * 1500);
+      const iva = Math.round(subtotal * 0.16);
+      const total = subtotal + iva;
+      const folio = (tipo === 'mano_obra' ? 'COT-MO' : 'COT-REF') + '-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + String(2000 + i);
+      await db.runQuery(
+        `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [folio, clienteId, tipo, new Date().toISOString().slice(0, 10), subtotal, iva, total]
+      );
+      cotizacionesCount++;
+    }
+    res.json({ ok: true, incidentes: incidentesCount, bitacoras: bitacorasCount, cotizaciones: cotizacionesCount });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -475,7 +600,10 @@ app.get('/api/seed-status', async (req, res) => {
     const [c] = await db.getAll('SELECT COUNT(*) as n FROM clientes');
     const [r] = await db.getAll('SELECT COUNT(*) as n FROM refacciones');
     const [m] = await db.getAll('SELECT COUNT(*) as n FROM maquinas');
-    res.json({ clientes: c.n, refacciones: r.n, maquinas: m.n });
+    const [i] = await db.getAll('SELECT COUNT(*) as n FROM incidentes');
+    const [b] = await db.getAll('SELECT COUNT(*) as n FROM bitacoras');
+    const [co] = await db.getAll('SELECT COUNT(*) as n FROM cotizaciones');
+    res.json({ clientes: c.n, refacciones: r.n, maquinas: m.n, incidentes: i.n, bitacoras: b.n, cotizaciones: co.n });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }

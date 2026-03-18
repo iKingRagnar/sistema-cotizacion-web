@@ -824,5 +824,649 @@
       "cliente_id": 9,
       "ubicacion": "Área Térmica"
     }
+  ],
+  "incidentes": [
+    {
+      "folio": "INC-2026-0001",
+      "fecha_reporte": "2025-12-14",
+      "cliente_nombre": "HERRAMIENTAS Y EQUIPOS REGIO",
+      "maquina_nombre": "Compresor de Tornillo #1",
+      "descripcion": "Bomba no inicia, posible cavitación",
+      "prioridad": "baja",
+      "tecnico_responsable": "Carlos Reyes",
+      "estatus": "abierto"
+    },
+    {
+      "folio": "INC-2026-0002",
+      "fecha_reporte": "2026-01-23",
+      "cliente_nombre": "ENERGÍA RENOVABLE NORESTE SC",
+      "maquina_nombre": "Bomba Centrífuga #2",
+      "descripcion": "Bomba no inicia, posible cavitación",
+      "prioridad": "alta",
+      "tecnico_responsable": "Luis García",
+      "estatus": "abierto"
+    },
+    {
+      "folio": "INC-2026-0003",
+      "fecha_reporte": "2026-01-10",
+      "cliente_nombre": "SOLUCIONES HIDRÁULICAS NORESTE",
+      "maquina_nombre": "Compresor de Tornillo #2",
+      "descripcion": "Fuga de aceite en sello mecánico",
+      "prioridad": "media",
+      "tecnico_responsable": "Pedro Sánchez",
+      "estatus": "abierto"
+    },
+    {
+      "folio": "INC-2026-0004",
+      "fecha_reporte": "2026-03-03",
+      "cliente_nombre": "TRANSFORMADORES ELÉCTRICOS NL",
+      "maquina_nombre": "Banda Transportadora Principal",
+      "descripcion": "Bomba no inicia, posible cavitación",
+      "prioridad": "baja",
+      "tecnico_responsable": "Carlos Reyes",
+      "estatus": "cerrado"
+    },
+    {
+      "folio": "INC-2026-0005",
+      "fecha_reporte": "2026-01-15",
+      "cliente_nombre": "EMPAQUES INDUSTRIALES DEL NORESTE",
+      "maquina_nombre": "Torre de Enfriamiento #1",
+      "descripcion": "Ruido inusual en motor de 10HP",
+      "prioridad": "media",
+      "tecnico_responsable": "Luis García",
+      "estatus": "en_proceso"
+    },
+    {
+      "folio": "INC-2026-0006",
+      "fecha_reporte": "2025-12-18",
+      "cliente_nombre": "TURBINAS Y MOTORES DEL NORTE",
+      "maquina_nombre": "Robot Soldador FANUC",
+      "descripcion": "Fuga de aceite en sello mecánico",
+      "prioridad": "critica",
+      "tecnico_responsable": "Carlos Reyes",
+      "estatus": "abierto"
+    },
+    {
+      "folio": "INC-2026-0007",
+      "fecha_reporte": "2025-12-28",
+      "cliente_nombre": "REFRIGERACIÓN Y CLIMA SA DE CV",
+      "maquina_nombre": "Horno de Tratamiento Térmico",
+      "descripcion": "Variador de frecuencia en falla F001",
+      "prioridad": "media",
+      "tecnico_responsable": "Luis García",
+      "estatus": "en_proceso"
+    },
+    {
+      "folio": "INC-2026-0008",
+      "fecha_reporte": "2026-03-06",
+      "cliente_nombre": "TURBINAS Y MOTORES DEL NORTE",
+      "maquina_nombre": "Bomba Centrífuga #1",
+      "descripcion": "Ruido inusual en motor de 10HP",
+      "prioridad": "critica",
+      "tecnico_responsable": "Carlos Reyes",
+      "estatus": "cerrado"
+    },
+    {
+      "folio": "INC-2026-0009",
+      "fecha_reporte": "2025-12-26",
+      "cliente_nombre": "MAQUILADORA GLOBAL SERVICES SC",
+      "maquina_nombre": "Centro de Maquinado Vertical",
+      "descripcion": "Parada no programada por falla eléctrica en tablero",
+      "prioridad": "critica",
+      "tecnico_responsable": "Juan Martínez",
+      "estatus": "cerrado"
+    },
+    {
+      "folio": "INC-2026-0010",
+      "fecha_reporte": "2026-01-29",
+      "cliente_nombre": "MANTENIMIENTO INDUSTRIAL GRUPO MX",
+      "maquina_nombre": "Horno de Tratamiento Térmico",
+      "descripcion": "Fuga de aceite en sello mecánico",
+      "prioridad": "alta",
+      "tecnico_responsable": "Juan Martínez",
+      "estatus": "cerrado"
+    },
+    {
+      "folio": "INC-2026-0011",
+      "fecha_reporte": "2026-03-01",
+      "cliente_nombre": "TEXTILES MONTERREY SA DE CV",
+      "maquina_nombre": "Generador Eléctrico 150kVA",
+      "descripcion": "Ruido inusual en motor de 10HP",
+      "prioridad": "baja",
+      "tecnico_responsable": "Juan Martínez",
+      "estatus": "en_proceso"
+    },
+    {
+      "folio": "INC-2026-0012",
+      "fecha_reporte": "2026-02-13",
+      "cliente_nombre": "COMPRESORES Y BOMBAS SA DE CV",
+      "maquina_nombre": "Bomba Centrífuga #1",
+      "descripcion": "Sobrecalentamiento en compresor #1",
+      "prioridad": "baja",
+      "tecnico_responsable": "Carlos Reyes",
+      "estatus": "en_proceso"
+    },
+    {
+      "folio": "INC-2026-0013",
+      "fecha_reporte": "2025-12-22",
+      "cliente_nombre": "AUTOPARTES MAGNA NORTE SC",
+      "maquina_nombre": "Robot Soldador FANUC",
+      "descripcion": "Bomba no inicia, posible cavitación",
+      "prioridad": "alta",
+      "tecnico_responsable": "Miguel Torres",
+      "estatus": "abierto"
+    },
+    {
+      "folio": "INC-2026-0014",
+      "fecha_reporte": "2026-02-24",
+      "cliente_nombre": "PINTURAS Y RECUBRIMIENTOS NL",
+      "maquina_nombre": "Torno CNC Haas",
+      "descripcion": "Sensor de presión fuera de rango",
+      "prioridad": "alta",
+      "tecnico_responsable": "Pedro Sánchez",
+      "estatus": "cerrado"
+    },
+    {
+      "folio": "INC-2026-0015",
+      "fecha_reporte": "2026-03-12",
+      "cliente_nombre": "ALIMENTOS PROCESADOS DEL NORTE",
+      "maquina_nombre": "Compresor de Tornillo #1",
+      "descripcion": "Parada no programada por falla eléctrica en tablero",
+      "prioridad": "critica",
+      "tecnico_responsable": "Miguel Torres",
+      "estatus": "cerrado"
+    },
+    {
+      "folio": "INC-2026-0016",
+      "fecha_reporte": "2026-03-15",
+      "cliente_nombre": "CONSTRUCCIONES METÁLICAS REGIO",
+      "maquina_nombre": "Bomba Centrífuga #2",
+      "descripcion": "Ruido inusual en motor de 10HP",
+      "prioridad": "alta",
+      "tecnico_responsable": "Carlos Reyes",
+      "estatus": "cerrado"
+    },
+    {
+      "folio": "INC-2026-0017",
+      "fecha_reporte": "2025-11-26",
+      "cliente_nombre": "REPARACIONES ESPECIALIZADAS SC",
+      "maquina_nombre": "Extrusor de Plástico 90mm",
+      "descripcion": "Bomba no inicia, posible cavitación",
+      "prioridad": "baja",
+      "tecnico_responsable": "Luis García",
+      "estatus": "cerrado"
+    },
+    {
+      "folio": "INC-2026-0018",
+      "fecha_reporte": "2026-01-25",
+      "cliente_nombre": "VÁLVULAS Y ACCESORIOS DEL NORTE",
+      "maquina_nombre": "Bomba Centrífuga #1",
+      "descripcion": "Fuga de aceite en sello mecánico",
+      "prioridad": "baja",
+      "tecnico_responsable": "Pedro Sánchez",
+      "estatus": "cerrado"
+    },
+    {
+      "folio": "INC-2026-0019",
+      "fecha_reporte": "2026-03-09",
+      "cliente_nombre": "MANTENIMIENTO INDUSTRIAL GRUPO MX",
+      "maquina_nombre": "Bomba Centrífuga #2",
+      "descripcion": "Falla en rodamiento principal, vibración excesiva",
+      "prioridad": "baja",
+      "tecnico_responsable": "Juan Martínez",
+      "estatus": "abierto"
+    },
+    {
+      "folio": "INC-2026-0020",
+      "fecha_reporte": "2025-11-29",
+      "cliente_nombre": "TURBINAS Y MOTORES DEL NORTE",
+      "maquina_nombre": "Extrusor de Plástico 90mm",
+      "descripcion": "Válvula de alivio operando fuera de set point",
+      "prioridad": "critica",
+      "tecnico_responsable": "Juan Martínez",
+      "estatus": "cerrado"
+    },
+    {
+      "folio": "INC-2026-0021",
+      "fecha_reporte": "2026-03-08",
+      "cliente_nombre": "TURBINAS Y MOTORES DEL NORTE",
+      "maquina_nombre": "Sistema de Vacío Central",
+      "descripcion": "Bomba no inicia, posible cavitación",
+      "prioridad": "alta",
+      "tecnico_responsable": "Carlos Reyes",
+      "estatus": "cerrado"
+    },
+    {
+      "folio": "INC-2026-0022",
+      "fecha_reporte": "2025-12-30",
+      "cliente_nombre": "SOLUCIONES HIDRÁULICAS NORESTE",
+      "maquina_nombre": "Chiller Industrial 40TR",
+      "descripcion": "Variador de frecuencia en falla F001",
+      "prioridad": "baja",
+      "tecnico_responsable": "Luis García",
+      "estatus": "cerrado"
+    },
+    {
+      "folio": "INC-2026-0023",
+      "fecha_reporte": "2026-02-13",
+      "cliente_nombre": "AUTOPARTES MAGNA NORTE SC",
+      "maquina_nombre": "Chiller Industrial 40TR",
+      "descripcion": "Ruido inusual en motor de 10HP",
+      "prioridad": "media",
+      "tecnico_responsable": "Pedro Sánchez",
+      "estatus": "abierto"
+    },
+    {
+      "folio": "INC-2026-0024",
+      "fecha_reporte": "2026-03-01",
+      "cliente_nombre": "SERVICIOS AMBIENTALES NORESTE",
+      "maquina_nombre": "Horno de Tratamiento Térmico",
+      "descripcion": "Parada no programada por falla eléctrica en tablero",
+      "prioridad": "baja",
+      "tecnico_responsable": "Miguel Torres",
+      "estatus": "abierto"
+    },
+    {
+      "folio": "INC-2026-0025",
+      "fecha_reporte": "2025-11-23",
+      "cliente_nombre": "PINTURAS Y RECUBRIMIENTOS NL",
+      "maquina_nombre": "Bomba Centrífuga #1",
+      "descripcion": "Válvula de alivio operando fuera de set point",
+      "prioridad": "media",
+      "tecnico_responsable": "Pedro Sánchez",
+      "estatus": "abierto"
+    },
+    {
+      "folio": "INC-2026-0026",
+      "fecha_reporte": "2026-02-11",
+      "cliente_nombre": "MANÓMETROS Y SENSORES SA DE CV",
+      "maquina_nombre": "Extrusor de Plástico 90mm",
+      "descripcion": "Bomba no inicia, posible cavitación",
+      "prioridad": "media",
+      "tecnico_responsable": "Juan Martínez",
+      "estatus": "en_proceso"
+    },
+    {
+      "folio": "INC-2026-0027",
+      "fecha_reporte": "2026-01-01",
+      "cliente_nombre": "AUTOPARTES MAGNA NORTE SC",
+      "maquina_nombre": "Banda Transportadora Principal",
+      "descripcion": "Fuga de aceite en sello mecánico",
+      "prioridad": "baja",
+      "tecnico_responsable": "Miguel Torres",
+      "estatus": "en_proceso"
+    },
+    {
+      "folio": "INC-2026-0028",
+      "fecha_reporte": "2025-11-30",
+      "cliente_nombre": "FUNDIDORA NORESTE SC",
+      "maquina_nombre": "Robot Soldador FANUC",
+      "descripcion": "Sobrecalentamiento en compresor #1",
+      "prioridad": "baja",
+      "tecnico_responsable": "Pedro Sánchez",
+      "estatus": "en_proceso"
+    },
+    {
+      "folio": "INC-2026-0029",
+      "fecha_reporte": "2026-02-11",
+      "cliente_nombre": "VÁLVULAS Y ACCESORIOS DEL NORTE",
+      "maquina_nombre": "Bomba Centrífuga #2",
+      "descripcion": "Sobrecalentamiento en compresor #1",
+      "prioridad": "baja",
+      "tecnico_responsable": "Miguel Torres",
+      "estatus": "cerrado"
+    },
+    {
+      "folio": "INC-2026-0030",
+      "fecha_reporte": "2026-01-11",
+      "cliente_nombre": "TRANSFORMADORES ELÉCTRICOS NL",
+      "maquina_nombre": "Banda Transportadora Principal",
+      "descripcion": "Válvula de alivio operando fuera de set point",
+      "prioridad": "critica",
+      "tecnico_responsable": "Juan Martínez",
+      "estatus": "en_proceso"
+    },
+    {
+      "folio": "INC-2026-0031",
+      "fecha_reporte": "2026-02-24",
+      "cliente_nombre": "MAQUILADORA GLOBAL SERVICES SC",
+      "maquina_nombre": "Sistema de Vacío Central",
+      "descripcion": "Sensor de presión fuera de rango",
+      "prioridad": "alta",
+      "tecnico_responsable": "Carlos Reyes",
+      "estatus": "abierto"
+    },
+    {
+      "folio": "INC-2026-0032",
+      "fecha_reporte": "2026-01-03",
+      "cliente_nombre": "CALDERAS Y VAPORIZADORES NL",
+      "maquina_nombre": "Compresor de Tornillo #2",
+      "descripcion": "Ruido inusual en motor de 10HP",
+      "prioridad": "media",
+      "tecnico_responsable": "Juan Martínez",
+      "estatus": "cerrado"
+    },
+    {
+      "folio": "INC-2026-0033",
+      "fecha_reporte": "2026-01-21",
+      "cliente_nombre": "SERVICIOS AMBIENTALES NORESTE",
+      "maquina_nombre": "Chiller Industrial 40TR",
+      "descripcion": "Sobrecalentamiento en compresor #1",
+      "prioridad": "baja",
+      "tecnico_responsable": "Luis García",
+      "estatus": "cerrado"
+    },
+    {
+      "folio": "INC-2026-0034",
+      "fecha_reporte": "2026-01-18",
+      "cliente_nombre": "LABORATORIO QUÍMICO REGIOMONTANO",
+      "maquina_nombre": "Bomba Centrífuga #2",
+      "descripcion": "Válvula de alivio operando fuera de set point",
+      "prioridad": "media",
+      "tecnico_responsable": "Luis García",
+      "estatus": "cerrado"
+    },
+    {
+      "folio": "INC-2026-0035",
+      "fecha_reporte": "2026-03-14",
+      "cliente_nombre": "SISTEMAS DE CONTROL AUTOMÁTICO",
+      "maquina_nombre": "Compresor de Tornillo #2",
+      "descripcion": "Sensor de presión fuera de rango",
+      "prioridad": "media",
+      "tecnico_responsable": "Miguel Torres",
+      "estatus": "cerrado"
+    },
+    {
+      "folio": "INC-2026-0036",
+      "fecha_reporte": "2026-02-01",
+      "cliente_nombre": "REPARACIONES ESPECIALIZADAS SC",
+      "maquina_nombre": "Robot Soldador FANUC",
+      "descripcion": "Correa rota en banda transportadora",
+      "prioridad": "media",
+      "tecnico_responsable": "Juan Martínez",
+      "estatus": "abierto"
+    },
+    {
+      "folio": "INC-2026-0037",
+      "fecha_reporte": "2025-12-24",
+      "cliente_nombre": "SERVICIOS AMBIENTALES NORESTE",
+      "maquina_nombre": "Banda Transportadora Principal",
+      "descripcion": "Ruido inusual en motor de 10HP",
+      "prioridad": "baja",
+      "tecnico_responsable": "Juan Martínez",
+      "estatus": "cerrado"
+    },
+    {
+      "folio": "INC-2026-0038",
+      "fecha_reporte": "2026-01-29",
+      "cliente_nombre": "EMPAQUES INDUSTRIALES DEL NORESTE",
+      "maquina_nombre": "Prensa Hidráulica 200T",
+      "descripcion": "Parada no programada por falla eléctrica en tablero",
+      "prioridad": "critica",
+      "tecnico_responsable": "Juan Martínez",
+      "estatus": "en_proceso"
+    },
+    {
+      "folio": "INC-2026-0039",
+      "fecha_reporte": "2026-01-07",
+      "cliente_nombre": "MAQUILADORA GLOBAL SERVICES SC",
+      "maquina_nombre": "Centro de Maquinado Vertical",
+      "descripcion": "Ruido inusual en motor de 10HP",
+      "prioridad": "baja",
+      "tecnico_responsable": "Miguel Torres",
+      "estatus": "abierto"
+    },
+    {
+      "folio": "INC-2026-0040",
+      "fecha_reporte": "2026-03-09",
+      "cliente_nombre": "SOLUCIONES HIDRÁULICAS NORESTE",
+      "maquina_nombre": "Sistema de Vacío Central",
+      "descripcion": "Válvula de alivio operando fuera de set point",
+      "prioridad": "alta",
+      "tecnico_responsable": "Miguel Torres",
+      "estatus": "cerrado"
+    }
+  ],
+  "bitacoras": [
+    {
+      "folio_incidente": "INC-2026-0007",
+      "fecha": "2026-01-28",
+      "tecnico": "Pedro Sánchez",
+      "actividades": "Cambio de sello mecánico John Crane Tipo 1. Prueba hidrostática a 5 bar por 30 min.",
+      "materiales_usados": "Rodamiento FAG 6308-ZZ (x4)",
+      "tiempo_horas": 3.9
+    },
+    {
+      "folio_incidente": "INC-2026-0038",
+      "fecha": "2026-02-13",
+      "tecnico": "Juan Martínez",
+      "actividades": "Cambio de empaque en brida 3\" línea de proceso. Prueba de hermeticidad.",
+      "materiales_usados": "Correa en V Optibelt XPA-1000 (x2)",
+      "tiempo_horas": 2.4
+    },
+    {
+      "folio_incidente": "INC-2026-0034",
+      "fecha": "2026-02-18",
+      "tecnico": "Luis García",
+      "actividades": "Cambio de empaque en brida 3\" línea de proceso. Prueba de hermeticidad.",
+      "materiales_usados": "Sello Mecánico John Crane Tipo 1 - 1\" (x2)",
+      "tiempo_horas": 4.6
+    },
+    {
+      "folio_incidente": "INC-2026-0017",
+      "fecha": "2026-03-16",
+      "tecnico": "Juan Martínez",
+      "actividades": "Diagnóstico y limpieza de filtros de compresor. Cambio de aceite Mobil DTE 26.",
+      "materiales_usados": "Motor Hidráulico Parker F11-5 (x3)",
+      "tiempo_horas": 3.2
+    },
+    {
+      "folio_incidente": "INC-2026-0015",
+      "fecha": "2026-01-15",
+      "tecnico": "Juan Martínez",
+      "actividades": "Ajuste de tensión en bandas de transmisión. Lubricación de cadenas y chumaceras.",
+      "materiales_usados": "Rodamiento Angular NSK 7206BEP (x1)",
+      "tiempo_horas": 11.0
+    },
+    {
+      "folio_incidente": "INC-2026-0022",
+      "fecha": "2026-03-04",
+      "tecnico": "Miguel Torres",
+      "actividades": "Balanceo dinámico de impulsor de bomba. Corrección de desbalance en campo.",
+      "materiales_usados": "Empaque de Teflón 1/8\" x 1/2\" x 10m (x3)",
+      "tiempo_horas": 4.3
+    },
+    {
+      "folio_incidente": "INC-2026-0008",
+      "fecha": "2026-03-16",
+      "tecnico": "Carlos Reyes",
+      "actividades": "Cambio de sello mecánico John Crane Tipo 1. Prueba hidrostática a 5 bar por 30 min.",
+      "materiales_usados": "Nivel de Burbuja Magnético Wika BM26 DN25 (x4)",
+      "tiempo_horas": 2.7
+    },
+    {
+      "folio_incidente": "INC-2026-0013",
+      "fecha": "2026-02-11",
+      "tecnico": "Juan Martínez",
+      "actividades": "Cambio de sello mecánico John Crane Tipo 1. Prueba hidrostática a 5 bar por 30 min.",
+      "materiales_usados": "Correa Poly-V Gates 6PK1120 (x1)",
+      "tiempo_horas": 11.0
+    },
+    {
+      "folio_incidente": "INC-2026-0021",
+      "fecha": "2026-03-14",
+      "tecnico": "Luis García",
+      "actividades": "Cambio de empaque en brida 3\" línea de proceso. Prueba de hermeticidad.",
+      "materiales_usados": "Filtro de Línea 1/2\" 40 micras Parker (x1)",
+      "tiempo_horas": 1.0
+    },
+    {
+      "folio_incidente": "INC-2026-0022",
+      "fecha": "2025-12-19",
+      "tecnico": "Pedro Sánchez",
+      "actividades": "Limpieza general de tablero eléctrico. Ajuste de conexiones flojas. Prueba de continuidad OK.",
+      "materiales_usados": "Guardamotor Siemens 3RV1021 9-14A (x1)",
+      "tiempo_horas": 2.3
+    },
+    {
+      "folio_incidente": "INC-2026-0020",
+      "fecha": "2026-03-12",
+      "tecnico": "Luis García",
+      "actividades": "Sustitución de rodamiento SKF 6205. Se verifica alineación y torque. Arranque sin novedad.",
+      "materiales_usados": "Rodamiento FAG 6308-ZZ (x2)",
+      "tiempo_horas": 8.1
+    },
+    {
+      "folio_incidente": "INC-2026-0034",
+      "fecha": "2026-01-04",
+      "tecnico": "Miguel Torres",
+      "actividades": "Diagnóstico y limpieza de filtros de compresor. Cambio de aceite Mobil DTE 26.",
+      "materiales_usados": "O-Ring Buna-N 2\" DN50 (x4)",
+      "tiempo_horas": 8.7
+    },
+    {
+      "folio_incidente": "INC-2026-0015",
+      "fecha": "2025-12-30",
+      "tecnico": "Carlos Reyes",
+      "actividades": "Diagnóstico y limpieza de filtros de compresor. Cambio de aceite Mobil DTE 26.",
+      "materiales_usados": "O-Ring Buna-N 2\" DN50 (x4)",
+      "tiempo_horas": 2.1
+    },
+    {
+      "folio_incidente": "INC-2026-0013",
+      "fecha": "2026-03-09",
+      "tecnico": "Juan Martínez",
+      "actividades": "Diagnóstico y limpieza de filtros de compresor. Cambio de aceite Mobil DTE 26.",
+      "materiales_usados": "Filtro de Aceite Hidráulico Hydac 10 micras (x1)",
+      "tiempo_horas": 5.9
+    },
+    {
+      "folio_incidente": "INC-2026-0010",
+      "fecha": "2026-03-14",
+      "tecnico": "Luis García",
+      "actividades": "Limpieza general de tablero eléctrico. Ajuste de conexiones flojas. Prueba de continuidad OK.",
+      "materiales_usados": "Rodamiento SKF 6205-2RS (x3)",
+      "tiempo_horas": 3.3
+    },
+    {
+      "folio_incidente": "INC-2026-0026",
+      "fecha": "2026-02-15",
+      "tecnico": "Carlos Reyes",
+      "actividades": "Limpieza general de tablero eléctrico. Ajuste de conexiones flojas. Prueba de continuidad OK.",
+      "materiales_usados": "Rodamiento Esférico SKF 1207 EKTN9 (x4)",
+      "tiempo_horas": 5.1
+    },
+    {
+      "folio_incidente": "INC-2026-0036",
+      "fecha": "2026-03-07",
+      "tecnico": "Juan Martínez",
+      "actividades": "Reajuste de parámetros PID en variador ABB. Calibración de encoder.",
+      "materiales_usados": "Manómetro Bourdon Wika 0-160 PSI 1/4\" BSP (x1)",
+      "tiempo_horas": 8.7
+    },
+    {
+      "folio_incidente": "INC-2026-0001",
+      "fecha": "2025-12-23",
+      "tecnico": "Luis García",
+      "actividades": "Ajuste de tensión en bandas de transmisión. Lubricación de cadenas y chumaceras.",
+      "materiales_usados": "Transmisor de Presión Endress+Hauser 0-10 bar (x2)",
+      "tiempo_horas": 7.7
+    },
+    {
+      "folio_incidente": "INC-2026-0019",
+      "fecha": "2026-02-12",
+      "tecnico": "Miguel Torres",
+      "actividades": "Sustitución de rodamiento SKF 6205. Se verifica alineación y torque. Arranque sin novedad.",
+      "materiales_usados": "Válvula Solenoide Neumática Festo MFH-5/2-D-1-FR (x2)",
+      "tiempo_horas": 1.9
+    },
+    {
+      "folio_incidente": "INC-2026-0026",
+      "fecha": "2026-01-19",
+      "tecnico": "Carlos Reyes",
+      "actividades": "Sustitución de rodamiento SKF 6205. Se verifica alineación y torque. Arranque sin novedad.",
+      "materiales_usados": "Nivel de Burbuja Magnético Wika BM26 DN25 (x4)",
+      "tiempo_horas": 10.9
+    },
+    {
+      "folio_incidente": "INC-2026-0019",
+      "fecha": "2026-02-13",
+      "tecnico": "Carlos Reyes",
+      "actividades": "Reajuste de parámetros PID en variador ABB. Calibración de encoder.",
+      "materiales_usados": "Válvula de Alivio Parker R12-8 (x2)",
+      "tiempo_horas": 4.5
+    },
+    {
+      "folio_incidente": "INC-2026-0024",
+      "fecha": "2025-12-20",
+      "tecnico": "Luis García",
+      "actividades": "Limpieza general de tablero eléctrico. Ajuste de conexiones flojas. Prueba de continuidad OK.",
+      "materiales_usados": "Aceite Mobil DTE 26 - Cubeta 19L (x2)",
+      "tiempo_horas": 2.5
+    },
+    {
+      "folio_incidente": "INC-2026-0024",
+      "fecha": "2026-01-31",
+      "tecnico": "Luis García",
+      "actividades": "Cambio de sello mecánico John Crane Tipo 1. Prueba hidrostática a 5 bar por 30 min.",
+      "materiales_usados": "Rodamiento FAG 6308-ZZ (x2)",
+      "tiempo_horas": 9.5
+    },
+    {
+      "folio_incidente": "INC-2026-0025",
+      "fecha": "2026-03-16",
+      "tecnico": "Carlos Reyes",
+      "actividades": "Diagnóstico y limpieza de filtros de compresor. Cambio de aceite Mobil DTE 26.",
+      "materiales_usados": "Aceite Shell Omala S2 GX 220 - 208L (x3)",
+      "tiempo_horas": 3.7
+    },
+    {
+      "folio_incidente": "INC-2026-0009",
+      "fecha": "2026-02-15",
+      "tecnico": "Juan Martínez",
+      "actividades": "Ajuste de tensión en bandas de transmisión. Lubricación de cadenas y chumaceras.",
+      "materiales_usados": "Grasa SKF LGMT 2 - 1 kg (x2)",
+      "tiempo_horas": 8.2
+    },
+    {
+      "folio_incidente": "INC-2026-0036",
+      "fecha": "2026-01-05",
+      "tecnico": "Luis García",
+      "actividades": "Limpieza general de tablero eléctrico. Ajuste de conexiones flojas. Prueba de continuidad OK.",
+      "materiales_usados": "Transmisor de Presión Endress+Hauser 0-10 bar (x3)",
+      "tiempo_horas": 11.9
+    },
+    {
+      "folio_incidente": "INC-2026-0035",
+      "fecha": "2026-02-20",
+      "tecnico": "Miguel Torres",
+      "actividades": "Diagnóstico y limpieza de filtros de compresor. Cambio de aceite Mobil DTE 26.",
+      "materiales_usados": "Aceite Mobil DTE 26 - Cubeta 19L (x2)",
+      "tiempo_horas": 3.1
+    },
+    {
+      "folio_incidente": "INC-2026-0005",
+      "fecha": "2026-01-08",
+      "tecnico": "Pedro Sánchez",
+      "actividades": "Reajuste de parámetros PID en variador ABB. Calibración de encoder.",
+      "materiales_usados": "Motor Paso a Paso NEMA 34 12Nm (x2)",
+      "tiempo_horas": 4.0
+    },
+    {
+      "folio_incidente": "INC-2026-0007",
+      "fecha": "2026-01-03",
+      "tecnico": "Luis García",
+      "actividades": "Diagnóstico y limpieza de filtros de compresor. Cambio de aceite Mobil DTE 26.",
+      "materiales_usados": "Rodamiento Esférico SKF 1207 EKTN9 (x4)",
+      "tiempo_horas": 1.9
+    },
+    {
+      "folio_incidente": "INC-2026-0033",
+      "fecha": "2026-03-13",
+      "tecnico": "Juan Martínez",
+      "actividades": "Limpieza general de tablero eléctrico. Ajuste de conexiones flojas. Prueba de continuidad OK.",
+      "materiales_usados": "Válvula Solenoide Neumática Festo MFH-5/2-D-1-FR (x2)",
+      "tiempo_horas": 6.2
+    }
   ]
 }

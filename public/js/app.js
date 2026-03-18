@@ -613,7 +613,7 @@
     const el = qs('#seed-status');
     try {
       const st = await fetchJson(API + '/seed-status');
-      el.textContent = `Actualmente: ${st.clientes} clientes, ${st.refacciones} refacciones, ${st.maquinas} máquinas.`;
+      el.innerHTML = `Actualmente: <strong>${st.clientes}</strong> clientes, <strong>${st.refacciones}</strong> refacciones, <strong>${st.maquinas}</strong> máquinas, <strong>${st.cotizaciones || 0}</strong> cotizaciones, <strong>${st.incidentes || 0}</strong> incidentes, <strong>${st.bitacoras || 0}</strong> bitácoras.`;
     } catch (e) { el.textContent = 'No se pudo conectar con el servidor.'; }
   }
 
@@ -623,14 +623,19 @@
     btn.textContent = 'Cargando…';
     try {
       const data = await fetchJson(API + '/seed-demo', { method: 'POST' });
-      qs('#seed-status').textContent = `Listo: ${data.clientes} clientes, ${data.refacciones} refacciones, ${data.maquinas} máquinas.`;
+      qs('#seed-status').innerHTML = `Listo: <strong>${data.clientes}</strong> clientes, <strong>${data.refacciones}</strong> refacciones, <strong>${data.maquinas}</strong> máquinas, <strong>${data.cotizaciones || 0}</strong> cotizaciones, <strong>${data.incidentes || 0}</strong> incidentes, <strong>${data.bitacoras || 0}</strong> bitácoras.`;
       btn.textContent = 'Datos demo cargados';
+      loadCotizaciones();
+      loadIncidentes();
+      loadBitacoras();
       loadClientes();
       loadRefacciones();
       loadMaquinas();
       fillClientesSelect();
     } catch (e) {
-      qs('#seed-status').textContent = 'Error: ' + e.message;
+      let msg = e.message;
+      try { const o = JSON.parse(msg); if (o.error) msg = o.error; } catch (_) {}
+      qs('#seed-status').innerHTML = '<span class="error-msg">Error: ' + escapeHtml(msg) + '</span>';
       btn.textContent = 'Cargar datos demo ahora';
     }
     btn.disabled = false;
@@ -664,6 +669,24 @@
   qs('.btn-empty-inc').addEventListener('click', () => openModalIncidente(null));
   qs('.btn-empty-bit').addEventListener('click', () => openModalBitacora(null));
   qs('#btn-seed-demo').addEventListener('click', seedDemo);
+  qs('#btn-seed-extra').addEventListener('click', async () => {
+    const btn = qs('#btn-seed-extra');
+    btn.disabled = true;
+    btn.textContent = 'Cargando…';
+    try {
+      const data = await fetchJson(API + '/seed-demo-extra', { method: 'POST' });
+      qs('#seed-status').innerHTML = `Listo: <strong>${data.incidentes || 0}</strong> incidentes, <strong>${data.bitacoras || 0}</strong> bitácoras, <strong>${data.cotizaciones || 0}</strong> cotizaciones agregados.`;
+      loadCotizaciones();
+      loadIncidentes();
+      loadBitacoras();
+    } catch (e) {
+      let msg = e.message;
+      try { const o = JSON.parse(msg); if (o.error) msg = o.error; } catch (_) {}
+      qs('#seed-status').innerHTML = '<span class="error-msg">Error: ' + escapeHtml(msg) + '</span>';
+    }
+    btn.disabled = false;
+    btn.textContent = 'Cargar solo incidentes, bitácoras y cotizaciones demo';
+  });
 
   loadClientes();
   fillClientesSelect();

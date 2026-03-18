@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sistema de Cotización - En línea</title>
-  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="stylesheet" href="css/style.css?v=4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
 <body>
   <header class="header">
-    <h1><i class="fas fa-calculator"></i> Sistema de Cotización y Gestión <span class="version">v3</span></h1>
+    <h1><i class="fas fa-calculator"></i> Sistema de Cotización y Gestión <span class="version">v4</span></h1>
     <p class="subtitle">Catálogos, cotizaciones, incidentes y bitácora de horas · 100% gratuito</p>
   </header>
 
@@ -202,12 +202,19 @@
 
     <!-- DEMO -->
     <section id="panel-demo" class="panel">
-      <div class="card">
+      <div class="card card-demo">
         <h2><i class="fas fa-database"></i> Cargar datos demo</h2>
-        <p>Importa clientes, refacciones y máquinas desde <strong>SistemaGestion_Demo.xlsm</strong> (exportado a <code>seed-demo.json</code>).</p>
+        <p>Importa desde <strong>SistemaGestion_Demo.xlsm</strong> (exportado a <code>seed-demo.json</code>): clientes, refacciones, máquinas, <strong>incidentes</strong>, <strong>bitácoras</strong> y cotizaciones de ejemplo.</p>
         <p class="status" id="seed-status">Consultando estado…</p>
-        <button type="button" id="btn-seed-demo" class="btn primary big">Cargar datos demo ahora</button>
-        <p class="hint">Solo ejecuta una vez. Luego verás los datos en Clientes, Refacciones y Máquinas.</p>
+        <button type="button" id="btn-seed-demo" class="btn primary big">Cargar todo el demo (solo si no hay clientes)</button>
+        <p class="hint" style="margin-top:0.5rem;">Si ya tienes clientes cargados y solo quieres agregar incidentes, bitácoras y cotizaciones de ejemplo:</p>
+        <button type="button" id="btn-seed-extra" class="btn big" style="background:#0d9488;color:#fff;margin-top:0.5rem;">Cargar solo incidentes, bitácoras y cotizaciones demo</button>
+        <p class="hint">Luego verás todo en Cotizaciones, Incidentes y Bitácora.</p>
+      </div>
+      <div class="card card-ai">
+        <h2><i class="fas fa-robot"></i> Asistente con IA</h2>
+        <p>¿Se puede meter un agente AI que te ayude en todo el sistema? <strong>Sí.</strong> Se puede conectar un chat que consulte tus datos (clientes, cotizaciones, incidentes) y responda preguntas o sugiera acciones. Para eso haría falta una API de IA (por ejemplo OpenAI, o servicios gratuitos como Groq). Si quieres que lo implementemos después, lo dejamos como siguiente paso.</p>
+        <p class="hint">Por ahora puedes usar los filtros de búsqueda y los botones Agregar / Editar / Eliminar en cada sección.</p>
       </div>
     </section>
   </main>
@@ -222,6 +229,6 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=3"></script>
+  <script src="js/app.js?v=4"></script>
 </body>
 </html>
