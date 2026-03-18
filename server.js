@@ -429,6 +429,10 @@ app.delete('/api/bitacoras/:id', async (req, res) => {
 // --- Cargar datos demo (desde seed-demo.json) ---
 app.post('/api/seed-demo', async (req, res) => {
   try {
+    const [cCount] = await db.getAll('SELECT COUNT(*) as n FROM clientes');
+    if (cCount && cCount.n > 0) {
+      return res.status(400).json({ error: 'Ya hay datos cargados. El demo solo se puede cargar cuando no hay clientes. Si quieres volver a cargar, elimina primero los clientes desde la pestaña Clientes.' });
+    }
     const seedPath = path.join(__dirname, 'seed-demo.json');
     if (!fs.existsSync(seedPath)) return res.status(404).json({ error: 'No existe seed-demo.json. Ejecuta: python exportar_demo.py' });
     const seed = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
@@ -477,9 +481,10 @@ app.get('/api/seed-status', async (req, res) => {
   }
 });
 
-// SPA: todas las rutas no-API sirven index.html
+// SPA: todas las rutas no-API sirven index.html (sin caché para que siempre cargue la última versión)
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api')) return res.status(404).end();
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
