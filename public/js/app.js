@@ -3,9 +3,50 @@
   let clientesCache = [];
   let refaccionesCache = [];
   let maquinasCache = [];
+  let cotizacionesCache = [];
+  let incidentesCache = [];
+  let bitacorasCache = [];
 
   function qs(s) { return document.querySelector(s); }
   function qsAll(s) { return document.querySelectorAll(s); }
+
+  function showToast(message, type) {
+    type = type === 'error' ? 'error' : 'success';
+    const container = qs('#toast-container');
+    if (!container) return;
+    const el = document.createElement('div');
+    el.className = 'toast toast-' + type;
+    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+    el.innerHTML = `<i class="fas ${icon} toast-icon"></i><span class="toast-msg">${escapeHtml(message)}</span>`;
+    container.appendChild(el);
+    const t = setTimeout(() => {
+      el.style.animation = 'toastIn 0.25s ease reverse';
+      setTimeout(() => el.remove(), 260);
+    }, type === 'error' ? 6000 : 4000);
+    el.addEventListener('click', () => { clearTimeout(t); el.remove(); });
+  }
+
+  function showLoading() {
+    const el = qs('#global-loading');
+    const main = qs('#main-content');
+    if (el) el.classList.remove('hidden');
+    if (main) main.classList.add('content-loading');
+  }
+  function hideLoading() {
+    const el = qs('#global-loading');
+    const main = qs('#main-content');
+    if (el) el.classList.add('hidden');
+    if (main) main.classList.remove('content-loading');
+  }
+
+  function parseApiError(e) {
+    let msg = e && e.message ? String(e.message) : 'Error al procesar';
+    try {
+      const o = JSON.parse(msg);
+      if (o && o.error) return o.error;
+    } catch (_) {}
+    return msg;
+  }
 
   function showPanel(id) {
     qsAll('.panel').forEach(p => p.classList.remove('active'));
@@ -93,6 +134,123 @@
     });
   }
 
+  function debounce(fn, ms) {
+    let t;
+    return function () { clearTimeout(t); t = setTimeout(() => fn.apply(this, arguments), ms); };
+  }
+
+  function parseNumberFilter(str) {
+    if (!str || !String(str).trim()) return null;
+    str = String(str).trim().replace(/,/g, '');
+    const n = parseFloat(str.replace(/[^\d.-]/g, ''));
+    if (str.startsWith('>=')) return { op: 'gte', value: n };
+    if (str.startsWith('<=')) return { op: 'lte', value: n };
+    if (str.startsWith('>')) return { op: 'gt', value: n };
+    if (str.startsWith('<')) return { op: 'lt', value: n };
+    const between = str.match(/^([\d.]+)\s*-\s*([\d.]+)$/) || str.match(/^between\s+([\d.]+)\s+and\s+([\d.]+)$/i);
+    if (between) return { op: 'between', value: parseFloat(between[1]), value2: parseFloat(between[2]) };
+    if (!isNaN(n)) return { op: 'eq', value: n };
+    return null;
+  }
+
+  function getDateRange(selectVal, dateInputVal) {
+    const now = new Date();
+    const today = now.toISOString().slice(0, 10);
+    if (dateInputVal && dateInputVal.length >= 10) return { start: dateInputVal.slice(0, 10), end: dateInputVal.slice(0, 10) };
+    switch (selectVal) {
+      case 'hoy': return { start: today, end: today };
+      case 'esta_semana': {
+        const d = new Date(now); d.setDate(d.getDate() - d.getDay()); return { start: d.toISOString().slice(0, 10), end: today };
+      }
+      case 'este_mes': return { start: today.slice(0, 7) + '-01', end: today };
+      case 'mes_pasado': {
+        const y = now.getFullYear(), m = now.getMonth(); const start = new Date(y, m - 1, 1), end = new Date(y, m, 0);
+        return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+      }
+      case 'este_año': return { start: today.slice(0, 4) + '-01-01', end: today };
+      default: return null;
+    }
+  }
+
+  function getFilterValues(tableEl) {
+    const tbl = typeof tableEl === 'string' ? qs(tableEl) : tableEl;
+    if (!tbl) return {};
+    const out = {};
+    tbl.querySelectorAll('.filter-input, .filter-date-select').forEach(inp => {
+      const key = inp.dataset.key;
+      if (!key) return;
+      if (inp.classList.contains('filter-date-select')) {
+        out[key + '_dateSelect'] = inp.value;
+        const dateInp = tbl.querySelector('.filter-date-input[data-key="' + key + '"]');
+        out[key + '_dateInput'] = dateInp ? dateInp.value : '';
+        return;
+      }
+      out[key] = inp.value.trim();
+    });
+    return out;
+  }
+
+  function applyFilters(data, filterValues, tableId) {
+    if (!data || !Array.isArray(data)) return [];
+    let out = data;
+    const tbl = qs('#' + tableId);
+    if (!tbl) return out;
+    tbl.querySelectorAll('.filter-row .filter-input[data-key]:not(.filter-date-input), .filter-row .filter-date-select[data-key]').forEach(inp => {
+      const key = inp.dataset.key;
+      const type = inp.classList.contains('filter-date-select') ? 'date' : (inp.dataset.type || 'text');
+      let val;
+      if (type === 'date' && inp.classList.contains('filter-date-select')) {
+        const range = getDateRange(inp.value, filterValues[key + '_dateInput']);
+        if (!range) return;
+        out = out.filter(row => {
+          const d = (row[key] || '').toString().slice(0, 10);
+          return d >= range.start && d <= range.end;
+        });
+        return;
+      }
+      if (inp.classList.contains('filter-date-input')) {
+        const v = inp.value ? inp.value.slice(0, 10) : '';
+        if (!v) return;
+        out = out.filter(row => (row[key] || '').toString().slice(0, 10) === v);
+        return;
+      }
+      val = filterValues[key];
+      if (val === undefined || val === '') return;
+      if (type === 'number') {
+        const cond = parseNumberFilter(val);
+        if (!cond) return;
+        out = out.filter(row => {
+          const num = parseFloat(row[key]);
+          if (isNaN(num)) return false;
+          if (cond.op === 'eq') return num === cond.value;
+          if (cond.op === 'gt') return num > cond.value;
+          if (cond.op === 'gte') return num >= cond.value;
+          if (cond.op === 'lt') return num < cond.value;
+          if (cond.op === 'lte') return num <= cond.value;
+          if (cond.op === 'between') return num >= cond.value && num <= cond.value2;
+          return true;
+        });
+      } else {
+        const lower = val.toLowerCase();
+        out = out.filter(row => String(row[key] || '').toLowerCase().includes(lower));
+      }
+    });
+    return out;
+  }
+
+  function bindTableFilters(tableId, onFilter) {
+    const tbl = qs('#' + tableId);
+    if (!tbl || !onFilter) return;
+    const run = debounce(onFilter, 220);
+    tbl.querySelectorAll('.filter-row .filter-input').forEach(inp => {
+      inp.addEventListener('input', run);
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); onFilter(); } });
+    });
+    tbl.querySelectorAll('.filter-row .filter-date-select, .filter-row .filter-date-input').forEach(inp => {
+      inp.addEventListener('change', onFilter);
+    });
+  }
+
   // ----- CLIENTES -----
   function renderClientes(data) {
     const tbody = qs('#tabla-clientes tbody');
@@ -129,18 +287,22 @@
   async function deleteCliente(id) {
     try {
       await fetchJson(API + '/clientes/' + id, { method: 'DELETE' });
+      showToast('Cliente eliminado correctamente.', 'success');
       loadClientes();
-    } catch (e) { alert('Error: ' + e.message); }
+    } catch (e) { showToast(parseApiError(e) || 'No se pudo eliminar.', 'error'); }
   }
 
   async function loadClientes() {
-    const q = qs('#buscar-clientes').value.trim();
-    const url = q ? `${API}/clientes?q=${encodeURIComponent(q)}` : `${API}/clientes`;
+    showLoading();
     try {
-      const data = await fetchJson(url);
+      const data = await fetchJson(API + '/clientes');
       clientesCache = data;
-      renderClientes(data);
+      const q = (qs('#buscar-clientes') && qs('#buscar-clientes').value || '').trim().toLowerCase();
+      let filtered = applyFilters(clientesCache, getFilterValues('#tabla-clientes'), 'tabla-clientes');
+      if (q) filtered = filtered.filter(c => [c.nombre, c.codigo, c.rfc].some(v => String(v || '').toLowerCase().includes(q)));
+      renderClientes(filtered);
     } catch (e) { renderClientes([]); console.error(e); }
+    finally { hideLoading(); }
   }
 
   // ----- REFACCIONES -----
@@ -179,18 +341,22 @@
   async function deleteRefaccion(id) {
     try {
       await fetchJson(API + '/refacciones/' + id, { method: 'DELETE' });
+      showToast('Refacción eliminada correctamente.', 'success');
       loadRefacciones();
-    } catch (e) { alert('Error: ' + e.message); }
+    } catch (e) { showToast(parseApiError(e) || 'No se pudo eliminar.', 'error'); }
   }
 
   async function loadRefacciones() {
-    const q = qs('#buscar-refacciones').value.trim();
-    const url = q ? `${API}/refacciones?q=${encodeURIComponent(q)}` : `${API}/refacciones`;
+    showLoading();
     try {
-      const data = await fetchJson(url);
+      const data = await fetchJson(API + '/refacciones');
       refaccionesCache = data;
-      renderRefacciones(data);
+      const q = (qs('#buscar-refacciones') && qs('#buscar-refacciones').value || '').trim().toLowerCase();
+      let filtered = applyFilters(refaccionesCache, getFilterValues('#tabla-refacciones'), 'tabla-refacciones');
+      if (q) filtered = filtered.filter(r => [r.codigo, r.descripcion, r.marca].some(v => String(v || '').toLowerCase().includes(q)));
+      renderRefacciones(filtered);
     } catch (e) { renderRefacciones([]); console.error(e); }
+    finally { hideLoading(); }
   }
 
   // ----- MÁQUINAS -----
@@ -229,18 +395,22 @@
   async function deleteMaquina(id) {
     try {
       await fetchJson(API + '/maquinas/' + id, { method: 'DELETE' });
+      showToast('Máquina eliminada correctamente.', 'success');
       loadMaquinas();
-    } catch (e) { alert('Error: ' + e.message); }
+    } catch (e) { showToast(parseApiError(e) || 'No se pudo eliminar.', 'error'); }
   }
 
   async function loadMaquinas() {
-    const clienteId = qs('#filtro-cliente-maq').value;
+    showLoading();
+    const clienteId = qs('#filtro-cliente-maq') && qs('#filtro-cliente-maq').value;
     const url = clienteId ? `${API}/maquinas?cliente_id=${clienteId}` : `${API}/maquinas`;
     try {
       const data = await fetchJson(url);
       maquinasCache = data;
-      renderMaquinas(data);
+      const filtered = applyFilters(maquinasCache, getFilterValues('#tabla-maquinas'), 'tabla-maquinas');
+      renderMaquinas(filtered);
     } catch (e) { renderMaquinas([]); console.error(e); }
+    finally { hideLoading(); }
   }
 
   // ----- COTIZACIONES -----
@@ -280,17 +450,22 @@
   }
 
   async function loadCotizaciones() {
+    showLoading();
     try {
       const data = await fetchJson(API + '/cotizaciones');
-      renderCotizaciones(data);
+      cotizacionesCache = data;
+      const filtered = applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones');
+      renderCotizaciones(filtered);
     } catch (e) { renderCotizaciones([]); }
+    finally { hideLoading(); }
   }
 
   async function deleteCotizacion(id) {
     try {
       await fetchJson(API + '/cotizaciones/' + id, { method: 'DELETE' });
+      showToast('Cotización eliminada correctamente.', 'success');
       loadCotizaciones();
-    } catch (e) { alert('Error: ' + e.message); }
+    } catch (e) { showToast(parseApiError(e) || 'No se pudo eliminar.', 'error'); }
   }
 
   // ----- INCIDENTES -----
@@ -331,17 +506,22 @@
   }
 
   async function loadIncidentes() {
+    showLoading();
     try {
       const data = await fetchJson(API + '/incidentes');
-      renderIncidentes(data);
+      incidentesCache = data;
+      const filtered = applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes');
+      renderIncidentes(filtered);
     } catch (e) { renderIncidentes([]); }
+    finally { hideLoading(); }
   }
 
   async function deleteIncidente(id) {
     try {
       await fetchJson(API + '/incidentes/' + id, { method: 'DELETE' });
+      showToast('Incidente eliminado correctamente.', 'success');
       loadIncidentes();
-    } catch (e) { alert('Error: ' + e.message); }
+    } catch (e) { showToast(parseApiError(e) || 'No se pudo eliminar.', 'error'); }
   }
 
   // ----- BITÁCORAS -----
@@ -383,17 +563,22 @@
   }
 
   async function loadBitacoras() {
+    showLoading();
     try {
       const data = await fetchJson(API + '/bitacoras');
-      renderBitacoras(data);
+      bitacorasCache = data;
+      const filtered = applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras');
+      renderBitacoras(filtered);
     } catch (e) { renderBitacoras([]); }
+    finally { hideLoading(); }
   }
 
   async function deleteBitacora(id) {
     try {
       await fetchJson(API + '/bitacoras/' + id, { method: 'DELETE' });
+      showToast('Registro de bitácora eliminado correctamente.', 'success');
       loadBitacoras();
-    } catch (e) { alert('Error: ' + e.message); }
+    } catch (e) { showToast(parseApiError(e) || 'No se pudo eliminar.', 'error'); }
   }
 
   // ----- MODAL GENÉRICO ----- (no se cierra al hacer clic fuera; solo con X o Cancelar)
@@ -516,10 +701,11 @@
       try {
         if (isNew) await fetchJson(API + '/clientes', { method: 'POST', body: JSON.stringify(payload) });
         else await fetchJson(API + '/clientes/' + cliente.id, { method: 'PUT', body: JSON.stringify(payload) });
+        qs('#modal').classList.add('hidden');
+        showToast(isNew ? 'Cliente guardado correctamente.' : 'Cliente actualizado correctamente.', 'success');
         loadClientes();
         fillClientesSelect();
-        qs('#modal').classList.add('hidden');
-      } catch (e) { alert('Error: ' + e.message); }
+      } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar. Revisa los datos e intenta de nuevo.', 'error'); }
     };
   }
 
@@ -564,10 +750,11 @@
       try {
         if (isNew) await fetchJson(API + '/refacciones', { method: 'POST', body: JSON.stringify(payload) });
         else await fetchJson(API + '/refacciones/' + refaccion.id, { method: 'PUT', body: JSON.stringify(payload) });
+        qs('#modal').classList.add('hidden');
+        showToast(isNew ? 'Refacción guardada correctamente.' : 'Refacción actualizada correctamente.', 'success');
         loadRefacciones();
         if (typeof fillRefaccionesSelect === 'function') fillRefaccionesSelect();
-        qs('#modal').classList.add('hidden');
-      } catch (e) { alert('Error: ' + e.message); }
+      } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar. Revisa los datos.', 'error'); }
     };
   }
 
@@ -607,9 +794,10 @@
       try {
         if (isNew) await fetchJson(API + '/maquinas', { method: 'POST', body: JSON.stringify(payload) });
         else await fetchJson(API + '/maquinas/' + maquina.id, { method: 'PUT', body: JSON.stringify(payload) });
-        loadMaquinas();
         qs('#modal').classList.add('hidden');
-      } catch (e) { alert('Error: ' + e.message); }
+        showToast(isNew ? 'Máquina guardada correctamente.' : 'Máquina actualizada correctamente.', 'success');
+        loadMaquinas();
+      } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar. Revisa los datos.', 'error'); }
     };
   }
 
@@ -667,9 +855,10 @@
       try {
         if (isNew) await fetchJson(API + '/cotizaciones', { method: 'POST', body: JSON.stringify(payload) });
         else { payload.folio = cot.folio; await fetchJson(API + '/cotizaciones/' + cot.id, { method: 'PUT', body: JSON.stringify(payload) }); }
-        loadCotizaciones();
         qs('#modal').classList.add('hidden');
-      } catch (e) { alert('Error: ' + e.message); }
+        showToast(isNew ? 'Cotización guardada correctamente.' : 'Cotización actualizada correctamente.', 'success');
+        loadCotizaciones();
+      } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar. Revisa los datos.', 'error'); }
     };
   }
 
@@ -677,7 +866,7 @@
     try {
       const cot = await fetchJson(API + '/cotizaciones/' + id);
       openModalCotizacion(cot);
-    } catch (e) { alert('Error: ' + e.message); }
+    } catch (e) { showToast(parseApiError(e) || 'No se pudo cargar la cotización.', 'error'); }
   }
 
   // ----- MODAL INCIDENTE -----
@@ -722,9 +911,10 @@
       try {
         if (isNew) await fetchJson(API + '/incidentes', { method: 'POST', body: JSON.stringify(payload) });
         else await fetchJson(API + '/incidentes/' + inc.id, { method: 'PUT', body: JSON.stringify(payload) });
-        loadIncidentes();
         qs('#modal').classList.add('hidden');
-      } catch (e) { alert('Error: ' + e.message); }
+        showToast(isNew ? 'Incidente guardado correctamente.' : 'Incidente actualizado correctamente.', 'success');
+        loadIncidentes();
+      } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar. Revisa los datos o completa los campos obligatorios.', 'error'); }
     };
   }
 
@@ -732,7 +922,7 @@
     try {
       const inc = await fetchJson(API + '/incidentes/' + id);
       openModalIncidente(inc);
-    } catch (e) { alert('Error: ' + e.message); }
+    } catch (e) { showToast(parseApiError(e) || 'No se pudo cargar el incidente.', 'error'); }
   }
 
   // ----- MODAL BITÁCORA -----
@@ -778,9 +968,10 @@
       try {
         if (isNew) await fetchJson(API + '/bitacoras', { method: 'POST', body: JSON.stringify(payload) });
         else await fetchJson(API + '/bitacoras/' + bit.id, { method: 'PUT', body: JSON.stringify(payload) });
-        loadBitacoras();
         qs('#modal').classList.add('hidden');
-      } catch (e) { alert('Error: ' + e.message); }
+        showToast(isNew ? 'Registro de bitácora guardado correctamente.' : 'Bitácora actualizada correctamente.', 'success');
+        loadBitacoras();
+      } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar. Indica incidente o cotización y fecha.', 'error'); }
     };
   }
 
@@ -788,7 +979,7 @@
     try {
       const bit = await fetchJson(API + '/bitacoras/' + id);
       openModalBitacora(bit);
-    } catch (e) { alert('Error: ' + e.message); }
+    } catch (e) { showToast(parseApiError(e) || 'No se pudo cargar el registro.', 'error'); }
   }
 
   // ----- SEED STATUS -----
@@ -833,15 +1024,45 @@
     } catch (_) {}
   }
 
-  function debounce(fn, ms) {
-    let t;
-    return function () { clearTimeout(t); t = setTimeout(() => fn.apply(this, arguments), ms); };
+  function applyClientesFiltersAndRender() {
+    const q = (qs('#buscar-clientes') && qs('#buscar-clientes').value || '').trim().toLowerCase();
+    let filtered = applyFilters(clientesCache, getFilterValues('#tabla-clientes'), 'tabla-clientes');
+    if (q) filtered = filtered.filter(c => [c.nombre, c.codigo, c.rfc].some(v => String(v || '').toLowerCase().includes(q)));
+    renderClientes(filtered);
+  }
+  function applyRefaccionesFiltersAndRender() {
+    const q = (qs('#buscar-refacciones') && qs('#buscar-refacciones').value || '').trim().toLowerCase();
+    let filtered = applyFilters(refaccionesCache, getFilterValues('#tabla-refacciones'), 'tabla-refacciones');
+    if (q) filtered = filtered.filter(r => [r.codigo, r.descripcion, r.marca].some(v => String(v || '').toLowerCase().includes(q)));
+    renderRefacciones(filtered);
+  }
+  function applyMaquinasFiltersAndRender() {
+    const filtered = applyFilters(maquinasCache, getFilterValues('#tabla-maquinas'), 'tabla-maquinas');
+    renderMaquinas(filtered);
+  }
+  function applyCotizacionesFiltersAndRender() {
+    const filtered = applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones');
+    renderCotizaciones(filtered);
+  }
+  function applyIncidentesFiltersAndRender() {
+    const filtered = applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes');
+    renderIncidentes(filtered);
+  }
+  function applyBitacorasFiltersAndRender() {
+    const filtered = applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras');
+    renderBitacoras(filtered);
   }
 
   // ----- EVENT LISTENERS -----
   qs('#buscar-clientes').addEventListener('input', debounce(loadClientes, 350));
   qs('#buscar-refacciones').addEventListener('input', debounce(loadRefacciones, 350));
   qs('#filtro-cliente-maq').addEventListener('change', loadMaquinas);
+  bindTableFilters('tabla-clientes', applyClientesFiltersAndRender);
+  bindTableFilters('tabla-refacciones', applyRefaccionesFiltersAndRender);
+  bindTableFilters('tabla-maquinas', applyMaquinasFiltersAndRender);
+  bindTableFilters('tabla-cotizaciones', applyCotizacionesFiltersAndRender);
+  bindTableFilters('tabla-incidentes', applyIncidentesFiltersAndRender);
+  bindTableFilters('tabla-bitacoras', applyBitacorasFiltersAndRender);
   qs('#nuevo-cliente').addEventListener('click', () => openModalCliente(null));
   qs('#nueva-refaccion').addEventListener('click', () => openModalRefaccion(null));
   qs('#nueva-maquina').addEventListener('click', () => openModalMaquina(null));
@@ -851,12 +1072,60 @@
   qs('.btn-empty-cot').addEventListener('click', () => openModalCotizacion(null));
   qs('.btn-empty-inc').addEventListener('click', () => openModalIncidente(null));
   qs('.btn-empty-bit').addEventListener('click', () => openModalBitacora(null));
-  // ----- Asistente IA: bienvenida, system prompt en backend, chat amigable -----
+  // ----- Asistente IA: widget flotante abajo-derecha, arrastrable; historial para no responder tonto -----
   (function initAiChat() {
+    const widget = qs('#ai-widget');
     const messagesEl = qs('#ai-messages');
     const inputEl = qs('#ai-input');
     const sendBtn = qs('#ai-send');
-    if (!messagesEl || !inputEl || !sendBtn) return;
+    if (!widget || !messagesEl || !inputEl || !sendBtn) return;
+
+    const chatHistory = [];
+    const STORAGE_KEY = 'aiWidgetPos';
+
+    function loadPosition() {
+      try {
+        const s = localStorage.getItem(STORAGE_KEY);
+        if (s) {
+          const { right, bottom } = JSON.parse(s);
+          widget.style.right = right != null ? right + 'px' : '';
+          widget.style.bottom = bottom != null ? bottom + 'px' : '';
+          widget.style.left = '';
+        }
+      } catch (_) {}
+    }
+    function savePosition() {
+      const r = parseFloat(widget.style.right);
+      const b = parseFloat(widget.style.bottom);
+      if (!isNaN(r) || !isNaN(b)) localStorage.setItem(STORAGE_KEY, JSON.stringify({ right: isNaN(r) ? 24 : r, bottom: isNaN(b) ? 24 : b }));
+    }
+    loadPosition();
+
+    const dragHeader = qs('.ai-widget-drag', widget);
+    if (dragHeader) {
+      let dragging = false, startX, startY, startRight, startBottom;
+      dragHeader.addEventListener('mousedown', function (e) {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        dragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startRight = parseFloat(widget.style.right) || 24;
+        startBottom = parseFloat(widget.style.bottom) || 24;
+      });
+      document.addEventListener('mousemove', function (e) {
+        if (!dragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        widget.style.right = Math.max(0, startRight - dx) + 'px';
+        widget.style.bottom = Math.max(0, startBottom - dy) + 'px';
+        widget.style.left = 'auto';
+      });
+      document.addEventListener('mouseup', function () {
+        if (dragging) { dragging = false; savePosition(); }
+      });
+    }
+
     function append(msg, isUser) {
       const div = document.createElement('div');
       div.className = 'ai-msg ' + (isUser ? 'ai-msg-user' : 'ai-msg-bot');
@@ -874,15 +1143,23 @@
       }
     }
     loadWelcome();
+
     async function send() {
       const text = inputEl.value.trim();
       if (!text) return;
       inputEl.value = '';
       append(text, true);
+      chatHistory.push({ role: 'user', content: text });
       sendBtn.disabled = true;
       try {
-        const data = await fetchJson(API + '/ai/chat', { method: 'POST', body: JSON.stringify({ message: text }) });
-        append(data.reply || 'Sin respuesta', false);
+        const data = await fetchJson(API + '/ai/chat', {
+          method: 'POST',
+          body: JSON.stringify({ message: text, messages: chatHistory }),
+        });
+        const reply = data.reply || 'Sin respuesta';
+        append(reply, false);
+        chatHistory.push({ role: 'assistant', content: reply });
+        while (chatHistory.length > 20) chatHistory.splice(0, 2);
       } catch (e) {
         let msg = e.message;
         try { const o = JSON.parse(msg); if (o.error) msg = o.error; if (o.hint) msg += '\n\n' + o.hint; } catch (_) {}

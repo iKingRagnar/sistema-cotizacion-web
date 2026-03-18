@@ -610,15 +610,20 @@ app.get('/api/seed-status', async (req, res) => {
 });
 
 // --- Asistente IA: solo OpenAI-compatible (Bearer). La key de Cursor (crsr_) es para el app Cursor, no para este chat.
-const AI_SYSTEM_PROMPT = `Eres el asistente del Sistema de Cotización y Gestión. Reglas: sé amable, cordial y profesional. Responde siempre en español. Ayuda con: consultar clientes, refacciones, máquinas, cotizaciones, incidentes y bitácora; explicar cómo usar el sistema; dar consejos sobre cotizaciones o mantenimiento. Si no sabes algo del sistema, dilo con tacto. Mantén respuestas útiles y no demasiado largas. No inventes datos que no tengas.`;
-const AI_WELCOME = `¡Hola! 👋 Soy tu asistente y estoy aquí para ayudarte con gusto.
+const AI_SYSTEM_BASE = `Eres el asistente del Sistema de Cotización y Gestión.
 
-Puedo apoyarte con:
-• Consultas sobre **clientes**, **refacciones**, **máquinas**, **cotizaciones**, **incidentes** y **bitácora**
-• Explicarte cómo usar el sistema
-• Ideas para cotizaciones o seguimiento de mantenimiento
+REGLAS ESTRICTAS:
+- Responde SIEMPRE en español. Sé amable pero directo.
+- NO repitas saludos genéricos ("¡Hola!", "¿En qué puedo ayudarte?") en cada respuesta. Usa el CONTEXTO de la conversación: si el usuario ya te dio una fecha o un dato, ÚSALO para responder.
+- Si el usuario pide "cotizaciones de hoy" o da una fecha (ej. 18 de marzo de 2026), usa los datos que te proporcione el sistema en este mensaje para listar o resumir las cotizaciones. No pidas de nuevo el dato que ya te dieron.
+- Si tienes datos actuales del sistema (cotizaciones, clientes, etc.) en el contexto, responde con esa información de forma clara. Si no hay datos, dilo en una frase.
+- No inventes datos. Si no tienes información, indica que puede revisar la pestaña correspondiente en el sistema.
+- Respuestas concisas y útiles. Sin relleno ni redundancia.`;
+const AI_WELCOME = `¡Hola! 👋 Soy tu asistente.
 
-Escribe tu pregunta o dime en qué te ayudo.`;
+Puedo ayudarte a consultar **cotizaciones** (por fecha, cliente), **clientes**, **refacciones**, **máquinas**, **incidentes** y **bitácora**. También puedo explicarte cómo usar el sistema.
+
+Pregunta lo que necesites, por ejemplo: "¿Cuántas cotizaciones hay de hoy?" o "Dame las cotizaciones del 18 de marzo."`;
 
 app.get('/api/ai/welcome', (req, res) => {
   res.json({ message: AI_WELCOME });
@@ -645,9 +650,34 @@ app.post('/api/ai/chat', async (req, res) => {
     });
   }
   try {
-    const { message } = req.body || {};
+    const { message, messages: history } = req.body || {};
     const text = (message || '').trim();
     if (!text) return res.status(400).json({ error: 'Falta el mensaje (message)' });
+
+    let systemContent = AI_SYSTEM_BASE;
+    const lower = text.toLowerCase();
+    const historyText = (Array.isArray(history) ? history : []).map(m => (m && m.content) || '').join(' ');
+    const wantsCotizaciones = /\b(cotizaciones?|cotización)\b/i.test(text + ' ' + historyText) || /\bhoy\b|fecha|\d{1,2}\s+de\s+\w+/i.test(text);
+    if (wantsCotizaciones) {
+      try {
+        const rows = await db.getAll(
+          `SELECT co.id, co.folio, co.fecha, co.tipo, co.subtotal, co.iva, co.total, c.nombre as cliente_nombre
+           FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id
+           ORDER BY co.fecha DESC, co.id DESC LIMIT 80`
+        );
+        const hoy = new Date().toISOString().slice(0, 10);
+        const paraHoy = rows.filter(r => r.fecha === hoy);
+        systemContent += `\n\nDatos actuales del sistema (usa esto para responder):\n- Cotizaciones de HOY (${hoy}): ${paraHoy.length}. ${paraHoy.length ? paraHoy.map(c => `Folio ${c.folio}, ${c.cliente_nombre}, $${(c.total || 0).toFixed(2)}`).join('; ') : 'Ninguna.'}\n- Últimas cotizaciones (total ${rows.length}): ${rows.slice(0, 15).map(c => `${c.folio} (${c.fecha}) ${c.cliente_nombre} $${(c.total || 0).toFixed(2)}`).join('; ')}`;
+      } catch (_) {}
+    }
+
+    const apiMessages = [{ role: 'system', content: systemContent }];
+    if (Array.isArray(history) && history.length) {
+      history.forEach(m => {
+        if (m && m.role && m.content) apiMessages.push({ role: m.role === 'assistant' ? 'assistant' : 'user', content: String(m.content).slice(0, 2000) });
+      });
+    }
+    apiMessages.push({ role: 'user', content: text });
 
     const apiUrl = process.env.OPENAI_API_BASE || 'https://api.openai.com/v1/chat/completions';
     const model = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
@@ -659,10 +689,7 @@ app.post('/api/ai/chat', async (req, res) => {
       },
       body: JSON.stringify({
         model,
-        messages: [
-          { role: 'system', content: AI_SYSTEM_PROMPT },
-          { role: 'user', content: text },
-        ],
+        messages: apiMessages,
         max_tokens: 500,
       }),
     });

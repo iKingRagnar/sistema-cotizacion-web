@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sistema de Cotización - En línea</title>
-  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="stylesheet" href="css/style.css?v=5">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
 <body>
@@ -23,7 +23,7 @@
     <button type="button" data-tab="demo" class="tab highlight"><i class="fas fa-database"></i> Cargar demo</button>
   </nav>
 
-  <main class="content">
+  <main class="content" id="main-content">
     <!-- CLIENTES -->
     <section id="panel-clientes" class="panel active">
       <div class="section-header">
@@ -34,17 +34,21 @@
         </div>
       </div>
       <div class="table-wrap">
-        <table class="data-table" id="tabla-clientes">
+        <table class="data-table filterable-table" id="tabla-clientes" data-cache="clientesCache">
           <thead>
             <tr>
-              <th>Id</th>
-              <th>Código</th>
-              <th>Nombre</th>
-              <th>RFC</th>
-              <th>Contacto</th>
-              <th>Teléfono</th>
-              <th>Ciudad</th>
+              <th>Id</th><th>Código</th><th>Nombre</th><th>RFC</th><th>Contacto</th><th>Teléfono</th><th>Ciudad</th>
               <th class="th-actions">Acciones</th>
+            </tr>
+            <tr class="filter-row">
+              <td><input type="text" class="filter-input" data-key="id" data-type="number" placeholder="ej. &gt;10"></td>
+              <td><input type="text" class="filter-input" data-key="codigo" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="nombre" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="rfc" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="contacto" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="telefono" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="ciudad" data-type="text" placeholder="Filtrar…"></td>
+              <td class="th-actions"></td>
             </tr>
           </thead>
           <tbody></tbody>
@@ -62,17 +66,21 @@
         </div>
       </div>
       <div class="table-wrap">
-        <table class="data-table" id="tabla-refacciones">
+        <table class="data-table filterable-table" id="tabla-refacciones" data-cache="refaccionesCache">
           <thead>
             <tr>
-              <th>Id</th>
-              <th>Código</th>
-              <th>Descripción</th>
-              <th>Marca</th>
-              <th>Origen</th>
-              <th>Precio unit.</th>
-              <th>Unidad</th>
+              <th>Id</th><th>Código</th><th>Descripción</th><th>Marca</th><th>Origen</th><th>Precio unit.</th><th>Unidad</th>
               <th class="th-actions">Acciones</th>
+            </tr>
+            <tr class="filter-row">
+              <td><input type="text" class="filter-input" data-key="id" data-type="number" placeholder="ej. &gt;5"></td>
+              <td><input type="text" class="filter-input" data-key="codigo" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="descripcion" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="marca" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="origen" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="precio_unitario" data-type="number" placeholder="&gt;100, &lt;500"></td>
+              <td><input type="text" class="filter-input" data-key="unidad" data-type="text" placeholder="Filtrar…"></td>
+              <td class="th-actions"></td>
             </tr>
           </thead>
           <tbody></tbody>
@@ -92,17 +100,21 @@
         </div>
       </div>
       <div class="table-wrap">
-        <table class="data-table" id="tabla-maquinas">
+        <table class="data-table filterable-table" id="tabla-maquinas" data-cache="maquinasCache">
           <thead>
             <tr>
-              <th>Id</th>
-              <th>Nombre</th>
-              <th>Cliente</th>
-              <th>Marca</th>
-              <th>Modelo</th>
-              <th>Nº Serie</th>
-              <th>Ubicación</th>
+              <th>Id</th><th>Nombre</th><th>Cliente</th><th>Marca</th><th>Modelo</th><th>Nº Serie</th><th>Ubicación</th>
               <th class="th-actions">Acciones</th>
+            </tr>
+            <tr class="filter-row">
+              <td><input type="text" class="filter-input" data-key="id" data-type="number" placeholder="ej. &gt;1"></td>
+              <td><input type="text" class="filter-input" data-key="nombre" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="cliente_nombre" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="marca" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="modelo" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="numero_serie" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="ubicacion" data-type="text" placeholder="Filtrar…"></td>
+              <td class="th-actions"></td>
             </tr>
           </thead>
           <tbody></tbody>
@@ -123,15 +135,19 @@
         <button type="button" class="btn primary big btn-empty-cot"><i class="fas fa-plus"></i> Agregar cotización</button>
       </div>
       <div id="cotizaciones-list" class="table-wrap">
-        <table class="data-table" id="tabla-cotizaciones">
+        <table class="data-table filterable-table" id="tabla-cotizaciones" data-cache="cotizacionesCache">
           <thead>
             <tr>
-              <th>Folio</th>
-              <th>Cliente</th>
-              <th>Tipo</th>
-              <th>Fecha</th>
-              <th>Total</th>
+              <th>Folio</th><th>Cliente</th><th>Tipo</th><th>Fecha</th><th>Total</th>
               <th class="th-actions">Acciones</th>
+            </tr>
+            <tr class="filter-row">
+              <td><input type="text" class="filter-input" data-key="folio" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="cliente_nombre" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="tipo" data-type="text" placeholder="refacciones|mano_obra"></td>
+              <td class="filter-date-wrap"><select class="filter-date-select" data-key="fecha"><option value="">Todas</option><option value="hoy">Hoy</option><option value="esta_semana">Esta semana</option><option value="este_mes">Este mes</option><option value="mes_pasado">Mes pasado</option><option value="este_año">Este año</option><option value="personalizado">Escribir fecha</option></select><input type="date" class="filter-input filter-date-input" data-key="fecha" title="O escribe aquí"></td>
+              <td><input type="text" class="filter-input" data-key="total" data-type="number" placeholder="&gt;1000, &lt;5000"></td>
+              <td class="th-actions"></td>
             </tr>
           </thead>
           <tbody></tbody>
@@ -152,16 +168,20 @@
         <button type="button" class="btn primary big btn-empty-inc"><i class="fas fa-plus"></i> Agregar incidente</button>
       </div>
       <div id="incidentes-list" class="table-wrap">
-        <table class="data-table" id="tabla-incidentes">
+        <table class="data-table filterable-table" id="tabla-incidentes" data-cache="incidentesCache">
           <thead>
             <tr>
-              <th>Folio</th>
-              <th>Cliente</th>
-              <th>Máquina</th>
-              <th>Descripción</th>
-              <th>Prioridad</th>
-              <th>Estatus</th>
+              <th>Folio</th><th>Cliente</th><th>Máquina</th><th>Descripción</th><th>Prioridad</th><th>Estatus</th>
               <th class="th-actions">Acciones</th>
+            </tr>
+            <tr class="filter-row">
+              <td><input type="text" class="filter-input" data-key="folio" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="cliente_nombre" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="maquina_nombre" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="descripcion" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="prioridad" data-type="text" placeholder="baja|media|alta"></td>
+              <td><input type="text" class="filter-input" data-key="estatus" data-type="text" placeholder="abierto|cerrado"></td>
+              <td class="th-actions"></td>
             </tr>
           </thead>
           <tbody></tbody>
@@ -182,17 +202,21 @@
         <button type="button" class="btn primary big btn-empty-bit"><i class="fas fa-plus"></i> Agregar registro</button>
       </div>
       <div id="bitacoras-list" class="table-wrap">
-        <table class="data-table" id="tabla-bitacoras">
+        <table class="data-table filterable-table" id="tabla-bitacoras" data-cache="bitacorasCache">
           <thead>
             <tr>
-              <th>Fecha</th>
-              <th>Incidente</th>
-              <th>Cotización</th>
-              <th>Técnico</th>
-              <th>Actividades</th>
-              <th>Horas</th>
-              <th>Materiales</th>
+              <th>Fecha</th><th>Incidente</th><th>Cotización</th><th>Técnico</th><th>Actividades</th><th>Horas</th><th>Materiales</th>
               <th class="th-actions">Acciones</th>
+            </tr>
+            <tr class="filter-row">
+              <td class="filter-date-wrap"><select class="filter-date-select" data-key="fecha"><option value="">Todas</option><option value="hoy">Hoy</option><option value="esta_semana">Esta semana</option><option value="este_mes">Este mes</option><option value="mes_pasado">Mes pasado</option><option value="este_año">Este año</option><option value="personalizado">Escribir fecha</option></select><input type="date" class="filter-input filter-date-input" data-key="fecha" title="O escribe aquí"></td>
+              <td><input type="text" class="filter-input" data-key="incidente_folio" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="cotizacion_folio" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="tecnico" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="actividades" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="tiempo_horas" data-type="number" placeholder="&gt;2, &lt;8"></td>
+              <td><input type="text" class="filter-input" data-key="materiales_usados" data-type="text" placeholder="Filtrar…"></td>
+              <td class="th-actions"></td>
             </tr>
           </thead>
           <tbody></tbody>
@@ -211,24 +235,25 @@
         <button type="button" id="btn-seed-extra" class="btn big" style="background:#0d9488;color:#fff;margin-top:0.5rem;">Cargar solo incidentes, bitácoras y cotizaciones demo</button>
         <p class="hint">Luego verás todo en Cotizaciones, Incidentes y Bitácora.</p>
       </div>
-      <div class="card card-ai card-ai-chat">
-        <div class="ai-chat-header">
-          <div class="ai-avatar"><i class="fas fa-robot"></i></div>
-          <div>
-            <h2>Asistente con IA</h2>
-            <span class="ai-status">En línea · Aquí para ayudarte</span>
-          </div>
-        </div>
-        <div class="ai-chat">
-          <div class="ai-chat-messages" id="ai-messages"></div>
-          <div class="ai-chat-form">
-            <input type="text" id="ai-input" placeholder="Escribe tu pregunta…" maxlength="500">
-            <button type="button" id="ai-send" class="btn primary"><i class="fas fa-paper-plane"></i> Enviar</button>
-          </div>
-        </div>
-      </div>
     </section>
   </main>
+
+  <div id="ai-widget" class="ai-widget" aria-label="Asistente con IA">
+    <div class="ai-chat-header ai-widget-drag">
+      <div class="ai-avatar"><i class="fas fa-robot"></i></div>
+      <div>
+        <h2>Asistente con IA</h2>
+        <span class="ai-status">En línea · Arrastra para mover</span>
+      </div>
+    </div>
+    <div class="ai-chat">
+      <div class="ai-chat-messages" id="ai-messages"></div>
+      <div class="ai-chat-form">
+        <input type="text" id="ai-input" placeholder="Escribe tu pregunta…" maxlength="500">
+        <button type="button" id="ai-send" class="btn primary"><i class="fas fa-paper-plane"></i> Enviar</button>
+      </div>
+    </div>
+  </div>
 
   <div id="modal" class="modal hidden">
     <div class="modal-box">
@@ -240,6 +265,11 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=4"></script>
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+  <div id="global-loading" class="global-loading hidden" aria-hidden="true">
+    <div class="loading-spinner"></div>
+    <span class="loading-text">Cargando…</span>
+  </div>
+  <script src="js/app.js?v=5"></script>
 </body>
 </html>
