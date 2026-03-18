@@ -213,8 +213,14 @@
       </div>
       <div class="card card-ai">
         <h2><i class="fas fa-robot"></i> Asistente con IA</h2>
-        <p>¿Se puede meter un agente AI que te ayude en todo el sistema? <strong>Sí.</strong> Se puede conectar un chat que consulte tus datos (clientes, cotizaciones, incidentes) y responda preguntas o sugiera acciones. Para eso haría falta una API de IA (por ejemplo OpenAI, o servicios gratuitos como Groq). Si quieres que lo implementemos después, lo dejamos como siguiente paso.</p>
-        <p class="hint">Por ahora puedes usar los filtros de búsqueda y los botones Agregar / Editar / Eliminar en cada sección.</p>
+        <p><strong>Dónde poner tu API de IA:</strong> En <strong>Render → tu servicio → Environment</strong> añade la variable <code>OPENAI_API_KEY</code> con tu API key (OpenAI u otro compatible). Detalles en <code>CONFIG_IA.md</code>.</p>
+        <div class="ai-chat">
+          <div class="ai-chat-messages" id="ai-messages"></div>
+          <div class="ai-chat-form">
+            <input type="text" id="ai-input" placeholder="Escribe tu pregunta…" maxlength="500">
+            <button type="button" id="ai-send" class="btn primary"><i class="fas fa-paper-plane"></i> Enviar</button>
+          </div>
+        </div>
       </div>
     </section>
   </main>

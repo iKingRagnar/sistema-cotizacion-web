@@ -46,6 +46,53 @@
     return confirm(msg || '¿Eliminar este registro?');
   }
 
+  const IVA_PORCENTAJE = 0.16;
+
+  function clearInvalidMarks() {
+    qsAll('.field-invalid').forEach(el => el.classList.remove('field-invalid'));
+    qsAll('.form-group.field-invalid').forEach(el => el.classList.remove('field-invalid'));
+  }
+  function markInvalid(inputIdOrEl, message) {
+    const el = typeof inputIdOrEl === 'string' ? qs('#' + inputIdOrEl) : inputIdOrEl;
+    if (!el) return;
+    el.classList.add('field-invalid');
+    el.focus();
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const formGroup = el.closest('.form-group');
+    if (formGroup) formGroup.classList.add('field-invalid');
+    return message;
+  }
+  function validateRequired(value, label) {
+    if (value == null || String(value).trim() === '') return label || 'Este campo es obligatorio';
+    return null;
+  }
+  function validateRFC(val) {
+    if (!val || !val.trim()) return null;
+    const v = val.trim().toUpperCase().replace(/\s/g, '');
+    if (v.length < 12 || v.length > 13) return 'RFC debe tener 12 o 13 caracteres';
+    if (!/^[A-Z0-9]+$/.test(v)) return 'RFC solo permite letras y números';
+    return null;
+  }
+  function validateCURP(val) {
+    if (!val || !val.trim()) return null;
+    const v = val.trim().toUpperCase();
+    if (v.length !== 18) return 'CURP debe tener 18 caracteres';
+    if (!/^[A-Z0-9]+$/.test(v)) return 'CURP solo permite letras y números';
+    return null;
+  }
+  function validateEmail(val) {
+    if (!val || !val.trim()) return null;
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!re.test(val.trim())) return 'Email no válido';
+    return null;
+  }
+  function onlyNumbers(el) {
+    if (!el) return;
+    el.addEventListener('input', function () {
+      this.value = this.value.replace(/[^0-9+\-\s()]/g, '');
+    });
+  }
+
   // ----- CLIENTES -----
   function renderClientes(data) {
     const tbody = qs('#tabla-clientes tbody');
@@ -349,15 +396,17 @@
     } catch (e) { alert('Error: ' + e.message); }
   }
 
-  // ----- MODAL GENÉRICO -----
+  // ----- MODAL GENÉRICO ----- (no se cierra al hacer clic fuera; solo con X o Cancelar)
   function openModal(title, bodyHtml, onClose) {
     const modal = qs('#modal');
     qs('#modal-title').textContent = title;
     qs('#modal-body').innerHTML = bodyHtml;
     modal.classList.remove('hidden');
-    const close = () => { modal.classList.add('hidden'); if (onClose) onClose(); };
+    clearInvalidMarks();
+    const close = () => { modal.classList.add('hidden'); clearInvalidMarks(); if (onClose) onClose(); };
     qs('#modal .close').onclick = close;
-    modal.onclick = e => { if (e.target === modal) close(); };
+    const cancelBtn = qs('#modal-body #modal-btn-cancel');
+    if (cancelBtn) cancelBtn.onclick = close;
     return close;
   }
 
@@ -365,25 +414,40 @@
   function openModalCliente(cliente) {
     const isNew = !cliente || !cliente.id;
     const body = `
-      <div class="form-group"><label>Código</label><input type="text" id="m-codigo" value="${escapeHtml(cliente && cliente.codigo) || ''}"></div>
-      <div class="form-group"><label>Nombre *</label><input type="text" id="m-nombre" value="${escapeHtml(cliente && cliente.nombre) || ''}" required></div>
-      <div class="form-group"><label>RFC</label><input type="text" id="m-rfc" value="${escapeHtml(cliente && cliente.rfc) || ''}"></div>
-      <div class="form-group"><label>Contacto</label><input type="text" id="m-contacto" value="${escapeHtml(cliente && cliente.contacto) || ''}"></div>
-      <div class="form-group"><label>Teléfono</label><input type="text" id="m-telefono" value="${escapeHtml(cliente && cliente.telefono) || ''}"></div>
-      <div class="form-group"><label>Email</label><input type="email" id="m-email" value="${escapeHtml(cliente && cliente.email) || ''}"></div>
-      <div class="form-group"><label>Dirección</label><input type="text" id="m-direccion" value="${escapeHtml(cliente && cliente.direccion) || ''}"></div>
-      <div class="form-group"><label>Ciudad</label><input type="text" id="m-ciudad" value="${escapeHtml(cliente && cliente.ciudad) || ''}"></div>
-      <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
+      <div class="form-group"><label>Código</label><input type="text" id="m-codigo" maxlength="20" value="${escapeHtml(cliente && cliente.codigo) || ''}" placeholder="Opcional"></div>
+      <div class="form-group"><label>Nombre *</label><input type="text" id="m-nombre" maxlength="200" value="${escapeHtml(cliente && cliente.nombre) || ''}" placeholder="Razón social o nombre completo" required></div>
+      <div class="form-group"><label>RFC</label><input type="text" id="m-rfc" maxlength="13" value="${escapeHtml(cliente && cliente.rfc) || ''}" placeholder="12 o 13 caracteres alfanuméricos" pattern="[A-Za-z0-9]{12,13}" title="12 o 13 caracteres"></div>
+      <div class="form-group"><label>Contacto</label><input type="text" id="m-contacto" maxlength="100" value="${escapeHtml(cliente && cliente.contacto) || ''}"></div>
+      <div class="form-group"><label>Teléfono</label><input type="tel" id="m-telefono" maxlength="20" value="${escapeHtml(cliente && cliente.telefono) || ''}" placeholder="Solo números, +, -, espacios" inputmode="tel"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="m-email" maxlength="100" value="${escapeHtml(cliente && cliente.email) || ''}"></div>
+      <div class="form-group"><label>Dirección</label><input type="text" id="m-direccion" maxlength="250" value="${escapeHtml(cliente && cliente.direccion) || ''}"></div>
+      <div class="form-group"><label>Ciudad</label><input type="text" id="m-ciudad" maxlength="80" value="${escapeHtml(cliente && cliente.ciudad) || ''}"></div>
+      <div class="form-actions">
+        <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
+        <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
+      </div>
     `;
     openModal(isNew ? 'Nuevo cliente' : 'Editar cliente', body);
+    onlyNumbers(qs('#m-telefono'));
+    qs('#m-rfc').addEventListener('input', function () { this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 13); });
     qs('#m-save').onclick = async () => {
+      clearInvalidMarks();
+      const nombre = qs('#m-nombre').value.trim();
+      const rfc = qs('#m-rfc').value.trim() || null;
+      const email = qs('#m-email').value.trim() || null;
+      let err = validateRequired(nombre, 'Nombre es obligatorio');
+      if (err) { markInvalid('m-nombre', err); return; }
+      err = validateRFC(rfc);
+      if (err) { markInvalid('m-rfc', err); return; }
+      err = validateEmail(email);
+      if (err) { markInvalid('m-email', err); return; }
       const payload = {
         codigo: qs('#m-codigo').value.trim() || null,
-        nombre: qs('#m-nombre').value.trim(),
-        rfc: qs('#m-rfc').value.trim() || null,
+        nombre,
+        rfc,
         contacto: qs('#m-contacto').value.trim() || null,
         telefono: qs('#m-telefono').value.trim() || null,
-        email: qs('#m-email').value.trim() || null,
+        email: email || null,
         direccion: qs('#m-direccion').value.trim() || null,
         ciudad: qs('#m-ciudad').value.trim() || null,
       };
@@ -401,32 +465,45 @@
   function openModalRefaccion(refaccion) {
     const isNew = !refaccion || !refaccion.id;
     const body = `
-      <div class="form-group"><label>Código *</label><input type="text" id="m-codigo" value="${escapeHtml(refaccion && refaccion.codigo) || ''}" required></div>
-      <div class="form-group"><label>Descripción *</label><input type="text" id="m-descripcion" value="${escapeHtml(refaccion && refaccion.descripcion) || ''}" required></div>
+      <div class="form-group"><label>Código *</label><input type="text" id="m-codigo" maxlength="50" value="${escapeHtml(refaccion && refaccion.codigo) || ''}" required placeholder="Identificador único"></div>
+      <div class="form-group"><label>Descripción *</label><input type="text" id="m-descripcion" maxlength="250" value="${escapeHtml(refaccion && refaccion.descripcion) || ''}" required></div>
       <div class="form-row">
-        <div class="form-group"><label>Marca</label><input type="text" id="m-marca" value="${escapeHtml(refaccion && refaccion.marca) || ''}"></div>
-        <div class="form-group"><label>Origen</label><input type="text" id="m-origen" value="${escapeHtml(refaccion && refaccion.origen) || ''}"></div>
+        <div class="form-group"><label>Marca</label><input type="text" id="m-marca" maxlength="80" value="${escapeHtml(refaccion && refaccion.marca) || ''}"></div>
+        <div class="form-group"><label>Origen</label><input type="text" id="m-origen" maxlength="80" value="${escapeHtml(refaccion && refaccion.origen) || ''}"></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>Precio unitario</label><input type="number" id="m-precio" step="0.01" value="${refaccion && refaccion.precio_unitario != null ? refaccion.precio_unitario : ''}"></div>
-        <div class="form-group"><label>Unidad</label><input type="text" id="m-unidad" value="${escapeHtml(refaccion && refaccion.unidad) || 'PZA'}"></div>
+        <div class="form-group"><label>Precio unitario</label><input type="number" id="m-precio" step="0.01" min="0" value="${refaccion && refaccion.precio_unitario != null ? refaccion.precio_unitario : ''}" placeholder="0"></div>
+        <div class="form-group"><label>Unidad</label><input type="text" id="m-unidad" maxlength="20" value="${escapeHtml(refaccion && refaccion.unidad) || 'PZA'}"></div>
       </div>
-      <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
+      <div class="form-actions">
+        <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
+        <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
+      </div>
     `;
     openModal(isNew ? 'Nueva refacción' : 'Editar refacción', body);
     qs('#m-save').onclick = async () => {
+      clearInvalidMarks();
+      const codigo = qs('#m-codigo').value.trim();
+      const descripcion = qs('#m-descripcion').value.trim();
+      const precio = parseFloat(qs('#m-precio').value);
+      let err = validateRequired(codigo, 'Código es obligatorio');
+      if (err) { markInvalid('m-codigo', err); return; }
+      err = validateRequired(descripcion, 'Descripción es obligatoria');
+      if (err) { markInvalid('m-descripcion', err); return; }
+      if (isNaN(precio) || precio < 0) { markInvalid('m-precio', 'El precio debe ser mayor o igual a 0'); return; }
       const payload = {
-        codigo: qs('#m-codigo').value.trim(),
-        descripcion: qs('#m-descripcion').value.trim(),
+        codigo,
+        descripcion,
         marca: qs('#m-marca').value.trim() || null,
         origen: qs('#m-origen').value.trim() || null,
-        precio_unitario: parseFloat(qs('#m-precio').value) || 0,
+        precio_unitario: precio,
         unidad: qs('#m-unidad').value.trim() || 'PZA',
       };
       try {
         if (isNew) await fetchJson(API + '/refacciones', { method: 'POST', body: JSON.stringify(payload) });
         else await fetchJson(API + '/refacciones/' + refaccion.id, { method: 'PUT', body: JSON.stringify(payload) });
         loadRefacciones();
+        if (typeof fillRefaccionesSelect === 'function') fillRefaccionesSelect();
         qs('#modal').classList.add('hidden');
       } catch (e) { alert('Error: ' + e.message); }
     };
@@ -439,20 +516,27 @@
     const options = clientes.map(c => `<option value="${c.id}" ${maquina && maquina.cliente_id == c.id ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`).join('');
     const body = `
       <div class="form-group"><label>Cliente *</label><select id="m-cliente_id">${options}</select></div>
-      <div class="form-group"><label>Nombre *</label><input type="text" id="m-nombre" value="${escapeHtml(maquina && maquina.nombre) || ''}" required></div>
+      <div class="form-group"><label>Nombre *</label><input type="text" id="m-nombre" maxlength="150" value="${escapeHtml(maquina && maquina.nombre) || ''}" required placeholder="Nombre o identificador de la máquina"></div>
       <div class="form-row">
-        <div class="form-group"><label>Marca</label><input type="text" id="m-marca" value="${escapeHtml(maquina && maquina.marca) || ''}"></div>
-        <div class="form-group"><label>Modelo</label><input type="text" id="m-modelo" value="${escapeHtml(maquina && maquina.modelo) || ''}"></div>
+        <div class="form-group"><label>Marca</label><input type="text" id="m-marca" maxlength="80" value="${escapeHtml(maquina && maquina.marca) || ''}"></div>
+        <div class="form-group"><label>Modelo</label><input type="text" id="m-modelo" maxlength="80" value="${escapeHtml(maquina && maquina.modelo) || ''}"></div>
       </div>
-      <div class="form-group"><label>Nº Serie</label><input type="text" id="m-numero_serie" value="${escapeHtml(maquina && maquina.numero_serie) || ''}"></div>
-      <div class="form-group"><label>Ubicación</label><input type="text" id="m-ubicacion" value="${escapeHtml(maquina && maquina.ubicacion) || ''}"></div>
-      <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
+      <div class="form-group"><label>Nº Serie</label><input type="text" id="m-numero_serie" maxlength="80" value="${escapeHtml(maquina && maquina.numero_serie) || ''}"></div>
+      <div class="form-group"><label>Ubicación</label><input type="text" id="m-ubicacion" maxlength="150" value="${escapeHtml(maquina && maquina.ubicacion) || ''}"></div>
+      <div class="form-actions">
+        <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
+        <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
+      </div>
     `;
     openModal(isNew ? 'Nueva máquina' : 'Editar máquina', body);
     qs('#m-save').onclick = async () => {
+      clearInvalidMarks();
+      const nombre = qs('#m-nombre').value.trim();
+      let err = validateRequired(nombre, 'Nombre de la máquina es obligatorio');
+      if (err) { markInvalid('m-nombre', err); return; }
       const payload = {
         cliente_id: parseInt(qs('#m-cliente_id').value, 10),
-        nombre: qs('#m-nombre').value.trim(),
+        nombre,
         marca: qs('#m-marca').value.trim() || null,
         modelo: qs('#m-modelo').value.trim() || null,
         numero_serie: qs('#m-numero_serie').value.trim() || null,
@@ -472,31 +556,51 @@
     const isNew = !cot || !cot.id;
     const clientes = await fetchJson(API + '/clientes').catch(() => []);
     const options = clientes.map(c => `<option value="${c.id}" ${cot && cot.cliente_id == c.id ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`).join('');
+    const subtotalVal = cot && cot.subtotal != null ? cot.subtotal : 0;
+    const ivaVal = cot && cot.iva != null ? cot.iva : subtotalVal * IVA_PORCENTAJE;
+    const totalVal = cot && cot.total != null ? cot.total : subtotalVal + ivaVal;
     const body = `
       <div class="form-group"><label>Cliente *</label><select id="m-cliente_id">${options}</select></div>
       <div class="form-row">
         <div class="form-group"><label>Tipo</label><select id="m-tipo"><option value="refacciones" ${cot && cot.tipo === 'refacciones' ? 'selected' : ''}>Refacciones</option><option value="mano_obra" ${cot && cot.tipo === 'mano_obra' ? 'selected' : ''}>Mano de obra</option></select></div>
-        <div class="form-group"><label>Fecha</label><input type="date" id="m-fecha" value="${cot && cot.fecha ? cot.fecha.slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
+        <div class="form-group"><label>Fecha *</label><input type="date" id="m-fecha" value="${cot && cot.fecha ? cot.fecha.slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>Subtotal</label><input type="number" id="m-subtotal" step="0.01" value="${cot && cot.subtotal != null ? cot.subtotal : '0'}"></div>
-        <div class="form-group"><label>IVA</label><input type="number" id="m-iva" step="0.01" value="${cot && cot.iva != null ? cot.iva : '0'}"></div>
-        <div class="form-group"><label>Total</label><input type="number" id="m-total" step="0.01" value="${cot && cot.total != null ? cot.total : '0'}"></div>
+        <div class="form-group"><label>Subtotal</label><input type="number" id="m-subtotal" step="0.01" min="0" value="${subtotalVal}" placeholder="0"></div>
+        <div class="form-group"><label>IVA (16%)</label><input type="text" id="m-iva" class="input-readonly" readonly value="${(ivaVal).toFixed(2)}" title="Calculado automáticamente"></div>
+        <div class="form-group"><label>Total</label><input type="text" id="m-total" class="input-readonly" readonly value="${(totalVal).toFixed(2)}" title="Calculado automáticamente"></div>
       </div>
-      <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
+      <div class="form-actions">
+        <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
+        <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
+      </div>
     `;
     openModal(isNew ? 'Nueva cotización' : 'Editar cotización', body);
-    qs('#m-save').onclick = async () => {
+    const updateIvaTotal = () => {
       const st = parseFloat(qs('#m-subtotal').value) || 0;
-      const iv = parseFloat(qs('#m-iva').value) || 0;
+      const iv = st * IVA_PORCENTAJE;
+      const tot = st + iv;
+      qs('#m-iva').value = iv.toFixed(2);
+      qs('#m-total').value = tot.toFixed(2);
+    };
+    qs('#m-subtotal').addEventListener('input', updateIvaTotal);
+    qs('#m-subtotal').addEventListener('change', updateIvaTotal);
+    qs('#m-save').onclick = async () => {
+      clearInvalidMarks();
+      const st = parseFloat(qs('#m-subtotal').value) || 0;
+      const iv = parseFloat(qs('#m-iva').value) || (st * IVA_PORCENTAJE);
       const tot = parseFloat(qs('#m-total').value) || (st + iv);
+      const fecha = qs('#m-fecha').value;
+      let err = validateRequired(fecha, 'La fecha es obligatoria');
+      if (err) { markInvalid('m-fecha', err); return; }
+      if (st < 0) { markInvalid('m-subtotal', 'El subtotal debe ser mayor o igual a 0'); return; }
       const payload = {
         cliente_id: parseInt(qs('#m-cliente_id').value, 10),
         tipo: qs('#m-tipo').value,
-        fecha: qs('#m-fecha').value,
+        fecha,
         subtotal: st,
-        iva: iv,
-        total: tot,
+        iva: Math.round(iv * 100) / 100,
+        total: Math.round(tot * 100) / 100,
       };
       try {
         if (isNew) await fetchJson(API + '/cotizaciones', { method: 'POST', body: JSON.stringify(payload) });
@@ -523,24 +627,34 @@
     const body = `
       <div class="form-group"><label>Cliente *</label><select id="m-cliente_id">${clientesOpt}</select></div>
       <div class="form-group"><label>Máquina</label><select id="m-maquina_id"><option value="">— Ninguna —</option>${maquinasOpt}</select></div>
-      <div class="form-group"><label>Descripción *</label><textarea id="m-descripcion" rows="3">${escapeHtml(inc && inc.descripcion) || ''}</textarea></div>
+      <div class="form-group"><label>Descripción *</label><textarea id="m-descripcion" rows="3" maxlength="2000" placeholder="Describe el incidente">${escapeHtml(inc && inc.descripcion) || ''}</textarea></div>
       <div class="form-row">
         <div class="form-group"><label>Prioridad</label><select id="m-prioridad"><option value="baja" ${inc && inc.prioridad === 'baja' ? 'selected' : ''}>Baja</option><option value="media" ${!inc || inc.prioridad === 'media' ? 'selected' : ''}>Media</option><option value="alta" ${inc && inc.prioridad === 'alta' ? 'selected' : ''}>Alta</option><option value="critica" ${inc && inc.prioridad === 'critica' ? 'selected' : ''}>Crítica</option></select></div>
         <div class="form-group"><label>Estatus</label><select id="m-estatus"><option value="abierto" ${!inc || inc.estatus === 'abierto' ? 'selected' : ''}>Abierto</option><option value="en_proceso" ${inc && inc.estatus === 'en_proceso' ? 'selected' : ''}>En proceso</option><option value="cerrado" ${inc && inc.estatus === 'cerrado' ? 'selected' : ''}>Cerrado</option><option value="cancelado" ${inc && inc.estatus === 'cancelado' ? 'selected' : ''}>Cancelado</option></select></div>
-        <div class="form-group"><label>Fecha reporte</label><input type="date" id="m-fecha_reporte" value="${inc && inc.fecha_reporte ? inc.fecha_reporte.slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
+        <div class="form-group"><label>Fecha reporte *</label><input type="date" id="m-fecha_reporte" value="${inc && inc.fecha_reporte ? inc.fecha_reporte.slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
       </div>
-      <div class="form-group"><label>Técnico responsable</label><input type="text" id="m-tecnico" value="${escapeHtml(inc && inc.tecnico_responsable) || ''}"></div>
-      <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
+      <div class="form-group"><label>Técnico responsable</label><input type="text" id="m-tecnico" maxlength="100" value="${escapeHtml(inc && inc.tecnico_responsable) || ''}"></div>
+      <div class="form-actions">
+        <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
+        <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
+      </div>
     `;
     openModal(isNew ? 'Nuevo incidente' : 'Editar incidente', body);
     qs('#m-save').onclick = async () => {
+      clearInvalidMarks();
+      const descripcion = qs('#m-descripcion').value.trim();
+      const fechaReporte = qs('#m-fecha_reporte').value;
+      let err = validateRequired(descripcion, 'La descripción del incidente es obligatoria');
+      if (err) { markInvalid('m-descripcion', err); return; }
+      err = validateRequired(fechaReporte, 'La fecha de reporte es obligatoria');
+      if (err) { markInvalid('m-fecha_reporte', err); return; }
       const payload = {
         cliente_id: parseInt(qs('#m-cliente_id').value, 10),
         maquina_id: qs('#m-maquina_id').value ? parseInt(qs('#m-maquina_id').value, 10) : null,
-        descripcion: qs('#m-descripcion').value.trim(),
+        descripcion,
         prioridad: qs('#m-prioridad').value,
         estatus: qs('#m-estatus').value,
-        fecha_reporte: qs('#m-fecha_reporte').value,
+        fecha_reporte: fechaReporte,
         tecnico_responsable: qs('#m-tecnico').value.trim() || null,
       };
       try {
@@ -570,19 +684,26 @@
       <div class="form-group"><label>Vincular a cotización</label><select id="m-cotizacion_id"><option value="">— Ninguna —</option>${cotOpt}</select></div>
       <p class="hint" style="margin-bottom:0.75rem;font-size:0.85rem;color:#64748b">Indica al menos uno: incidente o cotización.</p>
       <div class="form-row">
-        <div class="form-group"><label>Fecha</label><input type="date" id="m-fecha" value="${bit && bit.fecha ? bit.fecha.slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
-        <div class="form-group"><label>Horas</label><input type="number" id="m-tiempo_horas" step="0.25" value="${bit && bit.tiempo_horas != null ? bit.tiempo_horas : '0'}"></div>
+        <div class="form-group"><label>Fecha *</label><input type="date" id="m-fecha" value="${bit && bit.fecha ? bit.fecha.slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
+        <div class="form-group"><label>Horas</label><input type="number" id="m-tiempo_horas" step="0.25" min="0" value="${bit && bit.tiempo_horas != null ? bit.tiempo_horas : '0'}"></div>
       </div>
-      <div class="form-group"><label>Técnico</label><input type="text" id="m-tecnico" value="${escapeHtml(bit && bit.tecnico) || ''}"></div>
-      <div class="form-group"><label>Actividades realizadas</label><textarea id="m-actividades" rows="3">${escapeHtml(bit && bit.actividades) || ''}</textarea></div>
-      <div class="form-group"><label>Materiales usados</label><input type="text" id="m-materiales" value="${escapeHtml(bit && bit.materiales_usados) || ''}"></div>
-      <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
+      <div class="form-group"><label>Técnico</label><input type="text" id="m-tecnico" maxlength="100" value="${escapeHtml(bit && bit.tecnico) || ''}"></div>
+      <div class="form-group"><label>Actividades realizadas</label><textarea id="m-actividades" rows="3" maxlength="2000">${escapeHtml(bit && bit.actividades) || ''}</textarea></div>
+      <div class="form-group"><label>Materiales usados</label><input type="text" id="m-materiales" maxlength="500" value="${escapeHtml(bit && bit.materiales_usados) || ''}"></div>
+      <div class="form-actions">
+        <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
+        <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
+      </div>
     `;
     openModal(isNew ? 'Nueva bitácora (horas)' : 'Editar bitácora', body);
     qs('#m-save').onclick = async () => {
+      clearInvalidMarks();
       const incId = qs('#m-incidente_id').value ? parseInt(qs('#m-incidente_id').value, 10) : null;
       const cotId = qs('#m-cotizacion_id').value ? parseInt(qs('#m-cotizacion_id').value, 10) : null;
-      if (!incId && !cotId) { alert('Indica un incidente o una cotización.'); return; }
+      const fecha = qs('#m-fecha').value;
+      if (!incId && !cotId) { markInvalid('m-incidente_id', 'Indica un incidente o una cotización.'); alert('Indica al menos un incidente o una cotización.'); return; }
+      let err = validateRequired(fecha, 'La fecha es obligatoria');
+      if (err) { markInvalid('m-fecha', err); return; }
       const payload = {
         incidente_id: incId,
         cotizacion_id: cotId,
@@ -668,6 +789,39 @@
   qs('.btn-empty-cot').addEventListener('click', () => openModalCotizacion(null));
   qs('.btn-empty-inc').addEventListener('click', () => openModalIncidente(null));
   qs('.btn-empty-bit').addEventListener('click', () => openModalBitacora(null));
+  // ----- Asistente IA -----
+  (function initAiChat() {
+    const messagesEl = qs('#ai-messages');
+    const inputEl = qs('#ai-input');
+    const sendBtn = qs('#ai-send');
+    if (!messagesEl || !inputEl || !sendBtn) return;
+    function append(msg, isUser) {
+      const div = document.createElement('div');
+      div.className = 'ai-msg ' + (isUser ? 'ai-msg-user' : 'ai-msg-bot');
+      div.textContent = msg;
+      messagesEl.appendChild(div);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+    async function send() {
+      const text = inputEl.value.trim();
+      if (!text) return;
+      inputEl.value = '';
+      append(text, true);
+      sendBtn.disabled = true;
+      try {
+        const data = await fetchJson(API + '/ai/chat', { method: 'POST', body: JSON.stringify({ message: text }) });
+        append(data.reply || 'Sin respuesta', false);
+      } catch (e) {
+        let msg = e.message;
+        try { const o = JSON.parse(msg); if (o.error) msg = o.error; if (o.hint) msg += ' ' + o.hint; } catch (_) {}
+        append('Error: ' + msg, false);
+      }
+      sendBtn.disabled = false;
+    }
+    sendBtn.addEventListener('click', send);
+    inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+  })();
+
   qs('#btn-seed-demo').addEventListener('click', seedDemo);
   qs('#btn-seed-extra').addEventListener('click', async () => {
     const btn = qs('#btn-seed-extra');

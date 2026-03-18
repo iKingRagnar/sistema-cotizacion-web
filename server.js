@@ -247,15 +247,15 @@ function generarFolio(prefijo) {
 
 app.post('/api/cotizaciones', async (req, res) => {
   try {
-    const { cliente_id, tipo, fecha, subtotal, iva, total, folio, observaciones } = req.body || {};
+    const { cliente_id, tipo, fecha, subtotal, iva, total, folio } = req.body || {};
     if (!cliente_id) return res.status(400).json({ error: 'cliente_id requerido' });
     const f = folio || generarFolio(tipo === 'mano_obra' ? 'COT-MO' : 'COT-REF');
     const st = Number(subtotal) || 0;
     const iv = Number(iva) || 0;
     const tot = Number(total) != null ? Number(total) : st + iv;
     await db.runQuery(
-      `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total, observaciones) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [f, cliente_id, tipo || 'refacciones', fecha || new Date().toISOString().slice(0, 10), st, iv, tot, observaciones || null]
+      `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [f, cliente_id, tipo || 'refacciones', fecha || new Date().toISOString().slice(0, 10), st, iv, tot]
     );
     const r = await db.getOne('SELECT co.*, c.nombre as cliente_nombre FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id ORDER BY co.id DESC LIMIT 1');
     res.status(201).json(r);
@@ -266,10 +266,10 @@ app.post('/api/cotizaciones', async (req, res) => {
 
 app.put('/api/cotizaciones/:id', async (req, res) => {
   try {
-    const { folio, cliente_id, tipo, fecha, subtotal, iva, total, observaciones } = req.body || {};
+    const { folio, cliente_id, tipo, fecha, subtotal, iva, total } = req.body || {};
     await db.runQuery(
-      `UPDATE cotizaciones SET folio=?, cliente_id=?, tipo=?, fecha=?, subtotal=?, iva=?, total=?, observaciones=? WHERE id=?`,
-      [folio || null, cliente_id || null, tipo || 'refacciones', fecha || null, Number(subtotal) || 0, Number(iva) || 0, Number(total) || 0, observaciones || null, req.params.id]
+      `UPDATE cotizaciones SET folio=?, cliente_id=?, tipo=?, fecha=?, subtotal=?, iva=?, total=? WHERE id=?`,
+      [folio || null, cliente_id || null, tipo || 'refacciones', fecha || null, Number(subtotal) || 0, Number(iva) || 0, Number(total) || 0, req.params.id]
     );
     const r = await db.getOne('SELECT co.*, c.nombre as cliente_nombre FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id WHERE co.id = ?', [req.params.id]);
     res.json(r || {});
@@ -390,11 +390,11 @@ app.get('/api/bitacoras/:id', async (req, res) => {
 
 app.post('/api/bitacoras', async (req, res) => {
   try {
-    const { incidente_id, cotizacion_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados, observaciones } = req.body || {};
+    const { incidente_id, cotizacion_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados } = req.body || {};
     if (!incidente_id && !cotizacion_id) return res.status(400).json({ error: 'Indica incidente_id o cotizacion_id' });
     await db.runQuery(
-      `INSERT INTO bitacoras (incidente_id, cotizacion_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados, observaciones) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [incidente_id || null, cotizacion_id || null, fecha || new Date().toISOString().slice(0, 10), tecnico || null, actividades || null, Number(tiempo_horas) || 0, materiales_usados || null, observaciones || null]
+      `INSERT INTO bitacoras (incidente_id, cotizacion_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [incidente_id || null, cotizacion_id || null, fecha || new Date().toISOString().slice(0, 10), tecnico || null, actividades || null, Number(tiempo_horas) || 0, materiales_usados || null]
     );
     const r = await db.getOne('SELECT * FROM bitacoras ORDER BY id DESC LIMIT 1');
     res.status(201).json(r);
@@ -405,10 +405,10 @@ app.post('/api/bitacoras', async (req, res) => {
 
 app.put('/api/bitacoras/:id', async (req, res) => {
   try {
-    const { incidente_id, cotizacion_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados, observaciones } = req.body || {};
+    const { incidente_id, cotizacion_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados } = req.body || {};
     await db.runQuery(
-      `UPDATE bitacoras SET incidente_id=?, cotizacion_id=?, fecha=?, tecnico=?, actividades=?, tiempo_horas=?, materiales_usados=?, observaciones=? WHERE id=?`,
-      [incidente_id || null, cotizacion_id || null, fecha || null, tecnico || null, actividades || null, Number(tiempo_horas) || 0, materiales_usados || null, observaciones || null, req.params.id]
+      `UPDATE bitacoras SET incidente_id=?, cotizacion_id=?, fecha=?, tecnico=?, actividades=?, tiempo_horas=?, materiales_usados=? WHERE id=?`,
+      [incidente_id || null, cotizacion_id || null, fecha || null, tecnico || null, actividades || null, Number(tiempo_horas) || 0, materiales_usados || null, req.params.id]
     );
     const r = await db.getOne('SELECT * FROM bitacoras WHERE id = ?', [req.params.id]);
     res.json(r || {});
@@ -604,6 +604,45 @@ app.get('/api/seed-status', async (req, res) => {
     const [b] = await db.getAll('SELECT COUNT(*) as n FROM bitacoras');
     const [co] = await db.getAll('SELECT COUNT(*) as n FROM cotizaciones');
     res.json({ clientes: c.n, refacciones: r.n, maquinas: m.n, incidentes: i.n, bitacoras: b.n, cotizaciones: co.n });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+// --- Asistente IA (OpenAI-compatible). Configura OPENAI_API_KEY en Render → Environment.
+app.post('/api/ai/chat', async (req, res) => {
+  const apiKey = process.env.OPENAI_API_KEY || process.env.AI_API_KEY;
+  if (!apiKey) {
+    return res.status(503).json({
+      error: 'API de IA no configurada',
+      hint: 'Añade OPENAI_API_KEY en Render → tu servicio → Environment (o AI_API_KEY). Ver CONFIG_IA.md.',
+    });
+  }
+  try {
+    const { message } = req.body || {};
+    const text = (message || '').trim();
+    if (!text) return res.status(400).json({ error: 'Falta el mensaje (message)' });
+
+    const apiUrl = process.env.OPENAI_API_BASE || 'https://api.openai.com/v1/chat/completions';
+    const model = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: 'user', content: text }],
+        max_tokens: 500,
+      }),
+    });
+    const data = await response.json();
+    if (data.error) {
+      return res.status(response.ok ? 500 : response.status).json({ error: data.error.message || 'Error de la API de IA' });
+    }
+    const reply = data.choices?.[0]?.message?.content || 'Sin respuesta';
+    res.json({ reply });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
