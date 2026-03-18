@@ -211,9 +211,14 @@
         <button type="button" id="btn-seed-extra" class="btn big" style="background:#0d9488;color:#fff;margin-top:0.5rem;">Cargar solo incidentes, bitácoras y cotizaciones demo</button>
         <p class="hint">Luego verás todo en Cotizaciones, Incidentes y Bitácora.</p>
       </div>
-      <div class="card card-ai">
-        <h2><i class="fas fa-robot"></i> Asistente con IA</h2>
-        <p><strong>Dónde poner tu API de IA:</strong> En <strong>Render → tu servicio → Environment</strong> añade la variable <code>OPENAI_API_KEY</code> con tu API key (OpenAI u otro compatible). Detalles en <code>CONFIG_IA.md</code>.</p>
+      <div class="card card-ai card-ai-chat">
+        <div class="ai-chat-header">
+          <div class="ai-avatar"><i class="fas fa-robot"></i></div>
+          <div>
+            <h2>Asistente con IA</h2>
+            <span class="ai-status">En línea · Aquí para ayudarte</span>
+          </div>
+        </div>
         <div class="ai-chat">
           <div class="ai-chat-messages" id="ai-messages"></div>
           <div class="ai-chat-form">

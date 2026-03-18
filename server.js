@@ -13,7 +13,7 @@ const app = express();
 const PORT = process.env.PORT || 3456;
 
 app.use(cors());
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // --- API Catálogos ---
@@ -609,13 +609,39 @@ app.get('/api/seed-status', async (req, res) => {
   }
 });
 
-// --- Asistente IA (OpenAI-compatible). Configura CURSOR_API_KEY o OPENAI_API_KEY en Render → Environment.
+// --- Asistente IA: solo OpenAI-compatible (Bearer). La key de Cursor (crsr_) es para el app Cursor, no para este chat.
+const AI_SYSTEM_PROMPT = `Eres el asistente del Sistema de Cotización y Gestión. Reglas: sé amable, cordial y profesional. Responde siempre en español. Ayuda con: consultar clientes, refacciones, máquinas, cotizaciones, incidentes y bitácora; explicar cómo usar el sistema; dar consejos sobre cotizaciones o mantenimiento. Si no sabes algo del sistema, dilo con tacto. Mantén respuestas útiles y no demasiado largas. No inventes datos que no tengas.`;
+const AI_WELCOME = `¡Hola! 👋 Soy tu asistente y estoy aquí para ayudarte con gusto.
+
+Puedo apoyarte con:
+• Consultas sobre **clientes**, **refacciones**, **máquinas**, **cotizaciones**, **incidentes** y **bitácora**
+• Explicarte cómo usar el sistema
+• Ideas para cotizaciones o seguimiento de mantenimiento
+
+Escribe tu pregunta o dime en qué te ayudo.`;
+
+app.get('/api/ai/welcome', (req, res) => {
+  res.json({ message: AI_WELCOME });
+});
+
 app.post('/api/ai/chat', async (req, res) => {
-  const apiKey = process.env.CURSOR_API_KEY || process.env.OPENAI_API_KEY || process.env.AI_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY || process.env.AI_API_KEY;
+  if (process.env.CURSOR_API_KEY && !apiKey) {
+    return res.status(400).json({
+      error: 'La API key de Cursor (crsr_...) es para el editor Cursor, no para este chat.',
+      hint: 'Para el asistente de esta página usa una API compatible con OpenAI. En Render → Environment añade OPENAI_API_KEY con una key de OpenAI (crea una en https://platform.openai.com/api-keys).',
+    });
+  }
   if (!apiKey) {
     return res.status(503).json({
       error: 'API de IA no configurada',
-      hint: 'Añade CURSOR_API_KEY o OPENAI_API_KEY en Render → tu servicio → Environment. Ver CONFIG_IA.md.',
+      hint: 'En Render → tu servicio → Environment añade OPENAI_API_KEY (key de OpenAI). Ver CONFIG_IA.md.',
+    });
+  }
+  if (String(apiKey).startsWith('crsr_')) {
+    return res.status(400).json({
+      error: 'La key que configuraste es de Cursor (crsr_...). Para este chat se necesita una key de OpenAI.',
+      hint: 'Crea una en https://platform.openai.com/api-keys y añádela en Render como OPENAI_API_KEY.',
     });
   }
   try {
@@ -633,7 +659,10 @@ app.post('/api/ai/chat', async (req, res) => {
       },
       body: JSON.stringify({
         model,
-        messages: [{ role: 'user', content: text }],
+        messages: [
+          { role: 'system', content: AI_SYSTEM_PROMPT },
+          { role: 'user', content: text },
+        ],
         max_tokens: 500,
       }),
     });
@@ -643,6 +672,69 @@ app.post('/api/ai/chat', async (req, res) => {
     }
     const reply = data.choices?.[0]?.message?.content || 'Sin respuesta';
     res.json({ reply });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+// --- Extraer datos fiscales de imagen (constancia / datos fiscales) para alta de cliente
+app.post('/api/ai/extract-client', async (req, res) => {
+  const apiKey = process.env.OPENAI_API_KEY || process.env.AI_API_KEY;
+  if (!apiKey || String(apiKey).startsWith('crsr_')) {
+    return res.status(503).json({
+      error: 'Para extraer datos de imagen se necesita OPENAI_API_KEY (OpenAI) en Render.',
+      hint: 'La key de Cursor no sirve para esta función. Usa una key de https://platform.openai.com/api-keys',
+    });
+  }
+  try {
+    const { fileBase64, mimeType } = req.body || {};
+    if (!fileBase64) return res.status(400).json({ error: 'Falta fileBase64' });
+    const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const mime = (mimeType || 'image/jpeg').toLowerCase();
+    if (!allowed.includes(mime)) {
+      return res.status(400).json({
+        error: 'Por ahora solo se aceptan imágenes (JPG, PNG, GIF, WebP). PDF y Excel en una próxima versión.',
+      });
+    }
+    const dataUrl = `data:${mime};base64,${fileBase64.replace(/^data:[^;]+;base64,/, '')}`;
+    const apiUrl = process.env.OPENAI_API_BASE || 'https://api.openai.com/v1/chat/completions';
+    const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+    const extractPrompt = `Extrae de esta imagen (constancia fiscal, datos fiscales o documento similar) los datos del cliente. Responde ÚNICAMENTE un JSON válido, sin markdown, con estas claves (usa null si no aparece): nombre, rfc, direccion, ciudad, codigoPostal, regimenFiscal, email, telefono. Ejemplo: {"nombre":"RAZÓN SOCIAL S.A.","rfc":"ABC123456789","direccion":"Calle 1","ciudad":"Ciudad","codigoPostal":"12345","regimenFiscal":"601","email":null,"telefono":null}`;
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: model.includes('gpt-4') ? model : 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'Eres un asistente que extrae datos fiscales de imágenes. Responde solo JSON válido.' },
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: extractPrompt },
+              { type: 'image_url', image_url: { url: dataUrl } },
+            ],
+          },
+        ],
+        max_tokens: 400,
+      }),
+    });
+    const data = await response.json();
+    if (data.error) {
+      return res.status(response.ok ? 500 : response.status).json({ error: data.error.message || 'Error al analizar la imagen' });
+    }
+    const raw = data.choices?.[0]?.message?.content || '{}';
+    let parsed = {};
+    try {
+      const cleaned = raw.replace(/```json?\s*|\s*```/g, '').trim();
+      parsed = JSON.parse(cleaned);
+    } catch (_) {
+      parsed = { nombre: raw.slice(0, 200) || null };
+    }
+    const fields = ['nombre', 'rfc', 'direccion', 'ciudad', 'codigoPostal', 'regimenFiscal', 'email', 'telefono'];
+    const result = {};
+    fields.forEach(f => { result[f] = parsed[f] != null && String(parsed[f]).trim() !== '' ? String(parsed[f]).trim() : null; });
+    const missing = fields.filter(f => !result[f]);
+    res.json({ data: result, missing });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }

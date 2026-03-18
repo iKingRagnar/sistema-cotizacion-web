@@ -414,6 +414,13 @@
   function openModalCliente(cliente) {
     const isNew = !cliente || !cliente.id;
     const body = `
+      <div class="client-upload-area">
+        <label class="upload-label"><i class="fas fa-file-image"></i> Constancia o datos fiscales (imagen)</label>
+        <p class="upload-hint">Sube una foto o captura (JPG, PNG) para detectar nombre, RFC, dirección, etc. automáticamente.</p>
+        <input type="file" id="m-file-fiscal" accept="image/jpeg,image/png,image/gif,image/webp" class="input-file">
+        <div id="m-upload-status" class="upload-status hidden"></div>
+        <div id="m-extract-hints" class="extract-hints hidden"></div>
+      </div>
       <div class="form-group"><label>Código</label><input type="text" id="m-codigo" maxlength="20" value="${escapeHtml(cliente && cliente.codigo) || ''}" placeholder="Opcional"></div>
       <div class="form-group"><label>Nombre *</label><input type="text" id="m-nombre" maxlength="200" value="${escapeHtml(cliente && cliente.nombre) || ''}" placeholder="Razón social o nombre completo" required></div>
       <div class="form-group"><label>RFC</label><input type="text" id="m-rfc" maxlength="13" value="${escapeHtml(cliente && cliente.rfc) || ''}" placeholder="12 o 13 caracteres alfanuméricos" pattern="[A-Za-z0-9]{12,13}" title="12 o 13 caracteres"></div>
@@ -430,6 +437,61 @@
     openModal(isNew ? 'Nuevo cliente' : 'Editar cliente', body);
     onlyNumbers(qs('#m-telefono'));
     qs('#m-rfc').addEventListener('input', function () { this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 13); });
+    const fileInput = qs('#m-file-fiscal');
+    const statusEl = qs('#m-upload-status');
+    const hintsEl = qs('#m-extract-hints');
+    if (fileInput && statusEl && hintsEl) {
+      fileInput.addEventListener('change', async function () {
+        const file = this.files && this.files[0];
+        if (!file) return;
+        const mime = file.type || 'image/jpeg';
+        if (!/^image\/(jpeg|png|gif|webp)$/.test(mime)) {
+          statusEl.textContent = 'Solo imágenes JPG, PNG, GIF o WebP.';
+          statusEl.classList.remove('hidden', 'upload-ok');
+          statusEl.classList.add('upload-error');
+          return;
+        }
+        statusEl.textContent = 'Analizando imagen…';
+        statusEl.classList.remove('hidden', 'upload-ok', 'upload-error');
+        statusEl.classList.add('upload-loading');
+        hintsEl.classList.add('hidden');
+        hintsEl.innerHTML = '';
+        try {
+          const base64 = await new Promise((resolve, reject) => {
+            const r = new FileReader();
+            r.onload = () => {
+              const s = r.result;
+              resolve(s && s.indexOf('base64,') !== -1 ? s.split('base64,')[1] : s);
+            };
+            r.onerror = reject;
+            r.readAsDataURL(file);
+          });
+          const data = await fetchJson(API + '/ai/extract-client', { method: 'POST', body: JSON.stringify({ fileBase64: base64, mimeType: mime }) });
+          const d = data.data || {};
+          if (d.nombre) qs('#m-nombre').value = d.nombre;
+          if (d.rfc) qs('#m-rfc').value = d.rfc;
+          if (d.direccion) qs('#m-direccion').value = d.direccion;
+          if (d.ciudad) qs('#m-ciudad').value = d.ciudad;
+          if (d.email) qs('#m-email').value = d.email;
+          if (d.telefono) qs('#m-telefono').value = d.telefono;
+          statusEl.textContent = 'Datos detectados correctamente.';
+          statusEl.classList.remove('upload-loading', 'upload-error');
+          statusEl.classList.add('upload-ok');
+          const missing = data.missing || [];
+          if (missing.length) {
+            const labels = { nombre: 'Nombre', rfc: 'RFC', direccion: 'Dirección', ciudad: 'Ciudad', email: 'Email', telefono: 'Teléfono', codigoPostal: 'C.P.', regimenFiscal: 'Régimen fiscal' };
+            hintsEl.innerHTML = '<span class="hint-title"><i class="fas fa-info-circle"></i> Revisa o completa:</span> ' + missing.map(m => labels[m] || m).join(', ');
+            hintsEl.classList.remove('hidden');
+          }
+        } catch (e) {
+          let msg = e.message;
+          try { const o = JSON.parse(msg); if (o.error) msg = o.error; if (o.hint) msg += ' ' + o.hint; } catch (_) {}
+          statusEl.textContent = msg;
+          statusEl.classList.remove('upload-loading', 'upload-ok');
+          statusEl.classList.add('upload-error');
+        }
+      });
+    }
     qs('#m-save').onclick = async () => {
       clearInvalidMarks();
       const nombre = qs('#m-nombre').value.trim();
@@ -789,7 +851,7 @@
   qs('.btn-empty-cot').addEventListener('click', () => openModalCotizacion(null));
   qs('.btn-empty-inc').addEventListener('click', () => openModalIncidente(null));
   qs('.btn-empty-bit').addEventListener('click', () => openModalBitacora(null));
-  // ----- Asistente IA -----
+  // ----- Asistente IA: bienvenida, system prompt en backend, chat amigable -----
   (function initAiChat() {
     const messagesEl = qs('#ai-messages');
     const inputEl = qs('#ai-input');
@@ -798,10 +860,20 @@
     function append(msg, isUser) {
       const div = document.createElement('div');
       div.className = 'ai-msg ' + (isUser ? 'ai-msg-user' : 'ai-msg-bot');
+      div.style.whiteSpace = 'pre-wrap';
       div.textContent = msg;
       messagesEl.appendChild(div);
       messagesEl.scrollTop = messagesEl.scrollHeight;
     }
+    async function loadWelcome() {
+      try {
+        const data = await fetchJson(API + '/ai/welcome');
+        if (data.message) append(data.message, false);
+      } catch (_) {
+        append('¡Hola! Soy tu asistente. Puedo ayudarte con clientes, cotizaciones, incidentes y más. ¿En qué te ayudo?', false);
+      }
+    }
+    loadWelcome();
     async function send() {
       const text = inputEl.value.trim();
       if (!text) return;
@@ -813,8 +885,8 @@
         append(data.reply || 'Sin respuesta', false);
       } catch (e) {
         let msg = e.message;
-        try { const o = JSON.parse(msg); if (o.error) msg = o.error; if (o.hint) msg += ' ' + o.hint; } catch (_) {}
-        append('Error: ' + msg, false);
+        try { const o = JSON.parse(msg); if (o.error) msg = o.error; if (o.hint) msg += '\n\n' + o.hint; } catch (_) {}
+        append('⚠️ ' + msg, false);
       }
       sendBtn.disabled = false;
     }
