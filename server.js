@@ -609,13 +609,13 @@ app.get('/api/seed-status', async (req, res) => {
   }
 });
 
-// --- Asistente IA (OpenAI-compatible). Configura OPENAI_API_KEY en Render → Environment.
+// --- Asistente IA (OpenAI-compatible). Configura CURSOR_API_KEY o OPENAI_API_KEY en Render → Environment.
 app.post('/api/ai/chat', async (req, res) => {
-  const apiKey = process.env.OPENAI_API_KEY || process.env.AI_API_KEY;
+  const apiKey = process.env.CURSOR_API_KEY || process.env.OPENAI_API_KEY || process.env.AI_API_KEY;
   if (!apiKey) {
     return res.status(503).json({
       error: 'API de IA no configurada',
-      hint: 'Añade OPENAI_API_KEY en Render → tu servicio → Environment (o AI_API_KEY). Ver CONFIG_IA.md.',
+      hint: 'Añade CURSOR_API_KEY o OPENAI_API_KEY en Render → tu servicio → Environment. Ver CONFIG_IA.md.',
     });
   }
   try {
