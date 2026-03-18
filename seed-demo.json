@@ -1,0 +1,828 @@
+{
+  "clientes": [
+    {
+      "codigo": "CLI-1",
+      "nombre": "METALÚRGICA DEL NORTE SA DE CV",
+      "rfc": "MNO850312AB3",
+      "contacto": "Ing. Carlos Méndez",
+      "telefono": "81-1234-5678",
+      "email": "cmendez@metalnorte.mx",
+      "direccion": "Av. Industrial 1200, Col. Industrial",
+      "ciudad": "Monterrey"
+    },
+    {
+      "codigo": "CLI-2",
+      "nombre": "PLÁSTICOS REGIOMONTANOS SA DE CV",
+      "rfc": "PRE920615CD4",
+      "contacto": "Lic. Ana García",
+      "telefono": "81-2345-6789",
+      "email": "agarcia@plastireg.mx",
+      "direccion": "Blvd. Constitución 450, Col. Centro",
+      "ciudad": "Monterrey"
+    },
+    {
+      "codigo": "CLI-3",
+      "nombre": "FUNDIDORA NORESTE SC",
+      "rfc": "FNO780901EF5",
+      "contacto": "Ing. Roberto Salinas",
+      "telefono": "81-3456-7890",
+      "email": "rsalinas@fundnoreste.mx",
+      "direccion": "Km 12 Carr. Saltillo, Parque Industrial",
+      "ciudad": "Escobedo"
+    },
+    {
+      "codigo": "CLI-4",
+      "nombre": "TEXTILES MONTERREY SA DE CV",
+      "rfc": "TMO911220GH6",
+      "contacto": "Mtra. Daniela Flores",
+      "telefono": "81-4567-8901",
+      "email": "dflores@textilesmty.mx",
+      "direccion": "Calle Manufactura 300, Col. Las Brisas",
+      "ciudad": "Monterrey"
+    },
+    {
+      "codigo": "CLI-5",
+      "nombre": "AUTOPARTES MAGNA NORTE SC",
+      "rfc": "AMN030501IJ7",
+      "contacto": "Ing. Fernando Torres",
+      "telefono": "81-5678-9012",
+      "email": "ftorres@magnanorte.mx",
+      "direccion": "Av. Tecnológico 2500, Parque Ind. FINSA",
+      "ciudad": "Apodaca"
+    },
+    {
+      "codigo": "CLI-6",
+      "nombre": "EMPAQUES INDUSTRIALES DEL NORESTE",
+      "rfc": "EIN970815KL8",
+      "contacto": "Lic. Sofía Ramírez",
+      "telefono": "81-6789-0123",
+      "email": "sramirez@empaques-in.mx",
+      "direccion": "Blvd. Díaz Ordaz 1800, Col. Cumbres",
+      "ciudad": "Monterrey"
+    },
+    {
+      "codigo": "CLI-7",
+      "nombre": "REFRIGERACIÓN Y CLIMA SA DE CV",
+      "rfc": "RCL011128MN9",
+      "contacto": "Ing. Miguel Ángel Reyes",
+      "telefono": "81-7890-1234",
+      "email": "mreyes@refrigyclima.mx",
+      "direccion": "Calle Frigorífico 88, Col. Industrial Norte",
+      "ciudad": "San Nicolás"
+    },
+    {
+      "codigo": "CLI-8",
+      "nombre": "ALIMENTOS PROCESADOS DEL NORTE",
+      "rfc": "APN880430OP0",
+      "contacto": "Quím. Alejandra Cruz",
+      "telefono": "81-8901-2345",
+      "email": "acruz@alipronorte.mx",
+      "direccion": "Av. Alimentaria 560, Col. Valle Verde",
+      "ciudad": "Guadalupe"
+    },
+    {
+      "codigo": "CLI-9",
+      "nombre": "CONSTRUCCIONES METÁLICAS REGIO",
+      "rfc": "CMR950722QR1",
+      "contacto": "Ing. Luis Garza",
+      "telefono": "81-9012-3456",
+      "email": "lgarza@construmetal.mx",
+      "direccion": "Parque Ind. Cumbres Local 15",
+      "ciudad": "Escobedo"
+    },
+    {
+      "codigo": "CLI-10",
+      "nombre": "PINTURAS Y RECUBRIMIENTOS NL",
+      "rfc": "PRN020310ST2",
+      "contacto": "Lic. Verónica Hernández",
+      "telefono": "81-0123-4567",
+      "email": "vhernandez@pinturas-nl.mx",
+      "direccion": "Av. Recubrimientos 400, Col. San Bernabé",
+      "ciudad": "Monterrey"
+    },
+    {
+      "codigo": "CLI-11",
+      "nombre": "SOLUCIONES HIDRÁULICAS NORESTE",
+      "rfc": "SHN980612UV3",
+      "contacto": "Ing. Arturo Morales",
+      "telefono": "81-1122-3344",
+      "email": "amorales@hidraulicanorte.mx",
+      "direccion": "Calle Presión 220, Col. Las Mitras",
+      "ciudad": "Monterrey"
+    },
+    {
+      "codigo": "CLI-12",
+      "nombre": "COMPRESORES Y BOMBAS SA DE CV",
+      "rfc": "CBS060718WX4",
+      "contacto": "Ing. Patricia Leal",
+      "telefono": "81-2233-4455",
+      "email": "pleal@compbombas.mx",
+      "direccion": "Blvd. Industria 3300, Parque Ind. PYME",
+      "ciudad": "Apodaca"
+    },
+    {
+      "codigo": "CLI-13",
+      "nombre": "LABORATORIO QUÍMICO REGIOMONTANO",
+      "rfc": "LQR910905YZ5",
+      "contacto": "Quím. Ernesto Vega",
+      "telefono": "81-3344-5566",
+      "email": "evega@lqregio.mx",
+      "direccion": "Av. Ciencia 800, Col. Las Américas",
+      "ciudad": "San Nicolás"
+    },
+    {
+      "codigo": "CLI-14",
+      "nombre": "MAQUILADORA GLOBAL SERVICES SC",
+      "rfc": "MGS050220AB6",
+      "contacto": "Lic. Carolina Ibarra",
+      "telefono": "81-4455-6677",
+      "email": "cibarra@maqglobal.mx",
+      "direccion": "Km 8 Carr. Colombia, Parque Ind. Global",
+      "ciudad": "Escobedo"
+    },
+    {
+      "codigo": "CLI-15",
+      "nombre": "TURBINAS Y MOTORES DEL NORTE",
+      "rfc": "TMN870325CD7",
+      "contacto": "Ing. Héctor Villarreal",
+      "telefono": "81-5566-7788",
+      "email": "hvillarreal@turbimotores.mx",
+      "direccion": "Av. Motriz 1100, Col. Industrial Valle",
+      "ciudad": "Monterrey"
+    },
+    {
+      "codigo": "CLI-16",
+      "nombre": "SISTEMAS DE CONTROL AUTOMÁTICO",
+      "rfc": "SCA991015EF8",
+      "contacto": "Ing. Ramiro Elizondo",
+      "telefono": "81-6677-8899",
+      "email": "relizondo@syscontrolauto.mx",
+      "direccion": "Calle Automatización 50, Col. Centro",
+      "ciudad": "Monterrey"
+    },
+    {
+      "codigo": "CLI-17",
+      "nombre": "DISTRIBUIDORA ELÉCTRICA NORESTE",
+      "rfc": "DEN010825GH9",
+      "contacto": "Lic. Norma Cantú",
+      "telefono": "81-7788-9900",
+      "email": "ncanto@distrelec-ne.mx",
+      "direccion": "Blvd. Eléctrico 620, Col. Las Brisas",
+      "ciudad": "Guadalupe"
+    },
+    {
+      "codigo": "CLI-18",
+      "nombre": "MANTENIMIENTO INDUSTRIAL GRUPO MX",
+      "rfc": "MIG040630IJ0",
+      "contacto": "Ing. Salvador Nieto",
+      "telefono": "81-8899-0011",
+      "email": "snieto@grupomainmx.mx",
+      "direccion": "Av. Servicio 290, Col. Industrial Sur",
+      "ciudad": "Monterrey"
+    },
+    {
+      "codigo": "CLI-19",
+      "nombre": "HERRAMIENTAS Y EQUIPOS REGIO",
+      "rfc": "HER920108KL1",
+      "contacto": "Lic. Beatriz Lozano",
+      "telefono": "81-9900-1122",
+      "email": "blozano@herregio.mx",
+      "direccion": "Calle Herramienta 710, Bodega 4",
+      "ciudad": "Apodaca"
+    },
+    {
+      "codigo": "CLI-20",
+      "nombre": "TRANSFORMADORES ELÉCTRICOS NL",
+      "rfc": "TEN860514MN2",
+      "contacto": "Ing. Omar Gutiérrez",
+      "telefono": "81-0011-2233",
+      "email": "ogutierrez@transelectronl.mx",
+      "direccion": "Av. Voltaje 1450, Parque Ind. Las Palmas",
+      "ciudad": "Monterrey"
+    },
+    {
+      "codigo": "CLI-21",
+      "nombre": "SERVICIOS AMBIENTALES NORESTE",
+      "rfc": "SAN030920OP3",
+      "contacto": "Ing. Lucía Mendoza",
+      "telefono": "81-1234-5670",
+      "email": "lmendoza@servambnoreste.mx",
+      "direccion": "Blvd. Ecológico 330, Col. Valle Oriente",
+      "ciudad": "San Pedro"
+    },
+    {
+      "codigo": "CLI-22",
+      "nombre": "ELECTROCOMPONENTES DEL NORTE",
+      "rfc": "ECN780214QR4",
+      "contacto": "Ing. Jaime Pérez",
+      "telefono": "81-2345-6780",
+      "email": "jperez@electrocomp-norte.mx",
+      "direccion": "Calle Componente 180, Col. Industrial",
+      "ciudad": "Monterrey"
+    },
+    {
+      "codigo": "CLI-23",
+      "nombre": "IMPORTADORA TÉCNICA MONTERREY",
+      "rfc": "ITM940420ST5",
+      "contacto": "Lic. Gabriela Soto",
+      "telefono": "81-3456-7891",
+      "email": "gsoto@importec-mty.mx",
+      "direccion": "Av. Importación 2200, Bodega 8",
+      "ciudad": "Apodaca"
+    },
+    {
+      "codigo": "CLI-24",
+      "nombre": "REPARACIONES ESPECIALIZADAS SC",
+      "rfc": "RES011005UV6",
+      "contacto": "Ing. Diego Castillo",
+      "telefono": "81-4567-8902",
+      "email": "dcastillo@reparspec.mx",
+      "direccion": "Calle Taller 66, Col. Las Mitras",
+      "ciudad": "Monterrey"
+    },
+    {
+      "codigo": "CLI-25",
+      "nombre": "INDUSTRIAS QUÍMICAS MONTERREY",
+      "rfc": "IQM870710WX7",
+      "contacto": "Quím. Fernanda Ramos",
+      "telefono": "81-5678-9013",
+      "email": "framos@iqmty.mx",
+      "direccion": "Av. Química 950, Col. San Bernabé",
+      "ciudad": "Monterrey"
+    },
+    {
+      "codigo": "CLI-26",
+      "nombre": "CALDERAS Y VAPORIZADORES NL",
+      "rfc": "CVN990325YZ8",
+      "contacto": "Ing. Rogelio Almaguer",
+      "telefono": "81-6789-0124",
+      "email": "ralmaguer@calderasnl.mx",
+      "direccion": "Km 5 Carr. Laredo, Parque Industrial Norte",
+      "ciudad": "Escobedo"
+    },
+    {
+      "codigo": "CLI-27",
+      "nombre": "ENERGÍA RENOVABLE NORESTE SC",
+      "rfc": "ERN060812AB9",
+      "contacto": "Ing. Mariana Treviño",
+      "telefono": "81-7890-1235",
+      "email": "mtrevino@energiaren-ne.mx",
+      "direccion": "Blvd. Solar 450, Col. Cumbres 4to Sector",
+      "ciudad": "Monterrey"
+    },
+    {
+      "codigo": "CLI-28",
+      "nombre": "LUBRICANTES INDUSTRIALES REGIO",
+      "rfc": "LIR020115CD0",
+      "contacto": "Ing. Andrés Domínguez",
+      "telefono": "81-8901-2346",
+      "email": "adominguez@lubriind-regio.mx",
+      "direccion": "Calle Lubricación 120, Col. Industrial",
+      "ciudad": "San Nicolás"
+    },
+    {
+      "codigo": "CLI-29",
+      "nombre": "VÁLVULAS Y ACCESORIOS DEL NORTE",
+      "rfc": "VAN850630EF1",
+      "contacto": "Ing. Claudia Ortega",
+      "telefono": "81-9012-3457",
+      "email": "cortega@valvanorte.mx",
+      "direccion": "Av. Fluidos 800, Col. Valle Verde",
+      "ciudad": "Guadalupe"
+    },
+    {
+      "codigo": "CLI-30",
+      "nombre": "MANÓMETROS Y SENSORES SA DE CV",
+      "rfc": "MSA950918GH2",
+      "contacto": "Ing. Gustavo Ríos",
+      "telefono": "81-0123-4568",
+      "email": "grios@manosensores.mx",
+      "direccion": "Calle Presión Alta 340, Parque Ind. Innovación",
+      "ciudad": "Apodaca"
+    }
+  ],
+  "refacciones": [
+    {
+      "codigo": "ROD-001",
+      "descripcion": "Rodamiento SKF 6205-2RS",
+      "marca": "SKF",
+      "origen": "MX",
+      "precio_unitario": 285,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "ROD-002",
+      "descripcion": "Rodamiento FAG 6308-ZZ",
+      "marca": "FAG",
+      "origen": "MX",
+      "precio_unitario": 420,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "ROD-003",
+      "descripcion": "Rodamiento de Rodillos NTN NU205",
+      "marca": "NTN",
+      "origen": "MX",
+      "precio_unitario": 650,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "ROD-004",
+      "descripcion": "Rodamiento Angular NSK 7206BEP",
+      "marca": "NSK",
+      "origen": "MX",
+      "precio_unitario": 780,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "ROD-005",
+      "descripcion": "Rodamiento Esférico SKF 1207 EKTN9",
+      "marca": "SKF",
+      "origen": "MX",
+      "precio_unitario": 520,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "SEL-001",
+      "descripcion": "Sello Mecánico John Crane Tipo 1 - 1\"",
+      "marca": "John Crane",
+      "origen": "MX",
+      "precio_unitario": 1250,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "SEL-002",
+      "descripcion": "Sello de Aceite NOK - 40x62x10",
+      "marca": "NOK",
+      "origen": "MX",
+      "precio_unitario": 180,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "SEL-003",
+      "descripcion": "Empaque Espiral Metálico 3\" ASME 150",
+      "marca": "Garlock",
+      "origen": "MX",
+      "precio_unitario": 320,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "SEL-004",
+      "descripcion": "O-Ring Buna-N 2\" DN50",
+      "marca": "Parker",
+      "origen": "MX",
+      "precio_unitario": 45,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "SEL-005",
+      "descripcion": "Empaque de Teflón 1/8\" x 1/2\" x 10m",
+      "marca": "Generic",
+      "origen": "MX",
+      "precio_unitario": 95,
+      "unidad": "MTS"
+    },
+    {
+      "codigo": "COR-001",
+      "descripcion": "Correa en V Gates B-64",
+      "marca": "Gates",
+      "origen": "MX",
+      "precio_unitario": 145,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "COR-002",
+      "descripcion": "Correa Poly-V Gates 6PK1120",
+      "marca": "Gates",
+      "origen": "MX",
+      "precio_unitario": 380,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "COR-003",
+      "descripcion": "Correa de Distribución Dayco 5080XL",
+      "marca": "Dayco",
+      "origen": "MX",
+      "precio_unitario": 520,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "COR-004",
+      "descripcion": "Correa en V Optibelt XPA-1000",
+      "marca": "Optibelt",
+      "origen": "MX",
+      "precio_unitario": 290,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "COR-005",
+      "descripcion": "Banda Transportadora PVC 500mm x 1m",
+      "marca": "Generic",
+      "origen": "MX",
+      "precio_unitario": 850,
+      "unidad": "MTS"
+    },
+    {
+      "codigo": "MOT-001",
+      "descripcion": "Motor Eléctrico WEG 5HP 1800RPM 220/440V",
+      "marca": "WEG",
+      "origen": "MX",
+      "precio_unitario": 8500,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "MOT-002",
+      "descripcion": "Motor Eléctrico Siemens 10HP 1800RPM 440V",
+      "marca": "Siemens",
+      "origen": "MX",
+      "precio_unitario": 12800,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "MOT-003",
+      "descripcion": "Motor Paso a Paso NEMA 34 12Nm",
+      "marca": "Generic",
+      "origen": "MX",
+      "precio_unitario": 2400,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "MOT-004",
+      "descripcion": "Motorreductor SEW 0.37kW i=50",
+      "marca": "SEW",
+      "origen": "MX",
+      "precio_unitario": 6200,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "MOT-005",
+      "descripcion": "Motor Hidráulico Parker F11-5",
+      "marca": "Parker",
+      "origen": "MX",
+      "precio_unitario": 18500,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "VAL-001",
+      "descripcion": "Válvula de Bola Full Bore 1\" Inox 316",
+      "marca": "Generic",
+      "origen": "MX",
+      "precio_unitario": 380,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "VAL-002",
+      "descripcion": "Válvula de Compuerta 2\" Hierro ASME 150",
+      "marca": "Generic",
+      "origen": "MX",
+      "precio_unitario": 620,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "VAL-003",
+      "descripcion": "Válvula de Mariposa Wafer 4\" Inox",
+      "marca": "Generic",
+      "origen": "MX",
+      "precio_unitario": 1200,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "VAL-004",
+      "descripcion": "Válvula Solenoide 24VDC 1/2\" Asco",
+      "marca": "Asco",
+      "origen": "MX",
+      "precio_unitario": 850,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "VAL-005",
+      "descripcion": "Válvula de Alivio Parker R12-8",
+      "marca": "Parker",
+      "origen": "MX",
+      "precio_unitario": 1450,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "FIL-001",
+      "descripcion": "Filtro de Aceite Hidráulico Hydac 10 micras",
+      "marca": "Hydac",
+      "origen": "MX",
+      "precio_unitario": 420,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "FIL-002",
+      "descripcion": "Cartucho de Filtro de Aire Donaldson P119374",
+      "marca": "Donaldson",
+      "origen": "MX",
+      "precio_unitario": 680,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "FIL-003",
+      "descripcion": "Filtro de Aceite de Compresor Atlas Copco 1622",
+      "marca": "Atlas Copco",
+      "origen": "MX",
+      "precio_unitario": 1100,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "FIL-004",
+      "descripcion": "Separador Agua-Aceite Parker 1\" Auto Drenaje",
+      "marca": "Parker",
+      "origen": "MX",
+      "precio_unitario": 1850,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "FIL-005",
+      "descripcion": "Filtro de Línea 1/2\" 40 micras Parker",
+      "marca": "Parker",
+      "origen": "MX",
+      "precio_unitario": 560,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "LUB-001",
+      "descripcion": "Aceite Mobil DTE 26 - Cubeta 19L",
+      "marca": "Mobil",
+      "origen": "LT",
+      "precio_unitario": 2800,
+      "unidad": "CUB"
+    },
+    {
+      "codigo": "LUB-002",
+      "descripcion": "Grasa SKF LGMT 2 - 1 kg",
+      "marca": "SKF",
+      "origen": "KG",
+      "precio_unitario": 380,
+      "unidad": "KG"
+    },
+    {
+      "codigo": "LUB-003",
+      "descripcion": "Aceite Shell Omala S2 GX 220 - 208L",
+      "marca": "Shell",
+      "origen": "LT",
+      "precio_unitario": 12500,
+      "unidad": "TAM"
+    },
+    {
+      "codigo": "LUB-004",
+      "descripcion": "Spray Lubricante WD-40 360ml",
+      "marca": "WD-40",
+      "origen": "MX",
+      "precio_unitario": 95,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "LUB-005",
+      "descripcion": "Grasa Molykote BR-2 Plus - 5kg",
+      "marca": "Molykote",
+      "origen": "KG",
+      "precio_unitario": 1200,
+      "unidad": "KG"
+    },
+    {
+      "codigo": "ELE-001",
+      "descripcion": "Contactor Schneider LC1D25 220VAC",
+      "marca": "Schneider",
+      "origen": "MX",
+      "precio_unitario": 780,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "ELE-002",
+      "descripcion": "Guardamotor Siemens 3RV1021 9-14A",
+      "marca": "Siemens",
+      "origen": "MX",
+      "precio_unitario": 1450,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "ELE-003",
+      "descripcion": "Variador de Frecuencia ABB ACS355 5HP 220V",
+      "marca": "ABB",
+      "origen": "MX",
+      "precio_unitario": 8900,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "ELE-004",
+      "descripcion": "PLC Siemens S7-1200 CPU 1212C",
+      "marca": "Siemens",
+      "origen": "MX",
+      "precio_unitario": 9800,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "ELE-005",
+      "descripcion": "Sensor Inductivo Pepperl+Fuchs M18 NPN 8mm",
+      "marca": "Pepperl+Fuchs",
+      "origen": "MX",
+      "precio_unitario": 620,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "NEU-001",
+      "descripcion": "Cilindro Neumático Festo DSBC-50-100-PPSA-N3",
+      "marca": "Festo",
+      "origen": "MX",
+      "precio_unitario": 2800,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "NEU-002",
+      "descripcion": "Válvula Solenoide Neumática Festo MFH-5/2-D-1-FR",
+      "marca": "Festo",
+      "origen": "MX",
+      "precio_unitario": 1650,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "NEU-003",
+      "descripcion": "Unidad FRL Parker 3/8\" Auto Drenaje",
+      "marca": "Parker",
+      "origen": "MX",
+      "precio_unitario": 1200,
+      "unidad": "JGO"
+    },
+    {
+      "codigo": "NEU-004",
+      "descripcion": "Manguera Poliuretano 8mm x 100m Azul",
+      "marca": "Generic",
+      "origen": "MX",
+      "precio_unitario": 1450,
+      "unidad": "ROL"
+    },
+    {
+      "codigo": "NEU-005",
+      "descripcion": "Racor Push-in Parker 8mm x 1/4\" BSP",
+      "marca": "Parker",
+      "origen": "MX",
+      "precio_unitario": 85,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "MAN-001",
+      "descripcion": "Manómetro Bourdon Wika 0-160 PSI 1/4\" BSP",
+      "marca": "Wika",
+      "origen": "MX",
+      "precio_unitario": 380,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "MAN-002",
+      "descripcion": "Termómetro Bimetálico Wika 0-120°C 1/2\" BSP",
+      "marca": "Wika",
+      "origen": "MX",
+      "precio_unitario": 420,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "MAN-003",
+      "descripcion": "Transmisor de Presión Endress+Hauser 0-10 bar",
+      "marca": "Endress+Hauser",
+      "origen": "MX",
+      "precio_unitario": 4800,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "MAN-004",
+      "descripcion": "Caudalímetro Krohne OPTIMASS 3300 DN25",
+      "marca": "Krohne",
+      "origen": "MX",
+      "precio_unitario": 18500,
+      "unidad": "PZA"
+    },
+    {
+      "codigo": "MAN-005",
+      "descripcion": "Nivel de Burbuja Magnético Wika BM26 DN25",
+      "marca": "Wika",
+      "origen": "MX",
+      "precio_unitario": 2200,
+      "unidad": "PZA"
+    }
+  ],
+  "maquinas": [
+    {
+      "nombre": "Compresor de Tornillo #1",
+      "marca": "Atlas Copco",
+      "modelo": "GA30+",
+      "numero_serie": "AC-2021-001",
+      "cliente_id": 1,
+      "ubicacion": "Planta Principal - Área Compresión"
+    },
+    {
+      "nombre": "Compresor de Tornillo #2",
+      "marca": "Atlas Copco",
+      "modelo": "GA37+",
+      "numero_serie": "AC-2021-002",
+      "cliente_id": 5,
+      "ubicacion": "Planta Principal - Área Compresión"
+    },
+    {
+      "nombre": "Torno CNC Haas",
+      "marca": "Haas",
+      "modelo": "ST-10",
+      "numero_serie": "HAAS-TL-001",
+      "cliente_id": 3,
+      "ubicacion": "Taller de Mecanizado"
+    },
+    {
+      "nombre": "Centro de Maquinado Vertical",
+      "marca": "Mazak",
+      "modelo": "VCN-430A",
+      "numero_serie": "MZK-001",
+      "cliente_id": 9,
+      "ubicacion": "Taller de Mecanizado"
+    },
+    {
+      "nombre": "Prensa Hidráulica 200T",
+      "marca": "Enerpac",
+      "modelo": "RCH-2014",
+      "numero_serie": "ENP-001",
+      "cliente_id": 1,
+      "ubicacion": "Línea de Producción A"
+    },
+    {
+      "nombre": "Banda Transportadora Principal",
+      "marca": "Generic",
+      "modelo": "BT-1000",
+      "numero_serie": "BT-LP-001",
+      "cliente_id": 6,
+      "ubicacion": "Línea de Producción B"
+    },
+    {
+      "nombre": "Bomba Centrífuga #1",
+      "marca": "Grundfos",
+      "modelo": "CM10-3",
+      "numero_serie": "GF-BC1-001",
+      "cliente_id": 11,
+      "ubicacion": "Sala de Bombas"
+    },
+    {
+      "nombre": "Bomba Centrífuga #2",
+      "marca": "Grundfos",
+      "modelo": "CM15-3",
+      "numero_serie": "GF-BC2-001",
+      "cliente_id": 11,
+      "ubicacion": "Sala de Bombas"
+    },
+    {
+      "nombre": "Extrusor de Plástico 90mm",
+      "marca": "Davis-Standard",
+      "modelo": "90-24D",
+      "numero_serie": "DS-EXT-001",
+      "cliente_id": 2,
+      "ubicacion": "Planta Producción"
+    },
+    {
+      "nombre": "Robot Soldador FANUC",
+      "marca": "FANUC",
+      "modelo": "Arc Mate 120iC",
+      "numero_serie": "FNC-RSO-001",
+      "cliente_id": 5,
+      "ubicacion": "Línea de Ensamble"
+    },
+    {
+      "nombre": "Torre de Enfriamiento #1",
+      "marca": "Baltimore",
+      "modelo": "VFL-350",
+      "numero_serie": "BAL-TE1-001",
+      "cliente_id": 7,
+      "ubicacion": "Área de Servicios"
+    },
+    {
+      "nombre": "Chiller Industrial 40TR",
+      "marca": "York",
+      "modelo": "YCAL0040E",
+      "numero_serie": "YRK-CH1-001",
+      "cliente_id": 7,
+      "ubicacion": "Sala de Clima"
+    },
+    {
+      "nombre": "Generador Eléctrico 150kVA",
+      "marca": "Caterpillar",
+      "modelo": "C7.1",
+      "numero_serie": "CAT-GEN-001",
+      "cliente_id": 15,
+      "ubicacion": "Subestación Eléctrica"
+    },
+    {
+      "nombre": "Sistema de Vacío Central",
+      "marca": "Busch",
+      "modelo": "R5-0040-B",
+      "numero_serie": "BSC-VAC-001",
+      "cliente_id": 13,
+      "ubicacion": "Sala de Vacío"
+    },
+    {
+      "nombre": "Horno de Tratamiento Térmico",
+      "marca": "Thermcraft",
+      "modelo": "1800°F Box",
+      "numero_serie": "THC-HTT-001",
+      "cliente_id": 9,
+      "ubicacion": "Área Térmica"
+    }
+  ]
+}
