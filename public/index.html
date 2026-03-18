@@ -5,27 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sistema de Cotización - En línea</title>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
 <body>
   <header class="header">
-    <h1>Sistema de Cotización y Gestión</h1>
-    <p class="subtitle">Catálogos y datos en línea · 100% gratuito</p>
+    <h1><i class="fas fa-calculator"></i> Sistema de Cotización y Gestión</h1>
+    <p class="subtitle">Catálogos, cotizaciones, incidentes y bitácora de horas · 100% gratuito</p>
   </header>
 
   <nav class="tabs">
-    <button type="button" data-tab="clientes" class="tab active">Clientes</button>
-    <button type="button" data-tab="refacciones" class="tab">Refacciones</button>
-    <button type="button" data-tab="maquinas" class="tab">Máquinas</button>
-    <button type="button" data-tab="cotizaciones" class="tab">Cotizaciones</button>
-    <button type="button" data-tab="incidentes" class="tab">Incidentes</button>
-    <button type="button" data-tab="demo" class="tab highlight">Cargar datos demo</button>
+    <button type="button" data-tab="clientes" class="tab active"><i class="fas fa-users"></i> Clientes</button>
+    <button type="button" data-tab="refacciones" class="tab"><i class="fas fa-cogs"></i> Refacciones</button>
+    <button type="button" data-tab="maquinas" class="tab"><i class="fas fa-industry"></i> Máquinas</button>
+    <button type="button" data-tab="cotizaciones" class="tab"><i class="fas fa-file-invoice-dollar"></i> Cotizaciones</button>
+    <button type="button" data-tab="incidentes" class="tab"><i class="fas fa-exclamation-triangle"></i> Incidentes</button>
+    <button type="button" data-tab="bitacoras" class="tab"><i class="fas fa-clock"></i> Bitácora de horas</button>
+    <button type="button" data-tab="demo" class="tab highlight"><i class="fas fa-database"></i> Cargar demo</button>
   </nav>
 
   <main class="content">
+    <!-- CLIENTES -->
     <section id="panel-clientes" class="panel active">
-      <div class="toolbar">
-        <input type="search" id="buscar-clientes" placeholder="Buscar por nombre, código o RFC..." class="search">
-        <button type="button" id="nuevo-cliente" class="btn primary">+ Nuevo cliente</button>
+      <div class="section-header">
+        <h2><i class="fas fa-users"></i> Catálogo de clientes</h2>
+        <div class="toolbar">
+          <input type="search" id="buscar-clientes" placeholder="Buscar por nombre, código o RFC..." class="search">
+          <button type="button" id="nuevo-cliente" class="btn primary"><i class="fas fa-plus"></i> Nuevo cliente</button>
+        </div>
       </div>
       <div class="table-wrap">
         <table class="data-table" id="tabla-clientes">
@@ -38,6 +44,7 @@
               <th>Contacto</th>
               <th>Teléfono</th>
               <th>Ciudad</th>
+              <th class="th-actions">Acciones</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -45,10 +52,14 @@
       </div>
     </section>
 
+    <!-- REFACCIONES -->
     <section id="panel-refacciones" class="panel">
-      <div class="toolbar">
-        <input type="search" id="buscar-refacciones" placeholder="Buscar por código o descripción..." class="search">
-        <button type="button" id="nueva-refaccion" class="btn primary">+ Nueva refacción</button>
+      <div class="section-header">
+        <h2><i class="fas fa-cogs"></i> Catálogo de refacciones</h2>
+        <div class="toolbar">
+          <input type="search" id="buscar-refacciones" placeholder="Buscar por código o descripción..." class="search">
+          <button type="button" id="nueva-refaccion" class="btn primary"><i class="fas fa-plus"></i> Nueva refacción</button>
+        </div>
       </div>
       <div class="table-wrap">
         <table class="data-table" id="tabla-refacciones">
@@ -61,6 +72,7 @@
               <th>Origen</th>
               <th>Precio unit.</th>
               <th>Unidad</th>
+              <th class="th-actions">Acciones</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -68,12 +80,16 @@
       </div>
     </section>
 
+    <!-- MÁQUINAS -->
     <section id="panel-maquinas" class="panel">
-      <div class="toolbar">
-        <select id="filtro-cliente-maq">
-          <option value="">Todos los clientes</option>
-        </select>
-        <button type="button" id="nueva-maquina" class="btn primary">+ Nueva máquina</button>
+      <div class="section-header">
+        <h2><i class="fas fa-industry"></i> Catálogo de máquinas</h2>
+        <div class="toolbar">
+          <select id="filtro-cliente-maq">
+            <option value="">Todos los clientes</option>
+          </select>
+          <button type="button" id="nueva-maquina" class="btn primary"><i class="fas fa-plus"></i> Nueva máquina</button>
+        </div>
       </div>
       <div class="table-wrap">
         <table class="data-table" id="tabla-maquinas">
@@ -86,6 +102,7 @@
               <th>Modelo</th>
               <th>Nº Serie</th>
               <th>Ubicación</th>
+              <th class="th-actions">Acciones</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -93,8 +110,19 @@
       </div>
     </section>
 
+    <!-- COTIZACIONES -->
     <section id="panel-cotizaciones" class="panel">
-      <div class="table-wrap">
+      <div class="section-header">
+        <h2><i class="fas fa-file-invoice-dollar"></i> Cotizaciones</h2>
+        <button type="button" id="nueva-cotizacion" class="btn primary"><i class="fas fa-plus"></i> Nueva cotización</button>
+      </div>
+      <div id="cotizaciones-empty" class="empty-card hidden">
+        <div class="empty-icon"><i class="fas fa-file-invoice"></i></div>
+        <h3>No hay cotizaciones</h3>
+        <p>Crea tu primera cotización de refacciones o mano de obra.</p>
+        <button type="button" class="btn primary big btn-empty-cot"><i class="fas fa-plus"></i> Agregar cotización</button>
+      </div>
+      <div id="cotizaciones-list" class="table-wrap">
         <table class="data-table" id="tabla-cotizaciones">
           <thead>
             <tr>
@@ -103,6 +131,7 @@
               <th>Tipo</th>
               <th>Fecha</th>
               <th>Total</th>
+              <th class="th-actions">Acciones</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -110,8 +139,19 @@
       </div>
     </section>
 
+    <!-- INCIDENTES -->
     <section id="panel-incidentes" class="panel">
-      <div class="table-wrap">
+      <div class="section-header">
+        <h2><i class="fas fa-exclamation-triangle"></i> Incidentes</h2>
+        <button type="button" id="nuevo-incidente" class="btn primary"><i class="fas fa-plus"></i> Nuevo incidente</button>
+      </div>
+      <div id="incidentes-empty" class="empty-card hidden">
+        <div class="empty-icon"><i class="fas fa-clipboard-list"></i></div>
+        <h3>No hay incidentes</h3>
+        <p>Registra fallas, reportes o eventos por cliente y máquina.</p>
+        <button type="button" class="btn primary big btn-empty-inc"><i class="fas fa-plus"></i> Agregar incidente</button>
+      </div>
+      <div id="incidentes-list" class="table-wrap">
         <table class="data-table" id="tabla-incidentes">
           <thead>
             <tr>
@@ -121,6 +161,7 @@
               <th>Descripción</th>
               <th>Prioridad</th>
               <th>Estatus</th>
+              <th class="th-actions">Acciones</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -128,13 +169,45 @@
       </div>
     </section>
 
+    <!-- BITÁCORA DE HORAS -->
+    <section id="panel-bitacoras" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-clock"></i> Bitácora de horas</h2>
+        <button type="button" id="nueva-bitacora" class="btn primary"><i class="fas fa-plus"></i> Nueva bitácora</button>
+      </div>
+      <div id="bitacoras-empty" class="empty-card hidden">
+        <div class="empty-icon"><i class="fas fa-hourglass-half"></i></div>
+        <h3>No hay registros en la bitácora</h3>
+        <p>Registra horas de trabajo, actividades y materiales por incidente o cotización.</p>
+        <button type="button" class="btn primary big btn-empty-bit"><i class="fas fa-plus"></i> Agregar registro</button>
+      </div>
+      <div id="bitacoras-list" class="table-wrap">
+        <table class="data-table" id="tabla-bitacoras">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Incidente</th>
+              <th>Cotización</th>
+              <th>Técnico</th>
+              <th>Actividades</th>
+              <th>Horas</th>
+              <th>Materiales</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- DEMO -->
     <section id="panel-demo" class="panel">
       <div class="card">
-        <h2>Cargar datos demo</h2>
-        <p>Importa los catálogos de clientes, refacciones y máquinas desde el archivo <strong>SistemaGestion_Demo.xlsm</strong> (ya exportado a <code>seed-demo.json</code>).</p>
+        <h2><i class="fas fa-database"></i> Cargar datos demo</h2>
+        <p>Importa clientes, refacciones y máquinas desde <strong>SistemaGestion_Demo.xlsm</strong> (exportado a <code>seed-demo.json</code>).</p>
         <p class="status" id="seed-status">Consultando estado…</p>
         <button type="button" id="btn-seed-demo" class="btn primary big">Cargar datos demo ahora</button>
-        <p class="hint">Solo ejecuta una vez. Si ya cargaste, verás los datos en las pestañas Clientes, Refacciones y Máquinas.</p>
+        <p class="hint">Solo ejecuta una vez. Luego verás los datos en Clientes, Refacciones y Máquinas.</p>
       </div>
     </section>
   </main>

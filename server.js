@@ -124,6 +124,29 @@ app.post('/api/refacciones', async (req, res) => {
   }
 });
 
+app.put('/api/refacciones/:id', async (req, res) => {
+  try {
+    const { codigo, descripcion, marca, origen, precio_unitario, unidad } = req.body || {};
+    await db.runQuery(
+      `UPDATE refacciones SET codigo=?, descripcion=?, marca=?, origen=?, precio_unitario=?, unidad=? WHERE id=?`,
+      [codigo || '', descripcion || '', marca || null, origen || null, Number(precio_unitario) || 0, unidad || 'PZA', req.params.id]
+    );
+    const r = await db.getOne('SELECT * FROM refacciones WHERE id = ?', [req.params.id]);
+    res.json(r || {});
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.delete('/api/refacciones/:id', async (req, res) => {
+  try {
+    await db.runQuery('UPDATE refacciones SET activo = 0 WHERE id = ?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
 // --- Máquinas ---
 app.get('/api/maquinas', async (req, res) => {
   try {
@@ -166,6 +189,29 @@ app.post('/api/maquinas', async (req, res) => {
   }
 });
 
+app.put('/api/maquinas/:id', async (req, res) => {
+  try {
+    const { cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion } = req.body || {};
+    await db.runQuery(
+      `UPDATE maquinas SET cliente_id=?, codigo=?, nombre=?, marca=?, modelo=?, numero_serie=?, ubicacion=? WHERE id=?`,
+      [cliente_id || null, codigo || null, nombre || '', marca || null, modelo || null, numero_serie || null, ubicacion || null, req.params.id]
+    );
+    const r = await db.getOne('SELECT * FROM maquinas WHERE id = ?', [req.params.id]);
+    res.json(r || {});
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.delete('/api/maquinas/:id', async (req, res) => {
+  try {
+    await db.runQuery('UPDATE maquinas SET activo = 0 WHERE id = ?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
 // --- Cotizaciones ---
 app.get('/api/cotizaciones', async (req, res) => {
   try {
@@ -178,6 +224,70 @@ app.get('/api/cotizaciones', async (req, res) => {
   }
 });
 
+app.get('/api/cotizaciones/:id', async (req, res) => {
+  try {
+    const row = await db.getOne(
+      'SELECT co.*, c.nombre as cliente_nombre FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id WHERE co.id = ?',
+      [req.params.id]
+    );
+    if (!row) return res.status(404).json({ error: 'No encontrado' });
+    res.json(row);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+function generarFolio(prefijo) {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${prefijo}-${y}${m}${day}-${Math.floor(Math.random() * 9000) + 1000}`;
+}
+
+app.post('/api/cotizaciones', async (req, res) => {
+  try {
+    const { cliente_id, tipo, fecha, subtotal, iva, total, folio, observaciones } = req.body || {};
+    if (!cliente_id) return res.status(400).json({ error: 'cliente_id requerido' });
+    const f = folio || generarFolio(tipo === 'mano_obra' ? 'COT-MO' : 'COT-REF');
+    const st = Number(subtotal) || 0;
+    const iv = Number(iva) || 0;
+    const tot = Number(total) != null ? Number(total) : st + iv;
+    await db.runQuery(
+      `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total, observaciones) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [f, cliente_id, tipo || 'refacciones', fecha || new Date().toISOString().slice(0, 10), st, iv, tot, observaciones || null]
+    );
+    const r = await db.getOne('SELECT co.*, c.nombre as cliente_nombre FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id ORDER BY co.id DESC LIMIT 1');
+    res.status(201).json(r);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.put('/api/cotizaciones/:id', async (req, res) => {
+  try {
+    const { folio, cliente_id, tipo, fecha, subtotal, iva, total, observaciones } = req.body || {};
+    await db.runQuery(
+      `UPDATE cotizaciones SET folio=?, cliente_id=?, tipo=?, fecha=?, subtotal=?, iva=?, total=?, observaciones=? WHERE id=?`,
+      [folio || null, cliente_id || null, tipo || 'refacciones', fecha || null, Number(subtotal) || 0, Number(iva) || 0, Number(total) || 0, observaciones || null, req.params.id]
+    );
+    const r = await db.getOne('SELECT co.*, c.nombre as cliente_nombre FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id WHERE co.id = ?', [req.params.id]);
+    res.json(r || {});
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.delete('/api/cotizaciones/:id', async (req, res) => {
+  try {
+    await db.runQuery('DELETE FROM cotizacion_lineas WHERE cotizacion_id = ?', [req.params.id]);
+    await db.runQuery('DELETE FROM cotizaciones WHERE id = ?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
 // --- Incidentes ---
 app.get('/api/incidentes', async (req, res) => {
   try {
@@ -185,6 +295,132 @@ app.get('/api/incidentes', async (req, res) => {
       `SELECT i.*, c.nombre as cliente_nombre, m.nombre as maquina_nombre FROM incidentes i JOIN clientes c ON c.id = i.cliente_id LEFT JOIN maquinas m ON m.id = i.maquina_id ORDER BY i.fecha_reporte DESC LIMIT 200`
     );
     res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.get('/api/incidentes/:id', async (req, res) => {
+  try {
+    const row = await db.getOne(
+      `SELECT i.*, c.nombre as cliente_nombre, m.nombre as maquina_nombre FROM incidentes i JOIN clientes c ON c.id = i.cliente_id LEFT JOIN maquinas m ON m.id = i.maquina_id WHERE i.id = ?`,
+      [req.params.id]
+    );
+    if (!row) return res.status(404).json({ error: 'No encontrado' });
+    res.json(row);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+function generarFolioIncidente() {
+  const d = new Date();
+  return `INC-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}-${Math.floor(Math.random() * 9000) + 1000}`;
+}
+
+app.post('/api/incidentes', async (req, res) => {
+  try {
+    const { cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, tecnico_responsable, estatus } = req.body || {};
+    if (!cliente_id) return res.status(400).json({ error: 'cliente_id requerido' });
+    if (!descripcion || !descripcion.trim()) return res.status(400).json({ error: 'descripcion requerida' });
+    const folio = generarFolioIncidente();
+    await db.runQuery(
+      `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [folio, cliente_id, maquina_id || null, descripcion.trim(), prioridad || 'media', fecha_reporte || new Date().toISOString().slice(0, 10), tecnico_responsable || null, estatus || 'abierto']
+    );
+    const r = await db.getOne('SELECT i.*, c.nombre as cliente_nombre, m.nombre as maquina_nombre FROM incidentes i JOIN clientes c ON c.id = i.cliente_id LEFT JOIN maquinas m ON m.id = i.maquina_id ORDER BY i.id DESC LIMIT 1');
+    res.status(201).json(r);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.put('/api/incidentes/:id', async (req, res) => {
+  try {
+    const { cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, tecnico_responsable, estatus } = req.body || {};
+    await db.runQuery(
+      `UPDATE incidentes SET cliente_id=?, maquina_id=?, descripcion=?, prioridad=?, fecha_reporte=?, tecnico_responsable=?, estatus=? WHERE id=?`,
+      [cliente_id || null, maquina_id || null, descripcion || '', prioridad || 'media', fecha_reporte || null, tecnico_responsable || null, estatus || 'abierto', req.params.id]
+    );
+    const r = await db.getOne('SELECT i.*, c.nombre as cliente_nombre, m.nombre as maquina_nombre FROM incidentes i JOIN clientes c ON c.id = i.cliente_id LEFT JOIN maquinas m ON m.id = i.maquina_id WHERE i.id = ?', [req.params.id]);
+    res.json(r || {});
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.delete('/api/incidentes/:id', async (req, res) => {
+  try {
+    await db.runQuery('DELETE FROM incidentes WHERE id = ?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+// --- Bitácoras (horas / servicio realizado) ---
+app.get('/api/bitacoras', async (req, res) => {
+  try {
+    const rows = await db.getAll(
+      `SELECT b.*, i.folio as incidente_folio, co.folio as cotizacion_folio
+       FROM bitacoras b
+       LEFT JOIN incidentes i ON i.id = b.incidente_id
+       LEFT JOIN cotizaciones co ON co.id = b.cotizacion_id
+       ORDER BY b.fecha DESC, b.id DESC LIMIT 200`
+    );
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.get('/api/bitacoras/:id', async (req, res) => {
+  try {
+    const row = await db.getOne(
+      `SELECT b.*, i.folio as incidente_folio, co.folio as cotizacion_folio FROM bitacoras b
+       LEFT JOIN incidentes i ON i.id = b.incidente_id LEFT JOIN cotizaciones co ON co.id = b.cotizacion_id WHERE b.id = ?`,
+      [req.params.id]
+    );
+    if (!row) return res.status(404).json({ error: 'No encontrado' });
+    res.json(row);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.post('/api/bitacoras', async (req, res) => {
+  try {
+    const { incidente_id, cotizacion_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados, observaciones } = req.body || {};
+    if (!incidente_id && !cotizacion_id) return res.status(400).json({ error: 'Indica incidente_id o cotizacion_id' });
+    await db.runQuery(
+      `INSERT INTO bitacoras (incidente_id, cotizacion_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados, observaciones) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [incidente_id || null, cotizacion_id || null, fecha || new Date().toISOString().slice(0, 10), tecnico || null, actividades || null, Number(tiempo_horas) || 0, materiales_usados || null, observaciones || null]
+    );
+    const r = await db.getOne('SELECT * FROM bitacoras ORDER BY id DESC LIMIT 1');
+    res.status(201).json(r);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.put('/api/bitacoras/:id', async (req, res) => {
+  try {
+    const { incidente_id, cotizacion_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados, observaciones } = req.body || {};
+    await db.runQuery(
+      `UPDATE bitacoras SET incidente_id=?, cotizacion_id=?, fecha=?, tecnico=?, actividades=?, tiempo_horas=?, materiales_usados=?, observaciones=? WHERE id=?`,
+      [incidente_id || null, cotizacion_id || null, fecha || null, tecnico || null, actividades || null, Number(tiempo_horas) || 0, materiales_usados || null, observaciones || null, req.params.id]
+    );
+    const r = await db.getOne('SELECT * FROM bitacoras WHERE id = ?', [req.params.id]);
+    res.json(r || {});
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.delete('/api/bitacoras/:id', async (req, res) => {
+  try {
+    await db.runQuery('DELETE FROM bitacoras WHERE id = ?', [req.params.id]);
+    res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
