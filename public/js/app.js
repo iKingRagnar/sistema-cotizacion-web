@@ -653,6 +653,7 @@
     const emptyEl = qs('#cotizaciones-empty');
     const listEl = qs('#cotizaciones-list');
     const tbody = qs('#tabla-cotizaciones tbody');
+    if (!emptyEl || !listEl || !tbody) return;
     tbody.innerHTML = '';
     const hasFilteredResults = data && data.length > 0;
     const hasAnyInSystem = totalInSystem != null ? totalInSystem > 0 : (data && data.length > 0);
@@ -702,7 +703,11 @@
       cotizacionesCache = Array.isArray(data) ? data : [];
       const filtered = applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones');
       renderCotizaciones(filtered, cotizacionesCache.length);
-    } catch (e) { renderCotizaciones([]); }
+    } catch (e) {
+      const filtered = applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones');
+      renderCotizaciones(filtered, cotizacionesCache.length);
+      showToast('No se pudieron actualizar las cotizaciones. Se muestran los últimos datos.', 'error');
+    }
     finally { hideLoading(); }
   }
 
@@ -719,6 +724,7 @@
     const emptyEl = qs('#incidentes-empty');
     const listEl = qs('#incidentes-list');
     const tbody = qs('#tabla-incidentes tbody');
+    if (!emptyEl || !listEl || !tbody) return;
     tbody.innerHTML = '';
     const hasFilteredResults = data && data.length > 0;
     const hasAnyInSystem = totalInSystem != null ? totalInSystem > 0 : (data && data.length > 0);
@@ -770,7 +776,11 @@
       incidentesCache = Array.isArray(data) ? data : [];
       const filtered = applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes');
       renderIncidentes(filtered, incidentesCache.length);
-    } catch (e) { renderIncidentes([]); }
+    } catch (e) {
+      const filtered = applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes');
+      renderIncidentes(filtered, incidentesCache.length);
+      showToast('No se pudieron actualizar los incidentes. Se muestran los últimos datos.', 'error');
+    }
     finally { hideLoading(); }
   }
 
@@ -787,6 +797,7 @@
     const emptyEl = qs('#bitacoras-empty');
     const listEl = qs('#bitacoras-list');
     const tbody = qs('#tabla-bitacoras tbody');
+    if (!emptyEl || !listEl || !tbody) return;
     tbody.innerHTML = '';
     const hasFilteredResults = data && data.length > 0;
     const hasAnyInSystem = totalInSystem != null ? totalInSystem > 0 : (data && data.length > 0);
@@ -837,7 +848,11 @@
       bitacorasCache = Array.isArray(data) ? data : [];
       const filtered = applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras');
       renderBitacoras(filtered, bitacorasCache.length);
-    } catch (e) { renderBitacoras([]); }
+    } catch (e) {
+      const filtered = applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras');
+      renderBitacoras(filtered, bitacorasCache.length);
+      showToast('No se pudieron actualizar las bitácoras. Se muestran los últimos datos.', 'error');
+    }
     finally { hideLoading(); }
   }
 
@@ -1394,6 +1409,18 @@
       grid.querySelectorAll('.dashboard-card-action').forEach(btn => {
         btn.addEventListener('click', () => showPanel(btn.dataset.goto));
       });
+
+      // Usar los mismos datos ya cargados para rellenar las tablas de Cotizaciones, Incidentes y Bitácoras
+      // así se ven registros al abrir esas pestañas aunque falle una petición posterior
+      cotizacionesCache = Array.isArray(cotizaciones) ? cotizaciones : [];
+      incidentesCache = Array.isArray(incidentes) ? incidentes : [];
+      bitacorasCache = Array.isArray(bitacoras) ? bitacoras : [];
+      const filtCot = applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones');
+      const filtInc = applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes');
+      const filtBit = applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras');
+      renderCotizaciones(filtCot, cotizacionesCache.length);
+      renderIncidentes(filtInc, incidentesCache.length);
+      renderBitacoras(filtBit, bitacorasCache.length);
 
       const dashUpdateEl = qs('#dashboard-last-update');
       if (dashUpdateEl) {
