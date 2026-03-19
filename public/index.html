@@ -3,15 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Sistema de Cotización - En línea</title>
-  <link rel="stylesheet" href="css/style.css?v=5">
+  <title>Sistema de Cotización y Gestión · Cotizaciones, incidentes y bitácora profesional</title>
+  <meta name="description" content="Sistema profesional para cotizaciones, clientes, refacciones, máquinas, incidentes y bitácora de horas. Control total en un solo lugar.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="css/style.css?v=7">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
 <body>
   <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
   <header class="header">
-    <h1><i class="fas fa-calculator"></i> Sistema de Cotización y Gestión <span class="version">v4</span></h1>
-    <p class="subtitle">Catálogos, cotizaciones, incidentes y bitácora de horas</p>
+    <div class="header-inner">
+      <div class="header-brand">
+        <img src="favicon.svg" alt="" class="header-logo" width="40" height="40" aria-hidden="true">
+        <div>
+          <h1>Sistema de Cotización y Gestión <span class="version">v4</span> <span class="badge-pro">Pro</span></h1>
+          <p class="subtitle">Cotizaciones, incidentes, bitácora de horas y catálogos en una sola plataforma</p>
+        </div>
+      </div>
+    </div>
   </header>
 
   <nav class="tabs" role="navigation" aria-label="Secciones principales">
@@ -357,6 +366,9 @@
     </div>
   </div>
 
+  <footer class="app-footer" role="contentinfo">
+    <p>Sistema de Cotización y Gestión · <span class="footer-version">v4</span> · Uso profesional · <span aria-hidden="true">—</span> Cotizaciones, incidentes y bitácora en un solo lugar</p>
+  </footer>
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
   <div id="global-loading" class="global-loading hidden" aria-hidden="true">
     <div class="loading-spinner"></div>
