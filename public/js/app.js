@@ -68,6 +68,7 @@
     if (id === 'incidentes') loadIncidentes();
     if (id === 'bitacoras') loadBitacoras();
     if (id === 'demo') loadSeedStatus();
+    if (id === 'acerca') { /* solo mostrar panel */ }
   }
 
   qsAll('.tab').forEach(t => {
@@ -99,6 +100,23 @@
 
   function confirmar(msg) {
     return confirm(msg || '¿Eliminar este registro?');
+  }
+
+  function openConfirmModal(message, onConfirm) {
+    const modal = qs('#confirm-modal');
+    const title = qs('#confirm-title');
+    const msgEl = qs('#confirm-message');
+    const btnOk = qs('#confirm-btn-ok');
+    const btnCancel = qs('#confirm-btn-cancel');
+    const btnClose = qs('#confirm-close');
+    if (!modal || !msgEl || !btnOk) return void confirm(message);
+    title.textContent = 'Confirmar';
+    msgEl.textContent = message || '¿Eliminar este registro?';
+    modal.classList.remove('hidden');
+    const close = () => { modal.classList.add('hidden'); btnOk.onclick = null; btnCancel.onclick = null; btnClose.onclick = null; };
+    btnOk.onclick = () => { close(); if (typeof onConfirm === 'function') onConfirm(); };
+    btnCancel.onclick = close;
+    btnClose.onclick = close;
   }
 
   const IVA_PORCENTAJE = 0.16;
@@ -488,10 +506,10 @@
       showToast('No se pudo generar el Excel. Intenta de nuevo.', 'error');
     }
   }
-  function updateTableFooter(tableId, showing, total, clearAndRefresh) {
+  function updateTableFooter(tableId, showing, total, clearAndRefresh, paginationOpts) {
     const footer = qs('#footer-' + tableId);
     if (!footer) return;
-    if (total === 0) { footer.innerHTML = ''; return; }
+    if (total === 0 && (!paginationOpts || paginationOpts.totalFiltered === 0)) { footer.innerHTML = ''; return; }
     const tbl = qs('#' + tableId);
     const hasFilters = !tbl ? false : (() => {
       let has = false;
@@ -501,7 +519,54 @@
       return has;
     })();
     const showClear = hasFilters;
-    footer.innerHTML = `<span>Mostrando <strong>${showing}</strong> de <strong>${total}</strong> registros</span>${showClear ? ' <button type="button" class="clear-filters">Limpiar filtros</button>' : ''}`;
+    let msg = `<span>Mostrando <strong>${showing}</strong> de <strong>${total}</strong> registros</span>`;
+    if (paginationOpts && paginationOpts.totalFiltered > 0) {
+      const start = paginationOpts.page * (paginationOpts.pageSize || PAGE_SIZE) + 1;
+      const end = Math.min((paginationOpts.page + 1) * (paginationOpts.pageSize || PAGE_SIZE), paginationOpts.totalFiltered);
+      msg = `<span class="pagination-info">Mostrando <strong>${start}&ndash;${end}</strong> de <strong>${paginationOpts.totalFiltered}</strong></span>`;
+    }
+    footer.innerHTML = msg + (showClear ? ' <button type="button" class="clear-filters">Limpiar filtros</button>' : '');
+    if (paginationOpts && paginationOpts.totalFiltered > (paginationOpts.pageSize || PAGE_SIZE)) {
+      const wrap = document.createElement('div');
+      wrap.className = 'pagination-wrap';
+      const prev = document.createElement('button');
+      prev.type = 'button';
+      prev.className = 'btn outline';
+      prev.innerHTML = '<i class="fas fa-chevron-left"></i> Anterior';
+      prev.disabled = paginationOpts.page === 0;
+      if (!prev.disabled && paginationOpts.onPrev) prev.addEventListener('click', paginationOpts.onPrev);
+      const next = document.createElement('button');
+      next.type = 'button';
+      next.className = 'btn outline';
+      next.innerHTML = 'Siguiente <i class="fas fa-chevron-right"></i>';
+      const totalPages = Math.ceil(paginationOpts.totalFiltered / (paginationOpts.pageSize || PAGE_SIZE));
+      next.disabled = paginationOpts.page >= totalPages - 1;
+      if (!next.disabled && paginationOpts.onNext) next.addEventListener('click', paginationOpts.onNext);
+      wrap.appendChild(prev);
+      wrap.appendChild(next);
+      if (paginationOpts.onPageSizeChange && typeof PAGE_SIZES !== 'undefined') {
+        const label = document.createElement('span');
+        label.className = 'pagination-info';
+        label.textContent = ' Mostrar: ';
+        const sel = document.createElement('select');
+        sel.className = 'pagination-size-select';
+        sel.setAttribute('aria-label', 'Registros por página');
+        PAGE_SIZES.forEach(n => {
+          const opt = document.createElement('option');
+          opt.value = n;
+          opt.textContent = n;
+          if (n === (paginationOpts.pageSize || PAGE_SIZE)) opt.selected = true;
+          sel.appendChild(opt);
+        });
+        sel.addEventListener('change', () => {
+          const val = parseInt(sel.value, 10);
+          if (!isNaN(val)) paginationOpts.onPageSizeChange(tableId, val);
+        });
+        wrap.appendChild(label);
+        wrap.appendChild(sel);
+      }
+      footer.appendChild(wrap);
+    }
     const clearBtn = footer.querySelector('.clear-filters');
     if (clearBtn && clearAndRefresh) clearBtn.addEventListener('click', clearAndRefresh);
   }
@@ -509,7 +574,30 @@
     const tbl = qs('#' + tableId);
     if (tbl) tbl.querySelectorAll('.filter-row .filter-input, .filter-row .filter-date-select, .filter-row .filter-date-input').forEach(inp => { inp.value = ''; });
     if (searchId) { const s = qs(searchId); if (s) s.value = ''; }
+    if (typeof getPaginationState === 'function') setPaginationPage(tableId, 0);
     if (onRefresh) onRefresh();
+  }
+  const PAGE_SIZE = 25;
+  const PAGE_SIZES = [10, 25, 50];
+  const paginationState = {};
+  const pageSizeState = {};
+  function getPaginationState(tableId) { return paginationState[tableId] != null ? paginationState[tableId] : 0; }
+  function setPaginationPage(tableId, page) { paginationState[tableId] = Math.max(0, page); }
+  function getPageSize(tableId) { return pageSizeState[tableId] != null ? pageSizeState[tableId] : PAGE_SIZE; }
+  function setPageSize(tableId, size) { pageSizeState[tableId] = size; setPaginationPage(tableId, 0); }
+  function renderTableSkeleton(tableId, colCount, rowCount) {
+    const tbl = qs('#' + tableId);
+    if (!tbl) return;
+    const tbody = tbl.querySelector('tbody');
+    if (!tbody) return;
+    rowCount = rowCount || 8;
+    let html = '';
+    for (let i = 0; i < rowCount; i++) {
+      let cells = '';
+      for (let c = 0; c < colCount; c++) cells += '<td><span class="skeleton skeleton-text"></span></td>';
+      html += '<tr class="skeleton-row">' + cells + '</tr>';
+    }
+    tbody.innerHTML = html;
   }
 
   // ----- CLIENTES -----
@@ -537,12 +625,12 @@
       `;
       tbody.appendChild(tr);
     });
-    updateTableFooter('tabla-clientes', data.length, clientesCache.length, () => clearTableFiltersAndRefresh('tabla-clientes', '#buscar-clientes', applyClientesFiltersAndRender));
+    updateTableFooter('tabla-clientes', data.length, clientesCache.length, () => clearTableFiltersAndRefresh('tabla-clientes', '#buscar-clientes', applyClientesFiltersAndRender), arguments[1]);
     tbody.querySelectorAll('.btn-edit-cliente').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const c = data.find(x => x.id == btn.dataset.id); if (c) openModalCliente(c); });
     });
     tbody.querySelectorAll('.btn-delete-cliente').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); if (confirmar('¿Eliminar este cliente?')) deleteCliente(btn.dataset.id); });
+      btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar este cliente?', () => deleteCliente(btn.dataset.id)); });
     });
   }
 
@@ -556,13 +644,11 @@
 
   async function loadClientes() {
     showLoading();
+    renderTableSkeleton('tabla-clientes', 8);
     try {
       const data = await fetchJson(API + '/clientes');
       clientesCache = data;
-      const q = (qs('#buscar-clientes') && qs('#buscar-clientes').value || '').trim();
-      let filtered = applyFilters(clientesCache, getFilterValues('#tabla-clientes'), 'tabla-clientes');
-      if (q) filtered = filtered.filter(c => [c.nombre, c.codigo, c.rfc].some(v => normalizeForSearch(v).includes(normalizeForSearch(q))));
-      renderClientes(filtered);
+      applyClientesFiltersAndRender();
     } catch (e) { renderClientes([]); console.error(e); }
     finally { hideLoading(); }
   }
@@ -592,12 +678,12 @@
       `;
       tbody.appendChild(tr);
     });
-    updateTableFooter('tabla-refacciones', data.length, refaccionesCache.length, () => clearTableFiltersAndRefresh('tabla-refacciones', '#buscar-refacciones', applyRefaccionesFiltersAndRender));
+    updateTableFooter('tabla-refacciones', data.length, refaccionesCache.length, () => clearTableFiltersAndRefresh('tabla-refacciones', '#buscar-refacciones', applyRefaccionesFiltersAndRender), arguments[1]);
     tbody.querySelectorAll('.btn-edit-ref').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const r = data.find(x => x.id == btn.dataset.id); if (r) openModalRefaccion(r); });
     });
     tbody.querySelectorAll('.btn-delete-ref').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); if (confirmar('¿Eliminar esta refacción?')) deleteRefaccion(btn.dataset.id); });
+      btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar esta refacción?', () => deleteRefaccion(btn.dataset.id)); });
     });
   }
 
@@ -611,13 +697,11 @@
 
   async function loadRefacciones() {
     showLoading();
+    renderTableSkeleton('tabla-refacciones', 8);
     try {
       const data = await fetchJson(API + '/refacciones');
       refaccionesCache = data;
-      const q = (qs('#buscar-refacciones') && qs('#buscar-refacciones').value || '').trim();
-      let filtered = applyFilters(refaccionesCache, getFilterValues('#tabla-refacciones'), 'tabla-refacciones');
-      if (q) filtered = filtered.filter(r => [r.codigo, r.descripcion, r.marca].some(v => normalizeForSearch(v).includes(normalizeForSearch(q))));
-      renderRefacciones(filtered);
+      applyRefaccionesFiltersAndRender();
     } catch (e) { renderRefacciones([]); console.error(e); }
     finally { hideLoading(); }
   }
@@ -647,12 +731,12 @@
       `;
       tbody.appendChild(tr);
     });
-    updateTableFooter('tabla-maquinas', data.length, maquinasCache.length, () => clearTableFiltersAndRefresh('tabla-maquinas', null, applyMaquinasFiltersAndRender));
+    updateTableFooter('tabla-maquinas', data.length, maquinasCache.length, () => clearTableFiltersAndRefresh('tabla-maquinas', null, applyMaquinasFiltersAndRender), arguments[1]);
     tbody.querySelectorAll('.btn-edit-maq').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const m = data.find(x => x.id == btn.dataset.id); if (m) openModalMaquina(m); });
     });
     tbody.querySelectorAll('.btn-delete-maq').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); if (confirmar('¿Eliminar esta máquina?')) deleteMaquina(btn.dataset.id); });
+      btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar esta máquina?', () => deleteMaquina(btn.dataset.id)); });
     });
   }
 
@@ -666,13 +750,13 @@
 
   async function loadMaquinas() {
     showLoading();
+    renderTableSkeleton('tabla-maquinas', 8);
     const clienteId = qs('#filtro-cliente-maq') && qs('#filtro-cliente-maq').value;
     const url = clienteId ? `${API}/maquinas?cliente_id=${clienteId}` : `${API}/maquinas`;
     try {
       const data = await fetchJson(url);
       maquinasCache = data;
-      const filtered = applyFilters(maquinasCache, getFilterValues('#tabla-maquinas'), 'tabla-maquinas');
-      renderMaquinas(filtered);
+      applyMaquinasFiltersAndRender();
     } catch (e) { renderMaquinas([]); console.error(e); }
     finally { hideLoading(); }
   }
@@ -722,22 +806,21 @@
       btn.addEventListener('click', e => { e.stopPropagation(); editCotizacion(btn.dataset.id); });
     });
     tbody.querySelectorAll('.btn-delete-cot').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); if (confirmar('¿Eliminar esta cotización?')) deleteCotizacion(btn.dataset.id); });
+      btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar esta cotización?', () => deleteCotizacion(btn.dataset.id)); });
     });
-    updateTableFooter('tabla-cotizaciones', list.length, cotizacionesCache.length, () => clearTableFiltersAndRefresh('tabla-cotizaciones', null, applyCotizacionesFiltersAndRender));
+    updateTableFooter('tabla-cotizaciones', list.length, cotizacionesCache.length, () => clearTableFiltersAndRefresh('tabla-cotizaciones', null, applyCotizacionesFiltersAndRender), arguments[2]);
   }
 
   async function loadCotizaciones() {
     showLoading();
+    const table = qs('#tabla-cotizaciones');
+    if (table && table.querySelector('tbody')) renderTableSkeleton('tabla-cotizaciones', 7);
     try {
       const raw = await fetchJson(API + '/cotizaciones');
       cotizacionesCache = toArray(raw);
-      const filtros = getFilterValues('#tabla-cotizaciones');
-      const filtered = applyFilters(cotizacionesCache, filtros, 'tabla-cotizaciones');
-      renderCotizaciones(filtered, cotizacionesCache.length);
+      applyCotizacionesFiltersAndRender();
     } catch (e) {
-      const filtered = applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones');
-      renderCotizaciones(filtered, cotizacionesCache.length);
+      applyCotizacionesFiltersAndRender();
       showToast(parseApiError(e) || 'No se pudieron cargar las cotizaciones.', 'error');
     } finally {
       hideLoading();
@@ -805,22 +888,23 @@
       btn.addEventListener('click', e => { e.stopPropagation(); editIncidente(btn.dataset.id); });
     });
     tbody.querySelectorAll('.btn-delete-inc').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); if (confirmar('¿Eliminar este incidente?')) deleteIncidente(btn.dataset.id); });
+      btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar este incidente?', () => deleteIncidente(btn.dataset.id)); });
     });
-    updateTableFooter('tabla-incidentes', list.length, incidentesCache.length, () => clearTableFiltersAndRefresh('tabla-incidentes', null, applyIncidentesFiltersAndRender));
+    updateTableFooter('tabla-incidentes', list.length, incidentesCache.length, () => clearTableFiltersAndRefresh('tabla-incidentes', null, applyIncidentesFiltersAndRender), arguments[2]);
   }
 
   async function loadIncidentes() {
     showLoading();
+    renderTableSkeleton('tabla-incidentes', 12);
     try {
       const raw = await fetchJson(API + '/incidentes');
       incidentesCache = toArray(raw);
-      const filtros = getFilterValues('#tabla-incidentes');
-      const filtered = applyFilters(incidentesCache, filtros, 'tabla-incidentes');
-      renderIncidentes(filtered, incidentesCache.length);
+      applyIncidentesFiltersAndRender();
+      updateHeaderUrgencies();
+      if (typeof requestNotificationPermissionAndMaybeNotify === 'function') requestNotificationPermissionAndMaybeNotify();
     } catch (e) {
-      const filtered = applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes');
-      renderIncidentes(filtered, incidentesCache.length);
+      applyIncidentesFiltersAndRender();
+      updateHeaderUrgencies();
       showToast(parseApiError(e) || 'No se pudieron cargar los incidentes.', 'error');
     } finally {
       hideLoading();
@@ -884,19 +968,18 @@
       btn.addEventListener('click', e => { e.stopPropagation(); editBitacora(btn.dataset.id); });
     });
     tbody.querySelectorAll('.btn-delete-bit').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); if (confirmar('¿Eliminar este registro de bitácora?')) deleteBitacora(btn.dataset.id); });
+      btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar este registro de bitácora?', () => deleteBitacora(btn.dataset.id)); });
     });
-    updateTableFooter('tabla-bitacoras', list.length, bitacorasCache.length, () => clearTableFiltersAndRefresh('tabla-bitacoras', null, applyBitacorasFiltersAndRender));
+    updateTableFooter('tabla-bitacoras', list.length, bitacorasCache.length, () => clearTableFiltersAndRefresh('tabla-bitacoras', null, applyBitacorasFiltersAndRender), arguments[2]);
   }
 
   async function loadBitacoras() {
     showLoading();
+    renderTableSkeleton('tabla-bitacoras', 9);
     try {
       const raw = await fetchJson(API + '/bitacoras');
       bitacorasCache = toArray(raw);
-      const filtros = getFilterValues('#tabla-bitacoras');
-      const filtered = applyFilters(bitacorasCache, filtros, 'tabla-bitacoras');
-      renderBitacoras(filtered, bitacorasCache.length);
+      applyBitacorasFiltersAndRender();
     } catch (e) {
       const filtered = applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras');
       renderBitacoras(filtered, bitacorasCache.length);
@@ -1678,32 +1761,74 @@
   }
 
   function applyClientesFiltersAndRender() {
+    const tid = 'tabla-clientes';
     const q = (qs('#buscar-clientes') && qs('#buscar-clientes').value || '').trim();
-    let filtered = applyFilters(clientesCache, getFilterValues('#tabla-clientes'), 'tabla-clientes');
+    let filtered = applyFilters(clientesCache, getFilterValues('#tabla-clientes'), tid);
     if (q) filtered = filtered.filter(c => [c.nombre, c.codigo, c.rfc].some(v => normalizeForSearch(v).includes(normalizeForSearch(q))));
-    renderClientes(filtered);
+    const pageSize = getPageSize(tid);
+    let page = getPaginationState(tid);
+    const maxPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
+    if (page > maxPage) { setPaginationPage(tid, 0); page = 0; }
+    const slice = filtered.slice(page * pageSize, (page + 1) * pageSize);
+    const popts = filtered.length > pageSize ? { page, pageSize, totalFiltered: filtered.length, onPrev: () => { setPaginationPage(tid, page - 1); applyClientesFiltersAndRender(); }, onNext: () => { setPaginationPage(tid, page + 1); applyClientesFiltersAndRender(); }, onPageSizeChange: (t, size) => { setPageSize(t, size); applyClientesFiltersAndRender(); } } : undefined;
+    renderClientes(slice, popts);
   }
   function applyRefaccionesFiltersAndRender() {
+    const tid = 'tabla-refacciones';
     const q = (qs('#buscar-refacciones') && qs('#buscar-refacciones').value || '').trim();
-    let filtered = applyFilters(refaccionesCache, getFilterValues('#tabla-refacciones'), 'tabla-refacciones');
+    let filtered = applyFilters(refaccionesCache, getFilterValues('#tabla-refacciones'), tid);
     if (q) filtered = filtered.filter(r => [r.codigo, r.descripcion, r.marca].some(v => normalizeForSearch(v).includes(normalizeForSearch(q))));
-    renderRefacciones(filtered);
+    const pageSize = getPageSize(tid);
+    let page = getPaginationState(tid);
+    const maxPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
+    if (page > maxPage) { setPaginationPage(tid, 0); page = 0; }
+    const slice = filtered.slice(page * pageSize, (page + 1) * pageSize);
+    const popts = filtered.length > pageSize ? { page, pageSize, totalFiltered: filtered.length, onPrev: () => { setPaginationPage(tid, page - 1); applyRefaccionesFiltersAndRender(); }, onNext: () => { setPaginationPage(tid, page + 1); applyRefaccionesFiltersAndRender(); }, onPageSizeChange: (t, size) => { setPageSize(t, size); applyRefaccionesFiltersAndRender(); } } : undefined;
+    renderRefacciones(slice, popts);
   }
   function applyMaquinasFiltersAndRender() {
-    const filtered = applyFilters(maquinasCache, getFilterValues('#tabla-maquinas'), 'tabla-maquinas');
-    renderMaquinas(filtered);
+    const tid = 'tabla-maquinas';
+    const filtered = applyFilters(maquinasCache, getFilterValues('#tabla-maquinas'), tid);
+    const pageSize = getPageSize(tid);
+    let page = getPaginationState(tid);
+    const maxPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
+    if (page > maxPage) { setPaginationPage(tid, 0); page = 0; }
+    const slice = filtered.slice(page * pageSize, (page + 1) * pageSize);
+    const popts = filtered.length > pageSize ? { page, pageSize, totalFiltered: filtered.length, onPrev: () => { setPaginationPage(tid, page - 1); applyMaquinasFiltersAndRender(); }, onNext: () => { setPaginationPage(tid, page + 1); applyMaquinasFiltersAndRender(); }, onPageSizeChange: (t, size) => { setPageSize(t, size); applyMaquinasFiltersAndRender(); } } : undefined;
+    renderMaquinas(slice, popts);
   }
   function applyCotizacionesFiltersAndRender() {
-    const filtered = applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones');
-    renderCotizaciones(filtered, cotizacionesCache.length);
+    const tid = 'tabla-cotizaciones';
+    const filtered = applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), tid);
+    const pageSize = getPageSize(tid);
+    let page = getPaginationState(tid);
+    const maxPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
+    if (page > maxPage) { setPaginationPage(tid, 0); page = 0; }
+    const slice = filtered.slice(page * pageSize, (page + 1) * pageSize);
+    const popts = filtered.length > pageSize ? { page, pageSize, totalFiltered: filtered.length, onPrev: () => { setPaginationPage(tid, page - 1); applyCotizacionesFiltersAndRender(); }, onNext: () => { setPaginationPage(tid, page + 1); applyCotizacionesFiltersAndRender(); }, onPageSizeChange: (t, size) => { setPageSize(t, size); applyCotizacionesFiltersAndRender(); } } : undefined;
+    renderCotizaciones(slice, cotizacionesCache.length, popts);
   }
   function applyIncidentesFiltersAndRender() {
-    const filtered = applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes');
-    renderIncidentes(filtered, incidentesCache.length);
+    const tid = 'tabla-incidentes';
+    const filtered = applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), tid);
+    const pageSize = getPageSize(tid);
+    let page = getPaginationState(tid);
+    const maxPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
+    if (page > maxPage) { setPaginationPage(tid, 0); page = 0; }
+    const slice = filtered.slice(page * pageSize, (page + 1) * pageSize);
+    const popts = filtered.length > pageSize ? { page, pageSize, totalFiltered: filtered.length, onPrev: () => { setPaginationPage(tid, page - 1); applyIncidentesFiltersAndRender(); }, onNext: () => { setPaginationPage(tid, page + 1); applyIncidentesFiltersAndRender(); }, onPageSizeChange: (t, size) => { setPageSize(t, size); applyIncidentesFiltersAndRender(); } } : undefined;
+    renderIncidentes(slice, incidentesCache.length, popts);
   }
   function applyBitacorasFiltersAndRender() {
-    const filtered = applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras');
-    renderBitacoras(filtered, bitacorasCache.length);
+    const tid = 'tabla-bitacoras';
+    const filtered = applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), tid);
+    const pageSize = getPageSize(tid);
+    let page = getPaginationState(tid);
+    const maxPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
+    if (page > maxPage) { setPaginationPage(tid, 0); page = 0; }
+    const slice = filtered.slice(page * pageSize, (page + 1) * pageSize);
+    const popts = filtered.length > pageSize ? { page, pageSize, totalFiltered: filtered.length, onPrev: () => { setPaginationPage(tid, page - 1); applyBitacorasFiltersAndRender(); }, onNext: () => { setPaginationPage(tid, page + 1); applyBitacorasFiltersAndRender(); }, onPageSizeChange: (t, size) => { setPageSize(t, size); applyBitacorasFiltersAndRender(); } } : undefined;
+    renderBitacoras(slice, bitacorasCache.length, popts);
   }
 
   // ----- EVENT LISTENERS -----
@@ -1718,6 +1843,8 @@
   bindTableFilters('tabla-bitacoras', applyBitacorasFiltersAndRender);
   const dashboardRefresh = qs('#dashboard-refresh');
   if (dashboardRefresh) dashboardRefresh.addEventListener('click', () => loadDashboard());
+  const btnPrintPdf = qs('#btn-print-pdf');
+  if (btnPrintPdf) btnPrintPdf.addEventListener('click', () => window.print());
   qs('#nuevo-cliente').addEventListener('click', () => openModalCliente(null));
   qs('#nueva-refaccion').addEventListener('click', () => openModalRefaccion(null));
   qs('#nueva-maquina').addEventListener('click', () => openModalMaquina(null));
@@ -1753,16 +1880,148 @@
   qs('#export-bitacoras').addEventListener('click', () => exportToCsv(enrichBitacorasForExport(applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras')), 'tabla-bitacoras', 'bitacoras'));
   qs('#export-excel-bitacoras').addEventListener('click', () => exportToExcel(enrichBitacorasForExport(applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras')), 'tabla-bitacoras', 'bitacoras'));
 
+  function updateHeaderUrgencies() {
+    const el = qs('#header-alerts');
+    if (!el) return;
+    let urgent = 0;
+    (incidentesCache || []).forEach(inc => {
+      const d = getDiasRestantesSemaphore(inc);
+      if (d.dias !== null && d.dias <= 3) urgent++;
+    });
+    if (urgent === 0) {
+      el.innerHTML = '';
+      return;
+    }
+    el.innerHTML = `<a href="#" class="alert-badge alert-urgent" id="header-alert-incidentes" role="button"><i class="fas fa-exclamation-triangle"></i> ${urgent} incidente${urgent !== 1 ? 's' : ''} por vencer</a>`;
+    qs('#header-alert-incidentes').addEventListener('click', function (e) {
+      e.preventDefault();
+      showPanel('incidentes');
+    });
+    try {
+      if (typeof showUrgentNotificationIfGranted === 'function' && !sessionStorage.getItem('notif-urgent-shown')) {
+        showUrgentNotificationIfGranted();
+        sessionStorage.setItem('notif-urgent-shown', '1');
+      }
+    } catch (_) {}
+  }
+
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
       const modal = qs('#modal');
       if (modal && !modal.classList.contains('hidden')) modal.classList.add('hidden');
     }
-    if (e.ctrlKey || e.metaKey) {
-      const tab = { '0': 'dashboards', '1': 'clientes', '2': 'refacciones', '3': 'maquinas', '4': 'cotizaciones', '5': 'incidentes', '6': 'bitacoras' }[e.key];
+    const inInput = document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].indexOf(document.activeElement.tagName) >= 0;
+    if (!inInput && (e.ctrlKey || e.metaKey)) {
+      const tab = { '0': 'dashboards', '1': 'clientes', '2': 'refacciones', '3': 'maquinas', '4': 'cotizaciones', '5': 'incidentes', '6': 'bitacoras', '7': 'acerca' }[e.key];
       if (tab) { e.preventDefault(); showPanel(tab); }
     }
+    if (!inInput && e.key === 'k' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      openCommandPalette();
+    }
   });
+
+  function initTheme() {
+    const dark = localStorage.getItem('cotizacion-dark') === '1';
+    const icon = qs('#theme-icon');
+    if (dark) { document.body.classList.add('dark-theme'); if (icon) { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); } }
+    else { document.body.classList.remove('dark-theme'); if (icon) { icon.classList.remove('fa-sun'); icon.classList.add('fa-moon'); } }
+  }
+  function toggleTheme() {
+    const dark = document.body.classList.toggle('dark-theme');
+    localStorage.setItem('cotizacion-dark', dark ? '1' : '0');
+    const icon = qs('#theme-icon');
+    if (icon) { icon.classList.toggle('fa-moon', !dark); icon.classList.toggle('fa-sun', dark); }
+  }
+  const themeBtn = qs('#theme-toggle');
+  if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+  initTheme();
+
+  function openCommandPalette() {
+    const wrap = qs('#command-palette');
+    const input = qs('#command-palette-input');
+    const results = qs('#command-palette-results');
+    if (!wrap || !input || !results) return;
+    wrap.classList.remove('hidden');
+    input.value = '';
+    input.focus();
+    const sections = [
+      { id: 'dashboards', label: 'Dashboards', icon: 'fa-chart-pie' },
+      { id: 'clientes', label: 'Clientes', icon: 'fa-users' },
+      { id: 'refacciones', label: 'Refacciones', icon: 'fa-cogs' },
+      { id: 'maquinas', label: 'Máquinas', icon: 'fa-industry' },
+      { id: 'cotizaciones', label: 'Cotizaciones', icon: 'fa-file-invoice-dollar' },
+      { id: 'incidentes', label: 'Incidentes', icon: 'fa-exclamation-triangle' },
+      { id: 'bitacoras', label: 'Bitácora de horas', icon: 'fa-clock' },
+      { id: 'demo', label: 'Cargar demo', icon: 'fa-database' },
+      { id: 'acerca', label: 'Acerca de', icon: 'fa-info-circle' },
+    ];
+    function render(q) {
+      const qn = (q || '').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const sectionItems = sections.filter(s => !qn || s.label.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(qn)).map(s => ({ type: 'section', ...s }));
+      const clientItems = (clientesCache || []).filter(c => !qn || (c.nombre || '').toLowerCase().includes(qn) || (c.codigo || '').toLowerCase().includes(qn)).slice(0, 5).map(c => ({ type: 'cliente', id: c.id, label: c.nombre, meta: c.codigo, icon: 'fa-user' }));
+      const cotItems = (cotizacionesCache || []).filter(c => !qn || (c.folio || '').toLowerCase().includes(qn)).slice(0, 5).map(c => ({ type: 'cotizacion', id: c.id, label: c.folio, meta: c.cliente_nombre, icon: 'fa-file-invoice' }));
+      const incItems = (incidentesCache || []).filter(i => !qn || (i.folio || '').toLowerCase().includes(qn)).slice(0, 5).map(i => ({ type: 'incidente', id: i.id, label: i.folio, meta: i.cliente_nombre, icon: 'fa-exclamation-triangle' }));
+      const all = [...sectionItems, ...clientItems, ...cotItems, ...incItems];
+      results.innerHTML = all.length ? all.map((it, idx) => {
+        const meta = it.meta ? `<span class="command-palette-item-meta">${escapeHtml(it.meta)}</span>` : '';
+        if (it.type === 'section') return `<button type="button" class="command-palette-item" data-action="panel" data-id="${escapeHtml(it.id)}"><i class="fas ${it.icon}"></i> ${escapeHtml(it.label)}</button>`;
+        if (it.type === 'cliente') return `<button type="button" class="command-palette-item" data-action="edit-cliente" data-id="${it.id}"><i class="fas ${it.icon}"></i> ${escapeHtml(it.label)} ${meta}</button>`;
+        if (it.type === 'cotizacion') return `<button type="button" class="command-palette-item" data-action="edit-cotizacion" data-id="${it.id}"><i class="fas ${it.icon}"></i> ${escapeHtml(it.label)} ${meta}</button>`;
+        if (it.type === 'incidente') return `<button type="button" class="command-palette-item" data-action="edit-incidente" data-id="${it.id}"><i class="fas ${it.icon}"></i> ${escapeHtml(it.label)} ${meta}</button>`;
+        return '';
+      }).join('') : '<p style="padding:1rem;color:#64748b;">Sin resultados</p>';
+      results.querySelectorAll('.command-palette-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const action = btn.dataset.action;
+          const id = btn.dataset.id;
+          wrap.classList.add('hidden');
+          if (action === 'panel') showPanel(id);
+          if (action === 'edit-cliente' && id) { showPanel('clientes'); setTimeout(() => openModalCliente(clientesCache.find(c => c.id == id)), 100); }
+          if (action === 'edit-cotizacion' && id) { showPanel('cotizaciones'); setTimeout(() => editCotizacion(id), 100); }
+          if (action === 'edit-incidente' && id) { showPanel('incidentes'); setTimeout(() => editIncidente(id), 100); }
+        });
+      });
+    }
+    render('');
+    input.addEventListener('input', () => render(input.value));
+    input.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') { wrap.classList.add('hidden'); } });
+    wrap.addEventListener('click', (ev) => { if (ev.target === wrap) wrap.classList.add('hidden'); });
+  }
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+  }
+
+  const BACKUP_REMINDER_KEY = 'cotizacion-backup-last';
+  const BACKUP_REMINDER_INTERVAL = 24 * 60 * 60 * 1000;
+  function maybeShowBackupReminder() {
+    const last = parseInt(localStorage.getItem(BACKUP_REMINDER_KEY) || '0', 10);
+    if (Date.now() - last < BACKUP_REMINDER_INTERVAL) return;
+    localStorage.setItem(BACKUP_REMINDER_KEY, String(Date.now()));
+    showToast('Recuerda exportar tus datos (CSV/Excel en cada sección) con regularidad para no perder información.', 'success');
+  }
+  setTimeout(maybeShowBackupReminder, 15000);
+
+  /* Pedir permiso de notificaciones al cargar la app (tras 3 s) para avisos de incidentes por vencer */
+  setTimeout(requestNotificationPermissionAndMaybeNotify, 3000);
+
+  function requestNotificationPermissionAndMaybeNotify() {
+    if (!('Notification' in window) || Notification.permission === 'granted') return;
+    if (Notification.permission === 'default') {
+      Notification.requestPermission().then((p) => {
+        if (p === 'granted' && typeof updateHeaderUrgencies === 'function') {
+          const urgent = (incidentesCache || []).filter(inc => { const d = getDiasRestantesSemaphore(inc); return d.dias !== null && d.dias <= 3; }).length;
+          if (urgent > 0) new Notification('Sistema de Cotización', { body: `${urgent} incidente(s) por vencer. Revisa la sección Incidentes.`, icon: '/favicon.svg' });
+        }
+      });
+    }
+  }
+  function showUrgentNotificationIfGranted() {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    const urgent = (incidentesCache || []).filter(inc => { const d = getDiasRestantesSemaphore(inc); return d.dias !== null && d.dias <= 3; }).length;
+    if (urgent > 0) new Notification('Incidentes por vencer', { body: `Tienes ${urgent} incidente(s) por vencer o vencidos.`, icon: '/favicon.svg' });
+  }
 
   // ----- Asistente IA: minimizable (bolita), tooltip, inactividad, unread, animaciones -----
   (function initAiChat() {

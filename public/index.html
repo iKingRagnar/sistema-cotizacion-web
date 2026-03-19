@@ -6,7 +6,8 @@
   <title>Sistema de Cotización y Gestión · Cotizaciones, incidentes y bitácora profesional</title>
   <meta name="description" content="Sistema profesional para cotizaciones, clientes, refacciones, máquinas, incidentes y bitácora de horas. Control total en un solo lugar.">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="css/style.css?v=7">
+  <link rel="stylesheet" href="css/style.css?v=8">
+  <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
 <body>
@@ -20,6 +21,10 @@
           <p class="subtitle">Cotizaciones, incidentes, bitácora de horas y catálogos en una sola plataforma</p>
         </div>
       </div>
+      <div class="header-actions">
+        <div id="header-alerts" class="header-alerts" aria-live="polite"></div>
+        <button type="button" id="theme-toggle" class="btn-icon-header" title="Tema claro/oscuro" aria-label="Cambiar tema"><i class="fas fa-moon" id="theme-icon"></i></button>
+      </div>
     </div>
   </header>
 
@@ -32,6 +37,7 @@
     <button type="button" data-tab="incidentes" class="tab" title="Incidentes (Ctrl+5)"><i class="fas fa-exclamation-triangle"></i> Incidentes</button>
     <button type="button" data-tab="bitacoras" class="tab" title="Bitácora (Ctrl+6)"><i class="fas fa-clock"></i> Bitácora de horas</button>
     <button type="button" data-tab="demo" class="tab highlight" title="Cargar datos de ejemplo"><i class="fas fa-database"></i> Cargar demo</button>
+    <button type="button" data-tab="acerca" class="tab" title="Acerca de (Ctrl+7)"><i class="fas fa-info-circle"></i> Acerca de</button>
   </nav>
 
   <main class="content" id="main-content">
@@ -44,6 +50,7 @@
             <p class="dashboard-subtitle">Métricas clave por área · <span id="dashboard-last-update">Actualizado al cargar</span> · Se actualizan cada 12 h</p>
           </div>
           <div class="dashboard-header-right">
+            <button type="button" id="btn-print-pdf" class="btn-dashboard-refresh outline" title="Imprimir o guardar como PDF"><i class="fas fa-print"></i> Imprimir / PDF</button>
             <button type="button" id="dashboard-refresh" class="btn-dashboard-refresh" title="Actualizar datos"><i class="fas fa-sync-alt"></i> Actualizar</button>
           </div>
         </div>
@@ -318,6 +325,25 @@
         <p class="hint">Luego verás todo en Cotizaciones, Incidentes y Bitácora.</p>
       </div>
     </section>
+
+    <!-- ACERCA DE -->
+    <section id="panel-acerca" class="panel">
+      <div class="card card-acerca">
+        <h2><i class="fas fa-info-circle"></i> Acerca de</h2>
+        <p><strong>Sistema de Cotización y Gestión</strong> · Versión <span class="footer-version">v4</span></p>
+        <p>Plataforma profesional para cotizaciones, clientes, refacciones, máquinas, incidentes y bitácora de horas. Todo en un solo lugar.</p>
+        <ul class="acerca-features">
+          <li><i class="fas fa-check"></i> Catálogos (clientes, refacciones, máquinas)</li>
+          <li><i class="fas fa-check"></i> Cotizaciones y seguimiento</li>
+          <li><i class="fas fa-check"></i> Incidentes con SLA y fecha de vencimiento</li>
+          <li><i class="fas fa-check"></i> Bitácora de horas</li>
+          <li><i class="fas fa-check"></i> Dashboard con pronósticos y comparativos</li>
+          <li><i class="fas fa-check"></i> Exportación CSV/Excel y PDF</li>
+          <li><i class="fas fa-check"></i> Asistente con IA y reconocimiento de voz</li>
+        </ul>
+        <p class="hint">Atajos: <kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> secciones · <kbd>Ctrl</kbd>+<kbd>K</kbd> búsqueda global · <kbd>Esc</kbd> cierra modales.</p>
+      </div>
+    </section>
   </main>
 
   <div id="ai-widget-wrap" class="ai-widget-wrap collapsed" aria-label="Agente de Soporte - Asistente con IA">
@@ -365,9 +391,31 @@
       <div id="modal-body" class="modal-body"></div>
     </div>
   </div>
+  <div id="confirm-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div class="modal-box modal-confirm">
+      <div class="modal-header">
+        <h3 id="confirm-title">Confirmar</h3>
+        <button type="button" class="close" id="confirm-close" aria-label="Cerrar">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-message"></p>
+        <div class="form-actions" style="margin-top:1rem;">
+          <button type="button" id="confirm-btn-ok" class="btn danger"><i class="fas fa-trash"></i> Eliminar</button>
+          <button type="button" id="confirm-btn-cancel" class="btn">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="command-palette" class="command-palette hidden" role="dialog" aria-label="Búsqueda rápida">
+    <div class="command-palette-box">
+      <input type="text" id="command-palette-input" placeholder="Buscar sección, cliente, folio… (Esc para cerrar)" autocomplete="off">
+      <div id="command-palette-results"></div>
+    </div>
+  </div>
 
   <footer class="app-footer" role="contentinfo">
-    <p>Sistema de Cotización y Gestión · <span class="footer-version">v4</span> · Uso profesional · <span aria-hidden="true">—</span> Cotizaciones, incidentes y bitácora en un solo lugar</p>
+    <p>Sistema de Cotización y Gestión · <span class="footer-version">v4</span> · Uso profesional · Cotizaciones, incidentes y bitácora en un solo lugar</p>
+    <p class="footer-tip"><kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> atajos de sección · <kbd>Esc</kbd> cierra modales</p>
   </footer>
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
   <div id="global-loading" class="global-loading hidden" aria-hidden="true">
