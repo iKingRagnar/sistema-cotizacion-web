@@ -2134,6 +2134,9 @@
     const wrap = qs('#ai-widget-wrap');
     const widget = qs('#ai-widget');
     const fab = qs('#ai-fab');
+    const nudgeEl = qs('#ai-fab-nudge');
+    const nudgeClose = qs('#ai-fab-nudge-close');
+    const NUDGE_SESSION_KEY = 'ai-fab-nudge-dismissed';
     const minimizeBtn = qs('#ai-minimize');
     const unreadBadge = qs('#ai-unread-badge');
     const messagesEl = qs('#ai-messages');
@@ -2157,12 +2160,37 @@
     let pendingFileBase64 = null;
     let pendingFileMime = null;
 
+    function dismissFabNudge() {
+      if (!nudgeEl) return;
+      try { sessionStorage.setItem(NUDGE_SESSION_KEY, '1'); } catch (_) {}
+      nudgeEl.classList.remove('ai-fab-nudge--visible');
+      wrap.classList.remove('ai-fab-nudge-active');
+      setTimeout(function () { if (nudgeEl) nudgeEl.classList.add('hidden'); }, 400);
+    }
+    function maybeShowFabNudge() {
+      if (!nudgeEl || !fab) return;
+      try { if (sessionStorage.getItem(NUDGE_SESSION_KEY)) return; } catch (_) { /* sin sessionStorage, mostrar igual */ }
+      setTimeout(function () {
+        if (wrap.classList.contains('expanded')) return;
+        try { if (sessionStorage.getItem(NUDGE_SESSION_KEY)) return; } catch (_) {}
+        nudgeEl.classList.remove('hidden');
+        requestAnimationFrame(function () {
+          nudgeEl.classList.add('ai-fab-nudge--visible');
+          wrap.classList.add('ai-fab-nudge-active');
+        });
+        setTimeout(dismissFabNudge, 14000);
+      }, 2600);
+    }
+    maybeShowFabNudge();
+    if (nudgeClose) nudgeClose.addEventListener('click', function (e) { e.stopPropagation(); dismissFabNudge(); });
+
     function setExpanded(expanded) {
       wrap.classList.toggle('collapsed', !expanded);
       wrap.classList.toggle('expanded', expanded);
       if (expanded) {
         unreadCount = 0;
         updateUnreadBadge();
+        dismissFabNudge();
       }
     }
     function updateUnreadBadge() {
