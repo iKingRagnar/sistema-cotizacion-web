@@ -6,42 +6,93 @@
   <title>Cotización</title>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: 'Georgia', 'Times New Roman', serif; margin: 0; padding: 0; color: #1a1a2e; font-size: 11pt; line-height: 1.4; }
-    .no-print { position: fixed; top: 0; left: 0; right: 0; z-index: 9999; padding: 0.75rem 1.5rem; background: #0f172a; color: #e2e8f0; display: flex; align-items: center; gap: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-    .no-print button { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
-    .no-print #btn-print { background: #0d9488; color: #fff; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, 'Georgia', serif;
+      margin: 0;
+      padding: 0;
+      color: #0f172a;
+      font-size: 11pt;
+      line-height: 1.45;
+      background: linear-gradient(165deg, #f0fdfa 0%, #ecfeff 40%, #f8fafc 100%);
+    }
+    .no-print { position: fixed; top: 0; left: 0; right: 0; z-index: 9999; padding: 0.75rem 1.5rem; background: linear-gradient(90deg, #0f172a 0%, #134e4a 50%, #0f766e 100%); color: #e2e8f0; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.25); }
+    .no-print button { padding: 0.5rem 1rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
+    .no-print #btn-print { background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: #fff; box-shadow: 0 2px 12px rgba(13,148,136,0.45); }
     .no-print #btn-close { background: #475569; color: #fff; }
     .doc { max-width: 210mm; margin: 0 auto; padding: 2rem 2.5rem; padding-top: 4rem; }
     .no-print + .doc { padding-top: 2rem; }
-    @media print { .no-print { display: none !important; } .doc { padding-top: 0.5rem; } }
-    .letterhead { display: flex; align-items: flex-start; justify-content: space-between; padding-bottom: 1.25rem; border-bottom: 3px solid #0d9488; margin-bottom: 1.5rem; }
-    .letterhead-logo { height: 52px; width: auto; }
+    @media print {
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .no-print { display: none !important; }
+      .doc { padding-top: 0.5rem; background: #fff; }
+      body { background: #fff; }
+    }
+    .letterhead {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 1rem 1.15rem 1.25rem;
+      margin: -0.25rem -0.5rem 1.5rem;
+      border-radius: 12px;
+      background: linear-gradient(125deg, #0f766e 0%, #0d9488 35%, #0891b2 70%, #0e7490 100%);
+      color: #fff;
+      box-shadow: 0 8px 28px rgba(13, 148, 136, 0.35);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .letterhead-logo { height: 52px; width: auto; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2)); }
     .letterhead-company { text-align: right; }
-    .letterhead-company .name { font-size: 1.25rem; font-weight: 700; color: #0f172a; margin: 0; letter-spacing: 0.02em; }
-    .letterhead-company .tagline { font-size: 0.75rem; color: #64748b; margin: 0.2rem 0 0; }
-    .doc-title { text-align: center; font-size: 1.5rem; font-weight: 700; color: #0d9488; margin: 0 0 1.25rem; letter-spacing: 0.08em; }
-    .doc-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin-bottom: 1.25rem; font-size: 0.95rem; }
-    .doc-meta span { display: block; }
-    .doc-meta strong { color: #475569; font-weight: 600; margin-right: 0.35rem; }
+    .letterhead-company .name { font-size: 1.2rem; font-weight: 800; color: #fff; margin: 0; letter-spacing: 0.02em; text-shadow: 0 1px 2px rgba(0,0,0,0.15); }
+    .letterhead-company .tagline { font-size: 0.78rem; color: rgba(255,255,255,0.88); margin: 0.35rem 0 0; }
+    .doc-title {
+      text-align: center;
+      font-size: 1.55rem;
+      font-weight: 800;
+      margin: 0 0 1.35rem;
+      letter-spacing: 0.12em;
+      background: linear-gradient(90deg, #0f766e, #0d9488, #0891b2);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+    }
+    @supports not (background-clip: text) {
+      .doc-title { color: #0d9488; -webkit-text-fill-color: #0d9488; }
+    }
+    .doc-meta { display: flex; flex-wrap: wrap; gap: 1.25rem 2rem; margin-bottom: 1.35rem; font-size: 0.92rem; }
+    .doc-meta span { display: block; padding: 0.45rem 0.75rem; background: linear-gradient(180deg, #f0fdfa 0%, #ecfdf5 100%); border-radius: 8px; border: 1px solid #99f6e4; }
+    .doc-meta strong { color: #115e59; font-weight: 700; margin-right: 0.35rem; }
     .doc-block { margin-bottom: 1.25rem; }
-    .doc-block-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; color: #64748b; margin-bottom: 0.4rem; font-weight: 600; }
-    .doc-block-content { background: #f8fafc; padding: 0.9rem 1rem; border: 1px solid #e2e8f0; border-radius: 4px; }
-    .doc-block-content p { margin: 0.15rem 0; }
-    .doc-table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: 0.95rem; }
-    .doc-table th, .doc-table td { padding: 0.5rem 0.65rem; text-align: left; border: 1px solid #cbd5e1; }
-    .doc-table th { background: #0d9488; color: #fff; font-weight: 600; }
+    .doc-block-title { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.14em; color: #0f766e; margin-bottom: 0.45rem; font-weight: 700; }
+    .doc-block-content { background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%); padding: 1rem 1.1rem; border: 1px solid #cbd5e1; border-radius: 10px; border-left: 4px solid #0d9488; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06); }
+    .doc-block-content p { margin: 0.2rem 0; }
+    .doc-table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 1.35rem 0; font-size: 0.93rem; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08); }
+    .doc-table th, .doc-table td { padding: 0.55rem 0.7rem; text-align: left; border: 1px solid #bae6fd; }
+    .doc-table thead th {
+      background: linear-gradient(180deg, #0d9488 0%, #0f766e 100%);
+      color: #fff;
+      font-weight: 700;
+      text-shadow: 0 1px 1px rgba(0,0,0,0.12);
+    }
     .doc-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
-    .doc-table tbody tr:nth-child(even) { background: #f8fafc; }
-    .doc-table tfoot td { font-weight: 600; background: #e2e8f0; border-color: #cbd5e1; }
-    .doc-condiciones { font-size: 0.85rem; color: #475569; margin: 1.25rem 0; padding-left: 1rem; }
-    .doc-condiciones ol { margin: 0.35rem 0 0; padding-left: 1.25rem; }
-    .doc-condiciones li { margin: 0.2rem 0; }
+    .doc-table tbody tr:nth-child(even) { background: #f0fdfa; }
+    .doc-table tbody tr:nth-child(odd) { background: #fff; }
+    .doc-table tfoot td { font-weight: 600; background: #e0f2fe; border-color: #7dd3fc; color: #0c4a6e; }
+    .doc-table tfoot tr:last-child td {
+      background: linear-gradient(90deg, #0f766e 0%, #0d9488 50%, #14b8a6 100%);
+      color: #fff;
+      font-size: 1.05rem;
+      font-weight: 800;
+      border-color: #0f766e;
+    }
+    .doc-condiciones { font-size: 0.85rem; color: #334155; margin: 1.35rem 0; padding: 1rem 1.15rem; background: #fffbeb; border-radius: 10px; border: 1px solid #fcd34d; border-left: 4px solid #f59e0b; }
+    .doc-condiciones ol { margin: 0.4rem 0 0; padding-left: 1.25rem; }
+    .doc-condiciones li { margin: 0.25rem 0; }
     .doc-firma { margin-top: 2rem; display: flex; justify-content: space-between; gap: 3rem; flex-wrap: wrap; }
     .doc-firma-box { flex: 1; min-width: 180px; }
-    .doc-firma-line { border-bottom: 1px solid #1a1a2e; height: 2.2em; margin-bottom: 0.25rem; }
-    .doc-firma-label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+    .doc-firma-line { border-bottom: 2px solid #0d9488; height: 2.2em; margin-bottom: 0.25rem; }
+    .doc-firma-label { font-size: 0.72rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
     .loading, .error { padding: 2rem; text-align: center; }
-    .error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 8px; }
+    .error { background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%); color: #b91c1c; border: 1px solid #fecaca; border-radius: 10px; }
   </style>
 </head>
 <body>

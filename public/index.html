@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=11">
+  <link rel="stylesheet" href="css/style.css?v=12">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
@@ -69,12 +69,16 @@
         <div class="dashboard-header">
           <div class="dashboard-header-left">
             <h2 class="dashboard-title"><i class="fas fa-chart-pie"></i> Resumen general</h2>
-            <p class="dashboard-subtitle">Métricas clave por área · <span id="dashboard-last-update">Actualizado al cargar</span> · Se actualizan cada 12 h</p>
+            <p class="dashboard-subtitle">Métricas clave por área · Clic en gráficos, scorecards o filas del comparativo para <strong>cruzar filtros</strong> (estilo Power BI) · <span id="dashboard-last-update">Actualizado al cargar</span> · Se actualizan cada 12 h</p>
           </div>
           <div class="dashboard-header-right">
             <button type="button" id="btn-print-pdf" class="btn-dashboard-refresh outline" title="Imprimir o guardar como PDF"><i class="fas fa-print"></i> Imprimir / PDF</button>
             <button type="button" id="dashboard-refresh" class="btn-dashboard-refresh" title="Actualizar datos"><i class="fas fa-sync-alt"></i> Actualizar</button>
           </div>
+        </div>
+        <div id="dashboard-crossfilter-bar" class="dashboard-crossfilter-bar hidden" role="status" aria-live="polite">
+          <span id="dashboard-crossfilter-text" class="dashboard-crossfilter-text"></span>
+          <button type="button" id="dashboard-crossfilter-clear" class="btn small outline dashboard-crossfilter-clear">Quitar filtros</button>
         </div>
         <div id="dashboard-grid" class="dashboard-grid" aria-live="polite">
           <div class="dashboard-loading" id="dashboard-loading"><div class="loading-spinner"></div><span>Cargando indicadores…</span></div>
@@ -226,7 +230,7 @@
         <button type="button" class="btn primary big btn-empty-cot"><i class="fas fa-plus"></i> Agregar cotización</button>
       </div>
       <div id="cotizaciones-list" class="table-wrap">
-        <table class="data-table filterable-table" id="tabla-cotizaciones" data-cache="cotizacionesCache">
+        <table class="data-table data-table--fluid filterable-table" id="tabla-cotizaciones" data-cache="cotizacionesCache">
           <thead>
             <tr>
               <th>Folio</th><th>Cliente</th><th>Tipo</th><th>Fecha</th><th>Total</th><th>Vigencia</th>
@@ -265,7 +269,7 @@
         <button type="button" class="btn primary big btn-empty-inc"><i class="fas fa-plus"></i> Agregar incidente</button>
       </div>
       <div id="incidentes-list" class="table-wrap">
-        <table class="data-table filterable-table" id="tabla-incidentes" data-cache="incidentesCache">
+        <table class="data-table data-table--fluid filterable-table" id="tabla-incidentes" data-cache="incidentesCache">
           <thead>
             <tr>
               <th>Folio</th><th>Cliente</th><th>Máquina</th><th>Descripción</th><th>Fecha incidente</th><th>Fecha cerrado</th><th>Fecha vencimiento</th><th>Días restantes</th><th>Prioridad</th><th>Estatus</th><th>SLA</th>
@@ -309,7 +313,7 @@
         <button type="button" class="btn primary big btn-empty-bit"><i class="fas fa-plus"></i> Agregar registro</button>
       </div>
       <div id="bitacoras-list" class="table-wrap">
-        <table class="data-table filterable-table" id="tabla-bitacoras" data-cache="bitacorasCache">
+        <table class="data-table data-table--fluid filterable-table" id="tabla-bitacoras" data-cache="bitacorasCache">
           <thead>
             <tr>
               <th>Fecha</th><th>Incidente</th><th>Cotización</th><th>Técnico</th><th>Actividades</th><th>Horas</th><th>Materiales</th><th>Estado</th>

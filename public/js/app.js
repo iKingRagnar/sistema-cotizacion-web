@@ -12,6 +12,9 @@
   let bitacorasCache = [];
   let chartDonut = null;
   let chartBars = null;
+  /** Filtro cruzado en dashboard (estilo Power BI): dimensión de módulo y/o periodo del comparativo */
+  let dashboardCrossFilterEntity = null;
+  let dashboardCrossFilterPeriod = null;
 
   function qs(s) { return document.querySelector(s); }
   function qsAll(s) { return document.querySelectorAll(s); }
@@ -75,7 +78,7 @@
     const short = c.shortName || c.appName || 'Cotización Pro';
     if (nameEl) nameEl.textContent = short;
     if (tagEl) tagEl.textContent = c.tagline || '';
-    document.title = short + ' · Profesional';
+    updateDocumentTitleFromActiveTab();
     const logo = qs('#header-brand-logo');
     if (logo && c.logoUrl) {
       logo.src = c.logoUrl;
@@ -227,6 +230,29 @@
       if (isSoundEnabled()) playSuccessChime();
     });
   }
+  /** Título de la pestaña del navegador según la sección activa */
+  function updateDocumentTitle(panelId) {
+    const base = serverConfig.shortName || serverConfig.appName || 'Cotización Pro';
+    const map = {
+      dashboards: 'Dashboard',
+      clientes: 'Clientes',
+      refacciones: 'Refacciones',
+      maquinas: 'Máquinas',
+      cotizaciones: 'Cotizaciones',
+      incidentes: 'Incidentes',
+      bitacoras: 'Bitácora de horas',
+      demo: 'Cargar demo',
+      acerca: 'Acerca de',
+      auditoria: 'Auditoría',
+    };
+    const section = map[panelId] || 'Inicio';
+    document.title = section + ' · ' + base;
+  }
+  function updateDocumentTitleFromActiveTab() {
+    const tab = document.querySelector('.tab.active');
+    updateDocumentTitle(tab && tab.dataset.tab ? tab.dataset.tab : 'dashboards');
+  }
+
   function showPanel(id, opts) {
     const skipLoad = opts && opts.skipLoad === true;
     if (serverConfig.authRequired && !getAuthToken() && id !== 'acerca') {
@@ -248,6 +274,7 @@
     if (panel) panel.classList.add('active');
     if (tab) tab.classList.add('active');
     if (TABS_PERSIST.indexOf(id) >= 0) try { localStorage.setItem(LAST_TAB_KEY, id); } catch (_) {}
+    updateDocumentTitle(id);
     if (skipLoad) return;
     if (id === 'dashboards') loadDashboard();
     if (id === 'clientes') loadClientes();
@@ -989,7 +1016,7 @@
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${escapeHtml(String(c.folio || ''))}</td>
-        <td>${escapeHtml(String(c.cliente_nombre || ''))}</td>
+        <td class="td-text-wrap">${escapeHtml(String(c.cliente_nombre || ''))}</td>
         <td>${escapeHtml(String(c.tipo || ''))}</td>
         <td>${escapeHtml(String((c.fecha || '').toString().slice(0, 10)))}</td>
         <td>${typeof c.total === 'number' ? '$' + c.total.toLocaleString('es-MX', { minimumFractionDigits: 2 }) : (c.total != null ? '$' + Number(c.total).toLocaleString('es-MX', { minimumFractionDigits: 2 }) : '')}</td>
@@ -1074,9 +1101,9 @@
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${escapeHtml(String(i.folio || ''))}</td>
-        <td>${escapeHtml(String(i.cliente_nombre || ''))}</td>
-        <td>${escapeHtml(String(i.maquina_nombre || ''))}</td>
-        <td>${escapeHtml(desc.length > 45 ? desc.slice(0, 45) + '…' : desc)}</td>
+        <td class="td-text-wrap">${escapeHtml(String(i.cliente_nombre || ''))}</td>
+        <td class="td-text-wrap">${escapeHtml(String(i.maquina_nombre || ''))}</td>
+        <td class="td-desc-wrap">${escapeHtml(desc)}</td>
         <td>${(i.fecha_reporte || '').toString().slice(0, 10) || '—'}</td>
         <td>${(i.fecha_cerrado || '').toString().slice(0, 10) || '—'}</td>
         <td>${escapeHtml(fVenc)}</td>
@@ -1167,10 +1194,10 @@
         <td>${escapeHtml(String((b.fecha || '').toString().slice(0, 10)))}</td>
         <td>${escapeHtml(String(b.incidente_folio || '—'))}</td>
         <td>${escapeHtml(String(b.cotizacion_folio || '—'))}</td>
-        <td>${escapeHtml(String(b.tecnico || ''))}</td>
-        <td>${escapeHtml(act.length > 35 ? act.slice(0, 35) + '…' : act)}</td>
+        <td class="td-text-wrap">${escapeHtml(String(b.tecnico || ''))}</td>
+        <td class="td-desc-wrap">${escapeHtml(act)}</td>
         <td>${b.tiempo_horas != null ? b.tiempo_horas : '—'}</td>
-        <td>${escapeHtml(mat.length > 25 ? mat.slice(0, 25) + '…' : mat)}</td>
+        <td class="td-desc-wrap td-desc-wrap--compact">${escapeHtml(mat)}</td>
         <td class="sla-cell"><span class="semaforo semaforo-${est.color}" title="${escapeHtml(est.label)}"><i class="fas ${est.icon}"></i> ${escapeHtml(est.label)}</span></td>
         <td class="th-actions">
           <button type="button" class="btn small outline btn-pdf-bit" data-id="${b.id}" title="Imprimir / PDF"><i class="fas fa-file-pdf"></i></button>
@@ -1747,6 +1774,134 @@
     }
   }
 
+  function crossfilterEntityLabel(key) {
+    const m = {
+      clientes: 'Clientes',
+      refacciones: 'Refacciones',
+      maquinas: 'Máquinas',
+      cotizaciones: 'Cotizaciones',
+      incidentes: 'Incidentes',
+      bitacoras: 'Bitácora de horas',
+    };
+    return m[key] || key;
+  }
+  function crossfilterPeriodLabel(key) {
+    const m = { semana: 'Semana', mes: 'Mes', año: 'Año' };
+    return m[key] || key;
+  }
+  function setDashboardCrossFilterEntity(key) {
+    if (dashboardCrossFilterEntity === key) dashboardCrossFilterEntity = null;
+    else dashboardCrossFilterEntity = key || null;
+    syncDashboardCrossFilterUi();
+  }
+  function setDashboardCrossFilterPeriod(key) {
+    if (dashboardCrossFilterPeriod === key) dashboardCrossFilterPeriod = null;
+    else dashboardCrossFilterPeriod = key || null;
+    syncDashboardCrossFilterUi();
+  }
+  function clearDashboardCrossFilter() {
+    dashboardCrossFilterEntity = null;
+    dashboardCrossFilterPeriod = null;
+    syncDashboardCrossFilterUi();
+  }
+  function syncDashboardCrossFilterUi() {
+    const surface = qs('#panel-dashboards .dashboard-surface');
+    const bar = qs('#dashboard-crossfilter-bar');
+    const textEl = qs('#dashboard-crossfilter-text');
+    if (!surface) return;
+    surface.classList.toggle('dashboard-crossfilter-entity-active', !!dashboardCrossFilterEntity);
+    surface.classList.toggle('dashboard-crossfilter-period-active', !!dashboardCrossFilterPeriod);
+    surface.querySelectorAll('.is-crossfilter-match').forEach(function (el) { el.classList.remove('is-crossfilter-match'); });
+    if (dashboardCrossFilterEntity) {
+      surface.querySelectorAll('.dashboard-card[data-dashboard="' + dashboardCrossFilterEntity + '"]').forEach(function (el) { el.classList.add('is-crossfilter-match'); });
+      surface.querySelectorAll('.dashboard-score-tile[data-crossfilter-entity="' + dashboardCrossFilterEntity + '"]').forEach(function (el) { el.classList.add('is-crossfilter-match'); });
+      surface.querySelectorAll('.dashboard-kpi-item[data-crossfilter-entity="' + dashboardCrossFilterEntity + '"]').forEach(function (el) { el.classList.add('is-crossfilter-match'); });
+    }
+    if (dashboardCrossFilterPeriod) {
+      surface.querySelectorAll('.dashboard-stat-card[data-period="' + dashboardCrossFilterPeriod + '"]').forEach(function (el) { el.classList.add('is-crossfilter-match'); });
+    }
+    const idxMap = { cotizaciones: 0, incidentes: 1, bitacoras: 2 };
+    const baseDonut = ['#059669', '#ea580c', '#7c3aed'];
+    const dimDonut = 'rgba(51,65,85,0.38)';
+    if (chartDonut && chartDonut.canvas && chartDonut.data && chartDonut.data.datasets && chartDonut.data.datasets[0]) {
+      let colors = baseDonut.slice();
+      if (dashboardCrossFilterEntity && Object.prototype.hasOwnProperty.call(idxMap, dashboardCrossFilterEntity)) {
+        const hi = idxMap[dashboardCrossFilterEntity];
+        colors = baseDonut.map(function (c, j) { return j === hi ? c : dimDonut; });
+      }
+      chartDonut.data.datasets[0].backgroundColor = colors;
+      chartDonut.update('none');
+    }
+    if (chartBars && chartBars.canvas && chartBars.data && chartBars.data.datasets && chartBars.data.datasets[0] && chartBars.data.datasets[1]) {
+      const periods = ['semana', 'mes', 'año'];
+      const pi = dashboardCrossFilterPeriod ? periods.indexOf(dashboardCrossFilterPeriod) : -1;
+      if (pi >= 0) {
+        const dimBar = 'rgba(148,163,184,0.22)';
+        chartBars.data.datasets[0].backgroundColor = chartBars.data.datasets[0].data.map(function (_, j) {
+          return j === pi ? 'rgba(56,189,248,0.95)' : dimBar;
+        });
+        chartBars.data.datasets[1].backgroundColor = chartBars.data.datasets[1].data.map(function (_, j) {
+          return j === pi ? 'rgba(148,163,184,0.85)' : dimBar;
+        });
+      } else {
+        chartBars.data.datasets[0].backgroundColor = 'rgba(56,189,248,0.8)';
+        chartBars.data.datasets[1].backgroundColor = 'rgba(148,163,184,0.6)';
+      }
+      chartBars.update('none');
+    }
+    if (bar && textEl) {
+      const parts = [];
+      if (dashboardCrossFilterEntity) parts.push('Módulo: ' + crossfilterEntityLabel(dashboardCrossFilterEntity));
+      if (dashboardCrossFilterPeriod) parts.push('Periodo: ' + crossfilterPeriodLabel(dashboardCrossFilterPeriod));
+      if (parts.length) {
+        bar.classList.remove('hidden');
+        textEl.textContent = 'Vista filtrada (clic de nuevo en el mismo elemento para quitar) · ' + parts.join(' · ');
+      } else {
+        bar.classList.add('hidden');
+        textEl.textContent = '';
+      }
+    }
+  }
+  function initDashboardCrossfilterBindings() {
+    const grid = qs('#dashboard-grid');
+    if (grid && !grid.dataset.cfDelegation) {
+      grid.dataset.cfDelegation = '1';
+      grid.addEventListener('click', function (e) {
+        const kpiItem = e.target.closest('.dashboard-kpi-item[data-crossfilter-entity]');
+        if (kpiItem) {
+          setDashboardCrossFilterEntity(kpiItem.getAttribute('data-crossfilter-entity'));
+          return;
+        }
+        const tile = e.target.closest('.dashboard-score-tile[data-crossfilter-entity]');
+        if (tile) {
+          setDashboardCrossFilterEntity(tile.getAttribute('data-crossfilter-entity'));
+          return;
+        }
+        const card = e.target.closest('.dashboard-card[data-dashboard]');
+        if (card && !e.target.closest('.dashboard-card-action')) {
+          setDashboardCrossFilterEntity(card.getAttribute('data-dashboard'));
+        }
+      });
+    }
+    const comp = qs('#dashboard-comparativo');
+    if (comp && !comp.dataset.cfDelegation) {
+      comp.dataset.cfDelegation = '1';
+      comp.addEventListener('click', function (e) {
+        const row = e.target.closest('.stat-row[data-dimension]');
+        if (!row) return;
+        const dim = row.getAttribute('data-dimension');
+        if (dim) setDashboardCrossFilterEntity(dim);
+        const statCard = row.closest('.dashboard-stat-card[data-period]');
+        if (statCard) setDashboardCrossFilterPeriod(statCard.getAttribute('data-period'));
+      });
+    }
+    const clr = qs('#dashboard-crossfilter-clear');
+    if (clr && !clr.dataset.bound) {
+      clr.dataset.bound = '1';
+      clr.addEventListener('click', function () { clearDashboardCrossFilter(); });
+    }
+  }
+
   // ----- DASHBOARD -----
   function formatMoney(n) {
     if (n == null || isNaN(n)) return '—';
@@ -1783,7 +1938,10 @@
       const incidentes = toArr(raw[4]);
       const bitacoras = toArr(raw[5]);
       const dashboardStats = raw[6] && typeof raw[6] === 'object' ? raw[6] : null;
-      if (loading) loading.classList.add('hidden');
+      if (loading) {
+        loading.classList.add('hidden');
+        loading.remove();
+      }
       const now = new Date();
       const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
       const ciudades = new Set(clientes.map(c => (c.ciudad || '').trim()).filter(Boolean)).size;
@@ -1810,16 +1968,59 @@
       const bitEsteMes = bitacoras.filter(b => (b.fecha || '').slice(0, 7) === thisMonthStart.slice(0, 7)).length;
       const incTotal = incidentes.length;
       const incProgress = incTotal ? Math.round((incCerrados / incTotal) * 100) : 0;
+      const cotMontoMes = cotizaciones
+        .filter(c => (c.fecha || '').slice(0, 7) === thisMonthStart.slice(0, 7))
+        .reduce((s, c) => s + (Number(c.total) || 0), 0);
+      const bitHorasMes = bitacoras
+        .filter(b => (b.fecha || '').slice(0, 7) === thisMonthStart.slice(0, 7))
+        .reduce((s, b) => s + (Number(b.tiempo_horas) || 0), 0);
+      const incUrgentesAbiertos = incidentes.filter(i => {
+        const est = String(i.estatus || '').toLowerCase();
+        if (est === 'cerrado') return false;
+        return /^(alta|critica)$/i.test(String(i.prioridad || ''));
+      }).length;
+
+      const execEl = document.createElement('div');
+      execEl.className = 'dashboard-exec-scorecards';
+      execEl.setAttribute('aria-label', 'Scorecard ejecutivo');
+      execEl.innerHTML = `
+        <article class="dashboard-score-tile dashboard-score-tile--revenue" data-crossfilter-entity="cotizaciones" title="Clic: filtrar vista por cotizaciones (como Power BI)">
+          <span class="dashboard-score-eyebrow">Ingresos cotizados</span>
+          <span class="dashboard-score-label">Monto del mes</span>
+          <strong class="dashboard-score-value">${escapeHtml(formatMoney(cotMontoMes))}</strong>
+          <span class="dashboard-score-meta"><i class="fas fa-file-invoice"></i> ${escapeHtml(String(cotEsteMes))} cotiz. emitidas · mes</span>
+        </article>
+        <article class="dashboard-score-tile dashboard-score-tile--pipeline" data-crossfilter-entity="cotizaciones" title="Clic: filtrar vista por cotizaciones">
+          <span class="dashboard-score-eyebrow">Cartera / pipeline</span>
+          <span class="dashboard-score-label">Valor total cotizaciones</span>
+          <strong class="dashboard-score-value">${escapeHtml(formatMoney(cotTotal))}</strong>
+          <span class="dashboard-score-meta"><i class="fas fa-layer-group"></i> ${escapeHtml(String(cotizaciones.length))} documentos en sistema</span>
+        </article>
+        <article class="dashboard-score-tile dashboard-score-tile--risk" data-crossfilter-entity="incidentes" title="Clic: filtrar vista por incidentes">
+          <span class="dashboard-score-eyebrow">Riesgo operativo</span>
+          <span class="dashboard-score-label">Urgencias abiertas</span>
+          <strong class="dashboard-score-value">${escapeHtml(String(incUrgentesAbiertos))}</strong>
+          <span class="dashboard-score-meta"><i class="fas fa-fire"></i> Alta/crítica sin cerrar · ${escapeHtml(String(incAbiertos))} abiertos en total</span>
+        </article>
+        <article class="dashboard-score-tile dashboard-score-tile--ops" data-crossfilter-entity="bitacoras" title="Clic: filtrar vista por bitácora">
+          <span class="dashboard-score-eyebrow">Productividad</span>
+          <span class="dashboard-score-label">Horas registradas · mes</span>
+          <strong class="dashboard-score-value">${escapeHtml(bitHorasMes.toFixed(1))} h</strong>
+          <span class="dashboard-score-meta"><i class="fas fa-hard-hat"></i> ${escapeHtml(String(bitEsteMes))} registros · ${escapeHtml(String(tecnicos))} técnicos</span>
+        </article>
+      `;
+      grid.appendChild(execEl);
+
       const resumenKpi = [
-        { label: 'Clientes', value: clientes.length, icon: 'fa-users' },
-        { label: 'Cotizaciones (monto)', value: formatMoney(cotTotal), icon: 'fa-file-invoice-dollar' },
-        { label: 'Incidentes abiertos', value: incAbiertos, icon: 'fa-exclamation-triangle' },
-        { label: 'Horas en bitácora', value: bitHoras.toFixed(1) + ' h', icon: 'fa-clock' },
+        { label: 'Clientes', value: clientes.length, icon: 'fa-users', cf: 'clientes' },
+        { label: 'Cotizaciones (monto)', value: formatMoney(cotTotal), icon: 'fa-file-invoice-dollar', cf: 'cotizaciones' },
+        { label: 'Incidentes abiertos', value: incAbiertos, icon: 'fa-exclamation-triangle', cf: 'incidentes' },
+        { label: 'Horas en bitácora', value: bitHoras.toFixed(1) + ' h', icon: 'fa-clock', cf: 'bitacoras' },
       ];
       const kpiEl = document.createElement('div');
       kpiEl.className = 'dashboard-kpi-strip';
       kpiEl.setAttribute('aria-label', 'Resumen ejecutivo');
-      kpiEl.innerHTML = resumenKpi.map(k => `<span class="dashboard-kpi-item"><i class="fas ${k.icon}"></i> <strong>${escapeHtml(String(k.value))}</strong> ${escapeHtml(k.label)}</span>`).join('');
+      kpiEl.innerHTML = resumenKpi.map(k => `<span class="dashboard-kpi-item" data-crossfilter-entity="${escapeHtml(k.cf)}" title="Clic: filtrar por ${escapeHtml(crossfilterEntityLabel(k.cf))}"><i class="fas ${k.icon}"></i> <strong>${escapeHtml(String(k.value))}</strong> ${escapeHtml(k.label)}</span>`).join('');
       grid.appendChild(kpiEl);
       const cards = [
         { id: 'clientes', icon: 'fa-users', title: 'Clientes', goto: 'clientes', rows: [{ label: 'Total', value: clientes.length, v: 'neutral' }, { label: 'Ciudades', value: ciudades, v: 'neutral' }, { label: 'Con RFC', value: conRfc, v: 'positive' }] },
@@ -1829,7 +2030,6 @@
         { id: 'incidentes', icon: 'fa-exclamation-triangle', title: 'Incidentes', goto: 'incidentes', progress: incProgress, rows: [{ label: 'Total', value: incTotal, v: 'neutral' }, { label: 'Abiertos', value: incAbiertos, v: incAbiertos > 0 ? 'alert' : 'neutral' }, { label: 'En proceso', value: incEnProceso, v: 'neutral' }, { label: 'Alta/Crítica', value: incAltaCritica, v: incAltaCritica > 0 ? 'alert' : 'neutral' }, { label: 'Cerrados', value: incCerrados, v: 'positive' }] },
         { id: 'bitacoras', icon: 'fa-clock', title: 'Bitácora de horas', goto: 'bitacoras', rows: [{ label: 'Registros', value: bitacoras.length, v: 'neutral' }, { label: 'Horas totales', value: bitHoras.toFixed(1), v: 'positive' }, { label: 'Técnicos', value: tecnicos, v: 'neutral' }, { label: 'Este mes', value: bitEsteMes, v: 'positive' }] },
       ];
-      grid.innerHTML = '';
       cards.forEach((card) => {
         const el = document.createElement('div');
         el.className = 'dashboard-card';
@@ -1898,12 +2098,13 @@
           const sign = pct >= 0 ? '+' : '';
           return sign + pct + '%';
         }
+        const rowHint = 'Clic: cruzar filtro (módulo + periodo de esta tarjeta)';
         const pairs = [
-          { key: 'semana_actual', prevKey: 'semana_anterior', titulo: 'Semana actual vs anterior' },
-          { key: 'mes_actual', prevKey: 'mes_anterior', titulo: 'Mes actual vs anterior' },
-          { key: 'año_actual', prevKey: 'año_anterior', titulo: 'Año actual vs anterior' },
+          { key: 'semana_actual', prevKey: 'semana_anterior', titulo: 'Semana actual vs anterior', period: 'semana' },
+          { key: 'mes_actual', prevKey: 'mes_anterior', titulo: 'Mes actual vs anterior', period: 'mes' },
+          { key: 'año_actual', prevKey: 'año_anterior', titulo: 'Año actual vs anterior', period: 'año' },
         ];
-        compEl.innerHTML = pairs.map(({ key, prevKey, titulo }) => {
+        compEl.innerHTML = pairs.map(({ key, prevKey, titulo, period }) => {
           const p = dashboardStats.periodos[key];
           const prev = dashboardStats.periodos[prevKey];
           if (!p || !prev) return '';
@@ -1911,12 +2112,12 @@
           const inc = p.incidentes; const incPrev = prev.incidentes;
           const bit = p.bitacoras; const bitPrev = prev.bitacoras;
           return `
-            <div class="dashboard-stat-card">
-              <h4>${escapeHtml(titulo)}</h4>
-              <div class="stat-row"><span class="stat-label">Cotizaciones</span><span><span class="stat-value">${cot.count}</span> <span class="stat-diff ${diffClass(cot.count, cotPrev.count)}">${diffText(cot.count, cotPrev.count)}</span></span></div>
-              <div class="stat-row"><span class="stat-label">Monto cotiz.</span><span><span class="stat-value">${formatMoney(cot.monto)}</span> <span class="stat-diff ${diffClass(cot.monto, cotPrev.monto)}">${diffText(cot.monto, cotPrev.monto)}</span></span></div>
-              <div class="stat-row"><span class="stat-label">Incidentes</span><span><span class="stat-value">${inc.count}</span> <span class="stat-diff ${diffClass(inc.count, incPrev.count)}">${diffText(inc.count, incPrev.count)}</span></span></div>
-              <div class="stat-row"><span class="stat-label">Bitácoras</span><span><span class="stat-value">${bit.count} (${Number(bit.horas).toFixed(1)} h)</span> <span class="stat-diff ${diffClass(bit.count, bitPrev.count)}">${diffText(bit.count, bitPrev.count)}</span></span></div>
+            <div class="dashboard-stat-card" data-period="${period}">
+              <h4 class="dashboard-stat-card-title-cf" title="Clic en una fila de métrica para filtrar">${escapeHtml(titulo)}</h4>
+              <div class="stat-row stat-row-crossfilter" data-dimension="cotizaciones" title="${rowHint}"><span class="stat-label">Cotizaciones</span><span><span class="stat-value">${cot.count}</span> <span class="stat-diff ${diffClass(cot.count, cotPrev.count)}">${diffText(cot.count, cotPrev.count)}</span></span></div>
+              <div class="stat-row stat-row-crossfilter" data-dimension="cotizaciones" title="${rowHint}"><span class="stat-label">Monto cotiz.</span><span><span class="stat-value">${formatMoney(cot.monto)}</span> <span class="stat-diff ${diffClass(cot.monto, cotPrev.monto)}">${diffText(cot.monto, cotPrev.monto)}</span></span></div>
+              <div class="stat-row stat-row-crossfilter" data-dimension="incidentes" title="${rowHint}"><span class="stat-label">Incidentes</span><span><span class="stat-value">${inc.count}</span> <span class="stat-diff ${diffClass(inc.count, incPrev.count)}">${diffText(inc.count, incPrev.count)}</span></span></div>
+              <div class="stat-row stat-row-crossfilter" data-dimension="bitacoras" title="${rowHint}"><span class="stat-label">Bitácoras</span><span><span class="stat-value">${bit.count} (${Number(bit.horas).toFixed(1)} h)</span> <span class="stat-diff ${diffClass(bit.count, bitPrev.count)}">${diffText(bit.count, bitPrev.count)}</span></span></div>
             </div>`;
         }).join('');
 
@@ -1943,8 +2144,14 @@
         const chartsEl = qs('#dashboard-charts');
         if (chartsEl && typeof Chart !== 'undefined') {
           chartsEl.style.display = '';
-          if (chartDonut) chartDonut.destroy();
-          if (chartBars) chartBars.destroy();
+          if (chartDonut) {
+            chartDonut.destroy();
+            chartDonut = null;
+          }
+          if (chartBars) {
+            chartBars.destroy();
+            chartBars = null;
+          }
           const nCot = cotizaciones.length;
           const nInc = incidentes.length;
           const nBit = bitacoras.length;
@@ -1956,7 +2163,18 @@
                 labels: ['Cotizaciones', 'Incidentes', 'Bitácoras'],
                 datasets: [{ data: [nCot, nInc, nBit], backgroundColor: ['#059669', '#ea580c', '#7c3aed'], borderColor: '#1e293b', borderWidth: 2 }],
               },
-              options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0', font: { size: 12 } } } } },
+              options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                onHover: function (e, els) { if (e.native && e.native.target) e.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
+                onClick: function (_evt, elements) {
+                  if (!elements || !elements.length) return;
+                  const keys = ['cotizaciones', 'incidentes', 'bitacoras'];
+                  const i = elements[0].index;
+                  if (keys[i]) setDashboardCrossFilterEntity(keys[i]);
+                },
+                plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0', font: { size: 12 } } } },
+              },
             });
           }
           const barCtx = document.getElementById('chart-bars');
@@ -1974,6 +2192,13 @@
               options: {
                 responsive: true,
                 maintainAspectRatio: true,
+                onHover: function (e, els) { if (e.native && e.native.target) e.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
+                onClick: function (_evt, elements) {
+                  if (!elements || !elements.length) return;
+                  const periods = ['semana', 'mes', 'año'];
+                  const i = elements[0].index;
+                  if (periods[i]) setDashboardCrossFilterPeriod(periods[i]);
+                },
                 scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.06)' } }, y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.06)' } } },
                 plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0' } } },
               },
@@ -1990,6 +2215,8 @@
         const adv = qs('#dashboard-advanced');
         if (adv) adv.style.display = 'none';
       }
+      initDashboardCrossfilterBindings();
+      syncDashboardCrossFilterUi();
     } catch (e) {
       if (loading) loading.classList.add('hidden');
       grid.innerHTML = '<div class="dashboard-error"><i class="fas fa-exclamation-circle"></i> No se pudo cargar el resumen. Revisa la conexión e intenta de nuevo.</div>';
