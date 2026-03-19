@@ -299,6 +299,9 @@ body.dark-theme #tabla-cotizaciones thead tr:first-child th,
 body.dark-theme #tabla-incidentes thead tr:first-child th,
 body.dark-theme #tabla-bitacoras thead tr:first-child th {
   background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+  color: #f8fafc;
+  border-bottom-color: #475569;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.35);
 }
 /* Tema oscuro armonizado para tablas premium (evita fondos claros en hover/acciones) */
 body.dark-theme #tabla-cotizaciones tbody tr,
@@ -2516,6 +2519,31 @@ body.dark-theme .filter-date-wrap .filter-date-input {
   background: #0f172a;
   border-color: #475569;
   color: #e2e8f0;
+}
+body.dark-theme #tabla-cotizaciones .filter-row td,
+body.dark-theme #tabla-incidentes .filter-row td,
+body.dark-theme #tabla-bitacoras .filter-row td {
+  background: #0b1220;
+  border-bottom-color: #334155;
+}
+body.dark-theme #tabla-cotizaciones .filter-input,
+body.dark-theme #tabla-incidentes .filter-input,
+body.dark-theme #tabla-bitacoras .filter-input,
+body.dark-theme #tabla-cotizaciones .filter-date-select,
+body.dark-theme #tabla-incidentes .filter-date-select,
+body.dark-theme #tabla-bitacoras .filter-date-select,
+body.dark-theme #tabla-cotizaciones .filter-date-input,
+body.dark-theme #tabla-incidentes .filter-date-input,
+body.dark-theme #tabla-bitacoras .filter-date-input {
+  background: #020617;
+  color: #f8fafc;
+  border-color: #64748b;
+}
+body.dark-theme #tabla-cotizaciones .filter-input::placeholder,
+body.dark-theme #tabla-incidentes .filter-input::placeholder,
+body.dark-theme #tabla-bitacoras .filter-input::placeholder {
+  color: #cbd5e1;
+  opacity: 1;
 }
 body.dark-theme .table-footer { color: #94a3b8; }
 body.dark-theme .table-footer .clear-filters { color: #5eead4; }
