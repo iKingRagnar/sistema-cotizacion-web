@@ -78,8 +78,16 @@
     const r = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
     const text = await r.text();
     if (!r.ok) throw new Error(text || r.statusText);
-    if (!text.trim()) return {};
+    if (!text || !String(text).trim()) return {};
     try { return JSON.parse(text); } catch (_) { throw new Error(text); }
+  }
+
+  /** Siempre devuelve un array para listas del API (evita undefined/objeto). */
+  function toArray(x) {
+    if (Array.isArray(x)) return x;
+    if (x && typeof x === 'object' && Array.isArray(x.data)) return x.data;
+    if (x && typeof x === 'object' && Array.isArray(x.rows)) return x.rows;
+    return [];
   }
 
   function escapeHtml(s) {
@@ -198,7 +206,7 @@
         out[key + '_dateInput'] = dateInp ? dateInp.value : '';
         return;
       }
-      out[key] = inp.value.trim();
+      out[key] = (inp.value != null ? String(inp.value) : '').trim();
     });
     return out;
   }
@@ -653,38 +661,39 @@
     finally { hideLoading(); }
   }
 
-  // ----- COTIZACIONES -----
+  // ----- COTIZACIONES (módulo rehecho: carga + render explícitos) -----
   function renderCotizaciones(data, totalInSystem) {
-    const emptyEl = qs('#cotizaciones-empty');
-    const listEl = qs('#cotizaciones-list');
-    const tbody = qs('#tabla-cotizaciones tbody');
+    const panel = qs('#panel-cotizaciones');
+    if (!panel) return;
+    const emptyEl = panel.querySelector('#cotizaciones-empty');
+    const listEl = panel.querySelector('#cotizaciones-list');
+    const table = panel.querySelector('#tabla-cotizaciones');
+    const tbody = table ? table.querySelector('tbody') : null;
     if (!emptyEl || !listEl || !tbody) return;
+    const list = Array.isArray(data) ? data : [];
+    const total = totalInSystem != null ? totalInSystem : list.length;
+    const hayRegistros = total > 0;
+    const hayFilasVisibles = list.length > 0;
+    emptyEl.classList.toggle('hidden', hayRegistros);
+    listEl.classList.toggle('hidden', !hayRegistros);
     tbody.innerHTML = '';
-    const hasFilteredResults = data && data.length > 0;
-    const hasAnyInSystem = totalInSystem != null ? totalInSystem > 0 : (data && data.length > 0);
-    if (!hasAnyInSystem) {
-      emptyEl.classList.remove('hidden');
-      listEl.classList.add('hidden');
+    if (!hayRegistros) return;
+    if (!hayFilasVisibles) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty filter-empty"><span>No hay resultados con los filtros aplicados.</span> <button type="button" class="btn small primary clear-filters-inline">Quitar filtros</button></td></tr>';
+      const btn = tbody.querySelector('.clear-filters-inline');
+      if (btn) btn.addEventListener('click', () => clearTableFiltersAndRefresh('tabla-cotizaciones', null, applyCotizacionesFiltersAndRender));
+      updateTableFooter('tabla-cotizaciones', 0, cotizacionesCache.length, () => clearTableFiltersAndRefresh('tabla-cotizaciones', null, applyCotizacionesFiltersAndRender));
       return;
     }
-    emptyEl.classList.add('hidden');
-    listEl.classList.remove('hidden');
-    updateTableFooter('tabla-cotizaciones', (data && data.length) || 0, cotizacionesCache.length, () => clearTableFiltersAndRefresh('tabla-cotizaciones', null, applyCotizacionesFiltersAndRender));
-    if (!hasFilteredResults) {
-      const cols = 7;
-      tbody.innerHTML = `<tr><td colspan="${cols}" class="empty filter-empty"><span>No hay resultados con los filtros aplicados.</span> <button type="button" class="btn small primary clear-filters-inline">Quitar filtros</button></td></tr>`;
-      tbody.querySelector('.clear-filters-inline').addEventListener('click', () => clearTableFiltersAndRefresh('tabla-cotizaciones', null, applyCotizacionesFiltersAndRender));
-      return;
-    }
-    data.forEach(c => {
+    list.forEach(c => {
       const vig = getVigenciaSemaphore(c);
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${escapeHtml(c.folio || '')}</td>
-        <td>${escapeHtml(c.cliente_nombre || '')}</td>
-        <td>${escapeHtml(c.tipo || '')}</td>
-        <td>${escapeHtml(c.fecha || '')}</td>
-        <td>${typeof c.total === 'number' ? '$' + c.total.toLocaleString('es-MX', { minimumFractionDigits: 2 }) : ''}</td>
+        <td>${escapeHtml(String(c.folio || ''))}</td>
+        <td>${escapeHtml(String(c.cliente_nombre || ''))}</td>
+        <td>${escapeHtml(String(c.tipo || ''))}</td>
+        <td>${escapeHtml(String((c.fecha || '').toString().slice(0, 10)))}</td>
+        <td>${typeof c.total === 'number' ? '$' + c.total.toLocaleString('es-MX', { minimumFractionDigits: 2 }) : (c.total != null ? '$' + Number(c.total).toLocaleString('es-MX', { minimumFractionDigits: 2 }) : '')}</td>
         <td class="sla-cell"><span class="semaforo semaforo-${vig.color}" title="${escapeHtml(vig.label)}"><i class="fas ${vig.icon}"></i> ${escapeHtml(vig.label)}</span></td>
         <td class="th-actions">
           <button type="button" class="btn small primary btn-edit-cot" data-id="${c.id}"><i class="fas fa-edit"></i></button>
@@ -699,21 +708,24 @@
     tbody.querySelectorAll('.btn-delete-cot').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); if (confirmar('¿Eliminar esta cotización?')) deleteCotizacion(btn.dataset.id); });
     });
+    updateTableFooter('tabla-cotizaciones', list.length, cotizacionesCache.length, () => clearTableFiltersAndRefresh('tabla-cotizaciones', null, applyCotizacionesFiltersAndRender));
   }
 
   async function loadCotizaciones() {
     showLoading();
     try {
-      const data = await fetchJson(API + '/cotizaciones');
-      cotizacionesCache = Array.isArray(data) ? data : [];
-      const filtered = applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones');
+      const raw = await fetchJson(API + '/cotizaciones');
+      cotizacionesCache = toArray(raw);
+      const filtros = getFilterValues('#tabla-cotizaciones');
+      const filtered = applyFilters(cotizacionesCache, filtros, 'tabla-cotizaciones');
       renderCotizaciones(filtered, cotizacionesCache.length);
     } catch (e) {
       const filtered = applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones');
       renderCotizaciones(filtered, cotizacionesCache.length);
-      showToast('No se pudieron actualizar las cotizaciones. Se muestran los últimos datos.', 'error');
+      showToast(parseApiError(e) || 'No se pudieron cargar las cotizaciones.', 'error');
+    } finally {
+      hideLoading();
     }
-    finally { hideLoading(); }
   }
 
   async function deleteCotizacion(id) {
@@ -724,40 +736,43 @@
     } catch (e) { showToast(parseApiError(e) || 'No se pudo eliminar.', 'error'); }
   }
 
-  // ----- INCIDENTES -----
+  // ----- INCIDENTES (módulo rehecho: carga + render explícitos) -----
   function renderIncidentes(data, totalInSystem) {
-    const emptyEl = qs('#incidentes-empty');
-    const listEl = qs('#incidentes-list');
-    const tbody = qs('#tabla-incidentes tbody');
+    const panel = qs('#panel-incidentes');
+    if (!panel) return;
+    const emptyEl = panel.querySelector('#incidentes-empty');
+    const listEl = panel.querySelector('#incidentes-list');
+    const table = panel.querySelector('#tabla-incidentes');
+    const tbody = table ? table.querySelector('tbody') : null;
     if (!emptyEl || !listEl || !tbody) return;
+    const list = Array.isArray(data) ? data : [];
+    const total = totalInSystem != null ? totalInSystem : list.length;
+    const hayRegistros = total > 0;
+    const hayFilasVisibles = list.length > 0;
+    emptyEl.classList.toggle('hidden', hayRegistros);
+    listEl.classList.toggle('hidden', !hayRegistros);
     tbody.innerHTML = '';
-    const hasFilteredResults = data && data.length > 0;
-    const hasAnyInSystem = totalInSystem != null ? totalInSystem > 0 : (data && data.length > 0);
-    if (!hasAnyInSystem) {
-      emptyEl.classList.remove('hidden');
-      listEl.classList.add('hidden');
-      return;
-    }
-    emptyEl.classList.add('hidden');
-    listEl.classList.remove('hidden');
-    updateTableFooter('tabla-incidentes', (data && data.length) || 0, incidentesCache.length, () => clearTableFiltersAndRefresh('tabla-incidentes', null, applyIncidentesFiltersAndRender));
-    if (!hasFilteredResults) {
+    if (!hayRegistros) return;
+    if (!hayFilasVisibles) {
       tbody.innerHTML = '<tr><td colspan="10" class="empty filter-empty"><span>No hay resultados con los filtros aplicados.</span> <button type="button" class="btn small primary clear-filters-inline">Quitar filtros</button></td></tr>';
-      tbody.querySelector('.clear-filters-inline').addEventListener('click', () => clearTableFiltersAndRefresh('tabla-incidentes', null, applyIncidentesFiltersAndRender));
+      const btn = tbody.querySelector('.clear-filters-inline');
+      if (btn) btn.addEventListener('click', () => clearTableFiltersAndRefresh('tabla-incidentes', null, applyIncidentesFiltersAndRender));
+      updateTableFooter('tabla-incidentes', 0, incidentesCache.length, () => clearTableFiltersAndRefresh('tabla-incidentes', null, applyIncidentesFiltersAndRender));
       return;
     }
-    data.forEach(i => {
+    list.forEach(i => {
       const sla = getSlaSemaphore(i);
+      const desc = String(i.descripcion || '');
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${escapeHtml(i.folio || '')}</td>
-        <td>${escapeHtml(i.cliente_nombre || '')}</td>
-        <td>${escapeHtml(i.maquina_nombre || '')}</td>
-        <td>${escapeHtml((i.descripcion || '').slice(0, 45))}${(i.descripcion && i.descripcion.length > 45) ? '…' : ''}</td>
+        <td>${escapeHtml(String(i.folio || ''))}</td>
+        <td>${escapeHtml(String(i.cliente_nombre || ''))}</td>
+        <td>${escapeHtml(String(i.maquina_nombre || ''))}</td>
+        <td>${escapeHtml(desc.length > 45 ? desc.slice(0, 45) + '…' : desc)}</td>
         <td>${(i.fecha_reporte || '').toString().slice(0, 10) || '—'}</td>
         <td>${(i.fecha_cerrado || '').toString().slice(0, 10) || '—'}</td>
-        <td>${escapeHtml(i.prioridad || '')}</td>
-        <td>${escapeHtml(i.estatus || '')}</td>
+        <td>${escapeHtml(String(i.prioridad || ''))}</td>
+        <td>${escapeHtml(String(i.estatus || ''))}</td>
         <td class="sla-cell"><span class="semaforo semaforo-${sla.color}" title="${escapeHtml(sla.label)}"><i class="fas ${sla.icon}"></i> ${escapeHtml(sla.label)}</span></td>
         <td class="th-actions">
           <button type="button" class="btn small primary btn-edit-inc" data-id="${i.id}"><i class="fas fa-edit"></i></button>
@@ -772,21 +787,24 @@
     tbody.querySelectorAll('.btn-delete-inc').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); if (confirmar('¿Eliminar este incidente?')) deleteIncidente(btn.dataset.id); });
     });
+    updateTableFooter('tabla-incidentes', list.length, incidentesCache.length, () => clearTableFiltersAndRefresh('tabla-incidentes', null, applyIncidentesFiltersAndRender));
   }
 
   async function loadIncidentes() {
     showLoading();
     try {
-      const data = await fetchJson(API + '/incidentes');
-      incidentesCache = Array.isArray(data) ? data : [];
-      const filtered = applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes');
+      const raw = await fetchJson(API + '/incidentes');
+      incidentesCache = toArray(raw);
+      const filtros = getFilterValues('#tabla-incidentes');
+      const filtered = applyFilters(incidentesCache, filtros, 'tabla-incidentes');
       renderIncidentes(filtered, incidentesCache.length);
     } catch (e) {
       const filtered = applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes');
       renderIncidentes(filtered, incidentesCache.length);
-      showToast('No se pudieron actualizar los incidentes. Se muestran los últimos datos.', 'error');
+      showToast(parseApiError(e) || 'No se pudieron cargar los incidentes.', 'error');
+    } finally {
+      hideLoading();
     }
-    finally { hideLoading(); }
   }
 
   async function deleteIncidente(id) {
@@ -797,39 +815,43 @@
     } catch (e) { showToast(parseApiError(e) || 'No se pudo eliminar.', 'error'); }
   }
 
-  // ----- BITÁCORAS -----
+  // ----- BITÁCORAS (módulo rehecho: carga + render explícitos) -----
   function renderBitacoras(data, totalInSystem) {
-    const emptyEl = qs('#bitacoras-empty');
-    const listEl = qs('#bitacoras-list');
-    const tbody = qs('#tabla-bitacoras tbody');
+    const panel = qs('#panel-bitacoras');
+    if (!panel) return;
+    const emptyEl = panel.querySelector('#bitacoras-empty');
+    const listEl = panel.querySelector('#bitacoras-list');
+    const table = panel.querySelector('#tabla-bitacoras');
+    const tbody = table ? table.querySelector('tbody') : null;
     if (!emptyEl || !listEl || !tbody) return;
+    const list = Array.isArray(data) ? data : [];
+    const total = totalInSystem != null ? totalInSystem : list.length;
+    const hayRegistros = total > 0;
+    const hayFilasVisibles = list.length > 0;
+    emptyEl.classList.toggle('hidden', hayRegistros);
+    listEl.classList.toggle('hidden', !hayRegistros);
     tbody.innerHTML = '';
-    const hasFilteredResults = data && data.length > 0;
-    const hasAnyInSystem = totalInSystem != null ? totalInSystem > 0 : (data && data.length > 0);
-    if (!hasAnyInSystem) {
-      emptyEl.classList.remove('hidden');
-      listEl.classList.add('hidden');
-      return;
-    }
-    emptyEl.classList.add('hidden');
-    listEl.classList.remove('hidden');
-    updateTableFooter('tabla-bitacoras', (data && data.length) || 0, bitacorasCache.length, () => clearTableFiltersAndRefresh('tabla-bitacoras', null, applyBitacorasFiltersAndRender));
-    if (!hasFilteredResults) {
+    if (!hayRegistros) return;
+    if (!hayFilasVisibles) {
       tbody.innerHTML = '<tr><td colspan="9" class="empty filter-empty"><span>No hay resultados con los filtros aplicados.</span> <button type="button" class="btn small primary clear-filters-inline">Quitar filtros</button></td></tr>';
-      tbody.querySelector('.clear-filters-inline').addEventListener('click', () => clearTableFiltersAndRefresh('tabla-bitacoras', null, applyBitacorasFiltersAndRender));
+      const btn = tbody.querySelector('.clear-filters-inline');
+      if (btn) btn.addEventListener('click', () => clearTableFiltersAndRefresh('tabla-bitacoras', null, applyBitacorasFiltersAndRender));
+      updateTableFooter('tabla-bitacoras', 0, bitacorasCache.length, () => clearTableFiltersAndRefresh('tabla-bitacoras', null, applyBitacorasFiltersAndRender));
       return;
     }
-    data.forEach(b => {
+    list.forEach(b => {
       const est = getEstadoRegistroSemaphore(b);
+      const act = String(b.actividades || '');
+      const mat = String(b.materiales_usados || '');
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${escapeHtml(b.fecha || '')}</td>
-        <td>${escapeHtml(b.incidente_folio || '—')}</td>
-        <td>${escapeHtml(b.cotizacion_folio || '—')}</td>
-        <td>${escapeHtml(b.tecnico || '')}</td>
-        <td>${escapeHtml((b.actividades || '').slice(0, 35))}${(b.actividades && b.actividades.length > 35) ? '…' : ''}</td>
+        <td>${escapeHtml(String((b.fecha || '').toString().slice(0, 10)))}</td>
+        <td>${escapeHtml(String(b.incidente_folio || '—'))}</td>
+        <td>${escapeHtml(String(b.cotizacion_folio || '—'))}</td>
+        <td>${escapeHtml(String(b.tecnico || ''))}</td>
+        <td>${escapeHtml(act.length > 35 ? act.slice(0, 35) + '…' : act)}</td>
         <td>${b.tiempo_horas != null ? b.tiempo_horas : '—'}</td>
-        <td>${escapeHtml((b.materiales_usados || '').slice(0, 25))}${(b.materiales_usados && b.materiales_usados.length > 25) ? '…' : ''}</td>
+        <td>${escapeHtml(mat.length > 25 ? mat.slice(0, 25) + '…' : mat)}</td>
         <td class="sla-cell"><span class="semaforo semaforo-${est.color}" title="${escapeHtml(est.label)}"><i class="fas ${est.icon}"></i> ${escapeHtml(est.label)}</span></td>
         <td class="th-actions">
           <button type="button" class="btn small primary btn-edit-bit" data-id="${b.id}"><i class="fas fa-edit"></i></button>
@@ -844,21 +866,24 @@
     tbody.querySelectorAll('.btn-delete-bit').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); if (confirmar('¿Eliminar este registro de bitácora?')) deleteBitacora(btn.dataset.id); });
     });
+    updateTableFooter('tabla-bitacoras', list.length, bitacorasCache.length, () => clearTableFiltersAndRefresh('tabla-bitacoras', null, applyBitacorasFiltersAndRender));
   }
 
   async function loadBitacoras() {
     showLoading();
     try {
-      const data = await fetchJson(API + '/bitacoras');
-      bitacorasCache = Array.isArray(data) ? data : [];
-      const filtered = applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras');
+      const raw = await fetchJson(API + '/bitacoras');
+      bitacorasCache = toArray(raw);
+      const filtros = getFilterValues('#tabla-bitacoras');
+      const filtered = applyFilters(bitacorasCache, filtros, 'tabla-bitacoras');
       renderBitacoras(filtered, bitacorasCache.length);
     } catch (e) {
       const filtered = applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras');
       renderBitacoras(filtered, bitacorasCache.length);
-      showToast('No se pudieron actualizar las bitácoras. Se muestran los últimos datos.', 'error');
+      showToast(parseApiError(e) || 'No se pudieron cargar las bitácoras.', 'error');
+    } finally {
+      hideLoading();
     }
-    finally { hideLoading(); }
   }
 
   async function deleteBitacora(id) {
@@ -1609,11 +1634,8 @@
       await loadCotizaciones();
       await loadIncidentes();
       await loadBitacoras();
-      if ((data.incidentes || 0) === 0 || (data.bitacoras || 0) === 0) {
-        showToast('No se insertaron incidentes o bitácoras: los nombres de cliente/máquina del demo deben coincidir con los de la pestaña Clientes/Máquinas. Revisa seed-demo.json.', 'error');
-      } else {
-        showPanel('incidentes', { skipLoad: true });
-      }
+      showPanel('bitacoras', { skipLoad: true });
+      showToast('Datos demo cargados. Revisa Cotizaciones, Incidentes y Bitácora de horas.', 'success');
     } catch (e) {
       let msg = e.message;
       try { const o = JSON.parse(msg); if (o.error) msg = o.error; } catch (_) {}

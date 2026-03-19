@@ -226,7 +226,7 @@ app.get('/api/cotizaciones', async (req, res) => {
     const rows = await db.getAll(
       `SELECT co.*, c.nombre as cliente_nombre FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id ORDER BY co.fecha DESC, co.id DESC LIMIT 200`
     );
-    res.json(rows);
+    res.json(Array.isArray(rows) ? rows : []);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -302,7 +302,7 @@ app.get('/api/incidentes', async (req, res) => {
     const rows = await db.getAll(
       `SELECT i.*, c.nombre as cliente_nombre, m.nombre as maquina_nombre FROM incidentes i JOIN clientes c ON c.id = i.cliente_id LEFT JOIN maquinas m ON m.id = i.maquina_id ORDER BY i.fecha_reporte DESC LIMIT 200`
     );
-    res.json(rows);
+    res.json(Array.isArray(rows) ? rows : []);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -382,7 +382,7 @@ app.get('/api/bitacoras', async (req, res) => {
        LEFT JOIN cotizaciones co ON co.id = b.cotizacion_id
        ORDER BY b.fecha DESC, b.id DESC LIMIT 200`
     );
-    res.json(rows);
+    res.json(Array.isArray(rows) ? rows : []);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -573,10 +573,12 @@ app.get('/api/dashboard-stats', async (req, res) => {
 // --- Cargar datos demo (desde seed-demo.json) ---
 // Normaliza para matching: quita acentos, minúsculas, espacios colapsados
 function norm(s) {
-  if (!s || typeof s !== 'string') return '';
+  if (s == null || typeof s !== 'string') return '';
   const sinAcentos = String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   return sinAcentos.toLowerCase().replace(/\s+/g, ' ').trim();
 }
+function safeStr(v) { return (v != null && String(v).trim() !== '') ? String(v).trim() : null; }
+function safeStrReq(v) { return (v != null && String(v).trim() !== '') ? String(v).trim() : ''; }
 app.post('/api/seed-demo', async (req, res) => {
   try {
     const [cCount] = await db.getAll('SELECT COUNT(*) as n FROM clientes');
@@ -587,17 +589,17 @@ app.post('/api/seed-demo', async (req, res) => {
     if (!fs.existsSync(seedPath)) return res.status(404).json({ error: 'No existe seed-demo.json. Ejecuta: python exportar_demo.py' });
     const seed = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
 
-    const clientes = seed.clientes || [];
-    const refacciones = seed.refacciones || [];
-    const maquinas = seed.maquinas || [];
-    const incidentes = seed.incidentes || [];
-    const bitacoras = seed.bitacoras || [];
+    const clientes = (seed.clientes || []).filter(c => c && typeof c === 'object');
+    const refacciones = (seed.refacciones || []).filter(r => r && typeof r === 'object');
+    const maquinas = (seed.maquinas || []).filter(m => m && typeof m === 'object');
+    const incidentes = (seed.incidentes || []).filter(i => i && typeof i === 'object');
+    const bitacoras = (seed.bitacoras || []).filter(b => b && typeof b === 'object');
 
     const idMap = {};
     for (const c of clientes) {
       await db.runQuery(
         `INSERT INTO clientes (codigo, nombre, rfc, contacto, direccion, telefono, email, ciudad) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [c.codigo, c.nombre, c.rfc || null, c.contacto || null, c.direccion || null, c.telefono || null, c.email || null, c.ciudad || null]
+        [safeStr(c.codigo) || '', safeStrReq(c.nombre), safeStr(c.rfc), safeStr(c.contacto), safeStr(c.direccion), safeStr(c.telefono), safeStr(c.email), safeStr(c.ciudad)]
       );
       const r = await db.getOne('SELECT id FROM clientes ORDER BY id DESC LIMIT 1');
       if (r) idMap[clientes.indexOf(c) + 1] = r.id;
@@ -605,7 +607,7 @@ app.post('/api/seed-demo', async (req, res) => {
     for (const r of refacciones) {
       await db.runQuery(
         `INSERT INTO refacciones (codigo, descripcion, marca, origen, precio_unitario, unidad) VALUES (?, ?, ?, ?, ?, ?)`,
-        [r.codigo, r.descripcion, r.marca || null, r.origen || null, r.precio_unitario != null ? r.precio_unitario : 0, r.unidad || 'PZA']
+        [safeStrReq(r.codigo), safeStrReq(r.descripcion), safeStr(r.marca), safeStr(r.origen), r.precio_unitario != null ? Number(r.precio_unitario) : 0, safeStr(r.unidad) || 'PZA']
       );
     }
     for (const m of maquinas) {
@@ -613,43 +615,83 @@ app.post('/api/seed-demo', async (req, res) => {
       if (!cid) continue;
       await db.runQuery(
         `INSERT INTO maquinas (cliente_id, nombre, marca, modelo, numero_serie, ubicacion) VALUES (?, ?, ?, ?, ?, ?)`,
-        [cid, m.nombre, m.marca || null, m.modelo || null, m.numero_serie || null, m.ubicacion || null]
+        [cid, safeStrReq(m.nombre), safeStr(m.marca), safeStr(m.modelo), safeStr(m.numero_serie), safeStr(m.ubicacion)]
       );
     }
 
     const clientesDb = await db.getAll('SELECT id, nombre FROM clientes');
     const maquinasDb = await db.getAll('SELECT id, cliente_id, nombre FROM maquinas');
     const clienteByNombre = {};
-    clientesDb.forEach(c => { clienteByNombre[norm(c.nombre)] = c.id; });
+    clientesDb.forEach(c => { clienteByNombre[norm(c && c.nombre)] = c.id; });
     const maquinaByClienteYNombre = {};
-    maquinasDb.forEach(m => { maquinaByClienteYNombre[m.cliente_id + '|' + norm(m.nombre)] = m.id; });
+    maquinasDb.forEach(m => { maquinaByClienteYNombre[(m && m.cliente_id) + '|' + norm(m && m.nombre)] = m.id; });
 
     let incidentesCount = 0;
     const incidenteByFolio = {};
     for (const inc of incidentes) {
-      const clienteId = clienteByNombre[norm(inc.cliente_nombre)];
+      const clienteId = clienteByNombre[norm(inc && inc.cliente_nombre)];
       if (!clienteId) continue;
       let maquinaId = null;
-      if (inc.maquina_nombre) {
-        maquinaId = maquinaByClienteYNombre[clienteId + '|' + norm(inc.maquina_nombre)];
+      const maqNom = inc && inc.maquina_nombre;
+      if (maqNom) {
+        maquinaId = maquinaByClienteYNombre[clienteId + '|' + norm(maqNom)];
       }
       await db.runQuery(
         `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [inc.folio || null, clienteId, maquinaId, inc.descripcion || '-', inc.prioridad || 'media', inc.fecha_reporte || new Date().toISOString().slice(0, 10), inc.estatus === 'cerrado' ? (inc.fecha_cerrado || new Date().toISOString().slice(0, 10)) : null, inc.tecnico_responsable || null, inc.estatus || 'abierto']
+        [safeStr(inc.folio), clienteId, maquinaId, safeStrReq(inc.descripcion) || '-', safeStr(inc.prioridad) || 'media', (inc.fecha_reporte && String(inc.fecha_reporte).slice(0, 10)) || new Date().toISOString().slice(0, 10), inc.estatus === 'cerrado' ? (safeStr(inc.fecha_cerrado) || new Date().toISOString().slice(0, 10)) : null, safeStr(inc.tecnico_responsable), (inc.estatus && String(inc.estatus).trim()) || 'abierto']
       );
       const r = await db.getOne('SELECT id FROM incidentes ORDER BY id DESC LIMIT 1');
       if (r) { incidenteByFolio[(inc.folio || '').toUpperCase()] = r.id; incidentesCount++; }
     }
 
+    // Si no hubo match con nombres del seed, crear incidentes y bitácoras demo con los clientes/máquinas insertados
+    const hoy = new Date().toISOString().slice(0, 10);
+    if (incidentesCount === 0 && clientesDb.length > 0) {
+      const maquinasList = maquinasDb.length > 0 ? maquinasDb : [];
+      const tecnicos = ['Juan Pérez', 'María García', 'Carlos López', 'Ana Torres', 'Luis Martínez'];
+      const descripciones = ['Revisión preventiva', 'Ajuste de bandas', 'Cambio de aceite', 'Diagnóstico de falla', 'Reparación de motor', 'Calibración de sensores'];
+      for (let i = 1; i <= 15; i++) {
+        const cliente = clientesDb[(i - 1) % clientesDb.length];
+        let maquinaId = null;
+        const maqsDelCliente = maquinasList.filter(m => m.cliente_id === cliente.id);
+        if (maqsDelCliente.length > 0) maquinaId = maqsDelCliente[(i - 1) % maqsDelCliente.length].id;
+        const folio = 'INC-DEMO-' + String(1000 + i);
+        const diasAtras = (i % 14);
+        const fechaReporte = new Date(Date.now() - diasAtras * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        await db.runQuery(
+          `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [folio, cliente.id, maquinaId, descripciones[i % descripciones.length], i % 3 === 0 ? 'alta' : (i % 3 === 1 ? 'media' : 'baja'), fechaReporte, null, tecnicos[i % tecnicos.length], i % 5 === 0 ? 'cerrado' : 'abierto']
+        );
+        const r = await db.getOne('SELECT id FROM incidentes ORDER BY id DESC LIMIT 1');
+        if (r) { incidenteByFolio[folio] = r.id; incidentesCount++; }
+      }
+    }
+
     let bitacorasCount = 0;
+    const foliosParaBitacoras = Object.keys(incidenteByFolio);
     for (const bit of bitacoras) {
-      const incidenteId = incidenteByFolio[(bit.folio_incidente || '').toUpperCase()];
+      const folioInc = bit && bit.folio_incidente;
+      const incidenteId = incidenteByFolio[(folioInc != null ? String(folioInc) : '').toUpperCase()];
       if (!incidenteId) continue;
       await db.runQuery(
         `INSERT INTO bitacoras (incidente_id, cotizacion_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [incidenteId, null, bit.fecha || new Date().toISOString().slice(0, 10), bit.tecnico || null, bit.actividades || null, Number(bit.tiempo_horas) || 0, bit.materiales_usados || null]
+        [incidenteId, null, (bit.fecha && String(bit.fecha).slice(0, 10)) || new Date().toISOString().slice(0, 10), safeStr(bit.tecnico), safeStr(bit.actividades), Number(bit.tiempo_horas) || 0, safeStr(bit.materiales_usados)]
       );
       bitacorasCount++;
+    }
+    if (bitacorasCount === 0 && foliosParaBitacoras.length > 0) {
+      const actividades = ['Revisión de equipo', 'Cambio de refacciones', 'Pruebas de funcionamiento', 'Lubricación', 'Ajustes mecánicos'];
+      for (let i = 0; i < 20; i++) {
+        const folio = foliosParaBitacoras[i % foliosParaBitacoras.length];
+        const incidenteId = incidenteByFolio[folio];
+        const diasAtras = i % 10;
+        const fechaBit = new Date(Date.now() - diasAtras * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        await db.runQuery(
+          `INSERT INTO bitacoras (incidente_id, cotizacion_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [incidenteId, null, fechaBit, ['Juan Pérez', 'María García', 'Carlos López'][i % 3], actividades[i % actividades.length], Number((1.5 + (i % 4) * 0.5).toFixed(1)), i % 2 === 0 ? 'Grasa, aceite' : null]
+        );
+        bitacorasCount++;
+      }
     }
 
     let cotizacionesCount = 0;
@@ -688,37 +730,71 @@ app.post('/api/seed-demo-extra', async (req, res) => {
     const seedPath = path.join(__dirname, 'seed-demo.json');
     if (!fs.existsSync(seedPath)) return res.status(404).json({ error: 'No existe seed-demo.json' });
     const seed = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
-    const incidentes = seed.incidentes || [];
-    const bitacoras = seed.bitacoras || [];
+    const incidentes = (seed.incidentes || []).filter(i => i && typeof i === 'object');
+    const bitacoras = (seed.bitacoras || []).filter(b => b && typeof b === 'object');
     const clientesDb = await db.getAll('SELECT id, nombre FROM clientes');
     const maquinasDb = await db.getAll('SELECT id, cliente_id, nombre FROM maquinas');
     const clienteByNombre = {};
-    clientesDb.forEach(c => { clienteByNombre[norm(c.nombre)] = c.id; });
+    clientesDb.forEach(c => { clienteByNombre[norm(c && c.nombre)] = c.id; });
     const maquinaByClienteYNombre = {};
-    maquinasDb.forEach(m => { maquinaByClienteYNombre[m.cliente_id + '|' + norm(m.nombre)] = m.id; });
+    maquinasDb.forEach(m => { maquinaByClienteYNombre[(m && m.cliente_id) + '|' + norm(m && m.nombre)] = m.id; });
     let incidentesCount = 0;
     const incidenteByFolio = {};
     for (const inc of incidentes) {
-      const clienteId = clienteByNombre[norm(inc.cliente_nombre)];
+      const clienteId = clienteByNombre[norm(inc && inc.cliente_nombre)];
       if (!clienteId) continue;
       let maquinaId = null;
-      if (inc.maquina_nombre) maquinaId = maquinaByClienteYNombre[clienteId + '|' + norm(inc.maquina_nombre)];
+      const maqNom = inc && inc.maquina_nombre;
+      if (maqNom) maquinaId = maquinaByClienteYNombre[clienteId + '|' + norm(maqNom)];
       await db.runQuery(
         `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [inc.folio || null, clienteId, maquinaId, inc.descripcion || '-', inc.prioridad || 'media', inc.fecha_reporte || new Date().toISOString().slice(0, 10), inc.estatus === 'cerrado' ? (inc.fecha_cerrado || new Date().toISOString().slice(0, 10)) : null, inc.tecnico_responsable || null, inc.estatus || 'abierto']
+        [safeStr(inc.folio), clienteId, maquinaId, safeStrReq(inc.descripcion) || '-', safeStr(inc.prioridad) || 'media', (inc.fecha_reporte && String(inc.fecha_reporte).slice(0, 10)) || new Date().toISOString().slice(0, 10), inc.estatus === 'cerrado' ? (safeStr(inc.fecha_cerrado) || new Date().toISOString().slice(0, 10)) : null, safeStr(inc.tecnico_responsable), (inc.estatus && String(inc.estatus).trim()) || 'abierto']
       );
       const r = await db.getOne('SELECT id FROM incidentes ORDER BY id DESC LIMIT 1');
-      if (r) { incidenteByFolio[(inc.folio || '').toUpperCase()] = r.id; incidentesCount++; }
+      if (r) { incidenteByFolio[(inc.folio != null ? String(inc.folio) : '').toUpperCase()] = r.id; incidentesCount++; }
+    }
+    if (incidentesCount === 0 && clientesDb.length > 0) {
+      const maquinasList = maquinasDb.length > 0 ? maquinasDb : [];
+      const tecnicos = ['Juan Pérez', 'María García', 'Carlos López'];
+      const descripciones = ['Revisión preventiva', 'Ajuste de bandas', 'Diagnóstico de falla', 'Reparación'];
+      for (let i = 1; i <= 10; i++) {
+        const cliente = clientesDb[(i - 1) % clientesDb.length];
+        let maquinaId = null;
+        const maqsDelCliente = maquinasList.filter(m => m.cliente_id === cliente.id);
+        if (maqsDelCliente.length > 0) maquinaId = maqsDelCliente[0].id;
+        const folio = 'INC-EXTRA-' + String(2000 + i);
+        const fechaReporte = new Date(Date.now() - (i % 7) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        await db.runQuery(
+          `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [folio, cliente.id, maquinaId, descripciones[i % descripciones.length], 'media', fechaReporte, null, tecnicos[i % tecnicos.length], 'abierto']
+        );
+        const r = await db.getOne('SELECT id FROM incidentes ORDER BY id DESC LIMIT 1');
+        if (r) { incidenteByFolio[folio] = r.id; incidentesCount++; }
+      }
     }
     let bitacorasCount = 0;
+    const foliosExtra = Object.keys(incidenteByFolio);
     for (const bit of bitacoras) {
-      const incidenteId = incidenteByFolio[(bit.folio_incidente || '').toUpperCase()];
+      const folioInc = bit && bit.folio_incidente;
+      const incidenteId = incidenteByFolio[(folioInc != null ? String(folioInc) : '').toUpperCase()];
       if (!incidenteId) continue;
       await db.runQuery(
         `INSERT INTO bitacoras (incidente_id, cotizacion_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [incidenteId, null, bit.fecha || new Date().toISOString().slice(0, 10), bit.tecnico || null, bit.actividades || null, Number(bit.tiempo_horas) || 0, bit.materiales_usados || null]
+        [incidenteId, null, (bit.fecha && String(bit.fecha).slice(0, 10)) || new Date().toISOString().slice(0, 10), safeStr(bit.tecnico), safeStr(bit.actividades), Number(bit.tiempo_horas) || 0, safeStr(bit.materiales_usados)]
       );
       bitacorasCount++;
+    }
+    if (bitacorasCount === 0 && foliosExtra.length > 0) {
+      const actividades = ['Revisión', 'Reparación', 'Pruebas'];
+      for (let i = 0; i < 12; i++) {
+        const incidenteId = incidenteByFolio[foliosExtra[i % foliosExtra.length]];
+        const fechaBit = new Date(Date.now() - (i % 5) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        await db.runQuery(
+          `INSERT INTO bitacoras (incidente_id, cotizacion_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [incidenteId, null, fechaBit, 'Juan Pérez', actividades[i % 3], Number((2 + (i % 3)).toFixed(1)), null]
+        );
+        bitacorasCount++;
+      }
     }
     let cotizacionesCount = 0;
     const tipos = ['refacciones', 'mano_obra'];
