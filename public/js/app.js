@@ -1424,7 +1424,16 @@
   // ----- MODAL GENÉRICO ----- Focus trap, foco al abrir/cerrar, Escape cierra
   function openModal(title, bodyHtml, onClose) {
     const modal = qs('#modal');
+    const modalBox = qs('#modal .modal-box');
     const previousFocus = document.activeElement;
+    if (modalBox) {
+      modalBox.classList.remove('pdf-preview-modal', 'dragging');
+      modalBox.style.left = '';
+      modalBox.style.top = '';
+      modalBox.style.width = '';
+      modalBox.style.height = '';
+      modalBox.style.maxHeight = '';
+    }
     qs('#modal-title').textContent = title;
     qs('#modal-body').innerHTML = bodyHtml;
     modal.classList.remove('hidden');
@@ -1764,6 +1773,7 @@
       'id=' + encodeURIComponent(id),
       'audience=' + encodeURIComponent(audience || 'cliente'),
       'autoprint=' + encodeURIComponent(String(autoprint ? 1 : 0)),
+      'v=2',
     ].join('&');
     return (base ? base + '/' : '') + page + '?' + q;
   }
@@ -3127,25 +3137,37 @@
   /** Primera visita: tips rápidos (se guarda al cerrar el modal) */
   function startGuidedTour() {
     const steps = [
-      { panel: 'dashboards', title: 'Dashboard ejecutivo', text: 'Aquí ves KPIs, scorecards, comparativos y gráficas. Puedes cruzar filtros con clics como en BI.' },
-      { panel: 'clientes', title: 'Catálogo de clientes', text: 'Registra clientes, RFC, ciudad y contacto. La ciudad alimenta el filtro global por sucursal.' },
-      { panel: 'cotizaciones', title: 'Cotizaciones', text: 'Crea y exporta cotizaciones. Desde aquí también puedes imprimir PDF para cliente.' },
-      { panel: 'incidentes', title: 'Incidentes y SLA', text: 'Controla incidentes, prioridad, vencimiento y estatus operativo.' },
-      { panel: 'bitacoras', title: 'Bitácora de horas', text: 'Registra actividades y horas por incidente/cotización para trazabilidad.' },
-      { panel: 'demo', title: 'Respaldos y persistencia', text: 'Aquí gestionas estado de persistencia, backups manuales y automáticos.' },
+      { panel: 'dashboards', title: 'Dashboard ejecutivo', text: 'Aquí ves KPIs, scorecards, comparativos y gráficas. Puedes cruzar filtros con clics como en BI.', icon: 'fa-chart-pie', gradient: 'g-teal', bullets: ['Cruza filtros por entidad y periodo', 'Monitorea indicadores semanales/mensuales', 'Accede rápido a respaldos y reportes'] },
+      { panel: 'clientes', title: 'Catálogo de clientes', text: 'Registra clientes, RFC, ciudad y contacto. La ciudad alimenta el filtro global por sucursal.', icon: 'fa-users', gradient: 'g-blue', bullets: ['Alta rápida con validaciones', 'Datos listos para cotizaciones/incidentes', 'Ciudad usada para filtro global'] },
+      { panel: 'cotizaciones', title: 'Cotizaciones profesionales', text: 'Crea y exporta cotizaciones. Desde aquí también puedes generar PDF cliente o interno.', icon: 'fa-file-invoice-dollar', gradient: 'g-indigo', bullets: ['Flujo de creación y edición ágil', 'PDF de una página optimizado A4', 'Vista previa antes de imprimir'] },
+      { panel: 'incidentes', title: 'Incidentes y SLA', text: 'Controla incidentes, prioridad, vencimiento y estatus operativo.', icon: 'fa-triangle-exclamation', gradient: 'g-orange', bullets: ['Semáforos para urgencia y SLA', 'Seguimiento por cliente/máquina', 'Exportación ejecutiva para operación'] },
+      { panel: 'bitacoras', title: 'Bitácora de horas', text: 'Registra actividades y horas por incidente/cotización para trazabilidad.', icon: 'fa-clock', gradient: 'g-violet', bullets: ['Historial técnico por actividad', 'Base para control de productividad', 'Reporte PDF cliente/interno'] },
+      { panel: 'demo', title: 'Respaldos y persistencia', text: 'Aquí gestionas estado de persistencia, backups manuales y automáticos.', icon: 'fa-shield-halved', gradient: 'g-slate', bullets: ['Exporta/importa respaldo JSON', 'Backups automáticos con retención', 'Estado de almacenamiento en tiempo real'] },
     ];
     let idx = 0;
     function draw() {
       const s = steps[idx];
       showPanel(s.panel, { skipLoad: false });
       const html = `
-        <div class="onboarding-welcome">
-          <p class="onboarding-lead">${escapeHtml(s.title)}</p>
-          <p>${escapeHtml(s.text)}</p>
-          <p class="hint" style="margin-top:0.8rem;">Paso ${idx + 1} de ${steps.length}</p>
-          <div class="form-actions" style="margin-top:1rem;">
-            <button type="button" class="btn" id="tour-prev" ${idx === 0 ? 'disabled' : ''}>Anterior</button>
-            <button type="button" class="btn primary" id="tour-next">${idx === steps.length - 1 ? 'Finalizar tour' : 'Siguiente'}</button>
+        <div class="tour-card ${escapeHtml(s.gradient)}">
+          <div class="tour-media">
+            <div class="tour-media-icon"><i class="fas ${escapeHtml(s.icon)}"></i></div>
+            <div class="tour-media-title">${escapeHtml(s.title)}</div>
+            <div class="tour-media-caption">Paso ${idx + 1} de ${steps.length}</div>
+          </div>
+          <div class="tour-content">
+            <p class="tour-lead">${escapeHtml(s.text)}</p>
+            <ul class="tour-bullets">
+              ${(s.bullets || []).map(b => `<li><i class="fas fa-check-circle"></i><span>${escapeHtml(b)}</span></li>`).join('')}
+            </ul>
+            <div class="tour-progress">
+              <div class="tour-progress-bar"><span style="width:${Math.round(((idx + 1) / steps.length) * 100)}%"></span></div>
+              <span class="tour-progress-label">${idx + 1}/${steps.length}</span>
+            </div>
+            <div class="form-actions" style="margin-top:0.8rem;">
+              <button type="button" class="btn" id="tour-prev" ${idx === 0 ? 'disabled' : ''}>Anterior</button>
+              <button type="button" class="btn primary" id="tour-next">${idx === steps.length - 1 ? 'Finalizar tour' : 'Siguiente'}</button>
+            </div>
           </div>
         </div>`;
       const closeFn = openModal('Tour guiado', html);
@@ -3294,22 +3316,52 @@
   const notifExportCsv = qs('#notifications-export-csv');
   const notifExportPdf = qs('#notifications-export-pdf');
   if (notifBtn && notifPanel) {
+    function positionNotificationsPanel() {
+      if (notifPanel.classList.contains('hidden')) return;
+      const r = notifBtn.getBoundingClientRect();
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const panelW = Math.min(560, vw - 24);
+      const left = Math.max(12, Math.min(vw - panelW - 12, r.right - panelW));
+      const top = Math.min(vh - 80, r.bottom + 8);
+      notifPanel.classList.add('floating');
+      notifPanel.style.left = left + 'px';
+      notifPanel.style.top = top + 'px';
+      notifPanel.style.width = panelW + 'px';
+      notifPanel.style.maxHeight = Math.max(260, Math.min(520, vh - top - 12)) + 'px';
+      const list = qs('#notifications-list');
+      if (list) list.style.maxHeight = Math.max(160, Math.min(430, vh - top - 86)) + 'px';
+    }
+    function hideNotificationsPanel() {
+      notifPanel.classList.add('hidden');
+      notifPanel.classList.remove('floating');
+      notifPanel.style.left = '';
+      notifPanel.style.top = '';
+      notifPanel.style.width = '';
+      notifPanel.style.maxHeight = '';
+      const list = qs('#notifications-list');
+      if (list) list.style.maxHeight = '';
+    }
     notifBtn.addEventListener('click', function (e) {
       e.stopPropagation();
       notifPanel.classList.toggle('hidden');
+      if (notifPanel.classList.contains('hidden')) { hideNotificationsPanel(); return; }
       renderNotificationsPanel();
-      if (!notifPanel.classList.contains('hidden')) markNotificationsRead();
+      markNotificationsRead();
+      positionNotificationsPanel();
     });
     document.addEventListener('click', function (e) {
       if (notifPanel.classList.contains('hidden')) return;
       if (e.target === notifBtn || notifBtn.contains(e.target)) return;
       if (e.target === notifPanel || notifPanel.contains(e.target)) return;
-      notifPanel.classList.add('hidden');
+      hideNotificationsPanel();
     });
     document.addEventListener('keydown', function (e) {
       if (e.key !== 'Escape') return;
-      if (!notifPanel.classList.contains('hidden')) notifPanel.classList.add('hidden');
+      if (!notifPanel.classList.contains('hidden')) hideNotificationsPanel();
     });
+    window.addEventListener('resize', positionNotificationsPanel);
+    window.addEventListener('scroll', positionNotificationsPanel, { passive: true });
   }
   if (notifClear) {
     notifClear.addEventListener('click', function () {
