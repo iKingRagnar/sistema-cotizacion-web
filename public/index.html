@@ -8,28 +8,45 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
   <header class="header">
     <h1><i class="fas fa-calculator"></i> Sistema de Cotización y Gestión <span class="version">v4</span></h1>
-    <p class="subtitle">Catálogos, cotizaciones, incidentes y bitácora de horas · 100% gratuito</p>
+    <p class="subtitle">Catálogos, cotizaciones, incidentes y bitácora de horas</p>
   </header>
 
-  <nav class="tabs">
-    <button type="button" data-tab="clientes" class="tab active"><i class="fas fa-users"></i> Clientes</button>
-    <button type="button" data-tab="refacciones" class="tab"><i class="fas fa-cogs"></i> Refacciones</button>
-    <button type="button" data-tab="maquinas" class="tab"><i class="fas fa-industry"></i> Máquinas</button>
-    <button type="button" data-tab="cotizaciones" class="tab"><i class="fas fa-file-invoice-dollar"></i> Cotizaciones</button>
-    <button type="button" data-tab="incidentes" class="tab"><i class="fas fa-exclamation-triangle"></i> Incidentes</button>
-    <button type="button" data-tab="bitacoras" class="tab"><i class="fas fa-clock"></i> Bitácora de horas</button>
-    <button type="button" data-tab="demo" class="tab highlight"><i class="fas fa-database"></i> Cargar demo</button>
+  <nav class="tabs" role="navigation" aria-label="Secciones principales">
+    <button type="button" data-tab="dashboards" class="tab active" title="Resumen general (Ctrl+0)"><i class="fas fa-chart-pie"></i> Dashboards</button>
+    <button type="button" data-tab="clientes" class="tab" title="Clientes (Ctrl+1)"><i class="fas fa-users"></i> Clientes</button>
+    <button type="button" data-tab="refacciones" class="tab" title="Refacciones (Ctrl+2)"><i class="fas fa-cogs"></i> Refacciones</button>
+    <button type="button" data-tab="maquinas" class="tab" title="Máquinas (Ctrl+3)"><i class="fas fa-industry"></i> Máquinas</button>
+    <button type="button" data-tab="cotizaciones" class="tab" title="Cotizaciones (Ctrl+4)"><i class="fas fa-file-invoice-dollar"></i> Cotizaciones</button>
+    <button type="button" data-tab="incidentes" class="tab" title="Incidentes (Ctrl+5)"><i class="fas fa-exclamation-triangle"></i> Incidentes</button>
+    <button type="button" data-tab="bitacoras" class="tab" title="Bitácora (Ctrl+6)"><i class="fas fa-clock"></i> Bitácora de horas</button>
+    <button type="button" data-tab="demo" class="tab highlight" title="Cargar datos de ejemplo"><i class="fas fa-database"></i> Cargar demo</button>
   </nav>
 
   <main class="content" id="main-content">
+    <!-- DASHBOARDS -->
+    <section id="panel-dashboards" class="panel active" aria-label="Resumen por segmento">
+      <div class="section-header">
+        <h2><i class="fas fa-chart-pie"></i> Resumen general</h2>
+        <div class="toolbar">
+          <button type="button" id="dashboard-refresh" class="btn outline" title="Actualizar datos"><i class="fas fa-sync-alt"></i> Actualizar</button>
+        </div>
+      </div>
+      <p class="dashboard-intro">Métricas clave de cada área. Usa los botones para ir al detalle.</p>
+      <div id="dashboard-grid" class="dashboard-grid" aria-live="polite">
+        <div class="dashboard-loading" id="dashboard-loading"><div class="loading-spinner"></div><span>Cargando indicadores…</span></div>
+      </div>
+    </section>
+
     <!-- CLIENTES -->
-    <section id="panel-clientes" class="panel active">
+    <section id="panel-clientes" class="panel">
       <div class="section-header">
         <h2><i class="fas fa-users"></i> Catálogo de clientes</h2>
         <div class="toolbar">
           <input type="search" id="buscar-clientes" placeholder="Buscar por nombre, código o RFC..." class="search">
+          <button type="button" id="export-clientes" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-export"></i> Exportar CSV</button>
           <button type="button" id="nuevo-cliente" class="btn primary"><i class="fas fa-plus"></i> Nuevo cliente</button>
         </div>
       </div>
@@ -53,6 +70,7 @@
           </thead>
           <tbody></tbody>
         </table>
+        <div class="table-footer" id="footer-tabla-clientes" aria-live="polite"></div>
       </div>
     </section>
 
@@ -62,6 +80,7 @@
         <h2><i class="fas fa-cogs"></i> Catálogo de refacciones</h2>
         <div class="toolbar">
           <input type="search" id="buscar-refacciones" placeholder="Buscar por código o descripción..." class="search">
+          <button type="button" id="export-refacciones" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-export"></i> Exportar CSV</button>
           <button type="button" id="nueva-refaccion" class="btn primary"><i class="fas fa-plus"></i> Nueva refacción</button>
         </div>
       </div>
@@ -85,6 +104,7 @@
           </thead>
           <tbody></tbody>
         </table>
+        <div class="table-footer" id="footer-tabla-refacciones" aria-live="polite"></div>
       </div>
     </section>
 
@@ -96,6 +116,7 @@
           <select id="filtro-cliente-maq">
             <option value="">Todos los clientes</option>
           </select>
+          <button type="button" id="export-maquinas" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-export"></i> Exportar CSV</button>
           <button type="button" id="nueva-maquina" class="btn primary"><i class="fas fa-plus"></i> Nueva máquina</button>
         </div>
       </div>
@@ -119,6 +140,7 @@
           </thead>
           <tbody></tbody>
         </table>
+        <div class="table-footer" id="footer-tabla-maquinas" aria-live="polite"></div>
       </div>
     </section>
 
@@ -126,7 +148,10 @@
     <section id="panel-cotizaciones" class="panel">
       <div class="section-header">
         <h2><i class="fas fa-file-invoice-dollar"></i> Cotizaciones</h2>
-        <button type="button" id="nueva-cotizacion" class="btn primary"><i class="fas fa-plus"></i> Nueva cotización</button>
+        <div class="toolbar">
+          <button type="button" id="export-cotizaciones" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-export"></i> Exportar CSV</button>
+          <button type="button" id="nueva-cotizacion" class="btn primary"><i class="fas fa-plus"></i> Nueva cotización</button>
+        </div>
       </div>
       <div id="cotizaciones-empty" class="empty-card hidden">
         <div class="empty-icon"><i class="fas fa-file-invoice"></i></div>
@@ -152,6 +177,7 @@
           </thead>
           <tbody></tbody>
         </table>
+        <div class="table-footer" id="footer-tabla-cotizaciones" aria-live="polite"></div>
       </div>
     </section>
 
@@ -159,7 +185,10 @@
     <section id="panel-incidentes" class="panel">
       <div class="section-header">
         <h2><i class="fas fa-exclamation-triangle"></i> Incidentes</h2>
-        <button type="button" id="nuevo-incidente" class="btn primary"><i class="fas fa-plus"></i> Nuevo incidente</button>
+        <div class="toolbar">
+          <button type="button" id="export-incidentes" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-export"></i> Exportar CSV</button>
+          <button type="button" id="nuevo-incidente" class="btn primary"><i class="fas fa-plus"></i> Nuevo incidente</button>
+        </div>
       </div>
       <div id="incidentes-empty" class="empty-card hidden">
         <div class="empty-icon"><i class="fas fa-clipboard-list"></i></div>
@@ -171,7 +200,7 @@
         <table class="data-table filterable-table" id="tabla-incidentes" data-cache="incidentesCache">
           <thead>
             <tr>
-              <th>Folio</th><th>Cliente</th><th>Máquina</th><th>Descripción</th><th>Prioridad</th><th>Estatus</th>
+              <th>Folio</th><th>Cliente</th><th>Máquina</th><th>Descripción</th><th>Fecha incidente</th><th>Fecha cerrado</th><th>Prioridad</th><th>Estatus</th>
               <th class="th-actions">Acciones</th>
             </tr>
             <tr class="filter-row">
@@ -179,6 +208,8 @@
               <td><input type="text" class="filter-input" data-key="cliente_nombre" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="maquina_nombre" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="descripcion" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="fecha_reporte" data-type="text" placeholder="aaaa-mm-dd"></td>
+              <td><input type="text" class="filter-input" data-key="fecha_cerrado" data-type="text" placeholder="aaaa-mm-dd"></td>
               <td><input type="text" class="filter-input" data-key="prioridad" data-type="text" placeholder="baja|media|alta"></td>
               <td><input type="text" class="filter-input" data-key="estatus" data-type="text" placeholder="abierto|cerrado"></td>
               <td class="th-actions"></td>
@@ -186,6 +217,7 @@
           </thead>
           <tbody></tbody>
         </table>
+        <div class="table-footer" id="footer-tabla-incidentes" aria-live="polite"></div>
       </div>
     </section>
 
@@ -193,7 +225,10 @@
     <section id="panel-bitacoras" class="panel">
       <div class="section-header">
         <h2><i class="fas fa-clock"></i> Bitácora de horas</h2>
-        <button type="button" id="nueva-bitacora" class="btn primary"><i class="fas fa-plus"></i> Nueva bitácora</button>
+        <div class="toolbar">
+          <button type="button" id="export-bitacoras" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-export"></i> Exportar CSV</button>
+          <button type="button" id="nueva-bitacora" class="btn primary"><i class="fas fa-plus"></i> Nueva bitácora</button>
+        </div>
       </div>
       <div id="bitacoras-empty" class="empty-card hidden">
         <div class="empty-icon"><i class="fas fa-hourglass-half"></i></div>
@@ -221,6 +256,7 @@
           </thead>
           <tbody></tbody>
         </table>
+        <div class="table-footer" id="footer-tabla-bitacoras" aria-live="polite"></div>
       </div>
     </section>
 
@@ -238,8 +274,8 @@
     </section>
   </main>
 
-  <div id="ai-widget-wrap" class="ai-widget-wrap collapsed" aria-label="Asistente con IA">
-    <div id="ai-fab" class="ai-fab" title="Abrir asistente">
+  <div id="ai-widget-wrap" class="ai-widget-wrap collapsed" aria-label="Agente de Soporte - Asistente con IA">
+    <div id="ai-fab" class="ai-fab" title="Abrir Agente de Soporte">
       <i class="fas fa-robot"></i>
       <span class="ai-fab-tooltip">¿Te puedo ayudar?</span>
       <span id="ai-unread-badge" class="ai-unread-badge hidden">0</span>
@@ -248,13 +284,20 @@
       <div class="ai-chat-header ai-widget-drag">
         <div class="ai-avatar"><i class="fas fa-robot"></i></div>
         <div>
-          <h2>Asistente con IA</h2>
+          <h2>Agente de Soporte</h2>
           <span class="ai-status">En línea · Arrastra para mover</span>
         </div>
         <button type="button" id="ai-minimize" class="ai-btn-minimize" aria-label="Minimizar"><i class="fas fa-chevron-down"></i></button>
       </div>
       <div class="ai-chat">
         <div class="ai-chat-messages" id="ai-messages"></div>
+        <div class="ai-chat-suggestions" id="ai-suggestions">
+          <span class="ai-suggestions-label">Preguntas rápidas:</span>
+          <button type="button" class="ai-chip" data-msg="¿Cuántas cotizaciones hay de hoy?">Cotizaciones de hoy</button>
+          <button type="button" class="ai-chip" data-msg="¿Cuántos incidentes tengo de hoy?">Incidentes de hoy</button>
+          <button type="button" class="ai-chip" data-msg="Dame un resumen de clientes y cotizaciones">Resumen general</button>
+          <button type="button" class="ai-chip" data-msg="¿Qué incidentes están abiertos?">Incidentes abiertos</button>
+        </div>
         <div class="ai-chat-form">
           <button type="button" id="ai-attach" class="ai-btn-attach" aria-label="Adjuntar archivo"><i class="fas fa-paperclip"></i></button>
           <input type="file" id="ai-file-input" class="hidden" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx">

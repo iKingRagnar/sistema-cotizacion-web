@@ -78,6 +78,7 @@ function getSchema() {
       descripcion TEXT NOT NULL,
       prioridad TEXT,
       fecha_reporte TEXT NOT NULL DEFAULT (date('now','localtime')),
+      fecha_cerrado TEXT,
       tecnico_responsable TEXT,
       estatus TEXT DEFAULT 'abierto',
       creado_en TEXT DEFAULT (datetime('now','localtime'))
@@ -121,6 +122,7 @@ async function init() {
     const { createClient } = require('@libsql/client');
     db = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
     for (const sql of getSchema()) await db.execute(sql);
+    try { await db.execute('ALTER TABLE incidentes ADD COLUMN fecha_cerrado TEXT'); } catch (_) { /* columna ya existe */ }
     return;
   }
   const sqlite3 = require('sqlite3').verbose();
@@ -130,6 +132,9 @@ async function init() {
   for (const sql of getSchema()) {
     await new Promise((res, rej) => db.run(sql, err => (err ? rej(err) : res())));
   }
+  try {
+    await new Promise((res, rej) => db.run('ALTER TABLE incidentes ADD COLUMN fecha_cerrado TEXT', err => (err ? rej(err) : res())));
+  } catch (_) { /* columna ya existe */ }
   const rows = await getAll("SELECT COUNT(*) as c FROM tecnicos");
   if (rows[0] && rows[0].c === 0) {
     await runQuery("INSERT INTO tecnicos (nombre) VALUES ('Juan Pérez'), ('María García'), ('Carlos López')");

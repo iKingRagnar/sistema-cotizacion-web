@@ -328,13 +328,15 @@ function generarFolioIncidente() {
 
 app.post('/api/incidentes', async (req, res) => {
   try {
-    const { cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, tecnico_responsable, estatus } = req.body || {};
+    const { cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, tecnico_responsable, estatus } = req.body || {};
     if (!cliente_id) return res.status(400).json({ error: 'cliente_id requerido' });
     if (!descripcion || !descripcion.trim()) return res.status(400).json({ error: 'descripcion requerida' });
     const folio = generarFolioIncidente();
+    const est = estatus || 'abierto';
+    const fCerr = fecha_cerrado || (est === 'cerrado' ? new Date().toISOString().slice(0, 10) : null);
     await db.runQuery(
-      `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [folio, cliente_id, maquina_id || null, descripcion.trim(), prioridad || 'media', fecha_reporte || new Date().toISOString().slice(0, 10), tecnico_responsable || null, estatus || 'abierto']
+      `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [folio, cliente_id, maquina_id || null, descripcion.trim(), prioridad || 'media', fecha_reporte || new Date().toISOString().slice(0, 10), fCerr, tecnico_responsable || null, est]
     );
     const r = await db.getOne('SELECT i.*, c.nombre as cliente_nombre, m.nombre as maquina_nombre FROM incidentes i JOIN clientes c ON c.id = i.cliente_id LEFT JOIN maquinas m ON m.id = i.maquina_id ORDER BY i.id DESC LIMIT 1');
     res.status(201).json(r);
@@ -345,10 +347,14 @@ app.post('/api/incidentes', async (req, res) => {
 
 app.put('/api/incidentes/:id', async (req, res) => {
   try {
-    const { cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, tecnico_responsable, estatus } = req.body || {};
+    const { cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, tecnico_responsable, estatus } = req.body || {};
+    const est = estatus || 'abierto';
+    let fCerr = fecha_cerrado;
+    if (est === 'cerrado' && !fCerr) fCerr = new Date().toISOString().slice(0, 10);
+    else if (est !== 'cerrado') fCerr = null;
     await db.runQuery(
-      `UPDATE incidentes SET cliente_id=?, maquina_id=?, descripcion=?, prioridad=?, fecha_reporte=?, tecnico_responsable=?, estatus=? WHERE id=?`,
-      [cliente_id || null, maquina_id || null, descripcion || '', prioridad || 'media', fecha_reporte || null, tecnico_responsable || null, estatus || 'abierto', req.params.id]
+      `UPDATE incidentes SET cliente_id=?, maquina_id=?, descripcion=?, prioridad=?, fecha_reporte=?, fecha_cerrado=?, tecnico_responsable=?, estatus=? WHERE id=?`,
+      [cliente_id || null, maquina_id || null, descripcion || '', prioridad || 'media', fecha_reporte || null, fCerr, tecnico_responsable || null, est, req.params.id]
     );
     const r = await db.getOne('SELECT i.*, c.nombre as cliente_nombre, m.nombre as maquina_nombre FROM incidentes i JOIN clientes c ON c.id = i.cliente_id LEFT JOIN maquinas m ON m.id = i.maquina_id WHERE i.id = ?', [req.params.id]);
     res.json(r || {});
@@ -496,8 +502,8 @@ app.post('/api/seed-demo', async (req, res) => {
         maquinaId = maquinaByClienteYNombre[clienteId + '|' + norm(inc.maquina_nombre)];
       }
       await db.runQuery(
-        `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [inc.folio || null, clienteId, maquinaId, inc.descripcion || '-', inc.prioridad || 'media', inc.fecha_reporte || new Date().toISOString().slice(0, 10), inc.tecnico_responsable || null, inc.estatus || 'abierto']
+        `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [inc.folio || null, clienteId, maquinaId, inc.descripcion || '-', inc.prioridad || 'media', inc.fecha_reporte || new Date().toISOString().slice(0, 10), inc.estatus === 'cerrado' ? (inc.fecha_cerrado || new Date().toISOString().slice(0, 10)) : null, inc.tecnico_responsable || null, inc.estatus || 'abierto']
       );
       const r = await db.getOne('SELECT id FROM incidentes ORDER BY id DESC LIMIT 1');
       if (r) { incidenteByFolio[(inc.folio || '').toUpperCase()] = r.id; incidentesCount++; }
@@ -566,8 +572,8 @@ app.post('/api/seed-demo-extra', async (req, res) => {
       let maquinaId = null;
       if (inc.maquina_nombre) maquinaId = maquinaByClienteYNombre[clienteId + '|' + norm(inc.maquina_nombre)];
       await db.runQuery(
-        `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [inc.folio || null, clienteId, maquinaId, inc.descripcion || '-', inc.prioridad || 'media', inc.fecha_reporte || new Date().toISOString().slice(0, 10), inc.tecnico_responsable || null, inc.estatus || 'abierto']
+        `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [inc.folio || null, clienteId, maquinaId, inc.descripcion || '-', inc.prioridad || 'media', inc.fecha_reporte || new Date().toISOString().slice(0, 10), inc.estatus === 'cerrado' ? (inc.fecha_cerrado || new Date().toISOString().slice(0, 10)) : null, inc.tecnico_responsable || null, inc.estatus || 'abierto']
       );
       const r = await db.getOne('SELECT id FROM incidentes ORDER BY id DESC LIMIT 1');
       if (r) { incidenteByFolio[(inc.folio || '').toUpperCase()] = r.id; incidentesCount++; }
@@ -618,7 +624,7 @@ app.get('/api/seed-status', async (req, res) => {
 });
 
 // --- Asistente IA: solo OpenAI-compatible (Bearer). La key de Cursor (crsr_) es para el app Cursor, no para este chat.
-const AI_SYSTEM_BASE = `Eres el asistente del Sistema de Cotización y Gestión.
+const AI_SYSTEM_BASE = `Eres el Agente de Soporte del Sistema de Cotización y Gestión.
 
 REGLAS ESTRICTAS:
 - Responde SIEMPRE en español. Sé amable pero directo.
@@ -627,7 +633,7 @@ REGLAS ESTRICTAS:
 - Si tienes datos actuales del sistema (cotizaciones, clientes, etc.) en el contexto, responde con esa información de forma clara. Si no hay datos, dilo en una frase.
 - No inventes datos. Si no tienes información, indica que puede revisar la pestaña correspondiente en el sistema.
 - Respuestas concisas y útiles. Sin relleno ni redundancia.`;
-const AI_WELCOME = `¡Hola! 👋 Soy tu asistente.
+const AI_WELCOME = `¡Hola! 👋 Soy tu Agente de Soporte.
 
 Puedo ayudarte a consultar **cotizaciones** (por fecha, cliente), **clientes**, **refacciones**, **máquinas**, **incidentes** y **bitácora**. También puedo explicarte cómo usar el sistema.
 
@@ -665,7 +671,7 @@ app.post('/api/ai/chat', async (req, res) => {
     let systemContent = AI_SYSTEM_BASE;
     const lower = text.toLowerCase();
     const historyText = (Array.isArray(history) ? history : []).map(m => (m && m.content) || '').join(' ');
-    const wantsCotizaciones = /\b(cotizaciones?|cotización)\b/i.test(text + ' ' + historyText) || /\bhoy\b|fecha|\d{1,2}\s+de\s+\w+/i.test(text);
+    const wantsCotizaciones = /\b(cotizaciones?|cotización)\b/i.test(text + ' ' + historyText) || (/\bhoy\b|fecha|\d{1,2}\s+de\s+\w+/i.test(text) && !/\bincidentes?\b/i.test(text));
     if (wantsCotizaciones) {
       try {
         const rows = await db.getAll(
@@ -676,6 +682,19 @@ app.post('/api/ai/chat', async (req, res) => {
         const hoy = new Date().toISOString().slice(0, 10);
         const paraHoy = rows.filter(r => r.fecha === hoy);
         systemContent += `\n\nDatos actuales del sistema (usa esto para responder):\n- Cotizaciones de HOY (${hoy}): ${paraHoy.length}. ${paraHoy.length ? paraHoy.map(c => `Folio ${c.folio}, ${c.cliente_nombre}, $${(c.total || 0).toFixed(2)}`).join('; ') : 'Ninguna.'}\n- Últimas cotizaciones (total ${rows.length}): ${rows.slice(0, 15).map(c => `${c.folio} (${c.fecha}) ${c.cliente_nombre} $${(c.total || 0).toFixed(2)}`).join('; ')}`;
+      } catch (_) {}
+    }
+    const wantsIncidentes = /\bincidentes?\b/i.test(text + ' ' + historyText) || /\bcuántos\s+incidentes?\b|\bincidentes\s+de\s+hoy\b|\bincidentes\s+hoy\b/i.test(text);
+    if (wantsIncidentes) {
+      try {
+        const rows = await db.getAll(
+          `SELECT i.id, i.folio, i.fecha_reporte, i.fecha_cerrado, i.descripcion, i.prioridad, i.estatus, c.nombre as cliente_nombre
+           FROM incidentes i JOIN clientes c ON c.id = i.cliente_id
+           ORDER BY i.fecha_reporte DESC, i.id DESC LIMIT 80`
+        );
+        const hoy = new Date().toISOString().slice(0, 10);
+        const paraHoy = rows.filter(r => (r.fecha_reporte || '').toString().slice(0, 10) === hoy);
+        systemContent += `\n\nDatos actuales de incidentes (usa esto para responder):\n- Incidentes reportados HOY (${hoy}): ${paraHoy.length}. ${paraHoy.length ? paraHoy.map(inc => `${inc.folio} ${inc.cliente_nombre} ${(inc.descripcion || '').slice(0, 40)} (${inc.estatus})`).join('; ') : 'Ninguno.'}\n- Últimos incidentes (total ${rows.length}): ${rows.slice(0, 15).map(inc => `${inc.folio} (${(inc.fecha_reporte || '').slice(0, 10)}) ${inc.cliente_nombre} ${inc.estatus}`).join('; ')}`;
       } catch (_) {}
     }
 

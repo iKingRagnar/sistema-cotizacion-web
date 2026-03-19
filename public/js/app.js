@@ -19,11 +19,12 @@
     const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
     el.innerHTML = `<i class="fas ${icon} toast-icon"></i><span class="toast-msg">${escapeHtml(message)}</span>`;
     container.appendChild(el);
-    const t = setTimeout(() => {
-      el.style.animation = 'toastIn 0.25s ease reverse';
-      setTimeout(() => el.remove(), 260);
-    }, type === 'error' ? 6000 : 4000);
-    el.addEventListener('click', () => { clearTimeout(t); el.remove(); });
+    function dismiss() {
+      el.classList.add('toast-out');
+      setTimeout(function () { el.remove(); }, 320);
+    }
+    const t = setTimeout(dismiss, type === 'error' ? 6000 : 4000);
+    el.addEventListener('click', function () { clearTimeout(t); dismiss(); });
   }
 
   function showLoading() {
@@ -55,6 +56,7 @@
     const tab = document.querySelector('.tab[data-tab="' + id + '"]');
     if (panel) panel.classList.add('active');
     if (tab) tab.classList.add('active');
+    if (id === 'dashboards') loadDashboard();
     if (id === 'clientes') loadClientes();
     if (id === 'refacciones') loadRefacciones();
     if (id === 'maquinas') loadMaquinas();
@@ -149,7 +151,8 @@
     if (str.startsWith('<')) return { op: 'lt', value: n };
     const between = str.match(/^([\d.]+)\s*-\s*([\d.]+)$/) || str.match(/^between\s+([\d.]+)\s+and\s+([\d.]+)$/i);
     if (between) return { op: 'between', value: parseFloat(between[1]), value2: parseFloat(between[2]) };
-    if (!isNaN(n)) return { op: 'eq', value: n };
+    // Número solo (ej. "3"): mostrar valores cuya parte entera sea ese número (3.7, 3.2, 3). Con decimal (ej. "3.5"): igualdad exacta.
+    if (!isNaN(n)) return { op: str.includes('.') ? 'eq' : 'int', value: n };
     return null;
   }
 
@@ -228,6 +231,7 @@
         out = out.filter(row => {
           const num = parseFloat(row[key]);
           if (isNaN(num)) return false;
+          if (cond.op === 'int') return Math.floor(num) === cond.value; // "3" → 3, 3.7, 3.2
           if (cond.op === 'eq') return num === cond.value;
           if (cond.op === 'gt') return num > cond.value;
           if (cond.op === 'gte') return num >= cond.value;
@@ -257,6 +261,52 @@
     });
   }
 
+  function escapeCsv(val) {
+    if (val == null) return '';
+    const s = String(val).replace(/"/g, '""');
+    return /[,"\n\r]/.test(s) ? '"' + s + '"' : s;
+  }
+  function exportToCsv(data, tableId, filenameLabel) {
+    const tbl = qs('#' + tableId);
+    if (!tbl || !data || !data.length) { showToast('No hay datos para exportar.', 'error'); return; }
+    showToast('Exportando…', 'success');
+    const ths = Array.from(tbl.querySelectorAll('thead tr:first-child th:not(.th-actions)'));
+    const tds = tbl.querySelectorAll('.filter-row td:not(.th-actions)');
+    const keys = [], headers = [];
+    ths.forEach((th, i) => {
+      const td = tds[i];
+      const inp = td ? td.querySelector('[data-key]') : null;
+      if (inp && inp.dataset.key) { keys.push(inp.dataset.key); headers.push(th.textContent.trim()); }
+    });
+    const rows = [headers.join(','), ...data.map(row => keys.map(k => escapeCsv(row[k])).join(','))];
+    const csv = '\uFEFF' + rows.join('\r\n');
+    const a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    a.download = (filenameLabel || 'export') + '_' + new Date().toISOString().slice(0, 10) + '.csv';
+    a.click();
+    showToast('CSV descargado correctamente.', 'success');
+  }
+  function updateTableFooter(tableId, showing, total, clearAndRefresh) {
+    const footer = qs('#footer-' + tableId);
+    if (!footer) return;
+    if (total === 0) { footer.innerHTML = ''; return; }
+    const hasFilters = tbl => {
+      let has = false;
+      qs('#' + tbl).querySelectorAll('.filter-row .filter-input, .filter-row .filter-date-select, .filter-row .filter-date-input').forEach(inp => { if (inp.value && inp.value.trim()) has = true; });
+      return has;
+    };
+    const showClear = hasFilters(tableId);
+    footer.innerHTML = `<span>Mostrando <strong>${showing}</strong> de <strong>${total}</strong> registros</span>${showClear ? ' <button type="button" class="clear-filters">Limpiar filtros</button>' : ''}`;
+    const clearBtn = footer.querySelector('.clear-filters');
+    if (clearBtn && clearAndRefresh) clearBtn.addEventListener('click', clearAndRefresh);
+  }
+  function clearTableFiltersAndRefresh(tableId, searchId, onRefresh) {
+    const tbl = qs('#' + tableId);
+    if (tbl) tbl.querySelectorAll('.filter-row .filter-input, .filter-row .filter-date-select, .filter-row .filter-date-input').forEach(inp => { inp.value = ''; });
+    if (searchId) { const s = qs(searchId); if (s) s.value = ''; }
+    if (onRefresh) onRefresh();
+  }
+
   // ----- CLIENTES -----
   function renderClientes(data) {
     const tbody = qs('#tabla-clientes tbody');
@@ -282,6 +332,7 @@
       `;
       tbody.appendChild(tr);
     });
+    updateTableFooter('tabla-clientes', data.length, clientesCache.length, () => clearTableFiltersAndRefresh('tabla-clientes', '#buscar-clientes', applyClientesFiltersAndRender));
     tbody.querySelectorAll('.btn-edit-cliente').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const c = data.find(x => x.id == btn.dataset.id); if (c) openModalCliente(c); });
     });
@@ -336,6 +387,7 @@
       `;
       tbody.appendChild(tr);
     });
+    updateTableFooter('tabla-refacciones', data.length, refaccionesCache.length, () => clearTableFiltersAndRefresh('tabla-refacciones', '#buscar-refacciones', applyRefaccionesFiltersAndRender));
     tbody.querySelectorAll('.btn-edit-ref').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const r = data.find(x => x.id == btn.dataset.id); if (r) openModalRefaccion(r); });
     });
@@ -390,6 +442,7 @@
       `;
       tbody.appendChild(tr);
     });
+    updateTableFooter('tabla-maquinas', data.length, maquinasCache.length, () => clearTableFiltersAndRefresh('tabla-maquinas', null, applyMaquinasFiltersAndRender));
     tbody.querySelectorAll('.btn-edit-maq').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const m = data.find(x => x.id == btn.dataset.id); if (m) openModalMaquina(m); });
     });
@@ -434,9 +487,11 @@
     }
     emptyEl.classList.add('hidden');
     listEl.classList.remove('hidden');
+    updateTableFooter('tabla-cotizaciones', (data && data.length) || 0, cotizacionesCache.length, () => clearTableFiltersAndRefresh('tabla-cotizaciones', null, applyCotizacionesFiltersAndRender));
     if (!hasFilteredResults) {
       const cols = 6;
-      tbody.innerHTML = `<tr><td colspan="${cols}" class="empty filter-empty">No hay resultados con los filtros aplicados. Ajusta los criterios para ver registros.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="${cols}" class="empty filter-empty"><span>No hay resultados con los filtros aplicados.</span> <button type="button" class="btn small primary clear-filters-inline">Quitar filtros</button></td></tr>`;
+      tbody.querySelector('.clear-filters-inline').addEventListener('click', () => clearTableFiltersAndRefresh('tabla-cotizaciones', null, applyCotizacionesFiltersAndRender));
       return;
     }
     data.forEach(c => {
@@ -496,8 +551,10 @@
     }
     emptyEl.classList.add('hidden');
     listEl.classList.remove('hidden');
+    updateTableFooter('tabla-incidentes', (data && data.length) || 0, incidentesCache.length, () => clearTableFiltersAndRefresh('tabla-incidentes', null, applyIncidentesFiltersAndRender));
     if (!hasFilteredResults) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty filter-empty">No hay resultados con los filtros aplicados. Ajusta los criterios para ver registros.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="empty filter-empty"><span>No hay resultados con los filtros aplicados.</span> <button type="button" class="btn small primary clear-filters-inline">Quitar filtros</button></td></tr>';
+      tbody.querySelector('.clear-filters-inline').addEventListener('click', () => clearTableFiltersAndRefresh('tabla-incidentes', null, applyIncidentesFiltersAndRender));
       return;
     }
     data.forEach(i => {
@@ -507,6 +564,8 @@
         <td>${escapeHtml(i.cliente_nombre || '')}</td>
         <td>${escapeHtml(i.maquina_nombre || '')}</td>
         <td>${escapeHtml((i.descripcion || '').slice(0, 45))}${(i.descripcion && i.descripcion.length > 45) ? '…' : ''}</td>
+        <td>${(i.fecha_reporte || '').toString().slice(0, 10) || '—'}</td>
+        <td>${(i.fecha_cerrado || '').toString().slice(0, 10) || '—'}</td>
         <td>${escapeHtml(i.prioridad || '')}</td>
         <td>${escapeHtml(i.estatus || '')}</td>
         <td class="th-actions">
@@ -558,8 +617,10 @@
     }
     emptyEl.classList.add('hidden');
     listEl.classList.remove('hidden');
+    updateTableFooter('tabla-bitacoras', (data && data.length) || 0, bitacorasCache.length, () => clearTableFiltersAndRefresh('tabla-bitacoras', null, applyBitacorasFiltersAndRender));
     if (!hasFilteredResults) {
-      tbody.innerHTML = '<tr><td colspan="8" class="empty filter-empty">No hay resultados con los filtros aplicados. Ajusta los criterios para ver registros.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="empty filter-empty"><span>No hay resultados con los filtros aplicados.</span> <button type="button" class="btn small primary clear-filters-inline">Quitar filtros</button></td></tr>';
+      tbody.querySelector('.clear-filters-inline').addEventListener('click', () => clearTableFiltersAndRefresh('tabla-bitacoras', null, applyBitacorasFiltersAndRender));
       return;
     }
     data.forEach(b => {
@@ -606,17 +667,40 @@
     } catch (e) { showToast(parseApiError(e) || 'No se pudo eliminar.', 'error'); }
   }
 
-  // ----- MODAL GENÉRICO ----- (no se cierra al hacer clic fuera; solo con X o Cancelar)
+  // ----- MODAL GENÉRICO ----- Focus trap, foco al abrir/cerrar, Escape cierra
   function openModal(title, bodyHtml, onClose) {
     const modal = qs('#modal');
+    const previousFocus = document.activeElement;
     qs('#modal-title').textContent = title;
     qs('#modal-body').innerHTML = bodyHtml;
     modal.classList.remove('hidden');
     clearInvalidMarks();
-    const close = () => { modal.classList.add('hidden'); clearInvalidMarks(); if (onClose) onClose(); };
+    const focusables = () => modal.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+    const firstFocusable = () => focusables()[0];
+    const lastFocusable = () => { const f = focusables(); return f[f.length - 1]; };
+    const handleKey = (e) => {
+      if (e.key === 'Escape') { close(); return; }
+      if (e.key !== 'Tab') return;
+      const fs = focusables();
+      if (fs.length === 0) return;
+      if (e.shiftKey) {
+        if (document.activeElement === firstFocusable()) { e.preventDefault(); lastFocusable().focus(); }
+      } else {
+        if (document.activeElement === lastFocusable()) { e.preventDefault(); firstFocusable().focus(); }
+      }
+    };
+    const close = () => {
+      modal.classList.add('hidden');
+      modal.removeEventListener('keydown', handleKey);
+      clearInvalidMarks();
+      if (previousFocus && typeof previousFocus.focus === 'function') previousFocus.focus();
+      if (onClose) onClose();
+    };
+    modal.addEventListener('keydown', handleKey);
     qs('#modal .close').onclick = close;
     const cancelBtn = qs('#modal-body #modal-btn-cancel');
     if (cancelBtn) cancelBtn.onclick = close;
+    setTimeout(() => { const el = firstFocusable(); if (el) el.focus(); }, 50);
     return close;
   }
 
@@ -723,6 +807,10 @@
         direccion: qs('#m-direccion').value.trim() || null,
         ciudad: qs('#m-ciudad').value.trim() || null,
       };
+      const btn = qs('#m-save');
+      const origText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando…';
       try {
         if (isNew) await fetchJson(API + '/clientes', { method: 'POST', body: JSON.stringify(payload) });
         else await fetchJson(API + '/clientes/' + cliente.id, { method: 'PUT', body: JSON.stringify(payload) });
@@ -731,6 +819,7 @@
         loadClientes();
         fillClientesSelect();
       } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar. Revisa los datos e intenta de nuevo.', 'error'); }
+      finally { btn.disabled = false; btn.innerHTML = origText; }
     };
   }
 
@@ -772,6 +861,10 @@
         precio_unitario: precio,
         unidad: qs('#m-unidad').value.trim() || 'PZA',
       };
+      const btn = qs('#m-save');
+      const origText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando…';
       try {
         if (isNew) await fetchJson(API + '/refacciones', { method: 'POST', body: JSON.stringify(payload) });
         else await fetchJson(API + '/refacciones/' + refaccion.id, { method: 'PUT', body: JSON.stringify(payload) });
@@ -780,6 +873,7 @@
         loadRefacciones();
         if (typeof fillRefaccionesSelect === 'function') fillRefaccionesSelect();
       } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar. Revisa los datos.', 'error'); }
+      finally { btn.disabled = false; btn.innerHTML = origText; }
     };
   }
 
@@ -816,6 +910,10 @@
         numero_serie: qs('#m-numero_serie').value.trim() || null,
         ubicacion: qs('#m-ubicacion').value.trim() || null,
       };
+      const btn = qs('#m-save');
+      const origText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando…';
       try {
         if (isNew) await fetchJson(API + '/maquinas', { method: 'POST', body: JSON.stringify(payload) });
         else await fetchJson(API + '/maquinas/' + maquina.id, { method: 'PUT', body: JSON.stringify(payload) });
@@ -823,6 +921,7 @@
         showToast(isNew ? 'Máquina guardada correctamente.' : 'Máquina actualizada correctamente.', 'success');
         loadMaquinas();
       } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar. Revisa los datos.', 'error'); }
+      finally { btn.disabled = false; btn.innerHTML = origText; }
     };
   }
 
@@ -877,6 +976,10 @@
         iva: Math.round(iv * 100) / 100,
         total: Math.round(tot * 100) / 100,
       };
+      const btn = qs('#m-save');
+      const origText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando…';
       try {
         if (isNew) await fetchJson(API + '/cotizaciones', { method: 'POST', body: JSON.stringify(payload) });
         else { payload.folio = cot.folio; await fetchJson(API + '/cotizaciones/' + cot.id, { method: 'PUT', body: JSON.stringify(payload) }); }
@@ -884,6 +987,7 @@
         showToast(isNew ? 'Cotización guardada correctamente.' : 'Cotización actualizada correctamente.', 'success');
         loadCotizaciones();
       } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar. Revisa los datos.', 'error'); }
+      finally { btn.disabled = false; btn.innerHTML = origText; }
     };
   }
 
@@ -907,7 +1011,8 @@
       <div class="form-row">
         <div class="form-group"><label>Prioridad</label><select id="m-prioridad"><option value="baja" ${inc && inc.prioridad === 'baja' ? 'selected' : ''}>Baja</option><option value="media" ${!inc || inc.prioridad === 'media' ? 'selected' : ''}>Media</option><option value="alta" ${inc && inc.prioridad === 'alta' ? 'selected' : ''}>Alta</option><option value="critica" ${inc && inc.prioridad === 'critica' ? 'selected' : ''}>Crítica</option></select></div>
         <div class="form-group"><label>Estatus</label><select id="m-estatus"><option value="abierto" ${!inc || inc.estatus === 'abierto' ? 'selected' : ''}>Abierto</option><option value="en_proceso" ${inc && inc.estatus === 'en_proceso' ? 'selected' : ''}>En proceso</option><option value="cerrado" ${inc && inc.estatus === 'cerrado' ? 'selected' : ''}>Cerrado</option><option value="cancelado" ${inc && inc.estatus === 'cancelado' ? 'selected' : ''}>Cancelado</option></select></div>
-        <div class="form-group"><label>Fecha reporte *</label><input type="date" id="m-fecha_reporte" value="${inc && inc.fecha_reporte ? inc.fecha_reporte.slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
+        <div class="form-group"><label>Fecha incidente *</label><input type="date" id="m-fecha_reporte" value="${inc && inc.fecha_reporte ? inc.fecha_reporte.slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
+        <div class="form-group"><label>Fecha cerrado</label><input type="date" id="m-fecha_cerrado" value="${inc && inc.fecha_cerrado ? inc.fecha_cerrado.slice(0, 10) : ''}"></div>
       </div>
       <div class="form-group"><label>Técnico responsable</label><input type="text" id="m-tecnico" maxlength="100" value="${escapeHtml(inc && inc.tecnico_responsable) || ''}"></div>
       <div class="form-actions">
@@ -924,6 +1029,7 @@
       if (err) { markInvalid('m-descripcion', err); return; }
       err = validateRequired(fechaReporte, 'La fecha de reporte es obligatoria');
       if (err) { markInvalid('m-fecha_reporte', err); return; }
+      const fechaCerr = qs('#m-fecha_cerrado').value || null;
       const payload = {
         cliente_id: parseInt(qs('#m-cliente_id').value, 10),
         maquina_id: qs('#m-maquina_id').value ? parseInt(qs('#m-maquina_id').value, 10) : null,
@@ -931,8 +1037,13 @@
         prioridad: qs('#m-prioridad').value,
         estatus: qs('#m-estatus').value,
         fecha_reporte: fechaReporte,
+        fecha_cerrado: fechaCerr,
         tecnico_responsable: qs('#m-tecnico').value.trim() || null,
       };
+      const btn = qs('#m-save');
+      const origText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando…';
       try {
         if (isNew) await fetchJson(API + '/incidentes', { method: 'POST', body: JSON.stringify(payload) });
         else await fetchJson(API + '/incidentes/' + inc.id, { method: 'PUT', body: JSON.stringify(payload) });
@@ -940,6 +1051,7 @@
         showToast(isNew ? 'Incidente guardado correctamente.' : 'Incidente actualizado correctamente.', 'success');
         loadIncidentes();
       } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar. Revisa los datos o completa los campos obligatorios.', 'error'); }
+      finally { btn.disabled = false; btn.innerHTML = origText; }
     };
   }
 
@@ -990,6 +1102,10 @@
         tiempo_horas: parseFloat(qs('#m-tiempo_horas').value) || 0,
         materiales_usados: qs('#m-materiales').value.trim() || null,
       };
+      const btn = qs('#m-save');
+      const origText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando…';
       try {
         if (isNew) await fetchJson(API + '/bitacoras', { method: 'POST', body: JSON.stringify(payload) });
         else await fetchJson(API + '/bitacoras/' + bit.id, { method: 'PUT', body: JSON.stringify(payload) });
@@ -997,6 +1113,7 @@
         showToast(isNew ? 'Registro de bitácora guardado correctamente.' : 'Bitácora actualizada correctamente.', 'success');
         loadBitacoras();
       } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar. Indica incidente o cotización y fecha.', 'error'); }
+      finally { btn.disabled = false; btn.innerHTML = origText; }
     };
   }
 
@@ -1005,6 +1122,93 @@
       const bit = await fetchJson(API + '/bitacoras/' + id);
       openModalBitacora(bit);
     } catch (e) { showToast(parseApiError(e) || 'No se pudo cargar el registro.', 'error'); }
+  }
+
+  // ----- DASHBOARD -----
+  function formatMoney(n) {
+    if (n == null || isNaN(n)) return '—';
+    return '$' + Number(n).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  async function loadDashboard() {
+    const grid = qs('#dashboard-grid');
+    if (!grid) return;
+    let loading = qs('#dashboard-loading');
+    if (!loading) {
+      loading = document.createElement('div');
+      loading.id = 'dashboard-loading';
+      loading.className = 'dashboard-loading';
+      loading.innerHTML = '<div class="loading-spinner"></div><span>Cargando indicadores…</span>';
+    }
+    loading.classList.remove('hidden');
+    grid.innerHTML = '';
+    grid.appendChild(loading);
+    try {
+      const [clientes, refacciones, maquinas, cotizaciones, incidentes, bitacoras] = await Promise.all([
+        fetchJson(API + '/clientes').catch(() => []),
+        fetchJson(API + '/refacciones').catch(() => []),
+        fetchJson(API + '/maquinas').catch(() => []),
+        fetchJson(API + '/cotizaciones').catch(() => []),
+        fetchJson(API + '/incidentes').catch(() => []),
+        fetchJson(API + '/bitacoras').catch(() => []),
+      ]);
+      if (loading) loading.classList.add('hidden');
+      const now = new Date();
+      const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+      const ciudades = new Set((clientes || []).map(c => (c.ciudad || '').trim()).filter(Boolean)).size;
+      const conRfc = (clientes || []).filter(c => (c.rfc || '').trim()).length;
+      const valorCatalogo = (refacciones || []).reduce((s, r) => s + (Number(r.precio_unitario) || 0), 0);
+      const promPrecio = (refacciones || []).length ? valorCatalogo / refacciones.length : 0;
+      const marcas = new Set((refacciones || []).map(r => (r.marca || '').trim()).filter(Boolean)).size;
+      const maqPorCliente = {};
+      (maquinas || []).forEach(m => {
+        const key = m.cliente_nombre || 'Sin cliente';
+        maqPorCliente[key] = (maqPorCliente[key] || 0) + 1;
+      });
+      const topClienteMaq = Object.keys(maqPorCliente).length ? Object.entries(maqPorCliente).sort((a, b) => b[1] - a[1])[0] : null;
+      const cotTotal = (cotizaciones || []).reduce((s, c) => s + (Number(c.total) || 0), 0);
+      const cotEsteMes = (cotizaciones || []).filter(c => (c.fecha || '').slice(0, 7) === thisMonthStart.slice(0, 7)).length;
+      const cotRefacciones = (cotizaciones || []).filter(c => (c.tipo || '') === 'refacciones').length;
+      const cotManoObra = (cotizaciones || []).filter(c => (c.tipo || '') === 'mano_obra').length;
+      const incAbiertos = (incidentes || []).filter(i => (i.estatus || '') === 'abierto').length;
+      const incEnProceso = (incidentes || []).filter(i => (i.estatus || '') === 'en_proceso').length;
+      const incAltaCritica = (incidentes || []).filter(i => /^(alta|critica)$/i.test(i.prioridad || '')).length;
+      const incCerrados = (incidentes || []).filter(i => (i.estatus || '') === 'cerrado').length;
+      const bitHoras = (bitacoras || []).reduce((s, b) => s + (Number(b.tiempo_horas) || 0), 0);
+      const tecnicos = new Set((bitacoras || []).map(b => (b.tecnico || '').trim()).filter(Boolean)).size;
+      const bitEsteMes = (bitacoras || []).filter(b => (b.fecha || '').slice(0, 7) === thisMonthStart.slice(0, 7)).length;
+      const cards = [
+        { id: 'clientes', icon: 'fa-users', title: 'Clientes', goto: 'clientes', rows: [{ label: 'Total', value: (clientes || []).length }, { label: 'Ciudades', value: ciudades }, { label: 'Con RFC', value: conRfc }] },
+        { id: 'refacciones', icon: 'fa-cogs', title: 'Refacciones', goto: 'refacciones', rows: [{ label: 'Total', value: (refacciones || []).length }, { label: 'Valor catálogo', value: formatMoney(valorCatalogo) }, { label: 'Precio promedio', value: formatMoney(promPrecio) }, { label: 'Marcas', value: marcas }] },
+        { id: 'maquinas', icon: 'fa-industry', title: 'Máquinas', goto: 'maquinas', rows: [{ label: 'Total', value: (maquinas || []).length }, { label: 'Clientes con equipo', value: Object.keys(maqPorCliente).length }, topClienteMaq ? { label: 'Top cliente', value: topClienteMaq[0] + ' (' + topClienteMaq[1] + ')' } : null].filter(Boolean) },
+        { id: 'cotizaciones', icon: 'fa-file-invoice-dollar', title: 'Cotizaciones', goto: 'cotizaciones', rows: [{ label: 'Total', value: (cotizaciones || []).length }, { label: 'Monto total', value: formatMoney(cotTotal) }, { label: 'Este mes', value: cotEsteMes }, { label: 'Refacciones / Mano obra', value: cotRefacciones + ' / ' + cotManoObra }] },
+        { id: 'incidentes', icon: 'fa-exclamation-triangle', title: 'Incidentes', goto: 'incidentes', rows: [{ label: 'Total', value: (incidentes || []).length }, { label: 'Abiertos', value: incAbiertos }, { label: 'En proceso', value: incEnProceso }, { label: 'Alta/Crítica', value: incAltaCritica }, { label: 'Cerrados', value: incCerrados }] },
+        { id: 'bitacoras', icon: 'fa-clock', title: 'Bitácora de horas', goto: 'bitacoras', rows: [{ label: 'Registros', value: (bitacoras || []).length }, { label: 'Horas totales', value: bitHoras.toFixed(1) }, { label: 'Técnicos', value: tecnicos }, { label: 'Este mes', value: bitEsteMes }] },
+      ];
+      grid.innerHTML = '';
+      cards.forEach((card, idx) => {
+        const el = document.createElement('div');
+        el.className = 'dashboard-card';
+        el.setAttribute('data-dashboard', card.id);
+        el.innerHTML = `
+          <div class="dashboard-card-header">
+            <span class="dashboard-card-icon"><i class="fas ${card.icon}"></i></span>
+            <h3 class="dashboard-card-title">${escapeHtml(card.title)}</h3>
+          </div>
+          <dl class="dashboard-card-metrics">
+            ${card.rows.map(r => `<div class="dashboard-metric"><dt>${escapeHtml(r.label)}</dt><dd>${escapeHtml(String(r.value))}</dd></div>`).join('')}
+          </dl>
+          <button type="button" class="btn small primary dashboard-card-action" data-goto="${card.goto}">Ver ${escapeHtml(card.title)}</button>
+        `;
+        grid.appendChild(el);
+      });
+      grid.querySelectorAll('.dashboard-card-action').forEach(btn => {
+        btn.addEventListener('click', () => showPanel(btn.dataset.goto));
+      });
+    } catch (e) {
+      if (loading) loading.classList.add('hidden');
+      grid.innerHTML = '<div class="dashboard-error"><i class="fas fa-exclamation-circle"></i> No se pudo cargar el resumen. Revisa la conexión e intenta de nuevo.</div>';
+      console.error(e);
+    }
   }
 
   // ----- SEED STATUS -----
@@ -1088,6 +1292,8 @@
   bindTableFilters('tabla-cotizaciones', applyCotizacionesFiltersAndRender);
   bindTableFilters('tabla-incidentes', applyIncidentesFiltersAndRender);
   bindTableFilters('tabla-bitacoras', applyBitacorasFiltersAndRender);
+  const dashboardRefresh = qs('#dashboard-refresh');
+  if (dashboardRefresh) dashboardRefresh.addEventListener('click', () => loadDashboard());
   qs('#nuevo-cliente').addEventListener('click', () => openModalCliente(null));
   qs('#nueva-refaccion').addEventListener('click', () => openModalRefaccion(null));
   qs('#nueva-maquina').addEventListener('click', () => openModalMaquina(null));
@@ -1097,6 +1303,37 @@
   qs('.btn-empty-cot').addEventListener('click', () => openModalCotizacion(null));
   qs('.btn-empty-inc').addEventListener('click', () => openModalIncidente(null));
   qs('.btn-empty-bit').addEventListener('click', () => openModalBitacora(null));
+
+  function getFilteredClientes() {
+    const q = (qs('#buscar-clientes') && qs('#buscar-clientes').value || '').trim();
+    let d = applyFilters(clientesCache, getFilterValues('#tabla-clientes'), 'tabla-clientes');
+    if (q) d = d.filter(c => [c.nombre, c.codigo, c.rfc].some(v => normalizeForSearch(v).includes(normalizeForSearch(q))));
+    return d;
+  }
+  function getFilteredRefacciones() {
+    const q = (qs('#buscar-refacciones') && qs('#buscar-refacciones').value || '').trim();
+    let d = applyFilters(refaccionesCache, getFilterValues('#tabla-refacciones'), 'tabla-refacciones');
+    if (q) d = d.filter(r => [r.codigo, r.descripcion, r.marca].some(v => normalizeForSearch(v).includes(normalizeForSearch(q))));
+    return d;
+  }
+  qs('#export-clientes').addEventListener('click', () => exportToCsv(getFilteredClientes(), 'tabla-clientes', 'clientes'));
+  qs('#export-refacciones').addEventListener('click', () => exportToCsv(getFilteredRefacciones(), 'tabla-refacciones', 'refacciones'));
+  qs('#export-maquinas').addEventListener('click', () => exportToCsv(applyFilters(maquinasCache, getFilterValues('#tabla-maquinas'), 'tabla-maquinas'), 'tabla-maquinas', 'maquinas'));
+  qs('#export-cotizaciones').addEventListener('click', () => exportToCsv(applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones'), 'tabla-cotizaciones', 'cotizaciones'));
+  qs('#export-incidentes').addEventListener('click', () => exportToCsv(applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes'), 'tabla-incidentes', 'incidentes'));
+  qs('#export-bitacoras').addEventListener('click', () => exportToCsv(applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras'), 'tabla-bitacoras', 'bitacoras'));
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      const modal = qs('#modal');
+      if (modal && !modal.classList.contains('hidden')) modal.classList.add('hidden');
+    }
+    if (e.ctrlKey || e.metaKey) {
+      const tab = { '0': 'dashboards', '1': 'clientes', '2': 'refacciones', '3': 'maquinas', '4': 'cotizaciones', '5': 'incidentes', '6': 'bitacoras' }[e.key];
+      if (tab) { e.preventDefault(); showPanel(tab); }
+    }
+  });
+
   // ----- Asistente IA: minimizable (bolita), tooltip, inactividad, unread, animaciones -----
   (function initAiChat() {
     const wrap = qs('#ai-widget-wrap');
@@ -1211,13 +1448,18 @@
       });
     }
 
+    function removeTypingIndicator() {
+      const el = messagesEl.querySelector('.ai-typing');
+      if (el) el.remove();
+    }
     function append(msg, isUser) {
+      if (!isUser) removeTypingIndicator();
       const div = document.createElement('div');
       div.className = 'ai-msg ' + (isUser ? 'ai-msg-user' : 'ai-msg-bot');
       div.style.whiteSpace = 'pre-wrap';
       div.textContent = msg;
       messagesEl.appendChild(div);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
+      messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
       if (!isUser && wrap.classList.contains('collapsed')) {
         unreadCount++;
         updateUnreadBadge();
@@ -1228,11 +1470,18 @@
         const data = await fetchJson(API + '/ai/welcome');
         if (data.message) append(data.message, false);
       } catch (_) {
-        append('¡Hola! Soy tu asistente. Puedo ayudarte con clientes, cotizaciones, incidentes y más. ¿En qué te ayudo?', false);
+        append('¡Hola! Soy tu Agente de Soporte. Puedo ayudarte con clientes, cotizaciones, incidentes y más. ¿En qué te ayudo?', false);
       }
     }
     loadWelcome();
     scheduleIdleCheck();
+
+    qsAll('#ai-suggestions .ai-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const msg = btn.dataset.msg;
+        if (msg) { inputEl.value = msg; send(); }
+      });
+    });
 
     const allowedMimes = /^image\/(jpeg|png|gif|webp)$|^application\/pdf$|^application\/vnd\.(openxmlformats-officedocument\.(spreadsheetml\.sheet|wordprocessingml\.document)|ms-excel)$|^application\/msword$/;
     if (attachBtn && fileInput) {
@@ -1269,9 +1518,17 @@
       const messageToSend = text || (pendingFileBase64 ? '¿Qué hay en este archivo?' : '');
       const fileLabel = pendingFileMime && isPdfExcelOrWord(pendingFileMime) ? '[Documento adjunto]' : (pendingFileBase64 ? '[Imagen adjunta]' : '');
       append(text || fileLabel, true);
+      const suggestionsEl = qs('#ai-suggestions');
+      if (suggestionsEl) suggestionsEl.classList.add('hidden');
       resetIdleTimers();
       chatHistory.push({ role: 'user', content: messageToSend });
       sendBtn.disabled = true;
+      const typingEl = document.createElement('div');
+      typingEl.className = 'ai-msg ai-msg-bot ai-typing';
+      typingEl.setAttribute('aria-live', 'polite');
+      typingEl.innerHTML = '<span class="ai-typing-dot"></span><span class="ai-typing-dot"></span><span class="ai-typing-dot"></span>';
+      messagesEl.appendChild(typingEl);
+      messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
       const fileB64 = pendingFileBase64;
       const fileMime = pendingFileMime;
       pendingFileBase64 = null;
@@ -1351,7 +1608,7 @@
     btn.textContent = 'Cargar solo incidentes, bitácoras y cotizaciones demo';
   });
 
-  loadClientes();
+  loadDashboard();
   fillClientesSelect();
   loadSeedStatus();
 })();
