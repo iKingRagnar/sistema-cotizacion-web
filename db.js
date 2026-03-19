@@ -7,8 +7,10 @@ const fs = require('fs');
 const TURSO_URL = process.env.TURSO_DATABASE_URL;
 const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN;
 const useTurso = !!(TURSO_URL && TURSO_TOKEN);
+const SQLITE_DB_PATH = (process.env.SQLITE_DB_PATH || '').trim();
 
 let db;
+let sqliteResolvedPath = '';
 
 function getSchema() {
   return [
@@ -149,9 +151,17 @@ async function init() {
     return;
   }
   const sqlite3 = require('sqlite3').verbose();
-  const dir = path.join(__dirname, 'data');
+  const defaultDbPath = path.join(__dirname, 'data', 'cotizacion.db');
+  const resolvedDbPath = SQLITE_DB_PATH
+    ? (path.isAbsolute(SQLITE_DB_PATH) ? SQLITE_DB_PATH : path.join(__dirname, SQLITE_DB_PATH))
+    : defaultDbPath;
+  const dir = path.dirname(resolvedDbPath);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  db = new sqlite3.Database(path.join(dir, 'cotizacion.db'));
+  db = new sqlite3.Database(resolvedDbPath);
+  sqliteResolvedPath = resolvedDbPath;
+  // Modo recomendado para reducir bloqueos y mejorar durabilidad entre cierres/reinicios.
+  await new Promise((res, rej) => db.run('PRAGMA journal_mode = WAL', err => (err ? rej(err) : res())));
+  await new Promise((res, rej) => db.run('PRAGMA synchronous = NORMAL', err => (err ? rej(err) : res())));
   for (const sql of getSchema()) {
     await new Promise((res, rej) => db.run(sql, err => (err ? rej(err) : res())));
   }
@@ -202,4 +212,9 @@ function getOne(sql, params = []) {
   return getAll(sql, params).then(rows => (rows && rows[0]) || null);
 }
 
-module.exports = { init, runQuery, getAll, getOne, useTurso };
+function getStorageInfo() {
+  if (useTurso) return { mode: 'turso', path: null };
+  return { mode: 'sqlite', path: sqliteResolvedPath || null };
+}
+
+module.exports = { init, runQuery, getAll, getOne, useTurso, getStorageInfo };

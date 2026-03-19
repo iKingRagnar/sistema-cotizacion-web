@@ -24,6 +24,44 @@ app.get('/api/config', (req, res) => {
   res.json(auth.getPublicConfig());
 });
 
+app.get('/api/storage-health', async (req, res) => {
+  try {
+    const storage = db.getStorageInfo ? db.getStorageInfo() : { mode: db.useTurso ? 'turso' : 'sqlite', path: null };
+    const payload = {
+      mode: storage.mode,
+      path: storage.path || null,
+      persistence: 'unknown',
+      details: '',
+      now: new Date().toISOString(),
+    };
+    if (storage.mode === 'turso') {
+      payload.persistence = 'persistent_cloud';
+      payload.details = 'Base en nube (Turso): persistente entre reinicios y cierres.';
+      return res.json(payload);
+    }
+    if (!storage.path) {
+      payload.persistence = 'unknown';
+      payload.details = 'No se pudo resolver la ruta del archivo SQLite.';
+      return res.json(payload);
+    }
+    const exists = fs.existsSync(storage.path);
+    payload.exists = exists;
+    if (!exists) {
+      payload.persistence = 'local_file_missing';
+      payload.details = 'Aun no existe el archivo SQLite en disco.';
+      return res.json(payload);
+    }
+    const st = fs.statSync(storage.path);
+    payload.fileSizeBytes = st.size;
+    payload.lastModified = st.mtime.toISOString();
+    payload.persistence = 'local_file_persistent';
+    payload.details = 'SQLite local en archivo. Persistente mientras no borres/muevas el archivo ni redeployes sobre disco efimero.';
+    return res.json(payload);
+  } catch (e) {
+    return res.status(500).json({ error: String(e.message || e) });
+  }
+});
+
 app.post('/api/auth/login', async (req, res) => {
   try {
     if (!auth.AUTH_ENABLED) {
@@ -1209,7 +1247,11 @@ async function start() {
     console.log('Sistema de Cotización - En línea');
     console.log('Abre en el navegador: http://localhost:' + PORT);
     if (db.useTurso) console.log('Base de datos: Turso (nube)');
-    else console.log('Base de datos: SQLite local (carpeta data/)');
+    else {
+      const storage = db.getStorageInfo && db.getStorageInfo();
+      console.log('Base de datos: SQLite local');
+      if (storage && storage.path) console.log('Archivo SQLite: ' + storage.path);
+    }
   });
 }
 

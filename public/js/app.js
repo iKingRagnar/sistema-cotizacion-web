@@ -137,6 +137,7 @@
   const LAST_TAB_KEY = 'cotizacion-last-tab';
   const VALID_TABS = ['dashboards', 'clientes', 'refacciones', 'maquinas', 'cotizaciones', 'incidentes', 'bitacoras'];
   const TABS_PERSIST = VALID_TABS.concat(['auditoria']);
+  let lastQuickRefreshAt = 0;
   function showLoginOverlay(show) {
     const el = qs('#login-overlay');
     if (!el) return;
@@ -2252,6 +2253,57 @@
     }
   }
 
+  async function loadStorageHealth() {
+    const pill = qs('#storage-health-pill');
+    const detail = qs('#storage-health-detail');
+    if (!pill || !detail) return;
+    try {
+      const st = await fetchJson(API + '/storage-health');
+      pill.classList.remove('status-pill-neutral', 'status-pill-ok', 'status-pill-warn', 'status-pill-bad');
+      if (st && st.persistence === 'persistent_cloud') {
+        pill.classList.add('status-pill-ok');
+        pill.textContent = 'Persistencia: nube estable';
+      } else if (st && st.persistence === 'local_file_persistent') {
+        pill.classList.add('status-pill-ok');
+        pill.textContent = 'Persistencia: archivo local OK';
+      } else if (st && st.persistence === 'local_file_missing') {
+        pill.classList.add('status-pill-warn');
+        pill.textContent = 'Persistencia: archivo aún no creado';
+      } else {
+        pill.classList.add('status-pill-warn');
+        pill.textContent = 'Persistencia: revisar configuración';
+      }
+      if (st && st.mode === 'sqlite' && st.path) {
+        detail.textContent = 'SQLite: ' + st.path;
+      } else if (st && st.mode === 'turso') {
+        detail.textContent = 'Modo Turso (base de datos en nube).';
+      } else {
+        detail.textContent = st && st.details ? st.details : 'No se pudo determinar el estado de persistencia.';
+      }
+    } catch (_) {
+      pill.classList.remove('status-pill-neutral', 'status-pill-ok', 'status-pill-warn');
+      pill.classList.add('status-pill-bad');
+      pill.textContent = 'Persistencia: sin conexión';
+      detail.textContent = 'No fue posible consultar /api/storage-health.';
+    }
+  }
+
+  function refreshActivePanelData(opts) {
+    const silent = !!(opts && opts.silent);
+    const active = document.querySelector('.tab.active');
+    const id = active && active.dataset ? active.dataset.tab : 'dashboards';
+    if (id === 'dashboards') loadDashboard();
+    if (id === 'clientes') loadClientes();
+    if (id === 'refacciones') loadRefacciones();
+    if (id === 'maquinas') loadMaquinas();
+    if (id === 'cotizaciones') loadCotizaciones();
+    if (id === 'incidentes') loadIncidentes();
+    if (id === 'bitacoras') loadBitacoras();
+    loadSeedStatus(false);
+    loadStorageHealth();
+    if (!silent) showToast('Datos actualizados.', 'success');
+  }
+
   async function seedDemo() {
     const btn = qs('#btn-seed-demo');
     btn.disabled = true;
@@ -3081,6 +3133,20 @@
     loadDashboard();
     fillClientesSelect();
     loadSeedStatus();
+    loadStorageHealth();
+    window.addEventListener('focus', function () {
+      const now = Date.now();
+      if (now - lastQuickRefreshAt < 20000) return;
+      lastQuickRefreshAt = now;
+      refreshActivePanelData({ silent: true });
+    });
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState !== 'visible') return;
+      const now = Date.now();
+      if (now - lastQuickRefreshAt < 20000) return;
+      lastQuickRefreshAt = now;
+      refreshActivePanelData({ silent: true });
+    });
     setTimeout(maybeShowBackupReminder, 15000);
     setTimeout(requestNotificationPermissionAndMaybeNotify, 3000);
     if (refreshIntervalId == null) {
