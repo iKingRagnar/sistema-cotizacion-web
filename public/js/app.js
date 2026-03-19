@@ -1323,13 +1323,14 @@
     grid.innerHTML = '';
     grid.appendChild(loading);
     try {
-      const [clientes, refacciones, maquinas, cotizaciones, incidentes, bitacoras] = await Promise.all([
+      const [clientes, refacciones, maquinas, cotizaciones, incidentes, bitacoras, dashboardStats] = await Promise.all([
         fetchJson(API + '/clientes').catch(() => []),
         fetchJson(API + '/refacciones').catch(() => []),
         fetchJson(API + '/maquinas').catch(() => []),
         fetchJson(API + '/cotizaciones').catch(() => []),
         fetchJson(API + '/incidentes').catch(() => []),
         fetchJson(API + '/bitacoras').catch(() => []),
+        fetchJson(API + '/dashboard-stats').catch(() => null),
       ]);
       if (loading) loading.classList.add('hidden');
       const now = new Date();
@@ -1391,6 +1392,69 @@
       grid.querySelectorAll('.dashboard-card-action').forEach(btn => {
         btn.addEventListener('click', () => showPanel(btn.dataset.goto));
       });
+
+      // Estadísticas avanzadas: comparativo vs período anterior y pronósticos
+      const adv = qs('#dashboard-advanced');
+      const compEl = qs('#dashboard-comparativo');
+      const pronEl = qs('#dashboard-pronosticos');
+      if (adv && compEl && pronEl && dashboardStats && dashboardStats.periodos) {
+        adv.style.display = '';
+        function diffClass(current, previous) {
+          if (previous === 0) return current > 0 ? 'positive' : 'neutral';
+          const pct = ((current - previous) / previous) * 100;
+          if (pct > 0) return 'positive';
+          if (pct < 0) return 'negative';
+          return 'neutral';
+        }
+        function diffText(current, previous, isMoney) {
+          if (previous == null || previous === 0) return current > 0 ? (isMoney ? formatMoney(current) : '+' + current) : '—';
+          const delta = current - previous;
+          const pct = Math.round((delta / previous) * 100);
+          const sign = pct >= 0 ? '+' : '';
+          return sign + pct + '%';
+        }
+        const pairs = [
+          { key: 'semana_actual', prevKey: 'semana_anterior', titulo: 'Semana actual vs anterior' },
+          { key: 'mes_actual', prevKey: 'mes_anterior', titulo: 'Mes actual vs anterior' },
+          { key: 'año_actual', prevKey: 'año_anterior', titulo: 'Año actual vs anterior' },
+        ];
+        compEl.innerHTML = pairs.map(({ key, prevKey, titulo }) => {
+          const p = dashboardStats.periodos[key];
+          const prev = dashboardStats.periodos[prevKey];
+          if (!p || !prev) return '';
+          const cot = p.cotizaciones; const cotPrev = prev.cotizaciones;
+          const inc = p.incidentes; const incPrev = prev.incidentes;
+          const bit = p.bitacoras; const bitPrev = prev.bitacoras;
+          return `
+            <div class="dashboard-stat-card">
+              <h4>${escapeHtml(titulo)}</h4>
+              <div class="stat-row"><span class="stat-label">Cotizaciones</span><span><span class="stat-value">${cot.count}</span> <span class="stat-diff ${diffClass(cot.count, cotPrev.count)}">${diffText(cot.count, cotPrev.count)}</span></span></div>
+              <div class="stat-row"><span class="stat-label">Monto cotiz.</span><span><span class="stat-value">${formatMoney(cot.monto)}</span> <span class="stat-diff ${diffClass(cot.monto, cotPrev.monto)}">${diffText(cot.monto, cotPrev.monto)}</span></span></div>
+              <div class="stat-row"><span class="stat-label">Incidentes</span><span><span class="stat-value">${inc.count}</span> <span class="stat-diff ${diffClass(inc.count, incPrev.count)}">${diffText(inc.count, incPrev.count)}</span></span></div>
+              <div class="stat-row"><span class="stat-label">Bitácoras</span><span><span class="stat-value">${bit.count} (${Number(bit.horas).toFixed(1)} h)</span> <span class="stat-diff ${diffClass(bit.count, bitPrev.count)}">${diffText(bit.count, bitPrev.count)}</span></span></div>
+            </div>`;
+        }).join('');
+
+        const pron = dashboardStats.pronosticos;
+        if (pron) {
+          const pronCards = [
+            { titulo: 'Próxima semana', d: pron.proxima_semana },
+            { titulo: 'Próximo mes', d: pron.proximo_mes },
+            { titulo: 'Próximo año', d: pron.proximo_año },
+          ];
+          pronEl.innerHTML = pronCards.map(({ titulo, d }) => `
+            <div class="dashboard-forecast-card">
+              <h4>${escapeHtml(titulo)}</h4>
+              <div class="stat-row"><span class="stat-label">Cotizaciones</span><span class="stat-value">${d.cotizaciones_count} · ${formatMoney(d.cotizaciones_monto)}</span></div>
+              <div class="stat-row"><span class="stat-label">Incidentes</span><span class="stat-value">${d.incidentes_count}</span></div>
+              <div class="stat-row"><span class="stat-label">Bitácoras</span><span class="stat-value">${d.bitacoras_count} · ${d.bitacoras_horas}h</span></div>
+            </div>`).join('');
+        } else {
+          pronEl.innerHTML = '<p class="dashboard-hint">No hay datos suficientes para pronósticos.</p>';
+        }
+      } else if (adv) {
+        adv.style.display = 'none';
+      }
     } catch (e) {
       if (loading) loading.classList.add('hidden');
       grid.innerHTML = '<div class="dashboard-error"><i class="fas fa-exclamation-circle"></i> No se pudo cargar el resumen. Revisa la conexión e intenta de nuevo.</div>';
@@ -1399,12 +1463,31 @@
   }
 
   // ----- SEED STATUS -----
-  async function loadSeedStatus() {
+  const REFRESH_INTERVAL_MS = 12 * 60 * 60 * 1000; // 12 horas
+
+  function formatLastUpdate(d) {
+    const t = d instanceof Date ? d : new Date();
+    const day = String(t.getDate()).padStart(2, '0');
+    const month = String(t.getMonth() + 1).padStart(2, '0');
+    const year = t.getFullYear();
+    const h = String(t.getHours()).padStart(2, '0');
+    const min = String(t.getMinutes()).padStart(2, '0');
+    return `${day}/${month}/${year}, ${h}:${min}`;
+  }
+
+  async function loadSeedStatus(isAutoRefresh) {
     const el = qs('#seed-status');
+    const lastEl = qs('#seed-last-update');
     try {
       const st = await fetchJson(API + '/seed-status');
       el.innerHTML = `Actualmente: <strong>${st.clientes}</strong> clientes, <strong>${st.refacciones}</strong> refacciones, <strong>${st.maquinas}</strong> máquinas, <strong>${st.cotizaciones || 0}</strong> cotizaciones, <strong>${st.incidentes || 0}</strong> incidentes, <strong>${st.bitacoras || 0}</strong> bitácoras.`;
-    } catch (e) { el.textContent = 'No se pudo conectar con el servidor.'; }
+      const now = new Date();
+      if (lastEl) lastEl.textContent = 'Última actualización: ' + formatLastUpdate(now);
+      if (isAutoRefresh) showToast('Datos actualizados automáticamente (cada 12 h).', 'success');
+    } catch (e) {
+      el.textContent = 'No se pudo conectar con el servidor.';
+      if (lastEl) lastEl.textContent = '';
+    }
   }
 
   async function seedDemo() {
@@ -1415,6 +1498,7 @@
       const data = await fetchJson(API + '/seed-demo', { method: 'POST' });
       qs('#seed-status').innerHTML = `Listo: <strong>${data.clientes}</strong> clientes, <strong>${data.refacciones}</strong> refacciones, <strong>${data.maquinas}</strong> máquinas, <strong>${data.cotizaciones || 0}</strong> cotizaciones, <strong>${data.incidentes || 0}</strong> incidentes, <strong>${data.bitacoras || 0}</strong> bitácoras.`;
       btn.textContent = 'Datos demo cargados';
+      loadSeedStatus();
       loadCotizaciones();
       loadIncidentes();
       loadBitacoras();
@@ -1422,6 +1506,11 @@
       loadRefacciones();
       loadMaquinas();
       fillClientesSelect();
+      if ((data.incidentes || 0) === 0 || (data.bitacoras || 0) === 0) {
+        showToast('No se insertaron incidentes o bitácoras: los nombres de cliente/máquina del demo deben coincidir con los de la pestaña Clientes/Máquinas. Revisa seed-demo.json.', 'error');
+      } else {
+        showPanel('incidentes');
+      }
     } catch (e) {
       let msg = e.message;
       try { const o = JSON.parse(msg); if (o.error) msg = o.error; } catch (_) {}
@@ -1789,9 +1878,15 @@
     try {
       const data = await fetchJson(API + '/seed-demo-extra', { method: 'POST' });
       qs('#seed-status').innerHTML = `Listo: <strong>${data.incidentes || 0}</strong> incidentes, <strong>${data.bitacoras || 0}</strong> bitácoras, <strong>${data.cotizaciones || 0}</strong> cotizaciones agregados.`;
+      loadSeedStatus();
       loadCotizaciones();
       loadIncidentes();
       loadBitacoras();
+      if ((data.incidentes || 0) === 0 || (data.bitacoras || 0) === 0) {
+        showToast('No se insertaron incidentes ni bitácoras. Los nombres de cliente y máquina en seed-demo.json deben coincidir con los de Clientes y Máquinas. Prueba "Cargar datos demo ahora" si la base estaba vacía.', 'error');
+      } else {
+        showPanel('incidentes');
+      }
     } catch (e) {
       let msg = e.message;
       try { const o = JSON.parse(msg); if (o.error) msg = o.error; } catch (_) {}
@@ -1804,4 +1899,16 @@
   loadDashboard();
   fillClientesSelect();
   loadSeedStatus();
+
+  // Actualización automática cada 12 horas: estado demo + listas principales y notificación
+  setInterval(function () {
+    loadSeedStatus(true);
+    loadDashboard();
+    loadClientes();
+    loadRefacciones();
+    loadMaquinas();
+    loadCotizaciones();
+    loadIncidentes();
+    loadBitacoras();
+  }, REFRESH_INTERVAL_MS);
 })();

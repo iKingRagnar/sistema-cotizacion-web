@@ -440,10 +440,142 @@ app.delete('/api/bitacoras/:id', async (req, res) => {
   }
 });
 
+// --- Dashboard estadísticas avanzadas: periodos y pronósticos ---
+function toYMD(d) { return d.toISOString().slice(0, 10); }
+function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function addMonths(d, n) { const x = new Date(d); x.setMonth(x.getMonth() + n); return x; }
+function addYears(d, n) { const x = new Date(d); x.setFullYear(x.getFullYear() + n); return x; }
+function startOfWeekMonday(d) {
+  const x = new Date(d);
+  const day = x.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  x.setDate(x.getDate() + diff);
+  return x;
+}
+function startOfMonth(d) { const x = new Date(d); x.setDate(1); return x; }
+function startOfYear(d) { const x = new Date(d); x.setMonth(0); x.setDate(1); return x; }
+function endOfMonth(d) { return addDays(addMonths(startOfMonth(d), 1), -1); }
+function endOfYear(d) { const x = new Date(d); x.setMonth(11); x.setDate(31); return x; }
+
+app.get('/api/dashboard-stats', async (req, res) => {
+  try {
+    const today = new Date();
+    const todayStr = toYMD(today);
+
+    // Semana actual (lunes a hoy) y semana anterior (lunes a domingo)
+    const weekStart = startOfWeekMonday(today);
+    const weekEnd = addDays(weekStart, 6);
+    const prevWeekStart = addDays(weekStart, -7);
+    const prevWeekEnd = addDays(weekStart, -1);
+
+    const ranges = {
+      semana_actual: { inicio: toYMD(weekStart), fin: todayStr },
+      semana_anterior: { inicio: toYMD(prevWeekStart), fin: toYMD(prevWeekEnd) },
+      mes_actual: { inicio: toYMD(startOfMonth(today)), fin: todayStr },
+      mes_anterior: { inicio: toYMD(startOfMonth(addMonths(today, -1))), fin: toYMD(endOfMonth(addMonths(today, -1))) },
+      año_actual: { inicio: toYMD(startOfYear(today)), fin: todayStr },
+      año_anterior: { inicio: toYMD(startOfYear(addYears(today, -1))), fin: toYMD(endOfYear(addYears(today, -1))) },
+    };
+
+    async function queryCotizaciones(inicio, fin) {
+      const rows = await db.getAll(
+        `SELECT COUNT(*) as n, COALESCE(SUM(CAST(total AS REAL)), 0) as monto FROM cotizaciones WHERE fecha >= ? AND fecha <= ?`,
+        [inicio, fin]
+      );
+      return { count: (rows[0] && rows[0].n) || 0, monto: Number(rows[0] && rows[0].monto) || 0 };
+    }
+    async function queryIncidentes(inicio, fin) {
+      const rows = await db.getAll(
+        `SELECT COUNT(*) as n FROM incidentes WHERE fecha_reporte >= ? AND fecha_reporte <= ?`,
+        [inicio, fin]
+      );
+      return { count: (rows[0] && rows[0].n) || 0 };
+    }
+    async function queryBitacoras(inicio, fin) {
+      const rows = await db.getAll(
+        `SELECT COUNT(*) as n, COALESCE(SUM(CAST(tiempo_horas AS REAL)), 0) as horas FROM bitacoras WHERE fecha >= ? AND fecha <= ?`,
+        [inicio, fin]
+      );
+      return { count: (rows[0] && rows[0].n) || 0, horas: Number(rows[0] && rows[0].horas) || 0 };
+    }
+
+    const [cot_sem, cot_semAnt, cot_mes, cot_mesAnt, cot_año, cot_añoAnt] = await Promise.all([
+      queryCotizaciones(ranges.semana_actual.inicio, ranges.semana_actual.fin),
+      queryCotizaciones(ranges.semana_anterior.inicio, ranges.semana_anterior.fin),
+      queryCotizaciones(ranges.mes_actual.inicio, ranges.mes_actual.fin),
+      queryCotizaciones(ranges.mes_anterior.inicio, ranges.mes_anterior.fin),
+      queryCotizaciones(ranges.año_actual.inicio, ranges.año_actual.fin),
+      queryCotizaciones(ranges.año_anterior.inicio, ranges.año_anterior.fin),
+    ]);
+    const [inc_sem, inc_semAnt, inc_mes, inc_mesAnt, inc_año, inc_añoAnt] = await Promise.all([
+      queryIncidentes(ranges.semana_actual.inicio, ranges.semana_actual.fin),
+      queryIncidentes(ranges.semana_anterior.inicio, ranges.semana_anterior.fin),
+      queryIncidentes(ranges.mes_actual.inicio, ranges.mes_actual.fin),
+      queryIncidentes(ranges.mes_anterior.inicio, ranges.mes_anterior.fin),
+      queryIncidentes(ranges.año_actual.inicio, ranges.año_actual.fin),
+      queryIncidentes(ranges.año_anterior.inicio, ranges.año_anterior.fin),
+    ]);
+    const [bit_sem, bit_semAnt, bit_mes, bit_mesAnt, bit_año, bit_añoAnt] = await Promise.all([
+      queryBitacoras(ranges.semana_actual.inicio, ranges.semana_actual.fin),
+      queryBitacoras(ranges.semana_anterior.inicio, ranges.semana_anterior.fin),
+      queryBitacoras(ranges.mes_actual.inicio, ranges.mes_actual.fin),
+      queryBitacoras(ranges.mes_anterior.inicio, ranges.mes_anterior.fin),
+      queryBitacoras(ranges.año_actual.inicio, ranges.año_actual.fin),
+      queryBitacoras(ranges.año_anterior.inicio, ranges.año_anterior.fin),
+    ]);
+
+    const periodos = {
+      semana_actual: { cotizaciones: cot_sem, incidentes: inc_sem, bitacoras: bit_sem, etiqueta: 'Semana actual' },
+      semana_anterior: { cotizaciones: cot_semAnt, incidentes: inc_semAnt, bitacoras: bit_semAnt, etiqueta: 'Semana anterior' },
+      mes_actual: { cotizaciones: cot_mes, incidentes: inc_mes, bitacoras: bit_mes, etiqueta: 'Mes actual' },
+      mes_anterior: { cotizaciones: cot_mesAnt, incidentes: inc_mesAnt, bitacoras: bit_mesAnt, etiqueta: 'Mes anterior' },
+      año_actual: { cotizaciones: cot_año, incidentes: inc_año, bitacoras: bit_año, etiqueta: 'Año actual' },
+      año_anterior: { cotizaciones: cot_añoAnt, incidentes: inc_añoAnt, bitacoras: bit_añoAnt, etiqueta: 'Año anterior' },
+    };
+
+    // Pronósticos: promedio del periodo actual y anterior (siguiente semana/mes/año)
+    const pronostico_semana = {
+      cotizaciones_count: Math.round((cot_semAnt.count + cot_sem.count) / 2) || cot_sem.count,
+      cotizaciones_monto: Math.round(((cot_semAnt.monto + cot_sem.monto) / 2) * 100) / 100,
+      incidentes_count: Math.round((inc_semAnt.count + inc_sem.count) / 2) || inc_sem.count,
+      bitacoras_count: Math.round((bit_semAnt.count + bit_sem.count) / 2) || bit_sem.count,
+      bitacoras_horas: Math.round(((bit_semAnt.horas + bit_sem.horas) / 2) * 10) / 10 || bit_sem.horas,
+    };
+    const pronostico_mes = {
+      cotizaciones_count: Math.round((cot_mesAnt.count + cot_mes.count) / 2) || cot_mes.count,
+      cotizaciones_monto: Math.round(((cot_mesAnt.monto + cot_mes.monto) / 2) * 100) / 100,
+      incidentes_count: Math.round((inc_mesAnt.count + inc_mes.count) / 2) || inc_mes.count,
+      bitacoras_count: Math.round((bit_mesAnt.count + bit_mes.count) / 2) || bit_mes.count,
+      bitacoras_horas: Math.round(((bit_mesAnt.horas + bit_mes.horas) / 2) * 10) / 10 || bit_mes.horas,
+    };
+    const pronostico_año = {
+      cotizaciones_count: cot_añoAnt.count || cot_año.count,
+      cotizaciones_monto: Math.round((cot_añoAnt.monto || cot_año.monto) * 100) / 100,
+      incidentes_count: inc_añoAnt.count || inc_año.count,
+      bitacoras_count: bit_añoAnt.count || bit_año.count,
+      bitacoras_horas: Math.round((bit_añoAnt.horas || bit_año.horas) * 10) / 10 || bit_año.horas,
+    };
+
+    res.json({
+      periodos,
+      pronosticos: {
+        proxima_semana: pronostico_semana,
+        proximo_mes: pronostico_mes,
+        proximo_año: pronostico_año,
+      },
+      rangos: ranges,
+    });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
 // --- Cargar datos demo (desde seed-demo.json) ---
+// Normaliza para matching: quita acentos, minúsculas, espacios colapsados
 function norm(s) {
   if (!s || typeof s !== 'string') return '';
-  return s.toLowerCase().replace(/\s+/g, ' ').trim();
+  const sinAcentos = String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return sinAcentos.toLowerCase().replace(/\s+/g, ' ').trim();
 }
 app.post('/api/seed-demo', async (req, res) => {
   try {

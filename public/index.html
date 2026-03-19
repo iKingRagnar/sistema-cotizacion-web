@@ -41,6 +41,13 @@
         <div id="dashboard-grid" class="dashboard-grid" aria-live="polite">
           <div class="dashboard-loading" id="dashboard-loading"><div class="loading-spinner"></div><span>Cargando indicadores…</span></div>
         </div>
+        <div id="dashboard-advanced" class="dashboard-advanced" aria-live="polite" style="display:none;">
+          <h3 class="dashboard-section-title"><i class="fas fa-chart-line"></i> Comparativo vs período anterior</h3>
+          <div id="dashboard-comparativo" class="dashboard-comparativo"></div>
+          <h3 class="dashboard-section-title"><i class="fas fa-calendar-plus"></i> Pronósticos (cantidades y montos)</h3>
+          <p class="dashboard-hint">Estimación para la siguiente semana, mes y año con base en el promedio de periodos recientes.</p>
+          <div id="dashboard-pronosticos" class="dashboard-pronosticos"></div>
+        </div>
       </div>
     </section>
 
@@ -279,6 +286,8 @@
         <h2><i class="fas fa-database"></i> Cargar datos demo</h2>
         <p>Importa desde <strong>SistemaGestion_Demo.xlsm</strong> (exportado a <code>seed-demo.json</code>): clientes, refacciones, máquinas, <strong>incidentes</strong>, <strong>bitácoras</strong> y cotizaciones de ejemplo.</p>
         <p class="status" id="seed-status">Consultando estado…</p>
+        <p class="hint" id="seed-last-update" aria-live="polite"></p>
+        <p class="hint">Si han procesado más registros en otro lugar, actualiza manualmente (recarga la página o vuelve a esta pestaña). Los datos se actualizan solos cada 12 horas.</p>
         <button type="button" id="btn-seed-demo" class="btn primary big">Cargar todo el demo (solo si no hay clientes)</button>
         <p class="hint" style="margin-top:0.5rem;">Si ya tienes clientes cargados y solo quieres agregar incidentes, bitácoras y cotizaciones de ejemplo:</p>
         <button type="button" id="btn-seed-extra" class="btn big" style="background:#0d9488;color:#fff;margin-top:0.5rem;">Cargar solo incidentes, bitácoras y cotizaciones demo</button>

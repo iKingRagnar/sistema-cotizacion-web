@@ -431,6 +431,80 @@ body {
 }
 .dashboard-error i { margin-right: 0.5rem; }
 
+.dashboard-advanced {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.dashboard-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin: 0 0 0.75rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.dashboard-section-title i { color: #38bdf8; }
+.dashboard-hint {
+  font-size: 0.8125rem;
+  color: #94a3b8;
+  margin: 0 0 1rem 0;
+}
+.dashboard-comparativo,
+.dashboard-pronosticos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.dashboard-stat-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 1rem 1.15rem;
+}
+.dashboard-stat-card h4 {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.dashboard-stat-card .stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.875rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.dashboard-stat-card .stat-row:last-child { border-bottom: none; }
+.dashboard-stat-card .stat-label { color: #94a3b8; }
+.dashboard-stat-card .stat-value { font-weight: 600; color: #e2e8f0; }
+.dashboard-stat-card .stat-diff {
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+}
+.dashboard-stat-card .stat-diff.positive { color: #4ade80; }
+.dashboard-stat-card .stat-diff.negative { color: #f87171; }
+.dashboard-stat-card .stat-diff.neutral { color: #94a3b8; }
+.dashboard-forecast-card {
+  background: linear-gradient(135deg, rgba(56,189,248,0.08) 0%, rgba(56,189,248,0.02) 100%);
+  border: 1px solid rgba(56,189,248,0.15);
+  border-radius: 10px;
+  padding: 1rem 1.15rem;
+}
+.dashboard-forecast-card h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #38bdf8;
+  margin: 0 0 0.5rem 0;
+}
+.dashboard-forecast-card .stat-row { display: flex; justify-content: space-between; font-size: 0.8125rem; padding: 0.2rem 0; }
+.dashboard-forecast-card .stat-value { font-weight: 600; color: #e2e8f0; }
+
 .section-header {
   display: flex;
   flex-wrap: wrap;
