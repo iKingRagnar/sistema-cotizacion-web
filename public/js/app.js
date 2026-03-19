@@ -6,6 +6,8 @@
   let cotizacionesCache = [];
   let incidentesCache = [];
   let bitacorasCache = [];
+  let chartDonut = null;
+  let chartBars = null;
 
   function qs(s) { return document.querySelector(s); }
   function qsAll(s) { return document.querySelectorAll(s); }
@@ -697,7 +699,7 @@
     showLoading();
     try {
       const data = await fetchJson(API + '/cotizaciones');
-      cotizacionesCache = data;
+      cotizacionesCache = Array.isArray(data) ? data : [];
       const filtered = applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones');
       renderCotizaciones(filtered, cotizacionesCache.length);
     } catch (e) { renderCotizaciones([]); }
@@ -765,7 +767,7 @@
     showLoading();
     try {
       const data = await fetchJson(API + '/incidentes');
-      incidentesCache = data;
+      incidentesCache = Array.isArray(data) ? data : [];
       const filtered = applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes');
       renderIncidentes(filtered, incidentesCache.length);
     } catch (e) { renderIncidentes([]); }
@@ -832,7 +834,7 @@
     showLoading();
     try {
       const data = await fetchJson(API + '/bitacoras');
-      bitacorasCache = data;
+      bitacorasCache = Array.isArray(data) ? data : [];
       const filtered = applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras');
       renderBitacoras(filtered, bitacorasCache.length);
     } catch (e) { renderBitacoras([]); }
@@ -1393,6 +1395,13 @@
         btn.addEventListener('click', () => showPanel(btn.dataset.goto));
       });
 
+      const dashUpdateEl = qs('#dashboard-last-update');
+      if (dashUpdateEl) {
+        const d = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        dashUpdateEl.textContent = 'Última actualización: ' + pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear() + ', ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+      }
+
       // Estadísticas avanzadas: comparativo vs período anterior y pronósticos
       const adv = qs('#dashboard-advanced');
       const compEl = qs('#dashboard-comparativo');
@@ -1442,15 +1451,60 @@
             { titulo: 'Próximo mes', d: pron.proximo_mes },
             { titulo: 'Próximo año', d: pron.proximo_año },
           ];
-          pronEl.innerHTML = pronCards.map(({ titulo, d }) => `
+          pronEl.innerHTML = '<p class="dashboard-hint dashboard-forecast-legend">Cada fila: <strong>Cotizaciones</strong> = cantidad y monto estimado; <strong>Incidentes</strong> = cantidad estimada; <strong>Bitácoras</strong> = registros y horas estimadas.</p>' +
+            pronCards.map(({ titulo, d }) => `
             <div class="dashboard-forecast-card">
               <h4>${escapeHtml(titulo)}</h4>
-              <div class="stat-row"><span class="stat-label">Cotizaciones</span><span class="stat-value">${d.cotizaciones_count} · ${formatMoney(d.cotizaciones_monto)}</span></div>
-              <div class="stat-row"><span class="stat-label">Incidentes</span><span class="stat-value">${d.incidentes_count}</span></div>
-              <div class="stat-row"><span class="stat-label">Bitácoras</span><span class="stat-value">${d.bitacoras_count} · ${d.bitacoras_horas}h</span></div>
+              <div class="stat-row"><span class="stat-label">Cotizaciones</span><span class="stat-value">${d.cotizaciones_count} cotiz. · ${formatMoney(d.cotizaciones_monto)}</span></div>
+              <div class="stat-row"><span class="stat-label">Incidentes</span><span class="stat-value">${d.incidentes_count} incidentes</span></div>
+              <div class="stat-row"><span class="stat-label">Bitácoras</span><span class="stat-value">${d.bitacoras_count} registros · ${Number(d.bitacoras_horas).toFixed(1)} h</span></div>
             </div>`).join('');
         } else {
           pronEl.innerHTML = '<p class="dashboard-hint">No hay datos suficientes para pronósticos.</p>';
+        }
+
+        // Gráficos (donut + barras) si Chart.js está disponible
+        const chartsEl = qs('#dashboard-charts');
+        if (chartsEl && typeof Chart !== 'undefined') {
+          chartsEl.style.display = '';
+          if (chartDonut) chartDonut.destroy();
+          if (chartBars) chartBars.destroy();
+          const nCot = (cotizaciones || []).length;
+          const nInc = (incidentes || []).length;
+          const nBit = (bitacoras || []).length;
+          const donutCtx = document.getElementById('chart-donut');
+          if (donutCtx && (nCot + nInc + nBit > 0)) {
+            chartDonut = new Chart(donutCtx, {
+              type: 'doughnut',
+              data: {
+                labels: ['Cotizaciones', 'Incidentes', 'Bitácoras'],
+                datasets: [{ data: [nCot, nInc, nBit], backgroundColor: ['#059669', '#ea580c', '#7c3aed'], borderColor: '#1e293b', borderWidth: 2 }],
+              },
+              options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0', font: { size: 12 } } } } },
+            });
+          }
+          const barCtx = document.getElementById('chart-bars');
+          if (barCtx && dashboardStats.periodos) {
+            const p = dashboardStats.periodos;
+            chartBars = new Chart(barCtx, {
+              type: 'bar',
+              data: {
+                labels: ['Semana', 'Mes', 'Año'],
+                datasets: [
+                  { label: 'Actual', data: [p.semana_actual?.cotizaciones?.count ?? 0, p.mes_actual?.cotizaciones?.count ?? 0, p.año_actual?.cotizaciones?.count ?? 0], backgroundColor: 'rgba(56,189,248,0.8)', borderColor: '#38bdf8', borderWidth: 1 },
+                  { label: 'Anterior', data: [p.semana_anterior?.cotizaciones?.count ?? 0, p.mes_anterior?.cotizaciones?.count ?? 0, p.año_anterior?.cotizaciones?.count ?? 0], backgroundColor: 'rgba(148,163,184,0.6)', borderColor: '#94a3b8', borderWidth: 1 },
+                ],
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.06)' } }, y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.06)' } } },
+                plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0' } } },
+              },
+            });
+          }
+        } else if (chartsEl) {
+          chartsEl.style.display = 'none';
         }
       } else if (adv) {
         adv.style.display = 'none';

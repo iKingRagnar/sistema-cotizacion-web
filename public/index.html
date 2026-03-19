@@ -32,7 +32,7 @@
         <div class="dashboard-header">
           <div class="dashboard-header-left">
             <h2 class="dashboard-title"><i class="fas fa-chart-pie"></i> Resumen general</h2>
-            <p class="dashboard-subtitle">Métricas clave por área · Actualizado al cargar</p>
+            <p class="dashboard-subtitle">Métricas clave por área · <span id="dashboard-last-update">Actualizado al cargar</span> · Se actualizan cada 12 h</p>
           </div>
           <div class="dashboard-header-right">
             <button type="button" id="dashboard-refresh" class="btn-dashboard-refresh" title="Actualizar datos"><i class="fas fa-sync-alt"></i> Actualizar</button>
@@ -40,6 +40,19 @@
         </div>
         <div id="dashboard-grid" class="dashboard-grid" aria-live="polite">
           <div class="dashboard-loading" id="dashboard-loading"><div class="loading-spinner"></div><span>Cargando indicadores…</span></div>
+        </div>
+        <div id="dashboard-charts" class="dashboard-charts" aria-live="polite" style="display:none;">
+          <h3 class="dashboard-section-title"><i class="fas fa-chart-pie"></i> Resumen visual</h3>
+          <div class="dashboard-charts-row">
+            <div class="dashboard-chart-wrap">
+              <p class="dashboard-chart-caption">Distribución (cantidad)</p>
+              <canvas id="chart-donut" role="img" aria-label="Gráfico de anillo: cotizaciones, incidentes y bitácoras"></canvas>
+            </div>
+            <div class="dashboard-chart-wrap">
+              <p class="dashboard-chart-caption">Cotizaciones por período (actual vs anterior)</p>
+              <canvas id="chart-bars" role="img" aria-label="Gráfico de barras comparativo por semana, mes y año"></canvas>
+            </div>
+          </div>
         </div>
         <div id="dashboard-advanced" class="dashboard-advanced" aria-live="polite" style="display:none;">
           <h3 class="dashboard-section-title"><i class="fas fa-chart-line"></i> Comparativo vs período anterior</h3>
@@ -346,6 +359,7 @@
     <span class="loading-text">Cargando…</span>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="js/app.js?v=5"></script>
 </body>
 </html>
