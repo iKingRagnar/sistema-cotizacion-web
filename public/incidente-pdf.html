@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reporte de incidente</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Georgia', 'Times New Roman', serif; margin: 0; padding: 0; color: #1a1a2e; font-size: 11pt; line-height: 1.4; }
+    .no-print { position: fixed; top: 0; left: 0; right: 0; z-index: 9999; padding: 0.75rem 1.5rem; background: #0f172a; color: #e2e8f0; display: flex; align-items: center; gap: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+    .no-print button { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
+    .no-print #btn-print { background: #ea580c; color: #fff; }
+    .no-print #btn-close { background: #475569; color: #fff; }
+    .doc { max-width: 210mm; margin: 0 auto; padding: 2rem 2.5rem; padding-top: 4rem; }
+    .no-print + .doc { padding-top: 2rem; }
+    @media print { .no-print { display: none !important; } .doc { padding-top: 0.5rem; } }
+    .letterhead { display: flex; align-items: flex-start; justify-content: space-between; padding-bottom: 1rem; border-bottom: 3px solid #ea580c; margin-bottom: 1.25rem; }
+    .letterhead-logo { height: 48px; width: auto; }
+    .letterhead-company .name { font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0; }
+    .letterhead-company .tagline { font-size: 0.75rem; color: #64748b; margin: 0.2rem 0 0; }
+    .doc-title { text-align: center; font-size: 1.35rem; font-weight: 700; color: #ea580c; margin: 0 0 1rem; letter-spacing: 0.05em; }
+    .doc-meta { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 1rem; font-size: 0.9rem; }
+    .doc-meta span { display: block; }
+    .doc-meta strong { color: #475569; margin-right: 0.3rem; }
+    .doc-section { margin-bottom: 1rem; }
+    .doc-section-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-bottom: 0.35rem; font-weight: 600; }
+    .doc-section-content { background: #f8fafc; padding: 0.75rem 1rem; border: 1px solid #e2e8f0; border-radius: 4px; }
+    .doc-section-content p { margin: 0.2rem 0; }
+    .doc-table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-size: 0.9rem; }
+    .doc-table th, .doc-table td { padding: 0.45rem 0.6rem; text-align: left; border: 1px solid #cbd5e1; }
+    .doc-table th { background: #ea580c; color: #fff; font-weight: 600; width: 32%; }
+    .doc-table td { background: #fff; }
+    .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+    .badge-alta { background: #fef3c7; color: #92400e; }
+    .badge-critica { background: #fee2e2; color: #b91c1c; }
+    .badge-media { background: #dbeafe; color: #1d4ed8; }
+    .badge-baja { background: #d1fae5; color: #047857; }
+    .badge-abierto { background: #fef3c7; color: #92400e; }
+    .badge-cerrado { background: #d1fae5; color: #047857; }
+    .badge-en_proceso { background: #dbeafe; color: #1d4ed8; }
+    .doc-firma { margin-top: 1.5rem; }
+    .doc-firma-line { border-bottom: 1px solid #1a1a2e; height: 2em; width: 220px; margin-bottom: 0.2rem; }
+    .doc-firma-label { font-size: 0.75rem; color: #64748b; }
+    .loading, .error { padding: 2rem; text-align: center; }
+    .error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <div class="no-print">
+    <span id="msg">Cargando reporte…</span>
+    <button type="button" id="btn-print"><strong>Imprimir / Guardar como PDF</strong></button>
+    <button type="button" id="btn-close">Cerrar</button>
+  </div>
+  <div id="doc-body"></div>
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      const API = window.location.pathname.replace(/\/[^/]*$/, '') + '/api';
+      if (!id) {
+        document.getElementById('doc-body').innerHTML = '<div class="doc"><div class="error">Falta el ID del incidente (ej. ?id=1).</div></div>';
+        document.getElementById('msg').textContent = '';
+        return;
+      }
+      function esc(s) { if (s == null) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+      function fmtDate(s) { if (!s) return '—'; return String(s).slice(0, 10); }
+      function prioridadClass(p) { const x = (p || '').toLowerCase(); if (x === 'critica') return 'badge-critica'; if (x === 'alta') return 'badge-alta'; if (x === 'media') return 'badge-media'; return 'badge-baja'; }
+      function estatusClass(e) { const x = (e || '').toLowerCase(); if (x === 'cerrado') return 'badge-cerrado'; if (x === 'en_proceso') return 'badge-en_proceso'; return 'badge-abierto'; }
+      function render(inc) {
+        const basePath = window.location.pathname.replace(/\/[^/]*$/, '') || '';
+        const logoUrl = basePath ? (window.location.origin + basePath + '/favicon.svg') : (window.location.origin + '/favicon.svg');
+        const prioridad = (inc.prioridad || 'media').toLowerCase();
+        const estatus = (inc.estatus || 'abierto').toLowerCase();
+        const html = `
+          <div class="doc">
+            <header class="letterhead">
+              <img src="${esc(logoUrl)}" alt="" class="letterhead-logo" aria-hidden="true">
+              <div class="letterhead-company">
+                <p class="name">Sistema de Cotización y Gestión</p>
+                <p class="tagline">Reportes de incidentes · Seguimiento y SLA</p>
+              </div>
+            </header>
+            <h2 class="doc-title">REPORTE DE INCIDENTE</h2>
+            <div class="doc-meta">
+              <span><strong>Folio:</strong> ${esc(inc.folio)}</span>
+              <span><strong>Fecha de reporte:</strong> ${fmtDate(inc.fecha_reporte)}</span>
+              <span><strong>Fecha de vencimiento:</strong> ${fmtDate(inc.fecha_vencimiento) || '—'}</span>
+              <span><strong>Fecha de cierre:</strong> ${fmtDate(inc.fecha_cerrado) || '—'}</span>
+            </div>
+            <table class="doc-table">
+              <tr><th>Cliente</th><td>${esc(inc.cliente_nombre)}</td></tr>
+              <tr><th>Máquina / Equipo</th><td>${esc(inc.maquina_nombre) || '—'}</td></tr>
+              <tr><th>Prioridad</th><td><span class="badge ${prioridadClass(inc.prioridad)}">${esc(inc.prioridad || 'media')}</span></td></tr>
+              <tr><th>Estatus</th><td><span class="badge ${estatusClass(inc.estatus)}">${esc(inc.estatus || 'abierto')}</span></td></tr>
+              <tr><th>Técnico responsable</th><td>${esc(inc.tecnico_responsable) || '—'}</td></tr>
+            </table>
+            <div class="doc-section">
+              <div class="doc-section-title">Descripción del incidente</div>
+              <div class="doc-section-content">
+                <p>${esc(inc.descripcion || '—').replace(/\n/g, '<br>')}</p>
+              </div>
+            </div>
+            <p class="doc-firma-label" style="margin-top:1.25rem;">Documento generado para seguimiento interno y/o entrega al cliente. Fecha de impresión: ${fmtDate(new Date().toISOString())}</p>
+            <div class="doc-firma-line" style="margin-top:1rem;"></div>
+            <div class="doc-firma-label">Firma de recepción / conformidad (opcional)</div>
+          </div>
+        `;
+        document.getElementById('doc-body').innerHTML = html;
+        document.getElementById('msg').textContent = 'Listo. Use «Imprimir» y elija «Guardar como PDF» para descargar.';
+      }
+      function runPrint() { window.print(); }
+      document.getElementById('btn-print').addEventListener('click', runPrint);
+      document.getElementById('btn-close').addEventListener('click', function() { window.close(); });
+      async function load() {
+        try {
+          const res = await fetch(API + '/incidentes/' + id);
+          if (!res.ok) throw new Error('Incidente no encontrado');
+          const inc = await res.json();
+          render(inc);
+          setTimeout(runPrint, 350);
+        } catch (e) {
+          document.getElementById('doc-body').innerHTML = '<div class="doc"><div class="error">' + esc(e.message || 'No se pudo cargar el incidente.') + '</div></div>';
+          document.getElementById('msg').textContent = 'Error al cargar.';
+        }
+      }
+      load();
+    })();
+  </script>
+</body>
+</html>

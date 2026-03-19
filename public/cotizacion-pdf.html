@@ -6,45 +6,49 @@
   <title>Cotización</title>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 1.5rem 2rem; color: #1a1a2e; font-size: 14px; max-width: 800px; margin-left: auto; margin-right: auto; }
-    .no-print { margin-bottom: 1rem; padding: 0.75rem; background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 8px; font-size: 0.9rem; }
-    .no-print button { margin-right: 0.5rem; padding: 0.5rem 1rem; background: #0d9488; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
-    .no-print button.secondary { background: #64748b; }
-    .doc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #0d9488; }
-    .doc-logo { height: 56px; width: auto; }
-    .doc-company { text-align: right; }
-    .doc-company h1 { margin: 0; font-size: 1.35rem; color: #0f172a; }
-    .doc-company p { margin: 0.25rem 0 0; font-size: 0.85rem; color: #475569; }
-    .doc-title { text-align: center; margin: 1.25rem 0; font-size: 1.5rem; font-weight: 700; color: #0d9488; letter-spacing: 0.02em; }
-    .doc-meta { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    body { font-family: 'Georgia', 'Times New Roman', serif; margin: 0; padding: 0; color: #1a1a2e; font-size: 11pt; line-height: 1.4; }
+    .no-print { position: fixed; top: 0; left: 0; right: 0; z-index: 9999; padding: 0.75rem 1.5rem; background: #0f172a; color: #e2e8f0; display: flex; align-items: center; gap: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+    .no-print button { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
+    .no-print #btn-print { background: #0d9488; color: #fff; }
+    .no-print #btn-close { background: #475569; color: #fff; }
+    .doc { max-width: 210mm; margin: 0 auto; padding: 2rem 2.5rem; padding-top: 4rem; }
+    .no-print + .doc { padding-top: 2rem; }
+    @media print { .no-print { display: none !important; } .doc { padding-top: 0.5rem; } }
+    .letterhead { display: flex; align-items: flex-start; justify-content: space-between; padding-bottom: 1.25rem; border-bottom: 3px solid #0d9488; margin-bottom: 1.5rem; }
+    .letterhead-logo { height: 52px; width: auto; }
+    .letterhead-company { text-align: right; }
+    .letterhead-company .name { font-size: 1.25rem; font-weight: 700; color: #0f172a; margin: 0; letter-spacing: 0.02em; }
+    .letterhead-company .tagline { font-size: 0.75rem; color: #64748b; margin: 0.2rem 0 0; }
+    .doc-title { text-align: center; font-size: 1.5rem; font-weight: 700; color: #0d9488; margin: 0 0 1.25rem; letter-spacing: 0.08em; }
+    .doc-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin-bottom: 1.25rem; font-size: 0.95rem; }
     .doc-meta span { display: block; }
-    .doc-meta strong { color: #475569; font-weight: 600; }
-    .doc-cliente { background: #f8fafc; padding: 1rem 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #e2e8f0; }
-    .doc-cliente h3 { margin: 0 0 0.5rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; }
-    .doc-cliente p { margin: 0.2rem 0; }
-    .doc-table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
-    .doc-table th, .doc-table td { padding: 0.6rem 0.75rem; text-align: left; border: 1px solid #e2e8f0; }
-    .doc-table th { background: #f1f5f9; font-weight: 600; color: #475569; font-size: 0.85rem; }
+    .doc-meta strong { color: #475569; font-weight: 600; margin-right: 0.35rem; }
+    .doc-block { margin-bottom: 1.25rem; }
+    .doc-block-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; color: #64748b; margin-bottom: 0.4rem; font-weight: 600; }
+    .doc-block-content { background: #f8fafc; padding: 0.9rem 1rem; border: 1px solid #e2e8f0; border-radius: 4px; }
+    .doc-block-content p { margin: 0.15rem 0; }
+    .doc-table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: 0.95rem; }
+    .doc-table th, .doc-table td { padding: 0.5rem 0.65rem; text-align: left; border: 1px solid #cbd5e1; }
+    .doc-table th { background: #0d9488; color: #fff; font-weight: 600; }
     .doc-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
-    .doc-table tfoot td { font-weight: 600; background: #f8fafc; }
-    .doc-condiciones { font-size: 0.8rem; color: #64748b; margin-bottom: 1.5rem; line-height: 1.5; }
-    .doc-firma { margin-top: 2rem; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 2rem; }
-    .doc-firma-box { border-top: 1px solid #1a1a2e; padding-top: 0.5rem; min-width: 200px; text-align: center; font-size: 0.85rem; }
-    .doc-firma-box strong { display: block; margin-bottom: 0.25rem; }
-    .loading { padding: 2rem; text-align: center; color: #64748b; }
-    .error { padding: 1rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #b91c1c; }
-    @media print {
-      body { padding: 0.75rem 1rem; }
-      .no-print { display: none !important; }
-      .doc-header { border-bottom-color: #0d9488; }
-    }
+    .doc-table tbody tr:nth-child(even) { background: #f8fafc; }
+    .doc-table tfoot td { font-weight: 600; background: #e2e8f0; border-color: #cbd5e1; }
+    .doc-condiciones { font-size: 0.85rem; color: #475569; margin: 1.25rem 0; padding-left: 1rem; }
+    .doc-condiciones ol { margin: 0.35rem 0 0; padding-left: 1.25rem; }
+    .doc-condiciones li { margin: 0.2rem 0; }
+    .doc-firma { margin-top: 2rem; display: flex; justify-content: space-between; gap: 3rem; flex-wrap: wrap; }
+    .doc-firma-box { flex: 1; min-width: 180px; }
+    .doc-firma-line { border-bottom: 1px solid #1a1a2e; height: 2.2em; margin-bottom: 0.25rem; }
+    .doc-firma-label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+    .loading, .error { padding: 2rem; text-align: center; }
+    .error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 8px; }
   </style>
 </head>
 <body>
   <div class="no-print">
     <span id="msg">Cargando cotización…</span>
     <button type="button" id="btn-print"><strong>Imprimir / Guardar como PDF</strong></button>
-    <button type="button" id="btn-close" class="secondary">Cerrar</button>
+    <button type="button" id="btn-close">Cerrar</button>
   </div>
   <div id="doc-body"></div>
   <script>
@@ -53,18 +57,14 @@
       const id = params.get('id');
       const API = window.location.pathname.replace(/\/[^/]*$/, '') + '/api';
       if (!id) {
-        document.getElementById('doc-body').innerHTML = '<div class="error">Falta el ID de la cotización en la URL (ej. ?id=1).</div>';
+        document.getElementById('doc-body').innerHTML = '<div class="doc"><div class="error">Falta el ID de la cotización en la URL (ej. ?id=1).</div></div>';
         document.getElementById('msg').textContent = '';
         return;
       }
       function esc(s) { if (s == null) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
       function fmtNum(n) { return Number(n).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
       function fmtDate(s) { if (!s) return '—'; return String(s).slice(0, 10); }
-      function validHasta(fecha) {
-        const d = new Date(fecha);
-        d.setDate(d.getDate() + 30);
-        return d.toISOString().slice(0, 10);
-      }
+      function validHasta(fecha) { const d = new Date(fecha); d.setDate(d.getDate() + 30); return d.toISOString().slice(0, 10); }
       function render(cot, cliente) {
         const tipoLabel = (cot.tipo === 'mano_obra') ? 'Mano de obra' : 'Refacciones';
         const subtotal = Number(cot.subtotal) || 0;
@@ -73,83 +73,82 @@
         const basePath = window.location.pathname.replace(/\/[^/]*$/, '') || '';
         const logoUrl = basePath ? (window.location.origin + basePath + '/favicon.svg') : (window.location.origin + '/favicon.svg');
         const html = `
-          <div class="doc-header">
-            <img src="${esc(logoUrl)}" alt="" class="doc-logo" aria-hidden="true">
-            <div class="doc-company">
-              <h1>Sistema de Cotización y Gestión</h1>
-              <p>Cotizaciones profesionales</p>
+          <div class="doc">
+            <header class="letterhead">
+              <img src="${esc(logoUrl)}" alt="" class="letterhead-logo" aria-hidden="true">
+              <div class="letterhead-company">
+                <h1 class="name">Sistema de Cotización y Gestión</h1>
+                <p class="tagline">Cotizaciones profesionales · Servicio técnico y refacciones</p>
+              </div>
+            </header>
+            <h2 class="doc-title">COTIZACIÓN</h2>
+            <div class="doc-meta">
+              <span><strong>Folio:</strong> ${esc(cot.folio)}</span>
+              <span><strong>Fecha de emisión:</strong> ${fmtDate(cot.fecha)}</span>
+              <span><strong>Válida hasta:</strong> ${fmtDate(validHasta(cot.fecha))}</span>
             </div>
-          </div>
-          <h2 class="doc-title">COTIZACIÓN</h2>
-          <div class="doc-meta">
-            <span><strong>Folio:</strong> ${esc(cot.folio)}</span>
-            <span><strong>Fecha:</strong> ${fmtDate(cot.fecha)}</span>
-            <span><strong>Válida hasta:</strong> ${fmtDate(validHasta(cot.fecha))}</span>
-          </div>
-          <div class="doc-cliente">
-            <h3>Cliente</h3>
-            <p><strong>${esc(cliente ? cliente.nombre : cot.cliente_nombre)}</strong></p>
-            ${cliente && cliente.rfc ? '<p>RFC: ' + esc(cliente.rfc) + '</p>' : ''}
-            ${cliente && (cliente.direccion || cliente.ciudad) ? '<p>' + esc([cliente.direccion, cliente.ciudad].filter(Boolean).join(', ')) + '</p>' : ''}
-            ${cliente && cliente.contacto ? '<p>Contacto: ' + esc(cliente.contacto) + '</p>' : ''}
-            ${cliente && cliente.telefono ? '<p>Tel: ' + esc(cliente.telefono) + '</p>' : ''}
-            ${cliente && cliente.email ? '<p>Email: ' + esc(cliente.email) + '</p>' : ''}
-          </div>
-          <table class="doc-table">
-            <thead>
-              <tr>
-                <th>Concepto</th>
-                <th class="num">Cant.</th>
-                <th class="num">P. unitario</th>
-                <th class="num">Subtotal</th>
-                <th class="num">IVA (16%)</th>
-                <th class="num">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>${esc(tipoLabel)}</td>
-                <td class="num">1</td>
-                <td class="num">$ ${fmtNum(subtotal)}</td>
-                <td class="num">$ ${fmtNum(subtotal)}</td>
-                <td class="num">$ ${fmtNum(iva)}</td>
-                <td class="num">$ ${fmtNum(total)}</td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colspan="4"></td>
-                <td class="num">Subtotal</td>
-                <td class="num">$ ${fmtNum(subtotal)}</td>
-              </tr>
-              <tr>
-                <td colspan="4"></td>
-                <td class="num">IVA (16%)</td>
-                <td class="num">$ ${fmtNum(iva)}</td>
-              </tr>
-              <tr>
-                <td colspan="4"></td>
-                <td class="num"><strong>Total</strong></td>
-                <td class="num"><strong>$ ${fmtNum(total)}</strong></td>
-              </tr>
-            </tfoot>
-          </table>
-          <div class="doc-condiciones">
-            <strong>Condiciones:</strong> Precios en moneda nacional (MXN). Forma de pago según acuerdo. Esta cotización es válida por 30 días a partir de la fecha de emisión. Sujeto a disponibilidad.
-          </div>
-          <div class="doc-firma">
-            <div class="doc-firma-box">
-              <strong>Firma del cliente</strong>
-              <span>Nombre y firma</span>
+            <div class="doc-block">
+              <div class="doc-block-title">Destinatario</div>
+              <div class="doc-block-content">
+                <p><strong>${esc(cliente ? cliente.nombre : cot.cliente_nombre)}</strong></p>
+                ${cliente && cliente.rfc ? '<p>RFC: ' + esc(cliente.rfc) + '</p>' : ''}
+                ${cliente && (cliente.direccion || cliente.ciudad) ? '<p>' + esc([cliente.direccion, cliente.ciudad].filter(Boolean).join(', ')) + '</p>' : ''}
+                ${cliente && cliente.contacto ? '<p>Contacto: ' + esc(cliente.contacto) + '</p>' : ''}
+                ${cliente && cliente.telefono ? '<p>Teléfono: ' + esc(cliente.telefono) + '</p>' : ''}
+                ${cliente && cliente.email ? '<p>Correo: ' + esc(cliente.email) + '</p>' : ''}
+              </div>
             </div>
-            <div class="doc-firma-box">
-              <strong>Fecha de aceptación</strong>
-              <span>____ / ____ / ________</span>
+            <table class="doc-table">
+              <thead>
+                <tr>
+                  <th>Concepto</th>
+                  <th class="num">Cant.</th>
+                  <th class="num">P. unitario</th>
+                  <th class="num">Subtotal</th>
+                  <th class="num">IVA (16%)</th>
+                  <th class="num">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>${esc(tipoLabel)}</td>
+                  <td class="num">1</td>
+                  <td class="num">$ ${fmtNum(subtotal)}</td>
+                  <td class="num">$ ${fmtNum(subtotal)}</td>
+                  <td class="num">$ ${fmtNum(iva)}</td>
+                  <td class="num">$ ${fmtNum(total)}</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr><td colspan="4"></td><td class="num">Subtotal</td><td class="num">$ ${fmtNum(subtotal)}</td></tr>
+                <tr><td colspan="4"></td><td class="num">IVA (16%)</td><td class="num">$ ${fmtNum(iva)}</td></tr>
+                <tr><td colspan="4"></td><td class="num">Total</td><td class="num">$ ${fmtNum(total)}</td></tr>
+              </tfoot>
+            </table>
+            <div class="doc-condiciones">
+              <strong>Condiciones generales</strong>
+              <ol>
+                <li>Precios en moneda nacional (MXN).</li>
+                <li>Forma de pago según acuerdo entre las partes.</li>
+                <li>Esta cotización es válida por 30 días naturales a partir de la fecha de emisión.</li>
+                <li>Sujeto a disponibilidad de refacciones y/o capacidad de mano de obra.</li>
+                <li>La aceptación de esta cotización podrá formalizarse por escrito o por inicio de trabajos.</li>
+              </ol>
+            </div>
+            <div class="doc-firma">
+              <div class="doc-firma-box">
+                <div class="doc-firma-line"></div>
+                <div class="doc-firma-label">Firma del cliente / Aceptación</div>
+              </div>
+              <div class="doc-firma-box">
+                <div class="doc-firma-line"></div>
+                <div class="doc-firma-label">Fecha de aceptación (día / mes / año)</div>
+              </div>
             </div>
           </div>
         `;
         document.getElementById('doc-body').innerHTML = html;
-        document.getElementById('msg').textContent = 'Listo. Usa «Imprimir» y elige «Guardar como PDF» para descargar.';
+        document.getElementById('msg').textContent = 'Listo. Use «Imprimir» y elija «Guardar como PDF» para descargar.';
       }
       function runPrint() { window.print(); }
       document.getElementById('btn-print').addEventListener('click', runPrint);
@@ -161,15 +160,12 @@
           const cot = await resCot.json();
           let cliente = null;
           if (cot.cliente_id) {
-            try {
-              const resCl = await fetch(API + '/clientes/' + cot.cliente_id);
-              if (resCl.ok) cliente = await resCl.json();
-            } catch (_) {}
+            try { const resCl = await fetch(API + '/clientes/' + cot.cliente_id); if (resCl.ok) cliente = await resCl.json(); } catch (_) {}
           }
           render(cot, cliente);
-          setTimeout(runPrint, 300);
+          setTimeout(runPrint, 350);
         } catch (e) {
-          document.getElementById('doc-body').innerHTML = '<div class="error">' + esc(e.message || 'No se pudo cargar la cotización.') + '</div>';
+          document.getElementById('doc-body').innerHTML = '<div class="doc"><div class="error">' + esc(e.message || 'No se pudo cargar la cotización.') + '</div></div>';
           document.getElementById('msg').textContent = 'Error al cargar.';
         }
       }

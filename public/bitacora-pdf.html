@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registro de bitácora</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Georgia', 'Times New Roman', serif; margin: 0; padding: 0; color: #1a1a2e; font-size: 11pt; line-height: 1.4; }
+    .no-print { position: fixed; top: 0; left: 0; right: 0; z-index: 9999; padding: 0.75rem 1.5rem; background: #0f172a; color: #e2e8f0; display: flex; align-items: center; gap: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+    .no-print button { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
+    .no-print #btn-print { background: #7c3aed; color: #fff; }
+    .no-print #btn-close { background: #475569; color: #fff; }
+    .doc { max-width: 210mm; margin: 0 auto; padding: 2rem 2.5rem; padding-top: 4rem; }
+    .no-print + .doc { padding-top: 2rem; }
+    @media print { .no-print { display: none !important; } .doc { padding-top: 0.5rem; } }
+    .letterhead { display: flex; align-items: flex-start; justify-content: space-between; padding-bottom: 1rem; border-bottom: 3px solid #7c3aed; margin-bottom: 1.25rem; }
+    .letterhead-logo { height: 48px; width: auto; }
+    .letterhead-company .name { font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0; }
+    .letterhead-company .tagline { font-size: 0.75rem; color: #64748b; margin: 0.2rem 0 0; }
+    .doc-title { text-align: center; font-size: 1.35rem; font-weight: 700; color: #7c3aed; margin: 0 0 1rem; letter-spacing: 0.05em; }
+    .doc-meta { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 1rem; font-size: 0.9rem; }
+    .doc-meta span { display: block; }
+    .doc-meta strong { color: #475569; margin-right: 0.3rem; }
+    .doc-table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-size: 0.9rem; }
+    .doc-table th, .doc-table td { padding: 0.5rem 0.65rem; text-align: left; border: 1px solid #cbd5e1; }
+    .doc-table th { background: #7c3aed; color: #fff; font-weight: 600; width: 28%; }
+    .doc-table td { background: #fff; }
+    .doc-section { margin-top: 1rem; }
+    .doc-section-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-bottom: 0.35rem; font-weight: 600; }
+    .doc-section-content { background: #f8fafc; padding: 0.85rem 1rem; border: 1px solid #e2e8f0; border-radius: 4px; white-space: pre-wrap; }
+    .doc-firma { margin-top: 1.5rem; }
+    .doc-firma-line { border-bottom: 1px solid #1a1a2e; height: 2em; width: 220px; margin-bottom: 0.2rem; }
+    .doc-firma-label { font-size: 0.75rem; color: #64748b; }
+    .loading, .error { padding: 2rem; text-align: center; }
+    .error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <div class="no-print">
+    <span id="msg">Cargando registro…</span>
+    <button type="button" id="btn-print"><strong>Imprimir / Guardar como PDF</strong></button>
+    <button type="button" id="btn-close">Cerrar</button>
+  </div>
+  <div id="doc-body"></div>
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      const API = window.location.pathname.replace(/\/[^/]*$/, '') + '/api';
+      if (!id) {
+        document.getElementById('doc-body').innerHTML = '<div class="doc"><div class="error">Falta el ID del registro (ej. ?id=1).</div></div>';
+        document.getElementById('msg').textContent = '';
+        return;
+      }
+      function esc(s) { if (s == null) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+      function fmtDate(s) { if (!s) return '—'; return String(s).slice(0, 10); }
+      function render(bit) {
+        const basePath = window.location.pathname.replace(/\/[^/]*$/, '') || '';
+        const logoUrl = basePath ? (window.location.origin + basePath + '/favicon.svg') : (window.location.origin + '/favicon.svg');
+        const html = `
+          <div class="doc">
+            <header class="letterhead">
+              <img src="${esc(logoUrl)}" alt="" class="letterhead-logo" aria-hidden="true">
+              <div class="letterhead-company">
+                <p class="name">Sistema de Cotización y Gestión</p>
+                <p class="tagline">Bitácora de horas · Registro de actividades</p>
+              </div>
+            </header>
+            <h2 class="doc-title">REGISTRO DE BITÁCORA</h2>
+            <div class="doc-meta">
+              <span><strong>Fecha:</strong> ${fmtDate(bit.fecha)}</span>
+              <span><strong>Incidente:</strong> ${esc(bit.incidente_folio) || '—'}</span>
+              <span><strong>Cotización:</strong> ${esc(bit.cotizacion_folio) || '—'}</span>
+            </div>
+            <table class="doc-table">
+              <tr><th>Técnico</th><td>${esc(bit.tecnico)}</td></tr>
+              <tr><th>Tiempo (horas)</th><td>${bit.tiempo_horas != null ? Number(bit.tiempo_horas) : '—'}</td></tr>
+              <tr><th>Materiales utilizados</th><td>${esc(bit.materiales_usados) || '—'}</td></tr>
+            </table>
+            <div class="doc-section">
+              <div class="doc-section-title">Actividades realizadas</div>
+              <div class="doc-section-content">${esc(bit.actividades || '—').replace(/\n/g, '<br>')}</div>
+            </div>
+            <p class="doc-firma-label" style="margin-top:1.25rem;">Documento de respaldo para facturación y/o entrega al cliente. Fecha de impresión: ${fmtDate(new Date().toISOString())}</p>
+            <div class="doc-firma-line" style="margin-top:1rem;"></div>
+            <div class="doc-firma-label">Firma del técnico / Responsable</div>
+          </div>
+        `;
+        document.getElementById('doc-body').innerHTML = html;
+        document.getElementById('msg').textContent = 'Listo. Use «Imprimir» y elija «Guardar como PDF» para descargar.';
+      }
+      function runPrint() { window.print(); }
+      document.getElementById('btn-print').addEventListener('click', runPrint);
+      document.getElementById('btn-close').addEventListener('click', function() { window.close(); });
+      async function load() {
+        try {
+          const res = await fetch(API + '/bitacoras/' + id);
+          if (!res.ok) throw new Error('Registro no encontrado');
+          const bit = await res.json();
+          render(bit);
+          setTimeout(runPrint, 350);
+        } catch (e) {
+          document.getElementById('doc-body').innerHTML = '<div class="doc"><div class="error">' + esc(e.message || 'No se pudo cargar el registro.') + '</div></div>';
+          document.getElementById('msg').textContent = 'Error al cargar.';
+        }
+      }
+      load();
+    })();
+  </script>
+</body>
+</html>

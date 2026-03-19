@@ -889,12 +889,16 @@
         <td>${escapeHtml(String(i.estatus || ''))}</td>
         <td class="sla-cell"><span class="semaforo semaforo-${sla.color}" title="${escapeHtml(sla.label)}"><i class="fas ${sla.icon}"></i> ${escapeHtml(sla.label)}</span></td>
         <td class="th-actions">
+          <button type="button" class="btn small outline btn-pdf-inc" data-id="${i.id}" title="Imprimir / PDF"><i class="fas fa-file-pdf"></i></button>
           <button type="button" class="btn small primary btn-edit-inc" data-id="${i.id}" title="Editar"><i class="fas fa-edit"></i></button>
           <button type="button" class="btn small outline btn-duplicate-inc" data-id="${i.id}" title="Duplicar incidente"><i class="fas fa-copy"></i></button>
           <button type="button" class="btn small danger btn-delete-inc" data-id="${i.id}" title="Eliminar"><i class="fas fa-trash"></i></button>
         </td>
       `;
       tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.btn-pdf-inc').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); openIncidentePdf(btn.dataset.id); });
     });
     tbody.querySelectorAll('.btn-edit-inc').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); editIncidente(btn.dataset.id); });
@@ -973,11 +977,15 @@
         <td>${escapeHtml(mat.length > 25 ? mat.slice(0, 25) + '…' : mat)}</td>
         <td class="sla-cell"><span class="semaforo semaforo-${est.color}" title="${escapeHtml(est.label)}"><i class="fas ${est.icon}"></i> ${escapeHtml(est.label)}</span></td>
         <td class="th-actions">
+          <button type="button" class="btn small outline btn-pdf-bit" data-id="${b.id}" title="Imprimir / PDF"><i class="fas fa-file-pdf"></i></button>
           <button type="button" class="btn small primary btn-edit-bit" data-id="${b.id}"><i class="fas fa-edit"></i></button>
           <button type="button" class="btn small danger btn-delete-bit" data-id="${b.id}"><i class="fas fa-trash"></i></button>
         </td>
       `;
       tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.btn-pdf-bit').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); openBitacoraPdf(btn.dataset.id); });
     });
     tbody.querySelectorAll('.btn-edit-bit').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); editBitacora(btn.dataset.id); });
@@ -1354,6 +1362,16 @@
     const url = (base ? base + '/' : '') + 'cotizacion-pdf.html?id=' + encodeURIComponent(id);
     window.open(url, '_blank', 'noopener');
   }
+  function openIncidentePdf(id) {
+    const base = window.location.pathname.replace(/\/[^/]*$/, '') || '';
+    const url = (base ? base + '/' : '') + 'incidente-pdf.html?id=' + encodeURIComponent(id);
+    window.open(url, '_blank', 'noopener');
+  }
+  function openBitacoraPdf(id) {
+    const base = window.location.pathname.replace(/\/[^/]*$/, '') || '';
+    const url = (base ? base + '/' : '') + 'bitacora-pdf.html?id=' + encodeURIComponent(id);
+    window.open(url, '_blank', 'noopener');
+  }
 
   // ----- MODAL INCIDENTE -----
   async function openModalIncidente(inc) {
@@ -1554,6 +1572,17 @@
       const bitEsteMes = bitacoras.filter(b => (b.fecha || '').slice(0, 7) === thisMonthStart.slice(0, 7)).length;
       const incTotal = incidentes.length;
       const incProgress = incTotal ? Math.round((incCerrados / incTotal) * 100) : 0;
+      const resumenKpi = [
+        { label: 'Clientes', value: clientes.length, icon: 'fa-users' },
+        { label: 'Cotizaciones (monto)', value: formatMoney(cotTotal), icon: 'fa-file-invoice-dollar' },
+        { label: 'Incidentes abiertos', value: incAbiertos, icon: 'fa-exclamation-triangle' },
+        { label: 'Horas en bitácora', value: bitHoras.toFixed(1) + ' h', icon: 'fa-clock' },
+      ];
+      const kpiEl = document.createElement('div');
+      kpiEl.className = 'dashboard-kpi-strip';
+      kpiEl.setAttribute('aria-label', 'Resumen ejecutivo');
+      kpiEl.innerHTML = resumenKpi.map(k => `<span class="dashboard-kpi-item"><i class="fas ${k.icon}"></i> <strong>${escapeHtml(String(k.value))}</strong> ${escapeHtml(k.label)}</span>`).join('');
+      grid.appendChild(kpiEl);
       const cards = [
         { id: 'clientes', icon: 'fa-users', title: 'Clientes', goto: 'clientes', rows: [{ label: 'Total', value: clientes.length, v: 'neutral' }, { label: 'Ciudades', value: ciudades, v: 'neutral' }, { label: 'Con RFC', value: conRfc, v: 'positive' }] },
         { id: 'refacciones', icon: 'fa-cogs', title: 'Refacciones', goto: 'refacciones', rows: [{ label: 'Total', value: refacciones.length, v: 'neutral' }, { label: 'Valor catálogo', value: formatMoney(valorCatalogo), v: 'positive' }, { label: 'Precio promedio', value: formatMoney(promPrecio), v: 'neutral' }, { label: 'Marcas', value: marcas, v: 'neutral' }] },
