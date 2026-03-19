@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Sistema de Cotización - En línea</title>
   <link rel="stylesheet" href="css/style.css?v=5">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
@@ -27,16 +27,20 @@
 
   <main class="content" id="main-content">
     <!-- DASHBOARDS -->
-    <section id="panel-dashboards" class="panel active" aria-label="Resumen por segmento">
-      <div class="section-header">
-        <h2><i class="fas fa-chart-pie"></i> Resumen general</h2>
-        <div class="toolbar">
-          <button type="button" id="dashboard-refresh" class="btn outline" title="Actualizar datos"><i class="fas fa-sync-alt"></i> Actualizar</button>
+    <section id="panel-dashboards" class="panel panel-dashboard active" aria-label="Resumen por segmento">
+      <div class="dashboard-surface">
+        <div class="dashboard-header">
+          <div class="dashboard-header-left">
+            <h2 class="dashboard-title"><i class="fas fa-chart-pie"></i> Resumen general</h2>
+            <p class="dashboard-subtitle">Métricas clave por área · Actualizado al cargar</p>
+          </div>
+          <div class="dashboard-header-right">
+            <button type="button" id="dashboard-refresh" class="btn-dashboard-refresh" title="Actualizar datos"><i class="fas fa-sync-alt"></i> Actualizar</button>
+          </div>
         </div>
-      </div>
-      <p class="dashboard-intro">Métricas clave de cada área. Usa los botones para ir al detalle.</p>
-      <div id="dashboard-grid" class="dashboard-grid" aria-live="polite">
-        <div class="dashboard-loading" id="dashboard-loading"><div class="loading-spinner"></div><span>Cargando indicadores…</span></div>
+        <div id="dashboard-grid" class="dashboard-grid" aria-live="polite">
+          <div class="dashboard-loading" id="dashboard-loading"><div class="loading-spinner"></div><span>Cargando indicadores…</span></div>
+        </div>
       </div>
     </section>
 
@@ -46,7 +50,8 @@
         <h2><i class="fas fa-users"></i> Catálogo de clientes</h2>
         <div class="toolbar">
           <input type="search" id="buscar-clientes" placeholder="Buscar por nombre, código o RFC..." class="search">
-          <button type="button" id="export-clientes" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-export"></i> Exportar CSV</button>
+          <button type="button" id="export-clientes" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
+          <button type="button" id="export-excel-clientes" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
           <button type="button" id="nuevo-cliente" class="btn primary"><i class="fas fa-plus"></i> Nuevo cliente</button>
         </div>
       </div>
@@ -80,7 +85,8 @@
         <h2><i class="fas fa-cogs"></i> Catálogo de refacciones</h2>
         <div class="toolbar">
           <input type="search" id="buscar-refacciones" placeholder="Buscar por código o descripción..." class="search">
-          <button type="button" id="export-refacciones" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-export"></i> Exportar CSV</button>
+          <button type="button" id="export-refacciones" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
+          <button type="button" id="export-excel-refacciones" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
           <button type="button" id="nueva-refaccion" class="btn primary"><i class="fas fa-plus"></i> Nueva refacción</button>
         </div>
       </div>
@@ -116,7 +122,8 @@
           <select id="filtro-cliente-maq">
             <option value="">Todos los clientes</option>
           </select>
-          <button type="button" id="export-maquinas" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-export"></i> Exportar CSV</button>
+          <button type="button" id="export-maquinas" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
+          <button type="button" id="export-excel-maquinas" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
           <button type="button" id="nueva-maquina" class="btn primary"><i class="fas fa-plus"></i> Nueva máquina</button>
         </div>
       </div>
@@ -149,7 +156,8 @@
       <div class="section-header">
         <h2><i class="fas fa-file-invoice-dollar"></i> Cotizaciones</h2>
         <div class="toolbar">
-          <button type="button" id="export-cotizaciones" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-export"></i> Exportar CSV</button>
+          <button type="button" id="export-cotizaciones" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
+          <button type="button" id="export-excel-cotizaciones" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
           <button type="button" id="nueva-cotizacion" class="btn primary"><i class="fas fa-plus"></i> Nueva cotización</button>
         </div>
       </div>
@@ -163,7 +171,7 @@
         <table class="data-table filterable-table" id="tabla-cotizaciones" data-cache="cotizacionesCache">
           <thead>
             <tr>
-              <th>Folio</th><th>Cliente</th><th>Tipo</th><th>Fecha</th><th>Total</th>
+              <th>Folio</th><th>Cliente</th><th>Tipo</th><th>Fecha</th><th>Total</th><th>Vigencia</th>
               <th class="th-actions">Acciones</th>
             </tr>
             <tr class="filter-row">
@@ -172,6 +180,7 @@
               <td><input type="text" class="filter-input" data-key="tipo" data-type="text" placeholder="refacciones|mano_obra"></td>
               <td class="filter-date-wrap"><select class="filter-date-select" data-key="fecha"><option value="">Todas</option><option value="hoy">Hoy</option><option value="esta_semana">Esta semana</option><option value="este_mes">Este mes</option><option value="mes_pasado">Mes pasado</option><option value="este_año">Este año</option><option value="personalizado">Escribir fecha</option></select><input type="date" class="filter-input filter-date-input" data-key="fecha" title="O escribe aquí"></td>
               <td><input type="text" class="filter-input" data-key="total" data-type="number" placeholder="&gt;1000, &lt;5000"></td>
+              <td><span data-key="vigencia_estado" class="filter-input" style="display:inline-block;min-height:1px;padding:0;border:none;width:100%" aria-hidden="true"></span></td>
               <td class="th-actions"></td>
             </tr>
           </thead>
@@ -186,7 +195,8 @@
       <div class="section-header">
         <h2><i class="fas fa-exclamation-triangle"></i> Incidentes</h2>
         <div class="toolbar">
-          <button type="button" id="export-incidentes" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-export"></i> Exportar CSV</button>
+          <button type="button" id="export-incidentes" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
+          <button type="button" id="export-excel-incidentes" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
           <button type="button" id="nuevo-incidente" class="btn primary"><i class="fas fa-plus"></i> Nuevo incidente</button>
         </div>
       </div>
@@ -200,7 +210,7 @@
         <table class="data-table filterable-table" id="tabla-incidentes" data-cache="incidentesCache">
           <thead>
             <tr>
-              <th>Folio</th><th>Cliente</th><th>Máquina</th><th>Descripción</th><th>Fecha incidente</th><th>Fecha cerrado</th><th>Prioridad</th><th>Estatus</th>
+              <th>Folio</th><th>Cliente</th><th>Máquina</th><th>Descripción</th><th>Fecha incidente</th><th>Fecha cerrado</th><th>Prioridad</th><th>Estatus</th><th>SLA</th>
               <th class="th-actions">Acciones</th>
             </tr>
             <tr class="filter-row">
@@ -212,6 +222,7 @@
               <td><input type="text" class="filter-input" data-key="fecha_cerrado" data-type="text" placeholder="aaaa-mm-dd"></td>
               <td><input type="text" class="filter-input" data-key="prioridad" data-type="text" placeholder="baja|media|alta"></td>
               <td><input type="text" class="filter-input" data-key="estatus" data-type="text" placeholder="abierto|cerrado"></td>
+              <td><span data-key="sla_estado" class="filter-input" style="display:inline-block;min-height:1px;padding:0;border:none;width:100%" aria-hidden="true"></span></td>
               <td class="th-actions"></td>
             </tr>
           </thead>
@@ -226,7 +237,8 @@
       <div class="section-header">
         <h2><i class="fas fa-clock"></i> Bitácora de horas</h2>
         <div class="toolbar">
-          <button type="button" id="export-bitacoras" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-export"></i> Exportar CSV</button>
+          <button type="button" id="export-bitacoras" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
+          <button type="button" id="export-excel-bitacoras" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
           <button type="button" id="nueva-bitacora" class="btn primary"><i class="fas fa-plus"></i> Nueva bitácora</button>
         </div>
       </div>
@@ -240,7 +252,7 @@
         <table class="data-table filterable-table" id="tabla-bitacoras" data-cache="bitacorasCache">
           <thead>
             <tr>
-              <th>Fecha</th><th>Incidente</th><th>Cotización</th><th>Técnico</th><th>Actividades</th><th>Horas</th><th>Materiales</th>
+              <th>Fecha</th><th>Incidente</th><th>Cotización</th><th>Técnico</th><th>Actividades</th><th>Horas</th><th>Materiales</th><th>Estado</th>
               <th class="th-actions">Acciones</th>
             </tr>
             <tr class="filter-row">
@@ -251,6 +263,7 @@
               <td><input type="text" class="filter-input" data-key="actividades" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="tiempo_horas" data-type="number" placeholder="&gt;2, &lt;8"></td>
               <td><input type="text" class="filter-input" data-key="materiales_usados" data-type="text" placeholder="Filtrar…"></td>
+              <td><span data-key="estado_registro" class="filter-input" style="display:inline-block;min-height:1px;padding:0;border:none;width:100%" aria-hidden="true"></span></td>
               <td class="th-actions"></td>
             </tr>
           </thead>
@@ -323,6 +336,7 @@
     <div class="loading-spinner"></div>
     <span class="loading-text">Cargando…</span>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="js/app.js?v=5"></script>
 </body>
 </html>

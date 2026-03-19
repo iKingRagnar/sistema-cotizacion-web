@@ -266,10 +266,9 @@
     const s = String(val).replace(/"/g, '""');
     return /[,"\n\r]/.test(s) ? '"' + s + '"' : s;
   }
-  function exportToCsv(data, tableId, filenameLabel) {
+  function getTableKeysAndHeaders(tableId) {
     const tbl = qs('#' + tableId);
-    if (!tbl || !data || !data.length) { showToast('No hay datos para exportar.', 'error'); return; }
-    showToast('Exportando…', 'success');
+    if (!tbl) return { keys: [], headers: [] };
     const ths = Array.from(tbl.querySelectorAll('thead tr:first-child th:not(.th-actions)'));
     const tds = tbl.querySelectorAll('.filter-row td:not(.th-actions)');
     const keys = [], headers = [];
@@ -278,6 +277,74 @@
       const inp = td ? td.querySelector('[data-key]') : null;
       if (inp && inp.dataset.key) { keys.push(inp.dataset.key); headers.push(th.textContent.trim()); }
     });
+    return { keys, headers };
+  }
+
+  // Semáforos tipo ITIL v4: SLA por prioridad (días objetivo de resolución)
+  const SLA_DAYS_BY_PRIORITY = { critica: 1, alta: 2, media: 5, baja: 10 };
+  const SLA_WARNING_PCT = 0.8;
+  function parseDate(s) {
+    if (!s) return null;
+    const str = String(s).trim().slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return null;
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  function daysBetween(from, to) {
+    if (!from || !to) return 0;
+    const a = from instanceof Date ? from : new Date(from);
+    const b = to instanceof Date ? to : new Date(to);
+    return Math.floor((b - a) / (24 * 60 * 60 * 1000));
+  }
+  function getSlaSemaphore(inc) {
+    const priority = (inc.prioridad || 'media').toLowerCase();
+    const targetDays = SLA_DAYS_BY_PRIORITY[priority] ?? 5;
+    const fechaReporte = parseDate(inc.fecha_reporte);
+    const fechaCerrado = parseDate(inc.fecha_cerrado);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const estatus = (inc.estatus || '').toLowerCase();
+    if (estatus === 'cerrado' && fechaCerrado && fechaReporte) {
+      const resolutionDays = daysBetween(fechaReporte, fechaCerrado);
+      if (resolutionDays <= targetDays) return { color: 'green', label: 'Dentro de SLA', icon: 'fa-circle-check' };
+      return { color: 'red', label: 'Fuera de SLA', icon: 'fa-circle-xmark' };
+    }
+    if (!fechaReporte) return { color: 'green', label: '—', icon: 'fa-circle-minus' };
+    const daysOpen = daysBetween(fechaReporte, today);
+    if (daysOpen > targetDays) return { color: 'red', label: 'Fuera de SLA', icon: 'fa-circle-xmark' };
+    if (daysOpen >= Math.ceil(targetDays * SLA_WARNING_PCT)) return { color: 'yellow', label: 'Atención', icon: 'fa-circle-exclamation' };
+    return { color: 'green', label: 'Dentro de SLA', icon: 'fa-circle-check' };
+  }
+  function getVigenciaSemaphore(cot) {
+    const fecha = parseDate(cot.fecha);
+    if (!fecha) return { color: 'green', label: '—', icon: 'fa-circle-minus' };
+    const days = daysBetween(fecha, new Date());
+    if (days <= 15) return { color: 'green', label: 'Reciente', icon: 'fa-circle-check' };
+    if (days <= 30) return { color: 'yellow', label: 'Por vencer', icon: 'fa-circle-exclamation' };
+    return { color: 'red', label: 'Vencida', icon: 'fa-circle-xmark' };
+  }
+  function getEstadoRegistroSemaphore(bit) {
+    const fecha = parseDate(bit.fecha);
+    if (!fecha) return { color: 'green', label: '—', icon: 'fa-circle-minus' };
+    const days = daysBetween(fecha, new Date());
+    if (days <= 7) return { color: 'green', label: 'Reciente', icon: 'fa-circle-check' };
+    if (days <= 30) return { color: 'yellow', label: 'Antiguo', icon: 'fa-circle-exclamation' };
+    return { color: 'red', label: 'Muy antiguo', icon: 'fa-circle-xmark' };
+  }
+  function enrichIncidentesForExport(data) {
+    return (data || []).map(i => ({ ...i, sla_estado: getSlaSemaphore(i).label }));
+  }
+  function enrichCotizacionesForExport(data) {
+    return (data || []).map(c => ({ ...c, vigencia_estado: getVigenciaSemaphore(c).label }));
+  }
+  function enrichBitacorasForExport(data) {
+    return (data || []).map(b => ({ ...b, estado_registro: getEstadoRegistroSemaphore(b).label }));
+  }
+  function exportToCsv(data, tableId, filenameLabel) {
+    const tbl = qs('#' + tableId);
+    if (!tbl || !data || !data.length) { showToast('No hay datos para exportar.', 'error'); return; }
+    showToast('Exportando…', 'success');
+    const { keys, headers } = getTableKeysAndHeaders(tableId);
     const rows = [headers.join(','), ...data.map(row => keys.map(k => escapeCsv(row[k])).join(','))];
     const csv = '\uFEFF' + rows.join('\r\n');
     const a = document.createElement('a');
@@ -285,6 +352,113 @@
     a.download = (filenameLabel || 'export') + '_' + new Date().toISOString().slice(0, 10) + '.csv';
     a.click();
     showToast('CSV descargado correctamente.', 'success');
+  }
+  function detectExcelColumnFormat(header, key, sampleValues) {
+    const headerLower = (header || '').toLowerCase();
+    const keyLower = (key || '').toLowerCase();
+    const samples = sampleValues.filter(v => v != null && v !== '');
+    const looksCurrency = /^(total|monto|precio|subtotal|iva|valor|costo|importe|unit\.?|unitario)$/.test(keyLower) ||
+      /\b(total|monto|precio|subtotal|iva|valor)\b/.test(headerLower);
+    const looksDate = /^(fecha|date|fecha_reporte|fecha_cerrado)$/.test(keyLower) ||
+      /fecha|date/i.test(headerLower);
+    const looksInteger = /^(id|cliente_id|maquina_id|incidente_id|cotizacion_id)$/.test(keyLower) ||
+      /^\s*id\s*$/i.test(headerLower);
+    const looksNumber = /^(tiempo_horas|horas|precio_unitario|subtotal|iva|total|tiempo)$/.test(keyLower) ||
+      /\b(horas|precio|total|subtotal|iva)\b/.test(headerLower);
+    const looksPercentage = /porcentaje|%|percent/i.test(headerLower) || keyLower.includes('porcentaje');
+    if (looksPercentage && samples.length) {
+      const allNum = samples.every(v => !isNaN(parseFloat(String(v).replace('%', ''))));
+      if (allNum) return { type: 'percentage', numFmt: '0.00%' };
+    }
+    if (looksCurrency && samples.length) {
+      const allNum = samples.every(v => !isNaN(parseFloat(String(v).replace(/[$,]\s*/g, ''))));
+      if (allNum) return { type: 'currency', numFmt: '"$"#,##0.00' };
+    }
+    if (looksDate && samples.length) {
+      const iso = /^\d{4}-\d{2}-\d{2}/;
+      const allDate = samples.every(v => iso.test(String(v).trim()) || !isNaN(Date.parse(String(v))));
+      if (allDate) return { type: 'date', numFmt: 'yyyy-mm-dd' };
+    }
+    if (looksInteger && samples.length) {
+      const allInt = samples.every(v => Number.isInteger(Number(v)) || /^\d+$/.test(String(v).trim()));
+      if (allInt) return { type: 'integer', numFmt: '#,##0' };
+    }
+    if (looksNumber && samples.length) {
+      const allNum = samples.every(v => !isNaN(parseFloat(String(v))));
+      if (allNum) return { type: 'number', numFmt: '#,##0.00' };
+    }
+    return { type: 'text', numFmt: '@' };
+  }
+  async function exportToExcel(data, tableId, filenameLabel) {
+    const tbl = qs('#' + tableId);
+    if (!tbl || !data || !data.length) { showToast('No hay datos para exportar.', 'error'); return; }
+    if (typeof ExcelJS === 'undefined') { showToast('La exportación a Excel no está disponible. Recarga la página.', 'error'); return; }
+    showToast('Exportando a Excel…', 'success');
+    const { keys, headers } = getTableKeysAndHeaders(tableId);
+    const sampleSize = Math.min(20, data.length);
+    const columnFormats = keys.map((k, i) => detectExcelColumnFormat(
+      headers[i],
+      k,
+      data.slice(0, sampleSize).map(row => row[k])
+    ));
+    function cellValue(val, fmt) {
+      if (val == null || val === '') return '';
+      const s = String(val).trim();
+      if (fmt.type === 'currency' || fmt.type === 'number' || fmt.type === 'percentage') {
+        const n = fmt.type === 'percentage' ? parseFloat(s.replace('%', '')) / 100 : parseFloat(s.replace(/[$,]\s*/g, ''));
+        if (!isNaN(n)) return n;
+      }
+      if (fmt.type === 'integer') {
+        const n = parseInt(s, 10);
+        if (!isNaN(n)) return n;
+      }
+      if (fmt.type === 'date') {
+        const d = s.match(/^\d{4}-\d{2}-\d{2}/) ? new Date(s.slice(0, 10)) : new Date(s);
+        if (!isNaN(d.getTime())) return d;
+      }
+      return s;
+    }
+    try {
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'Sistema de Cotización';
+      const sheet = workbook.addWorksheet('Datos', { views: [{ state: 'frozen', ySplit: 1 }] });
+      const headerRow = sheet.addRow(headers);
+      headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1e3a5f' } };
+      headerRow.alignment = { horizontal: 'left', vertical: 'middle' };
+      headerRow.height = 22;
+      data.forEach((row, i) => {
+        const rowValues = keys.map((k, colIndex) => cellValue(row[k], columnFormats[colIndex]));
+        const r = sheet.addRow(rowValues);
+        r.eachCell((cell, colNumber) => {
+          const fmt = columnFormats[colNumber - 1];
+          if (fmt && fmt.numFmt && cell.value !== '') cell.numFmt = fmt.numFmt;
+        });
+        if (i % 2 === 1) r.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8fafc' } };
+        r.alignment = { vertical: 'middle', wrapText: true };
+      });
+      sheet.columns = headers.map((_, i) => ({ width: Math.min(Math.max(String(headers[i]).length + 2, 10), 40) }));
+      sheet.getRow(1).eachCell((cell, colNumber) => {
+        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+      });
+      for (let row = 2; row <= data.length + 1; row++) {
+        sheet.getRow(row).eachCell((cell) => {
+          cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+        });
+      }
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = (filenameLabel || 'export') + '_' + new Date().toISOString().slice(0, 10) + '.xlsx';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Excel descargado correctamente.', 'success');
+    } catch (e) {
+      console.error(e);
+      showToast('No se pudo generar el Excel. Intenta de nuevo.', 'error');
+    }
   }
   function updateTableFooter(tableId, showing, total, clearAndRefresh) {
     const footer = qs('#footer-' + tableId);
@@ -489,12 +663,13 @@
     listEl.classList.remove('hidden');
     updateTableFooter('tabla-cotizaciones', (data && data.length) || 0, cotizacionesCache.length, () => clearTableFiltersAndRefresh('tabla-cotizaciones', null, applyCotizacionesFiltersAndRender));
     if (!hasFilteredResults) {
-      const cols = 6;
+      const cols = 7;
       tbody.innerHTML = `<tr><td colspan="${cols}" class="empty filter-empty"><span>No hay resultados con los filtros aplicados.</span> <button type="button" class="btn small primary clear-filters-inline">Quitar filtros</button></td></tr>`;
       tbody.querySelector('.clear-filters-inline').addEventListener('click', () => clearTableFiltersAndRefresh('tabla-cotizaciones', null, applyCotizacionesFiltersAndRender));
       return;
     }
     data.forEach(c => {
+      const vig = getVigenciaSemaphore(c);
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${escapeHtml(c.folio || '')}</td>
@@ -502,6 +677,7 @@
         <td>${escapeHtml(c.tipo || '')}</td>
         <td>${escapeHtml(c.fecha || '')}</td>
         <td>${typeof c.total === 'number' ? '$' + c.total.toLocaleString('es-MX', { minimumFractionDigits: 2 }) : ''}</td>
+        <td class="sla-cell"><span class="semaforo semaforo-${vig.color}" title="${escapeHtml(vig.label)}"><i class="fas ${vig.icon}"></i> ${escapeHtml(vig.label)}</span></td>
         <td class="th-actions">
           <button type="button" class="btn small primary btn-edit-cot" data-id="${c.id}"><i class="fas fa-edit"></i></button>
           <button type="button" class="btn small danger btn-delete-cot" data-id="${c.id}"><i class="fas fa-trash"></i></button>
@@ -553,11 +729,12 @@
     listEl.classList.remove('hidden');
     updateTableFooter('tabla-incidentes', (data && data.length) || 0, incidentesCache.length, () => clearTableFiltersAndRefresh('tabla-incidentes', null, applyIncidentesFiltersAndRender));
     if (!hasFilteredResults) {
-      tbody.innerHTML = '<tr><td colspan="9" class="empty filter-empty"><span>No hay resultados con los filtros aplicados.</span> <button type="button" class="btn small primary clear-filters-inline">Quitar filtros</button></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" class="empty filter-empty"><span>No hay resultados con los filtros aplicados.</span> <button type="button" class="btn small primary clear-filters-inline">Quitar filtros</button></td></tr>';
       tbody.querySelector('.clear-filters-inline').addEventListener('click', () => clearTableFiltersAndRefresh('tabla-incidentes', null, applyIncidentesFiltersAndRender));
       return;
     }
     data.forEach(i => {
+      const sla = getSlaSemaphore(i);
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${escapeHtml(i.folio || '')}</td>
@@ -568,6 +745,7 @@
         <td>${(i.fecha_cerrado || '').toString().slice(0, 10) || '—'}</td>
         <td>${escapeHtml(i.prioridad || '')}</td>
         <td>${escapeHtml(i.estatus || '')}</td>
+        <td class="sla-cell"><span class="semaforo semaforo-${sla.color}" title="${escapeHtml(sla.label)}"><i class="fas ${sla.icon}"></i> ${escapeHtml(sla.label)}</span></td>
         <td class="th-actions">
           <button type="button" class="btn small primary btn-edit-inc" data-id="${i.id}"><i class="fas fa-edit"></i></button>
           <button type="button" class="btn small danger btn-delete-inc" data-id="${i.id}"><i class="fas fa-trash"></i></button>
@@ -619,11 +797,12 @@
     listEl.classList.remove('hidden');
     updateTableFooter('tabla-bitacoras', (data && data.length) || 0, bitacorasCache.length, () => clearTableFiltersAndRefresh('tabla-bitacoras', null, applyBitacorasFiltersAndRender));
     if (!hasFilteredResults) {
-      tbody.innerHTML = '<tr><td colspan="8" class="empty filter-empty"><span>No hay resultados con los filtros aplicados.</span> <button type="button" class="btn small primary clear-filters-inline">Quitar filtros</button></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="empty filter-empty"><span>No hay resultados con los filtros aplicados.</span> <button type="button" class="btn small primary clear-filters-inline">Quitar filtros</button></td></tr>';
       tbody.querySelector('.clear-filters-inline').addEventListener('click', () => clearTableFiltersAndRefresh('tabla-bitacoras', null, applyBitacorasFiltersAndRender));
       return;
     }
     data.forEach(b => {
+      const est = getEstadoRegistroSemaphore(b);
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${escapeHtml(b.fecha || '')}</td>
@@ -633,6 +812,7 @@
         <td>${escapeHtml((b.actividades || '').slice(0, 35))}${(b.actividades && b.actividades.length > 35) ? '…' : ''}</td>
         <td>${b.tiempo_horas != null ? b.tiempo_horas : '—'}</td>
         <td>${escapeHtml((b.materiales_usados || '').slice(0, 25))}${(b.materiales_usados && b.materiales_usados.length > 25) ? '…' : ''}</td>
+        <td class="sla-cell"><span class="semaforo semaforo-${est.color}" title="${escapeHtml(est.label)}"><i class="fas ${est.icon}"></i> ${escapeHtml(est.label)}</span></td>
         <td class="th-actions">
           <button type="button" class="btn small primary btn-edit-bit" data-id="${b.id}"><i class="fas fa-edit"></i></button>
           <button type="button" class="btn small danger btn-delete-bit" data-id="${b.id}"><i class="fas fa-trash"></i></button>
@@ -1176,28 +1356,35 @@
       const bitHoras = (bitacoras || []).reduce((s, b) => s + (Number(b.tiempo_horas) || 0), 0);
       const tecnicos = new Set((bitacoras || []).map(b => (b.tecnico || '').trim()).filter(Boolean)).size;
       const bitEsteMes = (bitacoras || []).filter(b => (b.fecha || '').slice(0, 7) === thisMonthStart.slice(0, 7)).length;
+      const incTotal = (incidentes || []).length;
+      const incProgress = incTotal ? Math.round((incCerrados / incTotal) * 100) : 0;
       const cards = [
-        { id: 'clientes', icon: 'fa-users', title: 'Clientes', goto: 'clientes', rows: [{ label: 'Total', value: (clientes || []).length }, { label: 'Ciudades', value: ciudades }, { label: 'Con RFC', value: conRfc }] },
-        { id: 'refacciones', icon: 'fa-cogs', title: 'Refacciones', goto: 'refacciones', rows: [{ label: 'Total', value: (refacciones || []).length }, { label: 'Valor catálogo', value: formatMoney(valorCatalogo) }, { label: 'Precio promedio', value: formatMoney(promPrecio) }, { label: 'Marcas', value: marcas }] },
-        { id: 'maquinas', icon: 'fa-industry', title: 'Máquinas', goto: 'maquinas', rows: [{ label: 'Total', value: (maquinas || []).length }, { label: 'Clientes con equipo', value: Object.keys(maqPorCliente).length }, topClienteMaq ? { label: 'Top cliente', value: topClienteMaq[0] + ' (' + topClienteMaq[1] + ')' } : null].filter(Boolean) },
-        { id: 'cotizaciones', icon: 'fa-file-invoice-dollar', title: 'Cotizaciones', goto: 'cotizaciones', rows: [{ label: 'Total', value: (cotizaciones || []).length }, { label: 'Monto total', value: formatMoney(cotTotal) }, { label: 'Este mes', value: cotEsteMes }, { label: 'Refacciones / Mano obra', value: cotRefacciones + ' / ' + cotManoObra }] },
-        { id: 'incidentes', icon: 'fa-exclamation-triangle', title: 'Incidentes', goto: 'incidentes', rows: [{ label: 'Total', value: (incidentes || []).length }, { label: 'Abiertos', value: incAbiertos }, { label: 'En proceso', value: incEnProceso }, { label: 'Alta/Crítica', value: incAltaCritica }, { label: 'Cerrados', value: incCerrados }] },
-        { id: 'bitacoras', icon: 'fa-clock', title: 'Bitácora de horas', goto: 'bitacoras', rows: [{ label: 'Registros', value: (bitacoras || []).length }, { label: 'Horas totales', value: bitHoras.toFixed(1) }, { label: 'Técnicos', value: tecnicos }, { label: 'Este mes', value: bitEsteMes }] },
+        { id: 'clientes', icon: 'fa-users', title: 'Clientes', goto: 'clientes', rows: [{ label: 'Total', value: (clientes || []).length, v: 'neutral' }, { label: 'Ciudades', value: ciudades, v: 'neutral' }, { label: 'Con RFC', value: conRfc, v: 'positive' }] },
+        { id: 'refacciones', icon: 'fa-cogs', title: 'Refacciones', goto: 'refacciones', rows: [{ label: 'Total', value: (refacciones || []).length, v: 'neutral' }, { label: 'Valor catálogo', value: formatMoney(valorCatalogo), v: 'positive' }, { label: 'Precio promedio', value: formatMoney(promPrecio), v: 'neutral' }, { label: 'Marcas', value: marcas, v: 'neutral' }] },
+        { id: 'maquinas', icon: 'fa-industry', title: 'Máquinas', goto: 'maquinas', rows: [{ label: 'Total', value: (maquinas || []).length, v: 'neutral' }, { label: 'Clientes con equipo', value: Object.keys(maqPorCliente).length, v: 'neutral' }, topClienteMaq ? { label: 'Top cliente', value: topClienteMaq[0] + ' (' + topClienteMaq[1] + ')', v: 'neutral', long: true } : null].filter(Boolean) },
+        { id: 'cotizaciones', icon: 'fa-file-invoice-dollar', title: 'Cotizaciones', goto: 'cotizaciones', rows: [{ label: 'Total', value: (cotizaciones || []).length, v: 'neutral' }, { label: 'Monto total', value: formatMoney(cotTotal), v: 'positive' }, { label: 'Este mes', value: cotEsteMes, v: 'positive' }, { label: 'Refacciones / Mano obra', value: cotRefacciones + ' / ' + cotManoObra, v: 'neutral' }] },
+        { id: 'incidentes', icon: 'fa-exclamation-triangle', title: 'Incidentes', goto: 'incidentes', progress: incProgress, rows: [{ label: 'Total', value: incTotal, v: 'neutral' }, { label: 'Abiertos', value: incAbiertos, v: incAbiertos > 0 ? 'alert' : 'neutral' }, { label: 'En proceso', value: incEnProceso, v: 'neutral' }, { label: 'Alta/Crítica', value: incAltaCritica, v: incAltaCritica > 0 ? 'alert' : 'neutral' }, { label: 'Cerrados', value: incCerrados, v: 'positive' }] },
+        { id: 'bitacoras', icon: 'fa-clock', title: 'Bitácora de horas', goto: 'bitacoras', rows: [{ label: 'Registros', value: (bitacoras || []).length, v: 'neutral' }, { label: 'Horas totales', value: bitHoras.toFixed(1), v: 'positive' }, { label: 'Técnicos', value: tecnicos, v: 'neutral' }, { label: 'Este mes', value: bitEsteMes, v: 'positive' }] },
       ];
       grid.innerHTML = '';
-      cards.forEach((card, idx) => {
+      cards.forEach((card) => {
         const el = document.createElement('div');
         el.className = 'dashboard-card';
         el.setAttribute('data-dashboard', card.id);
+        const progressHtml = card.progress != null ? `<div class="dashboard-card-progress"><div class="dashboard-progress-bar" style="width:${card.progress}%"></div><span class="dashboard-progress-label">${card.progress}% cerrados</span></div>` : '';
         el.innerHTML = `
           <div class="dashboard-card-header">
             <span class="dashboard-card-icon"><i class="fas ${card.icon}"></i></span>
-            <h3 class="dashboard-card-title">${escapeHtml(card.title)}</h3>
+            <div class="dashboard-card-heading">
+              <h3 class="dashboard-card-title">${escapeHtml(card.title)}</h3>
+              <span class="dashboard-card-subtitle">Resumen del módulo</span>
+            </div>
           </div>
           <dl class="dashboard-card-metrics">
-            ${card.rows.map(r => `<div class="dashboard-metric"><dt>${escapeHtml(r.label)}</dt><dd>${escapeHtml(String(r.value))}</dd></div>`).join('')}
+            ${card.rows.map(r => `<div class="dashboard-metric"><dt>${escapeHtml(r.label)}</dt><dd class="dash-value dash-value-${r.v || 'neutral'}${r.long ? ' dash-value-long' : ''}">${escapeHtml(String(r.value))}</dd></div>`).join('')}
           </dl>
-          <button type="button" class="btn small primary dashboard-card-action" data-goto="${card.goto}">Ver ${escapeHtml(card.title)}</button>
+          ${progressHtml}
+          <button type="button" class="dashboard-card-action" data-goto="${card.goto}">Abrir módulo <i class="fas fa-chevron-right"></i></button>
         `;
         grid.appendChild(el);
       });
@@ -1317,11 +1504,17 @@
     return d;
   }
   qs('#export-clientes').addEventListener('click', () => exportToCsv(getFilteredClientes(), 'tabla-clientes', 'clientes'));
+  qs('#export-excel-clientes').addEventListener('click', () => exportToExcel(getFilteredClientes(), 'tabla-clientes', 'clientes'));
   qs('#export-refacciones').addEventListener('click', () => exportToCsv(getFilteredRefacciones(), 'tabla-refacciones', 'refacciones'));
+  qs('#export-excel-refacciones').addEventListener('click', () => exportToExcel(getFilteredRefacciones(), 'tabla-refacciones', 'refacciones'));
   qs('#export-maquinas').addEventListener('click', () => exportToCsv(applyFilters(maquinasCache, getFilterValues('#tabla-maquinas'), 'tabla-maquinas'), 'tabla-maquinas', 'maquinas'));
-  qs('#export-cotizaciones').addEventListener('click', () => exportToCsv(applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones'), 'tabla-cotizaciones', 'cotizaciones'));
-  qs('#export-incidentes').addEventListener('click', () => exportToCsv(applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes'), 'tabla-incidentes', 'incidentes'));
-  qs('#export-bitacoras').addEventListener('click', () => exportToCsv(applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras'), 'tabla-bitacoras', 'bitacoras'));
+  qs('#export-excel-maquinas').addEventListener('click', () => exportToExcel(applyFilters(maquinasCache, getFilterValues('#tabla-maquinas'), 'tabla-maquinas'), 'tabla-maquinas', 'maquinas'));
+  qs('#export-cotizaciones').addEventListener('click', () => exportToCsv(enrichCotizacionesForExport(applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones')), 'tabla-cotizaciones', 'cotizaciones'));
+  qs('#export-excel-cotizaciones').addEventListener('click', () => exportToExcel(enrichCotizacionesForExport(applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones')), 'tabla-cotizaciones', 'cotizaciones'));
+  qs('#export-incidentes').addEventListener('click', () => exportToCsv(enrichIncidentesForExport(applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes')), 'tabla-incidentes', 'incidentes'));
+  qs('#export-excel-incidentes').addEventListener('click', () => exportToExcel(enrichIncidentesForExport(applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes')), 'tabla-incidentes', 'incidentes'));
+  qs('#export-bitacoras').addEventListener('click', () => exportToCsv(enrichBitacorasForExport(applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras')), 'tabla-bitacoras', 'bitacoras'));
+  qs('#export-excel-bitacoras').addEventListener('click', () => exportToExcel(enrichBitacorasForExport(applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras')), 'tabla-bitacoras', 'bitacoras'));
 
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
