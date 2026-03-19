@@ -43,6 +43,15 @@
     .meta-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; margin-bottom: 8px; }
     .chip { border: 1px solid #ddd6fe; background: #faf5ff; border-radius: 9px; padding: 6px; font-size: 10px; }
     .chip strong { color: #5b21b6; }
+    .insight-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin-bottom: 8px; }
+    .insight {
+      border: 1px solid #ddd6fe;
+      border-radius: 9px;
+      background: #faf5ff;
+      padding: 6px 7px;
+    }
+    .insight .k { font-size: 9px; color: #6d28d9; text-transform: uppercase; letter-spacing: .04em; }
+    .insight .v { margin-top: 2px; font-size: 11px; font-weight: 800; color: #4c1d95; }
     .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .table-box { border: 1px solid #e9d5ff; border-radius: 10px; overflow: hidden; }
     table { width: 100%; border-collapse: collapse; font-size: 10px; }
@@ -141,6 +150,11 @@
               <div class="chip"><strong>Fecha:</strong> ${fmtDate(bit.fecha)}</div>
               <div class="chip"><strong>Incidente:</strong> ${esc(bit.incidente_folio) || '—'}</div>
               <div class="chip"><strong>Cotización:</strong> ${esc(bit.cotizacion_folio) || '—'}</div>
+            </div>
+            <div class="insight-grid">
+              <div class="insight"><div class="k">Horas</div><div class="v">${bit.tiempo_horas != null ? Number(bit.tiempo_horas).toFixed(2) : '0.00'} h</div></div>
+              <div class="insight"><div class="k">Técnico</div><div class="v">${esc(bit.tecnico || 'N/D')}</div></div>
+              <div class="insight"><div class="k">Registro</div><div class="v">Bitácora #${esc(bit.id || '—')}</div></div>
             </div>
             <div class="layout">
               <div class="table-box">

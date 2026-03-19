@@ -3316,8 +3316,19 @@
   const notifExportCsv = qs('#notifications-export-csv');
   const notifExportPdf = qs('#notifications-export-pdf');
   if (notifBtn && notifPanel) {
+    const notifOriginalParent = notifPanel.parentElement;
+    const notifOriginalNext = notifPanel.nextSibling;
+    function mountNotificationsPanel() {
+      if (notifPanel.parentElement !== document.body) document.body.appendChild(notifPanel);
+    }
+    function unmountNotificationsPanel() {
+      if (!notifOriginalParent || notifPanel.parentElement === notifOriginalParent) return;
+      if (notifOriginalNext && notifOriginalNext.parentNode === notifOriginalParent) notifOriginalParent.insertBefore(notifPanel, notifOriginalNext);
+      else notifOriginalParent.appendChild(notifPanel);
+    }
     function positionNotificationsPanel() {
       if (notifPanel.classList.contains('hidden')) return;
+      mountNotificationsPanel();
       const r = notifBtn.getBoundingClientRect();
       const vw = window.innerWidth;
       const vh = window.innerHeight;
@@ -3344,6 +3355,7 @@
       notifPanel.style.maxHeight = '';
       const list = qs('#notifications-list');
       if (list) list.style.maxHeight = '';
+      unmountNotificationsPanel();
     }
     notifBtn.addEventListener('click', function (e) {
       e.stopPropagation();
