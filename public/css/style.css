@@ -219,6 +219,95 @@ body.dark-theme .notifications-date {
   border-color: #334155;
 }
 
+/* Premium UX: Cotizaciones + Incidentes */
+#panel-cotizaciones .section-header,
+#panel-incidentes .section-header,
+#panel-bitacoras .section-header {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+#panel-cotizaciones .section-header h2 i,
+#panel-incidentes .section-header h2 i,
+#panel-bitacoras .section-header h2 i {
+  background: linear-gradient(135deg, #1d4ed8 0%, #0d9488 100%);
+  color: #fff;
+}
+#panel-cotizaciones .toolbar .btn,
+#panel-incidentes .toolbar .btn,
+#panel-bitacoras .toolbar .btn {
+  border-radius: 10px;
+  font-weight: 700;
+}
+#panel-cotizaciones .table-wrap,
+#panel-incidentes .table-wrap,
+#panel-bitacoras .table-wrap {
+  border-radius: 14px;
+  border: 1px solid #dbeafe;
+  box-shadow: 0 8px 26px rgba(15, 23, 42, 0.08);
+}
+#tabla-cotizaciones thead tr:first-child th,
+#tabla-incidentes thead tr:first-child th,
+#tabla-bitacoras thead tr:first-child th {
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+  color: #334155;
+}
+#tabla-cotizaciones tbody tr:hover,
+#tabla-incidentes tbody tr:hover,
+#tabla-bitacoras tbody tr:hover {
+  background: #eaf2ff !important;
+}
+#tabla-cotizaciones td.th-actions,
+#tabla-cotizaciones th.th-actions,
+#tabla-incidentes td.th-actions,
+#tabla-incidentes th.th-actions,
+#tabla-bitacoras td.th-actions,
+#tabla-bitacoras th.th-actions {
+  position: sticky;
+  right: 0;
+  z-index: 3;
+  background: inherit;
+  box-shadow: -6px 0 10px rgba(15, 23, 42, 0.06);
+}
+#tabla-cotizaciones td .btn.small,
+#tabla-incidentes td .btn.small,
+#tabla-bitacoras td .btn.small {
+  border-radius: 999px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+}
+body.dark-theme #panel-cotizaciones .section-header,
+body.dark-theme #panel-incidentes .section-header,
+body.dark-theme #panel-bitacoras .section-header {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border-color: #334155;
+}
+body.dark-theme #panel-cotizaciones .table-wrap,
+body.dark-theme #panel-incidentes .table-wrap,
+body.dark-theme #panel-bitacoras .table-wrap {
+  border-color: #334155;
+  box-shadow: 0 8px 26px rgba(2, 6, 23, 0.45);
+}
+body.dark-theme #tabla-cotizaciones thead tr:first-child th,
+body.dark-theme #tabla-incidentes thead tr:first-child th,
+body.dark-theme #tabla-bitacoras thead tr:first-child th {
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+}
+@media (max-width: 980px) {
+  #tabla-cotizaciones td.th-actions,
+  #tabla-cotizaciones th.th-actions,
+  #tabla-incidentes td.th-actions,
+  #tabla-incidentes th.th-actions,
+  #tabla-bitacoras td.th-actions,
+  #tabla-bitacoras th.th-actions {
+    position: static;
+    box-shadow: none;
+  }
+}
+
 @keyframes headerGradientShift {
   0% { background-position: 0% 40%; }
   100% { background-position: 100% 60%; }
@@ -231,7 +320,7 @@ body.dark-theme .notifications-date {
   box-shadow: 0 4px 24px rgba(0,0,0,0.28), 0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.08);
   letter-spacing: 0.01em;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   animation: headerGradientShift 22s ease-in-out infinite alternate;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1586,6 +1675,53 @@ body.dark-theme .data-table thead tr:first-child th { background: #334155; box-s
 .close:hover { color: #0f172a; background: rgba(0,0,0,0.06); }
 .close:active { transform: scale(0.92); }
 .modal-body { padding: 1.25rem; }
+.pdf-preview-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+.pdf-preview-toolbar label { font-size: 0.85rem; color: #475569; font-weight: 700; }
+.pdf-preview-toolbar select {
+  min-width: 130px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  padding: 0 0.5rem;
+}
+.pdf-preview-frame-wrap {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  overflow: auto;
+  background: #fff;
+}
+.pdf-preview-frame {
+  width: 100%;
+  height: min(74vh, 860px);
+  border: 0;
+  background: #fff;
+  display: block;
+}
+.modal-box.pdf-preview-modal {
+  position: fixed;
+  max-width: none;
+  width: min(92vw, 1100px);
+  height: min(86vh, 900px);
+  max-height: none;
+  inset: auto;
+  left: 4vw;
+  top: 7vh;
+  overflow: hidden;
+  resize: both;
+}
+.modal-box.pdf-preview-modal.dragging {
+  user-select: none;
+}
+.modal-box.pdf-preview-modal .modal-body {
+  height: calc(100% - 62px);
+  overflow: hidden;
+}
 .form-group { margin-bottom: 1rem; }
 .form-group label { display: block; margin-bottom: 0.35rem; font-weight: 500; font-size: 0.9rem; color: #475569; }
 .form-group input, .form-group select, .form-group textarea {
@@ -2218,6 +2354,13 @@ body.dark-theme .card, body.dark-theme .empty-card { background: #1e293b; border
 body.dark-theme .card h2, body.dark-theme .empty-card h3 { color: #f1f5f9; }
 body.dark-theme .modal-box { background: #1e293b; border-color: #334155; color: #e2e8f0; }
 body.dark-theme .modal-header { border-bottom-color: #334155; }
+body.dark-theme .pdf-preview-toolbar label { color: #cbd5e1; }
+body.dark-theme .pdf-preview-toolbar select {
+  background: #0f172a;
+  color: #e2e8f0;
+  border-color: #334155;
+}
+body.dark-theme .pdf-preview-frame-wrap { border-color: #334155; background: #0f172a; }
 body.dark-theme .app-footer p { color: #94a3b8; }
 body.dark-theme .app-footer .footer-version { color: #cbd5e1; }
 body.dark-theme .app-footer .footer-tip { color: #64748b; }

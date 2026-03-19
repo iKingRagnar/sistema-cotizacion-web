@@ -6,158 +6,222 @@
   <title>Cotización</title>
   <style>
     * { box-sizing: border-box; }
+    :root { --p: #1e3a5f; --a: #0d9488; --ink: #0f172a; --muted: #475569; }
+    @page { size: A4 portrait; margin: 8mm; }
     body {
-      font-family: 'Segoe UI', system-ui, -apple-system, 'Georgia', serif;
       margin: 0;
-      padding: 0;
-      color: #0f172a;
-      font-size: 11pt;
-      line-height: 1.45;
-      background: linear-gradient(165deg, #f0fdfa 0%, #ecfeff 40%, #f8fafc 100%);
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background: linear-gradient(160deg, #eef2ff 0%, #f0fdfa 45%, #f8fafc 100%);
+      font-size: 10pt;
+      line-height: 1.32;
     }
-    .no-print { position: fixed; top: 0; left: 0; right: 0; z-index: 9999; padding: 0.75rem 1.5rem; background: linear-gradient(90deg, #0f172a 0%, #134e4a 50%, #0f766e 100%); color: #e2e8f0; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.25); }
-    .no-print button { padding: 0.5rem 1rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
-    .no-print #btn-print { background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: #fff; box-shadow: 0 2px 12px rgba(13,148,136,0.45); }
-    .no-print #btn-close { background: #475569; color: #fff; }
-    .doc { max-width: 210mm; margin: 0 auto; padding: 2rem 2.5rem; padding-top: 4rem; }
-    .no-print + .doc { padding-top: 2rem; }
+    .no-print {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      padding: 10px 14px;
+      background: linear-gradient(90deg, #0f172a 0%, var(--p) 55%, var(--a) 100%);
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.35);
+    }
+    .no-print button {
+      border: none;
+      border-radius: 8px;
+      padding: 7px 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    #btn-print { background: #14b8a6; color: #fff; }
+    #btn-close { background: #475569; color: #fff; }
+    .doc {
+      width: 100%;
+      max-width: 196mm;
+      margin: 0 auto;
+      padding: 7mm 8mm;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+    }
+    .head {
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: #fff;
+      background: linear-gradient(125deg, var(--p), #2563eb 58%, var(--a));
+    }
+    .brand { display: flex; align-items: center; gap: 8px; }
+    .brand img { width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,0.2); padding: 2px; }
+    .brand h1 { margin: 0; font-size: 13px; }
+    .brand p { margin: 2px 0 0 0; font-size: 10px; opacity: .9; }
+    .meta-mini { font-size: 10px; text-align: right; }
+    .title {
+      margin: 8px 0 9px;
+      text-align: center;
+      font-size: 19px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      color: var(--p);
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .chip { border: 1px solid #cbd5e1; border-radius: 10px; padding: 7px; background: #f8fafc; font-size: 10px; }
+    .chip strong { color: #0f766e; }
+    .cols { display: grid; grid-template-columns: 1.4fr 1fr; gap: 8px; margin-bottom: 8px; }
+    .block { border: 1px solid #cbd5e1; border-radius: 10px; padding: 8px; background: #fff; }
+    .block h3 { margin: 0 0 5px; font-size: 10px; color: #0f766e; letter-spacing: .08em; text-transform: uppercase; }
+    .block p { margin: 2px 0; font-size: 10px; color: #1e293b; }
+    .totals { border: 1px solid #99f6e4; background: #f0fdfa; }
+    .totals p { display: flex; justify-content: space-between; font-weight: 700; }
+    .totals p:last-child { color: #115e59; font-size: 11px; border-top: 1px dashed #99f6e4; padding-top: 4px; }
+    table { width: 100%; border-collapse: collapse; margin: 7px 0; font-size: 10px; }
+    th, td { border: 1px solid #dbeafe; padding: 6px; }
+    th { background: #eff6ff; color: #1e3a8a; text-transform: uppercase; letter-spacing: .04em; font-size: 9px; }
+    td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .notes {
+      margin-top: 6px;
+      border: 1px solid #fde68a;
+      background: #fffbeb;
+      border-radius: 8px;
+      padding: 7px 8px;
+      font-size: 9.5px;
+      color: #475569;
+    }
+    .sign { margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .line { border-bottom: 1.5px solid #94a3b8; height: 14px; margin-bottom: 2px; }
+    .lbl { font-size: 9px; color: #64748b; text-transform: uppercase; }
+    .doc.compact { font-size: 9.3pt; line-height: 1.24; }
+    .doc.compact .title { margin: 6px 0; font-size: 17px; }
+    .doc.compact th, .doc.compact td { padding: 5px; }
+    .doc.compact .meta-grid, .doc.compact .cols, .doc.compact .sign { gap: 6px; margin-bottom: 6px; }
+    .doc.ultra { font-size: 8.8pt; line-height: 1.18; }
+    .doc.ultra .notes { font-size: 9px; }
     @media print {
       * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      .no-print { display: none !important; }
-      .doc { padding-top: 0.5rem; background: #fff; }
       body { background: #fff; }
+      .no-print { display: none !important; }
+      .doc { margin: 0; border-radius: 0; border: none; box-shadow: none; max-width: none; padding: 0; }
     }
-    .letterhead {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      padding: 1rem 1.15rem 1.25rem;
-      margin: -0.25rem -0.5rem 1.5rem;
-      border-radius: 12px;
-      background: linear-gradient(125deg, #0f766e 0%, #0d9488 35%, #0891b2 70%, #0e7490 100%);
-      color: #fff;
-      box-shadow: 0 8px 28px rgba(13, 148, 136, 0.35);
-      border: 1px solid rgba(255,255,255,0.2);
-    }
-    .letterhead-logo { height: 52px; width: auto; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2)); }
-    .letterhead-company { text-align: right; }
-    .letterhead-company .name { font-size: 1.2rem; font-weight: 800; color: #fff; margin: 0; letter-spacing: 0.02em; text-shadow: 0 1px 2px rgba(0,0,0,0.15); }
-    .letterhead-company .tagline { font-size: 0.78rem; color: rgba(255,255,255,0.88); margin: 0.35rem 0 0; }
-    .doc-title {
-      text-align: center;
-      font-size: 1.55rem;
-      font-weight: 800;
-      margin: 0 0 1.35rem;
-      letter-spacing: 0.12em;
-      background: linear-gradient(90deg, #0f766e, #0d9488, #0891b2);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      -webkit-text-fill-color: transparent;
-    }
-    @supports not (background-clip: text) {
-      .doc-title { color: #0d9488; -webkit-text-fill-color: #0d9488; }
-    }
-    .doc-meta { display: flex; flex-wrap: wrap; gap: 1.25rem 2rem; margin-bottom: 1.35rem; font-size: 0.92rem; }
-    .doc-meta span { display: block; padding: 0.45rem 0.75rem; background: linear-gradient(180deg, #f0fdfa 0%, #ecfdf5 100%); border-radius: 8px; border: 1px solid #99f6e4; }
-    .doc-meta strong { color: #115e59; font-weight: 700; margin-right: 0.35rem; }
-    .doc-block { margin-bottom: 1.25rem; }
-    .doc-block-title { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.14em; color: #0f766e; margin-bottom: 0.45rem; font-weight: 700; }
-    .doc-block-content { background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%); padding: 1rem 1.1rem; border: 1px solid #cbd5e1; border-radius: 10px; border-left: 4px solid #0d9488; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06); }
-    .doc-block-content p { margin: 0.2rem 0; }
-    .doc-table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 1.35rem 0; font-size: 0.93rem; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08); }
-    .doc-table th, .doc-table td { padding: 0.55rem 0.7rem; text-align: left; border: 1px solid #bae6fd; }
-    .doc-table thead th {
-      background: linear-gradient(180deg, #0d9488 0%, #0f766e 100%);
-      color: #fff;
-      font-weight: 700;
-      text-shadow: 0 1px 1px rgba(0,0,0,0.12);
-    }
-    .doc-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
-    .doc-table tbody tr:nth-child(even) { background: #f0fdfa; }
-    .doc-table tbody tr:nth-child(odd) { background: #fff; }
-    .doc-table tfoot td { font-weight: 600; background: #e0f2fe; border-color: #7dd3fc; color: #0c4a6e; }
-    .doc-table tfoot tr:last-child td {
-      background: linear-gradient(90deg, #0f766e 0%, #0d9488 50%, #14b8a6 100%);
-      color: #fff;
-      font-size: 1.05rem;
-      font-weight: 800;
-      border-color: #0f766e;
-    }
-    .doc-condiciones { font-size: 0.85rem; color: #334155; margin: 1.35rem 0; padding: 1rem 1.15rem; background: #fffbeb; border-radius: 10px; border: 1px solid #fcd34d; border-left: 4px solid #f59e0b; }
-    .doc-condiciones ol { margin: 0.4rem 0 0; padding-left: 1.25rem; }
-    .doc-condiciones li { margin: 0.25rem 0; }
-    .doc-firma { margin-top: 2rem; display: flex; justify-content: space-between; gap: 3rem; flex-wrap: wrap; }
-    .doc-firma-box { flex: 1; min-width: 180px; }
-    .doc-firma-line { border-bottom: 2px solid #0d9488; height: 2.2em; margin-bottom: 0.25rem; }
-    .doc-firma-label { font-size: 0.72rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
-    .loading, .error { padding: 2rem; text-align: center; }
-    .error { background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%); color: #b91c1c; border: 1px solid #fecaca; border-radius: 10px; }
+    .error { margin: 1rem auto; max-width: 700px; padding: 1rem; border-radius: 10px; border: 1px solid #fecaca; background: #fef2f2; color: #991b1b; }
   </style>
 </head>
 <body>
   <div class="no-print">
     <span id="msg">Cargando cotización…</span>
-    <button type="button" id="btn-print"><strong>Imprimir / Guardar como PDF</strong></button>
+    <button type="button" id="btn-audience">Modo: Cliente</button>
+    <button type="button" id="btn-print">Imprimir / Guardar PDF</button>
     <button type="button" id="btn-close">Cerrar</button>
   </div>
   <div id="doc-body"></div>
   <script>
-    (function() {
+    (function () {
+      const AUTH_TOKEN_KEY = 'cotizacion-auth-token';
       const params = new URLSearchParams(window.location.search);
       const id = params.get('id');
+      const shouldAutoPrint = params.get('autoprint') !== '0';
+      let audience = (params.get('audience') || 'cliente').toLowerCase();
+      if (audience !== 'interno') audience = 'cliente';
       const API = window.location.pathname.replace(/\/[^/]*$/, '') + '/api';
       if (!id) {
-        document.getElementById('doc-body').innerHTML = '<div class="doc"><div class="error">Falta el ID de la cotización en la URL (ej. ?id=1).</div></div>';
+        document.getElementById('doc-body').innerHTML = '<div class="error">Falta el ID de la cotización (ej. ?id=1).</div>';
         document.getElementById('msg').textContent = '';
         return;
       }
       function esc(s) { if (s == null) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-      function fmtNum(n) { return Number(n).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-      function fmtDate(s) { if (!s) return '—'; return String(s).slice(0, 10); }
-      function validHasta(fecha) { const d = new Date(fecha); d.setDate(d.getDate() + 30); return d.toISOString().slice(0, 10); }
-      function render(cot, cliente) {
-        const tipoLabel = (cot.tipo === 'mano_obra') ? 'Mano de obra' : 'Refacciones';
+      function fmtNum(n) { return Number(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+      function fmtDate(s) { return s ? String(s).slice(0, 10) : '—'; }
+      function validHasta(fecha) { const d = new Date(fecha || Date.now()); d.setDate(d.getDate() + 30); return d.toISOString().slice(0, 10); }
+      function authHeaders() {
+        try {
+          const t = localStorage.getItem(AUTH_TOKEN_KEY);
+          return t ? { Authorization: 'Bearer ' + t } : {};
+        } catch (_) { return {}; }
+      }
+      async function getJson(url) {
+        const r = await fetch(url, { headers: authHeaders() });
+        if (!r.ok) throw new Error('No se pudo cargar el documento.');
+        return r.json();
+      }
+      function fitSinglePage() {
+        const doc = document.querySelector('.doc');
+        if (!doc) return;
+        const pageMax = Math.round(277 * 3.7795);
+        if (doc.scrollHeight > pageMax) doc.classList.add('compact');
+        if (doc.scrollHeight > pageMax) doc.classList.add('ultra');
+      }
+      function updateAudienceLabel() {
+        const b = document.getElementById('btn-audience');
+        if (b) b.textContent = audience === 'interno' ? 'Modo: Interno' : 'Modo: Cliente';
+      }
+      function render(cot, cliente, cfg) {
+        const tipoLabel = cot.tipo === 'mano_obra' ? 'Mano de obra' : 'Refacciones';
         const subtotal = Number(cot.subtotal) || 0;
         const iva = Number(cot.iva) || 0;
         const total = Number(cot.total) || subtotal + iva;
         const basePath = window.location.pathname.replace(/\/[^/]*$/, '') || '';
-        const logoUrl = basePath ? (window.location.origin + basePath + '/favicon.svg') : (window.location.origin + '/favicon.svg');
+        const defaultLogo = basePath ? (window.location.origin + basePath + '/favicon.svg') : (window.location.origin + '/favicon.svg');
+        const logoUrl = cfg.logoUrl || defaultLogo;
+        const shortName = cfg.shortName || cfg.appName || 'Gestor Administrativo';
+        const tagline = cfg.tagline || 'Cotizaciones y operaciones empresariales';
+        const internalBox = audience === 'interno'
+          ? `<div class="notes"><strong>Uso interno:</strong> ID #${esc(cot.id || '—')} · Cliente ID: ${esc(cot.cliente_id || '—')} · Tipo técnico: ${esc(cot.tipo || '—')}</div>`
+          : '';
         const html = `
-          <div class="doc">
-            <header class="letterhead">
-              <img src="${esc(logoUrl)}" alt="" class="letterhead-logo" aria-hidden="true">
-              <div class="letterhead-company">
-                <h1 class="name">Sistema de Cotización y Gestión</h1>
-                <p class="tagline">Cotizaciones profesionales · Servicio técnico y refacciones</p>
+          <div class="doc" id="doc">
+            <div class="head">
+              <div class="brand">
+                <img src="${esc(logoUrl)}" alt="">
+                <div>
+                  <h1>${esc(shortName)}</h1>
+                  <p>${esc(tagline)}</p>
+                </div>
               </div>
-            </header>
-            <h2 class="doc-title">COTIZACIÓN</h2>
-            <div class="doc-meta">
-              <span><strong>Folio:</strong> ${esc(cot.folio)}</span>
-              <span><strong>Fecha de emisión:</strong> ${fmtDate(cot.fecha)}</span>
-              <span><strong>Válida hasta:</strong> ${fmtDate(validHasta(cot.fecha))}</span>
+              <div class="meta-mini">
+                <div><strong>Documento:</strong> Cotización</div>
+                <div><strong>Impresión:</strong> ${fmtDate(new Date().toISOString())}</div>
+              </div>
             </div>
-            <div class="doc-block">
-              <div class="doc-block-title">Destinatario</div>
-              <div class="doc-block-content">
-                <p><strong>${esc(cliente ? cliente.nombre : cot.cliente_nombre)}</strong></p>
+            <div class="title">COTIZACIÓN</div>
+            <div class="meta-grid">
+              <div class="chip"><strong>Folio:</strong> ${esc(cot.folio || '—')}</div>
+              <div class="chip"><strong>Fecha emisión:</strong> ${fmtDate(cot.fecha)}</div>
+              <div class="chip"><strong>Vigencia:</strong> ${fmtDate(validHasta(cot.fecha))}</div>
+            </div>
+            <div class="cols">
+              <div class="block">
+                <h3>Cliente</h3>
+                <p><strong>${esc((cliente && cliente.nombre) || cot.cliente_nombre || '—')}</strong></p>
                 ${cliente && cliente.rfc ? '<p>RFC: ' + esc(cliente.rfc) + '</p>' : ''}
-                ${cliente && (cliente.direccion || cliente.ciudad) ? '<p>' + esc([cliente.direccion, cliente.ciudad].filter(Boolean).join(', ')) + '</p>' : ''}
                 ${cliente && cliente.contacto ? '<p>Contacto: ' + esc(cliente.contacto) + '</p>' : ''}
                 ${cliente && cliente.telefono ? '<p>Teléfono: ' + esc(cliente.telefono) + '</p>' : ''}
-                ${cliente && cliente.email ? '<p>Correo: ' + esc(cliente.email) + '</p>' : ''}
+                ${cliente && cliente.ciudad ? '<p>Ciudad: ' + esc(cliente.ciudad) + '</p>' : ''}
+              </div>
+              <div class="block totals">
+                <h3>Resumen</h3>
+                <p><span>Subtotal</span><span>$ ${fmtNum(subtotal)}</span></p>
+                <p><span>IVA 16%</span><span>$ ${fmtNum(iva)}</span></p>
+                <p><span>Total</span><span>$ ${fmtNum(total)}</span></p>
               </div>
             </div>
-            <table class="doc-table">
+            <table>
               <thead>
                 <tr>
                   <th>Concepto</th>
-                  <th class="num">Cant.</th>
-                  <th class="num">P. unitario</th>
-                  <th class="num">Subtotal</th>
-                  <th class="num">IVA (16%)</th>
-                  <th class="num">Total</th>
+                  <th>Cant.</th>
+                  <th>P.Unitario</th>
+                  <th>Subtotal</th>
+                  <th>IVA</th>
+                  <th>Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -170,53 +234,44 @@
                   <td class="num">$ ${fmtNum(total)}</td>
                 </tr>
               </tbody>
-              <tfoot>
-                <tr><td colspan="4"></td><td class="num">Subtotal</td><td class="num">$ ${fmtNum(subtotal)}</td></tr>
-                <tr><td colspan="4"></td><td class="num">IVA (16%)</td><td class="num">$ ${fmtNum(iva)}</td></tr>
-                <tr><td colspan="4"></td><td class="num">Total</td><td class="num">$ ${fmtNum(total)}</td></tr>
-              </tfoot>
             </table>
-            <div class="doc-condiciones">
-              <strong>Condiciones generales</strong>
-              <ol>
-                <li>Precios en moneda nacional (MXN).</li>
-                <li>Forma de pago según acuerdo entre las partes.</li>
-                <li>Esta cotización es válida por 30 días naturales a partir de la fecha de emisión.</li>
-                <li>Sujeto a disponibilidad de refacciones y/o capacidad de mano de obra.</li>
-                <li>La aceptación de esta cotización podrá formalizarse por escrito o por inicio de trabajos.</li>
-              </ol>
+            <div class="notes">
+              <strong>Condiciones:</strong> Precios en MXN, vigencia de 30 días naturales, sujeto a disponibilidad y programación operativa.
             </div>
-            <div class="doc-firma">
-              <div class="doc-firma-box">
-                <div class="doc-firma-line"></div>
-                <div class="doc-firma-label">Firma del cliente / Aceptación</div>
-              </div>
-              <div class="doc-firma-box">
-                <div class="doc-firma-line"></div>
-                <div class="doc-firma-label">Fecha de aceptación (día / mes / año)</div>
-              </div>
+            ${internalBox}
+            <div class="sign">
+              <div><div class="line"></div><div class="lbl">Firma de aceptación</div></div>
+              <div><div class="line"></div><div class="lbl">Nombre y fecha</div></div>
             </div>
           </div>
         `;
         document.getElementById('doc-body').innerHTML = html;
-        document.getElementById('msg').textContent = 'Listo. Use «Imprimir» y elija «Guardar como PDF» para descargar.';
+        fitSinglePage();
+        updateAudienceLabel();
+        document.getElementById('msg').textContent = 'Documento listo en formato optimizado para una sola página A4.';
       }
       function runPrint() { window.print(); }
       document.getElementById('btn-print').addEventListener('click', runPrint);
-      document.getElementById('btn-close').addEventListener('click', function() { window.close(); });
+      document.getElementById('btn-close').addEventListener('click', function () { window.close(); });
+      document.getElementById('btn-audience').addEventListener('click', function () {
+        audience = audience === 'cliente' ? 'interno' : 'cliente';
+        localStorage.setItem('pdf-audience', audience);
+        load();
+      });
       async function load() {
         try {
-          const resCot = await fetch(API + '/cotizaciones/' + id);
-          if (!resCot.ok) throw new Error('Cotización no encontrada');
-          const cot = await resCot.json();
+          const saved = localStorage.getItem('pdf-audience');
+          if (saved === 'interno' || saved === 'cliente') audience = saved;
+          const [cot, cfg] = await Promise.all([
+            getJson(API + '/cotizaciones/' + id),
+            getJson(API + '/config').catch(() => ({})),
+          ]);
           let cliente = null;
-          if (cot.cliente_id) {
-            try { const resCl = await fetch(API + '/clientes/' + cot.cliente_id); if (resCl.ok) cliente = await resCl.json(); } catch (_) {}
-          }
-          render(cot, cliente);
-          setTimeout(runPrint, 350);
+          if (cot.cliente_id) cliente = await getJson(API + '/clientes/' + cot.cliente_id).catch(() => null);
+          render(cot, cliente, cfg || {});
+          if (shouldAutoPrint) setTimeout(runPrint, 350);
         } catch (e) {
-          document.getElementById('doc-body').innerHTML = '<div class="doc"><div class="error">' + esc(e.message || 'No se pudo cargar la cotización.') + '</div></div>';
+          document.getElementById('doc-body').innerHTML = '<div class="error">' + esc(e.message || 'No se pudo cargar la cotización.') + '</div>';
           document.getElementById('msg').textContent = 'Error al cargar.';
         }
       }

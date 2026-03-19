@@ -6,155 +6,175 @@
   <title>Registro de bitácora</title>
   <style>
     * { box-sizing: border-box; }
+    @page { size: A4 portrait; margin: 8mm; }
     body {
-      font-family: 'Segoe UI', system-ui, -apple-system, 'Georgia', serif;
+      font-family: "Segoe UI", Arial, sans-serif;
       margin: 0;
-      padding: 0;
       color: #0f172a;
-      font-size: 11pt;
-      line-height: 1.45;
       background: linear-gradient(165deg, #faf5ff 0%, #f3e8ff 45%, #fafafa 100%);
+      font-size: 10pt;
+      line-height: 1.3;
     }
-    .no-print { position: fixed; top: 0; left: 0; right: 0; z-index: 9999; padding: 0.75rem 1.5rem; background: linear-gradient(90deg, #4c1d95 0%, #6d28d9 45%, #7c3aed 100%); color: #f5f3ff; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 20px rgba(124, 58, 237, 0.35); }
-    .no-print button { padding: 0.5rem 1rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
-    .no-print #btn-print { background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%); color: #fff; box-shadow: 0 2px 12px rgba(124, 58, 237, 0.45); }
+    .no-print {
+      position: sticky; top: 0; z-index: 9999; padding: 0.7rem 1rem;
+      background: linear-gradient(90deg, #4c1d95 0%, #6d28d9 45%, #7c3aed 100%);
+      color: #f5f3ff; display: flex; align-items: center; gap: 0.6rem; box-shadow: 0 4px 20px rgba(124,58,237,.35);
+    }
+    .no-print button { padding: 0.45rem 0.8rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 0.85rem; }
+    .no-print #btn-print { background: #a78bfa; color: #fff; }
     .no-print #btn-close { background: #475569; color: #fff; }
-    .doc { max-width: 210mm; margin: 0 auto; padding: 2rem 2.5rem; padding-top: 4rem; }
-    .no-print + .doc { padding-top: 2rem; }
+    .no-print #btn-audience { background: #ede9fe; color: #4c1d95; }
+    .doc { max-width: 196mm; margin: 0 auto; padding: 7mm 8mm; background: #fff; border: 1px solid #ddd6fe; border-radius: 14px; box-shadow: 0 10px 28px rgba(91,33,182,.12); }
+    .head { display: flex; justify-content: space-between; gap: 10px; border-radius: 12px; padding: 10px 12px; color: #fff; background: linear-gradient(125deg, #5b21b6, #7c3aed 65%, #a78bfa); }
+    .brand { display: flex; align-items: center; gap: 8px; }
+    .brand img { width: 34px; height: 34px; border-radius: 8px; background: rgba(255,255,255,.2); padding: 2px; }
+    .brand h1 { margin: 0; font-size: 13px; }
+    .brand p { margin: 2px 0 0 0; font-size: 10px; opacity: .92; }
+    .meta-mini { text-align: right; font-size: 10px; }
+    .title { margin: 8px 0; text-align: center; font-size: 18px; letter-spacing: .08em; color: #6d28d9; font-weight: 900; }
+    .meta-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; margin-bottom: 8px; }
+    .chip { border: 1px solid #ddd6fe; background: #faf5ff; border-radius: 9px; padding: 6px; font-size: 10px; }
+    .chip strong { color: #5b21b6; }
+    .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .table-box { border: 1px solid #e9d5ff; border-radius: 10px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; font-size: 10px; }
+    th, td { border: 1px solid #e9d5ff; padding: 6px; text-align: left; }
+    th { background: #f5f3ff; color: #5b21b6; width: 34%; }
+    .desc { border: 1px solid #d8b4fe; border-left: 4px solid #7c3aed; background: #faf5ff; border-radius: 10px; padding: 8px; }
+    .desc h3 { margin: 0 0 5px; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #6d28d9; }
+    .desc p { margin: 0; font-size: 10px; color: #334155; white-space: pre-wrap; }
+    .sign { margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .line { border-bottom: 1.5px solid #a78bfa; height: 14px; margin-bottom: 2px; }
+    .lbl { font-size: 9px; color: #64748b; text-transform: uppercase; }
+    .internal-banner { margin-top: 7px; border: 1px solid #cbd5e1; background: #f8fafc; border-left: 4px solid #64748b; border-radius: 8px; padding: 6px; font-size: 9.5px; color: #475569; }
+    .doc.compact { font-size: 9.2pt; line-height: 1.2; }
+    .doc.compact th, .doc.compact td, .doc.compact .chip { padding: 5px; }
     @media print {
       * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
       .no-print { display: none !important; }
-      .doc { padding-top: 0.5rem; background: #fff; }
       body { background: #fff; }
+      .doc { margin: 0; max-width: none; border: none; border-radius: 0; box-shadow: none; padding: 0; }
     }
-    .letterhead {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      padding: 1rem 1.15rem 1.15rem;
-      margin: -0.25rem -0.5rem 1.35rem;
-      border-radius: 12px;
-      background: linear-gradient(125deg, #5b21b6 0%, #6d28d9 38%, #7c3aed 72%, #8b5cf6 100%);
-      color: #fff;
-      box-shadow: 0 8px 28px rgba(91, 33, 182, 0.38);
-      border: 1px solid rgba(255,255,255,0.2);
-    }
-    .letterhead-logo { height: 48px; width: auto; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2)); }
-    .letterhead-company .name { font-size: 1.12rem; font-weight: 800; color: #fff; margin: 0; text-shadow: 0 1px 2px rgba(0,0,0,0.15); }
-    .letterhead-company .tagline { font-size: 0.76rem; color: rgba(255,255,255,0.9); margin: 0.3rem 0 0; }
-    .doc-title {
-      text-align: center;
-      font-size: 1.42rem;
-      font-weight: 800;
-      margin: 0 0 1.15rem;
-      letter-spacing: 0.08em;
-      background: linear-gradient(90deg, #6d28d9, #7c3aed, #a78bfa);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      -webkit-text-fill-color: transparent;
-    }
-    @supports not (background-clip: text) {
-      .doc-title { color: #7c3aed; -webkit-text-fill-color: #7c3aed; }
-    }
-    .doc-meta { display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; margin-bottom: 1.15rem; font-size: 0.88rem; }
-    .doc-meta span { display: block; padding: 0.4rem 0.7rem; background: linear-gradient(180deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; border: 1px solid #d8b4fe; }
-    .doc-meta strong { color: #5b21b6; margin-right: 0.3rem; font-weight: 700; }
-    .doc-table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 0.85rem 0; font-size: 0.9rem; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 14px rgba(91, 33, 182, 0.12); }
-    .doc-table th, .doc-table td { padding: 0.5rem 0.65rem; text-align: left; border: 1px solid #e9d5ff; }
-    .doc-table th {
-      background: linear-gradient(180deg, #7c3aed 0%, #6d28d9 100%);
-      color: #fff;
-      font-weight: 700;
-      width: 28%;
-      text-shadow: 0 1px 1px rgba(0,0,0,0.12);
-    }
-    .doc-table td { background: #fff; }
-    .doc-table tr:nth-child(even) td { background: #faf5ff; }
-    .doc-section { margin-top: 1.05rem; }
-    .doc-section-title { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.14em; color: #6d28d9; margin-bottom: 0.4rem; font-weight: 700; }
-    .doc-section-content {
-      background: linear-gradient(180deg, #f5f3ff 0%, #ede9fe 100%);
-      padding: 0.95rem 1.05rem;
-      border: 1px solid #c4b5fd;
-      border-radius: 10px;
-      border-left: 4px solid #7c3aed;
-      white-space: pre-wrap;
-      box-shadow: 0 2px 10px rgba(91, 33, 182, 0.08);
-    }
-    .doc-firma { margin-top: 1.5rem; }
-    .doc-firma-line { border-bottom: 2px solid #7c3aed; height: 2em; width: 220px; margin-bottom: 0.25rem; }
-    .doc-firma-label { font-size: 0.72rem; color: #64748b; font-weight: 600; }
-    .loading, .error { padding: 2rem; text-align: center; }
-    .error { background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%); color: #b91c1c; border: 1px solid #fecaca; border-radius: 10px; }
+    .error { margin: 1rem auto; max-width: 700px; padding: 1rem; border-radius: 10px; border: 1px solid #fecaca; background: #fef2f2; color: #b91c1c; }
   </style>
 </head>
 <body>
   <div class="no-print">
     <span id="msg">Cargando registro…</span>
-    <button type="button" id="btn-print"><strong>Imprimir / Guardar como PDF</strong></button>
+    <button type="button" id="btn-audience">Modo: Cliente</button>
+    <button type="button" id="btn-print"><strong>Imprimir / Guardar PDF</strong></button>
     <button type="button" id="btn-close">Cerrar</button>
   </div>
   <div id="doc-body"></div>
   <script>
     (function() {
+      const AUTH_TOKEN_KEY = 'cotizacion-auth-token';
       const params = new URLSearchParams(window.location.search);
       const id = params.get('id');
+      const shouldAutoPrint = params.get('autoprint') !== '0';
+      let audience = (params.get('audience') || 'cliente').toLowerCase();
+      if (audience !== 'interno') audience = 'cliente';
       const API = window.location.pathname.replace(/\/[^/]*$/, '') + '/api';
       if (!id) {
-        document.getElementById('doc-body').innerHTML = '<div class="doc"><div class="error">Falta el ID del registro (ej. ?id=1).</div></div>';
+        document.getElementById('doc-body').innerHTML = '<div class="error">Falta el ID del registro (ej. ?id=1).</div>';
         document.getElementById('msg').textContent = '';
         return;
       }
       function esc(s) { if (s == null) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
       function fmtDate(s) { if (!s) return '—'; return String(s).slice(0, 10); }
-      function render(bit) {
+      function authHeaders() {
+        try { const t = localStorage.getItem(AUTH_TOKEN_KEY); return t ? { Authorization: 'Bearer ' + t } : {}; } catch (_) { return {}; }
+      }
+      async function getJson(url) {
+        const r = await fetch(url, { headers: authHeaders() });
+        if (!r.ok) throw new Error('Registro no encontrado');
+        return r.json();
+      }
+      function fitSinglePage() {
+        const doc = document.querySelector('.doc');
+        if (!doc) return;
+        const pageMax = Math.round(277 * 3.7795);
+        if (doc.scrollHeight > pageMax) doc.classList.add('compact');
+      }
+      function updateAudienceLabel() {
+        const b = document.getElementById('btn-audience');
+        if (b) b.textContent = audience === 'interno' ? 'Modo: Interno' : 'Modo: Cliente';
+      }
+      function render(bit, cfg) {
         const basePath = window.location.pathname.replace(/\/[^/]*$/, '') || '';
-        const logoUrl = basePath ? (window.location.origin + basePath + '/favicon.svg') : (window.location.origin + '/favicon.svg');
+        const fallbackLogo = basePath ? (window.location.origin + basePath + '/favicon.svg') : (window.location.origin + '/favicon.svg');
+        const logoUrl = cfg.logoUrl || fallbackLogo;
+        const appName = cfg.shortName || cfg.appName || 'Gestor Administrativo';
+        const tagline = cfg.tagline || 'Bitácora de horas y actividades';
+        const extra = audience === 'interno'
+          ? `<div class="internal-banner"><strong>Uso interno:</strong> ID #${esc(bit.id)} · Incidente ID: ${esc(bit.incidente_id || '—')} · Cotización ID: ${esc(bit.cotizacion_id || '—')}</div>`
+          : '';
         const html = `
           <div class="doc">
-            <header class="letterhead">
-              <img src="${esc(logoUrl)}" alt="" class="letterhead-logo" aria-hidden="true">
-              <div class="letterhead-company">
-                <p class="name">Sistema de Cotización y Gestión</p>
-                <p class="tagline">Bitácora de horas · Registro de actividades</p>
+            <div class="head">
+              <div class="brand">
+                <img src="${esc(logoUrl)}" alt="">
+                <div>
+                  <h1>${esc(appName)}</h1>
+                  <p>${esc(tagline)}</p>
+                </div>
               </div>
-            </header>
-            <h2 class="doc-title">REGISTRO DE BITÁCORA</h2>
-            <div class="doc-meta">
-              <span><strong>Fecha:</strong> ${fmtDate(bit.fecha)}</span>
-              <span><strong>Incidente:</strong> ${esc(bit.incidente_folio) || '—'}</span>
-              <span><strong>Cotización:</strong> ${esc(bit.cotizacion_folio) || '—'}</span>
+              <div class="meta-mini">
+                <div><strong>Documento:</strong> Bitácora</div>
+                <div><strong>Impresión:</strong> ${fmtDate(new Date().toISOString())}</div>
+              </div>
             </div>
-            <table class="doc-table">
-              <tr><th>Técnico</th><td>${esc(bit.tecnico)}</td></tr>
-              <tr><th>Tiempo (horas)</th><td>${bit.tiempo_horas != null ? Number(bit.tiempo_horas) : '—'}</td></tr>
-              <tr><th>Materiales utilizados</th><td>${esc(bit.materiales_usados) || '—'}</td></tr>
-            </table>
-            <div class="doc-section">
-              <div class="doc-section-title">Actividades realizadas</div>
-              <div class="doc-section-content">${esc(bit.actividades || '—').replace(/\n/g, '<br>')}</div>
+            <div class="title">REGISTRO DE BITÁCORA</div>
+            <div class="meta-grid">
+              <div class="chip"><strong>Fecha:</strong> ${fmtDate(bit.fecha)}</div>
+              <div class="chip"><strong>Incidente:</strong> ${esc(bit.incidente_folio) || '—'}</div>
+              <div class="chip"><strong>Cotización:</strong> ${esc(bit.cotizacion_folio) || '—'}</div>
             </div>
-            <p class="doc-firma-label" style="margin-top:1.25rem;">Documento de respaldo para facturación y/o entrega al cliente. Fecha de impresión: ${fmtDate(new Date().toISOString())}</p>
-            <div class="doc-firma-line" style="margin-top:1rem;"></div>
-            <div class="doc-firma-label">Firma del técnico / Responsable</div>
+            <div class="layout">
+              <div class="table-box">
+                <table>
+                  <tr><th>Técnico</th><td>${esc(bit.tecnico || '—')}</td></tr>
+                  <tr><th>Tiempo (horas)</th><td>${bit.tiempo_horas != null ? Number(bit.tiempo_horas).toFixed(2) : '—'}</td></tr>
+                  <tr><th>Materiales usados</th><td>${esc(bit.materiales_usados) || '—'}</td></tr>
+                </table>
+              </div>
+              <div class="desc">
+                <h3>Actividades realizadas</h3>
+                <p>${esc(bit.actividades || '—')}</p>
+              </div>
+            </div>
+            ${extra}
+            <div class="sign">
+              <div><div class="line"></div><div class="lbl">Firma del técnico</div></div>
+              <div><div class="line"></div><div class="lbl">Revisión / conformidad</div></div>
+            </div>
           </div>
         `;
         document.getElementById('doc-body').innerHTML = html;
-        document.getElementById('msg').textContent = 'Listo. Use «Imprimir» y elija «Guardar como PDF» para descargar.';
+        fitSinglePage();
+        updateAudienceLabel();
+        document.getElementById('msg').textContent = 'Listo. Formato optimizado a una página A4.';
       }
       function runPrint() { window.print(); }
       document.getElementById('btn-print').addEventListener('click', runPrint);
       document.getElementById('btn-close').addEventListener('click', function() { window.close(); });
+      document.getElementById('btn-audience').addEventListener('click', function () {
+        audience = audience === 'cliente' ? 'interno' : 'cliente';
+        localStorage.setItem('pdf-audience', audience);
+        load();
+      });
       async function load() {
         try {
-          const res = await fetch(API + '/bitacoras/' + id);
-          if (!res.ok) throw new Error('Registro no encontrado');
-          const bit = await res.json();
-          render(bit);
-          setTimeout(runPrint, 350);
+          const saved = localStorage.getItem('pdf-audience');
+          if (saved === 'interno' || saved === 'cliente') audience = saved;
+          const [bit, cfg] = await Promise.all([
+            getJson(API + '/bitacoras/' + id),
+            getJson(API + '/config').catch(() => ({})),
+          ]);
+          render(bit, cfg || {});
+          if (shouldAutoPrint) setTimeout(runPrint, 350);
         } catch (e) {
-          document.getElementById('doc-body').innerHTML = '<div class="doc"><div class="error">' + esc(e.message || 'No se pudo cargar el registro.') + '</div></div>';
+          document.getElementById('doc-body').innerHTML = '<div class="error">' + esc(e.message || 'No se pudo cargar el registro.') + '</div>';
           document.getElementById('msg').textContent = 'Error al cargar.';
         }
       }

@@ -1758,20 +1758,160 @@
       openModalCotizacion(copy);
     } catch (e) { showToast(parseApiError(e) || 'No se pudo duplicar la cotización.', 'error'); }
   }
-  function openCotizacionPdf(id) {
+  function buildPdfUrl(page, id, audience, autoprint) {
     const base = window.location.pathname.replace(/\/[^/]*$/, '') || '';
-    const url = (base ? base + '/' : '') + 'cotizacion-pdf.html?id=' + encodeURIComponent(id);
-    window.open(url, '_blank', 'noopener');
+    const q = [
+      'id=' + encodeURIComponent(id),
+      'audience=' + encodeURIComponent(audience || 'cliente'),
+      'autoprint=' + encodeURIComponent(String(autoprint ? 1 : 0)),
+    ].join('&');
+    return (base ? base + '/' : '') + page + '?' + q;
+  }
+  function openPdfPreview(kind, id) {
+    const page = kind === 'cotizacion' ? 'cotizacion-pdf.html' : (kind === 'incidente' ? 'incidente-pdf.html' : 'bitacora-pdf.html');
+    const PDF_ZOOM_KEY = 'pdf-preview-zoom';
+    const PDF_MODAL_RECT_KEY = 'pdf-preview-modal-rect';
+    let audience = 'cliente';
+    let zoomValue = '1';
+    try {
+      const saved = localStorage.getItem('pdf-audience');
+      if (saved === 'interno' || saved === 'cliente') audience = saved;
+      const savedZoom = localStorage.getItem(PDF_ZOOM_KEY);
+      if (savedZoom === '0.8' || savedZoom === '1' || savedZoom === '1.25') zoomValue = savedZoom;
+    } catch (_) {}
+    const html = `
+      <div class="pdf-preview-toolbar">
+        <label>Vista:</label>
+        <select id="pdf-preview-audience">
+          <option value="cliente" ${audience === 'cliente' ? 'selected' : ''}>Cliente</option>
+          <option value="interno" ${audience === 'interno' ? 'selected' : ''}>Interno</option>
+        </select>
+        <label>Zoom:</label>
+        <select id="pdf-preview-zoom">
+          <option value="0.8" ${zoomValue === '0.8' ? 'selected' : ''}>80%</option>
+          <option value="1" ${zoomValue === '1' ? 'selected' : ''}>100%</option>
+          <option value="1.25" ${zoomValue === '1.25' ? 'selected' : ''}>125%</option>
+        </select>
+        <button type="button" class="btn outline" id="pdf-preview-download"><i class="fas fa-download"></i> Descargar directo</button>
+        <button type="button" class="btn outline" id="pdf-preview-open"><i class="fas fa-up-right-from-square"></i> Abrir en nueva pestaña</button>
+        <button type="button" class="btn primary" id="pdf-preview-print"><i class="fas fa-print"></i> Imprimir / Guardar PDF</button>
+      </div>
+      <div class="pdf-preview-frame-wrap">
+        <iframe id="pdf-preview-frame" class="pdf-preview-frame" title="Vista previa de PDF"></iframe>
+      </div>
+    `;
+    openModal('Vista previa PDF', html);
+    const modal = qs('#modal');
+    const modalBox = qs('#modal .modal-box');
+    const modalHeader = qs('#modal .modal-header');
+    if (modalBox) modalBox.classList.add('pdf-preview-modal');
+    let drag = null;
+    function saveRect() {
+      if (!modalBox || !modalBox.classList.contains('pdf-preview-modal')) return;
+      const r = modalBox.getBoundingClientRect();
+      const payload = {
+        left: Math.round(r.left),
+        top: Math.round(r.top),
+        width: Math.round(r.width),
+        height: Math.round(r.height),
+      };
+      try { localStorage.setItem(PDF_MODAL_RECT_KEY, JSON.stringify(payload)); } catch (_) {}
+    }
+    function clampAndApplyRect(rect) {
+      if (!modalBox || !rect) return;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const minW = Math.min(760, Math.max(380, vw - 24));
+      const minH = Math.min(480, Math.max(320, vh - 24));
+      const w = Math.max(minW, Math.min(vw - 24, Number(rect.width) || Math.round(vw * 0.9)));
+      const h = Math.max(minH, Math.min(vh - 24, Number(rect.height) || Math.round(vh * 0.85)));
+      const left = Math.max(12, Math.min(vw - w - 12, Number(rect.left) || Math.round((vw - w) / 2)));
+      const top = Math.max(12, Math.min(vh - h - 12, Number(rect.top) || 24));
+      modalBox.style.width = w + 'px';
+      modalBox.style.height = h + 'px';
+      modalBox.style.left = left + 'px';
+      modalBox.style.top = top + 'px';
+    }
+    if (modalBox) {
+      try {
+        const raw = localStorage.getItem(PDF_MODAL_RECT_KEY);
+        if (raw) clampAndApplyRect(JSON.parse(raw));
+      } catch (_) {}
+      modalBox.addEventListener('mouseup', saveRect);
+    }
+    if (modalHeader && modalBox) {
+      modalHeader.style.cursor = 'move';
+      const onMove = function (e) {
+        if (!drag || !modalBox.classList.contains('pdf-preview-modal')) return;
+        const w = modalBox.offsetWidth;
+        const h = modalBox.offsetHeight;
+        const maxLeft = Math.max(12, window.innerWidth - w - 12);
+        const maxTop = Math.max(12, window.innerHeight - h - 12);
+        const left = Math.max(12, Math.min(maxLeft, e.clientX - drag.dx));
+        const top = Math.max(12, Math.min(maxTop, e.clientY - drag.dy));
+        modalBox.style.left = left + 'px';
+        modalBox.style.top = top + 'px';
+      };
+      const onUp = function () {
+        if (!drag) return;
+        drag = null;
+        modalBox.classList.remove('dragging');
+        saveRect();
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      };
+      modalHeader.addEventListener('mousedown', function (e) {
+        if (e.target && (e.target.closest('.close') || e.target.closest('button') || e.target.closest('select'))) return;
+        const r = modalBox.getBoundingClientRect();
+        drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+        modalBox.classList.add('dragging');
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+    }
+    const frame = qs('#pdf-preview-frame');
+    const sel = qs('#pdf-preview-audience');
+    const zoomSel = qs('#pdf-preview-zoom');
+    const downloadBtn = qs('#pdf-preview-download');
+    function applyZoom() {
+      if (!frame || !zoomSel) return;
+      const z = Number(zoomSel.value || '1');
+      try { localStorage.setItem(PDF_ZOOM_KEY, String(zoomSel.value || '1')); } catch (_) {}
+      frame.style.transformOrigin = 'top left';
+      frame.style.transform = 'scale(' + z + ')';
+      frame.style.width = (100 / z) + '%';
+      frame.style.height = 'min(' + Math.round((74 / z) * 1.0) + 'vh, ' + Math.round(860 / z) + 'px)';
+    }
+    function applySrc() {
+      if (!frame || !sel) return;
+      audience = sel.value || 'cliente';
+      try { localStorage.setItem('pdf-audience', audience); } catch (_) {}
+      frame.src = buildPdfUrl(page, id, audience, false);
+    }
+    if (sel) sel.addEventListener('change', applySrc);
+    const openBtn = qs('#pdf-preview-open');
+    if (openBtn) openBtn.addEventListener('click', function () {
+      window.open(buildPdfUrl(page, id, audience, false), '_blank', 'noopener');
+    });
+    const printBtn = qs('#pdf-preview-print');
+    if (printBtn) printBtn.addEventListener('click', function () {
+      window.open(buildPdfUrl(page, id, audience, true), '_blank', 'noopener');
+    });
+    if (downloadBtn) downloadBtn.addEventListener('click', function () {
+      window.open(buildPdfUrl(page, id, audience, true), '_blank', 'noopener');
+    });
+    if (zoomSel) zoomSel.addEventListener('change', applyZoom);
+    applySrc();
+    applyZoom();
+  }
+  function openCotizacionPdf(id) {
+    openPdfPreview('cotizacion', id);
   }
   function openIncidentePdf(id) {
-    const base = window.location.pathname.replace(/\/[^/]*$/, '') || '';
-    const url = (base ? base + '/' : '') + 'incidente-pdf.html?id=' + encodeURIComponent(id);
-    window.open(url, '_blank', 'noopener');
+    openPdfPreview('incidente', id);
   }
   function openBitacoraPdf(id) {
-    const base = window.location.pathname.replace(/\/[^/]*$/, '') || '';
-    const url = (base ? base + '/' : '') + 'bitacora-pdf.html?id=' + encodeURIComponent(id);
-    window.open(url, '_blank', 'noopener');
+    openPdfPreview('bitacora', id);
   }
 
   // ----- MODAL INCIDENTE -----
@@ -3148,6 +3288,7 @@
   const notifBtn = qs('#btn-notifications');
   const notifPanel = qs('#notifications-panel');
   const notifClear = qs('#notifications-clear');
+  const notifRangePreset = qs('#notifications-range-preset');
   const notifDateFrom = qs('#notifications-date-from');
   const notifDateTo = qs('#notifications-date-to');
   const notifExportCsv = qs('#notifications-export-csv');
@@ -3165,6 +3306,10 @@
       if (e.target === notifPanel || notifPanel.contains(e.target)) return;
       notifPanel.classList.add('hidden');
     });
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      if (!notifPanel.classList.contains('hidden')) notifPanel.classList.add('hidden');
+    });
   }
   if (notifClear) {
     notifClear.addEventListener('click', function () {
@@ -3176,12 +3321,40 @@
   if (notifDateFrom) {
     notifDateFrom.addEventListener('change', function () {
       notificationsDateFrom = this.value || '';
+      if (notifRangePreset) notifRangePreset.value = '';
       renderNotificationsPanel();
     });
   }
   if (notifDateTo) {
     notifDateTo.addEventListener('change', function () {
       notificationsDateTo = this.value || '';
+      if (notifRangePreset) notifRangePreset.value = '';
+      renderNotificationsPanel();
+    });
+  }
+  if (notifRangePreset && notifDateFrom && notifDateTo) {
+    notifRangePreset.addEventListener('change', function () {
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      const iso = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+      let from = '';
+      let to = '';
+      if (this.value === 'today') {
+        from = iso(now); to = iso(now);
+      } else if (this.value === '7d') {
+        const d = new Date(now); d.setDate(d.getDate() - 6);
+        from = iso(d); to = iso(now);
+      } else if (this.value === '30d') {
+        const d = new Date(now); d.setDate(d.getDate() - 29);
+        from = iso(d); to = iso(now);
+      } else if (this.value === 'month') {
+        const d = new Date(now.getFullYear(), now.getMonth(), 1);
+        from = iso(d); to = iso(now);
+      }
+      notifDateFrom.value = from;
+      notifDateTo.value = to;
+      notificationsDateFrom = from;
+      notificationsDateTo = to;
       renderNotificationsPanel();
     });
   }
