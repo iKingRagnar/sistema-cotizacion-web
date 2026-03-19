@@ -44,6 +44,18 @@ body {
   outline-offset: 2px;
   box-shadow: var(--shadow-md);
 }
+.offline-banner {
+  position: sticky;
+  top: 0;
+  z-index: 10002;
+  background: #b45309;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  text-align: center;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.offline-banner.hidden { display: none; }
 .header {
   background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 35%, #234876 70%, #0d9488 100%);
   background-size: 200% 200%;
@@ -703,7 +715,9 @@ body {
 }
 .data-table th, .data-table td { padding: 0.7rem 0.85rem; text-align: left; border-bottom: 1px solid #f1f5f9; }
 .data-table th { background: #f8fafc; font-weight: 600; color: #475569; white-space: nowrap; }
-.data-table th.th-actions { width: 120px; text-align: center; }
+.data-table thead tr:first-child th { position: sticky; top: 0; z-index: 2; background: #f8fafc; box-shadow: 0 1px 0 0 #f1f5f9; }
+body.dark-theme .data-table thead tr:first-child th { background: #334155; box-shadow: 0 1px 0 0 #334155; }
+.data-table th.th-actions { width: 140px; text-align: center; }
 .data-table td.th-actions { text-align: center; }
 .data-table tbody tr:nth-child(even) { background: #fafbfc; }
 .data-table tbody tr {
@@ -1402,6 +1416,17 @@ body.dark-theme .skeleton { background: linear-gradient(90deg, #334155 25%, #475
 body.dark-theme .pagination-size-select { background: #1e293b; border-color: #475569; color: #e2e8f0; }
 .pagination-info { font-size: 0.875rem; color: #64748b; }
 body.dark-theme .pagination-info { color: #94a3b8; }
+
+/* Atajos de teclado (modal) */
+.shortcuts-list li { margin: 0.6rem 0; display: flex; align-items: center; gap: 0.35rem; }
+.shortcuts-list kbd { padding: 0.2rem 0.45rem; font-size: 0.8em; background: #e2e8f0; border: 1px solid #cbd5e1; border-radius: 4px; font-family: inherit; }
+body.dark-theme .shortcuts-list kbd { background: #334155; border-color: #475569; color: #e2e8f0; }
+.btn-icon-header#shortcuts-btn { font-weight: 700; font-size: 1.1rem; min-width: 2rem; }
+
+/* Respeta preferencia de movimiento reducido (accesibilidad) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
 
 /* Impresión / PDF */
 @media print {

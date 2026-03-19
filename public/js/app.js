@@ -51,6 +51,8 @@
     return msg;
   }
 
+  const LAST_TAB_KEY = 'cotizacion-last-tab';
+  const VALID_TABS = ['dashboards', 'clientes', 'refacciones', 'maquinas', 'cotizaciones', 'incidentes', 'bitacoras'];
   function showPanel(id, opts) {
     const skipLoad = opts && opts.skipLoad === true;
     qsAll('.panel').forEach(p => p.classList.remove('active'));
@@ -59,6 +61,7 @@
     const tab = document.querySelector('.tab[data-tab="' + id + '"]');
     if (panel) panel.classList.add('active');
     if (tab) tab.classList.add('active');
+    if (VALID_TABS.indexOf(id) >= 0) try { localStorage.setItem(LAST_TAB_KEY, id); } catch (_) {}
     if (skipLoad) return;
     if (id === 'dashboards') loadDashboard();
     if (id === 'clientes') loadClientes();
@@ -796,14 +799,18 @@
         <td>${typeof c.total === 'number' ? '$' + c.total.toLocaleString('es-MX', { minimumFractionDigits: 2 }) : (c.total != null ? '$' + Number(c.total).toLocaleString('es-MX', { minimumFractionDigits: 2 }) : '')}</td>
         <td class="sla-cell"><span class="semaforo semaforo-${vig.color}" title="${escapeHtml(vig.label)}"><i class="fas ${vig.icon}"></i> ${escapeHtml(vig.label)}</span></td>
         <td class="th-actions">
-          <button type="button" class="btn small primary btn-edit-cot" data-id="${c.id}"><i class="fas fa-edit"></i></button>
-          <button type="button" class="btn small danger btn-delete-cot" data-id="${c.id}"><i class="fas fa-trash"></i></button>
+          <button type="button" class="btn small primary btn-edit-cot" data-id="${c.id}" title="Editar"><i class="fas fa-edit"></i></button>
+          <button type="button" class="btn small outline btn-duplicate-cot" data-id="${c.id}" title="Duplicar cotización"><i class="fas fa-copy"></i></button>
+          <button type="button" class="btn small danger btn-delete-cot" data-id="${c.id}" title="Eliminar"><i class="fas fa-trash"></i></button>
         </td>
       `;
       tbody.appendChild(tr);
     });
     tbody.querySelectorAll('.btn-edit-cot').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); editCotizacion(btn.dataset.id); });
+    });
+    tbody.querySelectorAll('.btn-duplicate-cot').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); duplicateCotizacion(btn.dataset.id); });
     });
     tbody.querySelectorAll('.btn-delete-cot').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar esta cotización?', () => deleteCotizacion(btn.dataset.id)); });
@@ -878,14 +885,18 @@
         <td>${escapeHtml(String(i.estatus || ''))}</td>
         <td class="sla-cell"><span class="semaforo semaforo-${sla.color}" title="${escapeHtml(sla.label)}"><i class="fas ${sla.icon}"></i> ${escapeHtml(sla.label)}</span></td>
         <td class="th-actions">
-          <button type="button" class="btn small primary btn-edit-inc" data-id="${i.id}"><i class="fas fa-edit"></i></button>
-          <button type="button" class="btn small danger btn-delete-inc" data-id="${i.id}"><i class="fas fa-trash"></i></button>
+          <button type="button" class="btn small primary btn-edit-inc" data-id="${i.id}" title="Editar"><i class="fas fa-edit"></i></button>
+          <button type="button" class="btn small outline btn-duplicate-inc" data-id="${i.id}" title="Duplicar incidente"><i class="fas fa-copy"></i></button>
+          <button type="button" class="btn small danger btn-delete-inc" data-id="${i.id}" title="Eliminar"><i class="fas fa-trash"></i></button>
         </td>
       `;
       tbody.appendChild(tr);
     });
     tbody.querySelectorAll('.btn-edit-inc').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); editIncidente(btn.dataset.id); });
+    });
+    tbody.querySelectorAll('.btn-duplicate-inc').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); duplicateIncidente(btn.dataset.id); });
     });
     tbody.querySelectorAll('.btn-delete-inc').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar este incidente?', () => deleteIncidente(btn.dataset.id)); });
@@ -1327,6 +1338,13 @@
       openModalCotizacion(cot);
     } catch (e) { showToast(parseApiError(e) || 'No se pudo cargar la cotización.', 'error'); }
   }
+  async function duplicateCotizacion(id) {
+    try {
+      const cot = await fetchJson(API + '/cotizaciones/' + id);
+      const copy = { ...cot, id: undefined, folio: '' };
+      openModalCotizacion(copy);
+    } catch (e) { showToast(parseApiError(e) || 'No se pudo duplicar la cotización.', 'error'); }
+  }
 
   // ----- MODAL INCIDENTE -----
   async function openModalIncidente(inc) {
@@ -1393,6 +1411,13 @@
       const inc = await fetchJson(API + '/incidentes/' + id);
       openModalIncidente(inc);
     } catch (e) { showToast(parseApiError(e) || 'No se pudo cargar el incidente.', 'error'); }
+  }
+  async function duplicateIncidente(id) {
+    try {
+      const inc = await fetchJson(API + '/incidentes/' + id);
+      const copy = { ...inc, id: undefined, folio: '', fecha_cerrado: null, estatus: 'abierto' };
+      openModalIncidente(copy);
+    } catch (e) { showToast(parseApiError(e) || 'No se pudo duplicar el incidente.', 'error'); }
   }
 
   // ----- MODAL BITÁCORA -----
@@ -1919,7 +1944,31 @@
       e.preventDefault();
       openCommandPalette();
     }
+    if (!inInput && (e.key === '?' || (e.key === '/' && (e.ctrlKey || e.metaKey)))) {
+      e.preventDefault();
+      openShortcutsModal();
+    }
   });
+
+  function openShortcutsModal() {
+    const html = `
+      <ul class="shortcuts-list" style="list-style:none;padding:0;margin:0;">
+        <li><kbd>Ctrl</kbd>+<kbd>0</kbd> … Dashboards</li>
+        <li><kbd>Ctrl</kbd>+<kbd>1</kbd> … Clientes</li>
+        <li><kbd>Ctrl</kbd>+<kbd>2</kbd> … Refacciones</li>
+        <li><kbd>Ctrl</kbd>+<kbd>3</kbd> … Máquinas</li>
+        <li><kbd>Ctrl</kbd>+<kbd>4</kbd> … Cotizaciones</li>
+        <li><kbd>Ctrl</kbd>+<kbd>5</kbd> … Incidentes</li>
+        <li><kbd>Ctrl</kbd>+<kbd>6</kbd> … Bitácora de horas</li>
+        <li><kbd>Ctrl</kbd>+<kbd>7</kbd> … Acerca de</li>
+        <li><kbd>Ctrl</kbd>+<kbd>K</kbd> … Búsqueda global (paleta de comandos)</li>
+        <li><kbd>Ctrl</kbd>+<kbd>/</kbd> o <kbd>?</kbd> … Ver esta ayuda</li>
+        <li><kbd>Esc</kbd> … Cerrar modal o paleta</li>
+      </ul>
+      <p class="hint" style="margin-top:1rem;">En Mac usa <kbd>Cmd</kbd> en lugar de <kbd>Ctrl</kbd>.</p>
+    `;
+    openModal('Atajos de teclado', html);
+  }
 
   function initTheme() {
     const dark = localStorage.getItem('cotizacion-dark') === '1';
@@ -1936,6 +1985,12 @@
   const themeBtn = qs('#theme-toggle');
   if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
   initTheme();
+  (function restoreLastTab() {
+    try {
+      const last = localStorage.getItem(LAST_TAB_KEY);
+      if (last && VALID_TABS.indexOf(last) >= 0) showPanel(last);
+    } catch (_) {}
+  })();
 
   function openCommandPalette() {
     const wrap = qs('#command-palette');
@@ -1992,6 +2047,19 @@
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/service-worker.js').catch(() => {});
   }
+
+  const offlineBanner = qs('#offline-banner');
+  function updateOfflineBanner() {
+    if (!offlineBanner) return;
+    if (navigator.onLine) offlineBanner.classList.add('hidden');
+    else offlineBanner.classList.remove('hidden');
+  }
+  updateOfflineBanner();
+  window.addEventListener('online', updateOfflineBanner);
+  window.addEventListener('offline', updateOfflineBanner);
+
+  const shortcutsBtn = qs('#shortcuts-btn');
+  if (shortcutsBtn) shortcutsBtn.addEventListener('click', openShortcutsModal);
 
   const BACKUP_REMINDER_KEY = 'cotizacion-backup-last';
   const BACKUP_REMINDER_INTERVAL = 24 * 60 * 60 * 1000;
