@@ -1,5 +1,9 @@
 (function () {
   const API = '/api';
+  const AUTH_TOKEN_KEY = 'cotizacion-auth-token';
+  const AUTH_USER_KEY = 'cotizacion-auth-user';
+  const SOUND_PREF_KEY = 'cotizacion-sound';
+  let serverConfig = Object.assign({}, typeof window.__APP_CONFIG__ === 'object' && window.__APP_CONFIG__ ? window.__APP_CONFIG__ : {});
   let clientesCache = [];
   let refaccionesCache = [];
   let maquinasCache = [];
@@ -12,8 +16,84 @@
   function qs(s) { return document.querySelector(s); }
   function qsAll(s) { return document.querySelectorAll(s); }
 
+  function isSoundEnabled() {
+    try {
+      if (localStorage.getItem(SOUND_PREF_KEY) === '1') return true;
+      if (localStorage.getItem(SOUND_PREF_KEY) === '0') return false;
+    } catch (_) {}
+    return !!(serverConfig && serverConfig.soundEffectsDefault);
+  }
+  function playSuccessChime() {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      const ctx = new Ctx();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(880, ctx.currentTime);
+      g.gain.setValueAtTime(0.0001, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.07, ctx.currentTime + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.14);
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.start(ctx.currentTime);
+      o.stop(ctx.currentTime + 0.15);
+      setTimeout(function () { ctx.close && ctx.close(); }, 300);
+    } catch (_) {}
+  }
+  function getAuthToken() {
+    try { return localStorage.getItem(AUTH_TOKEN_KEY) || ''; } catch (_) { return ''; }
+  }
+  function setAuthSession(token, user) {
+    try {
+      if (token) localStorage.setItem(AUTH_TOKEN_KEY, token);
+      else localStorage.removeItem(AUTH_TOKEN_KEY);
+      if (user) localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+      else localStorage.removeItem(AUTH_USER_KEY);
+    } catch (_) {}
+  }
+  function clearAuthSession() {
+    setAuthSession(null, null);
+  }
+  function getSessionUser() {
+    try { return JSON.parse(localStorage.getItem(AUTH_USER_KEY) || 'null'); } catch (_) { return null; }
+  }
+  async function fetchServerConfig() {
+    try {
+      const r = await fetch('/api/config');
+      const j = await r.json();
+      serverConfig = Object.assign({}, typeof window.__APP_CONFIG__ === 'object' ? window.__APP_CONFIG__ : {}, j);
+    } catch (_) {
+      serverConfig = Object.assign({}, typeof window.__APP_CONFIG__ === 'object' ? window.__APP_CONFIG__ : {});
+    }
+  }
+  function applyBranding() {
+    const c = serverConfig;
+    const nameEl = qs('#app-title-name');
+    const tagEl = qs('#app-tagline');
+    const short = c.shortName || c.appName || 'Cotización Pro';
+    if (nameEl) nameEl.textContent = short;
+    if (tagEl) tagEl.textContent = c.tagline || '';
+    document.title = short + ' · Profesional';
+    const logo = qs('#header-brand-logo');
+    if (logo && c.logoUrl) {
+      logo.src = c.logoUrl;
+      logo.removeAttribute('aria-hidden');
+      logo.alt = short;
+    }
+    const desc = document.querySelector('meta[name="description"]');
+    if (desc && c.tagline) desc.setAttribute('content', c.tagline);
+    const acercaName = qs('#acerca-app-name');
+    const acercaDesc = qs('#acerca-app-desc');
+    if (acercaName) acercaName.textContent = c.appName || short;
+    if (acercaDesc) acercaDesc.textContent = c.tagline || acercaDesc.textContent;
+    document.documentElement.style.setProperty('--config-primary', c.primaryHex || '#1e3a5f');
+    document.documentElement.style.setProperty('--config-accent', c.accentHex || '#0d9488');
+  }
   function showToast(message, type) {
     type = type === 'error' ? 'error' : 'success';
+    if (type === 'success' && isSoundEnabled()) playSuccessChime();
     const container = qs('#toast-container');
     if (!container) return;
     const el = document.createElement('div');
@@ -53,15 +133,121 @@
 
   const LAST_TAB_KEY = 'cotizacion-last-tab';
   const VALID_TABS = ['dashboards', 'clientes', 'refacciones', 'maquinas', 'cotizaciones', 'incidentes', 'bitacoras'];
+  const TABS_PERSIST = VALID_TABS.concat(['auditoria']);
+  function showLoginOverlay(show) {
+    const el = qs('#login-overlay');
+    if (!el) return;
+    el.classList.toggle('hidden', !show);
+    document.body.classList.toggle('login-open', !!show);
+  }
+  function updateAuditTabVisibility() {
+    const tab = qs('#tab-auditoria');
+    if (!tab) return;
+    const u = getSessionUser();
+    const show = !!(serverConfig.auditUi && u && u.role === 'admin');
+    tab.classList.toggle('hidden', !show);
+  }
+  function syncSessionHeader() {
+    const wrap = qs('#header-session');
+    const label = qs('#header-session-user');
+    const out = qs('#btn-logout');
+    if (!wrap || !label) return;
+    const u = getSessionUser();
+    if (serverConfig.authRequired && u) {
+      wrap.classList.remove('hidden');
+      label.textContent = (u.displayName || u.username || '') + ' · ' + (u.role || '');
+      if (out) out.classList.remove('hidden');
+    } else {
+      wrap.classList.add('hidden');
+      if (out) out.classList.add('hidden');
+    }
+  }
+  function setupLoginForm() {
+    const form = qs('#login-form');
+    const err = qs('#login-error');
+    if (!form || form._bound) return;
+    form._bound = true;
+    form.addEventListener('submit', async function (ev) {
+      ev.preventDefault();
+      if (err) { err.classList.add('hidden'); err.textContent = ''; }
+      const u = qs('#login-user');
+      const p = qs('#login-pass');
+      try {
+        const r = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: (u && u.value) || '', password: (p && p.value) || '' }),
+        });
+        const text = await r.text();
+        let data = {};
+        try { data = text ? JSON.parse(text) : {}; } catch (_) {}
+        if (!r.ok) {
+          if (err) {
+            err.textContent = data.error || 'Error al iniciar sesión';
+            err.classList.remove('hidden');
+          }
+          return;
+        }
+        setAuthSession(data.token, data.user);
+        showLoginOverlay(false);
+        applyBranding();
+        updateAuditTabVisibility();
+        syncSessionHeader();
+        if (p) p.value = '';
+        finishBoot();
+      } catch (e) {
+        if (err) {
+          err.textContent = 'No se pudo conectar. Revisa la red o el servidor.';
+          err.classList.remove('hidden');
+        }
+      }
+    });
+  }
+  function initSoundToggleButton() {
+    const btn = qs('#btn-sound-toggle');
+    if (!btn || btn._bound) return;
+    btn._bound = true;
+    function refresh() {
+      const on = isSoundEnabled();
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.title = on ? 'Sonido de confirmación: activado (clic para apagar)' : 'Sonido de confirmación: apagado (clic para activar)';
+      const i = btn.querySelector('i');
+      if (i) {
+        i.classList.toggle('fa-volume-up', on);
+        i.classList.toggle('fa-volume-mute', !on);
+      }
+    }
+    refresh();
+    btn.addEventListener('click', function () {
+      try {
+        const next = !isSoundEnabled();
+        localStorage.setItem(SOUND_PREF_KEY, next ? '1' : '0');
+      } catch (_) {}
+      refresh();
+      if (isSoundEnabled()) playSuccessChime();
+    });
+  }
   function showPanel(id, opts) {
     const skipLoad = opts && opts.skipLoad === true;
+    if (serverConfig.authRequired && !getAuthToken() && id !== 'acerca') {
+      showLoginOverlay(true);
+      setupLoginForm();
+      return;
+    }
+    if (id === 'auditoria') {
+      const u = getSessionUser();
+      if (!serverConfig.auditUi || !u || u.role !== 'admin') {
+        showToast('Solo el administrador puede ver la auditoría.', 'error');
+        return;
+      }
+    }
     qsAll('.panel').forEach(p => p.classList.remove('active'));
     qsAll('.tab').forEach(t => t.classList.remove('active'));
     const panel = document.getElementById('panel-' + id);
     const tab = document.querySelector('.tab[data-tab="' + id + '"]');
     if (panel) panel.classList.add('active');
     if (tab) tab.classList.add('active');
-    if (VALID_TABS.indexOf(id) >= 0) try { localStorage.setItem(LAST_TAB_KEY, id); } catch (_) {}
+    if (TABS_PERSIST.indexOf(id) >= 0) try { localStorage.setItem(LAST_TAB_KEY, id); } catch (_) {}
     if (skipLoad) return;
     if (id === 'dashboards') loadDashboard();
     if (id === 'clientes') loadClientes();
@@ -72,6 +258,7 @@
     if (id === 'bitacoras') loadBitacoras();
     if (id === 'demo') loadSeedStatus();
     if (id === 'acerca') { /* solo mostrar panel */ }
+    if (id === 'auditoria') loadAuditLog();
   }
 
   qsAll('.tab').forEach(t => {
@@ -79,8 +266,17 @@
   });
 
   async function fetchJson(url, opts = {}) {
-    const r = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
+    const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+    const tok = getAuthToken();
+    if (tok) headers['Authorization'] = 'Bearer ' + tok;
+    const r = await fetch(url, Object.assign({}, opts, { headers }));
     const text = await r.text();
+    if (r.status === 401 && serverConfig.authRequired) {
+      clearAuthSession();
+      updateAuditTabVisibility();
+      syncSessionHeader();
+      showLoginOverlay(true);
+    }
     if (!r.ok) throw new Error(text || r.statusText);
     if (!text || !String(text).trim()) return {};
     try { return JSON.parse(text); } catch (_) { throw new Error(text); }
@@ -1509,6 +1705,48 @@
     } catch (e) { showToast(parseApiError(e) || 'No se pudo cargar el registro.', 'error'); }
   }
 
+  async function loadAuditLog() {
+    const tbody = qs('#audit-table-body');
+    const meta = qs('#audit-meta');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Cargando…</td></tr>';
+    if (meta) meta.textContent = '';
+    try {
+      const data = await fetchJson(API + '/audit?limit=100');
+      const rows = data.rows || [];
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">Sin eventos (o autenticación desactivada en el servidor).</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows
+        .map(function (r) {
+          const d = (r.detail || '').slice(0, 160);
+          return (
+            '<tr><td>' +
+            escapeHtml(r.creado_en) +
+            '</td><td>' +
+            escapeHtml(r.username) +
+            '</td><td>' +
+            escapeHtml(r.role) +
+            '</td><td>' +
+            escapeHtml(r.method) +
+            '</td><td class="audit-path">' +
+            escapeHtml(r.path) +
+            '</td><td class="audit-action">' +
+            escapeHtml(r.action) +
+            '</td><td class="audit-detail">' +
+            escapeHtml(d) +
+            (d.length >= 160 ? '…' : '') +
+            '</td></tr>'
+          );
+        })
+        .join('');
+      if (meta) meta.textContent = 'Registros en historial: ' + (data.total != null ? data.total : rows.length) + ' · Mostrando ' + rows.length;
+    } catch (_) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">No se pudo cargar la auditoría (¿sesión de admin?).</td></tr>';
+    }
+  }
+
   // ----- DASHBOARD -----
   function formatMoney(n) {
     if (n == null || isNaN(n)) return '—';
@@ -1975,7 +2213,10 @@
     }
     const inInput = document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].indexOf(document.activeElement.tagName) >= 0;
     if (!inInput && (e.ctrlKey || e.metaKey)) {
-      const tab = { '0': 'dashboards', '1': 'clientes', '2': 'refacciones', '3': 'maquinas', '4': 'cotizaciones', '5': 'incidentes', '6': 'bitacoras', '7': 'acerca' }[e.key];
+      const tabMap = { '0': 'dashboards', '1': 'clientes', '2': 'refacciones', '3': 'maquinas', '4': 'cotizaciones', '5': 'incidentes', '6': 'bitacoras', '7': 'acerca' };
+      const uK = getSessionUser();
+      if (serverConfig.auditUi && uK && uK.role === 'admin') tabMap['8'] = 'auditoria';
+      const tab = tabMap[e.key];
       if (tab) { e.preventDefault(); showPanel(tab); }
     }
     if (!inInput && e.key === 'k' && (e.ctrlKey || e.metaKey)) {
@@ -1999,6 +2240,7 @@
         <li><kbd>Ctrl</kbd>+<kbd>5</kbd> … Incidentes</li>
         <li><kbd>Ctrl</kbd>+<kbd>6</kbd> … Bitácora de horas</li>
         <li><kbd>Ctrl</kbd>+<kbd>7</kbd> … Acerca de</li>
+        <li><kbd>Ctrl</kbd>+<kbd>8</kbd> … Auditoría (solo admin, si está activa la autenticación)</li>
         <li><kbd>Ctrl</kbd>+<kbd>K</kbd> … Búsqueda global (paleta de comandos)</li>
         <li><kbd>Ctrl</kbd>+<kbd>/</kbd> o <kbd>?</kbd> … Ver esta ayuda</li>
         <li><kbd>Esc</kbd> … Cerrar modal o paleta</li>
@@ -2008,27 +2250,80 @@
     openModal('Atajos de teclado', html);
   }
 
+  function syncThemeColorMeta() {
+    const m = qs('#meta-theme-color');
+    if (!m) return;
+    const primary = (serverConfig && serverConfig.primaryHex) || '#1e3a5f';
+    m.setAttribute('content', document.body.classList.contains('dark-theme') ? '#0f172a' : primary);
+  }
   function initTheme() {
     const dark = localStorage.getItem('cotizacion-dark') === '1';
     const icon = qs('#theme-icon');
     if (dark) { document.body.classList.add('dark-theme'); if (icon) { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); } }
     else { document.body.classList.remove('dark-theme'); if (icon) { icon.classList.remove('fa-sun'); icon.classList.add('fa-moon'); } }
+    syncThemeColorMeta();
   }
   function toggleTheme() {
     const dark = document.body.classList.toggle('dark-theme');
     localStorage.setItem('cotizacion-dark', dark ? '1' : '0');
     const icon = qs('#theme-icon');
     if (icon) { icon.classList.toggle('fa-moon', !dark); icon.classList.toggle('fa-sun', dark); }
+    syncThemeColorMeta();
   }
   const themeBtn = qs('#theme-toggle');
   if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
-  initTheme();
-  (function restoreLastTab() {
+  const logoutBtn = qs('#btn-logout');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', function () {
+      clearAuthSession();
+      if (serverConfig.authRequired) {
+        location.reload();
+        return;
+      }
+      updateAuditTabVisibility();
+      syncSessionHeader();
+      location.reload();
+    });
+  }
+
+  /** Primera visita: tips rápidos (se guarda al cerrar el modal) */
+  function initOnboarding() {
+    try { if (localStorage.getItem('cotizacion-onboarding-v1')) return; } catch (_) { return; }
+    setTimeout(function () {
+      const html = `
+      <div class="onboarding-welcome">
+        <p class="onboarding-lead">Así sacas provecho al sistema desde el primer minuto:</p>
+        <ul class="onboarding-list">
+          <li><i class="fas fa-keyboard"></i> <span>Atajos <kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> por sección, <kbd>Ctrl</kbd>+<kbd>7</kbd> Acerca de, <kbd>Ctrl</kbd>+<kbd>8</kbd> Auditoría (admin con login), <kbd>Ctrl</kbd>+<kbd>K</kbd> búsqueda global.</span></li>
+          <li><i class="fas fa-moon"></i> <span>Tema claro u oscuro con el botón junto a los atajos.</span></li>
+          <li><i class="fas fa-robot"></i> <span>Agente de soporte (robot abajo a la derecha): preguntas sobre cotizaciones, incidentes y más.</span></li>
+        </ul>
+        <p class="hint" style="margin-top:1rem;">Vuelve a ver atajos con <kbd>?</kbd> o <kbd>Ctrl</kbd>+<kbd>/</kbd>.</p>
+        <div class="form-actions" style="margin-top:1.25rem;">
+          <button type="button" class="btn primary" id="onboarding-dismiss">Entendido, empezar</button>
+        </div>
+      </div>`;
+      const closeFn = openModal('Bienvenido', html, function () {
+        try { localStorage.setItem('cotizacion-onboarding-v1', '1'); } catch (_) {}
+      });
+      const btn = qs('#onboarding-dismiss');
+      if (btn) btn.addEventListener('click', function () { closeFn(); });
+    }, 1100);
+  }
+
+  function restoreLastTabOrDefault() {
     try {
       const last = localStorage.getItem(LAST_TAB_KEY);
+      if (last === 'auditoria') {
+        const u = getSessionUser();
+        if (serverConfig.auditUi && u && u.role === 'admin') {
+          showPanel('auditoria');
+          return;
+        }
+      }
       if (last && VALID_TABS.indexOf(last) >= 0) showPanel(last);
     } catch (_) {}
-  })();
+  }
 
   function openCommandPalette() {
     const wrap = qs('#command-palette');
@@ -2049,6 +2344,10 @@
       { id: 'demo', label: 'Cargar demo', icon: 'fa-database' },
       { id: 'acerca', label: 'Acerca de', icon: 'fa-info-circle' },
     ];
+    const uPal = getSessionUser();
+    if (serverConfig.auditUi && uPal && uPal.role === 'admin') {
+      sections.splice(8, 0, { id: 'auditoria', label: 'Auditoría (admin)', icon: 'fa-clipboard-list' });
+    }
     function render(q) {
       const qn = (q || '').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       const sectionItems = sections.filter(s => !qn || s.label.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(qn)).map(s => ({ type: 'section', ...s }));
@@ -2107,10 +2406,6 @@
     localStorage.setItem(BACKUP_REMINDER_KEY, String(Date.now()));
     showToast('Recuerda exportar tus datos (CSV/Excel en cada sección) con regularidad para no perder información.', 'success');
   }
-  setTimeout(maybeShowBackupReminder, 15000);
-
-  /* Pedir permiso de notificaciones al cargar la app (tras 3 s) para avisos de incidentes por vencer */
-  setTimeout(requestNotificationPermissionAndMaybeNotify, 3000);
 
   function requestNotificationPermissionAndMaybeNotify() {
     if (!('Notification' in window) || Notification.permission === 'granted') return;
@@ -2547,19 +2842,49 @@
     btn.textContent = 'Cargar solo incidentes, bitácoras y cotizaciones demo';
   });
 
-  loadDashboard();
-  fillClientesSelect();
-  loadSeedStatus();
-
-  // Actualización automática cada 12 horas: estado demo + listas principales y notificación
-  setInterval(function () {
-    loadSeedStatus(true);
+  let refreshIntervalId = null;
+  function finishBoot() {
+    showLoginOverlay(false);
+    initTheme();
+    syncSessionHeader();
+    updateAuditTabVisibility();
+    initSoundToggleButton();
+    initOnboarding();
+    restoreLastTabOrDefault();
     loadDashboard();
-    loadClientes();
-    loadRefacciones();
-    loadMaquinas();
-    loadCotizaciones();
-    loadIncidentes();
-    loadBitacoras();
-  }, REFRESH_INTERVAL_MS);
+    fillClientesSelect();
+    loadSeedStatus();
+    setTimeout(maybeShowBackupReminder, 15000);
+    setTimeout(requestNotificationPermissionAndMaybeNotify, 3000);
+    if (refreshIntervalId == null) {
+      refreshIntervalId = setInterval(function () {
+        loadSeedStatus(true);
+        loadDashboard();
+        loadClientes();
+        loadRefacciones();
+        loadMaquinas();
+        loadCotizaciones();
+        loadIncidentes();
+        loadBitacoras();
+      }, REFRESH_INTERVAL_MS);
+    }
+  }
+  async function boot() {
+    await fetchServerConfig();
+    applyBranding();
+    updateAuditTabVisibility();
+    initSoundToggleButton();
+    syncSessionHeader();
+    if (serverConfig.authRequired && !getAuthToken()) {
+      showLoginOverlay(true);
+      const hint = qs('#login-hint');
+      if (hint) hint.textContent = 'Introduce las credenciales que configuró el administrador del servidor (variable AUTH_ENABLED).';
+      setupLoginForm();
+      initTheme();
+      syncThemeColorMeta();
+      return;
+    }
+    finishBoot();
+  }
+  boot();
 })();

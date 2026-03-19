@@ -13,11 +13,51 @@ const pdfParse = require('pdf-parse');
 const XLSX = require('xlsx');
 
 const app = express();
+const auth = require('./auth');
 // En la nube (Render, etc.) usan process.env.PORT. Local: 3456 para evitar conflicto con otros servicios en 3000
 const PORT = process.env.PORT || 3456;
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+
+app.get('/api/config', (req, res) => {
+  res.json(auth.getPublicConfig());
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    if (!auth.AUTH_ENABLED) {
+      return res.status(400).json({ error: 'Autenticación desactivada en el servidor (AUTH_ENABLED=0).' });
+    }
+    const { username, password } = req.body || {};
+    if (!username || !password) return res.status(400).json({ error: 'Usuario y contraseña requeridos' });
+    const result = await auth.attemptLogin(username, password);
+    if (!result) return res.status(401).json({ error: 'Credenciales incorrectas' });
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.use(auth.createApiMiddleware());
+
+app.get('/api/audit', async (req, res) => {
+  try {
+    if (!auth.AUTH_ENABLED) return res.json({ rows: [], total: 0 });
+    const limit = Math.min(200, Math.max(1, parseInt(req.query.limit || '50', 10)));
+    const offset = Math.max(0, parseInt(req.query.offset || '0', 10));
+    const rows = await db.getAll(
+      'SELECT id, username, role, action, method, path, detail, ip, creado_en FROM audit_log ORDER BY id DESC LIMIT ? OFFSET ?',
+      [limit, offset]
+    );
+    const one = await db.getOne('SELECT COUNT(*) as c FROM audit_log');
+    const total = one && one.c != null ? Number(one.c) : 0;
+    res.json({ rows, total, limit, offset });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 /** Normaliza para búsqueda: minúsculas y sin acentos (manómetro === manometro). */
@@ -1164,6 +1204,7 @@ app.get('*', (req, res) => {
 
 async function start() {
   await db.init();
+  await auth.ensureSeedUsers();
   app.listen(PORT, () => {
     console.log('Sistema de Cotización - En línea');
     console.log('Abre en el navegador: http://localhost:' + PORT);

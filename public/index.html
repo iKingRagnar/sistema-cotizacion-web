@@ -3,27 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Sistema de Cotización y Gestión · Cotizaciones, incidentes y bitácora profesional</title>
+  <meta name="theme-color" id="meta-theme-color" content="#1e3a5f">
+  <title>Cotización Pro · Profesional</title>
   <meta name="description" content="Sistema profesional para cotizaciones, clientes, refacciones, máquinas, incidentes y bitácora de horas. Control total en un solo lugar.">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="css/style.css?v=8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=11">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
 <body>
   <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
   <div id="offline-banner" class="offline-banner hidden" role="alert" aria-live="polite">Sin conexión. Algunas funciones pueden no estar disponibles.</div>
+  <div id="login-overlay" class="login-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="login-title">
+    <div class="login-card">
+      <h2 id="login-title">Iniciar sesión</h2>
+      <p class="login-hint" id="login-hint"></p>
+      <form id="login-form" class="login-form" autocomplete="on">
+        <div class="form-group"><label for="login-user">Usuario</label><input type="text" id="login-user" name="username" autocomplete="username" required></div>
+        <div class="form-group"><label for="login-pass">Contraseña</label><input type="password" id="login-pass" name="password" autocomplete="current-password" required></div>
+        <p class="login-error hidden" id="login-error" role="alert"></p>
+        <button type="submit" class="btn primary big login-submit">Entrar</button>
+      </form>
+    </div>
+  </div>
   <header class="header">
     <div class="header-inner">
       <div class="header-brand">
-        <img src="favicon.svg" alt="" class="header-logo" width="40" height="40" aria-hidden="true">
+        <img src="favicon.svg" alt="" class="header-logo" width="40" height="40" aria-hidden="true" id="header-brand-logo">
         <div>
-          <h1>Sistema de Cotización y Gestión <span class="version">v4</span> <span class="badge-pro">Pro</span></h1>
-          <p class="subtitle">Cotizaciones, incidentes, bitácora de horas y catálogos en una sola plataforma</p>
+          <h1><span id="app-title-name">Cotización Pro</span> <span class="version">v4</span> <span class="badge-pro">Pro</span></h1>
+          <p class="subtitle" id="app-tagline">Cotizaciones, incidentes, bitácora de horas y catálogos en una sola plataforma</p>
         </div>
       </div>
       <div class="header-actions">
         <div id="header-alerts" class="header-alerts" aria-live="polite"></div>
+        <div id="header-session" class="header-session hidden" aria-live="polite"><span class="header-session-label" id="header-session-user"></span></div>
+        <button type="button" id="btn-logout" class="btn-icon-header hidden" title="Cerrar sesión" aria-label="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></button>
+        <button type="button" id="btn-sound-toggle" class="btn-icon-header" title="Sonido al guardar" aria-label="Sonido al guardar" aria-pressed="false"><i class="fas fa-volume-mute"></i></button>
         <button type="button" id="shortcuts-btn" class="btn-icon-header" title="Atajos de teclado (Ctrl+/)">?</button>
         <button type="button" id="theme-toggle" class="btn-icon-header" title="Tema claro/oscuro" aria-label="Cambiar tema"><i class="fas fa-moon" id="theme-icon"></i></button>
       </div>
@@ -38,6 +57,7 @@
     <button type="button" data-tab="cotizaciones" class="tab" title="Cotizaciones (Ctrl+4)"><i class="fas fa-file-invoice-dollar"></i> Cotizaciones</button>
     <button type="button" data-tab="incidentes" class="tab" title="Incidentes (Ctrl+5)"><i class="fas fa-exclamation-triangle"></i> Incidentes</button>
     <button type="button" data-tab="bitacoras" class="tab" title="Bitácora (Ctrl+6)"><i class="fas fa-clock"></i> Bitácora de horas</button>
+    <button type="button" data-tab="auditoria" class="tab hidden" id="tab-auditoria" title="Auditoría (Ctrl+8, solo admin)"><i class="fas fa-clipboard-list"></i> Auditoría</button>
     <button type="button" data-tab="demo" class="tab highlight" title="Cargar datos de ejemplo"><i class="fas fa-database"></i> Cargar demo</button>
     <button type="button" data-tab="acerca" class="tab" title="Acerca de (Ctrl+7)"><i class="fas fa-info-circle"></i> Acerca de</button>
   </nav>
@@ -313,6 +333,31 @@
       </div>
     </section>
 
+    <!-- AUDITORÍA (solo admin con AUTH_ENABLED) -->
+    <section id="panel-auditoria" class="panel" aria-label="Registro de auditoría">
+      <div class="section-header">
+        <h2><i class="fas fa-clipboard-list"></i> Auditoría</h2>
+        <p class="audit-meta" id="audit-meta"></p>
+      </div>
+      <p class="hint audit-intro">Registro de operaciones que modifican datos (POST, PUT, DELETE). Visible solo para el rol <strong>admin</strong> cuando el servidor tiene <code>AUTH_ENABLED=1</code>.</p>
+      <div class="table-wrap">
+        <table class="data-table" id="tabla-auditoria">
+          <thead>
+            <tr>
+              <th>Fecha / hora</th>
+              <th>Usuario</th>
+              <th>Rol</th>
+              <th>Método</th>
+              <th>Ruta</th>
+              <th>Acción</th>
+              <th>Detalle (recortado)</th>
+            </tr>
+          </thead>
+          <tbody id="audit-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- DEMO -->
     <section id="panel-demo" class="panel">
       <div class="card card-demo">
@@ -332,8 +377,8 @@
     <section id="panel-acerca" class="panel">
       <div class="card card-acerca">
         <h2><i class="fas fa-info-circle"></i> Acerca de</h2>
-        <p><strong>Sistema de Cotización y Gestión</strong> · Versión <span class="footer-version">v4</span></p>
-        <p>Plataforma profesional para cotizaciones, clientes, refacciones, máquinas, incidentes y bitácora de horas. Todo en un solo lugar.</p>
+        <p><strong id="acerca-app-name">Sistema de Cotización y Gestión</strong> · Versión <span class="footer-version">v4</span></p>
+        <p id="acerca-app-desc">Plataforma profesional para cotizaciones, clientes, refacciones, máquinas, incidentes y bitácora de horas. Todo en un solo lugar.</p>
         <ul class="acerca-features">
           <li><i class="fas fa-check"></i> Catálogos (clientes, refacciones, máquinas)</li>
           <li><i class="fas fa-check"></i> Cotizaciones y seguimiento</li>
@@ -342,8 +387,10 @@
           <li><i class="fas fa-check"></i> Dashboard con pronósticos y comparativos</li>
           <li><i class="fas fa-check"></i> Exportación CSV/Excel y PDF</li>
           <li><i class="fas fa-check"></i> Asistente con IA y reconocimiento de voz</li>
+          <li><i class="fas fa-shield-alt"></i> Autenticación opcional por entorno (roles admin / operador / consulta) y auditoría de cambios</li>
+          <li><i class="fas fa-palette"></i> Marca blanca: nombre, colores y logo vía <code>public/js/config.js</code> y variables de entorno (ver <code>CONFIG_BRANDING.md</code>)</li>
         </ul>
-        <p class="hint">Atajos: <kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> secciones · <kbd>Ctrl</kbd>+<kbd>K</kbd> búsqueda global · <kbd>Esc</kbd> cierra modales.</p>
+        <p class="hint">Atajos: <kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> secciones · <kbd>Ctrl</kbd>+<kbd>8</kbd> auditoría (admin) · <kbd>Ctrl</kbd>+<kbd>K</kbd> búsqueda global · <kbd>Esc</kbd> cierra modales.</p>
       </div>
     </section>
   </main>
@@ -377,11 +424,13 @@
           <button type="button" class="ai-chip" data-msg="¿Qué incidentes están abiertos?">Incidentes abiertos</button>
         </div>
         <div class="ai-chat-form">
-          <button type="button" id="ai-attach" class="ai-btn-attach" aria-label="Adjuntar archivo"><i class="fas fa-paperclip"></i></button>
-          <button type="button" id="ai-voice" class="ai-btn-attach" aria-label="Hablar (voz)" title="Hablar con el asistente"><i class="fas fa-microphone"></i></button>
-          <input type="file" id="ai-file-input" class="hidden" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx">
-          <input type="text" id="ai-input" placeholder="Escribe o habla tu mensaje…" maxlength="500">
-          <button type="button" id="ai-send" class="btn primary"><i class="fas fa-paper-plane"></i> Enviar</button>
+          <input type="file" id="ai-file-input" class="hidden" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" aria-hidden="true">
+          <div class="ai-chat-form-tools" role="toolbar" aria-label="Adjuntar y voz">
+            <button type="button" id="ai-attach" class="ai-btn-attach" aria-label="Adjuntar archivo"><i class="fas fa-paperclip"></i></button>
+            <button type="button" id="ai-voice" class="ai-btn-attach" aria-label="Hablar (voz)" title="Hablar con el asistente"><i class="fas fa-microphone"></i></button>
+          </div>
+          <input type="text" id="ai-input" placeholder="Escribe o habla tu mensaje…" maxlength="500" autocomplete="off">
+          <button type="button" id="ai-send" class="btn primary ai-chat-send" aria-label="Enviar mensaje al asistente"><i class="fas fa-paper-plane" aria-hidden="true"></i><span class="ai-send-label">Enviar</span></button>
         </div>
         <p class="ai-voice-hint" id="ai-voice-hint">Pulsa el micrófono y habla; lo que digas se enviará al asistente y se subirá al apartado que corresponda.</p>
       </div>
@@ -430,6 +479,7 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
-  <script src="js/app.js?v=6"></script>
+  <script src="js/config.js?v=1"></script>
+  <script src="js/app.js?v=10"></script>
 </body>
 </html>

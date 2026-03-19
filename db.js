@@ -112,6 +112,27 @@ function getSchema() {
       nombre TEXT UNIQUE NOT NULL,
       activo INTEGER DEFAULT 1
     )`,
+    `CREATE TABLE IF NOT EXISTS app_users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'operador',
+      display_name TEXT,
+      activo INTEGER DEFAULT 1,
+      creado_en TEXT DEFAULT (datetime('now','localtime'))
+    )`,
+    `CREATE TABLE IF NOT EXISTS audit_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT,
+      role TEXT,
+      action TEXT NOT NULL,
+      method TEXT,
+      path TEXT,
+      detail TEXT,
+      ip TEXT,
+      creado_en TEXT DEFAULT (datetime('now','localtime'))
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_audit_creado ON audit_log(creado_en DESC)`,
     `CREATE INDEX IF NOT EXISTS idx_clientes_nombre ON clientes(nombre)`,
     `CREATE INDEX IF NOT EXISTS idx_refacciones_codigo ON refacciones(codigo)`,
     `CREATE INDEX IF NOT EXISTS idx_maquinas_cliente ON maquinas(cliente_id)`,
