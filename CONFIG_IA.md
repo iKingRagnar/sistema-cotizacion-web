@@ -1,26 +1,68 @@
 # Configuración del Asistente con IA
 
-## Dónde poner tu API Key
+**¿Dónde configuro la API key del servidor?**  
+Depende de dónde corra el servidor: **en producción (Render)** se configura en el panel de Render; **en tu PC (local)** en un archivo `.env` o en la variable de entorno antes de arrancar el servidor.
 
-1. **En Render (producción)**  
-   - Entra a [Render Dashboard](https://dashboard.render.com) → tu servicio (Sistema de Cotización).  
-   - **Environment** → **Add Environment Variable**.  
-   - **Si usas API de Cursor:** nombre `CURSOR_API_KEY`, valor: tu API key de Cursor.  
-   - **Si usas OpenAI:** nombre `OPENAI_API_KEY`, valor: tu API key de OpenAI.  
-   - Guarda y haz **Deploy** para que tome efecto.
+---
 
-2. **En local**  
-   Crea un archivo `.env` en la raíz del proyecto (junto a `server.js`) con:
+## 1. En producción (Render)
 
-   ```
-   CURSOR_API_KEY=tu-api-key-de-cursor
-   ```
-   o
+Ahí es donde “vive” el servidor cuando lo despliegas en la nube.
+
+1. Entra a **[Render Dashboard](https://dashboard.render.com)** e inicia sesión.
+2. Abre **tu servicio** (el que corresponde al Sistema de Cotización).
+3. En el menú lateral, entra a **Environment**.
+4. Pulsa **Add Environment Variable** (o **Add Variable**).
+5. Añade:
+   - **Key:** `OPENAI_API_KEY`
+   - **Value:** tu API key de OpenAI (empieza por `sk-...`).  
+     Puedes crearla en: **[platform.openai.com/api-keys](https://platform.openai.com/api-keys)**.
+6. Guarda los cambios.
+7. Haz un **nuevo Deploy** (pestaña **Manual Deploy** → **Deploy latest commit**, o vuelve a desplegar desde GitHub) para que el servidor arranque con la nueva variable.
+
+Con eso el chat, la extracción de datos de imágenes y la extracción/“nueva cotización” desde PDF/Excel usarán la misma `OPENAI_API_KEY`.
+
+---
+
+## 2. En local (tu computadora)
+
+Cuando corres el servidor en tu PC (`node server.js` o `npm start`), la key se puede configurar de dos maneras.
+
+### Opción A: Archivo `.env` (recomendado)
+
+El proyecto ya usa `dotenv`: si existe un archivo `.env`, el servidor lo carga al arrancar.
+
+1. En la raíz del proyecto (carpeta donde está `server.js`), crea un archivo llamado **`.env`**.
+2. Dentro escribe una línea como esta (sustituye por tu key real):
+
    ```
    OPENAI_API_KEY=sk-tu-api-key-aqui
    ```
 
-   Luego en `server.js` puedes cargar variables con un paquete como `dotenv` (opcional). En Render no hace falta `.env` porque usas Environment.
+3. Si acabas de clonar el repo, instala dependencias: `npm install`.
+4. Arranca el servidor: `npm start` o `node server.js`.
+
+### Opción B: Variable de entorno en la terminal
+
+Sin archivo `.env`, puedes exportar la variable solo para esa sesión:
+
+- **PowerShell:**
+  ```powershell
+  $env:OPENAI_API_KEY="sk-tu-api-key-aqui"
+  node server.js
+  ```
+- **Cmd:**
+  ```cmd
+  set OPENAI_API_KEY=sk-tu-api-key-aqui
+  node server.js
+  ```
+- **Bash / Linux / Mac:**
+  ```bash
+  export OPENAI_API_KEY=sk-tu-api-key-aqui
+  node server.js
+  ```
+
+En Render **no** hace falta `.env`; allí se usan solo las variables de **Environment** del panel.
 
 ## Variables de entorno usadas por el servidor
 

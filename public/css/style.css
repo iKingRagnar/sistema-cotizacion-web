@@ -291,8 +291,98 @@ body {
 .filter-date-wrap .filter-date-select { width: 100%; max-width: 140px; padding: 0.35rem 0.5rem; font-size: 0.85rem; border: 1px solid #cbd5e1; border-radius: 6px; }
 .filter-date-wrap .filter-date-input { width: 100%; max-width: 140px; padding: 0.35rem 0.5rem; font-size: 0.85rem; border: 1px solid #cbd5e1; border-radius: 6px; }
 
-/* Asistente IA: widget flotante abajo-derecha, arrastrable */
-.ai-widget {
+/* Asistente IA: minimizable tipo Doppler — bolita + panel */
+.ai-widget-wrap {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
+}
+.ai-widget-wrap.collapsed .ai-widget-panel {
+  opacity: 0;
+  transform: scale(0.85) translateY(20px);
+  pointer-events: none;
+  visibility: hidden;
+  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+}
+.ai-widget-wrap.expanded .ai-fab {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s;
+}
+.ai-widget-wrap.expanded .ai-widget-panel {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+  visibility: visible;
+  animation: aiPanelOpen 0.3s ease;
+}
+@keyframes aiPanelOpen {
+  from { opacity: 0; transform: scale(0.9) translateY(15px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.ai-fab {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(13,148,136,0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+.ai-fab:hover { transform: scale(1.05); box-shadow: 0 6px 24px rgba(13,148,136,0.5); }
+.ai-fab-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  background: #1e3a5f;
+  color: #fff;
+  padding: 0.5rem 0.85rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.ai-fab-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -6px;
+  border: 6px solid transparent;
+  border-top-color: #1e3a5f;
+}
+.ai-fab:hover .ai-fab-tooltip { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(-10px); }
+.ai-unread-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(220,38,38,0.4);
+}
+.ai-widget.ai-widget-panel {
   position: fixed;
   bottom: 1.5rem;
   right: 1.5rem;
@@ -304,10 +394,34 @@ body {
   background: #fff;
   border-radius: 14px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.06);
-  z-index: 9999;
   overflow: hidden;
 }
 .ai-widget-drag { cursor: move; user-select: none; }
+.ai-btn-minimize {
+  margin-left: auto;
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.ai-btn-minimize:hover { background: rgba(255,255,255,0.35); }
+.ai-btn-attach {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  padding: 0.5rem;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: color 0.2s, background 0.2s;
+}
+.ai-btn-attach:hover { color: #1e3a5f; background: #f1f5f9; }
 .ai-chat-header { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 1.25rem; background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%); color: #fff; }
 .ai-avatar { width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
 .ai-chat-header h2 { margin: 0; font-size: 1.1rem; font-weight: 600; }

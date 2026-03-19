@@ -172,6 +172,12 @@
     }
   }
 
+  /** Normaliza texto para búsqueda: minúsculas y sin acentos (manómetro === manometro). */
+  function normalizeForSearch(str) {
+    if (str == null || str === '') return '';
+    return String(str).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
   function getFilterValues(tableEl) {
     const tbl = typeof tableEl === 'string' ? qs(tableEl) : tableEl;
     if (!tbl) return {};
@@ -231,8 +237,8 @@
           return true;
         });
       } else {
-        const lower = val.toLowerCase();
-        out = out.filter(row => String(row[key] || '').toLowerCase().includes(lower));
+        const norm = normalizeForSearch(val);
+        out = out.filter(row => normalizeForSearch(row[key]).includes(norm));
       }
     });
     return out;
@@ -297,9 +303,9 @@
     try {
       const data = await fetchJson(API + '/clientes');
       clientesCache = data;
-      const q = (qs('#buscar-clientes') && qs('#buscar-clientes').value || '').trim().toLowerCase();
+      const q = (qs('#buscar-clientes') && qs('#buscar-clientes').value || '').trim();
       let filtered = applyFilters(clientesCache, getFilterValues('#tabla-clientes'), 'tabla-clientes');
-      if (q) filtered = filtered.filter(c => [c.nombre, c.codigo, c.rfc].some(v => String(v || '').toLowerCase().includes(q)));
+      if (q) filtered = filtered.filter(c => [c.nombre, c.codigo, c.rfc].some(v => normalizeForSearch(v).includes(normalizeForSearch(q))));
       renderClientes(filtered);
     } catch (e) { renderClientes([]); console.error(e); }
     finally { hideLoading(); }
@@ -351,9 +357,9 @@
     try {
       const data = await fetchJson(API + '/refacciones');
       refaccionesCache = data;
-      const q = (qs('#buscar-refacciones') && qs('#buscar-refacciones').value || '').trim().toLowerCase();
+      const q = (qs('#buscar-refacciones') && qs('#buscar-refacciones').value || '').trim();
       let filtered = applyFilters(refaccionesCache, getFilterValues('#tabla-refacciones'), 'tabla-refacciones');
-      if (q) filtered = filtered.filter(r => [r.codigo, r.descripcion, r.marca].some(v => String(v || '').toLowerCase().includes(q)));
+      if (q) filtered = filtered.filter(r => [r.codigo, r.descripcion, r.marca].some(v => normalizeForSearch(v).includes(normalizeForSearch(q))));
       renderRefacciones(filtered);
     } catch (e) { renderRefacciones([]); console.error(e); }
     finally { hideLoading(); }
@@ -414,18 +420,25 @@
   }
 
   // ----- COTIZACIONES -----
-  function renderCotizaciones(data) {
+  function renderCotizaciones(data, totalInSystem) {
     const emptyEl = qs('#cotizaciones-empty');
     const listEl = qs('#cotizaciones-list');
     const tbody = qs('#tabla-cotizaciones tbody');
     tbody.innerHTML = '';
-    if (!data || data.length === 0) {
+    const hasFilteredResults = data && data.length > 0;
+    const hasAnyInSystem = totalInSystem != null ? totalInSystem > 0 : (data && data.length > 0);
+    if (!hasAnyInSystem) {
       emptyEl.classList.remove('hidden');
       listEl.classList.add('hidden');
       return;
     }
     emptyEl.classList.add('hidden');
     listEl.classList.remove('hidden');
+    if (!hasFilteredResults) {
+      const cols = 6;
+      tbody.innerHTML = `<tr><td colspan="${cols}" class="empty filter-empty">No hay resultados con los filtros aplicados. Ajusta los criterios para ver registros.</td></tr>`;
+      return;
+    }
     data.forEach(c => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
@@ -455,7 +468,7 @@
       const data = await fetchJson(API + '/cotizaciones');
       cotizacionesCache = data;
       const filtered = applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones');
-      renderCotizaciones(filtered);
+      renderCotizaciones(filtered, cotizacionesCache.length);
     } catch (e) { renderCotizaciones([]); }
     finally { hideLoading(); }
   }
@@ -469,18 +482,24 @@
   }
 
   // ----- INCIDENTES -----
-  function renderIncidentes(data) {
+  function renderIncidentes(data, totalInSystem) {
     const emptyEl = qs('#incidentes-empty');
     const listEl = qs('#incidentes-list');
     const tbody = qs('#tabla-incidentes tbody');
     tbody.innerHTML = '';
-    if (!data || data.length === 0) {
+    const hasFilteredResults = data && data.length > 0;
+    const hasAnyInSystem = totalInSystem != null ? totalInSystem > 0 : (data && data.length > 0);
+    if (!hasAnyInSystem) {
       emptyEl.classList.remove('hidden');
       listEl.classList.add('hidden');
       return;
     }
     emptyEl.classList.add('hidden');
     listEl.classList.remove('hidden');
+    if (!hasFilteredResults) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty filter-empty">No hay resultados con los filtros aplicados. Ajusta los criterios para ver registros.</td></tr>';
+      return;
+    }
     data.forEach(i => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
@@ -511,7 +530,7 @@
       const data = await fetchJson(API + '/incidentes');
       incidentesCache = data;
       const filtered = applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes');
-      renderIncidentes(filtered);
+      renderIncidentes(filtered, incidentesCache.length);
     } catch (e) { renderIncidentes([]); }
     finally { hideLoading(); }
   }
@@ -525,18 +544,24 @@
   }
 
   // ----- BITÁCORAS -----
-  function renderBitacoras(data) {
+  function renderBitacoras(data, totalInSystem) {
     const emptyEl = qs('#bitacoras-empty');
     const listEl = qs('#bitacoras-list');
     const tbody = qs('#tabla-bitacoras tbody');
     tbody.innerHTML = '';
-    if (!data || data.length === 0) {
+    const hasFilteredResults = data && data.length > 0;
+    const hasAnyInSystem = totalInSystem != null ? totalInSystem > 0 : (data && data.length > 0);
+    if (!hasAnyInSystem) {
       emptyEl.classList.remove('hidden');
       listEl.classList.add('hidden');
       return;
     }
     emptyEl.classList.add('hidden');
     listEl.classList.remove('hidden');
+    if (!hasFilteredResults) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty filter-empty">No hay resultados con los filtros aplicados. Ajusta los criterios para ver registros.</td></tr>';
+      return;
+    }
     data.forEach(b => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
@@ -568,7 +593,7 @@
       const data = await fetchJson(API + '/bitacoras');
       bitacorasCache = data;
       const filtered = applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras');
-      renderBitacoras(filtered);
+      renderBitacoras(filtered, bitacorasCache.length);
     } catch (e) { renderBitacoras([]); }
     finally { hideLoading(); }
   }
@@ -1025,15 +1050,15 @@
   }
 
   function applyClientesFiltersAndRender() {
-    const q = (qs('#buscar-clientes') && qs('#buscar-clientes').value || '').trim().toLowerCase();
+    const q = (qs('#buscar-clientes') && qs('#buscar-clientes').value || '').trim();
     let filtered = applyFilters(clientesCache, getFilterValues('#tabla-clientes'), 'tabla-clientes');
-    if (q) filtered = filtered.filter(c => [c.nombre, c.codigo, c.rfc].some(v => String(v || '').toLowerCase().includes(q)));
+    if (q) filtered = filtered.filter(c => [c.nombre, c.codigo, c.rfc].some(v => normalizeForSearch(v).includes(normalizeForSearch(q))));
     renderClientes(filtered);
   }
   function applyRefaccionesFiltersAndRender() {
-    const q = (qs('#buscar-refacciones') && qs('#buscar-refacciones').value || '').trim().toLowerCase();
+    const q = (qs('#buscar-refacciones') && qs('#buscar-refacciones').value || '').trim();
     let filtered = applyFilters(refaccionesCache, getFilterValues('#tabla-refacciones'), 'tabla-refacciones');
-    if (q) filtered = filtered.filter(r => [r.codigo, r.descripcion, r.marca].some(v => String(v || '').toLowerCase().includes(q)));
+    if (q) filtered = filtered.filter(r => [r.codigo, r.descripcion, r.marca].some(v => normalizeForSearch(v).includes(normalizeForSearch(q))));
     renderRefacciones(filtered);
   }
   function applyMaquinasFiltersAndRender() {
@@ -1042,15 +1067,15 @@
   }
   function applyCotizacionesFiltersAndRender() {
     const filtered = applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones');
-    renderCotizaciones(filtered);
+    renderCotizaciones(filtered, cotizacionesCache.length);
   }
   function applyIncidentesFiltersAndRender() {
     const filtered = applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes');
-    renderIncidentes(filtered);
+    renderIncidentes(filtered, incidentesCache.length);
   }
   function applyBitacorasFiltersAndRender() {
     const filtered = applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras');
-    renderBitacoras(filtered);
+    renderBitacoras(filtered, bitacorasCache.length);
   }
 
   // ----- EVENT LISTENERS -----
@@ -1072,31 +1097,91 @@
   qs('.btn-empty-cot').addEventListener('click', () => openModalCotizacion(null));
   qs('.btn-empty-inc').addEventListener('click', () => openModalIncidente(null));
   qs('.btn-empty-bit').addEventListener('click', () => openModalBitacora(null));
-  // ----- Asistente IA: widget flotante abajo-derecha, arrastrable; historial para no responder tonto -----
+  // ----- Asistente IA: minimizable (bolita), tooltip, inactividad, unread, animaciones -----
   (function initAiChat() {
+    const wrap = qs('#ai-widget-wrap');
     const widget = qs('#ai-widget');
+    const fab = qs('#ai-fab');
+    const minimizeBtn = qs('#ai-minimize');
+    const unreadBadge = qs('#ai-unread-badge');
     const messagesEl = qs('#ai-messages');
     const inputEl = qs('#ai-input');
     const sendBtn = qs('#ai-send');
-    if (!widget || !messagesEl || !inputEl || !sendBtn) return;
+    const attachBtn = qs('#ai-attach');
+    const fileInput = qs('#ai-file-input');
+    if (!wrap || !widget || !messagesEl || !inputEl || !sendBtn) return;
 
     const chatHistory = [];
     const STORAGE_KEY = 'aiWidgetPos';
+    const IDLE_ASK_MS = 2 * 60 * 1000;
+    const IDLE_CLOSE_MS = 4 * 60 * 1000;
+    let lastUserActivity = 0;
+    let idleAskShown = false;
+    let idleClosedShown = false;
+    let unreadCount = 0;
+    let idleCheckTimer = null;
+    let pendingFileBase64 = null;
+    let pendingFileMime = null;
+
+    function setExpanded(expanded) {
+      wrap.classList.toggle('collapsed', !expanded);
+      wrap.classList.toggle('expanded', expanded);
+      if (expanded) {
+        unreadCount = 0;
+        updateUnreadBadge();
+      }
+    }
+    function updateUnreadBadge() {
+      if (!unreadBadge) return;
+      if (unreadCount <= 0) {
+        unreadBadge.classList.add('hidden');
+        unreadBadge.textContent = '0';
+      } else {
+        unreadBadge.classList.remove('hidden');
+        unreadBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+      }
+    }
+    function resetIdleTimers() {
+      lastUserActivity = Date.now();
+      idleAskShown = false;
+      idleClosedShown = false;
+    }
+    function scheduleIdleCheck() {
+      if (idleCheckTimer) clearInterval(idleCheckTimer);
+      idleCheckTimer = setInterval(function () {
+        const elapsed = Date.now() - lastUserActivity;
+        if (elapsed >= IDLE_CLOSE_MS && idleAskShown && !idleClosedShown) {
+          idleClosedShown = true;
+          append('Por no haber actividad, cerré esta conversación. Cuando quieras seguir, escribe aquí de nuevo y con gusto te ayudo. ¡Hasta pronto! 👋', false);
+          setExpanded(false);
+        } else if (elapsed >= IDLE_ASK_MS && !idleAskShown) {
+          idleAskShown = true;
+          append('¿Necesitas algo más? Estoy aquí cuando quieras. Solo escribe y te ayudo. 😊', false);
+          if (wrap.classList.contains('collapsed')) {
+            unreadCount++;
+            updateUnreadBadge();
+          }
+        }
+      }, 30000);
+    }
+
+    if (fab) fab.addEventListener('click', () => setExpanded(true));
+    if (minimizeBtn) minimizeBtn.addEventListener('click', () => setExpanded(false));
 
     function loadPosition() {
       try {
         const s = localStorage.getItem(STORAGE_KEY);
         if (s) {
           const { right, bottom } = JSON.parse(s);
-          widget.style.right = right != null ? right + 'px' : '';
-          widget.style.bottom = bottom != null ? bottom + 'px' : '';
-          widget.style.left = '';
+          wrap.style.right = right != null ? right + 'px' : '';
+          wrap.style.bottom = bottom != null ? bottom + 'px' : '';
+          wrap.style.left = '';
         }
       } catch (_) {}
     }
     function savePosition() {
-      const r = parseFloat(widget.style.right);
-      const b = parseFloat(widget.style.bottom);
+      const r = parseFloat(wrap.style.right);
+      const b = parseFloat(wrap.style.bottom);
       if (!isNaN(r) || !isNaN(b)) localStorage.setItem(STORAGE_KEY, JSON.stringify({ right: isNaN(r) ? 24 : r, bottom: isNaN(b) ? 24 : b }));
     }
     loadPosition();
@@ -1110,16 +1195,16 @@
         dragging = true;
         startX = e.clientX;
         startY = e.clientY;
-        startRight = parseFloat(widget.style.right) || 24;
-        startBottom = parseFloat(widget.style.bottom) || 24;
+        startRight = parseFloat(wrap.style.right) || 24;
+        startBottom = parseFloat(wrap.style.bottom) || 24;
       });
       document.addEventListener('mousemove', function (e) {
         if (!dragging) return;
         const dx = e.clientX - startX;
         const dy = e.clientY - startY;
-        widget.style.right = Math.max(0, startRight - dx) + 'px';
-        widget.style.bottom = Math.max(0, startBottom - dy) + 'px';
-        widget.style.left = 'auto';
+        wrap.style.right = Math.max(0, startRight - dx) + 'px';
+        wrap.style.bottom = Math.max(0, startBottom - dy) + 'px';
+        wrap.style.left = 'auto';
       });
       document.addEventListener('mouseup', function () {
         if (dragging) { dragging = false; savePosition(); }
@@ -1133,6 +1218,10 @@
       div.textContent = msg;
       messagesEl.appendChild(div);
       messagesEl.scrollTop = messagesEl.scrollHeight;
+      if (!isUser && wrap.classList.contains('collapsed')) {
+        unreadCount++;
+        updateUnreadBadge();
+      }
     }
     async function loadWelcome() {
       try {
@@ -1143,21 +1232,92 @@
       }
     }
     loadWelcome();
+    scheduleIdleCheck();
 
+    const allowedMimes = /^image\/(jpeg|png|gif|webp)$|^application\/pdf$|^application\/vnd\.(openxmlformats-officedocument\.(spreadsheetml\.sheet|wordprocessingml\.document)|ms-excel)$|^application\/msword$/;
+    if (attachBtn && fileInput) {
+      attachBtn.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', function () {
+        const file = this.files && this.files[0];
+        if (!file) return;
+        const mime = file.type || '';
+        if (!allowedMimes.test(mime)) {
+          showToast('Formatos admitidos: imágenes (JPG, PNG, GIF, WebP), PDF, Excel (.xls, .xlsx) o Word (.doc, .docx).', 'error');
+          this.value = '';
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          const s = reader.result;
+          pendingFileBase64 = s && s.indexOf('base64,') !== -1 ? s.split('base64,')[1] : s;
+          pendingFileMime = mime;
+          if (/^image\//.test(mime)) showToast('Imagen lista. Escribe algo (ej. "pon esto en nueva cotización") y envía.', 'success');
+          else showToast('Documento listo. Escribe un mensaje (ej. "qué dice?" o "ponlo en nueva cotización") y envía.', 'success');
+        };
+        reader.readAsDataURL(file);
+        this.value = '';
+      });
+    }
+
+    function isPdfExcelOrWord(mime) {
+      return mime && /^application\/(pdf|vnd\.(openxmlformats-officedocument\.(spreadsheetml\.sheet|wordprocessingml\.document)|ms-excel)|msword)$/.test(mime);
+    }
     async function send() {
       const text = inputEl.value.trim();
-      if (!text) return;
+      if (!text && !pendingFileBase64) return;
       inputEl.value = '';
-      append(text, true);
-      chatHistory.push({ role: 'user', content: text });
+      const messageToSend = text || (pendingFileBase64 ? '¿Qué hay en este archivo?' : '');
+      const fileLabel = pendingFileMime && isPdfExcelOrWord(pendingFileMime) ? '[Documento adjunto]' : (pendingFileBase64 ? '[Imagen adjunta]' : '');
+      append(text || fileLabel, true);
+      resetIdleTimers();
+      chatHistory.push({ role: 'user', content: messageToSend });
       sendBtn.disabled = true;
+      const fileB64 = pendingFileBase64;
+      const fileMime = pendingFileMime;
+      pendingFileBase64 = null;
+      pendingFileMime = null;
       try {
-        const data = await fetchJson(API + '/ai/chat', {
+        let data;
+        if (fileB64 && isPdfExcelOrWord(fileMime)) {
+          data = await fetchJson(API + '/ai/extract-document', { method: 'POST', body: JSON.stringify({ fileBase64: fileB64, mimeType: fileMime, message: messageToSend }) });
+          const reply = data.reply || 'Listo.';
+          if (data.action === 'open_cotizacion' && data.cotizacion) {
+            setExpanded(false);
+            await openModalCotizacion(data.cotizacion);
+            append(reply, false);
+          } else {
+            append(reply, false);
+          }
+          chatHistory.push({ role: 'assistant', content: reply });
+          while (chatHistory.length > 20) chatHistory.splice(0, 2);
+          sendBtn.disabled = false;
+          return;
+        }
+        if (fileB64 && /pon.*(cotizaci[oó]n|nueva)/i.test(messageToSend)) {
+          try {
+            data = await fetchJson(API + '/ai/extract-client', { method: 'POST', body: JSON.stringify({ fileBase64: fileB64, mimeType: fileMime }) });
+            const d = data.data || {};
+            if (d.nombre || d.rfc) {
+              append('Encontré datos en la imagen. Abriendo formulario de cliente para que revises y guardes.', false);
+              setExpanded(false);
+              openModalCliente({ nombre: d.nombre, rfc: d.rfc, direccion: d.direccion, ciudad: d.ciudad, email: d.email, telefono: d.telefono });
+              sendBtn.disabled = false;
+              return;
+            }
+          } catch (_) {}
+        }
+        data = await fetchJson(API + '/ai/chat', {
           method: 'POST',
-          body: JSON.stringify({ message: text, messages: chatHistory }),
+          body: JSON.stringify({ message: messageToSend, messages: chatHistory }),
         });
         const reply = data.reply || 'Sin respuesta';
-        append(reply, false);
+        if (data.action === 'open_cotizacion' && data.cotizacion) {
+          setExpanded(false);
+          await openModalCotizacion(data.cotizacion);
+          append(reply, false);
+        } else {
+          append(reply, false);
+        }
         chatHistory.push({ role: 'assistant', content: reply });
         while (chatHistory.length > 20) chatHistory.splice(0, 2);
       } catch (e) {

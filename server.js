@@ -2,11 +2,15 @@
  * Sistema de Cotización - API y sitio web. Ver todo en línea.
  * Base de datos: Turso (nube) o SQLite local. 100% gratuito.
  */
+try { require('dotenv').config(); } catch (_) { /* dotenv opcional: en producción usamos variables del entorno */ }
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const db = require('./db');
+const mammoth = require('mammoth');
+const pdfParse = require('pdf-parse');
+const XLSX = require('xlsx');
 
 const app = express();
 // En la nube (Render, etc.) usan process.env.PORT. Local: 3456 para evitar conflicto con otros servicios en 3000
@@ -16,18 +20,22 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+/** Normaliza para búsqueda: minúsculas y sin acentos (manómetro === manometro). */
+function normalizeForSearch(str) {
+  if (str == null || str === '') return '';
+  return String(str).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
 // --- API Catálogos ---
 app.get('/api/clientes', async (req, res) => {
   try {
     const q = (req.query.q || '').trim();
-    let sql = 'SELECT * FROM clientes ORDER BY nombre';
-    let params = [];
+    let rows = await db.getAll('SELECT * FROM clientes ORDER BY nombre LIMIT 500', []);
     if (q) {
-      sql = 'SELECT * FROM clientes WHERE nombre LIKE ? OR codigo LIKE ? OR rfc LIKE ? ORDER BY nombre LIMIT 100';
-      const p = `%${q}%`;
-      params = [p, p, p];
+      const normQ = normalizeForSearch(q);
+      rows = rows.filter(c => normalizeForSearch(c.nombre).includes(normQ) || normalizeForSearch(c.codigo).includes(normQ) || normalizeForSearch(c.rfc).includes(normQ));
+      rows = rows.slice(0, 100);
     }
-    const rows = await db.getAll(sql, params);
     res.json(rows);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
@@ -762,6 +770,99 @@ app.post('/api/ai/extract-client', async (req, res) => {
     fields.forEach(f => { result[f] = parsed[f] != null && String(parsed[f]).trim() !== '' ? String(parsed[f]).trim() : null; });
     const missing = fields.filter(f => !result[f]);
     res.json({ data: result, missing });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+// --- Extraer texto de PDF, Excel o Word para el chat; opcionalmente devolver acción "open_cotizacion" ---
+const DOCUMENT_MIMES = {
+  'application/pdf': 'pdf',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+  'application/vnd.ms-excel': 'xls',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'application/msword': 'doc',
+};
+app.post('/api/ai/extract-document', async (req, res) => {
+  try {
+    const { fileBase64, mimeType, message: userMessage } = req.body || {};
+    if (!fileBase64) return res.status(400).json({ error: 'Falta fileBase64' });
+    const mime = (mimeType || '').toLowerCase();
+    const docType = DOCUMENT_MIMES[mime];
+    if (!docType) {
+      return res.status(400).json({
+        error: 'Tipo de archivo no soportado. Usa PDF, Excel (.xls, .xlsx) o Word (.docx).',
+      });
+    }
+    const raw = fileBase64.replace(/^data:[^;]+;base64,/, '');
+    const buffer = Buffer.from(raw, 'base64');
+    let extractedText = '';
+    if (docType === 'pdf') {
+      const data = await pdfParse(buffer);
+      extractedText = (data && data.text) ? data.text.trim() : '';
+    } else if (docType === 'docx' || docType === 'doc') {
+      try {
+        const result = await mammoth.extractRawText({ buffer });
+        extractedText = (result && result.value) ? result.value.trim() : '';
+      } catch (err) {
+        if (docType === 'doc') {
+          return res.status(400).json({
+            error: 'El formato Word antiguo (.doc) no está soportado. Guarda el archivo como .docx e inténtalo de nuevo.',
+          });
+        }
+        throw err;
+      }
+    } else {
+      const wb = XLSX.read(buffer, { type: 'buffer', cellDates: true });
+      const firstSheet = wb.SheetNames[0];
+      if (firstSheet && wb.Sheets[firstSheet]) {
+        const csv = XLSX.utils.sheet_to_txt(wb.Sheets[firstSheet], { FS: '\t', RS: '\n' });
+        extractedText = csv.trim().slice(0, 50000);
+      }
+    }
+    if (!extractedText) extractedText = '(Sin texto extraíble)';
+    const wantsCotizacion = userMessage && /(nueva\s+)?cotizaci[oó]n|pon(er)?\s+(esto|lo|el\s+documento)/i.test(userMessage);
+    const apiKey = process.env.OPENAI_API_KEY || process.env.AI_API_KEY;
+    if (wantsCotizacion && apiKey && !String(apiKey).startsWith('crsr_')) {
+      try {
+        const clientes = await db.getAll('SELECT id, nombre FROM clientes ORDER BY nombre LIMIT 200', []);
+        const clientesList = clientes.map(c => `id ${c.id}: ${c.nombre}`).join('\n');
+        const prompt = `Del siguiente contenido de un documento (PDF, Excel o Word), extrae datos para una cotización. Responde ÚNICAMENTE un JSON válido, sin markdown, con estas claves: cliente_id (id del cliente que mejor coincida, o null), subtotal (número, 0 si no hay), tipo ("refacciones" o "mano_obra"). Usa esta lista de clientes para elegir cliente_id por nombre:\n${clientesList}\n\nContenido del documento:\n${extractedText.slice(0, 6000)}`;
+        const apiUrl = process.env.OPENAI_API_BASE || 'https://api.openai.com/v1/chat/completions';
+        const model = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: 'system', content: 'Eres un asistente que extrae datos para cotizaciones. Responde solo JSON válido con las claves indicadas.' },
+              { role: 'user', content: prompt },
+            ],
+            max_tokens: 200,
+          }),
+        });
+        const data = await response.json();
+        const rawReply = data.choices?.[0]?.message?.content || '{}';
+        let cotizacion = {};
+        try {
+          const cleaned = rawReply.replace(/```json?\s*|\s*```/g, '').trim();
+          cotizacion = JSON.parse(cleaned);
+        } catch (_) {}
+        const cliente_id = cotizacion.cliente_id != null ? parseInt(cotizacion.cliente_id, 10) : null;
+        const subtotal = typeof cotizacion.subtotal === 'number' ? cotizacion.subtotal : (parseFloat(cotizacion.subtotal) || 0);
+        return res.json({
+          text: extractedText.slice(0, 3000),
+          reply: 'Listo. Encontré datos en el documento. Abre el formulario de cotización para que revises y completes.',
+          action: 'open_cotizacion',
+          cotizacion: { cliente_id: isNaN(cliente_id) ? null : cliente_id, subtotal, tipo: cotizacion.tipo === 'mano_obra' ? 'mano_obra' : 'refacciones' },
+        });
+      } catch (_) { /* si falla IA, seguimos solo con texto */ }
+    }
+    const reply = extractedText.length > 800
+      ? `Extraje el documento (${extractedText.length} caracteres). Puedes pedirme que lo pase a una nueva cotización o que resuma algo en concreto.`
+      : `Contenido del documento:\n\n${extractedText}`;
+    res.json({ text: extractedText.slice(0, 3000), reply });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }

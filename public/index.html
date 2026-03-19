@@ -238,19 +238,29 @@
     </section>
   </main>
 
-  <div id="ai-widget" class="ai-widget" aria-label="Asistente con IA">
-    <div class="ai-chat-header ai-widget-drag">
-      <div class="ai-avatar"><i class="fas fa-robot"></i></div>
-      <div>
-        <h2>Asistente con IA</h2>
-        <span class="ai-status">En línea · Arrastra para mover</span>
-      </div>
+  <div id="ai-widget-wrap" class="ai-widget-wrap collapsed" aria-label="Asistente con IA">
+    <div id="ai-fab" class="ai-fab" title="Abrir asistente">
+      <i class="fas fa-robot"></i>
+      <span class="ai-fab-tooltip">¿Te puedo ayudar?</span>
+      <span id="ai-unread-badge" class="ai-unread-badge hidden">0</span>
     </div>
-    <div class="ai-chat">
-      <div class="ai-chat-messages" id="ai-messages"></div>
-      <div class="ai-chat-form">
-        <input type="text" id="ai-input" placeholder="Escribe tu pregunta…" maxlength="500">
-        <button type="button" id="ai-send" class="btn primary"><i class="fas fa-paper-plane"></i> Enviar</button>
+    <div id="ai-widget" class="ai-widget ai-widget-panel">
+      <div class="ai-chat-header ai-widget-drag">
+        <div class="ai-avatar"><i class="fas fa-robot"></i></div>
+        <div>
+          <h2>Asistente con IA</h2>
+          <span class="ai-status">En línea · Arrastra para mover</span>
+        </div>
+        <button type="button" id="ai-minimize" class="ai-btn-minimize" aria-label="Minimizar"><i class="fas fa-chevron-down"></i></button>
+      </div>
+      <div class="ai-chat">
+        <div class="ai-chat-messages" id="ai-messages"></div>
+        <div class="ai-chat-form">
+          <button type="button" id="ai-attach" class="ai-btn-attach" aria-label="Adjuntar archivo"><i class="fas fa-paperclip"></i></button>
+          <input type="file" id="ai-file-input" class="hidden" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx">
+          <input type="text" id="ai-input" placeholder="Escribe tu mensaje…" maxlength="500">
+          <button type="button" id="ai-send" class="btn primary"><i class="fas fa-paper-plane"></i> Enviar</button>
+        </div>
       </div>
     </div>
   </div>
