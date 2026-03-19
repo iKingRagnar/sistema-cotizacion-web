@@ -3106,9 +3106,18 @@
   }
   function initTheme() {
     const dark = localStorage.getItem('cotizacion-dark') === '1';
+    const hc = localStorage.getItem('cotizacion-dark-hc') === '1';
     const icon = qs('#theme-icon');
+    const contrastBtn = qs('#contrast-toggle');
     if (dark) { document.body.classList.add('dark-theme'); if (icon) { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); } }
     else { document.body.classList.remove('dark-theme'); if (icon) { icon.classList.remove('fa-sun'); icon.classList.add('fa-moon'); } }
+    document.body.classList.toggle('dark-high-contrast', dark && hc);
+    if (contrastBtn) {
+      contrastBtn.classList.toggle('is-active', dark && hc);
+      contrastBtn.setAttribute('aria-pressed', dark && hc ? 'true' : 'false');
+      contrastBtn.disabled = !dark;
+      contrastBtn.title = dark ? 'Alto contraste en modo oscuro' : 'Activa tema oscuro para usar alto contraste';
+    }
     syncThemeColorMeta();
   }
   function toggleTheme() {
@@ -3116,10 +3125,33 @@
     localStorage.setItem('cotizacion-dark', dark ? '1' : '0');
     const icon = qs('#theme-icon');
     if (icon) { icon.classList.toggle('fa-moon', !dark); icon.classList.toggle('fa-sun', dark); }
+    const hcEnabled = localStorage.getItem('cotizacion-dark-hc') === '1';
+    document.body.classList.toggle('dark-high-contrast', dark && hcEnabled);
+    const contrastBtn = qs('#contrast-toggle');
+    if (contrastBtn) {
+      contrastBtn.classList.toggle('is-active', dark && hcEnabled);
+      contrastBtn.setAttribute('aria-pressed', dark && hcEnabled ? 'true' : 'false');
+      contrastBtn.disabled = !dark;
+      contrastBtn.title = dark ? 'Alto contraste en modo oscuro' : 'Activa tema oscuro para usar alto contraste';
+    }
     syncThemeColorMeta();
   }
   const themeBtn = qs('#theme-toggle');
   if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+  const contrastBtn = qs('#contrast-toggle');
+  if (contrastBtn) {
+    contrastBtn.addEventListener('click', function () {
+      if (!document.body.classList.contains('dark-theme')) {
+        showToast('Activa tema oscuro para usar alto contraste.', 'error');
+        return;
+      }
+      const active = document.body.classList.toggle('dark-high-contrast');
+      localStorage.setItem('cotizacion-dark-hc', active ? '1' : '0');
+      contrastBtn.classList.toggle('is-active', active);
+      contrastBtn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      showToast(active ? 'Alto contraste activado.' : 'Alto contraste desactivado.', 'success');
+    });
+  }
   const logoutBtn = qs('#btn-logout');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', function () {
