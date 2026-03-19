@@ -1892,17 +1892,25 @@
         showToast('Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.', 'error');
         return;
       }
-      showToast('Escuchando… Di por ejemplo: "Agrega un cliente Juan Pérez" o "Abre cotización para [nombre del cliente]"', 'success');
+      if (!window.isSecureContext) {
+        showToast('El reconocimiento de voz solo funciona en HTTPS o en localhost. Abre la app desde https:// o desde http://localhost.', 'error');
+        return;
+      }
+      showToast('Escuchando… Habla ahora (ej: "Abre cotización para [cliente]").', 'success');
       const rec = new SpeechRecognition();
       rec.continuous = false;
       rec.interimResults = true;
       rec.lang = 'es-MX';
+      rec.maxAlternatives = 3;
       if (voiceBtn) voiceBtn.classList.add('recording');
       let spokenText = '';
+      let gotAnyResult = false;
       rec.onresult = function (e) {
         for (let i = e.resultIndex; i < e.results.length; i++) {
-          const t = e.results[i][0].transcript;
-          if (e.results[i].isFinal) spokenText += t;
+          const result = e.results[i];
+          const t = result[0] && result[0].transcript;
+          if (t) gotAnyResult = true;
+          if (result.isFinal && t) spokenText += t;
         }
       };
       rec.onend = function () {
@@ -1915,14 +1923,29 @@
       };
       rec.onerror = function (e) {
         if (voiceBtn) voiceBtn.classList.remove('recording');
-        if (e.error === 'not-allowed') showToast('Permiso de micrófono denegado. Permite el acceso en la configuración del navegador.', 'error');
-        else if (e.error !== 'aborted') showToast('No se pudo reconocer la voz. Intenta de nuevo.', 'error');
+        if (e.error === 'aborted') return;
+        let msg = 'No se pudo reconocer la voz. Intenta de nuevo.';
+        if (e.error === 'not-allowed') {
+          msg = 'Permiso de micrófono denegado. Haz clic en el candado o ícono de la barra de direcciones y permite el micrófono para este sitio.';
+        } else if (e.error === 'no-speech') {
+          msg = 'No se detectó voz. Pulsa el micrófono de nuevo y habla justo después.';
+        } else if (e.error === 'network') {
+          msg = 'El reconocimiento de voz requiere internet. Revisa tu conexión.';
+        } else if (e.error === 'audio-capture') {
+          msg = 'No se pudo usar el micrófono. Comprueba que no esté en uso por otra pestaña o aplicación.';
+        } else if (e.error === 'language-not-supported') {
+          msg = 'Idioma no soportado en este navegador. Prueba en Chrome o Edge.';
+        } else if (e.error === 'service-not-allowed') {
+          msg = 'Servicio de voz no disponible. Usa Chrome o Edge y asegúrate de tener conexión a internet.';
+        }
+        try { console.warn('SpeechRecognition error:', e.error, e.message || ''); } catch (_) {}
+        showToast(msg, 'error');
       };
       try {
         rec.start();
       } catch (err) {
         if (voiceBtn) voiceBtn.classList.remove('recording');
-        showToast('No se pudo iniciar el micrófono.', 'error');
+        showToast('No se pudo iniciar el micrófono. Comprueba los permisos del sitio.', 'error');
       }
     }
     async function loadWelcome() {
