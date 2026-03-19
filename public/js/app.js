@@ -51,13 +51,15 @@
     return msg;
   }
 
-  function showPanel(id) {
+  function showPanel(id, opts) {
+    const skipLoad = opts && opts.skipLoad === true;
     qsAll('.panel').forEach(p => p.classList.remove('active'));
     qsAll('.tab').forEach(t => t.classList.remove('active'));
     const panel = document.getElementById('panel-' + id);
     const tab = document.querySelector('.tab[data-tab="' + id + '"]');
     if (panel) panel.classList.add('active');
     if (tab) tab.classList.add('active');
+    if (skipLoad) return;
     if (id === 'dashboards') loadDashboard();
     if (id === 'clientes') loadClientes();
     if (id === 'refacciones') loadRefacciones();
@@ -1600,17 +1602,17 @@
       qs('#seed-status').innerHTML = `Listo: <strong>${data.clientes}</strong> clientes, <strong>${data.refacciones}</strong> refacciones, <strong>${data.maquinas}</strong> máquinas, <strong>${data.cotizaciones || 0}</strong> cotizaciones, <strong>${data.incidentes || 0}</strong> incidentes, <strong>${data.bitacoras || 0}</strong> bitácoras.`;
       btn.textContent = 'Datos demo cargados';
       loadSeedStatus();
-      loadCotizaciones();
-      loadIncidentes();
-      loadBitacoras();
       loadClientes();
       loadRefacciones();
       loadMaquinas();
       fillClientesSelect();
+      await loadCotizaciones();
+      await loadIncidentes();
+      await loadBitacoras();
       if ((data.incidentes || 0) === 0 || (data.bitacoras || 0) === 0) {
         showToast('No se insertaron incidentes o bitácoras: los nombres de cliente/máquina del demo deben coincidir con los de la pestaña Clientes/Máquinas. Revisa seed-demo.json.', 'error');
       } else {
-        showPanel('incidentes');
+        showPanel('incidentes', { skipLoad: true });
       }
     } catch (e) {
       let msg = e.message;
@@ -1729,9 +1731,11 @@
     const sendBtn = qs('#ai-send');
     const attachBtn = qs('#ai-attach');
     const fileInput = qs('#ai-file-input');
+    const voiceBtn = qs('#ai-voice');
     if (!wrap || !widget || !messagesEl || !inputEl || !sendBtn) return;
 
     const chatHistory = [];
+    let lastReplyForTTS = null;
     const STORAGE_KEY = 'aiWidgetPos';
     const IDLE_ASK_MS = 2 * 60 * 1000;
     const IDLE_CLOSE_MS = 4 * 60 * 1000;
@@ -1843,9 +1847,60 @@
       div.textContent = msg;
       messagesEl.appendChild(div);
       messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
-      if (!isUser && wrap.classList.contains('collapsed')) {
-        unreadCount++;
-        updateUnreadBadge();
+      if (!isUser) {
+        lastReplyForTTS = msg;
+        if (!isUser && wrap.classList.contains('collapsed')) {
+          unreadCount++;
+          updateUnreadBadge();
+        }
+      }
+    }
+    function speakReply(text) {
+      if (!text || !window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text.slice(0, 500));
+      u.lang = 'es-MX';
+      u.rate = 0.95;
+      u.onerror = () => {};
+      window.speechSynthesis.speak(u);
+    }
+    function startVoiceInput() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        showToast('Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.', 'error');
+        return;
+      }
+      showToast('Escuchando… Di por ejemplo: "Agrega un cliente Juan Pérez" o "Abre cotización para [nombre del cliente]"', 'success');
+      const rec = new SpeechRecognition();
+      rec.continuous = false;
+      rec.interimResults = true;
+      rec.lang = 'es-MX';
+      if (voiceBtn) voiceBtn.classList.add('recording');
+      let spokenText = '';
+      rec.onresult = function (e) {
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const t = e.results[i][0].transcript;
+          if (e.results[i].isFinal) spokenText += t;
+        }
+      };
+      rec.onend = function () {
+        if (voiceBtn) voiceBtn.classList.remove('recording');
+        const txt = spokenText.trim();
+        if (txt) {
+          inputEl.value = (inputEl.value.trim() ? inputEl.value + ' ' : '') + txt;
+          send();
+        }
+      };
+      rec.onerror = function (e) {
+        if (voiceBtn) voiceBtn.classList.remove('recording');
+        if (e.error === 'not-allowed') showToast('Permiso de micrófono denegado. Permite el acceso en la configuración del navegador.', 'error');
+        else if (e.error !== 'aborted') showToast('No se pudo reconocer la voz. Intenta de nuevo.', 'error');
+      };
+      try {
+        rec.start();
+      } catch (err) {
+        if (voiceBtn) voiceBtn.classList.remove('recording');
+        showToast('No se pudo iniciar el micrófono.', 'error');
       }
     }
     async function loadWelcome() {
@@ -1955,11 +2010,24 @@
           setExpanded(false);
           await openModalCotizacion(data.cotizacion);
           append(reply, false);
+        } else if (data.action === 'open_cliente' && data.data) {
+          setExpanded(false);
+          openModalCliente(data.data);
+          append(reply, false);
+        } else if (data.action === 'open_incidente' && data.data) {
+          setExpanded(false);
+          openModalIncidente(data.data);
+          append(reply, false);
+        } else if (data.action === 'open_bitacora' && data.data) {
+          setExpanded(false);
+          openModalBitacora(data.data);
+          append(reply, false);
         } else {
           append(reply, false);
         }
         chatHistory.push({ role: 'assistant', content: reply });
         while (chatHistory.length > 20) chatHistory.splice(0, 2);
+        if (reply && window.speechSynthesis) speakReply(reply);
       } catch (e) {
         let msg = e.message;
         try { const o = JSON.parse(msg); if (o.error) msg = o.error; if (o.hint) msg += '\n\n' + o.hint; } catch (_) {}
@@ -1969,6 +2037,7 @@
     }
     sendBtn.addEventListener('click', send);
     inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+    if (voiceBtn) voiceBtn.addEventListener('click', startVoiceInput);
   })();
 
   qs('#btn-seed-demo').addEventListener('click', seedDemo);
@@ -1980,13 +2049,13 @@
       const data = await fetchJson(API + '/seed-demo-extra', { method: 'POST' });
       qs('#seed-status').innerHTML = `Listo: <strong>${data.incidentes || 0}</strong> incidentes, <strong>${data.bitacoras || 0}</strong> bitácoras, <strong>${data.cotizaciones || 0}</strong> cotizaciones agregados.`;
       loadSeedStatus();
-      loadCotizaciones();
-      loadIncidentes();
-      loadBitacoras();
+      await loadCotizaciones();
+      await loadIncidentes();
+      await loadBitacoras();
       if ((data.incidentes || 0) === 0 || (data.bitacoras || 0) === 0) {
         showToast('No se insertaron incidentes ni bitácoras. Los nombres de cliente y máquina en seed-demo.json deben coincidir con los de Clientes y Máquinas. Prueba "Cargar datos demo ahora" si la base estaba vacía.', 'error');
       } else {
-        showPanel('incidentes');
+        showPanel('incidentes', { skipLoad: true });
       }
     } catch (e) {
       let msg = e.message;

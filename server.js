@@ -764,7 +764,18 @@ REGLAS ESTRICTAS:
 - Si el usuario pide "cotizaciones de hoy" o da una fecha (ej. 18 de marzo de 2026), usa los datos que te proporcione el sistema en este mensaje para listar o resumir las cotizaciones. No pidas de nuevo el dato que ya te dieron.
 - Si tienes datos actuales del sistema (cotizaciones, clientes, etc.) en el contexto, responde con esa información de forma clara. Si no hay datos, dilo en una frase.
 - No inventes datos. Si no tienes información, indica que puede revisar la pestaña correspondiente en el sistema.
-- Respuestas concisas y útiles. Sin relleno ni redundancia.`;
+- Respuestas concisas y útiles. Sin relleno ni redundancia.
+
+ACCIONES PARA ABRIR FORMULARIOS (cuando el usuario pida crear, agregar, registrar, abrir algo por VOZ o texto):
+- Frases que debes reconocer (ejemplos): "agrega un cliente", "dame de alta a Juan Pérez", "registra un incidente", "abre una cotización", "abre cotización para [cliente]", "nueva cotización de refacciones", "anota en la bitácora", "registra 2 horas de trabajo", "quiero crear un cliente", "abre formulario de incidente".
+- Responde en UNA frase y al FINAL añade exactamente una línea: ACTION:{"type":"...","data":{...}}
+  Tipos: open_cliente, open_incidente, open_bitacora, open_cotizacion.
+  open_cliente data: nombre, rfc, direccion, ciudad, email, telefono, contacto. Si el usuario dice "cliente [nombre]" usa ese nombre.
+  open_incidente data: descripcion, prioridad (baja|media|alta|critica), cliente_id (número si en la lista de clientes hay uno que coincida con lo que dice el usuario) o cliente_nombre.
+  open_bitacora data: actividades, tiempo_horas (número), tecnico, materiales_usados.
+  open_cotizacion data: tipo ("refacciones" o "mano_obra"), cliente_id (número si en la lista de clientes hay coincidencia) o cliente_nombre.
+- Si en este mensaje te doy una lista de "Clientes (id, nombre)", usa el id cuando el usuario mencione ese cliente por nombre (ej. "cotización para Acme" → cliente_id del Acme de la lista).
+- Extrae TODO lo que el usuario diga o escriba; para lo no dicho usa null.`;
 const AI_WELCOME = `¡Hola! 👋 Soy tu Agente de Soporte.
 
 Puedo ayudarte a consultar **cotizaciones** (por fecha, cliente), **clientes**, **refacciones**, **máquinas**, **incidentes** y **bitácora**. También puedo explicarte cómo usar el sistema.
@@ -829,6 +840,15 @@ app.post('/api/ai/chat', async (req, res) => {
         systemContent += `\n\nDatos actuales de incidentes (usa esto para responder):\n- Incidentes reportados HOY (${hoy}): ${paraHoy.length}. ${paraHoy.length ? paraHoy.map(inc => `${inc.folio} ${inc.cliente_nombre} ${(inc.descripcion || '').slice(0, 40)} (${inc.estatus})`).join('; ') : 'Ninguno.'}\n- Últimos incidentes (total ${rows.length}): ${rows.slice(0, 15).map(inc => `${inc.folio} (${(inc.fecha_reporte || '').slice(0, 10)}) ${inc.cliente_nombre} ${inc.estatus}`).join('; ')}`;
       } catch (_) {}
     }
+    const wantsCreate = /\b(agregar|agrega|registrar|registra|crear|crea|abre|abrir|nueva|nuevo|dame de alta|anota|anotar|pon|poner)\b/i.test(text) && /\b(cliente|incidente|bitácora|bitacora|cotización|cotizacion)\b/i.test(text);
+    if (wantsCreate) {
+      try {
+        const clientes = await db.getAll('SELECT id, nombre FROM clientes ORDER BY nombre LIMIT 80');
+        if (clientes.length) {
+          systemContent += `\n\nClientes (id, nombre) para elegir cuando el usuario mencione un cliente por nombre:\n${clientes.map(c => `${c.id}: ${c.nombre}`).join('\n')}`;
+        }
+      } catch (_) {}
+    }
 
     const apiMessages = [{ role: 'system', content: systemContent }];
     if (Array.isArray(history) && history.length) {
@@ -856,8 +876,25 @@ app.post('/api/ai/chat', async (req, res) => {
     if (data.error) {
       return res.status(response.ok ? 500 : response.status).json({ error: data.error.message || 'Error de la API de IA' });
     }
-    const reply = data.choices?.[0]?.message?.content || 'Sin respuesta';
-    res.json({ reply });
+    let reply = data.choices?.[0]?.message?.content || 'Sin respuesta';
+    const actionMatch = reply.match(/ACTION:\s*(\{[\s\S]*?\})\s*$/m);
+    let payload = { reply };
+    if (actionMatch) {
+      try {
+        const parsed = JSON.parse(actionMatch[1]);
+        reply = reply.replace(/\s*ACTION:\s*\{[\s\S]*\}\s*$/m, '').trim();
+        payload.reply = reply || 'Listo.';
+        if (parsed.type && parsed.data) {
+          payload.action = parsed.type;
+          if (parsed.type === 'open_cotizacion') {
+            payload.cotizacion = parsed.data;
+          } else {
+            payload.data = parsed.data;
+          }
+        }
+      } catch (_) { /* mantener solo reply si el JSON es inválido */ }
+    }
+    res.json(payload);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }

@@ -335,10 +335,12 @@
         </div>
         <div class="ai-chat-form">
           <button type="button" id="ai-attach" class="ai-btn-attach" aria-label="Adjuntar archivo"><i class="fas fa-paperclip"></i></button>
+          <button type="button" id="ai-voice" class="ai-btn-attach" aria-label="Hablar (voz)" title="Hablar con el asistente"><i class="fas fa-microphone"></i></button>
           <input type="file" id="ai-file-input" class="hidden" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx">
-          <input type="text" id="ai-input" placeholder="Escribe tu mensaje…" maxlength="500">
+          <input type="text" id="ai-input" placeholder="Escribe o habla tu mensaje…" maxlength="500">
           <button type="button" id="ai-send" class="btn primary"><i class="fas fa-paper-plane"></i> Enviar</button>
         </div>
+        <p class="ai-voice-hint" id="ai-voice-hint">Pulsa el micrófono y habla; lo que digas se enviará al asistente y se subirá al apartado que corresponda.</p>
       </div>
     </div>
   </div>
