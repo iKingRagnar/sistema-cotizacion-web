@@ -224,7 +224,7 @@ app.delete('/api/maquinas/:id', async (req, res) => {
 app.get('/api/cotizaciones', async (req, res) => {
   try {
     const rows = await db.getAll(
-      `SELECT co.*, c.nombre as cliente_nombre FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id ORDER BY co.fecha DESC, co.id DESC LIMIT 200`
+      `SELECT co.*, c.nombre as cliente_nombre FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id ORDER BY co.fecha DESC, co.id DESC LIMIT 500`
     );
     res.json(Array.isArray(rows) ? rows : []);
   } catch (e) {
@@ -300,7 +300,7 @@ app.delete('/api/cotizaciones/:id', async (req, res) => {
 app.get('/api/incidentes', async (req, res) => {
   try {
     const rows = await db.getAll(
-      `SELECT i.*, c.nombre as cliente_nombre, m.nombre as maquina_nombre FROM incidentes i JOIN clientes c ON c.id = i.cliente_id LEFT JOIN maquinas m ON m.id = i.maquina_id ORDER BY i.fecha_reporte DESC LIMIT 200`
+      `SELECT i.*, c.nombre as cliente_nombre, m.nombre as maquina_nombre FROM incidentes i JOIN clientes c ON c.id = i.cliente_id LEFT JOIN maquinas m ON m.id = i.maquina_id ORDER BY i.fecha_reporte DESC LIMIT 500`
     );
     res.json(Array.isArray(rows) ? rows : []);
   } catch (e) {
@@ -382,7 +382,7 @@ app.get('/api/bitacoras', async (req, res) => {
        FROM bitacoras b
        LEFT JOIN incidentes i ON i.id = b.incidente_id
        LEFT JOIN cotizaciones co ON co.id = b.cotizacion_id
-       ORDER BY b.fecha DESC, b.id DESC LIMIT 200`
+       ORDER BY b.fecha DESC, b.id DESC LIMIT 500`
     );
     res.json(Array.isArray(rows) ? rows : []);
   } catch (e) {
@@ -658,12 +658,16 @@ app.post('/api/seed-demo', async (req, res) => {
         const maqsDelCliente = maquinasList.filter(m => m.cliente_id === cliente.id);
         if (maqsDelCliente.length > 0) maquinaId = maqsDelCliente[(i - 1) % maqsDelCliente.length].id;
         const folio = 'INC-DEMO-' + String(1000 + i);
-        const diasAtras = (i % 14);
+        // Repartir fechas: semana pasada, mes pasado, año pasado
+        const diasAtrasLista = [1, 2, 4, 7, 10, 15, 22, 30, 45, 60, 90, 120, 180, 270, 365];
+        const diasAtras = diasAtrasLista[i % diasAtrasLista.length];
         const fechaReporte = new Date(Date.now() - diasAtras * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-        const fVencDemo = new Date(Date.now() + (7 + i) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        const fVencDemo = new Date(Date.now() + (7 + (i % 14)) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        const cerrado = i % 5 === 0;
+        const fechaCerr = cerrado ? new Date(Date.now() - (diasAtras - 2) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10) : null;
         await db.runQuery(
           `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, fecha_vencimiento, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [folio, cliente.id, maquinaId, descripciones[i % descripciones.length], i % 3 === 0 ? 'alta' : (i % 3 === 1 ? 'media' : 'baja'), fechaReporte, null, fVencDemo, tecnicos[i % tecnicos.length], i % 5 === 0 ? 'cerrado' : 'abierto']
+          [folio, cliente.id, maquinaId, descripciones[i % descripciones.length], i % 3 === 0 ? 'alta' : (i % 3 === 1 ? 'media' : 'baja'), fechaReporte, fechaCerr, fVencDemo, tecnicos[i % tecnicos.length], cerrado ? 'cerrado' : 'abierto']
         );
         const r = await db.getOne('SELECT id FROM incidentes ORDER BY id DESC LIMIT 1');
         if (r) { incidenteByFolio[folio] = r.id; incidentesCount++; }
@@ -684,10 +688,11 @@ app.post('/api/seed-demo', async (req, res) => {
     }
     if (bitacorasCount === 0 && foliosParaBitacoras.length > 0) {
       const actividades = ['Revisión de equipo', 'Cambio de refacciones', 'Pruebas de funcionamiento', 'Lubricación', 'Ajustes mecánicos'];
-      for (let i = 0; i < 20; i++) {
+      const diasBitacora = [0, 1, 3, 5, 7, 10, 15, 20, 30, 45, 60, 90, 120, 180];
+      for (let i = 0; i < Math.max(25, foliosParaBitacoras.length * 2); i++) {
         const folio = foliosParaBitacoras[i % foliosParaBitacoras.length];
         const incidenteId = incidenteByFolio[folio];
-        const diasAtras = i % 10;
+        const diasAtras = diasBitacora[i % diasBitacora.length];
         const fechaBit = new Date(Date.now() - diasAtras * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
         await db.runQuery(
           `INSERT INTO bitacoras (incidente_id, cotizacion_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados) VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -699,16 +704,21 @@ app.post('/api/seed-demo', async (req, res) => {
 
     let cotizacionesCount = 0;
     const tipos = ['refacciones', 'mano_obra'];
-    for (let i = 0; i < Math.min(5, clientesDb.length); i++) {
-      const clienteId = clientesDb[i].id;
+    // Fechas repartidas: semana pasada (1-7 días), mes pasado (8-35), trimestre (40-100), año pasado (120-365)
+    const diasAtras = [0, 1, 2, 3, 5, 7, 10, 12, 15, 20, 25, 30, 40, 55, 70, 90, 120, 180, 250, 365];
+    const nCotizaciones = Math.min(60, clientesDb.length * 3);
+    for (let i = 0; i < nCotizaciones; i++) {
+      const clienteId = clientesDb[i % clientesDb.length].id;
       const tipo = tipos[i % 2];
-      const subtotal = 5000 + (i * 1500);
+      const subtotal = 3000 + (i * 800) + (i % 5) * 500;
       const iva = Math.round(subtotal * 0.16);
       const total = subtotal + iva;
-      const folio = (tipo === 'mano_obra' ? 'COT-MO' : 'COT-REF') + '-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + String(1001 + i);
+      const dayOffset = diasAtras[i % diasAtras.length];
+      const fecha = new Date(Date.now() - dayOffset * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const folio = (tipo === 'mano_obra' ? 'COT-MO' : 'COT-REF') + '-' + fecha.replace(/-/g, '') + '-' + String(1001 + i);
       await db.runQuery(
         `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [folio, clienteId, tipo, new Date().toISOString().slice(0, 10), subtotal, iva, total]
+        [folio, clienteId, tipo, fecha, subtotal, iva, total]
       );
       cotizacionesCount++;
     }
@@ -758,19 +768,23 @@ app.post('/api/seed-demo-extra', async (req, res) => {
     }
     if (incidentesCount === 0 && clientesDb.length > 0) {
       const maquinasList = maquinasDb.length > 0 ? maquinasDb : [];
-      const tecnicos = ['Juan Pérez', 'María García', 'Carlos López'];
-      const descripciones = ['Revisión preventiva', 'Ajuste de bandas', 'Diagnóstico de falla', 'Reparación'];
-      for (let i = 1; i <= 10; i++) {
+      const tecnicos = ['Juan Pérez', 'María García', 'Carlos López', 'Ana Torres', 'Luis Martínez'];
+      const descripciones = ['Revisión preventiva', 'Ajuste de bandas', 'Diagnóstico de falla', 'Reparación', 'Cambio de rodamiento', 'Calibración'];
+      const diasExtra = [1, 2, 5, 7, 10, 14, 21, 30, 45, 60, 90, 120, 180, 365];
+      for (let i = 1; i <= 25; i++) {
         const cliente = clientesDb[(i - 1) % clientesDb.length];
         let maquinaId = null;
         const maqsDelCliente = maquinasList.filter(m => m.cliente_id === cliente.id);
-        if (maqsDelCliente.length > 0) maquinaId = maqsDelCliente[0].id;
+        if (maqsDelCliente.length > 0) maquinaId = maqsDelCliente[i % maqsDelCliente.length].id;
         const folio = 'INC-EXTRA-' + String(2000 + i);
-        const fechaReporte = new Date(Date.now() - (i % 7) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-        const fVencExtra = new Date(Date.now() + (5 + i) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        const diasAtras = diasExtra[i % diasExtra.length];
+        const fechaReporte = new Date(Date.now() - diasAtras * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        const fVencExtra = new Date(Date.now() + (5 + (i % 14)) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        const cerrado = i % 4 === 0;
+        const fechaCerr = cerrado ? new Date(Date.now() - (diasAtras - 1) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10) : null;
         await db.runQuery(
           `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, fecha_vencimiento, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [folio, cliente.id, maquinaId, descripciones[i % descripciones.length], 'media', fechaReporte, null, fVencExtra, tecnicos[i % tecnicos.length], 'abierto']
+          [folio, cliente.id, maquinaId, descripciones[i % descripciones.length], i % 3 === 0 ? 'alta' : (i % 3 === 1 ? 'media' : 'baja'), fechaReporte, fechaCerr, fVencExtra, tecnicos[i % tecnicos.length], cerrado ? 'cerrado' : 'abierto']
         );
         const r = await db.getOne('SELECT id FROM incidentes ORDER BY id DESC LIMIT 1');
         if (r) { incidenteByFolio[folio] = r.id; incidentesCount++; }
@@ -789,29 +803,34 @@ app.post('/api/seed-demo-extra', async (req, res) => {
       bitacorasCount++;
     }
     if (bitacorasCount === 0 && foliosExtra.length > 0) {
-      const actividades = ['Revisión', 'Reparación', 'Pruebas'];
-      for (let i = 0; i < 12; i++) {
+      const actividades = ['Revisión', 'Reparación', 'Pruebas', 'Cambio de refacciones', 'Lubricación'];
+      const diasBitExtra = [0, 1, 3, 5, 8, 12, 20, 30, 45, 60, 90];
+      for (let i = 0; i < Math.max(20, foliosExtra.length * 2); i++) {
         const incidenteId = incidenteByFolio[foliosExtra[i % foliosExtra.length]];
-        const fechaBit = new Date(Date.now() - (i % 5) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        const fechaBit = new Date(Date.now() - diasBitExtra[i % diasBitExtra.length] * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
         await db.runQuery(
           `INSERT INTO bitacoras (incidente_id, cotizacion_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [incidenteId, null, fechaBit, 'Juan Pérez', actividades[i % 3], Number((2 + (i % 3)).toFixed(1)), null]
+          [incidenteId, null, fechaBit, ['Juan Pérez', 'María García', 'Carlos López'][i % 3], actividades[i % actividades.length], Number((2 + (i % 3)).toFixed(1)), null]
         );
         bitacorasCount++;
       }
     }
     let cotizacionesCount = 0;
     const tipos = ['refacciones', 'mano_obra'];
-    for (let i = 0; i < Math.min(5, clientesDb.length); i++) {
-      const clienteId = clientesDb[i].id;
+    const diasCotExtra = [0, 1, 2, 4, 7, 10, 15, 22, 30, 45, 60, 90, 150, 270, 365];
+    const nCotExtra = Math.min(40, clientesDb.length * 2);
+    for (let i = 0; i < nCotExtra; i++) {
+      const clienteId = clientesDb[i % clientesDb.length].id;
       const tipo = tipos[i % 2];
-      const subtotal = 5000 + (i * 1500);
+      const subtotal = 4000 + (i * 600) + (i % 4) * 400;
       const iva = Math.round(subtotal * 0.16);
       const total = subtotal + iva;
-      const folio = (tipo === 'mano_obra' ? 'COT-MO' : 'COT-REF') + '-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + String(2000 + i);
+      const dayOff = diasCotExtra[i % diasCotExtra.length];
+      const fecha = new Date(Date.now() - dayOff * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const folio = (tipo === 'mano_obra' ? 'COT-MO' : 'COT-REF') + '-' + fecha.replace(/-/g, '') + '-' + String(2000 + i);
       await db.runQuery(
         `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [folio, clienteId, tipo, new Date().toISOString().slice(0, 10), subtotal, iva, total]
+        [folio, clienteId, tipo, fecha, subtotal, iva, total]
       );
       cotizacionesCount++;
     }

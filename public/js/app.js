@@ -799,12 +799,16 @@
         <td>${typeof c.total === 'number' ? '$' + c.total.toLocaleString('es-MX', { minimumFractionDigits: 2 }) : (c.total != null ? '$' + Number(c.total).toLocaleString('es-MX', { minimumFractionDigits: 2 }) : '')}</td>
         <td class="sla-cell"><span class="semaforo semaforo-${vig.color}" title="${escapeHtml(vig.label)}"><i class="fas ${vig.icon}"></i> ${escapeHtml(vig.label)}</span></td>
         <td class="th-actions">
+          <button type="button" class="btn small outline btn-pdf-cot" data-id="${c.id}" title="Descargar / Imprimir PDF para cliente"><i class="fas fa-file-pdf"></i></button>
           <button type="button" class="btn small primary btn-edit-cot" data-id="${c.id}" title="Editar"><i class="fas fa-edit"></i></button>
           <button type="button" class="btn small outline btn-duplicate-cot" data-id="${c.id}" title="Duplicar cotización"><i class="fas fa-copy"></i></button>
           <button type="button" class="btn small danger btn-delete-cot" data-id="${c.id}" title="Eliminar"><i class="fas fa-trash"></i></button>
         </td>
       `;
       tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.btn-pdf-cot').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); openCotizacionPdf(btn.dataset.id); });
     });
     tbody.querySelectorAll('.btn-edit-cot').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); editCotizacion(btn.dataset.id); });
@@ -1344,6 +1348,11 @@
       const copy = { ...cot, id: undefined, folio: '' };
       openModalCotizacion(copy);
     } catch (e) { showToast(parseApiError(e) || 'No se pudo duplicar la cotización.', 'error'); }
+  }
+  function openCotizacionPdf(id) {
+    const base = window.location.pathname.replace(/\/[^/]*$/, '') || '';
+    const url = (base ? base + '/' : '') + 'cotizacion-pdf.html?id=' + encodeURIComponent(id);
+    window.open(url, '_blank', 'noopener');
   }
 
   // ----- MODAL INCIDENTE -----

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cotización</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 1.5rem 2rem; color: #1a1a2e; font-size: 14px; max-width: 800px; margin-left: auto; margin-right: auto; }
+    .no-print { margin-bottom: 1rem; padding: 0.75rem; background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 8px; font-size: 0.9rem; }
+    .no-print button { margin-right: 0.5rem; padding: 0.5rem 1rem; background: #0d9488; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .no-print button.secondary { background: #64748b; }
+    .doc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #0d9488; }
+    .doc-logo { height: 56px; width: auto; }
+    .doc-company { text-align: right; }
+    .doc-company h1 { margin: 0; font-size: 1.35rem; color: #0f172a; }
+    .doc-company p { margin: 0.25rem 0 0; font-size: 0.85rem; color: #475569; }
+    .doc-title { text-align: center; margin: 1.25rem 0; font-size: 1.5rem; font-weight: 700; color: #0d9488; letter-spacing: 0.02em; }
+    .doc-meta { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .doc-meta span { display: block; }
+    .doc-meta strong { color: #475569; font-weight: 600; }
+    .doc-cliente { background: #f8fafc; padding: 1rem 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #e2e8f0; }
+    .doc-cliente h3 { margin: 0 0 0.5rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; }
+    .doc-cliente p { margin: 0.2rem 0; }
+    .doc-table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
+    .doc-table th, .doc-table td { padding: 0.6rem 0.75rem; text-align: left; border: 1px solid #e2e8f0; }
+    .doc-table th { background: #f1f5f9; font-weight: 600; color: #475569; font-size: 0.85rem; }
+    .doc-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .doc-table tfoot td { font-weight: 600; background: #f8fafc; }
+    .doc-condiciones { font-size: 0.8rem; color: #64748b; margin-bottom: 1.5rem; line-height: 1.5; }
+    .doc-firma { margin-top: 2rem; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 2rem; }
+    .doc-firma-box { border-top: 1px solid #1a1a2e; padding-top: 0.5rem; min-width: 200px; text-align: center; font-size: 0.85rem; }
+    .doc-firma-box strong { display: block; margin-bottom: 0.25rem; }
+    .loading { padding: 2rem; text-align: center; color: #64748b; }
+    .error { padding: 1rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #b91c1c; }
+    @media print {
+      body { padding: 0.75rem 1rem; }
+      .no-print { display: none !important; }
+      .doc-header { border-bottom-color: #0d9488; }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print">
+    <span id="msg">Cargando cotización…</span>
+    <button type="button" id="btn-print"><strong>Imprimir / Guardar como PDF</strong></button>
+    <button type="button" id="btn-close" class="secondary">Cerrar</button>
+  </div>
+  <div id="doc-body"></div>
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      const API = window.location.pathname.replace(/\/[^/]*$/, '') + '/api';
+      if (!id) {
+        document.getElementById('doc-body').innerHTML = '<div class="error">Falta el ID de la cotización en la URL (ej. ?id=1).</div>';
+        document.getElementById('msg').textContent = '';
+        return;
+      }
+      function esc(s) { if (s == null) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+      function fmtNum(n) { return Number(n).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+      function fmtDate(s) { if (!s) return '—'; return String(s).slice(0, 10); }
+      function validHasta(fecha) {
+        const d = new Date(fecha);
+        d.setDate(d.getDate() + 30);
+        return d.toISOString().slice(0, 10);
+      }
+      function render(cot, cliente) {
+        const tipoLabel = (cot.tipo === 'mano_obra') ? 'Mano de obra' : 'Refacciones';
+        const subtotal = Number(cot.subtotal) || 0;
+        const iva = Number(cot.iva) || 0;
+        const total = Number(cot.total) || subtotal + iva;
+        const basePath = window.location.pathname.replace(/\/[^/]*$/, '') || '';
+        const logoUrl = basePath ? (window.location.origin + basePath + '/favicon.svg') : (window.location.origin + '/favicon.svg');
+        const html = `
+          <div class="doc-header">
+            <img src="${esc(logoUrl)}" alt="" class="doc-logo" aria-hidden="true">
+            <div class="doc-company">
+              <h1>Sistema de Cotización y Gestión</h1>
+              <p>Cotizaciones profesionales</p>
+            </div>
+          </div>
+          <h2 class="doc-title">COTIZACIÓN</h2>
+          <div class="doc-meta">
+            <span><strong>Folio:</strong> ${esc(cot.folio)}</span>
+            <span><strong>Fecha:</strong> ${fmtDate(cot.fecha)}</span>
+            <span><strong>Válida hasta:</strong> ${fmtDate(validHasta(cot.fecha))}</span>
+          </div>
+          <div class="doc-cliente">
+            <h3>Cliente</h3>
+            <p><strong>${esc(cliente ? cliente.nombre : cot.cliente_nombre)}</strong></p>
+            ${cliente && cliente.rfc ? '<p>RFC: ' + esc(cliente.rfc) + '</p>' : ''}
+            ${cliente && (cliente.direccion || cliente.ciudad) ? '<p>' + esc([cliente.direccion, cliente.ciudad].filter(Boolean).join(', ')) + '</p>' : ''}
+            ${cliente && cliente.contacto ? '<p>Contacto: ' + esc(cliente.contacto) + '</p>' : ''}
+            ${cliente && cliente.telefono ? '<p>Tel: ' + esc(cliente.telefono) + '</p>' : ''}
+            ${cliente && cliente.email ? '<p>Email: ' + esc(cliente.email) + '</p>' : ''}
+          </div>
+          <table class="doc-table">
+            <thead>
+              <tr>
+                <th>Concepto</th>
+                <th class="num">Cant.</th>
+                <th class="num">P. unitario</th>
+                <th class="num">Subtotal</th>
+                <th class="num">IVA (16%)</th>
+                <th class="num">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>${esc(tipoLabel)}</td>
+                <td class="num">1</td>
+                <td class="num">$ ${fmtNum(subtotal)}</td>
+                <td class="num">$ ${fmtNum(subtotal)}</td>
+                <td class="num">$ ${fmtNum(iva)}</td>
+                <td class="num">$ ${fmtNum(total)}</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4"></td>
+                <td class="num">Subtotal</td>
+                <td class="num">$ ${fmtNum(subtotal)}</td>
+              </tr>
+              <tr>
+                <td colspan="4"></td>
+                <td class="num">IVA (16%)</td>
+                <td class="num">$ ${fmtNum(iva)}</td>
+              </tr>
+              <tr>
+                <td colspan="4"></td>
+                <td class="num"><strong>Total</strong></td>
+                <td class="num"><strong>$ ${fmtNum(total)}</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+          <div class="doc-condiciones">
+            <strong>Condiciones:</strong> Precios en moneda nacional (MXN). Forma de pago según acuerdo. Esta cotización es válida por 30 días a partir de la fecha de emisión. Sujeto a disponibilidad.
+          </div>
+          <div class="doc-firma">
+            <div class="doc-firma-box">
+              <strong>Firma del cliente</strong>
+              <span>Nombre y firma</span>
+            </div>
+            <div class="doc-firma-box">
+              <strong>Fecha de aceptación</strong>
+              <span>____ / ____ / ________</span>
+            </div>
+          </div>
+        `;
+        document.getElementById('doc-body').innerHTML = html;
+        document.getElementById('msg').textContent = 'Listo. Usa «Imprimir» y elige «Guardar como PDF» para descargar.';
+      }
+      function runPrint() { window.print(); }
+      document.getElementById('btn-print').addEventListener('click', runPrint);
+      document.getElementById('btn-close').addEventListener('click', function() { window.close(); });
+      async function load() {
+        try {
+          const resCot = await fetch(API + '/cotizaciones/' + id);
+          if (!resCot.ok) throw new Error('Cotización no encontrada');
+          const cot = await resCot.json();
+          let cliente = null;
+          if (cot.cliente_id) {
+            try {
+              const resCl = await fetch(API + '/clientes/' + cot.cliente_id);
+              if (resCl.ok) cliente = await resCl.json();
+            } catch (_) {}
+          }
+          render(cot, cliente);
+          setTimeout(runPrint, 300);
+        } catch (e) {
+          document.getElementById('doc-body').innerHTML = '<div class="error">' + esc(e.message || 'No se pudo cargar la cotización.') + '</div>';
+          document.getElementById('msg').textContent = 'Error al cargar.';
+        }
+      }
+      load();
+    })();
+  </script>
+</body>
+</html>

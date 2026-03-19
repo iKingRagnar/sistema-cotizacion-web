@@ -717,7 +717,7 @@ body {
 .data-table th { background: #f8fafc; font-weight: 600; color: #475569; white-space: nowrap; }
 .data-table thead tr:first-child th { position: sticky; top: 0; z-index: 2; background: #f8fafc; box-shadow: 0 1px 0 0 #f1f5f9; }
 body.dark-theme .data-table thead tr:first-child th { background: #334155; box-shadow: 0 1px 0 0 #334155; }
-.data-table th.th-actions { width: 140px; text-align: center; }
+.data-table th.th-actions { width: 160px; text-align: center; }
 .data-table td.th-actions { text-align: center; }
 .data-table tbody tr:nth-child(even) { background: #fafbfc; }
 .data-table tbody tr {
