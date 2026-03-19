@@ -14,9 +14,9 @@ function getPublicConfig() {
   return {
     authRequired: AUTH_ENABLED,
     auditUi: AUTH_ENABLED,
-    appName: process.env.APP_NAME || 'Sistema de Cotización y Gestión',
-    shortName: process.env.APP_SHORT_NAME || 'Cotización Pro',
-    tagline: process.env.APP_TAGLINE || 'Cotizaciones, incidentes, bitácora de horas y catálogos en una sola plataforma',
+    appName: process.env.APP_NAME || 'Gestor Administrativo',
+    shortName: process.env.APP_SHORT_NAME || 'Gestor Administrativo',
+    tagline: process.env.APP_TAGLINE || 'Gestión de operaciones, incidentes, bitácora y catálogos en una sola plataforma',
     logoUrl: (process.env.APP_LOGO_URL || '').trim(),
     primaryHex: process.env.APP_PRIMARY_HEX || '#1e3a5f',
     accentHex: process.env.APP_ACCENT_HEX || '#0d9488',

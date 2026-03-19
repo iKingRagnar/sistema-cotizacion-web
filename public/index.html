@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" id="meta-theme-color" content="#1e3a5f">
-  <title>Cotización Pro · Profesional</title>
-  <meta name="description" content="Sistema profesional para cotizaciones, clientes, refacciones, máquinas, incidentes y bitácora de horas. Control total en un solo lugar.">
+  <title>Gestor Administrativo · Profesional</title>
+  <meta name="description" content="Gestor Administrativo para clientes, refacciones, máquinas, cotizaciones, incidentes y bitácora de horas. Control total en un solo lugar.">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=13">
+  <link rel="stylesheet" href="css/style.css?v=20">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
@@ -34,15 +34,39 @@
       <div class="header-brand">
         <img src="favicon.svg" alt="" class="header-logo" width="40" height="40" aria-hidden="true" id="header-brand-logo">
         <div>
-          <h1><span id="app-title-name">Cotización Pro</span> <span class="version">v4</span> <span class="badge-pro">Pro</span></h1>
-          <p class="subtitle" id="app-tagline">Cotizaciones, incidentes, bitácora de horas y catálogos en una sola plataforma</p>
+          <h1><span id="app-title-name">Gestor Administrativo</span> <span class="version">v4</span> <span class="badge-pro">Suite</span></h1>
+          <p class="subtitle" id="app-tagline">Gestión de operaciones, incidentes, bitácora y catálogos en una sola plataforma</p>
         </div>
       </div>
       <div class="header-actions">
+        <select id="global-branch-filter" class="header-branch-filter" title="Filtro global por sucursal / ciudad">
+          <option value="">Todas las sucursales</option>
+        </select>
         <div id="header-alerts" class="header-alerts" aria-live="polite"></div>
+        <div id="header-system-status" class="header-system-status" aria-live="polite">Estado: iniciando…</div>
+        <div class="header-notifications-wrap">
+          <button type="button" id="btn-notifications" class="btn-icon-header" title="Centro de notificaciones" aria-label="Centro de notificaciones">
+            <i class="fas fa-bell"></i>
+            <span id="notifications-badge" class="notifications-badge hidden">0</span>
+          </button>
+          <div id="notifications-panel" class="notifications-panel hidden" aria-live="polite">
+            <div class="notifications-header">
+              <strong>Notificaciones</strong>
+              <div class="notifications-tools">
+                <input type="date" id="notifications-date-from" class="notifications-date" title="Desde">
+                <input type="date" id="notifications-date-to" class="notifications-date" title="Hasta">
+                <button type="button" id="notifications-export-csv" class="btn small outline">CSV</button>
+                <button type="button" id="notifications-export-pdf" class="btn small outline">PDF</button>
+                <button type="button" id="notifications-clear" class="btn small outline">Limpiar</button>
+              </div>
+            </div>
+            <div id="notifications-list" class="notifications-list"></div>
+          </div>
+        </div>
         <div id="header-session" class="header-session hidden" aria-live="polite"><span class="header-session-label" id="header-session-user"></span></div>
         <button type="button" id="btn-logout" class="btn-icon-header hidden" title="Cerrar sesión" aria-label="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></button>
         <button type="button" id="btn-sound-toggle" class="btn-icon-header" title="Sonido al guardar" aria-label="Sonido al guardar" aria-pressed="false"><i class="fas fa-volume-mute"></i></button>
+        <button type="button" id="btn-guided-tour" class="btn-icon-header" title="Tour guiado de la plataforma" aria-label="Tour guiado"><i class="fas fa-route"></i></button>
         <button type="button" id="shortcuts-btn" class="btn-icon-header" title="Atajos de teclado (Ctrl+/)">?</button>
         <button type="button" id="theme-toggle" class="btn-icon-header" title="Tema claro/oscuro" aria-label="Cambiar tema"><i class="fas fa-moon" id="theme-icon"></i></button>
       </div>
@@ -72,6 +96,8 @@
             <p class="dashboard-subtitle">Métricas clave por área · Clic en gráficos, scorecards o filas del comparativo para <strong>cruzar filtros</strong> (estilo Power BI) · <span id="dashboard-last-update">Actualizado al cargar</span> · Se actualizan cada 12 h</p>
           </div>
           <div class="dashboard-header-right">
+            <button type="button" id="dashboard-go-backups" class="btn-dashboard-refresh outline" title="Ir al módulo de respaldos"><i class="fas fa-shield-halved"></i> Respaldos</button>
+            <button type="button" id="dashboard-go-executive-pdf" class="btn-dashboard-refresh outline" title="Reporte ejecutivo en PDF"><i class="fas fa-file-pdf"></i> Reporte ejecutivo</button>
             <button type="button" id="btn-print-pdf" class="btn-dashboard-refresh outline" title="Imprimir o guardar como PDF"><i class="fas fa-print"></i> Imprimir / PDF</button>
             <button type="button" id="dashboard-refresh" class="btn-dashboard-refresh" title="Actualizar datos"><i class="fas fa-sync-alt"></i> Actualizar</button>
           </div>
@@ -377,6 +403,24 @@
         <button type="button" id="btn-seed-demo" class="btn primary big">Cargar todo el demo (solo si no hay clientes)</button>
         <p class="hint" style="margin-top:0.5rem;">Si ya tienes clientes cargados y solo quieres agregar incidentes, bitácoras y cotizaciones de ejemplo:</p>
         <button type="button" id="btn-seed-extra" class="btn big" style="background:#0d9488;color:#fff;margin-top:0.5rem;">Cargar solo incidentes, bitácoras y cotizaciones demo</button>
+        <hr style="margin:1rem 0;border:none;border-top:1px solid #e2e8f0;">
+        <p class="hint">Respaldo completo de datos (recomendado):</p>
+        <div class="toolbar">
+          <button type="button" id="btn-backup-export" class="btn outline"><i class="fas fa-download"></i> Exportar respaldo JSON</button>
+          <button type="button" id="btn-backup-import" class="btn outline"><i class="fas fa-upload"></i> Restaurar respaldo JSON</button>
+          <input type="file" id="backup-import-file" class="hidden" accept=".json,application/json">
+        </div>
+        <div class="backup-files-card">
+          <div class="backup-files-head">
+            <strong>Backups automáticos detectados</strong>
+            <div class="backup-files-tools">
+              <button type="button" id="btn-backup-create-now" class="btn small outline"><i class="fas fa-plus"></i> Crear ahora</button>
+              <button type="button" id="btn-backup-files-refresh" class="btn small outline"><i class="fas fa-rotate"></i> Actualizar lista</button>
+            </div>
+          </div>
+          <p id="backup-files-policy" class="hint" style="margin:0 0 0.5rem 0;"></p>
+          <div id="backup-files-list" class="backup-files-list"></div>
+        </div>
         <p class="hint">Luego verás todo en Cotizaciones, Incidentes y Bitácora.</p>
       </div>
     </section>
@@ -488,6 +532,6 @@
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="js/config.js?v=1"></script>
-  <script src="js/app.js?v=11"></script>
+  <script src="js/app.js?v=19"></script>
 </body>
 </html>

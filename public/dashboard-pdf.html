@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reporte Ejecutivo - Gestor Administrativo</title>
+  <style>
+    :root { --p:#1e3a5f; --a:#0d9488; }
+    body { font-family: "Segoe UI", Arial, sans-serif; margin: 0; color: #0f172a; background: #f8fafc; }
+    .container { max-width: 1060px; margin: 0 auto; padding: 24px; }
+    .cover {
+      border-radius: 16px;
+      overflow: hidden;
+      color: #fff;
+      background: linear-gradient(135deg, var(--p), #1d4ed8 60%, var(--a));
+      box-shadow: 0 14px 42px rgba(15, 23, 42, 0.24);
+      margin-bottom: 16px;
+    }
+    .cover-inner { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 20px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand img { width: 48px; height: 48px; border-radius: 10px; background: rgba(255,255,255,0.2); padding: 4px; }
+    h1 { margin: 0 0 6px; font-size: 28px; }
+    .subtitle { margin: 0; opacity: 0.9; font-size: 14px; }
+    .meta-box { background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.35); border-radius: 12px; padding: 10px 12px; font-size: 13px; min-width: 230px; }
+    .no-print { margin-bottom: 12px; border: none; border-radius: 10px; background: #0f172a; color: #fff; padding: 9px 14px; cursor: pointer; }
+    .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .card { border: 1px solid #dbeafe; border-radius: 12px; padding: 14px; background: linear-gradient(135deg, #eff6ff, #ffffff); }
+    .card h3 { margin: 0 0 6px; font-size: 12px; color: #1d4ed8; text-transform: uppercase; letter-spacing: .05em; }
+    .value { font-size: 24px; font-weight: 700; color: #0f172a; }
+    .section { margin-top: 16px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; padding: 12px; }
+    .section h2 { font-size: 16px; margin: 0 0 8px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #e2e8f0; padding: 8px; font-size: 12px; text-align: left; }
+    th { background: #f8fafc; }
+    .notes { margin-top: 10px; color: #475569; font-size: 12px; }
+    @media print {
+      .no-print { display: none; }
+      body { background: #fff; }
+      .container { padding: 0; max-width: none; }
+      .cover { box-shadow: none; margin-bottom: 10mm; }
+      .section { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button class="no-print" onclick="window.print()">Imprimir / Guardar PDF</button>
+    <section class="cover">
+      <div class="cover-inner">
+        <div class="brand">
+          <img id="cover-logo" src="/favicon.svg" alt="Logo">
+          <div>
+            <h1 id="cover-title">Gestor Administrativo</h1>
+            <p class="subtitle" id="cover-tagline">Reporte ejecutivo para dirección general</p>
+          </div>
+        </div>
+        <div class="meta-box">
+          <div><strong>Documento:</strong> Resumen ejecutivo</div>
+          <div id="updated-at"><strong>Actualizado:</strong> Cargando...</div>
+        </div>
+      </div>
+    </section>
+    <div class="grid" id="kpi-grid"></div>
+    <div class="section">
+      <h2>Desglose por módulo</h2>
+      <table>
+        <thead><tr><th>Módulo</th><th>Registros</th><th>Participación</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <p class="notes" id="report-notes"></p>
+    </div>
+  </div>
+  <script>
+    const API = '/api';
+    function fmtMoney(n){ return (Number(n)||0).toLocaleString('es-MX',{style:'currency',currency:'MXN'}); }
+    function fmtPct(n){ return (Number(n)||0).toLocaleString('es-MX',{maximumFractionDigits:1}) + '%'; }
+    function authHeaders() {
+      try {
+        const token = localStorage.getItem('auth-token');
+        if (token) return { Authorization: 'Bearer ' + token };
+      } catch (_) {}
+      return {};
+    }
+    function getJson(url) {
+      return fetch(url, { headers: authHeaders() }).then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      });
+    }
+    async function loadConfig() {
+      try {
+        const c = await getJson(API + '/config');
+        if (c.primaryHex) document.documentElement.style.setProperty('--p', c.primaryHex);
+        if (c.accentHex) document.documentElement.style.setProperty('--a', c.accentHex);
+        if (c.logoUrl) document.getElementById('cover-logo').src = c.logoUrl;
+        document.getElementById('cover-title').textContent = c.shortName || c.appName || 'Gestor Administrativo';
+        if (c.tagline) document.getElementById('cover-tagline').textContent = c.tagline;
+      } catch (_) {}
+    }
+    (async function run(){
+      try {
+        await loadConfig();
+        const [clientes, refacciones, maquinas, cotizaciones, incidentes, bitacoras] = await Promise.all([
+          getJson(API + '/clientes'),
+          getJson(API + '/refacciones'),
+          getJson(API + '/maquinas'),
+          getJson(API + '/cotizaciones'),
+          getJson(API + '/incidentes'),
+          getJson(API + '/bitacoras')
+        ]);
+        const montoCot = (cotizaciones || []).reduce((s,c)=>s + (Number(c.total)||0), 0);
+        const horas = (bitacoras || []).reduce((s,b)=>s + (Number(b.tiempo_horas)||0), 0);
+        document.getElementById('updated-at').innerHTML = '<strong>Actualizado:</strong> ' + new Date().toLocaleString('es-MX');
+        document.getElementById('kpi-grid').innerHTML = [
+          ['Clientes', (clientes || []).length],
+          ['Máquinas', (maquinas || []).length],
+          ['Incidentes', (incidentes || []).length],
+          ['Cotizaciones', (cotizaciones || []).length],
+          ['Monto cotizado', fmtMoney(montoCot)],
+          ['Horas registradas', horas.toFixed(1)]
+        ].map(([k,v]) => `<div class="card"><h3>${k}</h3><div class="value">${v}</div></div>`).join('');
+        const modules = [
+          ['Clientes', (clientes || []).length],
+          ['Refacciones', (refacciones || []).length],
+          ['Máquinas', (maquinas || []).length],
+          ['Cotizaciones', (cotizaciones || []).length],
+          ['Incidentes', (incidentes || []).length],
+          ['Bitácoras', (bitacoras || []).length]
+        ];
+        const total = modules.reduce((s, r) => s + r[1], 0);
+        document.getElementById('rows').innerHTML = modules.map(function (r) {
+          const pct = total ? (r[1] * 100 / total) : 0;
+          return `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${fmtPct(pct)}</td></tr>`;
+        }).join('');
+        const abiertos = (incidentes || []).filter(i => String(i.estatus || '').toLowerCase() === 'abierto').length;
+        document.getElementById('report-notes').textContent = 'Hallazgos clave: ' + abiertos + ' incidente(s) abiertos, ' + (cotizaciones || []).length + ' cotización(es) totales y ' + horas.toFixed(1) + ' horas registradas.';
+      } catch (e) {
+        document.getElementById('updated-at').innerHTML = '<strong>Actualizado:</strong> No se pudo generar el reporte.';
+      }
+    })();
+  </script>
+</body>
+</html>

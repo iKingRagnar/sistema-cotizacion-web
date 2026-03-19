@@ -932,6 +932,267 @@ app.get('/api/seed-status', async (req, res) => {
   }
 });
 
+const BACKUP_TABLES = [
+  'clientes',
+  'refacciones',
+  'maquinas',
+  'cotizaciones',
+  'cotizacion_lineas',
+  'incidentes',
+  'bitacoras',
+  'mantenimientos',
+  'tecnicos',
+  'app_users',
+  'audit_log',
+];
+const BACKUP_AUTO_ENABLED = process.env.BACKUP_AUTO_ENABLED !== '0' && process.env.BACKUP_AUTO_ENABLED !== 'false';
+const BACKUP_AUTO_INTERVAL_MS = Math.max(1, parseInt(process.env.BACKUP_AUTO_INTERVAL_HOURS || '24', 10)) * 60 * 60 * 1000;
+const BACKUP_AUTO_MAX_FILES = Math.max(1, parseInt(process.env.BACKUP_AUTO_MAX_FILES || '14', 10));
+const BACKUP_AUTO_MAX_AGE_DAYS = Math.max(0, parseInt(process.env.BACKUP_AUTO_MAX_AGE_DAYS || '30', 10));
+let backupAutoTimer = null;
+
+function requireAdminIfAuth(req, res) {
+  if (!auth.AUTH_ENABLED) return true;
+  if (!req.authUser) {
+    res.status(401).json({ error: 'No autorizado. Inicia sesión.' });
+    return false;
+  }
+  if (req.authUser.role !== 'admin') {
+    res.status(403).json({ error: 'Solo el administrador puede ejecutar respaldos.' });
+    return false;
+  }
+  return true;
+}
+
+function getBackupDir() {
+  const custom = (process.env.BACKUP_AUTO_DIR || '').trim();
+  if (custom) return path.isAbsolute(custom) ? custom : path.join(__dirname, custom);
+  const storage = db.getStorageInfo ? db.getStorageInfo() : null;
+  if (storage && storage.mode === 'sqlite' && storage.path) {
+    return path.join(path.dirname(storage.path), 'backups');
+  }
+  return path.join(__dirname, 'data', 'backups');
+}
+
+async function buildBackupPayload() {
+  const payload = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    storage: db.getStorageInfo ? db.getStorageInfo() : { mode: db.useTurso ? 'turso' : 'sqlite', path: null },
+    data: {},
+  };
+  for (const t of BACKUP_TABLES) {
+    payload.data[t] = await db.getAll(`SELECT * FROM ${t} ORDER BY id ASC`);
+  }
+  return payload;
+}
+
+async function writeAutoBackupFile() {
+  const dir = getBackupDir();
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const stamp = now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + '-' + pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
+  const filename = `microsip-auto-backup-${stamp}.json`;
+  const finalPath = path.join(dir, filename);
+  const tmpPath = finalPath + '.tmp';
+  const payload = await buildBackupPayload();
+  fs.writeFileSync(tmpPath, JSON.stringify(payload, null, 2), 'utf8');
+  fs.renameSync(tmpPath, finalPath);
+  // Retención por antigüedad.
+  if (BACKUP_AUTO_MAX_AGE_DAYS > 0) {
+    const maxAgeMs = BACKUP_AUTO_MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+    const nowTs = Date.now();
+    for (const f of fs.readdirSync(dir).filter(x => /^microsip-auto-backup-\d{8}-\d{6}\.json$/i.test(x))) {
+      const full = path.join(dir, f);
+      try {
+        const st = fs.statSync(full);
+        if (nowTs - st.mtimeMs > maxAgeMs) fs.unlinkSync(full);
+      } catch (_) {}
+    }
+  }
+  // Retención simple por cantidad.
+  const files = fs.readdirSync(dir)
+    .filter(f => /^microsip-auto-backup-\d{8}-\d{6}\.json$/i.test(f))
+    .sort();
+  const extra = Math.max(0, files.length - BACKUP_AUTO_MAX_FILES);
+  for (let i = 0; i < extra; i++) {
+    try { fs.unlinkSync(path.join(dir, files[i])); } catch (_) {}
+  }
+  return finalPath;
+}
+
+function startAutoBackupScheduler() {
+  if (!BACKUP_AUTO_ENABLED) {
+    console.log('[backup-auto] Desactivado por BACKUP_AUTO_ENABLED=0');
+    return;
+  }
+  const run = async () => {
+    try {
+      const saved = await writeAutoBackupFile();
+      console.log('[backup-auto] Respaldo creado:', saved);
+    } catch (e) {
+      console.error('[backup-auto] Error al crear respaldo:', e && e.message ? e.message : e);
+    }
+  };
+  // Primer respaldo al arrancar para tener punto de recuperación inmediato.
+  run();
+  if (backupAutoTimer) clearInterval(backupAutoTimer);
+  backupAutoTimer = setInterval(run, BACKUP_AUTO_INTERVAL_MS);
+}
+
+app.get('/api/backup/export', async (req, res) => {
+  try {
+    if (!requireAdminIfAuth(req, res)) return;
+    const payload = await buildBackupPayload();
+    res.json(payload);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.post('/api/backup/import', async (req, res) => {
+  try {
+    if (!requireAdminIfAuth(req, res)) return;
+    const backup = req.body && req.body.backup;
+    if (!backup || typeof backup !== 'object' || !backup.data || typeof backup.data !== 'object') {
+      return res.status(400).json({ error: 'Respaldo inválido. Debe contener { backup: { data: ... } }' });
+    }
+    const data = backup.data;
+    if (!db.useTurso) {
+      await db.runQuery('PRAGMA foreign_keys = OFF');
+      await db.runQuery('PRAGMA wal_checkpoint(FULL)');
+    }
+    await db.runQuery('BEGIN');
+    try {
+      // Orden para respetar dependencias al limpiar e insertar.
+      const deleteOrder = ['cotizacion_lineas', 'bitacoras', 'incidentes', 'cotizaciones', 'mantenimientos', 'maquinas', 'refacciones', 'clientes', 'tecnicos', 'audit_log', 'app_users'];
+      for (const t of deleteOrder) {
+        await db.runQuery(`DELETE FROM ${t}`);
+      }
+      const insertOrder = ['clientes', 'refacciones', 'maquinas', 'cotizaciones', 'cotizacion_lineas', 'incidentes', 'bitacoras', 'mantenimientos', 'tecnicos', 'app_users', 'audit_log'];
+      const counts = {};
+      for (const t of insertOrder) {
+        const rows = Array.isArray(data[t]) ? data[t] : [];
+        if (!rows.length) {
+          counts[t] = 0;
+          continue;
+        }
+        const colsInfo = await db.getAll(`PRAGMA table_info(${t})`);
+        const validCols = (colsInfo || []).map(c => c.name);
+        let inserted = 0;
+        for (const row of rows) {
+          if (!row || typeof row !== 'object') continue;
+          const cols = validCols.filter(c => Object.prototype.hasOwnProperty.call(row, c));
+          if (!cols.length) continue;
+          const placeholders = cols.map(() => '?').join(',');
+          const values = cols.map(c => row[c]);
+          await db.runQuery(`INSERT INTO ${t} (${cols.join(',')}) VALUES (${placeholders})`, values);
+          inserted++;
+        }
+        counts[t] = inserted;
+      }
+      await db.runQuery('COMMIT');
+      if (!db.useTurso) {
+        await db.runQuery('PRAGMA wal_checkpoint(TRUNCATE)');
+        await db.runQuery('PRAGMA foreign_keys = ON');
+      }
+      res.json({ ok: true, importedAt: new Date().toISOString(), counts });
+    } catch (inner) {
+      try { await db.runQuery('ROLLBACK'); } catch (_) {}
+      if (!db.useTurso) {
+        try { await db.runQuery('PRAGMA foreign_keys = ON'); } catch (_) {}
+      }
+      throw inner;
+    }
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.get('/api/backup/files', async (req, res) => {
+  try {
+    if (!requireAdminIfAuth(req, res)) return;
+    const dir = getBackupDir();
+    if (!fs.existsSync(dir)) return res.json({ dir, files: [] });
+    const files = fs.readdirSync(dir)
+      .filter(f => /^microsip-auto-backup-\d{8}-\d{6}\.json$/i.test(f))
+      .map(f => {
+        const full = path.join(dir, f);
+        const st = fs.statSync(full);
+        return {
+          name: f,
+          sizeBytes: st.size,
+          modifiedAt: st.mtime.toISOString(),
+        };
+      })
+      .sort((a, b) => String(b.name).localeCompare(String(a.name)));
+    res.json({
+      dir,
+      policy: {
+        enabled: BACKUP_AUTO_ENABLED,
+        intervalHours: Math.round(BACKUP_AUTO_INTERVAL_MS / (60 * 60 * 1000)),
+        maxFiles: BACKUP_AUTO_MAX_FILES,
+        maxAgeDays: BACKUP_AUTO_MAX_AGE_DAYS,
+      },
+      files,
+    });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.get('/api/backup/file', async (req, res) => {
+  try {
+    if (!requireAdminIfAuth(req, res)) return;
+    const name = String(req.query.name || '').trim();
+    if (!/^[a-zA-Z0-9._-]+\.json$/.test(name)) {
+      return res.status(400).json({ error: 'Nombre de archivo inválido.' });
+    }
+    const full = path.join(getBackupDir(), name);
+    const base = path.basename(full);
+    if (base !== name) return res.status(400).json({ error: 'Ruta inválida.' });
+    if (!fs.existsSync(full)) return res.status(404).json({ error: 'Archivo no encontrado.' });
+    const raw = fs.readFileSync(full, 'utf8');
+    let payload = null;
+    try { payload = JSON.parse(raw); } catch (_) {}
+    if (!payload || typeof payload !== 'object') {
+      return res.status(400).json({ error: 'El archivo no contiene un respaldo válido.' });
+    }
+    res.json({ name, backup: payload });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.post('/api/backup/create-now', async (req, res) => {
+  try {
+    if (!requireAdminIfAuth(req, res)) return;
+    const saved = await writeAutoBackupFile();
+    res.json({ ok: true, file: path.basename(saved), fullPath: saved, createdAt: new Date().toISOString() });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.delete('/api/backup/file', async (req, res) => {
+  try {
+    if (!requireAdminIfAuth(req, res)) return;
+    const name = String((req.body && req.body.name) || '').trim();
+    if (!/^[a-zA-Z0-9._-]+\.json$/.test(name)) {
+      return res.status(400).json({ error: 'Nombre de archivo inválido.' });
+    }
+    const full = path.join(getBackupDir(), name);
+    const base = path.basename(full);
+    if (base !== name) return res.status(400).json({ error: 'Ruta inválida.' });
+    if (!fs.existsSync(full)) return res.status(404).json({ error: 'Archivo no encontrado.' });
+    fs.unlinkSync(full);
+    res.json({ ok: true, deleted: name });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
 // --- Asistente IA: solo OpenAI-compatible (Bearer). La key de Cursor (crsr_) es para el app Cursor, no para este chat.
 const AI_SYSTEM_BASE = `Eres el Agente de Soporte del Sistema de Cotización y Gestión.
 
@@ -1243,6 +1504,7 @@ app.get('*', (req, res) => {
 async function start() {
   await db.init();
   await auth.ensureSeedUsers();
+  startAutoBackupScheduler();
   app.listen(PORT, () => {
     console.log('Sistema de Cotización - En línea');
     console.log('Abre en el navegador: http://localhost:' + PORT);
@@ -1252,6 +1514,9 @@ async function start() {
       console.log('Base de datos: SQLite local');
       if (storage && storage.path) console.log('Archivo SQLite: ' + storage.path);
     }
+    console.log('[backup-auto] Intervalo (h):', Math.round(BACKUP_AUTO_INTERVAL_MS / (60 * 60 * 1000)));
+    console.log('[backup-auto] Directorio:', getBackupDir());
+    console.log('[backup-auto] Retención: max archivos =', BACKUP_AUTO_MAX_FILES, '| max días =', BACKUP_AUTO_MAX_AGE_DAYS);
   });
 }
 

@@ -10,11 +10,24 @@
   let cotizacionesCache = [];
   let incidentesCache = [];
   let bitacorasCache = [];
+  let globalBranchFilter = '';
+  const clienteCityById = {};
+  const clienteCityByName = {};
+  const notificationsFeed = [];
+  let notificationsDateFrom = '';
+  let notificationsDateTo = '';
+  let notificationsUnread = 0;
   let chartDonut = null;
   let chartBars = null;
   /** Filtro cruzado en dashboard (estilo Power BI): dimensión de módulo y/o periodo del comparativo */
   let dashboardCrossFilterEntity = null;
   let dashboardCrossFilterPeriod = null;
+  const systemStatusState = {
+    mode: '—',
+    persistence: '—',
+    registros: '—',
+    updatedAt: null,
+  };
 
   function qs(s) { return document.querySelector(s); }
   function qsAll(s) { return document.querySelectorAll(s); }
@@ -75,7 +88,7 @@
     const c = serverConfig;
     const nameEl = qs('#app-title-name');
     const tagEl = qs('#app-tagline');
-    const short = c.shortName || c.appName || 'Cotización Pro';
+    const short = c.shortName || c.appName || 'Gestor Administrativo';
     if (nameEl) nameEl.textContent = short;
     if (tagEl) tagEl.textContent = c.tagline || '';
     updateDocumentTitleFromActiveTab();
@@ -94,6 +107,167 @@
     document.documentElement.style.setProperty('--config-primary', c.primaryHex || '#1e3a5f');
     document.documentElement.style.setProperty('--config-accent', c.accentHex || '#0d9488');
   }
+
+  function updateHeaderSystemStatus() {
+    const el = qs('#header-system-status');
+    if (!el) return;
+    const bits = [];
+    bits.push('Modo: ' + systemStatusState.mode);
+    bits.push('Persistencia: ' + systemStatusState.persistence);
+    bits.push('Registros: ' + systemStatusState.registros);
+    if (systemStatusState.updatedAt) bits.push('Actualizado: ' + systemStatusState.updatedAt);
+    el.textContent = bits.join(' · ');
+  }
+
+  function getNotificationsFiltered() {
+    const from = notificationsDateFrom ? new Date(notificationsDateFrom + 'T00:00:00').getTime() : null;
+    const to = notificationsDateTo ? new Date(notificationsDateTo + 'T23:59:59').getTime() : null;
+    return notificationsFeed.filter(function (n) {
+      const ts = Number(n.ts || 0);
+      if (!ts) return !from && !to;
+      if (from && ts < from) return false;
+      if (to && ts > to) return false;
+      return true;
+    });
+  }
+
+  function renderNotificationsPanel() {
+    const list = qs('#notifications-list');
+    if (!list) return;
+    const rows = getNotificationsFiltered();
+    if (!rows.length) {
+      list.innerHTML = '<div class="notification-item">Sin notificaciones recientes.</div>';
+      return;
+    }
+    list.innerHTML = rows.map(function (n) {
+      const level = n.level === 'error' ? 'error' : (n.level === 'success' ? 'success' : 'info');
+      return `<div class="notification-item level-${level}">${escapeHtml(n.text)}<span class="meta">${escapeHtml(n.meta)}</span></div>`;
+    }).join('');
+  }
+
+  function updateNotificationsBadge() {
+    const badge = qs('#notifications-badge');
+    if (!badge) return;
+    if (!notificationsUnread) {
+      badge.classList.add('hidden');
+      badge.textContent = '0';
+      return;
+    }
+    badge.classList.remove('hidden');
+    badge.textContent = notificationsUnread > 99 ? '99+' : String(notificationsUnread);
+  }
+
+  function markNotificationsRead() {
+    notificationsUnread = 0;
+    updateNotificationsBadge();
+  }
+
+  function pushNotification(text, meta, level) {
+    notificationsFeed.unshift({
+      text: String(text || ''),
+      meta: meta || new Date().toLocaleString('es-MX'),
+      level: level || 'info',
+      ts: Date.now(),
+    });
+    while (notificationsFeed.length > 40) notificationsFeed.pop();
+    renderNotificationsPanel();
+    const panel = qs('#notifications-panel');
+    const panelOpen = !!(panel && !panel.classList.contains('hidden'));
+    if (!panelOpen) notificationsUnread += 1;
+    updateNotificationsBadge();
+  }
+
+  function exportNotificationsCsv() {
+    const filtered = getNotificationsFiltered();
+    if (!filtered.length) { showToast('No hay notificaciones para exportar.', 'error'); return; }
+    const rows = [['fecha_meta', 'nivel', 'mensaje']].concat(
+      filtered.map(n => [n.meta || '', n.level || 'info', n.text || ''])
+    );
+    const csv = rows.map(r => r.map(function (v) {
+      const s = String(v == null ? '' : v);
+      if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+      return s;
+    }).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'notificaciones-' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-') + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  }
+
+  function exportNotificationsPdf() {
+    const filtered = getNotificationsFiltered();
+    if (!filtered.length) { showToast('No hay notificaciones para exportar.', 'error'); return; }
+    const title = 'Centro de notificaciones';
+    const rows = filtered.map(n => `
+      <tr>
+        <td>${escapeHtml(n.meta || '')}</td>
+        <td>${escapeHtml((n.level || 'info').toUpperCase())}</td>
+        <td>${escapeHtml(n.text || '')}</td>
+      </tr>
+    `).join('');
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title>
+      <style>body{font-family:Arial,sans-serif;margin:18px;color:#0f172a}h1{font-size:20px;margin:0 0 8px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #e2e8f0;padding:7px;font-size:12px;text-align:left}th{background:#f8fafc}</style>
+      </head><body><h1>${title}</h1><p>Generado: ${new Date().toLocaleString('es-MX')}</p><table><thead><tr><th>Fecha</th><th>Nivel</th><th>Mensaje</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+    const w = window.open('', '_blank');
+    if (!w) { showToast('Permite pop-ups para exportar PDF.', 'error'); return; }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    setTimeout(function () { try { w.print(); } catch (_) {} }, 250);
+  }
+
+  async function loadRecentAuditNotifications() {
+    try {
+      const user = getSessionUser();
+      if (!serverConfig.auditUi || !user || user.role !== 'admin') return;
+      const rows = await fetchJson(API + '/audit?limit=8');
+      (rows || []).slice(0, 5).forEach(function (r) {
+        const actor = r.user_name || r.user_username || 'usuario';
+        pushNotification((r.action || 'evento') + ' en ' + (r.entity || 'sistema') + ' por ' + actor, 'Auditoría · ' + fmtDateTimeIso(r.created_at), 'info');
+      });
+    } catch (_) {}
+  }
+
+  function rebuildClientCityMaps() {
+    Object.keys(clienteCityById).forEach(k => delete clienteCityById[k]);
+    Object.keys(clienteCityByName).forEach(k => delete clienteCityByName[k]);
+    (clientesCache || []).forEach(function (c) {
+      const city = String(c && c.ciudad || '').trim();
+      if (!city) return;
+      if (c && c.id != null) clienteCityById[String(c.id)] = city;
+      const n = String(c && c.nombre || '').trim().toLowerCase();
+      if (n) clienteCityByName[n] = city;
+    });
+  }
+
+  function updateGlobalBranchOptions() {
+    const sel = qs('#global-branch-filter');
+    if (!sel) return;
+    const cities = Array.from(new Set((clientesCache || []).map(c => String(c && c.ciudad || '').trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'es'));
+    const current = globalBranchFilter;
+    sel.innerHTML = '<option value="">Todas las sucursales</option>' + cities.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    sel.value = cities.includes(current) ? current : '';
+    globalBranchFilter = sel.value || '';
+  }
+
+  function rowCity(row) {
+    if (!row || !globalBranchFilter) return '';
+    if (row.ciudad) return String(row.ciudad || '').trim();
+    if (row.cliente_id != null && clienteCityById[String(row.cliente_id)]) return clienteCityById[String(row.cliente_id)];
+    if (row.cliente_nombre) {
+      const k = String(row.cliente_nombre).trim().toLowerCase();
+      return clienteCityByName[k] || '';
+    }
+    return '';
+  }
+
+  function applyGlobalBranchFilterRows(rows) {
+    if (!globalBranchFilter) return rows;
+    return (rows || []).filter(r => rowCity(r) === globalBranchFilter);
+  }
   function showToast(message, type) {
     type = type === 'error' ? 'error' : 'success';
     if (type === 'success' && isSoundEnabled()) playSuccessChime();
@@ -110,6 +284,7 @@
     }
     const t = setTimeout(dismiss, type === 'error' ? 6000 : 4000);
     el.addEventListener('click', function () { clearTimeout(t); dismiss(); });
+    pushNotification(message, (type === 'error' ? 'Error' : 'Éxito') + ' · ' + new Date().toLocaleString('es-MX'), type);
   }
 
   function showLoading() {
@@ -875,6 +1050,8 @@
     try {
       const data = await fetchJson(API + '/clientes');
       clientesCache = data;
+      rebuildClientCityMaps();
+      updateGlobalBranchOptions();
       applyClientesFiltersAndRender();
     } catch (e) { renderClientes([]); console.error(e); }
     finally { hideLoading(); }
@@ -1939,43 +2116,49 @@
       const incidentes = toArr(raw[4]);
       const bitacoras = toArr(raw[5]);
       const dashboardStats = raw[6] && typeof raw[6] === 'object' ? raw[6] : null;
+      const clientesCtx = applyGlobalBranchFilterRows(clientes);
+      const clienteNamesCtx = new Set(clientesCtx.map(c => String(c && c.nombre || '').trim().toLowerCase()).filter(Boolean));
+      const maquinasCtx = globalBranchFilter ? maquinas.filter(m => clienteNamesCtx.has(String(m && m.cliente_nombre || '').trim().toLowerCase())) : maquinas;
+      const cotizacionesCtx = globalBranchFilter ? cotizaciones.filter(c => clienteNamesCtx.has(String(c && c.cliente_nombre || '').trim().toLowerCase())) : cotizaciones;
+      const incidentesCtx = globalBranchFilter ? incidentes.filter(i => clienteNamesCtx.has(String(i && i.cliente_nombre || '').trim().toLowerCase())) : incidentes;
+      const bitacorasCtx = bitacoras;
       if (loading) {
         loading.classList.add('hidden');
         loading.remove();
       }
       const now = new Date();
       const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-      const ciudades = new Set(clientes.map(c => (c.ciudad || '').trim()).filter(Boolean)).size;
-      const conRfc = clientes.filter(c => (c.rfc || '').trim()).length;
+      const ciudades = new Set(clientesCtx.map(c => (c.ciudad || '').trim()).filter(Boolean)).size;
+      const conRfc = clientesCtx.filter(c => (c.rfc || '').trim()).length;
       const valorCatalogo = refacciones.reduce((s, r) => s + (Number(r.precio_unitario) || 0), 0);
       const promPrecio = refacciones.length ? valorCatalogo / refacciones.length : 0;
       const marcas = new Set(refacciones.map(r => (r.marca || '').trim()).filter(Boolean)).size;
       const maqPorCliente = {};
-      maquinas.forEach(m => {
+      maquinasCtx.forEach(m => {
         const key = m.cliente_nombre || 'Sin cliente';
         maqPorCliente[key] = (maqPorCliente[key] || 0) + 1;
       });
       const topClienteMaq = Object.keys(maqPorCliente).length ? Object.entries(maqPorCliente).sort((a, b) => b[1] - a[1])[0] : null;
-      const cotTotal = cotizaciones.reduce((s, c) => s + (Number(c.total) || 0), 0);
-      const cotEsteMes = cotizaciones.filter(c => (c.fecha || '').slice(0, 7) === thisMonthStart.slice(0, 7)).length;
-      const cotRefacciones = cotizaciones.filter(c => (c.tipo || '') === 'refacciones').length;
-      const cotManoObra = cotizaciones.filter(c => (c.tipo || '') === 'mano_obra').length;
-      const incAbiertos = incidentes.filter(i => (i.estatus || '') === 'abierto').length;
-      const incEnProceso = incidentes.filter(i => (i.estatus || '') === 'en_proceso').length;
-      const incAltaCritica = incidentes.filter(i => /^(alta|critica)$/i.test(i.prioridad || '')).length;
-      const incCerrados = incidentes.filter(i => (i.estatus || '') === 'cerrado').length;
-      const bitHoras = bitacoras.reduce((s, b) => s + (Number(b.tiempo_horas) || 0), 0);
-      const tecnicos = new Set(bitacoras.map(b => (b.tecnico || '').trim()).filter(Boolean)).size;
-      const bitEsteMes = bitacoras.filter(b => (b.fecha || '').slice(0, 7) === thisMonthStart.slice(0, 7)).length;
-      const incTotal = incidentes.length;
+      const cotTotal = cotizacionesCtx.reduce((s, c) => s + (Number(c.total) || 0), 0);
+      const cotEsteMes = cotizacionesCtx.filter(c => (c.fecha || '').slice(0, 7) === thisMonthStart.slice(0, 7)).length;
+      const cotRefacciones = cotizacionesCtx.filter(c => (c.tipo || '') === 'refacciones').length;
+      const cotManoObra = cotizacionesCtx.filter(c => (c.tipo || '') === 'mano_obra').length;
+      const incAbiertos = incidentesCtx.filter(i => (i.estatus || '') === 'abierto').length;
+      const incEnProceso = incidentesCtx.filter(i => (i.estatus || '') === 'en_proceso').length;
+      const incAltaCritica = incidentesCtx.filter(i => /^(alta|critica)$/i.test(i.prioridad || '')).length;
+      const incCerrados = incidentesCtx.filter(i => (i.estatus || '') === 'cerrado').length;
+      const bitHoras = bitacorasCtx.reduce((s, b) => s + (Number(b.tiempo_horas) || 0), 0);
+      const tecnicos = new Set(bitacorasCtx.map(b => (b.tecnico || '').trim()).filter(Boolean)).size;
+      const bitEsteMes = bitacorasCtx.filter(b => (b.fecha || '').slice(0, 7) === thisMonthStart.slice(0, 7)).length;
+      const incTotal = incidentesCtx.length;
       const incProgress = incTotal ? Math.round((incCerrados / incTotal) * 100) : 0;
-      const cotMontoMes = cotizaciones
+      const cotMontoMes = cotizacionesCtx
         .filter(c => (c.fecha || '').slice(0, 7) === thisMonthStart.slice(0, 7))
         .reduce((s, c) => s + (Number(c.total) || 0), 0);
-      const bitHorasMes = bitacoras
+      const bitHorasMes = bitacorasCtx
         .filter(b => (b.fecha || '').slice(0, 7) === thisMonthStart.slice(0, 7))
         .reduce((s, b) => s + (Number(b.tiempo_horas) || 0), 0);
-      const incUrgentesAbiertos = incidentes.filter(i => {
+      const incUrgentesAbiertos = incidentesCtx.filter(i => {
         const est = String(i.estatus || '').toLowerCase();
         if (est === 'cerrado') return false;
         return /^(alta|critica)$/i.test(String(i.prioridad || ''));
@@ -1995,7 +2178,7 @@
           <span class="dashboard-score-eyebrow">Cartera / pipeline</span>
           <span class="dashboard-score-label">Valor total cotizaciones</span>
           <strong class="dashboard-score-value">${escapeHtml(formatMoney(cotTotal))}</strong>
-          <span class="dashboard-score-meta"><i class="fas fa-layer-group"></i> ${escapeHtml(String(cotizaciones.length))} documentos en sistema</span>
+          <span class="dashboard-score-meta"><i class="fas fa-layer-group"></i> ${escapeHtml(String(cotizacionesCtx.length))} documentos en sistema</span>
         </article>
         <article class="dashboard-score-tile dashboard-score-tile--risk" data-crossfilter-entity="incidentes" title="Clic: filtrar vista por incidentes">
           <span class="dashboard-score-eyebrow">Riesgo operativo</span>
@@ -2013,7 +2196,7 @@
       grid.appendChild(execEl);
 
       const resumenKpi = [
-        { label: 'Clientes', value: clientes.length, icon: 'fa-users', cf: 'clientes' },
+        { label: 'Clientes', value: clientesCtx.length, icon: 'fa-users', cf: 'clientes' },
         { label: 'Cotizaciones (monto)', value: formatMoney(cotTotal), icon: 'fa-file-invoice-dollar', cf: 'cotizaciones' },
         { label: 'Incidentes abiertos', value: incAbiertos, icon: 'fa-exclamation-triangle', cf: 'incidentes' },
         { label: 'Horas en bitácora', value: bitHoras.toFixed(1) + ' h', icon: 'fa-clock', cf: 'bitacoras' },
@@ -2024,12 +2207,12 @@
       kpiEl.innerHTML = resumenKpi.map(k => `<span class="dashboard-kpi-item" data-crossfilter-entity="${escapeHtml(k.cf)}" title="Clic: filtrar por ${escapeHtml(crossfilterEntityLabel(k.cf))}"><i class="fas ${k.icon}"></i> <strong>${escapeHtml(String(k.value))}</strong> ${escapeHtml(k.label)}</span>`).join('');
       grid.appendChild(kpiEl);
       const cards = [
-        { id: 'clientes', icon: 'fa-users', title: 'Clientes', goto: 'clientes', rows: [{ label: 'Total', value: clientes.length, v: 'neutral' }, { label: 'Ciudades', value: ciudades, v: 'neutral' }, { label: 'Con RFC', value: conRfc, v: 'positive' }] },
+        { id: 'clientes', icon: 'fa-users', title: 'Clientes', goto: 'clientes', rows: [{ label: 'Total', value: clientesCtx.length, v: 'neutral' }, { label: 'Ciudades', value: ciudades, v: 'neutral' }, { label: 'Con RFC', value: conRfc, v: 'positive' }] },
         { id: 'refacciones', icon: 'fa-cogs', title: 'Refacciones', goto: 'refacciones', rows: [{ label: 'Total', value: refacciones.length, v: 'neutral' }, { label: 'Valor catálogo', value: formatMoney(valorCatalogo), v: 'positive' }, { label: 'Precio promedio', value: formatMoney(promPrecio), v: 'neutral' }, { label: 'Marcas', value: marcas, v: 'neutral' }] },
         { id: 'maquinas', icon: 'fa-industry', title: 'Máquinas', goto: 'maquinas', rows: [{ label: 'Total', value: maquinas.length, v: 'neutral' }, { label: 'Clientes con equipo', value: Object.keys(maqPorCliente).length, v: 'neutral' }, topClienteMaq ? { label: 'Top cliente', value: topClienteMaq[0] + ' (' + topClienteMaq[1] + ')', v: 'neutral', long: true } : null].filter(Boolean) },
-        { id: 'cotizaciones', icon: 'fa-file-invoice-dollar', title: 'Cotizaciones', goto: 'cotizaciones', rows: [{ label: 'Total', value: cotizaciones.length, v: 'neutral' }, { label: 'Monto total', value: formatMoney(cotTotal), v: 'positive' }, { label: 'Este mes', value: cotEsteMes, v: 'positive' }, { label: 'Refacciones / Mano obra', value: cotRefacciones + ' / ' + cotManoObra, v: 'neutral' }] },
+        { id: 'cotizaciones', icon: 'fa-file-invoice-dollar', title: 'Cotizaciones', goto: 'cotizaciones', rows: [{ label: 'Total', value: cotizacionesCtx.length, v: 'neutral' }, { label: 'Monto total', value: formatMoney(cotTotal), v: 'positive' }, { label: 'Este mes', value: cotEsteMes, v: 'positive' }, { label: 'Refacciones / Mano obra', value: cotRefacciones + ' / ' + cotManoObra, v: 'neutral' }] },
         { id: 'incidentes', icon: 'fa-exclamation-triangle', title: 'Incidentes', goto: 'incidentes', progress: incProgress, rows: [{ label: 'Total', value: incTotal, v: 'neutral' }, { label: 'Abiertos', value: incAbiertos, v: incAbiertos > 0 ? 'alert' : 'neutral' }, { label: 'En proceso', value: incEnProceso, v: 'neutral' }, { label: 'Alta/Crítica', value: incAltaCritica, v: incAltaCritica > 0 ? 'alert' : 'neutral' }, { label: 'Cerrados', value: incCerrados, v: 'positive' }] },
-        { id: 'bitacoras', icon: 'fa-clock', title: 'Bitácora de horas', goto: 'bitacoras', rows: [{ label: 'Registros', value: bitacoras.length, v: 'neutral' }, { label: 'Horas totales', value: bitHoras.toFixed(1), v: 'positive' }, { label: 'Técnicos', value: tecnicos, v: 'neutral' }, { label: 'Este mes', value: bitEsteMes, v: 'positive' }] },
+        { id: 'bitacoras', icon: 'fa-clock', title: 'Bitácora de horas', goto: 'bitacoras', rows: [{ label: 'Registros', value: bitacorasCtx.length, v: 'neutral' }, { label: 'Horas totales', value: bitHoras.toFixed(1), v: 'positive' }, { label: 'Técnicos', value: tecnicos, v: 'neutral' }, { label: 'Este mes', value: bitEsteMes, v: 'positive' }] },
       ];
       cards.forEach((card) => {
         const el = document.createElement('div');
@@ -2153,9 +2336,9 @@
             chartBars.destroy();
             chartBars = null;
           }
-          const nCot = cotizaciones.length;
-          const nInc = incidentes.length;
-          const nBit = bitacoras.length;
+          const nCot = cotizacionesCtx.length;
+          const nInc = incidentesCtx.length;
+          const nBit = bitacorasCtx.length;
           const donutCtx = document.getElementById('chart-donut');
           if (donutCtx && (nCot + nInc + nBit > 0)) {
             chartDonut = new Chart(donutCtx, {
@@ -2245,10 +2428,16 @@
       const st = await fetchJson(API + '/seed-status');
       el.innerHTML = `Actualmente: <strong>${st.clientes}</strong> clientes, <strong>${st.refacciones}</strong> refacciones, <strong>${st.maquinas}</strong> máquinas, <strong>${st.cotizaciones || 0}</strong> cotizaciones, <strong>${st.incidentes || 0}</strong> incidentes, <strong>${st.bitacoras || 0}</strong> bitácoras.`;
       const now = new Date();
+      const totalReg = Number(st.clientes || 0) + Number(st.refacciones || 0) + Number(st.maquinas || 0) + Number(st.cotizaciones || 0) + Number(st.incidentes || 0) + Number(st.bitacoras || 0);
+      systemStatusState.registros = totalReg;
+      systemStatusState.updatedAt = formatLastUpdate(now);
+      updateHeaderSystemStatus();
       if (lastEl) lastEl.textContent = 'Última actualización: ' + formatLastUpdate(now);
       if (isAutoRefresh) showToast('Datos actualizados automáticamente (cada 12 h).', 'success');
     } catch (e) {
       el.textContent = 'No se pudo conectar con el servidor.';
+      systemStatusState.registros = 'sin conexión';
+      updateHeaderSystemStatus();
       if (lastEl) lastEl.textContent = '';
     }
   }
@@ -2275,16 +2464,231 @@
       }
       if (st && st.mode === 'sqlite' && st.path) {
         detail.textContent = 'SQLite: ' + st.path;
+        systemStatusState.mode = 'SQLite';
       } else if (st && st.mode === 'turso') {
         detail.textContent = 'Modo Turso (base de datos en nube).';
+        systemStatusState.mode = 'Turso';
       } else {
         detail.textContent = st && st.details ? st.details : 'No se pudo determinar el estado de persistencia.';
+        systemStatusState.mode = 'desconocido';
       }
+      systemStatusState.persistence = pill.textContent.replace('Persistencia: ', '');
+      updateHeaderSystemStatus();
     } catch (_) {
       pill.classList.remove('status-pill-neutral', 'status-pill-ok', 'status-pill-warn');
       pill.classList.add('status-pill-bad');
       pill.textContent = 'Persistencia: sin conexión';
       detail.textContent = 'No fue posible consultar /api/storage-health.';
+      systemStatusState.mode = 'sin conexión';
+      systemStatusState.persistence = 'sin conexión';
+      updateHeaderSystemStatus();
+    }
+  }
+
+  function downloadJsonFile(filename, obj) {
+    const text = JSON.stringify(obj, null, 2);
+    const blob = new Blob([text], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () {
+      URL.revokeObjectURL(url);
+      a.remove();
+    }, 400);
+  }
+
+  async function exportBackupJson() {
+    const btn = qs('#btn-backup-export');
+    if (btn) { btn.disabled = true; btn.textContent = 'Generando respaldo…'; }
+    try {
+      const data = await fetchJson(API + '/backup/export');
+      const d = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const ts = d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + '-' + pad(d.getHours()) + pad(d.getMinutes());
+      const file = 'microsip-backup-' + ts + '.json';
+      downloadJsonFile(file, data);
+      try { localStorage.setItem(BACKUP_REMINDER_KEY, String(Date.now())); } catch (_) {}
+      showToast('Respaldo exportado correctamente.', 'success');
+    } catch (e) {
+      showToast(parseApiError(e) || 'No se pudo exportar el respaldo.', 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Exportar respaldo JSON'; }
+    }
+  }
+
+  async function importBackupJsonFromFile(file) {
+    if (!file) return;
+    const txt = await file.text();
+    let parsed;
+    try {
+      parsed = JSON.parse(txt);
+    } catch (_) {
+      throw new Error('El archivo no es un JSON válido.');
+    }
+    const ok = window.confirm('Esto reemplazará TODOS los datos actuales por los del respaldo. ¿Deseas continuar?');
+    if (!ok) return;
+    await fetchJson(API + '/backup/import', {
+      method: 'POST',
+      body: JSON.stringify({ backup: parsed }),
+    });
+    await loadSeedStatus();
+    await loadStorageHealth();
+    await loadDashboard();
+    await loadClientes();
+    await loadRefacciones();
+    await loadMaquinas();
+    await loadCotizaciones();
+    await loadIncidentes();
+    await loadBitacoras();
+    fillClientesSelect();
+    showToast('Respaldo restaurado correctamente.', 'success');
+  }
+
+  function formatBytes(n) {
+    const v = Number(n) || 0;
+    if (v < 1024) return v + ' B';
+    if (v < 1024 * 1024) return (v / 1024).toFixed(1) + ' KB';
+    return (v / (1024 * 1024)).toFixed(2) + ' MB';
+  }
+
+  function fmtDateTimeIso(iso) {
+    if (!iso) return '—';
+    try {
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return '—';
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    } catch (_) {
+      return '—';
+    }
+  }
+
+  async function downloadBackupByName(name) {
+    const res = await fetchJson(API + '/backup/file?name=' + encodeURIComponent(name));
+    if (!res || !res.backup) throw new Error('No se pudo cargar el respaldo seleccionado.');
+    downloadJsonFile(name, res.backup);
+    showToast('Backup descargado: ' + name, 'success');
+  }
+
+  async function restoreBackupByName(name) {
+    const res = await fetchJson(API + '/backup/file?name=' + encodeURIComponent(name));
+    if (!res || !res.backup) throw new Error('No se pudo cargar el respaldo seleccionado.');
+    const ok = window.confirm('Se restaurará el backup ' + name + ' y se reemplazarán todos los datos actuales. ¿Continuar?');
+    if (!ok) return;
+    await fetchJson(API + '/backup/import', {
+      method: 'POST',
+      body: JSON.stringify({ backup: res.backup }),
+    });
+    await loadSeedStatus();
+    await loadStorageHealth();
+    await loadDashboard();
+    await loadClientes();
+    await loadRefacciones();
+    await loadMaquinas();
+    await loadCotizaciones();
+    await loadIncidentes();
+    await loadBitacoras();
+    fillClientesSelect();
+    showToast('Backup restaurado desde lista automática.', 'success');
+  }
+
+  async function deleteBackupByName(name) {
+    const ok = window.confirm('¿Eliminar este backup del servidor?\n' + name);
+    if (!ok) return;
+    await fetchJson(API + '/backup/file', {
+      method: 'DELETE',
+      body: JSON.stringify({ name }),
+    });
+    showToast('Backup eliminado: ' + name, 'success');
+  }
+
+  async function createBackupNow() {
+    const btn = qs('#btn-backup-create-now');
+    if (btn) { btn.disabled = true; btn.textContent = 'Creando…'; }
+    try {
+      const r = await fetchJson(API + '/backup/create-now', { method: 'POST' });
+      showToast('Backup creado: ' + (r.file || 'ok'), 'success');
+      await loadBackupFilesList();
+    } catch (e) {
+      showToast(parseApiError(e) || 'No se pudo crear el backup.', 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-plus"></i> Crear ahora'; }
+    }
+  }
+
+  async function loadBackupFilesList() {
+    const box = qs('#backup-files-list');
+    const policyEl = qs('#backup-files-policy');
+    if (!box) return;
+    box.innerHTML = '<div class="backup-file-empty">Cargando backups…</div>';
+    try {
+      const data = await fetchJson(API + '/backup/files');
+      const files = Array.isArray(data && data.files) ? data.files : [];
+      if (policyEl) {
+        const p = data && data.policy ? data.policy : null;
+        if (p) {
+          policyEl.textContent = `Política activa: cada ${p.intervalHours}h · máximo ${p.maxFiles} archivos · antigüedad máxima ${p.maxAgeDays} días`;
+        } else {
+          policyEl.textContent = '';
+        }
+      }
+      if (!files.length) {
+        box.innerHTML = '<div class="backup-file-empty">Aún no hay backups automáticos en el servidor.</div>';
+        return;
+      }
+      box.innerHTML = files.map(function (f) {
+        return `
+          <div class="backup-file-row" data-backup-name="${escapeHtml(f.name)}">
+            <div>
+              <span class="backup-file-name">${escapeHtml(f.name)}</span>
+              <small class="backup-file-meta">${escapeHtml(fmtDateTimeIso(f.modifiedAt))} · ${escapeHtml(formatBytes(f.sizeBytes))}</small>
+            </div>
+            <div class="backup-file-actions">
+              <button type="button" class="btn small outline btn-backup-download" data-name="${escapeHtml(f.name)}"><i class="fas fa-download"></i> Descargar</button>
+              <button type="button" class="btn small outline btn-backup-restore" data-name="${escapeHtml(f.name)}"><i class="fas fa-clock-rotate-left"></i> Restaurar</button>
+              <button type="button" class="btn small outline btn-backup-danger btn-backup-delete" data-name="${escapeHtml(f.name)}"><i class="fas fa-trash"></i> Borrar</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      box.querySelectorAll('.btn-backup-download').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+          const name = btn.dataset.name;
+          if (!name) return;
+          btn.disabled = true;
+          try { await downloadBackupByName(name); } catch (e) { showToast(parseApiError(e) || 'No se pudo descargar el backup.', 'error'); }
+          btn.disabled = false;
+        });
+      });
+      box.querySelectorAll('.btn-backup-restore').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+          const name = btn.dataset.name;
+          if (!name) return;
+          btn.disabled = true;
+          try { await restoreBackupByName(name); } catch (e) { showToast(parseApiError(e) || 'No se pudo restaurar el backup.', 'error'); }
+          btn.disabled = false;
+        });
+      });
+      box.querySelectorAll('.btn-backup-delete').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+          const name = btn.dataset.name;
+          if (!name) return;
+          btn.disabled = true;
+          try {
+            await deleteBackupByName(name);
+            await loadBackupFilesList();
+          } catch (e) {
+            showToast(parseApiError(e) || 'No se pudo borrar el backup.', 'error');
+          }
+          btn.disabled = false;
+        });
+      });
+    } catch (e) {
+      box.innerHTML = '<div class="backup-file-empty">No se pudo consultar la lista de backups automáticos.</div>';
+      showToast(parseApiError(e) || 'No se pudo cargar la lista de backups.', 'error');
     }
   }
 
@@ -2343,7 +2747,7 @@
   function applyClientesFiltersAndRender() {
     const tid = 'tabla-clientes';
     const q = (qs('#buscar-clientes') && qs('#buscar-clientes').value || '').trim();
-    let filtered = applyFilters(clientesCache, getFilterValues('#tabla-clientes'), tid);
+    let filtered = applyFilters(applyGlobalBranchFilterRows(clientesCache), getFilterValues('#tabla-clientes'), tid);
     if (q) filtered = filtered.filter(c => [c.nombre, c.codigo, c.rfc].some(v => normalizeForSearch(v).includes(normalizeForSearch(q))));
     const pageSize = getPageSize(tid);
     let page = getPaginationState(tid);
@@ -2368,7 +2772,7 @@
   }
   function applyMaquinasFiltersAndRender() {
     const tid = 'tabla-maquinas';
-    const filtered = applyFilters(maquinasCache, getFilterValues('#tabla-maquinas'), tid);
+    const filtered = applyFilters(applyGlobalBranchFilterRows(maquinasCache), getFilterValues('#tabla-maquinas'), tid);
     const pageSize = getPageSize(tid);
     let page = getPaginationState(tid);
     const maxPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
@@ -2379,7 +2783,7 @@
   }
   function applyCotizacionesFiltersAndRender() {
     const tid = 'tabla-cotizaciones';
-    const filtered = applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), tid);
+    const filtered = applyFilters(applyGlobalBranchFilterRows(cotizacionesCache), getFilterValues('#tabla-cotizaciones'), tid);
     const pageSize = getPageSize(tid);
     let page = getPaginationState(tid);
     const maxPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
@@ -2390,7 +2794,7 @@
   }
   function applyIncidentesFiltersAndRender() {
     const tid = 'tabla-incidentes';
-    const filtered = applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), tid);
+    const filtered = applyFilters(applyGlobalBranchFilterRows(incidentesCache), getFilterValues('#tabla-incidentes'), tid);
     const pageSize = getPageSize(tid);
     let page = getPaginationState(tid);
     const maxPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
@@ -2401,7 +2805,7 @@
   }
   function applyBitacorasFiltersAndRender() {
     const tid = 'tabla-bitacoras';
-    const filtered = applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), tid);
+    const filtered = applyFilters(applyGlobalBranchFilterRows(bitacorasCache), getFilterValues('#tabla-bitacoras'), tid);
     const pageSize = getPageSize(tid);
     let page = getPaginationState(tid);
     const maxPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
@@ -2423,8 +2827,23 @@
   bindTableFilters('tabla-bitacoras', applyBitacorasFiltersAndRender);
   const dashboardRefresh = qs('#dashboard-refresh');
   if (dashboardRefresh) dashboardRefresh.addEventListener('click', () => loadDashboard());
+  const dashboardGoBackups = qs('#dashboard-go-backups');
+  if (dashboardGoBackups) dashboardGoBackups.addEventListener('click', () => showPanel('demo'));
+  const dashboardGoExecutivePdf = qs('#dashboard-go-executive-pdf');
+  if (dashboardGoExecutivePdf) dashboardGoExecutivePdf.addEventListener('click', () => window.open('/dashboard-pdf.html', '_blank'));
   const btnPrintPdf = qs('#btn-print-pdf');
   if (btnPrintPdf) btnPrintPdf.addEventListener('click', () => window.print());
+  const branchSel = qs('#global-branch-filter');
+  if (branchSel) {
+    try { globalBranchFilter = localStorage.getItem('global-branch-filter') || ''; } catch (_) {}
+    branchSel.value = globalBranchFilter;
+    branchSel.addEventListener('change', function () {
+      globalBranchFilter = branchSel.value || '';
+      try { localStorage.setItem('global-branch-filter', globalBranchFilter); } catch (_) {}
+      refreshActivePanelData({ silent: true });
+      showToast(globalBranchFilter ? ('Filtro global aplicado: ' + globalBranchFilter) : 'Filtro global limpiado', 'success');
+    });
+  }
   qs('#nuevo-cliente').addEventListener('click', () => openModalCliente(null));
   qs('#nueva-refaccion').addEventListener('click', () => openModalRefaccion(null));
   qs('#nueva-maquina').addEventListener('click', () => openModalMaquina(null));
@@ -2566,6 +2985,41 @@
   }
 
   /** Primera visita: tips rápidos (se guarda al cerrar el modal) */
+  function startGuidedTour() {
+    const steps = [
+      { panel: 'dashboards', title: 'Dashboard ejecutivo', text: 'Aquí ves KPIs, scorecards, comparativos y gráficas. Puedes cruzar filtros con clics como en BI.' },
+      { panel: 'clientes', title: 'Catálogo de clientes', text: 'Registra clientes, RFC, ciudad y contacto. La ciudad alimenta el filtro global por sucursal.' },
+      { panel: 'cotizaciones', title: 'Cotizaciones', text: 'Crea y exporta cotizaciones. Desde aquí también puedes imprimir PDF para cliente.' },
+      { panel: 'incidentes', title: 'Incidentes y SLA', text: 'Controla incidentes, prioridad, vencimiento y estatus operativo.' },
+      { panel: 'bitacoras', title: 'Bitácora de horas', text: 'Registra actividades y horas por incidente/cotización para trazabilidad.' },
+      { panel: 'demo', title: 'Respaldos y persistencia', text: 'Aquí gestionas estado de persistencia, backups manuales y automáticos.' },
+    ];
+    let idx = 0;
+    function draw() {
+      const s = steps[idx];
+      showPanel(s.panel, { skipLoad: false });
+      const html = `
+        <div class="onboarding-welcome">
+          <p class="onboarding-lead">${escapeHtml(s.title)}</p>
+          <p>${escapeHtml(s.text)}</p>
+          <p class="hint" style="margin-top:0.8rem;">Paso ${idx + 1} de ${steps.length}</p>
+          <div class="form-actions" style="margin-top:1rem;">
+            <button type="button" class="btn" id="tour-prev" ${idx === 0 ? 'disabled' : ''}>Anterior</button>
+            <button type="button" class="btn primary" id="tour-next">${idx === steps.length - 1 ? 'Finalizar tour' : 'Siguiente'}</button>
+          </div>
+        </div>`;
+      const closeFn = openModal('Tour guiado', html);
+      const prev = qs('#tour-prev');
+      const next = qs('#tour-next');
+      if (prev) prev.addEventListener('click', function () { if (idx > 0) { idx--; closeFn(); draw(); } });
+      if (next) next.addEventListener('click', function () {
+        if (idx >= steps.length - 1) { closeFn(); showToast('Tour finalizado. Puedes repetirlo desde el ícono de ruta.', 'success'); return; }
+        idx++; closeFn(); draw();
+      });
+    }
+    draw();
+  }
+
   function initOnboarding() {
     try { if (localStorage.getItem('cotizacion-onboarding-v1')) return; } catch (_) { return; }
     setTimeout(function () {
@@ -2633,13 +3087,19 @@
       const clientItems = (clientesCache || []).filter(c => !qn || (c.nombre || '').toLowerCase().includes(qn) || (c.codigo || '').toLowerCase().includes(qn)).slice(0, 5).map(c => ({ type: 'cliente', id: c.id, label: c.nombre, meta: c.codigo, icon: 'fa-user' }));
       const cotItems = (cotizacionesCache || []).filter(c => !qn || (c.folio || '').toLowerCase().includes(qn)).slice(0, 5).map(c => ({ type: 'cotizacion', id: c.id, label: c.folio, meta: c.cliente_nombre, icon: 'fa-file-invoice' }));
       const incItems = (incidentesCache || []).filter(i => !qn || (i.folio || '').toLowerCase().includes(qn)).slice(0, 5).map(i => ({ type: 'incidente', id: i.id, label: i.folio, meta: i.cliente_nombre, icon: 'fa-exclamation-triangle' }));
-      const all = [...sectionItems, ...clientItems, ...cotItems, ...incItems];
+      const refItems = (refaccionesCache || []).filter(r => !qn || (r.codigo || '').toLowerCase().includes(qn) || (r.descripcion || '').toLowerCase().includes(qn)).slice(0, 5).map(r => ({ type: 'refaccion', id: r.id, label: r.codigo || 'Refacción', meta: r.descripcion, icon: 'fa-cog' }));
+      const maqItems = (maquinasCache || []).filter(m => !qn || (m.nombre || '').toLowerCase().includes(qn) || (m.cliente_nombre || '').toLowerCase().includes(qn)).slice(0, 5).map(m => ({ type: 'maquina', id: m.id, label: m.nombre, meta: m.cliente_nombre, icon: 'fa-industry' }));
+      const bitItems = (bitacorasCache || []).filter(b => !qn || (b.tecnico || '').toLowerCase().includes(qn) || (b.incidente_folio || '').toLowerCase().includes(qn)).slice(0, 5).map(b => ({ type: 'bitacora', id: b.id, label: b.incidente_folio || ('Bitácora #' + b.id), meta: b.tecnico, icon: 'fa-clock' }));
+      const all = [...sectionItems, ...clientItems, ...cotItems, ...incItems, ...refItems, ...maqItems, ...bitItems];
       results.innerHTML = all.length ? all.map((it, idx) => {
         const meta = it.meta ? `<span class="command-palette-item-meta">${escapeHtml(it.meta)}</span>` : '';
         if (it.type === 'section') return `<button type="button" class="command-palette-item" data-action="panel" data-id="${escapeHtml(it.id)}"><i class="fas ${it.icon}"></i> ${escapeHtml(it.label)}</button>`;
         if (it.type === 'cliente') return `<button type="button" class="command-palette-item" data-action="edit-cliente" data-id="${it.id}"><i class="fas ${it.icon}"></i> ${escapeHtml(it.label)} ${meta}</button>`;
         if (it.type === 'cotizacion') return `<button type="button" class="command-palette-item" data-action="edit-cotizacion" data-id="${it.id}"><i class="fas ${it.icon}"></i> ${escapeHtml(it.label)} ${meta}</button>`;
         if (it.type === 'incidente') return `<button type="button" class="command-palette-item" data-action="edit-incidente" data-id="${it.id}"><i class="fas ${it.icon}"></i> ${escapeHtml(it.label)} ${meta}</button>`;
+        if (it.type === 'refaccion') return `<button type="button" class="command-palette-item" data-action="edit-refaccion" data-id="${it.id}"><i class="fas ${it.icon}"></i> ${escapeHtml(it.label)} ${meta}</button>`;
+        if (it.type === 'maquina') return `<button type="button" class="command-palette-item" data-action="edit-maquina" data-id="${it.id}"><i class="fas ${it.icon}"></i> ${escapeHtml(it.label)} ${meta}</button>`;
+        if (it.type === 'bitacora') return `<button type="button" class="command-palette-item" data-action="edit-bitacora" data-id="${it.id}"><i class="fas ${it.icon}"></i> ${escapeHtml(it.label)} ${meta}</button>`;
         return '';
       }).join('') : '<p style="padding:1rem;color:#64748b;">Sin resultados</p>';
       results.querySelectorAll('.command-palette-item').forEach(btn => {
@@ -2651,12 +3111,21 @@
           if (action === 'edit-cliente' && id) { showPanel('clientes'); setTimeout(() => openModalCliente(clientesCache.find(c => c.id == id)), 100); }
           if (action === 'edit-cotizacion' && id) { showPanel('cotizaciones'); setTimeout(() => editCotizacion(id), 100); }
           if (action === 'edit-incidente' && id) { showPanel('incidentes'); setTimeout(() => editIncidente(id), 100); }
+          if (action === 'edit-refaccion' && id) { showPanel('refacciones'); setTimeout(() => openModalRefaccion(refaccionesCache.find(r => r.id == id)), 100); }
+          if (action === 'edit-maquina' && id) { showPanel('maquinas'); setTimeout(() => openModalMaquina(maquinasCache.find(m => m.id == id)), 100); }
+          if (action === 'edit-bitacora' && id) { showPanel('bitacoras'); setTimeout(() => editBitacora(id), 100); }
         });
       });
     }
     render('');
     input.addEventListener('input', () => render(input.value));
-    input.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') { wrap.classList.add('hidden'); } });
+    input.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Escape') { wrap.classList.add('hidden'); return; }
+      if (ev.key === 'Enter') {
+        const first = results.querySelector('.command-palette-item');
+        if (first) first.click();
+      }
+    });
     wrap.addEventListener('click', (ev) => { if (ev.target === wrap) wrap.classList.add('hidden'); });
   }
 
@@ -2676,6 +3145,52 @@
 
   const shortcutsBtn = qs('#shortcuts-btn');
   if (shortcutsBtn) shortcutsBtn.addEventListener('click', openShortcutsModal);
+  const notifBtn = qs('#btn-notifications');
+  const notifPanel = qs('#notifications-panel');
+  const notifClear = qs('#notifications-clear');
+  const notifDateFrom = qs('#notifications-date-from');
+  const notifDateTo = qs('#notifications-date-to');
+  const notifExportCsv = qs('#notifications-export-csv');
+  const notifExportPdf = qs('#notifications-export-pdf');
+  if (notifBtn && notifPanel) {
+    notifBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      notifPanel.classList.toggle('hidden');
+      renderNotificationsPanel();
+      if (!notifPanel.classList.contains('hidden')) markNotificationsRead();
+    });
+    document.addEventListener('click', function (e) {
+      if (notifPanel.classList.contains('hidden')) return;
+      if (e.target === notifBtn || notifBtn.contains(e.target)) return;
+      if (e.target === notifPanel || notifPanel.contains(e.target)) return;
+      notifPanel.classList.add('hidden');
+    });
+  }
+  if (notifClear) {
+    notifClear.addEventListener('click', function () {
+      notificationsFeed.length = 0;
+      renderNotificationsPanel();
+      markNotificationsRead();
+    });
+  }
+  if (notifDateFrom) {
+    notifDateFrom.addEventListener('change', function () {
+      notificationsDateFrom = this.value || '';
+      renderNotificationsPanel();
+    });
+  }
+  if (notifDateTo) {
+    notifDateTo.addEventListener('change', function () {
+      notificationsDateTo = this.value || '';
+      renderNotificationsPanel();
+    });
+  }
+  if (notifExportCsv) notifExportCsv.addEventListener('click', exportNotificationsCsv);
+  if (notifExportPdf) notifExportPdf.addEventListener('click', exportNotificationsPdf);
+  const tourBtn = qs('#btn-guided-tour');
+  if (tourBtn) {
+    tourBtn.addEventListener('click', function () { startGuidedTour(); });
+  }
 
   const BACKUP_REMINDER_KEY = 'cotizacion-backup-last';
   const BACKUP_REMINDER_INTERVAL = 24 * 60 * 60 * 1000;
@@ -2683,7 +3198,7 @@
     const last = parseInt(localStorage.getItem(BACKUP_REMINDER_KEY) || '0', 10);
     if (Date.now() - last < BACKUP_REMINDER_INTERVAL) return;
     localStorage.setItem(BACKUP_REMINDER_KEY, String(Date.now()));
-    showToast('Recuerda exportar tus datos (CSV/Excel en cada sección) con regularidad para no perder información.', 'success');
+    showToast('Tip: usa "Exportar respaldo JSON" en Cargar demo para guardar copia completa de la base.', 'success');
   }
 
   function requestNotificationPermissionAndMaybeNotify() {
@@ -3096,6 +3611,32 @@
   })();
 
   qs('#btn-seed-demo').addEventListener('click', seedDemo);
+  const btnBackupExport = qs('#btn-backup-export');
+  if (btnBackupExport) btnBackupExport.addEventListener('click', exportBackupJson);
+  const btnBackupImport = qs('#btn-backup-import');
+  const backupImportFile = qs('#backup-import-file');
+  const btnBackupFilesRefresh = qs('#btn-backup-files-refresh');
+  const btnBackupCreateNow = qs('#btn-backup-create-now');
+  if (btnBackupFilesRefresh) btnBackupFilesRefresh.addEventListener('click', loadBackupFilesList);
+  if (btnBackupCreateNow) btnBackupCreateNow.addEventListener('click', createBackupNow);
+  if (btnBackupImport && backupImportFile) {
+    btnBackupImport.addEventListener('click', function () { backupImportFile.click(); });
+    backupImportFile.addEventListener('change', async function () {
+      const file = this.files && this.files[0];
+      if (!file) return;
+      btnBackupImport.disabled = true;
+      btnBackupImport.textContent = 'Restaurando…';
+      try {
+        await importBackupJsonFromFile(file);
+      } catch (e) {
+        showToast(parseApiError(e) || 'No se pudo restaurar el respaldo.', 'error');
+      } finally {
+        this.value = '';
+        btnBackupImport.disabled = false;
+        btnBackupImport.textContent = 'Restaurar respaldo JSON';
+      }
+    });
+  }
   qs('#btn-seed-extra').addEventListener('click', async () => {
     const btn = qs('#btn-seed-extra');
     btn.disabled = true;
@@ -3120,6 +3661,7 @@
     btn.disabled = false;
     btn.textContent = 'Cargar solo incidentes, bitácoras y cotizaciones demo';
   });
+  loadBackupFilesList();
 
   let refreshIntervalId = null;
   function finishBoot() {
@@ -3128,12 +3670,15 @@
     syncSessionHeader();
     updateAuditTabVisibility();
     initSoundToggleButton();
+    renderNotificationsPanel();
+    updateNotificationsBadge();
     initOnboarding();
     restoreLastTabOrDefault();
     loadDashboard();
     fillClientesSelect();
     loadSeedStatus();
     loadStorageHealth();
+    loadRecentAuditNotifications();
     window.addEventListener('focus', function () {
       const now = Date.now();
       if (now - lastQuickRefreshAt < 20000) return;
