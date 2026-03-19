@@ -42,9 +42,6 @@
       max-width: 196mm;
       margin: 0 auto;
       padding: 7mm 8mm;
-      min-height: calc(297mm - 16mm);
-      display: flex;
-      flex-direction: column;
       background: #fff;
       border: 1px solid #e2e8f0;
       border-radius: 14px;
@@ -100,7 +97,11 @@
       font-size: 9.5px;
       color: #475569;
     }
-    .sign { margin-top: auto; padding-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .proposal-grid { margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .proposal-card { border: 1px solid #dbeafe; border-radius: 8px; padding: 7px; background: #f8fbff; }
+    .proposal-card h4 { margin: 0 0 4px; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: #1e3a8a; }
+    .proposal-card p { margin: 0; font-size: 9.5px; color: #475569; line-height: 1.35; }
+    .sign { margin-top: 12px; padding-top: 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
     .line { border-bottom: 1.5px solid #94a3b8; height: 14px; margin-bottom: 2px; }
     .lbl { font-size: 9px; color: #64748b; text-transform: uppercase; }
     .doc.compact { font-size: 9.3pt; line-height: 1.24; }
@@ -242,6 +243,16 @@
               <strong>Condiciones:</strong> Precios en MXN, vigencia de 30 días naturales, sujeto a disponibilidad y programación operativa.
             </div>
             ${internalBox}
+            <div class="proposal-grid">
+              <article class="proposal-card">
+                <h4>Alcance del servicio</h4>
+                <p>Incluye suministro y/o ejecución conforme al tipo de cotización seleccionado, con validación técnica previa.</p>
+              </article>
+              <article class="proposal-card">
+                <h4>Siguiente paso</h4>
+                <p>Al autorizar, programamos fecha de atención y confirmamos entregables. Tiempo estimado sujeto a disponibilidad.</p>
+              </article>
+            </div>
             <div class="sign">
               <div><div class="line"></div><div class="lbl">Firma de aceptación</div></div>
               <div><div class="line"></div><div class="lbl">Nombre y fecha</div></div>

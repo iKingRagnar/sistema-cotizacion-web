@@ -3323,14 +3323,17 @@
       const vh = window.innerHeight;
       const panelW = Math.min(560, vw - 24);
       const left = Math.max(12, Math.min(vw - panelW - 12, r.right - panelW));
-      const top = Math.min(vh - 80, r.bottom + 8);
+      const desiredTop = r.bottom + 8;
+      const panelH = Math.max(260, Math.min(520, vh - desiredTop - 12));
+      const openUp = (vh - desiredTop - 12) < 260;
+      const top = openUp ? Math.max(12, r.top - panelH - 8) : Math.min(vh - 80, desiredTop);
       notifPanel.classList.add('floating');
       notifPanel.style.left = left + 'px';
       notifPanel.style.top = top + 'px';
       notifPanel.style.width = panelW + 'px';
-      notifPanel.style.maxHeight = Math.max(260, Math.min(520, vh - top - 12)) + 'px';
+      notifPanel.style.maxHeight = panelH + 'px';
       const list = qs('#notifications-list');
-      if (list) list.style.maxHeight = Math.max(160, Math.min(430, vh - top - 86)) + 'px';
+      if (list) list.style.maxHeight = Math.max(160, panelH - 86) + 'px';
     }
     function hideNotificationsPanel() {
       notifPanel.classList.add('hidden');

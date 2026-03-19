@@ -201,18 +201,22 @@ body.dark-theme .header-branch-filter {
   color: #e2e8f0;
 }
 body.dark-theme .notifications-panel {
-  background: #1e293b;
+  background: #0f172a;
   border-color: #334155;
+  box-shadow: 0 20px 44px rgba(2, 6, 23, 0.7);
 }
 body.dark-theme .notifications-header { border-bottom-color: #334155; }
+body.dark-theme .notifications-header strong { color: #f8fafc; }
 body.dark-theme .notification-item {
   color: #e2e8f0;
   border-bottom-color: #334155;
-  background: transparent;
+  background: #111827;
 }
 body.dark-theme .notification-item .meta { color: #94a3b8; }
 body.dark-theme .notifications-badge { border-color: #1e293b; }
 body.dark-theme .notification-item.level-error { background: rgba(239, 68, 68, 0.08); }
+body.dark-theme .notification-item.level-info { background: rgba(59, 130, 246, 0.1); }
+body.dark-theme .notification-item.level-success { background: rgba(16, 185, 129, 0.1); }
 body.dark-theme .notifications-date {
   background: #0f172a;
   color: #e2e8f0;
@@ -458,7 +462,7 @@ body.dark-theme #tabla-bitacoras th.th-actions {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   box-shadow: var(--shadow-xl);
-  z-index: 10020;
+  z-index: 2147483000;
 }
 .notifications-panel.hidden { display: none !important; }
 .notifications-header {
@@ -488,6 +492,11 @@ body.dark-theme #tabla-bitacoras th.th-actions {
 .notifications-panel.floating {
   position: fixed;
   margin: 0;
+  animation: notifPanelIn .14s ease-out;
+}
+@keyframes notifPanelIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 @media (max-width: 980px) {
   .notifications-panel {
@@ -495,6 +504,8 @@ body.dark-theme #tabla-bitacoras th.th-actions {
     max-height: 68vh;
   }
   .notifications-date { min-width: 108px; }
+  .notifications-header { flex-direction: column; align-items: stretch; }
+  .notifications-tools { justify-content: flex-start; }
 }
 .notification-item {
   padding: 0.55rem 0.7rem;
