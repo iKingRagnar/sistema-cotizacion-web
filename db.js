@@ -3,6 +3,7 @@
  */
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 
 const TURSO_URL = process.env.TURSO_DATABASE_URL;
 const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN;
@@ -151,12 +152,22 @@ async function init() {
     return;
   }
   const sqlite3 = require('sqlite3').verbose();
-  const defaultDbPath = path.join(__dirname, 'data', 'cotizacion.db');
+  // Ruta por defecto fuera del proyecto para evitar reinicios por reemplazar carpetas o redeploy local.
+  const defaultDbPath = path.join(os.homedir(), '.microsip-api', 'cotizacion.db');
+  const legacyDbPath = path.join(__dirname, 'data', 'cotizacion.db');
   const resolvedDbPath = SQLITE_DB_PATH
     ? (path.isAbsolute(SQLITE_DB_PATH) ? SQLITE_DB_PATH : path.join(__dirname, SQLITE_DB_PATH))
     : defaultDbPath;
   const dir = path.dirname(resolvedDbPath);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  // Migración automática: si la nueva ruta aún no existe y hay BD en la ruta antigua, copiarla.
+  if (!fs.existsSync(resolvedDbPath) && fs.existsSync(legacyDbPath) && resolvedDbPath !== legacyDbPath) {
+    try {
+      fs.copyFileSync(legacyDbPath, resolvedDbPath);
+      if (fs.existsSync(legacyDbPath + '-wal')) fs.copyFileSync(legacyDbPath + '-wal', resolvedDbPath + '-wal');
+      if (fs.existsSync(legacyDbPath + '-shm')) fs.copyFileSync(legacyDbPath + '-shm', resolvedDbPath + '-shm');
+    } catch (_) { /* si falla la copia, continúa y crea nueva BD */ }
+  }
   db = new sqlite3.Database(resolvedDbPath);
   sqliteResolvedPath = resolvedDbPath;
   // Modo recomendado para reducir bloqueos y mejorar durabilidad entre cierres/reinicios.
