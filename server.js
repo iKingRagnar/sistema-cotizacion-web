@@ -328,15 +328,16 @@ function generarFolioIncidente() {
 
 app.post('/api/incidentes', async (req, res) => {
   try {
-    const { cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, tecnico_responsable, estatus } = req.body || {};
+    const { cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, fecha_vencimiento, tecnico_responsable, estatus } = req.body || {};
     if (!cliente_id) return res.status(400).json({ error: 'cliente_id requerido' });
     if (!descripcion || !descripcion.trim()) return res.status(400).json({ error: 'descripcion requerida' });
     const folio = generarFolioIncidente();
     const est = estatus || 'abierto';
     const fCerr = fecha_cerrado || (est === 'cerrado' ? new Date().toISOString().slice(0, 10) : null);
+    const fVenc = fecha_vencimiento && String(fecha_vencimiento).trim() ? String(fecha_vencimiento).slice(0, 10) : null;
     await db.runQuery(
-      `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [folio, cliente_id, maquina_id || null, descripcion.trim(), prioridad || 'media', fecha_reporte || new Date().toISOString().slice(0, 10), fCerr, tecnico_responsable || null, est]
+      `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, fecha_vencimiento, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [folio, cliente_id, maquina_id || null, descripcion.trim(), prioridad || 'media', fecha_reporte || new Date().toISOString().slice(0, 10), fCerr, fVenc, tecnico_responsable || null, est]
     );
     const r = await db.getOne('SELECT i.*, c.nombre as cliente_nombre, m.nombre as maquina_nombre FROM incidentes i JOIN clientes c ON c.id = i.cliente_id LEFT JOIN maquinas m ON m.id = i.maquina_id ORDER BY i.id DESC LIMIT 1');
     res.status(201).json(r);
@@ -347,14 +348,15 @@ app.post('/api/incidentes', async (req, res) => {
 
 app.put('/api/incidentes/:id', async (req, res) => {
   try {
-    const { cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, tecnico_responsable, estatus } = req.body || {};
+    const { cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, fecha_vencimiento, tecnico_responsable, estatus } = req.body || {};
     const est = estatus || 'abierto';
     let fCerr = fecha_cerrado;
     if (est === 'cerrado' && !fCerr) fCerr = new Date().toISOString().slice(0, 10);
     else if (est !== 'cerrado') fCerr = null;
+    const fVenc = fecha_vencimiento && String(fecha_vencimiento).trim() ? String(fecha_vencimiento).slice(0, 10) : null;
     await db.runQuery(
-      `UPDATE incidentes SET cliente_id=?, maquina_id=?, descripcion=?, prioridad=?, fecha_reporte=?, fecha_cerrado=?, tecnico_responsable=?, estatus=? WHERE id=?`,
-      [cliente_id || null, maquina_id || null, descripcion || '', prioridad || 'media', fecha_reporte || null, fCerr, tecnico_responsable || null, est, req.params.id]
+      `UPDATE incidentes SET cliente_id=?, maquina_id=?, descripcion=?, prioridad=?, fecha_reporte=?, fecha_cerrado=?, fecha_vencimiento=?, tecnico_responsable=?, estatus=? WHERE id=?`,
+      [cliente_id || null, maquina_id || null, descripcion || '', prioridad || 'media', fecha_reporte || null, fCerr, fVenc, tecnico_responsable || null, est, req.params.id]
     );
     const r = await db.getOne('SELECT i.*, c.nombre as cliente_nombre, m.nombre as maquina_nombre FROM incidentes i JOIN clientes c ON c.id = i.cliente_id LEFT JOIN maquinas m ON m.id = i.maquina_id WHERE i.id = ?', [req.params.id]);
     res.json(r || {});
@@ -637,8 +639,8 @@ app.post('/api/seed-demo', async (req, res) => {
         maquinaId = maquinaByClienteYNombre[clienteId + '|' + norm(maqNom)];
       }
       await db.runQuery(
-        `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [safeStr(inc.folio), clienteId, maquinaId, safeStrReq(inc.descripcion) || '-', safeStr(inc.prioridad) || 'media', (inc.fecha_reporte && String(inc.fecha_reporte).slice(0, 10)) || new Date().toISOString().slice(0, 10), inc.estatus === 'cerrado' ? (safeStr(inc.fecha_cerrado) || new Date().toISOString().slice(0, 10)) : null, safeStr(inc.tecnico_responsable), (inc.estatus && String(inc.estatus).trim()) || 'abierto']
+        `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, fecha_vencimiento, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [safeStr(inc.folio), clienteId, maquinaId, safeStrReq(inc.descripcion) || '-', safeStr(inc.prioridad) || 'media', (inc.fecha_reporte && String(inc.fecha_reporte).slice(0, 10)) || new Date().toISOString().slice(0, 10), inc.estatus === 'cerrado' ? (safeStr(inc.fecha_cerrado) || new Date().toISOString().slice(0, 10)) : null, safeStr(inc.fecha_vencimiento), safeStr(inc.tecnico_responsable), (inc.estatus && String(inc.estatus).trim()) || 'abierto']
       );
       const r = await db.getOne('SELECT id FROM incidentes ORDER BY id DESC LIMIT 1');
       if (r) { incidenteByFolio[(inc.folio || '').toUpperCase()] = r.id; incidentesCount++; }
@@ -658,9 +660,10 @@ app.post('/api/seed-demo', async (req, res) => {
         const folio = 'INC-DEMO-' + String(1000 + i);
         const diasAtras = (i % 14);
         const fechaReporte = new Date(Date.now() - diasAtras * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        const fVencDemo = new Date(Date.now() + (7 + i) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
         await db.runQuery(
-          `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [folio, cliente.id, maquinaId, descripciones[i % descripciones.length], i % 3 === 0 ? 'alta' : (i % 3 === 1 ? 'media' : 'baja'), fechaReporte, null, tecnicos[i % tecnicos.length], i % 5 === 0 ? 'cerrado' : 'abierto']
+          `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, fecha_vencimiento, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [folio, cliente.id, maquinaId, descripciones[i % descripciones.length], i % 3 === 0 ? 'alta' : (i % 3 === 1 ? 'media' : 'baja'), fechaReporte, null, fVencDemo, tecnicos[i % tecnicos.length], i % 5 === 0 ? 'cerrado' : 'abierto']
         );
         const r = await db.getOne('SELECT id FROM incidentes ORDER BY id DESC LIMIT 1');
         if (r) { incidenteByFolio[folio] = r.id; incidentesCount++; }
@@ -747,8 +750,8 @@ app.post('/api/seed-demo-extra', async (req, res) => {
       const maqNom = inc && inc.maquina_nombre;
       if (maqNom) maquinaId = maquinaByClienteYNombre[clienteId + '|' + norm(maqNom)];
       await db.runQuery(
-        `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [safeStr(inc.folio), clienteId, maquinaId, safeStrReq(inc.descripcion) || '-', safeStr(inc.prioridad) || 'media', (inc.fecha_reporte && String(inc.fecha_reporte).slice(0, 10)) || new Date().toISOString().slice(0, 10), inc.estatus === 'cerrado' ? (safeStr(inc.fecha_cerrado) || new Date().toISOString().slice(0, 10)) : null, safeStr(inc.tecnico_responsable), (inc.estatus && String(inc.estatus).trim()) || 'abierto']
+        `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, fecha_vencimiento, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [safeStr(inc.folio), clienteId, maquinaId, safeStrReq(inc.descripcion) || '-', safeStr(inc.prioridad) || 'media', (inc.fecha_reporte && String(inc.fecha_reporte).slice(0, 10)) || new Date().toISOString().slice(0, 10), inc.estatus === 'cerrado' ? (safeStr(inc.fecha_cerrado) || new Date().toISOString().slice(0, 10)) : null, safeStr(inc.fecha_vencimiento), safeStr(inc.tecnico_responsable), (inc.estatus && String(inc.estatus).trim()) || 'abierto']
       );
       const r = await db.getOne('SELECT id FROM incidentes ORDER BY id DESC LIMIT 1');
       if (r) { incidenteByFolio[(inc.folio != null ? String(inc.folio) : '').toUpperCase()] = r.id; incidentesCount++; }
@@ -764,9 +767,10 @@ app.post('/api/seed-demo-extra', async (req, res) => {
         if (maqsDelCliente.length > 0) maquinaId = maqsDelCliente[0].id;
         const folio = 'INC-EXTRA-' + String(2000 + i);
         const fechaReporte = new Date(Date.now() - (i % 7) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        const fVencExtra = new Date(Date.now() + (5 + i) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
         await db.runQuery(
-          `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [folio, cliente.id, maquinaId, descripciones[i % descripciones.length], 'media', fechaReporte, null, tecnicos[i % tecnicos.length], 'abierto']
+          `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, fecha_vencimiento, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [folio, cliente.id, maquinaId, descripciones[i % descripciones.length], 'media', fechaReporte, null, fVencExtra, tecnicos[i % tecnicos.length], 'abierto']
         );
         const r = await db.getOne('SELECT id FROM incidentes ORDER BY id DESC LIMIT 1');
         if (r) { incidenteByFolio[folio] = r.id; incidentesCount++; }

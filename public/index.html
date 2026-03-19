@@ -230,7 +230,7 @@
         <table class="data-table filterable-table" id="tabla-incidentes" data-cache="incidentesCache">
           <thead>
             <tr>
-              <th>Folio</th><th>Cliente</th><th>Máquina</th><th>Descripción</th><th>Fecha incidente</th><th>Fecha cerrado</th><th>Prioridad</th><th>Estatus</th><th>SLA</th>
+              <th>Folio</th><th>Cliente</th><th>Máquina</th><th>Descripción</th><th>Fecha incidente</th><th>Fecha cerrado</th><th>Fecha vencimiento</th><th>Días restantes</th><th>Prioridad</th><th>Estatus</th><th>SLA</th>
               <th class="th-actions">Acciones</th>
             </tr>
             <tr class="filter-row">
@@ -240,6 +240,8 @@
               <td><input type="text" class="filter-input" data-key="descripcion" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="fecha_reporte" data-type="text" placeholder="aaaa-mm-dd"></td>
               <td><input type="text" class="filter-input" data-key="fecha_cerrado" data-type="text" placeholder="aaaa-mm-dd"></td>
+              <td><input type="text" class="filter-input" data-key="fecha_vencimiento" data-type="text" placeholder="aaaa-mm-dd"></td>
+              <td><span data-key="dias_restantes" class="filter-input" style="display:inline-block;min-height:1px;padding:0;border:none;width:100%" aria-hidden="true"></span></td>
               <td><input type="text" class="filter-input" data-key="prioridad" data-type="text" placeholder="baja|media|alta"></td>
               <td><input type="text" class="filter-input" data-key="estatus" data-type="text" placeholder="abierto|cerrado"></td>
               <td><span data-key="sla_estado" class="filter-input" style="display:inline-block;min-height:1px;padding:0;border:none;width:100%" aria-hidden="true"></span></td>

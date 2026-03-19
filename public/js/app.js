@@ -308,6 +308,22 @@
     const b = to instanceof Date ? to : new Date(to);
     return Math.floor((b - a) / (24 * 60 * 60 * 1000));
   }
+  /** Días restantes hasta fecha_vencimiento: verde = bien, amarillo = poco tiempo, rojo = vencido. */
+  function getDiasRestantesSemaphore(inc) {
+    const fVenc = (inc.fecha_vencimiento || '').toString().trim().slice(0, 10);
+    if (!fVenc) return { color: 'gray', label: '—', dias: null };
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const venc = parseDate(fVenc);
+    if (!venc) return { color: 'gray', label: '—', dias: null };
+    const dias = Math.ceil((venc - hoy) / (24 * 60 * 60 * 1000));
+    if (dias < 0) return { color: 'red', label: 'Vencido hace ' + Math.abs(dias) + ' día(s)', dias };
+    if (dias === 0) return { color: 'red', label: 'Vence hoy', dias: 0 };
+    if (dias <= 3) return { color: 'red', label: dias + ' día(s)', dias };
+    if (dias <= 7) return { color: 'yellow', label: dias + ' día(s)', dias };
+    return { color: 'green', label: dias + ' día(s)', dias };
+  }
+
   function getSlaSemaphore(inc) {
     const priority = (inc.prioridad || 'media').toLowerCase();
     const targetDays = SLA_DAYS_BY_PRIORITY[priority] ?? 5;
@@ -754,7 +770,7 @@
     tbody.innerHTML = '';
     if (!hayRegistros) return;
     if (!hayFilasVisibles) {
-      tbody.innerHTML = '<tr><td colspan="10" class="empty filter-empty"><span>No hay resultados con los filtros aplicados.</span> <button type="button" class="btn small primary clear-filters-inline">Quitar filtros</button></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="12" class="empty filter-empty"><span>No hay resultados con los filtros aplicados.</span> <button type="button" class="btn small primary clear-filters-inline">Quitar filtros</button></td></tr>';
       const btn = tbody.querySelector('.clear-filters-inline');
       if (btn) btn.addEventListener('click', () => clearTableFiltersAndRefresh('tabla-incidentes', null, applyIncidentesFiltersAndRender));
       updateTableFooter('tabla-incidentes', 0, incidentesCache.length, () => clearTableFiltersAndRefresh('tabla-incidentes', null, applyIncidentesFiltersAndRender));
@@ -762,7 +778,9 @@
     }
     list.forEach(i => {
       const sla = getSlaSemaphore(i);
+      const diasRest = getDiasRestantesSemaphore(i);
       const desc = String(i.descripcion || '');
+      const fVenc = (i.fecha_vencimiento || '').toString().slice(0, 10) || '—';
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${escapeHtml(String(i.folio || ''))}</td>
@@ -771,6 +789,8 @@
         <td>${escapeHtml(desc.length > 45 ? desc.slice(0, 45) + '…' : desc)}</td>
         <td>${(i.fecha_reporte || '').toString().slice(0, 10) || '—'}</td>
         <td>${(i.fecha_cerrado || '').toString().slice(0, 10) || '—'}</td>
+        <td>${escapeHtml(fVenc)}</td>
+        <td class="sla-cell"><span class="semaforo semaforo-${diasRest.color}" title="${escapeHtml(diasRest.label)}">${diasRest.dias !== null ? '<i class="fas fa-clock"></i> ' : ''}${escapeHtml(diasRest.label)}</span></td>
         <td>${escapeHtml(String(i.prioridad || ''))}</td>
         <td>${escapeHtml(String(i.estatus || ''))}</td>
         <td class="sla-cell"><span class="semaforo semaforo-${sla.color}" title="${escapeHtml(sla.label)}"><i class="fas ${sla.icon}"></i> ${escapeHtml(sla.label)}</span></td>
@@ -1240,6 +1260,7 @@
         <div class="form-group"><label>Estatus</label><select id="m-estatus"><option value="abierto" ${!inc || inc.estatus === 'abierto' ? 'selected' : ''}>Abierto</option><option value="en_proceso" ${inc && inc.estatus === 'en_proceso' ? 'selected' : ''}>En proceso</option><option value="cerrado" ${inc && inc.estatus === 'cerrado' ? 'selected' : ''}>Cerrado</option><option value="cancelado" ${inc && inc.estatus === 'cancelado' ? 'selected' : ''}>Cancelado</option></select></div>
         <div class="form-group"><label>Fecha incidente *</label><input type="date" id="m-fecha_reporte" value="${inc && inc.fecha_reporte ? inc.fecha_reporte.slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
         <div class="form-group"><label>Fecha cerrado</label><input type="date" id="m-fecha_cerrado" value="${inc && inc.fecha_cerrado ? inc.fecha_cerrado.slice(0, 10) : ''}"></div>
+        <div class="form-group"><label>Fecha vencimiento</label><input type="date" id="m-fecha_vencimiento" value="${inc && inc.fecha_vencimiento ? inc.fecha_vencimiento.slice(0, 10) : ''}" title="Fecha límite para resolver"></div>
       </div>
       <div class="form-group"><label>Técnico responsable</label><input type="text" id="m-tecnico" maxlength="100" value="${escapeHtml(inc && inc.tecnico_responsable) || ''}"></div>
       <div class="form-actions">
@@ -1257,6 +1278,7 @@
       err = validateRequired(fechaReporte, 'La fecha de reporte es obligatoria');
       if (err) { markInvalid('m-fecha_reporte', err); return; }
       const fechaCerr = qs('#m-fecha_cerrado').value || null;
+      const fechaVenc = qs('#m-fecha_vencimiento').value || null;
       const payload = {
         cliente_id: parseInt(qs('#m-cliente_id').value, 10),
         maquina_id: qs('#m-maquina_id').value ? parseInt(qs('#m-maquina_id').value, 10) : null,
@@ -1265,6 +1287,7 @@
         estatus: qs('#m-estatus').value,
         fecha_reporte: fechaReporte,
         fecha_cerrado: fechaCerr,
+        fecha_vencimiento: fechaVenc,
         tecnico_responsable: qs('#m-tecnico').value.trim() || null,
       };
       const btn = qs('#m-save');
@@ -1886,7 +1909,9 @@
       u.onerror = () => {};
       window.speechSynthesis.speak(u);
     }
-    function startVoiceInput() {
+    let voiceRetryCount = 0;
+    const VOICE_MAX_RETRY = 1;
+    function startVoiceInput(isRetry) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
         showToast('Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.', 'error');
@@ -1896,25 +1921,31 @@
         showToast('El reconocimiento de voz solo funciona en HTTPS o en localhost. Abre la app desde https:// o desde http://localhost.', 'error');
         return;
       }
-      showToast('Escuchando… Habla ahora (ej: "Abre cotización para [cliente]").', 'success');
+      if (isRetry) {
+        showToast('Escuchando de nuevo… Habla ahora.', 'success');
+      } else {
+        showToast('Escuchando… Di tu mensaje en los próximos segundos.', 'success');
+      }
       const rec = new SpeechRecognition();
-      rec.continuous = false;
+      rec.continuous = true;
       rec.interimResults = true;
       rec.lang = 'es-MX';
       rec.maxAlternatives = 3;
       if (voiceBtn) voiceBtn.classList.add('recording');
       let spokenText = '';
-      let gotAnyResult = false;
       rec.onresult = function (e) {
         for (let i = e.resultIndex; i < e.results.length; i++) {
           const result = e.results[i];
           const t = result[0] && result[0].transcript;
-          if (t) gotAnyResult = true;
-          if (result.isFinal && t) spokenText += t;
+          if (result.isFinal && t) {
+            spokenText += t;
+            try { rec.stop(); } catch (_) {}
+          }
         }
       };
       rec.onend = function () {
         if (voiceBtn) voiceBtn.classList.remove('recording');
+        voiceRetryCount = 0;
         const txt = spokenText.trim();
         if (txt) {
           inputEl.value = (inputEl.value.trim() ? inputEl.value + ' ' : '') + txt;
@@ -1924,11 +1955,20 @@
       rec.onerror = function (e) {
         if (voiceBtn) voiceBtn.classList.remove('recording');
         if (e.error === 'aborted') return;
+        if (e.error === 'no-speech' && !isRetry && voiceRetryCount < VOICE_MAX_RETRY) {
+          voiceRetryCount++;
+          showToast('No se detectó voz. Reintentando en 1 segundo… habla cuando veas "Escuchando de nuevo".', 'success');
+          setTimeout(function () { startVoiceInput(true); }, 1000);
+          return;
+        }
+        if (e.error === 'no-speech') {
+          showToast('No se detectó voz. Pulsa el micrófono, espera a ver "Escuchando…" y habla en seguida.', 'error');
+          voiceRetryCount = 0;
+          return;
+        }
         let msg = 'No se pudo reconocer la voz. Intenta de nuevo.';
         if (e.error === 'not-allowed') {
           msg = 'Permiso de micrófono denegado. Haz clic en el candado o ícono de la barra de direcciones y permite el micrófono para este sitio.';
-        } else if (e.error === 'no-speech') {
-          msg = 'No se detectó voz. Pulsa el micrófono de nuevo y habla justo después.';
         } else if (e.error === 'network') {
           msg = 'El reconocimiento de voz requiere internet. Revisa tu conexión.';
         } else if (e.error === 'audio-capture') {
@@ -1940,13 +1980,16 @@
         }
         try { console.warn('SpeechRecognition error:', e.error, e.message || ''); } catch (_) {}
         showToast(msg, 'error');
+        voiceRetryCount = 0;
       };
-      try {
-        rec.start();
-      } catch (err) {
-        if (voiceBtn) voiceBtn.classList.remove('recording');
-        showToast('No se pudo iniciar el micrófono. Comprueba los permisos del sitio.', 'error');
-      }
+      setTimeout(function () {
+        try {
+          rec.start();
+        } catch (err) {
+          if (voiceBtn) voiceBtn.classList.remove('recording');
+          showToast('No se pudo iniciar el micrófono. Comprueba los permisos del sitio.', 'error');
+        }
+      }, 400);
     }
     async function loadWelcome() {
       try {

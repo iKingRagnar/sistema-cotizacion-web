@@ -79,6 +79,7 @@ function getSchema() {
       prioridad TEXT,
       fecha_reporte TEXT NOT NULL DEFAULT (date('now','localtime')),
       fecha_cerrado TEXT,
+      fecha_vencimiento TEXT,
       tecnico_responsable TEXT,
       estatus TEXT DEFAULT 'abierto',
       creado_en TEXT DEFAULT (datetime('now','localtime'))
@@ -123,6 +124,7 @@ async function init() {
     db = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
     for (const sql of getSchema()) await db.execute(sql);
     try { await db.execute('ALTER TABLE incidentes ADD COLUMN fecha_cerrado TEXT'); } catch (_) { /* columna ya existe */ }
+    try { await db.execute('ALTER TABLE incidentes ADD COLUMN fecha_vencimiento TEXT'); } catch (_) { /* columna ya existe */ }
     return;
   }
   const sqlite3 = require('sqlite3').verbose();
@@ -134,6 +136,9 @@ async function init() {
   }
   try {
     await new Promise((res, rej) => db.run('ALTER TABLE incidentes ADD COLUMN fecha_cerrado TEXT', err => (err ? rej(err) : res())));
+  } catch (_) { /* columna ya existe */ }
+  try {
+    await new Promise((res, rej) => db.run('ALTER TABLE incidentes ADD COLUMN fecha_vencimiento TEXT', err => (err ? rej(err) : res())));
   } catch (_) { /* columna ya existe */ }
   const rows = await getAll("SELECT COUNT(*) as c FROM tecnicos");
   if (rows[0] && rows[0].c === 0) {
