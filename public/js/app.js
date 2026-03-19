@@ -466,12 +466,15 @@
     const footer = qs('#footer-' + tableId);
     if (!footer) return;
     if (total === 0) { footer.innerHTML = ''; return; }
-    const hasFilters = tbl => {
+    const tbl = qs('#' + tableId);
+    const hasFilters = !tbl ? false : (() => {
       let has = false;
-      qs('#' + tbl).querySelectorAll('.filter-row .filter-input, .filter-row .filter-date-select, .filter-row .filter-date-input').forEach(inp => { if (inp.value && inp.value.trim()) has = true; });
+      try {
+        tbl.querySelectorAll('.filter-row .filter-input, .filter-row .filter-date-select, .filter-row .filter-date-input').forEach(inp => { if (inp.value && inp.value.trim()) has = true; });
+      } catch (_) {}
       return has;
-    };
-    const showClear = hasFilters(tableId);
+    })();
+    const showClear = hasFilters;
     footer.innerHTML = `<span>Mostrando <strong>${showing}</strong> de <strong>${total}</strong> registros</span>${showClear ? ' <button type="button" class="clear-filters">Limpiar filtros</button>' : ''}`;
     const clearBtn = footer.querySelector('.clear-filters');
     if (clearBtn && clearAndRefresh) clearBtn.addEventListener('click', clearAndRefresh);
@@ -1340,7 +1343,7 @@
     grid.innerHTML = '';
     grid.appendChild(loading);
     try {
-      const [clientes, refacciones, maquinas, cotizaciones, incidentes, bitacoras, dashboardStats] = await Promise.all([
+      const raw = await Promise.all([
         fetchJson(API + '/clientes').catch(() => []),
         fetchJson(API + '/refacciones').catch(() => []),
         fetchJson(API + '/maquinas').catch(() => []),
@@ -1349,40 +1352,48 @@
         fetchJson(API + '/bitacoras').catch(() => []),
         fetchJson(API + '/dashboard-stats').catch(() => null),
       ]);
+      const toArr = (x) => (x && Array.isArray(x) ? x : []);
+      const clientes = toArr(raw[0]);
+      const refacciones = toArr(raw[1]);
+      const maquinas = toArr(raw[2]);
+      const cotizaciones = toArr(raw[3]);
+      const incidentes = toArr(raw[4]);
+      const bitacoras = toArr(raw[5]);
+      const dashboardStats = raw[6] && typeof raw[6] === 'object' ? raw[6] : null;
       if (loading) loading.classList.add('hidden');
       const now = new Date();
       const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-      const ciudades = new Set((clientes || []).map(c => (c.ciudad || '').trim()).filter(Boolean)).size;
-      const conRfc = (clientes || []).filter(c => (c.rfc || '').trim()).length;
-      const valorCatalogo = (refacciones || []).reduce((s, r) => s + (Number(r.precio_unitario) || 0), 0);
-      const promPrecio = (refacciones || []).length ? valorCatalogo / refacciones.length : 0;
-      const marcas = new Set((refacciones || []).map(r => (r.marca || '').trim()).filter(Boolean)).size;
+      const ciudades = new Set(clientes.map(c => (c.ciudad || '').trim()).filter(Boolean)).size;
+      const conRfc = clientes.filter(c => (c.rfc || '').trim()).length;
+      const valorCatalogo = refacciones.reduce((s, r) => s + (Number(r.precio_unitario) || 0), 0);
+      const promPrecio = refacciones.length ? valorCatalogo / refacciones.length : 0;
+      const marcas = new Set(refacciones.map(r => (r.marca || '').trim()).filter(Boolean)).size;
       const maqPorCliente = {};
-      (maquinas || []).forEach(m => {
+      maquinas.forEach(m => {
         const key = m.cliente_nombre || 'Sin cliente';
         maqPorCliente[key] = (maqPorCliente[key] || 0) + 1;
       });
       const topClienteMaq = Object.keys(maqPorCliente).length ? Object.entries(maqPorCliente).sort((a, b) => b[1] - a[1])[0] : null;
-      const cotTotal = (cotizaciones || []).reduce((s, c) => s + (Number(c.total) || 0), 0);
-      const cotEsteMes = (cotizaciones || []).filter(c => (c.fecha || '').slice(0, 7) === thisMonthStart.slice(0, 7)).length;
-      const cotRefacciones = (cotizaciones || []).filter(c => (c.tipo || '') === 'refacciones').length;
-      const cotManoObra = (cotizaciones || []).filter(c => (c.tipo || '') === 'mano_obra').length;
-      const incAbiertos = (incidentes || []).filter(i => (i.estatus || '') === 'abierto').length;
-      const incEnProceso = (incidentes || []).filter(i => (i.estatus || '') === 'en_proceso').length;
-      const incAltaCritica = (incidentes || []).filter(i => /^(alta|critica)$/i.test(i.prioridad || '')).length;
-      const incCerrados = (incidentes || []).filter(i => (i.estatus || '') === 'cerrado').length;
-      const bitHoras = (bitacoras || []).reduce((s, b) => s + (Number(b.tiempo_horas) || 0), 0);
-      const tecnicos = new Set((bitacoras || []).map(b => (b.tecnico || '').trim()).filter(Boolean)).size;
-      const bitEsteMes = (bitacoras || []).filter(b => (b.fecha || '').slice(0, 7) === thisMonthStart.slice(0, 7)).length;
-      const incTotal = (incidentes || []).length;
+      const cotTotal = cotizaciones.reduce((s, c) => s + (Number(c.total) || 0), 0);
+      const cotEsteMes = cotizaciones.filter(c => (c.fecha || '').slice(0, 7) === thisMonthStart.slice(0, 7)).length;
+      const cotRefacciones = cotizaciones.filter(c => (c.tipo || '') === 'refacciones').length;
+      const cotManoObra = cotizaciones.filter(c => (c.tipo || '') === 'mano_obra').length;
+      const incAbiertos = incidentes.filter(i => (i.estatus || '') === 'abierto').length;
+      const incEnProceso = incidentes.filter(i => (i.estatus || '') === 'en_proceso').length;
+      const incAltaCritica = incidentes.filter(i => /^(alta|critica)$/i.test(i.prioridad || '')).length;
+      const incCerrados = incidentes.filter(i => (i.estatus || '') === 'cerrado').length;
+      const bitHoras = bitacoras.reduce((s, b) => s + (Number(b.tiempo_horas) || 0), 0);
+      const tecnicos = new Set(bitacoras.map(b => (b.tecnico || '').trim()).filter(Boolean)).size;
+      const bitEsteMes = bitacoras.filter(b => (b.fecha || '').slice(0, 7) === thisMonthStart.slice(0, 7)).length;
+      const incTotal = incidentes.length;
       const incProgress = incTotal ? Math.round((incCerrados / incTotal) * 100) : 0;
       const cards = [
-        { id: 'clientes', icon: 'fa-users', title: 'Clientes', goto: 'clientes', rows: [{ label: 'Total', value: (clientes || []).length, v: 'neutral' }, { label: 'Ciudades', value: ciudades, v: 'neutral' }, { label: 'Con RFC', value: conRfc, v: 'positive' }] },
-        { id: 'refacciones', icon: 'fa-cogs', title: 'Refacciones', goto: 'refacciones', rows: [{ label: 'Total', value: (refacciones || []).length, v: 'neutral' }, { label: 'Valor catálogo', value: formatMoney(valorCatalogo), v: 'positive' }, { label: 'Precio promedio', value: formatMoney(promPrecio), v: 'neutral' }, { label: 'Marcas', value: marcas, v: 'neutral' }] },
-        { id: 'maquinas', icon: 'fa-industry', title: 'Máquinas', goto: 'maquinas', rows: [{ label: 'Total', value: (maquinas || []).length, v: 'neutral' }, { label: 'Clientes con equipo', value: Object.keys(maqPorCliente).length, v: 'neutral' }, topClienteMaq ? { label: 'Top cliente', value: topClienteMaq[0] + ' (' + topClienteMaq[1] + ')', v: 'neutral', long: true } : null].filter(Boolean) },
-        { id: 'cotizaciones', icon: 'fa-file-invoice-dollar', title: 'Cotizaciones', goto: 'cotizaciones', rows: [{ label: 'Total', value: (cotizaciones || []).length, v: 'neutral' }, { label: 'Monto total', value: formatMoney(cotTotal), v: 'positive' }, { label: 'Este mes', value: cotEsteMes, v: 'positive' }, { label: 'Refacciones / Mano obra', value: cotRefacciones + ' / ' + cotManoObra, v: 'neutral' }] },
+        { id: 'clientes', icon: 'fa-users', title: 'Clientes', goto: 'clientes', rows: [{ label: 'Total', value: clientes.length, v: 'neutral' }, { label: 'Ciudades', value: ciudades, v: 'neutral' }, { label: 'Con RFC', value: conRfc, v: 'positive' }] },
+        { id: 'refacciones', icon: 'fa-cogs', title: 'Refacciones', goto: 'refacciones', rows: [{ label: 'Total', value: refacciones.length, v: 'neutral' }, { label: 'Valor catálogo', value: formatMoney(valorCatalogo), v: 'positive' }, { label: 'Precio promedio', value: formatMoney(promPrecio), v: 'neutral' }, { label: 'Marcas', value: marcas, v: 'neutral' }] },
+        { id: 'maquinas', icon: 'fa-industry', title: 'Máquinas', goto: 'maquinas', rows: [{ label: 'Total', value: maquinas.length, v: 'neutral' }, { label: 'Clientes con equipo', value: Object.keys(maqPorCliente).length, v: 'neutral' }, topClienteMaq ? { label: 'Top cliente', value: topClienteMaq[0] + ' (' + topClienteMaq[1] + ')', v: 'neutral', long: true } : null].filter(Boolean) },
+        { id: 'cotizaciones', icon: 'fa-file-invoice-dollar', title: 'Cotizaciones', goto: 'cotizaciones', rows: [{ label: 'Total', value: cotizaciones.length, v: 'neutral' }, { label: 'Monto total', value: formatMoney(cotTotal), v: 'positive' }, { label: 'Este mes', value: cotEsteMes, v: 'positive' }, { label: 'Refacciones / Mano obra', value: cotRefacciones + ' / ' + cotManoObra, v: 'neutral' }] },
         { id: 'incidentes', icon: 'fa-exclamation-triangle', title: 'Incidentes', goto: 'incidentes', progress: incProgress, rows: [{ label: 'Total', value: incTotal, v: 'neutral' }, { label: 'Abiertos', value: incAbiertos, v: incAbiertos > 0 ? 'alert' : 'neutral' }, { label: 'En proceso', value: incEnProceso, v: 'neutral' }, { label: 'Alta/Crítica', value: incAltaCritica, v: incAltaCritica > 0 ? 'alert' : 'neutral' }, { label: 'Cerrados', value: incCerrados, v: 'positive' }] },
-        { id: 'bitacoras', icon: 'fa-clock', title: 'Bitácora de horas', goto: 'bitacoras', rows: [{ label: 'Registros', value: (bitacoras || []).length, v: 'neutral' }, { label: 'Horas totales', value: bitHoras.toFixed(1), v: 'positive' }, { label: 'Técnicos', value: tecnicos, v: 'neutral' }, { label: 'Este mes', value: bitEsteMes, v: 'positive' }] },
+        { id: 'bitacoras', icon: 'fa-clock', title: 'Bitácora de horas', goto: 'bitacoras', rows: [{ label: 'Registros', value: bitacoras.length, v: 'neutral' }, { label: 'Horas totales', value: bitHoras.toFixed(1), v: 'positive' }, { label: 'Técnicos', value: tecnicos, v: 'neutral' }, { label: 'Este mes', value: bitEsteMes, v: 'positive' }] },
       ];
       grid.innerHTML = '';
       cards.forEach((card) => {
@@ -1410,17 +1421,20 @@
         btn.addEventListener('click', () => showPanel(btn.dataset.goto));
       });
 
-      // Usar los mismos datos ya cargados para rellenar las tablas de Cotizaciones, Incidentes y Bitácoras
-      // así se ven registros al abrir esas pestañas aunque falle una petición posterior
-      cotizacionesCache = Array.isArray(cotizaciones) ? cotizaciones : [];
-      incidentesCache = Array.isArray(incidentes) ? incidentes : [];
-      bitacorasCache = Array.isArray(bitacoras) ? bitacoras : [];
-      const filtCot = applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones');
-      const filtInc = applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes');
-      const filtBit = applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras');
-      renderCotizaciones(filtCot, cotizacionesCache.length);
-      renderIncidentes(filtInc, incidentesCache.length);
-      renderBitacoras(filtBit, bitacorasCache.length);
+      // Rellenar cachés y tablas con los datos ya cargados (si algo falla no rompemos el dashboard)
+      try {
+        cotizacionesCache = cotizaciones;
+        incidentesCache = incidentes;
+        bitacorasCache = bitacoras;
+        const filtCot = applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones');
+        const filtInc = applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes');
+        const filtBit = applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras');
+        renderCotizaciones(filtCot, cotizacionesCache.length);
+        renderIncidentes(filtInc, incidentesCache.length);
+        renderBitacoras(filtBit, bitacorasCache.length);
+      } catch (err) {
+        console.error('Dashboard prefill tablas:', err);
+      }
 
       const dashUpdateEl = qs('#dashboard-last-update');
       if (dashUpdateEl) {
@@ -1429,13 +1443,14 @@
         dashUpdateEl.textContent = 'Última actualización: ' + pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear() + ', ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
       }
 
-      // Estadísticas avanzadas: comparativo vs período anterior y pronósticos
-      const adv = qs('#dashboard-advanced');
-      const compEl = qs('#dashboard-comparativo');
-      const pronEl = qs('#dashboard-pronosticos');
-      if (adv && compEl && pronEl && dashboardStats && dashboardStats.periodos) {
-        adv.style.display = '';
-        function diffClass(current, previous) {
+      // Estadísticas avanzadas y gráficos (si algo falla no rompemos el dashboard)
+      try {
+        const adv = qs('#dashboard-advanced');
+        const compEl = qs('#dashboard-comparativo');
+        const pronEl = qs('#dashboard-pronosticos');
+        if (adv && compEl && pronEl && dashboardStats && dashboardStats.periodos) {
+          adv.style.display = '';
+          function diffClass(current, previous) {
           if (previous === 0) return current > 0 ? 'positive' : 'neutral';
           const pct = ((current - previous) / previous) * 100;
           if (pct > 0) return 'positive';
@@ -1496,9 +1511,9 @@
           chartsEl.style.display = '';
           if (chartDonut) chartDonut.destroy();
           if (chartBars) chartBars.destroy();
-          const nCot = (cotizaciones || []).length;
-          const nInc = (incidentes || []).length;
-          const nBit = (bitacoras || []).length;
+          const nCot = cotizaciones.length;
+          const nInc = incidentes.length;
+          const nBit = bitacoras.length;
           const donutCtx = document.getElementById('chart-donut');
           if (donutCtx && (nCot + nInc + nBit > 0)) {
             chartDonut = new Chart(donutCtx, {
@@ -1533,8 +1548,13 @@
         } else if (chartsEl) {
           chartsEl.style.display = 'none';
         }
-      } else if (adv) {
-        adv.style.display = 'none';
+        } else if (adv) {
+          adv.style.display = 'none';
+        }
+      } catch (errAdv) {
+        console.error('Dashboard estadísticas/gráficos:', errAdv);
+        const adv = qs('#dashboard-advanced');
+        if (adv) adv.style.display = 'none';
       }
     } catch (e) {
       if (loading) loading.classList.add('hidden');
