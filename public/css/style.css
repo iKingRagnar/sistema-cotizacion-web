@@ -2439,14 +2439,22 @@ body.dark-theme .tab.active:hover {
 }
 body.dark-theme .content { color: #e2e8f0; }
 body.dark-theme .section-header {
-  border-bottom-color: #334155;
-  background: linear-gradient(90deg, rgba(56, 189, 248, 0.1) 0%, transparent 45%) 0 100% / 100% 1px no-repeat;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 0.72rem 0.9rem;
+  background:
+    linear-gradient(180deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.98) 100%),
+    linear-gradient(90deg, rgba(56, 189, 248, 0.16) 0%, rgba(45, 212, 191, 0.1) 55%, transparent 100%);
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.42), inset 0 1px 0 rgba(148, 163, 184, 0.15);
 }
-body.dark-theme .section-header h2 { color: #f8fafc; }
+body.dark-theme .section-header h2 {
+  color: #f8fafc;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+}
 body.dark-theme .section-header h2 i {
-  color: #7dd3fc;
-  background: linear-gradient(145deg, rgba(56, 189, 248, 0.2) 0%, rgba(13, 148, 136, 0.2) 100%);
-  box-shadow: 0 1px 0 rgba(255,255,255,0.06) inset, 0 4px 16px rgba(0,0,0,0.25);
+  color: #ecfeff;
+  background: linear-gradient(145deg, rgba(14, 165, 233, 0.55) 0%, rgba(13, 148, 136, 0.58) 100%);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.1) inset, 0 6px 14px rgba(2, 6, 23, 0.35);
 }
 body.dark-theme .table-wrap {
   background: #1e293b;
@@ -2461,7 +2469,11 @@ body.dark-theme .app-footer {
   border-top-color: #334155;
   background: linear-gradient(180deg, transparent 0%, rgba(15, 23, 42, 0.95) 100%);
 }
-body.dark-theme .data-table th { background: #334155; color: #cbd5e1; }
+body.dark-theme .data-table th {
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+  color: #e2e8f0;
+  border-bottom-color: #475569;
+}
 body.dark-theme .data-table td { border-bottom-color: #334155; }
 body.dark-theme .data-table tbody tr:nth-child(even) { background: #0f172a; }
 body.dark-theme .card, body.dark-theme .empty-card { background: #1e293b; border-color: #334155; color: #e2e8f0; }
@@ -2480,6 +2492,8 @@ body.dark-theme .app-footer .footer-version { color: #cbd5e1; }
 body.dark-theme .app-footer .footer-tip { color: #64748b; }
 body.dark-theme .app-footer kbd { background: #334155; border-color: #475569; color: #cbd5e1; }
 body.dark-theme .search, body.dark-theme .filter-input { background: #0f172a; border-color: #475569; color: #e2e8f0; }
+body.dark-theme .filter-input::placeholder,
+body.dark-theme .search::placeholder { color: #94a3b8; opacity: 1; }
 body.dark-theme #panel-dashboards.panel-dashboard { background: #0f172a; }
 
 /* Tema oscuro: hovers y superficies que no deben volverse “blancas” (contraste texto/fondo) */
