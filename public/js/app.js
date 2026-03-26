@@ -2550,11 +2550,8 @@
       refaccionesCache = await fetchJson(API + '/refacciones').catch(() => []);
     }
     // Importante: en producción, `maquinasCache` puede estar filtrado por la pestaña Máquinas.
-    // Para el modal de cotización necesitamos SIEMPRE las máquinas del cliente (o todas si no hay cliente).
+    // En el modal de cotización siempre recargamos por cliente seleccionado.
     const cotClienteId = cot && cot.cliente_id ? Number(cot.cliente_id) : null;
-    const maquinasForModal = cotClienteId
-      ? await fetchJson(`${API}/maquinas?cliente_id=${encodeURIComponent(String(cotClienteId))}`).catch(() => [])
-      : (maquinasCache || []);
     const clienteOpts = clientes
       .map((c) => `<option value="${c.id}" ${cot && cot.cliente_id == c.id ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`)
       .join('');
@@ -2573,14 +2570,8 @@
       }
     })();
 
-    const maquinasFiltradas = (maquinasForModal || []).filter((m) => !cotClienteId || Number(m.cliente_id) === cotClienteId);
-    const maquinasOpts = maquinasFiltradas
-      .map((m) => {
-        const label = m.nombre || m.modelo || m.numero_serie || ('#' + m.id);
-        const sel = maqIds.includes(Number(m.id)) ? 'selected' : '';
-        return `<option value="${m.id}" ${sel}>${escapeHtml(label)}</option>`;
-      })
-      .join('');
+    // Se renderiza vacío y se llena dinámicamente tras abrir modal (para usar cliente seleccionado real).
+    const maquinasOpts = '';
 
     const body = `
       <div class="form-group"><label>Cliente *</label><select id="m-cliente_id">${clienteOpts}</select></div>
@@ -2613,9 +2604,7 @@
 
       <div class="form-group">
         <label>Máquinas (opcional)</label>
-        <select id="m-maquinas" multiple size="4">
-          ${maquinasOpts || ''}
-        </select>
+        <select id="m-maquinas" multiple size="4"></select>
       </div>
 
       <div class="form-row">
@@ -2652,7 +2641,6 @@
             <label>Máquina (opcional)</label>
             <select id="cot-line-maq">
               <option value="">— Sin máquina —</option>
-              ${(maquinasFiltradas || []).map(m => `<option value="${m.id}">${escapeHtml(m.nombre || m.modelo || m.numero_serie || ('#' + m.id))}</option>`).join('')}
             </select>
           </div>
         </div>
@@ -2675,6 +2663,9 @@
             <option value="">— Sin bitácora —</option>
           </select>
           <div class="hint">Si eliges una bitácora, se usarán sus horas y actividades como base.</div>
+          <div class="form-actions" style="margin-top:0.5rem;">
+            <button type="button" class="btn small outline" id="cot-line-new-bit"><i class="fas fa-clock"></i> Nueva bitácora</button>
+          </div>
         </div>
 
         <div class="form-row">
@@ -2779,6 +2770,40 @@
 
     let currentCotId = cotId;
     let bitacorasForCot = [];
+    let maquinasForModal = [];
+
+    function setMaquinasOptions(maqs, selectedIds) {
+      const list = Array.isArray(maqs) ? maqs : [];
+      const selIds = Array.isArray(selectedIds) ? selectedIds.map((x) => Number(x)).filter(Boolean) : [];
+      const html = list
+        .map((m) => {
+          const label = m.nombre || m.modelo || m.numero_serie || ('#' + m.id);
+          const sel = selIds.includes(Number(m.id)) ? 'selected' : '';
+          return `<option value="${m.id}" ${sel}>${escapeHtml(label)}</option>`;
+        })
+        .join('');
+      const multi = qs('#m-maquinas');
+      if (multi) multi.innerHTML = html || '';
+      const single = qs('#cot-line-maq');
+      if (single) {
+        const current = single.value;
+        single.innerHTML = '<option value="">— Sin máquina —</option>' + (html || '');
+        if (current) single.value = current;
+      }
+    }
+
+    async function refreshMaquinasForSelectedCliente(keepSelectedIds) {
+      const clienteId = Number(qs('#m-cliente_id')?.value) || null;
+      const selected = keepSelectedIds != null ? keepSelectedIds : (() => {
+        try { return getSelectedIds(qs('#m-maquinas')); } catch (_) { return []; }
+      })();
+      if (clienteId) {
+        maquinasForModal = await fetchJson(`${API}/maquinas?cliente_id=${encodeURIComponent(String(clienteId))}`).catch(() => []);
+      } else {
+        maquinasForModal = await fetchJson(`${API}/maquinas`).catch(() => []);
+      }
+      setMaquinasOptions(maquinasForModal, selected);
+    }
 
     async function refreshCotizacion() {
       if (!currentCotId) return;
@@ -2846,8 +2871,36 @@
       if (descWrap) descWrap.style.display = t === 'refaccion' ? 'none' : '';
       if (bitWrap) bitWrap.style.display = t === 'mano_obra' ? '' : 'none';
     }
-    qs('#m-open-line-panel')?.addEventListener('click', () => {
-      if (!currentCotId) return showToast('Primero guarda la cotización para poder agregar líneas.', 'warning');
+    async function ensureCotizacionExistsBeforeLines() {
+      if (currentCotId) return currentCotId;
+      // Auto-guardar header para permitir agregar líneas desde "Nueva cotización"
+      const fecha = qs('#m-fecha')?.value;
+      const clienteId = parseInt(qs('#m-cliente_id')?.value, 10);
+      if (!clienteId) { showToast('Selecciona un cliente.', 'warning'); return null; }
+      if (!fecha) { showToast('Selecciona una fecha.', 'warning'); return null; }
+      const tipo = qs('#m-tipo')?.value || 'refacciones';
+      const moneda = (qs('#m-moneda')?.value || 'MXN').toUpperCase();
+      const tc = Number(qs('#m-tc')?.value) || 17.0;
+      const maquinas_ids = getSelectedIds(qs('#m-maquinas'));
+      const payload = { cliente_id: clienteId, tipo, fecha, moneda, tipo_cambio: tc, maquinas_ids };
+      try {
+        const created = await fetchJson(`${API}/cotizaciones`, { method: 'POST', body: JSON.stringify(payload) });
+        currentCotId = Number(created && created.id) || null;
+        if (currentCotId) {
+          showToast('Cotización guardada. Ya puedes agregar líneas.', 'success');
+          await refreshCotizacion();
+          await loadBitacorasForCotizacion();
+        }
+        return currentCotId;
+      } catch (e) {
+        showToast(parseApiError(e) || 'No se pudo guardar la cotización.', 'error');
+        return null;
+      }
+    }
+
+    qs('#m-open-line-panel')?.addEventListener('click', async () => {
+      const okId = await ensureCotizacionExistsBeforeLines();
+      if (!okId) return;
       // Refrescar bitácoras cada vez que se abre (por si se crearon en otra pestaña)
       loadBitacorasForCotizacion();
       if (!lastLineDraft) lastLineDraft = buildDefaultLineDraft();
@@ -2864,6 +2917,22 @@
       const first = getFirstSelectedMaquinaId();
       if (!lastLineDraft) lastLineDraft = buildDefaultLineDraft();
       lastLineDraft.maquina_id = first;
+    });
+
+    qs('#m-cliente_id')?.addEventListener('change', async () => {
+      await refreshMaquinasForSelectedCliente([]);
+      const first = getFirstSelectedMaquinaId();
+      if (!lastLineDraft) lastLineDraft = buildDefaultLineDraft();
+      lastLineDraft.maquina_id = first;
+    });
+
+    // Cargar máquinas iniciales del cliente seleccionado
+    refreshMaquinasForSelectedCliente(maqIds);
+
+    qs('#cot-line-new-bit')?.addEventListener('click', async () => {
+      const okId = await ensureCotizacionExistsBeforeLines();
+      if (!okId) return;
+      openModalBitacora({ cotizacion_id: okId });
     });
 
     async function loadBitacorasForCotizacion() {
