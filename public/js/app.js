@@ -1241,8 +1241,9 @@
         <td class="td-text-wrap">${escapeHtml(String(c.cliente_nombre || ''))}</td>
         <td>${escapeHtml(String(c.tipo || ''))}</td>
         <td>${escapeHtml(String((c.fecha || '').toString().slice(0, 10)))}</td>
-        <td>${totalFmt}</td>
-        <td><span class="badge badge-moneda">${moneda}</span>${tcFmt ? '<small style="color:#6b7280"> @' + tcFmt + '</small>' : ''}</td>
+        <td><span class="badge badge-moneda">${moneda}</span></td>
+        <td>${tcFmt ? escapeHtml(tcFmt) : '—'}</td>
+        <td>${totalFmt || '—'}</td>
         <td><span class="semaforo ${estadoClass}">${estadoLabel}</span></td>
         <td class="sla-cell"><span class="semaforo semaforo-${vig.color}" title="${escapeHtml(vig.label)}"><i class="fas ${vig.icon}"></i> ${escapeHtml(vig.label)}</span></td>
         <td class="th-actions">
@@ -1328,22 +1329,25 @@
     if (!tbody) return;
     tbody.innerHTML = '';
     if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="9" class="empty">No hay reportes. Agrega uno nuevo.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="11" class="empty">No hay reportes. Agrega uno nuevo.</td></tr>';
       return;
     }
     data.forEach(r => {
       const tr = document.createElement('tr');
       const tipoLabel = r.tipo_reporte === 'servicio' ? 'Servicio' : r.tipo_reporte === 'venta' ? 'Venta' : (r.tipo_reporte || '');
       const subLabel = r.subtipo || '';
+      const estLabel = r.estatus || '—';
       tr.innerHTML = `
         <td>${escapeHtml(r.folio || '')}</td>
         <td>${escapeHtml(r.razon_social || r.cliente_nombre || '')}</td>
+        <td>${escapeHtml(r.maquina_nombre || '')}</td>
         <td>${escapeHtml(r.numero_maquina || '')}</td>
-        <td class="td-text-wrap">${escapeHtml(r.descripcion || '')}</td>
         <td><span class="badge badge-tipo-rep-${r.tipo_reporte || 'otro'}">${tipoLabel}</span></td>
         <td>${escapeHtml(subLabel)}</td>
+        <td class="td-text-wrap">${escapeHtml(r.descripcion || '')}</td>
         <td>${escapeHtml(r.tecnico || '')}</td>
         <td>${escapeHtml((r.fecha || '').toString().slice(0, 10))}</td>
+        <td>${escapeHtml(estLabel)}</td>
         <td class="th-actions">
           <button type="button" class="btn small primary btn-edit-rep" data-id="${r.id}"><i class="fas fa-edit"></i></button>
           <button type="button" class="btn small danger btn-del-rep" data-id="${r.id}"><i class="fas fa-trash"></i></button>
@@ -1496,14 +1500,16 @@
     }
     data.forEach(g => {
       const tr = document.createElement('tr');
+      const nMant = Array.isArray(g.mantenimientos) ? g.mantenimientos.length : 0;
+      const activa = g.activa === 1 || g.activa === true;
       tr.innerHTML = `
         <td>${escapeHtml(g.razon_social || '')}</td>
         <td>${escapeHtml(g.modelo_maquina || '')}</td>
         <td>${escapeHtml(g.numero_serie || '')}</td>
-        <td>${escapeHtml((g.fecha_entrega || '').toString().slice(0,10))}</td>
         <td>${escapeHtml(g.tipo_maquina || '')}</td>
-        <td><span class="badge badge-gar-${g.estado || 'activa'}">${g.estado || 'activa'}</span></td>
-        <td>${g.total_pagado != null ? '$' + Number(g.total_pagado).toLocaleString('es-MX', {minimumFractionDigits:2}) : '—'}</td>
+        <td>${escapeHtml((g.fecha_entrega || '').toString().slice(0,10))}</td>
+        <td><span class="badge badge-gar-mant" title="Mantenimientos registrados">${nMant}</span></td>
+        <td><span class="badge badge-gar-${activa ? 'activa' : 'cancelada'}">${activa ? 'Sí' : 'No'}</span></td>
         <td class="th-actions">
           <button type="button" class="btn small outline btn-mant-gar" data-id="${g.id}" title="Ver mantenimientos"><i class="fas fa-calendar-check"></i></button>
           <button type="button" class="btn small primary btn-edit-gar" data-id="${g.id}"><i class="fas fa-edit"></i></button>
@@ -1525,8 +1531,15 @@
 
   function openModalGarantia(garantia) {
     const isNew = !garantia || !garantia.id;
+    const clientesOpts = clientesCache.map(c => `<option value="${c.id}" ${garantia && Number(garantia.cliente_id) === Number(c.id) ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`).join('');
+    const activaVal = garantia && (garantia.activa === 0 || garantia.activa === false) ? '0' : '1';
     const body = `
-      <div class="form-group"><label>Razón social *</label><input type="text" id="m-rsocial-g" maxlength="200" value="${escapeHtml(garantia && garantia.razon_social) || ''}" required></div>
+      <div class="form-row">
+        <div class="form-group"><label>Cliente (catálogo)</label>
+          <select id="m-cliente-g"><option value="">— Sin vínculo —</option>${clientesOpts}</select>
+        </div>
+        <div class="form-group"><label>Razón social *</label><input type="text" id="m-rsocial-g" maxlength="200" value="${escapeHtml(garantia && garantia.razon_social) || ''}" required></div>
+      </div>
       <div class="form-row">
         <div class="form-group"><label>Modelo de máquina *</label><input type="text" id="m-modelo-g" maxlength="100" value="${escapeHtml(garantia && garantia.modelo_maquina) || ''}" required></div>
         <div class="form-group"><label>Tipo de máquina</label><input type="text" id="m-tipo-maq-g" maxlength="80" value="${escapeHtml(garantia && garantia.tipo_maquina) || ''}" placeholder="Fresadora, CNC…"></div>
@@ -1536,14 +1549,12 @@
         <div class="form-group"><label>Fecha de entrega *</label><input type="date" id="m-fent-g" value="${(garantia && garantia.fecha_entrega || new Date().toISOString().slice(0,10))}" required></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>Estado</label>
-          <select id="m-est-g">
-            <option value="activa" ${!garantia || garantia.estado === 'activa' ? 'selected' : ''}>Activa</option>
-            <option value="vencida" ${garantia && garantia.estado === 'vencida' ? 'selected' : ''}>Vencida</option>
-            <option value="cancelada" ${garantia && garantia.estado === 'cancelada' ? 'selected' : ''}>Cancelada</option>
+        <div class="form-group"><label>Activa</label>
+          <select id="m-activa-g">
+            <option value="1" ${activaVal === '1' ? 'selected' : ''}>Sí</option>
+            <option value="0" ${activaVal === '0' ? 'selected' : ''}>No</option>
           </select>
         </div>
-        <div class="form-group"><label>Email de contacto</label><input type="email" id="m-email-g" maxlength="150" value="${escapeHtml(garantia && garantia.email_contacto) || ''}"></div>
       </div>
       <div class="form-group"><label>Notas</label><textarea id="m-notas-g" rows="2" maxlength="500">${escapeHtml(garantia && garantia.notas) || ''}</textarea></div>
       <div class="form-actions">
@@ -1552,6 +1563,15 @@
       </div>
     `;
     openModal(isNew ? 'Nueva garantía' : 'Editar garantía', body);
+    const selCli = qs('#m-cliente-g');
+    const inpRs = qs('#m-rsocial-g');
+    if (selCli && inpRs) {
+      selCli.addEventListener('change', () => {
+        const id = selCli.value;
+        const c = clientesCache.find(x => String(x.id) === String(id));
+        if (c && c.nombre) inpRs.value = c.nombre;
+      });
+    }
     qs('#m-save').onclick = async () => {
       const rsocial = qs('#m-rsocial-g').value.trim();
       const modelo = qs('#m-modelo-g').value.trim();
@@ -1560,19 +1580,22 @@
       if (!rsocial) { showToast('Razón social es obligatoria.', 'error'); return; }
       if (!modelo) { showToast('Modelo de máquina es obligatorio.', 'error'); return; }
       if (!nserie) { showToast('Número de serie es obligatorio.', 'error'); return; }
-      const payload = {
+      const clienteId = qs('#m-cliente-g').value || null;
+      const payloadNew = {
+        cliente_id: clienteId,
         razon_social: rsocial,
         modelo_maquina: modelo,
         tipo_maquina: qs('#m-tipo-maq-g').value.trim() || null,
         numero_serie: nserie,
         fecha_entrega: fent,
-        estado: qs('#m-est-g').value,
-        email_contacto: qs('#m-email-g').value.trim() || null,
-        notas: qs('#m-notas-g').value.trim() || null,
+      };
+      const payloadPut = {
+        ...payloadNew,
+        activa: parseInt(qs('#m-activa-g').value, 10) ? 1 : 0,
       };
       try {
-        if (isNew) await fetchJson(API + '/garantias', { method: 'POST', body: JSON.stringify(payload) });
-        else await fetchJson(API + '/garantias/' + garantia.id, { method: 'PUT', body: JSON.stringify(payload) });
+        if (isNew) await fetchJson(API + '/garantias', { method: 'POST', body: JSON.stringify(payloadNew) });
+        else await fetchJson(API + '/garantias/' + garantia.id, { method: 'PUT', body: JSON.stringify(payloadPut) });
         qs('#modal').classList.add('hidden');
         showToast('Garantía guardada.', 'success');
         loadGarantias();
@@ -1663,9 +1686,14 @@
   async function loadBonos() {
     showLoading();
     try {
-      const [raw, tecs] = await Promise.all([fetchJson(API + '/bonos'), fetchJson(API + '/tecnicos').catch(() => [])]);
+      const [raw, tecs, reps] = await Promise.all([
+        fetchJson(API + '/bonos'),
+        fetchJson(API + '/tecnicos').catch(() => []),
+        fetchJson(API + '/reportes').catch(() => []),
+      ]);
       bonosCache = toArray(raw);
       tecnicosCache = toArray(tecs);
+      reportesCache = toArray(reps);
       renderBonos(bonosCache);
     } catch (e) {
       renderBonos([]);
@@ -1678,20 +1706,24 @@
     if (!tbody) return;
     tbody.innerHTML = '';
     if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay bonos registrados.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="empty">No hay bonos registrados.</td></tr>';
       return;
     }
     let totalBonos = 0;
     data.forEach(b => {
       totalBonos += Number(b.monto_bono || 0);
       const tr = document.createElement('tr');
+      const folioRep = b.reporte_folio || '—';
+      const notasTxt = (b.notas || '').toString();
+      const notasShort = notasTxt.length > 80 ? notasTxt.slice(0, 77) + '…' : notasTxt;
       tr.innerHTML = `
         <td>${escapeHtml(b.tecnico || '')}</td>
+        <td>${escapeHtml(folioRep)}</td>
         <td>${escapeHtml(b.tipo_capacitacion || '')}</td>
-        <td>${escapeHtml((b.fecha || '').toString().slice(0,10))}</td>
-        <td>${escapeHtml(b.cliente_nombre || b.razon_social || '')}</td>
         <td>$${Number(b.monto_bono || 0).toLocaleString('es-MX', {minimumFractionDigits:2})}</td>
+        <td>${escapeHtml((b.fecha || '').toString().slice(0,10))}</td>
         <td><span class="badge badge-bono-${b.pagado ? 'pagado' : 'pendiente'}">${b.pagado ? 'Pagado' : 'Pendiente'}</span></td>
+        <td class="td-text-wrap">${escapeHtml(notasShort)}</td>
         <td class="th-actions">
           <button type="button" class="btn small primary btn-edit-bono" data-id="${b.id}"><i class="fas fa-edit"></i></button>
           <button type="button" class="btn small danger btn-del-bono" data-id="${b.id}"><i class="fas fa-trash"></i></button>
@@ -1712,6 +1744,7 @@
   function openModalBono(bono) {
     const isNew = !bono || !bono.id;
     const tecnOpts = tecnicosCache.map(t => `<option value="${escapeHtml(t.nombre)}" ${bono && bono.tecnico === t.nombre ? 'selected' : ''}>${escapeHtml(t.nombre)}</option>`).join('');
+    const reportesOpts = reportesCache.map(r => `<option value="${r.id}" ${bono && Number(bono.reporte_id) === Number(r.id) ? 'selected' : ''}>${escapeHtml(r.folio || ('#' + r.id))}</option>`).join('');
     const TIPOS_CAP = ['Operación básica', 'Operación avanzada', 'Mantenimiento', 'Programación CNC', 'Seguridad industrial', 'Otra'];
     const tiposOpts = TIPOS_CAP.map(t => `<option value="${t}" ${bono && bono.tipo_capacitacion === t ? 'selected' : ''}>${t}</option>`).join('');
     const body = `
@@ -1719,13 +1752,15 @@
         <div class="form-group"><label>Técnico *</label>
           <select id="m-tec-bono"><option value="">— Selecciona —</option>${tecnOpts}</select>
         </div>
-        <div class="form-group"><label>Tipo de capacitación *</label>
-          <select id="m-tipo-cap"><option value="">— Selecciona —</option>${tiposOpts}</select>
+        <div class="form-group"><label>Reporte (catálogo)</label>
+          <select id="m-reporte-bono"><option value="">— Opcional —</option>${reportesOpts}</select>
         </div>
       </div>
       <div class="form-row">
+        <div class="form-group"><label>Tipo de capacitación *</label>
+          <select id="m-tipo-cap"><option value="">— Selecciona —</option>${tiposOpts}</select>
+        </div>
         <div class="form-group"><label>Fecha</label><input type="date" id="m-fecha-bono" value="${bono && bono.fecha || new Date().toISOString().slice(0,10)}"></div>
-        <div class="form-group"><label>Cliente / Empresa</label><input type="text" id="m-cliente-bono" maxlength="200" value="${escapeHtml(bono && bono.razon_social) || ''}"></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label>Monto bono (MXN) *</label><input type="number" id="m-monto-bono" step="0.01" min="0" value="${bono && bono.monto_bono || 0}"></div>
@@ -1749,10 +1784,10 @@
       if (!tecnico) { showToast('Selecciona un técnico.', 'error'); return; }
       if (!tipo) { showToast('Selecciona el tipo de capacitación.', 'error'); return; }
       const payload = {
+        reporte_id: qs('#m-reporte-bono').value || null,
         tecnico,
         tipo_capacitacion: tipo,
         fecha: qs('#m-fecha-bono').value,
-        razon_social: qs('#m-cliente-bono').value.trim() || null,
         monto_bono: parseFloat(qs('#m-monto-bono').value) || 0,
         pagado: parseInt(qs('#m-pagado-bono').value) || 0,
         notas: qs('#m-notas-bono').value.trim() || null,
@@ -1779,9 +1814,21 @@
   async function loadViajes() {
     showLoading();
     try {
-      const [raw, tecs] = await Promise.all([fetchJson(API + '/viajes'), fetchJson(API + '/tecnicos').catch(() => [])]);
-      viajesCache = toArray(raw);
+      const [raw, tecs, reps] = await Promise.all([
+        fetchJson(API + '/viajes'),
+        fetchJson(API + '/tecnicos').catch(() => []),
+        fetchJson(API + '/reportes').catch(() => []),
+      ]);
+      viajesCache = toArray(raw).map(v => ({
+        ...v,
+        razon_social: (v.razon_social || v.cliente_nombre || '').toString().trim(),
+        descripcion_busqueda: [v.descripcion, v.actividades].filter(Boolean).join(' · '),
+      }));
       tecnicosCache = toArray(tecs);
+      reportesCache = toArray(reps);
+      if (!clientesCache.length) {
+        try { clientesCache = toArray(await fetchJson(API + '/clientes')); } catch (_) {}
+      }
       renderViajes(viajesCache);
     } catch (e) {
       renderViajes([]);
@@ -1794,23 +1841,31 @@
     if (!tbody) return;
     tbody.innerHTML = '';
     if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="empty">No hay viajes registrados.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" class="empty">No hay viajes registrados.</td></tr>';
       return;
     }
     let totalViáticos = 0;
     data.forEach(v => {
       const dias = Number(v.dias || 1);
-      const monto = dias * 1000;
+      const monto = v.monto_viaticos != null && !isNaN(Number(v.monto_viaticos))
+        ? Number(v.monto_viaticos)
+        : dias * 1000;
       totalViáticos += monto;
+      const clienteLabel = (v.cliente_nombre || v.razon_social || '').trim() || '—';
+      const desc = [v.descripcion, v.actividades].filter(Boolean).join(' · ') || '—';
+      const mesLiq = v.mes_liquidacion ? String(v.mes_liquidacion).slice(0, 7) : '—';
+      const liq = Number(v.liquidado) === 1;
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${escapeHtml(v.tecnico || '')}</td>
+        <td class="td-text-wrap">${escapeHtml(clienteLabel)}</td>
         <td>${escapeHtml((v.fecha_inicio || '').toString().slice(0,10))}</td>
         <td>${escapeHtml((v.fecha_fin || '').toString().slice(0,10))}</td>
         <td>${dias}</td>
-        <td>$${monto.toLocaleString('es-MX', {minimumFractionDigits:2})}</td>
-        <td class="td-text-wrap">${escapeHtml(v.cliente || v.razon_social || '')}</td>
-        <td class="td-text-wrap">${escapeHtml(v.actividades || '')}</td>
+        <td>$${monto.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+        <td class="td-text-wrap">${escapeHtml(desc)}</td>
+        <td>${escapeHtml(mesLiq)}</td>
+        <td><span class="badge ${liq ? 'badge-bono-pagado' : 'badge-bono-pendiente'}">${liq ? 'Sí' : 'No'}</span></td>
         <td class="th-actions">
           <button type="button" class="btn small primary btn-edit-viaje" data-id="${v.id}"><i class="fas fa-edit"></i></button>
           <button type="button" class="btn small danger btn-del-viaje" data-id="${v.id}"><i class="fas fa-trash"></i></button>
@@ -1831,51 +1886,93 @@
   function openModalViaje(viaje) {
     const isNew = !viaje || !viaje.id;
     const tecnOpts = tecnicosCache.map(t => `<option value="${escapeHtml(t.nombre)}" ${viaje && viaje.tecnico === t.nombre ? 'selected' : ''}>${escapeHtml(t.nombre)}</option>`).join('');
+    const clientesOpts = clientesCache.map(c => `<option value="${c.id}" ${viaje && Number(viaje.cliente_id) === Number(c.id) ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`).join('');
+    const reportesOpts = reportesCache.map(r => `<option value="${r.id}" ${viaje && Number(viaje.reporte_id) === Number(r.id) ? 'selected' : ''}>${escapeHtml(r.folio || ('#' + r.id))}</option>`).join('');
+    const rsocial = (viaje && (viaje.razon_social || viaje.cliente_nombre)) ? escapeHtml(viaje.razon_social || viaje.cliente_nombre) : '';
+    const mesLiqVal = viaje && viaje.mes_liquidacion ? String(viaje.mes_liquidacion).slice(0, 7) : '';
+    const liqVal = viaje && Number(viaje.liquidado) === 1 ? '1' : '0';
     const body = `
       <div class="form-row">
         <div class="form-group"><label>Técnico *</label>
           <select id="m-tec-viaje"><option value="">— Selecciona —</option>${tecnOpts}</select>
         </div>
-        <div class="form-group"><label>Cliente / Empresa</label><input type="text" id="m-cliente-viaje" maxlength="200" value="${escapeHtml(viaje && viaje.cliente) || escapeHtml(viaje && viaje.razon_social) || ''}"></div>
+        <div class="form-group"><label>Cliente (catálogo)</label>
+          <select id="m-cliente-viaje"><option value="">— Selecciona o escribe razón social —</option>${clientesOpts}</select>
+        </div>
       </div>
+      <div class="form-group"><label>Razón social / empresa *</label><input type="text" id="m-rsocial-viaje" maxlength="200" value="${rsocial}" required placeholder="Se rellena al elegir cliente o escribe manualmente"></div>
       <div class="form-row">
-        <div class="form-group"><label>Fecha inicio</label><input type="date" id="m-finicio-viaje" value="${viaje && viaje.fecha_inicio || new Date().toISOString().slice(0,10)}"></div>
-        <div class="form-group"><label>Fecha fin</label><input type="date" id="m-ffin-viaje" value="${viaje && viaje.fecha_fin || new Date().toISOString().slice(0,10)}"></div>
-        <div class="form-group"><label>Días</label><input type="number" id="m-dias-viaje" min="1" step="1" value="${viaje && viaje.dias || 1}" readonly></div>
+        <div class="form-group"><label>Fecha inicio *</label><input type="date" id="m-finicio-viaje" value="${viaje && viaje.fecha_inicio ? String(viaje.fecha_inicio).slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
+        <div class="form-group"><label>Fecha fin *</label><input type="date" id="m-ffin-viaje" value="${viaje && viaje.fecha_fin ? String(viaje.fecha_fin).slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
+        <div class="form-group"><label>Días</label><input type="number" id="m-dias-viaje" min="1" step="1" value="${viaje && viaje.dias ? Number(viaje.dias) : 1}" readonly></div>
       </div>
-      <p style="font-size:0.85rem;color:#6b7280;margin-top:-0.5rem">Viáticos: $1,000 MXN por día. <strong id="m-total-viaticos-preview">$${((viaje && viaje.dias || 1) * 1000).toLocaleString('es-MX')}</strong></p>
+      <p style="font-size:0.85rem;color:#6b7280;margin-top:-0.5rem">Viáticos: $1,000 MXN por día. <strong id="m-total-viaticos-preview">$${((viaje && viaje.dias) ? Number(viaje.dias) : 1) * 1000}</strong></p>
+      <div class="form-row">
+        <div class="form-group"><label>Reporte (opcional)</label>
+          <select id="m-reporte-viaje"><option value="">— Ninguno —</option>${reportesOpts}</select>
+        </div>
+        <div class="form-group"><label>Mes liquidación</label><input type="month" id="m-mes-liq-viaje" value="${mesLiqVal}"></div>
+      </div>
+      ${!isNew ? `<div class="form-group"><label>Liquidado</label>
+        <select id="m-liq-viaje">
+          <option value="0" ${liqVal === '0' ? 'selected' : ''}>No</option>
+          <option value="1" ${liqVal === '1' ? 'selected' : ''}>Sí</option>
+        </select>
+      </div>` : ''}
+      <div class="form-group"><label>Descripción</label><textarea id="m-desc-viaje" rows="2" maxlength="500">${escapeHtml(viaje && viaje.descripcion) || ''}</textarea></div>
       <div class="form-group"><label>Actividades realizadas</label><textarea id="m-act-viaje" rows="3" maxlength="500">${escapeHtml(viaje && viaje.actividades) || ''}</textarea></div>
-      <div class="form-group"><label>Notas</label><textarea id="m-notas-viaje" rows="2" maxlength="300">${escapeHtml(viaje && viaje.notas) || ''}</textarea></div>
       <div class="form-actions">
         <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
         <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
       </div>
     `;
     openModal(isNew ? 'Nuevo viaje' : 'Editar viaje', body);
+    const selCli = qs('#m-cliente-viaje');
+    const inpRs = qs('#m-rsocial-viaje');
+    if (selCli && inpRs) {
+      selCli.addEventListener('change', () => {
+        const id = selCli.value;
+        const c = clientesCache.find(x => String(x.id) === String(id));
+        if (c && c.nombre) inpRs.value = c.nombre;
+      });
+    }
     // Auto calcular días
     function calcDias() {
       const fi = qs('#m-finicio-viaje').value;
       const ff = qs('#m-ffin-viaje').value;
       if (fi && ff) {
-        const d = Math.max(1, Math.round((new Date(ff) - new Date(fi)) / 86400000) + 1);
+        const d = Math.max(1, Math.round((new Date(ff + 'T12:00:00') - new Date(fi + 'T12:00:00')) / 86400000) + 1);
         qs('#m-dias-viaje').value = d;
         qs('#m-total-viaticos-preview').textContent = '$' + (d * 1000).toLocaleString('es-MX');
       }
     }
     qs('#m-finicio-viaje').addEventListener('change', calcDias);
     qs('#m-ffin-viaje').addEventListener('change', calcDias);
+    calcDias();
     qs('#m-save').onclick = async () => {
       const tecnico = qs('#m-tec-viaje').value;
       if (!tecnico) { showToast('Selecciona un técnico.', 'error'); return; }
+      const razon = qs('#m-rsocial-viaje').value.trim();
+      if (!razon) { showToast('Indica la razón social o elige un cliente.', 'error'); return; }
+      const fi = qs('#m-finicio-viaje').value;
+      const ff = qs('#m-ffin-viaje').value;
+      if (!fi || !ff) { showToast('Fecha inicio y fin son obligatorias.', 'error'); return; }
+      const clienteIdRaw = qs('#m-cliente-viaje').value;
+      const repIdRaw = qs('#m-reporte-viaje').value;
       const payload = {
         tecnico,
-        cliente: qs('#m-cliente-viaje').value.trim() || null,
-        fecha_inicio: qs('#m-finicio-viaje').value,
-        fecha_fin: qs('#m-ffin-viaje').value,
-        dias: parseInt(qs('#m-dias-viaje').value) || 1,
+        cliente_id: clienteIdRaw ? Number(clienteIdRaw) : null,
+        razon_social: razon,
+        fecha_inicio: fi,
+        fecha_fin: ff,
+        descripcion: qs('#m-desc-viaje').value.trim() || null,
         actividades: qs('#m-act-viaje').value.trim() || null,
-        notas: qs('#m-notas-viaje').value.trim() || null,
+        reporte_id: repIdRaw ? Number(repIdRaw) : null,
+        mes_liquidacion: qs('#m-mes-liq-viaje').value || null,
       };
+      if (!isNew && qs('#m-liq-viaje')) {
+        payload.liquidado = parseInt(qs('#m-liq-viaje').value, 10) ? 1 : 0;
+      }
       try {
         if (isNew) await fetchJson(API + '/viajes', { method: 'POST', body: JSON.stringify(payload) });
         else await fetchJson(API + '/viajes/' + viaje.id, { method: 'PUT', body: JSON.stringify(payload) });

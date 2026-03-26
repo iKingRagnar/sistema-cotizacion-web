@@ -2893,6 +2893,30 @@ body.dark-theme .shortcuts-list kbd { background: #334155; border-color: #475569
 .data-table tr.row-stock-bajo td { background: #fef9e7; }
 .data-table td.stock-bajo { color: #b45309; font-weight: 700; }
 
+/* Tema oscuro: fondo claro en filas de alerta hereda color de texto claro — forzar contraste */
+body.dark-theme .data-table tr.row-stock-bajo td {
+  background: #422006;
+  color: #fffbeb;
+}
+body.dark-theme .data-table tr.row-stock-bajo td.stock-bajo {
+  color: #fde68a;
+  font-weight: 700;
+}
+body.dark-theme .data-table tr.row-stock-bajo .link-btn {
+  color: #fde68a;
+}
+body.dark-theme .data-table tr.row-stock-bajo .btn {
+  color: inherit;
+}
+body.dark-theme .stock-alert-bar {
+  background: #422006;
+  border-color: #b45309;
+  color: #fde68a;
+}
+body.dark-theme .stock-alert-bar strong {
+  color: #fffbeb;
+}
+
 /* Filas de cotización aplicada */
 .data-table tr.row-cot-aplicada td { color: #6b7280; text-decoration: line-through; opacity: 0.7; }
 .data-table tr.row-cot-aplicada .th-actions { text-decoration: none; opacity: 1; }
