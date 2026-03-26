@@ -89,8 +89,7 @@
     const nameEl = qs('#app-title-name');
     const tagEl = qs('#app-tagline');
     const short = c.shortName || c.appName || 'Gestor Administrativo';
-    const build = c.buildTag ? (' · ' + c.buildTag) : '';
-    if (nameEl) nameEl.textContent = short + build;
+    if (nameEl) nameEl.textContent = short;
     if (tagEl) tagEl.textContent = c.tagline || '';
     updateDocumentTitleFromActiveTab();
     const logo = qs('#header-brand-logo');
@@ -2614,42 +2613,63 @@
 
       <hr class="divider" />
 
-      <div class="form-row">
-        <div class="form-group" style="flex:2">
-          <label>Concepto</label>
-          <input type="text" id="m-line-desc" placeholder="Ej. Diagnóstico, traslado (ida), reparación, etc.">
-        </div>
-        <div class="form-group">
-          <label>Tipo de línea</label>
-          <select id="m-line-tipo">
-            <option value="refaccion">Refacción</option>
-            <option value="mano_obra">Mano de obra</option>
-            <option value="vuelta">Vuelta (ida)</option>
-            <option value="otro">Otro</option>
-          </select>
-        </div>
+      <div class="form-actions">
+        <button type="button" class="btn outline" id="m-open-line-panel"><i class="fas fa-plus"></i> Agregar línea…</button>
+        <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar cotización</button>
+        <button type="button" class="btn" id="modal-btn-cancel">Cerrar</button>
       </div>
 
-      <div class="form-row" id="m-line-row-ref" style="display:none">
-        <div class="form-group" style="flex:2">
+      <div id="cot-line-panel" class="mini-panel hidden" aria-live="polite">
+        <div class="mini-panel-head">
+          <div class="mini-panel-title">Agregar línea</div>
+          <button type="button" class="btn small outline" id="cot-line-cancel">Cancelar</button>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tipo de línea</label>
+            <select id="cot-line-tipo">
+              <option value="refaccion">Refacción</option>
+              <option value="mano_obra">Mano de obra</option>
+              <option value="vuelta">Vuelta (ida)</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Máquina (opcional)</label>
+            <select id="cot-line-maq">
+              <option value="">— Sin máquina —</option>
+              ${(maquinasFiltradas || []).map(m => `<option value="${m.id}">${escapeHtml(m.nombre || m.modelo || m.numero_serie || ('#' + m.id))}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" id="cot-line-ref-wrap">
           <label>Refacción</label>
-          <select id="m-line-refaccion">
+          <select id="cot-line-refaccion">
             ${(refaccionesCache || []).slice(0, 200).map(r => `<option value="${r.id}">${escapeHtml((r.codigo || '') + ' — ' + (r.descripcion || ''))}</option>`).join('')}
           </select>
         </div>
-        <div class="form-group"><label>Cantidad</label><input type="number" id="m-line-cant" step="1" min="0" value="1"></div>
-        <div class="form-group"><label>Precio</label><input type="number" id="m-line-precio" step="0.01" min="0" value="0"></div>
-      </div>
 
-      <div class="form-row" id="m-line-row-generic">
-        <div class="form-group"><label>Cantidad / Horas</label><input type="number" id="m-line-cant2" step="0.25" min="0" value="1"></div>
-        <div class="form-group"><label>Precio</label><input type="number" id="m-line-precio2" step="0.01" min="0" value="0"></div>
-      </div>
+        <div class="form-group" id="cot-line-desc-wrap" style="display:none">
+          <label>Concepto</label>
+          <input type="text" id="cot-line-desc" placeholder="Ej. Diagnóstico, traslado (ida), reparación, etc.">
+        </div>
 
-      <div class="form-actions">
-        <button type="button" class="btn outline" id="m-add-line"><i class="fas fa-plus"></i> Agregar línea</button>
-        <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar cotización</button>
-        <button type="button" class="btn" id="modal-btn-cancel">Cerrar</button>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Cantidad / Horas</label>
+            <input type="number" id="cot-line-cant" step="0.25" min="0" value="1">
+          </div>
+          <div class="form-group">
+            <label>Precio</label>
+            <input type="number" id="cot-line-precio" step="0.01" min="0" value="0">
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn primary" id="cot-line-add"><i class="fas fa-plus"></i> Agregar</button>
+        </div>
       </div>
 
       <div class="table-wrap" style="margin-top:10px">
@@ -2735,16 +2755,33 @@
       return fresh;
     }
 
-    // Toggle line editors
-    function syncLineEditor() {
-      const t = qs('#m-line-tipo')?.value || 'refaccion';
-      const rowRef = qs('#m-line-row-ref');
-      const rowGen = qs('#m-line-row-generic');
-      if (rowRef) rowRef.style.display = t === 'refaccion' ? '' : 'none';
-      if (rowGen) rowGen.style.display = t === 'refaccion' ? 'none' : '';
+    // Mini panel (Opción A): abre selector para agregar línea
+    function showLinePanel() {
+      const p = qs('#cot-line-panel');
+      if (!p) return;
+      p.classList.remove('hidden');
+      qs('#cot-line-tipo')?.focus();
     }
-    qs('#m-line-tipo')?.addEventListener('change', syncLineEditor);
-    syncLineEditor();
+    function hideLinePanel() {
+      const p = qs('#cot-line-panel');
+      if (!p) return;
+      p.classList.add('hidden');
+    }
+    function syncLinePanelFields() {
+      const t = qs('#cot-line-tipo')?.value || 'refaccion';
+      const refWrap = qs('#cot-line-ref-wrap');
+      const descWrap = qs('#cot-line-desc-wrap');
+      if (refWrap) refWrap.style.display = t === 'refaccion' ? '' : 'none';
+      if (descWrap) descWrap.style.display = t === 'refaccion' ? 'none' : '';
+    }
+    qs('#m-open-line-panel')?.addEventListener('click', () => {
+      if (!currentCotId) return showToast('Primero guarda la cotización para poder agregar líneas.', 'warning');
+      syncLinePanelFields();
+      showLinePanel();
+    });
+    qs('#cot-line-cancel')?.addEventListener('click', hideLinePanel);
+    qs('#cot-line-tipo')?.addEventListener('change', syncLinePanelFields);
+    syncLinePanelFields();
 
     // Load initial lines if editing
     if (currentCotId) {
@@ -2757,32 +2794,29 @@
       // máquinas list depende de cliente; si el usuario cambia, no refrescamos catálogos aquí para mantenerlo simple
     });
 
-    qs('#m-add-line').onclick = async () => {
-      if (!currentCotId) {
-        showToast('Primero guarda la cotización para poder agregar líneas.', 'warning');
-        return;
-      }
-      const tipoLinea = qs('#m-line-tipo').value;
-      let payload = { tipo_linea: tipoLinea };
+    qs('#cot-line-add')?.addEventListener('click', async () => {
+      if (!currentCotId) return;
+      const tipoLinea = qs('#cot-line-tipo')?.value || 'refaccion';
+      const cant = Number(qs('#cot-line-cant')?.value) || 0;
+      const precio = Number(qs('#cot-line-precio')?.value) || 0;
+      const maqId = Number(qs('#cot-line-maq')?.value) || null;
+      let payload = { tipo_linea: tipoLinea, cantidad: cant, precio_unitario: precio, maquina_id: maqId };
       if (tipoLinea === 'refaccion') {
-        const refId = Number(qs('#m-line-refaccion').value) || null;
-        const cant = Number(qs('#m-line-cant').value) || 0;
-        const precio = Number(qs('#m-line-precio').value) || 0;
-        payload = { ...payload, refaccion_id: refId, cantidad: cant, precio_unitario: precio };
+        const refId = Number(qs('#cot-line-refaccion')?.value) || null;
+        payload = { ...payload, refaccion_id: refId };
       } else {
-        const desc = qs('#m-line-desc').value.trim();
-        const cant = Number(qs('#m-line-cant2').value) || 0;
-        const precio = Number(qs('#m-line-precio2').value) || 0;
-        payload = { ...payload, descripcion: desc || null, cantidad: cant, precio_unitario: precio };
+        const desc = qs('#cot-line-desc')?.value?.trim() || '';
+        payload = { ...payload, descripcion: desc || null };
       }
       try {
         await fetchJson(`${API}/cotizaciones/${currentCotId}/lineas`, { method: 'POST', body: JSON.stringify(payload) });
         await refreshCotizacion();
+        hideLinePanel();
         showToast('Línea agregada.', 'success');
       } catch (e) {
         showToast(parseApiError(e) || 'No se pudo agregar la línea.', 'error');
       }
-    };
+    });
 
     qs('#m-save').onclick = async () => {
       clearInvalidMarks();
