@@ -377,7 +377,172 @@ app.get('/api/cotizaciones/:id', async (req, res) => {
       [req.params.id]
     );
     if (!row) return res.status(404).json({ error: 'No encontrado' });
-    res.json(row);
+    const lineas = await db.getAll(
+      `SELECT l.*, r.codigo as codigo, r.descripcion as refaccion_descripcion, m.nombre as maquina_nombre
+       FROM cotizacion_lineas l
+       LEFT JOIN refacciones r ON r.id = l.refaccion_id
+       LEFT JOIN maquinas m ON m.id = l.maquina_id
+       WHERE l.cotizacion_id = ?
+       ORDER BY l.orden ASC, l.id ASC`,
+      [req.params.id]
+    );
+    res.json({ ...row, lineas: Array.isArray(lineas) ? lineas : [] });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+function calcLinea(tipo, cantidad, precioUnitario, moneda, tipoCambio) {
+  const qty = Number(cantidad) || 0;
+  const pu = Number(precioUnitario) || 0;
+  const st = Math.round(qty * pu * 100) / 100;
+  const iv = Math.round(st * 0.16 * 100) / 100;
+  const tot = Math.round((st + iv) * 100) / 100;
+  const tc = Number(tipoCambio) || 0;
+  const mon = (moneda || 'MXN').toUpperCase();
+  const puUsd = mon === 'USD' ? pu : (tc > 0 ? Math.round((pu / tc) * 100) / 100 : 0);
+  return {
+    tipo_linea: tipo,
+    cantidad: qty,
+    precio_unitario: pu,
+    precio_usd: puUsd,
+    subtotal: st,
+    iva: iv,
+    total: tot,
+  };
+}
+
+async function recalcCotizacionTotals(cotizacionId) {
+  const cot = await db.getOne('SELECT * FROM cotizaciones WHERE id = ?', [cotizacionId]);
+  if (!cot) return null;
+  const lineas = await db.getAll('SELECT * FROM cotizacion_lineas WHERE cotizacion_id = ?', [cotizacionId]);
+  const subtotal = (lineas || []).reduce((s, l) => s + (Number(l.subtotal) || 0), 0);
+  const iva = (lineas || []).reduce((s, l) => s + (Number(l.iva) || 0), 0);
+  const total = (lineas || []).reduce((s, l) => s + (Number(l.total) || 0), 0);
+  await db.runQuery('UPDATE cotizaciones SET subtotal=?, iva=?, total=? WHERE id=?', [
+    Math.round(subtotal * 100) / 100,
+    Math.round(iva * 100) / 100,
+    Math.round(total * 100) / 100,
+    cotizacionId,
+  ]);
+  return { subtotal, iva, total };
+}
+
+app.get('/api/cotizaciones/:id/lineas', async (req, res) => {
+  try {
+    const rows = await db.getAll(
+      `SELECT l.*, r.codigo as codigo, r.descripcion as refaccion_descripcion, m.nombre as maquina_nombre
+       FROM cotizacion_lineas l
+       LEFT JOIN refacciones r ON r.id = l.refaccion_id
+       LEFT JOIN maquinas m ON m.id = l.maquina_id
+       WHERE l.cotizacion_id = ?
+       ORDER BY l.orden ASC, l.id ASC`,
+      [req.params.id]
+    );
+    res.json(Array.isArray(rows) ? rows : []);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.post('/api/cotizaciones/:id/lineas', async (req, res) => {
+  try {
+    const cot = await db.getOne('SELECT * FROM cotizaciones WHERE id = ?', [req.params.id]);
+    if (!cot) return res.status(404).json({ error: 'Cotización no encontrada' });
+    const {
+      tipo_linea,
+      refaccion_id,
+      maquina_id,
+      descripcion,
+      cantidad,
+      precio_unitario,
+      orden,
+    } = req.body || {};
+    const tipo = String(tipo_linea || '').trim() || 'otro';
+    if (!['refaccion', 'vuelta', 'mano_obra', 'otro'].includes(tipo)) {
+      return res.status(400).json({ error: 'tipo_linea inválido' });
+    }
+    if (tipo === 'refaccion' && !refaccion_id) return res.status(400).json({ error: 'refaccion_id requerido' });
+    const calc = calcLinea(tipo, cantidad, precio_unitario, cot.moneda, cot.tipo_cambio);
+    await db.runQuery(
+      `INSERT INTO cotizacion_lineas (cotizacion_id, refaccion_id, maquina_id, tipo_linea, descripcion, cantidad, precio_unitario, precio_usd, subtotal, iva, total, orden)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        Number(req.params.id),
+        refaccion_id || null,
+        maquina_id || null,
+        calc.tipo_linea,
+        descripcion || null,
+        calc.cantidad,
+        calc.precio_unitario,
+        calc.precio_usd,
+        calc.subtotal,
+        calc.iva,
+        calc.total,
+        Number.isFinite(Number(orden)) ? Number(orden) : 0,
+      ]
+    );
+    await recalcCotizacionTotals(req.params.id);
+    const r = await db.getOne('SELECT * FROM cotizacion_lineas ORDER BY id DESC LIMIT 1');
+    res.status(201).json(r || {});
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.put('/api/cotizaciones/:id/lineas/:lineaId', async (req, res) => {
+  try {
+    const cot = await db.getOne('SELECT * FROM cotizaciones WHERE id = ?', [req.params.id]);
+    if (!cot) return res.status(404).json({ error: 'Cotización no encontrada' });
+    const linea = await db.getOne(
+      'SELECT * FROM cotizacion_lineas WHERE id = ? AND cotizacion_id = ?',
+      [req.params.lineaId, req.params.id]
+    );
+    if (!linea) return res.status(404).json({ error: 'Línea no encontrada' });
+
+    const nextTipo = (req.body && req.body.tipo_linea) != null ? String(req.body.tipo_linea).trim() : String(linea.tipo_linea || 'otro');
+    if (!['refaccion', 'vuelta', 'mano_obra', 'otro'].includes(nextTipo)) {
+      return res.status(400).json({ error: 'tipo_linea inválido' });
+    }
+    const nextRefaccionId = (req.body && 'refaccion_id' in req.body) ? req.body.refaccion_id : linea.refaccion_id;
+    if (nextTipo === 'refaccion' && !nextRefaccionId) return res.status(400).json({ error: 'refaccion_id requerido' });
+    const nextCantidad = (req.body && 'cantidad' in req.body) ? req.body.cantidad : linea.cantidad;
+    const nextPrecio = (req.body && 'precio_unitario' in req.body) ? req.body.precio_unitario : linea.precio_unitario;
+    const calc = calcLinea(nextTipo, nextCantidad, nextPrecio, cot.moneda, cot.tipo_cambio);
+
+    await db.runQuery(
+      `UPDATE cotizacion_lineas
+       SET refaccion_id=?, maquina_id=?, tipo_linea=?, descripcion=?, cantidad=?, precio_unitario=?, precio_usd=?, subtotal=?, iva=?, total=?, orden=?
+       WHERE id=? AND cotizacion_id=?`,
+      [
+        nextRefaccionId || null,
+        (req.body && 'maquina_id' in req.body) ? (req.body.maquina_id || null) : (linea.maquina_id || null),
+        calc.tipo_linea,
+        (req.body && 'descripcion' in req.body) ? (req.body.descripcion || null) : (linea.descripcion || null),
+        calc.cantidad,
+        calc.precio_unitario,
+        calc.precio_usd,
+        calc.subtotal,
+        calc.iva,
+        calc.total,
+        (req.body && 'orden' in req.body) ? (Number(req.body.orden) || 0) : (Number(linea.orden) || 0),
+        req.params.lineaId,
+        req.params.id,
+      ]
+    );
+    await recalcCotizacionTotals(req.params.id);
+    const r = await db.getOne('SELECT * FROM cotizacion_lineas WHERE id = ?', [req.params.lineaId]);
+    res.json(r || {});
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.delete('/api/cotizaciones/:id/lineas/:lineaId', async (req, res) => {
+  try {
+    await db.runQuery('DELETE FROM cotizacion_lineas WHERE id = ? AND cotizacion_id = ?', [req.params.lineaId, req.params.id]);
+    await recalcCotizacionTotals(req.params.id);
+    res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }

@@ -2542,65 +2542,289 @@
   async function openModalCotizacion(cot) {
     const isNew = !cot || !cot.id;
     const clientes = await fetchJson(API + '/clientes').catch(() => []);
-    const options = clientes.map(c => `<option value="${c.id}" ${cot && cot.cliente_id == c.id ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`).join('');
-    const subtotalVal = cot && cot.subtotal != null ? cot.subtotal : 0;
-    const ivaVal = cot && cot.iva != null ? cot.iva : subtotalVal * IVA_PORCENTAJE;
-    const totalVal = cot && cot.total != null ? cot.total : subtotalVal + ivaVal;
+    const clienteOpts = clientes
+      .map((c) => `<option value="${c.id}" ${cot && cot.cliente_id == c.id ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`)
+      .join('');
+
+    const cotMoneda = (cot && cot.moneda ? String(cot.moneda) : 'MXN').toUpperCase();
+    const cotTc = cot && cot.tipo_cambio != null ? Number(cot.tipo_cambio) : 17.0;
+    const maqIds = (() => {
+      try {
+        const raw = cot && cot.maquinas_ids;
+        if (!raw) return [];
+        if (Array.isArray(raw)) return raw.map((x) => Number(x)).filter(Boolean);
+        const arr = JSON.parse(String(raw));
+        return Array.isArray(arr) ? arr.map((x) => Number(x)).filter(Boolean) : [];
+      } catch (_) {
+        return [];
+      }
+    })();
+
+    const maquinasFiltradas = (maquinasCache || []).filter((m) => !cot || !cot.cliente_id || Number(m.cliente_id) === Number(cot.cliente_id));
+    const maquinasOpts = maquinasFiltradas
+      .map((m) => {
+        const label = m.nombre || m.modelo || m.numero_serie || ('#' + m.id);
+        const sel = maqIds.includes(Number(m.id)) ? 'selected' : '';
+        return `<option value="${m.id}" ${sel}>${escapeHtml(label)}</option>`;
+      })
+      .join('');
+
     const body = `
-      <div class="form-group"><label>Cliente *</label><select id="m-cliente_id">${options}</select></div>
+      <div class="form-group"><label>Cliente *</label><select id="m-cliente_id">${clienteOpts}</select></div>
+
       <div class="form-row">
-        <div class="form-group"><label>Tipo</label><select id="m-tipo"><option value="refacciones" ${cot && cot.tipo === 'refacciones' ? 'selected' : ''}>Refacciones</option><option value="mano_obra" ${cot && cot.tipo === 'mano_obra' ? 'selected' : ''}>Mano de obra</option></select></div>
+        <div class="form-group">
+          <label>Tipo</label>
+          <select id="m-tipo">
+            <option value="refacciones" ${cot && cot.tipo === 'refacciones' ? 'selected' : ''}>Refacciones</option>
+            <option value="mano_obra" ${cot && cot.tipo === 'mano_obra' ? 'selected' : ''}>Mano de obra</option>
+          </select>
+        </div>
         <div class="form-group"><label>Fecha *</label><input type="date" id="m-fecha" value="${cot && cot.fecha ? cot.fecha.slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
       </div>
+
       <div class="form-row">
-        <div class="form-group"><label>Subtotal</label><input type="number" id="m-subtotal" step="0.01" min="0" value="${subtotalVal}" placeholder="0"></div>
-        <div class="form-group"><label>IVA (16%)</label><input type="text" id="m-iva" class="input-readonly" readonly value="${(ivaVal).toFixed(2)}" title="Calculado automáticamente"></div>
-        <div class="form-group"><label>Total</label><input type="text" id="m-total" class="input-readonly" readonly value="${(totalVal).toFixed(2)}" title="Calculado automáticamente"></div>
+        <div class="form-group">
+          <label>Moneda</label>
+          <select id="m-moneda">
+            <option value="MXN" ${cotMoneda === 'MXN' ? 'selected' : ''}>MXN</option>
+            <option value="USD" ${cotMoneda === 'USD' ? 'selected' : ''}>USD</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>T.C.</label>
+          <input type="number" id="m-tc" step="0.01" min="0" value="${Number.isFinite(cotTc) ? cotTc.toFixed(2) : '17.00'}" placeholder="17.00">
+          <div class="hint">Si la moneda es USD, este tipo de cambio se usa para mostrar equivalencias.</div>
+        </div>
       </div>
+
+      <div class="form-group">
+        <label>Máquinas (opcional)</label>
+        <select id="m-maquinas" multiple size="4">
+          ${maquinasOpts || ''}
+        </select>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group"><label>Subtotal</label><input type="text" id="m-subtotal" class="input-readonly" readonly value="${Number(cot && cot.subtotal || 0).toFixed(2)}"></div>
+        <div class="form-group"><label>IVA (16%)</label><input type="text" id="m-iva" class="input-readonly" readonly value="${Number(cot && cot.iva || 0).toFixed(2)}"></div>
+        <div class="form-group"><label>Total</label><input type="text" id="m-total" class="input-readonly" readonly value="${Number(cot && cot.total || 0).toFixed(2)}"></div>
+      </div>
+
+      <hr class="divider" />
+
+      <div class="form-row">
+        <div class="form-group" style="flex:2">
+          <label>Concepto</label>
+          <input type="text" id="m-line-desc" placeholder="Ej. Diagnóstico, traslado (ida), reparación, etc.">
+        </div>
+        <div class="form-group">
+          <label>Tipo de línea</label>
+          <select id="m-line-tipo">
+            <option value="refaccion">Refacción</option>
+            <option value="mano_obra">Mano de obra</option>
+            <option value="vuelta">Vuelta (ida)</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row" id="m-line-row-ref" style="display:none">
+        <div class="form-group" style="flex:2">
+          <label>Refacción</label>
+          <select id="m-line-refaccion">
+            ${(refaccionesCache || []).slice(0, 200).map(r => `<option value="${r.id}">${escapeHtml((r.codigo || '') + ' — ' + (r.descripcion || ''))}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label>Cantidad</label><input type="number" id="m-line-cant" step="1" min="0" value="1"></div>
+        <div class="form-group"><label>Precio</label><input type="number" id="m-line-precio" step="0.01" min="0" value="0"></div>
+      </div>
+
+      <div class="form-row" id="m-line-row-generic">
+        <div class="form-group"><label>Cantidad / Horas</label><input type="number" id="m-line-cant2" step="0.25" min="0" value="1"></div>
+        <div class="form-group"><label>Precio</label><input type="number" id="m-line-precio2" step="0.01" min="0" value="0"></div>
+      </div>
+
       <div class="form-actions">
-        <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
-        <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
+        <button type="button" class="btn outline" id="m-add-line"><i class="fas fa-plus"></i> Agregar línea</button>
+        <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar cotización</button>
+        <button type="button" class="btn" id="modal-btn-cancel">Cerrar</button>
+      </div>
+
+      <div class="table-wrap" style="margin-top:10px">
+        <table class="table" id="tabla-cot-lineas">
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>Descripción</th>
+              <th>Cant</th>
+              <th>Precio</th>
+              <th>Subtotal</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
     `;
+
     openModal(isNew ? 'Nueva cotización' : 'Editar cotización', body);
-    const updateIvaTotal = () => {
-      const st = parseFloat(qs('#m-subtotal').value) || 0;
-      const iv = st * IVA_PORCENTAJE;
-      const tot = st + iv;
-      qs('#m-iva').value = iv.toFixed(2);
-      qs('#m-total').value = tot.toFixed(2);
+
+    const cotId = cot && cot.id ? Number(cot.id) : null;
+
+    function getSelectedIds(selectEl) {
+      const ids = [];
+      if (!selectEl) return ids;
+      Array.from(selectEl.selectedOptions || []).forEach((o) => {
+        const v = Number(o.value);
+        if (Number.isFinite(v)) ids.push(v);
+      });
+      return ids;
+    }
+
+    function renderLineas(lineas) {
+      const tbody = qs('#tabla-cot-lineas tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      const rows = Array.isArray(lineas) ? lineas : [];
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">No hay líneas. Agrega refacciones, vueltas o mano de obra.</td></tr>';
+        return;
+      }
+      rows.forEach((l) => {
+        const tr = document.createElement('tr');
+        const desc = l.refaccion_descripcion ? (l.codigo ? (l.codigo + ' — ' + l.refaccion_descripcion) : l.refaccion_descripcion) : (l.descripcion || '');
+        tr.innerHTML = `
+          <td>${escapeHtml(String(l.tipo_linea || ''))}</td>
+          <td class="td-text-wrap">${escapeHtml(String(desc || ''))}</td>
+          <td class="num">${Number(l.cantidad || 0)}</td>
+          <td class="num">${Number(l.precio_unitario || 0).toFixed(2)}</td>
+          <td class="num">${Number(l.subtotal || 0).toFixed(2)}</td>
+          <td class="th-actions"><button type="button" class="btn small danger btn-del-line" data-id="${l.id}"><i class="fas fa-trash"></i></button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      tbody.querySelectorAll('.btn-del-line').forEach((btn) => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          if (!currentCotId) return;
+          const id = btn.dataset.id;
+          openConfirmModal('¿Eliminar esta línea?', async () => {
+            try {
+              await fetchJson(`${API}/cotizaciones/${currentCotId}/lineas/${id}`, { method: 'DELETE' });
+              await refreshCotizacion();
+              showToast('Línea eliminada.', 'success');
+            } catch (err) {
+              showToast(parseApiError(err) || 'No se pudo eliminar la línea.', 'error');
+            }
+          });
+        });
+      });
+    }
+
+    let currentCotId = cotId;
+
+    async function refreshCotizacion() {
+      if (!currentCotId) return;
+      const fresh = await fetchJson(`${API}/cotizaciones/${currentCotId}`);
+      qs('#m-subtotal').value = Number(fresh.subtotal || 0).toFixed(2);
+      qs('#m-iva').value = Number(fresh.iva || 0).toFixed(2);
+      qs('#m-total').value = Number(fresh.total || 0).toFixed(2);
+      renderLineas(fresh.lineas || []);
+      return fresh;
+    }
+
+    // Toggle line editors
+    function syncLineEditor() {
+      const t = qs('#m-line-tipo')?.value || 'refaccion';
+      const rowRef = qs('#m-line-row-ref');
+      const rowGen = qs('#m-line-row-generic');
+      if (rowRef) rowRef.style.display = t === 'refaccion' ? '' : 'none';
+      if (rowGen) rowGen.style.display = t === 'refaccion' ? 'none' : '';
+    }
+    qs('#m-line-tipo')?.addEventListener('change', syncLineEditor);
+    syncLineEditor();
+
+    // Load initial lines if editing
+    if (currentCotId) {
+      try { await refreshCotizacion(); } catch (_) {}
+    } else {
+      renderLineas([]);
+    }
+
+    qs('#m-cliente_id')?.addEventListener('change', () => {
+      // máquinas list depende de cliente; si el usuario cambia, no refrescamos catálogos aquí para mantenerlo simple
+    });
+
+    qs('#m-add-line').onclick = async () => {
+      if (!currentCotId) {
+        showToast('Primero guarda la cotización para poder agregar líneas.', 'warning');
+        return;
+      }
+      const tipoLinea = qs('#m-line-tipo').value;
+      let payload = { tipo_linea: tipoLinea };
+      if (tipoLinea === 'refaccion') {
+        const refId = Number(qs('#m-line-refaccion').value) || null;
+        const cant = Number(qs('#m-line-cant').value) || 0;
+        const precio = Number(qs('#m-line-precio').value) || 0;
+        payload = { ...payload, refaccion_id: refId, cantidad: cant, precio_unitario: precio };
+      } else {
+        const desc = qs('#m-line-desc').value.trim();
+        const cant = Number(qs('#m-line-cant2').value) || 0;
+        const precio = Number(qs('#m-line-precio2').value) || 0;
+        payload = { ...payload, descripcion: desc || null, cantidad: cant, precio_unitario: precio };
+      }
+      try {
+        await fetchJson(`${API}/cotizaciones/${currentCotId}/lineas`, { method: 'POST', body: JSON.stringify(payload) });
+        await refreshCotizacion();
+        showToast('Línea agregada.', 'success');
+      } catch (e) {
+        showToast(parseApiError(e) || 'No se pudo agregar la línea.', 'error');
+      }
     };
-    qs('#m-subtotal').addEventListener('input', updateIvaTotal);
-    qs('#m-subtotal').addEventListener('change', updateIvaTotal);
+
     qs('#m-save').onclick = async () => {
       clearInvalidMarks();
-      const st = parseFloat(qs('#m-subtotal').value) || 0;
-      const iv = parseFloat(qs('#m-iva').value) || (st * IVA_PORCENTAJE);
-      const tot = parseFloat(qs('#m-total').value) || (st + iv);
       const fecha = qs('#m-fecha').value;
       let err = validateRequired(fecha, 'La fecha es obligatoria');
       if (err) { markInvalid('m-fecha', err); return; }
-      if (st < 0) { markInvalid('m-subtotal', 'El subtotal debe ser mayor o igual a 0'); return; }
+      const clienteId = parseInt(qs('#m-cliente_id').value, 10);
+      if (!clienteId) { markInvalid('m-cliente_id', 'Selecciona un cliente'); return; }
+      const tipo = qs('#m-tipo').value;
+      const moneda = (qs('#m-moneda').value || 'MXN').toUpperCase();
+      const tc = Number(qs('#m-tc').value) || 0;
+      const maquinas_ids = getSelectedIds(qs('#m-maquinas'));
       const payload = {
-        cliente_id: parseInt(qs('#m-cliente_id').value, 10),
-        tipo: qs('#m-tipo').value,
+        cliente_id: clienteId,
+        tipo,
         fecha,
-        subtotal: st,
-        iva: Math.round(iv * 100) / 100,
-        total: Math.round(tot * 100) / 100,
+        moneda,
+        tipo_cambio: tc > 0 ? tc : 17.0,
+        maquinas_ids,
       };
       const btn = qs('#m-save');
       const origText = btn.innerHTML;
       btn.disabled = true;
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando…';
       try {
-        if (isNew) await fetchJson(API + '/cotizaciones', { method: 'POST', body: JSON.stringify(payload) });
-        else { payload.folio = cot.folio; await fetchJson(API + '/cotizaciones/' + cot.id, { method: 'PUT', body: JSON.stringify(payload) }); }
-        qs('#modal').classList.add('hidden');
-        showToast(isNew ? 'Cotización guardada correctamente.' : 'Cotización actualizada correctamente.', 'success');
+        if (!currentCotId) {
+          const created = await fetchJson(`${API}/cotizaciones`, { method: 'POST', body: JSON.stringify(payload) });
+          currentCotId = Number(created && created.id) || null;
+          showToast('Cotización guardada. Ahora puedes agregar líneas.', 'success');
+          if (currentCotId) await refreshCotizacion();
+        } else {
+          payload.folio = cot && cot.folio ? cot.folio : null;
+          await fetchJson(`${API}/cotizaciones/${currentCotId}`, { method: 'PUT', body: JSON.stringify(payload) });
+          await refreshCotizacion();
+          showToast('Cotización actualizada.', 'success');
+        }
         loadCotizaciones();
-      } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar. Revisa los datos.', 'error'); }
-      finally { btn.disabled = false; btn.innerHTML = origText; }
+      } catch (e) {
+        showToast(parseApiError(e) || 'No se pudo guardar. Revisa los datos.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = origText;
+      }
     };
   }
 
