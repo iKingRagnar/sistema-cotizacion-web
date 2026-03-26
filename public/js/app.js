@@ -2247,6 +2247,45 @@
     return close;
   }
 
+  /** Segundo modal encima del principal (ej. bitácora sin cerrar cotización). */
+  function openModalStack(title, bodyHtml, onClose) {
+    const modal = qs('#modal-stack');
+    if (!modal) return function () {};
+    const previousFocus = document.activeElement;
+    qs('#modal-stack-title').textContent = title;
+    qs('#modal-stack-body').innerHTML = bodyHtml;
+    modal.classList.remove('hidden');
+    clearInvalidMarks();
+    const focusables = () => modal.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+    const firstFocusable = () => focusables()[0];
+    const lastFocusable = () => { const f = focusables(); return f[f.length - 1]; };
+    const handleKey = (e) => {
+      if (e.key === 'Escape') { e.stopPropagation(); close(); return; }
+      if (e.key !== 'Tab') return;
+      const fs = focusables();
+      if (fs.length === 0) return;
+      if (e.shiftKey) {
+        if (document.activeElement === firstFocusable()) { e.preventDefault(); lastFocusable().focus(); }
+      } else {
+        if (document.activeElement === lastFocusable()) { e.preventDefault(); firstFocusable().focus(); }
+      }
+    };
+    const close = () => {
+      modal.classList.add('hidden');
+      modal.removeEventListener('keydown', handleKey);
+      clearInvalidMarks();
+      if (previousFocus && typeof previousFocus.focus === 'function') previousFocus.focus();
+      if (onClose) onClose();
+    };
+    modal.addEventListener('keydown', handleKey);
+    const btnClose = qs('#modal-stack-close');
+    if (btnClose) btnClose.onclick = close;
+    const cancelBtn = qs('#modal-stack-body #modal-btn-cancel');
+    if (cancelBtn) cancelBtn.onclick = close;
+    setTimeout(() => { const el = firstFocusable(); if (el) el.focus(); }, 50);
+    return close;
+  }
+
   // ----- MODAL CLIENTE -----
   function openModalCliente(cliente) {
     const isNew = !cliente || !cliente.id;
@@ -2944,7 +2983,7 @@
     qs('#cot-line-new-bit')?.addEventListener('click', async () => {
       const okId = await ensureCotizacionExistsBeforeLines();
       if (!okId) return;
-      openModalBitacora({ cotizacion_id: okId });
+      openModalBitacora({ cotizacion_id: okId }, { stack: true, onSaved: () => loadBitacorasForCotizacion() });
     });
 
     async function loadBitacorasForCotizacion() {
@@ -3415,7 +3454,10 @@
   }
 
   // ----- MODAL BITÁCORA -----
-  async function openModalBitacora(bit) {
+  async function openModalBitacora(bit, opts) {
+    opts = opts || {};
+    const stack = !!opts.stack;
+    const onSaved = typeof opts.onSaved === 'function' ? opts.onSaved : null;
     const isNew = !bit || !bit.id;
     const [incidentes, cotizaciones] = await Promise.all([fetchJson(API + '/incidentes').catch(() => []), fetchJson(API + '/cotizaciones').catch(() => [])]);
     const incOpt = incidentes.map(i => `<option value="${i.id}" ${bit && bit.incidente_id == i.id ? 'selected' : ''}>${escapeHtml(i.folio || '')} - ${escapeHtml((i.descripcion || '').slice(0, 30))}</option>`).join('');
@@ -3436,34 +3478,39 @@
         <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
       </div>
     `;
-    openModal(isNew ? 'Nueva bitácora (horas)' : 'Editar bitácora', body);
-    qs('#m-save').onclick = async () => {
+    if (stack) openModalStack(isNew ? 'Nueva bitácora (horas)' : 'Editar bitácora', body);
+    else openModal(isNew ? 'Nueva bitácora (horas)' : 'Editar bitácora', body);
+    const root = stack ? qs('#modal-stack-body') : qs('#modal-body');
+    const q = (sel) => (root ? root.querySelector(sel) : null);
+    q('#m-save').onclick = async () => {
       clearInvalidMarks();
-      const incId = qs('#m-incidente_id').value ? parseInt(qs('#m-incidente_id').value, 10) : null;
-      const cotId = qs('#m-cotizacion_id').value ? parseInt(qs('#m-cotizacion_id').value, 10) : null;
-      const fecha = qs('#m-fecha').value;
-      if (!incId && !cotId) { markInvalid('m-incidente_id', 'Indica un incidente o una cotización.'); alert('Indica al menos un incidente o una cotización.'); return; }
+      const incId = q('#m-incidente_id').value ? parseInt(q('#m-incidente_id').value, 10) : null;
+      const cotId = q('#m-cotizacion_id').value ? parseInt(q('#m-cotizacion_id').value, 10) : null;
+      const fecha = q('#m-fecha').value;
+      if (!incId && !cotId) { markInvalid(q('#m-incidente_id'), 'Indica un incidente o una cotización.'); alert('Indica al menos un incidente o una cotización.'); return; }
       let err = validateRequired(fecha, 'La fecha es obligatoria');
-      if (err) { markInvalid('m-fecha', err); return; }
+      if (err) { markInvalid(q('#m-fecha'), err); return; }
       const payload = {
         incidente_id: incId,
         cotizacion_id: cotId,
-        fecha: qs('#m-fecha').value,
-        tecnico: qs('#m-tecnico').value.trim() || null,
-        actividades: qs('#m-actividades').value.trim() || null,
-        tiempo_horas: parseFloat(qs('#m-tiempo_horas').value) || 0,
-        materiales_usados: qs('#m-materiales').value.trim() || null,
+        fecha: q('#m-fecha').value,
+        tecnico: q('#m-tecnico').value.trim() || null,
+        actividades: q('#m-actividades').value.trim() || null,
+        tiempo_horas: parseFloat(q('#m-tiempo_horas').value) || 0,
+        materiales_usados: q('#m-materiales').value.trim() || null,
       };
-      const btn = qs('#m-save');
+      const btn = q('#m-save');
       const origText = btn.innerHTML;
       btn.disabled = true;
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando…';
       try {
         if (isNew) await fetchJson(API + '/bitacoras', { method: 'POST', body: JSON.stringify(payload) });
         else await fetchJson(API + '/bitacoras/' + bit.id, { method: 'PUT', body: JSON.stringify(payload) });
-        qs('#modal').classList.add('hidden');
+        if (stack) qs('#modal-stack').classList.add('hidden');
+        else qs('#modal').classList.add('hidden');
         showToast(isNew ? 'Registro de bitácora guardado correctamente.' : 'Bitácora actualizada correctamente.', 'success');
         loadBitacoras();
+        if (onSaved) onSaved();
       } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar. Indica incidente o cotización y fecha.', 'error'); }
       finally { btn.disabled = false; btn.innerHTML = origText; }
     };

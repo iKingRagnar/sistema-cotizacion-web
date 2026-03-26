@@ -1687,6 +1687,9 @@ body.dark-theme .data-table thead tr:first-child th { background: #334155; box-s
   box-shadow: 0 1px 0 rgba(0,0,0,0.05);
 }
 
+.modal.modal-stack {
+  z-index: 120;
+}
 .modal {
   position: fixed;
   inset: 0;
