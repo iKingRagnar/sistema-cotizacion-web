@@ -2662,7 +2662,7 @@
           <select id="cot-line-bitacora">
             <option value="">— Sin bitácora —</option>
           </select>
-          <div class="hint">Si eliges una bitácora, se usarán sus horas y actividades como base.</div>
+          <div class="hint">Solo aparecen bitácoras ligadas a esta cotización. Si no hay ninguna, usa el botón “Nueva bitácora” o créala en la pestaña Bitácora eligiendo esta misma cotización.</div>
           <div class="form-actions" style="margin-top:0.5rem;">
             <button type="button" class="btn small outline" id="cot-line-new-bit"><i class="fas fa-clock"></i> Nueva bitácora</button>
           </div>
@@ -2773,7 +2773,7 @@
     let maquinasForModal = [];
 
     function setMaquinasOptions(maqs, selectedIds) {
-      const list = Array.isArray(maqs) ? maqs : [];
+      const list = toArray(maqs);
       const selIds = Array.isArray(selectedIds) ? selectedIds.map((x) => Number(x)).filter(Boolean) : [];
       const html = list
         .map((m) => {
@@ -2797,10 +2797,25 @@
       const selected = keepSelectedIds != null ? keepSelectedIds : (() => {
         try { return getSelectedIds(qs('#m-maquinas')); } catch (_) { return []; }
       })();
+      // Respaldo inmediato desde caché (evita lista vacía mientras llega el API)
       if (clienteId) {
-        maquinasForModal = await fetchJson(`${API}/maquinas?cliente_id=${encodeURIComponent(String(clienteId))}`).catch(() => []);
-      } else {
-        maquinasForModal = await fetchJson(`${API}/maquinas`).catch(() => []);
+        const cached = (maquinasCache || []).filter((m) => Number(m.cliente_id) === clienteId);
+        if (cached.length) setMaquinasOptions(cached, selected);
+      } else if ((maquinasCache || []).length) {
+        setMaquinasOptions(maquinasCache, selected);
+      }
+      try {
+        if (clienteId) {
+          const raw = await fetchJson(`${API}/maquinas?cliente_id=${encodeURIComponent(String(clienteId))}`);
+          maquinasForModal = toArray(raw);
+        } else {
+          const raw = await fetchJson(`${API}/maquinas`);
+          maquinasForModal = toArray(raw);
+        }
+      } catch (_) {
+        maquinasForModal = clienteId
+          ? (maquinasCache || []).filter((m) => Number(m.cliente_id) === clienteId)
+          : (maquinasCache || []).slice();
       }
       setMaquinasOptions(maquinasForModal, selected);
     }
@@ -2926,9 +2941,6 @@
       lastLineDraft.maquina_id = first;
     });
 
-    // Cargar máquinas iniciales del cliente seleccionado
-    refreshMaquinasForSelectedCliente(maqIds);
-
     qs('#cot-line-new-bit')?.addEventListener('click', async () => {
       const okId = await ensureCotizacionExistsBeforeLines();
       if (!okId) return;
@@ -2939,7 +2951,7 @@
       if (!currentCotId) return [];
       try {
         const rows = await fetchJson(`${API}/bitacoras?cotizacion_id=${encodeURIComponent(String(currentCotId))}`);
-        bitacorasForCot = Array.isArray(rows) ? rows : [];
+        bitacorasForCot = toArray(rows);
       } catch (_) {
         bitacorasForCot = [];
       }
@@ -2954,6 +2966,11 @@
       }
       return bitacorasForCot;
     }
+
+    try {
+      await refreshMaquinasForSelectedCliente(maqIds);
+      if (currentCotId) await loadBitacorasForCotizacion();
+    } catch (_) {}
 
     qs('#cot-line-bitacora')?.addEventListener('change', () => {
       const bitId = Number(qs('#cot-line-bitacora')?.value) || null;
@@ -2975,10 +2992,6 @@
     } else {
       renderLineas([]);
     }
-
-    qs('#m-cliente_id')?.addEventListener('change', () => {
-      // máquinas list depende de cliente; si el usuario cambia, no refrescamos catálogos aquí para mantenerlo simple
-    });
 
     qs('#cot-line-add')?.addEventListener('click', async () => {
       if (!currentCotId) return;
