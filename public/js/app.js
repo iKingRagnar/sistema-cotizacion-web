@@ -2542,6 +2542,13 @@
   async function openModalCotizacion(cot) {
     const isNew = !cot || !cot.id;
     const clientes = await fetchJson(API + '/clientes').catch(() => []);
+    // Asegurar catálogos en caché (el usuario puede abrir Cotizaciones sin entrar a Refacciones/Máquinas)
+    if (!Array.isArray(maquinasCache) || maquinasCache.length === 0) {
+      maquinasCache = await fetchJson(API + '/maquinas').catch(() => []);
+    }
+    if (!Array.isArray(refaccionesCache) || refaccionesCache.length === 0) {
+      refaccionesCache = await fetchJson(API + '/refacciones').catch(() => []);
+    }
     const clienteOpts = clientes
       .map((c) => `<option value="${c.id}" ${cot && cot.cliente_id == c.id ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`)
       .join('');
@@ -2819,6 +2826,13 @@
     qs('#cot-line-cancel')?.addEventListener('click', hideLinePanel);
     qs('#cot-line-tipo')?.addEventListener('change', syncLinePanelFields);
     syncLinePanelFields();
+
+    // Si el usuario cambia las máquinas seleccionadas, el "draft" debe tomar la primera seleccionada
+    qs('#m-maquinas')?.addEventListener('change', () => {
+      const first = getFirstSelectedMaquinaId();
+      if (!lastLineDraft) lastLineDraft = buildDefaultLineDraft();
+      lastLineDraft.maquina_id = first;
+    });
 
     // Load initial lines if editing
     if (currentCotId) {
