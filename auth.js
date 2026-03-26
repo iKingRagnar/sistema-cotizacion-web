@@ -11,12 +11,16 @@ const TOKEN_MS = (parseInt(process.env.AUTH_TOKEN_DAYS || '7', 10) || 7) * 24 * 
 const AUDIT_ENABLED = process.env.AUDIT_ENABLED !== '0' && process.env.AUDIT_ENABLED !== 'false';
 
 function getPublicConfig() {
+  const build =
+    (process.env.RENDER_GIT_COMMIT || process.env.GIT_COMMIT || process.env.COMMIT_SHA || '').trim();
+  const buildTag = build ? ('build:' + build.slice(0, 7)) : '';
   return {
     authRequired: AUTH_ENABLED,
     auditUi: AUTH_ENABLED,
     appName: process.env.APP_NAME || 'Gestor Administrativo',
     shortName: process.env.APP_SHORT_NAME || 'Gestor Administrativo',
     tagline: process.env.APP_TAGLINE || 'Gestión de operaciones, incidentes, bitácora y catálogos en una sola plataforma',
+    buildTag,
     logoUrl: (process.env.APP_LOGO_URL || '').trim(),
     primaryHex: process.env.APP_PRIMARY_HEX || '#1e3a5f',
     accentHex: process.env.APP_ACCENT_HEX || '#0d9488',

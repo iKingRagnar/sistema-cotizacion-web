@@ -89,7 +89,8 @@
     const nameEl = qs('#app-title-name');
     const tagEl = qs('#app-tagline');
     const short = c.shortName || c.appName || 'Gestor Administrativo';
-    if (nameEl) nameEl.textContent = short;
+    const build = c.buildTag ? (' · ' + c.buildTag) : '';
+    if (nameEl) nameEl.textContent = short + build;
     if (tagEl) tagEl.textContent = c.tagline || '';
     updateDocumentTitleFromActiveTab();
     const logo = qs('#header-brand-logo');
