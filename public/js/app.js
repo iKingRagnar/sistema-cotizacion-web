@@ -2549,6 +2549,12 @@
     if (!Array.isArray(refaccionesCache) || refaccionesCache.length === 0) {
       refaccionesCache = await fetchJson(API + '/refacciones').catch(() => []);
     }
+    // Importante: en producción, `maquinasCache` puede estar filtrado por la pestaña Máquinas.
+    // Para el modal de cotización necesitamos SIEMPRE las máquinas del cliente (o todas si no hay cliente).
+    const cotClienteId = cot && cot.cliente_id ? Number(cot.cliente_id) : null;
+    const maquinasForModal = cotClienteId
+      ? await fetchJson(`${API}/maquinas?cliente_id=${encodeURIComponent(String(cotClienteId))}`).catch(() => [])
+      : (maquinasCache || []);
     const clienteOpts = clientes
       .map((c) => `<option value="${c.id}" ${cot && cot.cliente_id == c.id ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`)
       .join('');
@@ -2567,7 +2573,7 @@
       }
     })();
 
-    const maquinasFiltradas = (maquinasCache || []).filter((m) => !cot || !cot.cliente_id || Number(m.cliente_id) === Number(cot.cliente_id));
+    const maquinasFiltradas = (maquinasForModal || []).filter((m) => !cotClienteId || Number(m.cliente_id) === cotClienteId);
     const maquinasOpts = maquinasFiltradas
       .map((m) => {
         const label = m.nombre || m.modelo || m.numero_serie || ('#' + m.id);
@@ -2842,6 +2848,8 @@
     }
     qs('#m-open-line-panel')?.addEventListener('click', () => {
       if (!currentCotId) return showToast('Primero guarda la cotización para poder agregar líneas.', 'warning');
+      // Refrescar bitácoras cada vez que se abre (por si se crearon en otra pestaña)
+      loadBitacorasForCotizacion();
       if (!lastLineDraft) lastLineDraft = buildDefaultLineDraft();
       applyLineDraftToPanel(lastLineDraft);
       syncLinePanelFields();
