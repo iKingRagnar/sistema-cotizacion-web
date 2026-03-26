@@ -818,8 +818,8 @@ app.post('/api/seed-demo', async (req, res) => {
     }
     for (const r of refacciones) {
       await db.runQuery(
-        `INSERT INTO refacciones (codigo, descripcion, marca, origen, precio_unitario, unidad) VALUES (?, ?, ?, ?, ?, ?)`,
-        [safeStrReq(r.codigo), safeStrReq(r.descripcion), safeStr(r.marca), safeStr(r.origen), r.precio_unitario != null ? Number(r.precio_unitario) : 0, safeStr(r.unidad) || 'PZA']
+        `INSERT INTO refacciones (codigo, descripcion, precio_unitario, unidad) VALUES (?, ?, ?, ?)`,
+        [safeStrReq(r.codigo), safeStrReq(r.descripcion), r.precio_unitario != null ? Number(r.precio_unitario) : 0, safeStr(r.unidad) || 'PZA']
       );
     }
     for (const m of maquinas) {
