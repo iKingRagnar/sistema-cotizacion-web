@@ -378,10 +378,12 @@ app.get('/api/cotizaciones/:id', async (req, res) => {
     );
     if (!row) return res.status(404).json({ error: 'No encontrado' });
     const lineas = await db.getAll(
-      `SELECT l.*, r.codigo as codigo, r.descripcion as refaccion_descripcion, m.nombre as maquina_nombre
+      `SELECT l.*, r.codigo as codigo, r.descripcion as refaccion_descripcion, m.nombre as maquina_nombre,
+              b.fecha as bitacora_fecha, b.tecnico as bitacora_tecnico, b.tiempo_horas as bitacora_tiempo_horas, b.actividades as bitacora_actividades
        FROM cotizacion_lineas l
        LEFT JOIN refacciones r ON r.id = l.refaccion_id
        LEFT JOIN maquinas m ON m.id = l.maquina_id
+       LEFT JOIN bitacoras b ON b.id = l.bitacora_id
        WHERE l.cotizacion_id = ?
        ORDER BY l.orden ASC, l.id ASC`,
       [req.params.id]
@@ -431,10 +433,12 @@ async function recalcCotizacionTotals(cotizacionId) {
 app.get('/api/cotizaciones/:id/lineas', async (req, res) => {
   try {
     const rows = await db.getAll(
-      `SELECT l.*, r.codigo as codigo, r.descripcion as refaccion_descripcion, m.nombre as maquina_nombre
+      `SELECT l.*, r.codigo as codigo, r.descripcion as refaccion_descripcion, m.nombre as maquina_nombre,
+              b.fecha as bitacora_fecha, b.tecnico as bitacora_tecnico, b.tiempo_horas as bitacora_tiempo_horas, b.actividades as bitacora_actividades
        FROM cotizacion_lineas l
        LEFT JOIN refacciones r ON r.id = l.refaccion_id
        LEFT JOIN maquinas m ON m.id = l.maquina_id
+       LEFT JOIN bitacoras b ON b.id = l.bitacora_id
        WHERE l.cotizacion_id = ?
        ORDER BY l.orden ASC, l.id ASC`,
       [req.params.id]
@@ -453,6 +457,7 @@ app.post('/api/cotizaciones/:id/lineas', async (req, res) => {
       tipo_linea,
       refaccion_id,
       maquina_id,
+      bitacora_id,
       descripcion,
       cantidad,
       precio_unitario,
@@ -463,14 +468,19 @@ app.post('/api/cotizaciones/:id/lineas', async (req, res) => {
       return res.status(400).json({ error: 'tipo_linea inválido' });
     }
     if (tipo === 'refaccion' && !refaccion_id) return res.status(400).json({ error: 'refaccion_id requerido' });
+    if (tipo === 'mano_obra' && bitacora_id) {
+      const bit = await db.getOne('SELECT * FROM bitacoras WHERE id = ? AND cotizacion_id = ?', [bitacora_id, req.params.id]);
+      if (!bit) return res.status(400).json({ error: 'bitacora_id inválido para esta cotización' });
+    }
     const calc = calcLinea(tipo, cantidad, precio_unitario, cot.moneda, cot.tipo_cambio);
     await db.runQuery(
-      `INSERT INTO cotizacion_lineas (cotizacion_id, refaccion_id, maquina_id, tipo_linea, descripcion, cantidad, precio_unitario, precio_usd, subtotal, iva, total, orden)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO cotizacion_lineas (cotizacion_id, refaccion_id, maquina_id, bitacora_id, tipo_linea, descripcion, cantidad, precio_unitario, precio_usd, subtotal, iva, total, orden)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         Number(req.params.id),
         refaccion_id || null,
         maquina_id || null,
+        bitacora_id || null,
         calc.tipo_linea,
         descripcion || null,
         calc.cantidad,
@@ -506,17 +516,23 @@ app.put('/api/cotizaciones/:id/lineas/:lineaId', async (req, res) => {
     }
     const nextRefaccionId = (req.body && 'refaccion_id' in req.body) ? req.body.refaccion_id : linea.refaccion_id;
     if (nextTipo === 'refaccion' && !nextRefaccionId) return res.status(400).json({ error: 'refaccion_id requerido' });
+    const nextBitacoraId = (req.body && 'bitacora_id' in req.body) ? req.body.bitacora_id : linea.bitacora_id;
+    if (nextTipo === 'mano_obra' && nextBitacoraId) {
+      const bit = await db.getOne('SELECT * FROM bitacoras WHERE id = ? AND cotizacion_id = ?', [nextBitacoraId, req.params.id]);
+      if (!bit) return res.status(400).json({ error: 'bitacora_id inválido para esta cotización' });
+    }
     const nextCantidad = (req.body && 'cantidad' in req.body) ? req.body.cantidad : linea.cantidad;
     const nextPrecio = (req.body && 'precio_unitario' in req.body) ? req.body.precio_unitario : linea.precio_unitario;
     const calc = calcLinea(nextTipo, nextCantidad, nextPrecio, cot.moneda, cot.tipo_cambio);
 
     await db.runQuery(
       `UPDATE cotizacion_lineas
-       SET refaccion_id=?, maquina_id=?, tipo_linea=?, descripcion=?, cantidad=?, precio_unitario=?, precio_usd=?, subtotal=?, iva=?, total=?, orden=?
+       SET refaccion_id=?, maquina_id=?, bitacora_id=?, tipo_linea=?, descripcion=?, cantidad=?, precio_unitario=?, precio_usd=?, subtotal=?, iva=?, total=?, orden=?
        WHERE id=? AND cotizacion_id=?`,
       [
         nextRefaccionId || null,
         (req.body && 'maquina_id' in req.body) ? (req.body.maquina_id || null) : (linea.maquina_id || null),
+        nextBitacoraId || null,
         calc.tipo_linea,
         (req.body && 'descripcion' in req.body) ? (req.body.descripcion || null) : (linea.descripcion || null),
         calc.cantidad,
@@ -740,12 +756,20 @@ app.delete('/api/incidentes/:id', async (req, res) => {
 // --- Bitácoras (horas / servicio realizado) ---
 app.get('/api/bitacoras', async (req, res) => {
   try {
+    const cotizacionId = req.query && req.query.cotizacion_id ? Number(req.query.cotizacion_id) : null;
+    const incidenteId = req.query && req.query.incidente_id ? Number(req.query.incidente_id) : null;
+    const where = [];
+    const args = [];
+    if (Number.isFinite(cotizacionId) && cotizacionId > 0) { where.push('b.cotizacion_id = ?'); args.push(cotizacionId); }
+    if (Number.isFinite(incidenteId) && incidenteId > 0) { where.push('b.incidente_id = ?'); args.push(incidenteId); }
     const rows = await db.getAll(
       `SELECT b.*, i.folio as incidente_folio, co.folio as cotizacion_folio
        FROM bitacoras b
        LEFT JOIN incidentes i ON i.id = b.incidente_id
        LEFT JOIN cotizaciones co ON co.id = b.cotizacion_id
-       ORDER BY b.fecha DESC, b.id DESC LIMIT 500`
+       ${where.length ? ('WHERE ' + where.join(' AND ')) : ''}
+       ORDER BY b.fecha DESC, b.id DESC LIMIT 500`,
+      args
     );
     res.json(Array.isArray(rows) ? rows : []);
   } catch (e) {
@@ -1085,16 +1109,71 @@ app.post('/api/seed-demo', async (req, res) => {
     for (let i = 0; i < nCotizaciones; i++) {
       const clienteId = clientesDb[i % clientesDb.length].id;
       const tipo = tipos[i % 2];
-      const subtotal = 3000 + (i * 800) + (i % 5) * 500;
-      const iva = Math.round(subtotal * 0.16);
-      const total = subtotal + iva;
       const dayOffset = diasAtras[i % diasAtras.length];
       const fecha = new Date(Date.now() - dayOffset * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
       const folio = (tipo === 'mano_obra' ? 'COT-MO' : 'COT-REF') + '-' + fecha.replace(/-/g, '') + '-' + String(1001 + i);
       await db.runQuery(
-        `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [folio, clienteId, tipo, fecha, subtotal, iva, total]
+        `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total, tipo_cambio, moneda, maquinas_ids, estado, notas) VALUES (?, ?, ?, ?, 0, 0, 0, 17.0, 'MXN', '[]', 'borrador', ?)`,
+        [folio, clienteId, tipo, fecha, tipo === 'mano_obra' ? 'Cotización demo (mano de obra ligada a bitácora).' : 'Cotización demo (refacciones + vueltas).']
       );
+      const cotRow = await db.getOne('SELECT id FROM cotizaciones ORDER BY id DESC LIMIT 1');
+      const cotId = cotRow && cotRow.id;
+      if (!cotId) { cotizacionesCount++; continue; }
+
+      // Crear líneas coherentes: refacciones (2) + vuelta (1) o mano de obra ligada a bitácora + posible vuelta
+      const refDb = await db.getAll('SELECT id, precio_unitario FROM refacciones ORDER BY id DESC LIMIT 50');
+      const maqsCliente = maquinasDb.filter(m => m.cliente_id === clienteId);
+      const maqId = maqsCliente.length ? maqsCliente[i % maqsCliente.length].id : null;
+
+      if (tipo === 'refacciones') {
+        const picks = refDb.length ? [refDb[i % refDb.length], refDb[(i + 7) % refDb.length]] : [];
+        let orden = 0;
+        for (const p of picks) {
+          const cant = (1 + (i % 3));
+          const precio = Number(p.precio_unitario) || (450 + (i % 6) * 75);
+          const calc = calcLinea('refaccion', cant, precio, 'MXN', 17.0);
+          await db.runQuery(
+            `INSERT INTO cotizacion_lineas (cotizacion_id, refaccion_id, maquina_id, bitacora_id, tipo_linea, descripcion, cantidad, precio_unitario, precio_usd, subtotal, iva, total, orden)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [cotId, p.id, maqId, null, 'refaccion', null, calc.cantidad, calc.precio_unitario, calc.precio_usd, calc.subtotal, calc.iva, calc.total, orden++]
+          );
+        }
+        // Vuelta demo (traslado)
+        const calcV = calcLinea('vuelta', 1, 650, 'MXN', 17.0);
+        await db.runQuery(
+          `INSERT INTO cotizacion_lineas (cotizacion_id, refaccion_id, maquina_id, bitacora_id, tipo_linea, descripcion, cantidad, precio_unitario, precio_usd, subtotal, iva, total, orden)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [cotId, null, maqId, null, 'vuelta', 'Traslado (ida)', calcV.cantidad, calcV.precio_unitario, calcV.precio_usd, calcV.subtotal, calcV.iva, calcV.total, 99]
+        );
+      } else {
+        // Crear bitácora ligada a la cotización y luego línea de mano de obra que la referencia
+        const horas = Number((1.5 + (i % 5) * 0.5).toFixed(1));
+        const actividadesMO = ['Diagnóstico y revisión', 'Ajuste y calibración', 'Reparación en sitio', 'Mantenimiento preventivo', 'Pruebas y puesta en marcha'][i % 5];
+        await db.runQuery(
+          `INSERT INTO bitacoras (incidente_id, cotizacion_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [null, cotId, fecha, ['Juan Pérez','María García','Carlos López'][i % 3], actividadesMO, horas, null]
+        );
+        const bitRow = await db.getOne('SELECT id FROM bitacoras ORDER BY id DESC LIMIT 1');
+        const bitId = bitRow && bitRow.id;
+        const tarifa = 750; // MXN/h demo
+        const calcMO = calcLinea('mano_obra', horas, tarifa, 'MXN', 17.0);
+        await db.runQuery(
+          `INSERT INTO cotizacion_lineas (cotizacion_id, refaccion_id, maquina_id, bitacora_id, tipo_linea, descripcion, cantidad, precio_unitario, precio_usd, subtotal, iva, total, orden)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [cotId, null, maqId, bitId || null, 'mano_obra', actividadesMO, calcMO.cantidad, calcMO.precio_unitario, calcMO.precio_usd, calcMO.subtotal, calcMO.iva, calcMO.total, 0]
+        );
+        if (i % 3 === 0) {
+          const calcV2 = calcLinea('vuelta', 1, 650, 'MXN', 17.0);
+          await db.runQuery(
+            `INSERT INTO cotizacion_lineas (cotizacion_id, refaccion_id, maquina_id, bitacora_id, tipo_linea, descripcion, cantidad, precio_unitario, precio_usd, subtotal, iva, total, orden)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [cotId, null, maqId, null, 'vuelta', 'Traslado (ida)', calcV2.cantidad, calcV2.precio_unitario, calcV2.precio_usd, calcV2.subtotal, calcV2.iva, calcV2.total, 50]
+          );
+        }
+      }
+
+      await recalcCotizacionTotals(cotId);
       cotizacionesCount++;
     }
 

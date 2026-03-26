@@ -2663,6 +2663,14 @@
           <input type="text" id="cot-line-desc" placeholder="Ej. Diagnóstico, traslado (ida), reparación, etc.">
         </div>
 
+        <div class="form-group" id="cot-line-bit-wrap" style="display:none">
+          <label>Bitácora ligada (opcional)</label>
+          <select id="cot-line-bitacora">
+            <option value="">— Sin bitácora —</option>
+          </select>
+          <div class="hint">Si eliges una bitácora, se usarán sus horas y actividades como base.</div>
+        </div>
+
         <div class="form-row">
           <div class="form-group">
             <label>Cantidad / Horas</label>
@@ -2728,9 +2736,22 @@
           <td class="num">${Number(l.cantidad || 0)}</td>
           <td class="num">${Number(l.precio_unitario || 0).toFixed(2)}</td>
           <td class="num">${Number(l.subtotal || 0).toFixed(2)}</td>
-          <td class="th-actions"><button type="button" class="btn small danger btn-del-line" data-id="${l.id}"><i class="fas fa-trash"></i></button></td>
+          <td class="th-actions">
+            <button type="button" class="btn small outline btn-edit-line" data-id="${l.id}" title="Editar"><i class="fas fa-pen"></i></button>
+            <button type="button" class="btn small danger btn-del-line" data-id="${l.id}" title="Eliminar"><i class="fas fa-trash"></i></button>
+          </td>
         `;
         tbody.appendChild(tr);
+      });
+      tbody.querySelectorAll('.btn-edit-line').forEach((btn) => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          if (!currentCotId) return;
+          const id = Number(btn.dataset.id) || null;
+          const linea = rows.find((x) => Number(x.id) === id);
+          if (!linea) return;
+          openModalEditarLinea(linea);
+        });
       });
       tbody.querySelectorAll('.btn-del-line').forEach((btn) => {
         btn.addEventListener('click', async (e) => {
@@ -2751,6 +2772,7 @@
     }
 
     let currentCotId = cotId;
+    let bitacorasForCot = [];
 
     async function refreshCotizacion() {
       if (!currentCotId) return;
@@ -2813,8 +2835,10 @@
       const t = qs('#cot-line-tipo')?.value || 'refaccion';
       const refWrap = qs('#cot-line-ref-wrap');
       const descWrap = qs('#cot-line-desc-wrap');
+      const bitWrap = qs('#cot-line-bit-wrap');
       if (refWrap) refWrap.style.display = t === 'refaccion' ? '' : 'none';
       if (descWrap) descWrap.style.display = t === 'refaccion' ? 'none' : '';
+      if (bitWrap) bitWrap.style.display = t === 'mano_obra' ? '' : 'none';
     }
     qs('#m-open-line-panel')?.addEventListener('click', () => {
       if (!currentCotId) return showToast('Primero guarda la cotización para poder agregar líneas.', 'warning');
@@ -2834,9 +2858,43 @@
       lastLineDraft.maquina_id = first;
     });
 
+    async function loadBitacorasForCotizacion() {
+      if (!currentCotId) return [];
+      try {
+        const rows = await fetchJson(`${API}/bitacoras?cotizacion_id=${encodeURIComponent(String(currentCotId))}`);
+        bitacorasForCot = Array.isArray(rows) ? rows : [];
+      } catch (_) {
+        bitacorasForCot = [];
+      }
+      const sel = qs('#cot-line-bitacora');
+      if (sel) {
+        sel.innerHTML = '<option value="">— Sin bitácora —</option>' + bitacorasForCot
+          .map((b) => {
+            const label = (b.fecha ? String(b.fecha).slice(0, 10) : '') + ' · ' + (b.tecnico || 'Técnico') + ' · ' + (Number(b.tiempo_horas || 0).toFixed(1) + ' h');
+            return `<option value="${b.id}">${escapeHtml(label)}</option>`;
+          })
+          .join('');
+      }
+      return bitacorasForCot;
+    }
+
+    qs('#cot-line-bitacora')?.addEventListener('change', () => {
+      const bitId = Number(qs('#cot-line-bitacora')?.value) || null;
+      if (!bitId) return;
+      const bit = (bitacorasForCot || []).find((b) => Number(b.id) === bitId);
+      if (!bit) return;
+      // Autorellenar mano de obra desde bitácora (editable)
+      const horas = Number(bit.tiempo_horas) || 0;
+      const act = (bit.actividades || '').trim();
+      const tec = (bit.tecnico || '').trim();
+      if (qs('#cot-line-cant')) qs('#cot-line-cant').value = String(horas || 1);
+      if (qs('#cot-line-desc')) qs('#cot-line-desc').value = (tec && act) ? `${act} (${tec})` : (act || tec || '');
+    });
+
     // Load initial lines if editing
     if (currentCotId) {
       try { await refreshCotizacion(); } catch (_) {}
+      try { await loadBitacorasForCotizacion(); } catch (_) {}
     } else {
       renderLineas([]);
     }
@@ -2851,7 +2909,8 @@
       const cant = Number(qs('#cot-line-cant')?.value) || 0;
       const precio = Number(qs('#cot-line-precio')?.value) || 0;
       const maqId = Number(qs('#cot-line-maq')?.value) || null;
-      let payload = { tipo_linea: tipoLinea, cantidad: cant, precio_unitario: precio, maquina_id: maqId };
+      const bitId = Number(qs('#cot-line-bitacora')?.value) || null;
+      let payload = { tipo_linea: tipoLinea, cantidad: cant, precio_unitario: precio, maquina_id: maqId, bitacora_id: bitId };
       if (tipoLinea === 'refaccion') {
         const refId = Number(qs('#cot-line-refaccion')?.value) || null;
         payload = { ...payload, refaccion_id: refId };
@@ -2872,11 +2931,109 @@
           precio_unitario: precio || 0,
         };
         hideLinePanel();
+        await loadBitacorasForCotizacion();
         showToast('Línea agregada.', 'success');
       } catch (e) {
         showToast(parseApiError(e) || 'No se pudo agregar la línea.', 'error');
       }
     });
+
+    function openModalEditarLinea(linea) {
+      const isRef = String(linea.tipo_linea || '') === 'refaccion';
+      const isMO = String(linea.tipo_linea || '') === 'mano_obra';
+      const maqOpts = ['<option value="">— Sin máquina —</option>']
+        .concat((maquinasCache || []).filter((m) => !cot || !cot.cliente_id || Number(m.cliente_id) === Number(cot.cliente_id))
+          .map((m) => `<option value="${m.id}" ${Number(linea.maquina_id) === Number(m.id) ? 'selected' : ''}>${escapeHtml(m.nombre || m.modelo || m.numero_serie || ('#' + m.id))}</option>`))
+        .join('');
+      const refOpts = (refaccionesCache || []).slice(0, 200).map((r) => `<option value="${r.id}" ${Number(linea.refaccion_id) === Number(r.id) ? 'selected' : ''}>${escapeHtml((r.codigo || '') + ' — ' + (r.descripcion || ''))}</option>`).join('');
+      const bitOpts = ['<option value="">— Sin bitácora —</option>']
+        .concat((bitacorasForCot || []).map((b) => {
+          const label = (b.fecha ? String(b.fecha).slice(0, 10) : '') + ' · ' + (b.tecnico || 'Técnico') + ' · ' + (Number(b.tiempo_horas || 0).toFixed(1) + ' h');
+          const sel = Number(linea.bitacora_id) === Number(b.id) ? 'selected' : '';
+          return `<option value="${b.id}" ${sel}>${escapeHtml(label)}</option>`;
+        }))
+        .join('');
+      const html = `
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tipo de línea</label>
+            <select id="e-line-tipo">
+              <option value="refaccion" ${String(linea.tipo_linea) === 'refaccion' ? 'selected' : ''}>Refacción</option>
+              <option value="mano_obra" ${String(linea.tipo_linea) === 'mano_obra' ? 'selected' : ''}>Mano de obra</option>
+              <option value="vuelta" ${String(linea.tipo_linea) === 'vuelta' ? 'selected' : ''}>Vuelta</option>
+              <option value="otro" ${String(linea.tipo_linea) === 'otro' ? 'selected' : ''}>Otro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Máquina (opcional)</label>
+            <select id="e-line-maq">${maqOpts}</select>
+          </div>
+        </div>
+        <div class="form-group" id="e-line-ref-wrap" style="${isRef ? '' : 'display:none'}">
+          <label>Refacción</label>
+          <select id="e-line-ref">${refOpts}</select>
+        </div>
+        <div class="form-group" id="e-line-desc-wrap" style="${isRef ? 'display:none' : ''}">
+          <label>Descripción</label>
+          <input type="text" id="e-line-desc" value="${escapeHtml(linea.descripcion || '')}">
+        </div>
+        <div class="form-group" id="e-line-bit-wrap" style="${isMO ? '' : 'display:none'}">
+          <label>Bitácora ligada</label>
+          <select id="e-line-bit">${bitOpts}</select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Cantidad / Horas</label>
+            <input type="number" id="e-line-cant" step="0.25" min="0" value="${Number(linea.cantidad || 0)}">
+          </div>
+          <div class="form-group">
+            <label>Precio</label>
+            <input type="number" id="e-line-precio" step="0.01" min="0" value="${Number(linea.precio_unitario || 0)}">
+          </div>
+        </div>
+        <div class="form-actions">
+          ${isMO && linea.bitacora_id ? `<button type="button" class="btn outline" id="e-line-open-bit"><i class="fas fa-clock"></i> Abrir bitácora</button>` : ''}
+          <button type="button" class="btn primary" id="e-line-save"><i class="fas fa-save"></i> Guardar cambios</button>
+          <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
+        </div>
+      `;
+      openModal('Editar línea', html);
+      function syncEditFields() {
+        const t = qs('#e-line-tipo')?.value || 'otro';
+        const refWrap = qs('#e-line-ref-wrap');
+        const descWrap = qs('#e-line-desc-wrap');
+        const bitWrap = qs('#e-line-bit-wrap');
+        if (refWrap) refWrap.style.display = t === 'refaccion' ? '' : 'none';
+        if (descWrap) descWrap.style.display = t === 'refaccion' ? 'none' : '';
+        if (bitWrap) bitWrap.style.display = t === 'mano_obra' ? '' : 'none';
+      }
+      qs('#e-line-tipo')?.addEventListener('change', syncEditFields);
+      syncEditFields();
+      if (qs('#e-line-open-bit')) {
+        qs('#e-line-open-bit').addEventListener('click', () => editBitacora(linea.bitacora_id));
+      }
+      qs('#e-line-save')?.addEventListener('click', async () => {
+        const tipoLinea = qs('#e-line-tipo')?.value || 'otro';
+        const payload = {
+          tipo_linea: tipoLinea,
+          maquina_id: Number(qs('#e-line-maq')?.value) || null,
+          cantidad: Number(qs('#e-line-cant')?.value) || 0,
+          precio_unitario: Number(qs('#e-line-precio')?.value) || 0,
+          bitacora_id: Number(qs('#e-line-bit')?.value) || null,
+        };
+        if (tipoLinea === 'refaccion') payload.refaccion_id = Number(qs('#e-line-ref')?.value) || null;
+        else payload.descripcion = qs('#e-line-desc')?.value?.trim() || null;
+        try {
+          await fetchJson(`${API}/cotizaciones/${currentCotId}/lineas/${linea.id}`, { method: 'PUT', body: JSON.stringify(payload) });
+          qs('#modal').classList.add('hidden');
+          await refreshCotizacion();
+          await loadBitacorasForCotizacion();
+          showToast('Línea actualizada.', 'success');
+        } catch (e) {
+          showToast(parseApiError(e) || 'No se pudo actualizar la línea.', 'error');
+        }
+      });
+    }
 
     qs('#m-save').onclick = async () => {
       clearInvalidMarks();

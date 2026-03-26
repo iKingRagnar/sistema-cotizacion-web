@@ -85,6 +85,7 @@ function getSchema() {
       cotizacion_id INTEGER NOT NULL REFERENCES cotizaciones(id),
       refaccion_id INTEGER,
       maquina_id INTEGER,
+      bitacora_id INTEGER,
       tipo_linea TEXT DEFAULT 'refaccion',
       descripcion TEXT,
       cantidad REAL NOT NULL DEFAULT 1,
@@ -276,6 +277,7 @@ async function runMigrations() {
     `ALTER TABLE cotizaciones ADD COLUMN notas TEXT`,
     // cotizacion_lineas: nuevas columnas
     `ALTER TABLE cotizacion_lineas ADD COLUMN maquina_id INTEGER`,
+    `ALTER TABLE cotizacion_lineas ADD COLUMN bitacora_id INTEGER`,
     `ALTER TABLE cotizacion_lineas ADD COLUMN tipo_linea TEXT DEFAULT 'refaccion'`,
     `ALTER TABLE cotizacion_lineas ADD COLUMN precio_usd REAL DEFAULT 0`,
     // incidentes: columnas que ya tenía
