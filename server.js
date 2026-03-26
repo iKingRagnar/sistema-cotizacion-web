@@ -198,12 +198,22 @@ app.get('/api/refacciones/:id', async (req, res) => {
 
 app.post('/api/refacciones', async (req, res) => {
   try {
-    const { codigo, descripcion, marca, origen, precio_unitario, unidad } = req.body || {};
+    const { codigo, descripcion, zona, stock, stock_minimo, precio_unitario, precio_usd, unidad, categoria, subcategoria, imagen_url, manual_url, numero_parte_manual } = req.body || {};
     await db.runQuery(
-      `INSERT INTO refacciones (codigo, descripcion, marca, origen, precio_unitario, unidad) VALUES (?, ?, ?, ?, ?, ?)`,
-      [codigo || '', descripcion || '', marca || null, origen || null, Number(precio_unitario) || 0, unidad || 'PZA']
+      `INSERT INTO refacciones (codigo, descripcion, zona, stock, stock_minimo, precio_unitario, precio_usd, unidad, categoria, subcategoria, imagen_url, manual_url, numero_parte_manual)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [codigo || '', descripcion || '', zona || null, Number(stock) || 0, Number(stock_minimo) || 1,
+       Number(precio_unitario) || 0, Number(precio_usd) || 0, unidad || 'PZA',
+       categoria || null, subcategoria || null, imagen_url || null, manual_url || null, numero_parte_manual || null]
     );
     const r = await db.getOne('SELECT * FROM refacciones ORDER BY id DESC LIMIT 1');
+    // Registrar entrada en movimientos_stock si hay stock inicial
+    if (r && Number(stock) > 0) {
+      await db.runQuery(
+        `INSERT INTO movimientos_stock (refaccion_id, tipo, cantidad, costo_unitario, referencia, fecha) VALUES (?, 'entrada', ?, ?, 'Alta inicial', date('now','localtime'))`,
+        [r.id, Number(stock), Number(precio_unitario) || 0]
+      );
+    }
     res.status(201).json(r);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
@@ -212,13 +222,63 @@ app.post('/api/refacciones', async (req, res) => {
 
 app.put('/api/refacciones/:id', async (req, res) => {
   try {
-    const { codigo, descripcion, marca, origen, precio_unitario, unidad } = req.body || {};
+    const { codigo, descripcion, zona, stock, stock_minimo, precio_unitario, precio_usd, unidad, categoria, subcategoria, imagen_url, manual_url, numero_parte_manual } = req.body || {};
     await db.runQuery(
-      `UPDATE refacciones SET codigo=?, descripcion=?, marca=?, origen=?, precio_unitario=?, unidad=? WHERE id=?`,
-      [codigo || '', descripcion || '', marca || null, origen || null, Number(precio_unitario) || 0, unidad || 'PZA', req.params.id]
+      `UPDATE refacciones SET codigo=?, descripcion=?, zona=?, stock=?, stock_minimo=?, precio_unitario=?, precio_usd=?, unidad=?, categoria=?, subcategoria=?, imagen_url=?, manual_url=?, numero_parte_manual=? WHERE id=?`,
+      [codigo || '', descripcion || '', zona || null, Number(stock) || 0, Number(stock_minimo) || 1,
+       Number(precio_unitario) || 0, Number(precio_usd) || 0, unidad || 'PZA',
+       categoria || null, subcategoria || null, imagen_url || null, manual_url || null, numero_parte_manual || null,
+       req.params.id]
     );
     const r = await db.getOne('SELECT * FROM refacciones WHERE id = ?', [req.params.id]);
     res.json(r || {});
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+// Ajuste rápido de stock (entrada manual)
+app.post('/api/refacciones/:id/ajuste-stock', async (req, res) => {
+  try {
+    const { cantidad, tipo, costo_unitario, referencia } = req.body || {};
+    const ref = await db.getOne('SELECT * FROM refacciones WHERE id = ?', [req.params.id]);
+    if (!ref) return res.status(404).json({ error: 'No encontrado' });
+    const cant = Number(cantidad) || 0;
+    const tipoMov = tipo === 'salida' ? 'salida' : 'entrada';
+    const nuevoStock = tipoMov === 'entrada' ? ref.stock + cant : Math.max(0, ref.stock - cant);
+    await db.runQuery('UPDATE refacciones SET stock=? WHERE id=?', [nuevoStock, req.params.id]);
+    await db.runQuery(
+      `INSERT INTO movimientos_stock (refaccion_id, tipo, cantidad, costo_unitario, referencia, fecha) VALUES (?, ?, ?, ?, ?, date('now','localtime'))`,
+      [req.params.id, tipoMov, cant, Number(costo_unitario) || 0, referencia || 'Ajuste manual']
+    );
+    res.json({ ok: true, stock: nuevoStock });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+// Movimientos de stock de una refacción
+app.get('/api/refacciones/:id/movimientos', async (req, res) => {
+  try {
+    const rows = await db.getAll(
+      `SELECT m.*, co.folio as cotizacion_folio FROM movimientos_stock m
+       LEFT JOIN cotizaciones co ON co.id = m.cotizacion_id
+       WHERE m.refaccion_id = ? ORDER BY m.id DESC LIMIT 100`,
+      [req.params.id]
+    );
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+// Categorías de refacciones (árbol)
+app.get('/api/refacciones-categorias', async (req, res) => {
+  try {
+    const rows = await db.getAll(
+      `SELECT DISTINCT categoria, subcategoria FROM refacciones WHERE activo=1 AND categoria IS NOT NULL ORDER BY categoria, subcategoria`
+    );
+    res.json(rows);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -333,15 +393,18 @@ function generarFolio(prefijo) {
 
 app.post('/api/cotizaciones', async (req, res) => {
   try {
-    const { cliente_id, tipo, fecha, subtotal, iva, total, folio } = req.body || {};
+    const { cliente_id, tipo, fecha, subtotal, iva, total, folio, tipo_cambio, moneda, maquinas_ids, estado, notas } = req.body || {};
     if (!cliente_id) return res.status(400).json({ error: 'cliente_id requerido' });
     const f = folio || generarFolio(tipo === 'mano_obra' ? 'COT-MO' : 'COT-REF');
     const st = Number(subtotal) || 0;
     const iv = Number(iva) || 0;
     const tot = Number(total) != null ? Number(total) : st + iv;
+    const tc = Number(tipo_cambio) || 17.0;
+    const mon = moneda || 'MXN';
+    const maqIds = typeof maquinas_ids === 'string' ? maquinas_ids : JSON.stringify(maquinas_ids || []);
     await db.runQuery(
-      `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [f, cliente_id, tipo || 'refacciones', fecha || new Date().toISOString().slice(0, 10), st, iv, tot]
+      `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total, tipo_cambio, moneda, maquinas_ids, estado, notas) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [f, cliente_id, tipo || 'refacciones', fecha || new Date().toISOString().slice(0, 10), st, iv, tot, tc, mon, maqIds, estado || 'borrador', notas || null]
     );
     const r = await db.getOne('SELECT co.*, c.nombre as cliente_nombre FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id ORDER BY co.id DESC LIMIT 1');
     res.status(201).json(r);
@@ -352,13 +415,70 @@ app.post('/api/cotizaciones', async (req, res) => {
 
 app.put('/api/cotizaciones/:id', async (req, res) => {
   try {
-    const { folio, cliente_id, tipo, fecha, subtotal, iva, total } = req.body || {};
+    const { folio, cliente_id, tipo, fecha, subtotal, iva, total, tipo_cambio, moneda, maquinas_ids, estado, notas } = req.body || {};
+    const maqIds = typeof maquinas_ids === 'string' ? maquinas_ids : JSON.stringify(maquinas_ids || []);
     await db.runQuery(
-      `UPDATE cotizaciones SET folio=?, cliente_id=?, tipo=?, fecha=?, subtotal=?, iva=?, total=? WHERE id=?`,
-      [folio || null, cliente_id || null, tipo || 'refacciones', fecha || null, Number(subtotal) || 0, Number(iva) || 0, Number(total) || 0, req.params.id]
+      `UPDATE cotizaciones SET folio=?, cliente_id=?, tipo=?, fecha=?, subtotal=?, iva=?, total=?, tipo_cambio=?, moneda=?, maquinas_ids=?, estado=?, notas=? WHERE id=?`,
+      [folio || null, cliente_id || null, tipo || 'refacciones', fecha || null,
+       Number(subtotal) || 0, Number(iva) || 0, Number(total) || 0,
+       Number(tipo_cambio) || 17.0, moneda || 'MXN', maqIds, estado || 'borrador', notas || null,
+       req.params.id]
     );
     const r = await db.getOne('SELECT co.*, c.nombre as cliente_nombre FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id WHERE co.id = ?', [req.params.id]);
     res.json(r || {});
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+// Aplicar cotización: descontar stock FIFO
+app.post('/api/cotizaciones/:id/aplicar', async (req, res) => {
+  try {
+    const cot = await db.getOne('SELECT * FROM cotizaciones WHERE id = ?', [req.params.id]);
+    if (!cot) return res.status(404).json({ error: 'No encontrada' });
+    if (cot.estado === 'aplicada') return res.status(400).json({ error: 'Cotización ya aplicada' });
+    const lineas = await db.getAll('SELECT * FROM cotizacion_lineas WHERE cotizacion_id = ?', [req.params.id]);
+    const errores = [];
+    for (const l of lineas) {
+      if (!l.refaccion_id || l.tipo_linea !== 'refaccion') continue;
+      const ref = await db.getOne('SELECT * FROM refacciones WHERE id = ?', [l.refaccion_id]);
+      if (!ref) continue;
+      const cant = Number(l.cantidad) || 0;
+      if (ref.stock < cant) {
+        errores.push(`Sin stock suficiente: ${ref.codigo} (disponible: ${ref.stock}, requerido: ${cant})`);
+        continue;
+      }
+      const nuevoStock = ref.stock - cant;
+      await db.runQuery('UPDATE refacciones SET stock=? WHERE id=?', [nuevoStock, ref.id]);
+      await db.runQuery(
+        `INSERT INTO movimientos_stock (refaccion_id, tipo, cantidad, costo_unitario, cotizacion_id, referencia, fecha)
+         VALUES (?, 'salida', ?, ?, ?, ?, date('now','localtime'))`,
+        [ref.id, cant, Number(l.precio_unitario) || 0, cot.id, `Cot: ${cot.folio}`]
+      );
+    }
+    await db.runQuery(`UPDATE cotizaciones SET estado='aplicada' WHERE id=?`, [req.params.id]);
+    res.json({ ok: true, errores });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+// Tecnicos
+app.get('/api/tecnicos', async (req, res) => {
+  try {
+    const rows = await db.getAll('SELECT * FROM tecnicos WHERE activo=1 ORDER BY nombre');
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+app.post('/api/tecnicos', async (req, res) => {
+  try {
+    const { nombre } = req.body || {};
+    if (!nombre) return res.status(400).json({ error: 'nombre requerido' });
+    await db.runQuery('INSERT OR IGNORE INTO tecnicos (nombre) VALUES (?)', [nombre]);
+    const r = await db.getOne('SELECT * FROM tecnicos WHERE nombre=?', [nombre]);
+    res.status(201).json(r);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -1492,6 +1612,337 @@ app.post('/api/ai/extract-document', async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
+});
+
+// =================== REPORTES ===================
+function generarFolioReporte(tipo) {
+  const d = new Date();
+  const pre = tipo === 'venta' ? 'REP-V' : 'REP-S';
+  return `${pre}-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${Math.floor(Math.random()*9000)+1000}`;
+}
+
+app.get('/api/reportes', async (req, res) => {
+  try {
+    const rows = await db.getAll(
+      `SELECT r.*, c.nombre as cliente_nombre, m.nombre as maquina_nombre
+       FROM reportes r
+       LEFT JOIN clientes c ON c.id = r.cliente_id
+       LEFT JOIN maquinas m ON m.id = r.maquina_id
+       ORDER BY r.fecha DESC, r.id DESC LIMIT 500`
+    );
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.get('/api/reportes/:id', async (req, res) => {
+  try {
+    const row = await db.getOne(
+      `SELECT r.*, c.nombre as cliente_nombre, m.nombre as maquina_nombre
+       FROM reportes r LEFT JOIN clientes c ON c.id=r.cliente_id LEFT JOIN maquinas m ON m.id=r.maquina_id
+       WHERE r.id=?`, [req.params.id]
+    );
+    if (!row) return res.status(404).json({ error: 'No encontrado' });
+    res.json(row);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.post('/api/reportes', async (req, res) => {
+  try {
+    const { cliente_id, razon_social, maquina_id, numero_maquina, tipo_reporte, subtipo, descripcion, tecnico, fecha, estatus, notas } = req.body || {};
+    const folio = generarFolioReporte(tipo_reporte);
+    await db.runQuery(
+      `INSERT INTO reportes (folio, cliente_id, razon_social, maquina_id, numero_maquina, tipo_reporte, subtipo, descripcion, tecnico, fecha, estatus, notas)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [folio, cliente_id || null, razon_social || null, maquina_id || null, numero_maquina || null,
+       tipo_reporte || 'servicio', subtipo || null, descripcion || null, tecnico || null,
+       fecha || new Date().toISOString().slice(0,10), estatus || 'abierto', notas || null]
+    );
+    const r = await db.getOne('SELECT r.*, c.nombre as cliente_nombre FROM reportes r LEFT JOIN clientes c ON c.id=r.cliente_id ORDER BY r.id DESC LIMIT 1');
+    res.status(201).json(r);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.put('/api/reportes/:id', async (req, res) => {
+  try {
+    const { cliente_id, razon_social, maquina_id, numero_maquina, tipo_reporte, subtipo, descripcion, tecnico, fecha, estatus, notas } = req.body || {};
+    await db.runQuery(
+      `UPDATE reportes SET cliente_id=?, razon_social=?, maquina_id=?, numero_maquina=?, tipo_reporte=?, subtipo=?, descripcion=?, tecnico=?, fecha=?, estatus=?, notas=? WHERE id=?`,
+      [cliente_id || null, razon_social || null, maquina_id || null, numero_maquina || null,
+       tipo_reporte || 'servicio', subtipo || null, descripcion || null, tecnico || null,
+       fecha || null, estatus || 'abierto', notas || null, req.params.id]
+    );
+    const r = await db.getOne('SELECT r.*, c.nombre as cliente_nombre FROM reportes r LEFT JOIN clientes c ON c.id=r.cliente_id WHERE r.id=?', [req.params.id]);
+    res.json(r || {});
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.delete('/api/reportes/:id', async (req, res) => {
+  try {
+    await db.runQuery('DELETE FROM reportes WHERE id=?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+// =================== GARANTÍAS ===================
+// Calcula fechas de los 2 mantenimientos del año según fecha de entrega
+function calcularMantenimientosAnio(fechaEntrega, anio) {
+  const base = new Date(fechaEntrega + 'T00:00:00');
+  // Primer mantenimiento: 6 meses después; Segundo: 12 meses después
+  const m1 = new Date(base); m1.setMonth(m1.getMonth() + 6); m1.setFullYear(anio || m1.getFullYear());
+  const m2 = new Date(base); m2.setMonth(m2.getMonth() + 12); m2.setFullYear(anio || m2.getFullYear());
+  return [m1.toISOString().slice(0,10), m2.toISOString().slice(0,10)];
+}
+
+app.get('/api/garantias', async (req, res) => {
+  try {
+    const rows = await db.getAll(
+      `SELECT g.*, c.nombre as cliente_nombre FROM garantias g LEFT JOIN clientes c ON c.id=g.cliente_id ORDER BY g.fecha_entrega DESC LIMIT 500`
+    );
+    for (const g of rows) {
+      g.mantenimientos = await db.getAll('SELECT * FROM mantenimientos_garantia WHERE garantia_id=? ORDER BY anio, numero', [g.id]);
+    }
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.get('/api/garantias/:id', async (req, res) => {
+  try {
+    const g = await db.getOne('SELECT g.*, c.nombre as cliente_nombre FROM garantias g LEFT JOIN clientes c ON c.id=g.cliente_id WHERE g.id=?', [req.params.id]);
+    if (!g) return res.status(404).json({ error: 'No encontrado' });
+    g.mantenimientos = await db.getAll('SELECT * FROM mantenimientos_garantia WHERE garantia_id=? ORDER BY anio, numero', [g.id]);
+    res.json(g);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.post('/api/garantias', async (req, res) => {
+  try {
+    const { cliente_id, razon_social, modelo_maquina, numero_serie, tipo_maquina, fecha_entrega } = req.body || {};
+    if (!razon_social || !modelo_maquina || !fecha_entrega) return res.status(400).json({ error: 'razon_social, modelo_maquina y fecha_entrega requeridos' });
+    await db.runQuery(
+      `INSERT INTO garantias (cliente_id, razon_social, modelo_maquina, numero_serie, tipo_maquina, fecha_entrega) VALUES (?, ?, ?, ?, ?, ?)`,
+      [cliente_id || null, razon_social, modelo_maquina, numero_serie || null, tipo_maquina || null, fecha_entrega]
+    );
+    const g = await db.getOne('SELECT * FROM garantias ORDER BY id DESC LIMIT 1');
+    // Crear automáticamente los 2 mantenimientos del año 1
+    const anioEntrega = new Date(fecha_entrega + 'T00:00:00').getFullYear();
+    const [f1, f2] = calcularMantenimientosAnio(fecha_entrega, anioEntrega);
+    await db.runQuery(
+      `INSERT INTO mantenimientos_garantia (garantia_id, numero, anio, fecha_programada) VALUES (?, 1, ?, ?)`,
+      [g.id, anioEntrega, f1]
+    );
+    await db.runQuery(
+      `INSERT INTO mantenimientos_garantia (garantia_id, numero, anio, fecha_programada) VALUES (?, 2, ?, ?)`,
+      [g.id, anioEntrega, f2]
+    );
+    g.mantenimientos = await db.getAll('SELECT * FROM mantenimientos_garantia WHERE garantia_id=? ORDER BY anio, numero', [g.id]);
+    res.status(201).json(g);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.put('/api/garantias/:id', async (req, res) => {
+  try {
+    const { cliente_id, razon_social, modelo_maquina, numero_serie, tipo_maquina, fecha_entrega, activa } = req.body || {};
+    await db.runQuery(
+      `UPDATE garantias SET cliente_id=?, razon_social=?, modelo_maquina=?, numero_serie=?, tipo_maquina=?, fecha_entrega=?, activa=? WHERE id=?`,
+      [cliente_id || null, razon_social || '', modelo_maquina || '', numero_serie || null, tipo_maquina || null, fecha_entrega || null, activa != null ? Number(activa) : 1, req.params.id]
+    );
+    const g = await db.getOne('SELECT * FROM garantias WHERE id=?', [req.params.id]);
+    if (g) g.mantenimientos = await db.getAll('SELECT * FROM mantenimientos_garantia WHERE garantia_id=? ORDER BY anio, numero', [g.id]);
+    res.json(g || {});
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.delete('/api/garantias/:id', async (req, res) => {
+  try {
+    await db.runQuery('DELETE FROM mantenimientos_garantia WHERE garantia_id=?', [req.params.id]);
+    await db.runQuery('DELETE FROM garantias WHERE id=?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+// Confirmar mantenimiento de garantía
+app.put('/api/mantenimientos-garantia/:id', async (req, res) => {
+  try {
+    const { fecha_realizada, confirmado, costo, pagado, notas } = req.body || {};
+    await db.runQuery(
+      `UPDATE mantenimientos_garantia SET fecha_realizada=?, confirmado=?, costo=?, pagado=?, notas=? WHERE id=?`,
+      [fecha_realizada || null, confirmado != null ? Number(confirmado) : 0, Number(costo) || 0, Number(pagado) || 0, notas || null, req.params.id]
+    );
+    const r = await db.getOne('SELECT * FROM mantenimientos_garantia WHERE id=?', [req.params.id]);
+    res.json(r || {});
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+// Garantías próximas a mantenimiento (alerta)
+app.get('/api/garantias-alertas', async (req, res) => {
+  try {
+    const hoy = new Date();
+    const en30 = new Date(); en30.setDate(en30.getDate() + 30);
+    const hoyStr = hoy.toISOString().slice(0,10);
+    const en30Str = en30.toISOString().slice(0,10);
+    const rows = await db.getAll(
+      `SELECT mg.*, g.razon_social, g.modelo_maquina, g.numero_serie, g.cliente_id, c.nombre as cliente_nombre, c.email
+       FROM mantenimientos_garantia mg
+       JOIN garantias g ON g.id = mg.garantia_id
+       LEFT JOIN clientes c ON c.id = g.cliente_id
+       WHERE mg.confirmado = 0 AND mg.fecha_programada BETWEEN ? AND ?
+       ORDER BY mg.fecha_programada ASC`,
+      [hoyStr, en30Str]
+    );
+    const vencidos = await db.getAll(
+      `SELECT mg.*, g.razon_social, g.modelo_maquina, g.numero_serie, g.cliente_id, c.nombre as cliente_nombre
+       FROM mantenimientos_garantia mg
+       JOIN garantias g ON g.id = mg.garantia_id
+       LEFT JOIN clientes c ON c.id = g.cliente_id
+       WHERE mg.confirmado = 0 AND mg.fecha_programada < ?
+       ORDER BY mg.fecha_programada ASC`,
+      [hoyStr]
+    );
+    res.json({ proximos: rows, vencidos });
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+// =================== BONOS ===================
+app.get('/api/bonos', async (req, res) => {
+  try {
+    const rows = await db.getAll(
+      `SELECT b.*, r.folio as reporte_folio, r.tipo_reporte, r.subtipo
+       FROM bonos b LEFT JOIN reportes r ON r.id = b.reporte_id
+       ORDER BY b.fecha DESC, b.id DESC LIMIT 500`
+    );
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.post('/api/bonos', async (req, res) => {
+  try {
+    const { reporte_id, tecnico, tipo_capacitacion, monto_bono, fecha, notas } = req.body || {};
+    if (!tecnico) return res.status(400).json({ error: 'tecnico requerido' });
+    await db.runQuery(
+      `INSERT INTO bonos (reporte_id, tecnico, tipo_capacitacion, monto_bono, fecha, notas) VALUES (?, ?, ?, ?, ?, ?)`,
+      [reporte_id || null, tecnico, tipo_capacitacion || null, Number(monto_bono) || 0, fecha || new Date().toISOString().slice(0,10), notas || null]
+    );
+    const r = await db.getOne('SELECT * FROM bonos ORDER BY id DESC LIMIT 1');
+    res.status(201).json(r);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.put('/api/bonos/:id', async (req, res) => {
+  try {
+    const { reporte_id, tecnico, tipo_capacitacion, monto_bono, fecha, pagado, notas } = req.body || {};
+    await db.runQuery(
+      `UPDATE bonos SET reporte_id=?, tecnico=?, tipo_capacitacion=?, monto_bono=?, fecha=?, pagado=?, notas=? WHERE id=?`,
+      [reporte_id || null, tecnico || '', tipo_capacitacion || null, Number(monto_bono) || 0, fecha || null, Number(pagado) || 0, notas || null, req.params.id]
+    );
+    const r = await db.getOne('SELECT * FROM bonos WHERE id=?', [req.params.id]);
+    res.json(r || {});
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.delete('/api/bonos/:id', async (req, res) => {
+  try {
+    await db.runQuery('DELETE FROM bonos WHERE id=?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+// Resumen de bonos por técnico
+app.get('/api/bonos-resumen', async (req, res) => {
+  try {
+    const { mes } = req.query;
+    let sql = `SELECT tecnico, SUM(monto_bono) as total_bonos, COUNT(*) as cantidad, SUM(CASE WHEN pagado=1 THEN monto_bono ELSE 0 END) as pagado
+               FROM bonos`;
+    const params = [];
+    if (mes) { sql += ' WHERE strftime("%Y-%m", fecha) = ?'; params.push(mes); }
+    sql += ' GROUP BY tecnico ORDER BY tecnico';
+    const rows = await db.getAll(sql, params);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+// =================== VIAJES ===================
+const VIATICO_DIARIO = 1000; // MXN por día
+
+app.get('/api/viajes', async (req, res) => {
+  try {
+    const rows = await db.getAll(
+      `SELECT v.*, c.nombre as cliente_nombre, r.folio as reporte_folio
+       FROM viajes v
+       LEFT JOIN clientes c ON c.id = v.cliente_id
+       LEFT JOIN reportes r ON r.id = v.reporte_id
+       ORDER BY v.fecha_inicio DESC, v.id DESC LIMIT 500`
+    );
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.post('/api/viajes', async (req, res) => {
+  try {
+    const { tecnico, cliente_id, razon_social, fecha_inicio, fecha_fin, descripcion, actividades, reporte_id, mes_liquidacion } = req.body || {};
+    if (!tecnico || !fecha_inicio || !fecha_fin) return res.status(400).json({ error: 'tecnico, fecha_inicio y fecha_fin requeridos' });
+    const d1 = new Date(fecha_inicio + 'T00:00:00');
+    const d2 = new Date(fecha_fin + 'T00:00:00');
+    const dias = Math.max(1, Math.round((d2 - d1) / (86400000)) + 1);
+    const monto = dias * VIATICO_DIARIO;
+    await db.runQuery(
+      `INSERT INTO viajes (tecnico, cliente_id, razon_social, fecha_inicio, fecha_fin, dias, monto_viaticos, descripcion, actividades, reporte_id, mes_liquidacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [tecnico, cliente_id || null, razon_social || null, fecha_inicio, fecha_fin, dias, monto, descripcion || null, actividades || null, reporte_id || null, mes_liquidacion || null]
+    );
+    const r = await db.getOne('SELECT * FROM viajes ORDER BY id DESC LIMIT 1');
+    res.status(201).json(r);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.put('/api/viajes/:id', async (req, res) => {
+  try {
+    const { tecnico, cliente_id, razon_social, fecha_inicio, fecha_fin, descripcion, actividades, reporte_id, mes_liquidacion, liquidado } = req.body || {};
+    const d1 = new Date((fecha_inicio || '') + 'T00:00:00');
+    const d2 = new Date((fecha_fin || '') + 'T00:00:00');
+    const dias = isNaN(d1) || isNaN(d2) ? 1 : Math.max(1, Math.round((d2 - d1) / 86400000) + 1);
+    const monto = dias * VIATICO_DIARIO;
+    await db.runQuery(
+      `UPDATE viajes SET tecnico=?, cliente_id=?, razon_social=?, fecha_inicio=?, fecha_fin=?, dias=?, monto_viaticos=?, descripcion=?, actividades=?, reporte_id=?, mes_liquidacion=?, liquidado=? WHERE id=?`,
+      [tecnico || '', cliente_id || null, razon_social || null, fecha_inicio || null, fecha_fin || null, dias, monto, descripcion || null, actividades || null, reporte_id || null, mes_liquidacion || null, Number(liquidado) || 0, req.params.id]
+    );
+    const r = await db.getOne('SELECT * FROM viajes WHERE id=?', [req.params.id]);
+    res.json(r || {});
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.delete('/api/viajes/:id', async (req, res) => {
+  try {
+    await db.runQuery('DELETE FROM viajes WHERE id=?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+// Resumen mensual de viajes + bonos por técnico
+app.get('/api/liquidacion-mensual', async (req, res) => {
+  try {
+    const { mes } = req.query; // formato: YYYY-MM
+    if (!mes) return res.status(400).json({ error: 'Parámetro mes requerido (YYYY-MM)' });
+    const viajes = await db.getAll(
+      `SELECT v.*, c.nombre as cliente_nombre FROM viajes v LEFT JOIN clientes c ON c.id=v.cliente_id
+       WHERE strftime('%Y-%m', v.fecha_inicio) = ? ORDER BY v.tecnico, v.fecha_inicio`,
+      [mes]
+    );
+    const bonos = await db.getAll(
+      `SELECT * FROM bonos WHERE strftime('%Y-%m', fecha) = ? ORDER BY tecnico, fecha`, [mes]
+    );
+    // Agrupar por técnico
+    const porTecnico = {};
+    for (const v of viajes) {
+      if (!porTecnico[v.tecnico]) porTecnico[v.tecnico] = { viajes: [], bonos: [], total_viaticos: 0, total_bonos: 0 };
+      porTecnico[v.tecnico].viajes.push(v);
+      porTecnico[v.tecnico].total_viaticos += Number(v.monto_viaticos) || 0;
+    }
+    for (const b of bonos) {
+      if (!porTecnico[b.tecnico]) porTecnico[b.tecnico] = { viajes: [], bonos: [], total_viaticos: 0, total_bonos: 0 };
+      porTecnico[b.tecnico].bonos.push(b);
+      porTecnico[b.tecnico].total_bonos += Number(b.monto_bono) || 0;
+    }
+    res.json({ mes, porTecnico });
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
 
 // SPA: todas las rutas no-API sirven index.html (sin caché para que siempre cargue la última versión)

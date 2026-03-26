@@ -87,6 +87,10 @@
     <button type="button" data-tab="refacciones" class="tab" title="Refacciones (Ctrl+2)"><i class="fas fa-cogs"></i> Refacciones</button>
     <button type="button" data-tab="maquinas" class="tab" title="Máquinas (Ctrl+3)"><i class="fas fa-industry"></i> Máquinas</button>
     <button type="button" data-tab="cotizaciones" class="tab" title="Cotizaciones (Ctrl+4)"><i class="fas fa-file-invoice-dollar"></i> Cotizaciones</button>
+    <button type="button" data-tab="reportes" class="tab" title="Reportes de servicio y venta"><i class="fas fa-file-alt"></i> Reportes</button>
+    <button type="button" data-tab="garantias" class="tab" title="Garantías y mantenimientos"><i class="fas fa-shield-alt"></i> Garantías</button>
+    <button type="button" data-tab="bonos" class="tab" title="Bonos de capacitación"><i class="fas fa-award"></i> Bonos</button>
+    <button type="button" data-tab="viajes" class="tab" title="Viáticos y viajes"><i class="fas fa-plane"></i> Viajes</button>
     <button type="button" data-tab="incidentes" class="tab" title="Incidentes (Ctrl+5)"><i class="fas fa-exclamation-triangle"></i> Incidentes</button>
     <button type="button" data-tab="bitacoras" class="tab" title="Bitácora (Ctrl+6)"><i class="fas fa-clock"></i> Bitácora de horas</button>
     <button type="button" data-tab="auditoria" class="tab hidden" id="tab-auditoria" title="Auditoría (Ctrl+8, solo admin)"><i class="fas fa-clipboard-list"></i> Auditoría</button>
@@ -180,26 +184,35 @@
       <div class="section-header">
         <h2><i class="fas fa-cogs"></i> Catálogo de refacciones</h2>
         <div class="toolbar">
+          <select id="filtro-categoria-ref" title="Filtrar por categoría">
+            <option value="">Todas las categorías</option>
+          </select>
+          <select id="filtro-subcategoria-ref" title="Filtrar por subcategoría">
+            <option value="">Todas las subcategorías</option>
+          </select>
           <input type="search" id="buscar-refacciones" placeholder="Buscar por código o descripción..." class="search">
           <button type="button" id="export-refacciones" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
           <button type="button" id="export-excel-refacciones" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
           <button type="button" id="nueva-refaccion" class="btn primary"><i class="fas fa-plus"></i> Nueva refacción</button>
         </div>
       </div>
+      <div id="ref-stock-alert-bar" class="stock-alert-bar hidden" aria-live="polite"></div>
       <div class="table-wrap">
         <table class="data-table filterable-table" id="tabla-refacciones" data-cache="refaccionesCache">
           <thead>
             <tr>
-              <th>Id</th><th>Código</th><th>Descripción</th><th>Marca</th><th>Origen</th><th>Precio unit.</th><th>Unidad</th>
+              <th>Código</th><th>Descripción</th><th>Categoría</th><th>Zona</th><th>Stock</th><th>Mín.</th><th>Precio MXN</th><th>Precio USD</th><th>Unidad</th>
               <th class="th-actions">Acciones</th>
             </tr>
             <tr class="filter-row">
-              <td><input type="text" class="filter-input" data-key="id" data-type="number" placeholder="ej. &gt;5"></td>
               <td><input type="text" class="filter-input" data-key="codigo" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="descripcion" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="marca" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="origen" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="categoria" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="zona" data-type="text" placeholder="Estante, Rack…"></td>
+              <td><input type="text" class="filter-input" data-key="stock" data-type="number" placeholder="&gt;0"></td>
+              <td><input type="text" class="filter-input" data-key="stock_minimo" data-type="number" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="precio_unitario" data-type="number" placeholder="&gt;100, &lt;500"></td>
+              <td><input type="text" class="filter-input" data-key="precio_usd" data-type="number" placeholder="&gt;10"></td>
               <td><input type="text" class="filter-input" data-key="unidad" data-type="text" placeholder="Filtrar…"></td>
               <td class="th-actions"></td>
             </tr>
@@ -267,7 +280,7 @@
         <table class="data-table data-table--fluid filterable-table" id="tabla-cotizaciones" data-cache="cotizacionesCache">
           <thead>
             <tr>
-              <th>Folio</th><th>Cliente</th><th>Tipo</th><th>Fecha</th><th>Total</th><th>Vigencia</th>
+              <th>Folio</th><th>Cliente</th><th>Tipo</th><th>Fecha</th><th>Moneda</th><th>T.C.</th><th>Total</th><th>Estado</th><th>Vigencia</th>
               <th class="th-actions">Acciones</th>
             </tr>
             <tr class="filter-row">
@@ -275,7 +288,10 @@
               <td><input type="text" class="filter-input" data-key="cliente_nombre" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="tipo" data-type="text" placeholder="refacciones|mano_obra"></td>
               <td class="filter-date-wrap"><select class="filter-date-select" data-key="fecha"><option value="">Todas</option><option value="hoy">Hoy</option><option value="esta_semana">Esta semana</option><option value="este_mes">Este mes</option><option value="mes_pasado">Mes pasado</option><option value="este_año">Este año</option><option value="personalizado">Escribir fecha</option></select><input type="date" class="filter-input filter-date-input" data-key="fecha" title="O escribe aquí"></td>
+              <td><input type="text" class="filter-input" data-key="moneda" data-type="text" placeholder="MXN|USD"></td>
+              <td><input type="text" class="filter-input" data-key="tipo_cambio" data-type="number" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="total" data-type="number" placeholder="&gt;1000, &lt;5000"></td>
+              <td><input type="text" class="filter-input" data-key="estado" data-type="text" placeholder="borrador|aplicada"></td>
               <td><span data-key="vigencia_estado" class="filter-input" style="display:inline-block;min-height:1px;padding:0;border:none;width:100%" aria-hidden="true"></span></td>
               <td class="th-actions"></td>
             </tr>
@@ -283,6 +299,160 @@
           <tbody></tbody>
         </table>
         <div class="table-footer" id="footer-tabla-cotizaciones" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- REPORTES -->
+    <section id="panel-reportes" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-file-alt"></i> Reportes</h2>
+        <div class="toolbar">
+          <select id="filtro-tipo-reporte">
+            <option value="">Todos los tipos</option>
+            <option value="servicio">Servicio</option>
+            <option value="venta">Venta</option>
+          </select>
+          <button type="button" id="export-reportes" class="btn outline"><i class="fas fa-file-csv"></i> CSV</button>
+          <button type="button" id="nuevo-reporte" class="btn primary"><i class="fas fa-plus"></i> Nuevo reporte</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table filterable-table" id="tabla-reportes">
+          <thead>
+            <tr>
+              <th>Folio</th><th>Razón Social</th><th>Máquina</th><th>Número</th><th>Tipo</th><th>Subtipo</th><th>Descripción</th><th>Técnico</th><th>Fecha</th><th>Estatus</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+            <tr class="filter-row">
+              <td><input type="text" class="filter-input" data-key="folio" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="razon_social" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="maquina_nombre" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="numero_maquina" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="tipo_reporte" data-type="text" placeholder="servicio|venta"></td>
+              <td><input type="text" class="filter-input" data-key="subtipo" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="descripcion" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="tecnico" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="fecha" data-type="text" placeholder="aaaa-mm-dd"></td>
+              <td><input type="text" class="filter-input" data-key="estatus" data-type="text" placeholder="abierto|cerrado"></td>
+              <td class="th-actions"></td>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-footer" id="footer-tabla-reportes" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- GARANTÍAS -->
+    <section id="panel-garantias" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-shield-alt"></i> Garantías y Mantenimientos</h2>
+        <div class="toolbar">
+          <button type="button" id="btn-garantias-alertas" class="btn outline"><i class="fas fa-bell"></i> Ver alertas</button>
+          <button type="button" id="export-garantias" class="btn outline"><i class="fas fa-file-csv"></i> CSV</button>
+          <button type="button" id="nueva-garantia" class="btn primary"><i class="fas fa-plus"></i> Nueva garantía</button>
+        </div>
+      </div>
+      <div id="garantias-alerta-bar" class="stock-alert-bar hidden" aria-live="polite"></div>
+      <div class="table-wrap">
+        <table class="data-table filterable-table" id="tabla-garantias">
+          <thead>
+            <tr>
+              <th>Razón Social</th><th>Modelo</th><th>N° Serie</th><th>Tipo Máquina</th><th>F. Entrega</th><th>Mantenimientos</th><th>Activa</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+            <tr class="filter-row">
+              <td><input type="text" class="filter-input" data-key="razon_social" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="modelo_maquina" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="numero_serie" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="tipo_maquina" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="fecha_entrega" data-type="text" placeholder="aaaa-mm-dd"></td>
+              <td></td>
+              <td><input type="text" class="filter-input" data-key="activa" data-type="text" placeholder="1|0"></td>
+              <td class="th-actions"></td>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-footer" id="footer-tabla-garantias" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- BONOS -->
+    <section id="panel-bonos" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-award"></i> Bonos de capacitación</h2>
+        <div class="toolbar">
+          <select id="filtro-mes-bonos" title="Mes de liquidación">
+            <option value="">Todos los meses</option>
+          </select>
+          <button type="button" id="btn-bonos-imprimir" class="btn outline"><i class="fas fa-print"></i> Imprimir mes</button>
+          <button type="button" id="export-bonos" class="btn outline"><i class="fas fa-file-csv"></i> CSV</button>
+          <button type="button" id="nuevo-bono" class="btn primary"><i class="fas fa-plus"></i> Nuevo bono</button>
+        </div>
+      </div>
+      <div id="bonos-resumen-bar" class="bonos-resumen-bar" aria-live="polite"></div>
+      <div class="table-wrap">
+        <table class="data-table filterable-table" id="tabla-bonos">
+          <thead>
+            <tr>
+              <th>Técnico</th><th>Reporte</th><th>Tipo capacitación</th><th>Monto bono</th><th>Fecha</th><th>Pagado</th><th>Notas</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+            <tr class="filter-row">
+              <td><input type="text" class="filter-input" data-key="tecnico" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="reporte_folio" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="tipo_capacitacion" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="monto_bono" data-type="number" placeholder="&gt;500"></td>
+              <td><input type="text" class="filter-input" data-key="fecha" data-type="text" placeholder="aaaa-mm-dd"></td>
+              <td><input type="text" class="filter-input" data-key="pagado" data-type="text" placeholder="0|1"></td>
+              <td><input type="text" class="filter-input" data-key="notas" data-type="text" placeholder="Filtrar…"></td>
+              <td class="th-actions"></td>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-footer" id="footer-tabla-bonos" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- VIAJES -->
+    <section id="panel-viajes" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-plane"></i> Viajes y Viáticos</h2>
+        <div class="toolbar">
+          <select id="filtro-mes-viajes" title="Mes de liquidación">
+            <option value="">Todos los meses</option>
+          </select>
+          <button type="button" id="btn-viajes-liquidacion" class="btn outline"><i class="fas fa-print"></i> Liquidación mensual</button>
+          <button type="button" id="export-viajes" class="btn outline"><i class="fas fa-file-csv"></i> CSV</button>
+          <button type="button" id="nuevo-viaje" class="btn primary"><i class="fas fa-plus"></i> Nuevo viaje</button>
+        </div>
+      </div>
+      <p class="hint" style="padding:0 1.5rem 0.5rem">Viáticos: <strong>$1,000 MXN/día</strong>. Los días se calculan automáticamente por fecha inicio–fin.</p>
+      <div class="table-wrap">
+        <table class="data-table filterable-table" id="tabla-viajes">
+          <thead>
+            <tr>
+              <th>Técnico</th><th>Cliente / Razón social</th><th>F. Inicio</th><th>F. Fin</th><th>Días</th><th>Viáticos MXN</th><th>Descripción</th><th>Mes liq.</th><th>Liquidado</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+            <tr class="filter-row">
+              <td><input type="text" class="filter-input" data-key="tecnico" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="razon_social" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="fecha_inicio" data-type="text" placeholder="aaaa-mm-dd"></td>
+              <td><input type="text" class="filter-input" data-key="fecha_fin" data-type="text" placeholder="aaaa-mm-dd"></td>
+              <td><input type="text" class="filter-input" data-key="dias" data-type="number" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="monto_viaticos" data-type="number" placeholder="&gt;1000"></td>
+              <td><input type="text" class="filter-input" data-key="descripcion" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="mes_liquidacion" data-type="text" placeholder="2026-03"></td>
+              <td><input type="text" class="filter-input" data-key="liquidado" data-type="text" placeholder="0|1"></td>
+              <td class="th-actions"></td>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-footer" id="footer-tabla-viajes" aria-live="polite"></div>
       </div>
     </section>
 
@@ -539,7 +709,7 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
-  <script src="js/config.js?v=1"></script>
-  <script src="js/app.js?v=30"></script>
+  <script src="js/config.js?v=2"></script>
+  <script src="js/app.js?v=60"></script>
 </body>
 </html>
