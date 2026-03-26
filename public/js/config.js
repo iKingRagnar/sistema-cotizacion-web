@@ -3,8 +3,8 @@
  * El servidor puede sobreescribir con GET /api/config (nombre, colores, logo, auth).
  */
 window.__APP_CONFIG__ = {
-  appName: 'Gestor Administrativo',
-  shortName: 'Gestor Administrativo',
+  appName: 'Gestor Administrativo — PRUEBA DEPLOY DAVID',
+  shortName: 'Gestor Administrativo — PRUEBA DEPLOY DAVID',
   tagline: 'Gestión de operaciones, incidentes, bitácora y catálogos en una sola plataforma',
   /** URL absoluta o relativa a la raíz del sitio; vacío = favicon por defecto */
   logoUrl: '',
