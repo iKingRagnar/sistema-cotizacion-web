@@ -2756,6 +2756,41 @@
     }
 
     // Mini panel (Opción A): abre selector para agregar línea
+    let lastLineDraft = null;
+    function getFirstSelectedMaquinaId() {
+      const ids = getSelectedIds(qs('#m-maquinas'));
+      if (ids && ids.length) return Number(ids[0]) || null;
+      return null;
+    }
+    function buildDefaultLineDraft() {
+      const headerTipo = qs('#m-tipo')?.value || (cot && cot.tipo) || 'refacciones';
+      const tipoLinea = headerTipo === 'mano_obra' ? 'mano_obra' : 'refaccion';
+      const refId = Number(qs('#cot-line-refaccion')?.value) || null;
+      const maqId = getFirstSelectedMaquinaId();
+      return {
+        tipo_linea: tipoLinea,
+        maquina_id: maqId,
+        refaccion_id: refId,
+        descripcion: '',
+        cantidad: 1,
+        precio_unitario: 0,
+      };
+    }
+    function applyLineDraftToPanel(d) {
+      if (!d) return;
+      const tipoEl = qs('#cot-line-tipo');
+      const maqEl = qs('#cot-line-maq');
+      const refEl = qs('#cot-line-refaccion');
+      const descEl = qs('#cot-line-desc');
+      const cantEl = qs('#cot-line-cant');
+      const precioEl = qs('#cot-line-precio');
+      if (tipoEl) tipoEl.value = d.tipo_linea || 'refaccion';
+      if (maqEl) maqEl.value = d.maquina_id ? String(d.maquina_id) : '';
+      if (refEl && d.refaccion_id) refEl.value = String(d.refaccion_id);
+      if (descEl) descEl.value = d.descripcion || '';
+      if (cantEl) cantEl.value = String(Number(d.cantidad || 1));
+      if (precioEl) precioEl.value = String(Number(d.precio_unitario || 0));
+    }
     function showLinePanel() {
       const p = qs('#cot-line-panel');
       if (!p) return;
@@ -2776,6 +2811,8 @@
     }
     qs('#m-open-line-panel')?.addEventListener('click', () => {
       if (!currentCotId) return showToast('Primero guarda la cotización para poder agregar líneas.', 'warning');
+      if (!lastLineDraft) lastLineDraft = buildDefaultLineDraft();
+      applyLineDraftToPanel(lastLineDraft);
       syncLinePanelFields();
       showLinePanel();
     });
@@ -2811,6 +2848,15 @@
       try {
         await fetchJson(`${API}/cotizaciones/${currentCotId}/lineas`, { method: 'POST', body: JSON.stringify(payload) });
         await refreshCotizacion();
+        // Guardar como “default” para la siguiente línea (UX: abrir y solo dar Agregar)
+        lastLineDraft = {
+          tipo_linea: tipoLinea,
+          maquina_id: maqId,
+          refaccion_id: payload.refaccion_id || null,
+          descripcion: payload.descripcion || '',
+          cantidad: cant || 1,
+          precio_unitario: precio || 0,
+        };
         hideLinePanel();
         showToast('Línea agregada.', 'success');
       } catch (e) {
