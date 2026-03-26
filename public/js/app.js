@@ -3611,13 +3611,38 @@
     if (!silent) showToast('Datos actualizados.', 'success');
   }
 
-  async function seedDemo() {
+  async function seedDemo(useForce) {
     const btn = qs('#btn-seed-demo');
+    // Si no recibimos useForce, detectamos si ya hay datos y preguntamos
+    if (useForce === undefined) {
+      try {
+        const status = await fetchJson(API + '/seed-status');
+        if (status && status.clientes > 0) {
+          const ok = confirm(
+            '⚠️ Ya hay datos cargados (' + status.clientes + ' clientes).\n\n' +
+            '¿Quieres BORRAR todo y cargar el demo completo desde cero?\n\n' +
+            'Esto eliminará clientes, refacciones, cotizaciones, incidentes, garantías, bonos y viajes.'
+          );
+          if (!ok) return;
+          useForce = true;
+        } else {
+          useForce = false;
+        }
+      } catch (_) { useForce = false; }
+    }
     btn.disabled = true;
     btn.textContent = 'Cargando…';
     try {
-      const data = await fetchJson(API + '/seed-demo', { method: 'POST' });
-      qs('#seed-status').innerHTML = `Listo: <strong>${data.clientes}</strong> clientes, <strong>${data.refacciones}</strong> refacciones, <strong>${data.maquinas}</strong> máquinas, <strong>${data.cotizaciones || 0}</strong> cotizaciones, <strong>${data.incidentes || 0}</strong> incidentes, <strong>${data.bitacoras || 0}</strong> bitácoras.`;
+      const data = await fetchJson(API + '/seed-demo', {
+        method: 'POST',
+        body: JSON.stringify({ force: !!useForce }),
+      });
+      qs('#seed-status').innerHTML =
+        `Listo: <strong>${data.clientes}</strong> clientes, <strong>${data.refacciones}</strong> refacciones, ` +
+        `<strong>${data.maquinas}</strong> máquinas, <strong>${data.cotizaciones || 0}</strong> cotizaciones, ` +
+        `<strong>${data.incidentes || 0}</strong> incidentes, <strong>${data.bitacoras || 0}</strong> bitácoras, ` +
+        `<strong>${data.reportes || 0}</strong> reportes, <strong>${data.garantias || 0}</strong> garantías, ` +
+        `<strong>${data.bonos || 0}</strong> bonos, <strong>${data.viajes || 0}</strong> viajes.`;
       btn.textContent = 'Datos demo cargados';
       loadSeedStatus();
       loadClientes();
@@ -3628,7 +3653,7 @@
       await loadIncidentes();
       await loadBitacoras();
       showPanel('bitacoras', { skipLoad: true });
-      showToast('Datos demo cargados. Revisa Cotizaciones, Incidentes y Bitácora de horas.', 'success');
+      showToast('Demo completo cargado: clientes, cotizaciones, incidentes, reportes, garantías, bonos y viajes.', 'success');
     } catch (e) {
       let msg = e.message;
       try { const o = JSON.parse(msg); if (o.error) msg = o.error; } catch (_) {}

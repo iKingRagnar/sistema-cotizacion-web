@@ -781,9 +781,21 @@ function safeStr(v) { return (v != null && String(v).trim() !== '') ? String(v).
 function safeStrReq(v) { return (v != null && String(v).trim() !== '') ? String(v).trim() : ''; }
 app.post('/api/seed-demo', async (req, res) => {
   try {
+    const force = !!(req.body && req.body.force);
     const [cCount] = await db.getAll('SELECT COUNT(*) as n FROM clientes');
-    if (cCount && cCount.n > 0) {
+    if (cCount && cCount.n > 0 && !force) {
       return res.status(400).json({ error: 'Ya hay datos cargados. El demo solo se puede cargar cuando no hay clientes. Si quieres volver a cargar, elimina primero los clientes desde la pestaña Clientes.' });
+    }
+    // ── FORCE: vaciar todas las tablas de negocio en orden FK ──────────────
+    if (force && cCount && cCount.n > 0) {
+      const tablasOrden = [
+        'movimientos_stock','mantenimientos_garantia','bonos','viajes',
+        'mantenimientos','bitacoras','cotizacion_lineas','cotizaciones',
+        'incidentes','garantias','reportes','maquinas','refacciones','clientes',
+      ];
+      for (const t of tablasOrden) {
+        try { await db.runQuery(`DELETE FROM ${t}`); } catch (_) { /* tabla puede no existir en bd vieja */ }
+      }
     }
     const seedPath = path.join(__dirname, 'seed-demo.json');
     if (!fs.existsSync(seedPath)) return res.status(404).json({ error: 'No existe seed-demo.json. Ejecuta: python exportar_demo.py' });
@@ -921,14 +933,132 @@ app.post('/api/seed-demo', async (req, res) => {
       cotizacionesCount++;
     }
 
+    // ── REPORTES demo ─────────────────────────────────────────────────────
+    const subtiposServ = ['falla_electrica','falla_mecanica','falla_electronica','instalacion','capacitacion','garantia'];
+    const tecnicos2 = ['Juan Pérez','María García','Carlos López','Ana Torres','Luis Martínez'];
+    const diasRep = [0,1,2,5,7,10,14,20,30,45,60,90,120,180,270,365];
+    let reportesIds = [];
+    const nRep = Math.min(20, clientesDb.length * 2);
+    for (let i = 0; i < nRep; i++) {
+      const cli = clientesDb[i % clientesDb.length];
+      const maqsC = maquinasDb.filter(m => m.cliente_id === cli.id);
+      const maqId = maqsC.length ? maqsC[i % maqsC.length].id : null;
+      const tipo = i % 4 === 0 ? 'venta' : 'servicio';
+      const subtipo = tipo === 'venta' ? null : subtiposServ[i % subtiposServ.length];
+      const diasAtrasR = diasRep[i % diasRep.length];
+      const fechaR = new Date(Date.now() - diasAtrasR * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const folio = (tipo === 'venta' ? 'REP-VEN-' : 'REP-SRV-') + fechaR.replace(/-/g,'') + '-' + String(100 + i);
+      const est = i % 5 === 0 ? 'cerrado' : 'abierto';
+      await db.runQuery(
+        `INSERT INTO reportes (folio, cliente_id, razon_social, maquina_id, tipo_reporte, subtipo, descripcion, tecnico, fecha, estatus)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [folio, cli.id, cli.nombre, maqId, tipo, subtipo,
+         ['Mantenimiento preventivo demo','Reparación demo','Instalación de equipo demo','Capacitación técnica demo','Ajuste y calibración demo'][i % 5],
+         tecnicos2[i % tecnicos2.length], fechaR, est]
+      );
+      const rr = await db.getOne('SELECT id FROM reportes ORDER BY id DESC LIMIT 1');
+      if (rr) reportesIds.push(rr.id);
+    }
+
+    // ── GARANTÍAS demo ────────────────────────────────────────────────────
+    let garantiasCount = 0;
+    const modelosGar = ['Hidráulico HY-200','CNC Torno 450','Compresor CI-90','Robot Soldador RS-3','Cortadora Láser CL-1'];
+    for (let i = 0; i < Math.min(8, clientesDb.length * 2); i++) {
+      const cli = clientesDb[i % clientesDb.length];
+      const meses = [6, 9, 12, 18, 24];
+      const mesesAtras = meses[i % meses.length];
+      const fEnt = new Date(Date.now() - mesesAtras * 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const activa = mesesAtras <= 12 ? 1 : 0;
+      await db.runQuery(
+        `INSERT INTO garantias (cliente_id, razon_social, modelo_maquina, numero_serie, tipo_maquina, fecha_entrega, activa)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [cli.id, cli.nombre, modelosGar[i % modelosGar.length],
+         'SN-DEMO-' + String(1000 + i), ['Industrial','CNC','Hidráulica','Eléctrica'][i % 4], fEnt, activa]
+      );
+      const rg = await db.getOne('SELECT id FROM garantias ORDER BY id DESC LIMIT 1');
+      if (rg) {
+        // 2 mantenimientos de garantía por año
+        for (let num = 1; num <= 2; num++) {
+          const fProg = new Date(Date.now() + (num * 180 - mesesAtras * 30) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+          const confirmado = num === 1 && mesesAtras >= 6 ? 1 : 0;
+          await db.runQuery(
+            `INSERT INTO mantenimientos_garantia (garantia_id, numero, anio, fecha_programada, fecha_realizada, confirmado, costo)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [rg.id, num, new Date().getFullYear(), fProg,
+             confirmado ? fProg : null, confirmado, confirmado ? 1500 : 0]
+          );
+        }
+        garantiasCount++;
+      }
+    }
+
+    // ── BONOS demo ────────────────────────────────────────────────────────
+    let bonosCount = 0;
+    const tiposCapacitacion = ['Operación básica','Mantenimiento preventivo','Programación CNC','Seguridad industrial','Actualización firmware'];
+    for (let i = 0; i < Math.min(10, reportesIds.length); i++) {
+      const repId = reportesIds[i];
+      const tecnico = tecnicos2[i % tecnicos2.length];
+      const monto = [500, 750, 1000, 1250, 1500][i % 5];
+      const diasB = [0, 5, 10, 15, 30, 60, 90][i % 7];
+      const fechaB = new Date(Date.now() - diasB * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      await db.runQuery(
+        `INSERT INTO bonos (reporte_id, tecnico, tipo_capacitacion, monto_bono, fecha, pagado)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [repId, tecnico, tiposCapacitacion[i % tiposCapacitacion.length], monto, fechaB, i % 3 === 0 ? 1 : 0]
+      );
+      bonosCount++;
+    }
+    // Bonos sin reporte si no hubo reportes con capacitación
+    if (bonosCount === 0) {
+      for (let i = 0; i < 5; i++) {
+        const diasB = [0, 7, 14, 30, 60][i];
+        const fechaB = new Date(Date.now() - diasB * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        await db.runQuery(
+          `INSERT INTO bonos (reporte_id, tecnico, tipo_capacitacion, monto_bono, fecha, pagado)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [null, tecnicos2[i], tiposCapacitacion[i], (i + 1) * 500, fechaB, i < 2 ? 1 : 0]
+        );
+        bonosCount++;
+      }
+    }
+
+    // ── VIAJES demo ───────────────────────────────────────────────────────
+    let viajesCount = 0;
+    const descripsViaje = ['Instalación en planta','Diagnóstico en campo','Servicio correctivo urgente','Capacitación operadores','Arranque de equipo nuevo'];
+    const activsViaje = ['Revisión, ajuste y pruebas','Cambio de componentes y prueba final','Capacitación a personal','Instalación y puesta en marcha','Diagnóstico y cotización'];
+    for (let i = 0; i < Math.min(12, clientesDb.length * 2); i++) {
+      const cli = clientesDb[i % clientesDb.length];
+      const dias = [1, 2, 3, 1, 2, 4, 1, 3, 2, 1, 2, 5][i];
+      const diasAtrasV = [0, 3, 7, 10, 14, 20, 30, 45, 60, 90, 120, 180][i % 12];
+      const fIni = new Date(Date.now() - diasAtrasV * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const fFin = new Date(Date.now() - diasAtrasV * 24 * 60 * 60 * 1000 + (dias - 1) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const monto = dias * 1000;
+      const repId = reportesIds.length > i ? reportesIds[i] : null;
+      const mesLiq = fIni.slice(0, 7);
+      const liquidado = diasAtrasV >= 30 ? 1 : 0;
+      await db.runQuery(
+        `INSERT INTO viajes (tecnico, cliente_id, razon_social, fecha_inicio, fecha_fin, dias, monto_viaticos, descripcion, actividades, reporte_id, mes_liquidacion, liquidado)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [tecnicos2[i % tecnicos2.length], cli.id, cli.nombre, fIni, fFin, dias, monto,
+         descripsViaje[i % descripsViaje.length], activsViaje[i % activsViaje.length],
+         repId, mesLiq, liquidado]
+      );
+      viajesCount++;
+    }
+
     res.json({
       ok: true,
+      force,
       clientes: clientes.length,
       refacciones: refacciones.length,
       maquinas: maquinas.length,
       incidentes: incidentesCount,
       bitacoras: bitacorasCount,
       cotizaciones: cotizacionesCount,
+      reportes: reportesIds.length,
+      garantias: garantiasCount,
+      bonos: bonosCount,
+      viajes: viajesCount,
     });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
