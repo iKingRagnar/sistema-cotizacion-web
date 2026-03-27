@@ -328,8 +328,25 @@
               <td><input type="text" class="filter-input" data-key="razon_social" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="maquina_nombre" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="numero_maquina" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="tipo_reporte" data-type="text" placeholder="servicio|venta"></td>
-              <td><input type="text" class="filter-input" data-key="subtipo" data-type="text" placeholder="Filtrar…"></td>
+              <td>
+                <select class="filter-input" data-key="tipo_reporte" data-type="text" id="tabla-reportes-filter-tipo">
+                  <option value="">servicio|venta</option>
+                  <option value="servicio">servicio</option>
+                  <option value="venta">venta</option>
+                </select>
+              </td>
+              <td>
+                <select class="filter-input" id="tabla-reportes-filter-subtipo">
+                  <option value="">Todos</option>
+                  <option value="falla_electrica">falla eléctrica</option>
+                  <option value="falla_mecanica">falla mecánica</option>
+                  <option value="falla_electronica">falla electrónica</option>
+                  <option value="instalacion">instalación</option>
+                  <option value="capacitacion">capacitación</option>
+                  <option value="garantia">garantía</option>
+                  <option value="otro">otro / otra</option>
+                </select>
+              </td>
               <td><input type="text" class="filter-input" data-key="descripcion" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="tecnico" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="fecha" data-type="text" placeholder="aaaa-mm-dd"></td>
@@ -725,6 +742,6 @@
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=66"></script>
+  <script src="js/app.js?v=67"></script>
 </body>
 </html>

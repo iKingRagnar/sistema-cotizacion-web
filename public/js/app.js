@@ -1353,7 +1353,7 @@
       const [raw, tecs] = await Promise.all([fetchJson(API + '/reportes'), fetchJson(API + '/tecnicos').catch(() => [])]);
       reportesCache = toArray(raw);
       tecnicosCache = toArray(tecs);
-      renderReportes(reportesCache);
+      applyReportesFiltersAndRender();
     } catch (e) {
       renderReportes([]);
       showToast(parseApiError(e) || 'No se pudieron cargar los reportes.', 'error');
@@ -1366,6 +1366,7 @@
     tbody.innerHTML = '';
     if (!data || data.length === 0) {
       tbody.innerHTML = '<tr><td colspan="11" class="empty">No hay reportes. Agrega uno nuevo.</td></tr>';
+      updateTableFooter('tabla-reportes', 0, reportesCache.length, () => clearTableFiltersAndRefresh('tabla-reportes', null, applyReportesFiltersAndRender));
       return;
     }
     data.forEach(r => {
@@ -1397,6 +1398,73 @@
     tbody.querySelectorAll('.btn-del-rep').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar este reporte?', () => deleteReporte(btn.dataset.id)); });
     });
+    updateTableFooter('tabla-reportes', data.length, reportesCache.length, () => clearTableFiltersAndRefresh('tabla-reportes', null, applyReportesFiltersAndRender));
+  }
+
+  function normalizeReporteSubtipo(v) {
+    return normalizeForSearch(v).replace(/_/g, ' ').trim();
+  }
+
+  function refreshReporteSubtipoFilterOptions() {
+    const tipoTop = (qs('#filtro-tipo-reporte')?.value || '').trim().toLowerCase();
+    const tipoRow = (qs('#tabla-reportes-filter-tipo')?.value || '').trim().toLowerCase();
+    const subtipoSel = qs('#tabla-reportes-filter-subtipo');
+    if (!subtipoSel) return;
+    const tipo = tipoRow || tipoTop;
+    const map = {
+      servicio: [
+        { v: '', t: 'Todos (servicio)' },
+        { v: 'falla_electrica', t: 'falla eléctrica' },
+        { v: 'falla_mecanica', t: 'falla mecánica' },
+        { v: 'falla_electronica', t: 'falla electrónica' },
+        { v: 'otro', t: 'otro / otra' },
+      ],
+      venta: [
+        { v: '', t: 'Todos (venta)' },
+        { v: 'instalacion', t: 'instalación' },
+        { v: 'capacitacion', t: 'capacitación' },
+        { v: 'garantia', t: 'garantía' },
+        { v: 'otro', t: 'otro / otra' },
+      ],
+      all: [
+        { v: '', t: 'Todos' },
+        { v: 'falla_electrica', t: 'falla eléctrica' },
+        { v: 'falla_mecanica', t: 'falla mecánica' },
+        { v: 'falla_electronica', t: 'falla electrónica' },
+        { v: 'instalacion', t: 'instalación' },
+        { v: 'capacitacion', t: 'capacitación' },
+        { v: 'garantia', t: 'garantía' },
+        { v: 'otro', t: 'otro / otra' },
+      ],
+    };
+    const prev = subtipoSel.value || '';
+    const opts = map[tipo] || map.all;
+    subtipoSel.innerHTML = opts.map((o) => `<option value="${o.v}">${o.t}</option>`).join('');
+    const allowed = new Set(opts.map((o) => o.v));
+    subtipoSel.value = allowed.has(prev) ? prev : '';
+  }
+
+  function getFilteredReportes() {
+    let filtered = applyFilters(reportesCache, getFilterValues('#tabla-reportes'), 'tabla-reportes');
+    const tipoTop = (qs('#filtro-tipo-reporte')?.value || '').trim().toLowerCase();
+    if (tipoTop) {
+      filtered = filtered.filter((r) => String(r.tipo_reporte || '').trim().toLowerCase() === tipoTop);
+    }
+    const subtipo = (qs('#tabla-reportes-filter-subtipo')?.value || '').trim().toLowerCase();
+    if (subtipo) {
+      filtered = filtered.filter((r) => {
+        const s = normalizeReporteSubtipo(r.subtipo || '');
+        if (subtipo === 'otro') return s === 'otro' || s === 'otra';
+        return s === normalizeReporteSubtipo(subtipo);
+      });
+    }
+    return filtered;
+  }
+
+  function applyReportesFiltersAndRender() {
+    refreshReporteSubtipoFilterOptions();
+    const filtered = getFilteredReportes();
+    renderReportes(filtered);
   }
 
   function openModalReporte(reporte) {
@@ -4649,6 +4717,7 @@
   bindTableFilters('tabla-refacciones', applyRefaccionesFiltersAndRender);
   bindTableFilters('tabla-maquinas', applyMaquinasFiltersAndRender);
   bindTableFilters('tabla-cotizaciones', applyCotizacionesFiltersAndRender);
+  bindTableFilters('tabla-reportes', applyReportesFiltersAndRender);
   bindTableFilters('tabla-incidentes', applyIncidentesFiltersAndRender);
   bindTableFilters('tabla-bitacoras', applyBitacorasFiltersAndRender);
   const dashboardRefresh = qs('#dashboard-refresh');
@@ -4679,6 +4748,12 @@
   // Nuevos módulos
   const btnNuevoReporte = qs('#nuevo-reporte');
   if (btnNuevoReporte) btnNuevoReporte.addEventListener('click', () => openModalReporte(null));
+  const filtroTipoReporteTop = qs('#filtro-tipo-reporte');
+  if (filtroTipoReporteTop) filtroTipoReporteTop.addEventListener('change', applyReportesFiltersAndRender);
+  const filtroTipoReporteTbl = qs('#tabla-reportes-filter-tipo');
+  if (filtroTipoReporteTbl) filtroTipoReporteTbl.addEventListener('change', applyReportesFiltersAndRender);
+  const filtroSubtipoReporteTbl = qs('#tabla-reportes-filter-subtipo');
+  if (filtroSubtipoReporteTbl) filtroSubtipoReporteTbl.addEventListener('change', applyReportesFiltersAndRender);
   const btnNuevaGarantia = qs('#nueva-garantia');
   if (btnNuevaGarantia) btnNuevaGarantia.addEventListener('click', () => openModalGarantia(null));
   const btnNuevoBono = qs('#nuevo-bono');
@@ -4713,6 +4788,8 @@
   qs('#export-excel-maquinas').addEventListener('click', () => exportToExcel(applyFilters(maquinasCache, getFilterValues('#tabla-maquinas'), 'tabla-maquinas'), 'tabla-maquinas', 'maquinas'));
   qs('#export-cotizaciones').addEventListener('click', () => exportToCsv(enrichCotizacionesForExport(applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones')), 'tabla-cotizaciones', 'cotizaciones'));
   qs('#export-excel-cotizaciones').addEventListener('click', () => exportToExcel(enrichCotizacionesForExport(applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones')), 'tabla-cotizaciones', 'cotizaciones'));
+  const btnExportReportes = qs('#export-reportes');
+  if (btnExportReportes) btnExportReportes.addEventListener('click', () => exportToCsv(getFilteredReportes(), 'tabla-reportes', 'reportes'));
   qs('#export-incidentes').addEventListener('click', () => exportToCsv(enrichIncidentesForExport(applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes')), 'tabla-incidentes', 'incidentes'));
   qs('#export-excel-incidentes').addEventListener('click', () => exportToExcel(enrichIncidentesForExport(applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes')), 'tabla-incidentes', 'incidentes'));
   qs('#export-bitacoras').addEventListener('click', () => exportToCsv(enrichBitacorasForExport(applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras')), 'tabla-bitacoras', 'bitacoras'));
