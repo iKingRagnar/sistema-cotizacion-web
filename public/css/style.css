@@ -154,37 +154,63 @@ input.input-readonly {
   cursor: pointer !important;
   user-select: auto;
 }
-/* Cuerpo de tabla: solo lectura — sin selección (evita I-beam/caret “como si fuera editable”) */
-.data-table tbody td,
-.table-wrap tbody td {
+/* Cuerpo de tabla: texto de datos seleccionable (copiar); Acciones y botones sin caret raro */
+.data-table tbody td:not(.th-actions),
+.table-wrap tbody td:not(.th-actions) {
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+}
+.data-table tbody td.th-actions,
+.table-wrap tbody td.th-actions {
   cursor: default !important;
   user-select: none !important;
   -webkit-user-select: none !important;
   -moz-user-select: none !important;
-  -ms-user-select: none !important;
 }
-.data-table tbody td *:not(input):not(select):not(textarea),
-.table-wrap tbody td *:not(input):not(select):not(textarea) {
+.data-table tbody td.th-actions *:not(input):not(select):not(textarea),
+.table-wrap tbody td.th-actions *:not(input):not(select):not(textarea) {
   cursor: default !important;
   user-select: none !important;
   -webkit-user-select: none !important;
 }
-.data-table tbody td .btn,
-.data-table tbody td .btn *,
-.data-table tbody td button,
-.data-table tbody td button *,
-.data-table tbody td a[href],
-.data-table tbody td a[href] *,
-.data-table tbody td [role="button"],
-.data-table tbody td [role="button"] *,
-.table-wrap tbody td .btn,
-.table-wrap tbody td .btn *,
-.table-wrap tbody td button,
-.table-wrap tbody td button *,
-.table-wrap tbody td a[href],
-.table-wrap tbody td a[href] *,
-.table-wrap tbody td [role="button"],
-.table-wrap tbody td [role="button"] * {
+.data-table tbody td:not(.th-actions) .btn,
+.data-table tbody td:not(.th-actions) .btn *,
+.data-table tbody td:not(.th-actions) button,
+.data-table tbody td:not(.th-actions) button *,
+.data-table tbody td:not(.th-actions) a[href],
+.data-table tbody td:not(.th-actions) a[href] *,
+.data-table tbody td:not(.th-actions) [role="button"],
+.data-table tbody td:not(.th-actions) [role="button"] *,
+.table-wrap tbody td:not(.th-actions) .btn,
+.table-wrap tbody td:not(.th-actions) .btn *,
+.table-wrap tbody td:not(.th-actions) button,
+.table-wrap tbody td:not(.th-actions) button *,
+.table-wrap tbody td:not(.th-actions) a[href],
+.table-wrap tbody td:not(.th-actions) a[href] *,
+.table-wrap tbody td:not(.th-actions) [role="button"],
+.table-wrap tbody td:not(.th-actions) [role="button"] * {
+  cursor: pointer !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+.data-table tbody td.th-actions .btn,
+.data-table tbody td.th-actions .btn *,
+.data-table tbody td.th-actions button,
+.data-table tbody td.th-actions button *,
+.data-table tbody td.th-actions a[href],
+.data-table tbody td.th-actions a[href] *,
+.data-table tbody td.th-actions [role="button"],
+.data-table tbody td.th-actions [role="button"] *,
+.table-wrap tbody td.th-actions .btn,
+.table-wrap tbody td.th-actions .btn *,
+.table-wrap tbody td.th-actions button,
+.table-wrap tbody td.th-actions button *,
+.table-wrap tbody td.th-actions a[href],
+.table-wrap tbody td.th-actions a[href] *,
+.table-wrap tbody td.th-actions [role="button"],
+.table-wrap tbody td.th-actions [role="button"] * {
   cursor: pointer !important;
   user-select: none !important;
   -webkit-user-select: none !important;

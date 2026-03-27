@@ -42,18 +42,19 @@
   function qsAll(s) { return document.querySelectorAll(s); }
 
   (function bindTableReadOnlyGuards() {
-    function isDataTableBodyCell(el) {
+    /** Solo columna Acciones: bloquea inicio de selección (refuerzo al CSS). Celdas de datos permiten copiar. */
+    function isActionsColumnInteraction(el) {
       if (!el || !el.closest) return false;
-      const cell = el.closest('.data-table tbody td');
+      const cell = el.closest('.data-table tbody td.th-actions');
       if (!cell) return false;
       if (el.closest && el.closest('input, textarea, select, [contenteditable="true"]')) return false;
       return true;
     }
     document.addEventListener('selectstart', function (e) {
-      if (isDataTableBodyCell(e.target)) e.preventDefault();
+      if (isActionsColumnInteraction(e.target)) e.preventDefault();
     }, true);
     document.addEventListener('dragstart', function (e) {
-      if (isDataTableBodyCell(e.target)) e.preventDefault();
+      if (isActionsColumnInteraction(e.target)) e.preventDefault();
     }, true);
   })();
 
