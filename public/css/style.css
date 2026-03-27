@@ -72,6 +72,19 @@ input[type="range"],
 input[type="image"] {
   cursor: pointer;
 }
+/* Evita que el cursor cambie a “I” sobre íconos/texto dentro de controles clicables */
+a[href] *,
+button:not(:disabled) *,
+[role="button"]:not([aria-disabled="true"]) *,
+label *,
+summary * {
+  cursor: pointer;
+}
+.btn:disabled *,
+.btn[disabled] *,
+button:disabled * {
+  cursor: not-allowed;
+}
 input:not(.input-readonly):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="image"]):not([type="hidden"]):not(:disabled):not([readonly]),
 textarea:not(:disabled):not([readonly]),
 [contenteditable="true"] {
