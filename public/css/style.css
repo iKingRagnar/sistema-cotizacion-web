@@ -53,6 +53,9 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   cursor: default;
+  /* Evita cursor “I” y selección accidental en toda la cromática (títulos, toolbars, etc.) */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* Cursor de texto (I) solo donde el usuario puede escribir; resto flecha o pointer */
@@ -85,15 +88,46 @@ summary * {
 button:disabled * {
   cursor: not-allowed;
 }
+/* Botones con clase .btn (y anidados): sin selección de texto + puntero consistente */
+.btn:not(:disabled),
+.btn:not(:disabled) * {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
 input:not(.input-readonly):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="image"]):not([type="hidden"]):not(:disabled):not([readonly]),
 textarea:not(:disabled):not([readonly]),
 [contenteditable="true"] {
   cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
 }
 input[readonly],
 textarea[readonly],
 input.input-readonly {
   cursor: not-allowed;
+}
+
+/* Donde sí conviene copiar texto: tablas, modales, chat, notas */
+.table-wrap td,
+.table-wrap th,
+.table-wrap .data-table {
+  user-select: text;
+  -webkit-user-select: text;
+}
+.table-wrap button,
+.table-wrap .btn {
+  user-select: none;
+  -webkit-user-select: none;
+}
+.modal-body,
+.notifications-list,
+.ai-widget .ai-chat-messages,
+.ai-widget .ai-chat-suggestions,
+pre,
+code {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 ::selection {
