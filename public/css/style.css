@@ -154,10 +154,40 @@ input.input-readonly {
   cursor: pointer !important;
   user-select: auto;
 }
-/* Cuerpo de tabla: permitir copiar celdas */
+/* Cuerpo de tabla: copiar texto sí; cursor flecha (no I-beam) sobre datos estáticos */
+.data-table tbody td,
 .table-wrap tbody td {
+  cursor: default !important;
   user-select: text;
   -webkit-user-select: text;
+}
+.data-table tbody td .btn,
+.data-table tbody td button,
+.data-table tbody td a[href],
+.data-table tbody td [role="button"],
+.table-wrap tbody td .btn,
+.table-wrap tbody td button,
+.table-wrap tbody td a[href],
+.table-wrap tbody td [role="button"] {
+  cursor: pointer !important;
+}
+.data-table tbody th,
+.table-wrap tbody th {
+  cursor: default !important;
+  user-select: text;
+  -webkit-user-select: text;
+}
+/* Si en el futuro hay inputs dentro de celdas (edición en línea), cursor de texto solo ahí */
+.data-table tbody td input:not([type="checkbox"]):not([type="radio"]),
+.data-table tbody td textarea {
+  cursor: text !important;
+}
+.data-table tbody td select {
+  cursor: pointer !important;
+}
+.data-table tbody td input[type="checkbox"],
+.data-table tbody td input[type="radio"] {
+  cursor: pointer !important;
 }
 .table-wrap button,
 .table-wrap .btn {
