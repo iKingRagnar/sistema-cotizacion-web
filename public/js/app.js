@@ -1407,6 +1407,7 @@
 
   function refreshReporteSubtipoFilterOptions() {
     const tipoTop = (qs('#filtro-tipo-reporte')?.value || '').trim().toLowerCase();
+    const subtipoTopSel = qs('#filtro-subtipo-reporte');
     const tipoRow = (qs('#tabla-reportes-filter-tipo')?.value || '').trim().toLowerCase();
     const subtipoSel = qs('#tabla-reportes-filter-subtipo');
     if (!subtipoSel) return;
@@ -1442,6 +1443,11 @@
     subtipoSel.innerHTML = opts.map((o) => `<option value="${o.v}">${o.t}</option>`).join('');
     const allowed = new Set(opts.map((o) => o.v));
     subtipoSel.value = allowed.has(prev) ? prev : '';
+    if (subtipoTopSel) {
+      const prevTop = subtipoTopSel.value || '';
+      subtipoTopSel.innerHTML = opts.map((o) => `<option value="${o.v}">${o.t}</option>`).join('');
+      subtipoTopSel.value = allowed.has(prevTop) ? prevTop : '';
+    }
   }
 
   function getFilteredReportes() {
@@ -1451,11 +1457,13 @@
       filtered = filtered.filter((r) => String(r.tipo_reporte || '').trim().toLowerCase() === tipoTop);
     }
     const subtipo = (qs('#tabla-reportes-filter-subtipo')?.value || '').trim().toLowerCase();
-    if (subtipo) {
+    const subtipoTop = (qs('#filtro-subtipo-reporte')?.value || '').trim().toLowerCase();
+    const subtipoActive = subtipo || subtipoTop;
+    if (subtipoActive) {
       filtered = filtered.filter((r) => {
         const s = normalizeReporteSubtipo(r.subtipo || '');
-        if (subtipo === 'otro') return s === 'otro' || s === 'otra';
-        return s === normalizeReporteSubtipo(subtipo);
+        if (subtipoActive === 'otro') return s === 'otro' || s === 'otra';
+        return s === normalizeReporteSubtipo(subtipoActive);
       });
     }
     return filtered;
@@ -4750,6 +4758,8 @@
   if (btnNuevoReporte) btnNuevoReporte.addEventListener('click', () => openModalReporte(null));
   const filtroTipoReporteTop = qs('#filtro-tipo-reporte');
   if (filtroTipoReporteTop) filtroTipoReporteTop.addEventListener('change', applyReportesFiltersAndRender);
+  const filtroSubtipoReporteTop = qs('#filtro-subtipo-reporte');
+  if (filtroSubtipoReporteTop) filtroSubtipoReporteTop.addEventListener('change', applyReportesFiltersAndRender);
   const filtroTipoReporteTbl = qs('#tabla-reportes-filter-tipo');
   if (filtroTipoReporteTbl) filtroTipoReporteTbl.addEventListener('change', applyReportesFiltersAndRender);
   const filtroSubtipoReporteTbl = qs('#tabla-reportes-filter-subtipo');
