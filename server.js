@@ -600,7 +600,7 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
   try {
     const existing = await db.getOne('SELECT * FROM cotizaciones WHERE id = ?', [req.params.id]);
     if (!existing) return res.status(404).json({ error: 'No encontrada' });
-    const { folio, cliente_id, tipo, fecha, subtotal, iva, total, tipo_cambio, moneda, maquinas_ids, estado, notas } = req.body || {};
+    const { folio, cliente_id, tipo, fecha, tipo_cambio, moneda, maquinas_ids, estado, notas } = req.body || {};
     const maqIds = typeof maquinas_ids === 'string' ? maquinas_ids : JSON.stringify(maquinas_ids || []);
     // No pisar fecha con NULL si el cliente no envía el campo (JSON.stringify omite undefined) o el input falló.
     let fechaSql = existing.fecha || null;
@@ -610,12 +610,24 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
       fechaSql = new Date().toISOString().slice(0, 10);
     }
     await db.runQuery(
-      `UPDATE cotizaciones SET folio=?, cliente_id=?, tipo=?, fecha=?, subtotal=?, iva=?, total=?, tipo_cambio=?, moneda=?, maquinas_ids=?, estado=?, notas=? WHERE id=?`,
-      [folio || null, cliente_id || null, tipo || 'refacciones', fechaSql,
-       Number(subtotal) || 0, Number(iva) || 0, Number(total) || 0,
-       Number(tipo_cambio) || 17.0, moneda || 'MXN', maqIds, estado || 'borrador', notas || null,
-       req.params.id]
+      `UPDATE cotizaciones
+       SET folio=?, cliente_id=?, tipo=?, fecha=?, tipo_cambio=?, moneda=?, maquinas_ids=?, estado=?, notas=?
+       WHERE id=?`,
+      [
+        folio || null,
+        cliente_id || null,
+        tipo || 'refacciones',
+        fechaSql,
+        Number(tipo_cambio) || 17.0,
+        moneda || 'MXN',
+        maqIds,
+        estado || 'borrador',
+        notas || null,
+        req.params.id,
+      ]
     );
+    // Totales siempre se calculan desde líneas (evita que un PUT del header los pise a 0).
+    await recalcCotizacionTotals(req.params.id);
     const r = await db.getOne('SELECT co.*, c.nombre as cliente_nombre FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id WHERE co.id = ?', [req.params.id]);
     res.json(r || {});
   } catch (e) {
