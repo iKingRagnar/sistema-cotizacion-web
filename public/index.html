@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=46">
+  <link rel="stylesheet" href="css/style.css?v=47">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
@@ -624,7 +624,8 @@
         <table class="data-table data-table--fluid filterable-table" id="tabla-bitacoras" data-cache="bitacorasCache">
           <thead>
             <tr>
-              <th>Fecha</th><th>Incidente</th><th>Cotización</th><th>Técnico</th><th>Actividades</th><th>Horas</th><th>Materiales</th><th>Estado</th>
+              <th>Fecha</th><th>Incidente</th><th>Cotización</th><th>Técnico</th><th>Actividades</th>
+              <th class="col-no-ibeam">Horas</th><th class="col-no-ibeam">Materiales</th><th class="col-no-ibeam">Estado</th>
               <th class="th-actions">Acciones</th>
             </tr>
             <tr class="filter-row">
@@ -633,9 +634,9 @@
               <td><input type="text" class="filter-input" data-key="cotizacion_folio" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="tecnico" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="actividades" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="tiempo_horas" data-type="number" placeholder="&gt;2, &lt;8"></td>
-              <td><input type="text" class="filter-input" data-key="materiales_usados" data-type="text" placeholder="Filtrar…"></td>
-              <td><span data-key="estado_registro" class="filter-input" style="display:inline-block;min-height:1px;padding:0;border:none;width:100%" aria-hidden="true"></span></td>
+              <td class="col-no-ibeam"><input type="text" class="filter-input" data-key="tiempo_horas" data-type="number" placeholder="&gt;2, &lt;8"></td>
+              <td class="col-no-ibeam"><input type="text" class="filter-input" data-key="materiales_usados" data-type="text" placeholder="Filtrar…"></td>
+              <td class="col-no-ibeam"><span data-key="estado_registro" class="filter-input" style="display:inline-block;min-height:1px;padding:0;border:none;width:100%" aria-hidden="true"></span></td>
               <td class="th-actions"></td>
             </tr>
           </thead>
@@ -829,6 +830,6 @@
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=73"></script>
+  <script src="js/app.js?v=74"></script>
 </body>
 </html>

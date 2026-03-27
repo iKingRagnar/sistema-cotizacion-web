@@ -50,11 +50,18 @@
       if (el.closest && el.closest('input, textarea, select, [contenteditable="true"]')) return false;
       return true;
     }
+    /** Bitácora: columnas Horas / Materiales / Estado — sin caret al arrastrar (solo estas celdas). */
+    function isBitacoraNoIbeamBodyCell(el) {
+      if (!el || !el.closest) return false;
+      return !!el.closest('#tabla-bitacoras tbody td.col-no-ibeam');
+    }
     document.addEventListener('selectstart', function (e) {
       if (isActionsColumnInteraction(e.target)) e.preventDefault();
+      else if (isBitacoraNoIbeamBodyCell(e.target)) e.preventDefault();
     }, true);
     document.addEventListener('dragstart', function (e) {
       if (isActionsColumnInteraction(e.target)) e.preventDefault();
+      else if (isBitacoraNoIbeamBodyCell(e.target)) e.preventDefault();
     }, true);
   })();
 
@@ -2633,9 +2640,9 @@
         <td>${escapeHtml(String(b.cotizacion_folio || '—'))}</td>
         <td class="td-text-wrap">${escapeHtml(String(b.tecnico || ''))}</td>
         <td class="td-desc-wrap">${escapeHtml(act)}</td>
-        <td>${b.tiempo_horas != null ? b.tiempo_horas : '—'}</td>
-        <td class="td-desc-wrap td-desc-wrap--compact">${escapeHtml(mat)}</td>
-        <td class="sla-cell"><span class="semaforo semaforo-${est.color}" title="${escapeHtml(est.label)}"><i class="fas ${est.icon}"></i> ${escapeHtml(est.label)}</span></td>
+        <td class="col-no-ibeam">${b.tiempo_horas != null ? b.tiempo_horas : '—'}</td>
+        <td class="col-no-ibeam td-desc-wrap td-desc-wrap--compact">${escapeHtml(mat)}</td>
+        <td class="col-no-ibeam sla-cell"><span class="semaforo semaforo-${est.color}" title="${escapeHtml(est.label)}"><i class="fas ${est.icon}"></i> ${escapeHtml(est.label)}</span></td>
         <td class="th-actions">
           <button type="button" class="btn small outline btn-pdf-bit" data-id="${b.id}" title="Imprimir / PDF"><i class="fas fa-file-pdf"></i></button>
           <button type="button" class="btn small primary btn-edit-bit" data-id="${b.id}"><i class="fas fa-edit"></i></button>

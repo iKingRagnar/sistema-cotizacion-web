@@ -508,6 +508,43 @@ body.dark-theme .notifications-date {
   user-select: none !important;
   -webkit-user-select: none !important;
 }
+
+/* Bitácora — solo columnas Horas / Materiales / Estado: sin cursor de escritura (cabecera, filtros salvo inputs, celdas) */
+#tabla-bitacoras thead tr:first-child th.col-no-ibeam {
+  cursor: default !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+#tabla-bitacoras thead tr.filter-row td.col-no-ibeam {
+  cursor: default !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+#tabla-bitacoras thead tr.filter-row td.col-no-ibeam .filter-input[aria-hidden="true"] {
+  cursor: default !important;
+}
+#tabla-bitacoras thead tr.filter-row td.col-no-ibeam input.filter-input,
+#tabla-bitacoras thead tr.filter-row td.col-no-ibeam textarea {
+  cursor: text !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+#tabla-bitacoras thead tr.filter-row td.col-no-ibeam select {
+  cursor: pointer !important;
+  user-select: auto;
+}
+#tabla-bitacoras tbody td.col-no-ibeam {
+  cursor: default !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+#tabla-bitacoras tbody td.col-no-ibeam .semaforo,
+#tabla-bitacoras tbody td.col-no-ibeam .semaforo * {
+  cursor: default !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
 body.dark-theme #panel-cotizaciones .section-header,
 body.dark-theme #panel-incidentes .section-header,
 body.dark-theme #panel-bitacoras .section-header {

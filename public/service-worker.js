@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cotizacion-pro-v23';
+const CACHE_NAME = 'cotizacion-pro-v24';
 const STATIC_URLS = ['/', '/index.html', '/css/style.css', '/js/app.js', '/favicon.svg', '/manifest.json'];
 
 self.addEventListener('install', (e) => {
