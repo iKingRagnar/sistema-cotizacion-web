@@ -154,33 +154,53 @@ input.input-readonly {
   cursor: pointer !important;
   user-select: auto;
 }
-/* Cuerpo de tabla: copiar texto sí; cursor flecha (no I-beam) sobre datos estáticos */
+/* Cuerpo de tabla: solo lectura — sin selección (evita I-beam/caret “como si fuera editable”) */
 .data-table tbody td,
 .table-wrap tbody td {
   cursor: default !important;
-  user-select: text;
-  -webkit-user-select: text;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
+.data-table tbody td *:not(input):not(select):not(textarea),
+.table-wrap tbody td *:not(input):not(select):not(textarea) {
+  cursor: default !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
 }
 .data-table tbody td .btn,
+.data-table tbody td .btn *,
 .data-table tbody td button,
+.data-table tbody td button *,
 .data-table tbody td a[href],
+.data-table tbody td a[href] *,
 .data-table tbody td [role="button"],
+.data-table tbody td [role="button"] *,
 .table-wrap tbody td .btn,
+.table-wrap tbody td .btn *,
 .table-wrap tbody td button,
+.table-wrap tbody td button *,
 .table-wrap tbody td a[href],
-.table-wrap tbody td [role="button"] {
+.table-wrap tbody td a[href] *,
+.table-wrap tbody td [role="button"],
+.table-wrap tbody td [role="button"] * {
   cursor: pointer !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
 }
 .data-table tbody th,
 .table-wrap tbody th {
   cursor: default !important;
-  user-select: text;
-  -webkit-user-select: text;
+  user-select: none !important;
+  -webkit-user-select: none !important;
 }
-/* Si en el futuro hay inputs dentro de celdas (edición en línea), cursor de texto solo ahí */
+/* Edición en línea (si existiera): solo ahí texto */
 .data-table tbody td input:not([type="checkbox"]):not([type="radio"]),
 .data-table tbody td textarea {
   cursor: text !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
 }
 .data-table tbody td select {
   cursor: pointer !important;
@@ -3272,25 +3292,3 @@ body.dark-theme .stock-alert-bar strong {
 .mant-edit-sub { margin: 0 0 0.75rem; font-size: 0.9rem; color: #64748b; }
 body.dark-theme .cal-day { background: #1e293b; border-color: #334155; }
 body.dark-theme .cal-day-num { color: #e2e8f0; }
-
-/* Refuerzo final (al final del archivo): texto anidado en celdas heredaba “I” aunque el td tuviera default */
-.table-wrap .data-table tbody td *:not(button):not(.btn):not(.link-btn):not(a[href]):not([role="button"]):not(input):not(select):not(textarea) {
-  cursor: default !important;
-}
-.table-wrap .data-table tbody td button,
-.table-wrap .data-table tbody td .btn,
-.table-wrap .data-table tbody td a[href],
-.table-wrap .data-table tbody td [role="button"] {
-  cursor: pointer !important;
-}
-.table-wrap .data-table tbody td input:not([type="checkbox"]):not([type="radio"]),
-.table-wrap .data-table tbody td textarea {
-  cursor: text !important;
-}
-.table-wrap .data-table tbody td select {
-  cursor: pointer !important;
-}
-.table-wrap .data-table tbody td input[type="checkbox"],
-.table-wrap .data-table tbody td input[type="radio"] {
-  cursor: pointer !important;
-}
