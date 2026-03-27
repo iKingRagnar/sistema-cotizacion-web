@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=34">
+  <link rel="stylesheet" href="css/style.css?v=35">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
@@ -88,7 +88,9 @@
     <button type="button" data-tab="maquinas" class="tab" title="Máquinas (Ctrl+3)"><i class="fas fa-industry"></i> Máquinas</button>
     <button type="button" data-tab="cotizaciones" class="tab" title="Cotizaciones (Ctrl+4)"><i class="fas fa-file-invoice-dollar"></i> Cotizaciones</button>
     <button type="button" data-tab="reportes" class="tab" title="Reportes de servicio y venta"><i class="fas fa-file-alt"></i> Reportes</button>
-    <button type="button" data-tab="garantias" class="tab" title="Garantías y mantenimientos"><i class="fas fa-shield-alt"></i> Garantías</button>
+    <button type="button" data-tab="garantias" class="tab" title="Alta y edición de garantías"><i class="fas fa-shield-alt"></i> Garantías</button>
+    <button type="button" data-tab="mantenimiento-garantia" class="tab" title="Calendario y alertas de mantenimiento"><i class="fas fa-calendar-check"></i> Mantenimientos</button>
+    <button type="button" data-tab="garantias-sin-cobertura" class="tab" title="Garantías dadas de baja"><i class="fas fa-ban"></i> Sin cobertura</button>
     <button type="button" data-tab="bonos" class="tab" title="Bonos de capacitación"><i class="fas fa-award"></i> Bonos</button>
     <button type="button" data-tab="viajes" class="tab" title="Viáticos y viajes"><i class="fas fa-plane"></i> Viajes</button>
     <button type="button" data-tab="incidentes" class="tab" title="Incidentes (Ctrl+5)"><i class="fas fa-exclamation-triangle"></i> Incidentes</button>
@@ -402,6 +404,78 @@
           <tbody></tbody>
         </table>
         <div class="table-footer" id="footer-tabla-garantias" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- MANTENIMIENTOS POR GARANTÍA (operativo) -->
+    <section id="panel-mantenimiento-garantia" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-calendar-check"></i> Mantenimientos por garantía</h2>
+        <div class="toolbar">
+          <label class="toolbar-label-inline">Mes</label>
+          <input type="month" id="mant-gar-month" title="Mes del calendario">
+          <button type="button" id="btn-mant-gar-hoy" class="btn outline" title="Ir al mes actual"><i class="fas fa-calendar-day"></i> Hoy</button>
+          <button type="button" id="btn-mant-gar-procesar-alertas" class="btn outline" title="Enviar recordatorios (requiere SMTP)"><i class="fas fa-envelope"></i> Procesar alertas</button>
+          <button type="button" id="btn-mant-gar-refresh" class="btn primary"><i class="fas fa-sync-alt"></i> Actualizar</button>
+        </div>
+      </div>
+      <p class="mant-gar-hint">Prioridad: <strong>vencidos</strong> sin confirmar, luego <strong>próximos 30 días</strong>, luego el resto. Las fechas del 1.er y 2.o mantenimiento dependen del <strong>tipo de máquina</strong> (CNC, industrial, etc.).</p>
+      <div id="mant-gar-cal-wrap" class="mant-gar-cal-wrap" aria-label="Calendario de mantenimientos"></div>
+      <div class="table-wrap" style="margin-top:1.25rem">
+        <table class="data-table filterable-table" id="tabla-mantenimientos-garantia">
+          <thead>
+            <tr>
+              <th>Prioridad</th><th>Razón social</th><th>Modelo</th><th>Serie</th><th>Fecha prog.</th><th>Estado</th><th>Pagado</th><th>Alertas</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+            <tr class="filter-row">
+              <td></td>
+              <td><input type="text" class="filter-input" data-key="razon_social" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="modelo_maquina" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="numero_serie" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="fecha_programada" data-type="text" placeholder="aaaa-mm-dd"></td>
+              <td><input type="text" class="filter-input" data-key="_estado_ui" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="pagado" data-type="number" placeholder="&gt;0"></td>
+              <td></td>
+              <td class="th-actions"></td>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-footer" id="footer-tabla-mantenimientos-garantia" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- GARANTÍAS SIN COBERTURA -->
+    <section id="panel-garantias-sin-cobertura" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-ban"></i> Garantías sin cobertura</h2>
+        <p class="section-sub">Registros con <strong>Activa = No</strong> (garantía finalizada o fuera de vigencia).</p>
+        <div class="toolbar">
+          <button type="button" id="export-garantias-sin" class="btn outline"><i class="fas fa-file-csv"></i> CSV</button>
+          <button type="button" id="btn-mant-gar-refresh-sin" class="btn primary"><i class="fas fa-sync-alt"></i> Actualizar</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table filterable-table" id="tabla-garantias-sin">
+          <thead>
+            <tr>
+              <th>Razón Social</th><th>Modelo</th><th>N° Serie</th><th>Tipo</th><th>F. Entrega</th><th>Mantenimientos</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+            <tr class="filter-row">
+              <td><input type="text" class="filter-input" data-key="razon_social" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="modelo_maquina" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="numero_serie" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="tipo_maquina" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="fecha_entrega" data-type="text" placeholder="aaaa-mm-dd"></td>
+              <td></td>
+              <td class="th-actions"></td>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-footer" id="footer-tabla-garantias-sin" aria-live="polite"></div>
       </div>
     </section>
 
@@ -752,6 +826,6 @@
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=67"></script>
+  <script src="js/app.js?v=68"></script>
 </body>
 </html>

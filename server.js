@@ -1274,17 +1274,21 @@ app.post('/api/seed-demo', async (req, res) => {
       );
       const rg = await db.getOne('SELECT id FROM garantias ORDER BY id DESC LIMIT 1');
       if (rg) {
-        // 2 mantenimientos de garantía por año
-        for (let num = 1; num <= 2; num++) {
-          const fProg = new Date(Date.now() + (num * 180 - mesesAtras * 30) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-          const confirmado = num === 1 && mesesAtras >= 6 ? 1 : 0;
-          await db.runQuery(
-            `INSERT INTO mantenimientos_garantia (garantia_id, numero, anio, fecha_programada, fecha_realizada, confirmado, costo)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [rg.id, num, new Date().getFullYear(), fProg,
-             confirmado ? fProg : null, confirmado, confirmado ? 1500 : 0]
-          );
-        }
+        const tipoGar = ['Industrial', 'CNC', 'Hidráulica', 'Eléctrica'][i % 4];
+        const [f1, f2] = fechasMantenimientoPar(fEnt, tipoGar, 0);
+        const anio1 = new Date(f1 + 'T12:00:00').getFullYear();
+        const anio2 = new Date(f2 + 'T12:00:00').getFullYear();
+        const confirmado1 = mesesAtras >= 6 ? 1 : 0;
+        await db.runQuery(
+          `INSERT INTO mantenimientos_garantia (garantia_id, numero, anio, fecha_programada, fecha_realizada, confirmado, costo, pagado)
+           VALUES (?, 1, ?, ?, ?, ?, ?, ?)`,
+          [rg.id, anio1, f1, confirmado1 ? f1 : null, confirmado1, confirmado1 ? 1500 : 0, confirmado1 ? 1500 : 0]
+        );
+        await db.runQuery(
+          `INSERT INTO mantenimientos_garantia (garantia_id, numero, anio, fecha_programada, fecha_realizada, confirmado, costo, pagado)
+           VALUES (?, 2, ?, ?, ?, ?, ?, ?)`,
+          [rg.id, anio2, f2, null, 0, 0, 0]
+        );
         garantiasCount++;
       }
     }
@@ -2177,13 +2181,54 @@ app.delete('/api/reportes/:id', async (req, res) => {
 });
 
 // =================== GARANTÍAS ===================
-// Calcula fechas de los 2 mantenimientos del año según fecha de entrega
-function calcularMantenimientosAnio(fechaEntrega, anio) {
-  const base = new Date(fechaEntrega + 'T00:00:00');
-  // Primer mantenimiento: 6 meses después; Segundo: 12 meses después
-  const m1 = new Date(base); m1.setMonth(m1.getMonth() + 6); m1.setFullYear(anio || m1.getFullYear());
-  const m2 = new Date(base); m2.setMonth(m2.getMonth() + 12); m2.setFullYear(anio || m2.getFullYear());
-  return [m1.toISOString().slice(0,10), m2.toISOString().slice(0,10)];
+let nodemailer;
+try { nodemailer = require('nodemailer'); } catch (_) { nodemailer = null; }
+
+/** Meses desde entrega para el 1.er y 2.o mantenimiento del “año” (se repite cada 12 meses). */
+function intervalosMesesPorTipo(tipoMaquina) {
+  const raw = (tipoMaquina || '').toLowerCase();
+  const t = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (t.includes('cnc') || t.includes('torno')) return [4, 10];
+  if (t.includes('robot') || t.includes('laser')) return [3, 9];
+  if (t.includes('hidraul') || t.includes('compresor')) return [5, 11];
+  if (t.includes('electr')) return [5, 11];
+  if (t.includes('industrial') || t.includes('pesad')) return [6, 12];
+  return [6, 12];
+}
+
+/** Par de fechas (ISO) para el año de garantía `offset` (0 = primer año desde entrega, 1 = segundo año, …). */
+function fechasMantenimientoPar(fechaEntrega, tipoMaquina, offsetAnios) {
+  const base = new Date(fechaEntrega + 'T12:00:00');
+  const off = Math.max(0, Number(offsetAnios) || 0);
+  const [a, b] = intervalosMesesPorTipo(tipoMaquina);
+  const m1 = new Date(base); m1.setMonth(m1.getMonth() + off * 12 + a);
+  const m2 = new Date(base); m2.setMonth(m2.getMonth() + off * 12 + b);
+  return [m1.toISOString().slice(0, 10), m2.toISOString().slice(0, 10)];
+}
+
+function createMailTransport() {
+  if (!nodemailer) return null;
+  const host = (process.env.SMTP_HOST || '').trim();
+  const user = (process.env.SMTP_USER || '').trim();
+  const pass = (process.env.SMTP_PASS || '').trim();
+  if (!host || !user) return null;
+  const port = Number(process.env.SMTP_PORT) || 587;
+  return nodemailer.createTransport({
+    host, port, secure: port === 465,
+    auth: pass ? { user, pass } : undefined,
+  });
+}
+
+async function sendMailGarantia({ to, subject, text, html }) {
+  const t = createMailTransport();
+  const from = (process.env.SMTP_FROM || process.env.SMTP_USER || '').trim();
+  if (!t || !from || !to) return { sent: false, reason: 'smtp_not_configured_or_no_recipient' };
+  try {
+    await t.sendMail({ from, to, subject, text, html: html || `<pre>${text}</pre>` });
+    return { sent: true };
+  } catch (err) {
+    return { sent: false, reason: String(err.message || err) };
+  }
 }
 
 app.get('/api/garantias', async (req, res) => {
@@ -2194,6 +2239,45 @@ app.get('/api/garantias', async (req, res) => {
     for (const g of rows) {
       g.mantenimientos = await db.getAll('SELECT * FROM mantenimientos_garantia WHERE garantia_id=? ORDER BY anio, numero', [g.id]);
     }
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+/** Garantías dadas de baja (sin cobertura). */
+app.get('/api/garantias/sin-cobertura', async (req, res) => {
+  try {
+    const rows = await db.getAll(
+      `SELECT g.*, c.nombre as cliente_nombre FROM garantias g LEFT JOIN clientes c ON c.id=g.cliente_id WHERE g.activa=0 ORDER BY g.fecha_entrega DESC LIMIT 500`
+    );
+    for (const g of rows) {
+      g.mantenimientos = await db.getAll('SELECT * FROM mantenimientos_garantia WHERE garantia_id=? ORDER BY anio, numero', [g.id]);
+    }
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.get('/api/garantias/:id/mantenimientos', async (req, res) => {
+  try {
+    const rows = await db.getAll('SELECT * FROM mantenimientos_garantia WHERE garantia_id=? ORDER BY anio, numero, fecha_programada', [req.params.id]);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+/** Lista plana de mantenimientos (calendario / prioridades). Solo garantías activas. */
+app.get('/api/mantenimientos-garantia', async (req, res) => {
+  try {
+    const rows = await db.getAll(
+      `SELECT mg.*, g.razon_social, g.modelo_maquina, g.numero_serie, g.tipo_maquina, g.activa, g.fecha_entrega,
+              g.cliente_id, c.nombre as cliente_nombre, c.email as cliente_email
+       FROM mantenimientos_garantia mg
+       JOIN garantias g ON g.id = mg.garantia_id
+       LEFT JOIN clientes c ON c.id = g.cliente_id
+       WHERE g.activa = 1
+       ORDER BY
+         CASE WHEN mg.confirmado = 0 AND date(mg.fecha_programada) < date('now') THEN 0 ELSE 1 END,
+         CASE WHEN mg.confirmado = 0 AND date(mg.fecha_programada) >= date('now') AND date(mg.fecha_programada) <= date('now', '+30 days') THEN 0 ELSE 1 END,
+         date(mg.fecha_programada) ASC`
+    );
     res.json(rows);
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
@@ -2216,30 +2300,82 @@ app.post('/api/garantias', async (req, res) => {
       [cliente_id || null, razon_social, modelo_maquina, numero_serie || null, tipo_maquina || null, fecha_entrega]
     );
     const g = await db.getOne('SELECT * FROM garantias ORDER BY id DESC LIMIT 1');
-    // Crear automáticamente los 2 mantenimientos del año 1
-    const anioEntrega = new Date(fecha_entrega + 'T00:00:00').getFullYear();
-    const [f1, f2] = calcularMantenimientosAnio(fecha_entrega, anioEntrega);
+    const [f1, f2] = fechasMantenimientoPar(fecha_entrega, tipo_maquina, 0);
+    const anio1 = new Date(f1 + 'T12:00:00').getFullYear();
+    const anio2 = new Date(f2 + 'T12:00:00').getFullYear();
     await db.runQuery(
       `INSERT INTO mantenimientos_garantia (garantia_id, numero, anio, fecha_programada) VALUES (?, 1, ?, ?)`,
-      [g.id, anioEntrega, f1]
+      [g.id, anio1, f1]
     );
     await db.runQuery(
       `INSERT INTO mantenimientos_garantia (garantia_id, numero, anio, fecha_programada) VALUES (?, 2, ?, ?)`,
-      [g.id, anioEntrega, f2]
+      [g.id, anio2, f2]
     );
     g.mantenimientos = await db.getAll('SELECT * FROM mantenimientos_garantia WHERE garantia_id=? ORDER BY anio, numero', [g.id]);
     res.status(201).json(g);
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
 
+/** Añade el par de mantenimientos del siguiente año fiscal (offset +1 respecto al último bloque). */
+app.post('/api/garantias/:id/generar-siguiente-anio', async (req, res) => {
+  try {
+    const g = await db.getOne('SELECT * FROM garantias WHERE id=?', [req.params.id]);
+    if (!g) return res.status(404).json({ error: 'No encontrado' });
+    const rows = await db.getAll('SELECT * FROM mantenimientos_garantia WHERE garantia_id=? ORDER BY fecha_programada DESC', [g.id]);
+    let maxOff = 0;
+    if (rows.length) {
+      const base = new Date(g.fecha_entrega + 'T12:00:00');
+      const [a] = intervalosMesesPorTipo(g.tipo_maquina);
+      const last = new Date(rows[0].fecha_programada + 'T12:00:00');
+      const monthsFromBase = Math.round((last - base) / (30.44 * 24 * 60 * 60 * 1000));
+      maxOff = Math.max(0, Math.floor((monthsFromBase - a) / 12));
+    }
+    const nextOff = maxOff + 1;
+    const [f1, f2] = fechasMantenimientoPar(g.fecha_entrega, g.tipo_maquina, nextOff);
+    const anio1 = new Date(f1 + 'T12:00:00').getFullYear();
+    const anio2 = new Date(f2 + 'T12:00:00').getFullYear();
+    await db.runQuery(
+      `INSERT INTO mantenimientos_garantia (garantia_id, numero, anio, fecha_programada) VALUES (?, 1, ?, ?)`,
+      [g.id, anio1, f1]
+    );
+    await db.runQuery(
+      `INSERT INTO mantenimientos_garantia (garantia_id, numero, anio, fecha_programada) VALUES (?, 2, ?, ?)`,
+      [g.id, anio2, f2]
+    );
+    const out = await db.getOne('SELECT * FROM garantias WHERE id=?', [g.id]);
+    out.mantenimientos = await db.getAll('SELECT * FROM mantenimientos_garantia WHERE garantia_id=? ORDER BY anio, numero, fecha_programada', [g.id]);
+    res.status(201).json(out);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
 app.put('/api/garantias/:id', async (req, res) => {
   try {
-    const { cliente_id, razon_social, modelo_maquina, numero_serie, tipo_maquina, fecha_entrega, activa } = req.body || {};
+    const { cliente_id, razon_social, modelo_maquina, numero_serie, tipo_maquina, fecha_entrega, activa, recalcular_mantenimientos } = req.body || {};
     await db.runQuery(
       `UPDATE garantias SET cliente_id=?, razon_social=?, modelo_maquina=?, numero_serie=?, tipo_maquina=?, fecha_entrega=?, activa=? WHERE id=?`,
       [cliente_id || null, razon_social || '', modelo_maquina || '', numero_serie || null, tipo_maquina || null, fecha_entrega || null, activa != null ? Number(activa) : 1, req.params.id]
     );
     const g = await db.getOne('SELECT * FROM garantias WHERE id=?', [req.params.id]);
+    if (g && recalcular_mantenimientos) {
+      const pend = await db.getOne(
+        'SELECT COUNT(*) as c FROM mantenimientos_garantia WHERE garantia_id=? AND (confirmado=1 OR fecha_realizada IS NOT NULL OR (IFNULL(pagado,0) > 0))',
+        [g.id]
+      );
+      if (!pend || Number(pend.c) === 0) {
+        await db.runQuery('DELETE FROM mantenimientos_garantia WHERE garantia_id=?', [g.id]);
+        const [f1, f2] = fechasMantenimientoPar(g.fecha_entrega, g.tipo_maquina, 0);
+        const anio1 = new Date(f1 + 'T12:00:00').getFullYear();
+        const anio2 = new Date(f2 + 'T12:00:00').getFullYear();
+        await db.runQuery(
+          `INSERT INTO mantenimientos_garantia (garantia_id, numero, anio, fecha_programada) VALUES (?, 1, ?, ?)`,
+          [g.id, anio1, f1]
+        );
+        await db.runQuery(
+          `INSERT INTO mantenimientos_garantia (garantia_id, numero, anio, fecha_programada) VALUES (?, 2, ?, ?)`,
+          [g.id, anio2, f2]
+        );
+      }
+    }
     if (g) g.mantenimientos = await db.getAll('SELECT * FROM mantenimientos_garantia WHERE garantia_id=? ORDER BY anio, numero', [g.id]);
     res.json(g || {});
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
@@ -2256,10 +2392,23 @@ app.delete('/api/garantias/:id', async (req, res) => {
 // Confirmar mantenimiento de garantía
 app.put('/api/mantenimientos-garantia/:id', async (req, res) => {
   try {
-    const { fecha_realizada, confirmado, costo, pagado, notas } = req.body || {};
+    const { fecha_realizada, confirmado, costo, pagado, notas, alerta_enviada, alerta_vencida } = req.body || {};
+    const cur = await db.getOne('SELECT * FROM mantenimientos_garantia WHERE id=?', [req.params.id]);
+    if (!cur) return res.status(404).json({ error: 'No encontrado' });
+    const ae = alerta_enviada !== undefined ? Number(alerta_enviada) : Number(cur.alerta_enviada || 0);
+    const av = alerta_vencida !== undefined ? Number(alerta_vencida) : Number(cur.alerta_vencida || 0);
     await db.runQuery(
-      `UPDATE mantenimientos_garantia SET fecha_realizada=?, confirmado=?, costo=?, pagado=?, notas=? WHERE id=?`,
-      [fecha_realizada || null, confirmado != null ? Number(confirmado) : 0, Number(costo) || 0, Number(pagado) || 0, notas || null, req.params.id]
+      `UPDATE mantenimientos_garantia SET fecha_realizada=?, confirmado=?, costo=?, pagado=?, notas=?, alerta_enviada=?, alerta_vencida=? WHERE id=?`,
+      [
+        fecha_realizada || null,
+        confirmado != null ? Number(confirmado) : 0,
+        Number(costo) || 0,
+        Number(pagado) || 0,
+        notas || null,
+        ae,
+        av,
+        req.params.id,
+      ]
     );
     const r = await db.getOne('SELECT * FROM mantenimientos_garantia WHERE id=?', [req.params.id]);
     res.json(r || {});
@@ -2278,20 +2427,80 @@ app.get('/api/garantias-alertas', async (req, res) => {
        FROM mantenimientos_garantia mg
        JOIN garantias g ON g.id = mg.garantia_id
        LEFT JOIN clientes c ON c.id = g.cliente_id
-       WHERE mg.confirmado = 0 AND mg.fecha_programada BETWEEN ? AND ?
+       WHERE g.activa = 1 AND mg.confirmado = 0 AND mg.fecha_programada BETWEEN ? AND ?
        ORDER BY mg.fecha_programada ASC`,
       [hoyStr, en30Str]
     );
     const vencidos = await db.getAll(
-      `SELECT mg.*, g.razon_social, g.modelo_maquina, g.numero_serie, g.cliente_id, c.nombre as cliente_nombre
+      `SELECT mg.*, g.razon_social, g.modelo_maquina, g.numero_serie, g.cliente_id, c.nombre as cliente_nombre, c.email
        FROM mantenimientos_garantia mg
        JOIN garantias g ON g.id = mg.garantia_id
        LEFT JOIN clientes c ON c.id = g.cliente_id
-       WHERE mg.confirmado = 0 AND mg.fecha_programada < ?
+       WHERE g.activa = 1 AND mg.confirmado = 0 AND mg.fecha_programada < ?
        ORDER BY mg.fecha_programada ASC`,
       [hoyStr]
     );
     res.json({ proximos: rows, vencidos });
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+/** Marca alertas y opcionalmente envía correos (SMTP_* en entorno). dryRun: solo simula. */
+app.post('/api/garantias-alertas/procesar', async (req, res) => {
+  try {
+    const dryRun = !!(req.body && req.body.dryRun);
+    const hoyStr = new Date().toISOString().slice(0, 10);
+    const en30Str = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
+    const proximos = await db.getAll(
+      `SELECT mg.*, g.razon_social, g.modelo_maquina, g.numero_serie, g.cliente_id, c.nombre as cliente_nombre, c.email
+       FROM mantenimientos_garantia mg
+       JOIN garantias g ON g.id = mg.garantia_id
+       LEFT JOIN clientes c ON c.id = g.cliente_id
+       WHERE g.activa = 1 AND mg.confirmado = 0 AND mg.alerta_enviada = 0
+         AND mg.fecha_programada BETWEEN ? AND ?`,
+      [hoyStr, en30Str]
+    );
+    const vencidosSinEscalar = await db.getAll(
+      `SELECT mg.*, g.razon_social, g.modelo_maquina, g.numero_serie, g.cliente_id, c.nombre as cliente_nombre, c.email
+       FROM mantenimientos_garantia mg
+       JOIN garantias g ON g.id = mg.garantia_id
+       LEFT JOIN clientes c ON c.id = g.cliente_id
+       WHERE g.activa = 1 AND mg.confirmado = 0 AND mg.fecha_programada < ? AND mg.alerta_vencida = 0`,
+      [hoyStr]
+    );
+    const enviados = [];
+    const errores = [];
+    for (const row of proximos) {
+      const to = (row.email || '').trim();
+      const subj = `Mantenimiento próximo — ${row.razon_social}`;
+      const text = `Estimado cliente,\n\nLe recordamos el mantenimiento programado para el ${row.fecha_programada}.\nEquipo: ${row.modelo_maquina} (Serie ${row.numero_serie || '—'}).\n\nSaludos.`;
+      if (!dryRun) {
+        await db.runQuery('UPDATE mantenimientos_garantia SET alerta_enviada=1 WHERE id=?', [row.id]);
+        if (to) {
+          const r = await sendMailGarantia({ to, subject: subj, text });
+          enviados.push({ id: row.id, tipo: 'proximo', email: to, ...r });
+          if (!r.sent) errores.push({ id: row.id, ...r });
+        } else enviados.push({ id: row.id, tipo: 'proximo', email: null, sent: false, reason: 'cliente_sin_email' });
+      } else enviados.push({ id: row.id, tipo: 'proximo', dryRun: true });
+    }
+    for (const row of vencidosSinEscalar) {
+      const to = (row.email || '').trim();
+      const yaAviso = Number(row.alerta_enviada) === 1;
+      const subj = yaAviso
+        ? `URGENTE: mantenimiento vencido — ${row.razon_social}`
+        : `Mantenimiento vencido — ${row.razon_social}`;
+      const text = yaAviso
+        ? `El mantenimiento del ${row.fecha_programada} no fue confirmado y ya venció. Equipo: ${row.modelo_maquina}.`
+        : `El mantenimiento programado para el ${row.fecha_programada} ya venció. Equipo: ${row.modelo_maquina}.`;
+      if (!dryRun) {
+        await db.runQuery('UPDATE mantenimientos_garantia SET alerta_vencida=1, alerta_enviada=1 WHERE id=?', [row.id]);
+        if (to) {
+          const r = await sendMailGarantia({ to, subject: subj, text });
+          enviados.push({ id: row.id, tipo: 'vencido', email: to, ...r });
+          if (!r.sent) errores.push({ id: row.id, ...r });
+        } else enviados.push({ id: row.id, tipo: 'vencido', email: null, sent: false, reason: 'cliente_sin_email' });
+      } else enviados.push({ id: row.id, tipo: 'vencido', dryRun: true });
+    }
+    res.json({ ok: true, dryRun, procesados: enviados.length, detalle: enviados, errores });
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
 

@@ -312,10 +312,12 @@
   }
 
   const LAST_TAB_KEY = 'cotizacion-last-tab';
-  const VALID_TABS = ['dashboards', 'clientes', 'refacciones', 'maquinas', 'cotizaciones', 'reportes', 'garantias', 'bonos', 'viajes', 'incidentes', 'bitacoras'];
+  const VALID_TABS = ['dashboards', 'clientes', 'refacciones', 'maquinas', 'cotizaciones', 'reportes', 'garantias', 'mantenimiento-garantia', 'garantias-sin-cobertura', 'bonos', 'viajes', 'incidentes', 'bitacoras'];
   const TABS_PERSIST = VALID_TABS.concat(['auditoria']);
   let reportesCache = [];
   let garantiasCache = [];
+  let mantenimientosGarantiaCache = [];
+  let garantiasSinCoberturaCache = [];
   let bonosCache = [];
   let viajesCache = [];
   let tecnicosCache = [];
@@ -424,6 +426,8 @@
       cotizaciones: 'Cotizaciones',
       reportes: 'Reportes',
       garantias: 'Garantías',
+      'mantenimiento-garantia': 'Mantenimientos por garantía',
+      'garantias-sin-cobertura': 'Sin cobertura',
       bonos: 'Bonos',
       viajes: 'Viajes',
       incidentes: 'Incidentes',
@@ -470,6 +474,8 @@
     if (id === 'cotizaciones') loadCotizaciones();
     if (id === 'reportes') loadReportes();
     if (id === 'garantias') loadGarantias();
+    if (id === 'mantenimiento-garantia') loadMantenimientoGarantia();
+    if (id === 'garantias-sin-cobertura') loadGarantiasSinCobertura();
     if (id === 'bonos') loadBonos();
     if (id === 'viajes') loadViajes();
     if (id === 'incidentes') loadIncidentes();
@@ -1575,6 +1581,27 @@
   }
 
   // ----- GARANTÍAS -----
+  function addDaysIso(iso, n) {
+    const d = new Date((iso || '').slice(0, 10) + 'T12:00:00');
+    if (isNaN(d.getTime())) return '';
+    d.setDate(d.getDate() + n);
+    return d.toISOString().slice(0, 10);
+  }
+  function enrichMantGarRow(m) {
+    const hoy = new Date().toISOString().slice(0, 10);
+    const fp = (m.fecha_programada || '').toString().slice(0, 10);
+    const conf = Number(m.confirmado) === 1 || !!m.fecha_realizada;
+    let _estado_ui = 'pendiente';
+    if (conf) _estado_ui = 'realizado';
+    else if (fp && fp < hoy) _estado_ui = 'vencido';
+    else if (fp && fp >= hoy && fp <= addDaysIso(hoy, 30)) _estado_ui = 'próximo';
+    let _prioridad = 4;
+    if (!conf && fp && fp < hoy) _prioridad = 1;
+    else if (!conf && fp && fp >= hoy && fp <= addDaysIso(hoy, 30)) _prioridad = 2;
+    else if (!conf) _prioridad = 3;
+    return Object.assign({}, m, { _estado_ui, _prioridad });
+  }
+
   async function loadGarantias() {
     showLoading();
     try {
@@ -1588,18 +1615,211 @@
     } finally { hideLoading(); }
   }
 
+  async function loadMantenimientoGarantia() {
+    showLoading();
+    try {
+      const raw = await fetchJson(API + '/mantenimientos-garantia');
+      mantenimientosGarantiaCache = toArray(raw).map(enrichMantGarRow);
+      const mi = qs('#mant-gar-month');
+      if (mi && !mi.value) mi.value = new Date().toISOString().slice(0, 7);
+      renderMantenimientoGarantiaTable();
+      renderMantenimientoGarantiaCalendar();
+      checkGarantiasAlertas();
+    } catch (e) {
+      mantenimientosGarantiaCache = [];
+      showToast(parseApiError(e) || 'No se pudieron cargar los mantenimientos.', 'error');
+    } finally { hideLoading(); }
+  }
+
+  function renderMantenimientoGarantiaTable() {
+    const tbody = qs('#tabla-mantenimientos-garantia tbody');
+    const footer = qs('#footer-tabla-mantenimientos-garantia');
+    if (!tbody) return;
+    let data = mantenimientosGarantiaCache.slice().sort((a, b) =>
+      (a._prioridad - b._prioridad) || String(a.fecha_programada || '').localeCompare(String(b.fecha_programada || ''))
+    );
+    data = applyFilters(data, getFilterValues('#tabla-mantenimientos-garantia'), 'tabla-mantenimientos-garantia');
+    tbody.innerHTML = '';
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="9" class="empty">Sin registros o el filtro no devolvió resultados.</td></tr>';
+      if (footer) footer.textContent = '';
+      return;
+    }
+    const prioLabel = { 1: 'Alta', 2: 'Media', 3: 'Normal', 4: '—' };
+    data.forEach(m => {
+      const tr = document.createElement('tr');
+      const alerts = [];
+      if (Number(m.alerta_enviada)) alerts.push('Aviso enviado');
+      if (Number(m.alerta_vencida)) alerts.push('Escalado vencido');
+      tr.innerHTML = `
+        <td><span class="badge badge-mant-prio-${m._prioridad <= 2 ? 'hi' : 'lo'}">${prioLabel[m._prioridad] || '—'}</span></td>
+        <td>${escapeHtml(m.razon_social || '')}</td>
+        <td>${escapeHtml(m.modelo_maquina || '')}</td>
+        <td>${escapeHtml(m.numero_serie || '')}</td>
+        <td>${escapeHtml((m.fecha_programada || '').toString().slice(0, 10))}</td>
+        <td><span class="badge badge-mant-${m._estado_ui === 'realizado' ? 'ok' : m._estado_ui === 'vencido' ? 'bad' : m._estado_ui === 'próximo' ? 'warn' : 'pendiente'}">${escapeHtml(m._estado_ui)}</span></td>
+        <td>$${Number(m.pagado || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+        <td class="td-text-wrap">${escapeHtml(alerts.join(' · ') || '—')}</td>
+        <td class="th-actions">
+          <button type="button" class="btn small primary btn-mant-gar-edit" data-id="${m.id}"><i class="fas fa-edit"></i></button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.btn-mant-gar-edit').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const row = mantenimientosGarantiaCache.find(x => String(x.id) === String(btn.dataset.id));
+        if (!row) return;
+        let g = garantiasCache.find(x => String(x.id) === String(row.garantia_id));
+        if (!g) {
+          try { g = await fetchJson(API + '/garantias/' + row.garantia_id); } catch (_) {
+            g = { id: row.garantia_id, razon_social: row.razon_social, modelo_maquina: row.modelo_maquina, numero_serie: row.numero_serie };
+          }
+        }
+        openModalEditMantenimiento(row, g);
+      });
+    });
+    if (footer) footer.textContent = data.length + ' fila(s)';
+  }
+
+  function renderMantenimientoGarantiaCalendar() {
+    const wrap = qs('#mant-gar-cal-wrap');
+    const mi = qs('#mant-gar-month');
+    if (!wrap || !mi) return;
+    const ym = mi.value || new Date().toISOString().slice(0, 7);
+    const [Y, M] = ym.split('-').map(Number);
+    const first = new Date(Y, M - 1, 1);
+    const startPad = (first.getDay() + 6) % 7;
+    const daysInMonth = new Date(Y, M, 0).getDate();
+    const labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    const byDay = {};
+    mantenimientosGarantiaCache.forEach(m => {
+      const d = (m.fecha_programada || '').toString().slice(0, 10);
+      if (!d || d.slice(0, 7) !== ym) return;
+      const day = d.slice(8, 10);
+      if (!byDay[day]) byDay[day] = [];
+      byDay[day].push(m);
+    });
+    let cells = '';
+    for (let i = 0; i < startPad; i++) cells += '<div class="cal-cell cal-empty"></div>';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const ds = String(d).padStart(2, '0');
+      const list = byDay[ds] || [];
+      const hoy = new Date().toISOString().slice(0, 10);
+      const iso = ym + '-' + ds;
+      let cls = 'cal-cell cal-day';
+      if (iso === hoy) cls += ' cal-today';
+      const dots = list.slice(0, 4).map(ev => {
+        const st = ev._estado_ui === 'realizado' ? 'ok' : ev._estado_ui === 'vencido' ? 'bad' : ev._estado_ui === 'próximo' ? 'warn' : 'pendiente';
+        return `<span class="cal-dot cal-dot-${st}" title="${escapeHtml(ev.razon_social)} · ${escapeHtml((ev.fecha_programada || '').slice(0, 10))}"></span>`;
+      }).join('');
+      const more = list.length > 4 ? `<span class="cal-more">+${list.length - 4}</span>` : '';
+      cells += `<div class="${cls}"><div class="cal-day-num">${d}</div><div class="cal-dots">${dots}${more}</div></div>`;
+    }
+    wrap.innerHTML = `
+      <div class="cal-header">${labels.map(l => `<span>${l}</span>`).join('')}</div>
+      <div class="cal-grid">${cells}</div>
+      <p class="cal-legend"><span class="cal-dot cal-dot-bad"></span> Vencido
+        <span class="cal-dot cal-dot-warn"></span> Próximo (30 días)
+        <span class="cal-dot cal-dot-pendiente"></span> Pendiente
+        <span class="cal-dot cal-dot-ok"></span> Realizado</p>`;
+  }
+
+  async function loadGarantiasSinCobertura() {
+    showLoading();
+    try {
+      const raw = await fetchJson(API + '/garantias/sin-cobertura');
+      garantiasSinCoberturaCache = toArray(raw);
+      renderGarantiasSin(garantiasSinCoberturaCache);
+    } catch (e) {
+      garantiasSinCoberturaCache = [];
+      renderGarantiasSin([]);
+      showToast(parseApiError(e) || 'No se pudieron cargar los registros.', 'error');
+    } finally { hideLoading(); }
+  }
+
+  function renderGarantiasSin(data) {
+    const tbody = qs('#tabla-garantias-sin tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    if (!data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay garantías sin cobertura.</td></tr>';
+      return;
+    }
+    const filtered = applyFilters(data, getFilterValues('#tabla-garantias-sin'), 'tabla-garantias-sin');
+    filtered.forEach(g => {
+      const tr = document.createElement('tr');
+      const nMant = Array.isArray(g.mantenimientos) ? g.mantenimientos.length : 0;
+      tr.innerHTML = `
+        <td>${escapeHtml(g.razon_social || '')}</td>
+        <td>${escapeHtml(g.modelo_maquina || '')}</td>
+        <td>${escapeHtml(g.numero_serie || '')}</td>
+        <td>${escapeHtml(g.tipo_maquina || '')}</td>
+        <td>${escapeHtml((g.fecha_entrega || '').toString().slice(0, 10))}</td>
+        <td><span class="badge badge-gar-mant">${nMant}</span></td>
+        <td class="th-actions">
+          <button type="button" class="btn small outline btn-mant-gar-sin" data-id="${g.id}" title="Ver mantenimientos"><i class="fas fa-calendar-check"></i></button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.btn-mant-gar-sin').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const g = garantiasSinCoberturaCache.find(x => String(x.id) === String(btn.dataset.id));
+        if (g) openModalMantenimientos(g);
+      });
+    });
+  }
+
+  function applyGarantiasSinFiltersAndRender() {
+    renderGarantiasSin(garantiasSinCoberturaCache);
+  }
+
   async function checkGarantiasAlertas() {
     try {
       const alertas = await fetchJson(API + '/garantias-alertas');
       const bar = qs('#garantias-alerta-bar');
+      const prox = toArray(alertas && alertas.proximos);
+      const venc = toArray(alertas && alertas.vencidos);
+      const total = prox.length + venc.length;
       if (!bar) return;
-      if (alertas && alertas.length) {
+      if (total > 0) {
         bar.classList.remove('hidden');
-        bar.innerHTML = `<i class="fas fa-bell"></i> <strong>${alertas.length} alerta(s) de mantenimiento:</strong> ${alertas.slice(0,3).map(a => escapeHtml(a.razon_social) + ' – ' + escapeHtml(a.fecha_programada)).join(' | ')}${alertas.length > 3 ? ' …' : ''}`;
+        const sample = prox.concat(venc).slice(0, 3);
+        const extraV = venc.length ? ` · <strong>${venc.length} vencido(s)</strong>` : '';
+        bar.innerHTML = `<i class="fas fa-bell"></i> <strong>${total} alerta(s):</strong> ${sample.map(a => escapeHtml(a.razon_social) + ' – ' + escapeHtml((a.fecha_programada || '').toString().slice(0, 10))).join(' | ')}${total > 3 ? ' …' : ''}${extraV}`;
       } else {
         bar.classList.add('hidden');
       }
     } catch (_) {}
+  }
+
+  function openModalGarantiasAlertasDetalle() {
+    fetchJson(API + '/garantias-alertas').then(a => {
+      const prox = toArray(a && a.proximos);
+      const venc = toArray(a && a.vencidos);
+      const rows = prox.map(x => `<tr><td>${escapeHtml(x.razon_social)}</td><td>${escapeHtml(x.fecha_programada)}</td><td>Próximo</td></tr>`)
+        .concat(venc.map(x => `<tr><td>${escapeHtml(x.razon_social)}</td><td>${escapeHtml(x.fecha_programada)}</td><td><strong>Vencido</strong></td></tr>`));
+      const body = `
+        <p>Próximos 30 días: <strong>${prox.length}</strong> · Vencidos sin confirmar: <strong>${venc.length}</strong></p>
+        <table class="table-simple" style="width:100%"><thead><tr><th>Cliente</th><th>Fecha prog.</th><th>Tipo</th></tr></thead>
+        <tbody>${rows.length ? rows.join('') : '<tr><td colspan="3" class="empty">Sin alertas.</td></tr>'}</tbody></table>
+        <div class="form-actions" style="margin-top:1rem">
+          <button type="button" class="btn primary" id="btn-run-procesar-alertas"><i class="fas fa-envelope"></i> Procesar (correo + marcar)</button>
+          <button type="button" class="btn" id="modal-btn-cancel">Cerrar</button>
+        </div>`;
+      openModal('Alertas de mantenimiento', body);
+      const b = qs('#btn-run-procesar-alertas');
+      if (b) {
+        b.onclick = async () => {
+          try {
+            const r = await fetchJson(API + '/garantias-alertas/procesar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+            showToast('Procesados: ' + (r.procesados || 0) + (r.errores && r.errores.length ? ' (revisar SMTP)' : ''), 'success');
+            qs('#modal').classList.add('hidden');
+            loadGarantias();
+            loadMantenimientoGarantia();
+          } catch (e) { showToast(parseApiError(e), 'error'); }
+        };
+      }
+    }).catch(() => {});
   }
 
   function renderGarantias(data) {
@@ -1668,6 +1888,7 @@
           </select>
         </div>
       </div>
+      ${!isNew ? `<div class="form-group gar-recalc-box"><label class="gar-recalc-label"><input type="checkbox" id="m-recalc-mant"> Recalcular fechas de mantenimiento (solo si ninguno está confirmado, con fecha realizada o con pago registrado)</label></div>` : ''}
       <div class="form-group"><label>Notas</label><textarea id="m-notas-g" rows="2" maxlength="500">${escapeHtml(garantia && garantia.notas) || ''}</textarea></div>
       <div class="form-actions">
         <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
@@ -1705,12 +1926,15 @@
         ...payloadNew,
         activa: parseInt(qs('#m-activa-g').value, 10) ? 1 : 0,
       };
+      const rec = qs('#m-recalc-mant');
+      if (rec && rec.checked) payloadPut.recalcular_mantenimientos = true;
       try {
         if (isNew) await fetchJson(API + '/garantias', { method: 'POST', body: JSON.stringify(payloadNew) });
         else await fetchJson(API + '/garantias/' + garantia.id, { method: 'PUT', body: JSON.stringify(payloadPut) });
         qs('#modal').classList.add('hidden');
         showToast('Garantía guardada.', 'success');
         loadGarantias();
+        loadMantenimientoGarantia();
       } catch (e) { showToast(parseApiError(e), 'error'); }
     };
   }
@@ -1720,30 +1944,55 @@
     try {
       mantenimientos = toArray(await fetchJson(API + '/garantias/' + garantia.id + '/mantenimientos'));
     } catch (_) {}
-    const rows = mantenimientos.map((m, i) => `
+    const rows = mantenimientos.map((m, i) => {
+      const hoy = new Date().toISOString().slice(0, 10);
+      const fp = (m.fecha_programada || '').toString().slice(0, 10);
+      const conf = Number(m.confirmado) === 1;
+      let est = 'pendiente';
+      if (conf || m.fecha_realizada) est = 'realizado';
+      else if (fp && fp < hoy) est = 'vencido';
+      else if (fp && fp >= hoy && fp <= addDaysIso(hoy, 30)) est = 'próximo';
+      const al = [];
+      if (Number(m.alerta_enviada)) al.push('Aviso');
+      if (Number(m.alerta_vencida)) al.push('Escalado');
+      return `
       <tr>
         <td>${i + 1}</td>
-        <td>${escapeHtml((m.fecha_programada || '').toString().slice(0,10))}</td>
-        <td>${m.fecha_realizado ? escapeHtml(m.fecha_realizado.toString().slice(0,10)) : '—'}</td>
-        <td><span class="badge badge-mant-${m.estado || 'pendiente'}">${m.estado || 'pendiente'}</span></td>
-        <td>${m.monto_pagado != null ? '$' + Number(m.monto_pagado).toFixed(2) : '—'}</td>
+        <td>${escapeHtml(fp)}</td>
+        <td>${m.fecha_realizada ? escapeHtml(String(m.fecha_realizada).slice(0, 10)) : '—'}</td>
+        <td><span class="badge badge-mant-${est === 'realizado' ? 'ok' : est === 'vencido' ? 'bad' : est === 'próximo' ? 'warn' : 'pendiente'}">${escapeHtml(est)}</span></td>
+        <td>$${Number(m.pagado || 0).toFixed(2)}</td>
+        <td>${escapeHtml(al.join('/') || '—')}</td>
         <td><button type="button" class="btn small primary btn-mant-edit" data-id="${m.id}" data-garid="${garantia.id}"><i class="fas fa-edit"></i></button></td>
-      </tr>
-    `).join('');
+      </tr>`;
+    }).join('');
     const body = `
       <p><strong>${escapeHtml(garantia.razon_social)}</strong> – ${escapeHtml(garantia.modelo_maquina)} (${escapeHtml(garantia.numero_serie)})</p>
       <table class="table-simple" style="width:100%;margin-top:1rem">
-        <thead><tr><th>#</th><th>Fecha prog.</th><th>Realizado</th><th>Estado</th><th>Pago</th><th></th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="6" class="empty">Sin mantenimientos generados.</td></tr>'}</tbody>
+        <thead><tr><th>#</th><th>Fecha prog.</th><th>Realizado</th><th>Estado</th><th>Pagado</th><th>Alertas</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="7" class="empty">Sin mantenimientos generados.</td></tr>'}</tbody>
       </table>
       <div class="form-actions" style="margin-top:1rem">
+        <button type="button" class="btn outline" id="btn-gen-anio-mant"><i class="fas fa-plus"></i> Generar siguiente año</button>
         <button type="button" class="btn" id="modal-btn-cancel">Cerrar</button>
       </div>
     `;
     openModal('Mantenimientos: ' + escapeHtml(garantia.razon_social), body);
+    const bGen = qs('#btn-gen-anio-mant');
+    if (bGen) {
+      bGen.addEventListener('click', async () => {
+        try {
+          await fetchJson(API + '/garantias/' + garantia.id + '/generar-siguiente-anio', { method: 'POST', body: '{}' });
+          showToast('Mantenimientos del siguiente año generados.', 'success');
+          qs('#modal').classList.add('hidden');
+          loadGarantias();
+          loadMantenimientoGarantia();
+        } catch (e) { showToast(parseApiError(e), 'error'); }
+      });
+    }
     document.querySelectorAll('.btn-mant-edit').forEach(btn => {
       btn.addEventListener('click', () => {
-        const m = mantenimientos.find(x => x.id == btn.dataset.id);
+        const m = mantenimientos.find(x => String(x.id) === String(btn.dataset.id));
         if (m) openModalEditMantenimiento(m, garantia);
       });
     });
@@ -1751,17 +2000,18 @@
 
   function openModalEditMantenimiento(mant, garantia) {
     const body = `
+      <p class="mant-edit-sub">${escapeHtml(garantia.razon_social || '')} · ${escapeHtml(garantia.modelo_maquina || '')}</p>
       <div class="form-row">
-        <div class="form-group"><label>Estado</label>
-          <select id="m-est-mant">
-            <option value="pendiente" ${mant.estado === 'pendiente' ? 'selected' : ''}>Pendiente</option>
-            <option value="confirmado" ${mant.estado === 'confirmado' ? 'selected' : ''}>Confirmado</option>
-            <option value="realizado" ${mant.estado === 'realizado' ? 'selected' : ''}>Realizado</option>
-            <option value="vencido" ${mant.estado === 'vencido' ? 'selected' : ''}>Vencido</option>
-          </select>
-        </div>
-        <div class="form-group"><label>Fecha realizado</label><input type="date" id="m-frealiz-mant" value="${mant.fecha_realizado || ''}"></div>
-        <div class="form-group"><label>Monto pagado</label><input type="number" id="m-monto-mant" step="0.01" min="0" value="${mant.monto_pagado || 0}"></div>
+        <div class="form-group"><label><input type="checkbox" id="m-conf-mant" ${Number(mant.confirmado) === 1 ? 'checked' : ''}> Cliente confirmó / servicio programado</label></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Fecha realizado</label><input type="date" id="m-frealiz-mant" value="${mant.fecha_realizada ? String(mant.fecha_realizada).slice(0, 10) : ''}"></div>
+        <div class="form-group"><label>Costo (MXN)</label><input type="number" id="m-costo-mant" step="0.01" min="0" value="${Number(mant.costo) || 0}"></div>
+        <div class="form-group"><label>Pagado (MXN)</label><input type="number" id="m-pagado-mant" step="0.01" min="0" value="${Number(mant.pagado) || 0}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label><input type="checkbox" id="m-alerta-env-mant" ${Number(mant.alerta_enviada) === 1 ? 'checked' : ''}> Recordatorio enviado (manual)</label></div>
+        <div class="form-group"><label><input type="checkbox" id="m-alerta-ven-mant" ${Number(mant.alerta_vencida) === 1 ? 'checked' : ''}> Escalado por vencido (manual)</label></div>
       </div>
       <div class="form-group"><label>Notas</label><textarea id="m-notas-mant" rows="2" maxlength="300">${escapeHtml(mant.notas) || ''}</textarea></div>
       <div class="form-actions">
@@ -1772,9 +2022,12 @@
     openModal('Actualizar mantenimiento', body);
     qs('#m-save').onclick = async () => {
       const payload = {
-        estado: qs('#m-est-mant').value,
-        fecha_realizado: qs('#m-frealiz-mant').value || null,
-        monto_pagado: parseFloat(qs('#m-monto-mant').value) || null,
+        confirmado: qs('#m-conf-mant').checked ? 1 : 0,
+        fecha_realizada: qs('#m-frealiz-mant').value || null,
+        costo: parseFloat(qs('#m-costo-mant').value) || 0,
+        pagado: parseFloat(qs('#m-pagado-mant').value) || 0,
+        alerta_enviada: qs('#m-alerta-env-mant').checked ? 1 : 0,
+        alerta_vencida: qs('#m-alerta-ven-mant').checked ? 1 : 0,
         notas: qs('#m-notas-mant').value.trim() || null,
       };
       try {
@@ -1782,6 +2035,7 @@
         qs('#modal').classList.add('hidden');
         showToast('Mantenimiento actualizado.', 'success');
         loadGarantias();
+        loadMantenimientoGarantia();
       } catch (e) { showToast(parseApiError(e), 'error'); }
     };
   }
@@ -1791,6 +2045,7 @@
       await fetchJson(API + '/garantias/' + id, { method: 'DELETE' });
       showToast('Garantía eliminada.', 'success');
       loadGarantias();
+      loadMantenimientoGarantia();
     } catch (e) { showToast(parseApiError(e), 'error'); }
   }
 
@@ -4578,6 +4833,9 @@
     if (id === 'refacciones') loadRefacciones();
     if (id === 'maquinas') loadMaquinas();
     if (id === 'cotizaciones') loadCotizaciones();
+    if (id === 'garantias') loadGarantias();
+    if (id === 'mantenimiento-garantia') loadMantenimientoGarantia();
+    if (id === 'garantias-sin-cobertura') loadGarantiasSinCobertura();
     if (id === 'incidentes') loadIncidentes();
     if (id === 'bitacoras') loadBitacoras();
     loadSeedStatus(false);
@@ -4728,6 +4986,8 @@
   bindTableFilters('tabla-reportes', applyReportesFiltersAndRender);
   bindTableFilters('tabla-incidentes', applyIncidentesFiltersAndRender);
   bindTableFilters('tabla-bitacoras', applyBitacorasFiltersAndRender);
+  bindTableFilters('tabla-mantenimientos-garantia', () => renderMantenimientoGarantiaTable());
+  bindTableFilters('tabla-garantias-sin', applyGarantiasSinFiltersAndRender);
   const dashboardRefresh = qs('#dashboard-refresh');
   if (dashboardRefresh) dashboardRefresh.addEventListener('click', () => loadDashboard());
   const dashboardGoBackups = qs('#dashboard-go-backups');
@@ -4773,7 +5033,32 @@
   const btnLiquidacion = qs('#btn-viajes-liquidacion');
   if (btnLiquidacion) btnLiquidacion.addEventListener('click', () => generarLiquidacionMensual());
   const btnGarantiasAlertas = qs('#btn-garantias-alertas');
-  if (btnGarantiasAlertas) btnGarantiasAlertas.addEventListener('click', () => checkGarantiasAlertas());
+  if (btnGarantiasAlertas) btnGarantiasAlertas.addEventListener('click', () => openModalGarantiasAlertasDetalle());
+  const btnMantGarRefresh = qs('#btn-mant-gar-refresh');
+  if (btnMantGarRefresh) btnMantGarRefresh.addEventListener('click', () => loadMantenimientoGarantia());
+  const btnMantGarProcesar = qs('#btn-mant-gar-procesar-alertas');
+  if (btnMantGarProcesar) {
+    btnMantGarProcesar.addEventListener('click', async () => {
+      try {
+        const r = await fetchJson(API + '/garantias-alertas/procesar', { method: 'POST', body: JSON.stringify({}) });
+        showToast('Alertas procesadas: ' + (r.procesados || 0) + (r.errores && r.errores.length ? '. Revisa SMTP en el servidor.' : ''), r.errores && r.errores.length ? 'error' : 'success');
+        loadMantenimientoGarantia();
+        loadGarantias();
+      } catch (e) { showToast(parseApiError(e), 'error'); }
+    });
+  }
+  const btnMantGarHoy = qs('#btn-mant-gar-hoy');
+  if (btnMantGarHoy) btnMantGarHoy.addEventListener('click', () => {
+    const mi = qs('#mant-gar-month');
+    if (mi) mi.value = new Date().toISOString().slice(0, 7);
+    renderMantenimientoGarantiaCalendar();
+  });
+  const mantGarMonth = qs('#mant-gar-month');
+  if (mantGarMonth) mantGarMonth.addEventListener('change', () => renderMantenimientoGarantiaCalendar());
+  const btnMantGarRefreshSin = qs('#btn-mant-gar-refresh-sin');
+  if (btnMantGarRefreshSin) btnMantGarRefreshSin.addEventListener('click', () => loadGarantiasSinCobertura());
+  const exportGarantiasSin = qs('#export-garantias-sin');
+  if (exportGarantiasSin) exportGarantiasSin.addEventListener('click', () => exportToCsv(applyFilters(garantiasSinCoberturaCache, getFilterValues('#tabla-garantias-sin'), 'tabla-garantias-sin'), 'tabla-garantias-sin', 'garantias_sin_cobertura'));
   qs('.btn-empty-cot').addEventListener('click', () => openModalCotizacion(null));
   qs('.btn-empty-inc').addEventListener('click', () => openModalIncidente(null));
   qs('.btn-empty-bit').addEventListener('click', () => openModalBitacora(null));

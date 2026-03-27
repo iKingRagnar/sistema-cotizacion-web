@@ -3043,3 +3043,54 @@ body.dark-theme .stock-alert-bar strong {
 /* Btn success */
 .btn.success { background: #059669; color: #fff; }
 .btn.success:hover { background: #047857; }
+
+/* Mantenimientos por garantía */
+.mant-gar-hint { margin: 0 0 1rem; font-size: 0.9rem; color: #475569; max-width: 52rem; }
+.toolbar-label-inline { font-size: 0.85rem; color: #64748b; margin-right: 0.35rem; }
+#mant-gar-month { padding: 0.35rem 0.5rem; border-radius: var(--radius-sm); border: 1px solid #cbd5e1; font-family: inherit; }
+.mant-gar-cal-wrap { margin-top: 0.5rem; }
+.cal-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #64748b;
+  text-align: center;
+}
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.cal-cell.cal-empty { min-height: 2.5rem; }
+.cal-day {
+  min-height: 4.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  background: #fff;
+}
+.cal-day.cal-today { border-color: var(--config-accent, #0d9488); box-shadow: 0 0 0 1px rgba(13, 148, 136, 0.25); }
+.cal-day-num { font-size: 0.8rem; font-weight: 600; color: #334155; }
+.cal-dots { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; margin-top: 4px; }
+.cal-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.cal-dot-bad { background: #dc2626; }
+.cal-dot-warn { background: #d97706; }
+.cal-dot-pendiente { background: #94a3b8; }
+.cal-dot-ok { background: #059669; }
+.cal-more { font-size: 0.65rem; color: #64748b; }
+.cal-legend { margin: 0.75rem 0 0; font-size: 0.8rem; color: #64748b; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+.cal-legend .cal-dot { margin-right: 0.25rem; }
+.badge-mant-ok { background: #d1fae5; color: #065f46; }
+.badge-mant-bad { background: #fee2e2; color: #991b1b; }
+.badge-mant-warn { background: #ffedd5; color: #c2410c; }
+.badge-mant-prio-hi { background: #fecaca; color: #991b1b; }
+.badge-mant-prio-lo { background: #f1f5f9; color: #64748b; }
+.section-sub { margin: 0 0 0.75rem; font-size: 0.9rem; color: #64748b; max-width: 40rem; }
+.gar-recalc-box { font-size: 0.85rem; color: #475569; }
+.gar-recalc-label { cursor: pointer; }
+.mant-edit-sub { margin: 0 0 0.75rem; font-size: 0.9rem; color: #64748b; }
+body.dark-theme .cal-day { background: #1e293b; border-color: #334155; }
+body.dark-theme .cal-day-num { color: #e2e8f0; }
