@@ -3,6 +3,13 @@
   const AUTH_TOKEN_KEY = 'cotizacion-auth-token';
   const AUTH_USER_KEY = 'cotizacion-auth-user';
   const SOUND_PREF_KEY = 'cotizacion-sound';
+  const BGM_MUTED_KEY = 'cotizacion-bgm-muted';
+  const BGM_VOL_KEY = 'cotizacion-bgm-vol';
+  const BGM_DEFAULT_VOL = 0.05;
+  const BGM_VOL_STEP = 0.05;
+  const BGM_SRC = '/audio/Technology-Song.wav';
+  let bgMusicEl = null;
+  let refreshSoundToggleUi = function () {};
   let serverConfig = Object.assign({}, typeof window.__APP_CONFIG__ === 'object' && window.__APP_CONFIG__ ? window.__APP_CONFIG__ : {});
   let clientesCache = [];
   let refaccionesCache = [];
@@ -40,6 +47,79 @@
       if (localStorage.getItem(SOUND_PREF_KEY) === '0') return false;
     } catch (_) {}
     return !!(serverConfig && serverConfig.soundEffectsDefault);
+  }
+  function isBgmMuted() {
+    try { return localStorage.getItem(BGM_MUTED_KEY) === '1'; } catch (_) { return false; }
+  }
+  function setBgmMuted(muted) {
+    try { localStorage.setItem(BGM_MUTED_KEY, muted ? '1' : '0'); } catch (_) {}
+    applyBgmPlaybackState();
+  }
+  function getBgmVolume() {
+    try {
+      const v = parseFloat(localStorage.getItem(BGM_VOL_KEY));
+      if (!isNaN(v) && v >= 0 && v <= 1) return v;
+    } catch (_) {}
+    return BGM_DEFAULT_VOL;
+  }
+  function setBgmVolumeStored(v) {
+    v = Math.max(0, Math.min(1, v));
+    try { localStorage.setItem(BGM_VOL_KEY, String(v)); } catch (_) {}
+    return v;
+  }
+  function applyBgmPlaybackState() {
+    if (!bgMusicEl) return;
+    const muted = isBgmMuted();
+    bgMusicEl.volume = getBgmVolume();
+    if (muted) {
+      try { bgMusicEl.pause(); } catch (_) {}
+    } else {
+      bgMusicEl.muted = false;
+      const p = bgMusicEl.play();
+      if (p && typeof p.catch === 'function') p.catch(function () {});
+    }
+  }
+  function initBackgroundMusicOnce() {
+    if (bgMusicEl) return;
+    const audio = new Audio();
+    audio.src = BGM_SRC;
+    audio.loop = true;
+    audio.preload = 'auto';
+    audio.volume = getBgmVolume();
+    bgMusicEl = audio;
+    function tryPlay() {
+      if (isBgmMuted()) return;
+      audio.muted = false;
+      audio.volume = getBgmVolume();
+      const p = audio.play();
+      if (p && typeof p.catch === 'function') p.catch(function () {});
+    }
+    if (isBgmMuted()) {
+      try { audio.pause(); } catch (_) {}
+    }
+    document.addEventListener('click', tryPlay, { once: true });
+    document.addEventListener('pointerdown', tryPlay, { once: true });
+    document.addEventListener('keydown', tryPlay, { once: true });
+    tryPlay();
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible' && bgMusicEl && !isBgmMuted()) {
+        const p = bgMusicEl.play();
+        if (p && typeof p.catch === 'function') p.catch(function () {});
+      }
+    });
+    document.addEventListener('keydown', function onBgmVolKey(e) {
+      const t = e.target;
+      if (t && t.closest && t.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (e.code !== 'NumpadAdd' && e.code !== 'NumpadSubtract') return;
+      e.preventDefault();
+      let v = getBgmVolume();
+      if (e.code === 'NumpadAdd') v = setBgmVolumeStored(Math.min(1, v + BGM_VOL_STEP));
+      else v = setBgmVolumeStored(Math.max(0, v - BGM_VOL_STEP));
+      if (bgMusicEl) bgMusicEl.volume = v;
+      if (v > 0 && isBgmMuted()) setBgmMuted(false);
+      else applyBgmPlaybackState();
+      refreshSoundToggleUi();
+    });
   }
   function playSuccessChime() {
     try {
@@ -395,24 +475,24 @@
     const btn = qs('#btn-sound-toggle');
     if (!btn || btn._bound) return;
     btn._bound = true;
+    initBackgroundMusicOnce();
     function refresh() {
-      const on = isSoundEnabled();
-      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-      btn.title = on ? 'Sonido de confirmación: activado (clic para apagar)' : 'Sonido de confirmación: apagado (clic para activar)';
+      const musicOn = !isBgmMuted();
+      btn.setAttribute('aria-pressed', musicOn ? 'true' : 'false');
+      btn.title = musicOn
+        ? ('Música de fondo: activa (~' + Math.round(getBgmVolume() * 100) + '%). Num+ / Num− volumen. Clic silencia.')
+        : ('Música de fondo: silenciada. Clic para activar. Num+ / Num− volumen.');
       const i = btn.querySelector('i');
       if (i) {
-        i.classList.toggle('fa-volume-up', on);
-        i.classList.toggle('fa-volume-mute', !on);
+        i.classList.toggle('fa-volume-up', musicOn);
+        i.classList.toggle('fa-volume-mute', !musicOn);
       }
     }
+    refreshSoundToggleUi = refresh;
     refresh();
     btn.addEventListener('click', function () {
-      try {
-        const next = !isSoundEnabled();
-        localStorage.setItem(SOUND_PREF_KEY, next ? '1' : '0');
-      } catch (_) {}
+      setBgmMuted(!isBgmMuted());
       refresh();
-      if (isSoundEnabled()) playSuccessChime();
     });
   }
   /** Título de la pestaña del navegador según la sección activa */
