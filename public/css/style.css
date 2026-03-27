@@ -28,6 +28,7 @@ html {
   scroll-behavior: smooth;
   scrollbar-width: thin;
   scrollbar-color: #94a3b8 #f1f5f9;
+  cursor: default;
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -51,7 +52,37 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  cursor: default;
 }
+
+/* Cursor de texto (I) solo donde el usuario puede escribir; resto flecha o pointer */
+a[href],
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+summary,
+label,
+select:not(:disabled),
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="checkbox"],
+input[type="radio"],
+input[type="file"],
+input[type="range"],
+input[type="image"] {
+  cursor: pointer;
+}
+input:not(.input-readonly):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="image"]):not([type="hidden"]):not(:disabled):not([readonly]),
+textarea:not(:disabled):not([readonly]),
+[contenteditable="true"] {
+  cursor: text;
+}
+input[readonly],
+textarea[readonly],
+input.input-readonly {
+  cursor: not-allowed;
+}
+
 ::selection {
   background: rgba(13, 148, 136, 0.22);
   color: #0f172a;
