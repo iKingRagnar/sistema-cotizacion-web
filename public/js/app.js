@@ -2622,7 +2622,7 @@
             <option value="mano_obra" ${cot && cot.tipo === 'mano_obra' ? 'selected' : ''}>Mano de obra</option>
           </select>
         </div>
-        <div class="form-group"><label>Fecha *</label><input type="date" id="cotz-fecha" value="${cot && cot.fecha ? cot.fecha.slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
+        <div class="form-group"><label>Fecha *</label><input type="date" id="cotz-fecha" value="${cot && cot.fecha ? String(cot.fecha).slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
       </div>
 
       <div class="form-row">
@@ -2755,6 +2755,21 @@
         if (inModal) return inModal;
       }
       return qs('#modal-body #cotz-maquinas-list') || qs('#cotz-maquinas-list');
+    }
+
+    function getCotzFechaInput() {
+      return qm('#cotz-fecha') || qs('#modal-body #cotz-fecha');
+    }
+    /** Fecha YYYY-MM-DD para guardar: input real o respaldo desde cot / hoy (evita undefined en JSON). */
+    function readCotzFechaForSave() {
+      const el = getCotzFechaInput();
+      const raw = el && el.value != null ? String(el.value).trim() : '';
+      if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+      if (cot && cot.fecha) {
+        const s = String(cot.fecha).slice(0, 10);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      }
+      return new Date().toISOString().slice(0, 10);
     }
 
     const cotId = cot && cot.id ? Number(cot.id) : null;
@@ -2969,6 +2984,11 @@
       if (qm('#cotz-subtotal')) qm('#cotz-subtotal').value = Number(fresh.subtotal || 0).toFixed(2);
       if (qm('#cotz-iva')) qm('#cotz-iva').value = Number(fresh.iva || 0).toFixed(2);
       if (qm('#cotz-total')) qm('#cotz-total').value = Number(fresh.total || 0).toFixed(2);
+      const fin = getCotzFechaInput();
+      if (fin && fresh.fecha) {
+        const fd = String(fresh.fecha).slice(0, 10);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(fd)) fin.value = fd;
+      }
       renderLineas(fresh.lineas || []);
       return fresh;
     }
@@ -3032,7 +3052,7 @@
     async function ensureCotizacionExistsBeforeLines() {
       if (currentCotId) return currentCotId;
       // Auto-guardar header para permitir agregar líneas desde "Nueva cotización"
-      const fecha = qm('#cotz-fecha')?.value;
+      const fecha = readCotzFechaForSave();
       const clienteId = parseInt(qm('#cotz-cliente_id')?.value, 10);
       if (!clienteId) { showToast('Selecciona un cliente.', 'warning'); return null; }
       if (!fecha) { showToast('Selecciona una fecha.', 'warning'); return null; }
@@ -3271,9 +3291,9 @@
 
     qm('#cotz-save').onclick = async () => {
       clearInvalidMarks();
-      const fecha = qm('#cotz-fecha')?.value;
+      const fecha = readCotzFechaForSave();
       let err = validateRequired(fecha, 'La fecha es obligatoria');
-      if (err) { markInvalid(qm('#cotz-fecha'), err); return; }
+      if (err) { markInvalid(getCotzFechaInput(), err); return; }
       const clienteId = parseInt(qm('#cotz-cliente_id')?.value, 10);
       if (!clienteId) { markInvalid(qm('#cotz-cliente_id'), 'Selecciona un cliente'); return; }
       const tipo = qm('#cotz-tipo')?.value;
