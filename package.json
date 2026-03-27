@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "bitacora:s11": "node scripts/bitacora-s11-estilos.js"
   },
   "engines": {
     "node": ">=18"
@@ -15,10 +16,13 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
-    "nodemailer": "^6.9.16",
     "mammoth": "^1.8.0",
+    "nodemailer": "^6.9.16",
     "pdf-parse": "^1.1.1",
     "sqlite3": "^5.1.7",
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "exceljs": "^4.4.0"
   }
 }
