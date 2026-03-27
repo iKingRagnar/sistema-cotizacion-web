@@ -601,7 +601,13 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
     const existing = await db.getOne('SELECT * FROM cotizaciones WHERE id = ?', [req.params.id]);
     if (!existing) return res.status(404).json({ error: 'No encontrada' });
     const { folio, cliente_id, tipo, fecha, tipo_cambio, moneda, maquinas_ids, estado, notas } = req.body || {};
-    const maqIds = typeof maquinas_ids === 'string' ? maquinas_ids : JSON.stringify(maquinas_ids || []);
+    const hasBody = req.body && typeof req.body === 'object';
+    const hasMaqIds = hasBody && Object.prototype.hasOwnProperty.call(req.body, 'maquinas_ids');
+    const hasNotas = hasBody && Object.prototype.hasOwnProperty.call(req.body, 'notas');
+    const hasEstado = hasBody && Object.prototype.hasOwnProperty.call(req.body, 'estado');
+    const maqIds = hasMaqIds
+      ? (typeof maquinas_ids === 'string' ? maquinas_ids : JSON.stringify(maquinas_ids || []))
+      : (existing.maquinas_ids || '[]');
     // No pisar fecha con NULL si el cliente no envía el campo (JSON.stringify omite undefined) o el input falló.
     let fechaSql = existing.fecha || null;
     if (fecha != null && String(fecha).trim() !== '') {
@@ -616,13 +622,13 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
       [
         (folio != null && String(folio).trim() !== '') ? String(folio).trim() : (existing.folio || null),
         (cliente_id != null && Number(cliente_id) > 0) ? Number(cliente_id) : (existing.cliente_id || null),
-        tipo || 'refacciones',
+        (tipo != null && String(tipo).trim() !== '') ? String(tipo).trim() : (existing.tipo || 'refacciones'),
         fechaSql,
-        Number(tipo_cambio) || 17.0,
-        moneda || 'MXN',
+        (tipo_cambio != null && String(tipo_cambio).trim() !== '') ? (Number(tipo_cambio) || 17.0) : (Number(existing.tipo_cambio) || 17.0),
+        (moneda != null && String(moneda).trim() !== '') ? String(moneda).trim().toUpperCase() : (existing.moneda || 'MXN'),
         maqIds,
-        estado || 'borrador',
-        notas || null,
+        hasEstado ? ((estado != null && String(estado).trim() !== '') ? String(estado).trim() : 'borrador') : (existing.estado || 'borrador'),
+        hasNotas ? (notas || null) : (existing.notas || null),
         req.params.id,
       ]
     );

@@ -1244,7 +1244,12 @@
         <td>${escapeHtml(String(c.tipo || ''))}</td>
         <td>${escapeHtml(String((c.fecha || '').toString().slice(0, 10)))}</td>
         <td><span class="badge badge-moneda">${moneda}</span></td>
-        <td>${tcFmt ? escapeHtml(tcFmt) : '—'}</td>
+        <td>
+          <span class="badge badge-moneda" title="Tipo de cambio">${tcFmt ? escapeHtml(tcFmt) : '—'}</span>
+          <button type="button" class="btn tiny outline btn-edit-tc" data-id="${c.id}" data-tc="${tcFmt || ''}" title="Editar tipo de cambio en tabla">
+            <i class="fas fa-pen"></i>
+          </button>
+        </td>
         <td>${totalFmt || '—'}</td>
         <td><span class="semaforo ${estadoClass}">${estadoLabel}</span></td>
         <td class="sla-cell"><span class="semaforo semaforo-${vig.color}" title="${escapeHtml(vig.label)}"><i class="fas ${vig.icon}"></i> ${escapeHtml(vig.label)}</span></td>
@@ -1275,6 +1280,22 @@
     });
     tbody.querySelectorAll('.btn-delete-cot').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar esta cotización?', () => deleteCotizacion(btn.dataset.id)); });
+    });
+    tbody.querySelectorAll('.btn-edit-tc').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = Number(btn.dataset.id);
+        if (!id) return;
+        const actual = btn.dataset.tc || '';
+        const raw = window.prompt('Nuevo tipo de cambio (MXN por USD):', actual || '17.00');
+        if (raw == null) return;
+        const next = Number(String(raw).replace(',', '.').trim());
+        if (!Number.isFinite(next) || next <= 0) {
+          showToast('Tipo de cambio inválido. Usa un número mayor a 0.', 'error');
+          return;
+        }
+        await updateCotizacionTipoCambioInline(id, next);
+      });
     });
     updateTableFooter('tabla-cotizaciones', list.length, cotizacionesCache.length, () => clearTableFiltersAndRefresh('tabla-cotizaciones', null, applyCotizacionesFiltersAndRender), arguments[2]);
   }
@@ -1310,6 +1331,19 @@
       loadCotizaciones();
       loadRefacciones();
     } catch (e) { showToast(parseApiError(e) || 'No se pudo aplicar la cotización.', 'error'); }
+  }
+
+  async function updateCotizacionTipoCambioInline(id, tc) {
+    try {
+      await fetchJson(`${API}/cotizaciones/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ tipo_cambio: Number(tc) }),
+      });
+      await loadCotizaciones();
+      showToast('Tipo de cambio actualizado.', 'success');
+    } catch (e) {
+      showToast(parseApiError(e) || 'No se pudo actualizar el tipo de cambio.', 'error');
+    }
   }
 
   // ----- REPORTES -----
