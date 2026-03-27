@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "bitacora:s11": "node scripts/bitacora-s11-estilos.js"
+    "bitacora:s11": "node scripts/bitacora-s11-estilos.js",
+    "bitacora:pendientes": "node scripts/bitacora-pestaña-pendientes.js"
   },
   "engines": {
     "node": ">=18"
