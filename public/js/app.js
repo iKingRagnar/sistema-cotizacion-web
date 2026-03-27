@@ -639,6 +639,7 @@
     if (!tbl) return {};
     const out = {};
     tbl.querySelectorAll('.filter-input, .filter-date-select').forEach(inp => {
+      if (!['INPUT', 'SELECT', 'TEXTAREA'].includes(inp.tagName)) return;
       const key = inp.dataset.key;
       if (!key) return;
       if (inp.classList.contains('filter-date-select')) {
@@ -658,6 +659,7 @@
     const tbl = qs('#' + tableId);
     if (!tbl) return out;
     tbl.querySelectorAll('.filter-row .filter-input[data-key]:not(.filter-date-input), .filter-row .filter-date-select[data-key]').forEach(inp => {
+      if (!['INPUT', 'SELECT', 'TEXTAREA'].includes(inp.tagName)) return;
       const key = inp.dataset.key;
       const type = inp.classList.contains('filter-date-select') ? 'date' : (inp.dataset.type || 'text');
       let val;
@@ -706,6 +708,7 @@
     if (!tbl || !onFilter) return;
     const run = debounce(onFilter, 220);
     tbl.querySelectorAll('.filter-row .filter-input').forEach(inp => {
+      if (!['INPUT', 'SELECT', 'TEXTAREA'].includes(inp.tagName)) return;
       inp.addEventListener('input', run);
       inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); onFilter(); } });
     });
@@ -937,7 +940,10 @@
     const hasFilters = !tbl ? false : (() => {
       let has = false;
       try {
-        tbl.querySelectorAll('.filter-row .filter-input, .filter-row .filter-date-select, .filter-row .filter-date-input').forEach(inp => { if (inp.value && inp.value.trim()) has = true; });
+        tbl.querySelectorAll('.filter-row .filter-input, .filter-row .filter-date-select, .filter-row .filter-date-input').forEach(inp => {
+          if (!['INPUT', 'SELECT', 'TEXTAREA'].includes(inp.tagName)) return;
+          if (inp.value && inp.value.trim()) has = true;
+        });
       } catch (_) {}
       return has;
     })();
@@ -995,7 +1001,10 @@
   }
   function clearTableFiltersAndRefresh(tableId, searchId, onRefresh) {
     const tbl = qs('#' + tableId);
-    if (tbl) tbl.querySelectorAll('.filter-row .filter-input, .filter-row .filter-date-select, .filter-row .filter-date-input').forEach(inp => { inp.value = ''; });
+    if (tbl) tbl.querySelectorAll('.filter-row .filter-input, .filter-row .filter-date-select, .filter-row .filter-date-input').forEach(inp => {
+      if (!['INPUT', 'SELECT', 'TEXTAREA'].includes(inp.tagName)) return;
+      inp.value = '';
+    });
     if (searchId) { const s = qs(searchId); if (s) s.value = ''; }
     if (typeof getPaginationState === 'function') setPaginationPage(tableId, 0);
     if (onRefresh) onRefresh();
