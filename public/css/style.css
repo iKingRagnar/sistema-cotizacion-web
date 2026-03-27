@@ -108,10 +108,33 @@ input.input-readonly {
   cursor: not-allowed;
 }
 
-/* Donde sí conviene copiar texto: tablas, modales, chat, notas */
-.table-wrap td,
-.table-wrap th,
-.table-wrap .data-table {
+/* Tablas: títulos de columna (th) no son editables — sin cursor de texto */
+.data-table thead tr:first-child th {
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+/* Fila de filtros: la celda no es campo; solo inputs/select/textarea muestran cursor adecuado */
+.data-table thead .filter-row td {
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.data-table thead .filter-row input:not([type="checkbox"]):not([type="radio"]),
+.data-table thead .filter-row select,
+.data-table thead .filter-row textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+.data-table thead .filter-row input:not([type="checkbox"]):not([type="radio"]),
+.data-table thead .filter-row textarea {
+  cursor: text;
+}
+.data-table thead .filter-row select {
+  cursor: pointer;
+}
+/* Cuerpo de tabla: permitir copiar celdas */
+.table-wrap tbody td {
   user-select: text;
   -webkit-user-select: text;
 }
