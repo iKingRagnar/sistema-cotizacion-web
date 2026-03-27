@@ -2760,13 +2760,15 @@
     function getCotzFechaInput() {
       return qm('#cotz-fecha') || qs('#modal-body #cotz-fecha');
     }
-    /** Fecha YYYY-MM-DD para guardar: input real o respaldo desde cot / hoy (evita undefined en JSON). */
+    /** Snapshot actual de la cotización en edición; evita usar `cot` inicial desactualizado. */
+    let cotSnapshot = cot ? { ...cot } : null;
+    /** Fecha YYYY-MM-DD para guardar: input real o respaldo desde snapshot / hoy (evita undefined en JSON). */
     function readCotzFechaForSave() {
       const el = getCotzFechaInput();
       const raw = el && el.value != null ? String(el.value).trim() : '';
       if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
-      if (cot && cot.fecha) {
-        const s = String(cot.fecha).slice(0, 10);
+      if (cotSnapshot && cotSnapshot.fecha) {
+        const s = String(cotSnapshot.fecha).slice(0, 10);
         if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
       }
       return new Date().toISOString().slice(0, 10);
@@ -2981,6 +2983,7 @@
     async function refreshCotizacion() {
       if (!currentCotId) return;
       const fresh = await fetchJson(`${API}/cotizaciones/${currentCotId}`);
+      cotSnapshot = fresh && typeof fresh === 'object' ? { ...fresh } : cotSnapshot;
       if (qm('#cotz-subtotal')) qm('#cotz-subtotal').value = Number(fresh.subtotal || 0).toFixed(2);
       if (qm('#cotz-iva')) qm('#cotz-iva').value = Number(fresh.iva || 0).toFixed(2);
       if (qm('#cotz-total')) qm('#cotz-total').value = Number(fresh.total || 0).toFixed(2);
@@ -3317,10 +3320,12 @@
         if (!currentCotId) {
           const created = await fetchJson(`${API}/cotizaciones`, { method: 'POST', body: JSON.stringify(payload) });
           currentCotId = Number(created && created.id) || null;
+          cotSnapshot = created && typeof created === 'object' ? { ...created } : cotSnapshot;
           showToast('Cotización guardada. Ahora puedes agregar líneas.', 'success');
           if (currentCotId) await refreshCotizacion();
         } else {
-          payload.folio = cot && cot.folio ? cot.folio : null;
+          // Si ya existe, preservar folio actual (creado en auto-guardado al agregar línea primero).
+          if (cotSnapshot && cotSnapshot.folio) payload.folio = cotSnapshot.folio;
           await fetchJson(`${API}/cotizaciones/${currentCotId}`, { method: 'PUT', body: JSON.stringify(payload) });
           await refreshCotizacion();
           showToast('Cotización actualizada.', 'success');

@@ -614,8 +614,8 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
        SET folio=?, cliente_id=?, tipo=?, fecha=?, tipo_cambio=?, moneda=?, maquinas_ids=?, estado=?, notas=?
        WHERE id=?`,
       [
-        folio || null,
-        cliente_id || null,
+        (folio != null && String(folio).trim() !== '') ? String(folio).trim() : (existing.folio || null),
+        (cliente_id != null && Number(cliente_id) > 0) ? Number(cliente_id) : (existing.cliente_id || null),
         tipo || 'refacciones',
         fechaSql,
         Number(tipo_cambio) || 17.0,
