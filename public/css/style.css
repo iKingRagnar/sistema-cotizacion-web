@@ -3093,6 +3093,8 @@ body.dark-theme .stock-alert-bar strong {
 .section-sub { margin: 0 0 0.75rem; font-size: 0.9rem; color: #64748b; max-width: 40rem; }
 .gar-recalc-box { font-size: 0.85rem; color: #475569; }
 .gar-recalc-label { cursor: pointer; }
+.gar-modal-dry { margin: 0.75rem 0 0; font-size: 0.85rem; color: #64748b; }
+.gar-modal-dry label { cursor: pointer; }
 .mant-edit-sub { margin: 0 0 0.75rem; font-size: 0.9rem; color: #64748b; }
 body.dark-theme .cal-day { background: #1e293b; border-color: #334155; }
 body.dark-theme .cal-day-num { color: #e2e8f0; }
