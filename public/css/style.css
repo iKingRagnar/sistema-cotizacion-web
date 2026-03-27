@@ -3272,3 +3272,25 @@ body.dark-theme .stock-alert-bar strong {
 .mant-edit-sub { margin: 0 0 0.75rem; font-size: 0.9rem; color: #64748b; }
 body.dark-theme .cal-day { background: #1e293b; border-color: #334155; }
 body.dark-theme .cal-day-num { color: #e2e8f0; }
+
+/* Refuerzo final (al final del archivo): texto anidado en celdas heredaba “I” aunque el td tuviera default */
+.table-wrap .data-table tbody td *:not(button):not(.btn):not(.link-btn):not(a[href]):not([role="button"]):not(input):not(select):not(textarea) {
+  cursor: default !important;
+}
+.table-wrap .data-table tbody td button,
+.table-wrap .data-table tbody td .btn,
+.table-wrap .data-table tbody td a[href],
+.table-wrap .data-table tbody td [role="button"] {
+  cursor: pointer !important;
+}
+.table-wrap .data-table tbody td input:not([type="checkbox"]):not([type="radio"]),
+.table-wrap .data-table tbody td textarea {
+  cursor: text !important;
+}
+.table-wrap .data-table tbody td select {
+  cursor: pointer !important;
+}
+.table-wrap .data-table tbody td input[type="checkbox"],
+.table-wrap .data-table tbody td input[type="radio"] {
+  cursor: pointer !important;
+}
