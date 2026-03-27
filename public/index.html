@@ -570,7 +570,11 @@
     <section id="panel-demo" class="panel">
       <div class="card card-demo">
         <h2><i class="fas fa-database"></i> Cargar datos demo</h2>
+        <p class="demo-version-banner" style="margin:0 0 0.75rem 0;padding:0.55rem 0.7rem;border-radius:8px;border:1px solid #0d9488;background:rgba(13,148,136,0.14);font-size:0.88rem;line-height:1.45;">
+          <strong>Qué deberías ver con la versión nueva:</strong> un botón gris <strong>«Asegurar equipos por cliente (2 por cliente, demo)»</strong> debajo del botón verde. Con ~30 clientes, el contador de arriba debería pasar a unas <strong>60 máquinas</strong> (2 por cliente). Si sigues viendo solo <strong>15 máquinas</strong> y <strong>no</strong> aparece ese botón gris, no estás viendo el último código: en el navegador usa recarga forzada (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>) y confirma que en Render se desplegó el mismo proyecto que incluye estos archivos en <code>public/</code>.
+        </p>
         <p>Importa desde <strong>SistemaGestion_Demo.xlsm</strong> (exportado a <code>seed-demo.json</code>): clientes, refacciones, máquinas, <strong>incidentes</strong>, <strong>bitácoras</strong> y cotizaciones de ejemplo.</p>
+        <p class="hint">Al cargar el demo completo, el servidor asegura al menos <strong>un equipo demo</strong> por cada cliente que no traía máquinas en el JSON. Si ya tienes clientes creados a mano y en cotizaciones ves la caja de máquinas vacía, usa el botón de abajo para insertar <strong>2 equipos de presentación</strong> por cliente (sin borrar datos).</p>
         <p class="status" id="seed-status">Consultando estado…</p>
         <p class="hint" id="seed-last-update" aria-live="polite"></p>
         <p class="hint status-pill-wrap">
@@ -581,6 +585,8 @@
         <button type="button" id="btn-seed-demo" class="btn primary big">Cargar todo el demo (solo si no hay clientes)</button>
         <p class="hint" style="margin-top:0.5rem;">Si ya tienes clientes cargados y solo quieres agregar incidentes, bitácoras y cotizaciones de ejemplo:</p>
         <button type="button" id="btn-seed-extra" class="btn big" style="background:#0d9488;color:#fff;margin-top:0.5rem;">Cargar solo incidentes, bitácoras y cotizaciones demo</button>
+        <p class="hint" style="margin-top:0.75rem;">Si faltan equipos en el selector de cotizaciones (misma info que en Autopartes):</p>
+        <button type="button" id="btn-ensure-demo-maquinas" class="btn big outline" style="margin-top:0.35rem;"><i class="fas fa-cogs"></i> Asegurar equipos por cliente (2 por cliente, demo)</button>
         <hr style="margin:1rem 0;border:none;border-top:1px solid #e2e8f0;">
         <p class="hint">Respaldo completo de datos (recomendado):</p>
         <div class="toolbar">
@@ -719,6 +725,6 @@
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=60"></script>
+  <script src="js/app.js?v=63"></script>
 </body>
 </html>

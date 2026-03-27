@@ -28,6 +28,8 @@
     registros: '—',
     updatedAt: null,
   };
+  /** Evita llamar varias veces a /demo-ensure-maquinas en la misma carga de página. */
+  let seedDemoEnsureOnce = false;
 
   function qs(s) { return document.querySelector(s); }
   function qsAll(s) { return document.querySelectorAll(s); }
@@ -2581,15 +2583,12 @@
   async function openModalCotizacion(cot) {
     const isNew = !cot || !cot.id;
     const clientes = await fetchJson(API + '/clientes').catch(() => []);
-    // Asegurar catálogos en caché (el usuario puede abrir Cotizaciones sin entrar a Refacciones/Máquinas)
-    if (!Array.isArray(maquinasCache) || maquinasCache.length === 0) {
-      maquinasCache = await fetchJson(API + '/maquinas').catch(() => []);
-    }
+    // Catálogo completo solo para este modal: `maquinasCache` global suele estar filtrado por
+    // la pestaña Máquinas (#filtro-cliente-maq) y no incluye todos los clientes → selects vacíos.
+    const maquinasCatalogoModal = toArray(await fetchJson(API + '/maquinas').catch(() => []));
     if (!Array.isArray(refaccionesCache) || refaccionesCache.length === 0) {
       refaccionesCache = await fetchJson(API + '/refacciones').catch(() => []);
     }
-    // Importante: en producción, `maquinasCache` puede estar filtrado por la pestaña Máquinas.
-    // En el modal de cotización siempre recargamos por cliente seleccionado.
     const cotClienteId = cot && cot.cliente_id ? Number(cot.cliente_id) : null;
     const clienteOpts = clientes
       .map((c) => `<option value="${c.id}" ${cot && cot.cliente_id == c.id ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`)
@@ -2613,50 +2612,51 @@
     const maquinasOpts = '';
 
     const body = `
-      <div class="form-group"><label>Cliente *</label><select id="m-cliente_id">${clienteOpts}</select></div>
+      <div class="form-group"><label>Cliente *</label><select id="cotz-cliente_id">${clienteOpts}</select></div>
 
       <div class="form-row">
         <div class="form-group">
           <label>Tipo</label>
-          <select id="m-tipo">
+          <select id="cotz-tipo">
             <option value="refacciones" ${cot && cot.tipo === 'refacciones' ? 'selected' : ''}>Refacciones</option>
             <option value="mano_obra" ${cot && cot.tipo === 'mano_obra' ? 'selected' : ''}>Mano de obra</option>
           </select>
         </div>
-        <div class="form-group"><label>Fecha *</label><input type="date" id="m-fecha" value="${cot && cot.fecha ? cot.fecha.slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
+        <div class="form-group"><label>Fecha *</label><input type="date" id="cotz-fecha" value="${cot && cot.fecha ? cot.fecha.slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
           <label>Moneda</label>
-          <select id="m-moneda">
+          <select id="cotz-moneda">
             <option value="MXN" ${cotMoneda === 'MXN' ? 'selected' : ''}>MXN</option>
             <option value="USD" ${cotMoneda === 'USD' ? 'selected' : ''}>USD</option>
           </select>
         </div>
         <div class="form-group">
           <label>T.C.</label>
-          <input type="number" id="m-tc" step="0.01" min="0" value="${Number.isFinite(cotTc) ? cotTc.toFixed(2) : '17.00'}" placeholder="17.00">
+          <input type="number" id="cotz-tc" step="0.01" min="0" value="${Number.isFinite(cotTc) ? cotTc.toFixed(2) : '17.00'}" placeholder="17.00">
           <div class="hint">Si la moneda es USD, este tipo de cambio se usa para mostrar equivalencias.</div>
         </div>
       </div>
 
-      <div class="form-group">
+      <div class="form-group cotz-maquinas-wrap">
         <label>Máquinas (opcional)</label>
-        <select id="m-maquinas" multiple size="4"></select>
+        <p class="hint" id="cotz-maquinas-hint" style="margin:0 0 0.35rem 0;font-size:0.85rem;color:#64748b">Marca una o varias. Si no hay filas, registra equipos en la pestaña Máquinas para este cliente.</p>
+        <div id="cotz-maquinas-list" class="cotz-maquinas-list" role="group" aria-label="Máquinas de la cotización"></div>
       </div>
 
       <div class="form-row">
-        <div class="form-group"><label>Subtotal</label><input type="text" id="m-subtotal" class="input-readonly" readonly value="${Number(cot && cot.subtotal || 0).toFixed(2)}"></div>
-        <div class="form-group"><label>IVA (16%)</label><input type="text" id="m-iva" class="input-readonly" readonly value="${Number(cot && cot.iva || 0).toFixed(2)}"></div>
-        <div class="form-group"><label>Total</label><input type="text" id="m-total" class="input-readonly" readonly value="${Number(cot && cot.total || 0).toFixed(2)}"></div>
+        <div class="form-group"><label>Subtotal</label><input type="text" id="cotz-subtotal" class="input-readonly" readonly value="${Number(cot && cot.subtotal || 0).toFixed(2)}"></div>
+        <div class="form-group"><label>IVA (16%)</label><input type="text" id="cotz-iva" class="input-readonly" readonly value="${Number(cot && cot.iva || 0).toFixed(2)}"></div>
+        <div class="form-group"><label>Total</label><input type="text" id="cotz-total" class="input-readonly" readonly value="${Number(cot && cot.total || 0).toFixed(2)}"></div>
       </div>
 
       <hr class="divider" />
 
       <div class="form-actions">
-        <button type="button" class="btn outline" id="m-open-line-panel"><i class="fas fa-plus"></i> Agregar línea…</button>
-        <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar cotización</button>
+        <button type="button" class="btn outline" id="cotz-open-line-panel"><i class="fas fa-plus"></i> Agregar línea…</button>
+        <button type="button" class="btn primary" id="cotz-save"><i class="fas fa-save"></i> Guardar cotización</button>
         <button type="button" class="btn" id="modal-btn-cancel">Cerrar</button>
       </div>
 
@@ -2742,6 +2742,21 @@
 
     openModal(isNew ? 'Nueva cotización' : 'Editar cotización', body);
 
+    // Solo elementos del modal de cotización (evita qs('#m-*') que pega al primer id duplicado en el documento)
+    const modalRoot = qs('#modal-body');
+    function qm(sel) {
+      return modalRoot ? modalRoot.querySelector(sel) : null;
+    }
+    /** El modal puede re-renderizar; buscar el contenedor de checkboxes de forma robusta. */
+    function getCotzMaquinasListEl() {
+      const modal = qs('#modal');
+      if (modal && !modal.classList.contains('hidden')) {
+        const inModal = modal.querySelector('#cotz-maquinas-list');
+        if (inModal) return inModal;
+      }
+      return qs('#modal-body #cotz-maquinas-list') || qs('#cotz-maquinas-list');
+    }
+
     const cotId = cot && cot.id ? Number(cot.id) : null;
 
     function getSelectedIds(selectEl) {
@@ -2753,9 +2768,16 @@
       });
       return ids;
     }
+    function getSelectedMaquinaIdsFromUi() {
+      const wrap = getCotzMaquinasListEl();
+      if (!wrap) return [];
+      return Array.from(wrap.querySelectorAll('input.cotz-maq-cb:checked'))
+        .map((el) => Number(el.value))
+        .filter((n) => Number.isFinite(n) && n > 0);
+    }
 
     function renderLineas(lineas) {
-      const tbody = qs('#tabla-cot-lineas tbody');
+      const tbody = qm('#tabla-cot-lineas tbody');
       if (!tbody) return;
       tbody.innerHTML = '';
       const rows = Array.isArray(lineas) ? lineas : [];
@@ -2811,37 +2833,114 @@
     let bitacorasForCot = [];
     let maquinasForModal = [];
 
-    function setMaquinasOptions(maqs, selectedIds) {
+    function filterMaquinasPorCliente(catalog, clienteId) {
+      const cid = Number(clienteId);
+      if (!Number.isFinite(cid) || cid <= 0) return toArray(catalog).slice();
+      const arr = toArray(catalog);
+      let out = arr.filter((m) => Number(m.cliente_id) === cid);
+      if (out.length) return out;
+      out = arr.filter((m) => String(m.cliente_id) === String(cid));
+      if (out.length) return out;
+      return arr.filter((m) => m.cliente_id == cid);
+    }
+
+    function setMaquinasOptions(maqs, selectedIds, richLabels) {
       const list = toArray(maqs);
       const selIds = Array.isArray(selectedIds) ? selectedIds.map((x) => Number(x)).filter(Boolean) : [];
-      const html = list
+      function optLabel(m) {
+        const base = m.nombre || m.modelo || m.numero_serie || ('#' + m.id);
+        if (richLabels && (m.cliente_nombre || m.cliente_id != null)) {
+          return (m.cliente_nombre || ('Cliente ' + m.cliente_id)) + ' — ' + base;
+        }
+        return base;
+      }
+      const optionsHtml = list
         .map((m) => {
-          const label = m.nombre || m.modelo || m.numero_serie || ('#' + m.id);
           const sel = selIds.includes(Number(m.id)) ? 'selected' : '';
-          return `<option value="${m.id}" ${sel}>${escapeHtml(label)}</option>`;
+          return `<option value="${m.id}" ${sel}>${escapeHtml(optLabel(m))}</option>`;
         })
         .join('');
-      const multi = qs('#m-maquinas');
-      if (multi) multi.innerHTML = html || '';
-      const single = qs('#cot-line-maq');
+      const listEl = getCotzMaquinasListEl();
+      let usingPresentationDummy = false;
+      const clienteSel = qm('#cotz-cliente_id');
+      const cliOpt = clienteSel?.selectedOptions?.[0];
+      const clienteNom = (cliOpt && cliOpt.textContent) ? cliOpt.textContent.trim() : '';
+      if (listEl) {
+        if (!list.length) {
+          usingPresentationDummy = true;
+          const dummyLines = [
+            'Compresor de Tornillo #2 — área principal',
+            'Robot soldador FANUC — línea de ensamble',
+            'Celda CNC / centro de mecanizado',
+            'Banda transporte / proceso',
+          ];
+          const introCliente = clienteNom
+            ? ` <strong>${escapeHtml(clienteNom)}</strong>:`
+            : '';
+          listEl.innerHTML =
+            '<p class="hint cotz-maquinas-dummy-intro">Vista demo' +
+            introCliente +
+            ' equipos de ejemplo (solo pantalla). Marca para ver el flujo; <strong>no se guardan</strong> hasta tener equipos en el catálogo. Si la lista sigue vacía, en la pestaña <strong>Demo</strong> usa <em>Asegurar equipos por cliente</em>.</p>' +
+            dummyLines
+              .map(
+                (label, i) =>
+                  `<label class="cotz-maq-row cotz-maq-row-dummy"><input type="checkbox" class="cotz-maq-cb cotz-maq-cb-dummy" value="0" data-dummy="1" id="cotz-dummy-maq-${i}"> <span class="cotz-maq-label">${escapeHtml(label)}</span></label>`
+              )
+              .join('');
+        } else {
+          listEl.innerHTML = list
+            .map((m) => {
+              const chk = selIds.includes(Number(m.id)) ? 'checked' : '';
+              return `<label class="cotz-maq-row"><input type="checkbox" class="cotz-maq-cb" value="${m.id}" ${chk}> <span class="cotz-maq-label">${escapeHtml(optLabel(m))}</span></label>`;
+            })
+            .join('');
+        }
+      }
+      const single = qm('#cot-line-maq');
       if (single) {
         const current = single.value;
-        single.innerHTML = '<option value="">— Sin máquina —</option>' + (html || '');
-        if (current) single.value = current;
+        if (!list.length) {
+          single.innerHTML =
+            '<option value="">— Sin máquina —</option>' +
+            '<optgroup label="Ejemplos (solo vista)">' +
+            ['Compresor industrial', 'Celda CNC', 'Línea transporte'].map((t) => `<option value="" disabled>${escapeHtml(t)}</option>`).join('') +
+            '</optgroup>';
+        } else {
+          single.innerHTML = '<option value="">— Sin máquina —</option>' + (optionsHtml || '');
+        }
+        if (current && Number(current) > 0) single.value = current;
+      }
+      const hint = qm('#cotz-maquinas-hint');
+      if (hint) {
+        if (usingPresentationDummy) {
+          hint.textContent =
+            'Son filas solo para demo. Para datos reales como en otros clientes: pestaña Demo → «Asegurar equipos por cliente», o registra máquinas en la pestaña Máquinas.';
+          hint.style.color = '#64748b';
+        } else if (richLabels) {
+          hint.textContent =
+            'Mostrando todas las máquinas del catálogo (etiqueta: cliente — equipo). Si no ves la del cliente, revisa en Máquinas que el equipo tenga asignado ese cliente.';
+          hint.style.color = '#b45309';
+        } else {
+          hint.textContent = 'Marca las que apliquen a esta cotización. Puedes elegir varias.';
+          hint.style.color = '#64748b';
+        }
       }
     }
 
     async function refreshMaquinasForSelectedCliente(keepSelectedIds) {
-      const clienteId = Number(qs('#m-cliente_id')?.value) || null;
+      const clienteId = Number(qm('#cotz-cliente_id')?.value) || null;
       const selected = keepSelectedIds != null ? keepSelectedIds : (() => {
-        try { return getSelectedIds(qs('#m-maquinas')); } catch (_) { return []; }
+        try { return getSelectedMaquinaIdsFromUi(); } catch (_) { return []; }
       })();
-      // Respaldo inmediato desde caché (evita lista vacía mientras llega el API)
+      // Respaldo inmediato + placeholder: si aún no hay equipos en caché para este cliente, mostrar filas demo YA (evita caja vacía mientras llega el API).
       if (clienteId) {
-        const cached = (maquinasCache || []).filter((m) => Number(m.cliente_id) === clienteId);
-        if (cached.length) setMaquinasOptions(cached, selected);
-      } else if ((maquinasCache || []).length) {
-        setMaquinasOptions(maquinasCache, selected);
+        const cached = filterMaquinasPorCliente(maquinasCatalogoModal, clienteId);
+        if (cached.length) setMaquinasOptions(cached, selected, false);
+        else setMaquinasOptions([], selected, false);
+      } else if (maquinasCatalogoModal.length) {
+        setMaquinasOptions(maquinasCatalogoModal, selected, false);
+      } else {
+        setMaquinasOptions([], selected, false);
       }
       try {
         if (clienteId) {
@@ -2853,18 +2952,23 @@
         }
       } catch (_) {
         maquinasForModal = clienteId
-          ? (maquinasCache || []).filter((m) => Number(m.cliente_id) === clienteId)
-          : (maquinasCache || []).slice();
+          ? filterMaquinasPorCliente(maquinasCatalogoModal, clienteId)
+          : maquinasCatalogoModal.slice();
       }
-      setMaquinasOptions(maquinasForModal, selected);
+      if (clienteId && (!Array.isArray(maquinasForModal) || maquinasForModal.length === 0)) {
+        const fb = filterMaquinasPorCliente(maquinasCatalogoModal, clienteId);
+        if (fb.length) maquinasForModal = fb;
+      }
+      // Sin rellenar con todo el catálogo: en demo se confunde con otros clientes. Si sigue vacío → setMaquinasOptions muestra filas demo.
+      setMaquinasOptions(maquinasForModal, selected, false);
     }
 
     async function refreshCotizacion() {
       if (!currentCotId) return;
       const fresh = await fetchJson(`${API}/cotizaciones/${currentCotId}`);
-      qs('#m-subtotal').value = Number(fresh.subtotal || 0).toFixed(2);
-      qs('#m-iva').value = Number(fresh.iva || 0).toFixed(2);
-      qs('#m-total').value = Number(fresh.total || 0).toFixed(2);
+      if (qm('#cotz-subtotal')) qm('#cotz-subtotal').value = Number(fresh.subtotal || 0).toFixed(2);
+      if (qm('#cotz-iva')) qm('#cotz-iva').value = Number(fresh.iva || 0).toFixed(2);
+      if (qm('#cotz-total')) qm('#cotz-total').value = Number(fresh.total || 0).toFixed(2);
       renderLineas(fresh.lineas || []);
       return fresh;
     }
@@ -2872,14 +2976,14 @@
     // Mini panel (Opción A): abre selector para agregar línea
     let lastLineDraft = null;
     function getFirstSelectedMaquinaId() {
-      const ids = getSelectedIds(qs('#m-maquinas'));
+      const ids = getSelectedMaquinaIdsFromUi();
       if (ids && ids.length) return Number(ids[0]) || null;
       return null;
     }
     function buildDefaultLineDraft() {
-      const headerTipo = qs('#m-tipo')?.value || (cot && cot.tipo) || 'refacciones';
+      const headerTipo = qm('#cotz-tipo')?.value || (cot && cot.tipo) || 'refacciones';
       const tipoLinea = headerTipo === 'mano_obra' ? 'mano_obra' : 'refaccion';
-      const refId = Number(qs('#cot-line-refaccion')?.value) || null;
+      const refId = Number(qm('#cot-line-refaccion')?.value) || null;
       const maqId = getFirstSelectedMaquinaId();
       return {
         tipo_linea: tipoLinea,
@@ -2892,12 +2996,12 @@
     }
     function applyLineDraftToPanel(d) {
       if (!d) return;
-      const tipoEl = qs('#cot-line-tipo');
-      const maqEl = qs('#cot-line-maq');
-      const refEl = qs('#cot-line-refaccion');
-      const descEl = qs('#cot-line-desc');
-      const cantEl = qs('#cot-line-cant');
-      const precioEl = qs('#cot-line-precio');
+      const tipoEl = qm('#cot-line-tipo');
+      const maqEl = qm('#cot-line-maq');
+      const refEl = qm('#cot-line-refaccion');
+      const descEl = qm('#cot-line-desc');
+      const cantEl = qm('#cot-line-cant');
+      const precioEl = qm('#cot-line-precio');
       if (tipoEl) tipoEl.value = d.tipo_linea || 'refaccion';
       if (maqEl) maqEl.value = d.maquina_id ? String(d.maquina_id) : '';
       if (refEl && d.refaccion_id) refEl.value = String(d.refaccion_id);
@@ -2906,21 +3010,21 @@
       if (precioEl) precioEl.value = String(Number(d.precio_unitario || 0));
     }
     function showLinePanel() {
-      const p = qs('#cot-line-panel');
+      const p = qm('#cot-line-panel');
       if (!p) return;
       p.classList.remove('hidden');
-      qs('#cot-line-tipo')?.focus();
+      qm('#cot-line-tipo')?.focus();
     }
     function hideLinePanel() {
-      const p = qs('#cot-line-panel');
+      const p = qm('#cot-line-panel');
       if (!p) return;
       p.classList.add('hidden');
     }
     function syncLinePanelFields() {
-      const t = qs('#cot-line-tipo')?.value || 'refaccion';
-      const refWrap = qs('#cot-line-ref-wrap');
-      const descWrap = qs('#cot-line-desc-wrap');
-      const bitWrap = qs('#cot-line-bit-wrap');
+      const t = qm('#cot-line-tipo')?.value || 'refaccion';
+      const refWrap = qm('#cot-line-ref-wrap');
+      const descWrap = qm('#cot-line-desc-wrap');
+      const bitWrap = qm('#cot-line-bit-wrap');
       if (refWrap) refWrap.style.display = t === 'refaccion' ? '' : 'none';
       if (descWrap) descWrap.style.display = t === 'refaccion' ? 'none' : '';
       if (bitWrap) bitWrap.style.display = t === 'mano_obra' ? '' : 'none';
@@ -2928,14 +3032,14 @@
     async function ensureCotizacionExistsBeforeLines() {
       if (currentCotId) return currentCotId;
       // Auto-guardar header para permitir agregar líneas desde "Nueva cotización"
-      const fecha = qs('#m-fecha')?.value;
-      const clienteId = parseInt(qs('#m-cliente_id')?.value, 10);
+      const fecha = qm('#cotz-fecha')?.value;
+      const clienteId = parseInt(qm('#cotz-cliente_id')?.value, 10);
       if (!clienteId) { showToast('Selecciona un cliente.', 'warning'); return null; }
       if (!fecha) { showToast('Selecciona una fecha.', 'warning'); return null; }
-      const tipo = qs('#m-tipo')?.value || 'refacciones';
-      const moneda = (qs('#m-moneda')?.value || 'MXN').toUpperCase();
-      const tc = Number(qs('#m-tc')?.value) || 17.0;
-      const maquinas_ids = getSelectedIds(qs('#m-maquinas'));
+      const tipo = qm('#cotz-tipo')?.value || 'refacciones';
+      const moneda = (qm('#cotz-moneda')?.value || 'MXN').toUpperCase();
+      const tc = Number(qm('#cotz-tc')?.value) || 17.0;
+      const maquinas_ids = getSelectedMaquinaIdsFromUi();
       const payload = { cliente_id: clienteId, tipo, fecha, moneda, tipo_cambio: tc, maquinas_ids };
       try {
         const created = await fetchJson(`${API}/cotizaciones`, { method: 'POST', body: JSON.stringify(payload) });
@@ -2952,7 +3056,7 @@
       }
     }
 
-    qs('#m-open-line-panel')?.addEventListener('click', async () => {
+    qm('#cotz-open-line-panel')?.addEventListener('click', async () => {
       const okId = await ensureCotizacionExistsBeforeLines();
       if (!okId) return;
       // Refrescar bitácoras cada vez que se abre (por si se crearon en otra pestaña)
@@ -2962,25 +3066,25 @@
       syncLinePanelFields();
       showLinePanel();
     });
-    qs('#cot-line-cancel')?.addEventListener('click', hideLinePanel);
-    qs('#cot-line-tipo')?.addEventListener('change', syncLinePanelFields);
+    qm('#cot-line-cancel')?.addEventListener('click', hideLinePanel);
+    qm('#cot-line-tipo')?.addEventListener('change', syncLinePanelFields);
     syncLinePanelFields();
 
     // Si el usuario cambia las máquinas seleccionadas, el "draft" debe tomar la primera seleccionada
-    qs('#m-maquinas')?.addEventListener('change', () => {
+    getCotzMaquinasListEl()?.addEventListener('change', () => {
       const first = getFirstSelectedMaquinaId();
       if (!lastLineDraft) lastLineDraft = buildDefaultLineDraft();
       lastLineDraft.maquina_id = first;
     });
 
-    qs('#m-cliente_id')?.addEventListener('change', async () => {
+    qm('#cotz-cliente_id')?.addEventListener('change', async () => {
       await refreshMaquinasForSelectedCliente([]);
       const first = getFirstSelectedMaquinaId();
       if (!lastLineDraft) lastLineDraft = buildDefaultLineDraft();
       lastLineDraft.maquina_id = first;
     });
 
-    qs('#cot-line-new-bit')?.addEventListener('click', async () => {
+    qm('#cot-line-new-bit')?.addEventListener('click', async () => {
       const okId = await ensureCotizacionExistsBeforeLines();
       if (!okId) return;
       openModalBitacora({ cotizacion_id: okId }, { stack: true, onSaved: () => loadBitacorasForCotizacion() });
@@ -2994,7 +3098,7 @@
       } catch (_) {
         bitacorasForCot = [];
       }
-      const sel = qs('#cot-line-bitacora');
+      const sel = qm('#cot-line-bitacora');
       if (sel) {
         sel.innerHTML = '<option value="">— Sin bitácora —</option>' + bitacorasForCot
           .map((b) => {
@@ -3011,8 +3115,8 @@
       if (currentCotId) await loadBitacorasForCotizacion();
     } catch (_) {}
 
-    qs('#cot-line-bitacora')?.addEventListener('change', () => {
-      const bitId = Number(qs('#cot-line-bitacora')?.value) || null;
+    qm('#cot-line-bitacora')?.addEventListener('change', () => {
+      const bitId = Number(qm('#cot-line-bitacora')?.value) || null;
       if (!bitId) return;
       const bit = (bitacorasForCot || []).find((b) => Number(b.id) === bitId);
       if (!bit) return;
@@ -3020,8 +3124,8 @@
       const horas = Number(bit.tiempo_horas) || 0;
       const act = (bit.actividades || '').trim();
       const tec = (bit.tecnico || '').trim();
-      if (qs('#cot-line-cant')) qs('#cot-line-cant').value = String(horas || 1);
-      if (qs('#cot-line-desc')) qs('#cot-line-desc').value = (tec && act) ? `${act} (${tec})` : (act || tec || '');
+      if (qm('#cot-line-cant')) qm('#cot-line-cant').value = String(horas || 1);
+      if (qm('#cot-line-desc')) qm('#cot-line-desc').value = (tec && act) ? `${act} (${tec})` : (act || tec || '');
     });
 
     // Load initial lines if editing
@@ -3032,19 +3136,19 @@
       renderLineas([]);
     }
 
-    qs('#cot-line-add')?.addEventListener('click', async () => {
+    qm('#cot-line-add')?.addEventListener('click', async () => {
       if (!currentCotId) return;
-      const tipoLinea = qs('#cot-line-tipo')?.value || 'refaccion';
-      const cant = Number(qs('#cot-line-cant')?.value) || 0;
-      const precio = Number(qs('#cot-line-precio')?.value) || 0;
-      const maqId = Number(qs('#cot-line-maq')?.value) || null;
-      const bitId = Number(qs('#cot-line-bitacora')?.value) || null;
+      const tipoLinea = qm('#cot-line-tipo')?.value || 'refaccion';
+      const cant = Number(qm('#cot-line-cant')?.value) || 0;
+      const precio = Number(qm('#cot-line-precio')?.value) || 0;
+      const maqId = Number(qm('#cot-line-maq')?.value) || null;
+      const bitId = Number(qm('#cot-line-bitacora')?.value) || null;
       let payload = { tipo_linea: tipoLinea, cantidad: cant, precio_unitario: precio, maquina_id: maqId, bitacora_id: bitId };
       if (tipoLinea === 'refaccion') {
-        const refId = Number(qs('#cot-line-refaccion')?.value) || null;
+        const refId = Number(qm('#cot-line-refaccion')?.value) || null;
         payload = { ...payload, refaccion_id: refId };
       } else {
-        const desc = qs('#cot-line-desc')?.value?.trim() || '';
+        const desc = qm('#cot-line-desc')?.value?.trim() || '';
         payload = { ...payload, descripcion: desc || null };
       }
       try {
@@ -3070,8 +3174,9 @@
     function openModalEditarLinea(linea) {
       const isRef = String(linea.tipo_linea || '') === 'refaccion';
       const isMO = String(linea.tipo_linea || '') === 'mano_obra';
+      const clienteIdParaMaq = Number(qm('#cotz-cliente_id')?.value) || Number(cot && cot.cliente_id) || null;
       const maqOpts = ['<option value="">— Sin máquina —</option>']
-        .concat((maquinasCache || []).filter((m) => !cot || !cot.cliente_id || Number(m.cliente_id) === Number(cot.cliente_id))
+        .concat((maquinasCatalogoModal || []).filter((m) => !clienteIdParaMaq || Number(m.cliente_id) === Number(clienteIdParaMaq))
           .map((m) => `<option value="${m.id}" ${Number(linea.maquina_id) === Number(m.id) ? 'selected' : ''}>${escapeHtml(m.nombre || m.modelo || m.numero_serie || ('#' + m.id))}</option>`))
         .join('');
       const refOpts = (refaccionesCache || []).slice(0, 200).map((r) => `<option value="${r.id}" ${Number(linea.refaccion_id) === Number(r.id) ? 'selected' : ''}>${escapeHtml((r.codigo || '') + ' — ' + (r.descripcion || ''))}</option>`).join('');
@@ -3164,17 +3269,17 @@
       });
     }
 
-    qs('#m-save').onclick = async () => {
+    qm('#cotz-save').onclick = async () => {
       clearInvalidMarks();
-      const fecha = qs('#m-fecha').value;
+      const fecha = qm('#cotz-fecha')?.value;
       let err = validateRequired(fecha, 'La fecha es obligatoria');
-      if (err) { markInvalid('m-fecha', err); return; }
-      const clienteId = parseInt(qs('#m-cliente_id').value, 10);
-      if (!clienteId) { markInvalid('m-cliente_id', 'Selecciona un cliente'); return; }
-      const tipo = qs('#m-tipo').value;
-      const moneda = (qs('#m-moneda').value || 'MXN').toUpperCase();
-      const tc = Number(qs('#m-tc').value) || 0;
-      const maquinas_ids = getSelectedIds(qs('#m-maquinas'));
+      if (err) { markInvalid(qm('#cotz-fecha'), err); return; }
+      const clienteId = parseInt(qm('#cotz-cliente_id')?.value, 10);
+      if (!clienteId) { markInvalid(qm('#cotz-cliente_id'), 'Selecciona un cliente'); return; }
+      const tipo = qm('#cotz-tipo')?.value;
+      const moneda = (qm('#cotz-moneda')?.value || 'MXN').toUpperCase();
+      const tc = Number(qm('#cotz-tc')?.value) || 0;
+      const maquinas_ids = getSelectedMaquinaIdsFromUi();
       const payload = {
         cliente_id: clienteId,
         tipo,
@@ -3183,7 +3288,8 @@
         tipo_cambio: tc > 0 ? tc : 17.0,
         maquinas_ids,
       };
-      const btn = qs('#m-save');
+      const btn = qm('#cotz-save');
+      if (!btn) return;
       const origText = btn.innerHTML;
       btn.disabled = true;
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando…';
@@ -3482,10 +3588,15 @@
     else openModal(isNew ? 'Nueva bitácora (horas)' : 'Editar bitácora', body);
     const root = stack ? qs('#modal-stack-body') : qs('#modal-body');
     const q = (sel) => (root ? root.querySelector(sel) : null);
+    const forcedCotId = stack && bit && Number(bit.cotizacion_id) > 0 ? Number(bit.cotizacion_id) : null;
     q('#m-save').onclick = async () => {
       clearInvalidMarks();
-      const incId = q('#m-incidente_id').value ? parseInt(q('#m-incidente_id').value, 10) : null;
-      const cotId = q('#m-cotizacion_id').value ? parseInt(q('#m-cotizacion_id').value, 10) : null;
+      let incId = q('#m-incidente_id').value ? parseInt(q('#m-incidente_id').value, 10) : null;
+      let cotId = q('#m-cotizacion_id').value ? parseInt(q('#m-cotizacion_id').value, 10) : null;
+      if (forcedCotId) {
+        cotId = forcedCotId;
+        incId = null;
+      }
       const fecha = q('#m-fecha').value;
       if (!incId && !cotId) { markInvalid(q('#m-incidente_id'), 'Indica un incidente o una cotización.'); alert('Indica al menos un incidente o una cotización.'); return; }
       let err = validateRequired(fecha, 'La fecha es obligatoria');
@@ -3510,7 +3621,7 @@
         else qs('#modal').classList.add('hidden');
         showToast(isNew ? 'Registro de bitácora guardado correctamente.' : 'Bitácora actualizada correctamente.', 'success');
         loadBitacoras();
-        if (onSaved) onSaved();
+        if (onSaved) await onSaved();
       } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar. Indica incidente o cotización y fecha.', 'error'); }
       finally { btn.disabled = false; btn.innerHTML = origText; }
     };
@@ -4038,7 +4149,25 @@
     const el = qs('#seed-status');
     const lastEl = qs('#seed-last-update');
     try {
-      const st = await fetchJson(API + '/seed-status');
+      let st = await fetchJson(API + '/seed-status');
+      const incompletas =
+        st.maquinas_incompletas === true ||
+        (Number(st.clientes) > 0 && Number(st.maquinas) < Number(st.clientes) * 2);
+      if (!seedDemoEnsureOnce && incompletas && !isAutoRefresh) {
+        seedDemoEnsureOnce = true;
+        try {
+          const fix = await fetchJson(API + '/demo-ensure-maquinas', { method: 'POST' });
+          if (fix && Number(fix.inserted) > 0) {
+            st = await fetchJson(API + '/seed-status');
+            showToast(
+              'Equipos de presentación completados: +' + fix.inserted + ' (total máquinas activas: ' + (fix.maquinas_activas ?? st.maquinas) + ').',
+              'success'
+            );
+          }
+        } catch (_) {
+          /* Servidor sin ruta o sin permiso: no bloquear el panel Demo */
+        }
+      }
       el.innerHTML = `Actualmente: <strong>${st.clientes}</strong> clientes, <strong>${st.refacciones}</strong> refacciones, <strong>${st.maquinas}</strong> máquinas, <strong>${st.cotizaciones || 0}</strong> cotizaciones, <strong>${st.incidentes || 0}</strong> incidentes, <strong>${st.bitacoras || 0}</strong> bitácoras.`;
       const now = new Date();
       const totalReg = Number(st.clientes || 0) + Number(st.refacciones || 0) + Number(st.maquinas || 0) + Number(st.cotizaciones || 0) + Number(st.incidentes || 0) + Number(st.bitacoras || 0);
@@ -5434,6 +5563,30 @@
     btn.disabled = false;
     btn.textContent = 'Cargar solo incidentes, bitácoras y cotizaciones demo';
   });
+
+  const btnEnsureMaq = qs('#btn-ensure-demo-maquinas');
+  if (btnEnsureMaq) {
+    btnEnsureMaq.addEventListener('click', async () => {
+      btnEnsureMaq.disabled = true;
+      const orig = btnEnsureMaq.innerHTML;
+      btnEnsureMaq.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aplicando…';
+      try {
+        const data = await fetchJson(API + '/demo-ensure-maquinas', { method: 'POST' });
+        qs('#seed-status').innerHTML =
+          `Equipos listos: se insertaron <strong>${data.inserted || 0}</strong> registro(s); total máquinas activas en catálogo: <strong>${data.maquinas_activas ?? '—'}</strong> (clientes: ${data.clientes ?? '—'}).`;
+        loadSeedStatus();
+        loadMaquinas();
+        fillClientesSelect();
+        showToast('Equipos demo asegurados por cliente. Abre una cotización y elige cualquier cliente.', 'success');
+      } catch (e) {
+        let msg = e.message;
+        try { const o = JSON.parse(msg); if (o.error) msg = o.error; } catch (_) {}
+        showToast(msg || 'No se pudo completar.', 'error');
+      }
+      btnEnsureMaq.disabled = false;
+      btnEnsureMaq.innerHTML = orig;
+    });
+  }
   loadBackupFilesList();
 
   let refreshIntervalId = null;

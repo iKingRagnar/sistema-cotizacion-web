@@ -296,12 +296,14 @@ app.delete('/api/refacciones/:id', async (req, res) => {
 // --- Máquinas ---
 app.get('/api/maquinas', async (req, res) => {
   try {
-    const clienteId = req.query.cliente_id;
-    let sql = 'SELECT m.*, c.nombre as cliente_nombre FROM maquinas m LEFT JOIN clientes c ON c.id = m.cliente_id WHERE m.activo = 1 ORDER BY m.nombre';
+    const raw = req.query && req.query.cliente_id;
+    const clienteNum = raw != null && raw !== '' ? Number(raw) : NaN;
+    // COALESCE: filas antiguas con activo NULL deben verse como activas (antes quedaban fuera del listado).
+    let sql = 'SELECT m.*, c.nombre as cliente_nombre FROM maquinas m LEFT JOIN clientes c ON c.id = m.cliente_id WHERE COALESCE(m.activo, 1) = 1 ORDER BY m.nombre';
     let params = [];
-    if (clienteId) {
-      sql = 'SELECT m.*, c.nombre as cliente_nombre FROM maquinas m LEFT JOIN clientes c ON c.id = m.cliente_id WHERE m.activo = 1 AND m.cliente_id = ? ORDER BY m.nombre';
-      params = [clienteId];
+    if (Number.isFinite(clienteNum) && clienteNum > 0) {
+      sql = 'SELECT m.*, c.nombre as cliente_nombre FROM maquinas m LEFT JOIN clientes c ON c.id = m.cliente_id WHERE COALESCE(m.activo, 1) = 1 AND m.cliente_id = ? ORDER BY m.nombre';
+      params = [clienteNum];
     }
     const rows = await db.getAll(sql, params);
     res.json(rows);
@@ -794,10 +796,14 @@ app.get('/api/bitacoras/:id', async (req, res) => {
 app.post('/api/bitacoras', async (req, res) => {
   try {
     const { incidente_id, cotizacion_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados } = req.body || {};
-    if (!incidente_id && !cotizacion_id) return res.status(400).json({ error: 'Indica incidente_id o cotizacion_id' });
+    const incN = incidente_id != null && incidente_id !== '' ? Number(incidente_id) : NaN;
+    const cotN = cotizacion_id != null && cotizacion_id !== '' ? Number(cotizacion_id) : NaN;
+    const iid = Number.isFinite(incN) && incN > 0 ? incN : null;
+    const cid = Number.isFinite(cotN) && cotN > 0 ? cotN : null;
+    if (!iid && !cid) return res.status(400).json({ error: 'Indica incidente_id o cotizacion_id' });
     await db.runQuery(
       `INSERT INTO bitacoras (incidente_id, cotizacion_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [incidente_id || null, cotizacion_id || null, fecha || new Date().toISOString().slice(0, 10), tecnico || null, actividades || null, Number(tiempo_horas) || 0, materiales_usados || null]
+      [iid, cid, fecha || new Date().toISOString().slice(0, 10), tecnico || null, actividades || null, Number(tiempo_horas) || 0, materiales_usados || null]
     );
     const r = await db.getOne('SELECT * FROM bitacoras ORDER BY id DESC LIMIT 1');
     res.status(201).json(r);
@@ -809,9 +815,13 @@ app.post('/api/bitacoras', async (req, res) => {
 app.put('/api/bitacoras/:id', async (req, res) => {
   try {
     const { incidente_id, cotizacion_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados } = req.body || {};
+    const incN = incidente_id != null && incidente_id !== '' ? Number(incidente_id) : NaN;
+    const cotN = cotizacion_id != null && cotizacion_id !== '' ? Number(cotizacion_id) : NaN;
+    const iid = Number.isFinite(incN) && incN > 0 ? incN : null;
+    const cid = Number.isFinite(cotN) && cotN > 0 ? cotN : null;
     await db.runQuery(
       `UPDATE bitacoras SET incidente_id=?, cotizacion_id=?, fecha=?, tecnico=?, actividades=?, tiempo_horas=?, materiales_usados=? WHERE id=?`,
-      [incidente_id || null, cotizacion_id || null, fecha || null, tecnico || null, actividades || null, Number(tiempo_horas) || 0, materiales_usados || null, req.params.id]
+      [iid, cid, fecha || null, tecnico || null, actividades || null, Number(tiempo_horas) || 0, materiales_usados || null, req.params.id]
     );
     const r = await db.getOne('SELECT * FROM bitacoras WHERE id = ?', [req.params.id]);
     res.json(r || {});
@@ -1021,7 +1031,23 @@ app.post('/api/seed-demo', async (req, res) => {
     }
 
     const clientesDb = await db.getAll('SELECT id, nombre FROM clientes');
-    const maquinasDb = await db.getAll('SELECT id, cliente_id, nombre FROM maquinas');
+    let maquinasDb = await db.getAll('SELECT id, cliente_id, nombre FROM maquinas');
+    // Demo presentable: cada cliente debe tener al menos un equipo (el JSON solo asigna ~16 máquinas a unos pocos clientes).
+    const clienteIdsConMaquina = new Set((maquinasDb || []).map((m) => m && m.cliente_id).filter((id) => id != null));
+    const tiposDemo = ['Compresor', 'Celda CNC', 'Línea transporte', 'Robot soldador', 'Bomba proceso'];
+    let demoMaqIdx = 0;
+    for (const c of clientesDb) {
+      if (!clienteIdsConMaquina.has(c.id)) {
+        const nombre = 'Equipo demo — ' + (String(c.nombre || 'Cliente').slice(0, 42));
+        await db.runQuery(
+          `INSERT INTO maquinas (cliente_id, nombre, marca, modelo, numero_serie, ubicacion) VALUES (?, ?, ?, ?, ?, ?)`,
+          [c.id, nombre, 'Demo seed', 'DM-' + String((demoMaqIdx % tiposDemo.length) + 1), 'SN-DEMO-' + c.id, 'Planta principal (demo)']
+        );
+        clienteIdsConMaquina.add(c.id);
+        demoMaqIdx++;
+      }
+    }
+    maquinasDb = await db.getAll('SELECT id, cliente_id, nombre FROM maquinas');
     const clienteByNombre = {};
     clientesDb.forEach(c => { clienteByNombre[norm(c && c.nombre)] = c.id; });
     const maquinaByClienteYNombre = {};
@@ -1290,12 +1316,15 @@ app.post('/api/seed-demo', async (req, res) => {
       viajesCount++;
     }
 
+    const maqCountRow = await db.getOne('SELECT COUNT(*) as n FROM maquinas');
+    const maquinasTotal = maqCountRow && maqCountRow.n != null ? Number(maqCountRow.n) : maquinas.length;
+
     res.json({
       ok: true,
       force,
       clientes: clientes.length,
       refacciones: refacciones.length,
-      maquinas: maquinas.length,
+      maquinas: maquinasTotal,
       incidentes: incidentesCount,
       bitacoras: bitacorasCount,
       cotizaciones: cotizacionesCount,
@@ -1412,15 +1441,78 @@ app.post('/api/seed-demo-extra', async (req, res) => {
   }
 });
 
+/** Asegura hasta 2 equipos activos por cliente (idempotente). Desactivar arranque con COTIZACION_AUTO_ENSURE_MAQUINAS=0 */
+async function runDemoEnsureMaquinas() {
+  await db.runQuery('UPDATE maquinas SET activo = 1 WHERE activo IS NULL');
+  const clientesDb = await db.getAll('SELECT id, nombre FROM clientes ORDER BY id');
+  const plantillas = [
+    { nombre: 'Compresor de Tornillo #2', marca: 'Ingersoll', modelo: 'SSR-75', prefijo: 'SN-CT-' },
+    { nombre: 'Robot soldador FANUC', marca: 'FANUC', modelo: 'ARC Mate 120iD', prefijo: 'SN-RB-' },
+  ];
+  let inserted = 0;
+  for (const c of clientesDb) {
+    const row = await db.getOne(
+      'SELECT COUNT(*) as n FROM maquinas WHERE COALESCE(activo, 1) = 1 AND cliente_id = ?',
+      [c.id]
+    );
+    const n = row && row.n != null ? Number(row.n) : 0;
+    if (n >= 2) continue;
+    for (let k = n; k < 2; k++) {
+      const t = plantillas[k % plantillas.length];
+      const nomCli = String(c.nombre || 'Cliente').slice(0, 40);
+      await db.runQuery(
+        `INSERT INTO maquinas (cliente_id, nombre, marca, modelo, numero_serie, ubicacion, activo) VALUES (?, ?, ?, ?, ?, ?, 1)`,
+        [
+          c.id,
+          t.nombre + ' — ' + nomCli,
+          t.marca,
+          t.modelo,
+          t.prefijo + c.id + '-' + (k + 1),
+          'Planta principal (demo)',
+        ]
+      );
+      inserted++;
+    }
+  }
+  const total = await db.getOne('SELECT COUNT(*) as n FROM maquinas WHERE COALESCE(activo, 1) = 1');
+  return {
+    ok: true,
+    clientes: clientesDb.length,
+    inserted,
+    maquinas_activas: total && total.n != null ? Number(total.n) : 0,
+  };
+}
+
+// Asegura al menos 2 equipos “presentables” por cliente (sin borrar datos). Útil cuando ya hay clientes pero faltan máquinas o activo quedó NULL.
+app.post('/api/demo-ensure-maquinas', async (req, res) => {
+  try {
+    const out = await runDemoEnsureMaquinas();
+    res.json(out);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
 app.get('/api/seed-status', async (req, res) => {
   try {
     const [c] = await db.getAll('SELECT COUNT(*) as n FROM clientes');
     const [r] = await db.getAll('SELECT COUNT(*) as n FROM refacciones');
-    const [m] = await db.getAll('SELECT COUNT(*) as n FROM maquinas');
+    const [m] = await db.getAll('SELECT COUNT(*) as n FROM maquinas WHERE COALESCE(activo, 1) = 1');
     const [i] = await db.getAll('SELECT COUNT(*) as n FROM incidentes');
     const [b] = await db.getAll('SELECT COUNT(*) as n FROM bitacoras');
     const [co] = await db.getAll('SELECT COUNT(*) as n FROM cotizaciones');
-    res.json({ clientes: c.n, refacciones: r.n, maquinas: m.n, incidentes: i.n, bitacoras: b.n, cotizaciones: co.n });
+    const nc = Number(c && c.n) || 0;
+    const nm = Number(m && m.n) || 0;
+    const maquinas_incompletas = nc > 0 && nm < nc * 2;
+    res.json({
+      clientes: c.n,
+      refacciones: r.n,
+      maquinas: m.n,
+      incidentes: i.n,
+      bitacoras: b.n,
+      cotizaciones: co.n,
+      maquinas_incompletas,
+    });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -2329,6 +2421,22 @@ app.get('*', (req, res) => {
 async function start() {
   await db.init();
   await auth.ensureSeedUsers();
+  const autoEnsure =
+    process.env.COTIZACION_AUTO_ENSURE_MAQUINAS !== '0' && process.env.COTIZACION_AUTO_ENSURE_MAQUINAS !== 'false';
+  if (autoEnsure) {
+    try {
+      const [cRow] = await db.getAll('SELECT COUNT(*) as n FROM clientes');
+      const [mRow] = await db.getAll('SELECT COUNT(*) as n FROM maquinas WHERE COALESCE(activo, 1) = 1');
+      const nc = Number(cRow && cRow.n) || 0;
+      const nm = Number(mRow && mRow.n) || 0;
+      if (nc > 0 && nm < nc * 2) {
+        const r = await runDemoEnsureMaquinas();
+        console.log('[demo-ensure] Arranque: insertados', r.inserted, 'máquinas activas:', r.maquinas_activas);
+      }
+    } catch (e) {
+      console.warn('[demo-ensure] Arranque omitido:', e && e.message);
+    }
+  }
   startAutoBackupScheduler();
   app.listen(PORT, () => {
     console.log('Sistema de Cotización - En línea');
