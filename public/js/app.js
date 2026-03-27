@@ -1802,6 +1802,7 @@
         <p>Próximos 30 días: <strong>${prox.length}</strong> · Vencidos sin confirmar: <strong>${venc.length}</strong></p>
         <table class="table-simple" style="width:100%"><thead><tr><th>Cliente</th><th>Fecha prog.</th><th>Tipo</th></tr></thead>
         <tbody>${rows.length ? rows.join('') : '<tr><td colspan="3" class="empty">Sin alertas.</td></tr>'}</tbody></table>
+        <p class="gar-modal-dry"><label><input type="checkbox" id="modal-gar-dry-run"> Simular (demo) — sin correo ni cambios en BD</label></p>
         <div class="form-actions" style="margin-top:1rem">
           <button type="button" class="btn primary" id="btn-run-procesar-alertas"><i class="fas fa-envelope"></i> Procesar (correo + marcar)</button>
           <button type="button" class="btn" id="modal-btn-cancel">Cerrar</button>
@@ -1811,11 +1812,16 @@
       if (b) {
         b.onclick = async () => {
           try {
-            const r = await fetchJson(API + '/garantias-alertas/procesar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
-            showToast('Procesados: ' + (r.procesados || 0) + (r.errores && r.errores.length ? ' (revisar SMTP)' : ''), 'success');
+            const dryRun = !!(qs('#modal-gar-dry-run') && qs('#modal-gar-dry-run').checked);
+            const r = await fetchJson(API + '/garantias-alertas/procesar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dryRun }) });
+            if (dryRun) {
+              showToast('Simulación: ' + (r.procesados || 0) + ' registro(s) · sin correo ni cambios en BD.', 'success');
+            } else {
+              showToast('Procesados: ' + (r.procesados || 0) + (r.errores && r.errores.length ? ' (revisar SMTP)' : ''), r.errores && r.errores.length ? 'error' : 'success');
+              loadGarantias();
+              loadMantenimientoGarantia();
+            }
             qs('#modal').classList.add('hidden');
-            loadGarantias();
-            loadMantenimientoGarantia();
           } catch (e) { showToast(parseApiError(e), 'error'); }
         };
       }
@@ -5040,10 +5046,16 @@
   if (btnMantGarProcesar) {
     btnMantGarProcesar.addEventListener('click', async () => {
       try {
-        const r = await fetchJson(API + '/garantias-alertas/procesar', { method: 'POST', body: JSON.stringify({}) });
-        showToast('Alertas procesadas: ' + (r.procesados || 0) + (r.errores && r.errores.length ? '. Revisa SMTP en el servidor.' : ''), r.errores && r.errores.length ? 'error' : 'success');
-        loadMantenimientoGarantia();
-        loadGarantias();
+        const dryRun = !!(qs('#mant-gar-dry-run') && qs('#mant-gar-dry-run').checked);
+        const r = await fetchJson(API + '/garantias-alertas/procesar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dryRun }) });
+        if (dryRun) {
+          showToast('Simulación: ' + (r.procesados || 0) + ' registro(s) · sin correo ni cambios en BD.', 'success');
+          checkGarantiasAlertas();
+        } else {
+          showToast('Alertas procesadas: ' + (r.procesados || 0) + (r.errores && r.errores.length ? '. Revisa SMTP en el servidor.' : ''), r.errores && r.errores.length ? 'error' : 'success');
+          loadMantenimientoGarantia();
+          loadGarantias();
+        }
       } catch (e) { showToast(parseApiError(e), 'error'); }
     });
   }

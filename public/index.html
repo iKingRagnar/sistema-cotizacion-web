@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=35">
+  <link rel="stylesheet" href="css/style.css?v=36">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
@@ -415,7 +415,10 @@
           <label class="toolbar-label-inline">Mes</label>
           <input type="month" id="mant-gar-month" title="Mes del calendario">
           <button type="button" id="btn-mant-gar-hoy" class="btn outline" title="Ir al mes actual"><i class="fas fa-calendar-day"></i> Hoy</button>
-          <button type="button" id="btn-mant-gar-procesar-alertas" class="btn outline" title="Enviar recordatorios (requiere SMTP)"><i class="fas fa-envelope"></i> Procesar alertas</button>
+          <label class="mant-gar-dry-wrap" title="No envía correo ni modifica la base; solo muestra qué se procesaría">
+            <input type="checkbox" id="mant-gar-dry-run"> Simular (demo)
+          </label>
+          <button type="button" id="btn-mant-gar-procesar-alertas" class="btn outline" title="Con Simular: solo prueba. Sin marcar: correo (SMTP) y marcar alertas"><i class="fas fa-envelope"></i> Procesar alertas</button>
           <button type="button" id="btn-mant-gar-refresh" class="btn primary"><i class="fas fa-sync-alt"></i> Actualizar</button>
         </div>
       </div>
@@ -826,6 +829,6 @@
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=68"></script>
+  <script src="js/app.js?v=69"></script>
 </body>
 </html>

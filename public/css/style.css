@@ -3045,6 +3045,8 @@ body.dark-theme .stock-alert-bar strong {
 .btn.success:hover { background: #047857; }
 
 /* Mantenimientos por garantía */
+.mant-gar-dry-wrap { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; color: #64748b; cursor: pointer; margin-right: 0.25rem; }
+.mant-gar-dry-wrap input { cursor: pointer; }
 .mant-gar-hint { margin: 0 0 1rem; font-size: 0.9rem; color: #475569; max-width: 52rem; }
 .toolbar-label-inline { font-size: 0.85rem; color: #64748b; margin-right: 0.35rem; }
 #mant-gar-month { padding: 0.35rem 0.5rem; border-radius: var(--radius-sm); border: 1px solid #cbd5e1; font-family: inherit; }
