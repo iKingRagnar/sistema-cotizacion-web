@@ -19,7 +19,8 @@ const C = {
 };
 
 const RESP = 'Luis Alberto Peña Cantú';
-const TOTAL = 39.5;
+/** Suma de columna D; debe coincidir con rangos hora inicio / hora fin */
+const TOTAL = 48;
 
 function thinBorder(color = C.border) {
   return {
@@ -31,16 +32,20 @@ function thinBorder(color = C.border) {
 }
 
 const ROWS = [
-  ['24/03/2026', '08:30', '12:15', 3.75, 'Sistema Cotización Web (Gestor administrativo) — Render / Turso', 'Cotización en PDF: orden de columnas (código, descripción, cantidad), referencias USD/MXN y subtotales en la moneda de la cotización.', 'Plantilla de PDF lista para presentación a cliente.', 'Desarrollo y pruebas con asistencia IA (Cursor).', RESP],
-  ['24/03/2026', '13:00', '17:45', 4.75, 'Sistema Cotización Web (Gestor administrativo) — Render / Turso', 'Ajustes al PDF, validación de totales, pruebas de impresión y descarga; despliegue en Render.', 'PDF estable en producción; assets versionados (?v=) y service worker actualizado.', 'Control de caché del navegador para QA.', RESP],
-  ['24/03/2026', '18:00', '19:30', 1.5, 'Sistema Cotización Web (Gestor administrativo) — Render / Turso', 'Seguimiento post-deploy y verificación en entorno publicado.', 'Comportamiento confirmado en producción.', '', RESP],
-  ['25/03/2026', '08:15', '12:45', 4.5, 'Sistema Cotización Web (Gestor administrativo) — Render / Turso', 'Interfaz: cursor y apariencia “solo lectura” en tablas (CSS global, encabezados, fila de filtros, tema claro/oscuro).', 'Menos sensación de campo editable en zonas no interactivas.', 'Iteración según feedback de uso.', RESP],
-  ['25/03/2026', '14:00', '19:30', 5.5, 'Sistema Cotización Web (Gestor administrativo) — Render / Turso', 'Tablas de datos: selección y refuerzo con eventos; columna Acciones (iconos) sin cursor de texto indebido.', 'Experiencia de grilla más acorde a producto empresarial.', 'Balance: permitir copiar texto en celdas de datos donde aplica.', RESP],
-  ['26/03/2026', '08:30', '13:00', 4.5, 'Sistema Cotización Web (Gestor administrativo) — Render / Turso', 'Audio de fondo: HTMLAudioElement, bucle, volumen por defecto bajo, preferencias en localStorage (silencio/volumen).', 'Reproducción continua al cambiar pestañas internas del gestor (SPA).', 'visibilitychange para reanudar; autoplay desbloqueado con gesto del usuario.', RESP],
-  ['26/03/2026', '14:30', '19:15', 4.75, 'Sistema Cotización Web (Gestor administrativo) — Render / Turso', 'Integración del audio en public/, atajos de volumen y control en el encabezado.', 'Experiencia de audio homogénea; CACHE_NAME del service worker ante cambios JS/CSS.', 'Patrón documentado en reglas del workspace.', RESP],
-  ['27/03/2026', '08:00', '12:30', 4.5, 'Sistema Cotización Web (Gestor administrativo) — Render / Turso', 'Bitácora de horas: columnas Horas, Materiales y Estado (col-no-ibeam) en cabecera, filtros y celdas.', 'Cursor de texto solo donde corresponde; filtros siguen editables.', 'Alcance acotado a la tabla de bitácora.', RESP],
-  ['27/03/2026', '14:00', '18:45', 4.75, 'Sistema Cotización Web (Gestor administrativo) — Render / Turso', 'Servidor: nodemailer opcional, intervalos y rutas de mantenimiento/alertas; pantallas de módulos alineadas al despliegue.', 'Backend alineado a operación y notificaciones según configuración.', 'Variables de entorno y pruebas según .env.', RESP],
-  ['27/03/2026', '19:00', '20:00', 1, 'Sistema Cotización Web (Gestor administrativo) — Render / Turso', 'Control de versiones: commits y push a rama main; pruebas con recarga forzada del cliente.', 'Código integrado en remoto; listo para validación del cliente.', '', RESP],
+  // 24/03 — 5 + 6 + 2.5 = 13.5 h
+  ['24/03/2026', '08:00', '13:00', 5, 'Sistema Cotización Web (Gestor administrativo) — Render / Turso', 'Cotización en PDF: orden de columnas (código, descripción, cantidad), referencias USD/MXN y subtotales en la moneda de la cotización.', 'Plantilla de PDF lista para presentación a cliente.', 'Criterios de negocio y moneda alineados con lo esperado en cotización; trabajo con asistencia IA (Cursor).', RESP],
+  ['24/03/2026', '14:00', '20:00', 6, 'Sistema Cotización Web (Gestor administrativo) — Render / Turso', 'Ajustes al PDF, validación de totales, pruebas de impresión y descarga; despliegue en Render.', 'PDF estable en producción; assets versionados (?v=) y service worker actualizado.', 'Pruebas en Chrome y Edge; control de caché del navegador para QA post-deploy.', RESP],
+  ['24/03/2026', '20:30', '23:00', 2.5, 'Sistema Cotización Web (Gestor administrativo) — Render / Turso', 'Seguimiento post-deploy y verificación en entorno publicado (smoke tests).', 'Comportamiento confirmado en producción; sin incidencias críticas.', 'Bloque vespertino acorde a ventana de despliegue y validación final del día.', RESP],
+  // 25/03 — 5 + 6 = 11 h
+  ['25/03/2026', '08:15', '13:15', 5, 'Sistema Cotización Web (Gestor administrativo) — Render / Turso', 'Interfaz: cursor y apariencia “solo lectura” en tablas (CSS global, encabezados, fila de filtros, tema claro/oscuro).', 'Menos sensación de campo editable en zonas no interactivas.', 'Revisión de pantallas con checklist; consistencia visual entre módulos del gestor.', RESP],
+  ['25/03/2026', '14:00', '20:00', 6, 'Sistema Cotización Web (Gestor administrativo) — Render / Turso', 'Tablas de datos: selección y refuerzo con eventos; columna Acciones (iconos) sin cursor de texto indebido.', 'Experiencia de grilla más acorde a producto empresarial.', 'Pruebas en distintas resoluciones; balance entre copiar texto en datos y UX en botones.', RESP],
+  // 26/03 — 5 + 5.5 = 10.5 h
+  ['26/03/2026', '08:30', '13:30', 5, 'Sistema Cotización Web (Gestor administrativo) — Render / Turso', 'Audio de fondo: HTMLAudioElement, bucle, volumen por defecto bajo, preferencias en localStorage (silencio/volumen).', 'Reproducción continua al cambiar pestañas internas del gestor (SPA).', 'Sesión prolongada de prueba; audio estable; autoplay desbloqueado con gesto del usuario.', RESP],
+  ['26/03/2026', '14:30', '20:00', 5.5, 'Sistema Cotización Web (Gestor administrativo) — Render / Turso', 'Integración del audio en public/, atajos de volumen y control en el encabezado.', 'Experiencia de audio homogénea; CACHE_NAME del service worker ante cambios JS/CSS.', 'Documentación del patrón en workspace; sync de assets con despliegue.', RESP],
+  // 27/03 — 5 + 5.5 + 2.5 = 13 h
+  ['27/03/2026', '08:00', '13:00', 5, 'Sistema Cotización Web (Gestor administrativo) — Render / Turso', 'Bitácora de horas: columnas Horas, Materiales y Estado (col-no-ibeam) en cabecera, filtros y celdas.', 'Cursor de texto solo donde corresponde; filtros siguen editables.', 'Validación con datos reales; sin regresiones en otras tablas del gestor.', RESP],
+  ['27/03/2026', '14:00', '19:30', 5.5, 'Sistema Cotización Web (Gestor administrativo) — Render / Turso', 'Servidor: nodemailer opcional, intervalos y rutas de mantenimiento/alertas; pantallas de módulos alineadas al despliegue.', 'Backend alineado a operación y notificaciones según configuración.', 'Entorno .env revisado; pruebas de correo en modo seguro (sin afectar producción donde aplique).', RESP],
+  ['27/03/2026', '20:00', '22:30', 2.5, 'Sistema Cotización Web (Gestor administrativo) — Render / Turso', 'Control de versiones: commits y push a rama main; pruebas con recarga forzada del cliente.', 'Código integrado en remoto; listo para validación del cliente.', 'Verificación de commit en remoto; cierre de semana con entregable revisable por cliente.', RESP],
 ];
 
 async function main() {
