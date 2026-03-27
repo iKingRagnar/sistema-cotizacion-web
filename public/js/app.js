@@ -41,6 +41,22 @@
   function qs(s) { return document.querySelector(s); }
   function qsAll(s) { return document.querySelectorAll(s); }
 
+  (function bindTableReadOnlyGuards() {
+    function isDataTableBodyCell(el) {
+      if (!el || !el.closest) return false;
+      const cell = el.closest('.data-table tbody td');
+      if (!cell) return false;
+      if (el.closest && el.closest('input, textarea, select, [contenteditable="true"]')) return false;
+      return true;
+    }
+    document.addEventListener('selectstart', function (e) {
+      if (isDataTableBodyCell(e.target)) e.preventDefault();
+    }, true);
+    document.addEventListener('dragstart', function (e) {
+      if (isDataTableBodyCell(e.target)) e.preventDefault();
+    }, true);
+  })();
+
   function isSoundEnabled() {
     try {
       if (localStorage.getItem(SOUND_PREF_KEY) === '1') return true;

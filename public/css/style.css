@@ -457,6 +457,31 @@ body.dark-theme .notifications-date {
   height: 28px;
   padding: 0;
 }
+/* Columna Acciones (sticky): refuerzo — sin I-beam en huecos ni en iconos */
+#tabla-cotizaciones tbody td.th-actions,
+#tabla-incidentes tbody td.th-actions,
+#tabla-bitacoras tbody td.th-actions {
+  cursor: default !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+}
+#tabla-cotizaciones tbody td.th-actions .btn,
+#tabla-cotizaciones tbody td.th-actions .btn *,
+#tabla-cotizaciones tbody td.th-actions button,
+#tabla-cotizaciones tbody td.th-actions button *,
+#tabla-incidentes tbody td.th-actions .btn,
+#tabla-incidentes tbody td.th-actions .btn *,
+#tabla-incidentes tbody td.th-actions button,
+#tabla-incidentes tbody td.th-actions button *,
+#tabla-bitacoras tbody td.th-actions .btn,
+#tabla-bitacoras tbody td.th-actions .btn *,
+#tabla-bitacoras tbody td.th-actions button,
+#tabla-bitacoras tbody td.th-actions button * {
+  cursor: pointer !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
 body.dark-theme #panel-cotizaciones .section-header,
 body.dark-theme #panel-incidentes .section-header,
 body.dark-theme #panel-bitacoras .section-header {
