@@ -183,36 +183,57 @@
         const subtotal = Number(cot.subtotal) || 0;
         const iva = Number(cot.iva) || 0;
         const total = Number(cot.total) || subtotal + iva;
+        const monedaEtiqueta = moneda === 'USD' ? 'USD — Dólares estadounidenses' : 'MXN — Pesos mexicanos';
         function fmtMonto(n) {
           if (moneda === 'USD') return 'US$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
           return '$' + Number(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
-        // Construir filas de líneas
+        function fmtUsd(n) {
+          return 'US$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        function fmtMxn(n) {
+          return '$' + Number(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        /** Precio unitario en USD y MXN por línea (precio_unitario va en moneda de la cotización). */
+        function unitUsdMxn(l) {
+          const pu = Number(l.precio_unitario || 0);
+          let usd;
+          let mxn;
+          if (moneda === 'USD') {
+            usd = pu;
+            mxn = tipoCambio > 0 ? pu * tipoCambio : null;
+          } else {
+            mxn = pu;
+            if (l.precio_usd != null && l.precio_usd !== '') usd = Number(l.precio_usd);
+            else usd = tipoCambio > 0 ? pu / tipoCambio : null;
+          }
+          return { usd, mxn };
+        }
+        // Construir filas: Código → Descripción → Cantidad → USD → MXN → Subtotal (moneda cotización)
         const lineas = Array.isArray(cot.lineas) ? cot.lineas : [];
         let lineasHtml = '';
         if (lineas.length > 0) {
           lineasHtml = lineas.map(l => {
-            const precioUsd = l.precio_usd != null ? l.precio_usd : (tipoCambio > 0 ? Number(l.precio_unitario || 0) / tipoCambio : null);
-            const precioDisplay = moneda === 'USD'
-              ? 'US$' + Number(l.precio_unitario || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })
-              : '$' + Number(l.precio_unitario || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 });
-            const precioUsdDisplay = precioUsd != null ? 'US$' + Number(precioUsd).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '';
+            const { usd, mxn } = unitUsdMxn(l);
+            const colUsd = usd != null && !isNaN(usd) ? fmtUsd(usd) : '—';
+            const colMxn = mxn != null && !isNaN(mxn) ? fmtMxn(mxn) : '—';
+            const desc = esc(l.descripcion || l.refaccion_descripcion || l.concepto || '');
             return `<tr>
-              <td style="font-size:0.8em;color:#6b7280">${esc(l.codigo || '')}</td>
-              <td>${esc(l.descripcion || l.concepto || '')}</td>
+              <td style="font-size:0.85em;color:#334155;font-weight:600">${esc(l.codigo || '—')}</td>
+              <td>${desc}</td>
               <td class="num">${Number(l.cantidad || 1)}</td>
-              <td class="num">${precioDisplay}</td>
-              <td class="num">${precioUsdDisplay}</td>
+              <td class="num">${colUsd}</td>
+              <td class="num">${colMxn}</td>
               <td class="num">${fmtMonto(Number(l.subtotal || (l.cantidad || 1) * (l.precio_unitario || 0)))}</td>
             </tr>`;
           }).join('');
         } else {
           lineasHtml = `<tr>
-            <td></td>
+            <td>—</td>
             <td>${esc(tipoLabel)}</td>
             <td class="num">1</td>
-            <td class="num">${fmtMonto(subtotal)}</td>
-            <td class="num"></td>
+            <td class="num">—</td>
+            <td class="num">—</td>
             <td class="num">${fmtMonto(subtotal)}</td>
           </tr>`;
         }
@@ -247,7 +268,7 @@
             </div>
             <div class="insight-grid">
               <div class="insight"><div class="k">Modalidad</div><div class="v">${esc(tipoLabel)}</div></div>
-              <div class="insight"><div class="k">Moneda</div><div class="v">${moneda}${tipoCambio > 0 ? ' @' + fmtNum(tipoCambio) : ''}</div></div>
+              <div class="insight"><div class="k">Moneda de cotización</div><div class="v">${esc(monedaEtiqueta)}${tipoCambio > 0 ? ' · T.C. ' + fmtNum(tipoCambio) + ' MXN/USD' : ''}</div></div>
               <div class="insight"><div class="k">IVA aplicado</div><div class="v">16%</div></div>
               <div class="insight"><div class="k">Importe final</div><div class="v">${fmtMonto(total)}</div></div>
             </div>
@@ -272,12 +293,12 @@
             <table>
               <thead>
                 <tr>
-                  <th style="width:8%">Código</th>
-                  <th>Descripción</th>
-                  <th class="num" style="width:7%">Cant.</th>
-                  <th class="num" style="width:12%">P.Unit. ${moneda}</th>
-                  <th class="num" style="width:12%">P.Unit. USD</th>
-                  <th class="num" style="width:12%">Subtotal</th>
+                  <th style="width:9%">Código</th>
+                  <th>Descripción / concepto</th>
+                  <th class="num" style="width:6%">Cant.</th>
+                  <th class="num" style="width:11%">Precio unit. (USD)</th>
+                  <th class="num" style="width:11%">Precio unit. (MXN)</th>
+                  <th class="num" style="width:11%">Subtotal (${moneda})</th>
                 </tr>
               </thead>
               <tbody>
@@ -285,8 +306,8 @@
               </tbody>
             </table>
             <div class="notes">
-              <strong>Condiciones:</strong> Precios en ${moneda}, vigencia de 30 días naturales, sujeto a disponibilidad y programación operativa.
-              ${moneda === 'MXN' && tipoCambio > 0 ? ' T.C.: $' + fmtNum(tipoCambio) + ' MXN/USD.' : ''}
+              <strong>Condiciones:</strong> Importes de cotización en <strong>${moneda}</strong> (columna Subtotal). Columnas de precio unitario muestran referencia en <strong>USD</strong> y <strong>MXN</strong>. Vigencia 30 días naturales, sujeto a disponibilidad.
+              ${tipoCambio > 0 ? ' Tipo de cambio referencia: $' + fmtNum(tipoCambio) + ' MXN por 1 USD.' : ''}
             </div>
             ${internalBox}
             <div class="proposal-grid">
