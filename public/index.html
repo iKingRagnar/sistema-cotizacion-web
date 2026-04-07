@@ -87,12 +87,16 @@
     <button type="button" data-tab="refacciones" class="tab" title="Refacciones (Ctrl+2)"><i class="fas fa-cogs"></i> Refacciones</button>
     <button type="button" data-tab="maquinas" class="tab" title="Máquinas (Ctrl+3)"><i class="fas fa-industry"></i> Máquinas</button>
     <button type="button" data-tab="cotizaciones" class="tab" title="Cotizaciones (Ctrl+4)"><i class="fas fa-file-invoice-dollar"></i> Cotizaciones</button>
+    <button type="button" data-tab="ventas" class="tab" title="Histórico de ventas aprobadas"><i class="fas fa-check-double"></i> Ventas</button>
+    <button type="button" data-tab="revision-maquinas" class="tab" title="Revisión y preparación de máquinas"><i class="fas fa-tools"></i> Revisión Máquinas</button>
+    <button type="button" data-tab="tarifas" class="tab" title="Tarifas y esquemas de cobro"><i class="fas fa-tags"></i> Tarifas</button>
     <button type="button" data-tab="reportes" class="tab" title="Reportes de servicio y venta"><i class="fas fa-file-alt"></i> Reportes</button>
     <button type="button" data-tab="garantias" class="tab" title="Alta y edición de garantías"><i class="fas fa-shield-alt"></i> Garantías</button>
     <button type="button" data-tab="mantenimiento-garantia" class="tab" title="Calendario y alertas de mantenimiento"><i class="fas fa-calendar-check"></i> Mantenimientos</button>
     <button type="button" data-tab="garantias-sin-cobertura" class="tab" title="Garantías dadas de baja"><i class="fas fa-ban"></i> Sin cobertura</button>
     <button type="button" data-tab="bonos" class="tab" title="Bonos de capacitación"><i class="fas fa-award"></i> Bonos</button>
     <button type="button" data-tab="viajes" class="tab" title="Viáticos y viajes"><i class="fas fa-plane"></i> Viajes</button>
+    <button type="button" data-tab="tecnicos" class="tab" title="Gestión de técnicos y habilidades"><i class="fas fa-hard-hat"></i> Técnicos</button>
     <button type="button" data-tab="incidentes" class="tab" title="Incidentes (Ctrl+5)"><i class="fas fa-exclamation-triangle"></i> Incidentes</button>
     <button type="button" data-tab="bitacoras" class="tab" title="Bitácora (Ctrl+6)"><i class="fas fa-clock"></i> Bitácora de horas</button>
     <button type="button" data-tab="auditoria" class="tab hidden" id="tab-auditoria" title="Auditoría (Ctrl+8, solo admin)"><i class="fas fa-clipboard-list"></i> Auditoría</button>
@@ -161,7 +165,7 @@
         <table class="data-table filterable-table" id="tabla-clientes" data-cache="clientesCache">
           <thead>
             <tr>
-              <th>Id</th><th>Código</th><th>Nombre</th><th>RFC</th><th>Contacto</th><th>Teléfono</th><th>Ciudad</th>
+              <th>Id</th><th>Código</th><th>Nombre</th><th>RFC</th><th>Contacto</th><th>Teléfono</th><th>Correo electrónico</th><th>Ciudad</th>
               <th class="th-actions">Acciones</th>
             </tr>
             <tr class="filter-row">
@@ -171,6 +175,7 @@
               <td><input type="text" class="filter-input" data-key="rfc" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="contacto" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="telefono" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="email" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="ciudad" data-type="text" placeholder="Filtrar…"></td>
               <td class="th-actions"></td>
             </tr>
@@ -195,6 +200,10 @@
           <input type="search" id="buscar-refacciones" placeholder="Buscar por código o descripción..." class="search">
           <button type="button" id="export-refacciones" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
           <button type="button" id="export-excel-refacciones" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
+          <label class="btn outline" title="Importar catálogo desde XLSX (2026 REFACCIONES)" style="cursor:pointer;margin-bottom:0">
+            <i class="fas fa-file-import"></i> Importar XLSX
+            <input type="file" id="import-refacciones-file" accept=".xlsx,.xls" class="hidden" style="display:none">
+          </label>
           <button type="button" id="nueva-refaccion" class="btn primary"><i class="fas fa-plus"></i> Nueva refacción</button>
         </div>
       </div>
@@ -203,7 +212,7 @@
         <table class="data-table filterable-table" id="tabla-refacciones" data-cache="refaccionesCache">
           <thead>
             <tr>
-              <th>Código</th><th>Descripción</th><th>Categoría</th><th>Zona</th><th>Stock</th><th>Mín.</th><th>Precio MXN</th><th>Precio USD</th><th>Unidad</th>
+              <th>Código</th><th>Descripción</th><th>Categoría</th><th>Zona</th><th>Stock</th><th>Mín.</th><th>Precio USD</th><th>Precio MXN</th><th>Unidad</th>
               <th class="th-actions">Acciones</th>
             </tr>
             <tr class="filter-row">
@@ -213,8 +222,8 @@
               <td><input type="text" class="filter-input" data-key="zona" data-type="text" placeholder="Estante, Rack…"></td>
               <td><input type="text" class="filter-input" data-key="stock" data-type="number" placeholder="&gt;0"></td>
               <td><input type="text" class="filter-input" data-key="stock_minimo" data-type="number" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="precio_unitario" data-type="number" placeholder="&gt;100, &lt;500"></td>
               <td><input type="text" class="filter-input" data-key="precio_usd" data-type="number" placeholder="&gt;10"></td>
+              <td><input type="text" class="filter-input" data-key="precio_unitario" data-type="number" placeholder="&gt;100, &lt;500"></td>
               <td><input type="text" class="filter-input" data-key="unidad" data-type="text" placeholder="Filtrar…"></td>
               <td class="th-actions"></td>
             </tr>
@@ -233,24 +242,31 @@
           <select id="filtro-cliente-maq">
             <option value="">Todos los clientes</option>
           </select>
+          <select id="filtro-categoria-maq" title="Filtrar por categoría">
+            <option value="">Todas las categorías</option>
+          </select>
+          <select id="filtro-zona-maq" title="Filtrar por zona">
+            <option value="">Todas las zonas</option>
+          </select>
+          <button type="button" id="toggle-view-maquinas" class="btn outline" title="Cambiar vista tabla/tarjetas"><i class="fas fa-th-large"></i> Vista tarjetas</button>
           <button type="button" id="export-maquinas" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
           <button type="button" id="export-excel-maquinas" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
           <button type="button" id="nueva-maquina" class="btn primary"><i class="fas fa-plus"></i> Nueva máquina</button>
         </div>
       </div>
-      <div class="table-wrap">
+      <!-- Vista tabla -->
+      <div class="table-wrap" id="maquinas-tabla-wrap">
         <table class="data-table filterable-table" id="tabla-maquinas" data-cache="maquinasCache">
           <thead>
             <tr>
-              <th>Id</th><th>Nombre</th><th>Cliente</th><th>Marca</th><th>Modelo</th><th>Nº Serie</th><th>Ubicación</th>
+              <th>Id</th><th>Categoría</th><th>Modelo</th><th>Cliente</th><th>Nº Serie</th><th>Zona</th>
               <th class="th-actions">Acciones</th>
             </tr>
             <tr class="filter-row">
               <td><input type="text" class="filter-input" data-key="id" data-type="number" placeholder="ej. &gt;1"></td>
-              <td><input type="text" class="filter-input" data-key="nombre" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="cliente_nombre" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="marca" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="categoria" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="modelo" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="cliente_nombre" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="numero_serie" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="ubicacion" data-type="text" placeholder="Filtrar…"></td>
               <td class="th-actions"></td>
@@ -260,6 +276,8 @@
         </table>
         <div class="table-footer" id="footer-tabla-maquinas" aria-live="polite"></div>
       </div>
+      <!-- Vista tarjetas -->
+      <div id="maquinas-cards-wrap" class="maquinas-cards-grid hidden"></div>
     </section>
 
     <!-- COTIZACIONES -->
@@ -304,15 +322,135 @@
       </div>
     </section>
 
+    <!-- VENTAS (histórico cotizaciones aprobadas) -->
+    <section id="panel-ventas" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-check-double"></i> Historial de ventas</h2>
+        <div class="toolbar">
+          <select id="filtro-tipo-venta" title="Filtrar por tipo">
+            <option value="">Todos los tipos</option>
+            <option value="refacciones">Refacciones</option>
+            <option value="servicio">Servicio / Mano de obra</option>
+            <option value="maquina">Máquina</option>
+          </select>
+          <input type="month" id="filtro-mes-venta" title="Filtrar por mes">
+          <button type="button" id="export-ventas" class="btn outline"><i class="fas fa-file-csv"></i> CSV</button>
+          <button type="button" id="btn-reporte-mensual-ventas" class="btn outline" title="Reporte mensual con comisiones"><i class="fas fa-chart-bar"></i> Reporte mensual</button>
+        </div>
+      </div>
+      <div id="ventas-resumen-bar" class="ventas-resumen-bar hidden"></div>
+      <div class="table-wrap">
+        <table class="data-table" id="tabla-ventas">
+          <thead>
+            <tr>
+              <th>Folio</th><th>Fecha aprobación</th><th>Cliente</th><th>Tipo</th><th>Total MXN</th><th>Total USD</th><th>Vendedor</th><th>Comisión</th><th class="th-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-footer" id="footer-tabla-ventas" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- REVISIÓN DE MÁQUINAS -->
+    <section id="panel-revision-maquinas" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-tools"></i> Revisión de máquinas</h2>
+        <div class="toolbar">
+          <select id="filtro-entregado-rev" title="Filtrar por entrega">
+            <option value="">Todos</option>
+            <option value="Si">Entregadas</option>
+            <option value="No">Pendiente entrega</option>
+          </select>
+          <select id="filtro-prueba-rev" title="Filtrar por prueba">
+            <option value="">Todos</option>
+            <option value="En Proceso">En Proceso</option>
+            <option value="Finalizada">Finalizada</option>
+          </select>
+          <button type="button" id="nueva-revision-maq" class="btn primary"><i class="fas fa-plus"></i> Nueva revisión</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table filterable-table" id="tabla-revision-maquinas">
+          <thead>
+            <tr>
+              <th>Id</th><th>Categoría</th><th>Modelo</th><th>Nº Serie</th><th>Entregado</th><th>Prueba</th><th>Comentarios</th><th class="th-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-footer" id="footer-tabla-revision-maquinas" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- TARIFAS -->
+    <section id="panel-tarifas" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-tags"></i> Tarifas y esquemas de cobro</h2>
+        <div class="toolbar">
+          <button type="button" id="btn-save-tarifas" class="btn primary"><i class="fas fa-save"></i> Guardar cambios</button>
+        </div>
+      </div>
+      <div class="tarifas-container">
+        <div class="tarifas-section">
+          <h3 class="tarifas-section-title"><i class="fas fa-clock"></i> Tarifas de mano de obra por hora</h3>
+          <p class="tarifas-hint">Define el costo por hora según el tipo de técnico. Se usa para calcular cotizaciones de mano de obra.</p>
+          <table class="data-table" id="tabla-tarifas-mano-obra">
+            <thead><tr><th>Tipo de técnico</th><th>Tarifa hora (MXN)</th><th>Tarifa hora (USD)</th><th>Notas</th></tr></thead>
+            <tbody>
+              <tr><td>Técnico mecánico</td><td><input type="number" class="tarifa-input" data-key="mecanico_mxn" min="0" step="50" placeholder="0"></td><td><input type="number" class="tarifa-input" data-key="mecanico_usd" min="0" step="5" placeholder="0"></td><td><input type="text" class="tarifa-input-text" data-key="mecanico_nota" placeholder="Notas…"></td></tr>
+              <tr><td>Técnico electrónico</td><td><input type="number" class="tarifa-input" data-key="electronico_mxn" min="0" step="50"></td><td><input type="number" class="tarifa-input" data-key="electronico_usd" min="0" step="5"></td><td><input type="text" class="tarifa-input-text" data-key="electronico_nota"></td></tr>
+              <tr><td>Técnico CNC / Programación</td><td><input type="number" class="tarifa-input" data-key="cnc_mxn" min="0" step="50"></td><td><input type="number" class="tarifa-input" data-key="cnc_usd" min="0" step="5"></td><td><input type="text" class="tarifa-input-text" data-key="cnc_nota"></td></tr>
+              <tr><td>Ayudante</td><td><input type="number" class="tarifa-input" data-key="ayudante_mxn" min="0" step="50"></td><td><input type="number" class="tarifa-input" data-key="ayudante_usd" min="0" step="5"></td><td><input type="text" class="tarifa-input-text" data-key="ayudante_nota"></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tarifas-section">
+          <h3 class="tarifas-section-title"><i class="fas fa-road"></i> Tarifas de traslado / viáticos</h3>
+          <p class="tarifas-hint">Costo de traslado y viáticos según zona (clasificación A, B, C). Máximo 2 personas por viaje.</p>
+          <table class="data-table" id="tabla-tarifas-traslado">
+            <thead><tr><th>Zona</th><th>Ciudades ejemplo</th><th>Viático/día (MXN)</th><th>Hrs traslado aprox.</th><th>Costo km (MXN)</th></tr></thead>
+            <tbody>
+              <tr><td><strong>A – Local</strong></td><td><input type="text" class="tarifa-input-text" data-key="zona_a_ciudades" placeholder="Monterrey, área metro…"></td><td><input type="number" class="tarifa-input" data-key="zona_a_viatico" min="0" step="100"></td><td><input type="number" class="tarifa-input" data-key="zona_a_hrs" min="0" step="0.5"></td><td><input type="number" class="tarifa-input" data-key="zona_a_km" min="0" step="1"></td></tr>
+              <tr><td><strong>B – Regional</strong></td><td><input type="text" class="tarifa-input-text" data-key="zona_b_ciudades" placeholder="Guanajuato, Querétaro…"></td><td><input type="number" class="tarifa-input" data-key="zona_b_viatico" min="0" step="100"></td><td><input type="number" class="tarifa-input" data-key="zona_b_hrs" min="0" step="0.5"></td><td><input type="number" class="tarifa-input" data-key="zona_b_km" min="0" step="1"></td></tr>
+              <tr><td><strong>C – Nacional</strong></td><td><input type="text" class="tarifa-input-text" data-key="zona_c_ciudades" placeholder="CDMX, Guadalajara…"></td><td><input type="number" class="tarifa-input" data-key="zona_c_viatico" min="0" step="100"></td><td><input type="number" class="tarifa-input" data-key="zona_c_hrs" min="0" step="0.5"></td><td><input type="number" class="tarifa-input" data-key="zona_c_km" min="0" step="1"></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tarifas-section">
+          <h3 class="tarifas-section-title"><i class="fas fa-percentage"></i> Reglas de comisiones</h3>
+          <div class="tarifas-form-grid">
+            <div class="form-group"><label>Comisión refacciones (%)</label><input type="number" id="tarifa-comision-ref" class="tarifa-input" min="0" max="100" step="0.5" value="15"></div>
+            <div class="form-group"><label>Comisión servicios (%)</label><input type="number" id="tarifa-comision-svc" class="tarifa-input" min="0" max="100" step="0.5" value="15"></div>
+            <div class="form-group"><label>Comisión máquinas – David Cantú (%)</label><input type="number" id="tarifa-comision-maq-david" class="tarifa-input" min="0" max="100" step="0.5" value="10"></div>
+            <div class="form-group"><label>Bono por cada $20,000 facturados (MXN)</label><input type="number" id="tarifa-bono-20k" class="tarifa-input" min="0" step="100" value="1000"></div>
+            <div class="form-group"><label>Bono extra si supera $40,000 (MXN)</label><input type="number" id="tarifa-bono-40k" class="tarifa-input" min="0" step="100" value="2000"></div>
+            <div class="form-group"><label>Bono por día fuera de ciudad (MXN/persona)</label><input type="number" id="tarifa-bono-dia" class="tarifa-input" min="0" step="100" value="500"></div>
+          </div>
+        </div>
+        <div class="tarifas-section tarifas-nota-calc">
+          <h3 class="tarifas-section-title"><i class="fas fa-info-circle"></i> Cómo se calculan las tarifas</h3>
+          <ul class="tarifas-notas-list">
+            <li>Cotización de <strong>mano de obra</strong>: (Hrs trabajo × tarifa/hr) + (Hrs traslado × tarifa traslado) + (Días × viático/día × nº personas). Tope: 2 personas en viaje.</li>
+            <li>Cotización de <strong>refacciones</strong>: precio USD × tipo de cambio Banxico (o manual). Comisión del <span id="nota-comision-ref">15</span>% sobre total.</li>
+            <li>Cotización de <strong>máquina</strong>: precio USD × tipo de cambio. Si vendedor = David Cantú: comisión del <span id="nota-comision-maq">10</span>%.</li>
+            <li><strong>Bono por facturación</strong>: $<span id="nota-bono-20k">1,000</span> por cada $20,000 facturados. Si supera $40,000: bono máximo $<span id="nota-bono-40k">2,000</span>.</li>
+            <li><strong>Bono por viaje</strong>: $<span id="nota-bono-dia">500</span>/día/persona si es fuera de ciudad.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
     <!-- REPORTES -->
     <section id="panel-reportes" class="panel">
       <div class="section-header">
-        <h2><i class="fas fa-file-alt"></i> Reportes</h2>
+        <h2><i class="fas fa-file-alt"></i> Reportes de servicio</h2>
         <div class="toolbar">
           <select id="filtro-tipo-reporte">
             <option value="">Todos los tipos</option>
+            <option value="garantia">Garantía</option>
+            <option value="instalacion">Instalación</option>
             <option value="servicio">Servicio</option>
-            <option value="venta">Venta</option>
           </select>
           <select id="filtro-subtipo-reporte">
             <option value="">Todos los subtipos</option>
@@ -324,45 +462,51 @@
             <option value="garantia">Garantía</option>
             <option value="otro">Otro / Otra</option>
           </select>
+          <input type="search" id="buscar-reportes" placeholder="Buscar…" class="search" style="width:160px">
           <button type="button" id="export-reportes" class="btn outline"><i class="fas fa-file-csv"></i> CSV</button>
           <button type="button" id="nuevo-reporte" class="btn primary"><i class="fas fa-plus"></i> Nuevo reporte</button>
         </div>
       </div>
+      <p class="section-sub"><i class="fas fa-info-circle"></i> Los reportes se ordenan automáticamente: <strong>Garantías</strong> primero, luego <strong>Instalaciones</strong>, después <strong>Servicios</strong>.</p>
       <div class="table-wrap">
         <table class="data-table filterable-table" id="tabla-reportes">
           <thead>
             <tr>
-              <th>Folio</th><th>Razón Social</th><th>Máquina</th><th>Número</th><th>Tipo</th><th>Subtipo</th><th>Descripción</th><th>Técnico</th><th>Fecha</th><th>Estatus</th>
+              <th>Folio</th><th>Razón Social</th><th>Máquina</th><th>Nº Serie</th><th>Tipo</th><th>Subtipo</th><th>Técnico</th><th>Fecha Reporte</th>
+              <th class="admin-only-col" title="Solo visible para administrador">Fecha Programada <i class="fas fa-lock" style="font-size:0.7em;opacity:.6"></i></th>
+              <th>Estatus</th><th>Finalizado</th>
               <th class="th-actions">Acciones</th>
             </tr>
             <tr class="filter-row">
               <td><input type="text" class="filter-input" data-key="folio" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="razon_social" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="maquina_nombre" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="numero_maquina" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="numero_maquina" data-type="text" placeholder="Nº serie…"></td>
               <td>
-                <select class="filter-input" data-key="tipo_reporte" data-type="text" id="tabla-reportes-filter-tipo">
-                  <option value="">servicio|venta</option>
-                  <option value="servicio">servicio</option>
-                  <option value="venta">venta</option>
-                </select>
-              </td>
-              <td>
-                <select class="filter-input" id="tabla-reportes-filter-subtipo">
+                <select class="filter-input" data-key="tipo_reporte" data-type="text">
                   <option value="">Todos</option>
-                  <option value="falla_electrica">falla eléctrica</option>
-                  <option value="falla_mecanica">falla mecánica</option>
-                  <option value="falla_electronica">falla electrónica</option>
-                  <option value="instalacion">instalación</option>
-                  <option value="capacitacion">capacitación</option>
-                  <option value="garantia">garantía</option>
-                  <option value="otro">otro / otra</option>
+                  <option value="garantia">Garantía</option>
+                  <option value="instalacion">Instalación</option>
+                  <option value="servicio">Servicio</option>
                 </select>
               </td>
-              <td><input type="text" class="filter-input" data-key="descripcion" data-type="text" placeholder="Filtrar…"></td>
+              <td>
+                <select class="filter-input" data-key="subtipo" data-type="text">
+                  <option value="">Todos</option>
+                  <option value="falla_electrica">Falla eléctrica</option>
+                  <option value="falla_mecanica">Falla mecánica</option>
+                  <option value="falla_electronica">Falla electrónica</option>
+                  <option value="instalacion">Instalación</option>
+                  <option value="capacitacion">Capacitación</option>
+                  <option value="garantia">Garantía</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </td>
               <td><input type="text" class="filter-input" data-key="tecnico" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="fecha" data-type="text" placeholder="aaaa-mm-dd"></td>
-              <td><input type="text" class="filter-input" data-key="estatus" data-type="text" placeholder="abierto|cerrado"></td>
+              <td class="admin-only-col"></td>
+              <td><input type="text" class="filter-input" data-key="estatus" data-type="text" placeholder="abierto…"></td>
+              <td></td>
               <td class="th-actions"></td>
             </tr>
           </thead>
@@ -387,14 +531,13 @@
         <table class="data-table filterable-table" id="tabla-garantias">
           <thead>
             <tr>
-              <th>Razón Social</th><th>Modelo</th><th>N° Serie</th><th>Tipo Máquina</th><th>F. Entrega</th><th>Mantenimientos</th><th>Activa</th>
+              <th>Razón Social</th><th>Modelo</th><th>N° Serie</th><th>F. Entrega</th><th>Mantenimientos</th><th>Activa</th>
               <th class="th-actions">Acciones</th>
             </tr>
             <tr class="filter-row">
               <td><input type="text" class="filter-input" data-key="razon_social" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="modelo_maquina" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="numero_serie" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="tipo_maquina" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="fecha_entrega" data-type="text" placeholder="aaaa-mm-dd"></td>
               <td></td>
               <td><input type="text" class="filter-input" data-key="activa" data-type="text" placeholder="1|0"></td>
@@ -463,14 +606,13 @@
         <table class="data-table filterable-table" id="tabla-garantias-sin">
           <thead>
             <tr>
-              <th>Razón Social</th><th>Modelo</th><th>N° Serie</th><th>Tipo</th><th>F. Entrega</th><th>Mantenimientos</th>
+              <th>Razón Social</th><th>Modelo</th><th>N° Serie</th><th>F. Entrega</th><th>Mantenimientos</th>
               <th class="th-actions">Acciones</th>
             </tr>
             <tr class="filter-row">
               <td><input type="text" class="filter-input" data-key="razon_social" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="modelo_maquina" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="numero_serie" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="tipo_maquina" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="fecha_entrega" data-type="text" placeholder="aaaa-mm-dd"></td>
               <td></td>
               <td class="th-actions"></td>
@@ -557,6 +699,28 @@
           <tbody></tbody>
         </table>
         <div class="table-footer" id="footer-tabla-viajes" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- TÉCNICOS -->
+    <section id="panel-tecnicos" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-hard-hat"></i> Técnicos</h2>
+        <div class="toolbar">
+          <input type="search" id="buscar-tecnicos" placeholder="Buscar técnico…" class="search">
+          <button type="button" id="btn-new-tecnico" class="btn primary"><i class="fas fa-plus"></i> Nuevo técnico</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="tabla-tecnicos">
+          <thead>
+            <tr>
+              <th>Nombre</th><th>Habilidades</th><th>Disponibilidad</th><th>Activo</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
     </section>
 

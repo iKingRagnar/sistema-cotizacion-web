@@ -3380,3 +3380,67 @@ body.dark-theme .stock-alert-bar strong {
 .mant-edit-sub { margin: 0 0 0.75rem; font-size: 0.9rem; color: #64748b; }
 body.dark-theme .cal-day { background: #1e293b; border-color: #334155; }
 body.dark-theme .cal-day-num { color: #e2e8f0; }
+
+/* ===== MÁQUINAS: tarjetas y ficha ===== */
+.maquinas-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.25rem; padding: 1rem 0; }
+.maq-card { background: var(--surface, #fff); border: 1px solid var(--border, #e2e8f0); border-radius: var(--radius, 10px); padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.6rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); transition: box-shadow .2s; }
+.maq-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.11); }
+.maq-card-header { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.maq-card-cat { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; background: var(--config-accent, #0d9488); color: #fff; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+.maq-card-zona { font-size: 0.78rem; color: var(--text-muted, #64748b); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.maq-card-modelo { font-size: 1.15rem; font-weight: 700; color: var(--text, #1e293b); }
+.maq-card-body { font-size: 0.85rem; color: var(--text-secondary, #475569); display: flex; flex-direction: column; gap: 0.3rem; }
+.maq-card-row { display: flex; align-items: center; gap: 0.45rem; }
+.maq-card-row i { width: 14px; color: var(--config-accent, #0d9488); flex-shrink: 0; }
+.maq-card-actions { display: flex; gap: 0.4rem; margin-top: 0.3rem; }
+.maq-ficha { max-width: 520px; }
+.maq-ficha-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+.maq-ficha-logo { width: 52px; height: 52px; background: var(--config-accent, #0d9488); color: #fff; border-radius: var(--radius, 10px); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
+.maq-ficha-cat { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--config-accent, #0d9488); }
+.maq-ficha-modelo { font-size: 1.4rem; font-weight: 700; color: var(--text, #1e293b); }
+.maq-ficha-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.maq-ficha-table th { text-align: left; padding: 0.55rem 0.75rem; background: var(--bg-alt, #f8fafc); color: var(--text-muted, #64748b); font-weight: 600; width: 38%; border-bottom: 1px solid var(--border, #e2e8f0); }
+.maq-ficha-table td { padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--border, #e2e8f0); color: var(--text, #1e293b); }
+.maq-ficha-actions { margin-top: 1.25rem; display: flex; gap: 0.5rem; }
+body.dark-theme .maq-card { background: #1e293b; border-color: #334155; }
+body.dark-theme .maq-card-modelo { color: #f1f5f9; }
+body.dark-theme .maq-ficha-table th { background: #162032; color: #94a3b8; }
+body.dark-theme .maq-ficha-table td { color: #e2e8f0; }
+body.dark-theme .maq-ficha-modelo { color: #f1f5f9; }
+@media print {
+  .no-print { display: none !important; }
+  .maq-ficha { box-shadow: none; border: none; }
+}
+
+/* ===== TARIFAS PANEL ===== */
+.tarifas-container { display: flex; flex-direction: column; gap: 1.5rem; max-width: 820px; }
+.tarifas-section { background: var(--surface, #fff); border: 1px solid var(--border, #e2e8f0); border-radius: var(--radius, 10px); padding: 1.25rem 1.5rem; }
+.tarifas-section-title { font-size: 1rem; font-weight: 700; color: var(--text, #1e293b); margin: 0 0 0.9rem; display: flex; align-items: center; gap: 0.5rem; }
+.tarifas-section-title i { color: var(--config-accent, #0d9488); }
+.tarifas-form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.85rem 1.25rem; margin-bottom: 0.75rem; }
+.tarifas-form-grid label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.85rem; color: var(--text-secondary, #475569); font-weight: 500; }
+.tarifa-input { padding: 0.4rem 0.6rem; border: 1px solid var(--border, #cbd5e1); border-radius: var(--radius-sm, 6px); font-family: inherit; font-size: 0.9rem; background: var(--surface, #fff); color: var(--text, #1e293b); width: 100%; }
+.tarifa-input:focus { outline: 2px solid var(--config-accent, #0d9488); border-color: var(--config-accent, #0d9488); }
+.tarifa-input-text { padding: 0.4rem 0.6rem; border: 1px solid var(--border, #cbd5e1); border-radius: var(--radius-sm, 6px); font-family: inherit; font-size: 0.88rem; background: var(--surface, #fff); color: var(--text, #1e293b); width: 100%; resize: vertical; min-height: 60px; }
+.tarifas-hint { font-size: 0.8rem; color: var(--text-muted, #94a3b8); margin: 0.2rem 0 0; }
+.tarifas-notas-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.tarifas-notas-list label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.85rem; color: var(--text-secondary, #475569); font-weight: 500; }
+body.dark-theme .tarifas-section { background: var(--surface); border-color: var(--border); }
+body.dark-theme .tarifa-input, body.dark-theme .tarifa-input-text { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+body.dark-theme .tarifas-section-title { color: #f1f5f9; }
+
+/* ===== REFACCIONES: hover image preview & photo thumbs ===== */
+.ref-img-hover-wrap { position: relative; display: inline-block; }
+.ref-img-hover-preview { display: none; position: absolute; left: 100%; top: 50%; transform: translateY(-50%); z-index: 200; width: 180px; height: 180px; object-fit: contain; background: #fff; border: 2px solid var(--config-accent, #0d9488); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); pointer-events: none; margin-left: 6px; }
+.ref-img-hover-wrap:hover .ref-img-hover-preview,
+.ref-img-hover-wrap:focus-within .ref-img-hover-preview { display: block; }
+.ref-foto-preview-wrap { display: flex; align-items: center; margin-top: 0.35rem; }
+.ref-foto-thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border, #e2e8f0); cursor: pointer; }
+body.dark-theme .ref-img-hover-preview { background: #1e293b; border-color: var(--config-accent, #0d9488); }
+
+/* ===== COTIZACIONES: mano de obra fields grid ===== */
+.mo-fields-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.65rem 1rem; margin-bottom: 0.5rem; }
+.mo-fields-grid .form-group { margin: 0; }
+.mo-fields-grid label { font-size: 0.8rem; color: var(--text-secondary, #475569); margin-bottom: 0.25rem; display: block; font-weight: 500; }
+.mo-fields-grid input, .mo-fields-grid select { padding: 0.35rem 0.5rem; font-size: 0.88rem; border: 1px solid var(--border, #cbd5e1); border-radius: var(--radius-sm, 6px); background: var(--surface, #fff); color: var(--text, #1e293b); width: 100%; }
+body.dark-theme .mo-fields-grid input, body.dark-theme .mo-fields-grid select { background: #0f172a; color: #e2e8f0; border-color: #334155; }

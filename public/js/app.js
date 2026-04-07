@@ -587,6 +587,10 @@
     if (id === 'demo') loadSeedStatus();
     if (id === 'acerca') { /* solo mostrar panel */ }
     if (id === 'auditoria') loadAuditLog();
+    if (id === 'ventas') loadVentas();
+    if (id === 'revision-maquinas') loadRevisionMaquinas();
+    if (id === 'tarifas') loadTarifas();
+    if (id === 'tecnicos') loadTecnicos();
   }
 
   qsAll('.tab').forEach(t => {
@@ -1141,7 +1145,7 @@
     const tbody = qs('#tabla-clientes tbody');
     tbody.innerHTML = '';
     if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="empty">No hay clientes. Carga datos demo o agrega uno nuevo.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="empty">No hay clientes. Carga datos demo o agrega uno nuevo.</td></tr>';
       return;
     }
     data.forEach(c => {
@@ -1153,6 +1157,7 @@
         <td>${escapeHtml(c.rfc || '')}</td>
         <td>${escapeHtml(c.contacto || '')}</td>
         <td>${escapeHtml(c.telefono || '')}</td>
+        <td>${c.email ? `<a href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a>` : ''}</td>
         <td>${escapeHtml(c.ciudad || '')}</td>
         <td class="th-actions">
           <button type="button" class="btn small primary btn-edit-cliente" data-id="${c.id}"><i class="fas fa-edit"></i></button>
@@ -1214,15 +1219,16 @@
       const stockBajo = Number(r.stock) <= Number(r.stock_minimo || 1);
       const tr = document.createElement('tr');
       if (stockBajo) tr.classList.add('row-stock-bajo');
+      const imgThumb = r.imagen_url ? `<span class="ref-img-hover-wrap" tabindex="-1"><button type="button" class="btn-codigo-ref link-btn" data-id="${r.id}" title="Ver imagen/manual">${escapeHtml(r.codigo || '')}</button><img class="ref-img-hover-preview" src="${escapeHtml(r.imagen_url)}" alt="preview" loading="lazy"></span>` : `<button type="button" class="btn-codigo-ref link-btn" data-id="${r.id}" title="Ver imagen/manual">${escapeHtml(r.codigo || '')}</button>`;
       tr.innerHTML = `
-        <td><button type="button" class="btn-codigo-ref link-btn" data-id="${r.id}" title="Ver imagen/manual">${escapeHtml(r.codigo || '')}</button></td>
+        <td>${imgThumb}</td>
         <td>${escapeHtml(r.descripcion || '')}</td>
         <td>${escapeHtml(r.categoria || '')}${r.subcategoria ? ' / ' + escapeHtml(r.subcategoria) : ''}</td>
         <td>${escapeHtml(r.zona || '')}</td>
         <td class="${stockBajo ? 'stock-bajo' : ''}">${r.stock != null ? Number(r.stock).toLocaleString('es-MX') : '0'}</td>
         <td>${r.stock_minimo != null ? Number(r.stock_minimo) : 1}</td>
+        <td>${r.precio_usd ? '<strong>US$' + Number(r.precio_usd).toLocaleString('en-US', { minimumFractionDigits: 2 }) + '</strong>' : ''}</td>
         <td>${typeof r.precio_unitario === 'number' ? '$' + r.precio_unitario.toLocaleString('es-MX', { minimumFractionDigits: 2 }) : ''}</td>
-        <td>${r.precio_usd ? 'US$' + Number(r.precio_usd).toLocaleString('en-US', { minimumFractionDigits: 2 }) : ''}</td>
         <td>${escapeHtml(r.unidad || 'PZA')}</td>
         <td class="th-actions">
           <button type="button" class="btn small outline btn-stock-ref" data-id="${r.id}" title="Ajustar stock"><i class="fas fa-boxes"></i></button>
@@ -1266,25 +1272,107 @@
     finally { hideLoading(); }
   }
 
+  let tipoCambioActual = 17.0; // tipo de cambio USD/MXN actualizado desde Banxico
+
   // ----- MÁQUINAS -----
+  const CATEGORIAS_MAQUINAS = ['Centro de Maquinado', 'Torno CNC', 'Electroerosionadora por Hilo', 'Electroerosionadora por Penetración', 'Fresadora CNC', 'Rectificadora', 'Torno Convencional', 'Otro'];
+  let maquinasViewMode = 'tabla'; // 'tabla' | 'tarjetas'
+
+  function renderMaquinaCard(m) {
+    const zona = escapeHtml(m.ubicacion || '—');
+    const cat = escapeHtml(m.categoria || '—');
+    const modelo = escapeHtml(m.modelo || m.nombre || '—');
+    const serie = escapeHtml(m.numero_serie || '—');
+    const cliente = escapeHtml(m.cliente_nombre || '—');
+    return `
+      <div class="maq-card" data-id="${m.id}">
+        <div class="maq-card-header">
+          <span class="maq-card-cat">${cat}</span>
+          <span class="maq-card-zona"><i class="fas fa-map-marker-alt"></i> ${zona}</span>
+        </div>
+        <div class="maq-card-modelo">${modelo}</div>
+        <div class="maq-card-body">
+          <div class="maq-card-row"><i class="fas fa-barcode"></i> <strong>Serie:</strong> ${serie}</div>
+          <div class="maq-card-row"><i class="fas fa-user-tie"></i> <strong>Cliente:</strong> ${cliente}</div>
+        </div>
+        <div class="maq-card-actions">
+          <button type="button" class="btn small outline btn-view-maq" data-id="${m.id}" title="Ver ficha"><i class="fas fa-eye"></i> Ver</button>
+          <button type="button" class="btn small primary btn-edit-maq" data-id="${m.id}" title="Editar"><i class="fas fa-edit"></i></button>
+          <button type="button" class="btn small danger btn-delete-maq" data-id="${m.id}" title="Eliminar"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>`;
+  }
+
+  function renderMaquinaFicha(m) {
+    const zona = escapeHtml(m.ubicacion || '—');
+    const cat = escapeHtml(m.categoria || '—');
+    const modelo = escapeHtml(m.modelo || m.nombre || '—');
+    const serie = escapeHtml(m.numero_serie || '—');
+    const cliente = escapeHtml(m.cliente_nombre || '—');
+    const body = `
+      <div class="maq-ficha">
+        <div class="maq-ficha-header">
+          <div class="maq-ficha-logo"><i class="fas fa-industry"></i></div>
+          <div>
+            <div class="maq-ficha-cat">${cat}</div>
+            <div class="maq-ficha-modelo">${modelo}</div>
+          </div>
+        </div>
+        <table class="maq-ficha-table">
+          <tr><th>Nº de Serie</th><td>${serie}</td></tr>
+          <tr><th>Cliente</th><td>${cliente}</td></tr>
+          <tr><th>Zona</th><td>${zona}</td></tr>
+          <tr><th>ID sistema</th><td>${m.id}</td></tr>
+        </table>
+        <div class="maq-ficha-actions no-print">
+          <button type="button" class="btn outline" onclick="window.print()"><i class="fas fa-print"></i> Imprimir ficha</button>
+        </div>
+      </div>`;
+    openModal(`Ficha de máquina – ${modelo}`, body);
+  }
+
   function renderMaquinas(data) {
     const tbody = qs('#tabla-maquinas tbody');
+    const cardsWrap = qs('#maquinas-cards-wrap');
+
+    if (maquinasViewMode === 'tarjetas') {
+      tbody && (tbody.innerHTML = '');
+      if (!cardsWrap) return;
+      if (!data || data.length === 0) {
+        cardsWrap.innerHTML = '<p class="empty" style="padding:2rem">No hay máquinas.</p>';
+        return;
+      }
+      cardsWrap.innerHTML = data.map(renderMaquinaCard).join('');
+      cardsWrap.querySelectorAll('.btn-edit-maq').forEach(btn => {
+        btn.addEventListener('click', e => { e.stopPropagation(); const m = maquinasCache.find(x => x.id == btn.dataset.id); if (m) openModalMaquina(m); });
+      });
+      cardsWrap.querySelectorAll('.btn-delete-maq').forEach(btn => {
+        btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar esta máquina?', () => deleteMaquina(btn.dataset.id)); });
+      });
+      cardsWrap.querySelectorAll('.btn-view-maq').forEach(btn => {
+        btn.addEventListener('click', e => { e.stopPropagation(); const m = maquinasCache.find(x => x.id == btn.dataset.id); if (m) renderMaquinaFicha(m); });
+      });
+      return;
+    }
+
+    // Vista tabla
+    if (!tbody) return;
     tbody.innerHTML = '';
     if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="empty">No hay máquinas. Carga datos demo o agrega una nueva.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay máquinas. Carga datos demo o agrega una nueva.</td></tr>';
       return;
     }
     data.forEach(m => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${m.id}</td>
-        <td>${escapeHtml(m.nombre || '')}</td>
+        <td>${escapeHtml(m.categoria || '')}</td>
+        <td><strong>${escapeHtml(m.modelo || m.nombre || '')}</strong></td>
         <td>${escapeHtml(m.cliente_nombre || '')}</td>
-        <td>${escapeHtml(m.marca || '')}</td>
-        <td>${escapeHtml(m.modelo || '')}</td>
         <td>${escapeHtml(m.numero_serie || '')}</td>
         <td>${escapeHtml(m.ubicacion || '')}</td>
         <td class="th-actions">
+          <button type="button" class="btn small outline btn-view-maq" data-id="${m.id}" title="Ver ficha"><i class="fas fa-eye"></i></button>
           <button type="button" class="btn small primary btn-edit-maq" data-id="${m.id}"><i class="fas fa-edit"></i></button>
           <button type="button" class="btn small danger btn-delete-maq" data-id="${m.id}"><i class="fas fa-trash"></i></button>
         </td>
@@ -1292,6 +1380,9 @@
       tbody.appendChild(tr);
     });
     updateTableFooter('tabla-maquinas', data.length, maquinasCache.length, () => clearTableFiltersAndRefresh('tabla-maquinas', null, applyMaquinasFiltersAndRender), arguments[1]);
+    tbody.querySelectorAll('.btn-view-maq').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); const m = data.find(x => x.id == btn.dataset.id); if (m) renderMaquinaFicha(m); });
+    });
     tbody.querySelectorAll('.btn-edit-maq').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const m = data.find(x => x.id == btn.dataset.id); if (m) openModalMaquina(m); });
     });
@@ -1310,12 +1401,24 @@
 
   async function loadMaquinas() {
     showLoading();
-    renderTableSkeleton('tabla-maquinas', 8);
+    renderTableSkeleton('tabla-maquinas', 7);
     const clienteId = qs('#filtro-cliente-maq') && qs('#filtro-cliente-maq').value;
     const url = clienteId ? `${API}/maquinas?cliente_id=${clienteId}` : `${API}/maquinas`;
     try {
       const data = await fetchJson(url);
       maquinasCache = data;
+      // Poblar filtro de categoría
+      const catSel = qs('#filtro-categoria-maq');
+      if (catSel) {
+        const cats = [...new Set(data.map(m => m.categoria).filter(Boolean))].sort();
+        catSel.innerHTML = '<option value="">Todas las categorías</option>' + cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      }
+      // Poblar filtro de zona
+      const zonaSel = qs('#filtro-zona-maq');
+      if (zonaSel) {
+        const zonas = [...new Set(data.map(m => m.ubicacion).filter(Boolean))].sort();
+        zonaSel.innerHTML = '<option value="">Todas las zonas</option>' + zonas.map(z => `<option value="${escapeHtml(z)}">${escapeHtml(z)}</option>`).join('');
+      }
       applyMaquinasFiltersAndRender();
     } catch (e) { renderMaquinas([]); console.error(e); }
     finally { hideLoading(); }
@@ -1374,9 +1477,8 @@
         <td class="sla-cell"><span class="semaforo semaforo-${vig.color}" title="${escapeHtml(vig.label)}"><i class="fas ${vig.icon}"></i> ${escapeHtml(vig.label)}</span></td>
         <td class="th-actions">
           <button type="button" class="btn small outline btn-pdf-cot" data-id="${c.id}" title="Descargar / Imprimir PDF para cliente"><i class="fas fa-file-pdf"></i></button>
-          ${c.estado !== 'aplicada' && c.estado !== 'venta' ? `<button type="button" class="btn small success btn-aplicar-cot" data-id="${c.id}" title="Aplicar como venta"><i class="fas fa-check"></i></button>` : ''}
+          ${c.estado !== 'aplicada' && c.estado !== 'venta' ? `<button type="button" class="btn small success btn-aplicar-cot" data-id="${c.id}" title="Aprobar como venta"><i class="fas fa-check"></i></button>` : ''}
           <button type="button" class="btn small primary btn-edit-cot" data-id="${c.id}" title="Editar"><i class="fas fa-edit"></i></button>
-          <button type="button" class="btn small outline btn-duplicate-cot" data-id="${c.id}" title="Duplicar cotización"><i class="fas fa-copy"></i></button>
           <button type="button" class="btn small danger btn-delete-cot" data-id="${c.id}" title="Eliminar"><i class="fas fa-trash"></i></button>
         </td>
       `;
@@ -1394,9 +1496,7 @@
     tbody.querySelectorAll('.btn-edit-cot').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); editCotizacion(btn.dataset.id); });
     });
-    tbody.querySelectorAll('.btn-duplicate-cot').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); duplicateCotizacion(btn.dataset.id); });
-    });
+    // btn-duplicate-cot removido
     tbody.querySelectorAll('.btn-delete-cot').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar esta cotización?', () => deleteCotizacion(btn.dataset.id)); });
     });
@@ -1479,31 +1579,62 @@
     } finally { hideLoading(); }
   }
 
+  // Prioridad para ordenamiento de reportes: garantía=0, instalación=1, servicio=2
+  function reporteTipoPrioridad(tipo) {
+    if (tipo === 'garantia') return 0;
+    if (tipo === 'instalacion') return 1;
+    return 2; // servicio u otro
+  }
+
   function renderReportes(data) {
     const tbody = qs('#tabla-reportes tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
+    const isAdmin = currentUser && (currentUser.role === 'admin');
+
+    // Ocultar columna fecha programada si no es admin
+    const adminCols = document.querySelectorAll('.admin-only-col');
+    adminCols.forEach(el => { el.style.display = isAdmin ? '' : 'none'; });
+
     if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="11" class="empty">No hay reportes. Agrega uno nuevo.</td></tr>';
+      tbody.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 11}" class="empty">No hay reportes. Agrega uno nuevo.</td></tr>`;
       updateTableFooter('tabla-reportes', 0, reportesCache.length, () => clearTableFiltersAndRefresh('tabla-reportes', null, applyReportesFiltersAndRender));
       return;
     }
-    data.forEach(r => {
+
+    // Ordenar: garantía → instalación → servicio, luego por fecha desc
+    const sorted = [...data].sort((a, b) => {
+      const pa = reporteTipoPrioridad(a.tipo_reporte);
+      const pb = reporteTipoPrioridad(b.tipo_reporte);
+      if (pa !== pb) return pa - pb;
+      return String(b.fecha || '').localeCompare(String(a.fecha || ''));
+    });
+
+    const TIPO_LABELS = { garantia: 'Garantía', instalacion: 'Instalación', servicio: 'Servicio', venta: 'Venta' };
+    const TIPO_COLORS = { garantia: 'garantia', instalacion: 'instalacion', servicio: 'servicio', venta: 'venta' };
+
+    sorted.forEach(r => {
       const tr = document.createElement('tr');
-      const tipoLabel = r.tipo_reporte === 'servicio' ? 'Servicio' : r.tipo_reporte === 'venta' ? 'Venta' : (r.tipo_reporte || '');
-      const subLabel = r.subtipo || '';
+      const tipoLabel = TIPO_LABELS[r.tipo_reporte] || r.tipo_reporte || '';
       const estLabel = r.estatus || '—';
+      const fpCell = isAdmin ? `<td>${escapeHtml((r.fecha_programada || '').toString().slice(0, 10))}</td>` : '';
+      const finalizado = Number(r.finalizado) === 1;
       tr.innerHTML = `
         <td>${escapeHtml(r.folio || '')}</td>
         <td>${escapeHtml(r.razon_social || r.cliente_nombre || '')}</td>
-        <td>${escapeHtml(r.maquina_nombre || '')}</td>
-        <td>${escapeHtml(r.numero_maquina || '')}</td>
-        <td><span class="badge badge-tipo-rep-${r.tipo_reporte || 'otro'}">${tipoLabel}</span></td>
-        <td>${escapeHtml(subLabel)}</td>
-        <td class="td-text-wrap">${escapeHtml(r.descripcion || '')}</td>
+        <td>${escapeHtml(r.maquina_nombre || r.maquina_modelo || '')}</td>
+        <td>${escapeHtml(r.numero_maquina || r.maquina_serie || '')}</td>
+        <td><span class="badge badge-tipo-rep-${TIPO_COLORS[r.tipo_reporte] || 'otro'}">${tipoLabel}</span></td>
+        <td>${escapeHtml(r.subtipo || '')}</td>
         <td>${escapeHtml(r.tecnico || '')}</td>
         <td>${escapeHtml((r.fecha || '').toString().slice(0, 10))}</td>
-        <td>${escapeHtml(estLabel)}</td>
+        ${fpCell}
+        <td><span class="semaforo semaforo-${r.estatus === 'en_proceso' ? 'warn' : r.estatus === 'cerrado' ? 'ok' : 'gray'}">${estLabel}</span></td>
+        <td>
+          ${finalizado
+            ? `<span class="badge badge-ok"><i class="fas fa-check-circle"></i> Finalizado</span>`
+            : `<button type="button" class="btn tiny success btn-finalizar-rep" data-id="${r.id}" title="Marcar como finalizado (escanear firma)"><i class="fas fa-check"></i> Finalizar</button>`}
+        </td>
         <td class="th-actions">
           <button type="button" class="btn small primary btn-edit-rep" data-id="${r.id}"><i class="fas fa-edit"></i></button>
           <button type="button" class="btn small danger btn-del-rep" data-id="${r.id}"><i class="fas fa-trash"></i></button>
@@ -1517,7 +1648,33 @@
     tbody.querySelectorAll('.btn-del-rep').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar este reporte?', () => deleteReporte(btn.dataset.id)); });
     });
+    tbody.querySelectorAll('.btn-finalizar-rep').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); finalizarReporte(btn.dataset.id); });
+    });
     updateTableFooter('tabla-reportes', data.length, reportesCache.length, () => clearTableFiltersAndRefresh('tabla-reportes', null, applyReportesFiltersAndRender));
+  }
+
+  async function finalizarReporte(id) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*,application/pdf';
+    input.onchange = async () => {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          await fetchJson(API + '/reportes/' + id, {
+            method: 'PUT',
+            body: JSON.stringify({ finalizado: 1, archivo_firmado_b64: ev.target.result, archivo_firmado_nombre: file.name }),
+          });
+          showToast('Reporte finalizado correctamente.', 'success');
+          loadReportes();
+        } catch (er) { showToast(parseApiError(er), 'error'); }
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
   }
 
   function normalizeReporteSubtipo(v) {
@@ -1596,40 +1753,71 @@
 
   function openModalReporte(reporte) {
     const isNew = !reporte || !reporte.id;
-    const clientesOpts = clientesCache.map(c => `<option value="${c.id}" ${reporte && reporte.cliente_id == c.id ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`).join('');
-    const maquinasOpts = maquinasCache.map(m => `<option value="${m.id}" ${reporte && reporte.maquina_id == m.id ? 'selected' : ''}>${escapeHtml(m.modelo || m.nombre || m.numero_serie || '')}</option>`).join('');
-    const tecnOpts = tecnicosCache.map(t => `<option value="${escapeHtml(t.nombre)}" ${reporte && reporte.tecnico === t.nombre ? 'selected' : ''}>${escapeHtml(t.nombre)}</option>`).join('');
+    const isAdmin = currentUser && currentUser.role === 'admin';
+
+    const clientesOpts = clientesCache.map(c =>
+      `<option value="${c.id}" data-nombre="${escapeHtml(c.nombre)}" ${reporte && reporte.cliente_id == c.id ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`
+    ).join('');
+
+    // Filtrar máquinas por cliente si hay uno seleccionado
+    const maqAll = maquinasCache;
+    const maquinasOpts = (maqAll.length
+      ? maqAll.map(m => `<option value="${m.id}" data-serie="${escapeHtml(m.numero_serie || '')}" ${reporte && reporte.maquina_id == m.id ? 'selected' : ''}>${escapeHtml(m.modelo || m.nombre || '')} – ${escapeHtml(m.numero_serie || '')}</option>`)
+      : ['<option value="">— Sin máquinas —</option>']
+    ).join('');
+
+    const tecnOpts = tecnicosCache.map(t => {
+      const selected = reporte && reporte.tecnico === t.nombre ? 'selected' : '';
+      const label = t.ocupado && !(reporte && reporte.tecnico === t.nombre) ? `${escapeHtml(t.nombre)} 🔒 Ocupado` : escapeHtml(t.nombre);
+      const disabled = t.ocupado && !isAdmin && !(reporte && reporte.tecnico === t.nombre) ? 'disabled' : '';
+      return `<option value="${escapeHtml(t.nombre)}" ${selected} ${disabled}>${label}</option>`;
+    }).join('');
+
+    const fpVal = (reporte && reporte.fecha_programada || '').toString().slice(0, 10);
+    const adminFields = isAdmin ? `
+      <div class="form-row">
+        <div class="form-group"><label><i class="fas fa-lock" style="font-size:.8em;opacity:.6"></i> Fecha programada <small>(admin)</small></label>
+          <input type="date" id="m-fecha-prog" value="${fpVal}">
+        </div>
+        <div class="form-group"></div>
+      </div>` : '';
+
     const body = `
       <div class="form-row">
-        <div class="form-group"><label>Razón social</label><input type="text" id="m-rsocial" maxlength="200" value="${escapeHtml(reporte && reporte.razon_social) || ''}" placeholder="Nombre del cliente"></div>
-        <div class="form-group"><label>Cliente (catálogo)</label>
-          <select id="m-cliente"><option value="">— Sin cliente registrado —</option>${clientesOpts}</select>
+        <div class="form-group"><label>Razón social / Cliente *</label>
+          <select id="m-cliente"><option value="">— Seleccionar cliente —</option>${clientesOpts}</select>
+        </div>
+        <div class="form-group"><label>Razón social (texto libre)</label>
+          <input type="text" id="m-rsocial" maxlength="200" value="${escapeHtml(reporte && reporte.razon_social) || ''}" placeholder="Se llena automáticamente al elegir cliente">
         </div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>Máquina</label>
+        <div class="form-group"><label>Máquina (catálogo)</label>
           <select id="m-maquina"><option value="">— Selecciona —</option>${maquinasOpts}</select>
         </div>
-        <div class="form-group"><label>Número de máquina</label><input type="text" id="m-num-maq" maxlength="50" value="${escapeHtml(reporte && reporte.numero_maquina) || ''}"></div>
+        <div class="form-group"><label>Nº de serie (automático)</label>
+          <input type="text" id="m-num-maq" maxlength="80" value="${escapeHtml(reporte && reporte.numero_maquina) || ''}" readonly style="background:var(--bg-alt,#f8fafc)">
+        </div>
       </div>
       <div class="form-row">
         <div class="form-group"><label>Tipo de reporte *</label>
           <select id="m-tipo-rep">
-            <option value="servicio" ${reporte && reporte.tipo_reporte === 'servicio' ? 'selected' : ''}>Servicio</option>
-            <option value="venta" ${reporte && reporte.tipo_reporte === 'venta' ? 'selected' : ''}>Venta</option>
+            <option value="garantia" ${reporte && reporte.tipo_reporte === 'garantia' ? 'selected' : ''}>Garantía</option>
+            <option value="instalacion" ${reporte && reporte.tipo_reporte === 'instalacion' ? 'selected' : ''}>Instalación</option>
+            <option value="servicio" ${!reporte || reporte.tipo_reporte === 'servicio' || !reporte.tipo_reporte ? 'selected' : ''}>Servicio</option>
           </select>
         </div>
-        <div class="form-group"><label>Subtipo *</label>
-          <select id="m-subtipo-rep">
-            <option value="">— Selecciona tipo primero —</option>
-          </select>
+        <div class="form-group"><label>Subtipo</label>
+          <select id="m-subtipo-rep"><option value="">— Selecciona —</option></select>
         </div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>Técnico</label>
+        <div class="form-group"><label>Técnico asignado</label>
           <select id="m-tecnico-rep"><option value="">— Sin asignar —</option>${tecnOpts}</select>
         </div>
-        <div class="form-group"><label>Fecha</label><input type="date" id="m-fecha-rep" value="${(reporte && reporte.fecha || new Date().toISOString().slice(0,10))}"></div>
+        <div class="form-group"><label>Fecha del reporte</label>
+          <input type="date" id="m-fecha-rep" value="${(reporte && reporte.fecha || new Date().toISOString().slice(0,10))}">
+        </div>
         <div class="form-group"><label>Estatus</label>
           <select id="m-est-rep">
             <option value="abierto" ${!reporte || reporte.estatus === 'abierto' ? 'selected' : ''}>Abierto</option>
@@ -1638,43 +1826,90 @@
           </select>
         </div>
       </div>
-      <div class="form-group"><label>Descripción *</label><textarea id="m-desc-rep" rows="3" maxlength="1000">${escapeHtml(reporte && reporte.descripcion) || ''}</textarea></div>
-      <div class="form-group"><label>Notas</label><textarea id="m-notas-rep" rows="2" maxlength="500">${escapeHtml(reporte && reporte.notas) || ''}</textarea></div>
+      ${adminFields}
+      <div class="form-group"><label>Descripción del servicio</label>
+        <textarea id="m-desc-rep" rows="3" maxlength="1000">${escapeHtml(reporte && reporte.descripcion) || ''}</textarea>
+      </div>
+      <div class="form-group"><label>Notas</label>
+        <textarea id="m-notas-rep" rows="2" maxlength="500">${escapeHtml(reporte && reporte.notas) || ''}</textarea>
+      </div>
       <div class="form-actions">
         <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
         <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
       </div>
     `;
     openModal(isNew ? 'Nuevo reporte' : 'Editar reporte', body);
-    // Subtipos dinámicos
-    const SUBTIPOS = {
-      servicio: ['Falla eléctrica', 'Falla mecánica', 'Falla electrónica', 'Otro'],
-      venta: ['Instalación', 'Capacitación', 'Garantía', 'Otra'],
+
+    // Subtipos dinámicos por tipo de reporte
+    const SUBTIPOS_REP = {
+      garantia:   ['Mantenimiento preventivo', 'Mantenimiento correctivo', 'Falla mecánica', 'Falla electrónica', 'Otro'],
+      instalacion:['Instalación de máquina', 'Puesta en marcha', 'Capacitación', 'Falta capacitación', 'Otro'],
+      servicio:   ['Falla eléctrica', 'Falla mecánica', 'Falla electrónica', 'Capacitación', 'Falta capacitación', 'Otro'],
     };
     const tipoSel = qs('#m-tipo-rep');
-    const subSel = qs('#m-subtipo-rep');
-    function updateSubtipos() {
-      const opts = SUBTIPOS[tipoSel.value] || [];
-      subSel.innerHTML = opts.map(s => `<option value="${s}" ${reporte && reporte.subtipo === s ? 'selected' : ''}>${s}</option>`).join('');
+    const subSel  = qs('#m-subtipo-rep');
+    const maqSel  = qs('#m-maquina');
+    const numMaqEl = qs('#m-num-maq');
+    const clienteSel = qs('#m-cliente');
+    const rsocialEl  = qs('#m-rsocial');
+
+    function updateSubtiposRep() {
+      const opts = SUBTIPOS_REP[tipoSel.value] || [];
+      const cur = reporte && reporte.subtipo;
+      subSel.innerHTML = `<option value="">— Selecciona —</option>` +
+        opts.map(s => `<option value="${s}" ${cur === s ? 'selected' : ''}>${s}</option>`).join('');
     }
-    tipoSel.addEventListener('change', updateSubtipos);
-    updateSubtipos();
+    tipoSel.addEventListener('change', updateSubtiposRep);
+    updateSubtiposRep();
+
+    // Al cambiar máquina → auto-llenar nº serie
+    if (maqSel && numMaqEl) {
+      maqSel.addEventListener('change', () => {
+        const opt = maqSel.options[maqSel.selectedIndex];
+        numMaqEl.value = opt ? (opt.dataset.serie || '') : '';
+      });
+    }
+
+    // Al cambiar cliente → auto-llenar razón social
+    if (clienteSel && rsocialEl) {
+      clienteSel.addEventListener('change', () => {
+        const opt = clienteSel.options[clienteSel.selectedIndex];
+        if (opt && opt.value) rsocialEl.value = opt.dataset.nombre || '';
+      });
+    }
+
+    // Auto-status: si técnico asignado + fecha_programada (admin) → en_proceso
+    function autoStatus() {
+      const tecSel = qs('#m-tecnico-rep');
+      const fpEl   = qs('#m-fecha-prog');
+      const estSel = qs('#m-est-rep');
+      if (!estSel) return;
+      if (tecSel && tecSel.value && fpEl && fpEl.value && estSel.value === 'abierto') {
+        estSel.value = 'en_proceso';
+      }
+    }
+    qs('#m-tecnico-rep') && qs('#m-tecnico-rep').addEventListener('change', autoStatus);
+    qs('#m-fecha-prog') && qs('#m-fecha-prog').addEventListener('change', autoStatus);
+
     qs('#m-save').onclick = async () => {
-      const desc = qs('#m-desc-rep').value.trim();
-      if (!desc) { showToast('La descripción es obligatoria.', 'error'); return; }
+      const tipo = qs('#m-tipo-rep').value;
+      if (!tipo) { showToast('Selecciona el tipo de reporte.', 'error'); return; }
       const payload = {
         cliente_id: qs('#m-cliente').value || null,
         razon_social: qs('#m-rsocial').value.trim() || null,
         maquina_id: qs('#m-maquina').value || null,
         numero_maquina: qs('#m-num-maq').value.trim() || null,
-        tipo_reporte: qs('#m-tipo-rep').value,
+        tipo_reporte: tipo,
         subtipo: qs('#m-subtipo-rep').value || null,
-        descripcion: desc,
+        descripcion: qs('#m-desc-rep').value.trim() || null,
         tecnico: qs('#m-tecnico-rep').value || null,
         fecha: qs('#m-fecha-rep').value,
         estatus: qs('#m-est-rep').value,
         notas: qs('#m-notas-rep').value.trim() || null,
+        fecha_programada: isAdmin && qs('#m-fecha-prog') ? (qs('#m-fecha-prog').value || null) : undefined,
       };
+      // Si no es admin, no enviar fecha_programada
+      if (!isAdmin) delete payload.fecha_programada;
       try {
         if (isNew) await fetchJson(API + '/reportes', { method: 'POST', body: JSON.stringify(payload) });
         else await fetchJson(API + '/reportes/' + reporte.id, { method: 'PUT', body: JSON.stringify(payload) });
@@ -1855,7 +2090,7 @@
     if (!tbody) return;
     tbody.innerHTML = '';
     if (!data || !data.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay garantías sin cobertura.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">No hay garantías sin cobertura.</td></tr>';
       return;
     }
     const filtered = applyFilters(data, getFilterValues('#tabla-garantias-sin'), 'tabla-garantias-sin');
@@ -1866,7 +2101,6 @@
         <td>${escapeHtml(g.razon_social || '')}</td>
         <td>${escapeHtml(g.modelo_maquina || '')}</td>
         <td>${escapeHtml(g.numero_serie || '')}</td>
-        <td>${escapeHtml(g.tipo_maquina || '')}</td>
         <td>${escapeHtml((g.fecha_entrega || '').toString().slice(0, 10))}</td>
         <td><span class="badge badge-gar-mant">${nMant}</span></td>
         <td class="th-actions">
@@ -1946,7 +2180,7 @@
     if (!tbody) return;
     tbody.innerHTML = '';
     if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="empty">No hay garantías registradas. Agrega una.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay garantías registradas. Agrega una.</td></tr>';
       return;
     }
     data.forEach(g => {
@@ -1957,7 +2191,6 @@
         <td>${escapeHtml(g.razon_social || '')}</td>
         <td>${escapeHtml(g.modelo_maquina || '')}</td>
         <td>${escapeHtml(g.numero_serie || '')}</td>
-        <td>${escapeHtml(g.tipo_maquina || '')}</td>
         <td>${escapeHtml((g.fecha_entrega || '').toString().slice(0,10))}</td>
         <td><span class="badge badge-gar-mant" title="Mantenimientos registrados">${nMant}</span></td>
         <td><span class="badge badge-gar-${activa ? 'activa' : 'cancelada'}">${activa ? 'Sí' : 'No'}</span></td>
@@ -1993,7 +2226,6 @@
       </div>
       <div class="form-row">
         <div class="form-group"><label>Modelo de máquina *</label><input type="text" id="m-modelo-g" maxlength="100" value="${escapeHtml(garantia && garantia.modelo_maquina) || ''}" required></div>
-        <div class="form-group"><label>Tipo de máquina</label><input type="text" id="m-tipo-maq-g" maxlength="80" value="${escapeHtml(garantia && garantia.tipo_maquina) || ''}" placeholder="Fresadora, CNC…"></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label>Número de serie *</label><input type="text" id="m-nserie-g" maxlength="80" value="${escapeHtml(garantia && garantia.numero_serie) || ''}" required></div>
@@ -2037,7 +2269,6 @@
         cliente_id: clienteId,
         razon_social: rsocial,
         modelo_maquina: modelo,
-        tipo_maquina: qs('#m-tipo-maq-g').value.trim() || null,
         numero_serie: nserie,
         fecha_entrega: fent,
       };
@@ -2915,8 +3146,18 @@
       </div>
       <div class="form-group"><label>Nº parte en manual (Assembly of Parts)</label><input type="text" id="m-noparte" maxlength="80" value="${escapeHtml(refaccion && refaccion.numero_parte_manual) || ''}" placeholder="Ej. 12-34-567"></div>
       <div class="form-row">
-        <div class="form-group"><label>URL imagen</label><input type="url" id="m-imagen" maxlength="500" value="${escapeHtml(refaccion && refaccion.imagen_url) || ''}" placeholder="https://..."></div>
-        <div class="form-group"><label>URL manual PDF</label><input type="url" id="m-manual" maxlength="500" value="${escapeHtml(refaccion && refaccion.manual_url) || ''}" placeholder="https://..."></div>
+        <div class="form-group">
+          <label>Foto 1: Manual de partes</label>
+          <input type="file" id="m-foto1-file" accept="image/*" style="margin-bottom:0.3rem">
+          ${refaccion && refaccion.imagen_url ? `<div class="ref-foto-preview-wrap"><img src="${escapeHtml(refaccion.imagen_url)}" class="ref-foto-thumb" alt="Foto 1"><button type="button" class="btn small danger" id="m-foto1-clear" style="margin-left:0.5rem"><i class="fas fa-times"></i></button></div>` : ''}
+          <input type="hidden" id="m-imagen" value="${escapeHtml(refaccion && refaccion.imagen_url) || ''}">
+        </div>
+        <div class="form-group">
+          <label>Foto 2: Diagrama de ensamblado</label>
+          <input type="file" id="m-foto2-file" accept="image/*" style="margin-bottom:0.3rem">
+          ${refaccion && refaccion.manual_url ? `<div class="ref-foto-preview-wrap"><img src="${escapeHtml(refaccion.manual_url)}" class="ref-foto-thumb" alt="Foto 2"><button type="button" class="btn small danger" id="m-foto2-clear" style="margin-left:0.5rem"><i class="fas fa-times"></i></button></div>` : ''}
+          <input type="hidden" id="m-manual" value="${escapeHtml(refaccion && refaccion.manual_url) || ''}">
+        </div>
       </div>
       <div class="form-actions">
         <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
@@ -2924,6 +3165,11 @@
       </div>
     `;
     openModal(isNew ? 'Nueva refacción' : 'Editar refacción', body);
+    // Clear buttons for existing photos
+    const foto1ClearBtn = qs('#m-foto1-clear');
+    const foto2ClearBtn = qs('#m-foto2-clear');
+    if (foto1ClearBtn) foto1ClearBtn.addEventListener('click', () => { qs('#m-imagen').value = ''; foto1ClearBtn.closest('.ref-foto-preview-wrap').remove(); });
+    if (foto2ClearBtn) foto2ClearBtn.addEventListener('click', () => { qs('#m-manual').value = ''; foto2ClearBtn.closest('.ref-foto-preview-wrap').remove(); });
     qs('#m-save').onclick = async () => {
       clearInvalidMarks();
       const codigo = qs('#m-codigo').value.trim();
@@ -2933,6 +3179,17 @@
       if (err) { markInvalid('m-codigo', err); return; }
       err = validateRequired(descripcion, 'Descripción es obligatoria');
       if (err) { markInvalid('m-descripcion', err); return; }
+      // Read file inputs as base64 data URLs if selected
+      const readFileAsDataUrl = (fileInput) => new Promise((res) => {
+        const file = fileInput && fileInput.files && fileInput.files[0];
+        if (!file) { res(null); return; }
+        const reader = new FileReader();
+        reader.onload = (e) => res(e.target.result);
+        reader.onerror = () => res(null);
+        reader.readAsDataURL(file);
+      });
+      const foto1Data = await readFileAsDataUrl(qs('#m-foto1-file'));
+      const foto2Data = await readFileAsDataUrl(qs('#m-foto2-file'));
       const payload = {
         codigo,
         descripcion,
@@ -2944,8 +3201,8 @@
         unidad: qs('#m-unidad').value.trim() || 'PZA',
         categoria: qs('#m-categoria').value.trim() || null,
         subcategoria: qs('#m-subcategoria').value.trim() || null,
-        imagen_url: qs('#m-imagen').value.trim() || null,
-        manual_url: qs('#m-manual').value.trim() || null,
+        imagen_url: foto1Data || qs('#m-imagen').value.trim() || null,
+        manual_url: foto2Data || qs('#m-manual').value.trim() || null,
         numero_parte_manual: qs('#m-noparte').value.trim() || null,
       };
       const btn = qs('#m-save');
@@ -2964,14 +3221,14 @@
     };
   }
 
-  // Modal para ver imagen/manual de refacción
+  // Modal para ver imágenes de refacción
   function openModalRefaccionImagen(ref) {
+    const isImage = (url) => url && (url.startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(url));
+    const foto1 = ref.imagen_url ? (isImage(ref.imagen_url) ? `<div style="text-align:center"><p style="font-size:0.8rem;color:#6b7280;margin-bottom:0.4rem">Manual de partes</p><img src="${escapeHtml(ref.imagen_url)}" alt="Foto 1" style="max-width:100%;max-height:320px;border-radius:8px;border:1px solid #e2e8f0"></div>` : `<div><a href="${escapeHtml(ref.imagen_url)}" target="_blank" class="btn outline"><i class="fas fa-external-link-alt"></i> Ver foto 1</a></div>`) : '<p style="color:#6b7280;font-size:0.85rem">Sin foto 1.</p>';
+    const foto2 = ref.manual_url ? (isImage(ref.manual_url) ? `<div style="text-align:center"><p style="font-size:0.8rem;color:#6b7280;margin-bottom:0.4rem">Diagrama de ensamblado</p><img src="${escapeHtml(ref.manual_url)}" alt="Foto 2" style="max-width:100%;max-height:320px;border-radius:8px;border:1px solid #e2e8f0"></div>` : `<div><a href="${escapeHtml(ref.manual_url)}" target="_blank" class="btn outline"><i class="fas fa-external-link-alt"></i> Ver foto 2</a></div>`) : '<p style="color:#6b7280;font-size:0.85rem">Sin foto 2.</p>';
     const body = `
-      <div style="text-align:center;padding:1rem 0">
-        <p style="margin-bottom:0.5rem"><strong>Código:</strong> ${escapeHtml(ref.codigo)} &nbsp; <strong>Nº parte:</strong> ${escapeHtml(ref.numero_parte_manual || '—')}</p>
-        ${ref.imagen_url ? `<img src="${escapeHtml(ref.imagen_url)}" alt="Imagen refacción" style="max-width:100%;max-height:300px;border-radius:8px;margin-bottom:1rem">` : '<p style="color:#6b7280">Sin imagen registrada.</p>'}
-        ${ref.manual_url ? `<div><a href="${escapeHtml(ref.manual_url)}" target="_blank" class="btn outline"><i class="fas fa-file-pdf"></i> Ver manual PDF</a></div>` : '<p style="color:#6b7280">Sin manual registrado.</p>'}
-      </div>
+      <p style="margin-bottom:0.75rem"><strong>Código:</strong> ${escapeHtml(ref.codigo)} &nbsp; <strong>Nº parte:</strong> ${escapeHtml(ref.numero_parte_manual || '—')}</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">${foto1}${foto2}</div>
     `;
     openModal('Refacción: ' + (ref.descripcion || ref.codigo), body);
   }
@@ -3020,15 +3277,30 @@
     const isNew = !maquina || !maquina.id;
     const clientes = await fetchJson(API + '/clientes').catch(() => []);
     const options = clientes.map(c => `<option value="${c.id}" ${maquina && maquina.cliente_id == c.id ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`).join('');
+    const catOpts = CATEGORIAS_MAQUINAS.map(c => `<option value="${c}" ${maquina && maquina.categoria === c ? 'selected' : ''}>${c}</option>`).join('');
+    const zonasSucursal = ['Monterrey', 'Guanajuato', 'Ciudad de México', 'Guadalajara', 'Querétaro', 'Saltillo', 'San Luis Potosí', 'Otra'];
+    const zonaOpts = zonasSucursal.map(z => `<option value="${z}" ${maquina && maquina.ubicacion === z ? 'selected' : ''}>${z}</option>`).join('');
     const body = `
       <div class="form-group"><label>Cliente *</label><select id="m-cliente_id">${options}</select></div>
-      <div class="form-group"><label>Nombre *</label><input type="text" id="m-nombre" maxlength="150" value="${escapeHtml(maquina && maquina.nombre) || ''}" required placeholder="Nombre o identificador de la máquina"></div>
       <div class="form-row">
-        <div class="form-group"><label>Marca</label><input type="text" id="m-marca" maxlength="80" value="${escapeHtml(maquina && maquina.marca) || ''}"></div>
-        <div class="form-group"><label>Modelo</label><input type="text" id="m-modelo" maxlength="80" value="${escapeHtml(maquina && maquina.modelo) || ''}"></div>
+        <div class="form-group"><label>Categoría *</label>
+          <select id="m-categoria">
+            <option value="">-- Seleccionar --</option>
+            ${catOpts}
+          </select>
+        </div>
+        <div class="form-group"><label>Modelo *</label><input type="text" id="m-modelo" maxlength="80" value="${escapeHtml(maquina && maquina.modelo) || ''}" required placeholder="Ej: CTX 510, EcoTurn 400…"></div>
       </div>
-      <div class="form-group"><label>Nº Serie</label><input type="text" id="m-numero_serie" maxlength="80" value="${escapeHtml(maquina && maquina.numero_serie) || ''}"></div>
-      <div class="form-group"><label>Ubicación</label><input type="text" id="m-ubicacion" maxlength="150" value="${escapeHtml(maquina && maquina.ubicacion) || ''}"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Nº Serie</label><input type="text" id="m-numero_serie" maxlength="80" value="${escapeHtml(maquina && maquina.numero_serie) || ''}"></div>
+        <div class="form-group"><label>Zona / Sucursal</label>
+          <select id="m-ubicacion">
+            <option value="">-- Seleccionar --</option>
+            ${zonaOpts}
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Nombre / Identificador interno</label><input type="text" id="m-nombre" maxlength="150" value="${escapeHtml(maquina && maquina.nombre) || ''}" placeholder="Nombre interno opcional"></div>
       <div class="form-actions">
         <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
         <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
@@ -3037,14 +3309,14 @@
     openModal(isNew ? 'Nueva máquina' : 'Editar máquina', body);
     qs('#m-save').onclick = async () => {
       clearInvalidMarks();
-      const nombre = qs('#m-nombre').value.trim();
-      let err = validateRequired(nombre, 'Nombre de la máquina es obligatorio');
-      if (err) { markInvalid('m-nombre', err); return; }
+      const modelo = (qs('#m-modelo').value || '').trim();
+      let err = validateRequired(modelo, 'El modelo de la máquina es obligatorio');
+      if (err) { markInvalid('m-modelo', err); return; }
       const payload = {
         cliente_id: parseInt(qs('#m-cliente_id').value, 10),
-        nombre,
-        marca: qs('#m-marca').value.trim() || null,
-        modelo: qs('#m-modelo').value.trim() || null,
+        nombre: qs('#m-nombre').value.trim() || modelo,
+        categoria: qs('#m-categoria').value.trim() || null,
+        modelo,
         numero_serie: qs('#m-numero_serie').value.trim() || null,
         ubicacion: qs('#m-ubicacion').value.trim() || null,
       };
@@ -3180,25 +3452,66 @@
           <input type="text" id="cot-line-desc" placeholder="Ej. Diagnóstico, traslado (ida), reparación, etc.">
         </div>
 
-        <div class="form-group" id="cot-line-bit-wrap" style="display:none">
+        <div class=”form-group” id=”cot-line-bit-wrap” style=”display:none”>
           <label>Bitácora ligada (opcional)</label>
-          <select id="cot-line-bitacora">
-            <option value="">— Sin bitácora —</option>
+          <select id=”cot-line-bitacora”>
+            <option value=””>— Sin bitácora —</option>
           </select>
-          <div class="hint">Solo aparecen bitácoras ligadas a esta cotización. Si no hay ninguna, usa el botón “Nueva bitácora” o créala en la pestaña Bitácora eligiendo esta misma cotización.</div>
-          <div class="form-actions" style="margin-top:0.5rem;">
-            <button type="button" class="btn small outline" id="cot-line-new-bit"><i class="fas fa-clock"></i> Nueva bitácora</button>
+          <div class=”hint”>Solo aparecen bitácoras ligadas a esta cotización. Si no hay ninguna, usa el botón “Nueva bitácora” o créala en la pestaña Bitácora eligiendo esta misma cotización.</div>
+          <div class=”form-actions” style=”margin-top:0.5rem;”>
+            <button type=”button” class=”btn small outline” id=”cot-line-new-bit”><i class=”fas fa-clock”></i> Nueva bitácora</button>
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label>Cantidad / Horas</label>
-            <input type="number" id="cot-line-cant" step="0.25" min="0" value="1">
+        <!-- MANO DE OBRA: campos adicionales -->
+        <div id=”cot-line-mo-wrap” style=”display:none”>
+          <div class=”mo-fields-grid”>
+            <div class=”form-group”>
+              <label>Tipo de técnico</label>
+              <select id=”cot-line-mo-tipo-tec”>
+                <option value=”mecanico”>Mecánico</option>
+                <option value=”electronico”>Electrónico</option>
+                <option value=”cnc”>CNC / Programación</option>
+              </select>
+            </div>
+            <div class=”form-group”>
+              <label>Zona de servicio</label>
+              <select id=”cot-line-mo-zona”>
+                <option value=”a”>A – Local (Monterrey)</option>
+                <option value=”b”>B – Regional (Guanajuato, QRO)</option>
+                <option value=”c”>C – Nacional (CDMX, GDL)</option>
+              </select>
+            </div>
+            <div class=”form-group”>
+              <label>Horas traslado</label>
+              <input type=”number” id=”cot-line-mo-hrs-traslado” step=”0.5” min=”0” value=”0”>
+            </div>
+            <div class=”form-group”>
+              <label>Horas trabajo</label>
+              <input type=”number” id=”cot-line-mo-hrs-trabajo” step=”0.5” min=”0” value=”1”>
+            </div>
+            <div class=”form-group”>
+              <label># Ayudantes</label>
+              <input type=”number” id=”cot-line-mo-ayudantes” step=”1” min=”0” value=”0”>
+            </div>
+            <div class=”form-group”>
+              <label>Viáticos (días)</label>
+              <input type=”number” id=”cot-line-mo-viaticos-dias” step=”1” min=”0” value=”0”>
+            </div>
           </div>
-          <div class="form-group">
+          <div style=”font-size:0.8rem;color:var(--text-muted,#94a3b8);margin:0.3rem 0 0.5rem”>
+            <i class=”fas fa-calculator”></i> Precio calculado automáticamente desde Tarifas. Editable abajo.
+          </div>
+        </div>
+
+        <div class=”form-row”>
+          <div class=”form-group”>
+            <label>Cantidad / Horas</label>
+            <input type=”number” id=”cot-line-cant” step=”0.25” min=”0” value=”1”>
+          </div>
+          <div class=”form-group”>
             <label>Precio</label>
-            <input type="number" id="cot-line-precio" step="0.01" min="0" value="0">
+            <input type=”number” id=”cot-line-precio” step=”0.01” min=”0” value=”0”>
           </div>
         </div>
 
@@ -3527,14 +3840,47 @@
       if (!p) return;
       p.classList.add('hidden');
     }
+    function getTarifaVal(key) {
+      try {
+        const cache = JSON.parse(localStorage.getItem('tarifas_cache') || '{}');
+        return Number(cache[key]) || 0;
+      } catch (_) { return 0; }
+    }
+    function calcManoObraPrice() {
+      const tipoTec = qm('#cot-line-mo-tipo-tec')?.value || 'mecanico';
+      const zona = qm('#cot-line-mo-zona')?.value || 'a';
+      const hrsTraslado = Number(qm('#cot-line-mo-hrs-traslado')?.value) || 0;
+      const hrsTrabajo = Number(qm('#cot-line-mo-hrs-trabajo')?.value) || 0;
+      const ayudantes = Number(qm('#cot-line-mo-ayudantes')?.value) || 0;
+      const viaticoDias = Number(qm('#cot-line-mo-viaticos-dias')?.value) || 0;
+      const tarifaHora = getTarifaVal(`${tipoTec}_mxn`);
+      const tarifaAyudante = getTarifaVal('ayudante_mxn');
+      const tarifaViatico = getTarifaVal(`zona_${zona}_viatico`);
+      const precio = (hrsTrabajo * tarifaHora)
+        + (hrsTraslado * tarifaHora)
+        + (ayudantes * hrsTrabajo * tarifaAyudante)
+        + (viaticoDias * tarifaViatico);
+      const descParts = [];
+      if (hrsTrabajo) descParts.push(`${hrsTrabajo}h trabajo`);
+      if (hrsTraslado) descParts.push(`${hrsTraslado}h traslado`);
+      if (ayudantes) descParts.push(`${ayudantes} ayudante(s)`);
+      const zonaLabel = zona === 'a' ? 'A-Local' : zona === 'b' ? 'B-Regional' : 'C-Nacional';
+      const desc = `M.O. Zona ${zonaLabel} – ${descParts.join(', ')}`;
+      if (qm('#cot-line-precio')) qm('#cot-line-precio').value = precio.toFixed(2);
+      if (qm('#cot-line-cant')) qm('#cot-line-cant').value = hrsTrabajo || 1;
+      if (qm('#cot-line-desc')) qm('#cot-line-desc').value = desc;
+    }
     function syncLinePanelFields() {
       const t = qm('#cot-line-tipo')?.value || 'refaccion';
       const refWrap = qm('#cot-line-ref-wrap');
       const descWrap = qm('#cot-line-desc-wrap');
       const bitWrap = qm('#cot-line-bit-wrap');
+      const moWrap = qm('#cot-line-mo-wrap');
       if (refWrap) refWrap.style.display = t === 'refaccion' ? '' : 'none';
       if (descWrap) descWrap.style.display = t === 'refaccion' ? 'none' : '';
       if (bitWrap) bitWrap.style.display = t === 'mano_obra' ? '' : 'none';
+      if (moWrap) moWrap.style.display = t === 'mano_obra' ? '' : 'none';
+      if (t === 'mano_obra') calcManoObraPrice();
     }
     async function ensureCotizacionExistsBeforeLines() {
       if (currentCotId) return currentCotId;
@@ -3575,6 +3921,12 @@
     });
     qm('#cot-line-cancel')?.addEventListener('click', hideLinePanel);
     qm('#cot-line-tipo')?.addEventListener('change', syncLinePanelFields);
+    // Mano de obra: recalcular precio cuando cambia cualquier campo
+    ['#cot-line-mo-tipo-tec','#cot-line-mo-zona','#cot-line-mo-hrs-traslado',
+     '#cot-line-mo-hrs-trabajo','#cot-line-mo-ayudantes','#cot-line-mo-viaticos-dias'].forEach(sel => {
+      qm(sel)?.addEventListener('input', calcManoObraPrice);
+      qm(sel)?.addEventListener('change', calcManoObraPrice);
+    });
     syncLinePanelFields();
 
     // Si el usuario cambia las máquinas seleccionadas, el "draft" debe tomar la primera seleccionada
@@ -5051,7 +5403,11 @@
   }
   function applyMaquinasFiltersAndRender() {
     const tid = 'tabla-maquinas';
-    const filtered = applyFilters(applyGlobalBranchFilterRows(maquinasCache), getFilterValues('#tabla-maquinas'), tid);
+    let filtered = applyFilters(applyGlobalBranchFilterRows(maquinasCache), getFilterValues('#tabla-maquinas'), tid);
+    const catFilter = qs('#filtro-categoria-maq') && qs('#filtro-categoria-maq').value;
+    if (catFilter) filtered = filtered.filter(m => m.categoria === catFilter);
+    const zonaFilter = qs('#filtro-zona-maq') && qs('#filtro-zona-maq').value;
+    if (zonaFilter) filtered = filtered.filter(m => m.ubicacion === zonaFilter);
     const pageSize = getPageSize(tid);
     let page = getPaginationState(tid);
     const maxPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
@@ -5094,10 +5450,466 @@
     renderBitacoras(slice, bitacorasCache.length, popts);
   }
 
+  // ----- VENTAS -----
+  let ventasCache = [];
+  async function loadVentas() {
+    showLoading();
+    try {
+      const data = await fetchJson(API + '/ventas');
+      ventasCache = Array.isArray(data) ? data : [];
+      renderVentas(ventasCache);
+    } catch (e) { console.error(e); }
+    finally { hideLoading(); }
+  }
+
+  function renderVentas(data) {
+    const tbody = qs('#tabla-ventas tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" class="empty">No hay ventas aprobadas aún.</td></tr>';
+      return;
+    }
+
+    // Resumen bar
+    const totalMXN = data.reduce((s, v) => s + (Number(v.total) || 0), 0);
+    const resBar = qs('#ventas-resumen-bar');
+    if (resBar) {
+      resBar.classList.remove('hidden');
+      resBar.innerHTML = `<i class="fas fa-chart-bar"></i> <strong>${data.length}</strong> ventas &nbsp;|&nbsp; Total: <strong>${formatMoney(totalMXN)}</strong>`;
+    }
+
+    const TARIFAS = {};
+    try { Object.assign(TARIFAS, JSON.parse(localStorage.getItem('tarifas_cache') || '{}')); } catch (_) {}
+    const comRef = Number(TARIFAS.comision_ref) || 15;
+    const comSvc = Number(TARIFAS.comision_svc) || 15;
+    const comMaqDavid = Number(TARIFAS.comision_maq_david) || 10;
+
+    data.forEach(v => {
+      const tr = document.createElement('tr');
+      const tipoLabel = v.tipo === 'refacciones' ? 'Refacciones' : v.tipo === 'servicio' ? 'Servicio' : v.tipo === 'maquina' ? 'Máquina' : (v.tipo || '—');
+      const totalUSD = v.moneda === 'USD' ? formatMoney(v.total) : (v.tipo_cambio > 0 ? formatMoney(v.total / v.tipo_cambio) : '—');
+      let comPct = v.tipo === 'refacciones' ? comRef : v.tipo === 'servicio' ? comSvc : (v.vendedor === 'David Cantú' ? comMaqDavid : 0);
+      const comAmt = comPct > 0 ? formatMoney(Number(v.total) * comPct / 100) : '—';
+      tr.innerHTML = `
+        <td>${escapeHtml(v.folio || '')}</td>
+        <td>${escapeHtml((v.fecha_aprobacion || v.fecha || '').slice(0, 10))}</td>
+        <td>${escapeHtml(v.cliente_nombre || '')}</td>
+        <td>${escapeHtml(tipoLabel)}</td>
+        <td>${formatMoney(v.total)}</td>
+        <td>${totalUSD}</td>
+        <td>${escapeHtml(v.vendedor || '—')}</td>
+        <td>${comPct > 0 ? `${comPct}% = ${comAmt}` : '—'}</td>
+        <td class="th-actions">
+          <button type="button" class="btn small outline btn-pdf-venta" data-id="${v.id}" title="Ver PDF"><i class="fas fa-file-pdf"></i></button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.btn-pdf-venta').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); openCotizacionPdf(btn.dataset.id); });
+    });
+  }
+
+  // ----- REVISIÓN DE MÁQUINAS -----
+  let revisionMaquinasCache = [];
+  async function loadRevisionMaquinas() {
+    showLoading();
+    try {
+      const data = await fetchJson(API + '/revision-maquinas');
+      revisionMaquinasCache = Array.isArray(data) ? data : [];
+      renderRevisionMaquinas(revisionMaquinasCache);
+    } catch (e) { console.error(e); }
+    finally { hideLoading(); }
+  }
+
+  function renderRevisionMaquinas(data) {
+    const tbody = qs('#tabla-revision-maquinas tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    const filtEnt = qs('#filtro-entregado-rev') && qs('#filtro-entregado-rev').value;
+    const filtPrueba = qs('#filtro-prueba-rev') && qs('#filtro-prueba-rev').value;
+    let filtered = data;
+    if (filtEnt) filtered = filtered.filter(r => r.entregado === filtEnt);
+    if (filtPrueba) filtered = filtered.filter(r => r.prueba === filtPrueba);
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty">Sin registros. Agrega una revisión.</td></tr>';
+      return;
+    }
+    filtered.forEach(r => {
+      const tr = document.createElement('tr');
+      const entregadoBadge = r.entregado === 'Si'
+        ? `<span class="badge badge-ok"><i class="fas fa-check"></i> Sí</span>`
+        : `<span class="badge badge-warn"><i class="fas fa-times"></i> No</span>`;
+      const pruebaBadge = r.prueba === 'Finalizada'
+        ? `<span class="badge badge-ok">Finalizada</span>`
+        : `<span class="badge badge-info">En Proceso</span>`;
+      tr.innerHTML = `
+        <td>${r.id}</td>
+        <td>${escapeHtml(r.maquina_categoria || r.categoria || '')}</td>
+        <td>${escapeHtml(r.maquina_modelo || r.modelo || '')}</td>
+        <td>${escapeHtml(r.numero_serie || '')}</td>
+        <td>${entregadoBadge}</td>
+        <td>${pruebaBadge}</td>
+        <td class="td-text-wrap">${escapeHtml(r.comentarios || '')}</td>
+        <td class="th-actions">
+          <button type="button" class="btn small primary btn-edit-rev" data-id="${r.id}"><i class="fas fa-edit"></i></button>
+          <button type="button" class="btn small danger btn-del-rev" data-id="${r.id}"><i class="fas fa-trash"></i></button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.btn-edit-rev').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); const r = revisionMaquinasCache.find(x => x.id == btn.dataset.id); if (r) openModalRevisionMaquina(r); });
+    });
+    tbody.querySelectorAll('.btn-del-rev').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar este registro?', async () => {
+        await fetchJson(API + '/revision-maquinas/' + btn.dataset.id, { method: 'DELETE' });
+        loadRevisionMaquinas();
+      }); });
+    });
+  }
+
+  async function openModalRevisionMaquina(rev) {
+    const isNew = !rev || !rev.id;
+    const maqOpts = maquinasCache.map(m =>
+      `<option value="${m.id}" data-modelo="${escapeHtml(m.modelo || m.nombre || '')}" data-serie="${escapeHtml(m.numero_serie || '')}" data-cat="${escapeHtml(m.categoria || '')}" ${rev && rev.maquina_id == m.id ? 'selected' : ''}>${escapeHtml(m.modelo || m.nombre || '')} – ${escapeHtml(m.numero_serie || '')}</option>`
+    ).join('');
+    const body = `
+      <div class="form-group"><label>Máquina (catálogo)</label>
+        <select id="rm-maquina"><option value="">— Seleccionar —</option>${maqOpts}</select>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Categoría</label><input type="text" id="rm-cat" value="${escapeHtml(rev && rev.categoria || '')}" placeholder="Auto desde catálogo"></div>
+        <div class="form-group"><label>Modelo</label><input type="text" id="rm-modelo" value="${escapeHtml(rev && rev.modelo || '')}" placeholder="Auto desde catálogo"></div>
+      </div>
+      <div class="form-group"><label>Nº de serie</label><input type="text" id="rm-serie" value="${escapeHtml(rev && rev.numero_serie || '')}" placeholder="Auto desde catálogo"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Entregado</label>
+          <select id="rm-entregado">
+            <option value="No" ${!rev || rev.entregado === 'No' ? 'selected' : ''}>No</option>
+            <option value="Si" ${rev && rev.entregado === 'Si' ? 'selected' : ''}>Sí</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Prueba</label>
+          <select id="rm-prueba">
+            <option value="En Proceso" ${!rev || rev.prueba === 'En Proceso' ? 'selected' : ''}>En Proceso</option>
+            <option value="Finalizada" ${rev && rev.prueba === 'Finalizada' ? 'selected' : ''}>Finalizada</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Comentarios</label><textarea id="rm-coment" rows="2">${escapeHtml(rev && rev.comentarios || '')}</textarea></div>
+      <div class="form-actions">
+        <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
+        <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
+      </div>`;
+    openModal(isNew ? 'Nueva revisión de máquina' : 'Editar revisión', body);
+    const maqSel = qs('#rm-maquina');
+    if (maqSel) {
+      maqSel.addEventListener('change', () => {
+        const opt = maqSel.options[maqSel.selectedIndex];
+        if (opt && opt.value) {
+          qs('#rm-cat').value = opt.dataset.cat || '';
+          qs('#rm-modelo').value = opt.dataset.modelo || '';
+          qs('#rm-serie').value = opt.dataset.serie || '';
+          // Si no entregado, prueba = En Proceso
+          if (qs('#rm-entregado').value === 'No') qs('#rm-prueba').value = 'En Proceso';
+        }
+      });
+    }
+    qs('#m-save').onclick = async () => {
+      const payload = {
+        maquina_id: qs('#rm-maquina').value || null,
+        categoria: qs('#rm-cat').value.trim() || null,
+        modelo: qs('#rm-modelo').value.trim() || null,
+        numero_serie: qs('#rm-serie').value.trim() || null,
+        entregado: qs('#rm-entregado').value,
+        prueba: qs('#rm-prueba').value,
+        comentarios: qs('#rm-coment').value.trim() || null,
+      };
+      // Si no entregado → prueba siempre "En Proceso"
+      if (payload.entregado === 'No') payload.prueba = 'En Proceso';
+      try {
+        if (isNew) await fetchJson(API + '/revision-maquinas', { method: 'POST', body: JSON.stringify(payload) });
+        else await fetchJson(API + '/revision-maquinas/' + rev.id, { method: 'PUT', body: JSON.stringify(payload) });
+        qs('#modal').classList.add('hidden');
+        showToast('Guardado correctamente.', 'success');
+        loadRevisionMaquinas();
+      } catch (e) { showToast(parseApiError(e), 'error'); }
+    };
+  }
+
+  // ----- TARIFAS -----
+  let tarifasCache = {};
+  async function loadTarifas() {
+    try {
+      const data = await fetchJson(API + '/tarifas');
+      tarifasCache = data || {};
+      // Guardar en localStorage para uso offline en Ventas
+      try { localStorage.setItem('tarifas_cache', JSON.stringify(tarifasCache)); } catch (_) {}
+      // Poblar inputs
+      document.querySelectorAll('.tarifa-input').forEach(inp => {
+        const key = inp.dataset.key;
+        if (key && tarifasCache[key] !== undefined) inp.value = tarifasCache[key];
+      });
+      document.querySelectorAll('.tarifa-input-text').forEach(inp => {
+        const key = inp.dataset.key;
+        if (key && tarifasCache[key] !== undefined) inp.value = tarifasCache[key];
+      });
+      // Sincronizar notas de cómo se calculan
+      const updateNota = (id, key, fmt) => {
+        const el = qs(id);
+        if (el && tarifasCache[key]) el.textContent = fmt ? fmt(tarifasCache[key]) : tarifasCache[key];
+      };
+      updateNota('#nota-comision-ref', 'comision_ref');
+      updateNota('#nota-comision-maq', 'comision_maq_david');
+      updateNota('#nota-bono-20k', 'bono_20k', v => Number(v).toLocaleString('es-MX'));
+      updateNota('#nota-bono-40k', 'bono_40k', v => Number(v).toLocaleString('es-MX'));
+      updateNota('#nota-bono-dia', 'bono_dia', v => Number(v).toLocaleString('es-MX'));
+    } catch (e) { console.error(e); }
+  }
+
+  const btnSaveTarifas = qs('#btn-save-tarifas');
+  if (btnSaveTarifas) {
+    btnSaveTarifas.addEventListener('click', async () => {
+      const updates = {};
+      document.querySelectorAll('.tarifa-input').forEach(inp => {
+        if (inp.dataset.key) updates[inp.dataset.key] = inp.value;
+      });
+      document.querySelectorAll('.tarifa-input-text').forEach(inp => {
+        if (inp.dataset.key) updates[inp.dataset.key] = inp.value;
+      });
+      // Campos con id fijos
+      ['tarifa-comision-ref','tarifa-comision-svc','tarifa-comision-maq-david','tarifa-bono-20k','tarifa-bono-40k','tarifa-bono-dia'].forEach(id => {
+        const el = qs('#' + id);
+        if (el) {
+          const key = id.replace('tarifa-', '').replace(/-/g, '_');
+          updates[key] = el.value;
+        }
+      });
+      try {
+        await fetchJson(API + '/tarifas', { method: 'PUT', body: JSON.stringify(updates) });
+        tarifasCache = { ...tarifasCache, ...updates };
+        try { localStorage.setItem('tarifas_cache', JSON.stringify(tarifasCache)); } catch (_) {}
+        showToast('Tarifas guardadas correctamente.', 'success');
+      } catch (e) { showToast(parseApiError(e), 'error'); }
+    });
+  }
+
+  // Filtros de revisión de máquinas
+  qs('#filtro-entregado-rev') && qs('#filtro-entregado-rev').addEventListener('change', () => renderRevisionMaquinas(revisionMaquinasCache));
+  qs('#filtro-prueba-rev') && qs('#filtro-prueba-rev').addEventListener('change', () => renderRevisionMaquinas(revisionMaquinasCache));
+  qs('#nueva-revision-maq') && qs('#nueva-revision-maq').addEventListener('click', () => openModalRevisionMaquina(null));
+
+  // Tipo de cambio Banxico: obtener al cargar y mostrar en header
+  async function fetchAndShowTipoCambio() {
+    try {
+      const tc = await fetchJson(API + '/tipo-cambio');
+      if (tc && tc.valor) {
+        tipoCambioActual = Number(tc.valor);
+        const el = qs('#header-alerts');
+        if (el) {
+          const existing = el.querySelector('.tc-badge');
+          const badge = existing || document.createElement('span');
+          badge.className = 'tc-badge';
+          badge.title = `Tipo de cambio Banxico (${tc.fecha || 'hoy'})`;
+          badge.innerHTML = `<i class="fas fa-dollar-sign"></i> TC: $${tipoCambioActual.toFixed(2)}`;
+          badge.style.cssText = 'background:var(--config-accent,#0d9488);color:#fff;padding:3px 8px;border-radius:12px;font-size:0.78rem;font-weight:600;cursor:default';
+          if (!existing) el.prepend(badge);
+        }
+      }
+    } catch (_) {}
+  }
+  fetchAndShowTipoCambio();
+
+  // ----- TÉCNICOS -----
+  async function loadTecnicos() {
+    try {
+      const data = await fetchJson(API + '/tecnicos');
+      tecnicosCache = toArray(data);
+      renderTecnicos(tecnicosCache);
+    } catch (e) { console.error(e); }
+  }
+
+  function renderTecnicos(data) {
+    const tbody = qs('#tabla-tecnicos tbody');
+    if (!tbody) return;
+    const q = (qs('#buscar-tecnicos')?.value || '').toLowerCase();
+    const filtered = q ? data.filter(t => (t.nombre || '').toLowerCase().includes(q) || (t.habilidades || '').toLowerCase().includes(q)) : data;
+    tbody.innerHTML = '';
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty">No hay técnicos registrados.</td></tr>';
+      return;
+    }
+    filtered.forEach(t => {
+      const ocupadoBadge = t.ocupado ? '<span class="badge semaforo-rojo">🔒 Ocupado</span>' : '<span class="badge semaforo-verde">✓ Disponible</span>';
+      const activoBadge = t.activo ? '<span class="badge semaforo-verde">Activo</span>' : '<span class="badge semaforo-gris">Inactivo</span>';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>${escapeHtml(t.nombre || '')}</strong></td>
+        <td style="font-size:0.85rem;color:var(--text-secondary)">${escapeHtml(t.habilidades || '—')}</td>
+        <td>${ocupadoBadge}</td>
+        <td>${activoBadge}</td>
+        <td class="th-actions">
+          <button type="button" class="btn small primary btn-edit-tec" data-id="${t.id}"><i class="fas fa-edit"></i></button>
+          <button type="button" class="btn small danger btn-del-tec" data-id="${t.id}"><i class="fas fa-trash"></i></button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.btn-edit-tec').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = tecnicosCache.find(x => String(x.id) === String(btn.dataset.id));
+        if (t) openModalTecnico(t);
+      });
+    });
+    tbody.querySelectorAll('.btn-del-tec').forEach(btn => {
+      btn.addEventListener('click', () => {
+        openConfirmModal('¿Desactivar este técnico?', async () => {
+          await fetchJson(API + '/tecnicos/' + btn.dataset.id, { method: 'DELETE' });
+          loadTecnicos();
+        });
+      });
+    });
+  }
+
+  function openModalTecnico(tec) {
+    const isNew = !tec || !tec.id;
+    const body = `
+      <div class="form-group"><label>Nombre *</label>
+        <input type="text" id="m-tec-nombre" maxlength="100" value="${escapeHtml(tec && tec.nombre || '')}" placeholder="Ej. Juan Pérez" required>
+      </div>
+      <div class="form-group"><label>Habilidades / Especialidades</label>
+        <textarea id="m-tec-habilidades" rows="3" maxlength="500" placeholder="Ej. CNC Fanuc, Electroerosión, PLC Siemens, Soldadura MIG…">${escapeHtml(tec && tec.habilidades || '')}</textarea>
+        <div class="hint">Separa con comas. Aparece en la tabla y en el dropdown de asignación.</div>
+      </div>
+      ${!isNew ? `<div class="form-group"><label>Estado</label>
+        <select id="m-tec-activo">
+          <option value="1" ${tec && tec.activo != 0 ? 'selected' : ''}>Activo</option>
+          <option value="0" ${tec && tec.activo == 0 ? 'selected' : ''}>Inactivo</option>
+        </select>
+      </div>` : ''}
+      <div class="form-actions">
+        <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
+        <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
+      </div>`;
+    openModal(isNew ? 'Nuevo técnico' : 'Editar técnico', body);
+    qs('#m-save').onclick = async () => {
+      const nombre = qs('#m-tec-nombre')?.value.trim();
+      if (!nombre) { showToast('El nombre es obligatorio.', 'error'); return; }
+      const payload = {
+        nombre,
+        habilidades: qs('#m-tec-habilidades')?.value.trim() || null,
+        activo: isNew ? 1 : parseInt(qs('#m-tec-activo')?.value || '1', 10),
+      };
+      try {
+        if (isNew) await fetchJson(API + '/tecnicos', { method: 'POST', body: JSON.stringify(payload) });
+        else await fetchJson(API + '/tecnicos/' + tec.id, { method: 'PUT', body: JSON.stringify(payload) });
+        qs('#modal').classList.add('hidden');
+        showToast(isNew ? 'Técnico creado.' : 'Técnico actualizado.', 'success');
+        loadTecnicos();
+      } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar.', 'error'); }
+    };
+  }
+
+  qs('#btn-new-tecnico')?.addEventListener('click', () => openModalTecnico(null));
+  qs('#buscar-tecnicos')?.addEventListener('input', debounce(() => renderTecnicos(tecnicosCache), 250));
+
+  // ----- IMPORTAR XLSX REFACCIONES -----
+  async function importRefaccionesXlsx(file) {
+    if (!file) return;
+    if (typeof ExcelJS === 'undefined') { showToast('ExcelJS no disponible. Recarga la página.', 'error'); return; }
+    showToast('Leyendo archivo…', 'info');
+    try {
+      const buffer = await file.arrayBuffer();
+      const wb = new ExcelJS.Workbook();
+      await wb.xlsx.load(buffer);
+      const ws = wb.worksheets[0];
+      if (!ws) { showToast('No se encontró hoja de cálculo.', 'error'); return; }
+      const rows = [];
+      ws.eachRow((row, rowNum) => {
+        if (rowNum === 1) return; // skip header
+        const desc = (row.getCell(1).text || row.getCell(1).value || '').toString().trim();
+        if (!desc) return;
+        const unidad = (row.getCell(2).text || row.getCell(2).value || 'PZA').toString().trim() || 'PZA';
+        const precioRaw = row.getCell(3).value;
+        const stockRaw = row.getCell(4).value;
+        const categoria = (row.getCell(5).text || row.getCell(5).value || '').toString().trim();
+        const zona = (row.getCell(6).text || row.getCell(6).value || '').toString().trim();
+        // Intentar extraer código del inicio de la descripción (números + guiones)
+        const codeMatch = desc.match(/^([\d\-A-Z]+(?:\s[\d\-A-Z]+)?)\s+(.+)$/);
+        const codigo = codeMatch ? codeMatch[1].trim() : desc.slice(0, 20).replace(/\s+/g, '-').toUpperCase();
+        const descripcion = codeMatch ? codeMatch[2].trim() : desc;
+        rows.push({
+          codigo,
+          descripcion,
+          unidad,
+          precio_unitario: Number(precioRaw) || 0,
+          stock: Number(stockRaw) || 0,
+          categoria: categoria || null,
+          zona: zona || null,
+          activo: 1,
+        });
+      });
+      if (!rows.length) { showToast('No se encontraron datos en el archivo.', 'warning'); return; }
+      // Mostrar preview y confirmar
+      openConfirmModal(
+        `Se importarán ${rows.length} refacciones. Las que ya existen (por código) serán actualizadas. ¿Continuar?`,
+        async () => {
+          let ok = 0, errors = 0;
+          for (const r of rows) {
+            try {
+              // Intentar insertar; si existe (409) hacer PUT
+              try {
+                await fetchJson(API + '/refacciones', { method: 'POST', body: JSON.stringify(r) });
+              } catch (e) {
+                if (e && (String(e.message || e).includes('409') || String(e.message || e).includes('UNIQUE'))) {
+                  const existing = refaccionesCache.find(x => x.codigo === r.codigo);
+                  if (existing) await fetchJson(API + '/refacciones/' + existing.id, { method: 'PUT', body: JSON.stringify(r) });
+                } else throw e;
+              }
+              ok++;
+            } catch (_) { errors++; }
+          }
+          showToast(`Importación completada: ${ok} registros, ${errors} errores.`, errors ? 'warning' : 'success');
+          loadRefacciones();
+        }
+      );
+    } catch (e) {
+      showToast('Error al leer el archivo: ' + (e.message || e), 'error');
+      console.error(e);
+    }
+  }
+
+  qs('#import-refacciones-file')?.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      importRefaccionesXlsx(file);
+      e.target.value = ''; // reset para permitir re-selección
+    }
+  });
+
   // ----- EVENT LISTENERS -----
   qs('#buscar-clientes').addEventListener('input', debounce(loadClientes, 350));
   qs('#buscar-refacciones').addEventListener('input', debounce(loadRefacciones, 350));
   qs('#filtro-cliente-maq').addEventListener('change', loadMaquinas);
+  qs('#filtro-categoria-maq') && qs('#filtro-categoria-maq').addEventListener('change', applyMaquinasFiltersAndRender);
+  qs('#filtro-zona-maq') && qs('#filtro-zona-maq').addEventListener('change', applyMaquinasFiltersAndRender);
+  const toggleViewBtn = qs('#toggle-view-maquinas');
+  if (toggleViewBtn) {
+    toggleViewBtn.addEventListener('click', () => {
+      maquinasViewMode = maquinasViewMode === 'tabla' ? 'tarjetas' : 'tabla';
+      const tablaWrap = qs('#maquinas-tabla-wrap');
+      const cardsWrap = qs('#maquinas-cards-wrap');
+      if (maquinasViewMode === 'tarjetas') {
+        tablaWrap && tablaWrap.classList.add('hidden');
+        cardsWrap && cardsWrap.classList.remove('hidden');
+        toggleViewBtn.innerHTML = '<i class="fas fa-table"></i> Vista tabla';
+      } else {
+        tablaWrap && tablaWrap.classList.remove('hidden');
+        cardsWrap && cardsWrap.classList.add('hidden');
+        toggleViewBtn.innerHTML = '<i class="fas fa-th-large"></i> Vista tarjetas';
+      }
+      applyMaquinasFiltersAndRender();
+    });
+  }
   bindTableFilters('tabla-clientes', applyClientesFiltersAndRender);
   bindTableFilters('tabla-refacciones', applyRefaccionesFiltersAndRender);
   bindTableFilters('tabla-maquinas', applyMaquinasFiltersAndRender);
