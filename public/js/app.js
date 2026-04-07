@@ -181,6 +181,26 @@
   function getSessionUser() {
     try { return JSON.parse(localStorage.getItem(AUTH_USER_KEY) || 'null'); } catch (_) { return null; }
   }
+  // Helpers de permisos por rol
+  function canAdd() {
+    const u = getSessionUser();
+    if (!serverConfig.authRequired) return true;
+    return u && ['admin', 'operador', 'usuario'].includes(u.role);
+  }
+  function canEdit() {
+    const u = getSessionUser();
+    if (!serverConfig.authRequired) return true;
+    return u && ['admin', 'operador'].includes(u.role);
+  }
+  function canDelete() {
+    const u = getSessionUser();
+    if (!serverConfig.authRequired) return true;
+    return u && u.role === 'admin';
+  }
+  function getRoleLabel(role) {
+    const labels = { admin: 'Administrador', operador: 'Operador', usuario: 'Usuario', consulta: 'Consulta' };
+    return labels[role] || role || '—';
+  }
   async function fetchServerConfig() {
     try {
       const r = await fetch('/api/config');
@@ -197,6 +217,11 @@
     const short = c.shortName || c.appName || 'Gestor Administrativo';
     if (nameEl) nameEl.textContent = short;
     if (tagEl) tagEl.textContent = c.tagline || '';
+    // Login panel branding
+    const lbName = qs('#login-brand-name');
+    const lbTagline = qs('#login-brand-tagline');
+    if (lbName) lbName.textContent = c.appName || short;
+    if (lbTagline) lbTagline.textContent = c.tagline || '';
     updateDocumentTitleFromActiveTab();
     const logo = qs('#header-brand-logo');
     if (logo && c.logoUrl) {
@@ -445,9 +470,9 @@
     const out = qs('#btn-logout');
     if (!wrap || !label) return;
     const u = getSessionUser();
-    if (serverConfig.authRequired && u) {
+    if (u) {
       wrap.classList.remove('hidden');
-      label.textContent = (u.displayName || u.username || '') + ' · ' + (u.role || '');
+      label.textContent = (u.displayName || u.username || '') + ' · ' + getRoleLabel(u.role);
       if (out) out.classList.remove('hidden');
     } else {
       wrap.classList.add('hidden');
@@ -459,11 +484,29 @@
     const err = qs('#login-error');
     if (!form || form._bound) return;
     form._bound = true;
+    // Ojo: mostrar/ocultar contraseña
+    const eyeBtn = qs('#login-eye-btn');
+    const eyeIcon = qs('#login-eye-icon');
+    const passInput = qs('#login-pass');
+    if (eyeBtn && passInput && eyeIcon) {
+      eyeBtn.addEventListener('click', function () {
+        const isText = passInput.type === 'text';
+        passInput.type = isText ? 'password' : 'text';
+        eyeIcon.className = isText ? 'fas fa-eye' : 'fas fa-eye-slash';
+      });
+    }
+    const submitBtn = qs('#login-submit-btn');
+    const submitText = submitBtn && submitBtn.querySelector('.login-submit-text');
+    const submitLoading = submitBtn && submitBtn.querySelector('.login-submit-loading');
     form.addEventListener('submit', async function (ev) {
       ev.preventDefault();
-      if (err) { err.classList.add('hidden'); err.textContent = ''; }
+      if (err) { err.classList.add('hidden'); }
       const u = qs('#login-user');
       const p = qs('#login-pass');
+      // Loading state
+      if (submitBtn) submitBtn.disabled = true;
+      if (submitText) submitText.classList.add('hidden');
+      if (submitLoading) submitLoading.classList.remove('hidden');
       try {
         const r = await fetch('/api/auth/login', {
           method: 'POST',
@@ -475,7 +518,9 @@
         try { data = text ? JSON.parse(text) : {}; } catch (_) {}
         if (!r.ok) {
           if (err) {
-            err.textContent = data.error || 'Error al iniciar sesión';
+            const errText = qs('#login-error-text');
+            if (errText) errText.textContent = data.error || 'Usuario o contraseña incorrectos';
+            else err.textContent = data.error || 'Usuario o contraseña incorrectos';
             err.classList.remove('hidden');
           }
           return;
@@ -489,9 +534,15 @@
         finishBoot();
       } catch (e) {
         if (err) {
-          err.textContent = 'No se pudo conectar. Revisa la red o el servidor.';
+          const errText = qs('#login-error-text');
+          if (errText) errText.textContent = 'No se pudo conectar. Revisa la red o el servidor.';
+          else err.textContent = 'No se pudo conectar. Revisa la red o el servidor.';
           err.classList.remove('hidden');
         }
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+        if (submitText) submitText.classList.remove('hidden');
+        if (submitLoading) submitLoading.classList.add('hidden');
       }
     });
   }
@@ -1141,6 +1192,32 @@
   }
 
   // ----- CLIENTES -----
+  function previewCliente(c) {
+    openPreviewCard({
+      title: c.nombre || 'Cliente',
+      subtitle: c.codigo ? 'Código: ' + c.codigo : '',
+      icon: 'fa-user-tie',
+      color: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a9e 100%)',
+      sections: [{
+        title: 'Información fiscal', icon: 'fa-file-invoice',
+        fields: [
+          { label: 'ID', value: c.id, icon: 'fa-hashtag' },
+          { label: 'Código', value: c.codigo, icon: 'fa-barcode' },
+          { label: 'Nombre / Razón social', value: c.nombre, icon: 'fa-building', full: true },
+          { label: 'RFC', value: c.rfc, icon: 'fa-id-card' },
+        ]
+      }, {
+        title: 'Contacto', icon: 'fa-address-book',
+        fields: [
+          { label: 'Contacto', value: c.contacto, icon: 'fa-user' },
+          { label: 'Teléfono', value: c.telefono, icon: 'fa-phone' },
+          { label: 'Email', value: c.email, icon: 'fa-envelope' },
+          { label: 'Dirección', value: c.direccion, icon: 'fa-map-marker-alt', full: true },
+          { label: 'Ciudad', value: c.ciudad, icon: 'fa-city' },
+        ]
+      }]
+    });
+  }
   function renderClientes(data) {
     const tbody = qs('#tabla-clientes tbody');
     tbody.innerHTML = '';
@@ -1148,6 +1225,7 @@
       tbody.innerHTML = '<tr><td colspan="9" class="empty">No hay clientes. Carga datos demo o agrega uno nuevo.</td></tr>';
       return;
     }
+    const _canEdit = canEdit(); const _canDelete = canDelete();
     data.forEach(c => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
@@ -1160,13 +1238,17 @@
         <td>${c.email ? `<a href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a>` : ''}</td>
         <td>${escapeHtml(c.ciudad || '')}</td>
         <td class="th-actions">
-          <button type="button" class="btn small primary btn-edit-cliente" data-id="${c.id}"><i class="fas fa-edit"></i></button>
-          <button type="button" class="btn small danger btn-delete-cliente" data-id="${c.id}"><i class="fas fa-trash"></i></button>
+          <button type="button" class="btn small outline btn-preview-cliente" data-id="${c.id}" title="Vista previa"><i class="fas fa-eye"></i></button>
+          ${_canEdit ? `<button type="button" class="btn small primary btn-edit-cliente" data-id="${c.id}"><i class="fas fa-edit"></i></button>` : ''}
+          ${_canDelete ? `<button type="button" class="btn small danger btn-delete-cliente" data-id="${c.id}"><i class="fas fa-trash"></i></button>` : ''}
         </td>
       `;
       tbody.appendChild(tr);
     });
     updateTableFooter('tabla-clientes', data.length, clientesCache.length, () => clearTableFiltersAndRefresh('tabla-clientes', '#buscar-clientes', applyClientesFiltersAndRender), arguments[1]);
+    tbody.querySelectorAll('.btn-preview-cliente').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); const c = data.find(x => x.id == btn.dataset.id); if (c) previewCliente(c); });
+    });
     tbody.querySelectorAll('.btn-edit-cliente').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const c = data.find(x => x.id == btn.dataset.id); if (c) openModalCliente(c); });
     });
@@ -1197,6 +1279,37 @@
   }
 
   // ----- REFACCIONES -----
+  function previewRefaccion(r) {
+    const stockBajo = Number(r.stock) <= Number(r.stock_minimo || 1);
+    openPreviewCard({
+      title: r.descripcion || 'Refacción',
+      subtitle: r.codigo || '',
+      icon: 'fa-cogs',
+      color: 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)',
+      badge: stockBajo ? 'Stock Bajo' : 'Stock OK',
+      badgeClass: stockBajo ? 'pvc-badge--danger' : 'pvc-badge--success',
+      sections: [{
+        title: 'Identificación', icon: 'fa-barcode',
+        fields: [
+          { label: 'Código', value: r.codigo, icon: 'fa-barcode' },
+          { label: 'Descripción', value: r.descripcion, icon: 'fa-align-left', full: true },
+          { label: 'Categoría', value: r.categoria, icon: 'fa-tag' },
+          { label: 'Subcategoría', value: r.subcategoria, icon: 'fa-tags' },
+          { label: 'Zona', value: r.zona, icon: 'fa-map-marker-alt' },
+          { label: 'Unidad', value: r.unidad || 'PZA', icon: 'fa-ruler' },
+        ]
+      }, {
+        title: 'Inventario y precio', icon: 'fa-dollar-sign',
+        fields: [
+          { label: 'Stock actual', value: r.stock != null ? Number(r.stock).toLocaleString('es-MX') : '0', icon: 'fa-boxes', badge: stockBajo, badgeClass: stockBajo ? 'pvc-badge--danger' : '' },
+          { label: 'Stock mínimo', value: r.stock_minimo != null ? Number(r.stock_minimo) : 1, icon: 'fa-exclamation-triangle' },
+          { label: 'Precio MXN', value: r.precio_unitario ? '$' + Number(r.precio_unitario).toLocaleString('es-MX', { minimumFractionDigits: 2 }) : '', icon: 'fa-money-bill-wave' },
+          { label: 'Precio USD', value: r.precio_usd ? 'US$' + Number(r.precio_usd).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '', icon: 'fa-dollar-sign' },
+          { label: 'Nº Parte Manual', value: r.numero_parte_manual, icon: 'fa-book' },
+        ]
+      }]
+    });
+  }
   function renderRefacciones(data) {
     const tbody = qs('#tabla-refacciones tbody');
     tbody.innerHTML = '';
@@ -1204,6 +1317,7 @@
       tbody.innerHTML = '<tr><td colspan="10" class="empty">No hay refacciones. Agrega una nueva.</td></tr>';
       return;
     }
+    const _canEdit = canEdit(); const _canDelete = canDelete();
     // Alerta de stock bajo
     const bajos = data.filter(r => Number(r.stock) <= Number(r.stock_minimo || 1) && Number(r.stock_minimo || 1) > 0);
     const alertBar = qs('#ref-stock-alert-bar');
@@ -1231,9 +1345,10 @@
         <td>${typeof r.precio_unitario === 'number' ? '$' + r.precio_unitario.toLocaleString('es-MX', { minimumFractionDigits: 2 }) : ''}</td>
         <td>${escapeHtml(r.unidad || 'PZA')}</td>
         <td class="th-actions">
+          <button type="button" class="btn small outline btn-preview-ref" data-id="${r.id}" title="Vista previa"><i class="fas fa-eye"></i></button>
           <button type="button" class="btn small outline btn-stock-ref" data-id="${r.id}" title="Ajustar stock"><i class="fas fa-boxes"></i></button>
-          <button type="button" class="btn small primary btn-edit-ref" data-id="${r.id}"><i class="fas fa-edit"></i></button>
-          <button type="button" class="btn small danger btn-delete-ref" data-id="${r.id}"><i class="fas fa-trash"></i></button>
+          ${_canEdit ? `<button type="button" class="btn small primary btn-edit-ref" data-id="${r.id}"><i class="fas fa-edit"></i></button>` : ''}
+          ${_canDelete ? `<button type="button" class="btn small danger btn-delete-ref" data-id="${r.id}"><i class="fas fa-trash"></i></button>` : ''}
         </td>
       `;
       tbody.appendChild(tr);
@@ -1241,6 +1356,9 @@
     updateTableFooter('tabla-refacciones', data.length, refaccionesCache.length, () => clearTableFiltersAndRefresh('tabla-refacciones', '#buscar-refacciones', applyRefaccionesFiltersAndRender), arguments[1]);
     tbody.querySelectorAll('.btn-codigo-ref').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const r = data.find(x => x.id == btn.dataset.id); if (r) openModalRefaccionImagen(r); });
+    });
+    tbody.querySelectorAll('.btn-preview-ref').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); const r = data.find(x => x.id == btn.dataset.id); if (r) previewRefaccion(r); });
     });
     tbody.querySelectorAll('.btn-stock-ref').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const r = data.find(x => x.id == btn.dataset.id); if (r) openModalAjusteStock(r); });
@@ -1278,7 +1396,35 @@
   const CATEGORIAS_MAQUINAS = ['Centro de Maquinado', 'Torno CNC', 'Electroerosionadora por Hilo', 'Electroerosionadora por Penetración', 'Fresadora CNC', 'Rectificadora', 'Torno Convencional', 'Otro'];
   let maquinasViewMode = 'tabla'; // 'tabla' | 'tarjetas'
 
+  function previewMaquina(m) {
+    openPreviewCard({
+      title: m.modelo || m.nombre || 'Máquina',
+      subtitle: m.categoria || '',
+      icon: 'fa-industry',
+      color: 'linear-gradient(135deg, #1e3a5f 0%, #3b5998 100%)',
+      badge: m.activo === 0 ? 'Inactiva' : 'Activa',
+      badgeClass: m.activo === 0 ? 'pvc-badge--danger' : 'pvc-badge--success',
+      sections: [{
+        title: 'Especificaciones', icon: 'fa-cog',
+        fields: [
+          { label: 'ID', value: m.id, icon: 'fa-hashtag' },
+          { label: 'Categoría', value: m.categoria, icon: 'fa-layer-group' },
+          { label: 'Modelo', value: m.modelo || m.nombre, icon: 'fa-tag', full: true },
+          { label: 'Marca', value: m.marca, icon: 'fa-star' },
+          { label: 'Número de serie', value: m.numero_serie, icon: 'fa-barcode' },
+          { label: 'Código', value: m.codigo, icon: 'fa-code' },
+        ]
+      }, {
+        title: 'Ubicación y cliente', icon: 'fa-map-marker-alt',
+        fields: [
+          { label: 'Cliente', value: m.cliente_nombre, icon: 'fa-user-tie', full: true },
+          { label: 'Ubicación', value: m.ubicacion, icon: 'fa-map-marker-alt', full: true },
+        ]
+      }]
+    });
+  }
   function renderMaquinaCard(m) {
+    const _ce = canEdit(); const _cd = canDelete();
     const zona = escapeHtml(m.ubicacion || '—');
     const cat = escapeHtml(m.categoria || '—');
     const modelo = escapeHtml(m.modelo || m.nombre || '—');
@@ -1297,8 +1443,8 @@
         </div>
         <div class="maq-card-actions">
           <button type="button" class="btn small outline btn-view-maq" data-id="${m.id}" title="Ver ficha"><i class="fas fa-eye"></i> Ver</button>
-          <button type="button" class="btn small primary btn-edit-maq" data-id="${m.id}" title="Editar"><i class="fas fa-edit"></i></button>
-          <button type="button" class="btn small danger btn-delete-maq" data-id="${m.id}" title="Eliminar"><i class="fas fa-trash"></i></button>
+          ${_ce ? `<button type="button" class="btn small primary btn-edit-maq" data-id="${m.id}" title="Editar"><i class="fas fa-edit"></i></button>` : ''}
+          ${_cd ? `<button type="button" class="btn small danger btn-delete-maq" data-id="${m.id}" title="Eliminar"><i class="fas fa-trash"></i></button>` : ''}
         </div>
       </div>`;
   }
@@ -1350,7 +1496,7 @@
         btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar esta máquina?', () => deleteMaquina(btn.dataset.id)); });
       });
       cardsWrap.querySelectorAll('.btn-view-maq').forEach(btn => {
-        btn.addEventListener('click', e => { e.stopPropagation(); const m = maquinasCache.find(x => x.id == btn.dataset.id); if (m) renderMaquinaFicha(m); });
+        btn.addEventListener('click', e => { e.stopPropagation(); const m = maquinasCache.find(x => x.id == btn.dataset.id); if (m) previewMaquina(m); });
       });
       return;
     }
@@ -1362,6 +1508,7 @@
       tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay máquinas. Carga datos demo o agrega una nueva.</td></tr>';
       return;
     }
+    const _canEdit = canEdit(); const _canDelete = canDelete();
     data.forEach(m => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
@@ -1373,15 +1520,15 @@
         <td>${escapeHtml(m.ubicacion || '')}</td>
         <td class="th-actions">
           <button type="button" class="btn small outline btn-view-maq" data-id="${m.id}" title="Ver ficha"><i class="fas fa-eye"></i></button>
-          <button type="button" class="btn small primary btn-edit-maq" data-id="${m.id}"><i class="fas fa-edit"></i></button>
-          <button type="button" class="btn small danger btn-delete-maq" data-id="${m.id}"><i class="fas fa-trash"></i></button>
+          ${_canEdit ? `<button type="button" class="btn small primary btn-edit-maq" data-id="${m.id}"><i class="fas fa-edit"></i></button>` : ''}
+          ${_canDelete ? `<button type="button" class="btn small danger btn-delete-maq" data-id="${m.id}"><i class="fas fa-trash"></i></button>` : ''}
         </td>
       `;
       tbody.appendChild(tr);
     });
     updateTableFooter('tabla-maquinas', data.length, maquinasCache.length, () => clearTableFiltersAndRefresh('tabla-maquinas', null, applyMaquinasFiltersAndRender), arguments[1]);
     tbody.querySelectorAll('.btn-view-maq').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); const m = data.find(x => x.id == btn.dataset.id); if (m) renderMaquinaFicha(m); });
+      btn.addEventListener('click', e => { e.stopPropagation(); const m = data.find(x => x.id == btn.dataset.id); if (m) previewMaquina(m); });
     });
     tbody.querySelectorAll('.btn-edit-maq').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const m = data.find(x => x.id == btn.dataset.id); if (m) openModalMaquina(m); });
@@ -1425,6 +1572,43 @@
   }
 
   // ----- COTIZACIONES (módulo rehecho: carga + render explícitos) -----
+  function previewCotizacion(c) {
+    const moneda = c.moneda || 'MXN';
+    const totalFmt = c.total != null ? (moneda === 'USD' ? 'US$' + Number(c.total).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '$' + Number(c.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })) : '—';
+    const estadoColors = { pendiente: 'pvc-badge--warning', aplicada: 'pvc-badge--success', venta: 'pvc-badge--success', cancelada: 'pvc-badge--danger' };
+    openPreviewCard({
+      title: c.folio || 'Cotización',
+      subtitle: c.cliente_nombre || '',
+      icon: 'fa-file-invoice-dollar',
+      color: 'linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%)',
+      badge: c.estado || 'pendiente',
+      badgeClass: estadoColors[c.estado] || 'pvc-badge--warning',
+      sections: [{
+        title: 'Datos generales', icon: 'fa-info-circle',
+        fields: [
+          { label: 'Folio', value: c.folio, icon: 'fa-hashtag' },
+          { label: 'Cliente', value: c.cliente_nombre, icon: 'fa-user-tie' },
+          { label: 'Tipo', value: c.tipo, icon: 'fa-tag' },
+          { label: 'Fecha', value: (c.fecha || '').toString().slice(0, 10), icon: 'fa-calendar' },
+          { label: 'Vendedor', value: c.vendedor, icon: 'fa-user' },
+          { label: 'Estado', value: c.estado, icon: 'fa-flag', badge: true, badgeClass: estadoColors[c.estado] || '' },
+        ]
+      }, {
+        title: 'Montos', icon: 'fa-dollar-sign',
+        fields: [
+          { label: 'Moneda', value: moneda, icon: 'fa-money-bill' },
+          { label: 'Tipo de cambio', value: c.tipo_cambio ? '$' + Number(c.tipo_cambio).toFixed(2) : '', icon: 'fa-exchange-alt' },
+          { label: 'Subtotal', value: c.subtotal != null ? '$' + Number(c.subtotal).toLocaleString('es-MX', { minimumFractionDigits: 2 }) : '', icon: 'fa-calculator' },
+          { label: 'IVA (16%)', value: c.iva != null ? '$' + Number(c.iva).toLocaleString('es-MX', { minimumFractionDigits: 2 }) : '', icon: 'fa-percent' },
+          { label: 'Total', value: totalFmt, icon: 'fa-dollar-sign' },
+          { label: 'Fecha aprobación', value: c.fecha_aprobacion ? (c.fecha_aprobacion + '').slice(0, 10) : '', icon: 'fa-check-circle' },
+        ]
+      }, c.notas ? {
+        title: 'Notas', icon: 'fa-sticky-note',
+        fields: [{ label: 'Notas', value: c.notas, full: true }]
+      } : null].filter(Boolean)
+    });
+  }
   function renderCotizaciones(data, totalInSystem) {
     const panel = qs('#panel-cotizaciones');
     if (!panel) return;
@@ -1448,6 +1632,7 @@
       updateTableFooter('tabla-cotizaciones', 0, cotizacionesCache.length, () => clearTableFiltersAndRefresh('tabla-cotizaciones', null, applyCotizacionesFiltersAndRender));
       return;
     }
+    const _canEdit = canEdit(); const _canDelete = canDelete();
     list.forEach(c => {
       const vig = getVigenciaSemaphore(c);
       const moneda = c.moneda || 'MXN';
@@ -1476,13 +1661,17 @@
         <td><span class="semaforo ${estadoClass}">${estadoLabel}</span></td>
         <td class="sla-cell"><span class="semaforo semaforo-${vig.color}" title="${escapeHtml(vig.label)}"><i class="fas ${vig.icon}"></i> ${escapeHtml(vig.label)}</span></td>
         <td class="th-actions">
+          <button type="button" class="btn small outline btn-preview-cot" data-id="${c.id}" title="Vista previa"><i class="fas fa-eye"></i></button>
           <button type="button" class="btn small outline btn-pdf-cot" data-id="${c.id}" title="Descargar / Imprimir PDF para cliente"><i class="fas fa-file-pdf"></i></button>
           ${c.estado !== 'aplicada' && c.estado !== 'venta' ? `<button type="button" class="btn small success btn-aplicar-cot" data-id="${c.id}" title="Aprobar como venta"><i class="fas fa-check"></i></button>` : ''}
-          <button type="button" class="btn small primary btn-edit-cot" data-id="${c.id}" title="Editar"><i class="fas fa-edit"></i></button>
-          <button type="button" class="btn small danger btn-delete-cot" data-id="${c.id}" title="Eliminar"><i class="fas fa-trash"></i></button>
+          ${_canEdit ? `<button type="button" class="btn small primary btn-edit-cot" data-id="${c.id}" title="Editar"><i class="fas fa-edit"></i></button>` : ''}
+          ${_canDelete ? `<button type="button" class="btn small danger btn-delete-cot" data-id="${c.id}" title="Eliminar"><i class="fas fa-trash"></i></button>` : ''}
         </td>
       `;
       tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.btn-preview-cot').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); const c = cotizacionesCache.find(x => x.id == btn.dataset.id); if (c) previewCotizacion(c); });
     });
     tbody.querySelectorAll('.btn-aplicar-cot').forEach(btn => {
       btn.addEventListener('click', e => {
@@ -1566,6 +1755,36 @@
   }
 
   // ----- REPORTES -----
+  function previewReporte(r) {
+    const tipoColors = { garantia: 'pvc-badge--purple', instalacion: 'pvc-badge--info', servicio: 'pvc-badge--warning', venta: 'pvc-badge--success' };
+    openPreviewCard({
+      title: r.folio || 'Reporte',
+      subtitle: r.razon_social || r.cliente_nombre || '',
+      icon: 'fa-file-alt',
+      color: 'linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%)',
+      badge: r.tipo_reporte || '',
+      badgeClass: tipoColors[r.tipo_reporte] || 'pvc-badge--info',
+      sections: [{
+        title: 'Datos del reporte', icon: 'fa-info-circle',
+        fields: [
+          { label: 'Folio', value: r.folio, icon: 'fa-hashtag' },
+          { label: 'Cliente / Razón social', value: r.razon_social || r.cliente_nombre, icon: 'fa-building', full: true },
+          { label: 'Máquina', value: r.maquina_nombre || r.maquina_modelo, icon: 'fa-industry' },
+          { label: 'Nº Serie', value: r.numero_maquina || r.maquina_serie, icon: 'fa-barcode' },
+          { label: 'Tipo', value: r.tipo_reporte, icon: 'fa-tag', badge: true, badgeClass: tipoColors[r.tipo_reporte] || '' },
+          { label: 'Subtipo', value: r.subtipo, icon: 'fa-tags' },
+          { label: 'Técnico', value: r.tecnico, icon: 'fa-hard-hat' },
+          { label: 'Fecha', value: (r.fecha || '').toString().slice(0, 10), icon: 'fa-calendar' },
+          { label: 'Fecha programada', value: r.fecha_programada ? (r.fecha_programada + '').slice(0, 10) : '', icon: 'fa-calendar-check' },
+          { label: 'Estatus', value: r.estatus, icon: 'fa-flag', badge: true, badgeClass: r.estatus === 'cerrado' ? 'pvc-badge--success' : 'pvc-badge--warning' },
+          { label: 'Finalizado', value: Number(r.finalizado) === 1 ? 'Sí' : 'No', icon: 'fa-check-circle', badge: true, badgeClass: Number(r.finalizado) === 1 ? 'pvc-badge--success' : 'pvc-badge--danger' },
+        ]
+      }, r.descripcion ? {
+        title: 'Descripción', icon: 'fa-align-left',
+        fields: [{ label: 'Descripción', value: r.descripcion, full: true }]
+      } : null].filter(Boolean)
+    });
+  }
   async function loadReportes() {
     showLoading();
     try {
@@ -1590,7 +1809,7 @@
     const tbody = qs('#tabla-reportes tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
-    const isAdmin = currentUser && (currentUser.role === 'admin');
+    const isAdmin = canDelete();
 
     // Ocultar columna fecha programada si no es admin
     const adminCols = document.querySelectorAll('.admin-only-col');
@@ -1636,11 +1855,15 @@
             : `<button type="button" class="btn tiny success btn-finalizar-rep" data-id="${r.id}" title="Marcar como finalizado (escanear firma)"><i class="fas fa-check"></i> Finalizar</button>`}
         </td>
         <td class="th-actions">
-          <button type="button" class="btn small primary btn-edit-rep" data-id="${r.id}"><i class="fas fa-edit"></i></button>
-          <button type="button" class="btn small danger btn-del-rep" data-id="${r.id}"><i class="fas fa-trash"></i></button>
+          <button type="button" class="btn small outline btn-preview-rep" data-id="${r.id}" title="Vista previa"><i class="fas fa-eye"></i></button>
+          ${isAdmin ? `<button type="button" class="btn small primary btn-edit-rep" data-id="${r.id}"><i class="fas fa-edit"></i></button>` : (canEdit() ? `<button type="button" class="btn small primary btn-edit-rep" data-id="${r.id}"><i class="fas fa-edit"></i></button>` : '')}
+          ${isAdmin ? `<button type="button" class="btn small danger btn-del-rep" data-id="${r.id}"><i class="fas fa-trash"></i></button>` : ''}
         </td>
       `;
       tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.btn-preview-rep').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); const r = reportesCache.find(x => x.id == btn.dataset.id); if (r) previewReporte(r); });
     });
     tbody.querySelectorAll('.btn-edit-rep').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const r = reportesCache.find(x => x.id == btn.dataset.id); if (r) openModalReporte(r); });
@@ -1753,7 +1976,7 @@
 
   function openModalReporte(reporte) {
     const isNew = !reporte || !reporte.id;
-    const isAdmin = currentUser && currentUser.role === 'admin';
+    const isAdmin = canDelete();
 
     const clientesOpts = clientesCache.map(c =>
       `<option value="${c.id}" data-nombre="${escapeHtml(c.nombre)}" ${reporte && reporte.cliente_id == c.id ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`
@@ -2175,6 +2398,29 @@
     }).catch(() => {});
   }
 
+  function previewGarantia(g) {
+    const activa = g.activa === 1 || g.activa === true;
+    openPreviewCard({
+      title: g.razon_social || 'Garantía',
+      subtitle: g.modelo_maquina || '',
+      icon: 'fa-shield-alt',
+      color: 'linear-gradient(135deg, #059669 0%, #065f46 100%)',
+      badge: activa ? 'Activa' : 'Inactiva',
+      badgeClass: activa ? 'pvc-badge--success' : 'pvc-badge--danger',
+      sections: [{
+        title: 'Equipo', icon: 'fa-industry',
+        fields: [
+          { label: 'Razón social', value: g.razon_social, icon: 'fa-building', full: true },
+          { label: 'Modelo de máquina', value: g.modelo_maquina, icon: 'fa-cog' },
+          { label: 'Tipo de máquina', value: g.tipo_maquina, icon: 'fa-tag' },
+          { label: 'Número de serie', value: g.numero_serie, icon: 'fa-barcode' },
+          { label: 'Fecha de entrega', value: (g.fecha_entrega || '').toString().slice(0, 10), icon: 'fa-calendar' },
+          { label: 'Activa', value: activa ? 'Sí' : 'No', icon: 'fa-check-circle', badge: true, badgeClass: activa ? 'pvc-badge--success' : 'pvc-badge--danger' },
+          { label: 'Mantenimientos', value: Array.isArray(g.mantenimientos) ? g.mantenimientos.length : 0, icon: 'fa-tools' },
+        ]
+      }]
+    });
+  }
   function renderGarantias(data) {
     const tbody = qs('#tabla-garantias tbody');
     if (!tbody) return;
@@ -2183,6 +2429,7 @@
       tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay garantías registradas. Agrega una.</td></tr>';
       return;
     }
+    const _canEdit = canEdit(); const _canDelete = canDelete();
     data.forEach(g => {
       const tr = document.createElement('tr');
       const nMant = Array.isArray(g.mantenimientos) ? g.mantenimientos.length : 0;
@@ -2195,12 +2442,16 @@
         <td><span class="badge badge-gar-mant" title="Mantenimientos registrados">${nMant}</span></td>
         <td><span class="badge badge-gar-${activa ? 'activa' : 'cancelada'}">${activa ? 'Sí' : 'No'}</span></td>
         <td class="th-actions">
+          <button type="button" class="btn small outline btn-preview-gar" data-id="${g.id}" title="Vista previa"><i class="fas fa-eye"></i></button>
           <button type="button" class="btn small outline btn-mant-gar" data-id="${g.id}" title="Ver mantenimientos"><i class="fas fa-calendar-check"></i></button>
-          <button type="button" class="btn small primary btn-edit-gar" data-id="${g.id}"><i class="fas fa-edit"></i></button>
-          <button type="button" class="btn small danger btn-del-gar" data-id="${g.id}"><i class="fas fa-trash"></i></button>
+          ${_canEdit ? `<button type="button" class="btn small primary btn-edit-gar" data-id="${g.id}"><i class="fas fa-edit"></i></button>` : ''}
+          ${_canDelete ? `<button type="button" class="btn small danger btn-del-gar" data-id="${g.id}"><i class="fas fa-trash"></i></button>` : ''}
         </td>
       `;
       tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.btn-preview-gar').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); const g = garantiasCache.find(x => x.id == btn.dataset.id); if (g) previewGarantia(g); });
     });
     tbody.querySelectorAll('.btn-mant-gar').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const g = garantiasCache.find(x => x.id == btn.dataset.id); if (g) openModalMantenimientos(g); });
@@ -2418,6 +2669,30 @@
     } finally { hideLoading(); }
   }
 
+  function previewBono(b) {
+    openPreviewCard({
+      title: 'Bono: ' + (b.tecnico || '—'),
+      subtitle: b.tipo_capacitacion || '',
+      icon: 'fa-award',
+      color: 'linear-gradient(135deg, #d97706 0%, #92400e 100%)',
+      badge: b.pagado ? 'Pagado' : 'Pendiente',
+      badgeClass: b.pagado ? 'pvc-badge--success' : 'pvc-badge--warning',
+      sections: [{
+        title: 'Información del bono', icon: 'fa-info-circle',
+        fields: [
+          { label: 'Técnico', value: b.tecnico, icon: 'fa-hard-hat' },
+          { label: 'Reporte', value: b.reporte_folio || '—', icon: 'fa-file-alt' },
+          { label: 'Tipo de capacitación', value: b.tipo_capacitacion, icon: 'fa-graduation-cap' },
+          { label: 'Monto', value: '$' + Number(b.monto_bono || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 }), icon: 'fa-money-bill-wave' },
+          { label: 'Fecha', value: (b.fecha || '').toString().slice(0, 10), icon: 'fa-calendar' },
+          { label: 'Estado', value: b.pagado ? 'Pagado' : 'Pendiente', icon: 'fa-flag', badge: true, badgeClass: b.pagado ? 'pvc-badge--success' : 'pvc-badge--warning' },
+        ]
+      }, b.notas ? {
+        title: 'Notas', icon: 'fa-sticky-note',
+        fields: [{ label: 'Notas', value: b.notas, full: true }]
+      } : null].filter(Boolean)
+    });
+  }
   function renderBonos(data) {
     const tbody = qs('#tabla-bonos tbody');
     if (!tbody) return;
@@ -2426,6 +2701,7 @@
       tbody.innerHTML = '<tr><td colspan="8" class="empty">No hay bonos registrados.</td></tr>';
       return;
     }
+    const _canEdit = canEdit(); const _canDelete = canDelete();
     let totalBonos = 0;
     data.forEach(b => {
       totalBonos += Number(b.monto_bono || 0);
@@ -2442,14 +2718,18 @@
         <td><span class="badge badge-bono-${b.pagado ? 'pagado' : 'pendiente'}">${b.pagado ? 'Pagado' : 'Pendiente'}</span></td>
         <td class="td-text-wrap">${escapeHtml(notasShort)}</td>
         <td class="th-actions">
-          <button type="button" class="btn small primary btn-edit-bono" data-id="${b.id}"><i class="fas fa-edit"></i></button>
-          <button type="button" class="btn small danger btn-del-bono" data-id="${b.id}"><i class="fas fa-trash"></i></button>
+          <button type="button" class="btn small outline btn-preview-bono" data-id="${b.id}" title="Vista previa"><i class="fas fa-eye"></i></button>
+          ${_canEdit ? `<button type="button" class="btn small primary btn-edit-bono" data-id="${b.id}"><i class="fas fa-edit"></i></button>` : ''}
+          ${_canDelete ? `<button type="button" class="btn small danger btn-del-bono" data-id="${b.id}"><i class="fas fa-trash"></i></button>` : ''}
         </td>
       `;
       tbody.appendChild(tr);
     });
     const totalEl = qs('#bonos-total');
     if (totalEl) totalEl.textContent = '$' + totalBonos.toLocaleString('es-MX', { minimumFractionDigits: 2 });
+    tbody.querySelectorAll('.btn-preview-bono').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); const b = bonosCache.find(x => x.id == btn.dataset.id); if (b) previewBono(b); });
+    });
     tbody.querySelectorAll('.btn-edit-bono').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const b = bonosCache.find(x => x.id == btn.dataset.id); if (b) openModalBono(b); });
     });
@@ -2553,6 +2833,38 @@
     } finally { hideLoading(); }
   }
 
+  function previewViaje(v) {
+    const dias = Number(v.dias || 1);
+    const monto = v.monto_viaticos != null && !isNaN(Number(v.monto_viaticos)) ? Number(v.monto_viaticos) : dias * 1000;
+    const liq = Number(v.liquidado) === 1;
+    openPreviewCard({
+      title: 'Viaje: ' + (v.tecnico || '—'),
+      subtitle: (v.cliente_nombre || v.razon_social || '').trim() || '',
+      icon: 'fa-plane',
+      color: 'linear-gradient(135deg, #0284c7 0%, #075985 100%)',
+      badge: liq ? 'Liquidado' : 'Pendiente',
+      badgeClass: liq ? 'pvc-badge--success' : 'pvc-badge--warning',
+      sections: [{
+        title: 'Detalles del viaje', icon: 'fa-info-circle',
+        fields: [
+          { label: 'Técnico', value: v.tecnico, icon: 'fa-hard-hat' },
+          { label: 'Cliente / Empresa', value: v.cliente_nombre || v.razon_social, icon: 'fa-building', full: true },
+          { label: 'Fecha inicio', value: (v.fecha_inicio || '').toString().slice(0, 10), icon: 'fa-calendar-alt' },
+          { label: 'Fecha fin', value: (v.fecha_fin || '').toString().slice(0, 10), icon: 'fa-calendar-check' },
+          { label: 'Días', value: dias, icon: 'fa-clock' },
+          { label: 'Viáticos', value: '$' + monto.toLocaleString('es-MX', { minimumFractionDigits: 2 }), icon: 'fa-money-bill-wave' },
+          { label: 'Mes liquidación', value: v.mes_liquidacion ? String(v.mes_liquidacion).slice(0, 7) : '', icon: 'fa-calendar' },
+          { label: 'Liquidado', value: liq ? 'Sí' : 'No', icon: 'fa-check-circle', badge: true, badgeClass: liq ? 'pvc-badge--success' : 'pvc-badge--warning' },
+        ]
+      }, (v.descripcion || v.actividades) ? {
+        title: 'Actividades', icon: 'fa-list',
+        fields: [
+          { label: 'Descripción', value: v.descripcion, full: true },
+          { label: 'Actividades', value: v.actividades, full: true },
+        ].filter(f => f.value)
+      } : null].filter(Boolean)
+    });
+  }
   function renderViajes(data) {
     const tbody = qs('#tabla-viajes tbody');
     if (!tbody) return;
@@ -2561,6 +2873,7 @@
       tbody.innerHTML = '<tr><td colspan="10" class="empty">No hay viajes registrados.</td></tr>';
       return;
     }
+    const _canEdit = canEdit(); const _canDelete = canDelete();
     let totalViáticos = 0;
     data.forEach(v => {
       const dias = Number(v.dias || 1);
@@ -2584,14 +2897,18 @@
         <td>${escapeHtml(mesLiq)}</td>
         <td><span class="badge ${liq ? 'badge-bono-pagado' : 'badge-bono-pendiente'}">${liq ? 'Sí' : 'No'}</span></td>
         <td class="th-actions">
-          <button type="button" class="btn small primary btn-edit-viaje" data-id="${v.id}"><i class="fas fa-edit"></i></button>
-          <button type="button" class="btn small danger btn-del-viaje" data-id="${v.id}"><i class="fas fa-trash"></i></button>
+          <button type="button" class="btn small outline btn-preview-viaje" data-id="${v.id}" title="Vista previa"><i class="fas fa-eye"></i></button>
+          ${_canEdit ? `<button type="button" class="btn small primary btn-edit-viaje" data-id="${v.id}"><i class="fas fa-edit"></i></button>` : ''}
+          ${_canDelete ? `<button type="button" class="btn small danger btn-del-viaje" data-id="${v.id}"><i class="fas fa-trash"></i></button>` : ''}
         </td>
       `;
       tbody.appendChild(tr);
     });
     const totalEl = qs('#viajes-total-viaticos');
     if (totalEl) totalEl.textContent = '$' + totalViáticos.toLocaleString('es-MX', { minimumFractionDigits: 2 });
+    tbody.querySelectorAll('.btn-preview-viaje').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); const v = viajesCache.find(x => x.id == btn.dataset.id); if (v) previewViaje(v); });
+    });
     tbody.querySelectorAll('.btn-edit-viaje').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const v = viajesCache.find(x => x.id == btn.dataset.id); if (v) openModalViaje(v); });
     });
@@ -2745,6 +3062,39 @@
   }
 
   // ----- INCIDENTES (módulo rehecho: carga + render explícitos) -----
+  function previewIncidente(i) {
+    const prioColors = { alta: 'pvc-badge--danger', media: 'pvc-badge--warning', baja: 'pvc-badge--info' };
+    const estColors = { cerrado: 'pvc-badge--success', en_proceso: 'pvc-badge--warning', abierto: 'pvc-badge--danger' };
+    openPreviewCard({
+      title: i.folio || 'Incidente',
+      subtitle: i.cliente_nombre || '',
+      icon: 'fa-exclamation-triangle',
+      color: 'linear-gradient(135deg, #dc2626 0%, #7f1d1d 100%)',
+      badge: i.prioridad || 'media',
+      badgeClass: prioColors[i.prioridad] || 'pvc-badge--warning',
+      sections: [{
+        title: 'Información del incidente', icon: 'fa-info-circle',
+        fields: [
+          { label: 'Folio', value: i.folio, icon: 'fa-hashtag' },
+          { label: 'Cliente', value: i.cliente_nombre, icon: 'fa-user-tie' },
+          { label: 'Máquina', value: i.maquina_nombre, icon: 'fa-industry' },
+          { label: 'Técnico responsable', value: i.tecnico_responsable, icon: 'fa-hard-hat' },
+          { label: 'Prioridad', value: i.prioridad, icon: 'fa-flag', badge: true, badgeClass: prioColors[i.prioridad] || '' },
+          { label: 'Estatus', value: i.estatus, icon: 'fa-check-circle', badge: true, badgeClass: estColors[i.estatus] || '' },
+        ]
+      }, {
+        title: 'Fechas', icon: 'fa-calendar',
+        fields: [
+          { label: 'Fecha reporte', value: (i.fecha_reporte || '').toString().slice(0, 10), icon: 'fa-calendar-alt' },
+          { label: 'Fecha vencimiento', value: (i.fecha_vencimiento || '').toString().slice(0, 10), icon: 'fa-calendar-times' },
+          { label: 'Fecha cierre', value: (i.fecha_cerrado || '').toString().slice(0, 10), icon: 'fa-calendar-check' },
+        ]
+      }, i.descripcion ? {
+        title: 'Descripción', icon: 'fa-align-left',
+        fields: [{ label: 'Descripción', value: i.descripcion, full: true }]
+      } : null].filter(Boolean)
+    });
+  }
   function renderIncidentes(data, totalInSystem) {
     const panel = qs('#panel-incidentes');
     if (!panel) return;
@@ -2768,6 +3118,7 @@
       updateTableFooter('tabla-incidentes', 0, incidentesCache.length, () => clearTableFiltersAndRefresh('tabla-incidentes', null, applyIncidentesFiltersAndRender));
       return;
     }
+    const _canEdit = canEdit(); const _canDelete = canDelete();
     list.forEach(i => {
       const sla = getSlaSemaphore(i);
       const diasRest = getDiasRestantesSemaphore(i);
@@ -2787,13 +3138,17 @@
         <td>${escapeHtml(String(i.estatus || ''))}</td>
         <td class="sla-cell"><span class="semaforo semaforo-${sla.color}" title="${escapeHtml(sla.label)}"><i class="fas ${sla.icon}"></i> ${escapeHtml(sla.label)}</span></td>
         <td class="th-actions">
+          <button type="button" class="btn small outline btn-preview-inc" data-id="${i.id}" title="Vista previa"><i class="fas fa-eye"></i></button>
           <button type="button" class="btn small outline btn-pdf-inc" data-id="${i.id}" title="Imprimir / PDF"><i class="fas fa-file-pdf"></i></button>
-          <button type="button" class="btn small primary btn-edit-inc" data-id="${i.id}" title="Editar"><i class="fas fa-edit"></i></button>
-          <button type="button" class="btn small outline btn-duplicate-inc" data-id="${i.id}" title="Duplicar incidente"><i class="fas fa-copy"></i></button>
-          <button type="button" class="btn small danger btn-delete-inc" data-id="${i.id}" title="Eliminar"><i class="fas fa-trash"></i></button>
+          ${_canEdit ? `<button type="button" class="btn small primary btn-edit-inc" data-id="${i.id}" title="Editar"><i class="fas fa-edit"></i></button>` : ''}
+          ${_canEdit ? `<button type="button" class="btn small outline btn-duplicate-inc" data-id="${i.id}" title="Duplicar incidente"><i class="fas fa-copy"></i></button>` : ''}
+          ${_canDelete ? `<button type="button" class="btn small danger btn-delete-inc" data-id="${i.id}" title="Eliminar"><i class="fas fa-trash"></i></button>` : ''}
         </td>
       `;
       tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.btn-preview-inc').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); const i = incidentesCache.find(x => x.id == btn.dataset.id); if (i) previewIncidente(i); });
     });
     tbody.querySelectorAll('.btn-pdf-inc').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); openIncidentePdf(btn.dataset.id); });
@@ -2837,6 +3192,30 @@
   }
 
   // ----- BITÁCORAS (módulo rehecho: carga + render explícitos) -----
+  function previewBitacora(b) {
+    openPreviewCard({
+      title: 'Bitácora: ' + (b.tecnico || '—'),
+      subtitle: (b.fecha || '').toString().slice(0, 10) + (b.incidente_folio ? ' · ' + b.incidente_folio : ''),
+      icon: 'fa-clock',
+      color: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
+      sections: [{
+        title: 'Detalles del registro', icon: 'fa-info-circle',
+        fields: [
+          { label: 'Fecha', value: (b.fecha || '').toString().slice(0, 10), icon: 'fa-calendar' },
+          { label: 'Técnico', value: b.tecnico, icon: 'fa-hard-hat' },
+          { label: 'Folio incidente', value: b.incidente_folio || '—', icon: 'fa-exclamation-triangle' },
+          { label: 'Folio cotización', value: b.cotizacion_folio || '—', icon: 'fa-file-invoice-dollar' },
+          { label: 'Horas trabajadas', value: b.tiempo_horas != null ? b.tiempo_horas + ' hrs' : '—', icon: 'fa-stopwatch' },
+        ]
+      }, b.actividades ? {
+        title: 'Actividades', icon: 'fa-list-ul',
+        fields: [{ label: 'Actividades realizadas', value: b.actividades, full: true }]
+      } : null, b.materiales_usados ? {
+        title: 'Materiales', icon: 'fa-boxes',
+        fields: [{ label: 'Materiales usados', value: b.materiales_usados, full: true }]
+      } : null].filter(Boolean)
+    });
+  }
   function renderBitacoras(data, totalInSystem) {
     const panel = qs('#panel-bitacoras');
     if (!panel) return;
@@ -2860,6 +3239,7 @@
       updateTableFooter('tabla-bitacoras', 0, bitacorasCache.length, () => clearTableFiltersAndRefresh('tabla-bitacoras', null, applyBitacorasFiltersAndRender));
       return;
     }
+    const _canEdit = canEdit(); const _canDelete = canDelete();
     list.forEach(b => {
       const est = getEstadoRegistroSemaphore(b);
       const act = String(b.actividades || '');
@@ -2875,12 +3255,16 @@
         <td class="col-no-ibeam td-desc-wrap td-desc-wrap--compact">${escapeHtml(mat)}</td>
         <td class="col-no-ibeam sla-cell"><span class="semaforo semaforo-${est.color}" title="${escapeHtml(est.label)}"><i class="fas ${est.icon}"></i> ${escapeHtml(est.label)}</span></td>
         <td class="th-actions">
+          <button type="button" class="btn small outline btn-preview-bit" data-id="${b.id}" title="Vista previa"><i class="fas fa-eye"></i></button>
           <button type="button" class="btn small outline btn-pdf-bit" data-id="${b.id}" title="Imprimir / PDF"><i class="fas fa-file-pdf"></i></button>
-          <button type="button" class="btn small primary btn-edit-bit" data-id="${b.id}"><i class="fas fa-edit"></i></button>
-          <button type="button" class="btn small danger btn-delete-bit" data-id="${b.id}"><i class="fas fa-trash"></i></button>
+          ${_canEdit ? `<button type="button" class="btn small primary btn-edit-bit" data-id="${b.id}"><i class="fas fa-edit"></i></button>` : ''}
+          ${_canDelete ? `<button type="button" class="btn small danger btn-delete-bit" data-id="${b.id}"><i class="fas fa-trash"></i></button>` : ''}
         </td>
       `;
       tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.btn-preview-bit').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); const b = bitacorasCache.find(x => x.id == btn.dataset.id); if (b) previewBitacora(b); });
     });
     tbody.querySelectorAll('.btn-pdf-bit').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); openBitacoraPdf(btn.dataset.id); });
@@ -2916,6 +3300,50 @@
       showToast('Registro de bitácora eliminado correctamente.', 'success');
       loadBitacoras();
     } catch (e) { showToast(parseApiError(e) || 'No se pudo eliminar.', 'error'); }
+  }
+
+  // ----- PREVIEW CARD ---- Tarjeta hermosa para ver todos los datos de un registro
+  /**
+   * openPreviewCard(config)
+   * config: { title, subtitle, icon, color, badge, badgeClass, sections, footerHtml }
+   * sections: [{ title, icon, fields: [{ label, value, full, badge, badgeClass, icon }] }]
+   */
+  function openPreviewCard(config) {
+    const { title = '', subtitle = '', icon = 'fa-file-alt', color = 'var(--config-primary)', badge = '', badgeClass = '', sections = [], footerHtml = '' } = config;
+    const sectionsHtml = sections.map(sec => {
+      if (!sec || !sec.fields || !sec.fields.length) return '';
+      const fieldsHtml = sec.fields.filter(f => f.value !== undefined && f.value !== null && f.value !== '').map(f => {
+        const valueHtml = f.badge
+          ? `<span class="pvc-badge ${f.badgeClass || ''}">${escapeHtml(String(f.value))}</span>`
+          : `<span class="pvc-field-value">${f.html ? f.value : escapeHtml(String(f.value))}</span>`;
+        return `<div class="pvc-field ${f.full ? 'pvc-field--full' : ''}">
+          <span class="pvc-field-label">${f.icon ? `<i class="fas ${f.icon}"></i> ` : ''}${escapeHtml(f.label)}</span>
+          ${valueHtml}
+        </div>`;
+      }).join('');
+      if (!fieldsHtml) return '';
+      return `<div class="pvc-section">
+        ${sec.title ? `<div class="pvc-section-title">${sec.icon ? `<i class="fas ${sec.icon}"></i> ` : ''}${escapeHtml(sec.title)}</div>` : ''}
+        <div class="pvc-fields">${fieldsHtml}</div>
+      </div>`;
+    }).join('');
+    const body = `
+      <div class="preview-card">
+        <div class="pvc-header" style="background:${color}">
+          <div class="pvc-header-icon"><i class="fas ${icon}"></i></div>
+          <div class="pvc-header-info">
+            <h2 class="pvc-title">${escapeHtml(title)}</h2>
+            ${subtitle ? `<p class="pvc-subtitle">${escapeHtml(subtitle)}</p>` : ''}
+          </div>
+          ${badge ? `<span class="pvc-badge pvc-badge--header ${badgeClass}">${escapeHtml(badge)}</span>` : ''}
+        </div>
+        <div class="pvc-body">${sectionsHtml || '<p class="pvc-empty">Sin información adicional.</p>'}</div>
+        ${footerHtml ? `<div class="pvc-footer">${footerHtml}</div>` : ''}
+        <div class="pvc-close-row">
+          <button type="button" class="btn outline" id="modal-btn-cancel"><i class="fas fa-times"></i> Cerrar</button>
+        </div>
+      </div>`;
+    openModal(title, body);
   }
 
   // ----- MODAL GENÉRICO ----- Focus trap, foco al abrir/cerrar, Escape cierra
@@ -5729,6 +6157,28 @@
     } catch (e) { console.error(e); }
   }
 
+  function previewTecnico(t) {
+    openPreviewCard({
+      title: t.nombre || 'Técnico',
+      subtitle: t.ocupado ? 'En servicio actualmente' : 'Disponible',
+      icon: 'fa-hard-hat',
+      color: 'linear-gradient(135deg, #0891b2 0%, #164e63 100%)',
+      badge: t.activo ? 'Activo' : 'Inactivo',
+      badgeClass: t.activo ? 'pvc-badge--success' : 'pvc-badge--danger',
+      sections: [{
+        title: 'Información del técnico', icon: 'fa-user',
+        fields: [
+          { label: 'ID', value: t.id, icon: 'fa-hashtag' },
+          { label: 'Nombre', value: t.nombre, icon: 'fa-user', full: true },
+          { label: 'Estado', value: t.activo ? 'Activo' : 'Inactivo', icon: 'fa-toggle-on', badge: true, badgeClass: t.activo ? 'pvc-badge--success' : 'pvc-badge--danger' },
+          { label: 'Disponibilidad', value: t.ocupado ? '🔒 Ocupado' : '✓ Disponible', icon: 'fa-clock', badge: true, badgeClass: t.ocupado ? 'pvc-badge--warning' : 'pvc-badge--success' },
+        ]
+      }, t.habilidades ? {
+        title: 'Habilidades / Especialidades', icon: 'fa-tools',
+        fields: [{ label: 'Habilidades', value: t.habilidades, full: true }]
+      } : null].filter(Boolean)
+    });
+  }
   function renderTecnicos(data) {
     const tbody = qs('#tabla-tecnicos tbody');
     if (!tbody) return;
@@ -5739,6 +6189,7 @@
       tbody.innerHTML = '<tr><td colspan="5" class="empty">No hay técnicos registrados.</td></tr>';
       return;
     }
+    const _canEdit = canEdit(); const _canDelete = canDelete();
     filtered.forEach(t => {
       const ocupadoBadge = t.ocupado ? '<span class="badge semaforo-rojo">🔒 Ocupado</span>' : '<span class="badge semaforo-verde">✓ Disponible</span>';
       const activoBadge = t.activo ? '<span class="badge semaforo-verde">Activo</span>' : '<span class="badge semaforo-gris">Inactivo</span>';
@@ -5749,10 +6200,14 @@
         <td>${ocupadoBadge}</td>
         <td>${activoBadge}</td>
         <td class="th-actions">
-          <button type="button" class="btn small primary btn-edit-tec" data-id="${t.id}"><i class="fas fa-edit"></i></button>
-          <button type="button" class="btn small danger btn-del-tec" data-id="${t.id}"><i class="fas fa-trash"></i></button>
+          <button type="button" class="btn small outline btn-preview-tec" data-id="${t.id}" title="Vista previa"><i class="fas fa-eye"></i></button>
+          ${_canEdit ? `<button type="button" class="btn small primary btn-edit-tec" data-id="${t.id}"><i class="fas fa-edit"></i></button>` : ''}
+          ${_canDelete ? `<button type="button" class="btn small danger btn-del-tec" data-id="${t.id}"><i class="fas fa-trash"></i></button>` : ''}
         </td>`;
       tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.btn-preview-tec').forEach(btn => {
+      btn.addEventListener('click', () => { const t = tecnicosCache.find(x => String(x.id) === String(btn.dataset.id)); if (t) previewTecnico(t); });
     });
     tbody.querySelectorAll('.btn-edit-tec').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -7007,10 +7462,10 @@
     updateAuditTabVisibility();
     initSoundToggleButton();
     syncSessionHeader();
-    if (serverConfig.authRequired && !getAuthToken()) {
+    if (!getAuthToken()) {
       showLoginOverlay(true);
       const hint = qs('#login-hint');
-      if (hint) hint.textContent = 'Introduce las credenciales que configuró el administrador del servidor (variable AUTH_ENABLED).';
+      if (hint) hint.textContent = 'Introduce las credenciales de tu cuenta para continuar.';
       setupLoginForm();
       initTheme();
       syncThemeColorMeta();
