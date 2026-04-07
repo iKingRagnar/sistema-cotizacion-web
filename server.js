@@ -1174,14 +1174,9 @@ function norm(s) {
 }
 function safeStr(v) { return (v != null && String(v).trim() !== '') ? String(v).trim() : null; }
 function safeStrReq(v) { return (v != null && String(v).trim() !== '') ? String(v).trim() : ''; }
-app.post('/api/seed-demo', async (req, res) => {
-  try {
-    const force = !!(req.body && req.body.force);
-    const [cCount] = await db.getAll('SELECT COUNT(*) as n FROM clientes');
-    if (cCount && cCount.n > 0 && !force) {
-      return res.status(400).json({ error: 'Ya hay datos cargados. El demo solo se puede cargar cuando no hay clientes. Si quieres volver a cargar, elimina primero los clientes desde la pestaña Clientes.' });
-    }
+async function runSeedDemoCore(force) {
     // ── FORCE: vaciar todas las tablas de negocio en orden FK ──────────────
+    const [cCount] = await db.getAll('SELECT COUNT(*) as n FROM clientes');
     if (force && cCount && cCount.n > 0) {
       const tablasOrden = [
         'movimientos_stock','mantenimientos_garantia','bonos','viajes',
@@ -1193,7 +1188,7 @@ app.post('/api/seed-demo', async (req, res) => {
       }
     }
     const seedPath = path.join(__dirname, 'seed-demo.json');
-    if (!fs.existsSync(seedPath)) return res.status(404).json({ error: 'No existe seed-demo.json. Ejecuta: python exportar_demo.py' });
+    if (!fs.existsSync(seedPath)) throw new Error('No existe seed-demo.json. Ejecuta: python exportar_demo.py');
     const seed = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
 
     const clientes = (seed.clientes || []).filter(c => c && typeof c === 'object');
@@ -1519,7 +1514,7 @@ app.post('/api/seed-demo', async (req, res) => {
     const maqCountRow = await db.getOne('SELECT COUNT(*) as n FROM maquinas');
     const maquinasTotal = maqCountRow && maqCountRow.n != null ? Number(maqCountRow.n) : maquinas.length;
 
-    res.json({
+    return {
       ok: true,
       force,
       clientes: clientes.length,
@@ -1532,7 +1527,18 @@ app.post('/api/seed-demo', async (req, res) => {
       garantias: garantiasCount,
       bonos: bonosCount,
       viajes: viajesCount,
-    });
+    };
+}
+
+app.post('/api/seed-demo', async (req, res) => {
+  try {
+    const force = !!(req.body && req.body.force);
+    const [cCount] = await db.getAll('SELECT COUNT(*) as n FROM clientes');
+    if (cCount && cCount.n > 0 && !force) {
+      return res.status(400).json({ error: 'Ya hay datos cargados. El demo solo se puede cargar cuando no hay clientes. Si quieres volver a cargar, elimina primero los clientes desde la pestaña Clientes.' });
+    }
+    const result = await runSeedDemoCore(force);
+    res.json(result);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -2957,6 +2963,20 @@ app.get('*', (req, res) => {
 async function start() {
   await db.init();
   await auth.ensureSeedUsers();
+  // Auto-seed demo data si las tablas están vacías
+  try {
+    const [cRow] = await db.getAll('SELECT COUNT(*) as n FROM clientes');
+    if (!cRow || Number(cRow.n) === 0) {
+      const seedPath = require('path').join(__dirname, 'seed-demo.json');
+      if (require('fs').existsSync(seedPath)) {
+        console.log('[auto-seed] Base de datos vacía. Cargando datos demo...');
+        const r = await runSeedDemoCore(false);
+        console.log('[auto-seed] Datos cargados: clientes=' + r.clientes + ' refacciones=' + r.refacciones + ' incidentes=' + r.incidentes + ' cotizaciones=' + r.cotizaciones);
+      }
+    }
+  } catch (e) {
+    console.warn('[auto-seed] No se pudo cargar datos demo:', e && e.message);
+  }
   const autoEnsure =
     process.env.COTIZACION_AUTO_ENSURE_MAQUINAS !== '0' && process.env.COTIZACION_AUTO_ENSURE_MAQUINAS !== 'false';
   if (autoEnsure) {

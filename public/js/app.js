@@ -451,11 +451,35 @@
   let viajesCache = [];
   let tecnicosCache = [];
   let lastQuickRefreshAt = 0;
+  function spawnLoginParticles() {
+    const overlay = qs('#login-overlay');
+    if (!overlay || overlay._particlesSpawned) return;
+    overlay._particlesSpawned = true;
+    const colors = [
+      'rgba(14,148,163,0.7)', 'rgba(99,102,241,0.6)',
+      'rgba(255,255,255,0.4)', 'rgba(14,148,163,0.4)',
+      'rgba(30,58,95,0.8)',
+    ];
+    const count = 28;
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('span');
+      p.className = 'login-particle';
+      const size = (Math.random() * 6 + 3).toFixed(1) + 'px';
+      const left = (Math.random() * 100).toFixed(1) + '%';
+      const dur = (Math.random() * 10 + 7).toFixed(1) + 's';
+      const delay = (Math.random() * 10).toFixed(1) + 's';
+      const px = ((Math.random() - 0.5) * 80).toFixed(1) + 'px';
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      p.style.cssText = `--size:${size};--lft:${left};--dur:${dur};--delay:${delay};--px:${px};--color:${color}`;
+      overlay.appendChild(p);
+    }
+  }
   function showLoginOverlay(show) {
     const el = qs('#login-overlay');
     if (!el) return;
     el.classList.toggle('hidden', !show);
     document.body.classList.toggle('login-open', !!show);
+    if (show) spawnLoginParticles();
   }
   function updateAuditTabVisibility() {
     const tab = qs('#tab-auditoria');
@@ -617,7 +641,12 @@
     qsAll('.tab').forEach(t => t.classList.remove('active'));
     const panel = document.getElementById('panel-' + id);
     const tab = document.querySelector('.tab[data-tab="' + id + '"]');
-    if (panel) panel.classList.add('active');
+    if (panel) {
+      // Force animation replay by removing and re-adding the class
+      panel.classList.remove('active');
+      void panel.offsetWidth; // reflow
+      panel.classList.add('active');
+    }
     if (tab) tab.classList.add('active');
     if (TABS_PERSIST.indexOf(id) >= 0) try { localStorage.setItem(LAST_TAB_KEY, id); } catch (_) {}
     updateDocumentTitle(id);
@@ -1191,6 +1220,39 @@
     tbody.innerHTML = html;
   }
 
+  /** Replay stagger animation on all rows in a table's tbody */
+  function animateTableRows(tableId) {
+    const tbl = qs('#' + tableId);
+    if (!tbl) return;
+    const rows = tbl.querySelectorAll('tbody tr:not(.skeleton-row)');
+    rows.forEach(function (row, i) {
+      row.style.animation = 'none';
+      row.style.opacity = '0';
+      void row.offsetWidth;
+      row.style.animation = '';
+      row.style.opacity = '';
+      row.style.animationDelay = (i * 0.035) + 's';
+    });
+  }
+
+  /** Animate a numeric value counting up in an element */
+  function animateCount(el, target, duration) {
+    if (!el) return;
+    duration = duration || 800;
+    const start = 0;
+    const startTime = performance.now();
+    const isFloat = String(target).includes('.');
+    function tick(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const val = start + (target - start) * eased;
+      el.textContent = isFloat ? val.toFixed(2) : Math.round(val).toLocaleString();
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
   // ----- CLIENTES -----
   function previewCliente(c) {
     openPreviewCard({
@@ -1246,6 +1308,7 @@
       tbody.appendChild(tr);
     });
     updateTableFooter('tabla-clientes', data.length, clientesCache.length, () => clearTableFiltersAndRefresh('tabla-clientes', '#buscar-clientes', applyClientesFiltersAndRender), arguments[1]);
+    animateTableRows('tabla-clientes');
     tbody.querySelectorAll('.btn-preview-cliente').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const c = data.find(x => x.id == btn.dataset.id); if (c) previewCliente(c); });
     });
@@ -1354,6 +1417,7 @@
       tbody.appendChild(tr);
     });
     updateTableFooter('tabla-refacciones', data.length, refaccionesCache.length, () => clearTableFiltersAndRefresh('tabla-refacciones', '#buscar-refacciones', applyRefaccionesFiltersAndRender), arguments[1]);
+    animateTableRows('tabla-refacciones');
     tbody.querySelectorAll('.btn-codigo-ref').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const r = data.find(x => x.id == btn.dataset.id); if (r) openModalRefaccionImagen(r); });
     });
@@ -1527,6 +1591,7 @@
       tbody.appendChild(tr);
     });
     updateTableFooter('tabla-maquinas', data.length, maquinasCache.length, () => clearTableFiltersAndRefresh('tabla-maquinas', null, applyMaquinasFiltersAndRender), arguments[1]);
+    animateTableRows('tabla-maquinas');
     tbody.querySelectorAll('.btn-view-maq').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const m = data.find(x => x.id == btn.dataset.id); if (m) previewMaquina(m); });
     });
@@ -1706,6 +1771,7 @@
       });
     });
     updateTableFooter('tabla-cotizaciones', list.length, cotizacionesCache.length, () => clearTableFiltersAndRefresh('tabla-cotizaciones', null, applyCotizacionesFiltersAndRender), arguments[2]);
+    animateTableRows('tabla-cotizaciones');
   }
 
   async function loadCotizaciones() {
@@ -1875,6 +1941,7 @@
       btn.addEventListener('click', e => { e.stopPropagation(); finalizarReporte(btn.dataset.id); });
     });
     updateTableFooter('tabla-reportes', data.length, reportesCache.length, () => clearTableFiltersAndRefresh('tabla-reportes', null, applyReportesFiltersAndRender));
+    animateTableRows('tabla-reportes');
   }
 
   async function finalizarReporte(id) {
@@ -3163,6 +3230,7 @@
       btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar este incidente?', () => deleteIncidente(btn.dataset.id)); });
     });
     updateTableFooter('tabla-incidentes', list.length, incidentesCache.length, () => clearTableFiltersAndRefresh('tabla-incidentes', null, applyIncidentesFiltersAndRender), arguments[2]);
+    animateTableRows('tabla-incidentes');
   }
 
   async function loadIncidentes() {
@@ -3276,6 +3344,7 @@
       btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar este registro de bitácora?', () => deleteBitacora(btn.dataset.id)); });
     });
     updateTableFooter('tabla-bitacoras', list.length, bitacorasCache.length, () => clearTableFiltersAndRefresh('tabla-bitacoras', null, applyBitacorasFiltersAndRender), arguments[2]);
+    animateTableRows('tabla-bitacoras');
   }
 
   async function loadBitacoras() {
