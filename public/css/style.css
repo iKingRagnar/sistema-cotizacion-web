@@ -3437,3 +3437,10 @@ body.dark-theme .tarifas-section-title { color: #f1f5f9; }
 .ref-foto-preview-wrap { display: flex; align-items: center; margin-top: 0.35rem; }
 .ref-foto-thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border, #e2e8f0); cursor: pointer; }
 body.dark-theme .ref-img-hover-preview { background: #1e293b; border-color: var(--config-accent, #0d9488); }
+
+/* ===== COTIZACIONES: mano de obra fields grid ===== */
+.mo-fields-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.65rem 1rem; margin-bottom: 0.5rem; }
+.mo-fields-grid .form-group { margin: 0; }
+.mo-fields-grid label { font-size: 0.8rem; color: var(--text-secondary, #475569); margin-bottom: 0.25rem; display: block; font-weight: 500; }
+.mo-fields-grid input, .mo-fields-grid select { padding: 0.35rem 0.5rem; font-size: 0.88rem; border: 1px solid var(--border, #cbd5e1); border-radius: var(--radius-sm, 6px); background: var(--surface, #fff); color: var(--text, #1e293b); width: 100%; }
+body.dark-theme .mo-fields-grid input, body.dark-theme .mo-fields-grid select { background: #0f172a; color: #e2e8f0; border-color: #334155; }

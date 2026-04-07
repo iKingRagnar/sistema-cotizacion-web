@@ -590,6 +590,7 @@
     if (id === 'ventas') loadVentas();
     if (id === 'revision-maquinas') loadRevisionMaquinas();
     if (id === 'tarifas') loadTarifas();
+    if (id === 'tecnicos') loadTecnicos();
   }
 
   qsAll('.tab').forEach(t => {
@@ -3451,25 +3452,66 @@
           <input type="text" id="cot-line-desc" placeholder="Ej. Diagnóstico, traslado (ida), reparación, etc.">
         </div>
 
-        <div class="form-group" id="cot-line-bit-wrap" style="display:none">
+        <div class=”form-group” id=”cot-line-bit-wrap” style=”display:none”>
           <label>Bitácora ligada (opcional)</label>
-          <select id="cot-line-bitacora">
-            <option value="">— Sin bitácora —</option>
+          <select id=”cot-line-bitacora”>
+            <option value=””>— Sin bitácora —</option>
           </select>
-          <div class="hint">Solo aparecen bitácoras ligadas a esta cotización. Si no hay ninguna, usa el botón “Nueva bitácora” o créala en la pestaña Bitácora eligiendo esta misma cotización.</div>
-          <div class="form-actions" style="margin-top:0.5rem;">
-            <button type="button" class="btn small outline" id="cot-line-new-bit"><i class="fas fa-clock"></i> Nueva bitácora</button>
+          <div class=”hint”>Solo aparecen bitácoras ligadas a esta cotización. Si no hay ninguna, usa el botón “Nueva bitácora” o créala en la pestaña Bitácora eligiendo esta misma cotización.</div>
+          <div class=”form-actions” style=”margin-top:0.5rem;”>
+            <button type=”button” class=”btn small outline” id=”cot-line-new-bit”><i class=”fas fa-clock”></i> Nueva bitácora</button>
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label>Cantidad / Horas</label>
-            <input type="number" id="cot-line-cant" step="0.25" min="0" value="1">
+        <!-- MANO DE OBRA: campos adicionales -->
+        <div id=”cot-line-mo-wrap” style=”display:none”>
+          <div class=”mo-fields-grid”>
+            <div class=”form-group”>
+              <label>Tipo de técnico</label>
+              <select id=”cot-line-mo-tipo-tec”>
+                <option value=”mecanico”>Mecánico</option>
+                <option value=”electronico”>Electrónico</option>
+                <option value=”cnc”>CNC / Programación</option>
+              </select>
+            </div>
+            <div class=”form-group”>
+              <label>Zona de servicio</label>
+              <select id=”cot-line-mo-zona”>
+                <option value=”a”>A – Local (Monterrey)</option>
+                <option value=”b”>B – Regional (Guanajuato, QRO)</option>
+                <option value=”c”>C – Nacional (CDMX, GDL)</option>
+              </select>
+            </div>
+            <div class=”form-group”>
+              <label>Horas traslado</label>
+              <input type=”number” id=”cot-line-mo-hrs-traslado” step=”0.5” min=”0” value=”0”>
+            </div>
+            <div class=”form-group”>
+              <label>Horas trabajo</label>
+              <input type=”number” id=”cot-line-mo-hrs-trabajo” step=”0.5” min=”0” value=”1”>
+            </div>
+            <div class=”form-group”>
+              <label># Ayudantes</label>
+              <input type=”number” id=”cot-line-mo-ayudantes” step=”1” min=”0” value=”0”>
+            </div>
+            <div class=”form-group”>
+              <label>Viáticos (días)</label>
+              <input type=”number” id=”cot-line-mo-viaticos-dias” step=”1” min=”0” value=”0”>
+            </div>
           </div>
-          <div class="form-group">
+          <div style=”font-size:0.8rem;color:var(--text-muted,#94a3b8);margin:0.3rem 0 0.5rem”>
+            <i class=”fas fa-calculator”></i> Precio calculado automáticamente desde Tarifas. Editable abajo.
+          </div>
+        </div>
+
+        <div class=”form-row”>
+          <div class=”form-group”>
+            <label>Cantidad / Horas</label>
+            <input type=”number” id=”cot-line-cant” step=”0.25” min=”0” value=”1”>
+          </div>
+          <div class=”form-group”>
             <label>Precio</label>
-            <input type="number" id="cot-line-precio" step="0.01" min="0" value="0">
+            <input type=”number” id=”cot-line-precio” step=”0.01” min=”0” value=”0”>
           </div>
         </div>
 
@@ -3798,14 +3840,47 @@
       if (!p) return;
       p.classList.add('hidden');
     }
+    function getTarifaVal(key) {
+      try {
+        const cache = JSON.parse(localStorage.getItem('tarifas_cache') || '{}');
+        return Number(cache[key]) || 0;
+      } catch (_) { return 0; }
+    }
+    function calcManoObraPrice() {
+      const tipoTec = qm('#cot-line-mo-tipo-tec')?.value || 'mecanico';
+      const zona = qm('#cot-line-mo-zona')?.value || 'a';
+      const hrsTraslado = Number(qm('#cot-line-mo-hrs-traslado')?.value) || 0;
+      const hrsTrabajo = Number(qm('#cot-line-mo-hrs-trabajo')?.value) || 0;
+      const ayudantes = Number(qm('#cot-line-mo-ayudantes')?.value) || 0;
+      const viaticoDias = Number(qm('#cot-line-mo-viaticos-dias')?.value) || 0;
+      const tarifaHora = getTarifaVal(`${tipoTec}_mxn`);
+      const tarifaAyudante = getTarifaVal('ayudante_mxn');
+      const tarifaViatico = getTarifaVal(`zona_${zona}_viatico`);
+      const precio = (hrsTrabajo * tarifaHora)
+        + (hrsTraslado * tarifaHora)
+        + (ayudantes * hrsTrabajo * tarifaAyudante)
+        + (viaticoDias * tarifaViatico);
+      const descParts = [];
+      if (hrsTrabajo) descParts.push(`${hrsTrabajo}h trabajo`);
+      if (hrsTraslado) descParts.push(`${hrsTraslado}h traslado`);
+      if (ayudantes) descParts.push(`${ayudantes} ayudante(s)`);
+      const zonaLabel = zona === 'a' ? 'A-Local' : zona === 'b' ? 'B-Regional' : 'C-Nacional';
+      const desc = `M.O. Zona ${zonaLabel} – ${descParts.join(', ')}`;
+      if (qm('#cot-line-precio')) qm('#cot-line-precio').value = precio.toFixed(2);
+      if (qm('#cot-line-cant')) qm('#cot-line-cant').value = hrsTrabajo || 1;
+      if (qm('#cot-line-desc')) qm('#cot-line-desc').value = desc;
+    }
     function syncLinePanelFields() {
       const t = qm('#cot-line-tipo')?.value || 'refaccion';
       const refWrap = qm('#cot-line-ref-wrap');
       const descWrap = qm('#cot-line-desc-wrap');
       const bitWrap = qm('#cot-line-bit-wrap');
+      const moWrap = qm('#cot-line-mo-wrap');
       if (refWrap) refWrap.style.display = t === 'refaccion' ? '' : 'none';
       if (descWrap) descWrap.style.display = t === 'refaccion' ? 'none' : '';
       if (bitWrap) bitWrap.style.display = t === 'mano_obra' ? '' : 'none';
+      if (moWrap) moWrap.style.display = t === 'mano_obra' ? '' : 'none';
+      if (t === 'mano_obra') calcManoObraPrice();
     }
     async function ensureCotizacionExistsBeforeLines() {
       if (currentCotId) return currentCotId;
@@ -3846,6 +3921,12 @@
     });
     qm('#cot-line-cancel')?.addEventListener('click', hideLinePanel);
     qm('#cot-line-tipo')?.addEventListener('change', syncLinePanelFields);
+    // Mano de obra: recalcular precio cuando cambia cualquier campo
+    ['#cot-line-mo-tipo-tec','#cot-line-mo-zona','#cot-line-mo-hrs-traslado',
+     '#cot-line-mo-hrs-trabajo','#cot-line-mo-ayudantes','#cot-line-mo-viaticos-dias'].forEach(sel => {
+      qm(sel)?.addEventListener('input', calcManoObraPrice);
+      qm(sel)?.addEventListener('change', calcManoObraPrice);
+    });
     syncLinePanelFields();
 
     // Si el usuario cambia las máquinas seleccionadas, el "draft" debe tomar la primera seleccionada
@@ -5638,6 +5719,172 @@
     } catch (_) {}
   }
   fetchAndShowTipoCambio();
+
+  // ----- TÉCNICOS -----
+  async function loadTecnicos() {
+    try {
+      const data = await fetchJson(API + '/tecnicos');
+      tecnicosCache = toArray(data);
+      renderTecnicos(tecnicosCache);
+    } catch (e) { console.error(e); }
+  }
+
+  function renderTecnicos(data) {
+    const tbody = qs('#tabla-tecnicos tbody');
+    if (!tbody) return;
+    const q = (qs('#buscar-tecnicos')?.value || '').toLowerCase();
+    const filtered = q ? data.filter(t => (t.nombre || '').toLowerCase().includes(q) || (t.habilidades || '').toLowerCase().includes(q)) : data;
+    tbody.innerHTML = '';
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty">No hay técnicos registrados.</td></tr>';
+      return;
+    }
+    filtered.forEach(t => {
+      const ocupadoBadge = t.ocupado ? '<span class="badge semaforo-rojo">🔒 Ocupado</span>' : '<span class="badge semaforo-verde">✓ Disponible</span>';
+      const activoBadge = t.activo ? '<span class="badge semaforo-verde">Activo</span>' : '<span class="badge semaforo-gris">Inactivo</span>';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>${escapeHtml(t.nombre || '')}</strong></td>
+        <td style="font-size:0.85rem;color:var(--text-secondary)">${escapeHtml(t.habilidades || '—')}</td>
+        <td>${ocupadoBadge}</td>
+        <td>${activoBadge}</td>
+        <td class="th-actions">
+          <button type="button" class="btn small primary btn-edit-tec" data-id="${t.id}"><i class="fas fa-edit"></i></button>
+          <button type="button" class="btn small danger btn-del-tec" data-id="${t.id}"><i class="fas fa-trash"></i></button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.btn-edit-tec').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = tecnicosCache.find(x => String(x.id) === String(btn.dataset.id));
+        if (t) openModalTecnico(t);
+      });
+    });
+    tbody.querySelectorAll('.btn-del-tec').forEach(btn => {
+      btn.addEventListener('click', () => {
+        openConfirmModal('¿Desactivar este técnico?', async () => {
+          await fetchJson(API + '/tecnicos/' + btn.dataset.id, { method: 'DELETE' });
+          loadTecnicos();
+        });
+      });
+    });
+  }
+
+  function openModalTecnico(tec) {
+    const isNew = !tec || !tec.id;
+    const body = `
+      <div class="form-group"><label>Nombre *</label>
+        <input type="text" id="m-tec-nombre" maxlength="100" value="${escapeHtml(tec && tec.nombre || '')}" placeholder="Ej. Juan Pérez" required>
+      </div>
+      <div class="form-group"><label>Habilidades / Especialidades</label>
+        <textarea id="m-tec-habilidades" rows="3" maxlength="500" placeholder="Ej. CNC Fanuc, Electroerosión, PLC Siemens, Soldadura MIG…">${escapeHtml(tec && tec.habilidades || '')}</textarea>
+        <div class="hint">Separa con comas. Aparece en la tabla y en el dropdown de asignación.</div>
+      </div>
+      ${!isNew ? `<div class="form-group"><label>Estado</label>
+        <select id="m-tec-activo">
+          <option value="1" ${tec && tec.activo != 0 ? 'selected' : ''}>Activo</option>
+          <option value="0" ${tec && tec.activo == 0 ? 'selected' : ''}>Inactivo</option>
+        </select>
+      </div>` : ''}
+      <div class="form-actions">
+        <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
+        <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
+      </div>`;
+    openModal(isNew ? 'Nuevo técnico' : 'Editar técnico', body);
+    qs('#m-save').onclick = async () => {
+      const nombre = qs('#m-tec-nombre')?.value.trim();
+      if (!nombre) { showToast('El nombre es obligatorio.', 'error'); return; }
+      const payload = {
+        nombre,
+        habilidades: qs('#m-tec-habilidades')?.value.trim() || null,
+        activo: isNew ? 1 : parseInt(qs('#m-tec-activo')?.value || '1', 10),
+      };
+      try {
+        if (isNew) await fetchJson(API + '/tecnicos', { method: 'POST', body: JSON.stringify(payload) });
+        else await fetchJson(API + '/tecnicos/' + tec.id, { method: 'PUT', body: JSON.stringify(payload) });
+        qs('#modal').classList.add('hidden');
+        showToast(isNew ? 'Técnico creado.' : 'Técnico actualizado.', 'success');
+        loadTecnicos();
+      } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar.', 'error'); }
+    };
+  }
+
+  qs('#btn-new-tecnico')?.addEventListener('click', () => openModalTecnico(null));
+  qs('#buscar-tecnicos')?.addEventListener('input', debounce(() => renderTecnicos(tecnicosCache), 250));
+
+  // ----- IMPORTAR XLSX REFACCIONES -----
+  async function importRefaccionesXlsx(file) {
+    if (!file) return;
+    if (typeof ExcelJS === 'undefined') { showToast('ExcelJS no disponible. Recarga la página.', 'error'); return; }
+    showToast('Leyendo archivo…', 'info');
+    try {
+      const buffer = await file.arrayBuffer();
+      const wb = new ExcelJS.Workbook();
+      await wb.xlsx.load(buffer);
+      const ws = wb.worksheets[0];
+      if (!ws) { showToast('No se encontró hoja de cálculo.', 'error'); return; }
+      const rows = [];
+      ws.eachRow((row, rowNum) => {
+        if (rowNum === 1) return; // skip header
+        const desc = (row.getCell(1).text || row.getCell(1).value || '').toString().trim();
+        if (!desc) return;
+        const unidad = (row.getCell(2).text || row.getCell(2).value || 'PZA').toString().trim() || 'PZA';
+        const precioRaw = row.getCell(3).value;
+        const stockRaw = row.getCell(4).value;
+        const categoria = (row.getCell(5).text || row.getCell(5).value || '').toString().trim();
+        const zona = (row.getCell(6).text || row.getCell(6).value || '').toString().trim();
+        // Intentar extraer código del inicio de la descripción (números + guiones)
+        const codeMatch = desc.match(/^([\d\-A-Z]+(?:\s[\d\-A-Z]+)?)\s+(.+)$/);
+        const codigo = codeMatch ? codeMatch[1].trim() : desc.slice(0, 20).replace(/\s+/g, '-').toUpperCase();
+        const descripcion = codeMatch ? codeMatch[2].trim() : desc;
+        rows.push({
+          codigo,
+          descripcion,
+          unidad,
+          precio_unitario: Number(precioRaw) || 0,
+          stock: Number(stockRaw) || 0,
+          categoria: categoria || null,
+          zona: zona || null,
+          activo: 1,
+        });
+      });
+      if (!rows.length) { showToast('No se encontraron datos en el archivo.', 'warning'); return; }
+      // Mostrar preview y confirmar
+      openConfirmModal(
+        `Se importarán ${rows.length} refacciones. Las que ya existen (por código) serán actualizadas. ¿Continuar?`,
+        async () => {
+          let ok = 0, errors = 0;
+          for (const r of rows) {
+            try {
+              // Intentar insertar; si existe (409) hacer PUT
+              try {
+                await fetchJson(API + '/refacciones', { method: 'POST', body: JSON.stringify(r) });
+              } catch (e) {
+                if (e && (String(e.message || e).includes('409') || String(e.message || e).includes('UNIQUE'))) {
+                  const existing = refaccionesCache.find(x => x.codigo === r.codigo);
+                  if (existing) await fetchJson(API + '/refacciones/' + existing.id, { method: 'PUT', body: JSON.stringify(r) });
+                } else throw e;
+              }
+              ok++;
+            } catch (_) { errors++; }
+          }
+          showToast(`Importación completada: ${ok} registros, ${errors} errores.`, errors ? 'warning' : 'success');
+          loadRefacciones();
+        }
+      );
+    } catch (e) {
+      showToast('Error al leer el archivo: ' + (e.message || e), 'error');
+      console.error(e);
+    }
+  }
+
+  qs('#import-refacciones-file')?.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      importRefaccionesXlsx(file);
+      e.target.value = ''; // reset para permitir re-selección
+    }
+  });
 
   // ----- EVENT LISTENERS -----
   qs('#buscar-clientes').addEventListener('input', debounce(loadClientes, 350));

@@ -96,6 +96,7 @@
     <button type="button" data-tab="garantias-sin-cobertura" class="tab" title="Garantías dadas de baja"><i class="fas fa-ban"></i> Sin cobertura</button>
     <button type="button" data-tab="bonos" class="tab" title="Bonos de capacitación"><i class="fas fa-award"></i> Bonos</button>
     <button type="button" data-tab="viajes" class="tab" title="Viáticos y viajes"><i class="fas fa-plane"></i> Viajes</button>
+    <button type="button" data-tab="tecnicos" class="tab" title="Gestión de técnicos y habilidades"><i class="fas fa-hard-hat"></i> Técnicos</button>
     <button type="button" data-tab="incidentes" class="tab" title="Incidentes (Ctrl+5)"><i class="fas fa-exclamation-triangle"></i> Incidentes</button>
     <button type="button" data-tab="bitacoras" class="tab" title="Bitácora (Ctrl+6)"><i class="fas fa-clock"></i> Bitácora de horas</button>
     <button type="button" data-tab="auditoria" class="tab hidden" id="tab-auditoria" title="Auditoría (Ctrl+8, solo admin)"><i class="fas fa-clipboard-list"></i> Auditoría</button>
@@ -199,6 +200,10 @@
           <input type="search" id="buscar-refacciones" placeholder="Buscar por código o descripción..." class="search">
           <button type="button" id="export-refacciones" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
           <button type="button" id="export-excel-refacciones" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
+          <label class="btn outline" title="Importar catálogo desde XLSX (2026 REFACCIONES)" style="cursor:pointer;margin-bottom:0">
+            <i class="fas fa-file-import"></i> Importar XLSX
+            <input type="file" id="import-refacciones-file" accept=".xlsx,.xls" class="hidden" style="display:none">
+          </label>
           <button type="button" id="nueva-refaccion" class="btn primary"><i class="fas fa-plus"></i> Nueva refacción</button>
         </div>
       </div>
@@ -694,6 +699,28 @@
           <tbody></tbody>
         </table>
         <div class="table-footer" id="footer-tabla-viajes" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- TÉCNICOS -->
+    <section id="panel-tecnicos" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-hard-hat"></i> Técnicos</h2>
+        <div class="toolbar">
+          <input type="search" id="buscar-tecnicos" placeholder="Buscar técnico…" class="search">
+          <button type="button" id="btn-new-tecnico" class="btn primary"><i class="fas fa-plus"></i> Nuevo técnico</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="tabla-tecnicos">
+          <thead>
+            <tr>
+              <th>Nombre</th><th>Habilidades</th><th>Disponibilidad</th><th>Activo</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
     </section>
 

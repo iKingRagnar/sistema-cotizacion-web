@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/ragna/Downloads/Sistema Web/sistema-cotizacion-web/**)",
+      "Bash(git -C \"C:\\\\Users\\\\ragna\\\\Downloads\\\\Sistema Web\\\\sistema-cotizacion-web\\\\.claude\\\\worktrees\\\\intelligent-montalcini\" status)",
+      "Bash(python3 -c \":*)",
+      "Bash(python -c \":*)"
+    ]
+  }
+}
