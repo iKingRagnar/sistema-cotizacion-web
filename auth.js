@@ -1,11 +1,13 @@
 /**
- * Autenticación opcional (AUTH_ENABLED), tokens firmados y auditoría de mutaciones.
+ * Autenticación siempre activa, tokens firmados y auditoría de mutaciones.
+ * Roles: admin (CRUD completo), usuario (GET+POST), consulta (solo GET)
  */
 'use strict';
 const crypto = require('crypto');
 const db = require('./db');
 
-const AUTH_ENABLED = process.env.AUTH_ENABLED === '1' || process.env.AUTH_ENABLED === 'true';
+// Auth siempre activa a menos que explícitamente se desactive con AUTH_ENABLED=0
+const AUTH_ENABLED = process.env.AUTH_ENABLED !== '0' && process.env.AUTH_ENABLED !== 'false';
 const AUTH_SECRET = process.env.AUTH_SECRET || '';
 const TOKEN_MS = (parseInt(process.env.AUTH_TOKEN_DAYS || '7', 10) || 7) * 24 * 60 * 60 * 1000;
 const AUDIT_ENABLED = process.env.AUDIT_ENABLED !== '0' && process.env.AUDIT_ENABLED !== 'false';
@@ -89,7 +91,7 @@ function attachUser(req) {
   req.authUser = {
     id: p.sub,
     username: p.u || '',
-    role: p.r || 'operador',
+    role: p.r || 'usuario',
     displayName: p.d || p.u || '',
   };
 }
@@ -173,15 +175,51 @@ function createApiMiddleware() {
       return res.status(401).json({ error: 'No autorizado. Inicia sesión.' });
     }
 
-    const readOnly = req.method === 'GET' || req.method === 'HEAD';
-    if (readOnly) {
-      if (!['admin', 'operador', 'consulta'].includes(req.authUser.role)) {
-        return res.status(403).json({ error: 'Sin permiso de acceso' });
+    const method = req.method;
+    const isRead = method === 'GET' || method === 'HEAD';
+    const isWrite = method === 'POST';
+    const isModify = method === 'PUT' || method === 'PATCH';
+    const isDelete = method === 'DELETE';
+
+    const role = req.authUser.role;
+
+    // Roles válidos para cualquier operación
+    const validRoles = ['admin', 'operador', 'usuario', 'consulta'];
+    if (!validRoles.includes(role)) {
+      return res.status(403).json({ error: 'Rol no reconocido' });
+    }
+
+    if (isRead) {
+      // Todos los roles pueden leer
+      wrapAuditJson(req, res);
+      return next();
+    }
+
+    if (isWrite) {
+      // Solo admin, operador y usuario pueden agregar (POST)
+      if (!['admin', 'operador', 'usuario'].includes(role)) {
+        return res.status(403).json({ error: 'Tu rol solo permite consultar datos, no agregar registros' });
       }
-    } else {
-      if (!['admin', 'operador'].includes(req.authUser.role)) {
-        return res.status(403).json({ error: 'Tu rol solo permite consultar datos, no modificarlos' });
+      wrapAuditJson(req, res);
+      return next();
+    }
+
+    if (isModify) {
+      // Solo admin y operador pueden editar (PUT/PATCH)
+      if (!['admin', 'operador'].includes(role)) {
+        return res.status(403).json({ error: 'Tu rol no permite editar registros existentes' });
       }
+      wrapAuditJson(req, res);
+      return next();
+    }
+
+    if (isDelete) {
+      // Solo admin puede eliminar
+      if (role !== 'admin') {
+        return res.status(403).json({ error: 'Solo el administrador puede eliminar registros' });
+      }
+      wrapAuditJson(req, res);
+      return next();
     }
 
     wrapAuditJson(req, res);
@@ -206,18 +244,27 @@ async function attemptLogin(username, password) {
 }
 
 async function ensureSeedUsers() {
-  if (!AUTH_ENABLED) return;
   const row = await db.getOne('SELECT COUNT(*) as c FROM app_users');
   const c = row && row.c != null ? Number(row.c) : 0;
   if (c > 0) return;
 
-  const adminPass = process.env.ADMIN_INITIAL_PASSWORD || 'admin123';
-  const opPass = process.env.OPERADOR_INITIAL_PASSWORD || 'operador123';
-  const visPass = process.env.CONSULTA_INITIAL_PASSWORD || 'consulta123';
+  const adminPass = process.env.ADMIN_INITIAL_PASSWORD || 'Admin2025!';
+  const u1Pass = process.env.USUARIO1_INITIAL_PASSWORD || 'Usuario1_2025';
+  const u2Pass = process.env.USUARIO2_INITIAL_PASSWORD || 'Usuario2_2025';
+  const opPass = process.env.OPERADOR_INITIAL_PASSWORD || 'Operador2025';
+  const visPass = process.env.CONSULTA_INITIAL_PASSWORD || 'Consulta2025';
 
   await db.runQuery(
     'INSERT INTO app_users (username, password_hash, role, display_name) VALUES (?,?,?,?)',
     ['admin', hashPassword(adminPass), 'admin', 'Administrador']
+  );
+  await db.runQuery(
+    'INSERT INTO app_users (username, password_hash, role, display_name) VALUES (?,?,?,?)',
+    ['usuario1', hashPassword(u1Pass), 'usuario', 'Usuario 1']
+  );
+  await db.runQuery(
+    'INSERT INTO app_users (username, password_hash, role, display_name) VALUES (?,?,?,?)',
+    ['usuario2', hashPassword(u2Pass), 'usuario', 'Usuario 2']
   );
   await db.runQuery(
     'INSERT INTO app_users (username, password_hash, role, display_name) VALUES (?,?,?,?)',
@@ -227,7 +274,12 @@ async function ensureSeedUsers() {
     'INSERT INTO app_users (username, password_hash, role, display_name) VALUES (?,?,?,?)',
     ['consulta', hashPassword(visPass), 'consulta', 'Solo consulta']
   );
-  console.log('[auth] Usuarios iniciales creados: admin / operador / consulta (cambia contraseñas con variables de entorno o UPDATE en BD).');
+  console.log('[auth] Usuarios iniciales creados:');
+  console.log('  admin       / ' + adminPass + ' (Administrador - CRUD completo)');
+  console.log('  usuario1    / ' + u1Pass + ' (Usuario - puede agregar)');
+  console.log('  usuario2    / ' + u2Pass + ' (Usuario - puede agregar)');
+  console.log('  operador    / ' + opPass + ' (Operador - puede agregar y editar)');
+  console.log('  consulta    / ' + visPass + ' (Solo lectura)');
 }
 
 module.exports = {
