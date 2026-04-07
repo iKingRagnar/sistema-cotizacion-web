@@ -253,6 +253,24 @@ function getSchema() {
     `CREATE INDEX IF NOT EXISTS idx_reportes_cliente ON reportes(cliente_id)`,
     `CREATE INDEX IF NOT EXISTS idx_garantias_cliente ON garantias(cliente_id)`,
     `CREATE INDEX IF NOT EXISTS idx_movimientos_ref ON movimientos_stock(refaccion_id)`,
+    /* REVISIÓN DE MÁQUINAS: preparación y entrega */
+    `CREATE TABLE IF NOT EXISTS revision_maquinas (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      maquina_id INTEGER REFERENCES maquinas(id),
+      categoria TEXT,
+      modelo TEXT,
+      numero_serie TEXT,
+      entregado TEXT DEFAULT 'No',
+      prueba TEXT DEFAULT 'En Proceso',
+      comentarios TEXT,
+      creado_en TEXT DEFAULT (datetime('now','localtime'))
+    )`,
+    /* TARIFAS: almacén de pares clave-valor para tarifas editables */
+    `CREATE TABLE IF NOT EXISTS tarifas (
+      clave TEXT PRIMARY KEY,
+      valor TEXT NOT NULL,
+      actualizado_en TEXT DEFAULT (datetime('now','localtime'))
+    )`,
   ];
 }
 
@@ -283,6 +301,18 @@ async function runMigrations() {
     // incidentes: columnas que ya tenía
     `ALTER TABLE incidentes ADD COLUMN fecha_cerrado TEXT`,
     `ALTER TABLE incidentes ADD COLUMN fecha_vencimiento TEXT`,
+    // maquinas: agregar categoria
+    `ALTER TABLE maquinas ADD COLUMN categoria TEXT`,
+    // reportes: nuevas columnas
+    `ALTER TABLE reportes ADD COLUMN fecha_programada TEXT`,
+    `ALTER TABLE reportes ADD COLUMN finalizado INTEGER DEFAULT 0`,
+    `ALTER TABLE reportes ADD COLUMN archivo_firmado TEXT`,
+    `ALTER TABLE reportes ADD COLUMN archivo_firmado_nombre TEXT`,
+    // cotizaciones: vendedor para cotizaciones de máquina
+    `ALTER TABLE cotizaciones ADD COLUMN vendedor TEXT`,
+    `ALTER TABLE cotizaciones ADD COLUMN fecha_aprobacion TEXT`,
+    // tecnicos: habilidades
+    `ALTER TABLE tecnicos ADD COLUMN habilidades TEXT`,
   ];
   for (const sql of migrations) {
     try {

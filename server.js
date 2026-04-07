@@ -324,11 +324,11 @@ app.get('/api/maquinas/:id', async (req, res) => {
 
 app.post('/api/maquinas', async (req, res) => {
   try {
-    const { cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion } = req.body || {};
+    const { cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion, categoria } = req.body || {};
     if (!cliente_id) return res.status(400).json({ error: 'cliente_id requerido' });
     await db.runQuery(
-      `INSERT INTO maquinas (cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [cliente_id, codigo || null, nombre || '', marca || null, modelo || null, numero_serie || null, ubicacion || null]
+      `INSERT INTO maquinas (cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion, categoria) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [cliente_id, codigo || null, nombre || modelo || '', marca || null, modelo || null, numero_serie || null, ubicacion || null, categoria || null]
     );
     const r = await db.getOne('SELECT * FROM maquinas ORDER BY id DESC LIMIT 1');
     res.status(201).json(r);
@@ -339,10 +339,10 @@ app.post('/api/maquinas', async (req, res) => {
 
 app.put('/api/maquinas/:id', async (req, res) => {
   try {
-    const { cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion } = req.body || {};
+    const { cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion, categoria } = req.body || {};
     await db.runQuery(
-      `UPDATE maquinas SET cliente_id=?, codigo=?, nombre=?, marca=?, modelo=?, numero_serie=?, ubicacion=? WHERE id=?`,
-      [cliente_id || null, codigo || null, nombre || '', marca || null, modelo || null, numero_serie || null, ubicacion || null, req.params.id]
+      `UPDATE maquinas SET cliente_id=?, codigo=?, nombre=?, marca=?, modelo=?, numero_serie=?, ubicacion=?, categoria=? WHERE id=?`,
+      [cliente_id || null, codigo || null, nombre || modelo || '', marca || null, modelo || null, numero_serie || null, ubicacion || null, categoria || null, req.params.id]
     );
     const r = await db.getOne('SELECT * FROM maquinas WHERE id = ?', [req.params.id]);
     res.json(r || {});
@@ -354,6 +354,140 @@ app.put('/api/maquinas/:id', async (req, res) => {
 app.delete('/api/maquinas/:id', async (req, res) => {
   try {
     await db.runQuery('UPDATE maquinas SET activo = 0 WHERE id = ?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+// --- Tipo de cambio Banxico (USD/MXN) ---
+let tipoCambioCache = { valor: 17.0, fecha: null };
+async function fetchTipoCambioBanxico() {
+  try {
+    const https = require('https');
+    const url = 'https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43718/datos/oportuno?token=none';
+    // Usamos la serie SF43718 (tipo de cambio para solventar obligaciones en USD)
+    const data = await new Promise((resolve, reject) => {
+      const req2 = https.get(url, { headers: { 'Accept': 'application/json' } }, (r) => {
+        let body = '';
+        r.on('data', d => body += d);
+        r.on('end', () => { try { resolve(JSON.parse(body)); } catch (e) { reject(e); } });
+      });
+      req2.on('error', reject);
+      req2.setTimeout(5000, () => req2.destroy());
+    });
+    const dato = data?.bmx?.series?.[0]?.datos?.[0]?.dato;
+    if (dato && !isNaN(parseFloat(dato))) {
+      tipoCambioCache = { valor: parseFloat(dato), fecha: new Date().toISOString().slice(0, 10) };
+    }
+  } catch (_) { /* usar valor cacheado */ }
+  return tipoCambioCache;
+}
+// Refrescar al arrancar y cada hora
+fetchTipoCambioBanxico();
+setInterval(fetchTipoCambioBanxico, 60 * 60 * 1000);
+
+app.get('/api/tipo-cambio', async (req, res) => {
+  try {
+    const tc = await fetchTipoCambioBanxico();
+    res.json(tc);
+  } catch (e) {
+    res.json(tipoCambioCache);
+  }
+});
+
+// --- Ventas (cotizaciones aprobadas / aplicadas) ---
+app.get('/api/ventas', async (req, res) => {
+  try {
+    const rows = await db.getAll(
+      `SELECT co.*, c.nombre as cliente_nombre
+       FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id
+       WHERE co.estado IN ('aplicada','venta')
+       ORDER BY co.fecha_aprobacion DESC, co.id DESC LIMIT 500`
+    );
+    res.json(Array.isArray(rows) ? rows : []);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+// --- Tarifas (clave-valor) ---
+app.get('/api/tarifas', async (req, res) => {
+  try {
+    const rows = await db.getAll('SELECT clave, valor FROM tarifas', []);
+    const obj = {};
+    (rows || []).forEach(r => { obj[r.clave] = r.valor; });
+    res.json(obj);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.put('/api/tarifas', async (req, res) => {
+  try {
+    const updates = req.body || {};
+    for (const [clave, valor] of Object.entries(updates)) {
+      if (typeof clave !== 'string' || !clave) continue;
+      await db.runQuery(
+        `INSERT INTO tarifas (clave, valor, actualizado_en) VALUES (?, ?, datetime('now','localtime'))
+         ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor, actualizado_en=excluded.actualizado_en`,
+        [clave, String(valor)]
+      );
+    }
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+// --- Revisión de Máquinas ---
+app.get('/api/revision-maquinas', async (req, res) => {
+  try {
+    const rows = await db.getAll(
+      `SELECT r.*, m.modelo as maquina_modelo, m.categoria as maquina_categoria
+       FROM revision_maquinas r LEFT JOIN maquinas m ON m.id = r.maquina_id
+       ORDER BY r.id DESC`, []
+    );
+    res.json(Array.isArray(rows) ? rows : []);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.post('/api/revision-maquinas', async (req, res) => {
+  try {
+    const { maquina_id, categoria, modelo, numero_serie, entregado, prueba, comentarios } = req.body || {};
+    await db.runQuery(
+      `INSERT INTO revision_maquinas (maquina_id, categoria, modelo, numero_serie, entregado, prueba, comentarios)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [maquina_id || null, categoria || null, modelo || null, numero_serie || null,
+       entregado || 'No', prueba || 'En Proceso', comentarios || null]
+    );
+    const r = await db.getOne('SELECT * FROM revision_maquinas ORDER BY id DESC LIMIT 1');
+    res.status(201).json(r);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.put('/api/revision-maquinas/:id', async (req, res) => {
+  try {
+    const { maquina_id, categoria, modelo, numero_serie, entregado, prueba, comentarios } = req.body || {};
+    await db.runQuery(
+      `UPDATE revision_maquinas SET maquina_id=?, categoria=?, modelo=?, numero_serie=?, entregado=?, prueba=?, comentarios=? WHERE id=?`,
+      [maquina_id || null, categoria || null, modelo || null, numero_serie || null,
+       entregado || 'No', prueba || 'En Proceso', comentarios || null, req.params.id]
+    );
+    const r = await db.getOne('SELECT * FROM revision_maquinas WHERE id=?', [req.params.id]);
+    res.json(r || {});
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.delete('/api/revision-maquinas/:id', async (req, res) => {
+  try {
+    await db.runQuery('DELETE FROM revision_maquinas WHERE id=?', [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
@@ -666,7 +800,18 @@ app.post('/api/cotizaciones/:id/aplicar', async (req, res) => {
         [ref.id, cant, Number(l.precio_unitario) || 0, cot.id, `Cot: ${cot.folio}`]
       );
     }
-    await db.runQuery(`UPDATE cotizaciones SET estado='aplicada' WHERE id=?`, [req.params.id]);
+    const vendedor = req.body && req.body.vendedor ? String(req.body.vendedor) : null;
+    await db.runQuery(
+      `UPDATE cotizaciones SET estado='aplicada', fecha_aprobacion=date('now','localtime')${vendedor ? ', vendedor=?' : ''} WHERE id=?`,
+      vendedor ? [vendedor, req.params.id] : [req.params.id]
+    );
+
+    // Enviar correo de notificación si SMTP está configurado
+    try {
+      const cliente = await db.getOne('SELECT * FROM clientes WHERE id=?', [cot.cliente_id]);
+      await enviarCorreoAprobacion(cot, cliente, lineas);
+    } catch (_) { /* correo opcional */ }
+
     res.json({ ok: true, errores });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
@@ -677,18 +822,42 @@ app.post('/api/cotizaciones/:id/aplicar', async (req, res) => {
 app.get('/api/tecnicos', async (req, res) => {
   try {
     const rows = await db.getAll('SELECT * FROM tecnicos WHERE activo=1 ORDER BY nombre');
-    res.json(rows);
+    // Enrich with ocupado status: técnico tiene reporte abierto o en_proceso
+    const reportesActivos = await db.getAll("SELECT tecnico FROM reportes WHERE estatus IN ('abierto','en_proceso') AND tecnico IS NOT NULL AND tecnico != ''");
+    const ocupados = new Set(reportesActivos.map(r => r.tecnico));
+    const enriched = rows.map(t => ({ ...t, ocupado: ocupados.has(t.nombre) ? 1 : 0 }));
+    res.json(enriched);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
 });
 app.post('/api/tecnicos', async (req, res) => {
   try {
-    const { nombre } = req.body || {};
+    const { nombre, habilidades } = req.body || {};
     if (!nombre) return res.status(400).json({ error: 'nombre requerido' });
-    await db.runQuery('INSERT OR IGNORE INTO tecnicos (nombre) VALUES (?)', [nombre]);
+    await db.runQuery('INSERT OR IGNORE INTO tecnicos (nombre, habilidades) VALUES (?, ?)', [nombre, habilidades || null]);
     const r = await db.getOne('SELECT * FROM tecnicos WHERE nombre=?', [nombre]);
     res.status(201).json(r);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+app.put('/api/tecnicos/:id', requireAuth, async (req, res) => {
+  try {
+    const { nombre, habilidades, activo } = req.body || {};
+    if (!nombre) return res.status(400).json({ error: 'nombre requerido' });
+    await db.runQuery('UPDATE tecnicos SET nombre=?, habilidades=?, activo=? WHERE id=?',
+      [nombre, habilidades || null, activo !== undefined ? activo : 1, req.params.id]);
+    const r = await db.getOne('SELECT * FROM tecnicos WHERE id=?', [req.params.id]);
+    res.json(r);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+app.delete('/api/tecnicos/:id', requireAuth, async (req, res) => {
+  try {
+    await db.runQuery('UPDATE tecnicos SET activo=0 WHERE id=?', [req.params.id]);
+    res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -2219,12 +2388,147 @@ function createMailTransport() {
   });
 }
 
-async function sendMailGarantia({ to, subject, text, html }) {
+/** Genera HTML profesional para correos del sistema */
+function buildEmailHtml({ title, subtitle, rows, tableHeader, tableRows, footer, accentColor }) {
+  const accent = accentColor || '#0d9488';
+  const tableSection = tableHeader && tableRows ? `
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:20px 0;font-size:13px;">
+      <thead>
+        <tr style="background:${accent};color:#fff;">
+          ${tableHeader.map(h => `<th style="padding:10px 12px;text-align:left;font-weight:600;">${h}</th>`).join('')}
+        </tr>
+      </thead>
+      <tbody>
+        ${tableRows.map((row, i) => `
+          <tr style="background:${i % 2 === 0 ? '#f9fafb' : '#fff'};border-bottom:1px solid #e5e7eb;">
+            ${row.map(c => `<td style="padding:9px 12px;color:#374151;">${c}</td>`).join('')}
+          </tr>`).join('')}
+      </tbody>
+    </table>` : '';
+  const detailRows = rows ? rows.map(r => `
+    <tr>
+      <td style="padding:8px 0;color:#6b7280;font-size:13px;width:160px;vertical-align:top;">${r.label}</td>
+      <td style="padding:8px 0;color:#111827;font-size:13px;font-weight:${r.bold ? '700' : '400'};">${r.value}</td>
+    </tr>`).join('') : '';
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+  <body style="margin:0;padding:0;background:#f3f4f6;font-family:'Segoe UI',Arial,sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 20px;">
+      <tr><td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);max-width:600px;width:100%;">
+          <!-- Header -->
+          <tr>
+            <td style="background:${accent};padding:28px 36px;">
+              <p style="margin:0;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.75);font-weight:600;">Universal Machine Tools</p>
+              <h1 style="margin:8px 0 4px;font-size:22px;color:#fff;font-weight:700;">${title}</h1>
+              ${subtitle ? `<p style="margin:0;font-size:13px;color:rgba(255,255,255,0.85);">${subtitle}</p>` : ''}
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding:32px 36px;">
+              ${rows ? `<table width="100%" cellpadding="0" cellspacing="0">${detailRows}</table>` : ''}
+              ${tableSection}
+              ${footer ? `<div style="margin-top:24px;padding:16px 20px;background:#f9fafb;border-radius:8px;border-left:4px solid ${accent};font-size:13px;color:#374151;line-height:1.6;">${footer}</div>` : ''}
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="background:#f9fafb;padding:20px 36px;border-top:1px solid #e5e7eb;">
+              <p style="margin:0;font-size:12px;color:#9ca3af;">© ${new Date().getFullYear()} Universal Machine Tools &nbsp;|&nbsp; Sistema de Gestión ERP</p>
+              <p style="margin:4px 0 0;font-size:12px;color:#9ca3af;">Este es un correo automático, por favor no responda directamente a este mensaje.</p>
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+  </body></html>`;
+}
+
+/** Envía correo al aprobar una cotización: info cliente + resumen cotización */
+async function enviarCorreoAprobacion(cot, cliente, lineas) {
   const t = createMailTransport();
   const from = (process.env.SMTP_FROM || process.env.SMTP_USER || '').trim();
-  if (!t || !from || !to) return { sent: false, reason: 'smtp_not_configured_or_no_recipient' };
+  // Destinatarios fijos del sistema + correo del cliente
+  const adminEmails = ['dcantu746@gmail.com', 'guillermorc44@gmail.com'];
+  const envVarAdmin = (process.env.SMTP_ADMIN_EMAIL || '').trim();
+  if (envVarAdmin && !adminEmails.includes(envVarAdmin)) adminEmails.push(envVarAdmin);
+  if (!t || !from) return;
+
+  const clienteEmail = cliente && cliente.email ? cliente.email.trim() : '';
+  const allRecipients = [...new Set([...adminEmails, clienteEmail].filter(Boolean))];
+  if (!allRecipients.length) return;
+
+  const monedaLabel = cot.moneda || 'MXN';
+  const totalFmt = `$${Number(cot.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })} ${monedaLabel}`;
+  const subtotalFmt = `$${Number(cot.subtotal || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })} ${monedaLabel}`;
+  const ivaFmt = `$${Number(cot.iva || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })} ${monedaLabel}`;
+  const fechaFmt = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const rows = [
+    { label: 'Folio', value: `<strong>${cot.folio}</strong>`, bold: false },
+    { label: 'Fecha de aprobación', value: fechaFmt },
+    { label: 'Cliente', value: cliente ? cliente.nombre : 'N/A' },
+    { label: 'RFC', value: cliente ? (cliente.rfc || '—') : '—' },
+    { label: 'Tipo', value: cot.tipo || '—' },
+    { label: 'Subtotal', value: subtotalFmt },
+    { label: 'IVA (16%)', value: ivaFmt },
+    { label: 'Total', value: `<strong style="font-size:15px;">${totalFmt}</strong>`, bold: true },
+  ];
+
+  const tableHeader = ['#', 'Descripción', 'Cant.', 'Precio Unit.', 'Subtotal'];
+  const tableRows = (lineas || []).map((l, i) => [
+    i + 1,
+    l.descripcion || '—',
+    Number(l.cantidad || 0).toLocaleString('es-MX'),
+    `$${Number(l.precio_unitario || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
+    `$${Number(l.subtotal || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
+  ]);
+
+  const footer = `Para proceder con la facturación, favor de proporcionar la <strong>Constancia de Situación Fiscal</strong> actualizada y los datos de facturación correspondientes.<br><br>
+    <strong>Universal Machine Tools</strong> agradece su preferencia. Ante cualquier duda, comuníquese con nosotros a la brevedad.`;
+
+  const html = buildEmailHtml({
+    title: `Cotización Aprobada`,
+    subtitle: `Folio: ${cot.folio} &nbsp;|&nbsp; ${fechaFmt}`,
+    rows,
+    tableHeader,
+    tableRows,
+    footer,
+  });
+
+  const subject = `✅ Cotización aprobada – Folio ${cot.folio} | Universal Machine Tools`;
+  const text = `Cotización aprobada – Folio ${cot.folio}\n\nCliente: ${cliente ? cliente.nombre : 'N/A'}\nRFC: ${cliente ? (cliente.rfc || '—') : '—'}\nFecha: ${fechaFmt}\nTotal: ${totalFmt}\n\nConceptos:\n${(lineas || []).map((l, i) => `  ${i + 1}. ${l.descripcion || ''} — cant: ${l.cantidad}, precio: $${l.precio_unitario} ${monedaLabel}`).join('\n')}\n\nPara facturar: adjuntar Constancia de Situación Fiscal.\n\nUniversal Machine Tools`;
   try {
-    await t.sendMail({ from, to, subject, text, html: html || `<pre>${text}</pre>` });
+    await t.sendMail({ from, to: allRecipients.join(', '), subject, text, html });
+  } catch (_) { /* correo no bloquea la operación */ }
+}
+
+async function sendMailGarantia({ to, subject, text, html, garantia, mantenimiento }) {
+  const t = createMailTransport();
+  const from = (process.env.SMTP_FROM || process.env.SMTP_USER || '').trim();
+  // Always include admin emails
+  const adminEmails = ['dcantu746@gmail.com', 'guillermorc44@gmail.com'];
+  const allTo = [...new Set([...(Array.isArray(to) ? to : [to]), ...adminEmails].filter(Boolean))].join(', ');
+  if (!t || !from || !allTo) return { sent: false, reason: 'smtp_not_configured_or_no_recipient' };
+  let finalHtml = html;
+  if (!finalHtml && garantia) {
+    const fechaProg = mantenimiento && mantenimiento.fecha_programada ? new Date(mantenimiento.fecha_programada).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
+    finalHtml = buildEmailHtml({
+      title: 'Mantenimiento de Garantía Programado',
+      subtitle: `Máquina: ${garantia.modelo_maquina || '—'} | N° Serie: ${garantia.numero_serie || '—'}`,
+      rows: [
+        { label: 'Cliente', value: garantia.razon_social || '—' },
+        { label: 'Modelo', value: garantia.modelo_maquina || '—' },
+        { label: 'Número de serie', value: garantia.numero_serie || '—' },
+        { label: 'Mantenimiento N°', value: mantenimiento ? `${mantenimiento.numero} (Año ${mantenimiento.anio})` : '—' },
+        { label: 'Fecha programada', value: fechaProg, bold: true },
+        { label: 'Estado', value: 'Pendiente de confirmar' },
+      ],
+      footer: `Este mantenimiento forma parte de la garantía incluida con su equipo.<br>Por favor confirme disponibilidad para la fecha programada o contáctenos para reagendar.<br><br><strong>Universal Machine Tools</strong> — Su socio en maquinaria industrial.`,
+    });
+  }
+  try {
+    await t.sendMail({ from, to: allTo, subject, text, html: finalHtml || `<pre style="font-family:inherit">${text}</pre>` });
     return { sent: true };
   } catch (err) {
     return { sent: false, reason: String(err.message || err) };
@@ -2470,34 +2774,30 @@ app.post('/api/garantias-alertas/procesar', async (req, res) => {
     const enviados = [];
     const errores = [];
     for (const row of proximos) {
-      const to = (row.email || '').trim();
-      const subj = `Mantenimiento próximo — ${row.razon_social}`;
-      const text = `Estimado cliente,\n\nLe recordamos el mantenimiento programado para el ${row.fecha_programada}.\nEquipo: ${row.modelo_maquina} (Serie ${row.numero_serie || '—'}).\n\nSaludos.`;
+      const to = (row.email || '').trim() || null;
+      const subj = `🔧 Mantenimiento Programado – ${row.razon_social} | Universal Machine Tools`;
+      const text = `Estimado cliente,\n\nLe recordamos el mantenimiento programado para el ${row.fecha_programada}.\nEquipo: ${row.modelo_maquina} (Serie ${row.numero_serie || '—'}).\n\nSaludos,\nUniversal Machine Tools`;
       if (!dryRun) {
         await db.runQuery('UPDATE mantenimientos_garantia SET alerta_enviada=1 WHERE id=?', [row.id]);
-        if (to) {
-          const r = await sendMailGarantia({ to, subject: subj, text });
-          enviados.push({ id: row.id, tipo: 'proximo', email: to, ...r });
-          if (!r.sent) errores.push({ id: row.id, ...r });
-        } else enviados.push({ id: row.id, tipo: 'proximo', email: null, sent: false, reason: 'cliente_sin_email' });
+        const r = await sendMailGarantia({ to, subject: subj, text, garantia: row, mantenimiento: row });
+        enviados.push({ id: row.id, tipo: 'proximo', email: to, ...r });
+        if (!r.sent && to) errores.push({ id: row.id, ...r });
       } else enviados.push({ id: row.id, tipo: 'proximo', dryRun: true });
     }
     for (const row of vencidosSinEscalar) {
-      const to = (row.email || '').trim();
+      const to = (row.email || '').trim() || null;
       const yaAviso = Number(row.alerta_enviada) === 1;
       const subj = yaAviso
-        ? `URGENTE: mantenimiento vencido — ${row.razon_social}`
-        : `Mantenimiento vencido — ${row.razon_social}`;
+        ? `⚠️ URGENTE: Mantenimiento vencido – ${row.razon_social} | Universal Machine Tools`
+        : `⚠️ Mantenimiento vencido – ${row.razon_social} | Universal Machine Tools`;
       const text = yaAviso
         ? `El mantenimiento del ${row.fecha_programada} no fue confirmado y ya venció. Equipo: ${row.modelo_maquina}.`
         : `El mantenimiento programado para el ${row.fecha_programada} ya venció. Equipo: ${row.modelo_maquina}.`;
       if (!dryRun) {
         await db.runQuery('UPDATE mantenimientos_garantia SET alerta_vencida=1, alerta_enviada=1 WHERE id=?', [row.id]);
-        if (to) {
-          const r = await sendMailGarantia({ to, subject: subj, text });
-          enviados.push({ id: row.id, tipo: 'vencido', email: to, ...r });
-          if (!r.sent) errores.push({ id: row.id, ...r });
-        } else enviados.push({ id: row.id, tipo: 'vencido', email: null, sent: false, reason: 'cliente_sin_email' });
+        const r = await sendMailGarantia({ to, subject: subj, text, garantia: row, mantenimiento: row });
+        enviados.push({ id: row.id, tipo: 'vencido', email: to, ...r });
+        if (!r.sent && to) errores.push({ id: row.id, ...r });
       } else enviados.push({ id: row.id, tipo: 'vencido', dryRun: true });
     }
     res.json({ ok: true, dryRun, procesados: enviados.length, detalle: enviados, errores });
