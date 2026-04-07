@@ -842,7 +842,7 @@ app.post('/api/tecnicos', async (req, res) => {
     res.status(500).json({ error: String(e.message) });
   }
 });
-app.put('/api/tecnicos/:id', requireAuth, async (req, res) => {
+app.put('/api/tecnicos/:id', async (req, res) => {
   try {
     const { nombre, habilidades, activo } = req.body || {};
     if (!nombre) return res.status(400).json({ error: 'nombre requerido' });
@@ -854,7 +854,7 @@ app.put('/api/tecnicos/:id', requireAuth, async (req, res) => {
     res.status(500).json({ error: String(e.message) });
   }
 });
-app.delete('/api/tecnicos/:id', requireAuth, async (req, res) => {
+app.delete('/api/tecnicos/:id', async (req, res) => {
   try {
     await db.runQuery('UPDATE tecnicos SET activo=0 WHERE id=?', [req.params.id]);
     res.json({ ok: true });
