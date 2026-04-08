@@ -2326,40 +2326,115 @@
     const ym = mi.value || new Date().toISOString().slice(0, 7);
     const [Y, M] = ym.split('-').map(Number);
     const first = new Date(Y, M - 1, 1);
+    // Monday-first weekday offset
     const startPad = (first.getDay() + 6) % 7;
     const daysInMonth = new Date(Y, M, 0).getDate();
+    const hoy = new Date().toISOString().slice(0, 10);
+    const hoyPlusTreinta = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
     const labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+    // Also include prev/next month days to fill grid
+    const prevMonthDays = new Date(Y, M - 1, 0).getDate();
+
+    // Build event map
     const byDay = {};
     mantenimientosGarantiaCache.forEach(m => {
       const d = (m.fecha_programada || '').toString().slice(0, 10);
       if (!d || d.slice(0, 7) !== ym) return;
-      const day = d.slice(8, 10);
+      const day = parseInt(d.slice(8, 10), 10);
       if (!byDay[day]) byDay[day] = [];
       byDay[day].push(m);
     });
-    let cells = '';
-    for (let i = 0; i < startPad; i++) cells += '<div class="cal-cell cal-empty"></div>';
-    for (let d = 1; d <= daysInMonth; d++) {
-      const ds = String(d).padStart(2, '0');
-      const list = byDay[ds] || [];
-      const hoy = new Date().toISOString().slice(0, 10);
-      const iso = ym + '-' + ds;
-      let cls = 'cal-cell cal-day';
-      if (iso === hoy) cls += ' cal-today';
-      const dots = list.slice(0, 4).map(ev => {
-        const st = ev._estado_ui === 'realizado' ? 'ok' : ev._estado_ui === 'vencido' ? 'bad' : ev._estado_ui === 'próximo' ? 'warn' : 'pendiente';
-        return `<span class="cal-dot cal-dot-${st}" title="${escapeHtml(ev.razon_social)} · ${escapeHtml((ev.fecha_programada || '').slice(0, 10))}"></span>`;
-      }).join('');
-      const more = list.length > 4 ? `<span class="cal-more">+${list.length - 4}</span>` : '';
-      cells += `<div class="${cls}"><div class="cal-day-num">${d}</div><div class="cal-dots">${dots}${more}</div></div>`;
+
+    function getEventClass(ev) {
+      const fp = (ev.fecha_programada || '').slice(0, 10);
+      if (ev.confirmado || ev.fecha_realizada) return 'ev-realizado';
+      if (fp < hoy) return 'ev-vencido';
+      if (fp <= hoyPlusTreinta) return 'ev-proximo';
+      return 'ev-pendiente';
     }
+    function getEventLabel(ev) {
+      const fp = (ev.fecha_programada || '').slice(0, 10);
+      if (ev.confirmado || ev.fecha_realizada) return 'Realizado';
+      if (fp < hoy) return 'Vencido';
+      if (fp <= hoyPlusTreinta) return 'Próximo';
+      return 'Pendiente';
+    }
+
+    // Build cells
+    let cells = '';
+    // Prev month padding
+    for (let i = 0; i < startPad; i++) {
+      const pDay = prevMonthDays - startPad + 1 + i;
+      cells += `<div class="cal-day other-month"><div class="cal-day-num">${pDay}</div></div>`;
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      const iso = ym + '-' + String(d).padStart(2, '0');
+      const isHoy = iso === hoy;
+      const list = byDay[d] || [];
+      const hasBad = list.some(ev => getEventClass(ev) === 'ev-vencido');
+      const hasWarn = list.some(ev => getEventClass(ev) === 'ev-proximo');
+
+      let dayClass = 'cal-day';
+      if (isHoy) dayClass += ' today';
+      if (hasBad) dayClass += ' has-vencido';
+      if (hasWarn && !hasBad) dayClass += ' has-proximo';
+
+      // Render up to 3 events as chips
+      const shown = list.slice(0, 3);
+      const extra = list.length - shown.length;
+      const eventsHtml = shown.map(ev => {
+        const cls = getEventClass(ev);
+        const label = getEventLabel(ev);
+        const razon = (ev.razon_social || '').split(' ').slice(0, 3).join(' ');
+        const modelo = ev.modelo_maquina || ev.modelo || '';
+        const mtoNum = ev.numero || '';
+        return `<div class="${'cal-event ' + cls}" title="${escapeHtml(ev.razon_social || '')} · ${escapeHtml(modelo)} · Mto. ${mtoNum} · ${label}" onclick="void(0)">
+          <span style="opacity:.7;font-size:.6rem;">${label}</span>
+          <br>${escapeHtml(razon)}${modelo ? ' · ' + escapeHtml(modelo) : ''}
+        </div>`;
+      }).join('');
+      const extraHtml = extra > 0 ? `<div style="font-size:.65rem;color:var(--blue-glow);font-weight:700;margin-top:2px;text-align:right;">+${extra} más</div>` : '';
+
+      cells += `<div class="${dayClass}">
+        <div class="cal-day-num">${d}${isHoy ? ' <span style="font-size:.6rem;background:var(--blue-bright);color:#fff;border-radius:4px;padding:0 4px;vertical-align:middle;">Hoy</span>' : ''}</div>
+        ${eventsHtml}${extraHtml}
+      </div>`;
+    }
+    // Next month padding to complete last row
+    const totalCells = startPad + daysInMonth;
+    const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+    for (let i = 1; i <= remaining; i++) {
+      cells += `<div class="cal-day other-month"><div class="cal-day-num">${i}</div></div>`;
+    }
+
+    const totalEvents = Object.values(byDay).flat().length;
+    const vencidos = Object.values(byDay).flat().filter(ev => getEventClass(ev) === 'ev-vencido').length;
+    const proximos = Object.values(byDay).flat().filter(ev => getEventClass(ev) === 'ev-proximo').length;
+
     wrap.innerHTML = `
-      <div class="cal-header">${labels.map(l => `<span>${l}</span>`).join('')}</div>
-      <div class="cal-grid">${cells}</div>
-      <p class="cal-legend"><span class="cal-dot cal-dot-bad"></span> Vencido
-        <span class="cal-dot cal-dot-warn"></span> Próximo (30 días)
-        <span class="cal-dot cal-dot-pendiente"></span> Pendiente
-        <span class="cal-dot cal-dot-ok"></span> Realizado</p>`;
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem;">
+        <div>
+          <h3 style="margin:0;font-size:1.15rem;font-weight:700;background:linear-gradient(135deg,#e2e8f0,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${monthNames[M-1]} ${Y}</h3>
+          <p style="margin:0;font-size:.8rem;color:var(--ink-muted);">${totalEvents} mantenimiento${totalEvents !== 1 ? 's' : ''} este mes</p>
+        </div>
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+          ${vencidos ? `<span style="background:rgba(244,63,94,.15);border:1px solid rgba(244,63,94,.35);color:#fca5a5;border-radius:20px;padding:.2rem .8rem;font-size:.75rem;font-weight:700;"><i class="fas fa-exclamation-circle"></i> ${vencidos} vencido${vencidos !== 1 ? 's' : ''}</span>` : ''}
+          ${proximos ? `<span style="background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.35);color:#fde68a;border-radius:20px;padding:.2rem .8rem;font-size:.75rem;font-weight:700;"><i class="fas fa-clock"></i> ${proximos} próximo${proximos !== 1 ? 's' : ''}</span>` : ''}
+          ${!totalEvents ? `<span style="color:var(--ink-muted);font-size:.82rem;"><i class="fas fa-check-circle" style="color:var(--green)"></i> Sin mantenimientos este mes</span>` : ''}
+        </div>
+      </div>
+      <div class="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;">
+        ${labels.map(l => `<div class="cal-header-cell">${l}</div>`).join('')}
+        ${cells}
+      </div>
+      <div class="cal-legend" style="display:flex;gap:1.25rem;flex-wrap:wrap;margin-top:1rem;font-size:.78rem;color:var(--ink-muted);">
+        <span><span class="cal-legend-dot" style="background:var(--rose);box-shadow:0 0 6px var(--rose);"></span> Vencido</span>
+        <span><span class="cal-legend-dot" style="background:var(--gold);box-shadow:0 0 6px var(--gold);"></span> Próximo (30 días)</span>
+        <span><span class="cal-legend-dot" style="background:var(--blue-bright);box-shadow:0 0 6px var(--blue-bright);"></span> Pendiente</span>
+        <span><span class="cal-legend-dot" style="background:var(--green);box-shadow:0 0 6px var(--green);"></span> Realizado</span>
+      </div>`;
   }
 
   async function loadGarantiasSinCobertura() {
@@ -5214,7 +5289,7 @@
       const conRfc = clientesCtx.filter(c => (c.rfc || '').trim()).length;
       const valorCatalogo = refacciones.reduce((s, r) => s + (Number(r.precio_unitario) || 0), 0);
       const promPrecio = refacciones.length ? valorCatalogo / refacciones.length : 0;
-      const marcas = new Set(refacciones.map(r => (r.marca || '').trim()).filter(Boolean)).size;
+      const marcas = new Set(refacciones.map(r => (r.zona || r.marca || '').trim()).filter(Boolean)).size;
       const maqPorCliente = {};
       maquinasCtx.forEach(m => {
         const key = m.cliente_nombre || 'Sin cliente';
@@ -5290,7 +5365,7 @@
       grid.appendChild(kpiEl);
       const cards = [
         { id: 'clientes', icon: 'fa-users', title: 'Clientes', goto: 'clientes', rows: [{ label: 'Total', value: clientesCtx.length, v: 'neutral' }, { label: 'Ciudades', value: ciudades, v: 'neutral' }, { label: 'Con RFC', value: conRfc, v: 'positive' }] },
-        { id: 'refacciones', icon: 'fa-cogs', title: 'Refacciones', goto: 'refacciones', rows: [{ label: 'Total', value: refacciones.length, v: 'neutral' }, { label: 'Valor catálogo', value: formatMoney(valorCatalogo), v: 'positive' }, { label: 'Precio promedio', value: formatMoney(promPrecio), v: 'neutral' }, { label: 'Marcas', value: marcas, v: 'neutral' }] },
+        { id: 'refacciones', icon: 'fa-cogs', title: 'Refacciones', goto: 'refacciones', rows: [{ label: 'Total', value: refacciones.length, v: 'neutral' }, { label: 'Valor catálogo', value: formatMoney(valorCatalogo), v: 'positive' }, { label: 'Precio promedio', value: formatMoney(promPrecio), v: 'neutral' }, { label: 'Zonas', value: marcas, v: 'neutral' }] },
         { id: 'maquinas', icon: 'fa-industry', title: 'Máquinas', goto: 'maquinas', rows: [{ label: 'Total', value: maquinas.length, v: 'neutral' }, { label: 'Clientes con equipo', value: Object.keys(maqPorCliente).length, v: 'neutral' }, topClienteMaq ? { label: 'Top cliente', value: topClienteMaq[0] + ' (' + topClienteMaq[1] + ')', v: 'neutral', long: true } : null].filter(Boolean) },
         { id: 'cotizaciones', icon: 'fa-file-invoice-dollar', title: 'Cotizaciones', goto: 'cotizaciones', rows: [{ label: 'Total', value: cotizacionesCtx.length, v: 'neutral' }, { label: 'Monto total', value: formatMoney(cotTotal), v: 'positive' }, { label: 'Este mes', value: cotEsteMes, v: 'positive' }, { label: 'Refacciones / Mano obra', value: cotRefacciones + ' / ' + cotManoObra, v: 'neutral' }] },
         { id: 'incidentes', icon: 'fa-exclamation-triangle', title: 'Incidentes', goto: 'incidentes', progress: incProgress, rows: [{ label: 'Total', value: incTotal, v: 'neutral' }, { label: 'Abiertos', value: incAbiertos, v: incAbiertos > 0 ? 'alert' : 'neutral' }, { label: 'En proceso', value: incEnProceso, v: 'neutral' }, { label: 'Alta/Crítica', value: incAltaCritica, v: incAltaCritica > 0 ? 'alert' : 'neutral' }, { label: 'Cerrados', value: incCerrados, v: 'positive' }] },

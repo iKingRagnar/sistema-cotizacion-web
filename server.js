@@ -1221,8 +1221,8 @@ async function runSeedDemoCore(force) {
     }
     for (const r of refacciones) {
       await db.runQuery(
-        `INSERT INTO refacciones (codigo, descripcion, precio_unitario, unidad) VALUES (?, ?, ?, ?)`,
-        [safeStrReq(r.codigo), safeStrReq(r.descripcion), r.precio_unitario != null ? Number(r.precio_unitario) : 0, safeStr(r.unidad) || 'PZA']
+        `INSERT INTO refacciones (codigo, descripcion, precio_unitario, unidad, zona, stock, stock_minimo, categoria) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [safeStrReq(r.codigo), safeStrReq(r.descripcion), r.precio_unitario != null ? Number(r.precio_unitario) : 0, safeStr(r.unidad) || 'PZA', safeStr(r.zona) || safeStr(r.marca) || 'Estante A', r.stock != null ? Number(r.stock) : 0, r.stock_minimo != null ? Number(r.stock_minimo) : 1, safeStr(r.categoria) || safeStr(r.origen) || '']
       );
     }
     for (const m of maquinas) {
