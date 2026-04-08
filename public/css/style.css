@@ -4517,3 +4517,214 @@ body.dark-theme .glass {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* =====================================================
+   TIPO DE CAMBIO WIDGET (header)
+   ===================================================== */
+.tipo-cambio-widget {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(13,148,136,0.15);
+  border: 1px solid rgba(13,148,136,0.35);
+  border-radius: 8px;
+  padding: 3px 10px 3px 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #0d9488;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.tipo-cambio-widget:hover {
+  background: rgba(13,148,136,0.25);
+  border-color: rgba(13,148,136,0.55);
+}
+.tc-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.75;
+  font-weight: 700;
+}
+.tc-valor {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.tc-edit-btn {
+  background: none;
+  border: none;
+  color: inherit;
+  padding: 0 2px;
+  font-size: 0.72rem;
+  opacity: 0.7;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+.tc-edit-btn:hover { opacity: 1; }
+body.dark-theme .tipo-cambio-widget {
+  background: rgba(13,148,136,0.2);
+  border-color: rgba(13,148,136,0.4);
+  color: #2dd4bf;
+}
+
+/* =====================================================
+   GLOBAL STOCK ALERT (header)
+   ===================================================== */
+.global-stock-alert {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.35);
+  border-radius: 8px;
+  padding: 3px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #dc2626;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  animation: pulseGlow 2.5s ease-in-out infinite;
+}
+.global-stock-alert.hidden { display: none; }
+body.dark-theme .global-stock-alert {
+  color: #f87171;
+  background: rgba(239,68,68,0.18);
+  border-color: rgba(239,68,68,0.4);
+}
+
+/* =====================================================
+   VENTAS: resumen bar
+   ===================================================== */
+.ventas-resumen-bar {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 12px 20px;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, rgba(30,58,95,0.06), rgba(13,148,136,0.06));
+  border-radius: 10px;
+  border: 1px solid rgba(13,148,136,0.15);
+}
+.ventas-resumen-bar.hidden { display: none; }
+.ventas-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ventas-kpi-label {
+  font-size: 0.71rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  font-weight: 600;
+}
+.ventas-kpi-value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--config-primary, #1e3a5f);
+}
+.ventas-kpi-value.accent { color: var(--config-accent, #0d9488); }
+body.dark-theme .ventas-kpi-value { color: #e2e8f0; }
+
+/* =====================================================
+   TARIFAS: notes list
+   ===================================================== */
+.tarifas-notas-list li { margin-bottom: 0.5rem; line-height: 1.6; }
+
+/* =====================================================
+   STOCK ALERT BAR
+   ===================================================== */
+.stock-alert-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  margin: 0 0 12px 0;
+  background: rgba(239,68,68,0.09);
+  border-left: 4px solid #ef4444;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: #991b1b;
+  animation: fadeInDown 0.4s ease both;
+}
+.stock-alert-bar.hidden { display: none; }
+body.dark-theme .stock-alert-bar { color: #fca5a5; background: rgba(239,68,68,0.15); }
+
+/* =====================================================
+   REVISION MAQUINAS: state badges
+   ===================================================== */
+.badge-entregado-si  { background: rgba(16,185,129,0.15); color: #065f46; border-radius: 999px; padding: 2px 10px; font-size: 0.78rem; font-weight: 600; }
+.badge-entregado-no  { background: rgba(245,158,11,0.15); color: #92400e; border-radius: 999px; padding: 2px 10px; font-size: 0.78rem; font-weight: 600; }
+.badge-prueba-final  { background: rgba(16,185,129,0.15); color: #065f46; border-radius: 999px; padding: 2px 10px; font-size: 0.78rem; font-weight: 600; }
+.badge-prueba-proc   { background: rgba(99,102,241,0.15); color: #3730a3; border-radius: 999px; padding: 2px 10px; font-size: 0.78rem; font-weight: 600; }
+body.dark-theme .badge-entregado-si { color: #6ee7b7; }
+body.dark-theme .badge-entregado-no { color: #fcd34d; }
+body.dark-theme .badge-prueba-final { color: #6ee7b7; }
+body.dark-theme .badge-prueba-proc  { color: #a5b4fc; }
+
+/* =====================================================
+   MAQUINA FICHA (imprimible)
+   ===================================================== */
+.maq-ficha {
+  max-width: 480px;
+  margin: 0 auto;
+  font-family: var(--font-sans);
+}
+.maq-ficha-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--config-accent, #0d9488);
+}
+.maq-ficha-logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--config-primary,#1e3a5f), var(--config-accent,#0d9488));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  color: #fff;
+  flex-shrink: 0;
+}
+.maq-ficha-cat {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--config-accent, #0d9488);
+  font-weight: 700;
+}
+.maq-ficha-modelo {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--config-primary, #1e3a5f);
+}
+.maq-ficha-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+.maq-ficha-table th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 600;
+  width: 40%;
+  border-bottom: 1px solid #e2e8f0;
+}
+.maq-ficha-table td {
+  padding: 8px 12px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  border-bottom: 1px solid #e2e8f0;
+}
+.maq-ficha-actions { text-align: center; }
+@media print { .no-print { display: none !important; } }
+body.dark-theme .maq-ficha-modelo { color: #e2e8f0; }
+body.dark-theme .maq-ficha-table th { color: #94a3b8; border-color: #334155; }
+body.dark-theme .maq-ficha-table td { border-color: #334155; }

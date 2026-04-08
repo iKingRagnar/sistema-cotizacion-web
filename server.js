@@ -387,6 +387,19 @@ async function fetchTipoCambioBanxico() {
 fetchTipoCambioBanxico();
 setInterval(fetchTipoCambioBanxico, 60 * 60 * 1000);
 
+/** Carga tipo de cambio manual desde tarifas si existe */
+async function loadManualTipoCambio() {
+  try {
+    const row = await db.getOne("SELECT valor FROM tarifas WHERE clave='tipo_cambio_manual'");
+    if (row && row.valor) {
+      const v = parseFloat(row.valor);
+      if (!isNaN(v) && v > 0) {
+        tipoCambioCache = { valor: v, fecha: new Date().toISOString().slice(0, 10), manual: true };
+      }
+    }
+  } catch (_) {}
+}
+
 app.get('/api/tipo-cambio', async (req, res) => {
   try {
     const tc = await fetchTipoCambioBanxico();
@@ -2924,6 +2937,537 @@ app.delete('/api/viajes/:id', async (req, res) => {
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
 
+// =================== ALIAS: Aprobar cotización (equivalente a aplicar) ===================
+app.put('/api/cotizaciones/:id/aprobar', async (req, res) => {
+  try {
+    const cot = await db.getOne('SELECT * FROM cotizaciones WHERE id = ?', [req.params.id]);
+    if (!cot) return res.status(404).json({ error: 'No encontrada' });
+    if (cot.estado === 'aplicada' || cot.estado === 'venta') return res.status(400).json({ error: 'Cotización ya aplicada/aprobada' });
+    const lineas = await db.getAll('SELECT * FROM cotizacion_lineas WHERE cotizacion_id = ?', [req.params.id]);
+    const errores = [];
+    for (const l of lineas) {
+      if (!l.refaccion_id || l.tipo_linea !== 'refaccion') continue;
+      const ref = await db.getOne('SELECT * FROM refacciones WHERE id = ?', [l.refaccion_id]);
+      if (!ref) continue;
+      const cant = Number(l.cantidad) || 0;
+      if (ref.stock < cant) {
+        errores.push(`Sin stock suficiente: ${ref.codigo} (disponible: ${ref.stock}, requerido: ${cant})`);
+        continue;
+      }
+      const nuevoStock = ref.stock - cant;
+      await db.runQuery('UPDATE refacciones SET stock=? WHERE id=?', [nuevoStock, ref.id]);
+      await db.runQuery(
+        `INSERT INTO movimientos_stock (refaccion_id, tipo, cantidad, costo_unitario, cotizacion_id, referencia, fecha)
+         VALUES (?, 'salida', ?, ?, ?, ?, date('now','localtime'))`,
+        [ref.id, cant, Number(l.precio_unitario) || 0, cot.id, `Cot: ${cot.folio}`]
+      );
+    }
+    const vendedor = req.body && req.body.vendedor ? String(req.body.vendedor) : null;
+    await db.runQuery(
+      `UPDATE cotizaciones SET estado='aplicada', fecha_aprobacion=date('now','localtime')${vendedor ? ', vendedor=?' : ''} WHERE id=?`,
+      vendedor ? [vendedor, req.params.id] : [req.params.id]
+    );
+    try {
+      const cliente = await db.getOne('SELECT * FROM clientes WHERE id=?', [cot.cliente_id]);
+      await enviarCorreoAprobacion(cot, cliente, lineas);
+    } catch (_) {}
+    res.json({ ok: true, errores });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+// =================== ALERTAS DE STOCK ===================
+app.get('/api/alertas/stock', async (req, res) => {
+  try {
+    const rows = await db.getAll(
+      `SELECT * FROM refacciones WHERE activo=1 AND stock <= COALESCE(stock_minimo, 1) ORDER BY codigo`
+    );
+    res.json(Array.isArray(rows) ? rows : []);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+// =================== PUT TIPO DE CAMBIO (manual override) ===================
+app.put('/api/tipo-cambio', async (req, res) => {
+  try {
+    const { valor } = req.body || {};
+    const v = parseFloat(valor);
+    if (isNaN(v) || v <= 0) return res.status(400).json({ error: 'Valor inválido para tipo de cambio' });
+    tipoCambioCache = { valor: v, fecha: new Date().toISOString().slice(0, 10), manual: true };
+    // Persiste en tabla tarifas para sobrevivir reinicios
+    await db.runQuery(
+      `INSERT INTO tarifas (clave, valor, actualizado_en) VALUES ('tipo_cambio_manual', ?, datetime('now','localtime'))
+       ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor, actualizado_en=excluded.actualizado_en`,
+      [String(v)]
+    );
+    res.json({ ok: true, valor: v });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+// =================== REPORTES: Comisiones mensuales ===================
+app.get('/api/reportes/comisiones-mensuales', async (req, res) => {
+  try {
+    const { mes } = req.query; // YYYY-MM
+    let where = "co.estado IN ('aplicada','venta')";
+    const params = [];
+    if (mes) { where += " AND strftime('%Y-%m', co.fecha_aprobacion) = ?"; params.push(mes); }
+    const cotizaciones = await db.getAll(
+      `SELECT co.*, c.nombre as cliente_nombre FROM cotizaciones co
+       JOIN clientes c ON c.id=co.cliente_id
+       WHERE ${where} ORDER BY co.fecha_aprobacion DESC`,
+      params
+    );
+    // Tasas de comisión (o leer de tarifas)
+    const tarifasRaw = await db.getAll('SELECT clave, valor FROM tarifas', []);
+    const tarifas = {};
+    (tarifasRaw || []).forEach(t => { tarifas[t.clave] = t.valor; });
+    const pctRef = parseFloat(tarifas['comision_refacciones'] || '15') / 100;
+    const pctSvc = parseFloat(tarifas['comision_servicios'] || '15') / 100;
+    const pctMaq = parseFloat(tarifas['comision_maquinas_david'] || '10') / 100;
+
+    let totalRef = 0, totalSvc = 0, totalMaq = 0;
+    let comRef = 0, comSvc = 0, comMaq = 0;
+
+    cotizaciones.forEach(co => {
+      const tot = Number(co.total) || 0;
+      const tipo = (co.tipo || '').toLowerCase();
+      if (tipo === 'refacciones') { totalRef += tot; comRef += tot * pctRef; }
+      else if (tipo === 'mano_obra' || tipo === 'servicio') { totalSvc += tot; comSvc += tot * pctSvc; }
+      else if (tipo === 'maquina') {
+        totalMaq += tot;
+        if ((co.vendedor || '').toLowerCase().includes('david')) comMaq += tot * pctMaq;
+      }
+    });
+
+    res.json({
+      mes: mes || 'todos',
+      cotizaciones: cotizaciones.length,
+      refacciones: { total: Math.round(totalRef * 100) / 100, comision: Math.round(comRef * 100) / 100, pct: pctRef * 100 },
+      servicios: { total: Math.round(totalSvc * 100) / 100, comision: Math.round(comSvc * 100) / 100, pct: pctSvc * 100 },
+      maquinas: { total: Math.round(totalMaq * 100) / 100, comision: Math.round(comMaq * 100) / 100, pct: pctMaq * 100 },
+      total_comisiones: Math.round((comRef + comSvc + comMaq) * 100) / 100,
+      detalle: cotizaciones,
+    });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+// =================== EMAILS DISPARADOS MANUALMENTE ===================
+app.post('/api/emails/inventario-mensual', async (req, res) => {
+  try {
+    const t = createMailTransport();
+    const from = (process.env.SMTP_FROM || process.env.SMTP_USER || '').trim();
+    if (!t || !from) return res.status(503).json({ error: 'SMTP no configurado (SMTP_HOST, SMTP_USER, SMTP_PASS)' });
+    const adminEmails = ['dcantu746@gmail.com', 'guillermorc44@gmail.com'];
+    const envVarAdmin = (process.env.SMTP_ADMIN_EMAIL || '').trim();
+    if (envVarAdmin && !adminEmails.includes(envVarAdmin)) adminEmails.push(envVarAdmin);
+    const refacciones = await db.getAll('SELECT * FROM refacciones WHERE activo=1 ORDER BY stock ASC LIMIT 100');
+    const bajos = refacciones.filter(r => Number(r.stock) <= Number(r.stock_minimo || 1));
+    const tableHeader = ['Código', 'Descripción', 'Zona', 'Stock', 'Mínimo', 'Precio MXN'];
+    const tableRows = refacciones.slice(0, 50).map(r => [
+      r.codigo || '—', r.descripcion || '—', r.zona || '—',
+      Number(r.stock).toLocaleString('es-MX'), Number(r.stock_minimo || 1),
+      '$' + Number(r.precio_unitario || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 }),
+    ]);
+    const html = buildEmailHtml({
+      title: 'Inventario Mensual de Refacciones',
+      subtitle: `${new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long' })} · ${bajos.length} refacciones con stock bajo`,
+      tableHeader,
+      tableRows,
+      footer: `<strong>${bajos.length}</strong> refacciones están en o por debajo del stock mínimo. Se recomienda realizar pedido inmediato.<br><br>Total de referencias activas: ${refacciones.length}.`,
+    });
+    const subject = `📦 Inventario Mensual – ${new Date().toLocaleDateString('es-MX', { month: 'long', year: 'numeric' })} | Universal Machine Tools`;
+    await t.sendMail({ from, to: adminEmails.join(', '), subject, text: subject, html });
+    res.json({ ok: true, enviado_a: adminEmails });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.post('/api/emails/comisiones-mensual', async (req, res) => {
+  try {
+    const t = createMailTransport();
+    const from = (process.env.SMTP_FROM || process.env.SMTP_USER || '').trim();
+    if (!t || !from) return res.status(503).json({ error: 'SMTP no configurado' });
+    const adminEmails = ['dcantu746@gmail.com', 'guillermorc44@gmail.com'];
+    const mes = req.body && req.body.mes ? String(req.body.mes) : new Date().toISOString().slice(0, 7);
+    const data = await (async () => {
+      const cotizaciones = await db.getAll(
+        `SELECT * FROM cotizaciones WHERE estado IN ('aplicada','venta') AND strftime('%Y-%m', fecha_aprobacion) = ?`, [mes]
+      );
+      const tarifasRaw = await db.getAll('SELECT clave, valor FROM tarifas');
+      const tarifas = {};
+      (tarifasRaw || []).forEach(t2 => { tarifas[t2.clave] = t2.valor; });
+      const pctRef = parseFloat(tarifas['comision_refacciones'] || '15') / 100;
+      const pctSvc = parseFloat(tarifas['comision_servicios'] || '15') / 100;
+      const pctMaq = parseFloat(tarifas['comision_maquinas_david'] || '10') / 100;
+      let totalRef = 0, totalSvc = 0, totalMaq = 0, comRef = 0, comSvc = 0, comMaq = 0;
+      cotizaciones.forEach(co => {
+        const tot = Number(co.total) || 0;
+        const tipo = (co.tipo || '').toLowerCase();
+        if (tipo === 'refacciones') { totalRef += tot; comRef += tot * pctRef; }
+        else if (['mano_obra', 'servicio'].includes(tipo)) { totalSvc += tot; comSvc += tot * pctSvc; }
+        else if (tipo === 'maquina') { totalMaq += tot; if ((co.vendedor || '').toLowerCase().includes('david')) comMaq += tot * pctMaq; }
+      });
+      return { mes, cotizaciones: cotizaciones.length, totalRef, totalSvc, totalMaq, comRef, comSvc, comMaq };
+    })();
+    const html = buildEmailHtml({
+      title: 'Reporte de Comisiones Mensual',
+      subtitle: `Mes: ${data.mes} · ${data.cotizaciones} cotizaciones aprobadas`,
+      rows: [
+        { label: 'Ventas Refacciones', value: '$' + data.totalRef.toLocaleString('es-MX', { minimumFractionDigits: 2 }) },
+        { label: 'Comisión Refacciones (15%)', value: '$' + data.comRef.toLocaleString('es-MX', { minimumFractionDigits: 2 }), bold: true },
+        { label: 'Ventas Servicios', value: '$' + data.totalSvc.toLocaleString('es-MX', { minimumFractionDigits: 2 }) },
+        { label: 'Comisión Servicios (15%)', value: '$' + data.comSvc.toLocaleString('es-MX', { minimumFractionDigits: 2 }), bold: true },
+        { label: 'Ventas Máquinas', value: '$' + data.totalMaq.toLocaleString('es-MX', { minimumFractionDigits: 2 }) },
+        { label: 'Comisión Máquinas – David (10%)', value: '$' + data.comMaq.toLocaleString('es-MX', { minimumFractionDigits: 2 }), bold: true },
+        { label: 'TOTAL COMISIONES', value: '$' + (data.comRef + data.comSvc + data.comMaq).toLocaleString('es-MX', { minimumFractionDigits: 2 }), bold: true },
+      ],
+    });
+    const subject = `💰 Comisiones ${data.mes} | Universal Machine Tools`;
+    await t.sendMail({ from, to: adminEmails.join(', '), subject, text: subject, html });
+    res.json({ ok: true, enviado_a: adminEmails, resumen: data });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+// =================== SEMILLA DE DATOS ESPECÍFICA UNIVERSAL ===================
+app.post('/api/seed-universal', async (req, res) => {
+  try {
+    // Clientes reales de Universal
+    const clientes = [
+      { codigo: 'UNV-001', nombre: 'Universal Machinery SA de CV', rfc: 'UMS010101XXX', contacto: 'Roberto Hernández', direccion: 'Av. Industrial 100, Monterrey NL', telefono: '81-8000-0001', email: 'contacto@universal.com.mx', ciudad: 'Monterrey' },
+      { codigo: 'IMN-002', nombre: 'Industrias Metálicas del Norte SA', rfc: 'IMN020202XXX', contacto: 'Carlos Valdés', direccion: 'Blvd. Monterrey 200, San Nicolás NL', telefono: '81-8000-0002', email: 'imn@metal.com', ciudad: 'Monterrey' },
+      { codigo: 'TCN-003', nombre: 'TornoCNC Monterrey', rfc: 'TCM030303XXX', contacto: 'Ana Leal', direccion: 'Calle 5 de Mayo 300, Apodaca NL', telefono: '81-8000-0003', email: 'info@tornocnc.mx', ciudad: 'Monterrey' },
+      { codigo: 'AUT-004', nombre: 'Autopartes Guanajuato SA', rfc: 'AGS040404XXX', contacto: 'Luis Reyes', direccion: 'Parque Industrial 400, León GTO', telefono: '47-7000-0004', email: 'compras@autopartesgt.mx', ciudad: 'León' },
+      { codigo: 'MEC-005', nombre: 'Mecánica Precisión CDMX', rfc: 'MPC050505XXX', contacto: 'Sofía Torres', direccion: 'Eje 10 500, CDMX', telefono: '55-5000-0005', email: 'svc@mecanicaprecision.mx', ciudad: 'Ciudad de México' },
+      { codigo: 'SAL-006', nombre: 'Salinas Industrias SA de CV', rfc: 'SIS060606XXX', contacto: 'Jorge Salinas', direccion: 'Col. Industrial 600, Saltillo COAH', telefono: '84-4000-0006', email: 'info@salinasind.mx', ciudad: 'Saltillo' },
+      { codigo: 'QRO-007', nombre: 'Maquinados Querétaro SRL', rfc: 'MQS070707XXX', contacto: 'María González', direccion: 'Blvd. SEDESU 700, Querétaro QRO', telefono: '44-2000-0007', email: 'maquinados@qro.mx', ciudad: 'Querétaro' },
+      { codigo: 'MTY-008', nombre: 'Metalúrgica Monterrey SA', rfc: 'MMT080808XXX', contacto: 'Ricardo López', direccion: 'Av. Constitución 800, Monterrey NL', telefono: '81-8000-0008', email: 'rlopez@metalmon.mx', ciudad: 'Monterrey' },
+      { codigo: 'AGS-009', nombre: 'Aguascalientes Precisión SRL', rfc: 'APS090909XXX', contacto: 'Elena Ruíz', direccion: 'Av. Convención 900, Aguascalientes AGS', telefono: '44-9000-0009', email: 'eruiz@agsprecision.mx', ciudad: 'Aguascalientes' },
+      { codigo: 'PUE-010', nombre: 'Puebla CNC Parts SA', rfc: 'PCP101010XXX', contacto: 'Alejandro Méndez', direccion: 'Blvd. Forjadores 1000, Puebla PUE', telefono: '22-2000-0010', email: 'amendez@puecnc.mx', ciudad: 'Puebla' },
+    ];
+    // Maquinas CNC reales
+    const maquinas = [
+      { nombre: 'CTX 310 eco', categoria: 'Torno CNC', modelo: 'CTX 310 eco', marca: 'DMG Mori', numero_serie: 'DMG-2024-001', ubicacion: 'Monterrey' },
+      { nombre: 'NHX 4000', categoria: 'Centro de Maquinado', modelo: 'NHX 4000', marca: 'DMG Mori', numero_serie: 'DMG-2024-002', ubicacion: 'Monterrey' },
+      { nombre: 'DMU 50', categoria: 'Centro de Maquinado', modelo: 'DMU 50', marca: 'DMG Mori', numero_serie: 'DMG-2024-003', ubicacion: 'Guanajuato' },
+      { nombre: 'VF-2', categoria: 'Centro de Maquinado', modelo: 'VF-2', marca: 'Haas', numero_serie: 'HAAS-2024-004', ubicacion: 'Guanajuato' },
+      { nombre: 'VF-4', categoria: 'Centro de Maquinado', modelo: 'VF-4', marca: 'Haas', numero_serie: 'HAAS-2024-005', ubicacion: 'CDMX' },
+      { nombre: 'CTX 450', categoria: 'Torno CNC', modelo: 'CTX 450', marca: 'DMG Mori', numero_serie: 'DMG-2024-006', ubicacion: 'Saltillo' },
+      { nombre: 'FA30', categoria: 'Electroerosionadora por Hilo', modelo: 'FA30', marca: 'Fanuc', numero_serie: 'FAN-2024-007', ubicacion: 'Querétaro' },
+      { nombre: 'ROBOFIL 240', categoria: 'Electroerosionadora por Hilo', modelo: 'ROBOFIL 240', marca: 'Charmilles', numero_serie: 'CHA-2024-008', ubicacion: 'Monterrey' },
+      { nombre: 'AG40L', categoria: 'Electroerosionadora de Penetración', modelo: 'AG40L', marca: 'Sodick', numero_serie: 'SOD-2024-009', ubicacion: 'Monterrey' },
+      { nombre: 'VCS 400', categoria: 'Centro de Maquinado', modelo: 'VCS 400', marca: 'Victor', numero_serie: 'VIC-2024-010', ubicacion: 'León' },
+      { nombre: 'INTEGREX i-200', categoria: 'Torno CNC', modelo: 'INTEGREX i-200', marca: 'Mazak', numero_serie: 'MAZ-2024-011', ubicacion: 'Monterrey' },
+      { nombre: 'GL-35Y', categoria: 'Torno CNC', modelo: 'GL-35Y', marca: 'Hwacheon', numero_serie: 'HWA-2024-012', ubicacion: 'Querétaro' },
+      { nombre: 'FX5iE', categoria: 'Electroerosionadora por Hilo', modelo: 'FX5iE', marca: 'Mitsubishi', numero_serie: 'MIT-2024-013', ubicacion: 'CDMX' },
+      { nombre: 'Kern Micro', categoria: 'Centro de Maquinado', modelo: 'Kern Micro', marca: 'Kern', numero_serie: 'KRN-2024-014', ubicacion: 'Saltillo' },
+      { nombre: 'DN Solutions 5AX', categoria: 'Centro de Maquinado', modelo: 'DN Solutions 5AX', marca: 'DN Solutions', numero_serie: 'DNS-2024-015', ubicacion: 'Monterrey' },
+    ];
+    // Refacciones CNC reales
+    const refacciones = [
+      { codigo: 'REF-001', descripcion: 'Husillo principal CNC 4500 RPM', zona: 'Estante A1', stock: 3, stock_minimo: 2, precio_unitario: 45000, precio_usd: 2647, unidad: 'PZA', categoria: 'Mecánica', subcategoria: 'Husillos', imagen_url: 'https://picsum.photos/seed/ref001/400/300' },
+      { codigo: 'REF-002', descripcion: 'Motor servo AC 2.2kW Fanuc', zona: 'Estante A2', stock: 5, stock_minimo: 2, precio_unitario: 28000, precio_usd: 1647, unidad: 'PZA', categoria: 'Eléctrica', subcategoria: 'Motores', imagen_url: 'https://picsum.photos/seed/ref002/400/300' },
+      { codigo: 'REF-003', descripcion: 'Encoder incremental 2500 ppr', zona: 'Estante B1', stock: 8, stock_minimo: 3, precio_unitario: 4500, precio_usd: 265, unidad: 'PZA', categoria: 'Electrónica', subcategoria: 'Sensores', imagen_url: 'https://picsum.photos/seed/ref003/400/300' },
+      { codigo: 'REF-004', descripcion: 'Guía lineal THK SSR20XV 500mm', zona: 'Estante B2', stock: 4, stock_minimo: 2, precio_unitario: 8500, precio_usd: 500, unidad: 'PZA', categoria: 'Mecánica', subcategoria: 'Guías', imagen_url: 'https://picsum.photos/seed/ref004/400/300' },
+      { codigo: 'REF-005', descripcion: 'Tornillo de bolas SFU1605 1000mm', zona: 'Estante C1', stock: 2, stock_minimo: 2, precio_unitario: 12000, precio_usd: 706, unidad: 'PZA', categoria: 'Mecánica', subcategoria: 'Tornillería', imagen_url: 'https://picsum.photos/seed/ref005/400/300' },
+      { codigo: 'REF-006', descripcion: 'Tarjeta PCB control CNC Fanuc 16i', zona: 'Estante D1', stock: 1, stock_minimo: 1, precio_unitario: 85000, precio_usd: 5000, unidad: 'PZA', categoria: 'Electrónica', subcategoria: 'Tarjetas', imagen_url: 'https://picsum.photos/seed/ref006/400/300' },
+      { codigo: 'REF-007', descripcion: 'Fuente de poder 24V DC 5A', zona: 'Estante D2', stock: 10, stock_minimo: 3, precio_unitario: 1800, precio_usd: 106, unidad: 'PZA', categoria: 'Eléctrica', subcategoria: 'Fuentes', imagen_url: 'https://picsum.photos/seed/ref007/400/300' },
+      { codigo: 'REF-008', descripcion: 'Contactor 3P 40A Siemens 3RT', zona: 'Estante E1', stock: 15, stock_minimo: 5, precio_unitario: 2200, precio_usd: 129, unidad: 'PZA', categoria: 'Eléctrica', subcategoria: 'Contactores', imagen_url: 'https://picsum.photos/seed/ref008/400/300' },
+      { codigo: 'REF-009', descripcion: 'Rodamiento FAG 6208-2Z', zona: 'Estante F1', stock: 20, stock_minimo: 5, precio_unitario: 450, precio_usd: 26, unidad: 'PZA', categoria: 'Mecánica', subcategoria: 'Rodamientos', imagen_url: 'https://picsum.photos/seed/ref009/400/300' },
+      { codigo: 'REF-010', descripcion: 'Aceite ISO VG 68 lubricante CNC 20L', zona: 'Almacén', stock: 30, stock_minimo: 10, precio_unitario: 800, precio_usd: 47, unidad: 'CBO', categoria: 'Consumibles', subcategoria: 'Lubricantes', imagen_url: 'https://picsum.photos/seed/ref010/400/300' },
+      { codigo: 'REF-011', descripcion: 'Cable encoder blindado 5m', zona: 'Estante G1', stock: 12, stock_minimo: 4, precio_unitario: 950, precio_usd: 56, unidad: 'PZA', categoria: 'Eléctrica', subcategoria: 'Cables', imagen_url: 'https://picsum.photos/seed/ref011/400/300' },
+      { codigo: 'REF-012', descripcion: 'Herramienta VDI 40 insertable', zona: 'Estante H1', stock: 25, stock_minimo: 8, precio_unitario: 3200, precio_usd: 188, unidad: 'PZA', categoria: 'Herramienta', subcategoria: 'Portaherramientas', imagen_url: 'https://picsum.photos/seed/ref012/400/300' },
+      { codigo: 'REF-013', descripcion: 'Plato de garras 3 mandíbulas 200mm', zona: 'Estante H2', stock: 3, stock_minimo: 1, precio_unitario: 9500, precio_usd: 559, unidad: 'PZA', categoria: 'Herramienta', subcategoria: 'Sujeción', imagen_url: 'https://picsum.photos/seed/ref013/400/300' },
+      { codigo: 'REF-014', descripcion: 'Variador de frecuencia 3P 5.5kW', zona: 'Estante I1', stock: 2, stock_minimo: 1, precio_unitario: 18500, precio_usd: 1088, unidad: 'PZA', categoria: 'Eléctrica', subcategoria: 'Variadores', imagen_url: 'https://picsum.photos/seed/ref014/400/300' },
+      { codigo: 'REF-015', descripcion: 'Sello mecánico bomba refrigerante', zona: 'Estante J1', stock: 6, stock_minimo: 2, precio_unitario: 1200, precio_usd: 71, unidad: 'PZA', categoria: 'Mecánica', subcategoria: 'Sellos', imagen_url: 'https://picsum.photos/seed/ref015/400/300' },
+      { codigo: 'REF-016', descripcion: 'Tarjeta I/O Digital 32ch CNC', zona: 'Estante D3', stock: 1, stock_minimo: 1, precio_unitario: 42000, precio_usd: 2471, unidad: 'PZA', categoria: 'Electrónica', subcategoria: 'Tarjetas', imagen_url: 'https://picsum.photos/seed/ref016/400/300' },
+      { codigo: 'REF-017', descripcion: 'Pantalla LCD 10.4" CNC Touch', zona: 'Estante D4', stock: 2, stock_minimo: 1, precio_unitario: 35000, precio_usd: 2059, unidad: 'PZA', categoria: 'Electrónica', subcategoria: 'HMI', imagen_url: 'https://picsum.photos/seed/ref017/400/300' },
+      { codigo: 'REF-018', descripcion: 'Manguera hidráulica AN8 1m', zona: 'Almacén', stock: 40, stock_minimo: 10, precio_unitario: 380, precio_usd: 22, unidad: 'PZA', categoria: 'Hidráulica', subcategoria: 'Mangueras', imagen_url: 'https://picsum.photos/seed/ref018/400/300' },
+      { codigo: 'REF-019', descripcion: 'Filtro de refrigerante 100 micras', zona: 'Almacén', stock: 50, stock_minimo: 15, precio_unitario: 250, precio_usd: 15, unidad: 'PZA', categoria: 'Consumibles', subcategoria: 'Filtros', imagen_url: 'https://picsum.photos/seed/ref019/400/300' },
+      { codigo: 'REF-020', descripcion: 'Fresa de cara Ø80mm insertos', zona: 'Estante K1', stock: 4, stock_minimo: 2, precio_unitario: 6800, precio_usd: 400, unidad: 'PZA', categoria: 'Herramienta', subcategoria: 'Fresas', imagen_url: 'https://picsum.photos/seed/ref020/400/300' },
+    ];
+
+    // Insert clientes
+    const cIds = [];
+    for (const c of clientes) {
+      try {
+        await db.runQuery(
+          `INSERT INTO clientes (codigo, nombre, rfc, contacto, direccion, telefono, email, ciudad) VALUES (?,?,?,?,?,?,?,?)`,
+          [c.codigo, c.nombre, c.rfc, c.contacto, c.direccion, c.telefono, c.email, c.ciudad]
+        );
+        const r = await db.getOne('SELECT id FROM clientes ORDER BY id DESC LIMIT 1');
+        if (r) cIds.push({ ...c, id: r.id });
+      } catch (_) {}
+    }
+    // Insert maquinas (round-robin por cliente)
+    for (let i = 0; i < maquinas.length; i++) {
+      const m = maquinas[i];
+      const cliente = cIds[i % cIds.length];
+      if (!cliente) continue;
+      try {
+        await db.runQuery(
+          `INSERT INTO maquinas (cliente_id, nombre, marca, modelo, numero_serie, ubicacion, categoria) VALUES (?,?,?,?,?,?,?)`,
+          [cliente.id, m.nombre, m.marca, m.modelo, m.numero_serie, m.ubicacion, m.categoria]
+        );
+      } catch (_) {}
+    }
+    // Insert refacciones
+    for (const r of refacciones) {
+      try {
+        await db.runQuery(
+          `INSERT INTO refacciones (codigo, descripcion, zona, stock, stock_minimo, precio_unitario, precio_usd, unidad, categoria, subcategoria, imagen_url) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+          [r.codigo, r.descripcion, r.zona, r.stock, r.stock_minimo, r.precio_unitario, r.precio_usd, r.unidad, r.categoria, r.subcategoria, r.imagen_url]
+        );
+      } catch (_) {}
+    }
+    // Insert tarifas por defecto
+    const defaultTarifas = [
+      ['mecanico_mxn', '900'], ['mecanico_usd', '53'],
+      ['electronico_mxn', '1100'], ['electronico_usd', '65'],
+      ['cnc_mxn', '1200'], ['cnc_usd', '71'],
+      ['ayudante_mxn', '500'], ['ayudante_usd', '29'],
+      ['zona_a_ciudades', 'Monterrey, área metro'], ['zona_a_viatico', '1000'], ['zona_a_hrs', '1'], ['zona_a_km', '5'],
+      ['zona_b_ciudades', 'Saltillo, Guanajuato, Querétaro'], ['zona_b_viatico', '1500'], ['zona_b_hrs', '4'], ['zona_b_km', '40'],
+      ['zona_c_ciudades', 'CDMX, Guadalajara, Puebla'], ['zona_c_viatico', '2000'], ['zona_c_hrs', '8'], ['zona_c_km', '100'],
+      ['comision_refacciones', '15'], ['comision_servicios', '15'], ['comision_maquinas_david', '10'],
+      ['bono_20k', '1000'], ['bono_40k', '2000'], ['bono_dia', '500'],
+    ];
+    for (const [clave, valor] of defaultTarifas) {
+      try {
+        await db.runQuery(
+          `INSERT INTO tarifas (clave, valor) VALUES (?,?) ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor`,
+          [clave, valor]
+        );
+      } catch (_) {}
+    }
+    // Insert revision maquinas (5 records)
+    const revModelos = ['CTX 310 eco', 'NHX 4000', 'VF-2', 'FA30', 'AG40L'];
+    const revCategorias = ['Torno CNC', 'Centro de Maquinado', 'Centro de Maquinado', 'Electroerosionadora por Hilo', 'Electroerosionadora de Penetración'];
+    for (let i = 0; i < 5; i++) {
+      try {
+        await db.runQuery(
+          `INSERT INTO revision_maquinas (categoria, modelo, numero_serie, entregado, prueba, comentarios) VALUES (?,?,?,?,?,?)`,
+          [revCategorias[i], revModelos[i], 'SN-REV-' + (1000 + i), i < 2 ? 'Si' : 'No', i < 2 ? 'Finalizada' : 'En Proceso', 'Revisión preentrega demo']
+        );
+      } catch (_) {}
+    }
+    // Insert tecnicos especializados
+    const tecnicosDemos = [
+      { nombre: 'David Cantú', habilidades: 'CNC, Ventas, Programación' },
+      { nombre: 'Ing. Juan Ramírez', habilidades: 'Mecánica CNC, Tornos, Fresadoras' },
+      { nombre: 'Ing. Carlos Medina', habilidades: 'Electrónica, PLC, Servo drives' },
+      { nombre: 'Lic. Ana Torres', habilidades: 'Electroerosión, Alambre, Penetración' },
+      { nombre: 'Ing. Luis Sánchez', habilidades: 'CNC Programming, G-code, Mastercam' },
+    ];
+    for (const t of tecnicosDemos) {
+      try {
+        await db.runQuery('INSERT OR IGNORE INTO tecnicos (nombre, habilidades) VALUES (?,?)', [t.nombre, t.habilidades]);
+      } catch (_) {}
+    }
+    // ── COTIZACIONES demo ─────────────────────────────────────────────────
+    const cotizTipos = ['refacciones', 'mano_obra', 'maquina', 'refacciones', 'mano_obra'];
+    const cotizEstados = ['aplicada', 'aplicada', 'borrador', 'aplicada', 'aplicada'];
+    const cotizNotas = [
+      'Reemplazo husillo principal y motor servo.',
+      'Mantenimiento preventivo semestral.',
+      'Cotización venta fresadora DMU 50.',
+      'Encoders y guías lineales.',
+      'Calibración y ajuste general.',
+    ];
+    const cotizIds = [];
+    for (let i = 0; i < 10; i++) {
+      const cli = cIds[i % cIds.length];
+      if (!cli) continue;
+      const tipo = cotizTipos[i % cotizTipos.length];
+      const estado = cotizEstados[i % cotizEstados.length];
+      const folio = 'COT-UNIV-' + String(1000 + i);
+      const subtotal = (i + 1) * 15000 + 3000;
+      const iva = subtotal * 0.16;
+      const total = subtotal + iva;
+      const tc = 17.5;
+      const fecha = `2026-0${(i % 3) + 1}-${String((i * 3 + 5) % 28 + 1).padStart(2, '0')}`;
+      const fechaAprobacion = estado === 'aplicada' ? fecha : null;
+      const vendedor = i % 3 === 2 ? 'David Cantú' : (i % 2 === 0 ? 'Ing. Juan Ramírez' : null);
+      try {
+        const r = await db.runQuery(
+          `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total, tipo_cambio, moneda, maquinas_ids, estado, notas, vendedor, fecha_aprobacion)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+          [folio, cli.id, tipo, fecha, subtotal, iva, total, tc, 'MXN', '[]', estado, cotizNotas[i % cotizNotas.length], vendedor, fechaAprobacion]
+        );
+        if (r && r.lastInsertRowid) cotizIds.push(r.lastInsertRowid);
+      } catch (_) {}
+    }
+
+    // ── REPORTES demo ─────────────────────────────────────────────────────
+    const reporteTipos = ['garantia', 'instalacion', 'servicio', 'servicio', 'garantia', 'instalacion', 'servicio', 'garantia', 'servicio', 'instalacion'];
+    const reporteSubtipos = ['garantia', 'instalacion', 'falla_mecanica', 'falla_electrica', 'garantia', 'instalacion', 'falla_electronica', 'garantia', 'capacitacion', 'instalacion'];
+    const reporteDescs = [
+      'Revisión completa de husillo y eje Z por garantía.',
+      'Instalación y puesta en marcha de torno CTX 310.',
+      'Falla en eje X, revisión de guías lineales.',
+      'Falla en panel de control, revisión eléctrica.',
+      'Mantenimiento garantía semestral.',
+      'Instalación fresadora VF-2 en planta nueva.',
+      'Falla en tarjeta electrónica de control.',
+      'Mantenimiento garantía anual.',
+      'Capacitación programación G-code operadores.',
+      'Instalación y nivelación electroerosionadora.',
+    ];
+    const reporteEstatus = ['abierto', 'en_proceso', 'cerrado', 'cerrado', 'abierto', 'en_proceso', 'cerrado', 'abierto', 'cerrado', 'en_proceso'];
+    const tecnicosNombres = ['Ing. Juan Ramírez', 'Ing. Carlos Medina', 'Lic. Ana Torres', 'Ing. Luis Sánchez', 'Ing. Juan Ramírez'];
+    const reporteIds = [];
+    for (let i = 0; i < 10; i++) {
+      const cli = cIds[i % cIds.length];
+      if (!cli) continue;
+      const folio = 'RPT-UNIV-' + String(2000 + i);
+      const tipo = reporteTipos[i];
+      const subtipo = reporteSubtipos[i];
+      const fecha = `2026-0${(i % 3) + 1}-${String((i * 2 + 8) % 28 + 1).padStart(2, '0')}`;
+      const fechaProgramada = tipo === 'garantia' ? `2026-0${(i % 3) + 1}-${String((i * 2 + 15) % 28 + 1).padStart(2, '0')}` : null;
+      try {
+        const r = await db.runQuery(
+          `INSERT INTO reportes (folio, cliente_id, razon_social, tipo_reporte, subtipo, descripcion, tecnico, fecha, estatus, fecha_programada, finalizado)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+          [folio, cli.id, cli.nombre, tipo, subtipo, reporteDescs[i], tecnicosNombres[i % 5], fecha, reporteEstatus[i], fechaProgramada, reporteEstatus[i] === 'cerrado' ? 1 : 0]
+        );
+        if (r && r.lastInsertRowid) reporteIds.push(r.lastInsertRowid);
+      } catch (_) {}
+    }
+
+    // ── GARANTÍAS demo ─────────────────────────────────────────────────────
+    const garantiaModelos = ['CTX 310 eco', 'NHX 4000', 'VF-2', 'FA30', 'CTX 450', 'AG40L', 'DMU 50', 'INTEGREX i-200'];
+    const garantiaSerials = ['DMG-G001', 'DMG-G002', 'HAAS-G003', 'FAN-G004', 'DMG-G005', 'SOD-G006', 'DMG-G007', 'MAZ-G008'];
+    const garantiaIds = [];
+    for (let i = 0; i < 8; i++) {
+      const cli = cIds[i % cIds.length];
+      if (!cli) continue;
+      const fechaEntrega = `2025-0${(i % 9) + 1}-${String((i * 4 + 1) % 28 + 1).padStart(2, '0')}`;
+      try {
+        const r = await db.runQuery(
+          `INSERT INTO garantias (cliente_id, razon_social, modelo_maquina, numero_serie, fecha_entrega, activa)
+           VALUES (?,?,?,?,?,?)`,
+          [cli.id, cli.nombre, garantiaModelos[i], garantiaSerials[i], fechaEntrega, i < 6 ? 1 : 0]
+        );
+        if (r && r.lastInsertRowid) {
+          const gid = r.lastInsertRowid;
+          garantiaIds.push(gid);
+          // Mantenimientos: 2 por año
+          for (let m = 0; m < 2; m++) {
+            const anio = 2026;
+            const fechaProg = `${anio}-${m === 0 ? '03' : '09'}-15`;
+            const realizada = m === 0 && i < 4 ? fechaProg : null;
+            const confirmado = m === 0 && i < 4 ? 1 : 0;
+            try {
+              await db.runQuery(
+                `INSERT INTO mantenimientos_garantia (garantia_id, numero, anio, fecha_programada, fecha_realizada, confirmado, costo, pagado)
+                 VALUES (?,?,?,?,?,?,?,?)`,
+                [gid, m + 1, anio, fechaProg, realizada, confirmado, 3500, confirmado ? 3500 : 0]
+              );
+            } catch (_) {}
+          }
+        }
+      } catch (_) {}
+    }
+
+    // ── BONOS demo ─────────────────────────────────────────────────────────
+    const bonoTiposCap = ['Presencial local', 'Presencial foráneo', 'En línea', 'Presencial local', 'Presencial foráneo', 'En línea', 'Presencial local', 'Presencial foráneo'];
+    const bonoMontos = [1500, 3000, 800, 1500, 3000, 800, 2500, 3000];
+    for (let i = 0; i < 8; i++) {
+      const tecnico = tecnicosNombres[i % 5];
+      const repId = reporteIds[i % reporteIds.length] || null;
+      const fecha = `2026-0${(i % 3) + 1}-${String((i * 4 + 3) % 28 + 1).padStart(2, '0')}`;
+      try {
+        await db.runQuery(
+          `INSERT INTO bonos (reporte_id, tecnico, tipo_capacitacion, monto_bono, fecha, pagado, notas)
+           VALUES (?,?,?,?,?,?,?)`,
+          [repId, tecnico, bonoTiposCap[i], bonoMontos[i], fecha, i < 4 ? 1 : 0, `Capacitación ${bonoTiposCap[i]} – registro demo`]
+        );
+      } catch (_) {}
+    }
+
+    // ── VIAJES demo ─────────────────────────────────────────────────────────
+    const viajeDescs = [
+      'Visita técnica instalación torno CNC.',
+      'Capacitación programación CNC en planta.',
+      'Mantenimiento preventivo semestral.',
+      'Diagnóstico y reparación emergente.',
+      'Instalación fresadora VF-4.',
+      'Revisión garantía y calibración.',
+    ];
+    const viajeZonas = ['Guanajuato', 'Saltillo', 'Monterrey', 'CDMX', 'Querétaro', 'Puebla'];
+    for (let i = 0; i < 6; i++) {
+      const cli = cIds[i % cIds.length];
+      if (!cli) continue;
+      const tecnico = tecnicosNombres[i % 5];
+      const fi = `2026-0${(i % 3) + 1}-${String((i * 3 + 5) % 20 + 1).padStart(2, '0')}`;
+      const diasN = (i % 3) + 1;
+      const ffDate = new Date(fi);
+      ffDate.setDate(ffDate.getDate() + diasN);
+      const ff = ffDate.toISOString().slice(0, 10);
+      const monto = diasN * 1000;
+      const mes = fi.slice(0, 7);
+      try {
+        await db.runQuery(
+          `INSERT INTO viajes (tecnico, cliente_id, razon_social, fecha_inicio, fecha_fin, dias, monto_viaticos, descripcion, actividades, mes_liquidacion, liquidado)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+          [tecnico, cli.id, cli.nombre, fi, ff, diasN, monto, viajeDescs[i], `Zona: ${viajeZonas[i]}. ${viajeDescs[i]}`, mes, i < 3 ? 1 : 0]
+        );
+      } catch (_) {}
+    }
+
+    res.json({ ok: true, clientes: cIds.length, maquinas: maquinas.length, refacciones: refacciones.length, reportes: reporteIds.length, garantias: garantiaIds.length, cotizaciones: cotizIds.length });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+// =================== EMAIL: Reporte mensual bonos ===================
+app.post('/api/emails/bonos-mensual', async (req, res) => {
+  try {
+    const t = createMailTransport();
+    const from = (process.env.SMTP_FROM || process.env.SMTP_USER || '').trim();
+    if (!t || !from) return res.status(503).json({ error: 'SMTP no configurado' });
+    const adminEmails = ['dcantu746@gmail.com', 'guillermorc44@gmail.com'];
+    const mes = req.body && req.body.mes ? String(req.body.mes) : new Date().toISOString().slice(0, 7);
+    const bonos = await db.getAll(
+      `SELECT * FROM bonos WHERE strftime('%Y-%m', fecha) = ? ORDER BY tecnico, fecha`, [mes]
+    );
+    const viajes = await db.getAll(
+      `SELECT v.*, c.nombre as cliente_nombre FROM viajes v LEFT JOIN clientes c ON c.id=v.cliente_id
+       WHERE strftime('%Y-%m', v.fecha_inicio) = ? ORDER BY v.tecnico, v.fecha_inicio`, [mes]
+    );
+    const tableHeader = ['Técnico', 'Tipo', 'Fecha', 'Monto (MXN)', 'Pagado'];
+    const tableRows = bonos.map(b => [
+      b.tecnico || '—', b.tipo_capacitacion || 'Capacitación',
+      (b.fecha || '').slice(0, 10),
+      '$' + Number(b.monto_bono || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 }),
+      Number(b.pagado) === 1 ? 'Sí' : 'Pendiente',
+    ]);
+    const totalBonos = bonos.reduce((s, b) => s + (Number(b.monto_bono) || 0), 0);
+    const totalViaticos = viajes.reduce((s, v) => s + (Number(v.monto_viaticos) || 0), 0);
+    const html = buildEmailHtml({
+      title: `Reporte Mensual de Bonos — ${mes}`,
+      subtitle: `${bonos.length} bonos · $${totalBonos.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN en bonos · $${totalViaticos.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN en viáticos`,
+      tableHeader,
+      tableRows,
+      footer: `Total bonos: <strong>$${totalBonos.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</strong> MXN<br>Total viáticos: <strong>$${totalViaticos.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</strong> MXN<br>Total a liquidar: <strong>$${(totalBonos + totalViaticos).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</strong> MXN`,
+    });
+    const subject = `🏆 Bonos y Viáticos ${mes} | Universal Machine Tools`;
+    await t.sendMail({ from, to: adminEmails.join(', '), subject, text: subject, html });
+    res.json({ ok: true, enviado_a: adminEmails, bonos: bonos.length });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
 // Resumen mensual de viajes + bonos por técnico
 app.get('/api/liquidacion-mensual', async (req, res) => {
   try {
@@ -2963,6 +3507,7 @@ app.get('*', (req, res) => {
 async function start() {
   await db.init();
   await auth.ensureSeedUsers();
+  await loadManualTipoCambio();
   // Auto-seed demo data si las tablas están vacías
   try {
     const [cRow] = await db.getAll('SELECT COUNT(*) as n FROM clientes');

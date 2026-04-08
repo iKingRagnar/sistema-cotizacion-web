@@ -109,6 +109,14 @@
           <option value="">Todas las sucursales</option>
         </select>
         <div id="header-alerts" class="header-alerts" aria-live="polite"></div>
+        <!-- Tipo de Cambio widget -->
+        <div id="tipo-cambio-widget" class="tipo-cambio-widget" title="Tipo de cambio USD/MXN – Haz clic para editar">
+          <span class="tc-label">T.C.</span>
+          <span id="tc-valor" class="tc-valor">$17.00</span>
+          <button type="button" id="btn-edit-tc" class="tc-edit-btn" title="Editar tipo de cambio"><i class="fas fa-edit"></i></button>
+        </div>
+        <!-- Stock global alert -->
+        <div id="global-stock-alert" class="global-stock-alert hidden" aria-live="polite" title="Refacciones con stock bajo"></div>
         <div id="header-system-status" class="header-system-status" aria-live="polite">Estado: iniciando…</div>
         <div class="header-notifications-wrap">
           <button type="button" id="btn-notifications" class="btn-icon-header" title="Centro de notificaciones" aria-label="Centro de notificaciones">
@@ -224,6 +232,9 @@
           <input type="search" id="buscar-clientes" placeholder="Buscar por nombre, código o RFC..." class="search">
           <button type="button" id="export-clientes" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
           <button type="button" id="export-excel-clientes" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
+          <label class="btn outline" title="Importar clientes desde XLSX/CSV" style="cursor:pointer;margin-bottom:0"><i class="fas fa-file-import"></i> Importar
+            <input type="file" id="import-clientes-file" accept=".xlsx,.xls,.csv" style="display:none">
+          </label>
           <button type="button" id="nuevo-cliente" class="btn primary"><i class="fas fa-plus"></i> Nuevo cliente</button>
         </div>
       </div>
@@ -270,6 +281,7 @@
             <i class="fas fa-file-import"></i> Importar XLSX
             <input type="file" id="import-refacciones-file" accept=".xlsx,.xls" class="hidden" style="display:none">
           </label>
+          <button type="button" id="btn-inventario-email" class="btn outline" title="Enviar inventario actual por correo"><i class="fas fa-envelope"></i> Enviar inventario</button>
           <button type="button" id="nueva-refaccion" class="btn primary"><i class="fas fa-plus"></i> Nueva refacción</button>
         </div>
       </div>
@@ -317,6 +329,9 @@
           <button type="button" id="toggle-view-maquinas" class="btn outline" title="Cambiar vista tabla/tarjetas"><i class="fas fa-th-large"></i> Vista tarjetas</button>
           <button type="button" id="export-maquinas" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
           <button type="button" id="export-excel-maquinas" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
+          <label class="btn outline" title="Importar máquinas desde XLSX/CSV" style="cursor:pointer;margin-bottom:0"><i class="fas fa-file-import"></i> Importar
+            <input type="file" id="import-maquinas-file" accept=".xlsx,.xls,.csv" style="display:none">
+          </label>
           <button type="button" id="nueva-maquina" class="btn primary"><i class="fas fa-plus"></i> Nueva máquina</button>
         </div>
       </div>
@@ -530,6 +545,9 @@
           </select>
           <input type="search" id="buscar-reportes" placeholder="Buscar…" class="search" style="width:160px">
           <button type="button" id="export-reportes" class="btn outline"><i class="fas fa-file-csv"></i> CSV</button>
+          <label class="btn outline" title="Importar reportes desde XLSX/CSV" style="cursor:pointer;margin-bottom:0"><i class="fas fa-file-import"></i> Importar
+            <input type="file" id="import-reportes-file" accept=".xlsx,.xls,.csv" style="display:none">
+          </label>
           <button type="button" id="nuevo-reporte" class="btn primary"><i class="fas fa-plus"></i> Nuevo reporte</button>
         </div>
       </div>
@@ -699,7 +717,11 @@
             <option value="">Todos los meses</option>
           </select>
           <button type="button" id="btn-bonos-imprimir" class="btn outline"><i class="fas fa-print"></i> Imprimir mes</button>
+          <button type="button" id="btn-bonos-email" class="btn outline" title="Enviar reporte mensual de bonos por correo"><i class="fas fa-envelope"></i> Enviar email</button>
           <button type="button" id="export-bonos" class="btn outline"><i class="fas fa-file-csv"></i> CSV</button>
+          <label class="btn outline" title="Importar bonos desde XLSX/CSV" style="cursor:pointer;margin-bottom:0"><i class="fas fa-file-import"></i> Importar
+            <input type="file" id="import-bonos-file" accept=".xlsx,.xls,.csv" style="display:none">
+          </label>
           <button type="button" id="nuevo-bono" class="btn primary"><i class="fas fa-plus"></i> Nuevo bono</button>
         </div>
       </div>
@@ -737,7 +759,11 @@
             <option value="">Todos los meses</option>
           </select>
           <button type="button" id="btn-viajes-liquidacion" class="btn outline"><i class="fas fa-print"></i> Liquidación mensual</button>
+          <button type="button" id="btn-viajes-email" class="btn outline" title="Enviar reporte mensual de viajes por correo"><i class="fas fa-envelope"></i> Enviar email</button>
           <button type="button" id="export-viajes" class="btn outline"><i class="fas fa-file-csv"></i> CSV</button>
+          <label class="btn outline" title="Importar viajes desde XLSX/CSV" style="cursor:pointer;margin-bottom:0"><i class="fas fa-file-import"></i> Importar
+            <input type="file" id="import-viajes-file" accept=".xlsx,.xls,.csv" style="display:none">
+          </label>
           <button type="button" id="nuevo-viaje" class="btn primary"><i class="fas fa-plus"></i> Nuevo viaje</button>
         </div>
       </div>
@@ -774,6 +800,9 @@
         <h2><i class="fas fa-hard-hat"></i> Técnicos</h2>
         <div class="toolbar">
           <input type="search" id="buscar-tecnicos" placeholder="Buscar técnico…" class="search">
+          <label class="btn outline" title="Importar técnicos desde XLSX/CSV" style="cursor:pointer;margin-bottom:0"><i class="fas fa-file-import"></i> Importar
+            <input type="file" id="import-tecnicos-file" accept=".xlsx,.xls,.csv" style="display:none">
+          </label>
           <button type="button" id="btn-new-tecnico" class="btn primary"><i class="fas fa-plus"></i> Nuevo técnico</button>
         </div>
       </div>
@@ -922,6 +951,9 @@
         <button type="button" id="btn-seed-extra" class="btn big" style="background:#0d9488;color:#fff;margin-top:0.5rem;">Cargar solo incidentes, bitácoras y cotizaciones demo</button>
         <p class="hint" style="margin-top:0.75rem;">Si faltan equipos en el selector de cotizaciones (misma info que en Autopartes):</p>
         <button type="button" id="btn-ensure-demo-maquinas" class="btn big outline" style="margin-top:0.35rem;"><i class="fas fa-cogs"></i> Asegurar equipos por cliente (2 por cliente, demo)</button>
+        <hr style="margin:1rem 0;border:none;border-top:1px solid #e2e8f0;">
+        <p class="hint" style="margin-top:0.75rem;"><strong>Datos reales Universal CNC:</strong> clientes industriales reales, máquinas CNC (DMG MORI, Haas, Mazak…), refacciones con stock, técnicos y tarifas de servicio.</p>
+        <button type="button" id="btn-seed-universal" class="btn big" style="background:linear-gradient(135deg,#0d9488,#0891b2);color:#fff;margin-top:0.35rem;"><i class="fas fa-industry"></i> Cargar datos Universal CNC</button>
         <hr style="margin:1rem 0;border:none;border-top:1px solid #e2e8f0;">
         <p class="hint">Respaldo completo de datos (recomendado):</p>
         <div class="toolbar">

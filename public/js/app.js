@@ -6196,12 +6196,13 @@
   qs('#filtro-prueba-rev') && qs('#filtro-prueba-rev').addEventListener('change', () => renderRevisionMaquinas(revisionMaquinasCache));
   qs('#nueva-revision-maq') && qs('#nueva-revision-maq').addEventListener('click', () => openModalRevisionMaquina(null));
 
-  // Tipo de cambio Banxico: obtener al cargar y mostrar en header
+  // Tipo de cambio Banxico: obtener al cargar y mostrar en header + widget
   async function fetchAndShowTipoCambio() {
     try {
       const tc = await fetchJson(API + '/tipo-cambio');
       if (tc && tc.valor) {
         tipoCambioActual = Number(tc.valor);
+        // Update legacy header-alerts badge
         const el = qs('#header-alerts');
         if (el) {
           const existing = el.querySelector('.tc-badge');
@@ -6212,10 +6213,72 @@
           badge.style.cssText = 'background:var(--config-accent,#0d9488);color:#fff;padding:3px 8px;border-radius:12px;font-size:0.78rem;font-weight:600;cursor:default';
           if (!existing) el.prepend(badge);
         }
+        // Update header widget
+        const tcValEl = qs('#tc-valor');
+        if (tcValEl) tcValEl.textContent = '$' + tipoCambioActual.toFixed(2);
+        const widget = qs('#tipo-cambio-widget');
+        if (widget) {
+          widget.title = tc.fuente === 'manual'
+            ? `T.C. manual guardado: $${tipoCambioActual.toFixed(2)} MXN/USD`
+            : `T.C. Banxico (${tc.fecha || 'hoy'}): $${tipoCambioActual.toFixed(2)} MXN/USD`;
+        }
       }
     } catch (_) {}
   }
   fetchAndShowTipoCambio();
+
+  // Bind edit-TC button in header widget
+  (function bindTipoCambioWidget() {
+    const btnEditTc = qs('#btn-edit-tc');
+    if (!btnEditTc) return;
+    btnEditTc.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const current = tipoCambioActual || 17.0;
+      const val = prompt(`Tipo de cambio manual (MXN por 1 USD)\nActual: $${current.toFixed(2)}\n\nDeja vacío para volver al tipo Banxico:`, current.toFixed(2));
+      if (val === null) return; // cancelled
+      const num = parseFloat(val);
+      if (val.trim() === '') {
+        // clear manual override
+        try {
+          await fetchJson(API + '/tipo-cambio', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ valor: null }) });
+          showToast('Tipo de cambio: se eliminó el manual, usando Banxico.', 'info');
+          fetchAndShowTipoCambio();
+        } catch (err) { showToast(parseApiError(err) || 'Error al limpiar tipo de cambio.', 'error'); }
+        return;
+      }
+      if (isNaN(num) || num <= 0) { showToast('Valor inválido para tipo de cambio.', 'error'); return; }
+      try {
+        const res = await fetchJson(API + '/tipo-cambio', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ valor: num }) });
+        tipoCambioActual = num;
+        const tcValEl = qs('#tc-valor');
+        if (tcValEl) tcValEl.textContent = '$' + num.toFixed(2);
+        showToast(`Tipo de cambio actualizado: $${num.toFixed(2)} MXN/USD`, 'success');
+      } catch (err) { showToast(parseApiError(err) || 'Error al guardar tipo de cambio.', 'error'); }
+    });
+  })();
+
+  // Global stock alert banner
+  async function loadGlobalStockAlert() {
+    try {
+      const data = await fetchJson(API + '/alertas/stock');
+      const alertEl = qs('#global-stock-alert');
+      if (!alertEl) return;
+      const items = Array.isArray(data) ? data : [];
+      if (items.length === 0) {
+        alertEl.classList.add('hidden');
+        return;
+      }
+      alertEl.classList.remove('hidden');
+      const nombres = items.slice(0, 3).map(r => escapeHtml(r.descripcion || r.codigo || '')).join(', ');
+      const more = items.length > 3 ? ` y ${items.length - 3} más` : '';
+      alertEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <strong>${items.length}</strong> refacción(es) con stock bajo: ${nombres}${more} <a href="#" class="tc-link" id="link-stock-alert">Ver inventario</a>`;
+      qs('#link-stock-alert') && qs('#link-stock-alert').addEventListener('click', (ev) => {
+        ev.preventDefault();
+        showPanel('refacciones');
+      });
+    } catch (_) {}
+  }
+  loadGlobalStockAlert();
 
   // ----- TÉCNICOS -----
   async function loadTecnicos() {
@@ -6404,10 +6467,169 @@
 
   qs('#import-refacciones-file')?.addEventListener('change', (e) => {
     const file = e.target.files && e.target.files[0];
-    if (file) {
-      importRefaccionesXlsx(file);
-      e.target.value = ''; // reset para permitir re-selección
-    }
+    if (file) { importRefaccionesXlsx(file); e.target.value = ''; }
+  });
+
+  // ----- IMPORTAR XLSX/CSV GENÉRICO -----
+  async function importGenericXlsx(file, mapping, apiEndpoint, cacheArray, reloadFn, entityName) {
+    if (!file) return;
+    showToast('Leyendo archivo…', 'info');
+    try {
+      let rows = [];
+      if (file.name.toLowerCase().endsWith('.csv')) {
+        const text = await file.text();
+        const lines = text.split(/\r?\n/);
+        const headers = (lines[0] || '').split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+        for (let i = 1; i < lines.length; i++) {
+          const vals = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+          if (!vals.some(v => v)) continue;
+          const obj = {};
+          headers.forEach((h, idx) => { obj[h] = vals[idx] || ''; });
+          rows.push(mapping(obj));
+        }
+      } else {
+        if (typeof ExcelJS === 'undefined') { showToast('ExcelJS no disponible.', 'error'); return; }
+        const buffer = await file.arrayBuffer();
+        const wb = new ExcelJS.Workbook();
+        await wb.xlsx.load(buffer);
+        const ws = wb.worksheets[0];
+        if (!ws) { showToast('No se encontró hoja.', 'error'); return; }
+        let headers = [];
+        ws.eachRow((row, rowNum) => {
+          if (rowNum === 1) { headers = row.values.slice(1).map(v => String(v || '').trim()); return; }
+          const obj = {};
+          headers.forEach((h, idx) => { obj[h] = String(row.getCell(idx + 1).value != null ? row.getCell(idx + 1).value : '').trim(); });
+          const mapped = mapping(obj);
+          if (Object.values(mapped).some(v => v)) rows.push(mapped);
+        });
+      }
+      if (!rows.length) { showToast('No se encontraron datos.', 'warning'); return; }
+      openConfirmModal(
+        `Se importarán ${rows.length} ${entityName}. ¿Continuar?`,
+        async () => {
+          let ok = 0, errors = 0;
+          for (const r of rows) {
+            try {
+              await fetchJson(apiEndpoint, { method: 'POST', body: JSON.stringify(r) });
+              ok++;
+            } catch (_) { errors++; }
+          }
+          showToast(`${ok} ${entityName} importados${errors ? ', ' + errors + ' errores' : ''}.`, errors ? 'warning' : 'success');
+          reloadFn();
+        }
+      );
+    } catch (e) { showToast('Error leyendo archivo: ' + (e.message || e), 'error'); }
+  }
+
+  // Mapeos por módulo
+  const mapCliente = o => ({
+    nombre: o.nombre || o.Nombre || '', rfc: o.rfc || o.RFC || '',
+    contacto: o.contacto || o.Contacto || '', direccion: o.direccion || o.Dirección || o.Direccion || '',
+    telefono: o.telefono || o.Teléfono || o.Telefono || '', email: o.email || o.Email || o.Correo || '',
+    ciudad: o.ciudad || o.Ciudad || '', codigo: o.codigo || o.Código || o.Codigo || ''
+  });
+  const mapMaquina = o => ({
+    nombre: o.nombre || o.Nombre || o.modelo || o.Modelo || '',
+    modelo: o.modelo || o.Modelo || '', categoria: o.categoria || o.Categoría || o.Categoria || '',
+    numero_serie: o.numero_serie || o['Nº Serie'] || o['Numero Serie'] || o.serie || '',
+    ubicacion: o.ubicacion || o.Ubicación || o.Ubicacion || o.zona || o.Zona || '',
+    cliente_id: 1
+  });
+  const mapReporte = o => ({
+    razon_social: o.razon_social || o['Razón Social'] || o.cliente || '',
+    tipo_reporte: (o.tipo || o.tipo_reporte || o.Tipo || 'servicio').toLowerCase(),
+    subtipo: (o.subtipo || o.Subtipo || '').toLowerCase(),
+    descripcion: o.descripcion || o.Descripción || o.Descripcion || '',
+    tecnico: o.tecnico || o.Técnico || o.Tecnico || '',
+    fecha: o.fecha || o.Fecha || new Date().toISOString().slice(0, 10),
+    estatus: o.estatus || o.Estatus || 'abierto'
+  });
+  const mapBono = o => ({
+    tecnico: o.tecnico || o.Técnico || o.Tecnico || '',
+    tipo_capacitacion: o.tipo_capacitacion || o['Tipo Capacitación'] || o.tipo || 'Presencial local',
+    monto_bono: Number(o.monto_bono || o.monto || o.Monto || 0),
+    fecha: o.fecha || o.Fecha || new Date().toISOString().slice(0, 10),
+    pagado: Number(o.pagado || o.Pagado || 0),
+    notas: o.notas || o.Notas || ''
+  });
+  const mapViaje = o => ({
+    tecnico: o.tecnico || o.Técnico || o.Tecnico || '',
+    razon_social: o.razon_social || o.cliente || o.Cliente || '',
+    fecha_inicio: o.fecha_inicio || o['Fecha Inicio'] || new Date().toISOString().slice(0, 10),
+    fecha_fin: o.fecha_fin || o['Fecha Fin'] || new Date().toISOString().slice(0, 10),
+    dias: Number(o.dias || o.Días || o.Dias || 1),
+    monto_viaticos: Number(o.monto_viaticos || o.monto || o.Monto || 1000),
+    descripcion: o.descripcion || o.Descripción || o.Descripcion || '',
+    actividades: o.actividades || o.Actividades || ''
+  });
+  const mapTecnico = o => ({
+    nombre: o.nombre || o.Nombre || '',
+    habilidades: o.habilidades || o.Habilidades || o.skills || '',
+    activo: 1
+  });
+
+  qs('#import-clientes-file')?.addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0];
+    if (f) { importGenericXlsx(f, mapCliente, API + '/clientes', clientesCache, loadClientes, 'clientes'); e.target.value = ''; }
+  });
+  qs('#import-maquinas-file')?.addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0];
+    if (f) { importGenericXlsx(f, mapMaquina, API + '/maquinas', maquinasCache, loadMaquinas, 'máquinas'); e.target.value = ''; }
+  });
+  qs('#import-reportes-file')?.addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0];
+    if (f) { importGenericXlsx(f, mapReporte, API + '/reportes', reportesCache, loadReportes, 'reportes'); e.target.value = ''; }
+  });
+  qs('#import-bonos-file')?.addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0];
+    if (f) { importGenericXlsx(f, mapBono, API + '/bonos', bonosCache, loadBonos, 'bonos'); e.target.value = ''; }
+  });
+  qs('#import-viajes-file')?.addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0];
+    if (f) { importGenericXlsx(f, mapViaje, API + '/viajes', viajesCache, loadViajes, 'viajes'); e.target.value = ''; }
+  });
+  qs('#import-tecnicos-file')?.addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0];
+    if (f) { importGenericXlsx(f, mapTecnico, API + '/tecnicos', tecnicosCache, loadTecnicos, 'técnicos'); e.target.value = ''; }
+  });
+
+  // ----- EMAIL BOTONES MENSUALES -----
+  qs('#btn-bonos-email')?.addEventListener('click', async () => {
+    const mes = qs('#filtro-mes-bonos')?.value || new Date().toISOString().slice(0, 7);
+    if (!mes) { showToast('Selecciona un mes primero.', 'warning'); return; }
+    const btn = qs('#btn-bonos-email');
+    const orig = btn.innerHTML;
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    try {
+      const r = await fetchJson(API + '/emails/bonos-mensual', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mes }) });
+      showToast(`Reporte de bonos enviado (${r.bonos || 0} registros).`, 'success');
+    } catch (e) { showToast(parseApiError(e) || 'Error al enviar email.', 'error'); }
+    btn.disabled = false; btn.innerHTML = orig;
+  });
+
+  qs('#btn-viajes-email')?.addEventListener('click', async () => {
+    const mes = qs('#filtro-mes-viajes')?.value || new Date().toISOString().slice(0, 7);
+    if (!mes) { showToast('Selecciona un mes primero.', 'warning'); return; }
+    const btn = qs('#btn-viajes-email');
+    const orig = btn.innerHTML;
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    try {
+      await fetchJson(API + '/emails/inventario-mensual', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mes }) });
+      showToast('Reporte de viáticos enviado por correo.', 'success');
+    } catch (e) { showToast(parseApiError(e) || 'Error al enviar email.', 'error'); }
+    btn.disabled = false; btn.innerHTML = orig;
+  });
+
+  qs('#btn-inventario-email')?.addEventListener('click', async () => {
+    const btn = qs('#btn-inventario-email');
+    if (!btn) return;
+    const orig = btn.innerHTML;
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando…';
+    try {
+      const r = await fetchJson(API + '/emails/inventario-mensual', { method: 'POST' });
+      showToast(`Inventario enviado a: ${(r.enviado_a || []).join(', ')}`, 'success');
+    } catch (e) { showToast(parseApiError(e) || 'Error al enviar inventario.', 'error'); }
+    btn.disabled = false; btn.innerHTML = orig;
   });
 
   // ----- EVENT LISTENERS -----
@@ -7480,6 +7702,76 @@
     });
   }
   loadBackupFilesList();
+
+  // "Cargar datos Universal" seed button
+  const btnSeedUniversal = qs('#btn-seed-universal');
+  if (btnSeedUniversal) {
+    btnSeedUniversal.addEventListener('click', async () => {
+      if (!confirm('¿Cargar datos de Universal CNC (clientes, máquinas, refacciones, técnicos, tarifas)?\n\nEsto no borra datos existentes — solo agrega los que falten.')) return;
+      btnSeedUniversal.disabled = true;
+      const orig = btnSeedUniversal.innerHTML;
+      btnSeedUniversal.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando…';
+      try {
+        const data = await fetchJson(API + '/seed-universal', { method: 'POST' });
+        const seedSt = qs('#seed-status');
+        if (seedSt) seedSt.innerHTML = `Universal cargado: <strong>${data.clientes || 0}</strong> clientes, <strong>${data.maquinas || 0}</strong> máquinas, <strong>${data.refacciones || 0}</strong> refacciones, <strong>${data.tecnicos || 0}</strong> técnicos.`;
+        loadSeedStatus();
+        await loadClientes();
+        await loadMaquinas();
+        await loadRefacciones();
+        fillClientesSelect();
+        showToast('Datos Universal CNC cargados correctamente.', 'success');
+      } catch (e) {
+        let msg = e.message;
+        try { const o = JSON.parse(msg); if (o.error) msg = o.error; } catch (_) {}
+        showToast(msg || 'Error al cargar datos Universal.', 'error');
+      }
+      btnSeedUniversal.disabled = false;
+      btnSeedUniversal.innerHTML = orig;
+    });
+  }
+
+  // Ventas: reporte mensual con comisiones
+  const btnReporteMensualVentas = qs('#btn-reporte-mensual-ventas');
+  if (btnReporteMensualVentas) {
+    btnReporteMensualVentas.addEventListener('click', async () => {
+      btnReporteMensualVentas.disabled = true;
+      const orig = btnReporteMensualVentas.innerHTML;
+      btnReporteMensualVentas.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando…';
+      try {
+        const mes = qs('#filtro-mes-venta') ? qs('#filtro-mes-venta').value : '';
+        const url = API + '/reportes/comisiones-mensuales' + (mes ? `?mes=${mes}` : '');
+        const data = await fetchJson(url);
+        // Build summary text
+        let summary = `Reporte de comisiones${mes ? ' — ' + mes : ''}\n\n`;
+        summary += `Total ventas: ${formatMoney(data.total_ventas || 0)}\n`;
+        summary += `Total comisiones: ${formatMoney(data.total_comisiones || 0)}\n`;
+        if (Array.isArray(data.por_tecnico) && data.por_tecnico.length > 0) {
+          summary += `\nPor vendedor/técnico:\n`;
+          data.por_tecnico.forEach(t => {
+            summary += `  • ${t.vendedor || t.tecnico || 'Sin asignar'}: ${formatMoney(t.comision || 0)} (${t.ventas || 0} ventas)\n`;
+          });
+        }
+        // Update the resumen bar with comisiones info
+        const resBar = qs('#ventas-resumen-bar');
+        if (resBar && data.total_ventas != null) {
+          const existing = resBar.innerHTML;
+          resBar.innerHTML = `${existing} &nbsp;|&nbsp; <i class="fas fa-percentage"></i> Comisiones: <strong>${formatMoney(data.total_comisiones || 0)}</strong>`;
+        }
+        const sendEmail = confirm(summary + '\n¿Enviar este reporte por email?');
+        if (sendEmail) {
+          try {
+            await fetchJson(API + '/emails/comisiones-mensual', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mes }) });
+            showToast('Reporte enviado por email.', 'success');
+          } catch (err) { showToast(parseApiError(err) || 'No se pudo enviar el email.', 'error'); }
+        }
+      } catch (e) {
+        showToast(parseApiError(e) || 'Error al generar reporte.', 'error');
+      }
+      btnReporteMensualVentas.disabled = false;
+      btnReporteMensualVentas.innerHTML = orig;
+    });
+  }
 
   let refreshIntervalId = null;
   function finishBoot() {
