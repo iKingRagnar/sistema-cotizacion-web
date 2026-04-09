@@ -6237,12 +6237,17 @@
         method: 'POST',
         body: JSON.stringify({ force: false }),
       });
+      const en = data.enrichment || {};
+      const enLine =
+        en.tecnicos_demo != null
+          ? ` · Personal demo: <strong>${en.tecnicos_demo}</strong>, calendario mg: <strong>${en.mantenimientos_calendario || 0}</strong>, sin cobertura: <strong>${en.garantias_sin_cobertura || 0}</strong>, bonos seed: <strong>${en.bonos_demo || 0}</strong>`
+          : '';
       qs('#seed-status').innerHTML =
         `Listo: <strong>${data.clientes}</strong> clientes, <strong>${data.refacciones}</strong> refacciones, ` +
         `<strong>${data.maquinas}</strong> máquinas, <strong>${data.cotizaciones || 0}</strong> cotizaciones, ` +
         `<strong>${data.incidentes || 0}</strong> incidentes, <strong>${data.bitacoras || 0}</strong> bitácoras, ` +
         `<strong>${data.reportes || 0}</strong> reportes, <strong>${data.garantias || 0}</strong> garantías, ` +
-        `<strong>${data.bonos || 0}</strong> bonos, <strong>${data.viajes || 0}</strong> viajes.`;
+        `<strong>${data.bonos || 0}</strong> bonos, <strong>${data.viajes || 0}</strong> viajes.${enLine}`;
       btn.textContent = 'Datos demo cargados';
       loadSeedStatus();
       loadClientes();
@@ -6251,8 +6256,12 @@
       fillClientesSelect();
       await loadCotizaciones();
       await loadBitacoras();
+      if (typeof loadTecnicos === 'function') loadTecnicos();
+      if (typeof loadMantenimientoGarantia === 'function') loadMantenimientoGarantia();
+      if (typeof loadGarantiasSinCobertura === 'function') loadGarantiasSinCobertura();
+      if (typeof loadBonos === 'function') loadBonos();
       showPanel('bitacoras', { skipLoad: true });
-      showToast('Demo completo cargado: clientes, cotizaciones, reportes, garantías y bonos.', 'success');
+      showToast('Demo completo cargado: clientes, cotizaciones, reportes, garantías, bonos, personal y mantenimientos.', 'success');
     } catch (e) {
       let msg = e.message;
       try { const o = JSON.parse(msg); if (o.error) msg = o.error; } catch (_) {}
@@ -8042,11 +8051,21 @@
     btn.textContent = 'Cargando…';
     try {
       const data = await fetchJson(API + '/seed-demo-extra', { method: 'POST' });
-      qs('#seed-status').innerHTML = `Listo: <strong>${data.incidentes || 0}</strong> incidentes, <strong>${data.bitacoras || 0}</strong> bitácoras, <strong>${data.cotizaciones || 0}</strong> cotizaciones agregados.`;
+      const en = data.enrichment || {};
+      const enTxt =
+        en.tecnicos_demo != null
+          ? ` · +Personal <strong>${en.tecnicos_demo}</strong>, mant. calendario <strong>${en.mantenimientos_calendario || 0}</strong>, sin cobertura <strong>${en.garantias_sin_cobertura || 0}</strong>, bonos <strong>${en.bonos_demo || 0}</strong>`
+          : '';
+      qs('#seed-status').innerHTML =
+        `Listo: <strong>${data.incidentes || 0}</strong> incidentes, <strong>${data.bitacoras || 0}</strong> bitácoras, <strong>${data.cotizaciones || 0}</strong> cotizaciones agregados.${enTxt}`;
       loadSeedStatus();
       await loadCotizaciones();
       await loadIncidentes();
       await loadBitacoras();
+      if (typeof loadTecnicos === 'function') loadTecnicos();
+      if (typeof loadMantenimientoGarantia === 'function') loadMantenimientoGarantia();
+      if (typeof loadGarantiasSinCobertura === 'function') loadGarantiasSinCobertura();
+      if (typeof loadBonos === 'function') loadBonos();
       if ((data.incidentes || 0) === 0 || (data.bitacoras || 0) === 0) {
         showToast('No se insertaron incidentes ni bitácoras. Los nombres de cliente y máquina en seed-demo.json deben coincidir con los de Clientes y Máquinas. Prueba "Cargar datos demo ahora" si la base estaba vacía.', 'error');
       } else {

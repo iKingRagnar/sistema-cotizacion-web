@@ -1745,6 +1745,161 @@ function norm(s) {
 }
 function safeStr(v) { return (v != null && String(v).trim() !== '') ? String(v).trim() : null; }
 function safeStrReq(v) { return (v != null && String(v).trim() !== '') ? String(v).trim() : ''; }
+
+const SEED_CAL_NOTA = 'seed_demo_cal';
+const SEED_SIN_SERIE = 'SN-SINCOV-';
+const SEED_BONO_NOTA = 'seed_demo_bono';
+
+/**
+ * Personal (20), calendario de mantenimientos (30 fechas en el mes actual), garantías sin cobertura (30), bonos (30).
+ * Idempotente: solo rellena hasta los objetivos si faltan filas marcadas.
+ */
+async function runSeedDemoEnrichment() {
+  const out = {
+    tecnicos_demo: 0,
+    mantenimientos_calendario: 0,
+    garantias_sin_cobertura: 0,
+    bonos_demo: 0,
+  };
+
+  const personalDemo = [
+    { nombre: 'David Cantu', rol: 'Coordinación', puesto: 'Jefe de área', departamento: 'Servicio técnico', habilidades: 'Planeación de cuadrillas, ISO 9001, KPIs de campo', es_vendedor: 0 },
+    { nombre: 'María Elena Vázquez', rol: 'Técnico senior', puesto: 'Especialista CNC', departamento: 'Servicio', habilidades: 'Fanuc, Siemens, calibración', es_vendedor: 0 },
+    { nombre: 'Carlos Mendoza Ruiz', rol: 'Técnico', puesto: 'Campo eléctrico', departamento: 'Servicio', habilidades: 'Variadores, PLC básico', es_vendedor: 0 },
+    { nombre: 'Ana López Herrera', rol: 'Técnico', puesto: 'Hidráulica industrial', departamento: 'Servicio', habilidades: 'Bombas, válvulas proporcionales', es_vendedor: 0 },
+    { nombre: 'Luis Fernando Ortiz', rol: 'Supervisor', puesto: 'Supervisor de zona Norte', departamento: 'Servicio', habilidades: 'Gestión de incidentes, seguridad', es_vendedor: 0 },
+    { nombre: 'Patricia Ruiz Soto', rol: 'Ingeniería', puesto: 'Soporte técnico aplicaciones', departamento: 'Ingeniería', habilidades: 'Robótica, visión artificial', es_vendedor: 0 },
+    { nombre: 'Jorge Alberto Núñez', rol: 'Técnico', puesto: 'Neumática y vacío', departamento: 'Servicio', habilidades: 'Cilindros, vacío, fugas', es_vendedor: 0 },
+    { nombre: 'Rosa María Fuentes', rol: 'Administración', puesto: 'Coordinadora de refacciones', departamento: 'Logística', habilidades: 'Inventario, compras urgentes', es_vendedor: 0 },
+    { nombre: 'Miguel Ángel Torres', rol: 'Ventas', puesto: 'Ejecutivo de cuenta', departamento: 'Ventas', habilidades: 'Cotización máquinas, negociación', es_vendedor: 1 },
+    { nombre: 'Laura Daniela Campos', rol: 'Ventas', puesto: 'Ejecutiva refacciones', departamento: 'Ventas', habilidades: 'Catálogo OEM, seguimiento', es_vendedor: 1 },
+    { nombre: 'Fernando Castillo', rol: 'Técnico', puesto: 'Soldadura y metrología', departamento: 'Servicio', habilidades: 'ARCO, MIG, brazos', es_vendedor: 0 },
+    { nombre: 'Gabriela Morales', rol: 'Calidad', puesto: 'Auditora de servicio', departamento: 'Calidad', habilidades: 'Checklists, reportes cliente', es_vendedor: 0 },
+    { nombre: 'Héctor Javier Salinas', rol: 'Técnico', puesto: 'Compresores y aire', departamento: 'Servicio', habilidades: 'Tornillos, pistones, SEC', es_vendedor: 0 },
+    { nombre: 'Daniela Espínola', rol: 'Ingeniería', puesto: 'Puesta en marcha', departamento: 'Ingeniería', habilidades: 'Arranque, capacitación operadores', es_vendedor: 0 },
+    { nombre: 'Ricardo Sámano', rol: 'Logística', puesto: 'Coordinador de traslados', departamento: 'Logística', habilidades: 'Rutas, permisos', es_vendedor: 0 },
+    { nombre: 'Verónica Pineda', rol: 'Administración', puesto: 'Facturación y garantías', departamento: 'Administración', habilidades: 'Garantías, cobranza', es_vendedor: 0 },
+    { nombre: 'Oscar Iván Delgado', rol: 'Técnico', puesto: 'Láser y corte', departamento: 'Servicio', habilidades: 'Óptica, alineación', es_vendedor: 0 },
+    { nombre: 'Natalia Bermejo', rol: 'Capacitación', puesto: 'Instructora interna', departamento: 'RH', habilidades: 'Inducción, seguridad industrial', es_vendedor: 0 },
+    { nombre: 'Arturo Villarreal', rol: 'Técnico', puesto: 'Instrumentación', departamento: 'Servicio', habilidades: 'Sensores, 4–20 mA', es_vendedor: 0 },
+    { nombre: 'Silvia Rentería', rol: 'Soporte', puesto: 'Mesa de ayuda', departamento: 'Soporte', habilidades: 'Tickets, diagnóstico remoto', es_vendedor: 0 },
+  ];
+
+  for (const p of personalDemo) {
+    await db.runQuery('INSERT OR IGNORE INTO tecnicos (nombre, activo) VALUES (?, 1)', [p.nombre]);
+    await db.runQuery(
+      `UPDATE tecnicos SET rol=?, puesto=?, departamento=?, habilidades=?, es_vendedor=? WHERE nombre=?`,
+      [p.rol, p.puesto, p.departamento, p.habilidades, p.es_vendedor ? 1 : 0, p.nombre]
+    );
+    out.tecnicos_demo++;
+  }
+
+  const garActivas = await db.getAll('SELECT id FROM garantias WHERE activa = 1 ORDER BY id');
+  const garIds = (garActivas || []).map((r) => r.id);
+  const calRow = await db.getOne(
+    `SELECT COUNT(*) as n FROM mantenimientos_garantia WHERE COALESCE(notas,'') LIKE ?`,
+    [`${SEED_CAL_NOTA}%`]
+  );
+  const nCal = Number(calRow && calRow.n) || 0;
+  const targetCal = 30;
+  const toAddCal = Math.max(0, targetCal - nCal);
+
+  if (garIds.length > 0 && toAddCal > 0) {
+    const now = new Date();
+    const y = now.getFullYear();
+    const mo = now.getMonth();
+    const dim = new Date(y, mo + 1, 0).getDate();
+    const temas = [
+      'Preventivo lubricación', 'Revisión eléctrica', 'Calibración ejes', 'Cambio de sellos',
+      'Ajuste de presiones', 'Inspección de bandas', 'Limpieza de intercooler', 'Diagnóstico vibración',
+      'Actualización parámetros', 'Cambio de filtros', 'Nivelación de bancada', 'Prueba de carga',
+      'Revisión neumática', 'Torque de pernos', 'Control de alineación', 'Verificación CE',
+      'Puesta a tierra', 'Lubricación centralizada', 'Cambio de aceite hidráulico', 'Purga de condensados',
+      'Inspección de rodamientos', 'Chequeo de sensores', 'Revisión de software', 'Backup de programa',
+      'Limpieza de chiller', 'Calibración láser', 'Test de emergencia', 'Inspección de mangueras',
+      'Medición de desgaste', 'Informe fotográfico', 'Checklist final cliente',
+    ];
+    for (let k = 0; k < toAddCal; k++) {
+      const day = 1 + Math.min(dim - 1, Math.floor((k * Math.max(1, dim - 1)) / Math.max(1, targetCal - 1)));
+      const fechaStr = `${y}-${String(mo + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const gid = garIds[k % garIds.length];
+      const num = 80 + nCal + k;
+      const anio = y;
+      const nota = `${SEED_CAL_NOTA}:${temas[k % temas.length]}`;
+      await db.runQuery(
+        `INSERT INTO mantenimientos_garantia (garantia_id, numero, anio, fecha_programada, confirmado, pagado, notas)
+         VALUES (?, ?, ?, ?, 0, 0, ?)`,
+        [gid, num, anio, fechaStr, nota]
+      );
+      out.mantenimientos_calendario++;
+    }
+  }
+
+  const sinRow = await db.getOne(
+    `SELECT COUNT(*) as n FROM garantias WHERE COALESCE(numero_serie,'') LIKE ?`,
+    [`${SEED_SIN_SERIE}%`]
+  );
+  const nSin = Number(sinRow && sinRow.n) || 0;
+  const toAddSin = Math.max(0, 30 - nSin);
+  const clientesDb = await db.getAll('SELECT id, nombre FROM clientes ORDER BY id LIMIT 50');
+  const modelosSin = [
+    'Torno CNC TX-400', 'Prensa H-320', 'Robot palletizer RP-9', 'Compresor GA-55', 'Láser fiber FL-3015',
+    'Centro mecanizado VM-1100', 'Rectificadora RG-200', 'Dobladora hidráulica BH-250', 'Extrusora EX-88',
+    'Enfriador industrial EC-40', 'Elevador de carga EC-2T', 'Mezcladora MX-500', 'Granalladora GR-120',
+    'Sierra cinta SB-450', 'Taladro radial RD-160', 'Pulidora PL-90', 'Cepillo CP-300', 'Mortajadora MJ-18',
+    'Limadora LM-220', 'Fresadora universal FU-410', 'Troqueladora TD-600', 'Inyectora IN-250', 'Sopladora SB-80',
+    'Estación soldadura SW-4', 'Automata lineal AL-12', 'Transportador TR-24', 'Célula robot CR-7',
+    'Prensa briqueteadora PB-30', 'Desbobinador DB-15', 'Enderezadora EN-400',
+  ];
+  const tiposSin = ['Industrial', 'CNC', 'Hidráulica', 'Eléctrica', 'Neumática'];
+  for (let i = 0; i < toAddSin && clientesDb.length > 0; i++) {
+    const cli = clientesDb[i % clientesDb.length];
+    const diasAtras = 400 + i * 19;
+    const fEnt = new Date(Date.now() - diasAtras * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    await db.runQuery(
+      `INSERT INTO garantias (cliente_id, razon_social, modelo_maquina, numero_serie, tipo_maquina, fecha_entrega, activa)
+       VALUES (?, ?, ?, ?, ?, ?, 0)`,
+      [
+        cli.id,
+        cli.nombre,
+        modelosSin[i % modelosSin.length],
+        `${SEED_SIN_SERIE}${String(3000 + i)}`,
+        tiposSin[i % tiposSin.length],
+        fEnt,
+      ]
+    );
+    out.garantias_sin_cobertura++;
+  }
+
+  const bRow = await db.getOne(`SELECT COUNT(*) as n FROM bonos WHERE COALESCE(notas,'') LIKE ?`, [`${SEED_BONO_NOTA}%`]);
+  const nBon = Number(bRow && bRow.n) || 0;
+  const toAddBon = Math.max(0, 30 - nBon);
+  const repRows = await db.getAll('SELECT id, folio FROM reportes ORDER BY id DESC LIMIT 40');
+  const tiposCap = [
+    'Operación básica', 'Mantenimiento preventivo', 'Programación CNC', 'Seguridad industrial',
+    'Actualización firmware', 'Soldadura avanzada', 'Neumática aplicada', 'Visión artificial',
+    'Arranque de línea', 'Lean manufacturing', 'Scrum en planta', 'Comunicación técnica',
+  ];
+  const tecNames = personalDemo.map((p) => p.nombre);
+  for (let i = 0; i < toAddBon; i++) {
+    const rep = repRows[i % repRows.length];
+    const repId = rep && rep.id ? rep.id : null;
+    const tecnico = tecNames[i % tecNames.length];
+    const monto = 450 + (i % 12) * 175;
+    const diasB = i % 11;
+    const fechaB = new Date(Date.now() - diasB * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const nota = `${SEED_BONO_NOTA} #${nBon + i + 1}`;
+    await db.runQuery(
+      `INSERT INTO bonos (reporte_id, tecnico, tipo_capacitacion, monto_bono, fecha, pagado, notas)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [repId, tecnico, tiposCap[i % tiposCap.length], monto, fechaB, i % 4 === 0 ? 1 : 0, nota]
+    );
+    out.bonos_demo++;
+  }
+
+  return out;
+}
+
 async function runSeedDemoCore(_forceIgnored) {
     /* Nunca borrar datos reales: el parámetro force quedó deshabilitado.
        El demo completo solo debe ejecutarse con base vacía (sin clientes). */
@@ -2075,6 +2230,8 @@ async function runSeedDemoCore(_forceIgnored) {
     const maqCountRow = await db.getOne('SELECT COUNT(*) as n FROM maquinas');
     const maquinasTotal = maqCountRow && maqCountRow.n != null ? Number(maqCountRow.n) : maquinas.length;
 
+    const enrichment = await runSeedDemoEnrichment();
+
     return {
       ok: true,
       force: false,
@@ -2088,6 +2245,7 @@ async function runSeedDemoCore(_forceIgnored) {
       garantias: garantiasCount,
       bonos: bonosCount,
       viajes: viajesCount,
+      enrichment,
     };
 }
 
@@ -2206,7 +2364,14 @@ app.post('/api/seed-demo-extra', async (req, res) => {
       );
       cotizacionesCount++;
     }
-    res.json({ ok: true, incidentes: incidentesCount, bitacoras: bitacorasCount, cotizaciones: cotizacionesCount });
+    const enrichment = await runSeedDemoEnrichment();
+    res.json({
+      ok: true,
+      incidentes: incidentesCount,
+      bitacoras: bitacorasCount,
+      cotizaciones: cotizacionesCount,
+      enrichment,
+    });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }

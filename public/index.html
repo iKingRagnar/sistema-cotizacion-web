@@ -627,8 +627,8 @@
     </section>
 
     <!-- MANTENIMIENTOS POR GARANTÍA (operativo) -->
-    <section id="panel-mantenimiento-garantia" class="panel">
-      <div class="section-header">
+    <section id="panel-mantenimiento-garantia" class="panel panel-ux">
+      <div class="section-header section-header--ux">
         <h2><i class="fas fa-calendar-check"></i> Mantenimientos por garantía</h2>
         <div class="toolbar">
           <label class="toolbar-label-inline">Mes</label>
@@ -669,8 +669,8 @@
     </section>
 
     <!-- GARANTÍAS SIN COBERTURA -->
-    <section id="panel-garantias-sin-cobertura" class="panel">
-      <div class="section-header">
+    <section id="panel-garantias-sin-cobertura" class="panel panel-ux">
+      <div class="section-header section-header--ux">
         <h2><i class="fas fa-ban"></i> Garantías sin cobertura</h2>
         <p class="section-sub">Registros con <strong>Activa = No</strong> (garantía finalizada o fuera de vigencia).</p>
         <div class="toolbar">
@@ -701,8 +701,8 @@
     </section>
 
     <!-- BONOS -->
-    <section id="panel-bonos" class="panel comm-admin-only">
-      <div class="section-header">
+    <section id="panel-bonos" class="panel panel-ux comm-admin-only">
+      <div class="section-header section-header--ux">
         <h2><i class="fas fa-award"></i> Bonos de capacitación</h2>
         <div class="toolbar">
           <select id="filtro-mes-bonos" title="Mes de liquidación">
@@ -739,11 +739,11 @@
     </section>
 
     <!-- PERSONAL (antes técnicos) -->
-    <section id="panel-tecnicos" class="panel">
-      <div class="section-header">
+    <section id="panel-tecnicos" class="panel panel-ux">
+      <div class="section-header section-header--ux">
         <h2><i class="fas fa-users"></i> Personal</h2>
         <div class="toolbar">
-          <input type="search" id="buscar-tecnicos" placeholder="Buscar por nombre, puesto, habilidad…" class="search">
+          <input type="search" id="buscar-tecnicos" placeholder="Buscar por nombre, puesto, habilidad…" class="search search--ux">
           <button type="button" id="btn-new-tecnico" class="btn primary"><i class="fas fa-plus"></i> Nueva persona</button>
         </div>
       </div>
@@ -836,6 +836,7 @@
         </p>
         <p>Importa desde <strong>SistemaGestion_Demo.xlsm</strong> (exportado a <code>seed-demo.json</code>): clientes, refacciones, máquinas, <strong>incidentes</strong>, <strong>bitácoras</strong> y cotizaciones de ejemplo.</p>
         <p class="hint"><strong>Datos reales:</strong> el demo completo <strong>no borra nada</strong> y solo se ejecuta si la base está vacía (sin clientes). Con clientes ya cargados, usa el botón verde de abajo o «Asegurar equipos por cliente».</p>
+        <p class="hint">El demo y el botón verde también rellenan <strong>personal</strong> (~20, incl. David Cantu como jefe de área), <strong>mantenimientos</strong> en el calendario del mes, <strong>garantías sin cobertura</strong> y <strong>bonos</strong> de ejemplo (hasta ~30 c/u donde aplica).</p>
         <p class="hint">Al cargar el demo completo, el servidor asegura al menos <strong>un equipo demo</strong> por cada cliente que no traía máquinas en el JSON. Si ya tienes clientes creados a mano y en cotizaciones ves la caja de máquinas vacía, usa el botón de abajo para insertar <strong>2 equipos de presentación</strong> por cliente (sin borrar datos).</p>
         <p class="status" id="seed-status">Consultando estado…</p>
         <p class="hint" id="seed-last-update" aria-live="polite"></p>

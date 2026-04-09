@@ -5149,3 +5149,103 @@ body.dark-theme #tabla-refacciones thead .filter-row input.filter-input:-webkit-
   -webkit-text-fill-color: #e2e8f0 !important;
   box-shadow: 0 0 0 1000px #0f172a inset !important;
 }
+
+/* ---------- UX: Personal, Mantenimientos, Sin cobertura, Bonos ---------- */
+.panel.panel-ux {
+  background: linear-gradient(165deg, rgba(248, 250, 252, 0.98) 0%, #ffffff 52%, rgba(241, 245, 249, 0.65) 100%);
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  border-radius: var(--radius-lg);
+  padding: 1.35rem 1.4rem 1.55rem;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 1.25rem;
+}
+.section-header--ux {
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+.section-header--ux h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.25;
+}
+.section-header--ux .toolbar {
+  margin-left: auto;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.search--ux {
+  min-width: min(320px, 92vw);
+  border-radius: 12px;
+  border: 1px solid rgba(13, 148, 136, 0.22);
+  padding: 0.55rem 0.85rem;
+  font-size: 0.92rem;
+  transition: border-color 0.2s var(--ease-out-expo), box-shadow 0.2s var(--ease-out-expo);
+}
+.search--ux:focus {
+  outline: none;
+  border-color: rgba(13, 148, 136, 0.45);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+}
+#panel-mantenimiento-garantia .mant-gar-hint {
+  background: rgba(13, 148, 136, 0.08);
+  border: 1px solid rgba(13, 148, 136, 0.18);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.85rem;
+  font-size: 0.88rem;
+  color: #334155;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+#panel-mantenimiento-garantia .cal-month-summary {
+  font-size: 0.92rem;
+  color: #475569;
+}
+#panel-mantenimiento-garantia .mant-gar-cal-wrap .cal-grid {
+  gap: 6px;
+}
+#panel-mantenimiento-garantia .cal-cell.cal-day--has-events {
+  background: rgba(13, 148, 136, 0.06);
+  border-color: rgba(13, 148, 136, 0.25);
+}
+#panel-tecnicos #tabla-tecnicos.data-table tbody tr:hover td {
+  background: linear-gradient(90deg, rgba(13, 148, 136, 0.07) 0%, rgba(2, 132, 199, 0.05) 100%);
+}
+#panel-garantias-sin-cobertura .section-sub {
+  flex-basis: 100%;
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+#bonos-resumen-bar.bonos-resumen-bar {
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  background: linear-gradient(90deg, rgba(255, 251, 235, 0.9) 0%, rgba(254, 243, 199, 0.35) 100%);
+}
+body.dark-theme .panel.panel-ux {
+  background: linear-gradient(165deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.88) 100%);
+  border-color: rgba(148, 163, 184, 0.15);
+}
+body.dark-theme .section-header--ux h2 {
+  color: #f1f5f9;
+}
+body.dark-theme .section-header--ux {
+  border-bottom-color: rgba(148, 163, 184, 0.12);
+}
+body.dark-theme .search--ux {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(45, 212, 191, 0.25);
+  color: #e2e8f0;
+}
+body.dark-theme #panel-mantenimiento-garantia .mant-gar-hint {
+  background: rgba(13, 148, 136, 0.12);
+  border-color: rgba(45, 212, 191, 0.2);
+  color: #cbd5e1;
+}
