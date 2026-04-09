@@ -164,7 +164,7 @@
     <button type="button" data-tab="garantias" class="tab" title="Alta y edición de garantías"><i class="fas fa-shield-alt"></i> Garantías</button>
     <button type="button" data-tab="mantenimiento-garantia" class="tab" title="Calendario y alertas de mantenimiento"><i class="fas fa-calendar-check"></i> Mantenimientos</button>
     <button type="button" data-tab="garantias-sin-cobertura" class="tab" title="Garantías dadas de baja"><i class="fas fa-ban"></i> Sin cobertura</button>
-    <button type="button" data-tab="bonos" class="tab" title="Bonos de capacitación"><i class="fas fa-award"></i> Bonos</button>
+    <button type="button" data-tab="bonos" class="tab comm-admin-only" title="Bonos y liquidación (solo administrador)"><i class="fas fa-award"></i> Bonos</button>
     <button type="button" data-tab="tecnicos" class="tab" title="Personal: roles, vendedores y comisiones"><i class="fas fa-users"></i> Personal</button>
     <button type="button" data-tab="bitacoras" class="tab" title="Bitácora (Ctrl+6)"><i class="fas fa-clock"></i> Bitácora de horas</button>
     <button type="button" data-tab="auditoria" class="tab hidden" id="tab-auditoria" title="Auditoría (Ctrl+8, solo admin)"><i class="fas fa-clipboard-list"></i> Auditoría</button>
@@ -406,7 +406,7 @@
           </select>
           <input type="month" id="filtro-mes-venta" title="Filtrar por mes">
           <button type="button" id="export-ventas" class="btn outline"><i class="fas fa-file-csv"></i> CSV</button>
-          <button type="button" id="btn-reporte-mensual-ventas" class="btn outline" title="Reporte mensual con comisiones"><i class="fas fa-chart-bar"></i> Reporte mensual</button>
+          <button type="button" id="btn-reporte-mensual-ventas" class="btn outline comm-admin-only" title="Reporte mensual con comisiones (solo administrador)"><i class="fas fa-chart-bar"></i> Reporte mensual</button>
         </div>
       </div>
       <div id="ventas-resumen-bar" class="ventas-resumen-bar hidden"></div>
@@ -414,7 +414,7 @@
         <table class="data-table" id="tabla-ventas">
           <thead>
             <tr>
-              <th>Folio</th><th>Fecha aprobación</th><th>Cliente</th><th>Tipo</th><th>Total MXN</th><th>Total USD</th><th>Vendedor</th><th>Comisión</th><th class="th-actions">Acciones</th>
+              <th>Folio</th><th>Fecha aprobación</th><th>Cliente</th><th>Tipo</th><th>Total MXN</th><th>Total USD</th><th>Vendedor</th><th class="comm-admin-only">Comisión</th><th class="th-actions">Acciones</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -440,6 +440,11 @@
           </select>
           <button type="button" id="nueva-revision-maq" class="btn primary"><i class="fas fa-plus"></i> Nueva revisión</button>
         </div>
+      </div>
+      <div id="revision-maq-catalog-wrap" class="revision-maq-catalog-wrap">
+        <h3 class="revision-maq-catalog-heading"><i class="fas fa-th-large"></i> Catálogo de equipos</h3>
+        <p class="hint revision-maq-catalog-intro">Todas las máquinas registradas. Usa <strong>Nueva revisión</strong> o el botón en cada tarjeta.</p>
+        <div id="revision-maq-catalog" class="revision-maq-catalog" role="list"></div>
       </div>
       <div class="table-wrap">
         <table class="data-table filterable-table" id="tabla-revision-maquinas">
@@ -488,7 +493,7 @@
             </tbody>
           </table>
         </div>
-        <div class="tarifas-section">
+        <div class="tarifas-section comm-admin-only">
           <h3 class="tarifas-section-title"><i class="fas fa-percentage"></i> Reglas de comisiones</h3>
           <div class="tarifas-form-grid">
             <div class="form-group"><label>Comisión refacciones (%)</label><input type="number" id="tarifa-comision-ref" class="tarifa-input" min="0" max="100" step="0.5" value="15"></div>
@@ -503,10 +508,10 @@
           <h3 class="tarifas-section-title"><i class="fas fa-info-circle"></i> Cómo se calculan las tarifas</h3>
           <ul class="tarifas-notas-list">
             <li>Cotización de <strong>mano de obra</strong>: (Hrs trabajo × tarifa/hr) + (Hrs traslado × tarifa traslado) + (Días × viático/día × nº personas). Tope: 2 personas en viaje.</li>
-            <li>Cotización de <strong>refacciones</strong>: precio USD × tipo de cambio Banxico (o manual). Comisión del <span id="nota-comision-ref">15</span>% sobre total.</li>
-            <li>Cotización de <strong>máquina</strong>: precio USD × tipo de cambio. Si vendedor = David Cantú: comisión del <span id="nota-comision-maq">10</span>%.</li>
-            <li><strong>Bono por facturación</strong>: $<span id="nota-bono-20k">1,000</span> por cada $20,000 facturados. Si supera $40,000: bono máximo $<span id="nota-bono-40k">2,000</span>.</li>
-            <li><strong>Bono por viaje</strong>: $<span id="nota-bono-dia">500</span>/día/persona si es fuera de ciudad.</li>
+            <li class="comm-admin-only">Cotización de <strong>refacciones</strong>: precio USD × tipo de cambio Banxico (o manual). Comisión del <span id="nota-comision-ref">15</span>% sobre total.</li>
+            <li class="comm-admin-only">Cotización de <strong>máquina</strong>: precio USD × tipo de cambio. Si vendedor = David Cantú: comisión del <span id="nota-comision-maq">10</span>%.</li>
+            <li class="comm-admin-only"><strong>Bono por facturación</strong>: $<span id="nota-bono-20k">1,000</span> por cada $20,000 facturados. Si supera $40,000: bono máximo $<span id="nota-bono-40k">2,000</span>.</li>
+            <li class="comm-admin-only"><strong>Bono por viaje</strong>: $<span id="nota-bono-dia">500</span>/día/persona si es fuera de ciudad.</li>
           </ul>
         </div>
       </div>
@@ -696,7 +701,7 @@
     </section>
 
     <!-- BONOS -->
-    <section id="panel-bonos" class="panel">
+    <section id="panel-bonos" class="panel comm-admin-only">
       <div class="section-header">
         <h2><i class="fas fa-award"></i> Bonos de capacitación</h2>
         <div class="toolbar">

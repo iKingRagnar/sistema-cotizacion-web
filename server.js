@@ -563,6 +563,10 @@ app.get('/api/alertas', async (req, res) => {
   }
 });
 
+function shouldStripCommissions(req) {
+  return auth.AUTH_ENABLED && (!req.authUser || req.authUser.role !== 'admin');
+}
+
 // --- Ventas (cotizaciones aprobadas / aplicadas) ---
 app.get('/api/ventas', async (req, res) => {
   try {
@@ -578,7 +582,16 @@ app.get('/api/ventas', async (req, res) => {
        WHERE co.estado IN ('aplicada','venta')
        ORDER BY co.fecha_aprobacion DESC, co.id DESC LIMIT 500`
     );
-    res.json(Array.isArray(rows) ? rows : []);
+    const list = Array.isArray(rows) ? rows : [];
+    if (!shouldStripCommissions(req)) return res.json(list);
+    res.json(
+      list.map((r) => {
+        const o = { ...r };
+        delete o.v_comision_maquinas_pct;
+        delete o.v_comision_refacciones_pct;
+        return o;
+      })
+    );
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -703,6 +716,8 @@ async function backfillCatalogDefaults() {
 }
 
 // --- Tarifas (clave-valor) ---
+const TARIFAS_COMISION_KEYS = ['comision_ref', 'comision_svc', 'comision_maq_david', 'bono_20k', 'bono_40k', 'bono_dia'];
+
 app.get('/api/tarifas', async (req, res) => {
   try {
     const rows = await db.getAll('SELECT clave, valor FROM tarifas', []);
@@ -710,6 +725,11 @@ app.get('/api/tarifas', async (req, res) => {
     (rows || []).forEach(r => {
       if (r && r.clave != null && r.valor !== undefined && r.valor !== null) obj[r.clave] = r.valor;
     });
+    if (shouldStripCommissions(req)) {
+      TARIFAS_COMISION_KEYS.forEach((k) => {
+        delete obj[k];
+      });
+    }
     res.json(obj);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
@@ -1271,7 +1291,15 @@ app.get('/api/tecnicos', async (req, res) => {
     // Enrich with ocupado status: técnico tiene reporte abierto o en_proceso
     const reportesActivos = await db.getAll("SELECT tecnico FROM reportes WHERE estatus IN ('abierto','en_proceso') AND tecnico IS NOT NULL AND tecnico != ''");
     const ocupados = new Set(reportesActivos.map(r => r.tecnico));
-    const enriched = rows.map(t => ({ ...t, ocupado: ocupados.has(t.nombre) ? 1 : 0 }));
+    const strip = shouldStripCommissions(req);
+    const enriched = rows.map(t => {
+      const base = { ...t, ocupado: ocupados.has(t.nombre) ? 1 : 0 };
+      if (strip) {
+        delete base.comision_maquinas_pct;
+        delete base.comision_refacciones_pct;
+      }
+      return base;
+    });
     res.json(enriched);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
@@ -1293,6 +1321,13 @@ app.post('/api/tecnicos', async (req, res) => {
       comision_refacciones_pct,
     } = req.body || {};
     if (!nombre) return res.status(400).json({ error: 'nombre requerido' });
+    const isAdmin = auth.AUTH_ENABLED && req.authUser && req.authUser.role === 'admin';
+    let cMaq = Number(comision_maquinas_pct) || 0;
+    let cRef = Number(comision_refacciones_pct) || 0;
+    if (!isAdmin) {
+      cMaq = 0;
+      cRef = 10;
+    }
     await db.runQuery(
       `INSERT OR IGNORE INTO tecnicos (nombre, habilidades, ocupado, disponible_desde, rol, puesto, departamento, profesion, es_vendedor, comision_maquinas_pct, comision_refacciones_pct)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -1306,8 +1341,8 @@ app.post('/api/tecnicos', async (req, res) => {
         departamento || null,
         profesion || null,
         es_vendedor ? 1 : 0,
-        Number(comision_maquinas_pct) || 0,
-        Number(comision_refacciones_pct) || 0,
+        cMaq,
+        cRef,
       ]
     );
     await db.runQuery(
@@ -1321,8 +1356,8 @@ app.post('/api/tecnicos', async (req, res) => {
         departamento || null,
         profesion || null,
         es_vendedor ? 1 : 0,
-        Number(comision_maquinas_pct) || 0,
-        Number(comision_refacciones_pct) || 0,
+        cMaq,
+        cRef,
         nombre,
       ]
     );

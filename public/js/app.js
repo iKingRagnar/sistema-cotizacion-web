@@ -201,6 +201,15 @@
     const labels = { admin: 'Administrador', operador: 'Operador', usuario: 'Usuario', consulta: 'Consulta' };
     return labels[role] || role || '—';
   }
+  /** Comisiones, bonos y % de ganancia: solo administrador cuando la app exige login. */
+  function canViewCommissions() {
+    if (!serverConfig.authRequired) return true;
+    const u = getSessionUser();
+    return !!(u && u.role === 'admin');
+  }
+  function updateCommissionsUiVisibility() {
+    document.documentElement.classList.toggle('hide-commissions', !canViewCommissions());
+  }
   async function fetchServerConfig() {
     try {
       const r = await fetch('/api/config');
@@ -492,6 +501,7 @@
     const u = getSessionUser();
     const show = !!(serverConfig.auditUi && u && u.role === 'admin');
     tab.classList.toggle('hidden', !show);
+    updateCommissionsUiVisibility();
   }
   function syncSessionHeader() {
     const wrap = qs('#header-session');
@@ -641,6 +651,10 @@
         return;
       }
     }
+    if (id === 'bonos' && !canViewCommissions()) {
+      showToast('Solo el administrador puede ver bonos y comisiones.', 'error');
+      return;
+    }
     qsAll('.panel').forEach(p => p.classList.remove('active'));
     qsAll('.tab').forEach(t => t.classList.remove('active'));
     const panel = document.getElementById('panel-' + id);
@@ -688,6 +702,7 @@
     if (r.status === 401 && serverConfig.authRequired) {
       clearAuthSession();
       updateAuditTabVisibility();
+      updateCommissionsUiVisibility();
       syncSessionHeader();
       showLoginOverlay(true);
     }
@@ -2455,14 +2470,17 @@
       const list = byDay[ds] || [];
       const hoy = new Date().toISOString().slice(0, 10);
       const iso = ym + '-' + ds;
-      let cls = 'cal-cell cal-day';
+      let cls = 'cal-cell cal-day cal-day--click';
       if (iso === hoy) cls += ' cal-today';
+      if (list.length) cls += ' cal-day--has-events';
       const dots = list.slice(0, 4).map(ev => {
         const st = ev._estado_ui === 'realizado' ? 'ok' : ev._estado_ui === 'vencido' ? 'bad' : ev._estado_ui === 'próximo' ? 'warn' : 'pendiente';
         return `<span class="cal-dot cal-dot-${st}" title="${escapeHtml(ev.razon_social)} · ${escapeHtml((ev.fecha_programada || '').slice(0, 10))}"></span>`;
       }).join('');
       const more = list.length > 4 ? `<span class="cal-more">+${list.length - 4}</span>` : '';
-      cells += `<div class="${cls}"><div class="cal-day-num">${d}</div><div class="cal-dots">${dots}${more}</div></div>`;
+      const nEv = list.length;
+      const aria = nEv ? `${nEv} mantenimiento(s)` : 'Sin eventos';
+      cells += `<div class="${cls}" data-date="${iso}" role="button" tabindex="0" aria-label="Día ${d}. ${aria}"><div class="cal-day-num">${d}</div><div class="cal-dots">${dots}${more}</div></div>`;
     }
     const totalMes = mantenimientosGarantiaCache.filter(m => (m.fecha_programada || '').toString().slice(0, 7) === ym).length;
     wrap.innerHTML = `
@@ -2473,6 +2491,75 @@
         <span class="cal-dot cal-dot-warn"></span> Próximo (30 días)
         <span class="cal-dot cal-dot-pendiente"></span> Pendiente
         <span class="cal-dot cal-dot-ok"></span> Realizado</p>`;
+    wrap.querySelectorAll('.cal-day--click[data-date]').forEach(cell => {
+      const iso = cell.getAttribute('data-date');
+      const openDay = () => {
+        const ds = iso.slice(8, 10);
+        const items = byDay[ds] || [];
+        openModalMantenimientosGarantiaDia(iso, items);
+      };
+      cell.addEventListener('click', e => { e.preventDefault(); openDay(); });
+      cell.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDay(); }
+      });
+    });
+  }
+
+  function openModalMantenimientosGarantiaDia(dateIso, items) {
+    const pretty = (() => {
+      try {
+        const d = new Date(dateIso + 'T12:00:00');
+        return d.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      } catch (_) {
+        return dateIso;
+      }
+    })();
+    if (!items || !items.length) {
+      openModal('Mantenimientos', `
+        <div class="mant-dia-empty">
+          <i class="fas fa-calendar-day"></i>
+          <p><strong>${escapeHtml(pretty)}</strong></p>
+          <p class="hint">No hay mantenimientos programados para este día.</p>
+        </div>
+        <div class="form-actions"><button type="button" class="btn" id="modal-btn-cancel">Cerrar</button></div>`);
+      return;
+    }
+    const cards = items.map(ev => {
+      const st = ev._estado_ui || 'pendiente';
+      const badge = st === 'realizado' ? 'ok' : st === 'vencido' ? 'bad' : st === 'próximo' ? 'warn' : 'pendiente';
+      return `
+        <article class="mant-dia-card">
+          <div class="mant-dia-card-head">
+            <span class="mant-dia-client">${escapeHtml(ev.razon_social || '—')}</span>
+            <span class="badge badge-mant-${badge}">${escapeHtml(st)}</span>
+          </div>
+          <div class="mant-dia-fields">
+            <div><i class="fas fa-cog"></i> ${escapeHtml(ev.modelo_maquina || '—')}</div>
+            <div><i class="fas fa-fingerprint"></i> ${escapeHtml(ev.numero_serie || '—')}</div>
+            <div><i class="fas fa-calendar"></i> ${escapeHtml((ev.fecha_programada || '').toString().slice(0, 10))}</div>
+            <div><i class="fas fa-dollar-sign"></i> Pagado: $${Number(ev.pagado || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</div>
+          </div>
+          <button type="button" class="btn small primary btn-mant-dia-edit" data-id="${ev.id}"><i class="fas fa-edit"></i> Editar mantenimiento</button>
+        </article>`;
+    }).join('');
+    openModal(`Mantenimientos · ${pretty}`, `
+      <p class="mant-dia-sub">${items.length} evento(s) este día</p>
+      <div class="mant-dia-stack">${cards}</div>
+      <div class="form-actions"><button type="button" class="btn" id="modal-btn-cancel">Cerrar</button></div>`);
+    document.querySelectorAll('.btn-mant-dia-edit').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const row = mantenimientosGarantiaCache.find(x => String(x.id) === String(btn.dataset.id));
+        if (!row) return;
+        let g = garantiasCache.find(x => String(x.id) === String(row.garantia_id));
+        if (!g) {
+          try { g = await fetchJson(API + '/garantias/' + row.garantia_id); } catch (_) {
+            g = { id: row.garantia_id, razon_social: row.razon_social, modelo_maquina: row.modelo_maquina, numero_serie: row.numero_serie };
+          }
+        }
+        qs('#modal') && qs('#modal').classList.add('hidden');
+        openModalEditMantenimiento(row, g);
+      });
+    });
   }
 
   async function loadGarantiasSinCobertura() {
@@ -4631,7 +4718,11 @@
       const hint = qm('#cotz-comision-hint');
       if (puestoEl) puestoEl.value = p && p.puesto ? p.puesto : '';
       if (hint) {
-        if (p) {
+        if (!canViewCommissions()) {
+          hint.textContent = p
+            ? `Vendedor: ${escapeHtml(p.nombre || '')}. Precios de lista × tipo de cambio; el descuento % aplica al subtotal de partidas.`
+            : 'Selecciona quién cotiza para dejar trazabilidad. Precios de lista × tipo de cambio.';
+        } else if (p) {
           const cm = Number(p.comision_maquinas_pct) || 0;
           const cr = Number(p.comision_refacciones_pct) || 0;
           const nom = escapeHtml(p.nombre || '');
@@ -6262,8 +6353,10 @@
     const tbody = qs('#tabla-ventas tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
+    const showCom = canViewCommissions();
+    const colSpan = showCom ? 9 : 8;
     if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="9" class="empty">No hay ventas aprobadas aún.</td></tr>';
+      tbody.innerHTML = `<tr><td colspan="${colSpan}" class="empty">No hay ventas aprobadas aún.</td></tr>`;
       return;
     }
 
@@ -6290,6 +6383,7 @@
       else if (v.tipo === 'servicio') comPct = comSvc;
       else if (v.tipo === 'maquina') comPct = Number.isFinite(cm) ? cm : 0;
       const comAmt = comPct > 0 ? formatMoney(Number(v.total) * comPct / 100) : '—';
+      const comTd = showCom ? `<td>${comPct > 0 ? `${comPct}% = ${comAmt}` : '—'}</td>` : '';
       tr.innerHTML = `
         <td>${escapeHtml(v.folio || '')}</td>
         <td>${escapeHtml((v.fecha_aprobacion || v.fecha || '').slice(0, 10))}</td>
@@ -6298,7 +6392,7 @@
         <td>${formatMoney(v.total)}</td>
         <td>${totalUSD}</td>
         <td>${escapeHtml(v.vendedor || '—')}</td>
-        <td>${comPct > 0 ? `${comPct}% = ${comAmt}` : '—'}</td>
+        ${comTd}
         <td class="th-actions">
           <button type="button" class="btn small outline btn-pdf-venta" data-id="${v.id}" title="Ver PDF"><i class="fas fa-file-pdf"></i></button>
         </td>`;
@@ -6311,11 +6405,52 @@
 
   // ----- REVISIÓN DE MÁQUINAS -----
   let revisionMaquinasCache = [];
+  let revisionMaquinasCatalogoCache = [];
+  async function fetchRevisionMaquinasCatalogo() {
+    const data = await fetchJson(API + '/maquinas');
+    revisionMaquinasCatalogoCache = Array.isArray(data) ? data : [];
+    return revisionMaquinasCatalogoCache;
+  }
+
+  function renderRevisionMaquinasCatalog() {
+    const el = qs('#revision-maq-catalog');
+    if (!el) return;
+    const list = revisionMaquinasCatalogoCache || [];
+    if (!list.length) {
+      el.innerHTML = '<p class="empty revision-maq-catalog-empty">No hay equipos en el catálogo. Regístralos en la pestaña <strong>Máquinas</strong>.</p>';
+      return;
+    }
+    el.innerHTML = list.map(m => {
+      const tit = m.modelo || m.nombre || 'Equipo';
+      return `
+      <article class="revision-maq-card" role="listitem">
+        <div class="revision-maq-card-top">
+          <span class="revision-maq-card-title">${escapeHtml(tit)}</span>
+          <span class="revision-maq-card-serie"><i class="fas fa-barcode"></i> ${escapeHtml(m.numero_serie || '—')}</span>
+        </div>
+        <div class="revision-maq-card-client"><i class="fas fa-building"></i> ${escapeHtml(m.cliente_nombre || '—')}</div>
+        <div class="revision-maq-card-meta"><span class="revision-maq-pill">${escapeHtml(m.categoria || '—')}</span></div>
+        <button type="button" class="btn small primary btn-rev-desde-catalogo" data-maq-id="${m.id}">
+          <i class="fas fa-clipboard-check"></i> Nueva revisión
+        </button>
+      </article>`;
+    }).join('');
+    el.querySelectorAll('.btn-rev-desde-catalogo').forEach(btn => {
+      btn.addEventListener('click', () => {
+        openModalRevisionMaquina({ maquina_id: Number(btn.dataset.maqId) });
+      });
+    });
+  }
+
   async function loadRevisionMaquinas() {
     showLoading();
     try {
-      const data = await fetchJson(API + '/revision-maquinas');
+      const [data] = await Promise.all([
+        fetchJson(API + '/revision-maquinas'),
+        fetchRevisionMaquinasCatalogo(),
+      ]);
       revisionMaquinasCache = Array.isArray(data) ? data : [];
+      renderRevisionMaquinasCatalog();
       renderRevisionMaquinas(revisionMaquinasCache);
     } catch (e) { console.error(e); }
     finally { hideLoading(); }
@@ -6368,12 +6503,15 @@
   }
 
   async function openModalRevisionMaquina(rev) {
+    await fetchRevisionMaquinasCatalogo();
+    const catalog = revisionMaquinasCatalogoCache.length ? revisionMaquinasCatalogoCache : maquinasCache;
     const isNew = !rev || !rev.id;
-    const maqOpts = maquinasCache.map(m =>
-      `<option value="${m.id}" data-modelo="${escapeHtml(m.modelo || m.nombre || '')}" data-serie="${escapeHtml(m.numero_serie || '')}" data-cat="${escapeHtml(m.categoria || '')}" ${rev && rev.maquina_id == m.id ? 'selected' : ''}>${escapeHtml(m.modelo || m.nombre || '')} – ${escapeHtml(m.numero_serie || '')}</option>`
+    const preMaqId = rev && rev.maquina_id != null ? rev.maquina_id : null;
+    const maqOpts = catalog.map(m =>
+      `<option value="${m.id}" data-modelo="${escapeHtml(m.modelo || m.nombre || '')}" data-serie="${escapeHtml(m.numero_serie || '')}" data-cat="${escapeHtml(m.categoria || '')}" ${preMaqId != null && String(preMaqId) === String(m.id) ? 'selected' : ''}>${escapeHtml(m.modelo || m.nombre || '')} – ${escapeHtml(m.numero_serie || '')}</option>`
     ).join('');
     const catVal = (rev && rev.categoria) || '';
-    const catFromMaq = rev && rev.maquina_id && maquinasCache.find(x => String(x.id) === String(rev.maquina_id));
+    const catFromMaq = rev && rev.maquina_id && catalog.find(x => String(x.id) === String(rev.maquina_id));
     const effectiveCat = catVal || (catFromMaq && catFromMaq.categoria) || '';
     let catExtra = '';
     if (effectiveCat && !CATEGORIAS_MAQUINAS.includes(effectiveCat)) {
@@ -6484,11 +6622,13 @@
         const el = qs(id);
         if (el && tarifasCache[key]) el.textContent = fmt ? fmt(tarifasCache[key]) : tarifasCache[key];
       };
-      updateNota('#nota-comision-ref', 'comision_ref');
-      updateNota('#nota-comision-maq', 'comision_maq_david');
-      updateNota('#nota-bono-20k', 'bono_20k', v => Number(v).toLocaleString('es-MX'));
-      updateNota('#nota-bono-40k', 'bono_40k', v => Number(v).toLocaleString('es-MX'));
-      updateNota('#nota-bono-dia', 'bono_dia', v => Number(v).toLocaleString('es-MX'));
+      if (canViewCommissions()) {
+        updateNota('#nota-comision-ref', 'comision_ref');
+        updateNota('#nota-comision-maq', 'comision_maq_david');
+        updateNota('#nota-bono-20k', 'bono_20k', v => Number(v).toLocaleString('es-MX'));
+        updateNota('#nota-bono-40k', 'bono_40k', v => Number(v).toLocaleString('es-MX'));
+        updateNota('#nota-bono-dia', 'bono_dia', v => Number(v).toLocaleString('es-MX'));
+      }
     } catch (e) { console.error(e); }
   }
 
@@ -6575,8 +6715,10 @@
           { label: 'Departamento', value: t.departamento || '—', icon: 'fa-building' },
           { label: 'Profesión', value: t.profesion || '—', icon: 'fa-graduation-cap' },
           { label: 'Vendedor', value: Number(t.es_vendedor) === 1 ? 'Sí' : 'No', icon: 'fa-handshake' },
-          { label: 'Comisión % equipo', value: t.comision_maquinas_pct != null ? String(t.comision_maquinas_pct) : '—', icon: 'fa-percent' },
-          { label: 'Comisión % refacciones', value: t.comision_refacciones_pct != null ? String(t.comision_refacciones_pct) : '—', icon: 'fa-percent' },
+          ...(canViewCommissions() ? [
+            { label: 'Comisión % equipo', value: t.comision_maquinas_pct != null ? String(t.comision_maquinas_pct) : '—', icon: 'fa-percent' },
+            { label: 'Comisión % refacciones', value: t.comision_refacciones_pct != null ? String(t.comision_refacciones_pct) : '—', icon: 'fa-percent' },
+          ] : []),
           { label: 'Estado', value: t.activo ? 'Activo' : 'Inactivo', icon: 'fa-toggle-on', badge: true, badgeClass: t.activo ? 'pvc-badge--success' : 'pvc-badge--danger' },
           { label: 'Disponibilidad', value: t.ocupado ? '🔒 Ocupado' : '✓ Disponible', icon: 'fa-clock', badge: true, badgeClass: t.ocupado ? 'pvc-badge--warning' : 'pvc-badge--success' },
         ]
@@ -6639,6 +6781,12 @@
 
   function openModalTecnico(tec) {
     const isNew = !tec || !tec.id;
+    const showCom = canViewCommissions();
+    const comRow = showCom ? `
+      <div class="form-row">
+        <div class="form-group"><label>Comisión % equipo (máquinas)</label><input type="number" id="m-tec-com-m" min="0" max="100" step="0.5" value="${tec && tec.comision_maquinas_pct != null ? escapeHtml(String(tec.comision_maquinas_pct)) : '0'}"></div>
+        <div class="form-group"><label>Comisión % refacciones</label><input type="number" id="m-tec-com-r" min="0" max="100" step="0.5" value="${tec && tec.comision_refacciones_pct != null ? escapeHtml(String(tec.comision_refacciones_pct)) : '10'}"></div>
+      </div>` : '';
     const body = `
       <div class="form-group"><label>Nombre *</label>
         <input type="text" id="m-tec-nombre" maxlength="100" value="${escapeHtml(tec && tec.nombre || '')}" placeholder="Ej. Juan Pérez" required>
@@ -6662,9 +6810,8 @@
             <option value="1" ${tec && Number(tec.es_vendedor) === 1 ? 'selected' : ''}>Sí</option>
           </select>
         </div>
-        <div class="form-group"><label>Comisión % equipo (máquinas)</label><input type="number" id="m-tec-com-m" min="0" max="100" step="0.5" value="${tec && tec.comision_maquinas_pct != null ? escapeHtml(String(tec.comision_maquinas_pct)) : '0'}"></div>
-        <div class="form-group"><label>Comisión % refacciones</label><input type="number" id="m-tec-com-r" min="0" max="100" step="0.5" value="${tec && tec.comision_refacciones_pct != null ? escapeHtml(String(tec.comision_refacciones_pct)) : '10'}"></div>
       </div>
+      ${comRow}
       ${!isNew ? `<div class="form-group"><label>Estado</label>
         <select id="m-tec-activo">
           <option value="1" ${tec && tec.activo != 0 ? 'selected' : ''}>Activo</option>
@@ -6679,6 +6826,8 @@
     qs('#m-save').onclick = async () => {
       const nombre = qs('#m-tec-nombre')?.value.trim();
       if (!nombre) { showToast('El nombre es obligatorio.', 'error'); return; }
+      const comM = canViewCommissions() ? (Number(qs('#m-tec-com-m')?.value) || 0) : (Number(tec && tec.comision_maquinas_pct) || 0);
+      const comR = canViewCommissions() ? (Number(qs('#m-tec-com-r')?.value) || 0) : (Number(tec && tec.comision_refacciones_pct) || 10);
       const payload = {
         nombre,
         rol: qs('#m-tec-rol')?.value.trim() || null,
@@ -6687,8 +6836,8 @@
         profesion: qs('#m-tec-prof')?.value.trim() || null,
         habilidades: qs('#m-tec-habilidades')?.value.trim() || null,
         es_vendedor: qs('#m-tec-es-vendedor')?.value === '1' ? 1 : 0,
-        comision_maquinas_pct: Number(qs('#m-tec-com-m')?.value) || 0,
-        comision_refacciones_pct: Number(qs('#m-tec-com-r')?.value) || 0,
+        comision_maquinas_pct: comM,
+        comision_refacciones_pct: comR,
         activo: isNew ? 1 : parseInt(qs('#m-tec-activo')?.value || '1', 10),
       };
       try {
@@ -7206,6 +7355,10 @@
           showPanel('auditoria');
           return;
         }
+      }
+      if (last === 'bonos' && !canViewCommissions()) {
+        try { localStorage.removeItem(LAST_TAB_KEY); } catch (_) {}
+        last = null;
       }
       if (last && VALID_TABS.indexOf(last) >= 0) showPanel(last);
     } catch (_) {}
