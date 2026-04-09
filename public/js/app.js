@@ -1787,7 +1787,7 @@
     tbody.querySelectorAll('.btn-aplicar-cot').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
-        openConfirmModal('¿Aplicar esta cotización como venta? Se descontará el inventario.', () => aplicarCotizacion(btn.dataset.id));
+        openConfirmModal('¿Aprobar como venta? Se descontará del almacén la cantidad de cada refacción en las líneas (según catálogo).', () => aplicarCotizacion(btn.dataset.id));
       });
     });
     tbody.querySelectorAll('.btn-pdf-cot').forEach(btn => {
@@ -3537,12 +3537,13 @@
     const modalBox = qs('#modal .modal-box');
     const previousFocus = document.activeElement;
     if (modalBox) {
-      modalBox.classList.remove('pdf-preview-modal', 'dragging');
+      modalBox.classList.remove('pdf-preview-modal', 'dragging', 'modal-cotizacion');
       modalBox.style.left = '';
       modalBox.style.top = '';
       modalBox.style.width = '';
       modalBox.style.height = '';
       modalBox.style.maxHeight = '';
+      if (/cotizaci/i.test(String(title || ''))) modalBox.classList.add('modal-cotizacion');
     }
     qs('#modal-title').textContent = title;
     qs('#modal-body').innerHTML = bodyHtml;
@@ -4032,172 +4033,187 @@
     const maquinasOpts = '';
 
     const body = `
-      <div class="form-group"><label>Cliente *</label><select id="cotz-cliente_id">${clienteOpts}</select></div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Tipo</label>
-          <select id="cotz-tipo">
-            <option value="refacciones" ${cot && cot.tipo === 'refacciones' ? 'selected' : ''}>Refacciones</option>
-            <option value="mano_obra" ${cot && cot.tipo === 'mano_obra' ? 'selected' : ''}>Mano de obra</option>
-          </select>
-        </div>
-        <div class="form-group"><label>Fecha *</label><input type="date" id="cotz-fecha" value="${cot && cot.fecha ? String(cot.fecha).slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Moneda</label>
-          <select id="cotz-moneda">
-            <option value="MXN" ${cotMoneda === 'MXN' ? 'selected' : ''}>MXN</option>
-            <option value="USD" ${cotMoneda === 'USD' ? 'selected' : ''}>USD</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>T.C.</label>
-          <input type="number" id="cotz-tc" step="0.01" min="0" value="${Number.isFinite(cotTc) ? cotTc.toFixed(2) : '17.00'}" placeholder="17.00">
-          <div class="hint">Si la moneda es USD, este tipo de cambio se usa para mostrar equivalencias.</div>
-        </div>
-      </div>
-
-      <div class="form-group cotz-maquinas-wrap">
-        <label>Máquinas (opcional)</label>
-        <p class="hint" id="cotz-maquinas-hint" style="margin:0 0 0.35rem 0;font-size:0.85rem;color:#64748b">Marca una o varias. Si no hay filas, registra equipos en la pestaña Máquinas para este cliente.</p>
-        <div id="cotz-maquinas-list" class="cotz-maquinas-list" role="group" aria-label="Máquinas de la cotización"></div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group"><label>Subtotal</label><input type="text" id="cotz-subtotal" class="input-readonly" readonly value="${Number(cot && cot.subtotal || 0).toFixed(2)}"></div>
-        <div class="form-group"><label>IVA (16%)</label><input type="text" id="cotz-iva" class="input-readonly" readonly value="${Number(cot && cot.iva || 0).toFixed(2)}"></div>
-        <div class="form-group"><label>Total</label><input type="text" id="cotz-total" class="input-readonly" readonly value="${Number(cot && cot.total || 0).toFixed(2)}"></div>
-      </div>
-
-      <hr class="divider" />
-
-      <div class="form-actions">
-        <button type="button" class="btn outline" id="cotz-open-line-panel"><i class="fas fa-plus"></i> Agregar línea…</button>
-        <button type="button" class="btn primary" id="cotz-save"><i class="fas fa-save"></i> Guardar cotización</button>
-        <button type="button" class="btn" id="modal-btn-cancel">Cerrar</button>
-      </div>
-
-      <div id="cot-line-panel" class="mini-panel hidden" aria-live="polite">
-        <div class="mini-panel-head">
-          <div class="mini-panel-title">Agregar línea</div>
-          <button type="button" class="btn small outline" id="cot-line-cancel">Cancelar</button>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Tipo de línea</label>
-            <select id="cot-line-tipo">
-              <option value="refaccion">Refacción</option>
-              <option value="mano_obra">Mano de obra</option>
-              <option value="vuelta">Vuelta (ida)</option>
-              <option value="otro">Otro</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Máquina (opcional)</label>
-            <select id="cot-line-maq">
-              <option value="">— Sin máquina —</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group" id="cot-line-ref-wrap">
-          <label>Refacción</label>
-          <select id="cot-line-refaccion">
-            ${(refaccionesCache || []).slice(0, 200).map(r => `<option value="${r.id}">${escapeHtml((r.codigo || '') + ' — ' + (r.descripcion || ''))}</option>`).join('')}
-          </select>
-        </div>
-
-        <div class="form-group" id="cot-line-desc-wrap" style="display:none">
-          <label>Concepto</label>
-          <input type="text" id="cot-line-desc" placeholder="Ej. Diagnóstico, traslado (ida), reparación, etc.">
-        </div>
-
-        <div class=”form-group” id=”cot-line-bit-wrap” style=”display:none”>
-          <label>Bitácora ligada (opcional)</label>
-          <select id=”cot-line-bitacora”>
-            <option value=””>— Sin bitácora —</option>
-          </select>
-          <div class=”hint”>Solo aparecen bitácoras ligadas a esta cotización. Si no hay ninguna, usa el botón “Nueva bitácora” o créala en la pestaña Bitácora eligiendo esta misma cotización.</div>
-          <div class=”form-actions” style=”margin-top:0.5rem;”>
-            <button type=”button” class=”btn small outline” id=”cot-line-new-bit”><i class=”fas fa-clock”></i> Nueva bitácora</button>
-          </div>
-        </div>
-
-        <!-- MANO DE OBRA: campos adicionales -->
-        <div id=”cot-line-mo-wrap” style=”display:none”>
-          <div class=”mo-fields-grid”>
-            <div class=”form-group”>
-              <label>Tipo de técnico</label>
-              <select id=”cot-line-mo-tipo-tec”>
-                <option value=”mecanico”>Mecánico</option>
-                <option value=”electronico”>Electrónico</option>
-                <option value=”cnc”>CNC / Programación</option>
+      <div class="cotz-modal">
+        <section class="cotz-card" aria-labelledby="cotz-h-datos">
+          <h4 class="cotz-card-title" id="cotz-h-datos"><span class="cotz-step-num">1</span> Datos generales</h4>
+          <div class="form-group"><label>Cliente *</label><select id="cotz-cliente_id">${clienteOpts}</select></div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tipo de cotización</label>
+              <select id="cotz-tipo">
+                <option value="refacciones" ${cot && cot.tipo === 'refacciones' ? 'selected' : ''}>Refacciones</option>
+                <option value="mano_obra" ${cot && cot.tipo === 'mano_obra' ? 'selected' : ''}>Mano de obra</option>
               </select>
             </div>
-            <div class=”form-group”>
-              <label>Zona de servicio</label>
-              <select id=”cot-line-mo-zona”>
-                <option value=”a”>A – Local (Monterrey)</option>
-                <option value=”b”>B – Regional (Guanajuato, QRO)</option>
-                <option value=”c”>C – Nacional (CDMX, GDL)</option>
+            <div class="form-group"><label>Fecha *</label><input type="date" id="cotz-fecha" value="${cot && cot.fecha ? String(cot.fecha).slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Moneda</label>
+              <select id="cotz-moneda">
+                <option value="MXN" ${cotMoneda === 'MXN' ? 'selected' : ''}>MXN</option>
+                <option value="USD" ${cotMoneda === 'USD' ? 'selected' : ''}>USD</option>
               </select>
             </div>
-            <div class=”form-group”>
-              <label>Horas traslado</label>
-              <input type=”number” id=”cot-line-mo-hrs-traslado” step=”0.5” min=”0” value=”0”>
-            </div>
-            <div class=”form-group”>
-              <label>Horas trabajo</label>
-              <input type=”number” id=”cot-line-mo-hrs-trabajo” step=”0.5” min=”0” value=”1”>
-            </div>
-            <div class=”form-group”>
-              <label># Ayudantes</label>
-              <input type=”number” id=”cot-line-mo-ayudantes” step=”1” min=”0” value=”0”>
-            </div>
-            <div class=”form-group”>
-              <label>Viáticos (días)</label>
-              <input type=”number” id=”cot-line-mo-viaticos-dias” step=”1” min=”0” value=”0”>
+            <div class="form-group">
+              <label>Tipo de cambio</label>
+              <input type="number" id="cotz-tc" step="0.01" min="0" value="${Number.isFinite(cotTc) ? cotTc.toFixed(2) : '17.00'}" placeholder="17.00">
+              <div class="hint">Si cotizas en USD, este valor alimenta equivalencias en MXN.</div>
             </div>
           </div>
-          <div style=”font-size:0.8rem;color:var(--text-muted,#94a3b8);margin:0.3rem 0 0.5rem”>
-            <i class=”fas fa-calculator”></i> Precio calculado automáticamente desde Tarifas. Editable abajo.
+        </section>
+
+        <section class="cotz-card cotz-card--maquinas" aria-labelledby="cotz-h-maq">
+          <h4 class="cotz-card-title" id="cotz-h-maq"><span class="cotz-step-num">2</span> Equipos (opcional)</h4>
+          <p class="hint cotz-maquinas-intro" id="cotz-maquinas-hint">Marca los equipos que aplican. Si no hay filas, registra máquinas para el cliente en la pestaña Máquinas.</p>
+          <div id="cotz-maquinas-list" class="cotz-maquinas-list" role="group" aria-label="Máquinas de la cotización"></div>
+        </section>
+
+        <div class="cotz-inventory-hint" role="note">
+          <i class="fas fa-boxes-stacked" aria-hidden="true"></i>
+          <div>
+            <strong>Inventario</strong> — Las partidas de <em>refacción</em> bajan existencias al usar <strong>Aprobar como venta</strong> en la tabla (no al guardar borrador). Mano de obra / vueltas no mueven almacén.
           </div>
         </div>
 
-        <div class=”form-row”>
-          <div class=”form-group”>
-            <label>Cantidad / Horas</label>
-            <input type=”number” id=”cot-line-cant” step=”0.25” min=”0” value=”1”>
+        <section class="cotz-card cotz-card--lineas" aria-labelledby="cotz-h-lineas">
+          <h4 class="cotz-card-title" id="cotz-h-lineas"><span class="cotz-step-num">3</span> Partidas</h4>
+          <div class="table-wrap cotz-lineas-table-wrap">
+            <table class="data-table" id="tabla-cot-lineas">
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  <th>Descripción</th>
+                  <th>Cant</th>
+                  <th>Precio</th>
+                  <th>Subtotal</th>
+                  <th class="th-actions"></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
           </div>
-          <div class=”form-group”>
-            <label>Precio</label>
-            <input type=”number” id=”cot-line-precio” step=”0.01” min=”0” value=”0”>
+          <div class="cotz-toolbar-lineas">
+            <button type="button" class="btn outline" id="cotz-open-line-panel"><i class="fas fa-plus"></i> Agregar línea…</button>
+          </div>
+        </section>
+
+        <div id="cot-line-panel" class="mini-panel cotz-add-line-panel hidden" aria-live="polite">
+          <div class="mini-panel-head">
+            <div class="mini-panel-title">Nueva partida</div>
+            <button type="button" class="btn small outline" id="cot-line-cancel">Cerrar formulario</button>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tipo de línea</label>
+              <select id="cot-line-tipo">
+                <option value="refaccion">Refacción</option>
+                <option value="mano_obra">Mano de obra</option>
+                <option value="vuelta">Vuelta (ida)</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Máquina (opcional)</label>
+              <select id="cot-line-maq">
+                <option value="">— Sin máquina —</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" id="cot-line-ref-wrap">
+            <label>Refacción</label>
+            <select id="cot-line-refaccion">
+              ${(refaccionesCache || []).slice(0, 200).map(r => `<option value="${r.id}">${escapeHtml((r.codigo || '') + ' — ' + (r.descripcion || ''))}</option>`).join('')}
+            </select>
+          </div>
+
+          <div class="form-group" id="cot-line-desc-wrap" style="display:none">
+            <label>Concepto</label>
+            <input type="text" id="cot-line-desc" placeholder="Ej. Diagnóstico, traslado (ida), reparación, etc.">
+          </div>
+
+          <div class="form-group" id="cot-line-bit-wrap" style="display:none">
+            <label>Bitácora ligada (opcional)</label>
+            <select id="cot-line-bitacora">
+              <option value="">— Sin bitácora —</option>
+            </select>
+            <div class="hint">Solo bitácoras ligadas a esta cotización. Si no hay, crea una desde Bitácora o con el botón de abajo.</div>
+            <div class="form-actions" style="margin-top:0.5rem;">
+              <button type="button" class="btn small outline" id="cot-line-new-bit"><i class="fas fa-clock"></i> Nueva bitácora</button>
+            </div>
+          </div>
+
+          <div id="cot-line-mo-wrap" style="display:none">
+            <div class="mo-fields-grid">
+              <div class="form-group">
+                <label>Tipo de técnico</label>
+                <select id="cot-line-mo-tipo-tec">
+                  <option value="mecanico">Mecánico</option>
+                  <option value="electronico">Electrónico</option>
+                  <option value="cnc">CNC / Programación</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Zona de servicio</label>
+                <select id="cot-line-mo-zona">
+                  <option value="a">A – Local (Monterrey)</option>
+                  <option value="b">B – Regional (Guanajuato, QRO)</option>
+                  <option value="c">C – Nacional (CDMX, GDL)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Horas traslado</label>
+                <input type="number" id="cot-line-mo-hrs-traslado" step="0.5" min="0" value="0">
+              </div>
+              <div class="form-group">
+                <label>Horas trabajo</label>
+                <input type="number" id="cot-line-mo-hrs-trabajo" step="0.5" min="0" value="1">
+              </div>
+              <div class="form-group">
+                <label># Ayudantes</label>
+                <input type="number" id="cot-line-mo-ayudantes" step="1" min="0" value="0">
+              </div>
+              <div class="form-group">
+                <label>Viáticos (días)</label>
+                <input type="number" id="cot-line-mo-viaticos-dias" step="1" min="0" value="0">
+              </div>
+            </div>
+            <div class="cotz-mo-hint">
+              <i class="fas fa-calculator"></i> Precio sugerido desde Tarifas. Puedes ajustar cantidad y precio abajo.
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Cantidad / Horas</label>
+              <input type="number" id="cot-line-cant" step="0.25" min="0" value="1">
+            </div>
+            <div class="form-group">
+              <label>Precio unitario</label>
+              <input type="number" id="cot-line-precio" step="0.01" min="0" value="0">
+            </div>
+          </div>
+
+          <div class="form-actions cotz-add-actions">
+            <button type="button" class="btn primary" id="cot-line-add"><i class="fas fa-plus"></i> Agregar a la cotización</button>
           </div>
         </div>
 
-        <div class="form-actions">
-          <button type="button" class="btn primary" id="cot-line-add"><i class="fas fa-plus"></i> Agregar</button>
-        </div>
-      </div>
+        <section class="cotz-card cotz-card--totals" aria-labelledby="cotz-h-tot">
+          <h4 class="cotz-card-title" id="cotz-h-tot"><span class="cotz-step-num">4</span> Importes</h4>
+          <div class="form-row cotz-totals-row">
+            <div class="form-group"><label>Subtotal</label><input type="text" id="cotz-subtotal" class="input-readonly" readonly value="${Number(cot && cot.subtotal || 0).toFixed(2)}"></div>
+            <div class="form-group"><label>IVA (16%)</label><input type="text" id="cotz-iva" class="input-readonly" readonly value="${Number(cot && cot.iva || 0).toFixed(2)}"></div>
+            <div class="form-group"><label>Total</label><input type="text" id="cotz-total" class="input-readonly cotz-total-highlight" readonly value="${Number(cot && cot.total || 0).toFixed(2)}"></div>
+          </div>
+        </section>
 
-      <div class="table-wrap" style="margin-top:10px">
-        <table class="table" id="tabla-cot-lineas">
-          <thead>
-            <tr>
-              <th>Tipo</th>
-              <th>Descripción</th>
-              <th>Cant</th>
-              <th>Precio</th>
-              <th>Subtotal</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+        <div class="cotz-modal-footer">
+          <button type="button" class="btn primary" id="cotz-save"><i class="fas fa-save"></i> Guardar cotización</button>
+          <button type="button" class="btn" id="modal-btn-cancel">Cerrar</button>
+        </div>
       </div>
     `;
 
