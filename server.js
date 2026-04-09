@@ -572,12 +572,132 @@ app.get('/api/ventas', async (req, res) => {
   }
 });
 
+/** Valores por defecto alineados con la UI y “Cómo se calculan las tarifas” (editables después). */
+const DEFAULT_TARIFAS = {
+  mecanico_mxn: '450',
+  mecanico_usd: '25',
+  mecanico_nota: 'Tarifa estándar taller',
+  electronico_mxn: '520',
+  electronico_usd: '30',
+  electronico_nota: 'PLC, variadores, sensores',
+  cnc_mxn: '650',
+  cnc_usd: '38',
+  cnc_nota: 'Programación y ajuste CNC',
+  ayudante_mxn: '280',
+  ayudante_usd: '15',
+  ayudante_nota: 'Apoyo en campo',
+  zona_a_ciudades: 'Monterrey, área metropolitana',
+  zona_a_viatico: '800',
+  zona_a_hrs: '1',
+  zona_a_km: '5',
+  zona_b_ciudades: 'Guanajuato, Querétaro, Saltillo',
+  zona_b_viatico: '1200',
+  zona_b_hrs: '3',
+  zona_b_km: '8',
+  zona_c_ciudades: 'CDMX, Guadalajara, resto de la República',
+  zona_c_viatico: '1800',
+  zona_c_hrs: '6',
+  zona_c_km: '12',
+  comision_ref: '15',
+  comision_svc: '15',
+  comision_maq_david: '10',
+  bono_20k: '1000',
+  bono_40k: '2000',
+  bono_dia: '500',
+};
+
+async function ensureTarifasDefaults() {
+  try {
+    const rows = await db.getAll('SELECT clave FROM tarifas', []);
+    const have = new Set((rows || []).map(r => r.clave));
+    for (const [k, v] of Object.entries(DEFAULT_TARIFAS)) {
+      if (!have.has(k)) {
+        await db.runQuery(
+          `INSERT INTO tarifas (clave, valor, actualizado_en) VALUES (?, ?, datetime('now','localtime'))`,
+          [k, String(v)]
+        );
+      }
+    }
+  } catch (e) {
+    console.warn('[tarifas-defaults]', e && e.message);
+  }
+}
+
+function addDaysIso(isoDate, days) {
+  const d = new Date(String(isoDate || '').slice(0, 10) + 'T12:00:00');
+  if (isNaN(d.getTime())) return null;
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Completa categorías/zonas/precios demo y SLA cuando faltan (idempotente). */
+async function backfillCatalogDefaults() {
+  try {
+    const updates = [
+      [`UPDATE refacciones SET categoria = 'Correas y transmisión'
+        WHERE (categoria IS NULL OR TRIM(categoria) = '') AND UPPER(codigo) LIKE 'COR%'`],
+      [`UPDATE refacciones SET categoria = 'Eléctrico y control'
+        WHERE (categoria IS NULL OR TRIM(categoria) = '') AND UPPER(codigo) LIKE 'ELE%'`],
+      [`UPDATE refacciones SET categoria = 'Hidráulico'
+        WHERE (categoria IS NULL OR TRIM(categoria) = '') AND UPPER(codigo) LIKE 'HID%'`],
+      [`UPDATE refacciones SET categoria = 'Mecánico'
+        WHERE (categoria IS NULL OR TRIM(categoria) = '') AND UPPER(codigo) LIKE 'MEC%'`],
+      [`UPDATE refacciones SET categoria = 'Neumático'
+        WHERE (categoria IS NULL OR TRIM(categoria) = '') AND UPPER(codigo) LIKE 'NEU%'`],
+      [`UPDATE refacciones SET categoria = 'Refacciones generales'
+        WHERE (categoria IS NULL OR TRIM(categoria) = '')`],
+      [`UPDATE refacciones SET zona = 'Almacén principal'
+        WHERE zona IS NULL OR TRIM(zona) = ''`],
+      [`UPDATE refacciones SET precio_usd = ROUND(precio_unitario / 17.0, 2)
+        WHERE (precio_usd IS NULL OR precio_usd = 0) AND COALESCE(precio_unitario, 0) > 0`],
+      [`UPDATE maquinas SET categoria = 'Torno CNC'
+        WHERE (categoria IS NULL OR TRIM(categoria) = '')
+          AND (UPPER(COALESCE(modelo,'')) LIKE '%CNC%' OR UPPER(COALESCE(modelo,'')) LIKE '%TORNO%')`],
+      [`UPDATE maquinas SET categoria = 'Fresadora CNC'
+        WHERE (categoria IS NULL OR TRIM(categoria) = '')
+          AND (UPPER(COALESCE(modelo,'')) LIKE '%VCN%' OR UPPER(COALESCE(modelo,'')) LIKE '%FRES%')`],
+      [`UPDATE maquinas SET categoria = 'Centro de Maquinado'
+        WHERE (categoria IS NULL OR TRIM(categoria) = '')`],
+    ];
+    for (const [sql] of updates) {
+      await db.runQuery(sql);
+    }
+    const incs = await db.getAll(
+      `SELECT id, cliente_id, fecha_reporte FROM incidentes
+       WHERE (fecha_vencimiento IS NULL OR TRIM(fecha_vencimiento) = '')
+         AND COALESCE(estatus,'') != 'cerrado'`
+    );
+    for (const inc of incs || []) {
+      const base = (inc.fecha_reporte && String(inc.fecha_reporte).slice(0, 10)) || new Date().toISOString().slice(0, 10);
+      const venc = addDaysIso(base, 14);
+      if (venc) await db.runQuery('UPDATE incidentes SET fecha_vencimiento = ? WHERE id = ?', [venc, inc.id]);
+    }
+    const sinMaq = await db.getAll(
+      `SELECT i.id, i.cliente_id FROM incidentes i
+       WHERE i.maquina_id IS NULL AND i.cliente_id IS NOT NULL`
+    );
+    for (const row of sinMaq || []) {
+      const m = await db.getOne(
+        'SELECT id FROM maquinas WHERE cliente_id = ? AND COALESCE(activo,1) = 1 ORDER BY id LIMIT 1',
+        [row.cliente_id]
+      );
+      if (m && m.id) {
+        await db.runQuery('UPDATE incidentes SET maquina_id = ? WHERE id = ?', [m.id, row.id]);
+      }
+    }
+  } catch (e) {
+    console.warn('[backfill-catalog]', e && e.message);
+  }
+}
+
 // --- Tarifas (clave-valor) ---
 app.get('/api/tarifas', async (req, res) => {
   try {
     const rows = await db.getAll('SELECT clave, valor FROM tarifas', []);
-    const obj = {};
-    (rows || []).forEach(r => { obj[r.clave] = r.valor; });
+    const obj = { ...DEFAULT_TARIFAS };
+    (rows || []).forEach(r => {
+      if (r && r.clave != null && r.valor !== undefined && r.valor !== null) obj[r.clave] = r.valor;
+    });
     res.json(obj);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
@@ -2528,7 +2648,11 @@ app.get('/api/reportes/:id', async (req, res) => {
 
 app.post('/api/reportes', async (req, res) => {
   try {
-    const { cliente_id, razon_social, maquina_id, numero_maquina, tipo_reporte, subtipo, descripcion, tecnico, fecha, fecha_programada, estatus, notas, finalizado, archivo_firmado, archivo_firmado_nombre } = req.body || {};
+    const body = req.body || {};
+    const { cliente_id, razon_social, maquina_id, numero_maquina, tipo_reporte, subtipo, descripcion, tecnico, fecha, fecha_programada, estatus, notas, finalizado, archivo_firmado, archivo_firmado_b64, archivo_firmado_nombre } = body;
+    const archivo =
+      archivo_firmado ||
+      (typeof archivo_firmado_b64 === 'string' && archivo_firmado_b64.trim() ? archivo_firmado_b64.trim() : null);
     const folio = generarFolioReporte(tipo_reporte);
     const isFinalizado = finalizado ? 1 : 0;
     const finalEstatus = isFinalizado ? 'finalizado' : (estatus || 'abierto');
@@ -2538,7 +2662,7 @@ app.post('/api/reportes', async (req, res) => {
       [folio, cliente_id || null, razon_social || null, maquina_id || null, numero_maquina || null,
        tipo_reporte || 'servicio', subtipo || null, descripcion || null, tecnico || null,
        fecha || new Date().toISOString().slice(0,10), fecha_programada || null, finalEstatus, notas || null,
-       isFinalizado, archivo_firmado || null, archivo_firmado_nombre || null]
+       isFinalizado, archivo || null, archivo_firmado_nombre || null]
     );
     const r = await db.getOne('SELECT r.*, c.nombre as cliente_nombre FROM reportes r LEFT JOIN clientes c ON c.id=r.cliente_id ORDER BY r.id DESC LIMIT 1');
     res.status(201).json(r);
@@ -2547,15 +2671,29 @@ app.post('/api/reportes', async (req, res) => {
 
 app.put('/api/reportes/:id', async (req, res) => {
   try {
-    const { cliente_id, razon_social, maquina_id, numero_maquina, tipo_reporte, subtipo, descripcion, tecnico, fecha, fecha_programada, estatus, notas, finalizado, archivo_firmado, archivo_firmado_nombre } = req.body || {};
-    const isFinalizado = finalizado ? 1 : 0;
-    const finalEstatus = isFinalizado ? 'finalizado' : (estatus || 'abierto');
+    const existing = await db.getOne('SELECT * FROM reportes WHERE id=?', [req.params.id]);
+    if (!existing) return res.status(404).json({ error: 'No encontrado' });
+    const b = req.body || {};
+    const pick = (k, def = null) => (b[k] !== undefined ? b[k] : (existing[k] !== undefined ? existing[k] : def));
+    const archivo =
+      b.archivo_firmado !== undefined ? b.archivo_firmado
+        : (typeof b.archivo_firmado_b64 === 'string' && b.archivo_firmado_b64.trim()
+          ? b.archivo_firmado_b64.trim()
+          : existing.archivo_firmado);
+    const archivoNombre = b.archivo_firmado_nombre !== undefined ? b.archivo_firmado_nombre : existing.archivo_firmado_nombre;
+    const isFinalizado = b.finalizado !== undefined ? (b.finalizado ? 1 : 0) : (Number(existing.finalizado) ? 1 : 0);
+    let finalEstatus = pick('estatus', existing.estatus || 'abierto');
+    if (isFinalizado) finalEstatus = 'finalizado';
     await db.runQuery(
       `UPDATE reportes SET cliente_id=?, razon_social=?, maquina_id=?, numero_maquina=?, tipo_reporte=?, subtipo=?, descripcion=?, tecnico=?, fecha=?, fecha_programada=?, estatus=?, notas=?, finalizado=?, archivo_firmado=?, archivo_firmado_nombre=? WHERE id=?`,
-      [cliente_id || null, razon_social || null, maquina_id || null, numero_maquina || null,
-       tipo_reporte || 'servicio', subtipo || null, descripcion || null, tecnico || null,
-       fecha || null, fecha_programada || null, finalEstatus, notas || null,
-       isFinalizado, archivo_firmado || null, archivo_firmado_nombre || null, req.params.id]
+      [
+        pick('cliente_id'), pick('razon_social'), pick('maquina_id'), pick('numero_maquina'),
+        pick('tipo_reporte', 'servicio'), pick('subtipo'), pick('descripcion'), pick('tecnico'),
+        pick('fecha'), pick('fecha_programada'),
+        finalEstatus, pick('notas'),
+        isFinalizado, archivo || null, archivoNombre || null,
+        req.params.id,
+      ]
     );
     const r = await db.getOne('SELECT r.*, c.nombre as cliente_nombre FROM reportes r LEFT JOIN clientes c ON c.id=r.cliente_id WHERE r.id=?', [req.params.id]);
     res.json(r || {});
@@ -3209,6 +3347,7 @@ app.get('*', (req, res) => {
 
 async function start() {
   await db.init();
+  await ensureTarifasDefaults();
   await auth.ensureSeedUsers();
   // Auto-seed demo data si las tablas están vacías
   try {
@@ -3240,6 +3379,7 @@ async function start() {
       console.warn('[demo-ensure] Arranque omitido:', e && e.message);
     }
   }
+  await backfillCatalogDefaults();
   startAutoBackupScheduler();
   app.listen(PORT, () => {
     console.log('Sistema de Cotización - En línea');

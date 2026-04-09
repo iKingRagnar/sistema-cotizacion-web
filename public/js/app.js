@@ -1966,7 +1966,10 @@
         <td>
           ${finalizado
             ? `<span class="badge badge-ok"><i class="fas fa-check-circle"></i> Finalizado</span>`
-            : `<button type="button" class="btn tiny success btn-finalizar-rep" data-id="${r.id}" title="Marcar como finalizado (escanear firma)"><i class="fas fa-check"></i> Finalizar</button>`}
+            : `<span class="rep-final-wrap">
+            <button type="button" class="btn tiny success btn-finalizar-rep" data-id="${r.id}" title="Marcar como finalizado"><i class="fas fa-check"></i> Finalizar</button>
+            <button type="button" class="btn tiny outline btn-adj-firma-rep" data-id="${r.id}" title="Finalizar y adjuntar PDF o imagen firmada (opcional)"><i class="fas fa-paperclip"></i></button>
+          </span>`}
         </td>
         <td class="th-actions">
           <button type="button" class="btn small outline btn-preview-rep" data-id="${r.id}" title="Vista previa"><i class="fas fa-eye"></i></button>
@@ -1986,29 +1989,57 @@
       btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar este reporte?', () => deleteReporte(btn.dataset.id)); });
     });
     tbody.querySelectorAll('.btn-finalizar-rep').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); finalizarReporte(btn.dataset.id); });
+      btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); finalizarReporte(btn.dataset.id); });
+    });
+    tbody.querySelectorAll('.btn-adj-firma-rep').forEach(btn => {
+      btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); adjuntarFirmaYFinalizarReporte(btn.dataset.id); });
     });
     updateTableFooter('tabla-reportes', data.length, reportesCache.length, () => clearTableFiltersAndRefresh('tabla-reportes', null, applyReportesFiltersAndRender));
     animateTableRows('tabla-reportes');
   }
 
+  /** Finaliza el reporte en el servidor (sin abrir selector de archivos). */
   async function finalizarReporte(id) {
+    if (!id) return;
+    if (!confirm('¿Marcar este reporte como finalizado?')) return;
+    try {
+      await fetchJson(API + '/reportes/' + id, {
+        method: 'PUT',
+        body: JSON.stringify({ finalizado: 1 }),
+      });
+      showToast('Reporte finalizado correctamente.', 'success');
+      loadReportes();
+    } catch (er) {
+      showToast(parseApiError(er), 'error');
+    }
+  }
+
+  /** Solo si el usuario elige el clip: adjuntar PDF/imagen y finalizar. */
+  function adjuntarFirmaYFinalizarReporte(id) {
+    if (!id) return;
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*,application/pdf';
+    input.setAttribute('aria-label', 'Elegir archivo firmado');
     input.onchange = async () => {
-      const file = input.files[0];
+      const file = input.files && input.files[0];
       if (!file) return;
       const reader = new FileReader();
       reader.onload = async (ev) => {
         try {
           await fetchJson(API + '/reportes/' + id, {
             method: 'PUT',
-            body: JSON.stringify({ finalizado: 1, archivo_firmado_b64: ev.target.result, archivo_firmado_nombre: file.name }),
+            body: JSON.stringify({
+              finalizado: 1,
+              archivo_firmado_b64: ev.target.result,
+              archivo_firmado_nombre: file.name,
+            }),
           });
-          showToast('Reporte finalizado correctamente.', 'success');
+          showToast('Reporte finalizado con archivo adjunto.', 'success');
           loadReportes();
-        } catch (er) { showToast(parseApiError(er), 'error'); }
+        } catch (er) {
+          showToast(parseApiError(er), 'error');
+        }
       };
       reader.readAsDataURL(file);
     };
@@ -2273,6 +2304,23 @@
     d.setDate(d.getDate() + n);
     return d.toISOString().slice(0, 10);
   }
+  function pickMonthWithMostMantenimientos(cache) {
+    const counts = {};
+    (cache || []).forEach(m => {
+      const fp = (m.fecha_programada || '').toString().slice(0, 10);
+      if (fp.length >= 7) {
+        const ym = fp.slice(0, 7);
+        counts[ym] = (counts[ym] || 0) + 1;
+      }
+    });
+    let best = '';
+    let n = 0;
+    Object.keys(counts).forEach(ym => {
+      if (counts[ym] > n) { n = counts[ym]; best = ym; }
+    });
+    return best || '';
+  }
+
   function enrichMantGarRow(m) {
     const hoy = new Date().toISOString().slice(0, 10);
     const fp = (m.fecha_programada || '').toString().slice(0, 10);
@@ -2307,7 +2355,24 @@
       const raw = await fetchJson(API + '/mantenimientos-garantia');
       mantenimientosGarantiaCache = toArray(raw).map(enrichMantGarRow);
       const mi = qs('#mant-gar-month');
-      if (mi && !mi.value) mi.value = new Date().toISOString().slice(0, 7);
+      if (mi) {
+        const best = pickMonthWithMostMantenimientos(mantenimientosGarantiaCache);
+        const nowYm = new Date().toISOString().slice(0, 7);
+        if (!mi.value) {
+          mi.value = best || nowYm;
+        } else {
+          try {
+            const touched = sessionStorage.getItem('mantGarMonthTouched');
+            if (!touched && !sessionStorage.getItem('mantGarSmartV1')) {
+              const cur = mi.value;
+              const nCur = mantenimientosGarantiaCache.filter(m => (m.fecha_programada || '').toString().slice(0, 7) === cur).length;
+              const nBest = best ? mantenimientosGarantiaCache.filter(m => (m.fecha_programada || '').toString().slice(0, 7) === best).length : 0;
+              if (nCur === 0 && nBest > 0) mi.value = best;
+              sessionStorage.setItem('mantGarSmartV1', '1');
+            }
+          } catch (_) {}
+        }
+      }
       renderMantenimientoGarantiaTable();
       renderMantenimientoGarantiaCalendar();
       checkGarantiasAlertas();
@@ -2401,9 +2466,11 @@
       const more = list.length > 4 ? `<span class="cal-more">+${list.length - 4}</span>` : '';
       cells += `<div class="${cls}"><div class="cal-day-num">${d}</div><div class="cal-dots">${dots}${more}</div></div>`;
     }
+    const totalMes = mantenimientosGarantiaCache.filter(m => (m.fecha_programada || '').toString().slice(0, 7) === ym).length;
     wrap.innerHTML = `
+      <p class="cal-month-summary"><i class="fas fa-calendar-alt"></i> <strong>${totalMes}</strong> mantenimiento(s) en este mes · Cambia el mes arriba para ver otros periodos.</p>
       <div class="cal-header">${labels.map(l => `<span>${l}</span>`).join('')}</div>
-      <div class="cal-grid">${cells}</div>
+      <div class="cal-grid cal-grid--animated">${cells}</div>
       <p class="cal-legend"><span class="cal-dot cal-dot-bad"></span> Vencido
         <span class="cal-dot cal-dot-warn"></span> Próximo (30 días)
         <span class="cal-dot cal-dot-pendiente"></span> Pendiente
@@ -5102,7 +5169,16 @@
       const data = await fetchJson(API + '/audit?limit=100');
       const rows = data.rows || [];
       if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty">Sin eventos (o autenticación desactivada en el servidor).</td></tr>';
+        let emptyMsg;
+        if (!serverConfig.authRequired) {
+          emptyMsg = 'Con autenticación desactivada en el servidor (AUTH_ENABLED=0) no se guarda historial de auditoría en esta tabla. No es un fallo de la app.';
+        } else if (serverConfig.auditLoggingEnabled === false) {
+          emptyMsg = 'La escritura en auditoría está desactivada (AUDIT_ENABLED=0 en el servidor). Las operaciones no se registran en esta tabla.';
+        } else {
+          emptyMsg = 'Sin eventos todavía. Prueba a crear o editar un cliente, refacción o cotización y vuelve a actualizar esta pestaña.';
+        }
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">' + emptyMsg + '</td></tr>';
+        if (meta) meta.textContent = !serverConfig.authRequired ? 'Modo sin auditoría API' : (serverConfig.auditLoggingEnabled === false ? 'Auditoría de escritura desactivada' : 'Historial vacío');
         return;
       }
       tbody.innerHTML = rows
@@ -6175,12 +6251,24 @@
     const maqOpts = maquinasCache.map(m =>
       `<option value="${m.id}" data-modelo="${escapeHtml(m.modelo || m.nombre || '')}" data-serie="${escapeHtml(m.numero_serie || '')}" data-cat="${escapeHtml(m.categoria || '')}" ${rev && rev.maquina_id == m.id ? 'selected' : ''}>${escapeHtml(m.modelo || m.nombre || '')} – ${escapeHtml(m.numero_serie || '')}</option>`
     ).join('');
+    const catVal = (rev && rev.categoria) || '';
+    const catFromMaq = rev && rev.maquina_id && maquinasCache.find(x => String(x.id) === String(rev.maquina_id));
+    const effectiveCat = catVal || (catFromMaq && catFromMaq.categoria) || '';
+    let catExtra = '';
+    if (effectiveCat && !CATEGORIAS_MAQUINAS.includes(effectiveCat)) {
+      catExtra = `<option value="${escapeHtml(effectiveCat)}" selected>${escapeHtml(effectiveCat)} (histórico)</option>`;
+    }
+    const catOpts = CATEGORIAS_MAQUINAS.map(c =>
+      `<option value="${escapeHtml(c)}" ${effectiveCat === c ? 'selected' : ''}>${escapeHtml(c)}</option>`
+    ).join('');
     const body = `
       <div class="form-group"><label>Máquina (catálogo)</label>
         <select id="rm-maquina"><option value="">— Seleccionar —</option>${maqOpts}</select>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>Categoría</label><input type="text" id="rm-cat" value="${escapeHtml(rev && rev.categoria || '')}" placeholder="Auto desde catálogo"></div>
+        <div class="form-group"><label>Categoría</label>
+          <select id="rm-cat">${catExtra}<option value="" disabled ${!effectiveCat ? 'selected' : ''}>— Elegir categoría —</option>${catOpts}</select>
+        </div>
         <div class="form-group"><label>Modelo</label><input type="text" id="rm-modelo" value="${escapeHtml(rev && rev.modelo || '')}" placeholder="Auto desde catálogo"></div>
       </div>
       <div class="form-group"><label>Nº de serie</label><input type="text" id="rm-serie" value="${escapeHtml(rev && rev.numero_serie || '')}" placeholder="Auto desde catálogo"></div>
@@ -6209,7 +6297,21 @@
       maqSel.addEventListener('change', () => {
         const opt = maqSel.options[maqSel.selectedIndex];
         if (opt && opt.value) {
-          qs('#rm-cat').value = opt.dataset.cat || '';
+          const catEl = qs('#rm-cat');
+          const rawCat = (opt.dataset.cat || '').trim();
+          if (catEl) {
+            if (rawCat && CATEGORIAS_MAQUINAS.includes(rawCat)) catEl.value = rawCat;
+            else if (rawCat) {
+              const has = Array.from(catEl.options).some(o => o.value === rawCat);
+              if (!has) {
+                const o = document.createElement('option');
+                o.value = rawCat;
+                o.textContent = rawCat + ' (catálogo)';
+                catEl.insertBefore(o, catEl.firstChild);
+              }
+              catEl.value = rawCat;
+            } else catEl.value = 'Centro de Maquinado';
+          }
           qs('#rm-modelo').value = opt.dataset.modelo || '';
           qs('#rm-serie').value = opt.dataset.serie || '';
           // Si no entregado, prueba = En Proceso
@@ -6517,6 +6619,10 @@
       e.target.value = ''; // reset para permitir re-selección
     }
   });
+  qs('#btn-import-refacciones-trigger')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    qs('#import-refacciones-file')?.click();
+  });
 
   // ----- EVENT LISTENERS -----
   qs('#buscar-clientes').addEventListener('input', debounce(loadClientes, 350));
@@ -6630,10 +6736,16 @@
   if (btnMantGarHoy) btnMantGarHoy.addEventListener('click', () => {
     const mi = qs('#mant-gar-month');
     if (mi) mi.value = new Date().toISOString().slice(0, 7);
+    try { sessionStorage.setItem('mantGarMonthTouched', '1'); } catch (_) {}
     renderMantenimientoGarantiaCalendar();
   });
   const mantGarMonth = qs('#mant-gar-month');
-  if (mantGarMonth) mantGarMonth.addEventListener('change', () => renderMantenimientoGarantiaCalendar());
+  if (mantGarMonth) {
+    mantGarMonth.addEventListener('change', () => {
+      try { sessionStorage.setItem('mantGarMonthTouched', '1'); } catch (_) {}
+      renderMantenimientoGarantiaCalendar();
+    });
+  }
   const btnMantGarRefreshSin = qs('#btn-mant-gar-refresh-sin');
   if (btnMantGarRefreshSin) btnMantGarRefreshSin.addEventListener('click', () => loadGarantiasSinCobertura());
   const exportGarantiasSin = qs('#export-garantias-sin');

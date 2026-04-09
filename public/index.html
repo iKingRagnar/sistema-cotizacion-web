@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" id="meta-theme-color" content="#1e3a5f">
+  <meta name="theme-color" id="meta-theme-color" content="#4f46e5">
   <title>Gestor Administrativo · Profesional</title>
   <meta name="description" content="Gestor Administrativo para clientes, refacciones, máquinas, cotizaciones, incidentes y bitácora de horas. Control total en un solo lugar.">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=49">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Syne:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=52">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
@@ -270,10 +270,10 @@
           <input type="search" id="buscar-refacciones" placeholder="Buscar por código o descripción..." class="search">
           <button type="button" id="export-refacciones" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
           <button type="button" id="export-excel-refacciones" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
-          <label class="btn outline" title="Importar catálogo desde XLSX (2026 REFACCIONES)" style="cursor:pointer;margin-bottom:0">
+          <button type="button" class="btn outline" id="btn-import-refacciones-trigger" title="Importar catálogo desde XLSX (2026 REFACCIONES)">
             <i class="fas fa-file-import"></i> Importar XLSX
-            <input type="file" id="import-refacciones-file" accept=".xlsx,.xls" class="hidden" style="display:none">
-          </label>
+          </button>
+          <input type="file" id="import-refacciones-file" accept=".xlsx,.xls" class="hidden" tabindex="-1" aria-hidden="true">
           <button type="button" id="nueva-refaccion" class="btn primary"><i class="fas fa-plus"></i> Nueva refacción</button>
         </div>
       </div>
@@ -889,7 +889,7 @@
         <h2><i class="fas fa-clipboard-list"></i> Auditoría</h2>
         <p class="audit-meta" id="audit-meta"></p>
       </div>
-      <p class="hint audit-intro">Registro de operaciones que modifican datos (POST, PUT, DELETE). Visible solo para el rol <strong>admin</strong> cuando el servidor tiene <code>AUTH_ENABLED=1</code>.</p>
+      <p class="hint audit-intro">Registro de operaciones que modifican datos (POST, PUT, DELETE). Solo admin. Si la tabla sale vacía, suele ser porque no hay cambios registrados aún o porque en el servidor está desactivada la autenticación o la escritura en auditoría (ver mensaje bajo la tabla).</p>
       <div class="table-wrap">
         <table class="data-table" id="tabla-auditoria">
           <thead>
@@ -1067,6 +1067,6 @@
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=75"></script>
+  <script src="js/app.js?v=78"></script>
 </body>
 </html>
