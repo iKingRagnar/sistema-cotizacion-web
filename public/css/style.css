@@ -661,6 +661,23 @@ body.dark-theme #tabla-bitacoras th.th-actions {
   align-items: center;
   gap: 0.5rem;
 }
+.header-slot-tc,
+.header-slot-urgent,
+.header-slot-alertas {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.section-header .toolbar .toolbar-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+  user-select: none;
+  margin-right: 0.25rem;
+}
 .header-alerts .alert-badge {
   display: inline-flex;
   align-items: center;
@@ -3383,8 +3400,22 @@ body.dark-theme .cal-day-num { color: #e2e8f0; }
 
 /* ===== MÁQUINAS: tarjetas y ficha ===== */
 .maquinas-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.25rem; padding: 1rem 0; }
-.maq-card { background: var(--surface, #fff); border: 1px solid var(--border, #e2e8f0); border-radius: var(--radius, 10px); padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.6rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); transition: box-shadow .2s; }
+.maq-card { background: var(--surface, #fff); border: 1px solid var(--border, #e2e8f0); border-radius: var(--radius, 10px); padding: 0; display: flex; flex-direction: column; gap: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.06); transition: box-shadow .2s; overflow: hidden; }
 .maq-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.11); }
+.maq-card-thumb { width: 100%; height: 120px; background: linear-gradient(145deg, #e2e8f0, #f1f5f9); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+.maq-card-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.maq-card-thumb--empty { color: #94a3b8; font-size: 2rem; }
+.maq-card > .maq-card-header { padding: 0.85rem 1.2rem 0; }
+.maq-card > .maq-card-modelo { padding: 0 1.2rem; }
+.maq-card > .maq-card-body { padding: 0 1.2rem; }
+.maq-card > .maq-card-actions { padding: 0.85rem 1.2rem 1.1rem; margin-top: 0; }
+.maq-preview-imgwrap { border-radius: 8px; overflow: hidden; border: 1px solid var(--border, #e2e8f0); background: #f8fafc; }
+.maq-preview-img { display: block; width: 100%; max-height: 220px; object-fit: contain; }
+.maq-ficha-imgs { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+.maq-ficha-imgs figure { margin: 0; text-align: center; }
+.maq-ficha-imgs figcaption { font-size: 0.75rem; color: var(--text-muted, #64748b); margin-bottom: 0.35rem; }
+.maq-ficha-imgs img { max-width: 100%; max-height: 180px; object-fit: contain; border: 1px solid var(--border, #e2e8f0); border-radius: 8px; background: #f8fafc; }
+@media print { .maq-ficha-imgs { break-inside: avoid; } }
 .maq-card-header { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
 .maq-card-cat { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; background: var(--config-accent, #0d9488); color: #fff; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
 .maq-card-zona { font-size: 0.78rem; color: var(--text-muted, #64748b); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

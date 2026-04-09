@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=47">
+  <link rel="stylesheet" href="css/style.css?v=49">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
@@ -108,7 +108,11 @@
         <select id="global-branch-filter" class="header-branch-filter" title="Filtro global por sucursal / ciudad">
           <option value="">Todas las sucursales</option>
         </select>
-        <div id="header-alerts" class="header-alerts" aria-live="polite"></div>
+        <div id="header-alerts" class="header-alerts" aria-live="polite">
+          <span id="header-slot-tc" class="header-slot-tc"></span>
+          <span id="header-slot-urgent" class="header-slot-urgent"></span>
+          <span id="header-slot-alertas" class="header-slot-alertas"></span>
+        </div>
         <div id="header-system-status" class="header-system-status" aria-live="polite">Estado: iniciando…</div>
         <div class="header-notifications-wrap">
           <button type="button" id="btn-notifications" class="btn-icon-header" title="Centro de notificaciones" aria-label="Centro de notificaciones">
@@ -351,6 +355,9 @@
       <div class="section-header">
         <h2><i class="fas fa-file-invoice-dollar"></i> Cotizaciones</h2>
         <div class="toolbar">
+          <label class="toolbar-checkbox" title="Mostrar cotizaciones ya aplicadas o convertidas en venta">
+            <input type="checkbox" id="cot-incluir-aplicadas"> Incluir aplicadas
+          </label>
           <button type="button" id="export-cotizaciones" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
           <button type="button" id="export-excel-cotizaciones" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
           <button type="button" id="nueva-cotizacion" class="btn primary"><i class="fas fa-plus"></i> Nueva cotización</button>
@@ -1060,6 +1067,6 @@
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=74"></script>
+  <script src="js/app.js?v=75"></script>
 </body>
 </html>

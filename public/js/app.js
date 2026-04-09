@@ -435,7 +435,12 @@
     let msg = e && e.message ? String(e.message) : 'Error al procesar';
     try {
       const o = JSON.parse(msg);
-      if (o && o.error) return o.error;
+      if (o && o.error) {
+        if (Array.isArray(o.errores) && o.errores.length) {
+          return o.error + '\n' + o.errores.join('\n');
+        }
+        return o.error;
+      }
     } catch (_) {}
     return msg;
   }
@@ -1451,7 +1456,10 @@
       refaccionesCache = data;
       applyRefaccionesFiltersAndRender();
     } catch (e) { renderRefacciones([]); console.error(e); }
-    finally { hideLoading(); }
+    finally {
+      hideLoading();
+      if (typeof refreshAlertasHeader === 'function') refreshAlertasHeader();
+    }
   }
 
   let tipoCambioActual = 17.0; // tipo de cambio USD/MXN actualizado desde Banxico
@@ -1461,30 +1469,56 @@
   let maquinasViewMode = 'tabla'; // 'tabla' | 'tarjetas'
 
   function previewMaquina(m) {
+    const imgFields = [];
+    if (m.imagen_pieza_url) {
+      imgFields.push({
+        label: 'Vista pieza / parte (manual)',
+        value: `<div class="maq-preview-imgwrap"><img class="maq-preview-img" src="${escapeHtml(m.imagen_pieza_url)}" alt="Pieza"></div>`,
+        html: true,
+        full: true,
+        icon: 'fa-image',
+      });
+    }
+    if (m.imagen_ensamble_url) {
+      imgFields.push({
+        label: 'Diagrama de ensamble',
+        value: `<div class="maq-preview-imgwrap"><img class="maq-preview-img" src="${escapeHtml(m.imagen_ensamble_url)}" alt="Ensamble"></div>`,
+        html: true,
+        full: true,
+        icon: 'fa-object-group',
+      });
+    }
     openPreviewCard({
       title: m.modelo || m.nombre || 'Máquina',
-      subtitle: m.categoria || '',
+      subtitle: [m.categoria_principal, m.categoria].filter(Boolean).join(' · ') || '',
       icon: 'fa-industry',
       color: 'linear-gradient(135deg, #1e3a5f 0%, #3b5998 100%)',
       badge: m.activo === 0 ? 'Inactiva' : 'Activa',
       badgeClass: m.activo === 0 ? 'pvc-badge--danger' : 'pvc-badge--success',
-      sections: [{
-        title: 'Especificaciones', icon: 'fa-cog',
-        fields: [
-          { label: 'ID', value: m.id, icon: 'fa-hashtag' },
-          { label: 'Categoría', value: m.categoria, icon: 'fa-layer-group' },
-          { label: 'Modelo', value: m.modelo || m.nombre, icon: 'fa-tag', full: true },
-          { label: 'Marca', value: m.marca, icon: 'fa-star' },
-          { label: 'Número de serie', value: m.numero_serie, icon: 'fa-barcode' },
-          { label: 'Código', value: m.codigo, icon: 'fa-code' },
-        ]
-      }, {
-        title: 'Ubicación y cliente', icon: 'fa-map-marker-alt',
-        fields: [
-          { label: 'Cliente', value: m.cliente_nombre, icon: 'fa-user-tie', full: true },
-          { label: 'Ubicación', value: m.ubicacion, icon: 'fa-map-marker-alt', full: true },
-        ]
-      }]
+      sections: [
+        ...(imgFields.length
+          ? [{ title: 'Manual de partes — referencia visual', icon: 'fa-book', fields: imgFields }]
+          : []),
+        {
+          title: 'Especificaciones', icon: 'fa-cog',
+          fields: [
+            { label: 'ID', value: m.id, icon: 'fa-hashtag' },
+            { label: 'Centro / jerarquía', value: m.categoria_principal, icon: 'fa-sitemap' },
+            { label: 'Categoría', value: m.categoria, icon: 'fa-layer-group' },
+            { label: 'Modelo', value: m.modelo || m.nombre, icon: 'fa-tag', full: true },
+            { label: 'Número de serie', value: m.numero_serie, icon: 'fa-barcode' },
+            { label: 'Código interno', value: m.codigo, icon: 'fa-code' },
+            { label: 'Stock (almacén demo)', value: m.stock != null ? String(m.stock) : '0', icon: 'fa-warehouse' },
+          ],
+        },
+        {
+          title: 'Ubicación y cliente', icon: 'fa-map-marker-alt',
+          fields: [
+            { label: 'Cliente', value: m.cliente_nombre, icon: 'fa-user-tie', full: true },
+            { label: 'Zona / sucursal', value: m.ubicacion, icon: 'fa-map-marker-alt', full: true },
+          ],
+        },
+      ],
     });
   }
   function renderMaquinaCard(m) {
@@ -1494,8 +1528,12 @@
     const modelo = escapeHtml(m.modelo || m.nombre || '—');
     const serie = escapeHtml(m.numero_serie || '—');
     const cliente = escapeHtml(m.cliente_nombre || '—');
+    const thumb = m.imagen_pieza_url
+      ? `<div class="maq-card-thumb"><img src="${escapeHtml(m.imagen_pieza_url)}" alt="" loading="lazy"></div>`
+      : `<div class="maq-card-thumb maq-card-thumb--empty"><i class="fas fa-image"></i></div>`;
     return `
       <div class="maq-card" data-id="${m.id}">
+        ${thumb}
         <div class="maq-card-header">
           <span class="maq-card-cat">${cat}</span>
           <span class="maq-card-zona"><i class="fas fa-map-marker-alt"></i> ${zona}</span>
@@ -1519,6 +1557,12 @@
     const modelo = escapeHtml(m.modelo || m.nombre || '—');
     const serie = escapeHtml(m.numero_serie || '—');
     const cliente = escapeHtml(m.cliente_nombre || '—');
+    const imgs = (m.imagen_pieza_url || m.imagen_ensamble_url)
+      ? `<div class="maq-ficha-imgs">
+          ${m.imagen_pieza_url ? `<figure><figcaption>Pieza / parte</figcaption><img src="${escapeHtml(m.imagen_pieza_url)}" alt="Pieza"></figure>` : ''}
+          ${m.imagen_ensamble_url ? `<figure><figcaption>Diagrama ensamble</figcaption><img src="${escapeHtml(m.imagen_ensamble_url)}" alt="Ensamble"></figure>` : ''}
+        </div>`
+      : '';
     const body = `
       <div class="maq-ficha">
         <div class="maq-ficha-header">
@@ -1528,10 +1572,12 @@
             <div class="maq-ficha-modelo">${modelo}</div>
           </div>
         </div>
+        ${imgs}
         <table class="maq-ficha-table">
           <tr><th>Nº de Serie</th><td>${serie}</td></tr>
           <tr><th>Cliente</th><td>${cliente}</td></tr>
           <tr><th>Zona</th><td>${zona}</td></tr>
+          <tr><th>Stock</th><td>${escapeHtml(String(m.stock != null ? m.stock : 0))}</td></tr>
           <tr><th>ID sistema</th><td>${m.id}</td></tr>
         </table>
         <div class="maq-ficha-actions no-print">
@@ -1804,6 +1850,8 @@
       showToast('Cotización aplicada como venta. Inventario actualizado.', 'success');
       loadCotizaciones();
       loadRefacciones();
+      loadVentas();
+      if (typeof refreshAlertasHeader === 'function') refreshAlertasHeader();
     } catch (e) { showToast(parseApiError(e) || 'No se pudo aplicar la cotización.', 'error'); }
   }
 
@@ -3248,6 +3296,7 @@
       showToast(parseApiError(e) || 'No se pudieron cargar los incidentes.', 'error');
     } finally {
       hideLoading();
+      if (typeof refreshAlertasHeader === 'function') refreshAlertasHeader();
     }
   }
 
@@ -3773,49 +3822,100 @@
   async function openModalMaquina(maquina) {
     const isNew = !maquina || !maquina.id;
     const clientes = await fetchJson(API + '/clientes').catch(() => []);
+    const catalogoUm = toArray(await fetchJson(API + '/catalogo-universal-maquinas').catch(() => []));
     const options = clientes.map(c => `<option value="${c.id}" ${maquina && maquina.cliente_id == c.id ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`).join('');
     const catOpts = CATEGORIAS_MAQUINAS.map(c => `<option value="${c}" ${maquina && maquina.categoria === c ? 'selected' : ''}>${c}</option>`).join('');
-    const zonasSucursal = ['Monterrey', 'Guanajuato', 'Ciudad de México', 'Guadalajara', 'Querétaro', 'Saltillo', 'San Luis Potosí', 'Otra'];
+    const zonasSucursal = ['Monterrey', 'Ciudad de México', 'Querétaro', 'Guadalajara', 'Reynosa', 'Chihuahua', 'Guanajuato', 'Tlalnepantla', 'Saltillo', 'San Luis Potosí', 'Otra'];
     const zonaOpts = zonasSucursal.map(z => `<option value="${z}" ${maquina && maquina.ubicacion === z ? 'selected' : ''}>${z}</option>`).join('');
+    const catalogoOpts = catalogoUm.map((row, idx) => `<option value="${idx}" data-json="1">${escapeHtml(row.modelo)}</option>`).join('');
     const body = `
+      <p class="form-hint" style="margin-top:0"><i class="fas fa-book"></i> Catálogo basado en <strong>UNIVERSAL 2025</strong> (PDF). Al elegir un modelo se rellenan categoría, imágenes placeholder pieza/ensamble y código de manual; sustituye las URLs por tus escaneos cuando los tengas.</p>
+      <div class="form-group"><label>Importar desde catálogo Universal</label>
+        <select id="m-catalogo-um">
+          <option value="">— Sin importar (captura manual) —</option>
+          ${catalogoOpts}
+        </select>
+      </div>
       <div class="form-group"><label>Cliente *</label><select id="m-cliente_id">${options}</select></div>
       <div class="form-row">
+        <div class="form-group"><label>Centro de maquinado / jerarquía</label>
+          <input type="text" id="m-categoria_principal" maxlength="80" value="${escapeHtml(maquina && maquina.categoria_principal) || ''}" placeholder="Ej: Centro de Maquinado">
+        </div>
         <div class="form-group"><label>Categoría *</label>
           <select id="m-categoria">
             <option value="">-- Seleccionar --</option>
             ${catOpts}
           </select>
         </div>
-        <div class="form-group"><label>Modelo *</label><input type="text" id="m-modelo" maxlength="80" value="${escapeHtml(maquina && maquina.modelo) || ''}" required placeholder="Ej: CTX 510, EcoTurn 400…"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Modelo *</label><input type="text" id="m-modelo" maxlength="120" value="${escapeHtml(maquina && maquina.modelo) || ''}" required placeholder="Ej: GH1440A, CTX 510…"></div>
+        <div class="form-group"><label>Stock (0 por defecto en almacén demo)</label><input type="number" id="m-stock" step="any" min="0" value="${maquina && maquina.stock != null ? escapeHtml(String(maquina.stock)) : '0'}"></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label>Nº Serie</label><input type="text" id="m-numero_serie" maxlength="80" value="${escapeHtml(maquina && maquina.numero_serie) || ''}"></div>
-        <div class="form-group"><label>Zona / Sucursal</label>
+        <div class="form-group"><label>Zona / Sucursal (PDF)</label>
           <select id="m-ubicacion">
             <option value="">-- Seleccionar --</option>
             ${zonaOpts}
           </select>
         </div>
       </div>
-      <div class="form-group"><label>Nombre / Identificador interno</label><input type="text" id="m-nombre" maxlength="150" value="${escapeHtml(maquina && maquina.nombre) || ''}" placeholder="Nombre interno opcional"></div>
+      <div class="form-row">
+        <div class="form-group"><label>URL imagen — pieza / parte (manual)</label><input type="url" id="m-img-pieza" value="${escapeHtml(maquina && maquina.imagen_pieza_url) || ''}" placeholder="https://… o /img/maquinas/…"></div>
+        <div class="form-group"><label>URL imagen — diagrama ensamble</label><input type="url" id="m-img-ensamble" value="${escapeHtml(maquina && maquina.imagen_ensamble_url) || ''}" placeholder="https://… o /img/maquinas/…"></div>
+      </div>
+      <div class="form-group"><label>Nombre / Identificador interno</label><input type="text" id="m-nombre" maxlength="150" value="${escapeHtml(maquina && maquina.nombre) || ''}" placeholder="Opcional; si vacío se usa el modelo"></div>
       <div class="form-actions">
         <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
         <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
       </div>
     `;
     openModal(isNew ? 'Nueva máquina' : 'Editar máquina', body);
+    const catSel = qs('#m-catalogo-um');
+    if (catSel && catalogoUm.length) {
+      catSel.addEventListener('change', () => {
+        const i = parseInt(catSel.value, 10);
+        if (!Number.isFinite(i) || !catalogoUm[i]) return;
+        const row = catalogoUm[i];
+        const modeloEl = qs('#m-modelo');
+        const catEl = qs('#m-categoria');
+        const cpEl = qs('#m-categoria_principal');
+        const pz = qs('#m-img-pieza');
+        const en = qs('#m-img-ensamble');
+        if (modeloEl) modeloEl.value = row.modelo || '';
+        if (catEl && row.categoria) {
+          catEl.value = CATEGORIAS_MAQUINAS.includes(row.categoria) ? row.categoria : catEl.value;
+          if (!CATEGORIAS_MAQUINAS.includes(row.categoria)) {
+            const opt = document.createElement('option');
+            opt.value = row.categoria;
+            opt.selected = true;
+            catEl.appendChild(opt);
+          }
+        }
+        if (cpEl && row.categoria_principal) cpEl.value = row.categoria_principal;
+        if (pz && row.imagen_pieza_url) pz.value = row.imagen_pieza_url;
+        if (en && row.imagen_ensamble_url) en.value = row.imagen_ensamble_url;
+      });
+    }
     qs('#m-save').onclick = async () => {
       clearInvalidMarks();
       const modelo = (qs('#m-modelo').value || '').trim();
       let err = validateRequired(modelo, 'El modelo de la máquina es obligatorio');
       if (err) { markInvalid('m-modelo', err); return; }
+      const stockRaw = qs('#m-stock') && qs('#m-stock').value;
+      const stockNum = stockRaw !== '' && stockRaw != null ? Number(stockRaw) : 0;
       const payload = {
         cliente_id: parseInt(qs('#m-cliente_id').value, 10),
         nombre: qs('#m-nombre').value.trim() || modelo,
         categoria: qs('#m-categoria').value.trim() || null,
+        categoria_principal: (qs('#m-categoria_principal') && qs('#m-categoria_principal').value.trim()) || null,
         modelo,
         numero_serie: qs('#m-numero_serie').value.trim() || null,
         ubicacion: qs('#m-ubicacion').value.trim() || null,
+        imagen_pieza_url: (qs('#m-img-pieza') && qs('#m-img-pieza').value.trim()) || null,
+        imagen_ensamble_url: (qs('#m-img-ensamble') && qs('#m-img-ensamble').value.trim()) || null,
+        stock: Number.isFinite(stockNum) ? stockNum : 0,
       };
       const btn = qs('#m-save');
       const origText = btn.innerHTML;
@@ -5915,7 +6015,12 @@
   }
   function applyCotizacionesFiltersAndRender() {
     const tid = 'tabla-cotizaciones';
-    const filtered = applyFilters(applyGlobalBranchFilterRows(cotizacionesCache), getFilterValues('#tabla-cotizaciones'), tid);
+    let base = applyGlobalBranchFilterRows(cotizacionesCache);
+    const inclAplicadas = qs('#cot-incluir-aplicadas');
+    if (inclAplicadas && !inclAplicadas.checked) {
+      base = base.filter(c => c.estado !== 'aplicada' && c.estado !== 'venta');
+    }
+    const filtered = applyFilters(base, getFilterValues('#tabla-cotizaciones'), tid);
     const pageSize = getPageSize(tid);
     let page = getPaginationState(tid);
     const maxPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
@@ -6202,20 +6307,23 @@
       const tc = await fetchJson(API + '/tipo-cambio');
       if (tc && tc.valor) {
         tipoCambioActual = Number(tc.valor);
-        const el = qs('#header-alerts');
+        const el = qs('#header-slot-tc') || qs('#header-alerts');
         if (el) {
-          const existing = el.querySelector('.tc-badge');
-          const badge = existing || document.createElement('span');
+          el.innerHTML = '';
+          const badge = document.createElement('span');
           badge.className = 'tc-badge';
-          badge.title = `Tipo de cambio Banxico (${tc.fecha || 'hoy'})`;
+          const fuente = tc.fuente === 'banxico' ? 'Banxico' : tc.fuente === 'exchangerate-api' ? 'ExchangeRate-API' : (tc.fuente || 'referencia');
+          badge.title = `Tipo de cambio (${fuente})${tc.fecha ? ' · ' + tc.fecha : ''}`;
           badge.innerHTML = `<i class="fas fa-dollar-sign"></i> TC: $${tipoCambioActual.toFixed(2)}`;
           badge.style.cssText = 'background:var(--config-accent,#0d9488);color:#fff;padding:3px 8px;border-radius:12px;font-size:0.78rem;font-weight:600;cursor:default';
-          if (!existing) el.prepend(badge);
+          el.appendChild(badge);
         }
       }
     } catch (_) {}
   }
   fetchAndShowTipoCambio();
+  refreshAlertasHeader();
+  setInterval(refreshAlertasHeader, 3 * 60 * 1000);
 
   // ----- TÉCNICOS -----
   async function loadTecnicos() {
@@ -6438,6 +6546,16 @@
   bindTableFilters('tabla-refacciones', applyRefaccionesFiltersAndRender);
   bindTableFilters('tabla-maquinas', applyMaquinasFiltersAndRender);
   bindTableFilters('tabla-cotizaciones', applyCotizacionesFiltersAndRender);
+  const cotIncluirAplicadas = qs('#cot-incluir-aplicadas');
+  if (cotIncluirAplicadas) {
+    try {
+      if (localStorage.getItem('cot-incluir-aplicadas') === '1') cotIncluirAplicadas.checked = true;
+    } catch (_) {}
+    cotIncluirAplicadas.addEventListener('change', () => {
+      try { localStorage.setItem('cot-incluir-aplicadas', cotIncluirAplicadas.checked ? '1' : '0'); } catch (_) {}
+      applyCotizacionesFiltersAndRender();
+    });
+  }
   bindTableFilters('tabla-reportes', applyReportesFiltersAndRender);
   bindTableFilters('tabla-incidentes', applyIncidentesFiltersAndRender);
   bindTableFilters('tabla-bitacoras', applyBitacorasFiltersAndRender);
@@ -6552,28 +6670,69 @@
   qs('#export-excel-bitacoras').addEventListener('click', () => exportToExcel(enrichBitacorasForExport(applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras')), 'tabla-bitacoras', 'bitacoras'));
 
   function updateHeaderUrgencies() {
-    const el = qs('#header-alerts');
-    if (!el) return;
+    const slot = qs('#header-slot-urgent');
+    if (!slot) return;
+    slot.innerHTML = '';
     let urgent = 0;
     (incidentesCache || []).forEach(inc => {
       const d = getDiasRestantesSemaphore(inc);
       if (d.dias !== null && d.dias <= 3) urgent++;
     });
-    if (urgent === 0) {
-      el.innerHTML = '';
-      return;
-    }
-    el.innerHTML = `<a href="#" class="alert-badge alert-urgent" id="header-alert-incidentes" role="button"><i class="fas fa-exclamation-triangle"></i> ${urgent} incidente${urgent !== 1 ? 's' : ''} por vencer</a>`;
-    qs('#header-alert-incidentes').addEventListener('click', function (e) {
+    if (urgent === 0) return;
+    const a = document.createElement('a');
+    a.href = '#';
+    a.className = 'alert-badge alert-urgent';
+    a.id = 'header-alert-incidentes';
+    a.setAttribute('role', 'button');
+    a.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${urgent} incidente${urgent !== 1 ? 's' : ''} por vencer`;
+    a.addEventListener('click', function (e) {
       e.preventDefault();
       showPanel('incidentes');
     });
+    slot.appendChild(a);
     try {
       if (typeof showUrgentNotificationIfGranted === 'function' && !sessionStorage.getItem('notif-urgent-shown')) {
         showUrgentNotificationIfGranted();
         sessionStorage.setItem('notif-urgent-shown', '1');
       }
     } catch (_) {}
+  }
+
+  async function openCentroAlertasModal() {
+    showLoading();
+    try {
+      const data = await fetchJson(API + '/alertas');
+      const items = data.items || [];
+      const html = items.length === 0
+        ? '<p class="hint">No hay alertas en este momento.</p>'
+        : `<ul class="alertas-centro-list" style="list-style:none;padding:0;margin:0;max-height:60vh;overflow:auto;">${items.map(it => `<li style="padding:10px 0;border-bottom:1px solid var(--border-color,#e5e7eb);"><strong>${escapeHtml(it.titulo || '')}</strong><br><span style="color:var(--text-muted,#64748b);font-size:0.9rem;">${escapeHtml(it.detalle || '')}</span></li>`).join('')}</ul>`;
+      openModal('Centro de alertas', html);
+    } catch (e) {
+      showToast(parseApiError(e) || 'No se pudieron cargar las alertas.', 'error');
+    } finally {
+      hideLoading();
+    }
+  }
+
+  async function refreshAlertasHeader() {
+    const slot = qs('#header-slot-alertas');
+    if (!slot) return;
+    try {
+      const data = await fetchJson(API + '/alertas');
+      const n = (data.items || []).length;
+      slot.innerHTML = '';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'alert-badge' + (n > 0 ? '' : '');
+      btn.id = 'btn-header-centro-alertas';
+      btn.title = 'Ver alertas de inventario e incidentes';
+      btn.style.cssText = 'border:none;font:inherit;cursor:pointer;';
+      btn.innerHTML = n > 0
+        ? `<i class="fas fa-bell"></i> Alertas (${n})`
+        : `<i class="fas fa-bell"></i> Alertas`;
+      btn.addEventListener('click', (e) => { e.preventDefault(); openCentroAlertasModal(); });
+      slot.appendChild(btn);
+    } catch (_) { /* silencioso en header */ }
   }
 
   document.addEventListener('keydown', function (e) {

@@ -211,8 +211,12 @@ function getSchema() {
       reporte_id INTEGER REFERENCES reportes(id),
       tecnico TEXT NOT NULL,
       tipo_capacitacion TEXT,
+      modalidad TEXT DEFAULT 'local',
       monto_bono REAL DEFAULT 0,
+      dias INTEGER DEFAULT 1,
+      monto_total REAL DEFAULT 0,
       fecha TEXT DEFAULT (date('now','localtime')),
+      mes TEXT,
       pagado INTEGER DEFAULT 0,
       notas TEXT,
       creado_en TEXT DEFAULT (datetime('now','localtime'))
@@ -223,6 +227,10 @@ function getSchema() {
       tecnico TEXT NOT NULL,
       cliente_id INTEGER REFERENCES clientes(id),
       razon_social TEXT,
+      maquina TEXT,
+      numero_serie TEXT,
+      actividad TEXT,
+      estado TEXT,
       fecha_inicio TEXT NOT NULL,
       fecha_fin TEXT NOT NULL,
       dias INTEGER DEFAULT 1,
@@ -230,6 +238,7 @@ function getSchema() {
       descripcion TEXT,
       actividades TEXT,
       reporte_id INTEGER REFERENCES reportes(id),
+      mes TEXT,
       mes_liquidacion TEXT,
       liquidado INTEGER DEFAULT 0,
       creado_en TEXT DEFAULT (datetime('now','localtime'))
@@ -257,6 +266,7 @@ function getSchema() {
     `CREATE TABLE IF NOT EXISTS revision_maquinas (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       maquina_id INTEGER REFERENCES maquinas(id),
+      tipo_maquina TEXT,
       categoria TEXT,
       modelo TEXT,
       numero_serie TEXT,
@@ -311,8 +321,34 @@ async function runMigrations() {
     // cotizaciones: vendedor para cotizaciones de máquina
     `ALTER TABLE cotizaciones ADD COLUMN vendedor TEXT`,
     `ALTER TABLE cotizaciones ADD COLUMN fecha_aprobacion TEXT`,
-    // tecnicos: habilidades
+    // tecnicos: habilidades, disponibilidad
     `ALTER TABLE tecnicos ADD COLUMN habilidades TEXT`,
+    `ALTER TABLE tecnicos ADD COLUMN ocupado INTEGER DEFAULT 0`,
+    `ALTER TABLE tecnicos ADD COLUMN disponible_desde TEXT`,
+    // cotizaciones_lineas: campos para vueltas y mano de obra
+    `ALTER TABLE cotizacion_lineas ADD COLUMN es_ida INTEGER DEFAULT 0`,
+    `ALTER TABLE cotizacion_lineas ADD COLUMN horas_trabajo REAL DEFAULT 0`,
+    `ALTER TABLE cotizacion_lineas ADD COLUMN horas_traslado REAL DEFAULT 0`,
+    `ALTER TABLE cotizacion_lineas ADD COLUMN zona TEXT`,
+    `ALTER TABLE cotizacion_lineas ADD COLUMN ayudantes INTEGER DEFAULT 0`,
+    `ALTER TABLE cotizacion_lineas ADD COLUMN tarifa_aplicada TEXT`,
+    // reportes: eliminar tipo_maquina (ya no se usa)
+    `ALTER TABLE reportes ADD COLUMN subtipo TEXT`,
+    // garantias: quitar tipo_maquina, usar solo modelo_maquina
+    `ALTER TABLE garantias ADD COLUMN maximo_mantenimientos INTEGER DEFAULT 0`,
+    `ALTER TABLE garantias ADD COLUMN pagos_log TEXT DEFAULT '[]'`,
+    // bitacoras: enlazar a reportes
+    `ALTER TABLE bitacoras ADD COLUMN reporte_id INTEGER`,
+    `ALTER TABLE bitacoras ADD COLUMN archivo_firmado TEXT`,
+    `ALTER TABLE bitacoras ADD COLUMN archivo_firmado_nombre TEXT`,
+    // maquinas: agregar categoria_principal para jerarquía
+    `ALTER TABLE maquinas ADD COLUMN categoria_principal TEXT`,
+    // refacciones: agregar numero_parte_manual si no existe
+    `ALTER TABLE refacciones ADD COLUMN numero_parte_manual TEXT`,
+    // máquinas: imágenes manual de partes / diagrama ensamble (PDF Universal) + stock almacén demo
+    `ALTER TABLE maquinas ADD COLUMN imagen_pieza_url TEXT`,
+    `ALTER TABLE maquinas ADD COLUMN imagen_ensamble_url TEXT`,
+    `ALTER TABLE maquinas ADD COLUMN stock REAL DEFAULT 0`,
   ];
   for (const sql of migrations) {
     try {

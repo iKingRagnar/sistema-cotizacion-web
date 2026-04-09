@@ -205,9 +205,9 @@ function createApiMiddleware() {
     }
 
     if (isModify) {
-      // Solo admin y operador pueden editar (PUT/PATCH)
-      if (!['admin', 'operador'].includes(role)) {
-        return res.status(403).json({ error: 'Tu rol no permite editar registros existentes' });
+      // SOLO admin puede editar (PUT/PATCH) - Según requerimiento: solo David puede editar
+      if (role !== 'admin') {
+        return res.status(403).json({ error: 'Solo el administrador puede editar registros' });
       }
       wrapAuditJson(req, res);
       return next();

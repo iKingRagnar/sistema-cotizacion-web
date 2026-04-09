@@ -322,13 +322,53 @@ app.get('/api/maquinas/:id', async (req, res) => {
   }
 });
 
+app.get('/api/catalogo-universal-maquinas', async (req, res) => {
+  try {
+    const p = path.join(__dirname, 'public', 'data', 'catalogo-universal-maquinas.json');
+    if (!fs.existsSync(p)) return res.json([]);
+    const raw = fs.readFileSync(p, 'utf8');
+    const data = JSON.parse(raw);
+    res.json(Array.isArray(data) ? data : data.items || []);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
 app.post('/api/maquinas', async (req, res) => {
   try {
-    const { cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion, categoria } = req.body || {};
+    const {
+      cliente_id,
+      codigo,
+      nombre,
+      marca,
+      modelo,
+      numero_serie,
+      ubicacion,
+      categoria,
+      categoria_principal,
+      imagen_pieza_url,
+      imagen_ensamble_url,
+      stock,
+    } = req.body || {};
     if (!cliente_id) return res.status(400).json({ error: 'cliente_id requerido' });
+    const stockNum = stock != null && stock !== '' ? Number(stock) : 0;
     await db.runQuery(
-      `INSERT INTO maquinas (cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion, categoria) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [cliente_id, codigo || null, nombre || modelo || '', marca || null, modelo || null, numero_serie || null, ubicacion || null, categoria || null]
+      `INSERT INTO maquinas (cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion, categoria, categoria_principal, imagen_pieza_url, imagen_ensamble_url, stock)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        cliente_id,
+        codigo || null,
+        nombre || modelo || '',
+        marca || null,
+        modelo || null,
+        numero_serie || null,
+        ubicacion || null,
+        categoria || null,
+        categoria_principal || null,
+        imagen_pieza_url || null,
+        imagen_ensamble_url || null,
+        Number.isFinite(stockNum) ? stockNum : 0,
+      ]
     );
     const r = await db.getOne('SELECT * FROM maquinas ORDER BY id DESC LIMIT 1');
     res.status(201).json(r);
@@ -339,10 +379,39 @@ app.post('/api/maquinas', async (req, res) => {
 
 app.put('/api/maquinas/:id', async (req, res) => {
   try {
-    const { cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion, categoria } = req.body || {};
+    const {
+      cliente_id,
+      codigo,
+      nombre,
+      marca,
+      modelo,
+      numero_serie,
+      ubicacion,
+      categoria,
+      categoria_principal,
+      imagen_pieza_url,
+      imagen_ensamble_url,
+      stock,
+    } = req.body || {};
+    const stockNum = stock != null && stock !== '' ? Number(stock) : 0;
     await db.runQuery(
-      `UPDATE maquinas SET cliente_id=?, codigo=?, nombre=?, marca=?, modelo=?, numero_serie=?, ubicacion=?, categoria=? WHERE id=?`,
-      [cliente_id || null, codigo || null, nombre || modelo || '', marca || null, modelo || null, numero_serie || null, ubicacion || null, categoria || null, req.params.id]
+      `UPDATE maquinas SET cliente_id=?, codigo=?, nombre=?, marca=?, modelo=?, numero_serie=?, ubicacion=?, categoria=?, categoria_principal=?,
+       imagen_pieza_url=?, imagen_ensamble_url=?, stock=? WHERE id=?`,
+      [
+        cliente_id || null,
+        codigo || null,
+        nombre || modelo || '',
+        marca || null,
+        modelo || null,
+        numero_serie || null,
+        ubicacion || null,
+        categoria || null,
+        categoria_principal || null,
+        imagen_pieza_url || null,
+        imagen_ensamble_url || null,
+        Number.isFinite(stockNum) ? stockNum : 0,
+        req.params.id,
+      ]
     );
     const r = await db.getOne('SELECT * FROM maquinas WHERE id = ?', [req.params.id]);
     res.json(r || {});
@@ -360,30 +429,80 @@ app.delete('/api/maquinas/:id', async (req, res) => {
   }
 });
 
-// --- Tipo de cambio Banxico (USD/MXN) ---
-let tipoCambioCache = { valor: 17.0, fecha: null };
-async function fetchTipoCambioBanxico() {
-  try {
-    const https = require('https');
-    const url = 'https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43718/datos/oportuno?token=none';
-    // Usamos la serie SF43718 (tipo de cambio para solventar obligaciones en USD)
-    const data = await new Promise((resolve, reject) => {
-      const req2 = https.get(url, { headers: { 'Accept': 'application/json' } }, (r) => {
-        let body = '';
-        r.on('data', d => body += d);
-        r.on('end', () => { try { resolve(JSON.parse(body)); } catch (e) { reject(e); } });
+// --- Tipo de cambio: Banxico (token opcional) + respaldo ExchangeRate-API (clave en env) ---
+let tipoCambioCache = { valor: 17.0, fecha: null, fuente: 'default', banxico: null, exchangerate: null };
+
+function httpsGetJson(url, timeoutMs = 8000) {
+  const https = require('https');
+  return new Promise((resolve, reject) => {
+    const req2 = https.get(url, { headers: { Accept: 'application/json' } }, (r) => {
+      let body = '';
+      r.on('data', d => { body += d; });
+      r.on('end', () => {
+        try { resolve(JSON.parse(body)); } catch (e) { reject(e); }
       });
-      req2.on('error', reject);
-      req2.setTimeout(5000, () => req2.destroy());
     });
+    req2.on('error', reject);
+    req2.setTimeout(timeoutMs, () => { req2.destroy(); reject(new Error('timeout')); });
+  });
+}
+
+async function fetchTipoCambioBanxico() {
+  const prev = { ...tipoCambioCache };
+  const parseBanxicoDato = (data) => {
     const dato = data?.bmx?.series?.[0]?.datos?.[0]?.dato;
-    if (dato && !isNaN(parseFloat(dato))) {
-      tipoCambioCache = { valor: parseFloat(dato), fecha: new Date().toISOString().slice(0, 10) };
-    }
-  } catch (_) { /* usar valor cacheado */ }
+    if (dato != null && !isNaN(parseFloat(dato))) return parseFloat(dato);
+    return null;
+  };
+  const tokenPreferido = (process.env.BANXICO_TOKEN || process.env.BANXICO_API_TOKEN || '').trim();
+  const tokens = tokenPreferido ? [tokenPreferido, 'none'] : ['none'];
+
+  for (const tok of tokens) {
+    try {
+      const url = `https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43718/datos/oportuno?token=${encodeURIComponent(tok)}`;
+      const data = await httpsGetJson(url);
+      const v = parseBanxicoDato(data);
+      if (v != null) {
+        tipoCambioCache = {
+          valor: v,
+          fecha: new Date().toISOString().slice(0, 10),
+          fuente: 'banxico',
+          banxico: v,
+          exchangerate: prev.exchangerate,
+        };
+        return tipoCambioCache;
+      }
+    } catch (_) { /* siguiente fuente */ }
+  }
+
+  const erKey = (process.env.EXCHANGE_RATE_API_KEY || '').trim();
+  if (erKey) {
+    try {
+      const url = `https://v6.exchangerate-api.com/v6/${encodeURIComponent(erKey)}/latest/USD`;
+      const data = await httpsGetJson(url);
+      const mxn = data?.conversion_rates?.MXN;
+      if (mxn != null && !isNaN(parseFloat(mxn))) {
+        const v = parseFloat(mxn);
+        const fechaUp = data.time_last_update_utc ? String(data.time_last_update_utc).slice(0, 10) : new Date().toISOString().slice(0, 10);
+        tipoCambioCache = {
+          valor: v,
+          fecha: fechaUp,
+          fuente: 'exchangerate-api',
+          banxico: prev.banxico,
+          exchangerate: v,
+        };
+        return tipoCambioCache;
+      }
+    } catch (_) { /* mantener cache */ }
+  }
+
+  if (prev.valor && prev.valor > 0) {
+    tipoCambioCache = { ...prev, fuente: prev.fuente || 'cache' };
+    return tipoCambioCache;
+  }
+  tipoCambioCache = { valor: 17.0, fecha: null, fuente: 'default', banxico: null, exchangerate: null };
   return tipoCambioCache;
 }
-// Refrescar al arrancar y cada hora
 fetchTipoCambioBanxico();
 setInterval(fetchTipoCambioBanxico, 60 * 60 * 1000);
 
@@ -393,6 +512,48 @@ app.get('/api/tipo-cambio', async (req, res) => {
     res.json(tc);
   } catch (e) {
     res.json(tipoCambioCache);
+  }
+});
+
+/** Centro de alertas: stock bajo, incidentes por vencer */
+app.get('/api/alertas', async (req, res) => {
+  try {
+    const items = [];
+    const refs = await db.getAll(
+      `SELECT id, codigo, descripcion, stock, stock_minimo, zona FROM refacciones
+       WHERE activo = 1 AND COALESCE(stock_minimo, 0) > 0 AND stock <= stock_minimo
+       ORDER BY stock ASC, codigo LIMIT 200`
+    );
+    for (const r of refs || []) {
+      items.push({
+        id: `ref-stock-${r.id}`,
+        tipo: 'stock_bajo',
+        severidad: Number(r.stock) <= 0 ? 'danger' : 'warning',
+        titulo: `Stock bajo: ${r.codigo || '—'}`,
+        detalle: `Disponible ${r.stock}, mínimo ${r.stock_minimo}${r.zona ? ' · ' + r.zona : ''}`,
+        refaccion_id: r.id,
+      });
+    }
+    const incs = await db.getAll(
+      `SELECT i.id, i.folio, i.fecha_vencimiento, i.cliente_id, c.nombre as cliente_nombre
+       FROM incidentes i JOIN clientes c ON c.id = i.cliente_id
+       WHERE i.estatus = 'abierto' AND i.fecha_vencimiento IS NOT NULL AND i.fecha_vencimiento != ''
+         AND date(i.fecha_vencimiento) <= date('now','localtime','+7 days')
+       ORDER BY i.fecha_vencimiento ASC LIMIT 100`
+    );
+    for (const inc of incs || []) {
+      items.push({
+        id: `inc-${inc.id}`,
+        tipo: 'incidente_vence',
+        severidad: 'warning',
+        titulo: `Incidente por vencer: ${inc.folio || '#' + inc.id}`,
+        detalle: `${inc.cliente_nombre || ''} · vence ${inc.fecha_vencimiento}`,
+        incidente_id: inc.id,
+      });
+    }
+    res.json({ items, generado_en: new Date().toISOString() });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
   }
 });
 
@@ -598,6 +759,12 @@ app.post('/api/cotizaciones/:id/lineas', async (req, res) => {
       cantidad,
       precio_unitario,
       orden,
+      es_ida,
+      horas_trabajo,
+      horas_traslado,
+      zona,
+      ayudantes,
+      tarifa_aplicada,
     } = req.body || {};
     const tipo = String(tipo_linea || '').trim() || 'otro';
     if (!['refaccion', 'vuelta', 'mano_obra', 'otro'].includes(tipo)) {
@@ -610,8 +777,8 @@ app.post('/api/cotizaciones/:id/lineas', async (req, res) => {
     }
     const calc = calcLinea(tipo, cantidad, precio_unitario, cot.moneda, cot.tipo_cambio);
     await db.runQuery(
-      `INSERT INTO cotizacion_lineas (cotizacion_id, refaccion_id, maquina_id, bitacora_id, tipo_linea, descripcion, cantidad, precio_unitario, precio_usd, subtotal, iva, total, orden)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO cotizacion_lineas (cotizacion_id, refaccion_id, maquina_id, bitacora_id, tipo_linea, descripcion, cantidad, precio_unitario, precio_usd, subtotal, iva, total, orden, es_ida, horas_trabajo, horas_traslado, zona, ayudantes, tarifa_aplicada)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         Number(req.params.id),
         refaccion_id || null,
@@ -626,6 +793,12 @@ app.post('/api/cotizaciones/:id/lineas', async (req, res) => {
         calc.iva,
         calc.total,
         Number.isFinite(Number(orden)) ? Number(orden) : 0,
+        es_ida ? 1 : 0,
+        Number(horas_trabajo) || 0,
+        Number(horas_traslado) || 0,
+        zona || null,
+        Number(ayudantes) || 0,
+        tarifa_aplicada || null,
       ]
     );
     await recalcCotizacionTotals(req.params.id);
@@ -661,9 +834,17 @@ app.put('/api/cotizaciones/:id/lineas/:lineaId', async (req, res) => {
     const nextPrecio = (req.body && 'precio_unitario' in req.body) ? req.body.precio_unitario : linea.precio_unitario;
     const calc = calcLinea(nextTipo, nextCantidad, nextPrecio, cot.moneda, cot.tipo_cambio);
 
+    // Extraer nuevos campos si se envían
+    const esIda = (req.body && 'es_ida' in req.body) ? (req.body.es_ida ? 1 : 0) : (linea.es_ida || 0);
+    const horasTrabajo = (req.body && 'horas_trabajo' in req.body) ? Number(req.body.horas_trabajo) : (linea.horas_trabajo || 0);
+    const horasTraslado = (req.body && 'horas_traslado' in req.body) ? Number(req.body.horas_traslado) : (linea.horas_traslado || 0);
+    const zona = (req.body && 'zona' in req.body) ? req.body.zona : (linea.zona || null);
+    const ayudantes = (req.body && 'ayudantes' in req.body) ? Number(req.body.ayudantes) : (linea.ayudantes || 0);
+    const tarifaAplicada = (req.body && 'tarifa_aplicada' in req.body) ? req.body.tarifa_aplicada : (linea.tarifa_aplicada || null);
+
     await db.runQuery(
       `UPDATE cotizacion_lineas
-       SET refaccion_id=?, maquina_id=?, bitacora_id=?, tipo_linea=?, descripcion=?, cantidad=?, precio_unitario=?, precio_usd=?, subtotal=?, iva=?, total=?, orden=?
+       SET refaccion_id=?, maquina_id=?, bitacora_id=?, tipo_linea=?, descripcion=?, cantidad=?, precio_unitario=?, precio_usd=?, subtotal=?, iva=?, total=?, orden=?, es_ida=?, horas_trabajo=?, horas_traslado=?, zona=?, ayudantes=?, tarifa_aplicada=?
        WHERE id=? AND cotizacion_id=?`,
       [
         nextRefaccionId || null,
@@ -678,6 +859,12 @@ app.put('/api/cotizaciones/:id/lineas/:lineaId', async (req, res) => {
         calc.iva,
         calc.total,
         (req.body && 'orden' in req.body) ? (Number(req.body.orden) || 0) : (Number(linea.orden) || 0),
+        esIda,
+        horasTrabajo,
+        horasTraslado,
+        zona,
+        ayudantes,
+        tarifaAplicada,
         req.params.lineaId,
         req.params.id,
       ]
@@ -775,24 +962,45 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
   }
 });
 
-// Aplicar cotización: descontar stock FIFO
+// Aplicar cotización: validar stock total por refacción y solo entonces descontar
 app.post('/api/cotizaciones/:id/aplicar', async (req, res) => {
   try {
     const cot = await db.getOne('SELECT * FROM cotizaciones WHERE id = ?', [req.params.id]);
     if (!cot) return res.status(404).json({ error: 'No encontrada' });
-    if (cot.estado === 'aplicada') return res.status(400).json({ error: 'Cotización ya aplicada' });
-    const lineas = await db.getAll('SELECT * FROM cotizacion_lineas WHERE cotizacion_id = ?', [req.params.id]);
-    const errores = [];
+    if (cot.estado === 'aplicada' || cot.estado === 'venta') {
+      return res.status(400).json({ error: 'Cotización ya aplicada o registrada como venta' });
+    }
+    const lineas = await db.getAll('SELECT * FROM cotizacion_lineas WHERE cotizacion_id = ? ORDER BY orden, id', [req.params.id]);
+    const demandByRef = new Map();
     for (const l of lineas) {
-      if (!l.refaccion_id || l.tipo_linea !== 'refaccion') continue;
-      const ref = await db.getOne('SELECT * FROM refacciones WHERE id = ?', [l.refaccion_id]);
-      if (!ref) continue;
+      if (!l.refaccion_id || String(l.tipo_linea || 'refaccion') !== 'refaccion') continue;
       const cant = Number(l.cantidad) || 0;
-      if (ref.stock < cant) {
-        errores.push(`Sin stock suficiente: ${ref.codigo} (disponible: ${ref.stock}, requerido: ${cant})`);
+      if (cant <= 0) continue;
+      const idR = Number(l.refaccion_id);
+      demandByRef.set(idR, (demandByRef.get(idR) || 0) + cant);
+    }
+    const errores = [];
+    for (const [refId, need] of demandByRef) {
+      const ref = await db.getOne('SELECT * FROM refacciones WHERE id = ?', [refId]);
+      if (!ref) {
+        errores.push(`Refacción id ${refId} no encontrada en catálogo`);
         continue;
       }
-      const nuevoStock = ref.stock - cant;
+      if (Number(ref.stock) < need) {
+        errores.push(`Sin stock suficiente: ${ref.codigo} (disponible: ${ref.stock}, requerido: ${need})`);
+      }
+    }
+    if (errores.length) {
+      return res.status(400).json({ error: 'No se puede aplicar la cotización por inventario.', errores });
+    }
+
+    for (const l of lineas) {
+      if (!l.refaccion_id || String(l.tipo_linea || 'refaccion') !== 'refaccion') continue;
+      const cant = Number(l.cantidad) || 0;
+      if (cant <= 0) continue;
+      const ref = await db.getOne('SELECT * FROM refacciones WHERE id = ?', [l.refaccion_id]);
+      if (!ref) continue;
+      const nuevoStock = Number(ref.stock) - cant;
       await db.runQuery('UPDATE refacciones SET stock=? WHERE id=?', [nuevoStock, ref.id]);
       await db.runQuery(
         `INSERT INTO movimientos_stock (refaccion_id, tipo, cantidad, costo_unitario, cotizacion_id, referencia, fecha)
@@ -806,13 +1014,13 @@ app.post('/api/cotizaciones/:id/aplicar', async (req, res) => {
       vendedor ? [vendedor, req.params.id] : [req.params.id]
     );
 
-    // Enviar correo de notificación si SMTP está configurado
     try {
       const cliente = await db.getOne('SELECT * FROM clientes WHERE id=?', [cot.cliente_id]);
-      await enviarCorreoAprobacion(cot, cliente, lineas);
+      const cotUp = await db.getOne('SELECT * FROM cotizaciones WHERE id=?', [req.params.id]);
+      await enviarCorreoAprobacion(cotUp || cot, cliente);
     } catch (_) { /* correo opcional */ }
 
-    res.json({ ok: true, errores });
+    res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -833,9 +1041,9 @@ app.get('/api/tecnicos', async (req, res) => {
 });
 app.post('/api/tecnicos', async (req, res) => {
   try {
-    const { nombre, habilidades } = req.body || {};
+    const { nombre, habilidades, ocupado, disponible_desde } = req.body || {};
     if (!nombre) return res.status(400).json({ error: 'nombre requerido' });
-    await db.runQuery('INSERT OR IGNORE INTO tecnicos (nombre, habilidades) VALUES (?, ?)', [nombre, habilidades || null]);
+    await db.runQuery('INSERT OR IGNORE INTO tecnicos (nombre, habilidades, ocupado, disponible_desde) VALUES (?, ?, ?, ?)', [nombre, habilidades || null, ocupado ? 1 : 0, disponible_desde || null]);
     const r = await db.getOne('SELECT * FROM tecnicos WHERE nombre=?', [nombre]);
     res.status(201).json(r);
   } catch (e) {
@@ -844,10 +1052,10 @@ app.post('/api/tecnicos', async (req, res) => {
 });
 app.put('/api/tecnicos/:id', async (req, res) => {
   try {
-    const { nombre, habilidades, activo } = req.body || {};
+    const { nombre, habilidades, activo, ocupado, disponible_desde } = req.body || {};
     if (!nombre) return res.status(400).json({ error: 'nombre requerido' });
-    await db.runQuery('UPDATE tecnicos SET nombre=?, habilidades=?, activo=? WHERE id=?',
-      [nombre, habilidades || null, activo !== undefined ? activo : 1, req.params.id]);
+    await db.runQuery('UPDATE tecnicos SET nombre=?, habilidades=?, activo=?, ocupado=?, disponible_desde=? WHERE id=?',
+      [nombre, habilidades || null, activo !== undefined ? activo : 1, ocupado ? 1 : 0, disponible_desde || null, req.params.id]);
     const r = await db.getOne('SELECT * FROM tecnicos WHERE id=?', [req.params.id]);
     res.json(r);
   } catch (e) {
@@ -2320,14 +2528,17 @@ app.get('/api/reportes/:id', async (req, res) => {
 
 app.post('/api/reportes', async (req, res) => {
   try {
-    const { cliente_id, razon_social, maquina_id, numero_maquina, tipo_reporte, subtipo, descripcion, tecnico, fecha, estatus, notas } = req.body || {};
+    const { cliente_id, razon_social, maquina_id, numero_maquina, tipo_reporte, subtipo, descripcion, tecnico, fecha, fecha_programada, estatus, notas, finalizado, archivo_firmado, archivo_firmado_nombre } = req.body || {};
     const folio = generarFolioReporte(tipo_reporte);
+    const isFinalizado = finalizado ? 1 : 0;
+    const finalEstatus = isFinalizado ? 'finalizado' : (estatus || 'abierto');
     await db.runQuery(
-      `INSERT INTO reportes (folio, cliente_id, razon_social, maquina_id, numero_maquina, tipo_reporte, subtipo, descripcion, tecnico, fecha, estatus, notas)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO reportes (folio, cliente_id, razon_social, maquina_id, numero_maquina, tipo_reporte, subtipo, descripcion, tecnico, fecha, fecha_programada, estatus, notas, finalizado, archivo_firmado, archivo_firmado_nombre)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [folio, cliente_id || null, razon_social || null, maquina_id || null, numero_maquina || null,
        tipo_reporte || 'servicio', subtipo || null, descripcion || null, tecnico || null,
-       fecha || new Date().toISOString().slice(0,10), estatus || 'abierto', notas || null]
+       fecha || new Date().toISOString().slice(0,10), fecha_programada || null, finalEstatus, notas || null,
+       isFinalizado, archivo_firmado || null, archivo_firmado_nombre || null]
     );
     const r = await db.getOne('SELECT r.*, c.nombre as cliente_nombre FROM reportes r LEFT JOIN clientes c ON c.id=r.cliente_id ORDER BY r.id DESC LIMIT 1');
     res.status(201).json(r);
@@ -2336,12 +2547,15 @@ app.post('/api/reportes', async (req, res) => {
 
 app.put('/api/reportes/:id', async (req, res) => {
   try {
-    const { cliente_id, razon_social, maquina_id, numero_maquina, tipo_reporte, subtipo, descripcion, tecnico, fecha, estatus, notas } = req.body || {};
+    const { cliente_id, razon_social, maquina_id, numero_maquina, tipo_reporte, subtipo, descripcion, tecnico, fecha, fecha_programada, estatus, notas, finalizado, archivo_firmado, archivo_firmado_nombre } = req.body || {};
+    const isFinalizado = finalizado ? 1 : 0;
+    const finalEstatus = isFinalizado ? 'finalizado' : (estatus || 'abierto');
     await db.runQuery(
-      `UPDATE reportes SET cliente_id=?, razon_social=?, maquina_id=?, numero_maquina=?, tipo_reporte=?, subtipo=?, descripcion=?, tecnico=?, fecha=?, estatus=?, notas=? WHERE id=?`,
+      `UPDATE reportes SET cliente_id=?, razon_social=?, maquina_id=?, numero_maquina=?, tipo_reporte=?, subtipo=?, descripcion=?, tecnico=?, fecha=?, fecha_programada=?, estatus=?, notas=?, finalizado=?, archivo_firmado=?, archivo_firmado_nombre=? WHERE id=?`,
       [cliente_id || null, razon_social || null, maquina_id || null, numero_maquina || null,
        tipo_reporte || 'servicio', subtipo || null, descripcion || null, tecnico || null,
-       fecha || null, estatus || 'abierto', notas || null, req.params.id]
+       fecha || null, fecha_programada || null, finalEstatus, notas || null,
+       isFinalizado, archivo_firmado || null, archivo_firmado_nombre || null, req.params.id]
     );
     const r = await db.getOne('SELECT r.*, c.nombre as cliente_nombre FROM reportes r LEFT JOIN clientes c ON c.id=r.cliente_id WHERE r.id=?', [req.params.id]);
     res.json(r || {});
@@ -2450,11 +2664,10 @@ function buildEmailHtml({ title, subtitle, rows, tableHeader, tableRows, footer,
   </body></html>`;
 }
 
-/** Envía correo al aprobar una cotización: info cliente + resumen cotización */
-async function enviarCorreoAprobacion(cot, cliente, lineas) {
+/** Envía correo al aprobar una cotización: info cliente + líneas con código y moneda */
+async function enviarCorreoAprobacion(cot, cliente) {
   const t = createMailTransport();
   const from = (process.env.SMTP_FROM || process.env.SMTP_USER || '').trim();
-  // Destinatarios fijos del sistema + correo del cliente
   const adminEmails = ['dcantu746@gmail.com', 'guillermorc44@gmail.com'];
   const envVarAdmin = (process.env.SMTP_ADMIN_EMAIL || '').trim();
   if (envVarAdmin && !adminEmails.includes(envVarAdmin)) adminEmails.push(envVarAdmin);
@@ -2464,7 +2677,17 @@ async function enviarCorreoAprobacion(cot, cliente, lineas) {
   const allRecipients = [...new Set([...adminEmails, clienteEmail].filter(Boolean))];
   if (!allRecipients.length) return;
 
-  const monedaLabel = cot.moneda || 'MXN';
+  const lineas = await db.getAll(
+    `SELECT l.*, r.codigo AS ref_codigo, r.descripcion AS ref_desc
+     FROM cotizacion_lineas l
+     LEFT JOIN refacciones r ON r.id = l.refaccion_id
+     WHERE l.cotizacion_id = ?
+     ORDER BY l.orden, l.id`,
+    [cot.id]
+  );
+
+  const monedaLabel = (cot.moneda || 'MXN').toUpperCase();
+  const tc = Number(cot.tipo_cambio) > 0 ? Number(cot.tipo_cambio) : 17.0;
   const totalFmt = `$${Number(cot.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })} ${monedaLabel}`;
   const subtotalFmt = `$${Number(cot.subtotal || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })} ${monedaLabel}`;
   const ivaFmt = `$${Number(cot.iva || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })} ${monedaLabel}`;
@@ -2476,21 +2699,31 @@ async function enviarCorreoAprobacion(cot, cliente, lineas) {
     { label: 'Cliente', value: cliente ? cliente.nombre : 'N/A' },
     { label: 'RFC', value: cliente ? (cliente.rfc || '—') : '—' },
     { label: 'Tipo', value: cot.tipo || '—' },
+    { label: 'Tipo de cambio (ref.)', value: `$${tc.toFixed(4)} MXN/USD` },
     { label: 'Subtotal', value: subtotalFmt },
     { label: 'IVA (16%)', value: ivaFmt },
     { label: 'Total', value: `<strong style="font-size:15px;">${totalFmt}</strong>`, bold: true },
   ];
 
-  const tableHeader = ['#', 'Descripción', 'Cant.', 'Precio Unit.', 'Subtotal'];
-  const tableRows = (lineas || []).map((l, i) => [
-    i + 1,
-    l.descripcion || '—',
-    Number(l.cantidad || 0).toLocaleString('es-MX'),
-    `$${Number(l.precio_unitario || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
-    `$${Number(l.subtotal || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
-  ]);
+  const tableHeader = ['#', 'Código', 'Descripción', 'Cant.', `Unit. (${monedaLabel})`, 'USD ref.', 'Subtotal'];
+  const tableRows = (lineas || []).map((l, i) => {
+    const codigo = (l.ref_codigo && String(l.ref_codigo).trim()) ? l.ref_codigo : '—';
+    const desc = (l.descripcion && String(l.descripcion).trim()) ? l.descripcion : (l.ref_desc || '—');
+    const pu = Number(l.precio_unitario) || 0;
+    const puUsd = l.precio_usd != null && String(l.precio_usd) !== '' ? Number(l.precio_usd) : (monedaLabel === 'USD' ? pu : pu / tc);
+    return [
+      i + 1,
+      codigo || '—',
+      desc,
+      Number(l.cantidad || 0).toLocaleString('es-MX'),
+      `$${pu.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
+      `$${(Number.isFinite(puUsd) ? puUsd : 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
+      `$${Number(l.subtotal || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
+    ];
+  });
 
-  const footer = `Para proceder con la facturación, favor de proporcionar la <strong>Constancia de Situación Fiscal</strong> actualizada y los datos de facturación correspondientes.<br><br>
+  const footer = `Tipo de cambio de referencia: <strong>${tc.toFixed(4)} MXN/USD</strong> (Banxico / tabla cotización).<br><br>
+    Para proceder con la facturación, favor de proporcionar la <strong>Constancia de Situación Fiscal</strong> actualizada y los datos de facturación correspondientes.<br><br>
     <strong>Universal Machine Tools</strong> agradece su preferencia. Ante cualquier duda, comuníquese con nosotros a la brevedad.`;
 
   const html = buildEmailHtml({
@@ -2503,7 +2736,11 @@ async function enviarCorreoAprobacion(cot, cliente, lineas) {
   });
 
   const subject = `✅ Cotización aprobada – Folio ${cot.folio} | Universal Machine Tools`;
-  const text = `Cotización aprobada – Folio ${cot.folio}\n\nCliente: ${cliente ? cliente.nombre : 'N/A'}\nRFC: ${cliente ? (cliente.rfc || '—') : '—'}\nFecha: ${fechaFmt}\nTotal: ${totalFmt}\n\nConceptos:\n${(lineas || []).map((l, i) => `  ${i + 1}. ${l.descripcion || ''} — cant: ${l.cantidad}, precio: $${l.precio_unitario} ${monedaLabel}`).join('\n')}\n\nPara facturar: adjuntar Constancia de Situación Fiscal.\n\nUniversal Machine Tools`;
+  const text = `Cotización aprobada – Folio ${cot.folio}\n\nCliente: ${cliente ? cliente.nombre : 'N/A'}\nRFC: ${cliente ? (cliente.rfc || '—') : '—'}\nFecha: ${fechaFmt}\nTC ref.: ${tc}\nTotal: ${totalFmt}\n\nConceptos:\n${(lineas || []).map((l, i) => {
+    const c = l.ref_codigo || '—';
+    const d = l.descripcion || l.ref_desc || '';
+    return `  ${i + 1}. [${c}] ${d} — cant: ${l.cantidad}, subtotal: ${l.subtotal}`;
+  }).join('\n')}\n\nPara facturar: adjuntar Constancia de Situación Fiscal.\n\nUniversal Machine Tools`;
   try {
     await t.sendMail({ from, to: allRecipients.join(', '), subject, text, html });
   } catch (_) { /* correo no bloquea la operación */ }
@@ -2824,11 +3061,15 @@ app.get('/api/bonos', async (req, res) => {
 
 app.post('/api/bonos', async (req, res) => {
   try {
-    const { reporte_id, tecnico, tipo_capacitacion, monto_bono, fecha, notas } = req.body || {};
+    const { reporte_id, tecnico, tipo_capacitacion, modalidad, monto_bono, dias, fecha, mes, notas } = req.body || {};
     if (!tecnico) return res.status(400).json({ error: 'tecnico requerido' });
+    const diasNum = Number(dias) || 1;
+    const montoBono = Number(monto_bono) || 0;
+    const montoTotal = diasNum * montoBono;
+    const mesCalc = mes || (fecha ? fecha.slice(0,7) : new Date().toISOString().slice(0,7));
     await db.runQuery(
-      `INSERT INTO bonos (reporte_id, tecnico, tipo_capacitacion, monto_bono, fecha, notas) VALUES (?, ?, ?, ?, ?, ?)`,
-      [reporte_id || null, tecnico, tipo_capacitacion || null, Number(monto_bono) || 0, fecha || new Date().toISOString().slice(0,10), notas || null]
+      `INSERT INTO bonos (reporte_id, tecnico, tipo_capacitacion, modalidad, monto_bono, dias, monto_total, fecha, mes, notas) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [reporte_id || null, tecnico, tipo_capacitacion || null, modalidad || 'local', montoBono, diasNum, montoTotal, fecha || new Date().toISOString().slice(0,10), mesCalc, notas || null]
     );
     const r = await db.getOne('SELECT * FROM bonos ORDER BY id DESC LIMIT 1');
     res.status(201).json(r);
@@ -2837,10 +3078,14 @@ app.post('/api/bonos', async (req, res) => {
 
 app.put('/api/bonos/:id', async (req, res) => {
   try {
-    const { reporte_id, tecnico, tipo_capacitacion, monto_bono, fecha, pagado, notas } = req.body || {};
+    const { reporte_id, tecnico, tipo_capacitacion, modalidad, monto_bono, dias, fecha, mes, pagado, notas } = req.body || {};
+    const diasNum = Number(dias) || 1;
+    const montoBono = Number(monto_bono) || 0;
+    const montoTotal = diasNum * montoBono;
+    const mesCalc = mes || (fecha ? fecha.slice(0,7) : new Date().toISOString().slice(0,7));
     await db.runQuery(
-      `UPDATE bonos SET reporte_id=?, tecnico=?, tipo_capacitacion=?, monto_bono=?, fecha=?, pagado=?, notas=? WHERE id=?`,
-      [reporte_id || null, tecnico || '', tipo_capacitacion || null, Number(monto_bono) || 0, fecha || null, Number(pagado) || 0, notas || null, req.params.id]
+      `UPDATE bonos SET reporte_id=?, tecnico=?, tipo_capacitacion=?, modalidad=?, monto_bono=?, dias=?, monto_total=?, fecha=?, mes=?, pagado=?, notas=? WHERE id=?`,
+      [reporte_id || null, tecnico || '', tipo_capacitacion || null, modalidad || 'local', montoBono, diasNum, montoTotal, fecha || null, mesCalc, Number(pagado) || 0, notas || null, req.params.id]
     );
     const r = await db.getOne('SELECT * FROM bonos WHERE id=?', [req.params.id]);
     res.json(r || {});
@@ -2886,15 +3131,16 @@ app.get('/api/viajes', async (req, res) => {
 
 app.post('/api/viajes', async (req, res) => {
   try {
-    const { tecnico, cliente_id, razon_social, fecha_inicio, fecha_fin, descripcion, actividades, reporte_id, mes_liquidacion } = req.body || {};
+    const { tecnico, cliente_id, razon_social, maquina, numero_serie, actividad, estado, fecha_inicio, fecha_fin, descripcion, actividades, reporte_id, mes, mes_liquidacion } = req.body || {};
     if (!tecnico || !fecha_inicio || !fecha_fin) return res.status(400).json({ error: 'tecnico, fecha_inicio y fecha_fin requeridos' });
     const d1 = new Date(fecha_inicio + 'T00:00:00');
     const d2 = new Date(fecha_fin + 'T00:00:00');
     const dias = Math.max(1, Math.round((d2 - d1) / (86400000)) + 1);
     const monto = dias * VIATICO_DIARIO;
+    const mesCalc = mes || mes_liquidacion || fecha_inicio.slice(0,7);
     await db.runQuery(
-      `INSERT INTO viajes (tecnico, cliente_id, razon_social, fecha_inicio, fecha_fin, dias, monto_viaticos, descripcion, actividades, reporte_id, mes_liquidacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [tecnico, cliente_id || null, razon_social || null, fecha_inicio, fecha_fin, dias, monto, descripcion || null, actividades || null, reporte_id || null, mes_liquidacion || null]
+      `INSERT INTO viajes (tecnico, cliente_id, razon_social, maquina, numero_serie, actividad, estado, fecha_inicio, fecha_fin, dias, monto_viaticos, descripcion, actividades, reporte_id, mes, mes_liquidacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [tecnico, cliente_id || null, razon_social || null, maquina || null, numero_serie || null, actividad || null, estado || 'pendiente', fecha_inicio, fecha_fin, dias, monto, descripcion || null, actividades || null, reporte_id || null, mesCalc, mes_liquidacion || mesCalc]
     );
     const r = await db.getOne('SELECT * FROM viajes ORDER BY id DESC LIMIT 1');
     res.status(201).json(r);
@@ -2903,14 +3149,15 @@ app.post('/api/viajes', async (req, res) => {
 
 app.put('/api/viajes/:id', async (req, res) => {
   try {
-    const { tecnico, cliente_id, razon_social, fecha_inicio, fecha_fin, descripcion, actividades, reporte_id, mes_liquidacion, liquidado } = req.body || {};
+    const { tecnico, cliente_id, razon_social, maquina, numero_serie, actividad, estado, fecha_inicio, fecha_fin, descripcion, actividades, reporte_id, mes, mes_liquidacion, liquidado } = req.body || {};
     const d1 = new Date((fecha_inicio || '') + 'T00:00:00');
     const d2 = new Date((fecha_fin || '') + 'T00:00:00');
     const dias = isNaN(d1) || isNaN(d2) ? 1 : Math.max(1, Math.round((d2 - d1) / 86400000) + 1);
     const monto = dias * VIATICO_DIARIO;
+    const mesCalc = mes || mes_liquidacion || (fecha_inicio ? fecha_inicio.slice(0,7) : null);
     await db.runQuery(
-      `UPDATE viajes SET tecnico=?, cliente_id=?, razon_social=?, fecha_inicio=?, fecha_fin=?, dias=?, monto_viaticos=?, descripcion=?, actividades=?, reporte_id=?, mes_liquidacion=?, liquidado=? WHERE id=?`,
-      [tecnico || '', cliente_id || null, razon_social || null, fecha_inicio || null, fecha_fin || null, dias, monto, descripcion || null, actividades || null, reporte_id || null, mes_liquidacion || null, Number(liquidado) || 0, req.params.id]
+      `UPDATE viajes SET tecnico=?, cliente_id=?, razon_social=?, maquina=?, numero_serie=?, actividad=?, estado=?, fecha_inicio=?, fecha_fin=?, dias=?, monto_viaticos=?, descripcion=?, actividades=?, reporte_id=?, mes=?, mes_liquidacion=?, liquidado=? WHERE id=?`,
+      [tecnico || '', cliente_id || null, razon_social || null, maquina || null, numero_serie || null, actividad || null, estado || 'pendiente', fecha_inicio || null, fecha_fin || null, dias, monto, descripcion || null, actividades || null, reporte_id || null, mesCalc, mes_liquidacion || mesCalc, Number(liquidado) || 0, req.params.id]
     );
     const r = await db.getOne('SELECT * FROM viajes WHERE id=?', [req.params.id]);
     res.json(r || {});
