@@ -24,6 +24,11 @@ app.get('/api/config', (req, res) => {
   res.json(auth.getPublicConfig());
 });
 
+/** Liveness para Render u otros orquestadores: responde sin tocar la BD. */
+app.get('/health', (req, res) => {
+  res.status(200).type('text/plain').send('ok');
+});
+
 app.get('/api/storage-health', async (req, res) => {
   try {
     const storage = db.getStorageInfo ? db.getStorageInfo() : { mode: db.useTurso ? 'turso' : 'sqlite', path: null };
@@ -3627,10 +3632,8 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-async function start() {
-  await db.init();
-  await ensureTarifasDefaults();
-  await auth.ensureSeedUsers();
+/** Seed demo, backfill y respaldos: después de escuchar el puerto para no bloquear el health check de Render. */
+async function runPostListenStartup() {
   // Auto-seed demo data si las tablas están vacías
   try {
     const [cRow] = await db.getAll('SELECT COUNT(*) as n FROM clientes');
@@ -3663,18 +3666,27 @@ async function start() {
   }
   await backfillCatalogDefaults();
   startAutoBackupScheduler();
-  app.listen(PORT, () => {
+  console.log('[backup-auto] Intervalo (h):', Math.round(BACKUP_AUTO_INTERVAL_MS / (60 * 60 * 1000)));
+  console.log('[backup-auto] Directorio:', getBackupDir());
+  console.log('[backup-auto] Retención: max archivos =', BACKUP_AUTO_MAX_FILES, '| max días =', BACKUP_AUTO_MAX_AGE_DAYS);
+}
+
+async function start() {
+  await db.init();
+  await ensureTarifasDefaults();
+  await auth.ensureSeedUsers();
+  app.listen(PORT, '0.0.0.0', () => {
     console.log('Sistema de Cotización - En línea');
-    console.log('Abre en el navegador: http://localhost:' + PORT);
+    console.log('Escuchando en http://0.0.0.0:' + PORT + ' (Render / Docker: usar PORT del entorno)');
     if (db.useTurso) console.log('Base de datos: Turso (nube)');
     else {
       const storage = db.getStorageInfo && db.getStorageInfo();
       console.log('Base de datos: SQLite local');
       if (storage && storage.path) console.log('Archivo SQLite: ' + storage.path);
     }
-    console.log('[backup-auto] Intervalo (h):', Math.round(BACKUP_AUTO_INTERVAL_MS / (60 * 60 * 1000)));
-    console.log('[backup-auto] Directorio:', getBackupDir());
-    console.log('[backup-auto] Retención: max archivos =', BACKUP_AUTO_MAX_FILES, '| max días =', BACKUP_AUTO_MAX_AGE_DAYS);
+  });
+  setImmediate(() => {
+    runPostListenStartup().catch((err) => console.error('[post-listen]', err));
   });
 }
 
