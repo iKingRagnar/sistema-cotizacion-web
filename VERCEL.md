@@ -16,7 +16,13 @@ El proyecto es una app **Express** en `server.js`. Vercel la empaqueta como **un
 
 ## Pasos en Vercel (con licencia Pro)
 
-1. [Importar el repositorio](https://vercel.com/new) (GitHub: `iKingRagnar/sistema-cotizacion-web`).
+**Importación en un clic (conecta GitHub si te lo pide):**
+
+**[→ Crear proyecto desde GitHub: sistema-cotizacion-web](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FiKingRagnar%2Fsistema-cotizacion-web&project-name=sistema-cotizacion-web)**
+
+Repo: `https://github.com/iKingRagnar/sistema-cotizacion-web`
+
+1. Abre el enlace de arriba (o [Importar](https://vercel.com/new) → pega la URL del repo).
 2. **Framework Preset:** deja que detecte **Express** o elige Node si no aparece.
 3. **Build Command:** `npm install` (por defecto).
 4. **Install Command:** `npm install`.
