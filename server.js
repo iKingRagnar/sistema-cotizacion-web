@@ -20,6 +20,13 @@ const PORT = process.env.PORT || 3456;
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
+/** BD lista antes de cualquier ruta (Vercel serverless + desarrollo local). initServer está declarado al final del archivo (hoisting). */
+app.use((req, res, next) => {
+  initServer()
+    .then(() => next())
+    .catch(next);
+});
+
 app.get('/api/config', (req, res) => {
   res.json(auth.getPublicConfig());
 });
@@ -101,7 +108,10 @@ app.get('/api/audit', async (req, res) => {
   }
 });
 
-app.use(express.static(path.join(__dirname, 'public')));
+/* En Vercel los estáticos salen por CDN desde public/; express.static no aplica allí. */
+if (!process.env.VERCEL) {
+  app.use(express.static(path.join(__dirname, 'public')));
+}
 
 /** Normaliza para búsqueda: minúsculas y sin acentos (manómetro === manometro). */
 function normalizeForSearch(str) {
@@ -3665,19 +3675,33 @@ async function runPostListenStartup() {
     }
   }
   await backfillCatalogDefaults();
-  startAutoBackupScheduler();
-  console.log('[backup-auto] Intervalo (h):', Math.round(BACKUP_AUTO_INTERVAL_MS / (60 * 60 * 1000)));
-  console.log('[backup-auto] Directorio:', getBackupDir());
-  console.log('[backup-auto] Retención: max archivos =', BACKUP_AUTO_MAX_FILES, '| max días =', BACKUP_AUTO_MAX_AGE_DAYS);
+  if (process.env.VERCEL) {
+    console.log('[backup-auto] Omitido en Vercel (serverless). Usa export manual o un Cron si necesitas JSON periódico.');
+  } else {
+    startAutoBackupScheduler();
+    console.log('[backup-auto] Intervalo (h):', Math.round(BACKUP_AUTO_INTERVAL_MS / (60 * 60 * 1000)));
+    console.log('[backup-auto] Directorio:', getBackupDir());
+    console.log('[backup-auto] Retención: max archivos =', BACKUP_AUTO_MAX_FILES, '| max días =', BACKUP_AUTO_MAX_AGE_DAYS);
+  }
+}
+
+let serverInitPromise = null;
+function initServer() {
+  if (!serverInitPromise) {
+    serverInitPromise = (async () => {
+      await db.init();
+      await ensureTarifasDefaults();
+      await auth.ensureSeedUsers();
+    })();
+  }
+  return serverInitPromise;
 }
 
 async function start() {
-  await db.init();
-  await ensureTarifasDefaults();
-  await auth.ensureSeedUsers();
+  await initServer();
   app.listen(PORT, '0.0.0.0', () => {
     console.log('Sistema de Cotización - En línea');
-    console.log('Escuchando en http://0.0.0.0:' + PORT + ' (Render / Docker: usar PORT del entorno)');
+    console.log('Escuchando en http://0.0.0.0:' + PORT + ' (local / Render / Docker: usar PORT del entorno)');
     if (db.useTurso) console.log('Base de datos: Turso (nube)');
     else {
       const storage = db.getStorageInfo && db.getStorageInfo();
@@ -3690,7 +3714,12 @@ async function start() {
   });
 }
 
-start().catch(err => {
-  console.error(err);
-  process.exit(1);
-});
+if (require.main === module) {
+  start().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
+
+/** Vercel: export default de la app Express (Fluid Compute). Local: node server.js */
+module.exports = app;
