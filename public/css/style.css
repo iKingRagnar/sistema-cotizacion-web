@@ -5071,3 +5071,81 @@ body.dark-theme #panel-refacciones .toolbar select {
   border-color: rgba(13, 148, 136, 0.35);
   color: #e2e8f0;
 }
+
+/* Catálogo refacciones: misma línea visual que máquinas (sin filas/filtros amarillos; hover legible) */
+#ref-stock-alert-bar.stock-alert-bar {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e8f0fe 45%, #f8fafc 100%);
+  border: 1px solid rgba(13, 148, 136, 0.28);
+  color: #334155;
+  box-shadow: 0 2px 14px rgba(15, 23, 42, 0.06);
+  animation: none;
+}
+#ref-stock-alert-bar.stock-alert-bar::before {
+  background: linear-gradient(180deg, #0d9488, #14b8a6, #0891b2);
+}
+#ref-stock-alert-bar.stock-alert-bar i {
+  color: #0d9488;
+  filter: none;
+}
+#ref-stock-alert-bar.stock-alert-bar strong {
+  color: #0f172a;
+}
+
+#tabla-refacciones.data-table tr.row-stock-bajo td {
+  background: rgba(238, 242, 255, 0.55);
+  box-shadow: inset 3px 0 0 rgba(13, 148, 136, 0.5);
+}
+#tabla-refacciones.data-table td.stock-bajo {
+  color: #c2410c;
+  font-weight: 700;
+}
+#tabla-refacciones.data-table tbody tr:nth-child(even).row-stock-bajo td {
+  background: rgba(238, 242, 255, 0.72);
+}
+
+#tabla-refacciones.data-table tbody tr:hover {
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.12) 0%, rgba(34, 211, 238, 0.09) 100%) !important;
+  box-shadow: inset 4px 0 0 #818cf8 !important;
+  transform: none !important;
+}
+
+/* Filtros: fondo blanco (evita amarillo de autofill del navegador) */
+#tabla-refacciones thead .filter-row input.filter-input,
+#tabla-refacciones thead .filter-row select.filter-input,
+#tabla-refacciones thead .filter-row textarea.filter-input {
+  background-color: #fff !important;
+}
+#tabla-refacciones thead .filter-row input.filter-input:-webkit-autofill,
+#tabla-refacciones thead .filter-row input.filter-input:-webkit-autofill:hover,
+#tabla-refacciones thead .filter-row input.filter-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #0f172a !important;
+  box-shadow: 0 0 0 1000px #fff inset !important;
+  transition: background-color 99999s ease-out;
+}
+
+body.dark-theme #tabla-refacciones.data-table tr.row-stock-bajo td {
+  background: rgba(30, 41, 59, 0.85);
+  color: #e2e8f0;
+  box-shadow: inset 3px 0 0 rgba(45, 212, 191, 0.55);
+}
+body.dark-theme #tabla-refacciones.data-table td.stock-bajo {
+  color: #fdba74;
+}
+body.dark-theme #ref-stock-alert-bar.stock-alert-bar {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.92) 100%);
+  border-color: rgba(45, 212, 191, 0.35);
+  color: #e2e8f0;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+body.dark-theme #ref-stock-alert-bar.stock-alert-bar strong {
+  color: #f8fafc;
+}
+body.dark-theme #tabla-refacciones thead .filter-row input.filter-input,
+body.dark-theme #tabla-refacciones thead .filter-row select.filter-input,
+body.dark-theme #tabla-refacciones thead .filter-row textarea.filter-input {
+  background-color: #0f172a !important;
+}
+body.dark-theme #tabla-refacciones thead .filter-row input.filter-input:-webkit-autofill {
+  -webkit-text-fill-color: #e2e8f0 !important;
+  box-shadow: 0 0 0 1000px #0f172a inset !important;
+}

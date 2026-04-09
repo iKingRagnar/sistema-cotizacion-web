@@ -1383,8 +1383,8 @@
         fields: [
           { label: 'Stock actual', value: r.stock != null ? Number(r.stock).toLocaleString('es-MX') : '0', icon: 'fa-boxes', badge: stockBajo, badgeClass: stockBajo ? 'pvc-badge--danger' : '' },
           { label: 'Stock mínimo', value: r.stock_minimo != null ? Number(r.stock_minimo) : 1, icon: 'fa-exclamation-triangle' },
-          { label: 'Precio MXN', value: r.precio_unitario ? '$' + Number(r.precio_unitario).toLocaleString('es-MX', { minimumFractionDigits: 2 }) : '', icon: 'fa-money-bill-wave' },
-          { label: 'Precio USD', value: r.precio_usd ? 'US$' + Number(r.precio_usd).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '', icon: 'fa-dollar-sign' },
+          { label: 'Precio MXN', value: r.precio_unitario != null && r.precio_unitario !== '' ? '$' + Number(r.precio_unitario).toLocaleString('es-MX', { minimumFractionDigits: 2 }) : '', icon: 'fa-money-bill-wave' },
+          { label: 'Precio USD', value: (() => { const u = resolveRefaccionPrecioUsd(r); return u != null ? 'US$' + u.toLocaleString('en-US', { minimumFractionDigits: 2 }) : ''; })(), icon: 'fa-dollar-sign' },
           { label: 'Nº Parte Manual', value: r.numero_parte_manual, icon: 'fa-book' },
         ]
       }]
@@ -1421,8 +1421,8 @@
         <td>${escapeHtml(r.zona || '')}</td>
         <td class="${stockBajo ? 'stock-bajo' : ''}">${r.stock != null ? Number(r.stock).toLocaleString('es-MX') : '0'}</td>
         <td>${r.stock_minimo != null ? Number(r.stock_minimo) : 1}</td>
-        <td>${r.precio_usd ? '<strong>US$' + Number(r.precio_usd).toLocaleString('en-US', { minimumFractionDigits: 2 }) + '</strong>' : ''}</td>
-        <td>${typeof r.precio_unitario === 'number' ? '$' + r.precio_unitario.toLocaleString('es-MX', { minimumFractionDigits: 2 }) : ''}</td>
+        <td>${formatRefaccionPrecioUsdCell(r)}</td>
+        <td>${r.precio_unitario != null && r.precio_unitario !== '' ? '$' + Number(r.precio_unitario).toLocaleString('es-MX', { minimumFractionDigits: 2 }) : ''}</td>
         <td>${escapeHtml(r.unidad || 'PZA')}</td>
         <td class="th-actions">
           <button type="button" class="btn small outline btn-preview-ref" data-id="${r.id}" title="Vista previa"><i class="fas fa-eye"></i></button>
@@ -1475,6 +1475,23 @@
   }
 
   let tipoCambioActual = 17.0; // tipo de cambio USD/MXN actualizado desde Banxico
+
+  /** USD guardado en BD, o derivado de precio MXN / tipo de cambio (mismo criterio que el backfill del servidor). */
+  function resolveRefaccionPrecioUsd(r) {
+    const usd = Number(r.precio_usd);
+    if (Number.isFinite(usd) && usd > 0) return usd;
+    const mxn = Number(r.precio_unitario);
+    const tc = (typeof tipoCambioActual === 'number' && tipoCambioActual > 0) ? tipoCambioActual : 17;
+    if (Number.isFinite(mxn) && mxn > 0 && tc > 0) return Math.round((mxn / tc) * 100) / 100;
+    return null;
+  }
+  function formatRefaccionPrecioUsdCell(r) {
+    const v = resolveRefaccionPrecioUsd(r);
+    if (v == null) return '';
+    const derived = !(Number(r.precio_usd) > 0);
+    const title = derived ? ' title="Calculado desde precio MXN y tipo de cambio actual"' : '';
+    return '<strong' + title + '>US$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</strong>';
+  }
 
   // ----- MÁQUINAS -----
   const CATEGORIAS_MAQUINAS = ['Centro de Maquinado', 'Torno CNC', 'Electroerosionadora por Hilo', 'Electroerosionadora por Penetración', 'Fresadora CNC', 'Rectificadora', 'Torno Convencional', 'Otro'];
@@ -4696,8 +4713,11 @@
         const rid = Number(qm('#cot-line-refaccion')?.value);
         const r = (refaccionesCache || []).find((x) => Number(x.id) === rid);
         if (r && precioEl) {
-          const usd = Number(r.precio_usd) || 0;
-          const pu = mon === 'USD' ? usd : (usd > 0 ? Math.round(usd * tc * 100) / 100 : Number(r.precio_unitario) || 0);
+          const usd = resolveRefaccionPrecioUsd(r);
+          const mxn = Number(r.precio_unitario) || 0;
+          const pu = mon === 'USD'
+            ? (usd != null ? usd : 0)
+            : (mxn > 0 ? mxn : (usd != null && usd > 0 ? Math.round(usd * tc * 100) / 100 : 0));
           precioEl.value = pu.toFixed(2);
         }
       }
