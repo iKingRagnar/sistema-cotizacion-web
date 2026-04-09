@@ -369,7 +369,17 @@ async function runMigrations() {
   }
 }
 
+function isVercelServerless() {
+  const v = process.env.VERCEL;
+  return v === '1' || v === 'true';
+}
+
 async function init() {
+  if (isVercelServerless() && !useTurso) {
+    throw new Error(
+      'Vercel requiere TURSO_DATABASE_URL y TURSO_AUTH_TOKEN (Project → Settings → Environment Variables). SQLite en disco no funciona en serverless.'
+    );
+  }
   if (useTurso) {
     const { createClient } = require('@libsql/client');
     db = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });

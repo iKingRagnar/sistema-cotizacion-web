@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
+    "vercel:env": "node scripts/vercel-env.js",
     "bitacora:s11": "node scripts/bitacora-s11-estilos.js",
     "bitacora:pendientes": "node scripts/bitacora-pestaña-pendientes.js"
   },

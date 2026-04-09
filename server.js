@@ -20,7 +20,12 @@ const PORT = process.env.PORT || 3456;
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-/** BD lista antes de cualquier ruta (Vercel serverless + desarrollo local). initServer está declarado al final del archivo (hoisting). */
+/** Sin BD: útil en Vercel para ver que la función vive aunque falle Turso. */
+app.get('/health', (req, res) => {
+  res.status(200).type('text/plain').send('ok');
+});
+
+/** BD lista antes del resto de rutas (initServer al final del archivo, hoisting). */
 app.use((req, res, next) => {
   initServer()
     .then(() => next())
@@ -29,11 +34,6 @@ app.use((req, res, next) => {
 
 app.get('/api/config', (req, res) => {
   res.json(auth.getPublicConfig());
-});
-
-/** Liveness para Render u otros orquestadores: responde sin tocar la BD. */
-app.get('/health', (req, res) => {
-  res.status(200).type('text/plain').send('ok');
 });
 
 app.get('/api/storage-health', async (req, res) => {
@@ -3635,11 +3635,46 @@ app.get('/api/liquidacion-mensual', async (req, res) => {
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
 
-// SPA: todas las rutas no-API sirven index.html (sin caché para que siempre cargue la última versión)
-app.get('*', (req, res) => {
+function resolvePublicIndexHtmlPath() {
+  const rel = path.join('public', 'index.html');
+  const candidates = [path.join(__dirname, rel), path.join(process.cwd(), rel)];
+  for (const p of candidates) {
+    try {
+      if (fs.existsSync(p)) return p;
+    } catch (_) {}
+  }
+  return null;
+}
+
+// SPA: rutas no-API → index.html (rutas alternativas para bundle serverless de Vercel)
+app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return res.status(404).end();
+  const indexPath = resolvePublicIndexHtmlPath();
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  if (!indexPath) {
+    return res
+      .status(500)
+      .type('html')
+      .send(
+        '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Error</title></head><body><h1>No se encontró public/index.html</h1><p>Revisa el despliegue (includeFiles) o la raíz del proyecto.</p></body></html>'
+      );
+  }
+  res.sendFile(indexPath, (err) => {
+    if (err) next(err);
+  });
+});
+
+/** Errores (p. ej. init BD o sendFile): evita respuesta genérica sin pista. */
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  const msg = err && err.message ? String(err.message) : String(err || 'Error');
+  console.error('[express]', err && err.stack ? err.stack : msg);
+  if (req.path && String(req.path).startsWith('/api')) {
+    return res.status(500).json({ error: msg });
+  }
+  res.status(500).type('html').send(
+    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Error</title></head><body><h1>Error del servidor</h1><pre>${msg.replace(/</g, '&lt;')}</pre></body></html>`
+  );
 });
 
 /** Seed demo, backfill y respaldos: después de escuchar el puerto para no bloquear el health check de Render. */
@@ -3692,6 +3727,11 @@ function initServer() {
       await db.init();
       await ensureTarifasDefaults();
       await auth.ensureSeedUsers();
+      if (process.env.VERCEL && String(process.env.AUTH_SECRET || '').trim() === '') {
+        console.warn(
+          '[vercel] AUTH_SECRET no definido: sesiones con secreto por defecto (inseguro). Ejecuta npm run vercel:env y pega AUTH_SECRET en Vercel.'
+        );
+      }
     })();
   }
   return serverInitPromise;
