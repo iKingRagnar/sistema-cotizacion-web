@@ -349,6 +349,17 @@ async function runMigrations() {
     `ALTER TABLE maquinas ADD COLUMN imagen_pieza_url TEXT`,
     `ALTER TABLE maquinas ADD COLUMN imagen_ensamble_url TEXT`,
     `ALTER TABLE maquinas ADD COLUMN stock REAL DEFAULT 0`,
+    /* Personal extendido + cotización vendedor/descuento + lista máquinas USD */
+    `ALTER TABLE tecnicos ADD COLUMN rol TEXT`,
+    `ALTER TABLE tecnicos ADD COLUMN puesto TEXT`,
+    `ALTER TABLE tecnicos ADD COLUMN departamento TEXT`,
+    `ALTER TABLE tecnicos ADD COLUMN profesion TEXT`,
+    `ALTER TABLE tecnicos ADD COLUMN es_vendedor INTEGER DEFAULT 0`,
+    `ALTER TABLE tecnicos ADD COLUMN comision_maquinas_pct REAL DEFAULT 0`,
+    `ALTER TABLE tecnicos ADD COLUMN comision_refacciones_pct REAL DEFAULT 10`,
+    `ALTER TABLE cotizaciones ADD COLUMN vendedor_personal_id INTEGER`,
+    `ALTER TABLE cotizaciones ADD COLUMN descuento_pct REAL DEFAULT 0`,
+    `ALTER TABLE maquinas ADD COLUMN precio_lista_usd REAL DEFAULT 0`,
   ];
   for (const sql of migrations) {
     try {
@@ -393,6 +404,107 @@ async function init() {
   if (rows[0] && rows[0].c === 0) {
     await runQuery("INSERT INTO tecnicos (nombre) VALUES ('Juan Pérez'), ('María García'), ('Carlos López')");
   }
+  await seedPersonalAndPricing();
+}
+
+/** Datos demo: personal (vendedores + comisiones), precios USD en refacciones y lista en máquinas. */
+async function seedPersonalAndPricing() {
+  const david = await getOne("SELECT id, puesto FROM tecnicos WHERE nombre = 'David Cantú' LIMIT 1");
+  const needsTeamSeed = !david || !String(david.puesto || '').trim();
+
+  const team = [
+    {
+      nombre: 'David Cantú',
+      rol: 'Líder comercial',
+      puesto: 'Jefe de Área',
+      departamento: 'Ventas',
+      profesion: 'Ingeniero industrial',
+      habilidades: 'Negociación B2B, equipos CNC, cuentas clave, postventa',
+      es_vendedor: 1,
+      comision_maquinas_pct: 10,
+      comision_refacciones_pct: 10,
+    },
+    {
+      nombre: 'Ana López Méndez',
+      rol: 'Ejecutiva de ventas',
+      puesto: 'Ejecutiva de cuenta',
+      departamento: 'Ventas',
+      profesion: 'Mercadotecnia',
+      habilidades: 'Cotizaciones, refacciones, seguimiento CRM',
+      es_vendedor: 1,
+      comision_maquinas_pct: 0,
+      comision_refacciones_pct: 10,
+    },
+    {
+      nombre: 'Carlos Ruiz',
+      rol: 'Vendedor de campo',
+      puesto: 'Ejecutivo zona norte',
+      departamento: 'Ventas',
+      profesion: 'Técnico mecánico',
+      habilidades: 'Diagnóstico, visitas, refacciones urgentes',
+      es_vendedor: 1,
+      comision_maquinas_pct: 0,
+      comision_refacciones_pct: 10,
+    },
+    {
+      nombre: 'María Fernández',
+      rol: 'Soporte técnico',
+      puesto: 'Coordinadora de servicio',
+      departamento: 'Servicio',
+      profesion: 'Ingeniera mecatrónica',
+      habilidades: 'PLC, Fanuc, puesta en marcha',
+      es_vendedor: 0,
+      comision_maquinas_pct: 0,
+      comision_refacciones_pct: 0,
+    },
+    {
+      nombre: 'Luis Martínez',
+      rol: 'Taller',
+      puesto: 'Técnico senior',
+      departamento: 'Taller',
+      profesion: 'Técnico electricista',
+      habilidades: 'Variadores, sensores, cableado',
+      es_vendedor: 0,
+      comision_maquinas_pct: 0,
+      comision_refacciones_pct: 0,
+    },
+  ];
+  if (needsTeamSeed) {
+    for (const p of team) {
+      try {
+        await runQuery('INSERT OR IGNORE INTO tecnicos (nombre, activo) VALUES (?, 1)', [p.nombre]);
+        await runQuery(
+          `UPDATE tecnicos SET rol=?, puesto=?, departamento=?, profesion=?, habilidades=?, es_vendedor=?,
+         comision_maquinas_pct=?, comision_refacciones_pct=? WHERE nombre=?`,
+          [
+            p.rol,
+            p.puesto,
+            p.departamento,
+            p.profesion,
+            p.habilidades,
+            p.es_vendedor,
+            p.comision_maquinas_pct,
+            p.comision_refacciones_pct,
+            p.nombre,
+          ]
+        );
+      } catch (_) { /* ignore */ }
+    }
+  }
+  try {
+    await runQuery(
+      `UPDATE refacciones SET precio_usd = ROUND(15.0 + (ABS(CAST(id AS INTEGER)) * 13 % 450) / 10.0, 2)
+       WHERE COALESCE(precio_usd, 0) = 0`
+    );
+    await runQuery(
+      `UPDATE refacciones SET precio_unitario = ROUND(precio_usd * 17.0, 2)
+       WHERE COALESCE(precio_unitario, 0) = 0 AND COALESCE(precio_usd, 0) > 0`
+    );
+    await runQuery(
+      `UPDATE maquinas SET precio_lista_usd = 18500 + (ABS(CAST(id AS INTEGER)) * 97 % 120000)
+       WHERE COALESCE(precio_lista_usd, 0) = 0`
+    );
+  } catch (_) { /* ignore */ }
 }
 
 function runQuery(sql, params = []) {

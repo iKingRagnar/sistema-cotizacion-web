@@ -165,9 +165,7 @@
     <button type="button" data-tab="mantenimiento-garantia" class="tab" title="Calendario y alertas de mantenimiento"><i class="fas fa-calendar-check"></i> Mantenimientos</button>
     <button type="button" data-tab="garantias-sin-cobertura" class="tab" title="Garantías dadas de baja"><i class="fas fa-ban"></i> Sin cobertura</button>
     <button type="button" data-tab="bonos" class="tab" title="Bonos de capacitación"><i class="fas fa-award"></i> Bonos</button>
-    <button type="button" data-tab="viajes" class="tab" title="Viáticos y viajes"><i class="fas fa-plane"></i> Viajes</button>
-    <button type="button" data-tab="tecnicos" class="tab" title="Gestión de técnicos y habilidades"><i class="fas fa-hard-hat"></i> Técnicos</button>
-    <button type="button" data-tab="incidentes" class="tab" title="Incidentes (Ctrl+5)"><i class="fas fa-exclamation-triangle"></i> Incidentes</button>
+    <button type="button" data-tab="tecnicos" class="tab" title="Personal: roles, vendedores y comisiones"><i class="fas fa-users"></i> Personal</button>
     <button type="button" data-tab="bitacoras" class="tab" title="Bitácora (Ctrl+6)"><i class="fas fa-clock"></i> Bitácora de horas</button>
     <button type="button" data-tab="auditoria" class="tab hidden" id="tab-auditoria" title="Auditoría (Ctrl+8, solo admin)"><i class="fas fa-clipboard-list"></i> Auditoría</button>
     <button type="button" data-tab="demo" class="tab highlight" title="Cargar datos de ejemplo"><i class="fas fa-database"></i> Cargar demo</button>
@@ -202,7 +200,7 @@
           <div class="dashboard-charts-row">
             <div class="dashboard-chart-wrap">
               <p class="dashboard-chart-caption">Distribución (cantidad)</p>
-              <canvas id="chart-donut" role="img" aria-label="Gráfico de anillo: cotizaciones, incidentes y bitácoras"></canvas>
+              <canvas id="chart-donut" role="img" aria-label="Gráfico de anillo: cotizaciones y bitácoras"></canvas>
             </div>
             <div class="dashboard-chart-wrap">
               <p class="dashboard-chart-caption">Cotizaciones por período (actual vs anterior)</p>
@@ -735,109 +733,25 @@
       </div>
     </section>
 
-    <!-- VIAJES -->
-    <section id="panel-viajes" class="panel">
-      <div class="section-header">
-        <h2><i class="fas fa-plane"></i> Viajes y Viáticos</h2>
-        <div class="toolbar">
-          <select id="filtro-mes-viajes" title="Mes de liquidación">
-            <option value="">Todos los meses</option>
-          </select>
-          <button type="button" id="btn-viajes-liquidacion" class="btn outline"><i class="fas fa-print"></i> Liquidación mensual</button>
-          <button type="button" id="export-viajes" class="btn outline"><i class="fas fa-file-csv"></i> CSV</button>
-          <button type="button" id="nuevo-viaje" class="btn primary"><i class="fas fa-plus"></i> Nuevo viaje</button>
-        </div>
-      </div>
-      <p class="hint" style="padding:0 1.5rem 0.5rem">Viáticos: <strong>$1,000 MXN/día</strong>. Los días se calculan automáticamente por fecha inicio–fin.</p>
-      <div class="table-wrap">
-        <table class="data-table filterable-table" id="tabla-viajes">
-          <thead>
-            <tr>
-              <th>Técnico</th><th>Cliente / Razón social</th><th>F. Inicio</th><th>F. Fin</th><th>Días</th><th>Viáticos MXN</th><th>Descripción</th><th>Mes liq.</th><th>Liquidado</th>
-              <th class="th-actions">Acciones</th>
-            </tr>
-            <tr class="filter-row">
-              <td><input type="text" class="filter-input" data-key="tecnico" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="razon_social" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="fecha_inicio" data-type="text" placeholder="aaaa-mm-dd"></td>
-              <td><input type="text" class="filter-input" data-key="fecha_fin" data-type="text" placeholder="aaaa-mm-dd"></td>
-              <td><input type="text" class="filter-input" data-key="dias" data-type="number" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="monto_viaticos" data-type="number" placeholder="&gt;1000"></td>
-              <td><input type="text" class="filter-input" data-key="descripcion_busqueda" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="mes_liquidacion" data-type="text" placeholder="2026-03"></td>
-              <td><input type="text" class="filter-input" data-key="liquidado" data-type="text" placeholder="0|1"></td>
-              <td class="th-actions"></td>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-        <div class="table-footer" id="footer-tabla-viajes" aria-live="polite"></div>
-      </div>
-    </section>
-
-    <!-- TÉCNICOS -->
+    <!-- PERSONAL (antes técnicos) -->
     <section id="panel-tecnicos" class="panel">
       <div class="section-header">
-        <h2><i class="fas fa-hard-hat"></i> Técnicos</h2>
+        <h2><i class="fas fa-users"></i> Personal</h2>
         <div class="toolbar">
-          <input type="search" id="buscar-tecnicos" placeholder="Buscar técnico…" class="search">
-          <button type="button" id="btn-new-tecnico" class="btn primary"><i class="fas fa-plus"></i> Nuevo técnico</button>
+          <input type="search" id="buscar-tecnicos" placeholder="Buscar por nombre, puesto, habilidad…" class="search">
+          <button type="button" id="btn-new-tecnico" class="btn primary"><i class="fas fa-plus"></i> Nueva persona</button>
         </div>
       </div>
       <div class="table-wrap">
         <table class="data-table" id="tabla-tecnicos">
           <thead>
             <tr>
-              <th>Nombre</th><th>Habilidades</th><th>Disponibilidad</th><th>Activo</th>
+              <th>Nombre</th><th>Rol</th><th>Puesto</th><th>Depto.</th><th>Ventas</th><th>Habilidades</th><th>Disponibilidad</th><th>Activo</th>
               <th class="th-actions">Acciones</th>
             </tr>
           </thead>
           <tbody></tbody>
         </table>
-      </div>
-    </section>
-
-    <!-- INCIDENTES -->
-    <section id="panel-incidentes" class="panel">
-      <div class="section-header">
-        <h2><i class="fas fa-exclamation-triangle"></i> Incidentes</h2>
-        <div class="toolbar">
-          <button type="button" id="export-incidentes" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
-          <button type="button" id="export-excel-incidentes" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
-          <button type="button" id="nuevo-incidente" class="btn primary"><i class="fas fa-plus"></i> Nuevo incidente</button>
-        </div>
-      </div>
-      <div id="incidentes-empty" class="empty-card hidden">
-        <div class="empty-icon"><i class="fas fa-clipboard-list"></i></div>
-        <h3>No hay incidentes</h3>
-        <p>Registra fallas, reportes o eventos por cliente y máquina.</p>
-        <button type="button" class="btn primary big btn-empty-inc"><i class="fas fa-plus"></i> Agregar incidente</button>
-      </div>
-      <div id="incidentes-list" class="table-wrap">
-        <table class="data-table data-table--fluid filterable-table" id="tabla-incidentes" data-cache="incidentesCache">
-          <thead>
-            <tr>
-              <th>Folio</th><th>Cliente</th><th>Máquina</th><th>Descripción</th><th>Fecha incidente</th><th>Fecha cerrado</th><th>Fecha vencimiento</th><th>Días restantes</th><th>Prioridad</th><th>Estatus</th><th>SLA</th>
-              <th class="th-actions">Acciones</th>
-            </tr>
-            <tr class="filter-row">
-              <td><input type="text" class="filter-input" data-key="folio" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="cliente_nombre" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="maquina_nombre" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="descripcion" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="fecha_reporte" data-type="text" placeholder="aaaa-mm-dd"></td>
-              <td><input type="text" class="filter-input" data-key="fecha_cerrado" data-type="text" placeholder="aaaa-mm-dd"></td>
-              <td><input type="text" class="filter-input" data-key="fecha_vencimiento" data-type="text" placeholder="aaaa-mm-dd"></td>
-              <td><span data-key="dias_restantes" class="filter-input" style="display:inline-block;min-height:1px;padding:0;border:none;width:100%" aria-hidden="true"></span></td>
-              <td><input type="text" class="filter-input" data-key="prioridad" data-type="text" placeholder="baja|media|alta"></td>
-              <td><input type="text" class="filter-input" data-key="estatus" data-type="text" placeholder="abierto|cerrado"></td>
-              <td><span data-key="sla_estado" class="filter-input" style="display:inline-block;min-height:1px;padding:0;border:none;width:100%" aria-hidden="true"></span></td>
-              <td class="th-actions"></td>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-        <div class="table-footer" id="footer-tabla-incidentes" aria-live="polite"></div>
       </div>
     </section>
 

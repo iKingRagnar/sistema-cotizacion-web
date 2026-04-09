@@ -446,7 +446,7 @@
   }
 
   const LAST_TAB_KEY = 'cotizacion-last-tab';
-  const VALID_TABS = ['dashboards', 'clientes', 'refacciones', 'maquinas', 'cotizaciones', 'reportes', 'garantias', 'mantenimiento-garantia', 'garantias-sin-cobertura', 'bonos', 'viajes', 'incidentes', 'bitacoras'];
+  const VALID_TABS = ['dashboards', 'clientes', 'refacciones', 'maquinas', 'cotizaciones', 'reportes', 'garantias', 'mantenimiento-garantia', 'garantias-sin-cobertura', 'bonos', 'bitacoras'];
   const TABS_PERSIST = VALID_TABS.concat(['auditoria']);
   let reportesCache = [];
   let garantiasCache = [];
@@ -613,8 +613,7 @@
       'mantenimiento-garantia': 'Mantenimientos por garantía',
       'garantias-sin-cobertura': 'Sin cobertura',
       bonos: 'Bonos',
-      viajes: 'Viajes',
-      incidentes: 'Incidentes',
+      ventas: 'Ventas',
       bitacoras: 'Bitácora de horas',
       demo: 'Cargar demo',
       acerca: 'Acerca de',
@@ -666,8 +665,6 @@
     if (id === 'mantenimiento-garantia') loadMantenimientoGarantia();
     if (id === 'garantias-sin-cobertura') loadGarantiasSinCobertura();
     if (id === 'bonos') loadBonos();
-    if (id === 'viajes') loadViajes();
-    if (id === 'incidentes') loadIncidentes();
     if (id === 'bitacoras') loadBitacoras();
     if (id === 'demo') loadSeedStatus();
     if (id === 'acerca') { /* solo mostrar panel */ }
@@ -1701,7 +1698,8 @@
           { label: 'Cliente', value: c.cliente_nombre, icon: 'fa-user-tie' },
           { label: 'Tipo', value: c.tipo, icon: 'fa-tag' },
           { label: 'Fecha', value: (c.fecha || '').toString().slice(0, 10), icon: 'fa-calendar' },
-          { label: 'Vendedor', value: c.vendedor, icon: 'fa-user' },
+          { label: 'Vendedor', value: [c.vendedor, c.vendedor_puesto].filter(Boolean).join(' · ') || '—', icon: 'fa-user' },
+          { label: 'Descuento %', value: c.descuento_pct != null && Number(c.descuento_pct) > 0 ? String(c.descuento_pct) + '%' : '—', icon: 'fa-percent' },
           { label: 'Estado', value: c.estado, icon: 'fa-flag', badge: true, badgeClass: estadoColors[c.estado] || '' },
         ]
       }, {
@@ -3349,6 +3347,16 @@
   }
 
   async function loadIncidentes() {
+    if (!qs('#panel-incidentes')) {
+      try {
+        const raw = await fetchJson(API + '/incidentes');
+        incidentesCache = toArray(raw);
+      } catch (_) {
+        incidentesCache = [];
+      }
+      updateHeaderUrgencies();
+      return;
+    }
     showLoading();
     renderTableSkeleton('tabla-incidentes', 12);
     try {
@@ -3919,6 +3927,7 @@
       <div class="form-row">
         <div class="form-group"><label>Modelo *</label><input type="text" id="m-modelo" maxlength="120" value="${escapeHtml(maquina && maquina.modelo) || ''}" required placeholder="Ej: GH1440A, CTX 510…"></div>
         <div class="form-group"><label>Stock (0 por defecto en almacén demo)</label><input type="number" id="m-stock" step="any" min="0" value="${maquina && maquina.stock != null ? escapeHtml(String(maquina.stock)) : '0'}"></div>
+        <div class="form-group"><label>Precio de lista (USD)</label><input type="number" id="m-precio-lista-usd" step="0.01" min="0" value="${maquina && maquina.precio_lista_usd != null ? escapeHtml(String(maquina.precio_lista_usd)) : ''}" placeholder="Lista para cotizar × TC"></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label>Nº Serie</label><input type="text" id="m-numero_serie" maxlength="80" value="${escapeHtml(maquina && maquina.numero_serie) || ''}"></div>
@@ -3984,6 +3993,7 @@
         imagen_pieza_url: (qs('#m-img-pieza') && qs('#m-img-pieza').value.trim()) || null,
         imagen_ensamble_url: (qs('#m-img-ensamble') && qs('#m-img-ensamble').value.trim()) || null,
         stock: Number.isFinite(stockNum) ? stockNum : 0,
+        precio_lista_usd: qs('#m-precio-lista-usd') && qs('#m-precio-lista-usd').value !== '' ? Number(qs('#m-precio-lista-usd').value) : 0,
       };
       const btn = qs('#m-save');
       const origText = btn.innerHTML;
@@ -4010,6 +4020,18 @@
     if (!Array.isArray(refaccionesCache) || refaccionesCache.length === 0) {
       refaccionesCache = await fetchJson(API + '/refacciones').catch(() => []);
     }
+    try {
+      const tecRaw = await fetchJson(API + '/tecnicos').catch(() => []);
+      tecnicosCache = toArray(tecRaw);
+    } catch (_) {}
+    const vendedoresOpts = (tecnicosCache || [])
+      .filter((t) => Number(t.es_vendedor) === 1)
+      .map((t) => {
+        const sel = cot && cot.vendedor_personal_id && Number(cot.vendedor_personal_id) === Number(t.id) ? 'selected' : '';
+        return `<option value="${t.id}" ${sel}>${escapeHtml(t.nombre)} — ${escapeHtml(t.puesto || 'Vendedor')}</option>`;
+      })
+      .join('');
+    const descInicial = cot && cot.descuento_pct != null ? Number(cot.descuento_pct) : 0;
     const cotClienteId = cot && cot.cliente_id ? Number(cot.cliente_id) : null;
     const clienteOpts = clientes
       .map((c) => `<option value="${c.id}" ${cot && cot.cliente_id == c.id ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`)
@@ -4042,6 +4064,7 @@
               <label>Tipo de cotización</label>
               <select id="cotz-tipo">
                 <option value="refacciones" ${cot && cot.tipo === 'refacciones' ? 'selected' : ''}>Refacciones</option>
+                <option value="maquina" ${cot && cot.tipo === 'maquina' ? 'selected' : ''}>Equipo / máquina</option>
                 <option value="mano_obra" ${cot && cot.tipo === 'mano_obra' ? 'selected' : ''}>Mano de obra</option>
               </select>
             </div>
@@ -4058,7 +4081,29 @@
             <div class="form-group">
               <label>Tipo de cambio</label>
               <input type="number" id="cotz-tc" step="0.01" min="0" value="${Number.isFinite(cotTc) ? cotTc.toFixed(2) : '17.00'}" placeholder="17.00">
-              <div class="hint">Si cotizas en USD, este valor alimenta equivalencias en MXN.</div>
+              <div class="hint">Precios de lista en USD se convierten con este tipo de cambio (MXN = USD × TC).</div>
+            </div>
+          </div>
+          <div class="cotz-vendedor-block" style="margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(15,118,110,0.15);">
+            <div class="form-row">
+              <div class="form-group">
+                <label><i class="fas fa-user-tie"></i> Vendedor responsable</label>
+                <select id="cotz-vendedor-id">
+                  <option value="">— Quién cotiza / vende —</option>
+                  ${vendedoresOpts}
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Puesto</label>
+                <input type="text" id="cotz-vendedor-puesto" class="input-readonly" readonly value="" placeholder="—">
+              </div>
+            </div>
+            <p class="hint" id="cotz-comision-hint" style="font-size:0.85rem;">Los precios son estándar desde lista × TC. Las comisiones dependen del vendedor (David: 10% en equipo y refacciones; demás vendedores: 10% solo refacciones).</p>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Descuento autorizado (% sobre subtotal de partidas)</label>
+                <input type="number" id="cotz-descuento-pct" min="0" max="100" step="0.5" value="${Number.isFinite(descInicial) ? descInicial : 0}">
+              </div>
             </div>
           </div>
         </section>
@@ -4108,7 +4153,8 @@
             <div class="form-group">
               <label>Tipo de línea</label>
               <select id="cot-line-tipo">
-                <option value="refaccion">Refacción</option>
+                <option value="refaccion">Refacción (lista USD × TC)</option>
+                <option value="equipo">Equipo / máquina (lista USD × TC)</option>
                 <option value="mano_obra">Mano de obra</option>
                 <option value="vuelta">Vuelta (ida)</option>
                 <option value="otro">Otro</option>
@@ -4282,8 +4328,9 @@
       rows.forEach((l) => {
         const tr = document.createElement('tr');
         const desc = l.refaccion_descripcion ? (l.codigo ? (l.codigo + ' — ' + l.refaccion_descripcion) : l.refaccion_descripcion) : (l.descripcion || '');
+        const tipoLbl = l.tipo_linea === 'equipo' ? 'equipo' : String(l.tipo_linea || '');
         tr.innerHTML = `
-          <td>${escapeHtml(String(l.tipo_linea || ''))}</td>
+          <td>${escapeHtml(tipoLbl)}</td>
           <td class="td-text-wrap">${escapeHtml(String(desc || ''))}</td>
           <td class="num">${Number(l.cantidad || 0)}</td>
           <td class="num">${Number(l.precio_unitario || 0).toFixed(2)}</td>
@@ -4464,6 +4511,9 @@
       if (qm('#cotz-subtotal')) qm('#cotz-subtotal').value = Number(fresh.subtotal || 0).toFixed(2);
       if (qm('#cotz-iva')) qm('#cotz-iva').value = Number(fresh.iva || 0).toFixed(2);
       if (qm('#cotz-total')) qm('#cotz-total').value = Number(fresh.total || 0).toFixed(2);
+      if (qm('#cotz-descuento-pct') && fresh.descuento_pct != null) qm('#cotz-descuento-pct').value = String(Number(fresh.descuento_pct) || 0);
+      if (qm('#cotz-vendedor-id') && fresh.vendedor_personal_id) qm('#cotz-vendedor-id').value = String(fresh.vendedor_personal_id);
+      syncVendedorCotz();
       const fin = getCotzFechaInput();
       if (fin && fresh.fecha) {
         const fd = String(fresh.fecha).slice(0, 10);
@@ -4550,6 +4600,50 @@
       if (qm('#cot-line-cant')) qm('#cot-line-cant').value = hrsTrabajo || 1;
       if (qm('#cot-line-desc')) qm('#cot-line-desc').value = desc;
     }
+    function fillPrecioListaLinea() {
+      const t = qm('#cot-line-tipo')?.value || 'refaccion';
+      const tc = Number(qm('#cotz-tc')?.value) || 17;
+      const mon = (qm('#cotz-moneda')?.value || 'MXN').toUpperCase();
+      const precioEl = qm('#cot-line-precio');
+      if (t === 'refaccion') {
+        const rid = Number(qm('#cot-line-refaccion')?.value);
+        const r = (refaccionesCache || []).find((x) => Number(x.id) === rid);
+        if (r && precioEl) {
+          const usd = Number(r.precio_usd) || 0;
+          const pu = mon === 'USD' ? usd : (usd > 0 ? Math.round(usd * tc * 100) / 100 : Number(r.precio_unitario) || 0);
+          precioEl.value = pu.toFixed(2);
+        }
+      }
+      if (t === 'equipo') {
+        const mid = Number(qm('#cot-line-maq')?.value);
+        const m = (maquinasCatalogoModal || []).find((x) => Number(x.id) === mid);
+        if (m && precioEl) {
+          const usd = Number(m.precio_lista_usd) || 0;
+          const pu = mon === 'USD' ? usd : (usd > 0 ? Math.round(usd * tc * 100) / 100 : 0);
+          precioEl.value = pu.toFixed(2);
+        }
+      }
+    }
+    function syncVendedorCotz() {
+      const id = qm('#cotz-vendedor-id')?.value;
+      const p = (tecnicosCache || []).find((x) => String(x.id) === String(id));
+      const puestoEl = qm('#cotz-vendedor-puesto');
+      const hint = qm('#cotz-comision-hint');
+      if (puestoEl) puestoEl.value = p && p.puesto ? p.puesto : '';
+      if (hint) {
+        if (p) {
+          const cm = Number(p.comision_maquinas_pct) || 0;
+          const cr = Number(p.comision_refacciones_pct) || 0;
+          const nom = escapeHtml(p.nombre || '');
+          hint.innerHTML =
+            `<strong>${nom}</strong> — Comisión estándar: <strong>${cm}%</strong> en venta de equipo (solo David Cantú tiene % en máquinas; otros 0%) ·
+            <strong>${cr}%</strong> en refacciones. Los importes salen de lista × tipo de cambio; el descuento % se aplica al subtotal de partidas.`;
+        } else {
+          hint.textContent =
+            'Selecciona quién cotiza para dejar trazabilidad y evitar precios distintos entre vendedores. Precios siempre de lista × TC.';
+        }
+      }
+    }
     function syncLinePanelFields() {
       const t = qm('#cot-line-tipo')?.value || 'refaccion';
       const refWrap = qm('#cot-line-ref-wrap');
@@ -4557,10 +4651,11 @@
       const bitWrap = qm('#cot-line-bit-wrap');
       const moWrap = qm('#cot-line-mo-wrap');
       if (refWrap) refWrap.style.display = t === 'refaccion' ? '' : 'none';
-      if (descWrap) descWrap.style.display = t === 'refaccion' ? 'none' : '';
+      if (descWrap) descWrap.style.display = t === 'refaccion' || t === 'equipo' ? 'none' : '';
       if (bitWrap) bitWrap.style.display = t === 'mano_obra' ? '' : 'none';
       if (moWrap) moWrap.style.display = t === 'mano_obra' ? '' : 'none';
       if (t === 'mano_obra') calcManoObraPrice();
+      if (t === 'refaccion' || t === 'equipo') fillPrecioListaLinea();
     }
     async function ensureCotizacionExistsBeforeLines() {
       if (currentCotId) return currentCotId;
@@ -4573,7 +4668,19 @@
       const moneda = (qm('#cotz-moneda')?.value || 'MXN').toUpperCase();
       const tc = Number(qm('#cotz-tc')?.value) || 17.0;
       const maquinas_ids = getSelectedMaquinaIdsFromUi();
-      const payload = { cliente_id: clienteId, tipo, fecha, moneda, tipo_cambio: tc, maquinas_ids };
+      const vid = qm('#cotz-vendedor-id')?.value ? Number(qm('#cotz-vendedor-id').value) : null;
+      const vend = (tecnicosCache || []).find((x) => Number(x.id) === Number(vid));
+      const payload = {
+        cliente_id: clienteId,
+        tipo,
+        fecha,
+        moneda,
+        tipo_cambio: tc,
+        maquinas_ids,
+        vendedor_personal_id: vid && vid > 0 ? vid : null,
+        descuento_pct: Math.min(100, Math.max(0, Number(qm('#cotz-descuento-pct')?.value) || 0)),
+        vendedor: vend ? vend.nombre : null,
+      };
       try {
         const created = await fetchJson(`${API}/cotizaciones`, { method: 'POST', body: JSON.stringify(payload) });
         currentCotId = Number(created && created.id) || null;
@@ -4601,6 +4708,12 @@
     });
     qm('#cot-line-cancel')?.addEventListener('click', hideLinePanel);
     qm('#cot-line-tipo')?.addEventListener('change', syncLinePanelFields);
+    qm('#cot-line-refaccion')?.addEventListener('change', fillPrecioListaLinea);
+    qm('#cot-line-maq')?.addEventListener('change', fillPrecioListaLinea);
+    qm('#cotz-tc')?.addEventListener('input', fillPrecioListaLinea);
+    qm('#cotz-tc')?.addEventListener('change', fillPrecioListaLinea);
+    qm('#cotz-moneda')?.addEventListener('change', fillPrecioListaLinea);
+    qm('#cotz-vendedor-id')?.addEventListener('change', syncVendedorCotz);
     // Mano de obra: recalcular precio cuando cambia cualquier campo
     ['#cot-line-mo-tipo-tec','#cot-line-mo-zona','#cot-line-mo-hrs-traslado',
      '#cot-line-mo-hrs-trabajo','#cot-line-mo-ayudantes','#cot-line-mo-viaticos-dias'].forEach(sel => {
@@ -4608,6 +4721,7 @@
       qm(sel)?.addEventListener('change', calcManoObraPrice);
     });
     syncLinePanelFields();
+    syncVendedorCotz();
 
     // Si el usuario cambia las máquinas seleccionadas, el "draft" debe tomar la primera seleccionada
     getCotzMaquinasListEl()?.addEventListener('change', () => {
@@ -4682,11 +4796,15 @@
       const precio = Number(qm('#cot-line-precio')?.value) || 0;
       const maqId = Number(qm('#cot-line-maq')?.value) || null;
       const bitId = Number(qm('#cot-line-bitacora')?.value) || null;
+      if (tipoLinea === 'equipo' && !maqId) {
+        showToast('Selecciona la máquina / equipo para la línea de venta.', 'warning');
+        return;
+      }
       let payload = { tipo_linea: tipoLinea, cantidad: cant, precio_unitario: precio, maquina_id: maqId, bitacora_id: bitId };
       if (tipoLinea === 'refaccion') {
         const refId = Number(qm('#cot-line-refaccion')?.value) || null;
         payload = { ...payload, refaccion_id: refId };
-      } else {
+      } else if (tipoLinea !== 'equipo') {
         const desc = qm('#cot-line-desc')?.value?.trim() || '';
         payload = { ...payload, descripcion: desc || null };
       }
@@ -4712,6 +4830,7 @@
 
     function openModalEditarLinea(linea) {
       const isRef = String(linea.tipo_linea || '') === 'refaccion';
+      const isEquipo = String(linea.tipo_linea || '') === 'equipo';
       const isMO = String(linea.tipo_linea || '') === 'mano_obra';
       const clienteIdParaMaq = Number(qm('#cotz-cliente_id')?.value) || Number(cot && cot.cliente_id) || null;
       const maqOpts = ['<option value="">— Sin máquina —</option>']
@@ -4732,6 +4851,7 @@
             <label>Tipo de línea</label>
             <select id="e-line-tipo">
               <option value="refaccion" ${String(linea.tipo_linea) === 'refaccion' ? 'selected' : ''}>Refacción</option>
+              <option value="equipo" ${String(linea.tipo_linea) === 'equipo' ? 'selected' : ''}>Equipo / máquina</option>
               <option value="mano_obra" ${String(linea.tipo_linea) === 'mano_obra' ? 'selected' : ''}>Mano de obra</option>
               <option value="vuelta" ${String(linea.tipo_linea) === 'vuelta' ? 'selected' : ''}>Vuelta</option>
               <option value="otro" ${String(linea.tipo_linea) === 'otro' ? 'selected' : ''}>Otro</option>
@@ -4746,7 +4866,7 @@
           <label>Refacción</label>
           <select id="e-line-ref">${refOpts}</select>
         </div>
-        <div class="form-group" id="e-line-desc-wrap" style="${isRef ? 'display:none' : ''}">
+        <div class="form-group" id="e-line-desc-wrap" style="${isRef || isEquipo ? 'display:none' : ''}">
           <label>Descripción</label>
           <input type="text" id="e-line-desc" value="${escapeHtml(linea.descripcion || '')}">
         </div>
@@ -4777,7 +4897,7 @@
         const descWrap = qs('#e-line-desc-wrap');
         const bitWrap = qs('#e-line-bit-wrap');
         if (refWrap) refWrap.style.display = t === 'refaccion' ? '' : 'none';
-        if (descWrap) descWrap.style.display = t === 'refaccion' ? 'none' : '';
+        if (descWrap) descWrap.style.display = t === 'refaccion' || t === 'equipo' ? 'none' : '';
         if (bitWrap) bitWrap.style.display = t === 'mano_obra' ? '' : 'none';
       }
       qs('#e-line-tipo')?.addEventListener('change', syncEditFields);
@@ -4795,7 +4915,7 @@
           bitacora_id: Number(qs('#e-line-bit')?.value) || null,
         };
         if (tipoLinea === 'refaccion') payload.refaccion_id = Number(qs('#e-line-ref')?.value) || null;
-        else payload.descripcion = qs('#e-line-desc')?.value?.trim() || null;
+        else if (tipoLinea !== 'equipo') payload.descripcion = qs('#e-line-desc')?.value?.trim() || null;
         try {
           await fetchJson(`${API}/cotizaciones/${currentCotId}/lineas/${linea.id}`, { method: 'PUT', body: JSON.stringify(payload) });
           qs('#modal').classList.add('hidden');
@@ -4819,6 +4939,8 @@
       const moneda = (qm('#cotz-moneda')?.value || 'MXN').toUpperCase();
       const tc = Number(qm('#cotz-tc')?.value) || 0;
       const maquinas_ids = getSelectedMaquinaIdsFromUi();
+      const vid = qm('#cotz-vendedor-id')?.value ? Number(qm('#cotz-vendedor-id').value) : null;
+      const vend = (tecnicosCache || []).find((x) => Number(x.id) === Number(vid));
       const payload = {
         cliente_id: clienteId,
         tipo,
@@ -4826,6 +4948,9 @@
         moneda,
         tipo_cambio: tc > 0 ? tc : 17.0,
         maquinas_ids,
+        vendedor_personal_id: vid && vid > 0 ? vid : null,
+        descuento_pct: Math.min(100, Math.max(0, Number(qm('#cotz-descuento-pct')?.value) || 0)),
+        vendedor: vend ? vend.nombre : null,
       };
       const btn = qm('#cotz-save');
       if (!btn) return;
@@ -5232,7 +5357,6 @@
       refacciones: 'Refacciones',
       maquinas: 'Máquinas',
       cotizaciones: 'Cotizaciones',
-      incidentes: 'Incidentes',
       bitacoras: 'Bitácora de horas',
     };
     return m[key] || key;
@@ -5272,8 +5396,8 @@
     if (dashboardCrossFilterPeriod) {
       surface.querySelectorAll('.dashboard-stat-card[data-period="' + dashboardCrossFilterPeriod + '"]').forEach(function (el) { el.classList.add('is-crossfilter-match'); });
     }
-    const idxMap = { cotizaciones: 0, incidentes: 1, bitacoras: 2 };
-    const baseDonut = ['#059669', '#ea580c', '#7c3aed'];
+    const idxMap = { cotizaciones: 0, bitacoras: 1 };
+    const baseDonut = ['#059669', '#7c3aed'];
     const dimDonut = 'rgba(51,65,85,0.38)';
     if (chartDonut && chartDonut.canvas && chartDonut.data && chartDonut.data.datasets && chartDonut.data.datasets[0]) {
       let colors = baseDonut.slice();
@@ -5378,7 +5502,6 @@
         fetchJson(API + '/refacciones').catch(() => []),
         fetchJson(API + '/maquinas').catch(() => []),
         fetchJson(API + '/cotizaciones').catch(() => []),
-        fetchJson(API + '/incidentes').catch(() => []),
         fetchJson(API + '/bitacoras').catch(() => []),
         fetchJson(API + '/dashboard-stats').catch(() => null),
       ]);
@@ -5387,14 +5510,12 @@
       const refacciones = toArr(raw[1]);
       const maquinas = toArr(raw[2]);
       const cotizaciones = toArr(raw[3]);
-      const incidentes = toArr(raw[4]);
-      const bitacoras = toArr(raw[5]);
-      const dashboardStats = raw[6] && typeof raw[6] === 'object' ? raw[6] : null;
+      const bitacoras = toArr(raw[4]);
+      const dashboardStats = raw[5] && typeof raw[5] === 'object' ? raw[5] : null;
       const clientesCtx = applyGlobalBranchFilterRows(clientes);
       const clienteNamesCtx = new Set(clientesCtx.map(c => String(c && c.nombre || '').trim().toLowerCase()).filter(Boolean));
       const maquinasCtx = globalBranchFilter ? maquinas.filter(m => clienteNamesCtx.has(String(m && m.cliente_nombre || '').trim().toLowerCase())) : maquinas;
       const cotizacionesCtx = globalBranchFilter ? cotizaciones.filter(c => clienteNamesCtx.has(String(c && c.cliente_nombre || '').trim().toLowerCase())) : cotizaciones;
-      const incidentesCtx = globalBranchFilter ? incidentes.filter(i => clienteNamesCtx.has(String(i && i.cliente_nombre || '').trim().toLowerCase())) : incidentes;
       const bitacorasCtx = bitacoras;
       if (loading) {
         loading.classList.add('hidden');
@@ -5417,26 +5538,15 @@
       const cotEsteMes = cotizacionesCtx.filter(c => (c.fecha || '').slice(0, 7) === thisMonthStart.slice(0, 7)).length;
       const cotRefacciones = cotizacionesCtx.filter(c => (c.tipo || '') === 'refacciones').length;
       const cotManoObra = cotizacionesCtx.filter(c => (c.tipo || '') === 'mano_obra').length;
-      const incAbiertos = incidentesCtx.filter(i => (i.estatus || '') === 'abierto').length;
-      const incEnProceso = incidentesCtx.filter(i => (i.estatus || '') === 'en_proceso').length;
-      const incAltaCritica = incidentesCtx.filter(i => /^(alta|critica)$/i.test(i.prioridad || '')).length;
-      const incCerrados = incidentesCtx.filter(i => (i.estatus || '') === 'cerrado').length;
       const bitHoras = bitacorasCtx.reduce((s, b) => s + (Number(b.tiempo_horas) || 0), 0);
       const tecnicos = new Set(bitacorasCtx.map(b => (b.tecnico || '').trim()).filter(Boolean)).size;
       const bitEsteMes = bitacorasCtx.filter(b => (b.fecha || '').slice(0, 7) === thisMonthStart.slice(0, 7)).length;
-      const incTotal = incidentesCtx.length;
-      const incProgress = incTotal ? Math.round((incCerrados / incTotal) * 100) : 0;
       const cotMontoMes = cotizacionesCtx
         .filter(c => (c.fecha || '').slice(0, 7) === thisMonthStart.slice(0, 7))
         .reduce((s, c) => s + (Number(c.total) || 0), 0);
       const bitHorasMes = bitacorasCtx
         .filter(b => (b.fecha || '').slice(0, 7) === thisMonthStart.slice(0, 7))
         .reduce((s, b) => s + (Number(b.tiempo_horas) || 0), 0);
-      const incUrgentesAbiertos = incidentesCtx.filter(i => {
-        const est = String(i.estatus || '').toLowerCase();
-        if (est === 'cerrado') return false;
-        return /^(alta|critica)$/i.test(String(i.prioridad || ''));
-      }).length;
 
       const execEl = document.createElement('div');
       execEl.className = 'dashboard-exec-scorecards';
@@ -5454,11 +5564,11 @@
           <strong class="dashboard-score-value">${escapeHtml(formatMoney(cotTotal))}</strong>
           <span class="dashboard-score-meta"><i class="fas fa-layer-group"></i> ${escapeHtml(String(cotizacionesCtx.length))} documentos en sistema</span>
         </article>
-        <article class="dashboard-score-tile dashboard-score-tile--risk" data-crossfilter-entity="incidentes" title="Clic: filtrar vista por incidentes">
-          <span class="dashboard-score-eyebrow">Riesgo operativo</span>
-          <span class="dashboard-score-label">Urgencias abiertas</span>
-          <strong class="dashboard-score-value">${escapeHtml(String(incUrgentesAbiertos))}</strong>
-          <span class="dashboard-score-meta"><i class="fas fa-fire"></i> Alta/crítica sin cerrar · ${escapeHtml(String(incAbiertos))} abiertos en total</span>
+        <article class="dashboard-score-tile dashboard-score-tile--risk" data-crossfilter-entity="refacciones" title="Clic: filtrar vista por refacciones">
+          <span class="dashboard-score-eyebrow">Catálogo</span>
+          <span class="dashboard-score-label">Refacciones en sistema</span>
+          <strong class="dashboard-score-value">${escapeHtml(String(refacciones.length))}</strong>
+          <span class="dashboard-score-meta"><i class="fas fa-cogs"></i> Partidas en catálogo</span>
         </article>
         <article class="dashboard-score-tile dashboard-score-tile--ops" data-crossfilter-entity="bitacoras" title="Clic: filtrar vista por bitácora">
           <span class="dashboard-score-eyebrow">Productividad</span>
@@ -5472,7 +5582,7 @@
       const resumenKpi = [
         { label: 'Clientes', value: clientesCtx.length, icon: 'fa-users', cf: 'clientes' },
         { label: 'Cotizaciones (monto)', value: formatMoney(cotTotal), icon: 'fa-file-invoice-dollar', cf: 'cotizaciones' },
-        { label: 'Incidentes abiertos', value: incAbiertos, icon: 'fa-exclamation-triangle', cf: 'incidentes' },
+        { label: 'Refacciones (catálogo)', value: refacciones.length, icon: 'fa-cogs', cf: 'refacciones' },
         { label: 'Horas en bitácora', value: bitHoras.toFixed(1) + ' h', icon: 'fa-clock', cf: 'bitacoras' },
       ];
       const kpiEl = document.createElement('div');
@@ -5485,7 +5595,6 @@
         { id: 'refacciones', icon: 'fa-cogs', title: 'Refacciones', goto: 'refacciones', rows: [{ label: 'Total', value: refacciones.length, v: 'neutral' }, { label: 'Valor catálogo', value: formatMoney(valorCatalogo), v: 'positive' }, { label: 'Precio promedio', value: formatMoney(promPrecio), v: 'neutral' }, { label: 'Marcas', value: marcas, v: 'neutral' }] },
         { id: 'maquinas', icon: 'fa-industry', title: 'Máquinas', goto: 'maquinas', rows: [{ label: 'Total', value: maquinas.length, v: 'neutral' }, { label: 'Clientes con equipo', value: Object.keys(maqPorCliente).length, v: 'neutral' }, topClienteMaq ? { label: 'Top cliente', value: topClienteMaq[0] + ' (' + topClienteMaq[1] + ')', v: 'neutral', long: true } : null].filter(Boolean) },
         { id: 'cotizaciones', icon: 'fa-file-invoice-dollar', title: 'Cotizaciones', goto: 'cotizaciones', rows: [{ label: 'Total', value: cotizacionesCtx.length, v: 'neutral' }, { label: 'Monto total', value: formatMoney(cotTotal), v: 'positive' }, { label: 'Este mes', value: cotEsteMes, v: 'positive' }, { label: 'Refacciones / Mano obra', value: cotRefacciones + ' / ' + cotManoObra, v: 'neutral' }] },
-        { id: 'incidentes', icon: 'fa-exclamation-triangle', title: 'Incidentes', goto: 'incidentes', progress: incProgress, rows: [{ label: 'Total', value: incTotal, v: 'neutral' }, { label: 'Abiertos', value: incAbiertos, v: incAbiertos > 0 ? 'alert' : 'neutral' }, { label: 'En proceso', value: incEnProceso, v: 'neutral' }, { label: 'Alta/Crítica', value: incAltaCritica, v: incAltaCritica > 0 ? 'alert' : 'neutral' }, { label: 'Cerrados', value: incCerrados, v: 'positive' }] },
         { id: 'bitacoras', icon: 'fa-clock', title: 'Bitácora de horas', goto: 'bitacoras', rows: [{ label: 'Registros', value: bitacorasCtx.length, v: 'neutral' }, { label: 'Horas totales', value: bitHoras.toFixed(1), v: 'positive' }, { label: 'Técnicos', value: tecnicos, v: 'neutral' }, { label: 'Este mes', value: bitEsteMes, v: 'positive' }] },
       ];
       cards.forEach((card) => {
@@ -5516,14 +5625,14 @@
       // Rellenar cachés y tablas con los datos ya cargados (si algo falla no rompemos el dashboard)
       try {
         cotizacionesCache = cotizaciones;
-        incidentesCache = incidentes;
         bitacorasCache = bitacoras;
         const filtCot = applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones');
-        const filtInc = applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes');
         const filtBit = applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras');
         renderCotizaciones(filtCot, cotizacionesCache.length);
-        renderIncidentes(filtInc, incidentesCache.length);
         renderBitacoras(filtBit, bitacorasCache.length);
+        fetchJson(API + '/incidentes')
+          .then((r) => { incidentesCache = toArray(r); updateHeaderUrgencies(); })
+          .catch(() => {});
       } catch (err) {
         console.error('Dashboard prefill tablas:', err);
       }
@@ -5567,14 +5676,12 @@
           const prev = dashboardStats.periodos[prevKey];
           if (!p || !prev) return '';
           const cot = p.cotizaciones; const cotPrev = prev.cotizaciones;
-          const inc = p.incidentes; const incPrev = prev.incidentes;
           const bit = p.bitacoras; const bitPrev = prev.bitacoras;
           return `
             <div class="dashboard-stat-card" data-period="${period}">
               <h4 class="dashboard-stat-card-title-cf" title="Clic en una fila de métrica para filtrar">${escapeHtml(titulo)}</h4>
               <div class="stat-row stat-row-crossfilter" data-dimension="cotizaciones" title="${rowHint}"><span class="stat-label">Cotizaciones</span><span><span class="stat-value">${cot.count}</span> <span class="stat-diff ${diffClass(cot.count, cotPrev.count)}">${diffText(cot.count, cotPrev.count)}</span></span></div>
               <div class="stat-row stat-row-crossfilter" data-dimension="cotizaciones" title="${rowHint}"><span class="stat-label">Monto cotiz.</span><span><span class="stat-value">${formatMoney(cot.monto)}</span> <span class="stat-diff ${diffClass(cot.monto, cotPrev.monto)}">${diffText(cot.monto, cotPrev.monto)}</span></span></div>
-              <div class="stat-row stat-row-crossfilter" data-dimension="incidentes" title="${rowHint}"><span class="stat-label">Incidentes</span><span><span class="stat-value">${inc.count}</span> <span class="stat-diff ${diffClass(inc.count, incPrev.count)}">${diffText(inc.count, incPrev.count)}</span></span></div>
               <div class="stat-row stat-row-crossfilter" data-dimension="bitacoras" title="${rowHint}"><span class="stat-label">Bitácoras</span><span><span class="stat-value">${bit.count} (${Number(bit.horas).toFixed(1)} h)</span> <span class="stat-diff ${diffClass(bit.count, bitPrev.count)}">${diffText(bit.count, bitPrev.count)}</span></span></div>
             </div>`;
         }).join('');
@@ -5586,12 +5693,11 @@
             { titulo: 'Próximo mes', d: pron.proximo_mes },
             { titulo: 'Próximo año', d: pron.proximo_año },
           ];
-          pronEl.innerHTML = '<p class="dashboard-hint dashboard-forecast-legend">Cada fila: <strong>Cotizaciones</strong> = cantidad y monto estimado; <strong>Incidentes</strong> = cantidad estimada; <strong>Bitácoras</strong> = registros y horas estimadas.</p>' +
+          pronEl.innerHTML = '<p class="dashboard-hint dashboard-forecast-legend">Cada fila: <strong>Cotizaciones</strong> = cantidad y monto estimado; <strong>Bitácoras</strong> = registros y horas estimadas.</p>' +
             pronCards.map(({ titulo, d }) => `
             <div class="dashboard-forecast-card">
               <h4>${escapeHtml(titulo)}</h4>
               <div class="stat-row"><span class="stat-label">Cotizaciones</span><span class="stat-value">${d.cotizaciones_count} cotiz. · ${formatMoney(d.cotizaciones_monto)}</span></div>
-              <div class="stat-row"><span class="stat-label">Incidentes</span><span class="stat-value">${d.incidentes_count} incidentes</span></div>
               <div class="stat-row"><span class="stat-label">Bitácoras</span><span class="stat-value">${d.bitacoras_count} registros · ${Number(d.bitacoras_horas).toFixed(1)} h</span></div>
             </div>`).join('');
         } else {
@@ -5611,15 +5717,14 @@
             chartBars = null;
           }
           const nCot = cotizacionesCtx.length;
-          const nInc = incidentesCtx.length;
           const nBit = bitacorasCtx.length;
           const donutCtx = document.getElementById('chart-donut');
-          if (donutCtx && (nCot + nInc + nBit > 0)) {
+          if (donutCtx && (nCot + nBit > 0)) {
             chartDonut = new Chart(donutCtx, {
               type: 'doughnut',
               data: {
-                labels: ['Cotizaciones', 'Incidentes', 'Bitácoras'],
-                datasets: [{ data: [nCot, nInc, nBit], backgroundColor: ['#059669', '#ea580c', '#7c3aed'], borderColor: '#1e293b', borderWidth: 2 }],
+                labels: ['Cotizaciones', 'Bitácoras'],
+                datasets: [{ data: [nCot, nBit], backgroundColor: ['#059669', '#7c3aed'], borderColor: '#1e293b', borderWidth: 2 }],
               },
               options: {
                 responsive: true,
@@ -5627,7 +5732,7 @@
                 onHover: function (e, els) { if (e.native && e.native.target) e.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
                 onClick: function (_evt, elements) {
                   if (!elements || !elements.length) return;
-                  const keys = ['cotizaciones', 'incidentes', 'bitacoras'];
+                  const keys = ['cotizaciones', 'bitacoras'];
                   const i = elements[0].index;
                   if (keys[i]) setDashboardCrossFilterEntity(keys[i]);
                 },
@@ -5833,7 +5938,6 @@
     await loadRefacciones();
     await loadMaquinas();
     await loadCotizaciones();
-    await loadIncidentes();
     await loadBitacoras();
     fillClientesSelect();
     showToast('Respaldo restaurado correctamente.', 'success');
@@ -5881,7 +5985,6 @@
     await loadRefacciones();
     await loadMaquinas();
     await loadCotizaciones();
-    await loadIncidentes();
     await loadBitacoras();
     fillClientesSelect();
     showToast('Backup restaurado desde lista automática.', 'success');
@@ -5996,7 +6099,6 @@
     if (id === 'garantias') loadGarantias();
     if (id === 'mantenimiento-garantia') loadMantenimientoGarantia();
     if (id === 'garantias-sin-cobertura') loadGarantiasSinCobertura();
-    if (id === 'incidentes') loadIncidentes();
     if (id === 'bitacoras') loadBitacoras();
     loadSeedStatus(false);
     loadStorageHealth();
@@ -6042,10 +6144,9 @@
       loadMaquinas();
       fillClientesSelect();
       await loadCotizaciones();
-      await loadIncidentes();
       await loadBitacoras();
       showPanel('bitacoras', { skipLoad: true });
-      showToast('Demo completo cargado: clientes, cotizaciones, incidentes, reportes, garantías, bonos y viajes.', 'success');
+      showToast('Demo completo cargado: clientes, cotizaciones, reportes, garantías y bonos.', 'success');
     } catch (e) {
       let msg = e.message;
       try { const o = JSON.parse(msg); if (o.error) msg = o.error; } catch (_) {}
@@ -6122,6 +6223,7 @@
     renderCotizaciones(slice, cotizacionesCache.length, popts);
   }
   function applyIncidentesFiltersAndRender() {
+    if (!qs('#tabla-incidentes')) return;
     const tid = 'tabla-incidentes';
     const filtered = applyFilters(applyGlobalBranchFilterRows(incidentesCache), getFilterValues('#tabla-incidentes'), tid);
     const pageSize = getPageSize(tid);
@@ -6175,15 +6277,18 @@
 
     const TARIFAS = {};
     try { Object.assign(TARIFAS, JSON.parse(localStorage.getItem('tarifas_cache') || '{}')); } catch (_) {}
-    const comRef = Number(TARIFAS.comision_ref) || 15;
     const comSvc = Number(TARIFAS.comision_svc) || 15;
-    const comMaqDavid = Number(TARIFAS.comision_maq_david) || 10;
 
     data.forEach(v => {
       const tr = document.createElement('tr');
-      const tipoLabel = v.tipo === 'refacciones' ? 'Refacciones' : v.tipo === 'servicio' ? 'Servicio' : v.tipo === 'maquina' ? 'Máquina' : (v.tipo || '—');
+      const tipoLabel = v.tipo === 'refacciones' ? 'Refacciones' : v.tipo === 'servicio' ? 'Servicio' : v.tipo === 'maquina' ? 'Equipo / máquina' : (v.tipo || '—');
       const totalUSD = v.moneda === 'USD' ? formatMoney(v.total) : (v.tipo_cambio > 0 ? formatMoney(v.total / v.tipo_cambio) : '—');
-      let comPct = v.tipo === 'refacciones' ? comRef : v.tipo === 'servicio' ? comSvc : (v.vendedor === 'David Cantú' ? comMaqDavid : 0);
+      const cr = Number(v.v_comision_refacciones_pct);
+      const cm = Number(v.v_comision_maquinas_pct);
+      let comPct = 0;
+      if (v.tipo === 'refacciones') comPct = Number.isFinite(cr) ? cr : 10;
+      else if (v.tipo === 'servicio') comPct = comSvc;
+      else if (v.tipo === 'maquina') comPct = Number.isFinite(cm) ? cm : 0;
       const comAmt = comPct > 0 ? formatMoney(Number(v.total) * comPct / 100) : '—';
       tr.innerHTML = `
         <td>${escapeHtml(v.folio || '')}</td>
@@ -6454,17 +6559,24 @@
 
   function previewTecnico(t) {
     openPreviewCard({
-      title: t.nombre || 'Técnico',
-      subtitle: t.ocupado ? 'En servicio actualmente' : 'Disponible',
+      title: t.nombre || 'Personal',
+      subtitle: [t.puesto, t.departamento].filter(Boolean).join(' · ') || (t.ocupado ? 'En servicio' : 'Disponible'),
       icon: 'fa-hard-hat',
       color: 'linear-gradient(135deg, #0891b2 0%, #164e63 100%)',
       badge: t.activo ? 'Activo' : 'Inactivo',
       badgeClass: t.activo ? 'pvc-badge--success' : 'pvc-badge--danger',
       sections: [{
-        title: 'Información del técnico', icon: 'fa-user',
+        title: 'Información', icon: 'fa-user',
         fields: [
           { label: 'ID', value: t.id, icon: 'fa-hashtag' },
           { label: 'Nombre', value: t.nombre, icon: 'fa-user', full: true },
+          { label: 'Rol', value: t.rol || '—', icon: 'fa-id-badge' },
+          { label: 'Puesto', value: t.puesto || '—', icon: 'fa-briefcase' },
+          { label: 'Departamento', value: t.departamento || '—', icon: 'fa-building' },
+          { label: 'Profesión', value: t.profesion || '—', icon: 'fa-graduation-cap' },
+          { label: 'Vendedor', value: Number(t.es_vendedor) === 1 ? 'Sí' : 'No', icon: 'fa-handshake' },
+          { label: 'Comisión % equipo', value: t.comision_maquinas_pct != null ? String(t.comision_maquinas_pct) : '—', icon: 'fa-percent' },
+          { label: 'Comisión % refacciones', value: t.comision_refacciones_pct != null ? String(t.comision_refacciones_pct) : '—', icon: 'fa-percent' },
           { label: 'Estado', value: t.activo ? 'Activo' : 'Inactivo', icon: 'fa-toggle-on', badge: true, badgeClass: t.activo ? 'pvc-badge--success' : 'pvc-badge--danger' },
           { label: 'Disponibilidad', value: t.ocupado ? '🔒 Ocupado' : '✓ Disponible', icon: 'fa-clock', badge: true, badgeClass: t.ocupado ? 'pvc-badge--warning' : 'pvc-badge--success' },
         ]
@@ -6478,20 +6590,25 @@
     const tbody = qs('#tabla-tecnicos tbody');
     if (!tbody) return;
     const q = (qs('#buscar-tecnicos')?.value || '').toLowerCase();
-    const filtered = q ? data.filter(t => (t.nombre || '').toLowerCase().includes(q) || (t.habilidades || '').toLowerCase().includes(q)) : data;
+    const filtered = q ? data.filter(t => (t.nombre || '').toLowerCase().includes(q) || (t.habilidades || '').toLowerCase().includes(q) || (t.puesto || '').toLowerCase().includes(q) || (t.departamento || '').toLowerCase().includes(q)) : data;
     tbody.innerHTML = '';
     if (!filtered.length) {
-      tbody.innerHTML = '<tr><td colspan="5" class="empty">No hay técnicos registrados.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="empty">No hay personal registrado.</td></tr>';
       return;
     }
     const _canEdit = canEdit(); const _canDelete = canDelete();
     filtered.forEach(t => {
       const ocupadoBadge = t.ocupado ? '<span class="badge semaforo-rojo">🔒 Ocupado</span>' : '<span class="badge semaforo-verde">✓ Disponible</span>';
       const activoBadge = t.activo ? '<span class="badge semaforo-verde">Activo</span>' : '<span class="badge semaforo-gris">Inactivo</span>';
+      const vendBadge = Number(t.es_vendedor) === 1 ? '<span class="badge badge-ok">Vende</span>' : '<span class="badge badge-warn">No ventas</span>';
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><strong>${escapeHtml(t.nombre || '')}</strong></td>
-        <td style="font-size:0.85rem;color:var(--text-secondary)">${escapeHtml(t.habilidades || '—')}</td>
+        <td style="font-size:0.82rem">${escapeHtml(t.rol || '—')}</td>
+        <td style="font-size:0.82rem">${escapeHtml(t.puesto || '—')}</td>
+        <td style="font-size:0.82rem">${escapeHtml(t.departamento || '—')}</td>
+        <td>${vendBadge}</td>
+        <td style="font-size:0.82rem;color:var(--text-secondary)">${escapeHtml(t.habilidades || '—')}</td>
         <td>${ocupadoBadge}</td>
         <td>${activoBadge}</td>
         <td class="th-actions">
@@ -6526,9 +6643,27 @@
       <div class="form-group"><label>Nombre *</label>
         <input type="text" id="m-tec-nombre" maxlength="100" value="${escapeHtml(tec && tec.nombre || '')}" placeholder="Ej. Juan Pérez" required>
       </div>
+      <div class="form-row">
+        <div class="form-group"><label>Rol</label><input type="text" id="m-tec-rol" maxlength="120" value="${escapeHtml(tec && tec.rol || '')}" placeholder="Ej. Líder comercial"></div>
+        <div class="form-group"><label>Puesto</label><input type="text" id="m-tec-puesto" maxlength="120" value="${escapeHtml(tec && tec.puesto || '')}" placeholder="Ej. Jefe de Área"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Departamento</label><input type="text" id="m-tec-depto" maxlength="120" value="${escapeHtml(tec && tec.departamento || '')}"></div>
+        <div class="form-group"><label>Profesión</label><input type="text" id="m-tec-prof" maxlength="120" value="${escapeHtml(tec && tec.profesion || '')}"></div>
+      </div>
       <div class="form-group"><label>Habilidades / Especialidades</label>
         <textarea id="m-tec-habilidades" rows="3" maxlength="500" placeholder="Ej. CNC Fanuc, Electroerosión, PLC Siemens, Soldadura MIG…">${escapeHtml(tec && tec.habilidades || '')}</textarea>
         <div class="hint">Separa con comas. Aparece en la tabla y en el dropdown de asignación.</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>¿Vendedor?</label>
+          <select id="m-tec-es-vendedor">
+            <option value="0" ${tec && Number(tec.es_vendedor) !== 1 ? 'selected' : ''}>No</option>
+            <option value="1" ${tec && Number(tec.es_vendedor) === 1 ? 'selected' : ''}>Sí</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Comisión % equipo (máquinas)</label><input type="number" id="m-tec-com-m" min="0" max="100" step="0.5" value="${tec && tec.comision_maquinas_pct != null ? escapeHtml(String(tec.comision_maquinas_pct)) : '0'}"></div>
+        <div class="form-group"><label>Comisión % refacciones</label><input type="number" id="m-tec-com-r" min="0" max="100" step="0.5" value="${tec && tec.comision_refacciones_pct != null ? escapeHtml(String(tec.comision_refacciones_pct)) : '10'}"></div>
       </div>
       ${!isNew ? `<div class="form-group"><label>Estado</label>
         <select id="m-tec-activo">
@@ -6540,20 +6675,27 @@
         <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
         <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
       </div>`;
-    openModal(isNew ? 'Nuevo técnico' : 'Editar técnico', body);
+    openModal(isNew ? 'Nueva persona' : 'Editar personal', body);
     qs('#m-save').onclick = async () => {
       const nombre = qs('#m-tec-nombre')?.value.trim();
       if (!nombre) { showToast('El nombre es obligatorio.', 'error'); return; }
       const payload = {
         nombre,
+        rol: qs('#m-tec-rol')?.value.trim() || null,
+        puesto: qs('#m-tec-puesto')?.value.trim() || null,
+        departamento: qs('#m-tec-depto')?.value.trim() || null,
+        profesion: qs('#m-tec-prof')?.value.trim() || null,
         habilidades: qs('#m-tec-habilidades')?.value.trim() || null,
+        es_vendedor: qs('#m-tec-es-vendedor')?.value === '1' ? 1 : 0,
+        comision_maquinas_pct: Number(qs('#m-tec-com-m')?.value) || 0,
+        comision_refacciones_pct: Number(qs('#m-tec-com-r')?.value) || 0,
         activo: isNew ? 1 : parseInt(qs('#m-tec-activo')?.value || '1', 10),
       };
       try {
         if (isNew) await fetchJson(API + '/tecnicos', { method: 'POST', body: JSON.stringify(payload) });
         else await fetchJson(API + '/tecnicos/' + tec.id, { method: 'PUT', body: JSON.stringify(payload) });
         qs('#modal').classList.add('hidden');
-        showToast(isNew ? 'Técnico creado.' : 'Técnico actualizado.', 'success');
+        showToast(isNew ? 'Persona creada.' : 'Persona actualizada.', 'success');
         loadTecnicos();
       } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar.', 'error'); }
     };
@@ -6679,7 +6821,7 @@
     });
   }
   bindTableFilters('tabla-reportes', applyReportesFiltersAndRender);
-  bindTableFilters('tabla-incidentes', applyIncidentesFiltersAndRender);
+  if (qs('#tabla-incidentes')) bindTableFilters('tabla-incidentes', applyIncidentesFiltersAndRender);
   bindTableFilters('tabla-bitacoras', applyBitacorasFiltersAndRender);
   bindTableFilters('tabla-mantenimientos-garantia', () => renderMantenimientoGarantiaTable());
   bindTableFilters('tabla-garantias-sin', applyGarantiasSinFiltersAndRender);
@@ -6706,7 +6848,8 @@
   qs('#nueva-refaccion').addEventListener('click', () => openModalRefaccion(null));
   qs('#nueva-maquina').addEventListener('click', () => openModalMaquina(null));
   qs('#nueva-cotizacion').addEventListener('click', () => openModalCotizacion(null));
-  qs('#nuevo-incidente').addEventListener('click', () => openModalIncidente(null));
+  const btnNuevoIncidente = qs('#nuevo-incidente');
+  if (btnNuevoIncidente) btnNuevoIncidente.addEventListener('click', () => openModalIncidente(null));
   qs('#nueva-bitacora').addEventListener('click', () => openModalBitacora(null));
   // Nuevos módulos
   const btnNuevoReporte = qs('#nuevo-reporte');
@@ -6767,7 +6910,8 @@
   const exportGarantiasSin = qs('#export-garantias-sin');
   if (exportGarantiasSin) exportGarantiasSin.addEventListener('click', () => exportToCsv(applyFilters(garantiasSinCoberturaCache, getFilterValues('#tabla-garantias-sin'), 'tabla-garantias-sin'), 'tabla-garantias-sin', 'garantias_sin_cobertura'));
   qs('.btn-empty-cot').addEventListener('click', () => openModalCotizacion(null));
-  qs('.btn-empty-inc').addEventListener('click', () => openModalIncidente(null));
+  const btnEmptyInc = qs('.btn-empty-inc');
+  if (btnEmptyInc) btnEmptyInc.addEventListener('click', () => openModalIncidente(null));
   qs('.btn-empty-bit').addEventListener('click', () => openModalBitacora(null));
 
   function getFilteredClientes() {
@@ -6792,8 +6936,10 @@
   qs('#export-excel-cotizaciones').addEventListener('click', () => exportToExcel(enrichCotizacionesForExport(applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones')), 'tabla-cotizaciones', 'cotizaciones'));
   const btnExportReportes = qs('#export-reportes');
   if (btnExportReportes) btnExportReportes.addEventListener('click', () => exportToCsv(getFilteredReportes(), 'tabla-reportes', 'reportes'));
-  qs('#export-incidentes').addEventListener('click', () => exportToCsv(enrichIncidentesForExport(applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes')), 'tabla-incidentes', 'incidentes'));
-  qs('#export-excel-incidentes').addEventListener('click', () => exportToExcel(enrichIncidentesForExport(applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes')), 'tabla-incidentes', 'incidentes'));
+  const expInc = qs('#export-incidentes');
+  if (expInc) expInc.addEventListener('click', () => exportToCsv(enrichIncidentesForExport(applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes')), 'tabla-incidentes', 'incidentes'));
+  const expIncX = qs('#export-excel-incidentes');
+  if (expIncX) expIncX.addEventListener('click', () => exportToExcel(enrichIncidentesForExport(applyFilters(incidentesCache, getFilterValues('#tabla-incidentes'), 'tabla-incidentes')), 'tabla-incidentes', 'incidentes'));
   qs('#export-bitacoras').addEventListener('click', () => exportToCsv(enrichBitacorasForExport(applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras')), 'tabla-bitacoras', 'bitacoras'));
   qs('#export-excel-bitacoras').addEventListener('click', () => exportToExcel(enrichBitacorasForExport(applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras')), 'tabla-bitacoras', 'bitacoras'));
 
@@ -6815,7 +6961,7 @@
     a.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${urgent} incidente${urgent !== 1 ? 's' : ''} por vencer`;
     a.addEventListener('click', function (e) {
       e.preventDefault();
-      showPanel('incidentes');
+      showPanel('bitacoras');
     });
     slot.appendChild(a);
     try {
@@ -6870,7 +7016,7 @@
     }
     const inInput = document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].indexOf(document.activeElement.tagName) >= 0;
     if (!inInput && (e.ctrlKey || e.metaKey)) {
-      const tabMap = { '0': 'dashboards', '1': 'clientes', '2': 'refacciones', '3': 'maquinas', '4': 'cotizaciones', '5': 'incidentes', '6': 'bitacoras', '7': 'acerca' };
+      const tabMap = { '0': 'dashboards', '1': 'clientes', '2': 'refacciones', '3': 'maquinas', '4': 'cotizaciones', '5': 'bonos', '6': 'bitacoras', '7': 'acerca' };
       const uK = getSessionUser();
       if (serverConfig.auditUi && uK && uK.role === 'admin') tabMap['8'] = 'auditoria';
       const tab = tabMap[e.key];
@@ -6894,7 +7040,7 @@
         <li><kbd>Ctrl</kbd>+<kbd>2</kbd> … Refacciones</li>
         <li><kbd>Ctrl</kbd>+<kbd>3</kbd> … Máquinas</li>
         <li><kbd>Ctrl</kbd>+<kbd>4</kbd> … Cotizaciones</li>
-        <li><kbd>Ctrl</kbd>+<kbd>5</kbd> … Incidentes</li>
+        <li><kbd>Ctrl</kbd>+<kbd>5</kbd> … Bonos</li>
         <li><kbd>Ctrl</kbd>+<kbd>6</kbd> … Bitácora de horas</li>
         <li><kbd>Ctrl</kbd>+<kbd>7</kbd> … Acerca de</li>
         <li><kbd>Ctrl</kbd>+<kbd>8</kbd> … Auditoría (solo admin, si está activa la autenticación)</li>
@@ -6981,7 +7127,7 @@
       { panel: 'dashboards', title: 'Dashboard ejecutivo', text: 'Aquí ves KPIs, scorecards, comparativos y gráficas. Puedes cruzar filtros con clics como en BI.', icon: 'fa-chart-pie', gradient: 'g-teal', bullets: ['Cruza filtros por entidad y periodo', 'Monitorea indicadores semanales/mensuales', 'Accede rápido a respaldos y reportes'] },
       { panel: 'clientes', title: 'Catálogo de clientes', text: 'Registra clientes, RFC, ciudad y contacto. La ciudad alimenta el filtro global por sucursal.', icon: 'fa-users', gradient: 'g-blue', bullets: ['Alta rápida con validaciones', 'Datos listos para cotizaciones/incidentes', 'Ciudad usada para filtro global'] },
       { panel: 'cotizaciones', title: 'Cotizaciones profesionales', text: 'Crea y exporta cotizaciones. Desde aquí también puedes generar PDF cliente o interno.', icon: 'fa-file-invoice-dollar', gradient: 'g-indigo', bullets: ['Flujo de creación y edición ágil', 'PDF de una página optimizado A4', 'Vista previa antes de imprimir'] },
-      { panel: 'incidentes', title: 'Incidentes y SLA', text: 'Controla incidentes, prioridad, vencimiento y estatus operativo.', icon: 'fa-triangle-exclamation', gradient: 'g-orange', bullets: ['Semáforos para urgencia y SLA', 'Seguimiento por cliente/máquina', 'Exportación ejecutiva para operación'] },
+      { panel: 'bonos', title: 'Bonos de capacitación', text: 'Bonos ligados a reportes de servicio y al personal.', icon: 'fa-award', gradient: 'g-orange', bullets: ['Montos y estados de pago', 'Asociación a reporte', 'Sin mezclar con viáticos'] },
       { panel: 'bitacoras', title: 'Bitácora de horas', text: 'Registra actividades y horas por incidente/cotización para trazabilidad.', icon: 'fa-clock', gradient: 'g-violet', bullets: ['Historial técnico por actividad', 'Base para control de productividad', 'Reporte PDF cliente/interno'] },
       { panel: 'demo', title: 'Respaldos y persistencia', text: 'Aquí gestionas estado de persistencia, backups manuales y automáticos.', icon: 'fa-shield-halved', gradient: 'g-slate', bullets: ['Exporta/importa respaldo JSON', 'Backups automáticos con retención', 'Estado de almacenamiento en tiempo real'] },
     ];
@@ -7049,7 +7195,11 @@
 
   function restoreLastTabOrDefault() {
     try {
-      const last = localStorage.getItem(LAST_TAB_KEY);
+      let last = localStorage.getItem(LAST_TAB_KEY);
+      if (last === 'incidentes' || last === 'viajes') {
+        try { localStorage.removeItem(LAST_TAB_KEY); } catch (_) {}
+        last = null;
+      }
       if (last === 'auditoria') {
         const u = getSessionUser();
         if (serverConfig.auditUi && u && u.role === 'admin') {
@@ -7075,7 +7225,7 @@
       { id: 'refacciones', label: 'Refacciones', icon: 'fa-cogs' },
       { id: 'maquinas', label: 'Máquinas', icon: 'fa-industry' },
       { id: 'cotizaciones', label: 'Cotizaciones', icon: 'fa-file-invoice-dollar' },
-      { id: 'incidentes', label: 'Incidentes', icon: 'fa-exclamation-triangle' },
+      { id: 'bonos', label: 'Bonos', icon: 'fa-award' },
       { id: 'bitacoras', label: 'Bitácora de horas', icon: 'fa-clock' },
       { id: 'demo', label: 'Cargar demo', icon: 'fa-database' },
       { id: 'acerca', label: 'Acerca de', icon: 'fa-info-circle' },
@@ -7113,7 +7263,7 @@
           if (action === 'panel') showPanel(id);
           if (action === 'edit-cliente' && id) { showPanel('clientes'); setTimeout(() => openModalCliente(clientesCache.find(c => c.id == id)), 100); }
           if (action === 'edit-cotizacion' && id) { showPanel('cotizaciones'); setTimeout(() => editCotizacion(id), 100); }
-          if (action === 'edit-incidente' && id) { showPanel('incidentes'); setTimeout(() => editIncidente(id), 100); }
+          if (action === 'edit-incidente' && id) { showPanel('bitacoras'); setTimeout(() => editIncidente(id), 100); }
           if (action === 'edit-refaccion' && id) { showPanel('refacciones'); setTimeout(() => openModalRefaccion(refaccionesCache.find(r => r.id == id)), 100); }
           if (action === 'edit-maquina' && id) { showPanel('maquinas'); setTimeout(() => openModalMaquina(maquinasCache.find(m => m.id == id)), 100); }
           if (action === 'edit-bitacora' && id) { showPanel('bitacoras'); setTimeout(() => editBitacora(id), 100); }
@@ -7732,7 +7882,7 @@
       if ((data.incidentes || 0) === 0 || (data.bitacoras || 0) === 0) {
         showToast('No se insertaron incidentes ni bitácoras. Los nombres de cliente y máquina en seed-demo.json deben coincidir con los de Clientes y Máquinas. Prueba "Cargar datos demo ahora" si la base estaba vacía.', 'error');
       } else {
-        showPanel('incidentes', { skipLoad: true });
+        showPanel('bitacoras', { skipLoad: true });
       }
     } catch (e) {
       let msg = e.message;

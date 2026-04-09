@@ -349,12 +349,14 @@ app.post('/api/maquinas', async (req, res) => {
       imagen_pieza_url,
       imagen_ensamble_url,
       stock,
+      precio_lista_usd,
     } = req.body || {};
     if (!cliente_id) return res.status(400).json({ error: 'cliente_id requerido' });
     const stockNum = stock != null && stock !== '' ? Number(stock) : 0;
+    const plUsd = precio_lista_usd != null && precio_lista_usd !== '' ? Number(precio_lista_usd) : 0;
     await db.runQuery(
-      `INSERT INTO maquinas (cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion, categoria, categoria_principal, imagen_pieza_url, imagen_ensamble_url, stock)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO maquinas (cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion, categoria, categoria_principal, imagen_pieza_url, imagen_ensamble_url, stock, precio_lista_usd)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         cliente_id,
         codigo || null,
@@ -368,6 +370,7 @@ app.post('/api/maquinas', async (req, res) => {
         imagen_pieza_url || null,
         imagen_ensamble_url || null,
         Number.isFinite(stockNum) ? stockNum : 0,
+        Number.isFinite(plUsd) ? plUsd : 0,
       ]
     );
     const r = await db.getOne('SELECT * FROM maquinas ORDER BY id DESC LIMIT 1');
@@ -392,11 +395,13 @@ app.put('/api/maquinas/:id', async (req, res) => {
       imagen_pieza_url,
       imagen_ensamble_url,
       stock,
+      precio_lista_usd,
     } = req.body || {};
     const stockNum = stock != null && stock !== '' ? Number(stock) : 0;
+    const plUsd = precio_lista_usd != null && precio_lista_usd !== '' ? Number(precio_lista_usd) : 0;
     await db.runQuery(
       `UPDATE maquinas SET cliente_id=?, codigo=?, nombre=?, marca=?, modelo=?, numero_serie=?, ubicacion=?, categoria=?, categoria_principal=?,
-       imagen_pieza_url=?, imagen_ensamble_url=?, stock=? WHERE id=?`,
+       imagen_pieza_url=?, imagen_ensamble_url=?, stock=?, precio_lista_usd=? WHERE id=?`,
       [
         cliente_id || null,
         codigo || null,
@@ -410,6 +415,7 @@ app.put('/api/maquinas/:id', async (req, res) => {
         imagen_pieza_url || null,
         imagen_ensamble_url || null,
         Number.isFinite(stockNum) ? stockNum : 0,
+        Number.isFinite(plUsd) ? plUsd : 0,
         req.params.id,
       ]
     );
@@ -561,8 +567,14 @@ app.get('/api/alertas', async (req, res) => {
 app.get('/api/ventas', async (req, res) => {
   try {
     const rows = await db.getAll(
-      `SELECT co.*, c.nombre as cliente_nombre
-       FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id
+      `SELECT co.*, c.nombre as cliente_nombre,
+              COALESCE(vp.comision_maquinas_pct, vn.comision_maquinas_pct) as v_comision_maquinas_pct,
+              COALESCE(vp.comision_refacciones_pct, vn.comision_refacciones_pct) as v_comision_refacciones_pct,
+              COALESCE(vp.puesto, vn.puesto) as vendedor_puesto
+       FROM cotizaciones co
+       JOIN clientes c ON c.id = co.cliente_id
+       LEFT JOIN tecnicos vp ON vp.id = co.vendedor_personal_id
+       LEFT JOIN tecnicos vn ON co.vendedor_personal_id IS NULL AND vn.nombre = co.vendedor
        WHERE co.estado IN ('aplicada','venta')
        ORDER BY co.fecha_aprobacion DESC, co.id DESC LIMIT 500`
     );
@@ -779,7 +791,11 @@ app.delete('/api/revision-maquinas/:id', async (req, res) => {
 app.get('/api/cotizaciones', async (req, res) => {
   try {
     const rows = await db.getAll(
-      `SELECT co.*, c.nombre as cliente_nombre FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id ORDER BY co.fecha DESC, co.id DESC LIMIT 500`
+      `SELECT co.*, c.nombre as cliente_nombre, vp.puesto as vendedor_puesto
+       FROM cotizaciones co
+       JOIN clientes c ON c.id = co.cliente_id
+       LEFT JOIN tecnicos vp ON vp.id = co.vendedor_personal_id
+       ORDER BY co.fecha DESC, co.id DESC LIMIT 500`
     );
     res.json(Array.isArray(rows) ? rows : []);
   } catch (e) {
@@ -790,7 +806,11 @@ app.get('/api/cotizaciones', async (req, res) => {
 app.get('/api/cotizaciones/:id', async (req, res) => {
   try {
     const row = await db.getOne(
-      'SELECT co.*, c.nombre as cliente_nombre FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id WHERE co.id = ?',
+      `SELECT co.*, c.nombre as cliente_nombre, vp.puesto as vendedor_puesto, vp.nombre as vendedor_catalogo_nombre
+       FROM cotizaciones co
+       JOIN clientes c ON c.id = co.cliente_id
+       LEFT JOIN tecnicos vp ON vp.id = co.vendedor_personal_id
+       WHERE co.id = ?`,
       [req.params.id]
     );
     if (!row) return res.status(404).json({ error: 'No encontrado' });
@@ -831,19 +851,37 @@ function calcLinea(tipo, cantidad, precioUnitario, moneda, tipoCambio) {
   };
 }
 
+async function precioUnitarioDesdeLista(cot, tipo, refaccionId, maquinaId, precioUnitario) {
+  let pu = Number(precioUnitario);
+  if (pu > 0) return pu;
+  const mon = (cot.moneda || 'MXN').toUpperCase();
+  const tc = Number(cot.tipo_cambio) || 17;
+  if (tipo === 'refaccion' && refaccionId) {
+    const ref = await db.getOne('SELECT precio_usd, precio_unitario FROM refacciones WHERE id=?', [refaccionId]);
+    if (!ref) return 0;
+    const usd = Number(ref.precio_usd) || 0;
+    if (usd > 0) return mon === 'USD' ? usd : Math.round(usd * tc * 100) / 100;
+    return Number(ref.precio_unitario) || 0;
+  }
+  if (tipo === 'equipo' && maquinaId) {
+    const m = await db.getOne('SELECT precio_lista_usd FROM maquinas WHERE id=?', [maquinaId]);
+    const usd = m ? Number(m.precio_lista_usd) || 0 : 0;
+    if (usd > 0) return mon === 'USD' ? usd : Math.round(usd * tc * 100) / 100;
+  }
+  return 0;
+}
+
 async function recalcCotizacionTotals(cotizacionId) {
   const cot = await db.getOne('SELECT * FROM cotizaciones WHERE id = ?', [cotizacionId]);
   if (!cot) return null;
   const lineas = await db.getAll('SELECT * FROM cotizacion_lineas WHERE cotizacion_id = ?', [cotizacionId]);
-  const subtotal = (lineas || []).reduce((s, l) => s + (Number(l.subtotal) || 0), 0);
-  const iva = (lineas || []).reduce((s, l) => s + (Number(l.iva) || 0), 0);
-  const total = (lineas || []).reduce((s, l) => s + (Number(l.total) || 0), 0);
-  await db.runQuery('UPDATE cotizaciones SET subtotal=?, iva=?, total=? WHERE id=?', [
-    Math.round(subtotal * 100) / 100,
-    Math.round(iva * 100) / 100,
-    Math.round(total * 100) / 100,
-    cotizacionId,
-  ]);
+  const subtotalBruto = (lineas || []).reduce((s, l) => s + (Number(l.subtotal) || 0), 0);
+  const d = Math.min(100, Math.max(0, Number(cot.descuento_pct) || 0));
+  const factor = 1 - d / 100;
+  const subtotal = Math.round(subtotalBruto * factor * 100) / 100;
+  const iva = Math.round(subtotal * 0.16 * 100) / 100;
+  const total = Math.round((subtotal + iva) * 100) / 100;
+  await db.runQuery('UPDATE cotizaciones SET subtotal=?, iva=?, total=? WHERE id=?', [subtotal, iva, total, cotizacionId]);
   return { subtotal, iva, total };
 }
 
@@ -887,15 +925,24 @@ app.post('/api/cotizaciones/:id/lineas', async (req, res) => {
       tarifa_aplicada,
     } = req.body || {};
     const tipo = String(tipo_linea || '').trim() || 'otro';
-    if (!['refaccion', 'vuelta', 'mano_obra', 'otro'].includes(tipo)) {
+    if (!['refaccion', 'vuelta', 'mano_obra', 'otro', 'equipo'].includes(tipo)) {
       return res.status(400).json({ error: 'tipo_linea inválido' });
     }
     if (tipo === 'refaccion' && !refaccion_id) return res.status(400).json({ error: 'refaccion_id requerido' });
+    if (tipo === 'equipo' && !maquina_id) return res.status(400).json({ error: 'maquina_id requerido para línea equipo' });
     if (tipo === 'mano_obra' && bitacora_id) {
       const bit = await db.getOne('SELECT * FROM bitacoras WHERE id = ? AND cotizacion_id = ?', [bitacora_id, req.params.id]);
       if (!bit) return res.status(400).json({ error: 'bitacora_id inválido para esta cotización' });
     }
-    const calc = calcLinea(tipo, cantidad, precio_unitario, cot.moneda, cot.tipo_cambio);
+    let descFinal = descripcion || null;
+    if (tipo === 'equipo' && maquina_id && !String(descFinal || '').trim()) {
+      const mq = await db.getOne('SELECT nombre, modelo, marca FROM maquinas WHERE id=?', [maquina_id]);
+      if (mq) {
+        descFinal = [mq.marca, mq.modelo || mq.nombre].filter(Boolean).join(' ') || mq.nombre || 'Equipo';
+      }
+    }
+    const puLista = await precioUnitarioDesdeLista(cot, tipo, refaccion_id, maquina_id, precio_unitario);
+    const calc = calcLinea(tipo, cantidad, puLista, cot.moneda, cot.tipo_cambio);
     await db.runQuery(
       `INSERT INTO cotizacion_lineas (cotizacion_id, refaccion_id, maquina_id, bitacora_id, tipo_linea, descripcion, cantidad, precio_unitario, precio_usd, subtotal, iva, total, orden, es_ida, horas_trabajo, horas_traslado, zona, ayudantes, tarifa_aplicada)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -905,7 +952,7 @@ app.post('/api/cotizaciones/:id/lineas', async (req, res) => {
         maquina_id || null,
         bitacora_id || null,
         calc.tipo_linea,
-        descripcion || null,
+        descFinal,
         calc.cantidad,
         calc.precio_unitario,
         calc.precio_usd,
@@ -940,18 +987,21 @@ app.put('/api/cotizaciones/:id/lineas/:lineaId', async (req, res) => {
     if (!linea) return res.status(404).json({ error: 'Línea no encontrada' });
 
     const nextTipo = (req.body && req.body.tipo_linea) != null ? String(req.body.tipo_linea).trim() : String(linea.tipo_linea || 'otro');
-    if (!['refaccion', 'vuelta', 'mano_obra', 'otro'].includes(nextTipo)) {
+    if (!['refaccion', 'vuelta', 'mano_obra', 'otro', 'equipo'].includes(nextTipo)) {
       return res.status(400).json({ error: 'tipo_linea inválido' });
     }
     const nextRefaccionId = (req.body && 'refaccion_id' in req.body) ? req.body.refaccion_id : linea.refaccion_id;
+    const nextMaquinaId = (req.body && 'maquina_id' in req.body) ? req.body.maquina_id : linea.maquina_id;
     if (nextTipo === 'refaccion' && !nextRefaccionId) return res.status(400).json({ error: 'refaccion_id requerido' });
+    if (nextTipo === 'equipo' && !nextMaquinaId) return res.status(400).json({ error: 'maquina_id requerido para línea equipo' });
     const nextBitacoraId = (req.body && 'bitacora_id' in req.body) ? req.body.bitacora_id : linea.bitacora_id;
     if (nextTipo === 'mano_obra' && nextBitacoraId) {
       const bit = await db.getOne('SELECT * FROM bitacoras WHERE id = ? AND cotizacion_id = ?', [nextBitacoraId, req.params.id]);
       if (!bit) return res.status(400).json({ error: 'bitacora_id inválido para esta cotización' });
     }
     const nextCantidad = (req.body && 'cantidad' in req.body) ? req.body.cantidad : linea.cantidad;
-    const nextPrecio = (req.body && 'precio_unitario' in req.body) ? req.body.precio_unitario : linea.precio_unitario;
+    const nextPrecioRaw = (req.body && 'precio_unitario' in req.body) ? req.body.precio_unitario : linea.precio_unitario;
+    const nextPrecio = await precioUnitarioDesdeLista(cot, nextTipo, nextRefaccionId, nextMaquinaId, nextPrecioRaw);
     const calc = calcLinea(nextTipo, nextCantidad, nextPrecio, cot.moneda, cot.tipo_cambio);
 
     // Extraer nuevos campos si se envían
@@ -968,7 +1018,7 @@ app.put('/api/cotizaciones/:id/lineas/:lineaId', async (req, res) => {
        WHERE id=? AND cotizacion_id=?`,
       [
         nextRefaccionId || null,
-        (req.body && 'maquina_id' in req.body) ? (req.body.maquina_id || null) : (linea.maquina_id || null),
+        nextMaquinaId || null,
         nextBitacoraId || null,
         calc.tipo_linea,
         (req.body && 'descripcion' in req.body) ? (req.body.descripcion || null) : (linea.descripcion || null),
@@ -1017,20 +1067,61 @@ function generarFolio(prefijo) {
 
 app.post('/api/cotizaciones', async (req, res) => {
   try {
-    const { cliente_id, tipo, fecha, subtotal, iva, total, folio, tipo_cambio, moneda, maquinas_ids, estado, notas } = req.body || {};
+    const {
+      cliente_id,
+      tipo,
+      fecha,
+      subtotal,
+      iva,
+      total,
+      folio,
+      tipo_cambio,
+      moneda,
+      maquinas_ids,
+      estado,
+      notas,
+      vendedor_personal_id,
+      descuento_pct,
+      vendedor,
+    } = req.body || {};
     if (!cliente_id) return res.status(400).json({ error: 'cliente_id requerido' });
-    const f = folio || generarFolio(tipo === 'mano_obra' ? 'COT-MO' : 'COT-REF');
+    const prefijoFolio = tipo === 'mano_obra' ? 'COT-MO' : tipo === 'maquina' ? 'COT-MAQ' : 'COT-REF';
+    const f = folio || generarFolio(prefijoFolio);
     const st = Number(subtotal) || 0;
     const iv = Number(iva) || 0;
     const tot = Number(total) != null ? Number(total) : st + iv;
     const tc = Number(tipo_cambio) || 17.0;
     const mon = moneda || 'MXN';
     const maqIds = typeof maquinas_ids === 'string' ? maquinas_ids : JSON.stringify(maquinas_ids || []);
+    const dct = Math.min(100, Math.max(0, Number(descuento_pct) || 0));
+    const vid = vendedor_personal_id != null && String(vendedor_personal_id).trim() !== '' ? Number(vendedor_personal_id) : null;
     await db.runQuery(
-      `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total, tipo_cambio, moneda, maquinas_ids, estado, notas) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [f, cliente_id, tipo || 'refacciones', fecha || new Date().toISOString().slice(0, 10), st, iv, tot, tc, mon, maqIds, estado || 'borrador', notas || null]
+      `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total, tipo_cambio, moneda, maquinas_ids, estado, notas, vendedor_personal_id, descuento_pct, vendedor)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        f,
+        cliente_id,
+        tipo || 'refacciones',
+        fecha || new Date().toISOString().slice(0, 10),
+        st,
+        iv,
+        tot,
+        tc,
+        mon,
+        maqIds,
+        estado || 'borrador',
+        notas || null,
+        Number.isFinite(vid) && vid > 0 ? vid : null,
+        dct,
+        vendedor ? String(vendedor).trim() : null,
+      ]
     );
-    const r = await db.getOne('SELECT co.*, c.nombre as cliente_nombre FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id ORDER BY co.id DESC LIMIT 1');
+    const r = await db.getOne(
+      `SELECT co.*, c.nombre as cliente_nombre, vp.puesto as vendedor_puesto
+       FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id
+       LEFT JOIN tecnicos vp ON vp.id = co.vendedor_personal_id
+       ORDER BY co.id DESC LIMIT 1`
+    );
     res.status(201).json(r);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
@@ -1041,11 +1132,14 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
   try {
     const existing = await db.getOne('SELECT * FROM cotizaciones WHERE id = ?', [req.params.id]);
     if (!existing) return res.status(404).json({ error: 'No encontrada' });
-    const { folio, cliente_id, tipo, fecha, tipo_cambio, moneda, maquinas_ids, estado, notas } = req.body || {};
+    const { folio, cliente_id, tipo, fecha, tipo_cambio, moneda, maquinas_ids, estado, notas, vendedor_personal_id, descuento_pct, vendedor } = req.body || {};
     const hasBody = req.body && typeof req.body === 'object';
     const hasMaqIds = hasBody && Object.prototype.hasOwnProperty.call(req.body, 'maquinas_ids');
     const hasNotas = hasBody && Object.prototype.hasOwnProperty.call(req.body, 'notas');
     const hasEstado = hasBody && Object.prototype.hasOwnProperty.call(req.body, 'estado');
+    const hasVendedorId = hasBody && Object.prototype.hasOwnProperty.call(req.body, 'vendedor_personal_id');
+    const hasDescuento = hasBody && Object.prototype.hasOwnProperty.call(req.body, 'descuento_pct');
+    const hasVendedorNombre = hasBody && Object.prototype.hasOwnProperty.call(req.body, 'vendedor');
     const maqIds = hasMaqIds
       ? (typeof maquinas_ids === 'string' ? maquinas_ids : JSON.stringify(maquinas_ids || []))
       : (existing.maquinas_ids || '[]');
@@ -1056,9 +1150,19 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
     } else if (!fechaSql) {
       fechaSql = new Date().toISOString().slice(0, 10);
     }
+    const vidPut = hasVendedorId
+      ? (vendedor_personal_id != null && String(vendedor_personal_id).trim() !== '' ? Number(vendedor_personal_id) : null)
+      : (existing.vendedor_personal_id != null ? existing.vendedor_personal_id : null);
+    const dctPut = hasDescuento
+      ? Math.min(100, Math.max(0, Number(descuento_pct) || 0))
+      : (Number(existing.descuento_pct) || 0);
+    const vendPut = hasVendedorNombre
+      ? (vendedor != null && String(vendedor).trim() !== '' ? String(vendedor).trim() : null)
+      : existing.vendedor;
     await db.runQuery(
       `UPDATE cotizaciones
-       SET folio=?, cliente_id=?, tipo=?, fecha=?, tipo_cambio=?, moneda=?, maquinas_ids=?, estado=?, notas=?
+       SET folio=?, cliente_id=?, tipo=?, fecha=?, tipo_cambio=?, moneda=?, maquinas_ids=?, estado=?, notas=?,
+           vendedor_personal_id=?, descuento_pct=?, vendedor=?
        WHERE id=?`,
       [
         (folio != null && String(folio).trim() !== '') ? String(folio).trim() : (existing.folio || null),
@@ -1070,12 +1174,21 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
         maqIds,
         hasEstado ? ((estado != null && String(estado).trim() !== '') ? String(estado).trim() : 'borrador') : (existing.estado || 'borrador'),
         hasNotas ? (notas || null) : (existing.notas || null),
+        Number.isFinite(vidPut) && vidPut > 0 ? vidPut : null,
+        dctPut,
+        vendPut || null,
         req.params.id,
       ]
     );
     // Totales siempre se calculan desde líneas (evita que un PUT del header los pise a 0).
     await recalcCotizacionTotals(req.params.id);
-    const r = await db.getOne('SELECT co.*, c.nombre as cliente_nombre FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id WHERE co.id = ?', [req.params.id]);
+    const r = await db.getOne(
+      `SELECT co.*, c.nombre as cliente_nombre, vp.puesto as vendedor_puesto
+       FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id
+       LEFT JOIN tecnicos vp ON vp.id = co.vendedor_personal_id
+       WHERE co.id = ?`,
+      [req.params.id]
+    );
     res.json(r || {});
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
@@ -1128,10 +1241,15 @@ app.post('/api/cotizaciones/:id/aplicar', async (req, res) => {
         [ref.id, cant, Number(l.precio_unitario) || 0, cot.id, `Cot: ${cot.folio}`]
       );
     }
-    const vendedor = req.body && req.body.vendedor ? String(req.body.vendedor) : null;
+    let vendedorNombre = req.body && req.body.vendedor ? String(req.body.vendedor).trim() : null;
+    if (!vendedorNombre && cot.vendedor_personal_id) {
+      const p = await db.getOne('SELECT nombre FROM tecnicos WHERE id=?', [cot.vendedor_personal_id]);
+      if (p && p.nombre) vendedorNombre = p.nombre;
+    }
+    if (!vendedorNombre && cot.vendedor) vendedorNombre = String(cot.vendedor).trim();
     await db.runQuery(
-      `UPDATE cotizaciones SET estado='aplicada', fecha_aprobacion=date('now','localtime')${vendedor ? ', vendedor=?' : ''} WHERE id=?`,
-      vendedor ? [vendedor, req.params.id] : [req.params.id]
+      `UPDATE cotizaciones SET estado='aplicada', fecha_aprobacion=date('now','localtime'), vendedor=? WHERE id=?`,
+      [vendedorNombre || null, req.params.id]
     );
 
     try {
@@ -1161,9 +1279,53 @@ app.get('/api/tecnicos', async (req, res) => {
 });
 app.post('/api/tecnicos', async (req, res) => {
   try {
-    const { nombre, habilidades, ocupado, disponible_desde } = req.body || {};
+    const {
+      nombre,
+      habilidades,
+      ocupado,
+      disponible_desde,
+      rol,
+      puesto,
+      departamento,
+      profesion,
+      es_vendedor,
+      comision_maquinas_pct,
+      comision_refacciones_pct,
+    } = req.body || {};
     if (!nombre) return res.status(400).json({ error: 'nombre requerido' });
-    await db.runQuery('INSERT OR IGNORE INTO tecnicos (nombre, habilidades, ocupado, disponible_desde) VALUES (?, ?, ?, ?)', [nombre, habilidades || null, ocupado ? 1 : 0, disponible_desde || null]);
+    await db.runQuery(
+      `INSERT OR IGNORE INTO tecnicos (nombre, habilidades, ocupado, disponible_desde, rol, puesto, departamento, profesion, es_vendedor, comision_maquinas_pct, comision_refacciones_pct)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        nombre,
+        habilidades || null,
+        ocupado ? 1 : 0,
+        disponible_desde || null,
+        rol || null,
+        puesto || null,
+        departamento || null,
+        profesion || null,
+        es_vendedor ? 1 : 0,
+        Number(comision_maquinas_pct) || 0,
+        Number(comision_refacciones_pct) || 0,
+      ]
+    );
+    await db.runQuery(
+      `UPDATE tecnicos SET habilidades=?, ocupado=?, disponible_desde=?, rol=?, puesto=?, departamento=?, profesion=?, es_vendedor=?, comision_maquinas_pct=?, comision_refacciones_pct=? WHERE nombre=?`,
+      [
+        habilidades || null,
+        ocupado ? 1 : 0,
+        disponible_desde || null,
+        rol || null,
+        puesto || null,
+        departamento || null,
+        profesion || null,
+        es_vendedor ? 1 : 0,
+        Number(comision_maquinas_pct) || 0,
+        Number(comision_refacciones_pct) || 0,
+        nombre,
+      ]
+    );
     const r = await db.getOne('SELECT * FROM tecnicos WHERE nombre=?', [nombre]);
     res.status(201).json(r);
   } catch (e) {
@@ -1172,10 +1334,41 @@ app.post('/api/tecnicos', async (req, res) => {
 });
 app.put('/api/tecnicos/:id', async (req, res) => {
   try {
-    const { nombre, habilidades, activo, ocupado, disponible_desde } = req.body || {};
+    const {
+      nombre,
+      habilidades,
+      activo,
+      ocupado,
+      disponible_desde,
+      rol,
+      puesto,
+      departamento,
+      profesion,
+      es_vendedor,
+      comision_maquinas_pct,
+      comision_refacciones_pct,
+    } = req.body || {};
     if (!nombre) return res.status(400).json({ error: 'nombre requerido' });
-    await db.runQuery('UPDATE tecnicos SET nombre=?, habilidades=?, activo=?, ocupado=?, disponible_desde=? WHERE id=?',
-      [nombre, habilidades || null, activo !== undefined ? activo : 1, ocupado ? 1 : 0, disponible_desde || null, req.params.id]);
+    await db.runQuery(
+      `UPDATE tecnicos SET nombre=?, habilidades=?, activo=?, ocupado=?, disponible_desde=?,
+       rol=?, puesto=?, departamento=?, profesion=?, es_vendedor=?, comision_maquinas_pct=?, comision_refacciones_pct=?
+       WHERE id=?`,
+      [
+        nombre,
+        habilidades || null,
+        activo !== undefined ? activo : 1,
+        ocupado ? 1 : 0,
+        disponible_desde || null,
+        rol || null,
+        puesto || null,
+        departamento || null,
+        profesion || null,
+        es_vendedor ? 1 : 0,
+        Number(comision_maquinas_pct) || 0,
+        Number(comision_refacciones_pct) || 0,
+        req.params.id,
+      ]
+    );
     const r = await db.getOne('SELECT * FROM tecnicos WHERE id=?', [req.params.id]);
     res.json(r);
   } catch (e) {
@@ -2824,6 +3017,43 @@ async function enviarCorreoAprobacion(cot, cliente) {
     [cot.id]
   );
 
+  let vp = null;
+  if (cot.vendedor_personal_id) {
+    vp = await db.getOne(
+      `SELECT nombre, puesto, comision_maquinas_pct, comision_refacciones_pct FROM tecnicos WHERE id = ?`,
+      [cot.vendedor_personal_id]
+    );
+  }
+  if (!vp && cot.vendedor) {
+    vp = await db.getOne(
+      `SELECT nombre, puesto, comision_maquinas_pct, comision_refacciones_pct FROM tecnicos WHERE TRIM(nombre) = TRIM(?) AND activo = 1`,
+      [String(cot.vendedor)]
+    );
+  }
+  let comSvc = 15;
+  try {
+    const trSvc = await db.getOne(`SELECT valor FROM tarifas WHERE clave = 'comision_svc'`);
+    if (trSvc && trSvc.valor != null) comSvc = Number(trSvc.valor) || 15;
+  } catch (_) {}
+
+  const tipoCot = String(cot.tipo || '').toLowerCase();
+  const cr = Number(vp && vp.comision_refacciones_pct);
+  const cm = Number(vp && vp.comision_maquinas_pct);
+  let comPct = 0;
+  let comRegla = '';
+  if (tipoCot === 'refacciones') {
+    comPct = Number.isFinite(cr) ? cr : 10;
+    comRegla = 'Personal · % refacciones';
+  } else if (tipoCot === 'servicio' || tipoCot === 'mano_obra') {
+    comPct = comSvc;
+    comRegla = 'Tarifa comision_svc';
+  } else if (tipoCot === 'maquina') {
+    comPct = Number.isFinite(cm) ? cm : 0;
+    comRegla = 'Personal · % equipo/máquina';
+  }
+  const totalNum = Number(cot.total) || 0;
+  const comMonto = comPct > 0 ? totalNum * (comPct / 100) : 0;
+
   const monedaLabel = (cot.moneda || 'MXN').toUpperCase();
   const tc = Number(cot.tipo_cambio) > 0 ? Number(cot.tipo_cambio) : 17.0;
   const totalFmt = `$${Number(cot.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })} ${monedaLabel}`;
@@ -2837,6 +3067,22 @@ async function enviarCorreoAprobacion(cot, cliente) {
     { label: 'Cliente', value: cliente ? cliente.nombre : 'N/A' },
     { label: 'RFC', value: cliente ? (cliente.rfc || '—') : '—' },
     { label: 'Tipo', value: cot.tipo || '—' },
+    { label: 'Vendedor', value: (vp && vp.nombre) || cot.vendedor || '—' },
+    { label: 'Puesto (vendedor)', value: (vp && vp.puesto) || '—' },
+    {
+      label: '% Comisión aplicable',
+      value:
+        comPct > 0
+          ? `${comPct}% <span style="font-size:12px;color:#6b7280;">(${comRegla})</span>`
+          : '— (sin comisión para este tipo)',
+    },
+    {
+      label: 'Monto comisión estimado',
+      value:
+        comPct > 0
+          ? `$${comMonto.toLocaleString('es-MX', { minimumFractionDigits: 2 })} ${monedaLabel}`
+          : '—',
+    },
     { label: 'Tipo de cambio (ref.)', value: `$${tc.toFixed(4)} MXN/USD` },
     { label: 'Subtotal', value: subtotalFmt },
     { label: 'IVA (16%)', value: ivaFmt },
@@ -2861,20 +3107,21 @@ async function enviarCorreoAprobacion(cot, cliente) {
   });
 
   const footer = `Tipo de cambio de referencia: <strong>${tc.toFixed(4)} MXN/USD</strong> (Banxico / tabla cotización).<br><br>
+    <strong>Reporte de venta (comisiones):</strong> el % mostrado corresponde al tipo de cotización (refacciones, equipo/máquina o servicio/mano de obra) y a la tabla <strong>Personal</strong> o tarifas; el monto es estimado sobre el total de la venta.<br><br>
     Para proceder con la facturación, favor de proporcionar la <strong>Constancia de Situación Fiscal</strong> actualizada y los datos de facturación correspondientes.<br><br>
     <strong>Universal Machine Tools</strong> agradece su preferencia. Ante cualquier duda, comuníquese con nosotros a la brevedad.`;
 
   const html = buildEmailHtml({
-    title: `Cotización Aprobada`,
-    subtitle: `Folio: ${cot.folio} &nbsp;|&nbsp; ${fechaFmt}`,
+    title: `Venta aprobada · Reporte de comisión`,
+    subtitle: `Folio: ${cot.folio} &nbsp;|&nbsp; ${fechaFmt}${comPct > 0 ? ` &nbsp;|&nbsp; ${comPct}% comisión` : ''}`,
     rows,
     tableHeader,
     tableRows,
     footer,
   });
 
-  const subject = `✅ Cotización aprobada – Folio ${cot.folio} | Universal Machine Tools`;
-  const text = `Cotización aprobada – Folio ${cot.folio}\n\nCliente: ${cliente ? cliente.nombre : 'N/A'}\nRFC: ${cliente ? (cliente.rfc || '—') : '—'}\nFecha: ${fechaFmt}\nTC ref.: ${tc}\nTotal: ${totalFmt}\n\nConceptos:\n${(lineas || []).map((l, i) => {
+  const subject = `✅ Venta / cotización aprobada – Folio ${cot.folio} · Comisión ${comPct > 0 ? comPct + '%' : 'N/A'} | Universal Machine Tools`;
+  const text = `Cotización aprobada (reporte de venta) – Folio ${cot.folio}\n\nCliente: ${cliente ? cliente.nombre : 'N/A'}\nRFC: ${cliente ? (cliente.rfc || '—') : '—'}\nFecha: ${fechaFmt}\nVendedor: ${(vp && vp.nombre) || cot.vendedor || '—'}\nPuesto: ${(vp && vp.puesto) || '—'}\nTipo: ${cot.tipo || '—'}\nComisión: ${comPct > 0 ? comPct + '% (' + comRegla + ') — estimado ~' + comMonto.toFixed(2) + ' ' + monedaLabel : '—'}\nTC ref.: ${tc}\nTotal: ${totalFmt}\n\nConceptos:\n${(lineas || []).map((l, i) => {
     const c = l.ref_codigo || '—';
     const d = l.descripcion || l.ref_desc || '';
     return `  ${i + 1}. [${c}] ${d} — cant: ${l.cantidad}, subtotal: ${l.subtotal}`;
