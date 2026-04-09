@@ -1745,19 +1745,9 @@ function norm(s) {
 }
 function safeStr(v) { return (v != null && String(v).trim() !== '') ? String(v).trim() : null; }
 function safeStrReq(v) { return (v != null && String(v).trim() !== '') ? String(v).trim() : ''; }
-async function runSeedDemoCore(force) {
-    // ── FORCE: vaciar todas las tablas de negocio en orden FK ──────────────
-    const [cCount] = await db.getAll('SELECT COUNT(*) as n FROM clientes');
-    if (force && cCount && cCount.n > 0) {
-      const tablasOrden = [
-        'movimientos_stock','mantenimientos_garantia','bonos','viajes',
-        'mantenimientos','bitacoras','cotizacion_lineas','cotizaciones',
-        'incidentes','garantias','reportes','maquinas','refacciones','clientes',
-      ];
-      for (const t of tablasOrden) {
-        try { await db.runQuery(`DELETE FROM ${t}`); } catch (_) { /* tabla puede no existir en bd vieja */ }
-      }
-    }
+async function runSeedDemoCore(_forceIgnored) {
+    /* Nunca borrar datos reales: el parámetro force quedó deshabilitado.
+       El demo completo solo debe ejecutarse con base vacía (sin clientes). */
     const seedPath = path.join(__dirname, 'seed-demo.json');
     if (!fs.existsSync(seedPath)) throw new Error('No existe seed-demo.json. Ejecuta: python exportar_demo.py');
     const seed = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
@@ -2087,7 +2077,7 @@ async function runSeedDemoCore(force) {
 
     return {
       ok: true,
-      force,
+      force: false,
       clientes: clientes.length,
       refacciones: refacciones.length,
       maquinas: maquinasTotal,
@@ -2103,12 +2093,16 @@ async function runSeedDemoCore(force) {
 
 app.post('/api/seed-demo', async (req, res) => {
   try {
-    const force = !!(req.body && req.body.force);
     const [cCount] = await db.getAll('SELECT COUNT(*) as n FROM clientes');
-    if (cCount && cCount.n > 0 && !force) {
-      return res.status(400).json({ error: 'Ya hay datos cargados. El demo solo se puede cargar cuando no hay clientes. Si quieres volver a cargar, elimina primero los clientes desde la pestaña Clientes.' });
+    const n = cCount && cCount.n != null ? Number(cCount.n) : 0;
+    if (n > 0) {
+      return res.status(400).json({
+        error:
+          'Ya hay clientes en la base: no se carga el demo completo para no mezclar ni borrar datos reales. ' +
+          'Usa «Cargar solo incidentes, bitácoras y cotizaciones demo», «Asegurar equipos por cliente», o SQL en Turso (scripts/).',
+      });
     }
-    const result = await runSeedDemoCore(force);
+    const result = await runSeedDemoCore(false);
     res.json(result);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });

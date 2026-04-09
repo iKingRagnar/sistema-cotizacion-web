@@ -517,9 +517,20 @@ async function seedPersonalAndPricing() {
   } catch (_) { /* ignore */ }
 }
 
+/** libSQL (@libsql/client) no acepta undefined ni NaN en args — solo null, number, string, bigint, boolean, Uint8Array */
+function normalizeLibsqlArgs(params) {
+  if (!Array.isArray(params) || params.length === 0) return params;
+  return params.map((p) => {
+    if (p === undefined) return null;
+    if (typeof p === 'number' && (Number.isNaN(p) || !Number.isFinite(p))) return null;
+    return p;
+  });
+}
+
 function runQuery(sql, params = []) {
   if (useTurso) {
-    return db.execute({ sql, args: params }).then(r => ({ lastInsertRowid: r.meta?.last_insert_row_id }));
+    const args = normalizeLibsqlArgs(params);
+    return db.execute({ sql, args }).then(r => ({ lastInsertRowid: r.meta?.last_insert_row_id }));
   }
   return new Promise((resolve, reject) => {
     db.run(sql, params, function (err) {
@@ -531,7 +542,8 @@ function runQuery(sql, params = []) {
 
 function getAll(sql, params = []) {
   if (useTurso) {
-    return db.execute({ sql, args: params }).then(r => {
+    const args = normalizeLibsqlArgs(params);
+    return db.execute({ sql, args }).then(r => {
       const cols = r.columns || [];
       return (r.rows || []).map(row => {
         const o = {};

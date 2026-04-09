@@ -6216,31 +6216,26 @@
     if (!silent) showToast('Datos actualizados.', 'success');
   }
 
-  async function seedDemo(useForce) {
+  async function seedDemo() {
     const btn = qs('#btn-seed-demo');
-    // Si no recibimos useForce, detectamos si ya hay datos y preguntamos
-    if (useForce === undefined) {
-      try {
-        const status = await fetchJson(API + '/seed-status');
-        if (status && status.clientes > 0) {
-          const ok = confirm(
-            '⚠️ Ya hay datos cargados (' + status.clientes + ' clientes).\n\n' +
-            '¿Quieres BORRAR todo y cargar el demo completo desde cero?\n\n' +
-            'Esto eliminará clientes, refacciones, cotizaciones, incidentes, garantías, bonos y viajes.'
-          );
-          if (!ok) return;
-          useForce = true;
-        } else {
-          useForce = false;
-        }
-      } catch (_) { useForce = false; }
-    }
+    try {
+      const status = await fetchJson(API + '/seed-status');
+      if (status && Number(status.clientes) > 0) {
+        const msg =
+          'Ya hay clientes en la base: no se borra ni se pisa datos reales. ' +
+          'Para añadir incidentes/bitácoras/cotizaciones demo usa el botón verde «Cargar solo incidentes, bitácoras y cotizaciones demo», o SQL en Turso (scripts/).';
+        if (qs('#seed-status')) qs('#seed-status').innerHTML = '<span class="warn-msg">' + escapeHtml(msg) + '</span>';
+        showToast(msg, 'success');
+        return;
+      }
+    } catch (_) {}
+    if (!btn) return;
     btn.disabled = true;
     btn.textContent = 'Cargando…';
     try {
       const data = await fetchJson(API + '/seed-demo', {
         method: 'POST',
-        body: JSON.stringify({ force: !!useForce }),
+        body: JSON.stringify({ force: false }),
       });
       qs('#seed-status').innerHTML =
         `Listo: <strong>${data.clientes}</strong> clientes, <strong>${data.refacciones}</strong> refacciones, ` +
