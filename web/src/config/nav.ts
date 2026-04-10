@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   ShoppingCart,
   UserCircle2,
+  UserCog,
   Wrench,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -47,5 +48,15 @@ export const mainNav: NavItem[] = [
   { href: "/bonos", label: "Bonos", icon: Award },
   { href: "/personal", label: "Personal / Técnicos", icon: UserCircle2 },
   { href: "/bitacora", label: "Bitácora de horas", icon: Clock },
+  { href: "/usuarios", label: "Usuarios", icon: UserCog, description: "Solo administrador" },
   { href: "/auditoria", label: "Auditoría", icon: Activity },
 ];
+
+/** Enlaces solo para administrador (resto de roles no los ven en el menú). */
+const ADMIN_ONLY_HREFS = new Set(["/usuarios", "/auditoria"]);
+
+export function navForRole(role: string | null | undefined): NavItem[] {
+  const r = (role || "").toLowerCase();
+  if (r === "admin") return mainNav;
+  return mainNav.filter((item) => !ADMIN_ONLY_HREFS.has(item.href));
+}

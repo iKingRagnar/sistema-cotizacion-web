@@ -1,14 +1,22 @@
 "use client";
 
-import { mainNav } from "@/config/nav";
+import { mainNav, navForRole } from "@/config/nav";
+import { getStoredUser } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import type { NavItem } from "@/config/nav";
 
 export function AppSidebar({ className }: { className?: string }) {
   const pathname = usePathname();
+  const [items, setItems] = useState<NavItem[]>(mainNav);
+
+  useEffect(() => {
+    setItems(navForRole(getStoredUser()?.role));
+  }, [pathname]);
 
   return (
     <aside
@@ -29,7 +37,7 @@ export function AppSidebar({ className }: { className?: string }) {
         </div>
       </div>
       <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-0.5">
-        {mainNav.map((item, i) => {
+        {items.map((item, i) => {
           const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
           const Icon = item.icon;
           return (

@@ -79,15 +79,15 @@ export default function RefaccionesPage() {
         },
       },
       {
-        accessorKey: "precio_unitario",
-        header: "Precio MXN",
-        cell: ({ getValue }) => formatMoneyMxn(Number(getValue()) || 0),
-      },
-      {
         id: "usd",
         header: "USD",
         cell: ({ row }) =>
           row.original.precio_usd != null ? formatMoneyUsd(Number(row.original.precio_usd)) : "—",
+      },
+      {
+        accessorKey: "precio_unitario",
+        header: "Precio MXN",
+        cell: ({ getValue }) => formatMoneyMxn(Number(getValue()) || 0),
       },
     ],
     []

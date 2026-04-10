@@ -12,7 +12,8 @@ import { downloadText, formatDateMx, rowsToCsv } from "@/lib/format";
 import { useQuery } from "@tanstack/react-query";
 import { type ColumnDef } from "@tanstack/react-table";
 import { CheckCircle2, FileSignature } from "lucide-react";
-import { useMemo, useState } from "react";
+import { getStoredUser } from "@/lib/session";
+import { useEffect, useMemo, useState } from "react";
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
 type Reporte = {
@@ -37,6 +38,10 @@ export default function ReportesPage() {
   const q = useQuery({ queryKey: ["reportes"], queryFn: () => apiFetch<Reporte[]>("/api/reportes") });
   const [previewId, setPreviewId] = useState<number | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    setIsAdmin(getStoredUser()?.role === "admin");
+  }, []);
   const previewQ = useQuery({
     queryKey: ["reporte", previewId],
     queryFn: () => apiFetch<Reporte>(`/api/reportes/${previewId}`),
@@ -61,8 +66,8 @@ export default function ReportesPage() {
     return Array.from(m.entries()).map(([name, value]) => ({ name, value }));
   }, [q.data]);
 
-  const columns = useMemo<ColumnDef<Reporte>[]>(
-    () => [
+  const columns = useMemo<ColumnDef<Reporte>[]>(() => {
+    const base: ColumnDef<Reporte>[] = [
       {
         accessorKey: "folio",
         header: "Folio",
@@ -84,6 +89,18 @@ export default function ReportesPage() {
         header: "Fecha",
         cell: ({ getValue }) => formatDateMx(String(getValue())),
       },
+    ];
+    if (isAdmin) {
+      base.push({
+        accessorKey: "fecha_programada",
+        header: "Fecha programada",
+        cell: ({ getValue }) => {
+          const v = getValue();
+          return v ? formatDateMx(String(v)) : "—";
+        },
+      });
+    }
+    base.push(
       { accessorKey: "cliente_nombre", header: "Cliente", cell: ({ getValue }) => getValue() || "—" },
       { accessorKey: "tipo_reporte", header: "Tipo", cell: ({ getValue }) => getValue() || "—" },
       { accessorKey: "subtipo", header: "Subtipo", cell: ({ getValue }) => getValue() || "—" },
@@ -126,9 +143,9 @@ export default function ReportesPage() {
             </span>
           ),
       },
-    ],
-    []
-  );
+    );
+    return base;
+  }, [isAdmin]);
 
   const exportCsv = () => {
     const rows = (q.data ?? []).map((r) => [

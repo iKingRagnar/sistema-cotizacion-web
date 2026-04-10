@@ -91,6 +91,129 @@ app.post('/api/auth/login', async (req, res) => {
 
 app.use(auth.createApiMiddleware());
 
+app.get('/api/auth/me', (req, res) => {
+  try {
+    if (!auth.AUTH_ENABLED) {
+      return res.json({
+        user: { id: 0, username: 'local', role: 'admin', displayName: 'Local' },
+      });
+    }
+    if (!req.authUser) return res.status(401).json({ error: 'No autorizado. Inicia sesión.' });
+    res.json({
+      user: {
+        id: req.authUser.id,
+        username: req.authUser.username,
+        role: req.authUser.role,
+        displayName: req.authUser.displayName,
+      },
+    });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+const APP_USER_ROLES = ['admin', 'usuario', 'operador', 'consulta', 'invitado'];
+
+app.get('/api/app-users', async (req, res) => {
+  try {
+    if (!req.authUser || req.authUser.role !== 'admin') {
+      return res.status(403).json({ error: 'Solo el administrador puede ver usuarios' });
+    }
+    const rows = await db.getAll(
+      'SELECT id, username, role, display_name, activo, creado_en FROM app_users ORDER BY username ASC'
+    );
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.post('/api/app-users', async (req, res) => {
+  try {
+    if (!req.authUser || req.authUser.role !== 'admin') {
+      return res.status(403).json({ error: 'Solo el administrador puede crear usuarios' });
+    }
+    const { username, password, role, display_name } = req.body || {};
+    const u = String(username || '').trim().toLowerCase();
+    if (!u || !password) return res.status(400).json({ error: 'Usuario y contraseña requeridos' });
+    if (!/^[a-z0-9._-]{2,64}$/.test(u)) {
+      return res.status(400).json({ error: 'Usuario: solo letras minúsculas, números, . _ - (2–64 caracteres)' });
+    }
+    const r = String(role || 'invitado').trim();
+    if (!APP_USER_ROLES.includes(r)) return res.status(400).json({ error: 'Rol no válido' });
+    const exists = await db.getOne('SELECT id FROM app_users WHERE lower(username)=?', [u]);
+    if (exists) return res.status(409).json({ error: 'Ese nombre de usuario ya existe' });
+    const dn = String(display_name || u).trim() || u;
+    await db.runQuery(
+      'INSERT INTO app_users (username, password_hash, role, display_name, activo) VALUES (?,?,?,?,1)',
+      [u, auth.hashPassword(String(password)), r, dn]
+    );
+    const row = await db.getOne(
+      'SELECT id, username, role, display_name, activo, creado_en FROM app_users WHERE lower(username)=?',
+      [u]
+    );
+    res.status(201).json(row);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.patch('/api/app-users/:id', async (req, res) => {
+  try {
+    if (!req.authUser || req.authUser.role !== 'admin') {
+      return res.status(403).json({ error: 'Solo el administrador puede editar usuarios' });
+    }
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'ID inválido' });
+    const target = await db.getOne('SELECT * FROM app_users WHERE id=?', [id]);
+    if (!target) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    const b = req.body || {};
+    let role = target.role;
+    if (b.role !== undefined) {
+      const r = String(b.role).trim();
+      if (!APP_USER_ROLES.includes(r)) return res.status(400).json({ error: 'Rol no válido' });
+      role = r;
+    }
+    let activo = target.activo != null ? Number(target.activo) : 1;
+    if (b.activo !== undefined) activo = b.activo ? 1 : 0;
+
+    if (Number(req.authUser.id) === id && (role !== 'admin' || !activo)) {
+      return res.status(400).json({ error: 'No puedes quitarte el rol administrador ni desactivarte a ti mismo' });
+    }
+
+    const admins = await db.getAll("SELECT id FROM app_users WHERE role='admin' AND activo=1");
+    const wasAdmin = target.role === 'admin' && Number(target.activo) === 1;
+    const willBeAdmin = role === 'admin' && activo === 1;
+    if (wasAdmin && !willBeAdmin) {
+      const others = admins.filter((a) => Number(a.id) !== id);
+      if (others.length < 1) {
+        return res.status(400).json({ error: 'Debe quedar al menos un administrador activo' });
+      }
+    }
+
+    let display_name = target.display_name;
+    if (b.display_name !== undefined) display_name = String(b.display_name).trim() || target.username;
+
+    let password_hash = target.password_hash;
+    if (b.password != null && String(b.password).trim() !== '') {
+      password_hash = auth.hashPassword(String(b.password));
+    }
+
+    await db.runQuery(
+      'UPDATE app_users SET role=?, display_name=?, activo=?, password_hash=? WHERE id=?',
+      [role, display_name, activo, password_hash, id]
+    );
+    const row = await db.getOne(
+      'SELECT id, username, role, display_name, activo, creado_en FROM app_users WHERE id=?',
+      [id]
+    );
+    res.json(row);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
 app.get('/api/audit', async (req, res) => {
   try {
     if (!auth.AUTH_ENABLED) return res.json({ rows: [], total: 0 });
@@ -3189,6 +3312,12 @@ function generarFolioReporte(tipo) {
   return `${pre}-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${Math.floor(Math.random()*9000)+1000}`;
 }
 
+function stripFechaProgramadaReporte(row, isAdmin) {
+  if (isAdmin || !row) return row;
+  const { fecha_programada, ...rest } = row;
+  return rest;
+}
+
 app.get('/api/reportes', async (req, res) => {
   try {
     const rows = await db.getAll(
@@ -3206,7 +3335,8 @@ app.get('/api/reportes', async (req, res) => {
          r.fecha DESC, r.id DESC
        LIMIT 500`
     );
-    res.json(rows);
+    const isAdmin = !auth.AUTH_ENABLED || (req.authUser && req.authUser.role === 'admin');
+    res.json(rows.map((r) => stripFechaProgramadaReporte(r, isAdmin)));
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
 
@@ -3218,7 +3348,8 @@ app.get('/api/reportes/:id', async (req, res) => {
        WHERE r.id=?`, [req.params.id]
     );
     if (!row) return res.status(404).json({ error: 'No encontrado' });
-    res.json(row);
+    const isAdmin = !auth.AUTH_ENABLED || (req.authUser && req.authUser.role === 'admin');
+    res.json(stripFechaProgramadaReporte(row, isAdmin));
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
 
@@ -3226,6 +3357,8 @@ app.post('/api/reportes', async (req, res) => {
   try {
     const body = req.body || {};
     const { cliente_id, razon_social, maquina_id, numero_maquina, tipo_reporte, subtipo, descripcion, tecnico, fecha, fecha_programada, estatus, notas, finalizado, archivo_firmado, archivo_firmado_b64, archivo_firmado_nombre } = body;
+    const repAdmin = !auth.AUTH_ENABLED || (req.authUser && req.authUser.role === 'admin');
+    const fechaProgIns = repAdmin ? (fecha_programada || null) : null;
     const archivo =
       archivo_firmado ||
       (typeof archivo_firmado_b64 === 'string' && archivo_firmado_b64.trim() ? archivo_firmado_b64.trim() : null);
@@ -3237,7 +3370,7 @@ app.post('/api/reportes', async (req, res) => {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [folio, cliente_id || null, razon_social || null, maquina_id || null, numero_maquina || null,
        tipo_reporte || 'servicio', subtipo || null, descripcion || null, tecnico || null,
-       fecha || new Date().toISOString().slice(0,10), fecha_programada || null, finalEstatus, notas || null,
+       fecha || new Date().toISOString().slice(0,10), fechaProgIns, finalEstatus, notas || null,
        isFinalizado, archivo || null, archivo_firmado_nombre || null]
     );
     const r = await db.getOne('SELECT r.*, c.nombre as cliente_nombre FROM reportes r LEFT JOIN clientes c ON c.id=r.cliente_id ORDER BY r.id DESC LIMIT 1');
@@ -3251,6 +3384,7 @@ app.put('/api/reportes/:id', async (req, res) => {
     if (!existing) return res.status(404).json({ error: 'No encontrado' });
     const b = req.body || {};
     const pick = (k, def = null) => (b[k] !== undefined ? b[k] : (existing[k] !== undefined ? existing[k] : def));
+    const repAdmin = !auth.AUTH_ENABLED || (req.authUser && req.authUser.role === 'admin');
     const archivo =
       b.archivo_firmado !== undefined ? b.archivo_firmado
         : (typeof b.archivo_firmado_b64 === 'string' && b.archivo_firmado_b64.trim()
@@ -3265,7 +3399,7 @@ app.put('/api/reportes/:id', async (req, res) => {
       [
         pick('cliente_id'), pick('razon_social'), pick('maquina_id'), pick('numero_maquina'),
         pick('tipo_reporte', 'servicio'), pick('subtipo'), pick('descripcion'), pick('tecnico'),
-        pick('fecha'), pick('fecha_programada'),
+        pick('fecha'), repAdmin ? pick('fecha_programada', existing.fecha_programada) : existing.fecha_programada,
         finalEstatus, pick('notas'),
         isFinalizado, archivo || null, archivoNombre || null,
         req.params.id,

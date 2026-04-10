@@ -3,20 +3,30 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { mainNav } from "@/config/nav";
+import { mainNav, navForRole } from "@/config/nav";
+import { clearSession, getStoredUser } from "@/lib/session";
 import { cn } from "@/lib/utils";
-import { Menu, Moon, Search, Sun } from "lucide-react";
+import { LogOut, Menu, Moon, Search, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import type { NavItem } from "@/config/nav";
 
 export function AppHeader() {
   const { theme, setTheme } = useTheme();
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [navItems, setNavItems] = useState<NavItem[]>(mainNav);
+  const [sessionLabel, setSessionLabel] = useState<string | null>(null);
   useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    setNavItems(navForRole(getStoredUser()?.role));
+    const u = getStoredUser();
+    setSessionLabel(u ? `${u.displayName || u.username} · ${u.role}` : null);
+  }, [pathname]);
   const title = mainNav.find((n) => n.href === pathname)?.label ?? "Gestor Administrativo";
 
   return (
@@ -32,7 +42,7 @@ export function AppHeader() {
         <SheetContent side="left" className="w-72 p-0 flex flex-col bg-sidebar/95">
           <div className="border-b border-border/50 p-4 text-sm font-semibold">Navegación</div>
           <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
-            {mainNav.map((item) => {
+            {navItems.map((item) => {
               const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
               const Icon = item.icon;
               return (
@@ -70,6 +80,24 @@ export function AppHeader() {
         />
       </div>
 
+      {sessionLabel && (
+        <span className="hidden md:inline text-[11px] text-muted-foreground max-w-[200px] truncate" title={sessionLabel}>
+          {sessionLabel}
+        </span>
+      )}
+      <Button
+        variant="outline"
+        size="sm"
+        className="shrink-0 border-border/60 gap-1.5 hidden sm:inline-flex"
+        onClick={() => {
+          clearSession();
+          router.push("/login");
+        }}
+        aria-label="Cerrar sesión"
+      >
+        <LogOut className="size-3.5" />
+        Salir
+      </Button>
       <Button
         variant="outline"
         size="icon"
