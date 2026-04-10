@@ -17,6 +17,25 @@ const auth = require('./auth');
 // En la nube (Render, etc.) usan process.env.PORT. Local: 3456 para evitar conflicto con otros servicios en 3000
 const PORT = process.env.PORT || 3456;
 
+/**
+ * Destinatarios internos (admin / operaciones): aprobación de cotización, garantías, reportes automáticos futuros.
+ * Por defecto: David (admin). Opcional: segundo correo de operaciones.
+ * Override: ADMIN_NOTIFY_EMAILS=uno@x.com,otro@y.com  (reemplaza la lista por defecto)
+ * Extra: SMTP_ADMIN_EMAIL se añade si no está ya en la lista (compatibilidad).
+ */
+function getAdminNotifyEmails() {
+  const csv = (process.env.ADMIN_NOTIFY_EMAILS || '').trim();
+  if (csv) {
+    return [...new Set(csv.split(/[,;]/).map((e) => e.trim()).filter(Boolean))];
+  }
+  const list = ['dcantu746@gmail.com', 'guillermorc44@gmail.com'];
+  const extra = (process.env.SMTP_ADMIN_EMAIL || '').trim();
+  if (extra && !list.some((x) => x.toLowerCase() === extra.toLowerCase())) {
+    list.push(extra);
+  }
+  return list;
+}
+
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
@@ -3516,9 +3535,7 @@ function buildEmailHtml({ title, subtitle, rows, tableHeader, tableRows, footer,
 async function enviarCorreoAprobacion(cot, cliente) {
   const t = createMailTransport();
   const from = (process.env.SMTP_FROM || process.env.SMTP_USER || '').trim();
-  const adminEmails = ['dcantu746@gmail.com', 'guillermorc44@gmail.com'];
-  const envVarAdmin = (process.env.SMTP_ADMIN_EMAIL || '').trim();
-  if (envVarAdmin && !adminEmails.includes(envVarAdmin)) adminEmails.push(envVarAdmin);
+  const adminEmails = getAdminNotifyEmails();
   if (!t || !from) return;
 
   const clienteEmail = cliente && cliente.email ? cliente.email.trim() : '';
@@ -3651,8 +3668,8 @@ async function enviarCorreoAprobacion(cot, cliente) {
 async function sendMailGarantia({ to, subject, text, html, garantia, mantenimiento }) {
   const t = createMailTransport();
   const from = (process.env.SMTP_FROM || process.env.SMTP_USER || '').trim();
-  // Always include admin emails
-  const adminEmails = ['dcantu746@gmail.com', 'guillermorc44@gmail.com'];
+  // Siempre incluye correos de admin / operaciones
+  const adminEmails = getAdminNotifyEmails();
   const allTo = [...new Set([...(Array.isArray(to) ? to : [to]), ...adminEmails].filter(Boolean))].join(', ');
   if (!t || !from || !allTo) return { sent: false, reason: 'smtp_not_configured_or_no_recipient' };
   let finalHtml = html;
