@@ -196,6 +196,26 @@
         function fmtMxn(n) {
           return '$' + Number(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
+        function tipoLineaLabelPdf(t) {
+          const m = { refaccion: 'Refacción', vuelta: 'Vuelta', mano_obra: 'Mano de obra', equipo: 'Equipo / máquina', otro: 'Otro' };
+          const k = String(t || '').trim();
+          return esc(m[k] || (k ? k : '—'));
+        }
+        function lineDescPdf(l) {
+          let desc = l.refaccion_descripcion
+            ? (l.codigo ? (l.codigo + ' — ' + l.refaccion_descripcion) : l.refaccion_descripcion)
+            : (l.descripcion || '');
+          if (String(l.tipo_linea || '') === 'vuelta' && !String(desc || '').trim()) {
+            const parts = [];
+            if (Number(l.es_ida)) parts.push('Ida');
+            const ht = Number(l.horas_trabajo) || 0;
+            const htr = Number(l.horas_traslado) || 0;
+            if (ht) parts.push(ht + 'h trabajo');
+            if (htr) parts.push(htr + 'h traslado');
+            desc = parts.length ? parts.join(' · ') : 'Vuelta';
+          }
+          return esc(desc);
+        }
         /** Precio unitario en USD y MXN por línea (precio_unitario va en moneda de la cotización). */
         function unitUsdMxn(l) {
           const pu = Number(l.precio_unitario || 0);
@@ -219,10 +239,11 @@
             const { usd, mxn } = unitUsdMxn(l);
             const colUsd = usd != null && !isNaN(usd) ? fmtUsd(usd) : '—';
             const colMxn = mxn != null && !isNaN(mxn) ? fmtMxn(mxn) : '—';
-            const desc = esc(l.descripcion || l.refaccion_descripcion || l.concepto || '');
             return `<tr>
-              <td style="font-size:0.85em;color:#334155;font-weight:600">${esc(l.codigo || '—')}</td>
-              <td>${desc}</td>
+              <td style="font-size:0.78em">${tipoLineaLabelPdf(l.tipo_linea)}</td>
+              <td style="font-size:0.82em;color:#334155;font-weight:600">${esc(l.codigo || '—')}</td>
+              <td style="font-size:0.78em">${esc(l.maquina_nombre || '—')}</td>
+              <td>${lineDescPdf(l)}</td>
               <td class="num">${Number(l.cantidad || 1)}</td>
               <td class="num">${colUsd}</td>
               <td class="num">${colMxn}</td>
@@ -231,6 +252,8 @@
           }).join('');
         } else {
           lineasHtml = `<tr>
+            <td>${esc(tipoLabel)}</td>
+            <td>—</td>
             <td>—</td>
             <td>${esc(tipoLabel)}</td>
             <td class="num">1</td>
@@ -295,12 +318,14 @@
             <table>
               <thead>
                 <tr>
-                  <th style="width:9%">Código</th>
+                  <th style="width:8%">Tipo</th>
+                  <th style="width:8%">Código</th>
+                  <th style="width:10%">Máquina</th>
                   <th>Descripción / concepto</th>
-                  <th class="num" style="width:6%">Cant.</th>
-                  <th class="num" style="width:11%">Precio unit. (USD)</th>
-                  <th class="num" style="width:11%">Precio unit. (MXN)</th>
-                  <th class="num" style="width:11%">Subtotal (${moneda})</th>
+                  <th class="num" style="width:5%">Cant.</th>
+                  <th class="num" style="width:9%">P. unit. USD</th>
+                  <th class="num" style="width:9%">P. unit. MXN</th>
+                  <th class="num" style="width:9%">Subtotal (${moneda})</th>
                 </tr>
               </thead>
               <tbody>

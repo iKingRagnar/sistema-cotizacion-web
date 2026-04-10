@@ -134,6 +134,8 @@ function postAllowedForStaff(url) {
   if (/^\/api\/cotizaciones\/\d+\/recalc-lineas$/.test(p)) return true;
   if (/^\/api\/cotizaciones\/\d+\/aplicar$/.test(p)) return true;
   if (p === '/api/reportes') return true;
+  if (p === '/api/bonos') return true;
+  if (p === '/api/viajes') return true;
   if (p === '/api/ai/chat') return true;
   if (p.startsWith('/api/ai/extract')) return true;
   return false;
@@ -145,6 +147,8 @@ function putPatchAllowedForStaff(url) {
   if (/^\/api\/cotizaciones\/\d+$/.test(p)) return true;
   if (/^\/api\/cotizaciones\/\d+\/lineas\/\d+$/.test(p)) return true;
   if (/^\/api\/reportes\/\d+$/.test(p)) return true;
+  if (/^\/api\/bonos\/\d+$/.test(p)) return true;
+  if (/^\/api\/viajes\/\d+$/.test(p)) return true;
   return false;
 }
 
@@ -260,7 +264,7 @@ function createApiMiddleware() {
           return next();
         }
         return res.status(403).json({
-          error: 'No tienes permiso para crear este tipo de registro. Solo cotizaciones, líneas, aplicar cotización y reportes.',
+          error: 'No tienes permiso para crear este tipo de registro. Solo cotizaciones, líneas, aplicar cotización, reportes, bonos y viajes.',
         });
       }
       if (isModify) {

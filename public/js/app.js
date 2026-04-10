@@ -8,6 +8,8 @@
   const BGM_DEFAULT_VOL = 0.05;
   const BGM_VOL_STEP = 0.05;
   const BGM_SRC = '/audio/Technology-Song.wav';
+  /** Monto sugerido al crear un bono nuevo (MXN); editable antes de guardar. */
+  const DEFAULT_BONO_MXN = 500;
   let bgMusicEl = null;
   let refreshSoundToggleUi = function () {};
   let serverConfig = Object.assign({}, typeof window.__APP_CONFIG__ === 'object' && window.__APP_CONFIG__ ? window.__APP_CONFIG__ : {});
@@ -1444,8 +1446,18 @@
           { label: 'Precio USD', value: (() => { const u = resolveRefaccionPrecioUsd(r); return u != null ? 'US$' + u.toLocaleString('en-US', { minimumFractionDigits: 2 }) : ''; })(), icon: 'fa-dollar-sign' },
           { label: 'Nº Parte Manual', value: r.numero_parte_manual, icon: 'fa-book' },
         ]
-      }]
+      }],
+      footerHtml: (r.categoria || '').trim()
+        ? `<p style="margin:0"><button type="button" class="btn small outline" id="ref-preview-goto-maquinas"><i class="fas fa-industry"></i> Ver máquinas (misma categoría)</button></p><p class="hint" style="margin:0.35rem 0 0;font-size:0.8rem">Abre el catálogo de máquinas con filtro por categoría si existe en el listado.</p>`
+        : '',
     });
+    const catGo = (r.categoria || '').trim();
+    if (catGo) {
+      setTimeout(() => {
+        const b = qs('#ref-preview-goto-maquinas');
+        if (b) b.onclick = () => { goToMaquinasFromRefaccionCategoria(catGo); };
+      }, 0);
+    }
   }
   function renderRefacciones(data) {
     const tbody = qs('#tabla-refacciones tbody');
@@ -1766,6 +1778,35 @@
       applyMaquinasFiltersAndRender();
     } catch (e) { renderMaquinas([]); console.error(e); }
     finally { hideLoading(); }
+  }
+
+  /** Desde vista previa de refacción: ir a Máquinas filtrando por la misma categoría (dropdown o filtro de tabla). */
+  async function goToMaquinasFromRefaccionCategoria(categoria) {
+    const c = String(categoria || '').trim();
+    if (!c) return;
+    const mod = qs('#modal');
+    if (mod) mod.classList.add('hidden');
+    showPanel('maquinas', { skipLoad: true });
+    try {
+      await loadMaquinas();
+    } catch (_) {}
+    const catSel = qs('#filtro-categoria-maq');
+    const inp = qs('#tabla-maquinas .filter-input[data-key="categoria"]');
+    if (inp) inp.value = '';
+    let applied = false;
+    if (catSel) {
+      const hasOpt = Array.from(catSel.options).some(o => o.value === c);
+      if (hasOpt) {
+        catSel.value = c;
+        applied = true;
+      }
+    }
+    if (!applied && inp) {
+      inp.value = c;
+      applied = true;
+    }
+    if (!applied) showToast('No hay coincidencia en el filtro de categorías de máquinas. Revisa el catálogo o filtra manualmente.', 'warning');
+    applyMaquinasFiltersAndRender();
   }
 
   // ----- COTIZACIONES (módulo rehecho: carga + render explícitos) -----
@@ -3154,7 +3195,7 @@
         <div class="form-group"><label>Fecha</label><input type="date" id="m-fecha-bono" value="${bono && bono.fecha || new Date().toISOString().slice(0,10)}"></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>Monto bono (MXN) *</label><input type="number" id="m-monto-bono" step="0.01" min="0" value="${bono && bono.monto_bono || 0}"></div>
+        <div class="form-group"><label>Monto bono (MXN) *</label><input type="number" id="m-monto-bono" step="0.01" min="0" value="${bono && bono.monto_bono != null && bono.monto_bono !== '' ? Number(bono.monto_bono) : (isNew ? DEFAULT_BONO_MXN : 0)}"></div>
         <div class="form-group"><label>Pagado</label>
           <select id="m-pagado-bono">
             <option value="0" ${!bono || !bono.pagado ? 'selected' : ''}>No</option>
@@ -3372,6 +3413,10 @@
         const d = Math.max(1, Math.round((new Date(ff + 'T12:00:00') - new Date(fi + 'T12:00:00')) / 86400000) + 1);
         qs('#m-dias-viaje').value = d;
         qs('#m-total-viaticos-preview').textContent = '$' + (d * 1000).toLocaleString('es-MX');
+        if (isNew) {
+          const mesInp = qs('#m-mes-liq-viaje');
+          if (mesInp && !String(mesInp.value || '').trim()) mesInp.value = fi.slice(0, 7);
+        }
       }
     }
     qs('#m-finicio-viaje').addEventListener('change', calcDias);
@@ -3419,40 +3464,102 @@
     } catch (e) { showToast(parseApiError(e), 'error'); }
   }
 
+  /** Convierte respuesta GET /api/liquidacion-mensual ({ porTecnico }) en filas para tabla/CSV. */
+  function buildLiquidacionRowsFromApi(apiRes) {
+    const porTecnico = apiRes && apiRes.porTecnico && typeof apiRes.porTecnico === 'object' ? apiRes.porTecnico : null;
+    if (!porTecnico) return [];
+    return Object.keys(porTecnico)
+      .sort((a, b) => a.localeCompare(b, 'es'))
+      .map((tecnico) => {
+        const block = porTecnico[tecnico];
+        const viajes = Array.isArray(block.viajes) ? block.viajes : [];
+        let total_dias = 0;
+        for (const v of viajes) {
+          if (v.dias != null && String(v.dias).trim() !== '') {
+            total_dias += Math.max(0, Number(v.dias)) || 0;
+          } else if (v.fecha_inicio && v.fecha_fin) {
+            const fi = String(v.fecha_inicio).slice(0, 10);
+            const ff = String(v.fecha_fin).slice(0, 10);
+            total_dias += Math.max(
+              1,
+              Math.round((new Date(ff + 'T12:00:00') - new Date(fi + 'T12:00:00')) / 86400000) + 1
+            );
+          } else {
+            total_dias += 1;
+          }
+        }
+        const total_viaticos = Number(block.total_viaticos) || 0;
+        const total_bonos = Number(block.total_bonos) || 0;
+        return {
+          tecnico,
+          total_dias,
+          total_viaticos,
+          total_bonos,
+          total_combined: total_viaticos + total_bonos,
+        };
+      });
+  }
+
   // Liquidación mensual de viajes
   async function generarLiquidacionMensual() {
     const mesInput = qs('#filtro-mes-viajes');
     const mes = mesInput ? mesInput.value : new Date().toISOString().slice(0, 7);
     if (!mes) { showToast('Selecciona un mes.', 'error'); return; }
     try {
-      const data = await fetchJson(API + '/liquidacion-mensual?mes=' + mes);
-      if (!data || !data.length) { showToast('Sin viajes en ese mes.', 'info'); return; }
-      openModalLiquidacion(data, mes);
+      const raw = await fetchJson(API + '/liquidacion-mensual?mes=' + encodeURIComponent(mes));
+      const rows = buildLiquidacionRowsFromApi(raw);
+      if (!rows.length) { showToast('No hay viajes ni bonos registrados para ese mes.', 'info'); return; }
+      openModalLiquidacion(rows, mes);
     } catch (e) { showToast(parseApiError(e), 'error'); }
   }
 
-  function openModalLiquidacion(data, mes) {
-    const rows = data.map(d => `
+  function openModalLiquidacion(rows, mes) {
+    const rowsHtml = rows.map(d => `
       <tr>
         <td>${escapeHtml(d.tecnico || '')}</td>
         <td>${d.total_dias}</td>
-        <td>$${Number(d.total_viaticos).toLocaleString('es-MX', {minimumFractionDigits:2})}</td>
-        <td>$${Number(d.total_bonos || 0).toLocaleString('es-MX', {minimumFractionDigits:2})}</td>
-        <td><strong>$${Number((d.total_viaticos || 0) + (d.total_bonos || 0)).toLocaleString('es-MX', {minimumFractionDigits:2})}</strong></td>
+        <td>$${Number(d.total_viaticos).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+        <td>$${Number(d.total_bonos || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+        <td><strong>$${Number(d.total_combined != null ? d.total_combined : (d.total_viaticos || 0) + (d.total_bonos || 0)).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</strong></td>
       </tr>
     `).join('');
     const body = `
-      <h3 style="margin-bottom:1rem">Liquidación mensual: ${mes}</h3>
+      <h3 style="margin-bottom:1rem">Liquidación mensual: ${escapeHtml(mes)}</h3>
       <table class="table-simple" style="width:100%">
-        <thead><tr><th>Técnico</th><th>Días</th><th>Viáticos</th><th>Bonos</th><th>Total</th></tr></thead>
-        <tbody>${rows}</tbody>
+        <thead><tr><th>Técnico</th><th>Días viaje</th><th>Viáticos</th><th>Bonos</th><th>Total</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
       </table>
       <div class="form-actions" style="margin-top:1.5rem">
+        <button type="button" class="btn outline" id="liq-export-csv"><i class="fas fa-file-csv"></i> Descargar CSV</button>
         <button type="button" class="btn primary" onclick="window.print()"><i class="fas fa-print"></i> Imprimir</button>
         <button type="button" class="btn" id="modal-btn-cancel">Cerrar</button>
       </div>
     `;
     openModal('Liquidación mensual', body);
+    const csvBtn = qs('#modal-body #liq-export-csv');
+    if (csvBtn) {
+      csvBtn.onclick = () => {
+        const header = ['Técnico', 'Días viaje', 'Viáticos MXN', 'Bonos MXN', 'Total MXN'];
+        const lines = [
+          header.map(escapeCsv).join(','),
+          ...rows.map((d) =>
+            [
+              escapeCsv(d.tecnico || ''),
+              d.total_dias,
+              Number(d.total_viaticos) || 0,
+              Number(d.total_bonos) || 0,
+              Number(d.total_combined != null ? d.total_combined : (d.total_viaticos || 0) + (d.total_bonos || 0)),
+            ].join(',')
+          ),
+        ];
+        const csv = '\uFEFF' + lines.join('\r\n');
+        const a = document.createElement('a');
+        a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+        a.download = 'liquidacion_' + String(mes).replace(/\s/g, '_') + '.csv';
+        a.click();
+        showToast('CSV descargado.', 'success');
+      };
+    }
   }
 
   // ----- INCIDENTES (módulo rehecho: carga + render explícitos) -----
