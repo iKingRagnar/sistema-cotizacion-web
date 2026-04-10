@@ -2739,7 +2739,6 @@
         fields: [
           { label: 'Razón social', value: g.razon_social, icon: 'fa-building', full: true },
           { label: 'Modelo de máquina', value: g.modelo_maquina, icon: 'fa-cog' },
-          { label: 'Tipo de máquina', value: g.tipo_maquina, icon: 'fa-tag' },
           { label: 'Número de serie', value: g.numero_serie, icon: 'fa-barcode' },
           { label: 'Fecha de entrega', value: (g.fecha_entrega || '').toString().slice(0, 10), icon: 'fa-calendar' },
           { label: 'Activa', value: activa ? 'Sí' : 'No', icon: 'fa-check-circle', badge: true, badgeClass: activa ? 'pvc-badge--success' : 'pvc-badge--danger' },
@@ -3544,6 +3543,7 @@
           { label: 'Técnico', value: b.tecnico, icon: 'fa-hard-hat' },
           { label: 'Folio incidente', value: b.incidente_folio || '—', icon: 'fa-exclamation-triangle' },
           { label: 'Folio cotización', value: b.cotizacion_folio || '—', icon: 'fa-file-invoice-dollar' },
+          { label: 'Folio reporte', value: b.reporte_folio || '—', icon: 'fa-clipboard-list' },
           { label: 'Horas trabajadas', value: b.tiempo_horas != null ? b.tiempo_horas + ' hrs' : '—', icon: 'fa-stopwatch' },
         ]
       }, b.actividades ? {
@@ -3552,6 +3552,10 @@
       } : null, b.materiales_usados ? {
         title: 'Materiales', icon: 'fa-boxes',
         fields: [{ label: 'Materiales usados', value: b.materiales_usados, full: true }]
+      } : null,
+      b.archivo_firmado || b.archivo_firmado_nombre ? {
+        title: 'Evidencia', icon: 'fa-paperclip',
+        fields: [{ label: 'Archivo firmado', value: b.archivo_firmado_nombre || 'Adjunto en registro', full: true }]
       } : null].filter(Boolean)
     });
   }
@@ -3572,7 +3576,7 @@
     tbody.innerHTML = '';
     if (!hayRegistros) return;
     if (!hayFilasVisibles) {
-      tbody.innerHTML = '<tr><td colspan="9" class="empty filter-empty"><span>No hay resultados con los filtros aplicados.</span> <button type="button" class="btn small primary clear-filters-inline">Quitar filtros</button></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" class="empty filter-empty"><span>No hay resultados con los filtros aplicados.</span> <button type="button" class="btn small primary clear-filters-inline">Quitar filtros</button></td></tr>';
       const btn = tbody.querySelector('.clear-filters-inline');
       if (btn) btn.addEventListener('click', () => clearTableFiltersAndRefresh('tabla-bitacoras', null, applyBitacorasFiltersAndRender));
       updateTableFooter('tabla-bitacoras', 0, bitacorasCache.length, () => clearTableFiltersAndRefresh('tabla-bitacoras', null, applyBitacorasFiltersAndRender));
@@ -3588,6 +3592,7 @@
         <td>${escapeHtml(String((b.fecha || '').toString().slice(0, 10)))}</td>
         <td>${escapeHtml(String(b.incidente_folio || '—'))}</td>
         <td>${escapeHtml(String(b.cotizacion_folio || '—'))}</td>
+        <td>${escapeHtml(String(b.reporte_folio || '—'))}</td>
         <td class="td-text-wrap">${escapeHtml(String(b.tecnico || ''))}</td>
         <td class="td-desc-wrap">${escapeHtml(act)}</td>
         <td class="col-no-ibeam">${b.tiempo_horas != null ? b.tiempo_horas : '—'}</td>
@@ -3620,7 +3625,7 @@
 
   async function loadBitacoras() {
     showLoading();
-    renderTableSkeleton('tabla-bitacoras', 9);
+    renderTableSkeleton('tabla-bitacoras', 10);
     try {
       const raw = await fetchJson(API + '/bitacoras');
       bitacorasCache = toArray(raw);

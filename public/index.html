@@ -804,14 +804,14 @@
       <div id="bitacoras-empty" class="empty-card hidden">
         <div class="empty-icon"><i class="fas fa-hourglass-half"></i></div>
         <h3>No hay registros en la bitácora</h3>
-        <p>Registra horas de trabajo, actividades y materiales por incidente o cotización.</p>
+        <p>Registra horas por incidente o cotización; al finalizar un reporte de servicio también se genera un registro enlazado.</p>
         <button type="button" class="btn primary big btn-empty-bit"><i class="fas fa-plus"></i> Agregar registro</button>
       </div>
       <div id="bitacoras-list" class="table-wrap">
         <table class="data-table data-table--fluid filterable-table" id="tabla-bitacoras" data-cache="bitacorasCache">
           <thead>
             <tr>
-              <th>Fecha</th><th>Incidente</th><th>Cotización</th><th>Técnico</th><th>Actividades</th>
+              <th>Fecha</th><th>Incidente</th><th>Cotización</th><th>Reporte</th><th>Técnico</th><th>Actividades</th>
               <th class="col-no-ibeam">Horas</th><th class="col-no-ibeam">Materiales</th><th class="col-no-ibeam">Estado</th>
               <th class="th-actions">Acciones</th>
             </tr>
@@ -819,6 +819,7 @@
               <td class="filter-date-wrap"><select class="filter-date-select" data-key="fecha"><option value="">Todas</option><option value="hoy">Hoy</option><option value="esta_semana">Esta semana</option><option value="este_mes">Este mes</option><option value="mes_pasado">Mes pasado</option><option value="este_año">Este año</option><option value="personalizado">Escribir fecha</option></select><input type="date" class="filter-input filter-date-input" data-key="fecha" title="O escribe aquí"></td>
               <td><input type="text" class="filter-input" data-key="incidente_folio" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="cotizacion_folio" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="reporte_folio" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="tecnico" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="actividades" data-type="text" placeholder="Filtrar…"></td>
               <td class="col-no-ibeam"><input type="text" class="filter-input" data-key="tiempo_horas" data-type="number" placeholder="&gt;2, &lt;8"></td>
@@ -1070,6 +1071,6 @@
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=84"></script>
+  <script src="js/app.js?v=85"></script>
 </body>
 </html>

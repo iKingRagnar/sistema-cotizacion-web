@@ -120,6 +120,7 @@ function normalizeApiPath(url) {
 function isAdminOnlyApiPath(url) {
   const p = normalizeApiPath(url);
   if (p.startsWith('/api/app-users')) return true;
+  if (p.startsWith('/api/admin/')) return true;
   if (p === '/api/tarifas') return true;
   if (p === '/api/prospectos') return true;
   return false;

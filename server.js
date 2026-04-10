@@ -1727,10 +1727,11 @@ app.get('/api/bitacoras', async (req, res) => {
     if (Number.isFinite(cotizacionId) && cotizacionId > 0) { where.push('b.cotizacion_id = ?'); args.push(cotizacionId); }
     if (Number.isFinite(incidenteId) && incidenteId > 0) { where.push('b.incidente_id = ?'); args.push(incidenteId); }
     const rows = await db.getAll(
-      `SELECT b.*, i.folio as incidente_folio, co.folio as cotizacion_folio
+      `SELECT b.*, i.folio as incidente_folio, co.folio as cotizacion_folio, rep.folio as reporte_folio
        FROM bitacoras b
        LEFT JOIN incidentes i ON i.id = b.incidente_id
        LEFT JOIN cotizaciones co ON co.id = b.cotizacion_id
+       LEFT JOIN reportes rep ON rep.id = b.reporte_id
        ${where.length ? ('WHERE ' + where.join(' AND ')) : ''}
        ORDER BY b.fecha DESC, b.id DESC LIMIT 500`,
       args
@@ -1744,8 +1745,9 @@ app.get('/api/bitacoras', async (req, res) => {
 app.get('/api/bitacoras/:id', async (req, res) => {
   try {
     const row = await db.getOne(
-      `SELECT b.*, i.folio as incidente_folio, co.folio as cotizacion_folio FROM bitacoras b
-       LEFT JOIN incidentes i ON i.id = b.incidente_id LEFT JOIN cotizaciones co ON co.id = b.cotizacion_id WHERE b.id = ?`,
+      `SELECT b.*, i.folio as incidente_folio, co.folio as cotizacion_folio, rep.folio as reporte_folio FROM bitacoras b
+       LEFT JOIN incidentes i ON i.id = b.incidente_id LEFT JOIN cotizaciones co ON co.id = b.cotizacion_id
+       LEFT JOIN reportes rep ON rep.id = b.reporte_id WHERE b.id = ?`,
       [req.params.id]
     );
     if (!row) return res.status(404).json({ error: 'No encontrado' });
@@ -3393,6 +3395,13 @@ app.post('/api/reportes', async (req, res) => {
        isFinalizado, archivo || null, archivo_firmado_nombre || null]
     );
     const r = await db.getOne('SELECT r.*, c.nombre as cliente_nombre FROM reportes r LEFT JOIN clientes c ON c.id=r.cliente_id ORDER BY r.id DESC LIMIT 1');
+    if (r && r.id && isFinalizado) {
+      try {
+        await syncBitacoraFromReporte(r.id);
+      } catch (e) {
+        console.warn('[bitacora-sync]', e && e.message);
+      }
+    }
     res.status(201).json(r);
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
@@ -3425,6 +3434,13 @@ app.put('/api/reportes/:id', async (req, res) => {
       ]
     );
     const r = await db.getOne('SELECT r.*, c.nombre as cliente_nombre FROM reportes r LEFT JOIN clientes c ON c.id=r.cliente_id WHERE r.id=?', [req.params.id]);
+    if (r && r.id && isFinalizado) {
+      try {
+        await syncBitacoraFromReporte(r.id);
+      } catch (e) {
+        console.warn('[bitacora-sync]', e && e.message);
+      }
+    }
     res.json(r || {});
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
@@ -3434,6 +3450,64 @@ app.delete('/api/reportes/:id', async (req, res) => {
     await db.runQuery('DELETE FROM reportes WHERE id=?', [req.params.id]);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+/** Al finalizar un reporte, deja registro enlazado en bitácoras (mismo archivo firmado si existe). */
+async function syncBitacoraFromReporte(reporteId) {
+  const r = await db.getOne('SELECT * FROM reportes WHERE id=?', [reporteId]);
+  if (!r || !Number(r.finalizado)) return;
+  const folio = r.folio || '#' + reporteId;
+  const desc = (r.descripcion || '').trim();
+  const actividades =
+    ('Reporte de servicio finalizado: ' + folio + (desc ? '. ' + desc.slice(0, 1200) : '')).trim();
+  const fecha = (r.fecha || new Date().toISOString().slice(0, 10)).toString().slice(0, 10);
+  const tech = r.tecnico || null;
+  const arch = r.archivo_firmado || null;
+  const archN = r.archivo_firmado_nombre || null;
+  const mat = 'Origen: reporte id ' + reporteId + (arch ? ' · servicio firmado adjunto' : '');
+  const existing = await db.getOne('SELECT id FROM bitacoras WHERE reporte_id=?', [reporteId]);
+  if (existing && existing.id) {
+    await db.runQuery(
+      `UPDATE bitacoras SET fecha=?, tecnico=?, actividades=?, materiales_usados=?, tiempo_horas=COALESCE(tiempo_horas,0), archivo_firmado=?, archivo_firmado_nombre=? WHERE reporte_id=?`,
+      [fecha, tech, actividades, mat, arch, archN, reporteId]
+    );
+  } else {
+    await db.runQuery(
+      `INSERT INTO bitacoras (incidente_id, cotizacion_id, reporte_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados, archivo_firmado, archivo_firmado_nombre)
+       VALUES (NULL, NULL, ?, ?, ?, ?, 0, ?, ?, ?)`,
+      [reporteId, fecha, tech, actividades, mat, arch, archN]
+    );
+  }
+}
+
+/** Prueba o reenvío manual del correo mensual (admin). Body opcional: { "periodo": "YYYY-MM" } */
+app.post('/api/admin/monthly-reports/run', async (req, res) => {
+  try {
+    if (!auth.AUTH_ENABLED) {
+      return res.status(400).json({ error: 'Activa AUTH_ENABLED y entra como admin para usar esta ruta.' });
+    }
+    if (!req.authUser || req.authUser.role !== 'admin') {
+      return res.status(403).json({ error: 'Solo el administrador puede ejecutar el envío mensual.' });
+    }
+    const body = req.body || {};
+    let periodo = (body.periodo || '').trim();
+    if (!periodo) {
+      const d = new Date();
+      const prev = new Date(d.getFullYear(), d.getMonth() - 1, 1);
+      periodo = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
+    }
+    const r = await sendMonthlyAdminEmail(periodo);
+    if (!r.sent) {
+      return res.status(503).json({
+        error: 'No se pudo enviar (revisa SMTP_* en el servidor y destinatarios).',
+        detail: r.reason || 'unknown',
+        periodo,
+      });
+    }
+    res.json({ ok: true, periodo: r.periodo || periodo });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message || e) });
+  }
 });
 
 // =================== GARANTÍAS ===================
@@ -3665,6 +3739,239 @@ async function enviarCorreoAprobacion(cot, cliente) {
   } catch (_) { /* correo no bloquea la operación */ }
 }
 
+function ymBounds(ym) {
+  const parts = String(ym || '').trim().split('-');
+  if (parts.length !== 2) return null;
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  if (!y || !m || m < 1 || m > 12) return null;
+  const pad = (n) => String(n).padStart(2, '0');
+  const start = `${y}-${pad(m)}-01`;
+  const lastDay = new Date(y, m, 0).getDate();
+  const end = `${y}-${pad(m)}-${String(lastDay).padStart(2, '0')}`;
+  return { start, end, label: `${y}-${pad(m)}` };
+}
+
+function normTipoTxt(s) {
+  return String(s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function vendedorEsDavidCantu(name) {
+  const n = normTipoTxt(name);
+  return n.includes('david') && n.includes('cantu');
+}
+
+function escMail(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+async function getTarifaValor(clave, fallback) {
+  try {
+    const row = await db.getOne('SELECT valor FROM tarifas WHERE clave=?', [clave]);
+    if (row && row.valor != null && String(row.valor).trim() !== '') {
+      const x = Number(row.valor);
+      return Number.isFinite(x) ? x : fallback;
+    }
+  } catch (_) {}
+  return fallback;
+}
+
+/** Resumen de ventas aplicadas del mes + inventario de refacciones → correo a admin(s). */
+async function sendMonthlyAdminEmail(periodoYm) {
+  const bounds = ymBounds(periodoYm);
+  if (!bounds) throw new Error('periodo inválido (use YYYY-MM)');
+  const pctRef = await getTarifaValor('comision_ref', 15);
+  const pctSvc = await getTarifaValor('comision_svc', 15);
+  const pctMaqDavid = await getTarifaValor('comision_maq_david', 10);
+
+  const rows = await db.getAll(
+    `SELECT co.*, c.nombre as cliente_nombre,
+            COALESCE(vp.nombre, vn.nombre, co.vendedor) as vendedor_resuelto
+     FROM cotizaciones co
+     JOIN clientes c ON c.id = co.cliente_id
+     LEFT JOIN tecnicos vp ON vp.id = co.vendedor_personal_id
+     LEFT JOIN tecnicos vn ON co.vendedor_personal_id IS NULL AND vn.nombre = co.vendedor
+     WHERE co.estado IN ('aplicada','venta')
+       AND date(COALESCE(co.fecha_aprobacion, co.fecha)) >= date(?)
+       AND date(COALESCE(co.fecha_aprobacion, co.fecha)) <= date(?)`,
+    [bounds.start, bounds.end]
+  );
+
+  let totalRef = 0;
+  let totalSvc = 0;
+  let totalMaqDavid = 0;
+  const detalle = [];
+  for (const cot of rows || []) {
+    const tipo = normTipoTxt(cot.tipo);
+    const tot = Number(cot.total) || 0;
+    const vend = cot.vendedor_resuelto || cot.vendedor || '';
+    if (tipo === 'refacciones') {
+      totalRef += tot;
+      detalle.push({ folio: cot.folio, tipo: 'Refacciones', total: tot, com: tot * (pctRef / 100) });
+    } else if (tipo === 'servicio' || tipo === 'mano_obra') {
+      totalSvc += tot;
+      detalle.push({ folio: cot.folio, tipo: 'Servicio / M.O.', total: tot, com: tot * (pctSvc / 100) });
+    } else if (tipo === 'maquina' && vendedorEsDavidCantu(vend)) {
+      totalMaqDavid += tot;
+      detalle.push({ folio: cot.folio, tipo: 'Equipo (David Cantú)', total: tot, com: tot * (pctMaqDavid / 100) });
+    }
+  }
+
+  const comRef = totalRef * (pctRef / 100);
+  const comSvc = totalSvc * (pctSvc / 100);
+  const comMaq = totalMaqDavid * (pctMaqDavid / 100);
+  const comTotal = comRef + comSvc + comMaq;
+
+  const inv = await db.getAll(
+    `SELECT codigo, descripcion, zona, stock, stock_minimo FROM refacciones WHERE COALESCE(activo,1)=1 ORDER BY codigo LIMIT 2000`
+  );
+  const invRows = (inv || []).map((r) => [
+    escMail(r.codigo),
+    escMail((r.descripcion || '').slice(0, 100)),
+    escMail(r.zona || '—'),
+    String(Number(r.stock) || 0),
+    String(Number(r.stock_minimo) || 0),
+  ]);
+
+  const tableVentas = detalle.slice(0, 100).map((d) => [
+    escMail(d.folio),
+    escMail(d.tipo),
+    `$${d.total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
+    `$${d.com.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
+  ]);
+
+  const summaryRows = [
+    { label: 'Suma ventas refacciones', value: `$${totalRef.toLocaleString('es-MX', { minimumFractionDigits: 2 })}` },
+    { label: `Comisión ${pctRef}% (refacciones)`, value: `$${comRef.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, bold: true },
+    { label: 'Suma servicio / mano de obra', value: `$${totalSvc.toLocaleString('es-MX', { minimumFractionDigits: 2 })}` },
+    { label: `Comisión ${pctSvc}% (servicios)`, value: `$${comSvc.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, bold: true },
+    { label: 'Suma equipo vendido por David Cantú', value: `$${totalMaqDavid.toLocaleString('es-MX', { minimumFractionDigits: 2 })}` },
+    { label: `Comisión ${pctMaqDavid}% (equipo David)`, value: `$${comMaq.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, bold: true },
+    { label: 'Total comisiones estimadas', value: `$${comTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, bold: true },
+    { label: 'Cotizaciones aplicadas en el mes', value: String((rows || []).length) },
+  ];
+
+  const footer =
+    'Porcentajes desde tabla <strong>Tarifas</strong> (comision_ref, comision_svc, comision_maq_david). ' +
+    'Montos según total de cotización (moneda registrada). Equipo: solo filas con vendedor que incluya «David» y «Cantú».';
+
+  const htmlVentas = buildEmailHtml({
+    title: 'Cierre de mes · Comisiones por ventas aplicadas',
+    subtitle: `${bounds.label} (${bounds.start} al ${bounds.end})`,
+    rows: summaryRows,
+    tableHeader: ['Folio', 'Tipo', 'Total venta', 'Comisión est.'],
+    tableRows: tableVentas.length ? tableVentas : [['—', 'Sin ventas aplicadas en el periodo', '—', '—']],
+    footer,
+  });
+
+  const maxInv = 400;
+  const invSlice = invRows.slice(0, maxInv);
+  const footerInv =
+    invRows.length > maxInv
+      ? `Mostrando ${maxInv} de ${invRows.length} filas. Exporta inventario completo desde el sistema.`
+      : `${invRows.length} artículos activos.`;
+
+  const htmlInv = buildEmailHtml({
+    title: 'Inventario de refacciones (corte)',
+    subtitle: `Periodo ${bounds.label}`,
+    rows: null,
+    tableHeader: ['Código', 'Descripción', 'Zona', 'Stock', 'Mín.'],
+    tableRows: invSlice.length ? invSlice : [['—', 'Sin refacciones', '—', '0', '0']],
+    footer: footerInv,
+  });
+
+  const t = createMailTransport();
+  const from = (process.env.SMTP_FROM || process.env.SMTP_USER || '').trim();
+  const recipients = getAdminNotifyEmails();
+  const to = recipients.join(', ');
+  if (!t || !from || !to) {
+    return { sent: false, reason: 'smtp_or_recipients_missing' };
+  }
+
+  const text =
+    `Resumen ${bounds.label}\n` +
+    `Refacciones: $${totalRef.toFixed(2)} → comisión ${pctRef}% = $${comRef.toFixed(2)}\n` +
+    `Servicios: $${totalSvc.toFixed(2)} → ${pctSvc}% = $${comSvc.toFixed(2)}\n` +
+    `Equipo (David): $${totalMaqDavid.toFixed(2)} → ${pctMaqDavid}% = $${comMaq.toFixed(2)}\n` +
+    `Total comisiones est.: $${comTotal.toFixed(2)}\n`;
+  await t.sendMail({
+    from,
+    to,
+    subject: `📊 Cierre ${bounds.label} · Comisiones e inventario | Universal Machine Tools`,
+    text,
+    html: `${htmlVentas}<div style="height:32px"></div>${htmlInv}`,
+  });
+  return { sent: true, periodo: bounds.label };
+}
+
+async function trySendMonthlyBundleForPreviousMonth() {
+  const tz = process.env.TZ || 'America/Mexico_City';
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    hour12: false,
+  }).formatToParts(now);
+  const map = {};
+  for (const p of parts) {
+    if (p.type !== 'literal') map[p.type] = p.value;
+  }
+  const dd = Number(map.day);
+  const hour = parseInt(String(map.hour != null ? map.hour : '0'), 10) || 0;
+  if (dd !== 1 || hour < 6 || hour > 10) return;
+
+  const y = parseInt(map.year, 10);
+  const mo = parseInt(map.month, 10);
+  const prev = new Date(y, mo - 2, 1);
+  const pYm = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
+
+  const ex = await db.getOne('SELECT job FROM cron_jobs_log WHERE job=? AND periodo=?', ['monthly_admin_bundle', pYm]);
+  if (ex) return;
+
+  try {
+    const r = await sendMonthlyAdminEmail(pYm);
+    if (r.sent) {
+      await db.runQuery(
+        `INSERT INTO cron_jobs_log (job, periodo, ejecutado_en) VALUES ('monthly_admin_bundle', ?, datetime('now','localtime'))`,
+        [pYm]
+      );
+      console.log('[monthly-email] Enviado resumen', pYm, '→', getAdminNotifyEmails().join(', '));
+    } else {
+      console.warn('[monthly-email] No enviado', pYm, r.reason || '');
+    }
+  } catch (e) {
+    console.error('[monthly-email]', e && e.message ? e.message : e);
+  }
+}
+
+let monthlyReportsTimer = null;
+function startMonthlyAdminReportsScheduler() {
+  if (process.env.VERCEL) {
+    console.log('[monthly-email] Omitido en Vercel. Usa POST /api/admin/monthly-reports/run o un Cron que pegue a tu API.');
+    return;
+  }
+  if (process.env.MONTHLY_ADMIN_EMAILS_ENABLED === '0' || process.env.MONTHLY_ADMIN_EMAILS_ENABLED === 'false') {
+    console.log('[monthly-email] Desactivado (MONTHLY_ADMIN_EMAILS_ENABLED=0)');
+    return;
+  }
+  if (monthlyReportsTimer) clearInterval(monthlyReportsTimer);
+  const tick = () => {
+    trySendMonthlyBundleForPreviousMonth().catch((e) => console.error('[monthly-email]', e));
+  };
+  monthlyReportsTimer = setInterval(tick, 60 * 60 * 1000);
+  tick();
+}
+
 async function sendMailGarantia({ to, subject, text, html, garantia, mantenimiento }) {
   const t = createMailTransport();
   const from = (process.env.SMTP_FROM || process.env.SMTP_USER || '').trim();
@@ -3766,7 +4073,8 @@ app.post('/api/garantias', async (req, res) => {
       [cliente_id || null, razon_social, modelo_maquina, numero_serie || null, tipo_maquina || null, fecha_entrega]
     );
     const g = await db.getOne('SELECT * FROM garantias ORDER BY id DESC LIMIT 1');
-    const [f1, f2] = fechasMantenimientoPar(fecha_entrega, tipo_maquina, 0);
+    const modeloHint = [modelo_maquina, tipo_maquina].map((x) => (x && String(x).trim()) || '').find(Boolean) || '';
+    const [f1, f2] = fechasMantenimientoPar(fecha_entrega, modeloHint, 0);
     const anio1 = new Date(f1 + 'T12:00:00').getFullYear();
     const anio2 = new Date(f2 + 'T12:00:00').getFullYear();
     await db.runQuery(
@@ -3789,15 +4097,16 @@ app.post('/api/garantias/:id/generar-siguiente-anio', async (req, res) => {
     if (!g) return res.status(404).json({ error: 'No encontrado' });
     const rows = await db.getAll('SELECT * FROM mantenimientos_garantia WHERE garantia_id=? ORDER BY fecha_programada DESC', [g.id]);
     let maxOff = 0;
+    const modeloHintG = (g.modelo_maquina && String(g.modelo_maquina).trim()) || (g.tipo_maquina && String(g.tipo_maquina).trim()) || '';
     if (rows.length) {
       const base = new Date(g.fecha_entrega + 'T12:00:00');
-      const [a] = intervalosMesesPorTipo(g.tipo_maquina);
+      const [a] = intervalosMesesPorTipo(modeloHintG);
       const last = new Date(rows[0].fecha_programada + 'T12:00:00');
       const monthsFromBase = Math.round((last - base) / (30.44 * 24 * 60 * 60 * 1000));
       maxOff = Math.max(0, Math.floor((monthsFromBase - a) / 12));
     }
     const nextOff = maxOff + 1;
-    const [f1, f2] = fechasMantenimientoPar(g.fecha_entrega, g.tipo_maquina, nextOff);
+    const [f1, f2] = fechasMantenimientoPar(g.fecha_entrega, modeloHintG, nextOff);
     const anio1 = new Date(f1 + 'T12:00:00').getFullYear();
     const anio2 = new Date(f2 + 'T12:00:00').getFullYear();
     await db.runQuery(
@@ -3829,7 +4138,8 @@ app.put('/api/garantias/:id', async (req, res) => {
       );
       if (!pend || Number(pend.c) === 0) {
         await db.runQuery('DELETE FROM mantenimientos_garantia WHERE garantia_id=?', [g.id]);
-        const [f1, f2] = fechasMantenimientoPar(g.fecha_entrega, g.tipo_maquina, 0);
+        const mhPut = (g.modelo_maquina && String(g.modelo_maquina).trim()) || (g.tipo_maquina && String(g.tipo_maquina).trim()) || '';
+        const [f1, f2] = fechasMantenimientoPar(g.fecha_entrega, mhPut, 0);
         const anio1 = new Date(f1 + 'T12:00:00').getFullYear();
         const anio2 = new Date(f2 + 'T12:00:00').getFullYear();
         await db.runQuery(
@@ -4306,6 +4616,7 @@ async function runPostListenStartup() {
     console.log('[backup-auto] Intervalo (h):', Math.round(BACKUP_AUTO_INTERVAL_MS / (60 * 60 * 1000)));
     console.log('[backup-auto] Directorio:', getBackupDir());
     console.log('[backup-auto] Retención: max archivos =', BACKUP_AUTO_MAX_FILES, '| max días =', BACKUP_AUTO_MAX_AGE_DAYS);
+    startMonthlyAdminReportsScheduler();
   }
 }
 

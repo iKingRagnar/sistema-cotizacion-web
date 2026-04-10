@@ -369,6 +369,8 @@ async function runMigrations() {
     `ALTER TABLE bitacoras ADD COLUMN reporte_id INTEGER`,
     `ALTER TABLE bitacoras ADD COLUMN archivo_firmado TEXT`,
     `ALTER TABLE bitacoras ADD COLUMN archivo_firmado_nombre TEXT`,
+    // evitar doble envío de correos mensuales (job + periodo YYYY-MM)
+    `CREATE TABLE IF NOT EXISTS cron_jobs_log (job TEXT NOT NULL, periodo TEXT NOT NULL, ejecutado_en TEXT NOT NULL, PRIMARY KEY (job, periodo))`,
     // maquinas: agregar categoria_principal para jerarquía
     `ALTER TABLE maquinas ADD COLUMN categoria_principal TEXT`,
     // refacciones: agregar numero_parte_manual si no existe
