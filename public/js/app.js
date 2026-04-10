@@ -455,7 +455,7 @@
   }
 
   const LAST_TAB_KEY = 'cotizacion-last-tab';
-  const VALID_TABS = ['dashboards', 'clientes', 'refacciones', 'maquinas', 'cotizaciones', 'reportes', 'garantias', 'mantenimiento-garantia', 'garantias-sin-cobertura', 'bonos', 'bitacoras'];
+  const VALID_TABS = ['dashboards', 'clientes', 'refacciones', 'maquinas', 'cotizaciones', 'reportes', 'garantias', 'mantenimiento-garantia', 'garantias-sin-cobertura', 'bonos', 'bitacoras', 'prospeccion'];
   const TABS_PERSIST = VALID_TABS.concat(['auditoria']);
   let reportesCache = [];
   let garantiasCache = [];
@@ -624,6 +624,7 @@
       'garantias-sin-cobertura': 'Sin cobertura',
       bonos: 'Bonos',
       ventas: 'Ventas',
+      prospeccion: 'Prospección',
       bitacoras: 'Bitácora de horas',
       demo: 'Cargar demo',
       acerca: 'Acerca de',
@@ -684,6 +685,7 @@
     if (id === 'acerca') { /* solo mostrar panel */ }
     if (id === 'auditoria') loadAuditLog();
     if (id === 'ventas') loadVentas();
+    if (id === 'prospeccion') loadProspeccion();
     if (id === 'revision-maquinas') loadRevisionMaquinas();
     if (id === 'tarifas') loadTarifas();
     if (id === 'tecnicos') loadTecnicos();
@@ -6211,6 +6213,7 @@
     if (id === 'mantenimiento-garantia') loadMantenimientoGarantia();
     if (id === 'garantias-sin-cobertura') loadGarantiasSinCobertura();
     if (id === 'bitacoras') loadBitacoras();
+    if (id === 'prospeccion') loadProspeccion();
     loadSeedStatus(false);
     loadStorageHealth();
     if (!silent) showToast('Datos actualizados.', 'success');
@@ -6425,6 +6428,204 @@
     tbody.querySelectorAll('.btn-pdf-venta').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); openCotizacionPdf(btn.dataset.id); });
     });
+  }
+
+  // ----- PROSPECCIÓN (mapa + tabla, /api/prospectos) -----
+  let prospectosCache = [];
+  let leafletLoadPromise = null;
+  let prospeccionMap = null;
+  let prospeccionMarkersLayer = null;
+
+  function ensureLeaflet() {
+    if (typeof window !== 'undefined' && window.L && typeof window.L.map === 'function') return Promise.resolve();
+    if (leafletLoadPromise) return leafletLoadPromise;
+    leafletLoadPromise = new Promise(function (resolve, reject) {
+      const href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      if (!document.querySelector('link[href="' + href + '"]')) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = href;
+        document.head.appendChild(link);
+      }
+      const s = document.createElement('script');
+      s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      s.async = true;
+      s.onload = function () { resolve(); };
+      s.onerror = function () { leafletLoadPromise = null; reject(new Error('No se pudo cargar Leaflet')); };
+      document.body.appendChild(s);
+    });
+    return leafletLoadPromise;
+  }
+
+  function setupProspeccionUi() {
+    const f = qs('#filtro-prospeccion');
+    if (f && !f._prospeccionBound) {
+      f._prospeccionBound = true;
+      let t;
+      f.addEventListener('input', function () {
+        clearTimeout(t);
+        t = setTimeout(function () { renderProspeccionFromCache(); }, 200);
+      });
+    }
+    const btnR = qs('#btn-prospeccion-refresh');
+    if (btnR && !btnR._prospeccionBound) {
+      btnR._prospeccionBound = true;
+      btnR.addEventListener('click', function () { loadProspeccion(); });
+    }
+    const btnE = qs('#export-prospeccion-csv');
+    if (btnE && !btnE._prospeccionBound) {
+      btnE._prospeccionBound = true;
+      btnE.addEventListener('click', exportProspeccionCsv);
+    }
+  }
+
+  function getProspectosFiltered() {
+    const raw = prospectosCache || [];
+    const q = (qs('#filtro-prospeccion') && qs('#filtro-prospeccion').value || '').trim().toLowerCase();
+    if (!q) return raw.slice();
+    return raw.filter(function (r) {
+      const blob = [
+        r.empresa, r.zona, r.estado, r.industria, r.tipo_interes, r.notas,
+      ].map(function (x) { return String(x || '').toLowerCase(); }).join(' ');
+      return blob.indexOf(q) >= 0;
+    });
+  }
+
+  function fmtProspectoUsd(n) {
+    const x = Number(n) || 0;
+    return x.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+
+  function renderProspeccionKpis(rows) {
+    const el = qs('#prospeccion-kpis');
+    if (!el) return;
+    const total = rows.length;
+    const conGeo = rows.filter(function (r) { return Number.isFinite(Number(r.lat)) && Number.isFinite(Number(r.lng)); }).length;
+    const pot = rows.reduce(function (s, r) { return s + (Number(r.potencial_usd) || 0); }, 0);
+    const scoreAvg = total ? rows.reduce(function (s, r) { return s + (Number(r.score_ia) || 0); }, 0) / total : 0;
+    el.innerHTML = `
+      <div class="prospeccion-kpi"><div class="prospeccion-kpi-lbl">Prospectos (filtrados)</div><div class="prospeccion-kpi-val">${total}</div></div>
+      <div class="prospeccion-kpi"><div class="prospeccion-kpi-lbl">Con coordenadas</div><div class="prospeccion-kpi-val">${conGeo}</div></div>
+      <div class="prospeccion-kpi"><div class="prospeccion-kpi-lbl">Potencial USD (suma)</div><div class="prospeccion-kpi-val">${fmtProspectoUsd(pot)}</div></div>
+      <div class="prospeccion-kpi"><div class="prospeccion-kpi-lbl">Score IA (prom.)</div><div class="prospeccion-kpi-val">${scoreAvg.toFixed(0)}</div></div>`;
+  }
+
+  function renderProspeccionTable(rows) {
+    const tbody = qs('#tabla-prospeccion tbody');
+    const foot = qs('#footer-tabla-prospeccion');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="9" class="empty">No hay prospectos. Usa <strong>Cargar demo</strong> o altas en base.</td></tr>';
+      if (foot) foot.textContent = '';
+      return;
+    }
+    rows.forEach(function (r) {
+      const tr = document.createElement('tr');
+      const notas = String(r.notas || '');
+      tr.innerHTML = `
+        <td>${escapeHtml(r.empresa || '')}</td>
+        <td>${escapeHtml(r.zona || '—')}</td>
+        <td>${escapeHtml(r.estado || '—')}</td>
+        <td>${escapeHtml(r.industria || '—')}</td>
+        <td>${escapeHtml(r.tipo_interes || '—')}</td>
+        <td>${escapeHtml(fmtProspectoUsd(r.potencial_usd))}</td>
+        <td>${escapeHtml(String(Math.round(Number(r.score_ia) || 0)))}</td>
+        <td>${escapeHtml((r.ultimo_contacto || '').slice(0, 10) || '—')}</td>
+        <td>${escapeHtml(notas.slice(0, 120))}${notas.length > 120 ? '…' : ''}</td>`;
+      tbody.appendChild(tr);
+    });
+    if (foot) foot.textContent = rows.length + ' fila(s)';
+  }
+
+  function renderProspeccionMap(rows) {
+    const L = window.L;
+    if (!L) return;
+    const el = qs('#map-prospeccion');
+    if (!el) return;
+    const valid = rows.filter(function (r) {
+      const lat = Number(r.lat); const lng = Number(r.lng);
+      return Number.isFinite(lat) && Number.isFinite(lng);
+    });
+    if (!prospeccionMap) {
+      prospeccionMap = L.map(el, { scrollWheelZoom: true });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap',
+      }).addTo(prospeccionMap);
+      prospeccionMarkersLayer = L.layerGroup().addTo(prospeccionMap);
+    }
+    prospeccionMarkersLayer.clearLayers();
+    valid.forEach(function (r) {
+      const lat = Number(r.lat); const lng = Number(r.lng);
+      const rad = 8 + Math.min(8, (Number(r.score_ia) || 50) / 12);
+      const m = L.circleMarker([lat, lng], {
+        radius: rad,
+        color: '#0d9488',
+        weight: 2,
+        fillColor: '#14b8a6',
+        fillOpacity: 0.55,
+      });
+      m.bindPopup('<strong>' + escapeHtml(r.empresa || '') + '</strong><br>' +
+        (r.zona ? escapeHtml(r.zona) + '<br>' : '') +
+        'Potencial USD: ' + fmtProspectoUsd(r.potencial_usd) + '<br>Score: ' + Math.round(Number(r.score_ia) || 0));
+      prospeccionMarkersLayer.addLayer(m);
+    });
+    if (valid.length) {
+      const bounds = L.latLngBounds(valid.map(function (r) { return [Number(r.lat), Number(r.lng)]; }));
+      prospeccionMap.fitBounds(bounds.pad(0.15));
+    } else {
+      prospeccionMap.setView([25.7, -100.3], 5);
+    }
+    setTimeout(function () { try { prospeccionMap.invalidateSize(); } catch (_) {} }, 200);
+  }
+
+  function renderProspeccionFromCache() {
+    setupProspeccionUi();
+    const rows = getProspectosFiltered();
+    renderProspeccionKpis(rows);
+    renderProspeccionTable(rows);
+    if (window.L && typeof window.L.map === 'function') renderProspeccionMap(rows);
+  }
+
+  async function loadProspeccion() {
+    setupProspeccionUi();
+    showLoading();
+    try {
+      await ensureLeaflet();
+      const data = await fetchJson(API + '/prospectos');
+      prospectosCache = toArray(data);
+      renderProspeccionFromCache();
+    } catch (e) {
+      console.error(e);
+      showToast(parseApiError(e) || 'No se pudieron cargar los prospectos.', 'error');
+      prospectosCache = [];
+      renderProspeccionFromCache();
+    } finally {
+      hideLoading();
+      setTimeout(function () { try { if (prospeccionMap) prospeccionMap.invalidateSize(); } catch (_) {} }, 300);
+    }
+  }
+
+  function exportProspeccionCsv() {
+    const rows = getProspectosFiltered();
+    if (!rows.length) { showToast('No hay filas para exportar.', 'error'); return; }
+    const headers = ['empresa', 'zona', 'lat', 'lng', 'estado', 'industria', 'tipo_interes', 'potencial_usd', 'score_ia', 'ultimo_contacto', 'notas'];
+    const out = [headers.join(',')].concat(rows.map(function (r) {
+      return headers.map(function (h) {
+        let v = r[h];
+        if (v == null) v = '';
+        v = String(v);
+        if (/[",\n]/.test(v)) return '"' + v.replace(/"/g, '""') + '"';
+        return v;
+      }).join(',');
+    })).join('\n');
+    const blob = new Blob([out], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'prospeccion-' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-') + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 0);
   }
 
   // ----- REVISIÓN DE MÁQUINAS -----
@@ -7402,6 +7603,7 @@
       { id: 'refacciones', label: 'Refacciones', icon: 'fa-cogs' },
       { id: 'maquinas', label: 'Máquinas', icon: 'fa-industry' },
       { id: 'cotizaciones', label: 'Cotizaciones', icon: 'fa-file-invoice-dollar' },
+      { id: 'prospeccion', label: 'Prospección', icon: 'fa-map-marked-alt' },
       { id: 'bonos', label: 'Bonos', icon: 'fa-award' },
       { id: 'bitacoras', label: 'Bitácora de horas', icon: 'fa-clock' },
       { id: 'demo', label: 'Cargar demo', icon: 'fa-database' },
@@ -7409,7 +7611,7 @@
     ];
     const uPal = getSessionUser();
     if (serverConfig.auditUi && uPal && uPal.role === 'admin') {
-      sections.splice(8, 0, { id: 'auditoria', label: 'Auditoría (admin)', icon: 'fa-clipboard-list' });
+      sections.splice(9, 0, { id: 'auditoria', label: 'Auditoría (admin)', icon: 'fa-clipboard-list' });
     }
     function render(q) {
       const qn = (q || '').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');

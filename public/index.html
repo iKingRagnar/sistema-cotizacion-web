@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Syne:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=54">
+  <link rel="stylesheet" href="css/style.css?v=55">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
@@ -158,6 +158,7 @@
     <button type="button" data-tab="maquinas" class="tab" title="Máquinas (Ctrl+3)"><i class="fas fa-industry"></i> Máquinas</button>
     <button type="button" data-tab="cotizaciones" class="tab" title="Cotizaciones (Ctrl+4)"><i class="fas fa-file-invoice-dollar"></i> Cotizaciones</button>
     <button type="button" data-tab="ventas" class="tab" title="Histórico de ventas aprobadas"><i class="fas fa-check-double"></i> Ventas</button>
+    <button type="button" data-tab="prospeccion" class="tab" title="Mapa y pipeline de prospectos (COVIA)"><i class="fas fa-map-marked-alt"></i> Prospección</button>
     <button type="button" data-tab="revision-maquinas" class="tab" title="Revisión y preparación de máquinas"><i class="fas fa-tools"></i> Revisión Máquinas</button>
     <button type="button" data-tab="tarifas" class="tab" title="Tarifas y esquemas de cobro"><i class="fas fa-tags"></i> Tarifas</button>
     <button type="button" data-tab="reportes" class="tab" title="Reportes de servicio y venta"><i class="fas fa-file-alt"></i> Reportes</button>
@@ -420,6 +421,35 @@
           <tbody></tbody>
         </table>
         <div class="table-footer" id="footer-tabla-ventas" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- PROSPECCIÓN (mapa + pipeline COVIA) -->
+    <section id="panel-prospeccion" class="panel panel-ux">
+      <div class="section-header section-header--ux">
+        <h2><i class="fas fa-map-marked-alt"></i> Prospección</h2>
+        <p class="section-sub">Pipeline comercial: prospectos con ubicación, score y potencial (API <code>/api/prospectos</code>).</p>
+        <div class="toolbar">
+          <input type="search" id="filtro-prospeccion" class="search search--ux" placeholder="Buscar empresa, zona, estado, industria…" autocomplete="off">
+          <button type="button" id="btn-prospeccion-refresh" class="btn primary"><i class="fas fa-sync-alt"></i> Actualizar</button>
+          <button type="button" id="export-prospeccion-csv" class="btn outline"><i class="fas fa-file-csv"></i> CSV</button>
+        </div>
+      </div>
+      <div id="prospeccion-kpis" class="prospeccion-kpis" aria-live="polite"></div>
+      <div class="prospeccion-map-wrap">
+        <div id="map-prospeccion" class="prospeccion-map" role="region" aria-label="Mapa de prospectos"></div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="tabla-prospeccion">
+          <thead>
+            <tr>
+              <th>Empresa</th><th>Zona</th><th>Estado</th><th>Industria</th><th>Interés</th>
+              <th>Potencial USD</th><th>Score IA</th><th>Último contacto</th><th>Notas</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-footer" id="footer-tabla-prospeccion" aria-live="polite"></div>
       </div>
     </section>
 
@@ -978,7 +1008,7 @@
 
   <footer class="app-footer" role="contentinfo">
     <p>Sistema de Cotización y Gestión · <span class="footer-version">v4</span> · Uso profesional · Cotizaciones, incidentes y bitácora en un solo lugar
-      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 54 · JS 80</strong></span></p>
+      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 55 · JS 81</strong></span></p>
     <p class="footer-tip"><kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> atajos de sección · <kbd>Esc</kbd> cierra modales</p>
   </footer>
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
@@ -989,6 +1019,6 @@
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=80"></script>
+  <script src="js/app.js?v=81"></script>
 </body>
 </html>
