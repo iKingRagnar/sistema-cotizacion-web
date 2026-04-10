@@ -337,6 +337,29 @@ async function ensureSeedUsers() {
   console.log('[auth] AUTH_SEED_DEMO_USERS=1: usuarios demo adicionales creados (usuario1, usuario2, operador, consulta).');
 }
 
+/**
+ * Usuarios que deben existir tras un deploy con BD vacía o nueva instancia.
+ * Solo INSERT si no hay fila con el mismo username (no pisa contraseña ni datos si ya existe).
+ * Contraseña: definir SEED_USER_ZERG120_PASSWORD en el servidor (recomendado); si no, usa el default de respaldo.
+ */
+async function ensurePinnedAppUsers() {
+  const zergPass = (process.env.SEED_USER_ZERG120_PASSWORD || '').trim() || 'Ayuvk2xq22';
+  const pinned = [
+    { username: 'Zerg120', display_name: 'Alberto', role: 'usuario', password: zergPass },
+  ];
+  for (const u of pinned) {
+    const un = String(u.username || '').trim();
+    if (!un) continue;
+    const exists = await db.getOne('SELECT id FROM app_users WHERE lower(username) = lower(?)', [un]);
+    if (exists && exists.id != null) continue;
+    await db.runQuery(
+      'INSERT INTO app_users (username, password_hash, role, display_name, activo) VALUES (?,?,?,?,1)',
+      [un, hashPassword(u.password), u.role, u.display_name || un]
+    );
+    console.log('[auth] Usuario anclado creado (faltaba en BD):', un, '|', u.display_name, '| rol', u.role);
+  }
+}
+
 module.exports = {
   AUTH_ENABLED,
   AUDIT_ENABLED,
@@ -344,6 +367,7 @@ module.exports = {
   createApiMiddleware,
   attemptLogin,
   ensureSeedUsers,
+  ensurePinnedAppUsers,
   verifyToken,
   hashPassword,
   READ_ONLY_ROLES,

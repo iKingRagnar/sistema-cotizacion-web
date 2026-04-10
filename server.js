@@ -4627,6 +4627,7 @@ function initServer() {
       await db.init();
       await ensureTarifasDefaults();
       await auth.ensureSeedUsers();
+      await auth.ensurePinnedAppUsers();
       if (process.env.VERCEL && String(process.env.AUTH_SECRET || '').trim() === '') {
         console.warn(
           '[vercel] AUTH_SECRET no definido: sesiones con secreto por defecto (inseguro). Ejecuta npm run vercel:env y pega AUTH_SECRET en Vercel.'
