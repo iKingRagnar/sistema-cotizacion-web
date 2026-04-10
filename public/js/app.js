@@ -520,6 +520,13 @@
       const t = qs('#' + tid);
       if (t) t.classList.toggle('hidden', !showAdminModules);
     });
+    if (!showAdminModules) {
+      const activeTab = document.querySelector('.tab.active');
+      const at = activeTab && activeTab.dataset && activeTab.dataset.tab;
+      if (at === 'prospeccion' || at === 'tarifas' || at === 'tecnicos') {
+        showPanel('dashboards');
+      }
+    }
     updateCommissionsUiVisibility();
   }
   function syncSessionHeader() {
