@@ -9,6 +9,7 @@ import { apiFetch } from "@/lib/api";
 import { downloadText, formatDateMx, formatMoneyMxn, rowsToCsv } from "@/lib/format";
 import { useQuery } from "@tanstack/react-query";
 import { type ColumnDef } from "@tanstack/react-table";
+import Link from "next/link";
 import { useMemo } from "react";
 
 type Cotizacion = {
@@ -75,8 +76,16 @@ export default function CotizacionesPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-2">
       <PageToolbar onExportCsv={exportCsv}>
-        <h2 className="text-xl font-semibold font-heading">Cotizaciones</h2>
-        <p className="text-sm text-muted-foreground">Folios, estados y montos</p>
+        <div>
+          <h2 className="text-xl font-semibold font-heading">Cotizaciones</h2>
+          <p className="text-sm text-muted-foreground">
+            Folios, estados y montos. Tipos y estados deben alinearse a{" "}
+            <Link href="/catalogos" className="text-primary underline-offset-2 hover:underline">
+              Catálogos
+            </Link>{" "}
+            (tipo de cotización, estado); las notas siguen siendo texto libre.
+          </p>
+        </div>
       </PageToolbar>
       <GlassCard className="p-4 md:p-6">
         <DataTable columns={columns} data={q.data ?? []} />

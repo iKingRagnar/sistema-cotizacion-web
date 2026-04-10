@@ -298,6 +298,17 @@ function getSchema() {
       creado_en TEXT DEFAULT (datetime('now','localtime'))
     )`,
     `CREATE INDEX IF NOT EXISTS idx_prospectos_estado ON prospectos(estado)`,
+    /* CATÁLOGOS: valores controlados por clave (rol, puesto, cotizacion_tipo, …) */
+    `CREATE TABLE IF NOT EXISTS catalogos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      clave TEXT NOT NULL,
+      valor TEXT NOT NULL,
+      activo INTEGER DEFAULT 1,
+      orden INTEGER DEFAULT 0,
+      creado_en TEXT DEFAULT (datetime('now','localtime'))
+    )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_catalogos_clave_valor ON catalogos(clave, valor)`,
+    `CREATE INDEX IF NOT EXISTS idx_catalogos_clave_activo ON catalogos(clave, activo)`,
   ];
 }
 
@@ -402,6 +413,7 @@ async function init() {
     db = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
     for (const sql of getSchema()) await db.execute(sql);
     await runMigrations();
+    await seedCatalogosDefaults();
     return;
   }
   const sqlite3 = require('sqlite3').verbose();
@@ -432,6 +444,71 @@ async function init() {
     await runQuery("INSERT INTO tecnicos (nombre) VALUES ('Juan Pérez'), ('María García'), ('Carlos López')");
   }
   await seedPersonalAndPricing();
+  await seedCatalogosDefaults();
+}
+
+/** Valores iniciales y sincronía desde técnicos (evita escribir a mano fuera del catálogo). */
+async function seedCatalogosDefaults() {
+  try {
+    const defaults = [
+      ['rol', 'Vendedor'],
+      ['rol', 'Técnico'],
+      ['rol', 'Técnico senior'],
+      ['rol', 'Coordinador'],
+      ['rol', 'Líder comercial'],
+      ['rol', 'Administración'],
+      ['rol', 'Gerencia'],
+      ['rol', 'Soporte técnico'],
+      ['rol', 'Taller'],
+      ['rol', 'Ejecutiva de ventas'],
+      ['rol', 'Vendedor de campo'],
+      ['puesto', 'Instrumentación'],
+      ['puesto', 'Ejecutivo de cuenta'],
+      ['puesto', 'Ejecutivo zona norte'],
+      ['puesto', 'Coordinadora de servicio'],
+      ['puesto', 'Técnico senior'],
+      ['puesto', 'Jefe de Área'],
+      ['puesto', 'Ejecutiva de refacciones'],
+      ['departamento', 'Servicio'],
+      ['departamento', 'Ventas'],
+      ['departamento', 'Taller'],
+      ['departamento', 'Administración'],
+      ['departamento', 'Logística'],
+      ['departamento', 'Calidad'],
+      ['profesion', 'Ingeniero industrial'],
+      ['profesion', 'Ingeniero mecatrónico'],
+      ['profesion', 'Ingeniera mecatrónica'],
+      ['profesion', 'Técnico mecánico'],
+      ['profesion', 'Técnico electricista'],
+      ['profesion', 'Mercadotecnia'],
+      ['profesion', 'Licenciado'],
+      ['profesion', 'Instrumentista'],
+      ['cotizacion_tipo', 'refacciones'],
+      ['cotizacion_tipo', 'mano_obra'],
+      ['cotizacion_tipo', 'maquina'],
+      ['cotizacion_tipo', 'mixta'],
+      ['cotizacion_estado', 'borrador'],
+      ['cotizacion_estado', 'pendiente_aprobacion'],
+      ['cotizacion_estado', 'aplicada'],
+      ['cotizacion_estado', 'cancelada'],
+    ];
+    for (const [clave, valor] of defaults) {
+      await runQuery('INSERT OR IGNORE INTO catalogos (clave, valor) VALUES (?, ?)', [clave, valor]);
+    }
+    const cols = ['rol', 'puesto', 'departamento', 'profesion'];
+    for (const col of cols) {
+      const found = await getAll(
+        `SELECT DISTINCT ${col} as v FROM tecnicos WHERE ${col} IS NOT NULL AND TRIM(${col}) != ''`
+      );
+      for (const row of found) {
+        const v = String(row.v || '').trim();
+        if (!v) continue;
+        await runQuery('INSERT OR IGNORE INTO catalogos (clave, valor) VALUES (?, ?)', [col, v]);
+      }
+    }
+  } catch (_) {
+    /* tabla nueva o permisos */
+  }
 }
 
 /** Datos demo: personal (vendedores + comisiones), precios USD en refacciones y lista en máquinas. */

@@ -51,13 +51,13 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className={cn("space-y-3", className)}>
-      <div className="rounded-xl border border-border/60 bg-card/40 backdrop-blur-sm overflow-hidden shadow-sm">
+      <div className="rounded-xl border border-border/50 bg-card/35 backdrop-blur-md overflow-hidden shadow-sm ring-1 ring-white/[0.04] dark:ring-white/[0.06]">
         <Table>
-          <TableHeader>
+          <TableHeader className="sticky top-0 z-[1] bg-card/90 backdrop-blur-md shadow-sm">
             {table.getHeaderGroups().map((hg) => (
               <TableRow key={hg.id} className="hover:bg-transparent border-border/50">
                 {hg.headers.map((h) => (
-                  <TableHead key={h.id} className="text-xs uppercase tracking-wide text-muted-foreground">
+                  <TableHead key={h.id} className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     {h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}
                   </TableHead>
                 ))}
@@ -66,10 +66,14 @@ export function DataTable<TData, TValue>({
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => (
+              table.getRowModel().rows.map((row, idx) => (
                 <TableRow
                   key={row.id}
-                  className="group border-border/40 transition-colors hover:bg-muted/40"
+                  className={cn(
+                    "group border-border/30 transition-all duration-200",
+                    idx % 2 === 0 ? "bg-transparent" : "bg-muted/[0.12]",
+                    "hover:bg-teal-500/[0.06] hover:shadow-[inset_0_0_0_1px_rgba(45,212,191,0.12)] dark:hover:bg-teal-500/[0.08]"
+                  )}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="text-sm">

@@ -1299,6 +1299,59 @@ app.post('/api/cotizaciones/:id/aplicar', async (req, res) => {
   }
 });
 
+// Catálogos (rol, puesto, departamento, cotizacion_tipo, etc.)
+app.get('/api/catalogos', async (req, res) => {
+  try {
+    const clave = String(req.query.clave || '').trim();
+    if (clave && clave !== 'all') {
+      const rows = await db.getAll(
+        `SELECT id, clave, valor, orden FROM catalogos WHERE activo=1 AND clave=? ORDER BY orden ASC, valor ASC`,
+        [clave]
+      );
+      return res.json(rows);
+    }
+    const rows = await db.getAll(
+      `SELECT id, clave, valor, orden FROM catalogos WHERE activo=1 ORDER BY clave ASC, orden ASC, valor ASC`
+    );
+    const grouped = {};
+    for (const r of rows) {
+      if (!grouped[r.clave]) grouped[r.clave] = [];
+      grouped[r.clave].push(r);
+    }
+    res.json(grouped);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.post('/api/catalogos', async (req, res) => {
+  try {
+    const { clave, valor } = req.body || {};
+    const c = String(clave || '').trim();
+    const v = String(valor || '').trim();
+    if (!c || !v) return res.status(400).json({ error: 'clave y valor requeridos' });
+    await db.runQuery('INSERT OR IGNORE INTO catalogos (clave, valor) VALUES (?, ?)', [c, v]);
+    await db.runQuery('UPDATE catalogos SET activo=1 WHERE clave=? AND valor=?', [c, v]);
+    const row = await db.getOne(
+      `SELECT id, clave, valor, orden FROM catalogos WHERE clave=? AND valor=? AND activo=1`,
+      [c, v]
+    );
+    if (!row) return res.status(500).json({ error: 'No se pudo leer el catálogo' });
+    res.status(201).json(row);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.delete('/api/catalogos/:id', async (req, res) => {
+  try {
+    await db.runQuery('UPDATE catalogos SET activo=0 WHERE id=?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
 // Tecnicos
 app.get('/api/tecnicos', async (req, res) => {
   try {
