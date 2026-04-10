@@ -281,6 +281,23 @@ function getSchema() {
       valor TEXT NOT NULL,
       actualizado_en TEXT DEFAULT (datetime('now','localtime'))
     )`,
+    /* PROSPECTOS: pipeline comercial (mapa + scoring) */
+    `CREATE TABLE IF NOT EXISTS prospectos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      empresa TEXT NOT NULL,
+      zona TEXT,
+      lat REAL,
+      lng REAL,
+      tipo_interes TEXT,
+      industria TEXT,
+      potencial_usd REAL DEFAULT 0,
+      ultimo_contacto TEXT,
+      score_ia REAL DEFAULT 0,
+      estado TEXT DEFAULT 'nuevo',
+      notas TEXT,
+      creado_en TEXT DEFAULT (datetime('now','localtime'))
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_prospectos_estado ON prospectos(estado)`,
   ];
 }
 

@@ -1760,6 +1760,8 @@ async function runSeedDemoEnrichment() {
     mantenimientos_calendario: 0,
     garantias_sin_cobertura: 0,
     bonos_demo: 0,
+    prospectos_demo: 0,
+    mantenimientos_correctivos: 0,
   };
 
   const personalDemo = [
@@ -1896,6 +1898,95 @@ async function runSeedDemoEnrichment() {
     );
     out.bonos_demo++;
   }
+
+  /* Prospectos demo (NL, Coahuila, Tamaulipas, etc.) */
+  const SEED_PROSPECTO = 'demo:prospecto';
+  const prCount = await db.getOne(`SELECT COUNT(*) as n FROM prospectos WHERE COALESCE(notas,'') LIKE ?`, [`${SEED_PROSPECTO}%`]);
+  const nPr = Number(prCount && prCount.n) || 0;
+  const prospectosSeed = [
+    { empresa: 'Aceros del Norte S.A.', zona: 'Nuevo León', lat: 25.6866, lng: -100.3161, tipo: 'Torno CNC CTX', ind: 'Automotriz', usd: 185000, est: 'calificado' },
+    { empresa: 'Fundidora Santa Catarina', zona: 'Nuevo León', lat: 25.6751, lng: -100.4614, tipo: 'Electroerosión hilo', ind: 'Metal-mecánica', usd: 92000, est: 'negociación' },
+    { empresa: 'Manufacturas Regiomontanas', zona: 'Nuevo León', lat: 25.6488, lng: -100.2891, tipo: 'Refacciones Fanuc', ind: 'Plástico', usd: 45000, est: 'nuevo' },
+    { empresa: 'Industrias García', zona: 'Coahuila', lat: 25.4232, lng: -101.0053, tipo: 'Centro mecanizado 5 ejes', ind: 'Aeroespacial', usd: 240000, est: 'calificado' },
+    { empresa: 'Torreón Precision Parts', zona: 'Coahuila', lat: 25.5428, lng: -103.4068, tipo: 'Robot soldadura ARC Mate', ind: 'Agroindustria', usd: 78000, est: 'propuesta' },
+    { empresa: 'Láser del Norte', zona: 'Chihuahua', lat: 28.6329, lng: -106.0691, tipo: 'Láser fiber + chiller', ind: 'Electrónica', usd: 112000, est: 'negociación' },
+    { empresa: 'Reynosa Tooling', zona: 'Tamaulipas', lat: 26.0508, lng: -98.2978, tipo: 'Máquina BT-1000', ind: 'Automotriz', usd: 198000, est: 'nuevo' },
+    { empresa: 'Matamoros Industrial', zona: 'Tamaulipas', lat: 25.8697, lng: -97.5028, tipo: 'Rectificadora + variadores', ind: 'Energía', usd: 56000, est: 'calificado' },
+    { empresa: 'Querétaro Aerospace Hub', zona: 'Querétaro', lat: 20.5888, lng: -100.3899, tipo: 'Célula robot Fanuc', ind: 'Aeroespacial', usd: 310000, est: 'propuesta' },
+    { empresa: 'Silao Manufacturing', zona: 'Guanajuato', lat: 20.9174, lng: -101.2923, tipo: 'Torno CNC + refacciones', ind: 'Automotriz', usd: 87000, est: 'nuevo' },
+    { empresa: 'Pesquería Industrial Park', zona: 'Nuevo León', lat: 25.7856, lng: -100.1884, tipo: 'Compresor + mantenimiento', ind: 'Alimentos', usd: 34000, est: 'calificado' },
+    { empresa: 'Monclova Heavy', zona: 'Coahuila', lat: 26.9063, lng: -101.4206, tipo: 'Prensa hidráulica', ind: 'Minería', usd: 125000, est: 'negociación' },
+    { empresa: 'Piedras Negras Maquila', zona: 'Coahuila', lat: 28.7006, lng: -100.5236, tipo: 'Variadores + contactores', ind: 'Textil', usd: 28000, est: 'nuevo' },
+    { empresa: 'Saltillo Automoción', zona: 'Coahuila', lat: 25.4216, lng: -101.0003, tipo: 'Línea transfer + robot', ind: 'Automotriz', usd: 420000, est: 'calificado' },
+    { empresa: 'Nuevo Laredo Logistics', zona: 'Tamaulipas', lat: 27.4763, lng: -99.5164, tipo: 'Montacargas + rectificado', ind: 'Logística', usd: 51000, est: 'propuesta' },
+    { empresa: 'San Luis Potosí Tech', zona: 'San Luis Potosí', lat: 22.1565, lng: -100.9755, tipo: 'Electroerosión + hilo', ind: 'Médico', usd: 143000, est: 'negociación' },
+    { empresa: 'Apodaca Industrial', zona: 'Nuevo León', lat: 25.7786, lng: -100.1889, tipo: 'Centro VM-1100', ind: 'Plástico', usd: 96000, est: 'nuevo' },
+    { empresa: 'Escobedo Metal', zona: 'Nuevo León', lat: 25.7935, lng: -100.3139, tipo: 'Bandas + correas', ind: 'Metal-mecánica', usd: 22000, est: 'calificado' },
+    { empresa: 'Ramos Arizpe Cluster', zona: 'Coahuila', lat: 25.5469, lng: -100.9603, tipo: 'Instalación + capacitación', ind: 'Automotriz', usd: 67000, est: 'propuesta' },
+    { empresa: 'Ciudad Victoria OEM', zona: 'Tamaulipas', lat: 23.7417, lng: -99.1459, tipo: 'Guardamotores + arranques', ind: 'Agro', usd: 19000, est: 'nuevo' },
+    { empresa: 'Monterrey Sur Plastics', zona: 'Nuevo León', lat: 25.5552, lng: -100.2201, tipo: 'Temperatura + chillers', ind: 'Plástico', usd: 74000, est: 'negociación' },
+    { empresa: 'Durango Minería', zona: 'Durango', lat: 24.0277, lng: -104.6576, tipo: 'Bombas + válvulas', ind: 'Minería', usd: 88000, est: 'calificado' },
+    { empresa: 'Zacatecas Precision', zona: 'Zacatecas', lat: 22.7709, lng: -102.5833, tipo: 'Metrología + brazo', ind: 'Aero', usd: 54000, est: 'nuevo' },
+    { empresa: 'Aguascalientes Auto', zona: 'Aguascalientes', lat: 21.8853, lng: -102.2916, tipo: 'Soldadura + robot', ind: 'Automotriz', usd: 176000, est: 'propuesta' },
+    { empresa: 'Tampico Port Services', zona: 'Tamaulipas', lat: 22.2553, lng: -97.8686, tipo: 'Compresores marinos', ind: 'Energía', usd: 99000, est: 'calificado' },
+    { empresa: 'León Footwear Tech', zona: 'Guanajuato', lat: 21.125, lng: -101.686, tipo: 'Corte láser textil', ind: 'Calzado', usd: 41000, est: 'nuevo' },
+    { empresa: 'Hermosillo Solar', zona: 'Sonora', lat: 29.0729, lng: -110.9559, tipo: 'Variadores VFD', ind: 'Energía', usd: 62000, est: 'negociación' },
+    { empresa: 'Mexicali Border Mfg', zona: 'Baja California', lat: 32.6245, lng: -115.4523, tipo: 'PLC + sensores', ind: 'Electrónica', usd: 71000, est: 'calificado' },
+  ];
+  const toAddPr = Math.max(0, 28 - nPr);
+  for (let i = 0; i < toAddPr && i < prospectosSeed.length; i++) {
+    const p = prospectosSeed[i];
+    const dias = 3 + (i % 20);
+    const uc = new Date(Date.now() - dias * 86400000).toISOString().slice(0, 10);
+    const score = 55 + (i % 40) + (p.usd > 100000 ? 10 : 0);
+    await db.runQuery(
+      `INSERT INTO prospectos (empresa, zona, lat, lng, tipo_interes, industria, potencial_usd, ultimo_contacto, score_ia, estado, notas)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [p.empresa, p.zona, p.lat, p.lng, p.tipo, p.ind, p.usd, uc, score, p.est, `${SEED_PROSPECTO}:${i + 1}`]
+    );
+    out.prospectos_demo++;
+  }
+
+  /* Mantenimientos correctivos/preventivos en taller (tabla mantenimientos) */
+  const mgRow = await db.getOne(`SELECT COUNT(*) as n FROM mantenimientos WHERE COALESCE(descripcion_falla,'') LIKE ?`, [`${SEED_CAL_NOTA}%`]);
+  const nMg = Number(mgRow && mgRow.n) || 0;
+  const targetMg = 18;
+  const maqs = await db.getAll('SELECT id FROM maquinas ORDER BY id LIMIT 80');
+  const tiposMg = ['preventivo', 'correctivo', 'preventivo', 'correctivo'];
+  const fallas = [
+    'Fuga hidráulica en válvula proporcional', 'Desgaste de rodamiento husillo', 'Fallo encoder eje Z',
+    'Calentamiento variador', 'Pérdida presión neumática', 'Desalineación láser', 'Error servo eje C',
+    'Ruido anómalo bomba', 'Cableado dañado canal', 'Software congelado HMI', 'Filtro obstruido chiller',
+    'Correa dentada fatigada', 'Sensor proximidad intermitente', 'Torque bajo pernos bancada',
+    'Lubricación insuficiente', 'Vibración estructural', 'Falla contactor principal', 'Desbalance motor',
+  ];
+  const tecs = personalDemo.map((x) => x.nombre);
+  for (let k = 0; k < Math.max(0, targetMg - nMg) && maqs.length > 0; k++) {
+    const mid = maqs[k % maqs.length].id;
+    const tipo = tiposMg[k % tiposMg.length];
+    const diasA = 5 + k * 3;
+    const fi = new Date(Date.now() - diasA * 86400000).toISOString().slice(0, 10);
+    const ff = tipo === 'correctivo' ? new Date(Date.now() - (diasA - 2) * 86400000).toISOString().slice(0, 10) : null;
+    const costo = tipo === 'correctivo' ? 8500 + (k % 8) * 1200 : 3200 + (k % 5) * 400;
+    await db.runQuery(
+      `INSERT INTO mantenimientos (maquina_id, tipo, fecha_inicio, fecha_fin, descripcion_falla, tecnico, horas_invertidas, costo_total)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [mid, tipo, fi, ff, `${SEED_CAL_NOTA} ${fallas[k % fallas.length]}`, tecs[k % tecs.length], tipo === 'correctivo' ? 4 + (k % 3) : 2, costo]
+    );
+    out.mantenimientos_correctivos++;
+  }
+
+  /* Placeholders visuales en refacciones sin imagen (demo) */
+  try {
+    await db.runQuery(
+      `UPDATE refacciones SET imagen_url = ? WHERE (imagen_url IS NULL OR imagen_url = '') LIMIT 40`,
+      ['https://picsum.photos/seed/refdiag/640/400']
+    );
+    await db.runQuery(
+      `UPDATE refacciones SET manual_url = ? WHERE (manual_url IS NULL OR manual_url = '') LIMIT 40`,
+      ['https://picsum.photos/seed/refman/640/400']
+    );
+  } catch (_) {}
 
   return out;
 }
@@ -3030,7 +3121,15 @@ app.get('/api/reportes', async (req, res) => {
        FROM reportes r
        LEFT JOIN clientes c ON c.id = r.cliente_id
        LEFT JOIN maquinas m ON m.id = r.maquina_id
-       ORDER BY r.fecha DESC, r.id DESC LIMIT 500`
+       ORDER BY
+         CASE
+           WHEN LOWER(COALESCE(r.subtipo, '')) = 'garantia' THEN 1
+           WHEN LOWER(COALESCE(r.subtipo, '')) = 'instalacion' THEN 2
+           WHEN r.tipo_reporte = 'venta' THEN 9
+           ELSE 3
+         END,
+         r.fecha DESC, r.id DESC
+       LIMIT 500`
     );
     res.json(rows);
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
@@ -3763,6 +3862,111 @@ app.delete('/api/viajes/:id', async (req, res) => {
     await db.runQuery('DELETE FROM viajes WHERE id=?', [req.params.id]);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+/** Pipeline comercial — prospectos (mapa + scoring) */
+app.get('/api/prospectos', async (req, res) => {
+  try {
+    const rows = await db.getAll(
+      'SELECT * FROM prospectos ORDER BY COALESCE(score_ia,0) DESC, potencial_usd DESC, id DESC LIMIT 500'
+    );
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+/** Mantenimientos de taller (preventivo/correctivo), no confundir con mantenimientos_garantia */
+app.get('/api/mantenimientos-taller', async (req, res) => {
+  try {
+    const rows = await db.getAll(
+      `SELECT m.*, ma.nombre as maquina_nombre, ma.modelo as maquina_modelo, ma.numero_serie as maquina_serie,
+              c.nombre as cliente_nombre
+       FROM mantenimientos m
+       JOIN maquinas ma ON ma.id = m.maquina_id
+       LEFT JOIN clientes c ON c.id = ma.cliente_id
+       ORDER BY datetime(COALESCE(m.fecha_inicio, m.creado_en)) DESC
+       LIMIT 500`
+    );
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+/**
+ * Insights predictivos (reglas heurísticas sobre datos locales; sustituible por modelo ML).
+ */
+app.get('/api/insights/panel', async (req, res) => {
+  try {
+    const stockBajo = await db.getAll(
+      `SELECT codigo, descripcion, stock, stock_minimo FROM refacciones
+       WHERE activo = 1 AND COALESCE(stock_minimo,0) > 0 AND COALESCE(stock,0) <= COALESCE(stock_minimo,0)
+       ORDER BY (stock_minimo - stock) DESC LIMIT 12`
+    );
+    const mgProx = await db.getAll(
+      `SELECT mg.id, mg.fecha_programada, g.modelo_maquina, g.razon_social
+       FROM mantenimientos_garantia mg
+       JOIN garantias g ON g.id = mg.garantia_id
+       WHERE g.activa = 1 AND mg.confirmado = 0
+         AND date(mg.fecha_programada) >= date('now')
+         AND date(mg.fecha_programada) <= date('now', '+90 days')
+       ORDER BY date(mg.fecha_programada) ASC LIMIT 15`
+    );
+    const prospectosHot = await db.getAll(
+      `SELECT empresa, zona, potencial_usd, score_ia, estado FROM prospectos
+       WHERE COALESCE(estado,'') IN ('calificado','negociación','propuesta')
+       ORDER BY score_ia DESC LIMIT 8`
+    );
+    const ventasMes = await db.getOne(
+      `SELECT COUNT(*) as n, COALESCE(SUM(total),0) as monto FROM cotizaciones
+       WHERE estado = 'aplicada' AND strftime('%Y-%m', COALESCE(fecha_aprobacion, fecha)) = strftime('%Y-%m','now')`
+    );
+    const insights = [];
+    if (stockBajo.length) {
+      insights.push({
+        tipo: 'inventario',
+        titulo: 'Stock crítico',
+        detalle: `${stockBajo.length} refacción(es) en o bajo mínimo. Prioridad: ${stockBajo[0].codigo}.`,
+        severidad: 'alta',
+      });
+    }
+    if (mgProx.length) {
+      insights.push({
+        tipo: 'garantia',
+        titulo: 'Mantenimientos programados (90 días)',
+        detalle: `${mgProx.length} citas próximas; primera: ${mgProx[0].modelo_maquina} · ${mgProx[0].fecha_programada}`,
+        severidad: 'media',
+      });
+    }
+    if (prospectosHot.length) {
+      const top = prospectosHot[0];
+      insights.push({
+        tipo: 'ventas',
+        titulo: 'Pipeline alto valor',
+        detalle: `Mejor score: ${top.empresa} (${top.zona}) · ~USD ${Math.round(top.potencial_usd || 0).toLocaleString('es-MX')} · ${Math.round(top.score_ia || 0)}%`,
+        severidad: 'baja',
+      });
+    }
+    insights.push({
+      tipo: 'forecast',
+      titulo: 'Pronóstico refacciones (heurístico)',
+      detalle:
+        stockBajo.length > 5
+          ? 'Consumo elevado: revisar compras OEM en las próximas 2–3 semanas.'
+          : 'Rotación estable: mantener política de mínimos actual.',
+      severidad: 'baja',
+    });
+    res.json({
+      stock_bajo: stockBajo,
+      mantenimientos_garantia_proximos: mgProx,
+      prospectos_calientes: prospectosHot,
+      ventas_mes_aplicadas: ventasMes || { n: 0, monto: 0 },
+      insights,
+    });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
 });
 
 // Resumen mensual de viajes + bonos por técnico

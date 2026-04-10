@@ -10,7 +10,7 @@ import { apiFetch } from "@/lib/api";
 import { formatMoneyMxn } from "@/lib/format";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Activity, ClipboardList, TrendingUp } from "lucide-react";
+import { Activity, ClipboardList, Sparkles, TrendingUp } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -36,6 +36,12 @@ type AlertasRes = {
   items: { id: string; tipo: string; severidad: string; titulo: string; detalle: string }[];
 };
 
+type Insight = { tipo: string; titulo: string; detalle: string; severidad: string };
+
+type InsightsPanel = {
+  insights: Insight[];
+};
+
 export default function DashboardPage() {
   const statsQ = useQuery({
     queryKey: ["dashboard-stats"],
@@ -44,6 +50,10 @@ export default function DashboardPage() {
   const alertasQ = useQuery({
     queryKey: ["alertas"],
     queryFn: () => apiFetch<AlertasRes>("/api/alertas"),
+  });
+  const insightsQ = useQuery({
+    queryKey: ["insights-panel"],
+    queryFn: () => apiFetch<InsightsPanel>("/api/insights/panel"),
   });
 
   if (statsQ.isError) {
@@ -77,6 +87,29 @@ export default function DashboardPage() {
           Indicadores consolidados · cotizaciones, incidentes y bitácora
         </p>
       </div>
+
+      {insightsQ.data?.insights && insightsQ.data.insights.length > 0 && (
+        <div className="rounded-2xl border border-border/50 bg-gradient-to-br from-muted/40 via-card/50 to-emerald-500/5 p-4 md:p-5 backdrop-blur-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="size-4 text-amber-400" />
+            <h3 className="text-sm font-semibold font-heading">Insights predictivos (IA heurística)</h3>
+          </div>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {insightsQ.data.insights.map((ins, i) => (
+              <motion.li
+                key={i}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.04 }}
+                className="rounded-xl border border-border/40 bg-background/40 p-3 text-xs"
+              >
+                <p className="font-medium text-foreground">{ins.titulo}</p>
+                <p className="text-muted-foreground mt-1 leading-relaxed">{ins.detalle}</p>
+              </motion.li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard

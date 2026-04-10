@@ -6,11 +6,13 @@ import { GlassCard } from "@/components/premium/glass-card";
 import { PageToolbar } from "@/components/premium/toolbar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { apiFetch } from "@/lib/api";
 import { downloadText, formatDateMx, rowsToCsv } from "@/lib/format";
 import { useQuery } from "@tanstack/react-query";
 import { type ColumnDef } from "@tanstack/react-table";
-import { useMemo } from "react";
+import { CheckCircle2, FileSignature } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
 type Reporte = {
@@ -20,16 +22,26 @@ type Reporte = {
   subtipo?: string | null;
   estatus?: string | null;
   fecha?: string | null;
+  fecha_programada?: string | null;
   tecnico?: string | null;
   cliente_nombre?: string | null;
   maquina_nombre?: string | null;
   descripcion?: string | null;
+  finalizado?: number | null;
+  archivo_firmado_nombre?: string | null;
 };
 
 const COLORS = ["#34d399", "#22d3ee", "#a78bfa", "#fbbf24", "#fb7185", "#94a3b8"];
 
 export default function ReportesPage() {
   const q = useQuery({ queryKey: ["reportes"], queryFn: () => apiFetch<Reporte[]>("/api/reportes") });
+  const [previewId, setPreviewId] = useState<number | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const previewQ = useQuery({
+    queryKey: ["reporte", previewId],
+    queryFn: () => apiFetch<Reporte>(`/api/reportes/${previewId}`),
+    enabled: previewOpen && previewId != null,
+  });
 
   const pieData = useMemo(() => {
     const m = new Map<string, number>();
@@ -51,7 +63,22 @@ export default function ReportesPage() {
 
   const columns = useMemo<ColumnDef<Reporte>[]>(
     () => [
-      { accessorKey: "folio", header: "Folio" },
+      {
+        accessorKey: "folio",
+        header: "Folio",
+        cell: ({ row }) => (
+          <button
+            type="button"
+            className="text-left font-mono text-xs text-primary hover:underline underline-offset-2"
+            onClick={() => {
+              setPreviewId(row.original.id);
+              setPreviewOpen(true);
+            }}
+          >
+            {row.original.folio || "—"}
+          </button>
+        ),
+      },
       {
         accessorKey: "fecha",
         header: "Fecha",
@@ -70,6 +97,35 @@ export default function ReportesPage() {
         ),
       },
       { accessorKey: "tecnico", header: "Técnico", cell: ({ getValue }) => getValue() || "—" },
+      {
+        accessorKey: "maquina_nombre",
+        header: "Máquina",
+        cell: ({ getValue }) => {
+          const v = getValue();
+          const s = v == null || v === "" ? "—" : String(v);
+          return (
+            <span className="max-w-[160px] truncate block" title={s}>
+              {s}
+            </span>
+          );
+        },
+      },
+      {
+        id: "finalizado",
+        header: "Firma",
+        cell: ({ row }) =>
+          row.original.finalizado ? (
+            <span className="inline-flex items-center gap-1 text-emerald-400 text-xs">
+              <CheckCircle2 className="size-3.5" />
+              OK
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-muted-foreground text-xs">
+              <FileSignature className="size-3.5" />
+              Pendiente
+            </span>
+          ),
+      },
     ],
     []
   );
@@ -98,8 +154,12 @@ export default function ReportesPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <PageToolbar onExportCsv={exportCsv}>
-        <h2 className="text-xl font-semibold font-heading">Reportes de servicio y venta</h2>
-        <p className="text-sm text-muted-foreground">Distribución por estatus y detalle filtrable</p>
+        <div>
+          <h2 className="text-xl font-semibold font-heading">Reportes de servicio y venta</h2>
+          <p className="text-sm text-muted-foreground">
+            Orden automático: garantías → instalaciones → servicios → ventas. Vista previa al pulsar folio.
+          </p>
+        </div>
       </PageToolbar>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -162,6 +222,63 @@ export default function ReportesPage() {
       <GlassCard className="p-4 md:p-6">
         <DataTable columns={columns} data={q.data ?? []} />
       </GlassCard>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-lg border-border/60 bg-card/95 backdrop-blur-xl">
+          <DialogHeader>
+            <DialogTitle className="font-heading font-mono text-sm">
+              {previewQ.data?.folio ?? "Vista previa"}
+            </DialogTitle>
+          </DialogHeader>
+          {previewQ.isLoading ? (
+            <p className="text-sm text-muted-foreground">Cargando…</p>
+          ) : previewQ.data ? (
+            <div className="space-y-3 text-sm">
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline">{previewQ.data.tipo_reporte || "—"}</Badge>
+                <Badge variant="secondary">{previewQ.data.subtipo || "—"}</Badge>
+                <Badge
+                  variant={previewQ.data.estatus === "cerrado" ? "default" : "outline"}
+                  className="capitalize"
+                >
+                  {previewQ.data.estatus || "—"}
+                </Badge>
+              </div>
+              <p>
+                <span className="text-muted-foreground">Cliente: </span>
+                {previewQ.data.cliente_nombre || "—"}
+              </p>
+              <p>
+                <span className="text-muted-foreground">Máquina: </span>
+                {previewQ.data.maquina_nombre || "—"}
+              </p>
+              <p>
+                <span className="text-muted-foreground">Técnico: </span>
+                {previewQ.data.tecnico || "—"}
+              </p>
+              <p>
+                <span className="text-muted-foreground">Fecha: </span>
+                {formatDateMx(String(previewQ.data.fecha || ""))}
+              </p>
+              {previewQ.data.fecha_programada ? (
+                <p>
+                  <span className="text-muted-foreground">Programada: </span>
+                  {formatDateMx(String(previewQ.data.fecha_programada))}
+                </p>
+              ) : null}
+              <div className="rounded-lg border border-border/50 bg-muted/20 p-3 text-muted-foreground leading-relaxed">
+                {previewQ.data.descripcion || "Sin descripción."}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Firma digital: {previewQ.data.finalizado ? "Registrada" : "Pendiente"}
+                {previewQ.data.archivo_firmado_nombre
+                  ? ` · ${previewQ.data.archivo_firmado_nombre}`
+                  : ""}
+              </p>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
