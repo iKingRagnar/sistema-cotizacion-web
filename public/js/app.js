@@ -198,7 +198,13 @@
     return u && u.role === 'admin';
   }
   function getRoleLabel(role) {
-    const labels = { admin: 'Administrador', operador: 'Operador', usuario: 'Usuario', consulta: 'Consulta' };
+    const labels = {
+      admin: 'Administrador',
+      operador: 'Operador',
+      usuario: 'Usuario',
+      consulta: 'Consulta',
+      invitado: 'Invitado',
+    };
     return labels[role] || role || '—';
   }
   /** Comisiones, bonos y % de ganancia: solo administrador cuando la app exige login. */
@@ -456,7 +462,7 @@
 
   const LAST_TAB_KEY = 'cotizacion-last-tab';
   const VALID_TABS = ['dashboards', 'clientes', 'refacciones', 'maquinas', 'cotizaciones', 'reportes', 'garantias', 'mantenimiento-garantia', 'garantias-sin-cobertura', 'bonos', 'bitacoras', 'prospeccion'];
-  const TABS_PERSIST = VALID_TABS.concat(['auditoria']);
+  const TABS_PERSIST = VALID_TABS.concat(['auditoria', 'usuarios']);
   let reportesCache = [];
   let garantiasCache = [];
   let mantenimientosGarantiaCache = [];
@@ -497,10 +503,12 @@
   }
   function updateAuditTabVisibility() {
     const tab = qs('#tab-auditoria');
-    if (!tab) return;
+    const tabUsers = qs('#tab-usuarios');
     const u = getSessionUser();
-    const show = !!(serverConfig.auditUi && u && u.role === 'admin');
-    tab.classList.toggle('hidden', !show);
+    const showAudit = !!(serverConfig.auditUi && u && u.role === 'admin');
+    if (tab) tab.classList.toggle('hidden', !showAudit);
+    const showUsers = !!(serverConfig.authRequired && u && u.role === 'admin');
+    if (tabUsers) tabUsers.classList.toggle('hidden', !showUsers);
     updateCommissionsUiVisibility();
   }
   function syncSessionHeader() {
@@ -629,6 +637,7 @@
       demo: 'Cargar demo',
       acerca: 'Acerca de',
       auditoria: 'Auditoría',
+      usuarios: 'Usuarios',
     };
     const section = map[panelId] || 'Inicio';
     document.title = section + ' · ' + base;
@@ -649,6 +658,13 @@
       const u = getSessionUser();
       if (!serverConfig.auditUi || !u || u.role !== 'admin') {
         showToast('Solo el administrador puede ver la auditoría.', 'error');
+        return;
+      }
+    }
+    if (id === 'usuarios') {
+      const u = getSessionUser();
+      if (!serverConfig.authRequired || !u || u.role !== 'admin') {
+        showToast('Solo el administrador puede gestionar usuarios.', 'error');
         return;
       }
     }
@@ -684,6 +700,7 @@
     if (id === 'demo') loadSeedStatus();
     if (id === 'acerca') { /* solo mostrar panel */ }
     if (id === 'auditoria') loadAuditLog();
+    if (id === 'usuarios') loadAppUsers();
     if (id === 'ventas') loadVentas();
     if (id === 'prospeccion') loadProspeccion();
     if (id === 'revision-maquinas') loadRevisionMaquinas();
@@ -5464,6 +5481,146 @@
     }
   }
 
+  const APP_USER_ROLE_OPTIONS = [
+    { value: 'invitado', label: 'Invitado' },
+    { value: 'consulta', label: 'Consulta' },
+    { value: 'usuario', label: 'Usuario' },
+    { value: 'operador', label: 'Operador' },
+    { value: 'admin', label: 'Admin' },
+  ];
+
+  function renderUsuariosRoleSelect(userId, currentRole) {
+    return (
+      '<select class="filter-input usuarios-role-select" data-user-id="' +
+      userId +
+      '" aria-label="Rol">' +
+      APP_USER_ROLE_OPTIONS.map(function (o) {
+        return (
+          '<option value="' +
+          escapeHtml(o.value) +
+          '"' +
+          (o.value === currentRole ? ' selected' : '') +
+          '>' +
+          escapeHtml(o.label) +
+          '</option>'
+        );
+      }).join('') +
+      '</select>'
+    );
+  }
+
+  async function loadAppUsers() {
+    const tbody = qs('#tabla-usuarios-body');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">Cargando…</td></tr>';
+    try {
+      const rows = toArray(await fetchJson(API + '/app-users'));
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty">No hay usuarios registrados.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows
+        .map(function (r) {
+          const id = r.id;
+          const activo = !!(r.activo === 1 || r.activo === true);
+          return (
+            '<tr data-user-row="' +
+            id +
+            '"><td>' +
+            escapeHtml(r.username) +
+            '</td><td>' +
+            escapeHtml(r.display_name || '—') +
+            '</td><td>' +
+            renderUsuariosRoleSelect(id, r.role || 'invitado') +
+            '</td><td><input type="checkbox" class="usuarios-activo-check" id="usuarios-act-' +
+            id +
+            '" data-user-id="' +
+            id +
+            '" title="Cuenta activa" ' +
+            (activo ? 'checked' : '') +
+            '></td><td class="muted">' +
+            escapeHtml(r.creado_en || '—') +
+            '</td></tr>'
+          );
+        })
+        .join('');
+    } catch (e) {
+      tbody.innerHTML =
+        '<tr><td colspan="5" class="empty">' + escapeHtml(parseApiError(e) || 'No se pudo cargar usuarios.') + '</td></tr>';
+    }
+  }
+
+  function setupUsuariosPanel() {
+    const btn = qs('#btn-usuarios-create');
+    const tbody = qs('#tabla-usuarios-body');
+    if (btn && !btn._bound) {
+      btn._bound = true;
+      btn.addEventListener('click', async function () {
+        const uEl = qs('#usuarios-new-username');
+        const pEl = qs('#usuarios-new-password');
+        const dEl = qs('#usuarios-new-display');
+        const rEl = qs('#usuarios-new-role');
+        const username = (uEl && uEl.value ? String(uEl.value) : '').trim().toLowerCase();
+        const password = pEl && pEl.value ? String(pEl.value) : '';
+        const display_name = (dEl && dEl.value ? String(dEl.value) : '').trim() || username;
+        const role = rEl && rEl.value ? String(rEl.value) : 'invitado';
+        if (!username || !password) {
+          showToast('Usuario y contraseña son obligatorios.', 'error');
+          return;
+        }
+        btn.disabled = true;
+        try {
+          await fetchJson(API + '/app-users', {
+            method: 'POST',
+            body: JSON.stringify({ username: username, password: password, display_name: display_name, role: role }),
+          });
+          showToast('Usuario creado.', 'success');
+          if (uEl) uEl.value = '';
+          if (pEl) pEl.value = '';
+          if (dEl) dEl.value = '';
+          loadAppUsers();
+        } catch (e) {
+          showToast(parseApiError(e) || 'No se pudo crear el usuario.', 'error');
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    }
+    if (tbody && !tbody._delegBound) {
+      tbody._delegBound = true;
+      tbody.addEventListener('change', async function (ev) {
+        const t = ev.target;
+        if (!t || !t.dataset || t.dataset.userId == null) return;
+        const id = parseInt(t.dataset.userId, 10);
+        if (!Number.isFinite(id)) return;
+        if (t.classList && t.classList.contains('usuarios-role-select')) {
+          try {
+            await fetchJson(API + '/app-users/' + id, {
+              method: 'PATCH',
+              body: JSON.stringify({ role: t.value }),
+            });
+            showToast('Rol actualizado.', 'success');
+          } catch (e) {
+            showToast(parseApiError(e) || 'No se pudo actualizar el rol.', 'error');
+            loadAppUsers();
+          }
+        }
+        if (t.classList && t.classList.contains('usuarios-activo-check')) {
+          try {
+            await fetchJson(API + '/app-users/' + id, {
+              method: 'PATCH',
+              body: JSON.stringify({ activo: t.checked }),
+            });
+            showToast('Estado de cuenta actualizado.', 'success');
+          } catch (e) {
+            showToast(parseApiError(e) || 'No se pudo actualizar.', 'error');
+            loadAppUsers();
+          }
+        }
+      });
+    }
+  }
+
   function crossfilterEntityLabel(key) {
     const m = {
       clientes: 'Clientes',
@@ -6214,6 +6371,7 @@
     if (id === 'garantias-sin-cobertura') loadGarantiasSinCobertura();
     if (id === 'bitacoras') loadBitacoras();
     if (id === 'prospeccion') loadProspeccion();
+    if (id === 'usuarios') loadAppUsers();
     loadSeedStatus(false);
     loadStorageHealth();
     if (!silent) showToast('Datos actualizados.', 'success');
@@ -7581,6 +7739,13 @@
           return;
         }
       }
+      if (last === 'usuarios') {
+        const u = getSessionUser();
+        if (serverConfig.authRequired && u && u.role === 'admin') {
+          showPanel('usuarios');
+          return;
+        }
+      }
       if (last === 'bonos' && !canViewCommissions()) {
         try { localStorage.removeItem(LAST_TAB_KEY); } catch (_) {}
         last = null;
@@ -7610,8 +7775,13 @@
       { id: 'acerca', label: 'Acerca de', icon: 'fa-info-circle' },
     ];
     const uPal = getSessionUser();
+    let adminInsert = 9;
     if (serverConfig.auditUi && uPal && uPal.role === 'admin') {
-      sections.splice(9, 0, { id: 'auditoria', label: 'Auditoría (admin)', icon: 'fa-clipboard-list' });
+      sections.splice(adminInsert, 0, { id: 'auditoria', label: 'Auditoría (admin)', icon: 'fa-clipboard-list' });
+      adminInsert++;
+    }
+    if (serverConfig.authRequired && uPal && uPal.role === 'admin') {
+      sections.splice(adminInsert, 0, { id: 'usuarios', label: 'Usuarios y permisos (admin)', icon: 'fa-user-shield' });
     }
     function render(q) {
       const qn = (q || '').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -8313,6 +8483,7 @@
     initTheme();
     syncSessionHeader();
     updateAuditTabVisibility();
+    setupUsuariosPanel();
     initSoundToggleButton();
     renderNotificationsPanel();
     updateNotificationsBadge();

@@ -169,6 +169,7 @@
     <button type="button" data-tab="tecnicos" class="tab" title="Personal: roles, vendedores y comisiones"><i class="fas fa-users"></i> Personal</button>
     <button type="button" data-tab="bitacoras" class="tab" title="Bitácora (Ctrl+6)"><i class="fas fa-clock"></i> Bitácora de horas</button>
     <button type="button" data-tab="auditoria" class="tab hidden" id="tab-auditoria" title="Auditoría (Ctrl+8, solo admin)"><i class="fas fa-clipboard-list"></i> Auditoría</button>
+    <button type="button" data-tab="usuarios" class="tab hidden" id="tab-usuarios" title="Cuentas y permisos (solo admin)"><i class="fas fa-user-shield"></i> Usuarios</button>
     <button type="button" data-tab="demo" class="tab highlight" title="Cargar datos de ejemplo"><i class="fas fa-database"></i> Cargar demo</button>
     <button type="button" data-tab="acerca" class="tab" title="Acerca de (Ctrl+7)"><i class="fas fa-info-circle"></i> Acerca de</button>
   </nav>
@@ -857,6 +858,56 @@
       </div>
     </section>
 
+    <!-- USUARIOS DEL SISTEMA (solo admin con login) -->
+    <section id="panel-usuarios" class="panel" aria-label="Usuarios y permisos">
+      <div class="section-header">
+        <h2><i class="fas fa-user-shield"></i> Usuarios y permisos</h2>
+        <p class="hint">Solo el administrador puede crear cuentas y asignar roles. <strong>Invitado / Consulta</strong> = solo ver. <strong>Usuario / Operador</strong> = cotizaciones y reportes (sin editar catálogos maestros).</p>
+      </div>
+      <div class="card" style="margin-bottom:1rem;padding:1rem 1.25rem;">
+        <h3 style="margin:0 0 0.75rem 0;font-size:1rem;">Nuevo usuario</h3>
+        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;">
+          <div class="form-group" style="min-width:140px;">
+            <label for="usuarios-new-username">Usuario</label>
+            <input type="text" id="usuarios-new-username" autocomplete="off" placeholder="minúsculas" class="filter-input">
+          </div>
+          <div class="form-group" style="min-width:140px;">
+            <label for="usuarios-new-password">Contraseña</label>
+            <input type="password" id="usuarios-new-password" autocomplete="new-password" class="filter-input">
+          </div>
+          <div class="form-group" style="min-width:160px;">
+            <label for="usuarios-new-display">Nombre para mostrar</label>
+            <input type="text" id="usuarios-new-display" autocomplete="off" class="filter-input">
+          </div>
+          <div class="form-group" style="min-width:180px;">
+            <label for="usuarios-new-role">Rol</label>
+            <select id="usuarios-new-role" class="filter-input">
+              <option value="invitado">Invitado (solo ver)</option>
+              <option value="consulta">Consulta (solo ver)</option>
+              <option value="usuario">Usuario (cotizar / reportes)</option>
+              <option value="operador">Operador (cotizar / reportes)</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </div>
+          <button type="button" id="btn-usuarios-create" class="btn primary"><i class="fas fa-user-plus"></i> Crear usuario</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="tabla-usuarios">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Nombre</th>
+              <th>Rol</th>
+              <th>Activo</th>
+              <th>Alta</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-usuarios-body"></tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- DEMO -->
     <section id="panel-demo" class="panel">
       <div class="card card-demo">
@@ -1019,6 +1070,6 @@
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=81"></script>
+  <script src="js/app.js?v=82"></script>
 </body>
 </html>
