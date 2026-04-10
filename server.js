@@ -1799,6 +1799,17 @@ function norm(s) {
 function safeStr(v) { return (v != null && String(v).trim() !== '') ? String(v).trim() : null; }
 function safeStrReq(v) { return (v != null && String(v).trim() !== '') ? String(v).trim() : ''; }
 
+/** Evita SQLITE_CONSTRAINT UNIQUE al repetir seed (mismo folio base). */
+async function folioUnicoEnTabla(tabla, base) {
+  let f = String(base);
+  for (let n = 0; n < 9999; n++) {
+    const ex = await db.getOne(`SELECT id FROM ${tabla} WHERE folio = ? LIMIT 1`, [f]);
+    if (!ex) return f;
+    f = `${base}-x${n + 1}`;
+  }
+  return `${base}-${Date.now()}`;
+}
+
 const SEED_CAL_NOTA = 'seed_demo_cal';
 const SEED_SIN_SERIE = 'SN-SINCOV-';
 const SEED_BONO_NOTA = 'seed_demo_bono';
@@ -2106,7 +2117,8 @@ async function runSeedDemoCore(_forceIgnored) {
 
     let incidentesCount = 0;
     const incidenteByFolio = {};
-    for (const inc of incidentes) {
+    for (let ii = 0; ii < incidentes.length; ii++) {
+      const inc = incidentes[ii];
       const clienteId = clienteByNombre[norm(inc && inc.cliente_nombre)];
       if (!clienteId) continue;
       let maquinaId = null;
@@ -2114,9 +2126,11 @@ async function runSeedDemoCore(_forceIgnored) {
       if (maqNom) {
         maquinaId = maquinaByClienteYNombre[clienteId + '|' + norm(maqNom)];
       }
+      const baseIncFolio = safeStr(inc.folio) || `INC-JSON-${ii}`;
+      const folioIncIns = await folioUnicoEnTabla('incidentes', baseIncFolio);
       await db.runQuery(
         `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, fecha_vencimiento, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [safeStr(inc.folio), clienteId, maquinaId, safeStrReq(inc.descripcion) || '-', safeStr(inc.prioridad) || 'media', (inc.fecha_reporte && String(inc.fecha_reporte).slice(0, 10)) || new Date().toISOString().slice(0, 10), inc.estatus === 'cerrado' ? (safeStr(inc.fecha_cerrado) || new Date().toISOString().slice(0, 10)) : null, safeStr(inc.fecha_vencimiento), safeStr(inc.tecnico_responsable), (inc.estatus && String(inc.estatus).trim()) || 'abierto']
+        [folioIncIns, clienteId, maquinaId, safeStrReq(inc.descripcion) || '-', safeStr(inc.prioridad) || 'media', (inc.fecha_reporte && String(inc.fecha_reporte).slice(0, 10)) || new Date().toISOString().slice(0, 10), inc.estatus === 'cerrado' ? (safeStr(inc.fecha_cerrado) || new Date().toISOString().slice(0, 10)) : null, safeStr(inc.fecha_vencimiento), safeStr(inc.tecnico_responsable), (inc.estatus && String(inc.estatus).trim()) || 'abierto']
       );
       const r = await db.getOne('SELECT id FROM incidentes ORDER BY id DESC LIMIT 1');
       if (r) { incidenteByFolio[(inc.folio || '').toUpperCase()] = r.id; incidentesCount++; }
@@ -2133,7 +2147,8 @@ async function runSeedDemoCore(_forceIgnored) {
         let maquinaId = null;
         const maqsDelCliente = maquinasList.filter(m => m.cliente_id === cliente.id);
         if (maqsDelCliente.length > 0) maquinaId = maqsDelCliente[(i - 1) % maqsDelCliente.length].id;
-        const folio = 'INC-DEMO-' + String(1000 + i);
+        const folioBaseDemo = 'INC-DEMO-' + String(1000 + i);
+        const folio = await folioUnicoEnTabla('incidentes', folioBaseDemo);
         // Repartir fechas: semana pasada, mes pasado, año pasado
         const diasAtrasLista = [1, 2, 4, 7, 10, 15, 22, 30, 45, 60, 90, 120, 180, 270, 365];
         const diasAtras = diasAtrasLista[i % diasAtrasLista.length];
@@ -2188,7 +2203,9 @@ async function runSeedDemoCore(_forceIgnored) {
       const tipo = tipos[i % 2];
       const dayOffset = diasAtras[i % diasAtras.length];
       const fecha = new Date(Date.now() - dayOffset * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-      const folio = (tipo === 'mano_obra' ? 'COT-MO' : 'COT-REF') + '-' + fecha.replace(/-/g, '') + '-' + String(1001 + i);
+      const folioBase =
+        (tipo === 'mano_obra' ? 'COT-MO' : 'COT-REF') + '-' + fecha.replace(/-/g, '') + '-' + String(1001 + i);
+      const folio = await folioUnicoEnTabla('cotizaciones', folioBase);
       await db.runQuery(
         `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total, tipo_cambio, moneda, maquinas_ids, estado, notas) VALUES (?, ?, ?, ?, 0, 0, 0, 17.0, 'MXN', '[]', 'borrador', ?)`,
         [folio, clienteId, tipo, fecha, tipo === 'mano_obra' ? 'Cotización demo (mano de obra ligada a bitácora).' : 'Cotización demo (refacciones + vueltas).']
@@ -2427,15 +2444,18 @@ app.post('/api/seed-demo-extra', async (req, res) => {
     maquinasDb.forEach(m => { maquinaByClienteYNombre[(m && m.cliente_id) + '|' + norm(m && m.nombre)] = m.id; });
     let incidentesCount = 0;
     const incidenteByFolio = {};
-    for (const inc of incidentes) {
+    for (let ei = 0; ei < incidentes.length; ei++) {
+      const inc = incidentes[ei];
       const clienteId = clienteByNombre[norm(inc && inc.cliente_nombre)];
       if (!clienteId) continue;
       let maquinaId = null;
       const maqNom = inc && inc.maquina_nombre;
       if (maqNom) maquinaId = maquinaByClienteYNombre[clienteId + '|' + norm(maqNom)];
+      const baseIncFolio = safeStr(inc.folio) || `INC-JSON-${ei}`;
+      const folioIncExtra = await folioUnicoEnTabla('incidentes', baseIncFolio);
       await db.runQuery(
         `INSERT INTO incidentes (folio, cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, fecha_vencimiento, tecnico_responsable, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [safeStr(inc.folio), clienteId, maquinaId, safeStrReq(inc.descripcion) || '-', safeStr(inc.prioridad) || 'media', (inc.fecha_reporte && String(inc.fecha_reporte).slice(0, 10)) || new Date().toISOString().slice(0, 10), inc.estatus === 'cerrado' ? (safeStr(inc.fecha_cerrado) || new Date().toISOString().slice(0, 10)) : null, safeStr(inc.fecha_vencimiento), safeStr(inc.tecnico_responsable), (inc.estatus && String(inc.estatus).trim()) || 'abierto']
+        [folioIncExtra, clienteId, maquinaId, safeStrReq(inc.descripcion) || '-', safeStr(inc.prioridad) || 'media', (inc.fecha_reporte && String(inc.fecha_reporte).slice(0, 10)) || new Date().toISOString().slice(0, 10), inc.estatus === 'cerrado' ? (safeStr(inc.fecha_cerrado) || new Date().toISOString().slice(0, 10)) : null, safeStr(inc.fecha_vencimiento), safeStr(inc.tecnico_responsable), (inc.estatus && String(inc.estatus).trim()) || 'abierto']
       );
       const r = await db.getOne('SELECT id FROM incidentes ORDER BY id DESC LIMIT 1');
       if (r) { incidenteByFolio[(inc.folio != null ? String(inc.folio) : '').toUpperCase()] = r.id; incidentesCount++; }
@@ -2450,7 +2470,7 @@ app.post('/api/seed-demo-extra', async (req, res) => {
         let maquinaId = null;
         const maqsDelCliente = maquinasList.filter(m => m.cliente_id === cliente.id);
         if (maqsDelCliente.length > 0) maquinaId = maqsDelCliente[i % maqsDelCliente.length].id;
-        const folio = 'INC-EXTRA-' + String(2000 + i);
+        const folio = await folioUnicoEnTabla('incidentes', 'INC-EXTRA-' + String(2000 + i));
         const diasAtras = diasExtra[i % diasExtra.length];
         const fechaReporte = new Date(Date.now() - diasAtras * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
         const fVencExtra = new Date(Date.now() + (5 + (i % 14)) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -2501,7 +2521,9 @@ app.post('/api/seed-demo-extra', async (req, res) => {
       const total = subtotal + iva;
       const dayOff = diasCotExtra[i % diasCotExtra.length];
       const fecha = new Date(Date.now() - dayOff * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-      const folio = (tipo === 'mano_obra' ? 'COT-MO' : 'COT-REF') + '-' + fecha.replace(/-/g, '') + '-' + String(2000 + i);
+      const folioBase =
+        (tipo === 'mano_obra' ? 'COT-MO' : 'COT-REF') + '-' + fecha.replace(/-/g, '') + '-' + String(2000 + i);
+      const folio = await folioUnicoEnTabla('cotizaciones', folioBase);
       await db.runQuery(
         `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total) VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [folio, clienteId, tipo, fecha, subtotal, iva, total]
