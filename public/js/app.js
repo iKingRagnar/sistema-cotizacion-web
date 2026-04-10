@@ -766,6 +766,58 @@
     return [];
   }
 
+  /** Clave estable para comparar nombres de técnico (coma, espacios, tildes). */
+  function nombreTecnicoKey(s) {
+    return String(s || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/,/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+  }
+
+  function isSameTecnicoNombre(a, b) {
+    const ka = nombreTecnicoKey(a);
+    const kb = nombreTecnicoKey(b);
+    return ka && kb && ka === kb;
+  }
+
+  /**
+   * Una opción por persona en selects: evita "David Cantu" y "David Cantu," duplicados.
+   * Prefiere la variante sin coma al final; fusiona flag ocupado (reportes).
+   */
+  function tecnicosUniqueForSelect(tecnicos) {
+    const groups = new Map();
+    for (const t of toArray(tecnicos)) {
+      if (!t || t.nombre == null) continue;
+      const raw = String(t.nombre).replace(/\s+/g, ' ').trim();
+      if (!raw) continue;
+      const key = nombreTecnicoKey(raw);
+      if (!key) continue;
+      const ocup = !!(t && t.ocupado);
+      const cur = groups.get(key);
+      if (!cur) {
+        groups.set(key, { raw, ocupado: ocup });
+      } else {
+        cur.ocupado = !!(cur.ocupado || ocup);
+        const pickRaw = (a, b) => {
+          const aEnd = /,\s*$/.test(a);
+          const bEnd = /,\s*$/.test(b);
+          if (aEnd !== bEnd) return aEnd ? b : a;
+          return a.length <= b.length ? a : b;
+        };
+        cur.raw = pickRaw(cur.raw, raw);
+      }
+    }
+    return Array.from(groups.values())
+      .map((g) => ({
+        nombre: g.raw.replace(/,\s*$/, '').replace(/\s+/g, ' ').trim(),
+        ocupado: g.ocupado,
+      }))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }));
+  }
+
   function escapeHtml(s) {
     if (s == null) return '';
     const div = document.createElement('div');
@@ -2302,10 +2354,11 @@
       : ['<option value="">— Sin máquinas —</option>']
     ).join('');
 
-    const tecnOpts = tecnicosCache.map(t => {
-      const selected = reporte && reporte.tecnico === t.nombre ? 'selected' : '';
-      const label = t.ocupado && !(reporte && reporte.tecnico === t.nombre) ? `${escapeHtml(t.nombre)} 🔒 Ocupado` : escapeHtml(t.nombre);
-      const disabled = t.ocupado && !isAdmin && !(reporte && reporte.tecnico === t.nombre) ? 'disabled' : '';
+    const tecnOpts = tecnicosUniqueForSelect(tecnicosCache).map(t => {
+      const selected = reporte && isSameTecnicoNombre(reporte.tecnico, t.nombre) ? 'selected' : '';
+      const sameAsReporte = reporte && isSameTecnicoNombre(reporte.tecnico, t.nombre);
+      const label = t.ocupado && !sameAsReporte ? `${escapeHtml(t.nombre)} 🔒 Ocupado` : escapeHtml(t.nombre);
+      const disabled = t.ocupado && !isAdmin && !sameAsReporte ? 'disabled' : '';
       return `<option value="${escapeHtml(t.nombre)}" ${selected} ${disabled}>${label}</option>`;
     }).join('');
 
@@ -3177,7 +3230,7 @@
 
   function openModalBono(bono) {
     const isNew = !bono || !bono.id;
-    const tecnOpts = tecnicosCache.map(t => `<option value="${escapeHtml(t.nombre)}" ${bono && bono.tecnico === t.nombre ? 'selected' : ''}>${escapeHtml(t.nombre)}</option>`).join('');
+    const tecnOpts = tecnicosUniqueForSelect(tecnicosCache).map(t => `<option value="${escapeHtml(t.nombre)}" ${bono && isSameTecnicoNombre(bono.tecnico, t.nombre) ? 'selected' : ''}>${escapeHtml(t.nombre)}</option>`).join('');
     const reportesOpts = reportesCache.map(r => `<option value="${r.id}" ${bono && Number(bono.reporte_id) === Number(r.id) ? 'selected' : ''}>${escapeHtml(r.folio || ('#' + r.id))}</option>`).join('');
     const TIPOS_CAP = ['Operación básica', 'Operación avanzada', 'Mantenimiento', 'Programación CNC', 'Seguridad industrial', 'Otra'];
     const tiposOpts = TIPOS_CAP.map(t => `<option value="${t}" ${bono && bono.tipo_capacitacion === t ? 'selected' : ''}>${t}</option>`).join('');
@@ -3364,7 +3417,7 @@
 
   function openModalViaje(viaje) {
     const isNew = !viaje || !viaje.id;
-    const tecnOpts = tecnicosCache.map(t => `<option value="${escapeHtml(t.nombre)}" ${viaje && viaje.tecnico === t.nombre ? 'selected' : ''}>${escapeHtml(t.nombre)}</option>`).join('');
+    const tecnOpts = tecnicosUniqueForSelect(tecnicosCache).map(t => `<option value="${escapeHtml(t.nombre)}" ${viaje && isSameTecnicoNombre(viaje.tecnico, t.nombre) ? 'selected' : ''}>${escapeHtml(t.nombre)}</option>`).join('');
     const clientesOpts = clientesCache.map(c => `<option value="${c.id}" ${viaje && Number(viaje.cliente_id) === Number(c.id) ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`).join('');
     const reportesOpts = reportesCache.map(r => `<option value="${r.id}" ${viaje && Number(viaje.reporte_id) === Number(r.id) ? 'selected' : ''}>${escapeHtml(r.folio || ('#' + r.id))}</option>`).join('');
     const rsocial = (viaje && (viaje.razon_social || viaje.cliente_nombre)) ? escapeHtml(viaje.razon_social || viaje.cliente_nombre) : '';
