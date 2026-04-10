@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiFetch } from "@/lib/api";
 import { downloadText, formatDateMx, rowsToCsv } from "@/lib/format";
+import { useRequireAdminRedirect } from "@/lib/use-require-admin";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { type ColumnDef } from "@tanstack/react-table";
 import dynamic from "next/dynamic";
@@ -59,7 +60,12 @@ const item = {
 };
 
 export default function ProspectosPage() {
-  const q = useQuery({ queryKey: ["prospectos"], queryFn: () => apiFetch<Prospecto[]>("/api/prospectos") });
+  const allowed = useRequireAdminRedirect();
+  const q = useQuery({
+    queryKey: ["prospectos"],
+    queryFn: () => apiFetch<Prospecto[]>("/api/prospectos"),
+    enabled: allowed === true,
+  });
   const [chatIn, setChatIn] = useState("");
   const [chatLog, setChatLog] = useState<{ role: "user" | "assistant"; text: string }[]>([]);
   const [search, setSearch] = useState("");
@@ -235,6 +241,11 @@ export default function ProspectosPage() {
       })),
     [filtrados]
   );
+
+  if (allowed === null) {
+    return <p className="text-sm text-muted-foreground p-6">Verificando acceso…</p>;
+  }
+  if (!allowed) return null;
 
   if (q.isError) {
     return <ErrorState message={(q.error as Error).message} onRetry={() => q.refetch()} />;

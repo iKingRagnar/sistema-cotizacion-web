@@ -120,6 +120,8 @@ function normalizeApiPath(url) {
 function isAdminOnlyApiPath(url) {
   const p = normalizeApiPath(url);
   if (p.startsWith('/api/app-users')) return true;
+  if (p === '/api/tarifas') return true;
+  if (p === '/api/prospectos') return true;
   return false;
 }
 
@@ -230,7 +232,7 @@ function createApiMiddleware() {
     }
 
     if (isAdminOnlyApiPath(req.originalUrl) && role !== 'admin') {
-      return res.status(403).json({ error: 'Solo el administrador puede gestionar cuentas de usuario' });
+      return res.status(403).json({ error: 'Solo el administrador puede acceder a este recurso.' });
     }
 
     if (isRead) {

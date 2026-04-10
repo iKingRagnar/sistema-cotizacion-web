@@ -53,7 +53,13 @@ export const mainNav: NavItem[] = [
 ];
 
 /** Enlaces solo para administrador (resto de roles no los ven en el menú). */
-const ADMIN_ONLY_HREFS = new Set(["/usuarios", "/auditoria"]);
+const ADMIN_ONLY_HREFS = new Set([
+  "/usuarios",
+  "/auditoria",
+  "/tarifas",
+  "/prospectos",
+  "/personal",
+]);
 
 export function navForRole(role: string | null | undefined): NavItem[] {
   const r = (role || "").toLowerCase();

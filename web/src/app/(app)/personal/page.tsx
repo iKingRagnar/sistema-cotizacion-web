@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sheet";
 import { apiFetch } from "@/lib/api";
 import { CATALOGO } from "@/lib/catalog-keys";
+import { useRequireAdminRedirect } from "@/lib/use-require-admin";
 import { downloadText, formatMoneyMxn, rowsToCsv } from "@/lib/format";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ColumnDef } from "@tanstack/react-table";
@@ -63,9 +64,18 @@ function emptyForm() {
 }
 
 export default function PersonalPage() {
+  const allowed = useRequireAdminRedirect();
   const qc = useQueryClient();
-  const tec = useQuery({ queryKey: ["tecnicos"], queryFn: () => apiFetch<Tecnico[]>("/api/tecnicos") });
-  const br = useQuery({ queryKey: ["bonos-resumen"], queryFn: () => apiFetch<BonoRes[]>("/api/bonos-resumen") });
+  const tec = useQuery({
+    queryKey: ["tecnicos"],
+    queryFn: () => apiFetch<Tecnico[]>("/api/tecnicos"),
+    enabled: allowed === true,
+  });
+  const br = useQuery({
+    queryKey: ["bonos-resumen"],
+    queryFn: () => apiFetch<BonoRes[]>("/api/bonos-resumen"),
+    enabled: allowed === true,
+  });
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -230,6 +240,11 @@ export default function PersonalPage() {
       )
     );
   };
+
+  if (allowed === null) {
+    return <p className="text-sm text-muted-foreground p-6">Verificando acceso…</p>;
+  }
+  if (!allowed) return null;
 
   if (tec.isError) {
     return <ErrorState message={(tec.error as Error).message} onRetry={() => tec.refetch()} />;

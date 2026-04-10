@@ -5,13 +5,16 @@ import { GlassCard } from "@/components/premium/glass-card";
 import { PageToolbar } from "@/components/premium/toolbar";
 import { apiFetch } from "@/lib/api";
 import { downloadText, rowsToCsv } from "@/lib/format";
+import { useRequireAdminRedirect } from "@/lib/use-require-admin";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 
 export default function TarifasPage() {
+  const allowed = useRequireAdminRedirect();
   const q = useQuery({
     queryKey: ["tarifas"],
     queryFn: () => apiFetch<Record<string, string>>("/api/tarifas"),
+    enabled: allowed === true,
   });
 
   const exportCsv = () => {
@@ -24,6 +27,11 @@ export default function TarifasPage() {
       )
     );
   };
+
+  if (allowed === null) {
+    return <p className="text-sm text-muted-foreground p-6">Verificando acceso…</p>;
+  }
+  if (!allowed) return null;
 
   if (q.isError) {
     return <ErrorState message={(q.error as Error).message} onRetry={() => q.refetch()} />;

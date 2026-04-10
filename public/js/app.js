@@ -213,6 +213,12 @@
     const u = getSessionUser();
     return !!(u && u.role === 'admin');
   }
+  /** Tarifas, prospección y pestaña Personal: solo admin si hay login; sin auth, comportamiento local (acceso libre). */
+  function canAccessAdminOnlyModules() {
+    if (!serverConfig.authRequired) return true;
+    const u = getSessionUser();
+    return !!(u && u.role === 'admin');
+  }
   function updateCommissionsUiVisibility() {
     document.documentElement.classList.toggle('hide-commissions', !canViewCommissions());
   }
@@ -509,6 +515,11 @@
     if (tab) tab.classList.toggle('hidden', !showAudit);
     const showUsers = !!(serverConfig.authRequired && u && u.role === 'admin');
     if (tabUsers) tabUsers.classList.toggle('hidden', !showUsers);
+    const showAdminModules = canAccessAdminOnlyModules();
+    ['tab-prospeccion', 'tab-tarifas', 'tab-tecnicos'].forEach(function (tid) {
+      const t = qs('#' + tid);
+      if (t) t.classList.toggle('hidden', !showAdminModules);
+    });
     updateCommissionsUiVisibility();
   }
   function syncSessionHeader() {
@@ -633,6 +644,8 @@
       bonos: 'Bonos',
       ventas: 'Ventas',
       prospeccion: 'Prospección',
+      tarifas: 'Tarifas',
+      tecnicos: 'Personal',
       bitacoras: 'Bitácora de horas',
       demo: 'Cargar demo',
       acerca: 'Acerca de',
@@ -670,6 +683,10 @@
     }
     if (id === 'bonos' && !canViewCommissions()) {
       showToast('Solo el administrador puede ver bonos y comisiones.', 'error');
+      return;
+    }
+    if ((id === 'prospeccion' || id === 'tarifas' || id === 'tecnicos') && !canAccessAdminOnlyModules()) {
+      showToast('Solo el administrador puede acceder a esta sección.', 'error');
       return;
     }
     qsAll('.panel').forEach(p => p.classList.remove('active'));
@@ -7750,6 +7767,10 @@
         try { localStorage.removeItem(LAST_TAB_KEY); } catch (_) {}
         last = null;
       }
+      if (last === 'prospeccion' && !canAccessAdminOnlyModules()) {
+        try { localStorage.removeItem(LAST_TAB_KEY); } catch (_) {}
+        last = null;
+      }
       if (last && VALID_TABS.indexOf(last) >= 0) showPanel(last);
     } catch (_) {}
   }
@@ -7768,7 +7789,6 @@
       { id: 'refacciones', label: 'Refacciones', icon: 'fa-cogs' },
       { id: 'maquinas', label: 'Máquinas', icon: 'fa-industry' },
       { id: 'cotizaciones', label: 'Cotizaciones', icon: 'fa-file-invoice-dollar' },
-      { id: 'prospeccion', label: 'Prospección', icon: 'fa-map-marked-alt' },
       { id: 'bonos', label: 'Bonos', icon: 'fa-award' },
       { id: 'bitacoras', label: 'Bitácora de horas', icon: 'fa-clock' },
       { id: 'demo', label: 'Cargar demo', icon: 'fa-database' },
@@ -7776,6 +7796,14 @@
     ];
     const uPal = getSessionUser();
     let adminInsert = 9;
+    if (canAccessAdminOnlyModules()) {
+      sections.splice(5, 0,
+        { id: 'prospeccion', label: 'Prospección', icon: 'fa-map-marked-alt' },
+        { id: 'tarifas', label: 'Tarifas', icon: 'fa-tags' },
+        { id: 'tecnicos', label: 'Personal / Técnicos', icon: 'fa-users' }
+      );
+      adminInsert += 3;
+    }
     if (serverConfig.auditUi && uPal && uPal.role === 'admin') {
       sections.splice(adminInsert, 0, { id: 'auditoria', label: 'Auditoría (admin)', icon: 'fa-clipboard-list' });
       adminInsert++;
