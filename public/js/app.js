@@ -1932,7 +1932,8 @@
       const totalFmt = c.total != null
         ? (moneda === 'USD' ? 'US$' + Number(c.total).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '$' + Number(c.total).toLocaleString('es-MX', { minimumFractionDigits: 2 }))
         : '';
-      const tcFmt = c.tipo_cambio ? Number(c.tipo_cambio).toFixed(2) : '';
+      const tcNum = Number(c.tipo_cambio);
+      const tcFmt = Number.isFinite(tcNum) && tcNum > 0 ? tcNum.toFixed(2) : '';
       const estadoMap = { pendiente: 'Pendiente', aplicada: 'Aplicada', cancelada: 'Cancelada', venta: 'Venta' };
       const estadoLabel = estadoMap[c.estado] || c.estado || 'Pendiente';
       const estadoClass = { pendiente: 'semaforo-amarillo', aplicada: 'semaforo-verde', venta: 'semaforo-verde', cancelada: 'semaforo-rojo' }[c.estado] || 'semaforo-gris';

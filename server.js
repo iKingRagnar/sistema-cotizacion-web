@@ -1011,13 +1011,20 @@ app.get('/api/cotizaciones/:id', async (req, res) => {
   }
 });
 
+/** TC válido para listas USD×TC y columnas derivadas (evita NaN / 0 tras lecturas raras o parches). */
+function tipoCambioCotizacionEfectivo(cot) {
+  const n = Number(cot && cot.tipo_cambio);
+  return Number.isFinite(n) && n > 0 ? n : 17;
+}
+
 function calcLinea(tipo, cantidad, precioUnitario, moneda, tipoCambio) {
   const qty = Number(cantidad) || 0;
   const pu = Number(precioUnitario) || 0;
   const st = Math.round(qty * pu * 100) / 100;
   const iv = Math.round(st * 0.16 * 100) / 100;
   const tot = Math.round((st + iv) * 100) / 100;
-  const tc = Number(tipoCambio) || 0;
+  const tcRaw = Number(tipoCambio);
+  const tc = Number.isFinite(tcRaw) && tcRaw > 0 ? tcRaw : 0;
   const mon = (moneda || 'MXN').toUpperCase();
   const puUsd = mon === 'USD' ? pu : (tc > 0 ? Math.round((pu / tc) * 100) / 100 : 0);
   return {
@@ -1047,7 +1054,7 @@ async function precioUnitarioVueltaDesdeTarifas(cot, esIda, horasTrabajo, horasT
   const ht = Number(horasTrabajo) || 0;
   const htr = Number(horasTraslado) || 0;
   const baseMxn = (esIda ? idaMxn : 0) + ht * hrMxn + htr * hrMxn;
-  const tc = Number(cot.tipo_cambio) || 17;
+  const tc = tipoCambioCotizacionEfectivo(cot);
   const mon = (cot.moneda || 'MXN').toUpperCase();
   if (mon === 'USD') return tc > 0 ? Math.round((baseMxn / tc) * 100) / 100 : Math.round(baseMxn * 100) / 100;
   return Math.round(baseMxn * 100) / 100;
@@ -1056,23 +1063,34 @@ async function precioUnitarioVueltaDesdeTarifas(cot, esIda, horasTrabajo, horasT
 /**
  * Recalcula precios de todas las líneas tras cambiar moneda o tipo de cambio (lista USD×TC, vueltas desde tarifas).
  * Mano de obra / otro: conserva precio_unitario y cantidad del usuario, solo recalcula columnas derivadas.
+ * @param {object} [cotPatch] — Tras PUT de moneda/TC, mezclar aquí para no depender de un SELECT inmediato (p. ej. Turso).
  */
-async function recalcCotizacionLineasPrecios(cotizacionId) {
+async function recalcCotizacionLineasPrecios(cotizacionId, cotPatch = null) {
   const cot = await db.getOne('SELECT * FROM cotizaciones WHERE id=?', [cotizacionId]);
   if (!cot) return;
+  const cotEff = cotPatch && typeof cotPatch === 'object' ? { ...cot, ...cotPatch } : cot;
+  if (cotEff.tipo_cambio != null) {
+    const tc = Number(cotEff.tipo_cambio);
+    cotEff.tipo_cambio = Number.isFinite(tc) && tc > 0 ? tc : 17;
+  }
+  if (cotEff.moneda != null && String(cotEff.moneda).trim() !== '') {
+    cotEff.moneda = String(cotEff.moneda).trim().toUpperCase();
+  }
+  const tcLinea = tipoCambioCotizacionEfectivo(cotEff);
   const lineas = await db.getAll('SELECT * FROM cotizacion_lineas WHERE cotizacion_id=? ORDER BY orden, id', [cotizacionId]);
   for (const l of lineas || []) {
     const tipo = String(l.tipo_linea || 'otro');
     let calc;
     if (tipo === 'vuelta') {
-      const pu = await precioUnitarioVueltaDesdeTarifas(cot, !!Number(l.es_ida), l.horas_trabajo, l.horas_traslado);
-      calc = calcLinea('vuelta', 1, pu, cot.moneda, cot.tipo_cambio);
+      const pu = await precioUnitarioVueltaDesdeTarifas(cotEff, !!Number(l.es_ida), l.horas_trabajo, l.horas_traslado);
+      calc = calcLinea('vuelta', 1, pu, cotEff.moneda, tcLinea);
     } else if (tipo === 'refaccion' || tipo === 'equipo') {
-      const puLista = await precioUnitarioDesdeLista(cot, tipo, l.refaccion_id, l.maquina_id, null);
-      const pu = puLista > 0 ? puLista : Number(l.precio_unitario) || 0;
-      calc = calcLinea(tipo, l.cantidad, pu, cot.moneda, cot.tipo_cambio);
+      const puLista = await precioUnitarioDesdeLista(cotEff, tipo, l.refaccion_id, l.maquina_id, null);
+      const stored = Number(l.precio_unitario) || 0;
+      const pu = Number.isFinite(puLista) && puLista > 0 ? puLista : stored;
+      calc = calcLinea(tipo, l.cantidad, pu, cotEff.moneda, tcLinea);
     } else {
-      calc = calcLinea(tipo, l.cantidad, Number(l.precio_unitario) || 0, cot.moneda, cot.tipo_cambio);
+      calc = calcLinea(tipo, l.cantidad, Number(l.precio_unitario) || 0, cotEff.moneda, tcLinea);
     }
     await db.runQuery(
       `UPDATE cotizacion_lineas SET precio_unitario=?, precio_usd=?, subtotal=?, iva=?, total=? WHERE id=?`,
@@ -1132,16 +1150,18 @@ async function precioUnitarioDesdeLista(cot, tipo, refaccionId, maquinaId, preci
   let pu = Number(precioUnitario);
   if (pu > 0) return pu;
   const mon = (cot.moneda || 'MXN').toUpperCase();
-  const tc = Number(cot.tipo_cambio) || 17;
-  if (tipo === 'refaccion' && refaccionId) {
-    const ref = await db.getOne('SELECT precio_usd, precio_unitario FROM refacciones WHERE id=?', [refaccionId]);
+  const tc = tipoCambioCotizacionEfectivo(cot);
+  const refIdNum = refaccionId != null ? Number(refaccionId) : NaN;
+  const maqIdNum = maquinaId != null ? Number(maquinaId) : NaN;
+  if (tipo === 'refaccion' && Number.isFinite(refIdNum) && refIdNum > 0) {
+    const ref = await db.getOne('SELECT precio_usd, precio_unitario FROM refacciones WHERE id=?', [refIdNum]);
     if (!ref) return 0;
     const usd = Number(ref.precio_usd) || 0;
     if (usd > 0) return mon === 'USD' ? usd : Math.round(usd * tc * 100) / 100;
     return Number(ref.precio_unitario) || 0;
   }
-  if (tipo === 'equipo' && maquinaId) {
-    const m = await db.getOne('SELECT precio_lista_usd FROM maquinas WHERE id=?', [maquinaId]);
+  if (tipo === 'equipo' && Number.isFinite(maqIdNum) && maqIdNum > 0) {
+    const m = await db.getOne('SELECT precio_lista_usd FROM maquinas WHERE id=?', [maqIdNum]);
     const usd = m ? Number(m.precio_lista_usd) || 0 : 0;
     if (usd > 0) return mon === 'USD' ? usd : Math.round(usd * tc * 100) / 100;
   }
@@ -1485,7 +1505,7 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
       ]
     );
     if (tcChanged || monChanged) {
-      await recalcCotizacionLineasPrecios(req.params.id);
+      await recalcCotizacionLineasPrecios(req.params.id, { tipo_cambio: nextTc, moneda: nextMon });
     } else {
       await recalcCotizacionTotals(req.params.id);
     }
