@@ -469,7 +469,7 @@
   }
 
   const LAST_TAB_KEY = 'cotizacion-last-tab';
-  const VALID_TABS = ['dashboards', 'clientes', 'refacciones', 'maquinas', 'cotizaciones', 'reportes', 'garantias', 'mantenimiento-garantia', 'garantias-sin-cobertura', 'bonos', 'bitacoras', 'prospeccion'];
+  const VALID_TABS = ['dashboards', 'clientes', 'refacciones', 'maquinas', 'cotizaciones', 'reportes', 'garantias', 'mantenimiento-garantia', 'garantias-sin-cobertura', 'bonos', 'viajes', 'bitacoras', 'prospeccion'];
   const TABS_PERSIST = VALID_TABS.concat(['auditoria', 'usuarios']);
   let reportesCache = [];
   let garantiasCache = [];
@@ -651,6 +651,7 @@
       'mantenimiento-garantia': 'Mantenimientos por garantía',
       'garantias-sin-cobertura': 'Sin cobertura',
       bonos: 'Bonos',
+      viajes: 'Viajes',
       ventas: 'Ventas',
       prospeccion: 'Prospección',
       tarifas: 'Tarifas',
@@ -690,8 +691,8 @@
         return;
       }
     }
-    if (id === 'bonos' && !canViewCommissions()) {
-      showToast('Solo el administrador puede ver bonos y comisiones.', 'error');
+    if ((id === 'bonos' || id === 'viajes') && !canViewCommissions()) {
+      showToast('Solo el administrador puede ver bonos, viajes y comisiones.', 'error');
       return;
     }
     if ((id === 'prospeccion' || id === 'tarifas' || id === 'tecnicos') && !canAccessAdminOnlyModules()) {
@@ -722,6 +723,7 @@
     if (id === 'mantenimiento-garantia') loadMantenimientoGarantia();
     if (id === 'garantias-sin-cobertura') loadGarantiasSinCobertura();
     if (id === 'bonos') loadBonos();
+    if (id === 'viajes') loadViajes();
     if (id === 'bitacoras') loadBitacoras();
     if (id === 'demo') loadSeedStatus();
     if (id === 'acerca') { /* solo mostrar panel */ }
@@ -3265,7 +3267,15 @@
     } catch (e) {
       renderViajes([]);
       showToast(parseApiError(e) || 'No se pudieron cargar los viajes.', 'error');
-    } finally { hideLoading(); }
+    } finally {
+      hideLoading();
+      const mesInp = qs('#filtro-mes-viajes');
+      if (mesInp && !String(mesInp.value || '').trim()) {
+        try {
+          mesInp.value = new Date().toISOString().slice(0, 7);
+        } catch (_) {}
+      }
+    }
   }
 
   function previewViaje(v) {
@@ -6707,6 +6717,8 @@
     if (id === 'garantias') loadGarantias();
     if (id === 'mantenimiento-garantia') loadMantenimientoGarantia();
     if (id === 'garantias-sin-cobertura') loadGarantiasSinCobertura();
+    if (id === 'bonos') loadBonos();
+    if (id === 'viajes') loadViajes();
     if (id === 'bitacoras') loadBitacoras();
     if (id === 'prospeccion') loadProspeccion();
     if (id === 'usuarios') loadAppUsers();
@@ -6759,6 +6771,7 @@
       if (typeof loadMantenimientoGarantia === 'function') loadMantenimientoGarantia();
       if (typeof loadGarantiasSinCobertura === 'function') loadGarantiasSinCobertura();
       if (typeof loadBonos === 'function') loadBonos();
+      if (typeof loadViajes === 'function') loadViajes();
       showPanel('bitacoras', { skipLoad: true });
       showToast('Demo completo cargado: clientes, cotizaciones, reportes, garantías, bonos, personal y mantenimientos.', 'success');
     } catch (e) {
@@ -8066,7 +8079,7 @@
   function restoreLastTabOrDefault() {
     try {
       let last = localStorage.getItem(LAST_TAB_KEY);
-      if (last === 'incidentes' || last === 'viajes') {
+      if (last === 'incidentes') {
         try { localStorage.removeItem(LAST_TAB_KEY); } catch (_) {}
         last = null;
       }
@@ -8084,7 +8097,7 @@
           return;
         }
       }
-      if (last === 'bonos' && !canViewCommissions()) {
+      if ((last === 'bonos' || last === 'viajes') && !canViewCommissions()) {
         try { localStorage.removeItem(LAST_TAB_KEY); } catch (_) {}
         last = null;
       }
@@ -8111,6 +8124,7 @@
       { id: 'maquinas', label: 'Máquinas', icon: 'fa-industry' },
       { id: 'cotizaciones', label: 'Cotizaciones', icon: 'fa-file-invoice-dollar' },
       { id: 'bonos', label: 'Bonos', icon: 'fa-award' },
+      { id: 'viajes', label: 'Viajes', icon: 'fa-plane' },
       { id: 'bitacoras', label: 'Bitácora de horas', icon: 'fa-clock' },
       { id: 'demo', label: 'Cargar demo', icon: 'fa-database' },
       { id: 'acerca', label: 'Acerca de', icon: 'fa-info-circle' },

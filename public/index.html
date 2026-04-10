@@ -166,6 +166,7 @@
     <button type="button" data-tab="mantenimiento-garantia" class="tab" title="Calendario y alertas de mantenimiento"><i class="fas fa-calendar-check"></i> Mantenimientos</button>
     <button type="button" data-tab="garantias-sin-cobertura" class="tab" title="Garantías dadas de baja"><i class="fas fa-ban"></i> Sin cobertura</button>
     <button type="button" data-tab="bonos" class="tab comm-admin-only" title="Bonos y liquidación (solo administrador)"><i class="fas fa-award"></i> Bonos</button>
+    <button type="button" data-tab="viajes" class="tab comm-admin-only" title="Viajes, viáticos y liquidación mensual (misma visibilidad que Bonos)"><i class="fas fa-plane"></i> Viajes</button>
     <button type="button" data-tab="tecnicos" class="tab" id="tab-tecnicos" title="Personal: roles, vendedores y comisiones"><i class="fas fa-users"></i> Personal</button>
     <button type="button" data-tab="bitacoras" class="tab" title="Bitácora (Ctrl+6)"><i class="fas fa-clock"></i> Bitácora de horas</button>
     <button type="button" data-tab="auditoria" class="tab hidden" id="tab-auditoria" title="Auditoría (Ctrl+8, solo admin)"><i class="fas fa-clipboard-list"></i> Auditoría</button>
@@ -768,6 +769,31 @@
           <tbody></tbody>
         </table>
         <div class="table-footer" id="footer-tabla-bonos" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- VIAJES (viáticos + liquidación mensual con bonos) -->
+    <section id="panel-viajes" class="panel panel-ux comm-admin-only">
+      <div class="section-header section-header--ux">
+        <h2><i class="fas fa-plane"></i> Viajes y viáticos</h2>
+        <div class="toolbar">
+          <input type="month" id="filtro-mes-viajes" title="Mes para liquidación (viajes por fecha de inicio + bonos por fecha)" aria-label="Mes para liquidación">
+          <button type="button" id="btn-viajes-liquidacion" class="btn outline"><i class="fas fa-file-invoice-dollar"></i> Liquidación mensual</button>
+          <button type="button" id="nuevo-viaje" class="btn primary"><i class="fas fa-plus"></i> Nuevo viaje</button>
+        </div>
+      </div>
+      <p class="hint" style="margin:0 0 0.75rem 1rem;font-size:0.875rem">Viáticos: <strong>$1,000 MXN por día</strong> (calculado al guardar). El mes de <strong>fecha inicio</strong> define en qué mes cae el viaje para la liquidación.</p>
+      <div class="table-wrap">
+        <table class="data-table" id="tabla-viajes">
+          <thead>
+            <tr>
+              <th>Técnico</th><th>Cliente / Empresa</th><th>Inicio</th><th>Fin</th><th>Días</th><th>Viáticos</th><th>Descripción</th><th>Mes liq.</th><th>Liquidado</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <p style="margin:0.75rem 1rem;font-size:0.9rem" aria-live="polite">Total viáticos (lista actual): <strong id="viajes-total-viaticos">$0.00</strong></p>
       </div>
     </section>
 
