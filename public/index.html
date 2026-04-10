@@ -555,9 +555,10 @@
         <div class="toolbar">
           <select id="filtro-tipo-reporte">
             <option value="">Todos los tipos</option>
-            <option value="garantia">Garantía</option>
-            <option value="instalacion">Instalación</option>
-            <option value="servicio">Servicio</option>
+            <option value="servicio">Servicio (fallas / campo)</option>
+            <option value="venta">Venta (instalación, capacitación, garantía)</option>
+            <option value="garantia">Legado: tipo «Garantía»</option>
+            <option value="instalacion">Legado: tipo «Instalación»</option>
           </select>
           <select id="filtro-subtipo-reporte">
             <option value="">Todos los subtipos</option>
@@ -574,7 +575,7 @@
           <button type="button" id="nuevo-reporte" class="btn primary"><i class="fas fa-plus"></i> Nuevo reporte</button>
         </div>
       </div>
-      <p class="section-sub"><i class="fas fa-info-circle"></i> Los reportes se ordenan automáticamente: <strong>Garantías</strong> primero, luego <strong>Instalaciones</strong>, después <strong>Servicios</strong>.</p>
+      <p class="section-sub"><i class="fas fa-info-circle"></i> Tipo principal: <strong>Servicio</strong> (subtipos de falla) o <strong>Venta</strong> (instalación, capacitación, garantía como subtipo). Los folios nuevos usan prefijo REP-S (servicio) o REP-V (venta). Reportes viejos con tipo «Garantía» o «Instalación» siguen visibles con los filtros de legado.</p>
       <div class="table-wrap">
         <table class="data-table filterable-table" id="tabla-reportes">
           <thead>
@@ -590,15 +591,16 @@
               <td><input type="text" class="filter-input" data-key="maquina_nombre" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="numero_maquina" data-type="text" placeholder="Nº serie…"></td>
               <td>
-                <select class="filter-input" data-key="tipo_reporte" data-type="text">
+                <select class="filter-input" data-key="tipo_reporte" data-type="text" id="tabla-reportes-filter-tipo">
                   <option value="">Todos</option>
-                  <option value="garantia">Garantía</option>
-                  <option value="instalacion">Instalación</option>
                   <option value="servicio">Servicio</option>
+                  <option value="venta">Venta</option>
+                  <option value="garantia">Legado: Garantía</option>
+                  <option value="instalacion">Legado: Instalación</option>
                 </select>
               </td>
               <td>
-                <select class="filter-input" data-key="subtipo" data-type="text">
+                <select class="filter-input" data-key="subtipo" data-type="text" id="tabla-reportes-filter-subtipo">
                   <option value="">Todos</option>
                   <option value="falla_electrica">Falla eléctrica</option>
                   <option value="falla_mecanica">Falla mecánica</option>

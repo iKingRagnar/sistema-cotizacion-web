@@ -882,6 +882,16 @@
     return String(str).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   }
 
+  /** Filtro tabla reportes: «venta» agrupa tipo venta + legado garantía/instalación. */
+  function reporteTipoMatchesFiltro(rowTipo, filtroVal) {
+    const f = String(filtroVal || '').trim().toLowerCase();
+    if (!f) return true;
+    const t = String(rowTipo || '').trim().toLowerCase();
+    if (f === 'venta') return t === 'venta' || t === 'garantia' || t === 'instalacion';
+    if (f === 'servicio') return t === 'servicio';
+    return t === f;
+  }
+
   function getFilterValues(tableEl) {
     const tbl = typeof tableEl === 'string' ? qs(tableEl) : tableEl;
     if (!tbl) return {};
@@ -944,6 +954,10 @@
           return true;
         });
       } else {
+        if (key === 'tipo_reporte') {
+          out = out.filter((row) => reporteTipoMatchesFiltro(row[key], val));
+          return;
+        }
         const norm = normalizeForSearch(val);
         out = out.filter(row => normalizeForSearch(row[key]).includes(norm));
       }
@@ -1985,11 +1999,13 @@
     } finally { hideLoading(); }
   }
 
-  // Prioridad para ordenamiento de reportes: garantía=0, instalación=1, servicio=2
   function reporteTipoPrioridad(tipo) {
-    if (tipo === 'garantia') return 0;
-    if (tipo === 'instalacion') return 1;
-    return 2; // servicio u otro
+    const t = String(tipo || '').toLowerCase();
+    if (t === 'garantia') return 0;
+    if (t === 'instalacion') return 1;
+    if (t === 'venta') return 2;
+    if (t === 'servicio') return 3;
+    return 4;
   }
 
   function renderReportes(data) {
@@ -2016,7 +2032,12 @@
       return String(b.fecha || '').localeCompare(String(a.fecha || ''));
     });
 
-    const TIPO_LABELS = { garantia: 'Garantía', instalacion: 'Instalación', servicio: 'Servicio', venta: 'Venta' };
+    const TIPO_LABELS = {
+      garantia: 'Garantía (legado)',
+      instalacion: 'Instalación (legado)',
+      servicio: 'Servicio',
+      venta: 'Venta',
+    };
     const TIPO_COLORS = { garantia: 'garantia', instalacion: 'instalacion', servicio: 'servicio', venta: 'venta' };
 
     sorted.forEach(r => {
@@ -2031,7 +2052,7 @@
         <td>${escapeHtml(r.maquina_nombre || r.maquina_modelo || '')}</td>
         <td>${escapeHtml(r.numero_maquina || r.maquina_serie || '')}</td>
         <td><span class="badge badge-tipo-rep-${TIPO_COLORS[r.tipo_reporte] || 'otro'}">${tipoLabel}</span></td>
-        <td>${escapeHtml(r.subtipo || '')}</td>
+        <td>${escapeHtml(formatReporteSubtipoCell(r.subtipo))}</td>
         <td>${escapeHtml(r.tecnico || '')}</td>
         <td>${escapeHtml((r.fecha || '').toString().slice(0, 10))}</td>
         ${fpCell}
@@ -2123,13 +2144,42 @@
     return normalizeForSearch(v).replace(/_/g, ' ').trim();
   }
 
+  const REP_SUBTIPO_LABELS = {
+    falla_electrica: 'Falla eléctrica',
+    falla_mecanica: 'Falla mecánica',
+    falla_electronica: 'Falla electrónica',
+    instalacion: 'Instalación',
+    capacitacion: 'Capacitación',
+    garantia: 'Garantía',
+    otro: 'Otro / otra',
+    otra: 'Otro / otra',
+  };
+
+  function formatReporteSubtipoCell(raw) {
+    const s = String(raw || '').trim();
+    if (!s) return '';
+    const key = normalizeReporteSubtipo(s).replace(/\s+/g, '_');
+    return REP_SUBTIPO_LABELS[key] || s;
+  }
+
+  /** Mapea filas viejas (tipo garantía/instalación) al modal servicio/venta. */
+  function mapReporteModalTipo(rep) {
+    if (!rep || !rep.tipo_reporte) return { tipo: 'servicio', subtipo: rep && rep.subtipo ? rep.subtipo : '' };
+    const t = String(rep.tipo_reporte).toLowerCase();
+    if (t === 'venta' || t === 'servicio') return { tipo: t, subtipo: rep.subtipo || '' };
+    if (t === 'garantia') return { tipo: 'venta', subtipo: rep.subtipo || 'garantia' };
+    if (t === 'instalacion') return { tipo: 'venta', subtipo: rep.subtipo || 'instalacion' };
+    return { tipo: 'servicio', subtipo: rep.subtipo || '' };
+  }
+
   function refreshReporteSubtipoFilterOptions() {
     const tipoTop = (qs('#filtro-tipo-reporte')?.value || '').trim().toLowerCase();
     const subtipoTopSel = qs('#filtro-subtipo-reporte');
     const tipoRow = (qs('#tabla-reportes-filter-tipo')?.value || '').trim().toLowerCase();
     const subtipoSel = qs('#tabla-reportes-filter-subtipo');
     if (!subtipoSel) return;
-    const tipo = tipoRow || tipoTop;
+    let tipo = tipoRow || tipoTop;
+    if (tipo === 'garantia' || tipo === 'instalacion') tipo = 'venta';
     const map = {
       servicio: [
         { v: '', t: 'Todos (servicio)' },
@@ -2172,7 +2222,7 @@
     let filtered = applyFilters(reportesCache, getFilterValues('#tabla-reportes'), 'tabla-reportes');
     const tipoTop = (qs('#filtro-tipo-reporte')?.value || '').trim().toLowerCase();
     if (tipoTop) {
-      filtered = filtered.filter((r) => String(r.tipo_reporte || '').trim().toLowerCase() === tipoTop);
+      filtered = filtered.filter((r) => reporteTipoMatchesFiltro(r.tipo_reporte, tipoTop));
     }
     const subtipo = (qs('#tabla-reportes-filter-subtipo')?.value || '').trim().toLowerCase();
     const subtipoTop = (qs('#filtro-subtipo-reporte')?.value || '').trim().toLowerCase();
@@ -2196,6 +2246,7 @@
   function openModalReporte(reporte) {
     const isNew = !reporte || !reporte.id;
     const isAdmin = canDelete();
+    const modalTipoInicial = mapReporteModalTipo(reporte || {});
 
     const clientesOpts = clientesCache.map(c =>
       `<option value="${c.id}" data-nombre="${escapeHtml(c.nombre)}" ${reporte && reporte.cliente_id == c.id ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`
@@ -2244,9 +2295,8 @@
       <div class="form-row">
         <div class="form-group"><label>Tipo de reporte *</label>
           <select id="m-tipo-rep">
-            <option value="garantia" ${reporte && reporte.tipo_reporte === 'garantia' ? 'selected' : ''}>Garantía</option>
-            <option value="instalacion" ${reporte && reporte.tipo_reporte === 'instalacion' ? 'selected' : ''}>Instalación</option>
-            <option value="servicio" ${!reporte || reporte.tipo_reporte === 'servicio' || !reporte.tipo_reporte ? 'selected' : ''}>Servicio</option>
+            <option value="servicio" ${modalTipoInicial.tipo === 'servicio' ? 'selected' : ''}>Servicio (fallas / campo)</option>
+            <option value="venta" ${modalTipoInicial.tipo === 'venta' ? 'selected' : ''}>Venta (instalación, capacitación, garantía)</option>
           </select>
         </div>
         <div class="form-group"><label>Subtipo</label>
@@ -2282,11 +2332,19 @@
     `;
     openModal(isNew ? 'Nuevo reporte' : 'Editar reporte', body);
 
-    // Subtipos dinámicos por tipo de reporte
     const SUBTIPOS_REP = {
-      garantia:   ['Mantenimiento preventivo', 'Mantenimiento correctivo', 'Falla mecánica', 'Falla electrónica', 'Otro'],
-      instalacion:['Instalación de máquina', 'Puesta en marcha', 'Capacitación', 'Falta capacitación', 'Otro'],
-      servicio:   ['Falla eléctrica', 'Falla mecánica', 'Falla electrónica', 'Capacitación', 'Falta capacitación', 'Otro'],
+      servicio: [
+        { v: 'falla_electrica', l: 'Falla eléctrica' },
+        { v: 'falla_mecanica', l: 'Falla mecánica' },
+        { v: 'falla_electronica', l: 'Falla electrónica' },
+        { v: 'otro', l: 'Otro / otra' },
+      ],
+      venta: [
+        { v: 'instalacion', l: 'Instalación' },
+        { v: 'capacitacion', l: 'Capacitación' },
+        { v: 'garantia', l: 'Garantía' },
+        { v: 'otro', l: 'Otro / otra' },
+      ],
     };
     const tipoSel = qs('#m-tipo-rep');
     const subSel  = qs('#m-subtipo-rep');
@@ -2296,12 +2354,22 @@
     const rsocialEl  = qs('#m-rsocial');
 
     function updateSubtiposRep() {
-      const opts = SUBTIPOS_REP[tipoSel.value] || [];
-      const cur = reporte && reporte.subtipo;
-      subSel.innerHTML = `<option value="">— Selecciona —</option>` +
-        opts.map(s => `<option value="${s}" ${cur === s ? 'selected' : ''}>${s}</option>`).join('');
+      const opts = SUBTIPOS_REP[tipoSel.value] || SUBTIPOS_REP.servicio;
+      const curRaw = isNew ? '' : String(modalTipoInicial.subtipo || (reporte && reporte.subtipo) || '');
+      const curN = curRaw ? normalizeReporteSubtipo(curRaw) : '';
+      subSel.innerHTML = '<option value="">— Selecciona —</option>' +
+        opts.map((o) => {
+          const oN = normalizeReporteSubtipo(o.v);
+          const sel = curN && (curN === oN || curN === normalizeReporteSubtipo(o.l)) ? ' selected' : '';
+          return `<option value="${escapeHtml(o.v)}"${sel}>${escapeHtml(o.l)}</option>`;
+        }).join('');
     }
-    tipoSel.addEventListener('change', updateSubtiposRep);
+    tipoSel.addEventListener('change', () => {
+      subSel.innerHTML = '<option value="">— Selecciona —</option>' +
+        (SUBTIPOS_REP[tipoSel.value] || SUBTIPOS_REP.servicio)
+          .map((o) => `<option value="${escapeHtml(o.v)}">${escapeHtml(o.l)}</option>`)
+          .join('');
+    });
     updateSubtiposRep();
 
     // Al cambiar máquina → auto-llenar nº serie
@@ -3999,7 +4067,7 @@
   function openModalRefaccionImagen(ref) {
     const isImage = (url) => url && (url.startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(url));
     const foto1 = ref.imagen_url ? (isImage(ref.imagen_url) ? `<div style="text-align:center"><p style="font-size:0.8rem;color:#6b7280;margin-bottom:0.4rem">Manual de partes</p><img src="${escapeHtml(ref.imagen_url)}" alt="Foto 1" style="max-width:100%;max-height:320px;border-radius:8px;border:1px solid #e2e8f0"></div>` : `<div><a href="${escapeHtml(ref.imagen_url)}" target="_blank" class="btn outline"><i class="fas fa-external-link-alt"></i> Ver foto 1</a></div>`) : '<p style="color:#6b7280;font-size:0.85rem">Sin foto 1.</p>';
-    const foto2 = ref.manual_url ? (isImage(ref.manual_url) ? `<div style="text-align:center"><p style="font-size:0.8rem;color:#6b7280;margin-bottom:0.4rem">Diagrama de ensamblado</p><img src="${escapeHtml(ref.manual_url)}" alt="Foto 2" style="max-width:100%;max-height:320px;border-radius:8px;border:1px solid #e2e8f0"></div>` : `<div><a href="${escapeHtml(ref.manual_url)}" target="_blank" class="btn outline"><i class="fas fa-external-link-alt"></i> Ver foto 2</a></div>`) : '<p style="color:#6b7280;font-size:0.85rem">Sin foto 2.</p>';
+    const foto2 = ref.manual_url ? (isImage(ref.manual_url) ? `<div style="text-align:center"><p style="font-size:0.8rem;color:#6b7280;margin-bottom:0.4rem">Diagrama de ensamblado</p><img src="${escapeHtml(ref.manual_url)}" alt="Foto 2" style="max-width:100%;max-height:320px;border-radius:8px;border:1px solid #e2e8f0"></div>` : `<div><a href="${escapeHtml(ref.manual_url)}" target="_blank" class="btn outline"><i class="fas fa-external-link-alt"></i> Abrir manual / PDF / enlace</a></div>`) : '<p style="color:#6b7280;font-size:0.85rem">Sin manual o diagrama.</p>';
     const body = `
       <p style="margin-bottom:0.75rem"><strong>Código:</strong> ${escapeHtml(ref.codigo)} &nbsp; <strong>Nº parte:</strong> ${escapeHtml(ref.numero_parte_manual || '—')}</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">${foto1}${foto2}</div>
@@ -4233,7 +4301,10 @@
             <div class="form-group">
               <label>Tipo de cambio</label>
               <input type="number" id="cotz-tc" step="0.01" min="0" value="${Number.isFinite(cotTc) ? cotTc.toFixed(2) : '17.00'}" placeholder="17.00">
-              <div class="hint">Precios de lista en USD se convierten con este tipo de cambio (MXN = USD × TC).</div>
+              <div class="hint">Precios de lista en USD se convierten con este tipo de cambio (MXN = USD × TC). Las vueltas calculadas por tarifa también se recalculan al guardar o con el botón de abajo.</div>
+              <div class="form-actions" style="margin-top:0.5rem;flex-wrap:wrap;gap:0.35rem">
+                <button type="button" class="btn small outline" id="cotz-recalc-lineas" title="Recalcula refacciones/equipo en USD×TC y vueltas por tarifa (sin cerrar el modal)"><i class="fas fa-sync-alt"></i> Actualizar partidas con este T.C.</button>
+              </div>
             </div>
           </div>
           <div class="cotz-vendedor-block" style="margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(15,118,110,0.15);">
@@ -4280,10 +4351,12 @@
               <thead>
                 <tr>
                   <th>Tipo</th>
+                  <th>Código</th>
+                  <th>Máquina</th>
                   <th>Descripción</th>
                   <th>Cant</th>
-                  <th>Precio</th>
-                  <th>Subtotal</th>
+                  <th>P.u.</th>
+                  <th>Subt.</th>
                   <th class="th-actions"></th>
                 </tr>
               </thead>
@@ -4308,7 +4381,7 @@
                 <option value="refaccion">Refacción (lista USD × TC)</option>
                 <option value="equipo">Equipo / máquina (lista USD × TC)</option>
                 <option value="mano_obra">Mano de obra</option>
-                <option value="vuelta">Vuelta (ida)</option>
+                <option value="vuelta">Vuelta (ida + horas × tarifa)</option>
                 <option value="otro">Otro</option>
               </select>
             </div>
@@ -4328,8 +4401,24 @@
           </div>
 
           <div class="form-group" id="cot-line-desc-wrap" style="display:none">
-            <label>Concepto</label>
+            <label id="cot-line-desc-label">Concepto</label>
             <input type="text" id="cot-line-desc" placeholder="Ej. Diagnóstico, traslado (ida), reparación, etc.">
+          </div>
+
+          <div id="cot-line-vuelta-wrap" class="mini-panel" style="display:none;margin-bottom:0.75rem;padding:0.75rem;background:var(--bg-alt,#f8fafc);border-radius:8px">
+            <div class="form-row">
+              <div class="form-group" style="flex:1;min-width:200px">
+                <label><input type="checkbox" id="cot-line-vuelta-ida" checked> Traslado ida (tarifa fija en MXN, convertida si la cotización es USD)</label>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Horas traslado</label>
+                <input type="number" id="cot-line-vuelta-hrs-traslado" step="0.5" min="0" value="0"></div>
+              <div class="form-group"><label>Horas trabajo (en sitio)</label>
+                <input type="number" id="cot-line-vuelta-hrs-trabajo" step="0.5" min="0" value="0"></div>
+            </div>
+            <p class="hint" id="cot-line-vuelta-preview" style="margin:0.25rem 0 0"></p>
+            <p class="hint" style="margin:0.35rem 0 0;font-size:0.8rem">Deja <strong>Precio unitario en 0</strong> para que el servidor calcule con las tarifas <code>vuelta_ida_mxn</code> y <code>vuelta_hora_mxn</code>. Si capturas un precio &gt; 0, se usa como manual.</p>
           </div>
 
           <div class="form-group" id="cot-line-bit-wrap" style="display:none">
@@ -4337,7 +4426,7 @@
             <select id="cot-line-bitacora">
               <option value="">— Sin bitácora —</option>
             </select>
-            <div class="hint">Solo bitácoras ligadas a esta cotización. Si no hay, crea una desde Bitácora o con el botón de abajo.</div>
+            <div class="hint">Si ya registraste horas en bitácora, elige una para copiar cantidad y concepto. Si aún no existe, usa <strong>Nueva bitácora</strong> (se liga a esta cotización).</div>
             <div class="form-actions" style="margin-top:0.5rem;">
               <button type="button" class="btn small outline" id="cot-line-new-bit"><i class="fas fa-clock"></i> Nueva bitácora</button>
             </div>
@@ -4474,15 +4563,30 @@
       tbody.innerHTML = '';
       const rows = Array.isArray(lineas) ? lineas : [];
       if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="empty">No hay líneas. Agrega refacciones, vueltas o mano de obra.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="empty">No hay líneas. Agrega refacciones, vueltas o mano de obra.</td></tr>';
         return;
       }
       rows.forEach((l) => {
         const tr = document.createElement('tr');
-        const desc = l.refaccion_descripcion ? (l.codigo ? (l.codigo + ' — ' + l.refaccion_descripcion) : l.refaccion_descripcion) : (l.descripcion || '');
+        let desc = l.refaccion_descripcion
+          ? (l.codigo ? (l.codigo + ' — ' + l.refaccion_descripcion) : l.refaccion_descripcion)
+          : (l.descripcion || '');
+        if (String(l.tipo_linea || '') === 'vuelta' && !String(desc || '').trim()) {
+          const parts = [];
+          if (Number(l.es_ida)) parts.push('Ida');
+          const ht = Number(l.horas_trabajo) || 0;
+          const htr = Number(l.horas_traslado) || 0;
+          if (ht) parts.push(ht + 'h trabajo');
+          if (htr) parts.push(htr + 'h traslado');
+          desc = parts.length ? parts.join(' · ') : 'Vuelta';
+        }
         const tipoLbl = l.tipo_linea === 'equipo' ? 'equipo' : String(l.tipo_linea || '');
+        const codigoCell = l.codigo ? escapeHtml(String(l.codigo)) : '—';
+        const maqCell = l.maquina_nombre ? escapeHtml(String(l.maquina_nombre)) : '—';
         tr.innerHTML = `
           <td>${escapeHtml(tipoLbl)}</td>
+          <td class="td-text-wrap">${codigoCell}</td>
+          <td class="td-text-wrap">${maqCell}</td>
           <td class="td-text-wrap">${escapeHtml(String(desc || ''))}</td>
           <td class="num">${Number(l.cantidad || 0)}</td>
           <td class="num">${Number(l.precio_unitario || 0).toFixed(2)}</td>
@@ -4728,6 +4832,25 @@
         return Number(cache[key]) || 0;
       } catch (_) { return 0; }
     }
+    /** Vista previa local (tarifas en caché); el servidor es la fuente de verdad al guardar. */
+    function calcCotVueltaBaseMxn() {
+      const ida = qm('#cot-line-vuelta-ida')?.checked;
+      const ht = Number(qm('#cot-line-vuelta-hrs-trabajo')?.value) || 0;
+      const htr = Number(qm('#cot-line-vuelta-hrs-traslado')?.value) || 0;
+      const idaMxn = getTarifaVal('vuelta_ida_mxn') || 650;
+      const hrMxn = getTarifaVal('vuelta_hora_mxn') || 450;
+      return (ida ? idaMxn : 0) + ht * hrMxn + htr * hrMxn;
+    }
+    function updateCotVueltaPreview() {
+      const prev = qm('#cot-line-vuelta-preview');
+      if (!prev) return;
+      const mon = (qm('#cotz-moneda')?.value || 'MXN').toUpperCase();
+      const tc = Number(qm('#cotz-tc')?.value) || 17;
+      const baseMxn = calcCotVueltaBaseMxn();
+      const pu = mon === 'USD' && tc > 0 ? Math.round((baseMxn / tc) * 100) / 100 : Math.round(baseMxn * 100) / 100;
+      const unitLbl = mon === 'USD' ? 'USD' : 'MXN';
+      prev.textContent = `Sugerido (1 partida): ${pu.toFixed(2)} ${unitLbl} · base MXN ${baseMxn.toFixed(2)} (ida + horas × tarifa)`;
+    }
     function calcManoObraPrice() {
       const tipoTec = qm('#cot-line-mo-tipo-tec')?.value || 'mecanico';
       const zona = qm('#cot-line-mo-zona')?.value || 'a';
@@ -4778,6 +4901,10 @@
           precioEl.value = pu.toFixed(2);
         }
       }
+      if (t === 'vuelta') {
+        updateCotVueltaPreview();
+        if (precioEl && !(Number(precioEl.value) > 0)) precioEl.value = '0';
+      }
     }
     function syncVendedorCotz() {
       const id = qm('#cotz-vendedor-id')?.value;
@@ -4807,14 +4934,32 @@
       const t = qm('#cot-line-tipo')?.value || 'refaccion';
       const refWrap = qm('#cot-line-ref-wrap');
       const descWrap = qm('#cot-line-desc-wrap');
+      const descLabel = qm('#cot-line-desc-label');
       const bitWrap = qm('#cot-line-bit-wrap');
       const moWrap = qm('#cot-line-mo-wrap');
+      const vuWrap = qm('#cot-line-vuelta-wrap');
       if (refWrap) refWrap.style.display = t === 'refaccion' ? '' : 'none';
-      if (descWrap) descWrap.style.display = t === 'refaccion' || t === 'equipo' ? 'none' : '';
+      if (descWrap) {
+        if (t === 'vuelta') {
+          descWrap.style.display = '';
+          if (descLabel) descLabel.textContent = 'Concepto (opcional)';
+        } else {
+          descWrap.style.display = t === 'refaccion' || t === 'equipo' ? 'none' : '';
+          if (descLabel) descLabel.textContent = 'Concepto';
+        }
+      }
       if (bitWrap) bitWrap.style.display = t === 'mano_obra' ? '' : 'none';
       if (moWrap) moWrap.style.display = t === 'mano_obra' ? '' : 'none';
+      if (vuWrap) vuWrap.style.display = t === 'vuelta' ? '' : 'none';
+      const cantLab = qm('#cot-line-cant')?.closest('.form-group')?.querySelector('label');
+      if (cantLab) cantLab.textContent = t === 'vuelta' ? 'Cantidad (fija 1 en servidor)' : 'Cantidad / Horas';
       if (t === 'mano_obra') calcManoObraPrice();
       if (t === 'refaccion' || t === 'equipo') fillPrecioListaLinea();
+      if (t === 'vuelta') {
+        if (qm('#cot-line-cant')) qm('#cot-line-cant').value = '1';
+        fillPrecioListaLinea();
+        updateCotVueltaPreview();
+      }
     }
     async function ensureCotizacionExistsBeforeLines() {
       if (currentCotId) return currentCotId;
@@ -4873,6 +5018,31 @@
     qm('#cotz-tc')?.addEventListener('change', fillPrecioListaLinea);
     qm('#cotz-moneda')?.addEventListener('change', fillPrecioListaLinea);
     qm('#cotz-vendedor-id')?.addEventListener('change', syncVendedorCotz);
+    ['#cot-line-vuelta-ida', '#cot-line-vuelta-hrs-traslado', '#cot-line-vuelta-hrs-trabajo'].forEach((sel) => {
+      qm(sel)?.addEventListener('input', () => {
+        if ((qm('#cot-line-tipo')?.value || '') === 'vuelta') updateCotVueltaPreview();
+      });
+      qm(sel)?.addEventListener('change', () => {
+        if ((qm('#cot-line-tipo')?.value || '') === 'vuelta') {
+          updateCotVueltaPreview();
+          fillPrecioListaLinea();
+        }
+      });
+    });
+    async function postRecalcCotizacionLineas() {
+      if (!currentCotId) {
+        showToast('Guarda la cotización o agrega una línea para crear el borrador antes de recalcular.', 'warning');
+        return;
+      }
+      try {
+        await fetchJson(`${API}/cotizaciones/${currentCotId}/recalc-lineas`, { method: 'POST', body: JSON.stringify({}) });
+        await refreshCotizacion();
+        showToast('Partidas actualizadas con el tipo de cambio y tarifas.', 'success');
+      } catch (e) {
+        showToast(parseApiError(e) || 'No se pudo recalcular las líneas.', 'error');
+      }
+    }
+    qm('#cotz-recalc-lineas')?.addEventListener('click', postRecalcCotizacionLineas);
     // Mano de obra: recalcular precio cuando cambia cualquier campo
     ['#cot-line-mo-tipo-tec','#cot-line-mo-zona','#cot-line-mo-hrs-traslado',
      '#cot-line-mo-hrs-trabajo','#cot-line-mo-ayudantes','#cot-line-mo-viaticos-dias'].forEach(sel => {
@@ -4963,6 +5133,19 @@
       if (tipoLinea === 'refaccion') {
         const refId = Number(qm('#cot-line-refaccion')?.value) || null;
         payload = { ...payload, refaccion_id: refId };
+      } else if (tipoLinea === 'vuelta') {
+        const desc = qm('#cot-line-desc')?.value?.trim() || '';
+        payload = {
+          tipo_linea: 'vuelta',
+          cantidad: 1,
+          precio_unitario: precio > 0 ? precio : 0,
+          maquina_id: maqId,
+          bitacora_id: null,
+          es_ida: !!qm('#cot-line-vuelta-ida')?.checked,
+          horas_trabajo: Number(qm('#cot-line-vuelta-hrs-trabajo')?.value) || 0,
+          horas_traslado: Number(qm('#cot-line-vuelta-hrs-traslado')?.value) || 0,
+          descripcion: desc || null,
+        };
       } else if (tipoLinea !== 'equipo') {
         const desc = qm('#cot-line-desc')?.value?.trim() || '';
         payload = { ...payload, descripcion: desc || null };
@@ -4991,6 +5174,7 @@
       const isRef = String(linea.tipo_linea || '') === 'refaccion';
       const isEquipo = String(linea.tipo_linea || '') === 'equipo';
       const isMO = String(linea.tipo_linea || '') === 'mano_obra';
+      const isVuelta = String(linea.tipo_linea || '') === 'vuelta';
       const clienteIdParaMaq = Number(qm('#cotz-cliente_id')?.value) || Number(cot && cot.cliente_id) || null;
       const maqOpts = ['<option value="">— Sin máquina —</option>']
         .concat((maquinasCatalogoModal || []).filter((m) => !clienteIdParaMaq || Number(m.cliente_id) === Number(clienteIdParaMaq))
@@ -5033,13 +5217,23 @@
           <label>Bitácora ligada</label>
           <select id="e-line-bit">${bitOpts}</select>
         </div>
+        <div id="e-line-vuelta-wrap" style="${isVuelta ? 'margin-bottom:0.75rem;padding:0.65rem;background:var(--bg-alt,#f8fafc);border-radius:8px' : 'display:none'}">
+          <div class="form-group"><label><input type="checkbox" id="e-line-vuelta-ida" ${Number(linea.es_ida) ? 'checked' : ''}> Traslado ida (tarifa fija)</label></div>
+          <div class="form-row">
+            <div class="form-group"><label>Horas traslado</label>
+              <input type="number" id="e-line-vuelta-htr" step="0.5" min="0" value="${Number(linea.horas_traslado) || 0}"></div>
+            <div class="form-group"><label>Horas trabajo</label>
+              <input type="number" id="e-line-vuelta-ht" step="0.5" min="0" value="${Number(linea.horas_trabajo) || 0}"></div>
+          </div>
+          <p class="hint" style="margin:0;font-size:0.8rem">Precio en <strong>0</strong> recalcula por tarifas al guardar; si capturas precio &gt; 0 queda manual.</p>
+        </div>
         <div class="form-row">
           <div class="form-group">
             <label>Cantidad / Horas</label>
             <input type="number" id="e-line-cant" step="0.25" min="0" value="${Number(linea.cantidad || 0)}">
           </div>
           <div class="form-group">
-            <label>Precio</label>
+            <label>Precio unitario</label>
             <input type="number" id="e-line-precio" step="0.01" min="0" value="${Number(linea.precio_unitario || 0)}">
           </div>
         </div>
@@ -5055,9 +5249,11 @@
         const refWrap = qs('#e-line-ref-wrap');
         const descWrap = qs('#e-line-desc-wrap');
         const bitWrap = qs('#e-line-bit-wrap');
+        const vuWrap = qs('#e-line-vuelta-wrap');
         if (refWrap) refWrap.style.display = t === 'refaccion' ? '' : 'none';
         if (descWrap) descWrap.style.display = t === 'refaccion' || t === 'equipo' ? 'none' : '';
         if (bitWrap) bitWrap.style.display = t === 'mano_obra' ? '' : 'none';
+        if (vuWrap) vuWrap.style.display = t === 'vuelta' ? '' : 'none';
       }
       qs('#e-line-tipo')?.addEventListener('change', syncEditFields);
       syncEditFields();
@@ -5075,6 +5271,12 @@
         };
         if (tipoLinea === 'refaccion') payload.refaccion_id = Number(qs('#e-line-ref')?.value) || null;
         else if (tipoLinea !== 'equipo') payload.descripcion = qs('#e-line-desc')?.value?.trim() || null;
+        if (tipoLinea === 'vuelta') {
+          payload.cantidad = 1;
+          payload.es_ida = !!qs('#e-line-vuelta-ida')?.checked;
+          payload.horas_trabajo = Number(qs('#e-line-vuelta-ht')?.value) || 0;
+          payload.horas_traslado = Number(qs('#e-line-vuelta-htr')?.value) || 0;
+        }
         try {
           await fetchJson(`${API}/cotizaciones/${currentCotId}/lineas/${linea.id}`, { method: 'PUT', body: JSON.stringify(payload) });
           qs('#modal').classList.add('hidden');

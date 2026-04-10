@@ -131,6 +131,7 @@ function postAllowedForStaff(url) {
   const p = normalizeApiPath(url);
   if (p === '/api/cotizaciones') return true;
   if (/^\/api\/cotizaciones\/\d+\/lineas$/.test(p)) return true;
+  if (/^\/api\/cotizaciones\/\d+\/recalc-lineas$/.test(p)) return true;
   if (/^\/api\/cotizaciones\/\d+\/aplicar$/.test(p)) return true;
   if (p === '/api/reportes') return true;
   if (p === '/api/ai/chat') return true;

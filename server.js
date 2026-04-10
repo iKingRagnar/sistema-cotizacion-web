@@ -786,6 +786,9 @@ const DEFAULT_TARIFAS = {
   bono_20k: '1000',
   bono_40k: '2000',
   bono_dia: '500',
+  /** Vuelta (ida): cargo fijo MXN + horas trabajo/traslado × tarifa hora MXN; se convierte con T.C. si la cotización es USD */
+  vuelta_ida_mxn: '650',
+  vuelta_hora_mxn: '450',
 };
 
 async function ensureTarifasDefaults() {
@@ -1028,6 +1031,103 @@ function calcLinea(tipo, cantidad, precioUnitario, moneda, tipoCambio) {
   };
 }
 
+async function getTarifaNum(clave, fallback) {
+  try {
+    const row = await db.getOne('SELECT valor FROM tarifas WHERE clave=?', [clave]);
+    const n = row && row.valor != null ? Number(String(row.valor).replace(',', '.')) : NaN;
+    if (Number.isFinite(n) && n >= 0) return n;
+  } catch (_) {}
+  return Number(fallback) || 0;
+}
+
+/** Monto unitario (1 partida) en moneda de la cotización: ida + horas × tarifa (tarifas en MXN). */
+async function precioUnitarioVueltaDesdeTarifas(cot, esIda, horasTrabajo, horasTraslado) {
+  const idaMxn = await getTarifaNum('vuelta_ida_mxn', DEFAULT_TARIFAS.vuelta_ida_mxn);
+  const hrMxn = await getTarifaNum('vuelta_hora_mxn', DEFAULT_TARIFAS.vuelta_hora_mxn);
+  const ht = Number(horasTrabajo) || 0;
+  const htr = Number(horasTraslado) || 0;
+  const baseMxn = (esIda ? idaMxn : 0) + ht * hrMxn + htr * hrMxn;
+  const tc = Number(cot.tipo_cambio) || 17;
+  const mon = (cot.moneda || 'MXN').toUpperCase();
+  if (mon === 'USD') return tc > 0 ? Math.round((baseMxn / tc) * 100) / 100 : Math.round(baseMxn * 100) / 100;
+  return Math.round(baseMxn * 100) / 100;
+}
+
+/**
+ * Recalcula precios de todas las líneas tras cambiar moneda o tipo de cambio (lista USD×TC, vueltas desde tarifas).
+ * Mano de obra / otro: conserva precio_unitario y cantidad del usuario, solo recalcula columnas derivadas.
+ */
+async function recalcCotizacionLineasPrecios(cotizacionId) {
+  const cot = await db.getOne('SELECT * FROM cotizaciones WHERE id=?', [cotizacionId]);
+  if (!cot) return;
+  const lineas = await db.getAll('SELECT * FROM cotizacion_lineas WHERE cotizacion_id=? ORDER BY orden, id', [cotizacionId]);
+  for (const l of lineas || []) {
+    const tipo = String(l.tipo_linea || 'otro');
+    let calc;
+    if (tipo === 'vuelta') {
+      const pu = await precioUnitarioVueltaDesdeTarifas(cot, !!Number(l.es_ida), l.horas_trabajo, l.horas_traslado);
+      calc = calcLinea('vuelta', 1, pu, cot.moneda, cot.tipo_cambio);
+    } else if (tipo === 'refaccion' || tipo === 'equipo') {
+      const puLista = await precioUnitarioDesdeLista(cot, tipo, l.refaccion_id, l.maquina_id, null);
+      const pu = puLista > 0 ? puLista : Number(l.precio_unitario) || 0;
+      calc = calcLinea(tipo, l.cantidad, pu, cot.moneda, cot.tipo_cambio);
+    } else {
+      calc = calcLinea(tipo, l.cantidad, Number(l.precio_unitario) || 0, cot.moneda, cot.tipo_cambio);
+    }
+    await db.runQuery(
+      `UPDATE cotizacion_lineas SET precio_unitario=?, precio_usd=?, subtotal=?, iva=?, total=? WHERE id=?`,
+      [calc.precio_unitario, calc.precio_usd, calc.subtotal, calc.iva, calc.total, l.id]
+    );
+  }
+  await recalcCotizacionTotals(cotizacionId);
+}
+
+/** Salidas de inventario por capas FIFO según movimientos previos (entrada/salida). */
+async function registrarSalidaStockFifo(refaccionId, cantidadTotal, cotizacionId, referencia) {
+  const needAll = Number(cantidadTotal) || 0;
+  if (needAll <= 0) return;
+  const movs = await db.getAll(
+    'SELECT id, tipo, cantidad, costo_unitario FROM movimientos_stock WHERE refaccion_id=? ORDER BY id ASC',
+    [refaccionId]
+  );
+  const layers = [];
+  for (const m of movs || []) {
+    const q = Number(m.cantidad) || 0;
+    if (q <= 0) continue;
+    const c = Number(m.costo_unitario) || 0;
+    if (m.tipo === 'entrada') {
+      layers.push({ qty: q, cost: c });
+    } else if (m.tipo === 'salida') {
+      let take = q;
+      while (take > 1e-9 && layers.length) {
+        const L = layers[0];
+        const u = Math.min(L.qty, take);
+        L.qty -= u;
+        take -= u;
+        if (L.qty <= 1e-9) layers.shift();
+      }
+    }
+  }
+  let need = needAll;
+  const partes = [];
+  while (need > 1e-9 && layers.length) {
+    const L = layers[0];
+    const u = Math.min(L.qty, need);
+    partes.push({ qty: u, cost: L.cost });
+    L.qty -= u;
+    need -= u;
+    if (L.qty <= 1e-9) layers.shift();
+  }
+  if (need > 1e-9) partes.push({ qty: need, cost: 0 });
+  for (const p of partes) {
+    await db.runQuery(
+      `INSERT INTO movimientos_stock (refaccion_id, tipo, cantidad, costo_unitario, cotizacion_id, referencia, fecha)
+       VALUES (?, 'salida', ?, ?, ?, ?, date('now','localtime'))`,
+      [refaccionId, p.qty, p.cost, cotizacionId || null, referencia || '']
+    );
+  }
+}
+
 async function precioUnitarioDesdeLista(cot, tipo, refaccionId, maquinaId, precioUnitario) {
   let pu = Number(precioUnitario);
   if (pu > 0) return pu;
@@ -1118,8 +1218,18 @@ app.post('/api/cotizaciones/:id/lineas', async (req, res) => {
         descFinal = [mq.marca, mq.modelo || mq.nombre].filter(Boolean).join(' ') || mq.nombre || 'Equipo';
       }
     }
-    const puLista = await precioUnitarioDesdeLista(cot, tipo, refaccion_id, maquina_id, precio_unitario);
-    const calc = calcLinea(tipo, cantidad, puLista, cot.moneda, cot.tipo_cambio);
+    let calc;
+    if (tipo === 'vuelta') {
+      const manual = Number(precio_unitario);
+      const puV =
+        manual > 0
+          ? manual
+          : await precioUnitarioVueltaDesdeTarifas(cot, !!es_ida, horas_trabajo, horas_traslado);
+      calc = calcLinea('vuelta', 1, puV, cot.moneda, cot.tipo_cambio);
+    } else {
+      const puLista = await precioUnitarioDesdeLista(cot, tipo, refaccion_id, maquina_id, precio_unitario);
+      calc = calcLinea(tipo, cantidad, puLista, cot.moneda, cot.tipo_cambio);
+    }
     await db.runQuery(
       `INSERT INTO cotizacion_lineas (cotizacion_id, refaccion_id, maquina_id, bitacora_id, tipo_linea, descripcion, cantidad, precio_unitario, precio_usd, subtotal, iva, total, orden, es_ida, horas_trabajo, horas_traslado, zona, ayudantes, tarifa_aplicada)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -1178,8 +1288,21 @@ app.put('/api/cotizaciones/:id/lineas/:lineaId', async (req, res) => {
     }
     const nextCantidad = (req.body && 'cantidad' in req.body) ? req.body.cantidad : linea.cantidad;
     const nextPrecioRaw = (req.body && 'precio_unitario' in req.body) ? req.body.precio_unitario : linea.precio_unitario;
-    const nextPrecio = await precioUnitarioDesdeLista(cot, nextTipo, nextRefaccionId, nextMaquinaId, nextPrecioRaw);
-    const calc = calcLinea(nextTipo, nextCantidad, nextPrecio, cot.moneda, cot.tipo_cambio);
+    let calc;
+    if (nextTipo === 'vuelta') {
+      const esIdaPut = (req.body && 'es_ida' in req.body) ? !!req.body.es_ida : !!linea.es_ida;
+      const htPut = (req.body && 'horas_trabajo' in req.body) ? Number(req.body.horas_trabajo) : linea.horas_trabajo;
+      const htrPut = (req.body && 'horas_traslado' in req.body) ? Number(req.body.horas_traslado) : linea.horas_traslado;
+      const manualV = Number(nextPrecioRaw);
+      const puV =
+        manualV > 0
+          ? manualV
+          : await precioUnitarioVueltaDesdeTarifas(cot, esIdaPut, htPut, htrPut);
+      calc = calcLinea('vuelta', 1, puV, cot.moneda, cot.tipo_cambio);
+    } else {
+      const nextPrecio = await precioUnitarioDesdeLista(cot, nextTipo, nextRefaccionId, nextMaquinaId, nextPrecioRaw);
+      calc = calcLinea(nextTipo, nextCantidad, nextPrecio, cot.moneda, cot.tipo_cambio);
+    }
 
     // Extraer nuevos campos si se envían
     const esIda = (req.body && 'es_ida' in req.body) ? (req.body.es_ida ? 1 : 0) : (linea.es_ida || 0);
@@ -1336,6 +1459,10 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
     const vendPut = hasVendedorNombre
       ? (vendedor != null && String(vendedor).trim() !== '' ? String(vendedor).trim() : null)
       : existing.vendedor;
+    const nextTc = (tipo_cambio != null && String(tipo_cambio).trim() !== '') ? (Number(tipo_cambio) || 17.0) : (Number(existing.tipo_cambio) || 17.0);
+    const nextMon = (moneda != null && String(moneda).trim() !== '') ? String(moneda).trim().toUpperCase() : (existing.moneda || 'MXN');
+    const tcChanged = hasBody && Object.prototype.hasOwnProperty.call(req.body, 'tipo_cambio') && nextTc !== (Number(existing.tipo_cambio) || 17.0);
+    const monChanged = hasBody && Object.prototype.hasOwnProperty.call(req.body, 'moneda') && nextMon !== String(existing.moneda || 'MXN').toUpperCase();
     await db.runQuery(
       `UPDATE cotizaciones
        SET folio=?, cliente_id=?, tipo=?, fecha=?, tipo_cambio=?, moneda=?, maquinas_ids=?, estado=?, notas=?,
@@ -1346,8 +1473,8 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
         (cliente_id != null && Number(cliente_id) > 0) ? Number(cliente_id) : (existing.cliente_id || null),
         (tipo != null && String(tipo).trim() !== '') ? String(tipo).trim() : (existing.tipo || 'refacciones'),
         fechaSql,
-        (tipo_cambio != null && String(tipo_cambio).trim() !== '') ? (Number(tipo_cambio) || 17.0) : (Number(existing.tipo_cambio) || 17.0),
-        (moneda != null && String(moneda).trim() !== '') ? String(moneda).trim().toUpperCase() : (existing.moneda || 'MXN'),
+        nextTc,
+        nextMon,
         maqIds,
         hasEstado ? ((estado != null && String(estado).trim() !== '') ? String(estado).trim() : 'borrador') : (existing.estado || 'borrador'),
         hasNotas ? (notas || null) : (existing.notas || null),
@@ -1357,8 +1484,11 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
         req.params.id,
       ]
     );
-    // Totales siempre se calculan desde líneas (evita que un PUT del header los pise a 0).
-    await recalcCotizacionTotals(req.params.id);
+    if (tcChanged || monChanged) {
+      await recalcCotizacionLineasPrecios(req.params.id);
+    } else {
+      await recalcCotizacionTotals(req.params.id);
+    }
     const r = await db.getOne(
       `SELECT co.*, c.nombre as cliente_nombre, vp.puesto as vendedor_puesto
        FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id
@@ -1367,6 +1497,25 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
       [req.params.id]
     );
     res.json(r || {});
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+/** Recalcula todas las líneas (lista USD×TC, vueltas desde tarifas) sin cambiar el encabezado. Útil tras editar tipo de cambio en el modal. */
+app.post('/api/cotizaciones/:id/recalc-lineas', async (req, res) => {
+  try {
+    const existing = await db.getOne('SELECT id FROM cotizaciones WHERE id=?', [req.params.id]);
+    if (!existing) return res.status(404).json({ error: 'No encontrada' });
+    await recalcCotizacionLineasPrecios(req.params.id);
+    const r = await db.getOne(
+      `SELECT co.*, c.nombre as cliente_nombre, vp.puesto as vendedor_puesto
+       FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id
+       LEFT JOIN tecnicos vp ON vp.id = co.vendedor_personal_id
+       WHERE co.id=?`,
+      [req.params.id]
+    );
+    res.json(r || { ok: true });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -1410,13 +1559,9 @@ app.post('/api/cotizaciones/:id/aplicar', async (req, res) => {
       if (cant <= 0) continue;
       const ref = await db.getOne('SELECT * FROM refacciones WHERE id = ?', [l.refaccion_id]);
       if (!ref) continue;
+      await registrarSalidaStockFifo(ref.id, cant, cot.id, `Cot: ${cot.folio || cot.id}`);
       const nuevoStock = Number(ref.stock) - cant;
       await db.runQuery('UPDATE refacciones SET stock=? WHERE id=?', [nuevoStock, ref.id]);
-      await db.runQuery(
-        `INSERT INTO movimientos_stock (refaccion_id, tipo, cantidad, costo_unitario, cotizacion_id, referencia, fecha)
-         VALUES (?, 'salida', ?, ?, ?, ?, date('now','localtime'))`,
-        [ref.id, cant, Number(l.precio_unitario) || 0, cot.id, `Cot: ${cot.folio}`]
-      );
     }
     let vendedorNombre = req.body && req.body.vendedor ? String(req.body.vendedor).trim() : null;
     if (!vendedorNombre && cot.vendedor_personal_id) {
