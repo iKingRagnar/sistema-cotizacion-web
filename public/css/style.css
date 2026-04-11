@@ -622,7 +622,7 @@ body.dark-theme .notifications-date {
   border-radius: 18px;
   border: 1px solid rgba(13, 148, 136, 0.16);
   box-shadow: 0 12px 40px rgba(13, 148, 136, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.5) inset;
-  overflow: auto;
+  overflow: visible;
   background: rgba(255, 255, 255, 0.55);
   backdrop-filter: blur(6px);
 }

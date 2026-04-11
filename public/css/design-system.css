@@ -1,0 +1,152 @@
+/**
+ * Componentes UI — design system (.ds-*)
+ * Usa variables de design-tokens.css
+ */
+
+/* —— Menú de acciones por fila (reemplaza N iconos) —— */
+.ds-row-actions {
+  position: relative;
+  display: inline-flex;
+  justify-content: flex-end;
+  width: 100%;
+  max-width: 100%;
+}
+
+.ds-row-actions > summary {
+  list-style: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-color-border);
+  background: var(--ds-color-surface);
+  color: var(--ds-color-text-secondary);
+  box-shadow: var(--ds-shadow-sm);
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.ds-row-actions > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ds-row-actions > summary:hover {
+  background: var(--ds-color-surface-muted);
+  border-color: var(--ds-color-border-strong);
+  color: var(--ds-color-text);
+}
+
+.ds-row-actions[open] > summary {
+  background: var(--ds-color-primary-50);
+  border-color: rgba(13, 148, 136, 0.35);
+  color: var(--ds-color-primary-700);
+}
+
+.ds-row-actions__panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 200px;
+  padding: var(--ds-space-2);
+  border-radius: var(--ds-radius-lg);
+  border: 1px solid var(--ds-color-border);
+  background: var(--ds-color-surface);
+  box-shadow: var(--ds-shadow-lg);
+  z-index: 50;
+  animation: ds-menu-in 0.14s ease-out;
+}
+
+@keyframes ds-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ds-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.65rem;
+  border: none;
+  border-radius: var(--ds-radius-sm);
+  background: transparent;
+  font-size: var(--ds-text-sm);
+  font-weight: 500;
+  color: var(--ds-color-text);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.ds-menu-item i {
+  width: 1.1rem;
+  text-align: center;
+  color: var(--ds-color-text-muted);
+}
+
+.ds-menu-item:hover {
+  background: var(--ds-color-surface-muted);
+}
+
+.ds-menu-item--danger {
+  color: var(--ds-color-error-fg);
+}
+
+.ds-menu-item--danger i {
+  color: var(--ds-color-error-fg);
+}
+
+.ds-menu-item--danger:hover {
+  background: var(--ds-color-error-bg);
+}
+
+/* Refacciones: cabecera sticky (solo fila de títulos) */
+#tabla-refacciones thead tr:first-child th {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+}
+
+/* Shell tabla premium */
+.ref-table-shell {
+  border-radius: var(--ds-radius-2xl);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 250, 252, 0.98) 100%);
+  box-shadow: var(--ds-shadow-md), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+  overflow: visible;
+}
+
+/* Scroll horizontal sin recortar menús de fila (dropdown) */
+.ref-table-scroll-x {
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.dark-theme .ds-row-actions > summary {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+body.dark-theme .ds-row-actions__panel {
+  background: #0f172a;
+  border-color: #334155;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+body.dark-theme .ds-menu-item:hover {
+  background: #1e293b;
+}
+
+body.dark-theme .ds-menu-item--danger:hover {
+  background: rgba(127, 29, 29, 0.35);
+}

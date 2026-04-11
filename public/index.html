@@ -10,7 +10,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Syne:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=57">
+  <link rel="stylesheet" href="css/design-tokens.css?v=1">
+  <link rel="stylesheet" href="css/design-system.css?v=2">
+  <link rel="stylesheet" href="css/style.css?v=59">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
@@ -295,28 +297,30 @@
         </div>
       </div>
       <div id="ref-stock-alert-bar" class="stock-alert-bar hidden" aria-live="polite"></div>
-      <div class="table-wrap">
-        <table class="data-table data-table--fluid filterable-table" id="tabla-refacciones" data-cache="refaccionesCache">
-          <thead>
-            <tr>
-              <th>Código</th><th>Descripción</th><th>Categoría</th><th>Zona</th><th>Bloque</th><th>Stock</th><th>Mín.</th><th>Precio USD</th><th>Unidad</th>
-              <th class="th-actions">Acciones</th>
-            </tr>
-            <tr class="filter-row">
-              <td><input type="text" class="filter-input" data-key="codigo" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="descripcion" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="categoria" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="zona" data-type="text" placeholder="Estante, Rack…"></td>
-              <td><input type="text" class="filter-input" data-key="bloque" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="stock" data-type="number" placeholder="&gt;0"></td>
-              <td><input type="text" class="filter-input" data-key="stock_minimo" data-type="number" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="precio_usd" data-type="number" placeholder="&gt;10"></td>
-              <td><input type="text" class="filter-input" data-key="unidad" data-type="text" placeholder="Filtrar…"></td>
-              <td class="th-actions"></td>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+      <div class="table-wrap ref-table-shell">
+        <div class="ref-table-scroll-x">
+          <table class="data-table data-table--fluid filterable-table" id="tabla-refacciones" data-cache="refaccionesCache">
+            <thead>
+              <tr>
+                <th>Código</th><th>Descripción</th><th>Categoría</th><th>Zona</th><th>Bloque</th><th>Stock</th><th>Mín.</th><th>Precio USD</th><th>Unidad</th>
+                <th class="th-actions">Acciones</th>
+              </tr>
+              <tr class="filter-row">
+                <td><input type="text" class="filter-input" data-key="codigo" data-type="text" placeholder="Filtrar…"></td>
+                <td><input type="text" class="filter-input" data-key="descripcion" data-type="text" placeholder="Filtrar…"></td>
+                <td><input type="text" class="filter-input" data-key="categoria" data-type="text" placeholder="Filtrar…"></td>
+                <td><input type="text" class="filter-input" data-key="zona" data-type="text" placeholder="Estante, Rack…"></td>
+                <td><input type="text" class="filter-input" data-key="bloque" data-type="text" placeholder="Filtrar…"></td>
+                <td><input type="text" class="filter-input" data-key="stock" data-type="number" placeholder="&gt;0"></td>
+                <td><input type="text" class="filter-input" data-key="stock_minimo" data-type="number" placeholder="Filtrar…"></td>
+                <td><input type="text" class="filter-input" data-key="precio_usd" data-type="number" placeholder="&gt;10"></td>
+                <td><input type="text" class="filter-input" data-key="unidad" data-type="text" placeholder="Filtrar…"></td>
+                <td class="th-actions"></td>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
         <div class="table-footer" id="footer-tabla-refacciones" aria-live="polite"></div>
       </div>
       <div class="card module-delete-zone" style="margin-top:1rem;padding:1rem 1.25rem;">

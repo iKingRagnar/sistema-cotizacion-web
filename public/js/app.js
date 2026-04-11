@@ -246,7 +246,7 @@
     if (typeof c === 'boolean') return c ? '1' : '';
     if (typeof c === 'string') {
       const t = c.trim();
-      if (!t) return '';
+      if (!t || t === '[object Object]') return '';
       if ((t.startsWith('{') && t.endsWith('}')) || (t.startsWith('[') && t.endsWith(']'))) {
         try {
           const parsed = JSON.parse(t);
@@ -285,10 +285,14 @@
                         : c.id != null && typeof c.id !== 'object'
                           ? c.id
                           : null;
-      if (pick != null && pick !== c) return refCategoriaLabel(pick, d + 1);
+      if (pick != null && pick !== c) {
+        const sub = refCategoriaLabel(pick, d + 1);
+        return sub === '[object Object]' ? '' : sub;
+      }
       return '';
     }
-    return String(c).trim();
+    const fb = String(c).trim();
+    return fb === '[object Object]' ? '' : fb;
   }
   /** Celda HTML: línea / parte con pills (sin [object Object]). */
   function formatRefaccionCategoriaCellHtml(r) {
@@ -2097,11 +2101,16 @@
         <td class="ref-td-num">${r.stock_minimo != null ? Number(r.stock_minimo) : 1}</td>
         <td class="ref-td-price">${formatRefaccionPrecioUsdCell(r)}</td>
         <td class="ref-td-unit">${escapeHtml(r.unidad || 'PZA')}</td>
-        <td class="th-actions">
-          <button type="button" class="btn small outline btn-preview-ref" data-id="${r.id}" title="Vista previa"><i class="fas fa-eye"></i></button>
-          ${_canStock ? `<button type="button" class="btn small outline btn-stock-ref" data-id="${r.id}" title="Inventario: entrada, salida o conteo"><i class="fas fa-boxes"></i></button>` : ''}
-          ${_canEdit ? `<button type="button" class="btn small primary btn-edit-ref" data-id="${r.id}"><i class="fas fa-edit"></i></button>` : ''}
-          ${_canDelete ? `<button type="button" class="btn small danger btn-delete-ref" data-id="${r.id}"><i class="fas fa-trash"></i></button>` : ''}
+        <td class="th-actions ref-td-actions">
+          <details class="ds-row-actions">
+            <summary class="ds-row-actions__trigger" aria-label="Menú de acciones"><i class="fas fa-ellipsis-vertical"></i></summary>
+            <div class="ds-row-actions__panel" role="menu">
+              <button type="button" class="ds-menu-item btn-preview-ref" data-id="${r.id}" role="menuitem"><i class="fas fa-eye"></i><span>Vista previa</span></button>
+              ${_canStock ? `<button type="button" class="ds-menu-item btn-stock-ref" data-id="${r.id}" role="menuitem"><i class="fas fa-boxes"></i><span>Inventario</span></button>` : ''}
+              ${_canEdit ? `<button type="button" class="ds-menu-item btn-edit-ref" data-id="${r.id}" role="menuitem"><i class="fas fa-edit"></i><span>Editar</span></button>` : ''}
+              ${_canDelete ? `<button type="button" class="ds-menu-item ds-menu-item--danger btn-delete-ref" data-id="${r.id}" role="menuitem"><i class="fas fa-trash-alt"></i><span>Eliminar</span></button>` : ''}
+            </div>
+          </details>
         </td>
       `;
       tbody.appendChild(tr);
@@ -2111,17 +2120,40 @@
     tbody.querySelectorAll('.btn-codigo-ref').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const r = data.find(x => x.id == btn.dataset.id); if (r) openModalRefaccionImagen(r); });
     });
+    function closeRefaccionRowMenu(btn) {
+      const det = btn && btn.closest && btn.closest('details.ds-row-actions');
+      if (det) det.open = false;
+    }
     tbody.querySelectorAll('.btn-preview-ref').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); const r = data.find(x => x.id == btn.dataset.id); if (r) previewRefaccion(r); });
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        closeRefaccionRowMenu(btn);
+        const r = data.find(x => x.id == btn.dataset.id);
+        if (r) previewRefaccion(r);
+      });
     });
     tbody.querySelectorAll('.btn-stock-ref').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); const r = data.find(x => x.id == btn.dataset.id); if (r) openModalAjusteStock(r); });
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        closeRefaccionRowMenu(btn);
+        const r = data.find(x => x.id == btn.dataset.id);
+        if (r) openModalAjusteStock(r);
+      });
     });
     tbody.querySelectorAll('.btn-edit-ref').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); const r = data.find(x => x.id == btn.dataset.id); if (r) openModalRefaccion(r); });
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        closeRefaccionRowMenu(btn);
+        const r = data.find(x => x.id == btn.dataset.id);
+        if (r) openModalRefaccion(r);
+      });
     });
     tbody.querySelectorAll('.btn-delete-ref').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar esta refacción?', () => deleteRefaccion(btn.dataset.id)); });
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        closeRefaccionRowMenu(btn);
+        openConfirmModal('¿Eliminar esta refacción?', () => deleteRefaccion(btn.dataset.id));
+      });
     });
   }
 
@@ -9666,7 +9698,7 @@
         const unidad = (row.getCell(2).text || row.getCell(2).value || 'PZA').toString().trim() || 'PZA';
         const precioUsdRaw = row.getCell(3).value;
         const stockRaw = row.getCell(4).value;
-        const categoria = (row.getCell(5).text || row.getCell(5).value || '').toString().trim();
+        const categoria = refCategoriaLabel(row.getCell(5).value != null ? row.getCell(5).value : row.getCell(5).text) || null;
         const zona = (row.getCell(6).text || row.getCell(6).value || '').toString().trim();
         const bloque = (row.getCell(7).text || row.getCell(7).value || '').toString().trim();
         // Intentar extraer código del inicio de la descripción (números + guiones)
@@ -9751,6 +9783,30 @@
   }
   bindTableFilters('tabla-clientes', applyClientesFiltersAndRender);
   bindTableFilters('tabla-refacciones', applyRefaccionesFiltersAndRender);
+  (function bindRefaccionesRowMenuSingleton() {
+    const tbl = qs('#tabla-refacciones');
+    if (tbl && !tbl._dsToggleBound) {
+      tbl._dsToggleBound = true;
+      tbl.addEventListener(
+        'toggle',
+        function (e) {
+          const t = e.target;
+          if (!t || !t.classList || !t.classList.contains('ds-row-actions') || !t.open) return;
+          tbl.querySelectorAll('details.ds-row-actions[open]').forEach(function (d) {
+            if (d !== t) d.open = false;
+          });
+        },
+        true
+      );
+    }
+  })();
+  document.addEventListener('click', function dsCloseRefaccionesRowMenus(e) {
+    if (!e.target || !e.target.closest || !e.target.closest('#tabla-refacciones .ds-row-actions')) {
+      document.querySelectorAll('#tabla-refacciones details.ds-row-actions[open]').forEach(function (d) {
+        d.open = false;
+      });
+    }
+  });
   bindTableFilters('tabla-maquinas', applyMaquinasFiltersAndRender);
   bindTableFilters('tabla-cotizaciones', applyCotizacionesFiltersAndRender);
   const cotIncluirAplicadas = qs('#cot-incluir-aplicadas');
