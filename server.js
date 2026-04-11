@@ -2139,9 +2139,7 @@ function sqlDemoReportesSubquery() {
 }
 
 async function sqlDeleteCount(sql, params = []) {
-  await db.runQuery(sql, params);
-  const r = await db.getOne('SELECT changes() AS n');
-  return Number(r && r.n) || 0;
+  return db.runMutationCount(sql, params);
 }
 
 /**
@@ -2483,8 +2481,7 @@ async function deleteDemoDummiesTx() {
   const repQ = sqlDemoReportesSubquery();
   const paramsRep = DEMO_REPORTE_DESCS.slice();
   const out = {};
-  await db.runQuery('BEGIN');
-  try {
+  async function runDeletes() {
     out.movimientos_stock = await sqlDeleteCount(
       `DELETE FROM movimientos_stock WHERE cotizacion_id IN (SELECT id FROM cotizaciones WHERE COALESCE(notas,'') LIKE '%Cotización demo%')`
     );
@@ -2531,6 +2528,15 @@ async function deleteDemoDummiesTx() {
        OR (COALESCE(marca,'') = 'Demo seed' AND COALESCE(ubicacion,'') = 'Planta principal (demo)')`
     );
     out.deleted_total = Object.keys(out).reduce((s, k) => s + (typeof out[k] === 'number' ? out[k] : 0), 0);
+  }
+  /* Turso/libSQL: cada execute() es una petición aislada; BEGIN/COMMIT no abre transacción entre llamadas → "cannot commit - no transaction". */
+  if (db.useTurso) {
+    await runDeletes();
+    return out;
+  }
+  await db.runQuery('BEGIN');
+  try {
+    await runDeletes();
     await db.runQuery('COMMIT');
     return out;
   } catch (e) {

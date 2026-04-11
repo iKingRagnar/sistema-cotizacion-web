@@ -660,9 +660,21 @@ function getOne(sql, params = []) {
   return getAll(sql, params).then(rows => (rows && rows[0]) || null);
 }
 
+/** DELETE/UPDATE: filas afectadas. En Turso no usar SELECT changes() (otra petición = otro contexto). */
+async function runMutationCount(sql, params = []) {
+  if (useTurso) {
+    const args = normalizeLibsqlArgs(params);
+    const r = await db.execute({ sql, args });
+    return Number(r.rowsAffected ?? 0);
+  }
+  await runQuery(sql, params);
+  const row = await getOne('SELECT changes() AS n');
+  return Number(row && row.n) || 0;
+}
+
 function getStorageInfo() {
   if (useTurso) return { mode: 'turso', path: null };
   return { mode: 'sqlite', path: sqliteResolvedPath || null };
 }
 
-module.exports = { init, runQuery, getAll, getOne, useTurso, getStorageInfo };
+module.exports = { init, runQuery, getAll, getOne, useTurso, getStorageInfo, runMutationCount };
