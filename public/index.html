@@ -958,6 +958,16 @@
         <button type="button" id="btn-seed-demo" class="btn primary big">Cargar todo el demo (solo si no hay clientes)</button>
         <p class="hint" style="margin-top:0.5rem;">Si ya tienes clientes cargados y solo quieres agregar incidentes, bitácoras y cotizaciones de ejemplo:</p>
         <button type="button" id="btn-seed-extra" class="btn big" style="background:#0d9488;color:#fff;margin-top:0.5rem;">Cargar solo incidentes, bitácoras y cotizaciones demo</button>
+        <div class="card" style="margin-top:1rem;padding:0.85rem 1rem;border:1px solid #e2e8f0;border-radius:10px;background:#fafafa;">
+          <h3 style="margin:0 0 0.5rem 0;font-size:1.05rem;"><i class="fas fa-flask"></i> Datos demo: contador y borrado selectivo</h3>
+          <p class="hint" style="margin:0 0 0.5rem 0;">Aquí puedes ver cuántos registros están marcados como <strong>demo</strong> (mismas reglas que el seed: cotizaciones con «Cotización demo», incidentes <code>INC-DEMO-*</code>, equipos <code>SN-DEMO-*</code> / «Equipo demo —», reportes REP con descripciones demo, garantías serie demo/SINCOV, prospectos con <code>demo:prospecto</code>, mantenimientos/bonos con prefijos <code>seed_demo_*</code>). <strong>No</strong> se borran clientes, refacciones ni el personal cargado por el demo.</p>
+          <p id="demo-dummy-stats" class="hint" style="margin:0 0 0.65rem 0;font-family:ui-monospace,monospace;font-size:0.82rem;line-height:1.5;">Pulsa «Actualizar contador» para cargar números.</p>
+          <div class="toolbar" style="flex-wrap:wrap;gap:0.5rem;">
+            <button type="button" id="btn-demo-dummy-refresh" class="btn small outline"><i class="fas fa-rotate"></i> Actualizar contador demo</button>
+            <button type="button" id="btn-demo-dummy-delete" class="btn small" style="background:#b91c1c;color:#fff;border:none;"><i class="fas fa-trash-alt"></i> Borrar solo registros demo</button>
+          </div>
+          <p class="hint" style="margin:0.55rem 0 0 0;font-size:0.8rem;">El borrado pide confirmación y, si hay login activo, solo el <strong>administrador</strong> puede ejecutarlo. Debes escribir exactamente: <kbd>BORRAR-DATOS-DEMO</kbd></p>
+        </div>
         <p class="hint" style="margin-top:0.75rem;">Si faltan equipos en el selector de cotizaciones (misma info que en Autopartes):</p>
         <button type="button" id="btn-ensure-demo-maquinas" class="btn big outline" style="margin-top:0.35rem;"><i class="fas fa-cogs"></i> Asegurar equipos por cliente (2 por cliente, demo)</button>
         <hr style="margin:1rem 0;border:none;border-top:1px solid #e2e8f0;">
