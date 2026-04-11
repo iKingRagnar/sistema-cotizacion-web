@@ -509,14 +509,21 @@ app.post('/api/maquinas', async (req, res) => {
       precio_lista_usd,
       ficha_tecnica,
     } = req.body || {};
-    if (!cliente_id) return res.status(400).json({ error: 'cliente_id requerido' });
+    let cid = cliente_id != null && cliente_id !== '' ? Number(cliente_id) : null;
+    if (!cid || !Number.isFinite(cid)) {
+      const first = await db.getOne('SELECT id FROM clientes ORDER BY id LIMIT 1');
+      if (!first || first.id == null) {
+        return res.status(400).json({ error: 'No hay clientes en el sistema. Crea al menos un cliente o indica cliente_id.' });
+      }
+      cid = first.id;
+    }
     const stockNum = stock != null && stock !== '' ? Number(stock) : 0;
     const plUsd = precio_lista_usd != null && precio_lista_usd !== '' ? Number(precio_lista_usd) : 0;
     await db.runQuery(
       `INSERT INTO maquinas (cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion, categoria, categoria_principal, imagen_pieza_url, imagen_ensamble_url, stock, precio_lista_usd, ficha_tecnica)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        cliente_id,
+        cid,
         codigo || null,
         nombre || modelo || '',
         marca || null,
@@ -559,11 +566,20 @@ app.put('/api/maquinas/:id', async (req, res) => {
     } = req.body || {};
     const stockNum = stock != null && stock !== '' ? Number(stock) : 0;
     const plUsd = precio_lista_usd != null && precio_lista_usd !== '' ? Number(precio_lista_usd) : 0;
+    let cidPut = cliente_id != null && cliente_id !== '' ? Number(cliente_id) : null;
+    if (!cidPut || !Number.isFinite(cidPut)) {
+      const cur = await db.getOne('SELECT cliente_id FROM maquinas WHERE id = ?', [req.params.id]);
+      cidPut = cur && cur.cliente_id != null ? Number(cur.cliente_id) : null;
+    }
+    if (!cidPut || !Number.isFinite(cidPut)) {
+      const first = await db.getOne('SELECT id FROM clientes ORDER BY id LIMIT 1');
+      cidPut = first && first.id != null ? Number(first.id) : null;
+    }
     await db.runQuery(
       `UPDATE maquinas SET cliente_id=?, codigo=?, nombre=?, marca=?, modelo=?, numero_serie=?, ubicacion=?, categoria=?, categoria_principal=?,
        imagen_pieza_url=?, imagen_ensamble_url=?, stock=?, precio_lista_usd=?, ficha_tecnica=? WHERE id=?`,
       [
-        cliente_id || null,
+        cidPut,
         codigo || null,
         nombre || modelo || '',
         marca || null,
@@ -3461,51 +3477,155 @@ app.post('/api/ai/chat', async (req, res) => {
   }
 });
 
-// --- Extraer datos fiscales de imagen (constancia / datos fiscales) para alta de cliente
+/** Texto plano desde PDF/Office (misma lógica que /api/ai/extract-document). */
+async function extractFiscalDocumentText(buffer, mimeLower) {
+  const docType = {
+    'application/pdf': 'pdf',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+    'application/vnd.ms-excel': 'xls',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+    'application/msword': 'doc',
+  }[mimeLower];
+  if (!docType) return null;
+  if (docType === 'pdf') {
+    const data = await pdfParse(buffer);
+    return (data && data.text) ? data.text.trim() : '';
+  }
+  if (docType === 'docx' || docType === 'doc') {
+    try {
+      const result = await mammoth.extractRawText({ buffer });
+      return (result && result.value) ? result.value.trim() : '';
+    } catch (err) {
+      if (docType === 'doc') {
+        const e = new Error('El formato Word antiguo (.doc) no está soportado. Guarda el archivo como .docx e inténtalo de nuevo.');
+        e.code = 'DOC_LEGACY';
+        throw e;
+      }
+      throw err;
+    }
+  }
+  const wb = XLSX.read(buffer, { type: 'buffer', cellDates: true });
+  const firstSheet = wb.SheetNames[0];
+  if (firstSheet && wb.Sheets[firstSheet]) {
+    const csv = XLSX.utils.sheet_to_txt(wb.Sheets[firstSheet], { FS: '\t', RS: '\n' });
+    return csv.trim().slice(0, 50000);
+  }
+  return '';
+}
+
+// --- Extraer datos fiscales de imagen o documento (constancia / datos fiscales) para alta de cliente
 app.post('/api/ai/extract-client', async (req, res) => {
   const apiKey = process.env.OPENAI_API_KEY || process.env.AI_API_KEY;
   if (!apiKey || String(apiKey).startsWith('crsr_')) {
     return res.status(503).json({
-      error: 'Para extraer datos de imagen se necesita OPENAI_API_KEY (OpenAI) en Render.',
+      error: 'Para extraer datos del archivo se necesita OPENAI_API_KEY (OpenAI) en Render.',
       hint: 'La key de Cursor no sirve para esta función. Usa una key de https://platform.openai.com/api-keys',
     });
   }
+  const imageMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  const docMimes = [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/msword',
+  ];
+  const extractPromptJson = 'Responde ÚNICAMENTE un JSON válido, sin markdown, con estas claves (usa null si no aparece): nombre, rfc, direccion, ciudad, codigoPostal, regimenFiscal, email, telefono. Ejemplo: {"nombre":"RAZÓN SOCIAL S.A.","rfc":"ABC123456789","direccion":"Calle 1","ciudad":"Ciudad","codigoPostal":"12345","regimenFiscal":"601","email":null,"telefono":null}';
+  function guessMimeFromFileName(name) {
+    const n = String(name || '').toLowerCase();
+    if (n.endsWith('.pdf')) return 'application/pdf';
+    if (n.endsWith('.docx')) return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    if (n.endsWith('.doc')) return 'application/msword';
+    if (n.endsWith('.xlsx')) return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    if (n.endsWith('.xls')) return 'application/vnd.ms-excel';
+    if (/\.(jpe?g)$/i.test(n)) return 'image/jpeg';
+    if (n.endsWith('.png')) return 'image/png';
+    if (n.endsWith('.gif')) return 'image/gif';
+    if (n.endsWith('.webp')) return 'image/webp';
+    return '';
+  }
   try {
-    const { fileBase64, mimeType } = req.body || {};
+    const { fileBase64, mimeType, fileName } = req.body || {};
     if (!fileBase64) return res.status(400).json({ error: 'Falta fileBase64' });
-    const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    const mime = (mimeType || 'image/jpeg').toLowerCase();
-    if (!allowed.includes(mime)) {
+    const rawB64 = fileBase64.replace(/^data:[^;]+;base64,/, '');
+    const buffer = Buffer.from(rawB64, 'base64');
+    let mime = (mimeType || '').toLowerCase();
+    if (!mime || mime === 'application/octet-stream') {
+      mime = guessMimeFromFileName(fileName) || '';
+    }
+    if (!mime) {
       return res.status(400).json({
-        error: 'Por ahora solo se aceptan imágenes (JPG, PNG, GIF, WebP). PDF y Excel en una próxima versión.',
+        error: 'No se pudo detectar el tipo de archivo. Elige de nuevo el archivo o usa extensión .pdf, .jpg, .png, etc.',
       });
     }
-    const dataUrl = `data:${mime};base64,${fileBase64.replace(/^data:[^;]+;base64,/, '')}`;
     const apiUrl = process.env.OPENAI_API_BASE || 'https://api.openai.com/v1/chat/completions';
     const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-    const extractPrompt = `Extrae de esta imagen (constancia fiscal, datos fiscales o documento similar) los datos del cliente. Responde ÚNICAMENTE un JSON válido, sin markdown, con estas claves (usa null si no aparece): nombre, rfc, direccion, ciudad, codigoPostal, regimenFiscal, email, telefono. Ejemplo: {"nombre":"RAZÓN SOCIAL S.A.","rfc":"ABC123456789","direccion":"Calle 1","ciudad":"Ciudad","codigoPostal":"12345","regimenFiscal":"601","email":null,"telefono":null}`;
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: model.includes('gpt-4') ? model : 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: 'Eres un asistente que extrae datos fiscales de imágenes. Responde solo JSON válido.' },
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: extractPrompt },
-              { type: 'image_url', image_url: { url: dataUrl } },
-            ],
-          },
-        ],
-        max_tokens: 400,
-      }),
-    });
-    const data = await response.json();
-    if (data.error) {
-      return res.status(response.ok ? 500 : response.status).json({ error: data.error.message || 'Error al analizar la imagen' });
+    const visionModel = model.includes('gpt-4') ? model : 'gpt-4o-mini';
+
+    let data;
+    if (imageMimes.includes(mime)) {
+      const dataUrl = `data:${mime};base64,${rawB64}`;
+      const extractPrompt = `Extrae de esta imagen (constancia fiscal, datos fiscales o documento similar) los datos del cliente. ${extractPromptJson}`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model: visionModel,
+          messages: [
+            { role: 'system', content: 'Eres un asistente que extrae datos fiscales de imágenes. Responde solo JSON válido.' },
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: extractPrompt },
+                { type: 'image_url', image_url: { url: dataUrl } },
+              ],
+            },
+          ],
+          max_tokens: 400,
+        }),
+      });
+      data = await response.json();
+      if (data.error) {
+        return res.status(response.ok ? 500 : response.status).json({ error: data.error.message || 'Error al analizar la imagen' });
+      }
+    } else if (docMimes.includes(mime)) {
+      let extractedText;
+      try {
+        extractedText = await extractFiscalDocumentText(buffer, mime);
+      } catch (e) {
+        return res.status(400).json({ error: e.message || String(e) });
+      }
+      if (extractedText == null) {
+        return res.status(400).json({ error: 'Tipo de documento no reconocido.' });
+      }
+      if (!extractedText || extractedText.length < 2) {
+        return res.status(400).json({
+          error: 'No se pudo extraer texto del documento (p. ej. PDF escaneado sin capa de texto). Prueba con un PDF con texto seleccionable o una foto de la constancia.',
+        });
+      }
+      const textPrompt = `Extrae del siguiente texto (procedente de constancia fiscal, datos fiscales o documento similar) los datos del cliente. ${extractPromptJson}\n\n--- Texto del documento ---\n${extractedText.slice(0, 14000)}`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model: visionModel,
+          messages: [
+            { role: 'system', content: 'Eres un asistente que extrae datos fiscales de texto de documentos. Responde solo JSON válido.' },
+            { role: 'user', content: textPrompt },
+          ],
+          max_tokens: 400,
+        }),
+      });
+      data = await response.json();
+      if (data.error) {
+        return res.status(response.ok ? 500 : response.status).json({ error: data.error.message || 'Error al analizar el documento' });
+      }
+    } else {
+      return res.status(400).json({
+        error: 'Tipo no soportado. Usa imagen (JPG, PNG, GIF, WebP), PDF, Word (.docx) o Excel (.xls, .xlsx).',
+      });
     }
+
     const raw = data.choices?.[0]?.message?.content || '{}';
     let parsed = {};
     try {

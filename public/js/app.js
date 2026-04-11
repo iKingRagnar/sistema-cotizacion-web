@@ -1632,6 +1632,79 @@
     return `<span title="${escapeHtml(raw)}">${display}</span>`;
   }
 
+  /** Payload completo para PUT /api/maquinas/:id (evita borrar campos al subir imagen desde la tabla). */
+  function buildMaquinaPutPayload(m, overrides) {
+    const o = overrides || {};
+    const stockNum = m.stock != null && m.stock !== '' ? Number(m.stock) : 0;
+    const plUsd = m.precio_lista_usd != null && m.precio_lista_usd !== '' ? Number(m.precio_lista_usd) : 0;
+    return {
+      cliente_id: m.cliente_id != null ? Number(m.cliente_id) : null,
+      codigo: m.codigo != null && String(m.codigo).trim() !== '' ? String(m.codigo).trim() : null,
+      nombre: (m.nombre || m.modelo || '').trim() || '',
+      marca: m.marca != null && String(m.marca).trim() !== '' ? String(m.marca).trim() : null,
+      modelo: m.modelo != null ? String(m.modelo) : null,
+      numero_serie: m.numero_serie != null && String(m.numero_serie).trim() !== '' ? String(m.numero_serie).trim() : null,
+      ubicacion: m.ubicacion != null && String(m.ubicacion).trim() !== '' ? String(m.ubicacion).trim() : null,
+      categoria: m.categoria != null && String(m.categoria).trim() !== '' ? String(m.categoria).trim() : null,
+      categoria_principal: m.categoria_principal != null && String(m.categoria_principal).trim() !== '' ? String(m.categoria_principal).trim() : null,
+      imagen_pieza_url: o.imagen_pieza_url !== undefined ? o.imagen_pieza_url : (m.imagen_pieza_url || null),
+      imagen_ensamble_url: o.imagen_ensamble_url !== undefined ? o.imagen_ensamble_url : (m.imagen_ensamble_url || null),
+      stock: Number.isFinite(stockNum) ? stockNum : 0,
+      precio_lista_usd: Number.isFinite(plUsd) ? plUsd : 0,
+      ficha_tecnica: m.ficha_tecnica != null && String(m.ficha_tecnica).trim() !== '' ? String(m.ficha_tecnica).trim() : null,
+    };
+  }
+
+  function readFileAsDataUrlInput(fileInput) {
+    return new Promise((res) => {
+      const file = fileInput && fileInput.files && fileInput.files[0];
+      if (!file) { res(null); return; }
+      const reader = new FileReader();
+      reader.onload = (e) => res(e.target.result);
+      reader.onerror = () => res(null);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function openModalMaquinaImagen(m) {
+    const isImage = (url) => url && (String(url).startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(String(url)));
+    const cur = m.imagen_pieza_url
+      ? (isImage(m.imagen_pieza_url)
+        ? `<div class="ref-foto-preview-wrap"><img src="${escapeHtml(m.imagen_pieza_url)}" class="ref-foto-thumb" alt="Vista previa"></div>`
+        : `<p><a href="${escapeHtml(m.imagen_pieza_url)}" target="_blank" rel="noopener noreferrer" class="btn outline"><i class="fas fa-external-link-alt"></i> Ver imagen actual</a></p>`)
+      : '<p class="hint" style="margin:0">Sin imagen de catálogo. Elige un archivo abajo.</p>';
+    const body = `
+      <p style="margin-top:0"><strong>${escapeHtml(m.modelo || m.nombre || 'Máquina')}</strong> · ID sistema: <strong>${m.id}</strong></p>
+      ${cur}
+      <div class="form-group"><label>Subir o reemplazar imagen</label>
+        <input type="file" id="maq-img-file" accept="image/*">
+      </div>
+      <p class="form-hint" style="font-size:0.8rem">Misma lógica que refacciones: la imagen se guarda en el registro (data URL).</p>
+      <div class="form-actions">
+        <button type="button" class="btn primary" id="maq-img-save"><i class="fas fa-save"></i> Guardar imagen</button>
+        <button type="button" class="btn" id="modal-btn-cancel">Cerrar</button>
+      </div>
+    `;
+    openModal('Imagen de máquina · ID ' + m.id, body);
+    qs('#maq-img-save').onclick = async () => {
+      const data = await readFileAsDataUrlInput(qs('#maq-img-file'));
+      if (!data) { showToast('Selecciona una imagen.', 'error'); return; }
+      const fresh = maquinasCache.find((x) => Number(x.id) === Number(m.id)) || m;
+      const payload = buildMaquinaPutPayload(fresh, { imagen_pieza_url: data });
+      const btn = qs('#maq-img-save');
+      const orig = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando…';
+      try {
+        await fetchJson(API + '/maquinas/' + m.id, { method: 'PUT', body: JSON.stringify(payload) });
+        qs('#modal').classList.add('hidden');
+        showToast('Imagen guardada.', 'success');
+        loadMaquinas();
+      } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar la imagen.', 'error'); }
+      finally { btn.disabled = false; btn.innerHTML = orig; }
+    };
+  }
+
   function previewMaquina(m) {
     const imgFields = [];
     if (m.imagen_pieza_url) {
@@ -1709,8 +1782,8 @@
         : `<div class="maq-card-row" title="${escapeHtml(ft)}"><i class="fas fa-file-lines"></i> ${escapeHtml(ft.length > 72 ? ft.slice(0, 69) + '…' : ft)}</div>`)
       : '';
     const thumb = m.imagen_pieza_url
-      ? `<div class="maq-card-thumb"><img src="${escapeHtml(m.imagen_pieza_url)}" alt="" loading="lazy"></div>`
-      : `<div class="maq-card-thumb maq-card-thumb--empty"><i class="fas fa-image"></i></div>`;
+      ? `<div class="maq-card-thumb maq-card-thumb-upload" data-id="${m.id}" role="button" tabindex="0" title="Clic para subir o cambiar imagen"><img src="${escapeHtml(m.imagen_pieza_url)}" alt="" loading="lazy"></div>`
+      : `<div class="maq-card-thumb maq-card-thumb--empty maq-card-thumb-upload" data-id="${m.id}" role="button" tabindex="0" title="Clic para subir imagen"><i class="fas fa-camera"></i></div>`;
     return `
       <div class="maq-card" data-id="${m.id}">
         ${thumb}
@@ -1796,6 +1869,10 @@
       cardsWrap.querySelectorAll('.btn-view-maq').forEach(btn => {
         btn.addEventListener('click', e => { e.stopPropagation(); const m = maquinasCache.find(x => x.id == btn.dataset.id); if (m) previewMaquina(m); });
       });
+      cardsWrap.querySelectorAll('.maq-card-thumb-upload').forEach(el => {
+        el.addEventListener('click', e => { e.stopPropagation(); const row = maquinasCache.find(x => x.id == el.dataset.id); if (row) openModalMaquinaImagen(row); });
+        el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); } });
+      });
       return;
     }
 
@@ -1809,8 +1886,11 @@
     const _canEdit = canEdit(); const _canDelete = canDelete();
     data.forEach(m => {
       const tr = document.createElement('tr');
+      const idCell = m.imagen_pieza_url
+        ? `<span class="ref-img-hover-wrap" tabindex="-1"><button type="button" class="btn-id-maq link-btn" data-id="${m.id}" title="Subir o ver imagen de catálogo">${m.id}</button><img class="ref-img-hover-preview" src="${escapeHtml(m.imagen_pieza_url)}" alt="" loading="lazy"></span>`
+        : `<button type="button" class="btn-id-maq link-btn" data-id="${m.id}" title="Subir imagen (catálogo)">${m.id}</button>`;
       tr.innerHTML = `
-        <td>${m.id}</td>
+        <td>${idCell}</td>
         <td>${escapeHtml(m.categoria || '')}</td>
         <td><strong>${escapeHtml(m.modelo || m.nombre || '')}</strong></td>
         <td>${formatMaquinaFichaTecnicaCell(m)}</td>
@@ -1824,6 +1904,9 @@
     });
     updateTableFooter('tabla-maquinas', data.length, maquinasCache.length, () => clearTableFiltersAndRefresh('tabla-maquinas', null, applyMaquinasFiltersAndRender), arguments[1]);
     animateTableRows('tabla-maquinas');
+    tbody.querySelectorAll('.btn-id-maq').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); const row = data.find(x => x.id == btn.dataset.id); if (row) openModalMaquinaImagen(row); });
+    });
     tbody.querySelectorAll('.btn-view-maq').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const m = data.find(x => x.id == btn.dataset.id); if (m) previewMaquina(m); });
     });
@@ -4055,9 +4138,9 @@
     const isNew = !cliente || !cliente.id;
     const body = `
       <div class="client-upload-area">
-        <label class="upload-label"><i class="fas fa-file-image"></i> Constancia o datos fiscales (imagen)</label>
-        <p class="upload-hint">Sube una foto o captura (JPG, PNG) para detectar nombre, RFC, dirección, etc. automáticamente.</p>
-        <input type="file" id="m-file-fiscal" accept="image/jpeg,image/png,image/gif,image/webp" class="input-file">
+        <label class="upload-label"><i class="fas fa-file-invoice"></i> Constancia o datos fiscales (documento)</label>
+        <p class="upload-hint">Sube PDF, Word, Excel o una imagen (JPG, PNG, GIF, WebP) para detectar nombre, RFC, dirección, etc. Los PDF escaneados sin texto seleccionable pueden fallar; en ese caso usa foto o PDF con texto.</p>
+        <input type="file" id="m-file-fiscal" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/msword,.doc,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.xlsx,application/vnd.ms-excel,.xls" class="input-file">
         <div id="m-upload-status" class="upload-status hidden"></div>
         <div id="m-extract-hints" class="extract-hints hidden"></div>
       </div>
@@ -4084,14 +4167,30 @@
       fileInput.addEventListener('change', async function () {
         const file = this.files && this.files[0];
         if (!file) return;
-        const mime = file.type || 'image/jpeg';
-        if (!/^image\/(jpeg|png|gif|webp)$/.test(mime)) {
-          statusEl.textContent = 'Solo imágenes JPG, PNG, GIF o WebP.';
+        const guessMimeFromName = (name) => {
+          const n = String(name || '').toLowerCase();
+          if (n.endsWith('.pdf')) return 'application/pdf';
+          if (n.endsWith('.docx')) return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+          if (n.endsWith('.doc')) return 'application/msword';
+          if (n.endsWith('.xlsx')) return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+          if (n.endsWith('.xls')) return 'application/vnd.ms-excel';
+          if (/\.(jpe?g)$/i.test(n)) return 'image/jpeg';
+          if (n.endsWith('.png')) return 'image/png';
+          if (n.endsWith('.gif')) return 'image/gif';
+          if (n.endsWith('.webp')) return 'image/webp';
+          return '';
+        };
+        let mime = (file.type || '').toLowerCase();
+        if (!mime || mime === 'application/octet-stream') mime = guessMimeFromName(file.name) || '';
+        const allowed = /^(image\/(jpeg|png|gif|webp)|application\/pdf|application\/vnd\.openxmlformats-officedocument\.(spreadsheetml\.sheet|wordprocessingml\.document)|application\/vnd\.ms-excel|application\/msword)$/;
+        if (!mime || !allowed.test(mime)) {
+          statusEl.textContent = 'Formato no admitido. Usa JPG, PNG, GIF, WebP, PDF, Word (.doc, .docx) o Excel (.xls, .xlsx).';
           statusEl.classList.remove('hidden', 'upload-ok');
           statusEl.classList.add('upload-error');
           return;
         }
-        statusEl.textContent = 'Analizando imagen…';
+        const analyzingLabel = /^image\//.test(mime) ? 'Analizando imagen…' : 'Analizando documento…';
+        statusEl.textContent = analyzingLabel;
         statusEl.classList.remove('hidden', 'upload-ok', 'upload-error');
         statusEl.classList.add('upload-loading');
         hintsEl.classList.add('hidden');
@@ -4106,7 +4205,7 @@
             r.onerror = reject;
             r.readAsDataURL(file);
           });
-          const data = await fetchJson(API + '/ai/extract-client', { method: 'POST', body: JSON.stringify({ fileBase64: base64, mimeType: mime }) });
+          const data = await fetchJson(API + '/ai/extract-client', { method: 'POST', body: JSON.stringify({ fileBase64: base64, mimeType: mime, fileName: file.name || '' }) });
           const d = data.data || {};
           if (d.nombre) qs('#m-nombre').value = d.nombre;
           if (d.rfc) qs('#m-rfc').value = d.rfc;
@@ -4323,54 +4422,43 @@
   async function openModalMaquina(maquina) {
     const isNew = !maquina || !maquina.id;
     const clientes = await fetchJson(API + '/clientes').catch(() => []);
+    const defaultClienteId = clientes[0] && clientes[0].id != null ? Number(clientes[0].id) : null;
     const catalogoUm = toArray(await fetchJson(API + '/catalogo-universal-maquinas').catch(() => []));
-    const options = clientes.map(c => `<option value="${c.id}" ${maquina && maquina.cliente_id == c.id ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`).join('');
     const catOpts = CATEGORIAS_MAQUINAS.map(c => `<option value="${c}" ${maquina && maquina.categoria === c ? 'selected' : ''}>${c}</option>`).join('');
-    const zonasSucursal = ['Monterrey', 'Ciudad de México', 'Querétaro', 'Guadalajara', 'Reynosa', 'Chihuahua', 'Guanajuato', 'Tlalnepantla', 'Saltillo', 'San Luis Potosí', 'Otra'];
-    const zonaOpts = zonasSucursal.map(z => `<option value="${z}" ${maquina && maquina.ubicacion === z ? 'selected' : ''}>${z}</option>`).join('');
     const catalogoOpts = catalogoUm.map((row, idx) => `<option value="${idx}" data-json="1">${escapeHtml(row.modelo)}</option>`).join('');
     const body = `
-      <p class="form-hint" style="margin-top:0"><i class="fas fa-book"></i> Catálogo basado en <strong>UNIVERSAL 2025</strong> (PDF). Al elegir un modelo se rellenan categoría, imágenes placeholder pieza/ensamble y código de manual; sustituye las URLs por tus escaneos cuando los tengas.</p>
-      <div class="form-group"><label>Importar desde catálogo Universal</label>
+      <p class="form-hint" style="margin-top:0"><i class="fas fa-book"></i> Catálogo <strong>UNIVERSAL 2025</strong>: elige un modelo o captura manual. Las imágenes del JSON se cargan al seleccionar; puedes <strong>subir archivos aquí</strong> (tienen prioridad). Clic en el <strong>ID</strong> en la tabla para cambiar solo la foto principal.</p>
+      <div class="form-group maq-catalogo-block">
+        <label>Importar desde catálogo Universal</label>
         <select id="m-catalogo-um">
           <option value="">— Sin importar (captura manual) —</option>
           ${catalogoOpts}
         </select>
-      </div>
-      <div class="form-group"><label>Cliente *</label><select id="m-cliente_id">${options}</select></div>
-      <div class="form-row">
-        <div class="form-group"><label>Centro de maquinado / jerarquía</label>
-          <input type="text" id="m-categoria_principal" maxlength="80" value="${escapeHtml(maquina && maquina.categoria_principal) || ''}" placeholder="Ej: Centro de Maquinado">
+        <div class="form-row" style="margin-top:0.65rem">
+          <div class="form-group" style="margin-bottom:0">
+            <label>Foto pieza / parte</label>
+            <input type="file" id="m-cat-file-pieza" accept="image/*">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Foto diagrama ensamble</label>
+            <input type="file" id="m-cat-file-ensamble" accept="image/*">
+          </div>
         </div>
-        <div class="form-group"><label>Categoría *</label>
-          <select id="m-categoria">
-            <option value="">-- Seleccionar --</option>
-            ${catOpts}
-          </select>
-        </div>
+        <p class="form-hint" style="margin:0.35rem 0 0;font-size:0.8rem">Misma lógica que refacciones (imagen en base64 al guardar).</p>
+        <input type="hidden" id="m-h-imagen-pieza" value="${escapeHtml(maquina && maquina.imagen_pieza_url) || ''}">
+        <input type="hidden" id="m-h-imagen-ensamble" value="${escapeHtml(maquina && maquina.imagen_ensamble_url) || ''}">
+        <input type="hidden" id="m-h-categoria-principal" value="${escapeHtml(maquina && maquina.categoria_principal) || ''}">
       </div>
-      <div class="form-row">
-        <div class="form-group"><label>Modelo *</label><input type="text" id="m-modelo" maxlength="120" value="${escapeHtml(maquina && maquina.modelo) || ''}" required placeholder="Ej: GH1440A, CTX 510…"></div>
-        <div class="form-group"><label>Stock (0 por defecto en almacén demo)</label><input type="number" id="m-stock" step="any" min="0" value="${maquina && maquina.stock != null ? escapeHtml(String(maquina.stock)) : '0'}"></div>
-        <div class="form-group"><label>Precio de lista (USD)</label><input type="number" id="m-precio-lista-usd" step="0.01" min="0" value="${maquina && maquina.precio_lista_usd != null ? escapeHtml(String(maquina.precio_lista_usd)) : ''}" placeholder="Lista para cotizar × TC"></div>
+      <div class="form-group"><label>Categoría *</label>
+        <select id="m-categoria">
+          <option value="">-- Seleccionar --</option>
+          ${catOpts}
+        </select>
       </div>
-      <div class="form-row">
-        <div class="form-group"><label>Nº Serie</label><input type="text" id="m-numero_serie" maxlength="80" value="${escapeHtml(maquina && maquina.numero_serie) || ''}"></div>
-        <div class="form-group"><label>Zona / Sucursal (PDF)</label>
-          <select id="m-ubicacion">
-            <option value="">-- Seleccionar --</option>
-            ${zonaOpts}
-          </select>
-        </div>
-      </div>
+      <div class="form-group"><label>Modelo *</label><input type="text" id="m-modelo" maxlength="120" value="${escapeHtml(maquina && maquina.modelo) || ''}" required placeholder="Ej: GH1440A, CTX 510…"></div>
       <div class="form-group"><label>Ficha técnica</label>
-        <textarea id="m-ficha_tecnica" rows="3" maxlength="8000" placeholder="URL del PDF o nota interna">${escapeHtml(maquina && maquina.ficha_tecnica) || ''}</textarea>
+        <textarea id="m-ficha_tecnica" rows="4" maxlength="8000" placeholder="URL del PDF o nota interna">${escapeHtml(maquina && maquina.ficha_tecnica) || ''}</textarea>
       </div>
-      <div class="form-row">
-        <div class="form-group"><label>URL imagen — pieza / parte (manual)</label><input type="url" id="m-img-pieza" value="${escapeHtml(maquina && maquina.imagen_pieza_url) || ''}" placeholder="https://… o /img/maquinas/…"></div>
-        <div class="form-group"><label>URL imagen — diagrama ensamble</label><input type="url" id="m-img-ensamble" value="${escapeHtml(maquina && maquina.imagen_ensamble_url) || ''}" placeholder="https://… o /img/maquinas/…"></div>
-      </div>
-      <div class="form-group"><label>Nombre / Identificador interno</label><input type="text" id="m-nombre" maxlength="150" value="${escapeHtml(maquina && maquina.nombre) || ''}" placeholder="Opcional; si vacío se usa el modelo"></div>
       <div class="form-actions">
         <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
         <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
@@ -4385,9 +4473,9 @@
         const row = catalogoUm[i];
         const modeloEl = qs('#m-modelo');
         const catEl = qs('#m-categoria');
-        const cpEl = qs('#m-categoria_principal');
-        const pz = qs('#m-img-pieza');
-        const en = qs('#m-img-ensamble');
+        const hp = qs('#m-h-imagen-pieza');
+        const he = qs('#m-h-imagen-ensamble');
+        const hcp = qs('#m-h-categoria-principal');
         if (modeloEl) modeloEl.value = row.modelo || '';
         if (catEl && row.categoria) {
           catEl.value = CATEGORIAS_MAQUINAS.includes(row.categoria) ? row.categoria : catEl.value;
@@ -4398,9 +4486,9 @@
             catEl.appendChild(opt);
           }
         }
-        if (cpEl && row.categoria_principal) cpEl.value = row.categoria_principal;
-        if (pz && row.imagen_pieza_url) pz.value = row.imagen_pieza_url;
-        if (en && row.imagen_ensamble_url) en.value = row.imagen_ensamble_url;
+        if (hcp && row.categoria_principal) hcp.value = row.categoria_principal;
+        if (hp && row.imagen_pieza_url) hp.value = row.imagen_pieza_url;
+        if (he && row.imagen_ensamble_url) he.value = row.imagen_ensamble_url;
       });
     }
     qs('#m-save').onclick = async () => {
@@ -4408,22 +4496,36 @@
       const modelo = (qs('#m-modelo').value || '').trim();
       let err = validateRequired(modelo, 'El modelo de la máquina es obligatorio');
       if (err) { markInvalid('m-modelo', err); return; }
-      const stockRaw = qs('#m-stock') && qs('#m-stock').value;
-      const stockNum = stockRaw !== '' && stockRaw != null ? Number(stockRaw) : 0;
+      const errCat = validateRequired(qs('#m-categoria').value.trim(), 'La categoría es obligatoria');
+      if (errCat) { markInvalid('m-categoria', errCat); return; }
+      const fotoPieza = await readFileAsDataUrlInput(qs('#m-cat-file-pieza'));
+      const fotoEns = await readFileAsDataUrlInput(qs('#m-cat-file-ensamble'));
+      const hPieza = (qs('#m-h-imagen-pieza') && qs('#m-h-imagen-pieza').value.trim()) || '';
+      const hEns = (qs('#m-h-imagen-ensamble') && qs('#m-h-imagen-ensamble').value.trim()) || '';
+      const imagenPieza = fotoPieza || hPieza || null;
+      const imagenEns = fotoEns || hEns || null;
+      const stockNum = !isNew && maquina && maquina.stock != null ? Number(maquina.stock) : 0;
+      const plUsd = !isNew && maquina && maquina.precio_lista_usd != null ? Number(maquina.precio_lista_usd) : 0;
+      const clienteIdFinal = (maquina && maquina.cliente_id != null)
+        ? Number(maquina.cliente_id)
+        : (defaultClienteId != null ? defaultClienteId : null);
+      const cpHidden = (qs('#m-h-categoria-principal') && qs('#m-h-categoria-principal').value.trim()) || null;
       const payload = {
-        cliente_id: parseInt(qs('#m-cliente_id').value, 10),
-        nombre: qs('#m-nombre').value.trim() || modelo,
+        nombre: modelo,
+        codigo: !isNew && maquina && maquina.codigo != null ? String(maquina.codigo).trim() || null : null,
+        marca: null,
         categoria: qs('#m-categoria').value.trim() || null,
-        categoria_principal: (qs('#m-categoria_principal') && qs('#m-categoria_principal').value.trim()) || null,
+        categoria_principal: cpHidden || (!isNew && maquina ? (maquina.categoria_principal || null) : null),
         modelo,
-        numero_serie: qs('#m-numero_serie').value.trim() || null,
-        ubicacion: qs('#m-ubicacion').value.trim() || null,
-        imagen_pieza_url: (qs('#m-img-pieza') && qs('#m-img-pieza').value.trim()) || null,
-        imagen_ensamble_url: (qs('#m-img-ensamble') && qs('#m-img-ensamble').value.trim()) || null,
+        numero_serie: !isNew && maquina ? (maquina.numero_serie != null && String(maquina.numero_serie).trim() !== '' ? String(maquina.numero_serie).trim() : null) : null,
+        ubicacion: !isNew && maquina ? (maquina.ubicacion != null && String(maquina.ubicacion).trim() !== '' ? String(maquina.ubicacion).trim() : null) : null,
+        imagen_pieza_url: imagenPieza,
+        imagen_ensamble_url: imagenEns,
         ficha_tecnica: (qs('#m-ficha_tecnica') && qs('#m-ficha_tecnica').value.trim()) || null,
         stock: Number.isFinite(stockNum) ? stockNum : 0,
-        precio_lista_usd: qs('#m-precio-lista-usd') && qs('#m-precio-lista-usd').value !== '' ? Number(qs('#m-precio-lista-usd').value) : 0,
+        precio_lista_usd: Number.isFinite(plUsd) ? plUsd : 0,
       };
+      if (clienteIdFinal != null && Number.isFinite(clienteIdFinal)) payload.cliente_id = clienteIdFinal;
       const btn = qs('#m-save');
       const origText = btn.innerHTML;
       btn.disabled = true;
@@ -8502,6 +8604,7 @@
     let idleCheckTimer = null;
     let pendingFileBase64 = null;
     let pendingFileMime = null;
+    let pendingFileName = null;
 
     function dismissFabNudge() {
       if (!nudgeEl) return;
@@ -8746,12 +8849,26 @@
     });
 
     const allowedMimes = /^image\/(jpeg|png|gif|webp)$|^application\/pdf$|^application\/vnd\.(openxmlformats-officedocument\.(spreadsheetml\.sheet|wordprocessingml\.document)|ms-excel)$|^application\/msword$/;
+    function guessChatAttachMime(name) {
+      const n = String(name || '').toLowerCase();
+      if (n.endsWith('.pdf')) return 'application/pdf';
+      if (n.endsWith('.docx')) return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      if (n.endsWith('.doc')) return 'application/msword';
+      if (n.endsWith('.xlsx')) return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      if (n.endsWith('.xls')) return 'application/vnd.ms-excel';
+      if (/\.(jpe?g)$/i.test(n)) return 'image/jpeg';
+      if (n.endsWith('.png')) return 'image/png';
+      if (n.endsWith('.gif')) return 'image/gif';
+      if (n.endsWith('.webp')) return 'image/webp';
+      return '';
+    }
     if (attachBtn && fileInput) {
       attachBtn.addEventListener('click', () => fileInput.click());
       fileInput.addEventListener('change', function () {
         const file = this.files && this.files[0];
         if (!file) return;
-        const mime = file.type || '';
+        let mime = (file.type || '').toLowerCase();
+        if (!mime || mime === 'application/octet-stream') mime = guessChatAttachMime(file.name) || '';
         if (!allowedMimes.test(mime)) {
           showToast('Formatos admitidos: imágenes (JPG, PNG, GIF, WebP), PDF, Excel (.xls, .xlsx) o Word (.doc, .docx).', 'error');
           this.value = '';
@@ -8762,6 +8879,7 @@
           const s = reader.result;
           pendingFileBase64 = s && s.indexOf('base64,') !== -1 ? s.split('base64,')[1] : s;
           pendingFileMime = mime;
+          pendingFileName = file.name || '';
           if (/^image\//.test(mime)) showToast('Imagen lista. Escribe algo (ej. "pon esto en nueva cotización") y envía.', 'success');
           else showToast('Documento listo. Escribe un mensaje (ej. "qué dice?" o "ponlo en nueva cotización") y envía.', 'success');
         };
@@ -8793,8 +8911,10 @@
       messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
       const fileB64 = pendingFileBase64;
       const fileMime = pendingFileMime;
+      const fileNameAttach = pendingFileName;
       pendingFileBase64 = null;
       pendingFileMime = null;
+      pendingFileName = null;
       try {
         let data;
         if (fileB64 && isPdfExcelOrWord(fileMime)) {
@@ -8814,10 +8934,10 @@
         }
         if (fileB64 && /pon.*(cotizaci[oó]n|nueva)/i.test(messageToSend)) {
           try {
-            data = await fetchJson(API + '/ai/extract-client', { method: 'POST', body: JSON.stringify({ fileBase64: fileB64, mimeType: fileMime }) });
+            data = await fetchJson(API + '/ai/extract-client', { method: 'POST', body: JSON.stringify({ fileBase64: fileB64, mimeType: fileMime, fileName: fileNameAttach || '' }) });
             const d = data.data || {};
             if (d.nombre || d.rfc) {
-              append('Encontré datos en la imagen. Abriendo formulario de cliente para que revises y guardes.', false);
+              append('Encontré datos en el archivo. Abriendo formulario de cliente para que revises y guardes.', false);
               setExpanded(false);
               openModalCliente({ nombre: d.nombre, rfc: d.rfc, direccion: d.direccion, ciudad: d.ciudad, email: d.email, telefono: d.telefono });
               sendBtn.disabled = false;

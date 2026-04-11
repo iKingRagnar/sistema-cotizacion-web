@@ -3889,6 +3889,9 @@ body.dark-theme .prospeccion-kpi { background: #1e293b; border-color: #334155; }
 .maq-card-thumb { width: 100%; height: 120px; background: linear-gradient(145deg, #e2e8f0, #f1f5f9); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
 .maq-card-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .maq-card-thumb--empty { color: #94a3b8; font-size: 2rem; }
+.maq-card-thumb-upload { cursor: pointer; outline: none; transition: box-shadow 0.15s ease; }
+.maq-card-thumb-upload:hover { box-shadow: inset 0 0 0 2px rgba(59, 130, 246, 0.45); }
+.maq-card-thumb-upload:focus-visible { box-shadow: inset 0 0 0 2px #3b82f6; }
 .maq-card > .maq-card-header { padding: 0.85rem 1.2rem 0; }
 .maq-card > .maq-card-modelo { padding: 0 1.2rem; }
 .maq-card > .maq-card-body { padding: 0 1.2rem; }
