@@ -87,16 +87,22 @@ function parseBearer(req) {
   return m ? m[1].trim() : null;
 }
 
+/** Rol canónico en minúsculas (evita fallos si en BD/token vino "Admin", espacios, etc.) */
+function normalizeRole(role) {
+  return String(role || '').trim().toLowerCase();
+}
+
 function attachUser(req) {
   req.authUser = null;
   const raw = parseBearer(req);
   if (!raw) return;
   const p = verifyToken(raw);
   if (!p || p.sub == null) return;
+  const nr = normalizeRole(p.r);
   req.authUser = {
     id: p.sub,
     username: p.u || '',
-    role: p.r || 'usuario',
+    role: nr || 'usuario',
     displayName: p.d || p.u || '',
   };
 }
@@ -289,7 +295,7 @@ function createApiMiddleware() {
 
 /** admin/operador: siempre pueden cotizar. usuario: solo si está vinculado a Personal y es_vendedor=1 */
 function computeCanCotizar(role, tecnicoId, esVendedorBool) {
-  const r = String(role || '');
+  const r = normalizeRole(role);
   if (r === 'admin' || r === 'operador') return true;
   if (r === 'usuario' && tecnicoId && esVendedorBool) return true;
   return false;
@@ -304,11 +310,12 @@ async function buildUserProfileFromRow(u) {
     const t = await db.getOne('SELECT es_vendedor FROM tecnicos WHERE id = ?', [tecnicoId]);
     esVendedor = !!(t && Number(t.es_vendedor) === 1);
   }
-  const canCotizar = computeCanCotizar(u.role, tecnicoId, esVendedor);
+  const roleNorm = normalizeRole(u.role);
+  const canCotizar = computeCanCotizar(roleNorm, tecnicoId, esVendedor);
   return {
     id: u.id,
     username: u.username,
-    role: u.role,
+    role: roleNorm || 'usuario',
     displayName: u.display_name || u.username,
     tecnicoId,
     esVendedor,
@@ -331,7 +338,13 @@ async function attemptLogin(username, password) {
   );
   if (!u || !verifyPassword(password, u.password_hash)) return null;
   const exp = Date.now() + TOKEN_MS;
-  const token = signToken({ sub: u.id, u: u.username, r: u.role, d: u.display_name || u.username, exp });
+  const token = signToken({
+    sub: u.id,
+    u: u.username,
+    r: normalizeRole(u.role) || 'usuario',
+    d: u.display_name || u.username,
+    exp,
+  });
   const user = await buildUserProfileFromRow(u);
   return {
     token,
@@ -413,6 +426,7 @@ module.exports = {
   ensurePinnedAppUsers,
   verifyToken,
   hashPassword,
+  normalizeRole,
   READ_ONLY_ROLES,
   STAFF_ROLES,
 };

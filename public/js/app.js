@@ -187,27 +187,34 @@
   function getSessionUser() {
     try { return JSON.parse(localStorage.getItem(AUTH_USER_KEY) || 'null'); } catch (_) { return null; }
   }
+  /** Alineado con servidor: evita que "Admin" o espacios rompan permisos. */
+  function normalizeRole(r) {
+    return String(r == null ? '' : r).trim().toLowerCase();
+  }
   // Helpers de permisos por rol
   function canAdd() {
     const u = getSessionUser();
     if (!serverConfig.authRequired) return true;
-    return u && ['admin', 'operador', 'usuario'].includes(u.role);
+    const role = normalizeRole(u && u.role);
+    return u && ['admin', 'operador', 'usuario'].includes(role);
   }
   function canEdit() {
     const u = getSessionUser();
     if (!serverConfig.authRequired) return true;
-    return u && ['admin', 'operador'].includes(u.role);
+    const role = normalizeRole(u && u.role);
+    return u && ['admin', 'operador'].includes(role);
   }
   function canDelete() {
     const u = getSessionUser();
     if (!serverConfig.authRequired) return true;
-    return u && u.role === 'admin';
+    return u && normalizeRole(u.role) === 'admin';
   }
   /** Entradas/salidas y conteo físico: admin, operador y usuario (no consulta/invitado). */
   function canAdjustStock() {
     const u = getSessionUser();
     if (!serverConfig.authRequired) return true;
-    return u && ['admin', 'operador', 'usuario'].includes(u.role);
+    const role = normalizeRole(u && u.role);
+    return u && ['admin', 'operador', 'usuario'].includes(role);
   }
   function getRoleLabel(role) {
     const labels = {
@@ -223,38 +230,96 @@
   function canViewCommissions() {
     if (!serverConfig.authRequired) return true;
     const u = getSessionUser();
-    return !!(u && u.role === 'admin');
+    return !!(u && normalizeRole(u.role) === 'admin');
   }
   /** Tarifas, prospección y pestaña Personal: solo admin si hay login; sin auth, comportamiento local (acceso libre). */
   function canAccessAdminOnlyModules() {
     if (!serverConfig.authRequired) return true;
     const u = getSessionUser();
-    return !!(u && u.role === 'admin');
+    return !!(u && normalizeRole(u.role) === 'admin');
   }
-  /** Texto estable para categoría/subcategoría cuando el API o el import devuelven un objeto. */
-  function refCategoriaLabel(c) {
+  function refCategoriaLabel(c, depth) {
+    const d = (depth | 0);
+    if (d > 8) return '';
     if (c == null || c === '') return '';
+    if (typeof c === 'number' && Number.isFinite(c)) return String(c);
+    if (typeof c === 'boolean') return c ? '1' : '';
+    if (typeof c === 'string') {
+      const t = c.trim();
+      if (!t) return '';
+      if ((t.startsWith('{') && t.endsWith('}')) || (t.startsWith('[') && t.endsWith(']'))) {
+        try {
+          const parsed = JSON.parse(t);
+          const inner = refCategoriaLabel(parsed, d + 1);
+          if (inner) return inner;
+        } catch (_) { /* seguir como texto */ }
+      }
+      return t;
+    }
+    if (Array.isArray(c)) {
+      return c
+        .map(function (x) {
+          return refCategoriaLabel(x, d + 1);
+        })
+        .filter(Boolean)
+        .join(', ');
+    }
     if (typeof c === 'object') {
-      return String(
+      const pick =
         c.nombre != null
           ? c.nombre
           : c.name != null
             ? c.name
             : c.label != null
               ? c.label
-              : c.id != null
-                ? c.id
-                : ''
-      ).trim();
+              : c.titulo != null
+                ? c.titulo
+                : c.value != null
+                  ? c.value
+                  : c.texto != null
+                    ? c.texto
+                    : c.categoria != null
+                      ? c.categoria
+                      : c.subcategoria != null
+                        ? c.subcategoria
+                        : c.id != null && typeof c.id !== 'object'
+                          ? c.id
+                          : null;
+      if (pick != null && pick !== c) return refCategoriaLabel(pick, d + 1);
+      return '';
     }
     return String(c).trim();
+  }
+  /** Celda HTML: línea / parte con pills (sin [object Object]). */
+  function formatRefaccionCategoriaCellHtml(r) {
+    const cat = refCategoriaLabel(r.categoria);
+    const sub = refCategoriaLabel(r.subcategoria);
+    if (!cat && !sub) return '<span class="ref-cat-empty">—</span>';
+    if (!sub) {
+      return (
+        '<span class="ref-cat-stack"><span class="ref-cat-pill ref-cat-pill--line">' +
+        escapeHtml(cat) +
+        '</span></span>'
+      );
+    }
+    return (
+      '<span class="ref-cat-stack">' +
+      '<span class="ref-cat-pill ref-cat-pill--line">' +
+      escapeHtml(cat) +
+      '</span>' +
+      '<span class="ref-cat-sep" aria-hidden="true">/</span>' +
+      '<span class="ref-cat-pill ref-cat-pill--part">' +
+      escapeHtml(sub) +
+      '</span>' +
+      '</span>'
+    );
   }
   /** Pestaña y API de cotizaciones: admin/operador siempre; usuario solo si está vinculado a Personal como vendedor. */
   function canAccessCotizaciones() {
     if (!serverConfig.authRequired) return true;
     const u = getSessionUser();
     if (!u) return false;
-    const r = String(u.role || '');
+    const r = normalizeRole(u.role);
     if (r === 'admin' || r === 'operador') return true;
     return !!(u.canCotizar);
   }
@@ -1946,8 +2011,7 @@
   function previewRefaccion(r) {
     const stockBajo = Number(r.stock) <= Number(r.stock_minimo || 1);
     const underHeaderHtml = buildRefaccionPreviewUnderHeader(r);
-    const hasSeg =
-      (r.categoria && String(r.categoria).trim()) || (r.subcategoria && String(r.subcategoria).trim());
+    const hasSeg = !!(refCategoriaLabel(r.categoria) || refCategoriaLabel(r.subcategoria));
     const footerHtml =
       '<p class="pvc-footer-link-hint" style="font-size:0.82rem;color:var(--text-muted,#64748b);line-height:1.45;margin:0 0 0.75rem;">' +
       '<i class="fas fa-link"></i> <strong>Línea</strong> y <strong>parte</strong> son los mismos segmentos que en <strong>Máquinas</strong> (campos <code>categoria</code> / <code>subcategoria</code>), definidos en <strong>Categorías</strong>. Se relacionan por <strong>texto igual</strong>. En cotización, cada línea usa <code>refaccion_id</code> o <code>maquina_id</code>.</p>' +
@@ -1968,8 +2032,8 @@
           fields: [
             { label: 'Código', value: r.codigo, icon: 'fa-barcode' },
             { label: 'Descripción', value: r.descripcion, icon: 'fa-align-left', full: true },
-            { label: 'Línea (nombre máquina)', value: r.categoria, icon: 'fa-layer-group' },
-            { label: 'Parte', value: r.subcategoria, icon: 'fa-puzzle-piece' },
+            { label: 'Línea (nombre máquina)', value: refCategoriaLabel(r.categoria) || '—', icon: 'fa-layer-group' },
+            { label: 'Parte', value: refCategoriaLabel(r.subcategoria) || '—', icon: 'fa-puzzle-piece' },
             { label: 'Zona', value: r.zona, icon: 'fa-map-marker-alt' },
             { label: 'Bloque', value: r.bloque, icon: 'fa-th-large' },
             { label: 'Unidad', value: r.unidad || 'PZA', icon: 'fa-ruler' },
@@ -1993,7 +2057,9 @@
     setTimeout(() => {
       const btn = qs('#modal-body .btn-ref-to-maquinas');
       if (btn && !btn.disabled) {
-        btn.addEventListener('click', () => goToMaquinasFromRefaccionSegmentos(r.categoria, r.subcategoria));
+        btn.addEventListener('click', () =>
+          goToMaquinasFromRefaccionSegmentos(refCategoriaLabel(r.categoria), refCategoriaLabel(r.subcategoria))
+        );
       }
     }, 0);
   }
@@ -2022,15 +2088,15 @@
       if (stockBajo) tr.classList.add('row-stock-bajo');
       const imgThumb = r.imagen_url ? `<span class="ref-img-hover-wrap" tabindex="-1"><button type="button" class="btn-codigo-ref link-btn" data-id="${r.id}" title="Ver imagen/manual">${escapeHtml(r.codigo || '')}</button><img class="ref-img-hover-preview" src="${escapeHtml(r.imagen_url)}" alt="preview" loading="lazy"></span>` : `<button type="button" class="btn-codigo-ref link-btn" data-id="${r.id}" title="Ver imagen/manual">${escapeHtml(r.codigo || '')}</button>`;
       tr.innerHTML = `
-        <td>${imgThumb}</td>
-        <td>${escapeHtml(r.descripcion || '')}</td>
-        <td>${escapeHtml(refCategoriaLabel(r.categoria))}${refCategoriaLabel(r.subcategoria) ? ' / ' + escapeHtml(refCategoriaLabel(r.subcategoria)) : ''}</td>
-        <td>${escapeHtml(r.zona || '')}</td>
-        <td>${escapeHtml(r.bloque || '')}</td>
-        <td class="${stockBajo ? 'stock-bajo' : ''}">${r.stock != null ? Number(r.stock).toLocaleString('es-MX') : '0'}</td>
-        <td>${r.stock_minimo != null ? Number(r.stock_minimo) : 1}</td>
-        <td>${formatRefaccionPrecioUsdCell(r)}</td>
-        <td>${escapeHtml(r.unidad || 'PZA')}</td>
+        <td class="ref-td-code">${imgThumb}</td>
+        <td class="td-desc-wrap td-text-wrap ref-td-desc">${escapeHtml(r.descripcion || '')}</td>
+        <td class="ref-td-cat">${formatRefaccionCategoriaCellHtml(r)}</td>
+        <td class="ref-td-meta">${escapeHtml(r.zona || '')}</td>
+        <td class="ref-td-meta">${escapeHtml(r.bloque || '')}</td>
+        <td class="ref-td-num ${stockBajo ? 'stock-bajo' : ''}">${r.stock != null ? Number(r.stock).toLocaleString('es-MX') : '0'}</td>
+        <td class="ref-td-num">${r.stock_minimo != null ? Number(r.stock_minimo) : 1}</td>
+        <td class="ref-td-price">${formatRefaccionPrecioUsdCell(r)}</td>
+        <td class="ref-td-unit">${escapeHtml(r.unidad || 'PZA')}</td>
         <td class="th-actions">
           <button type="button" class="btn small outline btn-preview-ref" data-id="${r.id}" title="Vista previa"><i class="fas fa-eye"></i></button>
           ${_canStock ? `<button type="button" class="btn small outline btn-stock-ref" data-id="${r.id}" title="Inventario: entrada, salida o conteo"><i class="fas fa-boxes"></i></button>` : ''}
@@ -2527,8 +2593,8 @@
    * `refaccion_id` o `maquina_id`.
    */
   async function goToMaquinasFromRefaccionSegmentos(categoria, subcategoria) {
-    const c = String(categoria || '').trim();
-    const s = String(subcategoria || '').trim();
+    const c = refCategoriaLabel(categoria);
+    const s = refCategoriaLabel(subcategoria);
     if (!c && !s) {
       showToast('No hay línea ni parte de catálogo en esta refacción.', 'warning');
       return;
@@ -2559,8 +2625,8 @@
 
   /** Desde vista previa de máquina: ir a Refacciones con los mismos segmentos de catálogo (dropdowns + filtros). */
   async function goToRefaccionesFromMaquinaSegmentos(categoria, subcategoria) {
-    const c = String(categoria || '').trim();
-    const s = String(subcategoria || '').trim();
+    const c = refCategoriaLabel(categoria);
+    const s = refCategoriaLabel(subcategoria);
     if (!c && !s) {
       showToast('No hay línea ni parte de catálogo en esta máquina.', 'warning');
       return;
