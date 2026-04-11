@@ -25,6 +25,9 @@ function getSchema() {
       telefono TEXT,
       email TEXT,
       ciudad TEXT,
+      constancia_url TEXT,
+      constancia_nombre TEXT,
+      constancia_thumb_url TEXT,
       creado_en TEXT DEFAULT (datetime('now','localtime'))
     )`,
     /* Refacciones: zona=estante/rack, stock=cantidad actual, stock_minimo=alerta,
@@ -309,6 +312,21 @@ function getSchema() {
     )`,
     `CREATE UNIQUE INDEX IF NOT EXISTS idx_catalogos_clave_valor ON catalogos(clave, valor)`,
     `CREATE INDEX IF NOT EXISTS idx_catalogos_clave_activo ON catalogos(clave, activo)`,
+    /* Catálogo global: categorías y subcategorías (admin) */
+    `CREATE TABLE IF NOT EXISTS catalogo_categorias (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre TEXT NOT NULL UNIQUE,
+      orden INTEGER DEFAULT 0,
+      creado_en TEXT DEFAULT (datetime('now','localtime'))
+    )`,
+    `CREATE TABLE IF NOT EXISTS catalogo_subcategorias (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      categoria_id INTEGER NOT NULL REFERENCES catalogo_categorias(id) ON DELETE CASCADE,
+      nombre TEXT NOT NULL,
+      orden INTEGER DEFAULT 0,
+      creado_en TEXT DEFAULT (datetime('now','localtime'))
+    )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_catalogo_sub_nombre ON catalogo_subcategorias(categoria_id, nombre)`,
   ];
 }
 
@@ -391,6 +409,32 @@ async function runMigrations() {
     `ALTER TABLE cotizaciones ADD COLUMN descuento_pct REAL DEFAULT 0`,
     `ALTER TABLE maquinas ADD COLUMN precio_lista_usd REAL DEFAULT 0`,
     `ALTER TABLE maquinas ADD COLUMN ficha_tecnica TEXT`,
+    `ALTER TABLE clientes ADD COLUMN constancia_url TEXT`,
+    `ALTER TABLE clientes ADD COLUMN constancia_nombre TEXT`,
+    `ALTER TABLE clientes ADD COLUMN constancia_thumb_url TEXT`,
+    `ALTER TABLE maquinas ADD COLUMN subcategoria TEXT`,
+    `ALTER TABLE refacciones ADD COLUMN bloque TEXT`,
+    `ALTER TABLE refacciones ADD COLUMN tipo_cambio_registro REAL`,
+    /* Personal: INE y licencia (data URL + miniatura) */
+    `ALTER TABLE tecnicos ADD COLUMN ine_foto_url TEXT`,
+    `ALTER TABLE tecnicos ADD COLUMN ine_thumb_url TEXT`,
+    `ALTER TABLE tecnicos ADD COLUMN licencia_foto_url TEXT`,
+    `ALTER TABLE tecnicos ADD COLUMN licencia_thumb_url TEXT`,
+    /* Vincular cuenta de app al registro de Personal (para permiso de cotizar si es_vendedor) */
+    `ALTER TABLE app_users ADD COLUMN tecnico_id INTEGER`,
+    /* Historial de cuentas eliminadas (solo admin; auditoría + avisos por correo) */
+    `CREATE TABLE IF NOT EXISTS app_users_deleted (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      original_user_id INTEGER NOT NULL,
+      username TEXT NOT NULL,
+      display_name TEXT,
+      role TEXT,
+      tecnico_id INTEGER,
+      usuario_creado_en TEXT,
+      eliminado_en TEXT DEFAULT (datetime('now','localtime')),
+      eliminado_por_user_id INTEGER,
+      eliminado_por_username TEXT
+    )`,
   ];
   for (const sql of migrations) {
     try {
@@ -416,7 +460,9 @@ async function init() {
     db = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
     for (const sql of getSchema()) await db.execute(sql);
     await runMigrations();
+    await migrateDavidCantuRefacciones15();
     await seedCatalogosDefaults();
+    await seedCatalogoCategoriasFromLegacy();
     return;
   }
   const sqlite3 = require('sqlite3').verbose();
@@ -447,7 +493,9 @@ async function init() {
     await runQuery("INSERT INTO tecnicos (nombre) VALUES ('Juan Pérez'), ('María García'), ('Carlos López')");
   }
   await seedPersonalAndPricing();
+  await migrateDavidCantuRefacciones15();
   await seedCatalogosDefaults();
+  await seedCatalogoCategoriasFromLegacy();
 }
 
 /** Valores iniciales y sincronía desde técnicos (evita escribir a mano fuera del catálogo). */
@@ -514,6 +562,35 @@ async function seedCatalogosDefaults() {
   }
 }
 
+/** Migra textos sueltos de refacciones/máquinas al catálogo normalizado (idempotente). */
+async function seedCatalogoCategoriasFromLegacy() {
+  try {
+    const cats = await getAll(
+      `SELECT DISTINCT TRIM(categoria) AS n FROM refacciones WHERE categoria IS NOT NULL AND TRIM(categoria) != ''
+       UNION SELECT DISTINCT TRIM(categoria) FROM maquinas WHERE categoria IS NOT NULL AND TRIM(categoria) != ''`
+    );
+    for (const row of cats) {
+      const n = String(row.n || '').trim();
+      if (!n) continue;
+      await runQuery('INSERT OR IGNORE INTO catalogo_categorias (nombre) VALUES (?)', [n]);
+    }
+    const subs = await getAll(
+      `SELECT DISTINCT TRIM(categoria) AS c, TRIM(subcategoria) AS s FROM refacciones
+       WHERE subcategoria IS NOT NULL AND TRIM(subcategoria) != '' AND categoria IS NOT NULL AND TRIM(categoria) != ''`
+    );
+    for (const row of subs) {
+      const c = String(row.c || '').trim();
+      const s = String(row.s || '').trim();
+      if (!c || !s) continue;
+      const cat = await getOne('SELECT id FROM catalogo_categorias WHERE nombre = ?', [c]);
+      if (!cat || cat.id == null) continue;
+      await runQuery('INSERT OR IGNORE INTO catalogo_subcategorias (categoria_id, nombre) VALUES (?, ?)', [cat.id, s]);
+    }
+  } catch (_) {
+    /* tabla nueva o vacía */
+  }
+}
+
 /**
  * Tras vaciar todas las tablas de negocio: catálogos por defecto, técnicos mínimos si hace falta, pricing demo.
  * No crea usuarios de app (eso hace auth.ensureSeedUsers en server.js).
@@ -525,6 +602,7 @@ async function reseedAfterFullWipe() {
     await runQuery("INSERT INTO tecnicos (nombre) VALUES ('Juan Pérez'), ('María García'), ('Carlos López')");
   }
   await seedPersonalAndPricing();
+  await migrateDavidCantuRefacciones15();
 }
 
 /** Datos demo: personal (vendedores + comisiones), precios USD en refacciones y lista en máquinas. */
@@ -542,7 +620,7 @@ async function seedPersonalAndPricing() {
       habilidades: 'Negociación B2B, equipos CNC, cuentas clave, postventa',
       es_vendedor: 1,
       comision_maquinas_pct: 10,
-      comision_refacciones_pct: 10,
+      comision_refacciones_pct: 15,
     },
     {
       nombre: 'Ana López Méndez',
@@ -617,12 +695,22 @@ async function seedPersonalAndPricing() {
        WHERE COALESCE(precio_usd, 0) = 0`
     );
     await runQuery(
-      `UPDATE refacciones SET precio_unitario = ROUND(precio_usd * 17.0, 2)
-       WHERE COALESCE(precio_unitario, 0) = 0 AND COALESCE(precio_usd, 0) > 0`
-    );
-    await runQuery(
       `UPDATE maquinas SET precio_lista_usd = 18500 + (ABS(CAST(id AS INTEGER)) * 97 % 120000)
        WHERE COALESCE(precio_lista_usd, 0) = 0`
+    );
+  } catch (_) { /* ignore */ }
+}
+
+/**
+ * David Cantú: 15% comisión en refacciones (regla vigente; semillas antiguas usaban 10%).
+ * Solo actualiza filas que siguen en 10 o NULL para no pisar ajustes manuales del admin.
+ */
+async function migrateDavidCantuRefacciones15() {
+  try {
+    await runQuery(
+      `UPDATE tecnicos SET comision_refacciones_pct = 15
+       WHERE TRIM(nombre) IN ('David Cantú', 'David Cantu')
+         AND (comision_refacciones_pct IS NULL OR comision_refacciones_pct = 10)`
     );
   } catch (_) { /* ignore */ }
 }

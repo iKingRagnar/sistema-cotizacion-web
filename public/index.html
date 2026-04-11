@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Syne:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=56">
+  <link rel="stylesheet" href="css/style.css?v=57">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
@@ -105,7 +105,7 @@
         </div>
       </div>
       <div class="header-actions">
-        <select id="global-branch-filter" class="header-branch-filter" title="Filtro global por sucursal / ciudad">
+        <select id="global-branch-filter" class="header-branch-filter" title="Sucursales — filtro global">
           <option value="">Todas las sucursales</option>
         </select>
         <div id="header-alerts" class="header-alerts" aria-live="polite">
@@ -156,7 +156,7 @@
     <button type="button" data-tab="clientes" class="tab" title="Clientes (Ctrl+1)"><i class="fas fa-users"></i> Clientes</button>
     <button type="button" data-tab="refacciones" class="tab" title="Refacciones (Ctrl+2)"><i class="fas fa-cogs"></i> Refacciones</button>
     <button type="button" data-tab="maquinas" class="tab" title="Máquinas (Ctrl+3)"><i class="fas fa-industry"></i> Máquinas</button>
-    <button type="button" data-tab="cotizaciones" class="tab" title="Cotizaciones (Ctrl+4)"><i class="fas fa-file-invoice-dollar"></i> Cotizaciones</button>
+    <button type="button" data-tab="cotizaciones" class="tab" id="tab-cotizaciones" title="Cotizaciones (Ctrl+4)"><i class="fas fa-file-invoice-dollar"></i> Cotizaciones</button>
     <button type="button" data-tab="ventas" class="tab" title="Histórico de ventas aprobadas"><i class="fas fa-check-double"></i> Ventas</button>
     <button type="button" data-tab="prospeccion" class="tab" id="tab-prospeccion" title="Mapa y pipeline de prospectos (COVIA)"><i class="fas fa-map-marked-alt"></i> Prospección</button>
     <button type="button" data-tab="revision-maquinas" class="tab" title="Revisión y preparación de máquinas"><i class="fas fa-tools"></i> Revisión Máquinas</button>
@@ -167,10 +167,11 @@
     <button type="button" data-tab="garantias-sin-cobertura" class="tab" title="Garantías dadas de baja"><i class="fas fa-ban"></i> Sin cobertura</button>
     <button type="button" data-tab="bonos" class="tab comm-admin-only" title="Bonos y liquidación (solo administrador)"><i class="fas fa-award"></i> Bonos</button>
     <button type="button" data-tab="viajes" class="tab comm-admin-only" title="Viajes, viáticos y liquidación mensual (misma visibilidad que Bonos)"><i class="fas fa-plane"></i> Viajes</button>
-    <button type="button" data-tab="tecnicos" class="tab" id="tab-tecnicos" title="Personal: roles, vendedores y comisiones"><i class="fas fa-users"></i> Personal</button>
+    <button type="button" data-tab="tecnicos" class="tab" id="tab-tecnicos" title="Personal: puestos, vendedores y comisiones"><i class="fas fa-users"></i> Personal</button>
     <button type="button" data-tab="bitacoras" class="tab" title="Bitácora (Ctrl+6)"><i class="fas fa-clock"></i> Bitácora de horas</button>
     <button type="button" data-tab="auditoria" class="tab hidden" id="tab-auditoria" title="Auditoría (Ctrl+8, solo admin)"><i class="fas fa-clipboard-list"></i> Auditoría</button>
     <button type="button" data-tab="usuarios" class="tab hidden" id="tab-usuarios" title="Cuentas y permisos (solo admin)"><i class="fas fa-user-shield"></i> Usuarios</button>
+    <button type="button" data-tab="categorias-catalogo" class="tab hidden" id="tab-categorias-catalogo" title="Categorías y subcategorías (solo admin)"><i class="fas fa-sitemap"></i> Categorías</button>
     <button type="button" data-tab="demo" class="tab highlight" title="Cargar datos de ejemplo"><i class="fas fa-database"></i> Cargar demo</button>
     <button type="button" data-tab="acerca" class="tab" title="Acerca de (Ctrl+7)"><i class="fas fa-info-circle"></i> Acerca de</button>
   </nav>
@@ -255,6 +256,17 @@
         </table>
         <div class="table-footer" id="footer-tabla-clientes" aria-live="polite"></div>
       </div>
+      <div class="card module-delete-zone" style="margin-top:1rem;padding:1rem 1.25rem;">
+        <h3 style="margin:0 0 0.5rem 0;font-size:1rem;"><i class="fas fa-trash-alt"></i> Eliminar cliente</h3>
+        <p class="hint" style="margin:0 0 0.75rem 0;">Indica el <strong>ID</strong> numérico (columna Id en la tabla). Solo administrador si hay inicio de sesión.</p>
+        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;">
+          <div class="form-group" style="min-width:140px;">
+            <label for="delete-cliente-id">ID</label>
+            <input type="text" id="delete-cliente-id" class="filter-input" inputmode="numeric" placeholder="ej. 12" autocomplete="off">
+          </div>
+          <button type="button" id="btn-delete-cliente-zona" class="btn danger"><i class="fas fa-trash"></i> Eliminar</button>
+        </div>
+      </div>
     </section>
 
     <!-- REFACCIONES -->
@@ -283,7 +295,7 @@
         <table class="data-table filterable-table" id="tabla-refacciones" data-cache="refaccionesCache">
           <thead>
             <tr>
-              <th>Código</th><th>Descripción</th><th>Categoría</th><th>Zona</th><th>Stock</th><th>Mín.</th><th>Precio USD</th><th>Precio MXN</th><th>Unidad</th>
+              <th>Código</th><th>Descripción</th><th>Categoría</th><th>Zona</th><th>Bloque</th><th>Stock</th><th>Mín.</th><th>Precio USD</th><th>Unidad</th>
               <th class="th-actions">Acciones</th>
             </tr>
             <tr class="filter-row">
@@ -291,10 +303,10 @@
               <td><input type="text" class="filter-input" data-key="descripcion" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="categoria" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="zona" data-type="text" placeholder="Estante, Rack…"></td>
+              <td><input type="text" class="filter-input" data-key="bloque" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="stock" data-type="number" placeholder="&gt;0"></td>
               <td><input type="text" class="filter-input" data-key="stock_minimo" data-type="number" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="precio_usd" data-type="number" placeholder="&gt;10"></td>
-              <td><input type="text" class="filter-input" data-key="precio_unitario" data-type="number" placeholder="&gt;100, &lt;500"></td>
               <td><input type="text" class="filter-input" data-key="unidad" data-type="text" placeholder="Filtrar…"></td>
               <td class="th-actions"></td>
             </tr>
@@ -303,6 +315,17 @@
         </table>
         <div class="table-footer" id="footer-tabla-refacciones" aria-live="polite"></div>
       </div>
+      <div class="card module-delete-zone" style="margin-top:1rem;padding:1rem 1.25rem;">
+        <h3 style="margin:0 0 0.5rem 0;font-size:1rem;"><i class="fas fa-trash-alt"></i> Eliminar refacción</h3>
+        <p class="hint" style="margin:0 0 0.75rem 0;">Escribe el <strong>ID</strong> numérico o el <strong>código</strong> exacto. Solo administrador si hay inicio de sesión.</p>
+        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;">
+          <div class="form-group" style="min-width:200px;flex:1;">
+            <label for="delete-refaccion-id">ID o código</label>
+            <input type="text" id="delete-refaccion-id" class="filter-input" placeholder="ID o código" autocomplete="off">
+          </div>
+          <button type="button" id="btn-delete-refaccion-zona" class="btn danger"><i class="fas fa-trash"></i> Eliminar</button>
+        </div>
+      </div>
     </section>
 
     <!-- MÁQUINAS -->
@@ -310,15 +333,6 @@
       <div class="section-header">
         <h2><i class="fas fa-industry"></i> Catálogo de máquinas</h2>
         <div class="toolbar">
-          <select id="filtro-cliente-maq">
-            <option value="">Todos los clientes</option>
-          </select>
-          <select id="filtro-categoria-maq" title="Filtrar por categoría">
-            <option value="">Todas las categorías</option>
-          </select>
-          <select id="filtro-zona-maq" title="Filtrar por zona">
-            <option value="">Todas las zonas</option>
-          </select>
           <button type="button" id="toggle-view-maquinas" class="btn outline" title="Cambiar vista tabla/tarjetas"><i class="fas fa-th-large"></i> Vista tarjetas</button>
           <button type="button" id="export-maquinas" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
           <button type="button" id="export-excel-maquinas" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
@@ -330,12 +344,13 @@
         <table class="data-table filterable-table" id="tabla-maquinas" data-cache="maquinasCache">
           <thead>
             <tr>
-              <th>Id</th><th>Categoría</th><th>Modelo</th><th>Ficha técnica</th>
+              <th>Id</th><th>Nombre máquina</th><th>Parte</th><th>Versión</th><th>Ficha técnica</th>
               <th class="th-actions">Acciones</th>
             </tr>
             <tr class="filter-row">
               <td><input type="text" class="filter-input" data-key="id" data-type="number" placeholder="ej. &gt;1"></td>
               <td><input type="text" class="filter-input" data-key="categoria" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="subcategoria" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="modelo" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="ficha_tecnica" data-type="text" placeholder="Filtrar…"></td>
               <td class="th-actions"></td>
@@ -347,6 +362,17 @@
       </div>
       <!-- Vista tarjetas -->
       <div id="maquinas-cards-wrap" class="maquinas-cards-grid hidden"></div>
+      <div class="card module-delete-zone" style="margin-top:1rem;padding:1rem 1.25rem;">
+        <h3 style="margin:0 0 0.5rem 0;font-size:1rem;"><i class="fas fa-trash-alt"></i> Eliminar máquina (catálogo)</h3>
+        <p class="hint" style="margin:0 0 0.75rem 0;">Indica el <strong>ID</strong> numérico de la fila en la tabla. Solo administrador si hay inicio de sesión.</p>
+        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;">
+          <div class="form-group" style="min-width:140px;">
+            <label for="delete-maquina-id">ID</label>
+            <input type="text" id="delete-maquina-id" class="filter-input" inputmode="numeric" placeholder="ej. 5" autocomplete="off">
+          </div>
+          <button type="button" id="btn-delete-maquina-zona" class="btn danger"><i class="fas fa-trash"></i> Eliminar</button>
+        </div>
+      </div>
     </section>
 
     <!-- COTIZACIONES -->
@@ -360,6 +386,21 @@
           <button type="button" id="export-cotizaciones" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
           <button type="button" id="export-excel-cotizaciones" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
           <button type="button" id="nueva-cotizacion" class="btn primary"><i class="fas fa-plus"></i> Nueva cotización</button>
+        </div>
+      </div>
+      <div id="cotizaciones-comisiones-david-wrap" class="comm-admin-only cotizacion-comisiones-david-wrap hidden" aria-live="polite">
+        <div class="david-comisiones-card">
+          <div class="david-comisiones-head">
+            <div class="david-comisiones-head-text">
+              <h3><i class="fas fa-hand-holding-usd"></i> Comisiones David Cantú</h3>
+              <p class="david-comisiones-sub">Sobre ventas ya aprobadas: <strong>15%</strong> cuando el cliente es David Cantú en refacciones, y <strong>15%</strong> cuando David vende equipo/máquina. Importes en moneda de la cotización.</p>
+            </div>
+            <button type="button" id="btn-email-david-comisiones" class="btn outline david-comisiones-mail-btn" title="Abre tu correo con el resumen (elige el destinatario)">
+              <i class="fas fa-envelope"></i> Enviar resumen por correo
+            </button>
+          </div>
+          <div id="cotizaciones-comisiones-david-body" class="david-comisiones-body"></div>
+          <div id="cotizaciones-comisiones-david-total" class="david-comisiones-total" hidden></div>
         </div>
       </div>
       <div id="cotizaciones-empty" class="empty-card hidden">
@@ -391,6 +432,17 @@
           <tbody></tbody>
         </table>
         <div class="table-footer" id="footer-tabla-cotizaciones" aria-live="polite"></div>
+      </div>
+      <div class="card module-delete-zone" style="margin-top:1rem;padding:1rem 1.25rem;">
+        <h3 style="margin:0 0 0.5rem 0;font-size:1rem;"><i class="fas fa-trash-alt"></i> Eliminar cotización</h3>
+        <p class="hint" style="margin:0 0 0.75rem 0;">Escribe el <strong>ID</strong> numérico o el <strong>folio</strong> exacto. Se eliminan también las líneas. Solo administrador si hay inicio de sesión.</p>
+        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;">
+          <div class="form-group" style="min-width:200px;flex:1;">
+            <label for="delete-cotizacion-id">ID o folio</label>
+            <input type="text" id="delete-cotizacion-id" class="filter-input" placeholder="ID o folio" autocomplete="off">
+          </div>
+          <button type="button" id="btn-delete-cotizacion-zona" class="btn danger"><i class="fas fa-trash"></i> Eliminar</button>
+        </div>
       </div>
     </section>
 
@@ -480,7 +532,7 @@
         <table class="data-table filterable-table" id="tabla-revision-maquinas">
           <thead>
             <tr>
-              <th>Id</th><th>Categoría</th><th>Modelo</th><th>Nº Serie</th><th>Entregado</th><th>Prueba</th><th>Comentarios</th><th class="th-actions">Acciones</th>
+              <th>Id</th><th>Nombre máquina</th><th>Versión</th><th>Nº Serie</th><th>Entregado</th><th>Prueba</th><th>Comentarios</th><th class="th-actions">Acciones</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -539,7 +591,7 @@
           <ul class="tarifas-notas-list">
             <li>Cotización de <strong>mano de obra</strong>: (Hrs trabajo × tarifa/hr) + (Hrs traslado × tarifa traslado) + (Días × viático/día × nº personas). Tope: 2 personas en viaje.</li>
             <li class="comm-admin-only">Cotización de <strong>refacciones</strong>: precio USD × tipo de cambio Banxico (o manual). Comisión del <span id="nota-comision-ref">15</span>% sobre total.</li>
-            <li class="comm-admin-only">Cotización de <strong>máquina</strong>: precio USD × tipo de cambio. Si vendedor = David Cantú: comisión del <span id="nota-comision-maq">10</span>%.</li>
+            <li class="comm-admin-only">Cotización de <strong>máquina</strong>: precio USD × tipo de cambio. Si vendedor = David Cantú: comisión del <span id="nota-comision-maq">15</span>% (resumen en <strong>Cotizaciones → Comisiones David Cantú</strong>).</li>
             <li class="comm-admin-only"><strong>Bono por facturación</strong>: $<span id="nota-bono-20k">1,000</span> por cada $20,000 facturados. Si supera $40,000: bono máximo $<span id="nota-bono-40k">2,000</span>.</li>
             <li class="comm-admin-only"><strong>Bono por viaje</strong>: $<span id="nota-bono-dia">500</span>/día/persona si es fuera de ciudad.</li>
           </ul>
@@ -808,7 +860,7 @@
         <table class="data-table" id="tabla-tecnicos">
           <thead>
             <tr>
-              <th>Nombre</th><th>Rol</th><th>Puesto</th><th>Depto.</th><th>Ventas</th><th>Habilidades</th><th>Disponibilidad</th><th>Activo</th>
+              <th>Nombre</th><th>Puesto</th><th>Depto.</th><th>Ventas</th><th>Habilidades</th><th>INE / Lic.</th><th>Disponibilidad</th><th>Activo</th>
               <th class="th-actions">Acciones</th>
             </tr>
           </thead>
@@ -889,7 +941,7 @@
     <section id="panel-usuarios" class="panel" aria-label="Usuarios y permisos">
       <div class="section-header">
         <h2><i class="fas fa-user-shield"></i> Usuarios y permisos</h2>
-        <p class="hint">Solo el administrador puede crear cuentas y asignar roles. <strong>Invitado / Consulta</strong> = solo ver. <strong>Usuario / Operador</strong> = cotizaciones y reportes (sin editar catálogos maestros).</p>
+        <p class="hint">Solo el administrador puede crear cuentas y asignar roles. Puede <strong>eliminar usuarios</strong> (no a ti mismo ni al único admin activo); cada baja queda registrada abajo. <strong>Invitado / Consulta</strong> = solo ver. <strong>Usuario / Operador</strong> = cotizaciones y reportes (sin editar catálogos maestros).</p>
       </div>
       <div class="card" style="margin-bottom:1rem;padding:1rem 1.25rem;">
         <h3 style="margin:0 0 0.75rem 0;font-size:1rem;">Nuevo usuario</h3>
@@ -926,11 +978,85 @@
               <th>Usuario</th>
               <th>Nombre</th>
               <th>Rol</th>
+              <th>Personal (cotizar)</th>
               <th>Activo</th>
               <th>Alta</th>
+              <th style="width:7rem;">Acciones</th>
             </tr>
           </thead>
           <tbody id="tabla-usuarios-body"></tbody>
+        </table>
+      </div>
+      <div class="card" style="margin-top:1rem;padding:1rem 1.25rem;">
+        <div class="section-header" style="margin-bottom:0.75rem;">
+          <h3 style="margin:0;font-size:1rem;"><i class="fas fa-archive"></i> Registro de usuarios eliminados</h3>
+        </div>
+        <p class="hint" style="margin:0 0 0.75rem 0;">Historial de cuentas dadas de baja. Usa <strong>Correo</strong> para abrir tu cliente de correo con el texto listo (configura el destinatario opcional).</p>
+        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;margin-bottom:0.75rem;">
+          <div class="form-group" style="min-width:220px;flex:1;">
+            <label for="usuarios-notify-email">Correo destino (opcional)</label>
+            <input type="email" id="usuarios-notify-email" class="filter-input" placeholder="ej. rrhh@empresa.com" autocomplete="email" title="Se guarda en este navegador">
+          </div>
+          <button type="button" id="btn-usuarios-email-resumen" class="btn outline"><i class="fas fa-envelope"></i> Enviar resumen por correo</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="tabla-usuarios-eliminados">
+            <thead>
+              <tr>
+                <th>Usuario</th>
+                <th>Nombre</th>
+                <th>Rol</th>
+                <th>Eliminado</th>
+                <th>Eliminado por</th>
+                <th style="width:8rem;">Correo</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-usuarios-eliminados-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- CATEGORÍAS / SUBCATEGORÍAS (solo admin con login) -->
+    <section id="panel-categorias-catalogo" class="panel" aria-label="Categorías y subcategorías">
+      <div class="section-header">
+        <h2><i class="fas fa-sitemap"></i> Categorías y subcategorías</h2>
+        <p class="hint">Solo el <strong>administrador</strong> puede crear, editar o eliminar. Refacciones y máquinas usan estas listas en los formularios y filtros.</p>
+      </div>
+      <div class="card" style="margin-bottom:1rem;padding:1rem 1.25rem;">
+        <h3 style="margin:0 0 0.75rem 0;font-size:1rem;">Nueva categoría</h3>
+        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;">
+          <div class="form-group" style="min-width:200px;flex:1;">
+            <label for="cat-admin-new-nombre">Nombre</label>
+            <input type="text" id="cat-admin-new-nombre" maxlength="120" placeholder="Ej. Fresadora" class="filter-input">
+          </div>
+          <button type="button" id="cat-admin-add-categoria" class="btn primary"><i class="fas fa-plus"></i> Agregar categoría</button>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:1rem;padding:1rem 1.25rem;">
+        <h3 style="margin:0 0 0.75rem 0;font-size:1rem;">Nueva subcategoría</h3>
+        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;">
+          <div class="form-group" style="min-width:180px;">
+            <label for="cat-admin-sub-padre">Categoría padre</label>
+            <select id="cat-admin-sub-padre" class="filter-input"></select>
+          </div>
+          <div class="form-group" style="min-width:200px;flex:1;">
+            <label for="cat-admin-new-sub">Nombre</label>
+            <input type="text" id="cat-admin-new-sub" maxlength="120" placeholder="Ej. Husillo" class="filter-input">
+          </div>
+          <button type="button" id="cat-admin-add-sub" class="btn primary"><i class="fas fa-plus"></i> Agregar subcategoría</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="tabla-categorias-admin">
+          <thead>
+            <tr>
+              <th>Categoría</th>
+              <th>Subcategorías</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-categorias-admin-body"></tbody>
         </table>
       </div>
     </section>

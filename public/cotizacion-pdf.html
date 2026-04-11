@@ -43,11 +43,22 @@
       width: 100%;
       max-width: 196mm;
       margin: 0 auto;
-      padding: 7mm 8mm;
+      padding: 7mm 8mm 8mm 9mm;
       background: #fff;
       border: 1px solid #e2e8f0;
       border-radius: 14px;
       box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+      position: relative;
+    }
+    .doc::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 10mm;
+      bottom: 10mm;
+      width: 3px;
+      border-radius: 3px;
+      background: linear-gradient(180deg, #1e3a5f 0%, #0d9488 55%, #2563eb 100%);
     }
     .head {
       border-radius: 12px;
@@ -64,12 +75,15 @@
     .brand p { margin: 2px 0 0 0; font-size: 10px; opacity: .9; }
     .meta-mini { font-size: 10px; text-align: right; }
     .title {
-      margin: 8px 0 9px;
+      margin: 8px auto 10px;
       text-align: center;
-      font-size: 19px;
+      font-size: 20px;
       font-weight: 900;
-      letter-spacing: .08em;
+      letter-spacing: .12em;
       color: var(--p);
+      padding-bottom: 6px;
+      border-bottom: 2px solid #e0e7ff;
+      max-width: 92%;
     }
     .meta-grid {
       display: grid;
@@ -97,7 +111,8 @@
     .totals p:last-child { color: #115e59; font-size: 11px; border-top: 1px dashed #99f6e4; padding-top: 4px; }
     table { width: 100%; border-collapse: collapse; margin: 7px 0; font-size: 10px; }
     th, td { border: 1px solid #dbeafe; padding: 6px; }
-    th { background: #eff6ff; color: #1e3a8a; text-transform: uppercase; letter-spacing: .04em; font-size: 9px; }
+    th { background: linear-gradient(180deg, #eff6ff 0%, #e0f2fe 100%); color: #1e3a8a; text-transform: uppercase; letter-spacing: .05em; font-size: 9px; }
+    tbody tr:nth-child(even) td { background: #f8fafc; }
     td.num { text-align: right; font-variant-numeric: tabular-nums; }
     .notes {
       margin-top: 6px;
@@ -112,6 +127,15 @@
     .proposal-card { border: 1px solid #dbeafe; border-radius: 8px; padding: 7px; background: #f8fbff; }
     .proposal-card h4 { margin: 0 0 4px; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: #1e3a8a; }
     .proposal-card p { margin: 0; font-size: 9.5px; color: #475569; line-height: 1.35; }
+    .doc-foot {
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 8px;
+      color: #94a3b8;
+      text-align: center;
+      letter-spacing: .02em;
+    }
     .sign { margin-top: 12px; padding-top: 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
     .line { border-bottom: 1.5px solid #94a3b8; height: 14px; margin-bottom: 2px; }
     .lbl { font-size: 9px; color: #64748b; text-transform: uppercase; }
@@ -351,6 +375,7 @@
               <div><div class="line"></div><div class="lbl">Firma de aceptación</div></div>
               <div><div class="line"></div><div class="lbl">Nombre y fecha</div></div>
             </div>
+            <div class="doc-foot">Documento generado para fines informativos · Vigencia y disponibilidad sujetas a condiciones comerciales.</div>
           </div>
         `;
         document.getElementById('doc-body').innerHTML = html;

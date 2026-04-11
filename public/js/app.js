@@ -8,13 +8,17 @@
   const BGM_DEFAULT_VOL = 0.05;
   const BGM_VOL_STEP = 0.05;
   const BGM_SRC = '/audio/Technology-Song.wav';
-  /** Monto sugerido al crear un bono nuevo (MXN); editable antes de guardar. */
-  const DEFAULT_BONO_MXN = 500;
+  /** Monto sugerido al crear un bono nuevo (USD); editable antes de guardar. */
+  const DEFAULT_BONO_USD = 30;
   let bgMusicEl = null;
   let refreshSoundToggleUi = function () {};
   let serverConfig = Object.assign({}, typeof window.__APP_CONFIG__ === 'object' && window.__APP_CONFIG__ ? window.__APP_CONFIG__ : {});
   let clientesCache = [];
   let refaccionesCache = [];
+  /** Árbol GET /api/categorias-catalogo para filtros de refacciones. */
+  let categoriasCatalogoTree = { categorias: [] };
+  /** Copia para edición/eliminación en panel admin de categorías. */
+  let categoriasAdminTree = null;
   let maquinasCache = [];
   let cotizacionesCache = [];
   let incidentesCache = [];
@@ -199,6 +203,12 @@
     if (!serverConfig.authRequired) return true;
     return u && u.role === 'admin';
   }
+  /** Entradas/salidas y conteo físico: admin, operador y usuario (no consulta/invitado). */
+  function canAdjustStock() {
+    const u = getSessionUser();
+    if (!serverConfig.authRequired) return true;
+    return u && ['admin', 'operador', 'usuario'].includes(u.role);
+  }
   function getRoleLabel(role) {
     const labels = {
       admin: 'Administrador',
@@ -220,6 +230,24 @@
     if (!serverConfig.authRequired) return true;
     const u = getSessionUser();
     return !!(u && u.role === 'admin');
+  }
+  /** Pestaña y API de cotizaciones: admin/operador siempre; usuario solo si está vinculado a Personal como vendedor. */
+  function canAccessCotizaciones() {
+    if (!serverConfig.authRequired) return true;
+    const u = getSessionUser();
+    return !!(u && u.canCotizar);
+  }
+  async function refreshSessionUser() {
+    if (!serverConfig.authRequired || !getAuthToken()) return;
+    try {
+      const r = await fetch('/api/auth/me', { headers: { Authorization: 'Bearer ' + getAuthToken() } });
+      const j = await r.json();
+      if (r.ok && j.user) setAuthSession(getAuthToken(), j.user);
+    } catch (_) {}
+  }
+  function updateCotizacionesTabVisibility() {
+    const tab = qs('#tab-cotizaciones');
+    if (tab) tab.classList.toggle('hidden', !canAccessCotizaciones());
   }
   function updateCommissionsUiVisibility() {
     document.documentElement.classList.toggle('hide-commissions', !canViewCommissions());
@@ -470,7 +498,7 @@
 
   const LAST_TAB_KEY = 'cotizacion-last-tab';
   const VALID_TABS = ['dashboards', 'clientes', 'refacciones', 'maquinas', 'cotizaciones', 'reportes', 'garantias', 'mantenimiento-garantia', 'garantias-sin-cobertura', 'bonos', 'viajes', 'bitacoras', 'prospeccion'];
-  const TABS_PERSIST = VALID_TABS.concat(['auditoria', 'usuarios']);
+  const TABS_PERSIST = VALID_TABS.concat(['auditoria', 'usuarios', 'categorias-catalogo']);
   let reportesCache = [];
   let garantiasCache = [];
   let mantenimientosGarantiaCache = [];
@@ -478,6 +506,7 @@
   let bonosCache = [];
   let viajesCache = [];
   let tecnicosCache = [];
+  let appUsersDeletedCache = [];
   let lastQuickRefreshAt = 0;
   function spawnLoginParticles() {
     const overlay = qs('#login-overlay');
@@ -512,11 +541,19 @@
   function updateAuditTabVisibility() {
     const tab = qs('#tab-auditoria');
     const tabUsers = qs('#tab-usuarios');
+    const tabCat = qs('#tab-categorias-catalogo');
     const u = getSessionUser();
     const showAudit = !!(serverConfig.auditUi && u && u.role === 'admin');
     if (tab) tab.classList.toggle('hidden', !showAudit);
     const showUsers = !!(serverConfig.authRequired && u && u.role === 'admin');
     if (tabUsers) tabUsers.classList.toggle('hidden', !showUsers);
+    const showCatAdmin = !!(serverConfig.authRequired && u && u.role === 'admin');
+    if (tabCat) tabCat.classList.toggle('hidden', !showCatAdmin);
+    if (serverConfig.authRequired && u && u.role !== 'admin') {
+      const activeTab = document.querySelector('.tab.active');
+      const at = activeTab && activeTab.dataset && activeTab.dataset.tab;
+      if (at === 'usuarios' || at === 'categorias-catalogo') showPanel('dashboards');
+    }
     const showAdminModules = canAccessAdminOnlyModules();
     ['tab-prospeccion', 'tab-tarifas', 'tab-tecnicos'].forEach(function (tid) {
       const t = qs('#' + tid);
@@ -529,6 +566,7 @@
         showPanel('dashboards');
       }
     }
+    updateCotizacionesTabVisibility();
     updateCommissionsUiVisibility();
   }
   function syncSessionHeader() {
@@ -545,6 +583,7 @@
       wrap.classList.add('hidden');
       if (out) out.classList.add('hidden');
     }
+    syncModuleDeleteZonesVisibility();
   }
   function setupLoginForm() {
     const form = qs('#login-form');
@@ -596,6 +635,7 @@
         showLoginOverlay(false);
         applyBranding();
         updateAuditTabVisibility();
+        updateCotizacionesTabVisibility();
         syncSessionHeader();
         if (p) p.value = '';
         finishBoot();
@@ -661,6 +701,7 @@
       acerca: 'Acerca de',
       auditoria: 'Auditoría',
       usuarios: 'Usuarios',
+      'categorias-catalogo': 'Categorías',
     };
     const section = map[panelId] || 'Inicio';
     document.title = section + ' · ' + base;
@@ -691,12 +732,23 @@
         return;
       }
     }
+    if (id === 'categorias-catalogo') {
+      const u = getSessionUser();
+      if (!serverConfig.authRequired || !u || u.role !== 'admin') {
+        showToast('Solo el administrador puede gestionar categorías y subcategorías.', 'error');
+        return;
+      }
+    }
     if ((id === 'bonos' || id === 'viajes') && !canViewCommissions()) {
       showToast('Solo el administrador puede ver bonos, viajes y comisiones.', 'error');
       return;
     }
     if ((id === 'prospeccion' || id === 'tarifas' || id === 'tecnicos') && !canAccessAdminOnlyModules()) {
       showToast('Solo el administrador puede acceder a esta sección.', 'error');
+      return;
+    }
+    if (id === 'cotizaciones' && !canAccessCotizaciones()) {
+      showToast('No tienes acceso a cotizaciones. Un administrador debe vincular tu cuenta a Personal marcado como vendedor, o asignarte rol operador/administrador.', 'error');
       return;
     }
     qsAll('.panel').forEach(p => p.classList.remove('active'));
@@ -709,7 +761,23 @@
       void panel.offsetWidth; // reflow
       panel.classList.add('active');
     }
-    if (tab) tab.classList.add('active');
+    if (tab) {
+      tab.classList.add('active');
+      requestAnimationFrame(() => {
+        try {
+          const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          tab.scrollIntoView({
+            inline: 'center',
+            block: 'nearest',
+            behavior: reduceMotion ? 'auto' : 'smooth',
+          });
+        } catch (_) {
+          try {
+            tab.scrollIntoView(false);
+          } catch (_) {}
+        }
+      });
+    }
     if (TABS_PERSIST.indexOf(id) >= 0) try { localStorage.setItem(LAST_TAB_KEY, id); } catch (_) {}
     updateDocumentTitle(id);
     if (skipLoad) return;
@@ -729,6 +797,7 @@
     if (id === 'acerca') { /* solo mostrar panel */ }
     if (id === 'auditoria') loadAuditLog();
     if (id === 'usuarios') loadAppUsers();
+    if (id === 'categorias-catalogo') loadCategoriasAdminPanel();
     if (id === 'ventas') loadVentas();
     if (id === 'prospeccion') loadProspeccion();
     if (id === 'revision-maquinas') loadRevisionMaquinas();
@@ -783,6 +852,139 @@
     return ka && kb && ka === kb;
   }
 
+  /** Comisiones especiales David Cantú: 15% refacciones con cliente David; 15% máquina vendida por David (solo admin UI). */
+  const DAVID_CANTU_COMISION_PCT = 15;
+  let davidComisionesRowsCache = [];
+
+  function isDavidVendedorCot(v) {
+    if (!v) return false;
+    if (isSameTecnicoNombre(v.vendedor, 'David Cantu')) return true;
+    const vid = v.vendedor_personal_id;
+    if (vid == null || vid === '') return false;
+    const t = (tecnicosCache || []).find(function (x) { return String(x.id) === String(vid); });
+    return !!(t && isSameTecnicoNombre(t.nombre, 'David Cantu'));
+  }
+
+  function computeDavidCantuComisionRows(ventas) {
+    const rows = [];
+    for (const v of toArray(ventas)) {
+      const tipo = String(v.tipo || '').toLowerCase();
+      const total = Number(v.total) || 0;
+      const cliente = v.cliente_nombre || '';
+      const pct = DAVID_CANTU_COMISION_PCT;
+      const monto = Math.round(total * pct * 100) / 10000;
+      if (tipo === 'refacciones' && isSameTecnicoNombre(cliente, 'David Cantu')) {
+        rows.push({
+          folio: v.folio,
+          fecha: String(v.fecha_aprobacion || v.fecha || '').slice(0, 10),
+          regla: 'refacciones_a_david',
+          concepto: 'Refacciones · cliente David Cantú',
+          detalle: '15% sobre el total de la venta por venta de refacciones a David Cantú.',
+          base: total,
+          pct: pct,
+          monto: monto,
+          moneda: (v.moneda || 'USD').toUpperCase(),
+          vendedor: v.vendedor || '—',
+        });
+        continue;
+      }
+      if (tipo === 'maquina' && isDavidVendedorCot(v)) {
+        rows.push({
+          folio: v.folio,
+          fecha: String(v.fecha_aprobacion || v.fecha || '').slice(0, 10),
+          regla: 'maquina_vende_david',
+          concepto: 'Equipo / máquina · vende David Cantú',
+          detalle: '15% sobre el total cuando David Cantú vende máquina.',
+          base: total,
+          pct: pct,
+          monto: monto,
+          moneda: (v.moneda || 'USD').toUpperCase(),
+          vendedor: v.vendedor || '—',
+        });
+      }
+    }
+    return rows;
+  }
+
+  function fmtCotizacionMontoMoneda(v, amount) {
+    const mon = (v.moneda || 'USD').toUpperCase();
+    const n = Number(amount) || 0;
+    if (mon === 'USD') return 'US$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return '$' + n.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  async function refreshDavidComisionesCotPanel() {
+    const wrap = qs('#cotizaciones-comisiones-david-wrap');
+    const bodyEl = qs('#cotizaciones-comisiones-david-body');
+    const totalEl = qs('#cotizaciones-comisiones-david-total');
+    if (!wrap || !bodyEl) return;
+    if (!canViewCommissions()) {
+      wrap.classList.add('hidden');
+      davidComisionesRowsCache = [];
+      return;
+    }
+    try {
+      if (!tecnicosCache || !tecnicosCache.length) {
+        try {
+          tecnicosCache = toArray(await fetchJson(API + '/tecnicos'));
+        } catch (_) {}
+      }
+      const ventas = toArray(await fetchJson(API + '/ventas'));
+      if (!ventas.length) {
+        wrap.classList.add('hidden');
+        davidComisionesRowsCache = [];
+        return;
+      }
+      wrap.classList.remove('hidden');
+      const rows = computeDavidCantuComisionRows(ventas);
+      davidComisionesRowsCache = rows.slice();
+      if (!rows.length) {
+        bodyEl.innerHTML =
+          '<p class="david-comisiones-empty"><i class="fas fa-info-circle"></i> Aún no hay ventas que apliquen: refacciones con <strong>cliente</strong> David Cantú, o <strong>máquina</strong> con vendedor David Cantú.</p>';
+        if (totalEl) {
+          totalEl.hidden = true;
+          totalEl.innerHTML = '';
+        }
+        return;
+      }
+      let sumMxn = 0;
+      let sumUsd = 0;
+      const trs = rows
+        .map(function (r) {
+          const fakeV = { moneda: r.moneda };
+          if (r.moneda === 'USD') sumUsd += r.monto;
+          else sumMxn += r.monto;
+          return `<tr>
+            <td>${escapeHtml(String(r.folio || ''))}</td>
+            <td>${escapeHtml(r.fecha)}</td>
+            <td><span class="david-comisiones-badge">${escapeHtml(r.concepto)}</span></td>
+            <td class="td-text-wrap">${escapeHtml(r.detalle)}</td>
+            <td>${escapeHtml(String(r.vendedor))}</td>
+            <td class="num">${fmtCotizacionMontoMoneda(fakeV, r.base)}</td>
+            <td class="num david-comisiones-pct">${r.pct}%</td>
+            <td class="num david-comisiones-monto">${fmtCotizacionMontoMoneda(fakeV, r.monto)}</td>
+          </tr>`;
+        })
+        .join('');
+      bodyEl.innerHTML =
+        '<table class="data-table david-comisiones-table"><thead><tr>' +
+        '<th>Folio</th><th>Fecha</th><th>Concepto</th><th>Detalle</th><th>Vendedor</th><th class="num">Base (total)</th><th class="num">%</th><th class="num">Comisión</th>' +
+        '</tr></thead><tbody>' +
+        trs +
+        '</tbody></table>';
+      if (totalEl) {
+        const parts = [];
+        if (sumMxn > 0) parts.push('<strong>Total MXN:</strong> ' + formatMoney(sumMxn));
+        if (sumUsd > 0) parts.push('<strong>Total USD:</strong> US$' + sumUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+        totalEl.innerHTML = '<div class="david-comisiones-total-inner">' + parts.join(' &nbsp;·&nbsp; ') + '</div>';
+        totalEl.hidden = false;
+      }
+    } catch (_) {
+      wrap.classList.add('hidden');
+      davidComisionesRowsCache = [];
+    }
+  }
+
   /**
    * Una opción por persona en selects: evita "David Cantu" y "David Cantu," duplicados.
    * Prefiere la variante sin coma al final; fusiona flag ocupado (reportes).
@@ -829,7 +1031,7 @@
     return confirm(msg || '¿Eliminar este registro?');
   }
 
-  function openConfirmModal(message, onConfirm) {
+  function openConfirmModal(message, onConfirm, opts) {
     const modal = qs('#confirm-modal');
     const title = qs('#confirm-title');
     const msgEl = qs('#confirm-message');
@@ -837,11 +1039,36 @@
     const btnCancel = qs('#confirm-btn-cancel');
     const btnClose = qs('#confirm-close');
     if (!modal || !msgEl || !btnOk) return void confirm(message);
+    const defLabel = 'Eliminar';
+    const defIcon = 'fa-trash';
+    const defClass = 'btn danger';
+    const o = opts && typeof opts === 'object' ? opts : {};
+    const useLabel = o.confirmLabel != null ? String(o.confirmLabel) : defLabel;
+    const useIcon = o.confirmIcon != null ? String(o.confirmIcon) : defIcon;
+    const useClass = o.confirmClass != null ? String(o.confirmClass) : defClass;
+    function resetOkButton() {
+      btnOk.className = defClass;
+      btnOk.innerHTML = '<i class="fas ' + defIcon + '"></i> ' + escapeHtml(defLabel);
+    }
+    function applyOkButton() {
+      btnOk.className = useClass;
+      btnOk.innerHTML = '<i class="fas ' + useIcon + '"></i> ' + escapeHtml(useLabel);
+    }
     title.textContent = 'Confirmar';
     msgEl.textContent = message || '¿Eliminar este registro?';
+    applyOkButton();
     modal.classList.remove('hidden');
-    const close = () => { modal.classList.add('hidden'); btnOk.onclick = null; btnCancel.onclick = null; btnClose.onclick = null; };
-    btnOk.onclick = () => { close(); if (typeof onConfirm === 'function') onConfirm(); };
+    const close = () => {
+      modal.classList.add('hidden');
+      resetOkButton();
+      btnOk.onclick = null;
+      btnCancel.onclick = null;
+      btnClose.onclick = null;
+    };
+    btnOk.onclick = () => {
+      close();
+      if (typeof onConfirm === 'function') onConfirm();
+    };
     btnCancel.onclick = close;
     btnClose.onclick = close;
   }
@@ -1384,6 +1611,222 @@
   }
 
   // ----- CLIENTES -----
+  async function downloadClienteConstanciaFile(id, suggestedName) {
+    try {
+      const headers = {};
+      const tok = getAuthToken();
+      if (tok) headers['Authorization'] = 'Bearer ' + tok;
+      const r = await fetch(API + '/clientes/' + encodeURIComponent(id) + '/constancia?download=1', { headers });
+      if (!r.ok) throw new Error('bad');
+      const blob = await r.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      let fn = (suggestedName || 'constancia').replace(/[^\w.\-\u00C0-\u024f]/g, '_') || 'constancia';
+      if (fn.indexOf('.') < 0 && blob.type) {
+        if (blob.type.indexOf('pdf') >= 0) fn += '.pdf';
+        else if (blob.type.indexOf('jpeg') >= 0) fn += '.jpg';
+        else if (blob.type.indexOf('png') >= 0) fn += '.png';
+      }
+      a.download = fn;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (_) {
+      showToast('No se pudo descargar la constancia.', 'error');
+    }
+  }
+
+  function makeImageThumbDataUrl(dataUrl, maxSize) {
+    maxSize = maxSize || 56;
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          let w = img.width;
+          let h = img.height;
+          if (w <= 0 || h <= 0) { resolve(null); return; }
+          const scale = Math.min(maxSize / w, maxSize / h, 1);
+          w = Math.round(w * scale);
+          h = Math.round(h * scale);
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', 0.65));
+        } catch (_) { resolve(null); }
+      };
+      img.onerror = () => resolve(null);
+      img.src = dataUrl;
+    });
+  }
+
+  /** Abre imagen a pantalla completa (overlay). PDF u otros: nueva pestaña. */
+  function openRefaccionMediaFull(url) {
+    const u = String(url || '');
+    if (!u) return;
+    const isImg = u.startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(u);
+    if (!isImg) {
+      try { window.open(u, '_blank', 'noopener,noreferrer'); } catch (_) {}
+      return;
+    }
+    const prev = document.getElementById('ref-img-lightbox');
+    if (prev) prev.remove();
+    const wrap = document.createElement('div');
+    wrap.id = 'ref-img-lightbox';
+    wrap.className = 'ref-img-lightbox';
+    wrap.setAttribute('role', 'dialog');
+    wrap.setAttribute('aria-modal', 'true');
+    const inner = document.createElement('div');
+    inner.className = 'ref-img-lightbox-inner';
+    const imgEl = document.createElement('img');
+    imgEl.alt = '';
+    imgEl.src = u;
+    inner.appendChild(imgEl);
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'ref-img-lightbox-close';
+    closeBtn.setAttribute('aria-label', 'Cerrar');
+    closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+    wrap.appendChild(closeBtn);
+    wrap.appendChild(inner);
+    document.body.appendChild(wrap);
+    const close = () => {
+      wrap.classList.add('ref-img-lightbox--out');
+      setTimeout(() => { wrap.remove(); document.removeEventListener('keydown', onKey); }, 200);
+    };
+    function onKey(e) {
+      if (e.key === 'Escape') close();
+    }
+    document.addEventListener('keydown', onKey);
+    wrap.addEventListener('click', (e) => { if (e.target === wrap || (e.target && e.target.closest('.ref-img-lightbox-close'))) close(); });
+    requestAnimationFrame(() => wrap.classList.add('ref-img-lightbox--in'));
+  }
+
+  /** Bloque bajo el título: imagen principal (número de parte) + miniatura pieza. */
+  function buildRefaccionPreviewUnderHeader(r) {
+    const imgPart = r.imagen_url ? String(r.imagen_url).trim() : '';
+    const imgPieza = r.manual_url ? String(r.manual_url).trim() : '';
+    if (!imgPart && !imgPieza) return '';
+    const isImg = (u) => u && (u.startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(u));
+    const isPdf = (u) => u && (u.startsWith('data:application/pdf') || /\.pdf(\?|$)/i.test(u));
+
+    function blockNumeroParte(url) {
+      if (isImg(url)) {
+        return (
+          '<div class="ref-pvc-hero-main">' +
+          '<span class="ref-pvc-hero-kicker"><i class="fas fa-barcode"></i> Número de parte</span>' +
+          '<button type="button" class="ref-pvc-hero-frame js-refaccion-open-media" data-url="' + escapeHtml(url) + '" title="Ver imagen completa">' +
+          '<img src="' + escapeHtml(url) + '" alt="Número de parte" loading="lazy">' +
+          '<span class="ref-pvc-hero-shine"></span>' +
+          '<span class="ref-pvc-hero-cta"><i class="fas fa-expand-alt"></i> Abrir imagen</span>' +
+          '</button></div>'
+        );
+      }
+      if (isPdf(url)) {
+        return (
+          '<div class="ref-pvc-hero-main">' +
+          '<span class="ref-pvc-hero-kicker"><i class="fas fa-barcode"></i> Número de parte</span>' +
+          '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" class="ref-pvc-hero-doc">' +
+          '<span class="ref-pvc-hero-doc-icon"><i class="fas fa-file-pdf"></i></span>' +
+          '<span>Abrir PDF</span><i class="fas fa-external-link-alt ref-pvc-hero-doc-arrow"></i></a></div>'
+        );
+      }
+      return (
+        '<div class="ref-pvc-hero-main">' +
+        '<span class="ref-pvc-hero-kicker"><i class="fas fa-barcode"></i> Número de parte</span>' +
+        '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" class="ref-pvc-hero-doc">' +
+        '<span class="ref-pvc-hero-doc-icon"><i class="fas fa-file-alt"></i></span>' +
+        '<span>Abrir archivo</span><i class="fas fa-external-link-alt ref-pvc-hero-doc-arrow"></i></a></div>'
+      );
+    }
+
+    function blockPiezaThumb(url, compact) {
+      if (isImg(url)) {
+        return (
+          '<aside class="ref-pvc-hero-side' + (compact ? ' ref-pvc-hero-side--thumb' : '') + '">' +
+          '<span class="ref-pvc-hero-kicker ref-pvc-hero-kicker--accent"><i class="fas fa-puzzle-piece"></i> Pieza</span>' +
+          '<div class="ref-pvc-pieza-card">' +
+          '<div class="ref-pvc-pieza-ring"></div>' +
+          '<img src="' + escapeHtml(url) + '" alt="Vista pieza" loading="lazy">' +
+          '</div>' +
+          '<button type="button" class="ref-pvc-pieza-mini-zoom js-refaccion-open-media" data-url="' + escapeHtml(url) + '" title="Ver imagen completa">' +
+          '<i class="fas fa-search-plus"></i></button>' +
+          '</aside>'
+        );
+      }
+      return (
+        '<aside class="ref-pvc-hero-side">' +
+        '<span class="ref-pvc-hero-kicker ref-pvc-hero-kicker--accent"><i class="fas fa-puzzle-piece"></i> Pieza</span>' +
+        '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" class="ref-pvc-hero-doc ref-pvc-hero-doc--compact">' +
+        '<span class="ref-pvc-hero-doc-icon"><i class="fas ' + (isPdf(url) ? 'fa-file-pdf' : 'fa-file-alt') + '"></i></span>' +
+        '<span>Abrir</span></a></aside>'
+      );
+    }
+
+    function blockPiezaSolo(url) {
+      if (isImg(url)) {
+        return (
+          '<div class="ref-pvc-hero-main ref-pvc-hero-main--solo">' +
+          '<span class="ref-pvc-hero-kicker"><i class="fas fa-puzzle-piece"></i> Pieza</span>' +
+          '<button type="button" class="ref-pvc-hero-frame js-refaccion-open-media" data-url="' + escapeHtml(url) + '">' +
+          '<img src="' + escapeHtml(url) + '" alt="Pieza" loading="lazy">' +
+          '<span class="ref-pvc-hero-shine"></span>' +
+          '<span class="ref-pvc-hero-cta"><i class="fas fa-expand-alt"></i> Abrir imagen</span>' +
+          '</button></div>'
+        );
+      }
+      if (isPdf(url)) {
+        return (
+          '<div class="ref-pvc-hero-main">' +
+          '<span class="ref-pvc-hero-kicker"><i class="fas fa-puzzle-piece"></i> Pieza</span>' +
+          '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" class="ref-pvc-hero-doc">' +
+          '<span class="ref-pvc-hero-doc-icon"><i class="fas fa-file-pdf"></i></span>' +
+          '<span>Abrir PDF</span><i class="fas fa-external-link-alt ref-pvc-hero-doc-arrow"></i></a></div>'
+        );
+      }
+      return (
+        '<div class="ref-pvc-hero-main">' +
+        '<span class="ref-pvc-hero-kicker"><i class="fas fa-puzzle-piece"></i> Pieza</span>' +
+        '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" class="ref-pvc-hero-doc">' +
+        '<span class="ref-pvc-hero-doc-icon"><i class="fas fa-file-alt"></i></span>' +
+        '<span>Abrir archivo</span><i class="fas fa-external-link-alt ref-pvc-hero-doc-arrow"></i></a></div>'
+      );
+    }
+
+    if (!imgPart && imgPieza) {
+      return '<div class="ref-pvc-hero"><div class="ref-pvc-hero-inner ref-pvc-hero-inner--single">' + blockPiezaSolo(imgPieza) + '</div></div>';
+    }
+
+    const mainHtml = imgPart ? blockNumeroParte(imgPart) : '';
+    const sideHtml = imgPieza ? blockPiezaThumb(imgPieza, !!imgPart) : '';
+    const layoutClass = mainHtml && sideHtml ? 'ref-pvc-hero-inner--split' : 'ref-pvc-hero-inner--single';
+    return '<div class="ref-pvc-hero"><div class="ref-pvc-hero-inner ' + layoutClass + '">' + mainHtml + sideHtml + '</div></div>';
+  }
+
+  /** Miniatura o icono (PDF/otro) para vistas previas de refacciones/máquinas. */
+  function previewMediaThumbBlock(url, title) {
+    const u = String(url || '');
+    if (!u) return '';
+    const isImg = u.startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(u);
+    if (isImg) {
+      return `<div class="pvc-preview-media"><img src="${escapeHtml(u)}" class="ref-foto-thumb" alt="${escapeHtml(title || '')}" style="max-height:140px;max-width:100%;object-fit:contain;border-radius:8px;border:1px solid var(--border-color,#e5e7eb);"></div>`;
+    }
+    const isPdf = u.startsWith('data:application/pdf') || /\.pdf(\?|$)/i.test(u) || /application\/pdf/i.test(u);
+    const icon = isPdf ? 'fa-file-pdf' : 'fa-file-alt';
+    const cls = isPdf ? 'cliente-const-slot--pdf' : 'cliente-const-slot--file';
+    return `<div class="pvc-preview-media"><span class="cliente-const-slot ${cls}" style="width:88px;height:88px;display:inline-flex;align-items:center;justify-content:center;" title="${escapeHtml(title || 'Archivo')}"><i class="fas ${icon} fa-2x"></i></span></div>`;
+  }
+
+  function clienteConstanciaThumbHtml(c) {
+    if (!c || !c.has_constancia) return '';
+    if (c.constancia_kind === 'image' && c.constancia_thumb_url) {
+      return `<span class="cliente-const-slot" title="Constancia fiscal"><img src="${escapeHtml(c.constancia_thumb_url)}" alt="" class="cliente-const-mini" loading="lazy"></span>`;
+    }
+    const icon = c.constancia_kind === 'pdf' ? 'fa-file-pdf' : 'fa-file-alt';
+    const cls = c.constancia_kind === 'pdf' ? 'cliente-const-slot--pdf' : 'cliente-const-slot--file';
+    return `<span class="cliente-const-slot ${cls}" title="Constancia (${c.constancia_kind === 'pdf' ? 'PDF' : 'documento'})"><i class="fas ${icon}"></i></span>`;
+  }
+
   function previewCliente(c) {
     openPreviewCard({
       title: c.nombre || 'Cliente',
@@ -1407,8 +1850,15 @@
           { label: 'Dirección', value: c.direccion, icon: 'fa-map-marker-alt', full: true },
           { label: 'Ciudad', value: c.ciudad, icon: 'fa-city' },
         ]
-      }]
+      }],
+      footerHtml: c.has_constancia
+        ? '<button type="button" class="btn primary" id="pvc-dl-constancia"><i class="fas fa-download"></i> Descargar constancia</button>'
+        : '',
     });
+    setTimeout(() => {
+      const btn = qs('#pvc-dl-constancia');
+      if (btn) btn.addEventListener('click', () => downloadClienteConstanciaFile(c.id, c.constancia_nombre || 'constancia'));
+    }, 0);
   }
   function renderClientes(data) {
     const tbody = qs('#tabla-clientes tbody');
@@ -1423,7 +1873,7 @@
       tr.innerHTML = `
         <td>${c.id}</td>
         <td>${escapeHtml(c.codigo || '')}</td>
-        <td>${escapeHtml(c.nombre || '')}</td>
+        <td class="td-cliente-nombre"><span class="cliente-nombre-wrap"><span class="cliente-nombre-text">${escapeHtml(c.nombre || '')}</span>${clienteConstanciaThumbHtml(c)}</span></td>
         <td>${escapeHtml(c.rfc || '')}</td>
         <td>${escapeHtml(c.contacto || '')}</td>
         <td>${escapeHtml(c.telefono || '')}</td>
@@ -1474,6 +1924,15 @@
   // ----- REFACCIONES -----
   function previewRefaccion(r) {
     const stockBajo = Number(r.stock) <= Number(r.stock_minimo || 1);
+    const underHeaderHtml = buildRefaccionPreviewUnderHeader(r);
+    const hasSeg =
+      (r.categoria && String(r.categoria).trim()) || (r.subcategoria && String(r.subcategoria).trim());
+    const footerHtml =
+      '<p class="pvc-footer-link-hint" style="font-size:0.82rem;color:var(--text-muted,#64748b);line-height:1.45;margin:0 0 0.75rem;">' +
+      '<i class="fas fa-link"></i> <strong>Línea</strong> y <strong>parte</strong> son los mismos segmentos que en <strong>Máquinas</strong> (campos <code>categoria</code> / <code>subcategoria</code>), definidos en <strong>Categorías</strong>. Se relacionan por <strong>texto igual</strong>. En cotización, cada línea usa <code>refaccion_id</code> o <code>maquina_id</code>.</p>' +
+      '<button type="button" class="btn outline btn-ref-to-maquinas"' +
+      (hasSeg ? '' : ' disabled title="Agrega línea o parte desde el catálogo"') +
+      '><i class="fas fa-industry"></i> Ver máquinas con esta línea/parte</button>';
     openPreviewCard({
       title: r.descripcion || 'Refacción',
       subtitle: r.codigo || '',
@@ -1481,37 +1940,41 @@
       color: 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)',
       badge: stockBajo ? 'Stock Bajo' : 'Stock OK',
       badgeClass: stockBajo ? 'pvc-badge--danger' : 'pvc-badge--success',
-      sections: [{
-        title: 'Identificación', icon: 'fa-barcode',
-        fields: [
-          { label: 'Código', value: r.codigo, icon: 'fa-barcode' },
-          { label: 'Descripción', value: r.descripcion, icon: 'fa-align-left', full: true },
-          { label: 'Categoría', value: r.categoria, icon: 'fa-tag' },
-          { label: 'Subcategoría', value: r.subcategoria, icon: 'fa-tags' },
-          { label: 'Zona', value: r.zona, icon: 'fa-map-marker-alt' },
-          { label: 'Unidad', value: r.unidad || 'PZA', icon: 'fa-ruler' },
-        ]
-      }, {
-        title: 'Inventario y precio', icon: 'fa-dollar-sign',
-        fields: [
-          { label: 'Stock actual', value: r.stock != null ? Number(r.stock).toLocaleString('es-MX') : '0', icon: 'fa-boxes', badge: stockBajo, badgeClass: stockBajo ? 'pvc-badge--danger' : '' },
-          { label: 'Stock mínimo', value: r.stock_minimo != null ? Number(r.stock_minimo) : 1, icon: 'fa-exclamation-triangle' },
-          { label: 'Precio MXN', value: r.precio_unitario != null && r.precio_unitario !== '' ? '$' + Number(r.precio_unitario).toLocaleString('es-MX', { minimumFractionDigits: 2 }) : '', icon: 'fa-money-bill-wave' },
-          { label: 'Precio USD', value: (() => { const u = resolveRefaccionPrecioUsd(r); return u != null ? 'US$' + u.toLocaleString('en-US', { minimumFractionDigits: 2 }) : ''; })(), icon: 'fa-dollar-sign' },
-          { label: 'Nº Parte Manual', value: r.numero_parte_manual, icon: 'fa-book' },
-        ]
-      }],
-      footerHtml: (r.categoria || '').trim()
-        ? `<p style="margin:0"><button type="button" class="btn small outline" id="ref-preview-goto-maquinas"><i class="fas fa-industry"></i> Ver máquinas (misma categoría)</button></p><p class="hint" style="margin:0.35rem 0 0;font-size:0.8rem">Abre el catálogo de máquinas con filtro por categoría si existe en el listado.</p>`
-        : '',
+      underHeaderHtml,
+      sections: [
+        {
+          title: 'Identificación', icon: 'fa-barcode',
+          fields: [
+            { label: 'Código', value: r.codigo, icon: 'fa-barcode' },
+            { label: 'Descripción', value: r.descripcion, icon: 'fa-align-left', full: true },
+            { label: 'Línea (nombre máquina)', value: r.categoria, icon: 'fa-layer-group' },
+            { label: 'Parte', value: r.subcategoria, icon: 'fa-puzzle-piece' },
+            { label: 'Zona', value: r.zona, icon: 'fa-map-marker-alt' },
+            { label: 'Bloque', value: r.bloque, icon: 'fa-th-large' },
+            { label: 'Unidad', value: r.unidad || 'PZA', icon: 'fa-ruler' },
+          ],
+        },
+        {
+          title: 'Inventario y precio', icon: 'fa-dollar-sign',
+          fields: [
+            { label: 'Stock actual', value: r.stock != null ? Number(r.stock).toLocaleString('es-MX') : '0', icon: 'fa-boxes', badge: stockBajo, badgeClass: stockBajo ? 'pvc-badge--danger' : '' },
+            { label: 'Stock mínimo', value: r.stock_minimo != null ? Number(r.stock_minimo) : 1, icon: 'fa-exclamation-triangle' },
+            { label: 'Precio lista (USD)', value: (() => { const u = resolveRefaccionPrecioUsd(r); return u != null ? 'US$' + u.toLocaleString('en-US', { minimumFractionDigits: 2 }) : ''; })(), icon: 'fa-dollar-sign' },
+            ...(r.tipo_cambio_registro != null && Number(r.tipo_cambio_registro) > 0
+              ? [{ label: 'T.C. al registrar (USD/MXN)', value: Number(r.tipo_cambio_registro).toFixed(4), icon: 'fa-exchange-alt' }]
+              : []),
+            { label: 'Nº Parte Manual', value: r.numero_parte_manual, icon: 'fa-book' },
+          ],
+        },
+      ],
+      footerHtml,
     });
-    const catGo = (r.categoria || '').trim();
-    if (catGo) {
-      setTimeout(() => {
-        const b = qs('#ref-preview-goto-maquinas');
-        if (b) b.onclick = () => { goToMaquinasFromRefaccionCategoria(catGo); };
-      }, 0);
-    }
+    setTimeout(() => {
+      const btn = qs('#modal-body .btn-ref-to-maquinas');
+      if (btn && !btn.disabled) {
+        btn.addEventListener('click', () => goToMaquinasFromRefaccionSegmentos(r.categoria, r.subcategoria));
+      }
+    }, 0);
   }
   function renderRefacciones(data) {
     const tbody = qs('#tabla-refacciones tbody');
@@ -1520,7 +1983,7 @@
       tbody.innerHTML = '<tr><td colspan="10" class="empty">No hay refacciones. Agrega una nueva.</td></tr>';
       return;
     }
-    const _canEdit = canEdit(); const _canDelete = canDelete();
+    const _canEdit = canEdit(); const _canDelete = canDelete(); const _canStock = canAdjustStock();
     // Alerta de stock bajo
     const bajos = data.filter(r => Number(r.stock) <= Number(r.stock_minimo || 1) && Number(r.stock_minimo || 1) > 0);
     const alertBar = qs('#ref-stock-alert-bar');
@@ -1542,14 +2005,14 @@
         <td>${escapeHtml(r.descripcion || '')}</td>
         <td>${escapeHtml(r.categoria || '')}${r.subcategoria ? ' / ' + escapeHtml(r.subcategoria) : ''}</td>
         <td>${escapeHtml(r.zona || '')}</td>
+        <td>${escapeHtml(r.bloque || '')}</td>
         <td class="${stockBajo ? 'stock-bajo' : ''}">${r.stock != null ? Number(r.stock).toLocaleString('es-MX') : '0'}</td>
         <td>${r.stock_minimo != null ? Number(r.stock_minimo) : 1}</td>
         <td>${formatRefaccionPrecioUsdCell(r)}</td>
-        <td>${r.precio_unitario != null && r.precio_unitario !== '' ? '$' + Number(r.precio_unitario).toLocaleString('es-MX', { minimumFractionDigits: 2 }) : ''}</td>
         <td>${escapeHtml(r.unidad || 'PZA')}</td>
         <td class="th-actions">
           <button type="button" class="btn small outline btn-preview-ref" data-id="${r.id}" title="Vista previa"><i class="fas fa-eye"></i></button>
-          <button type="button" class="btn small outline btn-stock-ref" data-id="${r.id}" title="Ajustar stock"><i class="fas fa-boxes"></i></button>
+          ${_canStock ? `<button type="button" class="btn small outline btn-stock-ref" data-id="${r.id}" title="Inventario: entrada, salida o conteo"><i class="fas fa-boxes"></i></button>` : ''}
           ${_canEdit ? `<button type="button" class="btn small primary btn-edit-ref" data-id="${r.id}"><i class="fas fa-edit"></i></button>` : ''}
           ${_canDelete ? `<button type="button" class="btn small danger btn-delete-ref" data-id="${r.id}"><i class="fas fa-trash"></i></button>` : ''}
         </td>
@@ -1583,14 +2046,81 @@
     } catch (e) { showToast(parseApiError(e) || 'No se pudo eliminar.', 'error'); }
   }
 
+  function refillRefaccionSubcategoriaOptions() {
+    const selCat = qs('#filtro-categoria-ref');
+    const selSub = qs('#filtro-subcategoria-ref');
+    if (!selCat || !selSub) return;
+    const cats = toArray(categoriasCatalogoTree && categoriasCatalogoTree.categorias);
+    const catVal = selCat.value;
+    const prevSub = selSub.value;
+    let subs = [];
+    if (!catVal) {
+      const seen = new Set();
+      cats.forEach((c) => {
+        toArray(c.subcategorias).forEach((s) => {
+          const n = s && s.nombre != null ? String(s.nombre) : '';
+          if (n && !seen.has(n)) {
+            seen.add(n);
+            subs.push(n);
+          }
+        });
+      });
+    } else {
+      const c = cats.find((x) => x.nombre === catVal);
+      subs = toArray(c && c.subcategorias).map((s) => (s && s.nombre != null ? String(s.nombre) : '')).filter(Boolean);
+    }
+    selSub.innerHTML =
+      '<option value="">Todas las subcategorías</option>' +
+      subs.map((n) => '<option value="' + escapeHtml(n) + '">' + escapeHtml(n) + '</option>').join('');
+    if (prevSub && subs.indexOf(prevSub) >= 0) selSub.value = prevSub;
+    else selSub.value = '';
+  }
+
+  function populateRefaccionCategoriaFiltersFromTree(tree) {
+    categoriasCatalogoTree = tree && tree.categorias ? tree : { categorias: [] };
+    const selCat = qs('#filtro-categoria-ref');
+    if (!selCat) return;
+    const prevCat = selCat.value;
+    const cats = toArray(categoriasCatalogoTree.categorias);
+    selCat.innerHTML =
+      '<option value="">Todas las categorías</option>' +
+      cats.map((c) => '<option value="' + escapeHtml(c.nombre) + '">' + escapeHtml(c.nombre) + '</option>').join('');
+    if (prevCat && [...selCat.options].some((o) => o.value === prevCat)) selCat.value = prevCat;
+    else selCat.value = '';
+    refillRefaccionSubcategoriaOptions();
+  }
+
+  function setupRefaccionFiltrosCategoriasOnce() {
+    const selCat = qs('#filtro-categoria-ref');
+    const selSub = qs('#filtro-subcategoria-ref');
+    if (!selCat || selCat._catFilterBound) return;
+    selCat._catFilterBound = true;
+    selCat.addEventListener('change', () => {
+      refillRefaccionSubcategoriaOptions();
+      applyRefaccionesFiltersAndRender();
+    });
+    if (selSub && !selSub._subFilterBound) {
+      selSub._subFilterBound = true;
+      selSub.addEventListener('change', applyRefaccionesFiltersAndRender);
+    }
+  }
+
   async function loadRefacciones() {
     showLoading();
-    renderTableSkeleton('tabla-refacciones', 8);
+    renderTableSkeleton('tabla-refacciones', 10);
+    setupRefaccionFiltrosCategoriasOnce();
     try {
-      const data = await fetchJson(API + '/refacciones');
+      const [data, tree] = await Promise.all([
+        fetchJson(API + '/refacciones'),
+        fetchJson(API + '/categorias-catalogo').catch(() => ({ categorias: [] })),
+      ]);
       refaccionesCache = data;
+      populateRefaccionCategoriaFiltersFromTree(tree);
       applyRefaccionesFiltersAndRender();
-    } catch (e) { renderRefacciones([]); console.error(e); }
+    } catch (e) {
+      renderRefacciones([]);
+      console.error(e);
+    }
     finally {
       hideLoading();
       if (typeof refreshAlertasHeader === 'function') refreshAlertasHeader();
@@ -1599,12 +2129,15 @@
 
   let tipoCambioActual = 17.0; // tipo de cambio USD/MXN actualizado desde Banxico
 
-  /** USD guardado en BD, o derivado de precio MXN / tipo de cambio (mismo criterio que el backfill del servidor). */
+  /** Precio lista en USD: prioridad a precio_usd; legado: MXN congelado con tipo_cambio_registro o TC actual. */
   function resolveRefaccionPrecioUsd(r) {
     const usd = Number(r.precio_usd);
     if (Number.isFinite(usd) && usd > 0) return usd;
     const mxn = Number(r.precio_unitario);
-    const tc = (typeof tipoCambioActual === 'number' && tipoCambioActual > 0) ? tipoCambioActual : 17;
+    const tcReg = Number(r.tipo_cambio_registro);
+    const tc = (Number.isFinite(tcReg) && tcReg > 0)
+      ? tcReg
+      : ((typeof tipoCambioActual === 'number' && tipoCambioActual > 0) ? tipoCambioActual : 17);
     if (Number.isFinite(mxn) && mxn > 0 && tc > 0) return Math.round((mxn / tc) * 100) / 100;
     return null;
   }
@@ -1612,12 +2145,11 @@
     const v = resolveRefaccionPrecioUsd(r);
     if (v == null) return '';
     const derived = !(Number(r.precio_usd) > 0);
-    const title = derived ? ' title="Calculado desde precio MXN y tipo de cambio actual"' : '';
+    const title = derived ? ' title="Legado: estimado desde MXN y T.C. al registrar (o actual)"' : '';
     return '<strong' + title + '>US$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</strong>';
   }
 
   // ----- MÁQUINAS -----
-  const CATEGORIAS_MAQUINAS = ['Centro de Maquinado', 'Torno CNC', 'Electroerosionadora por Hilo', 'Electroerosionadora por Penetración', 'Fresadora CNC', 'Rectificadora', 'Torno Convencional', 'Otro'];
   let maquinasViewMode = 'tabla'; // 'tabla' | 'tarjetas'
 
   function formatMaquinaFichaTecnicaCell(m) {
@@ -1647,6 +2179,9 @@
       ubicacion: m.ubicacion != null && String(m.ubicacion).trim() !== '' ? String(m.ubicacion).trim() : null,
       categoria: m.categoria != null && String(m.categoria).trim() !== '' ? String(m.categoria).trim() : null,
       categoria_principal: m.categoria_principal != null && String(m.categoria_principal).trim() !== '' ? String(m.categoria_principal).trim() : null,
+      subcategoria: o.subcategoria !== undefined
+        ? o.subcategoria
+        : (m.subcategoria != null && String(m.subcategoria).trim() !== '' ? String(m.subcategoria).trim() : null),
       imagen_pieza_url: o.imagen_pieza_url !== undefined ? o.imagen_pieza_url : (m.imagen_pieza_url || null),
       imagen_ensamble_url: o.imagen_ensamble_url !== undefined ? o.imagen_ensamble_url : (m.imagen_ensamble_url || null),
       stock: Number.isFinite(stockNum) ? stockNum : 0,
@@ -1709,8 +2244,8 @@
     const imgFields = [];
     if (m.imagen_pieza_url) {
       imgFields.push({
-        label: 'Vista pieza / parte (manual)',
-        value: `<div class="maq-preview-imgwrap"><img class="maq-preview-img" src="${escapeHtml(m.imagen_pieza_url)}" alt="Pieza"></div>`,
+        label: 'Imagen de carga máquina',
+        value: previewMediaThumbBlock(m.imagen_pieza_url, 'Imagen máquina'),
         html: true,
         full: true,
         icon: 'fa-image',
@@ -1718,11 +2253,11 @@
     }
     if (m.imagen_ensamble_url) {
       imgFields.push({
-        label: 'Diagrama de ensamble',
-        value: `<div class="maq-preview-imgwrap"><img class="maq-preview-img" src="${escapeHtml(m.imagen_ensamble_url)}" alt="Ensamble"></div>`,
+        label: 'Especificaciones de máquina (archivo)',
+        value: previewMediaThumbBlock(m.imagen_ensamble_url, 'Especificaciones'),
         html: true,
         full: true,
-        icon: 'fa-object-group',
+        icon: 'fa-file-lines',
       });
     }
     const ftRaw = (m.ficha_tecnica || '').trim();
@@ -1735,23 +2270,24 @@
       }
     }
     openPreviewCard({
-      title: m.modelo || m.nombre || 'Máquina',
-      subtitle: [m.categoria_principal, m.categoria].filter(Boolean).join(' · ') || '',
+      title: m.categoria || m.modelo || m.nombre || 'Máquina',
+      subtitle: [m.subcategoria, m.modelo || m.nombre].filter(Boolean).join(' · ') || (m.categoria_principal || ''),
       icon: 'fa-industry',
       color: 'linear-gradient(135deg, #1e3a5f 0%, #3b5998 100%)',
       badge: m.activo === 0 ? 'Inactiva' : 'Activa',
       badgeClass: m.activo === 0 ? 'pvc-badge--danger' : 'pvc-badge--success',
       sections: [
         ...(imgFields.length
-          ? [{ title: 'Manual de partes — referencia visual', icon: 'fa-book', fields: imgFields }]
+          ? [{ title: 'Imágenes y archivos', icon: 'fa-images', fields: imgFields }]
           : []),
         {
           title: 'Especificaciones', icon: 'fa-cog',
           fields: [
             { label: 'ID', value: m.id, icon: 'fa-hashtag' },
             { label: 'Centro / jerarquía', value: m.categoria_principal, icon: 'fa-sitemap' },
-            { label: 'Categoría', value: m.categoria, icon: 'fa-layer-group' },
-            { label: 'Modelo', value: m.modelo || m.nombre, icon: 'fa-tag', full: true },
+            { label: 'Nombre de la máquina', value: m.categoria, icon: 'fa-layer-group' },
+            { label: 'Parte', value: m.subcategoria, icon: 'fa-puzzle-piece' },
+            { label: 'Versión (modelo)', value: m.modelo || m.nombre, icon: 'fa-tag', full: true },
             { label: 'Número de serie', value: m.numero_serie, icon: 'fa-barcode' },
             fichaSpec,
             { label: 'Código interno', value: m.codigo, icon: 'fa-code' },
@@ -1766,12 +2302,27 @@
           ],
         },
       ],
+      footerHtml:
+        '<p class="pvc-footer-link-hint" style="font-size:0.82rem;color:var(--text-muted,#64748b);line-height:1.45;margin:0 0 0.75rem;">' +
+        '<i class="fas fa-link"></i> Misma <strong>línea</strong> y <strong>parte</strong> que en refacciones (catálogo en <strong>Categorías</strong>). En cotización: <code>refaccion_id</code> o <code>maquina_id</code> por línea.</p>' +
+        '<button type="button" class="btn outline btn-maq-to-ref"' +
+        ((m.categoria && String(m.categoria).trim()) || (m.subcategoria && String(m.subcategoria).trim()) ? '' : ' disabled title="Agrega línea o parte desde el catálogo"') +
+        '><i class="fas fa-cogs"></i> Ver refacciones con esta línea/parte</button>',
     });
+    setTimeout(() => {
+      const btn = qs('#modal-body .btn-maq-to-ref');
+      if (btn && !btn.disabled) {
+        btn.addEventListener('click', () => goToRefaccionesFromMaquinaSegmentos(m.categoria, m.subcategoria));
+      }
+    }, 0);
   }
   function renderMaquinaCard(m) {
     const _ce = canEdit(); const _cd = canDelete();
     const zona = escapeHtml(m.ubicacion || '—');
     const cat = escapeHtml(m.categoria || '—');
+    const parte = (m.subcategoria && String(m.subcategoria).trim())
+      ? `<div class="maq-card-parte">${escapeHtml(m.subcategoria)}</div>`
+      : '';
     const modelo = escapeHtml(m.modelo || m.nombre || '—');
     const serie = escapeHtml(m.numero_serie || '—');
     const cliente = escapeHtml(m.cliente_nombre || '—');
@@ -1791,7 +2342,8 @@
           <span class="maq-card-cat">${cat}</span>
           <span class="maq-card-zona"><i class="fas fa-map-marker-alt"></i> ${zona}</span>
         </div>
-        <div class="maq-card-modelo">${modelo}</div>
+        ${parte}
+        <div class="maq-card-modelo" title="Versión / modelo">${modelo}</div>
         <div class="maq-card-body">
           <div class="maq-card-row"><i class="fas fa-barcode"></i> <strong>Serie:</strong> ${serie}</div>
           ${fichaLine}
@@ -1808,6 +2360,9 @@
   function renderMaquinaFicha(m) {
     const zona = escapeHtml(m.ubicacion || '—');
     const cat = escapeHtml(m.categoria || '—');
+    const parte = m.subcategoria && String(m.subcategoria).trim()
+      ? `<div class="maq-ficha-parte">${escapeHtml(m.subcategoria)}</div>`
+      : '';
     const modelo = escapeHtml(m.modelo || m.nombre || '—');
     const serie = escapeHtml(m.numero_serie || '—');
     const cliente = escapeHtml(m.cliente_nombre || '—');
@@ -1829,6 +2384,7 @@
           <div class="maq-ficha-logo"><i class="fas fa-industry"></i></div>
           <div>
             <div class="maq-ficha-cat">${cat}</div>
+            ${parte}
             <div class="maq-ficha-modelo">${modelo}</div>
           </div>
         </div>
@@ -1845,7 +2401,7 @@
           <button type="button" class="btn outline" onclick="window.print()"><i class="fas fa-print"></i> Imprimir ficha</button>
         </div>
       </div>`;
-    openModal(`Ficha de máquina – ${modelo}`, body);
+    openModal(`Ficha de máquina – ${cat} · ${modelo}`, body);
   }
 
   function renderMaquinas(data) {
@@ -1880,7 +2436,7 @@
     if (!tbody) return;
     tbody.innerHTML = '';
     if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="empty">No hay máquinas. Carga datos demo o agrega una nueva.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">No hay máquinas. Carga datos demo o agrega una nueva.</td></tr>';
       return;
     }
     const _canEdit = canEdit(); const _canDelete = canDelete();
@@ -1892,6 +2448,7 @@
       tr.innerHTML = `
         <td>${idCell}</td>
         <td>${escapeHtml(m.categoria || '')}</td>
+        <td>${escapeHtml(m.subcategoria || '')}</td>
         <td><strong>${escapeHtml(m.modelo || m.nombre || '')}</strong></td>
         <td>${formatMaquinaFichaTecnicaCell(m)}</td>
         <td class="th-actions">
@@ -1928,96 +2485,257 @@
 
   async function loadMaquinas() {
     showLoading();
-    renderTableSkeleton('tabla-maquinas', 5);
-    const clienteId = qs('#filtro-cliente-maq') && qs('#filtro-cliente-maq').value;
-    const url = clienteId ? `${API}/maquinas?cliente_id=${clienteId}` : `${API}/maquinas`;
+    renderTableSkeleton('tabla-maquinas', 6);
     try {
-      const data = await fetchJson(url);
+      const data = await fetchJson(`${API}/maquinas`);
       maquinasCache = data;
-      // Poblar filtro de categoría
-      const catSel = qs('#filtro-categoria-maq');
-      if (catSel) {
-        const cats = [...new Set(data.map(m => m.categoria).filter(Boolean))].sort();
-        catSel.innerHTML = '<option value="">Todas las categorías</option>' + cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-      }
-      // Poblar filtro de zona
-      const zonaSel = qs('#filtro-zona-maq');
-      if (zonaSel) {
-        const zonas = [...new Set(data.map(m => m.ubicacion).filter(Boolean))].sort();
-        zonaSel.innerHTML = '<option value="">Todas las zonas</option>' + zonas.map(z => `<option value="${escapeHtml(z)}">${escapeHtml(z)}</option>`).join('');
-      }
       applyMaquinasFiltersAndRender();
     } catch (e) { renderMaquinas([]); console.error(e); }
     finally { hideLoading(); }
   }
 
-  /** Desde vista previa de refacción: ir a Máquinas filtrando por la misma categoría (dropdown o filtro de tabla). */
-  async function goToMaquinasFromRefaccionCategoria(categoria) {
+  /**
+   * Refacciones y máquinas comparten segmentos de catálogo: `categoria` (línea / nombre de máquina) y
+   * `subcategoria` (parte), definidos en GET /api/categorias-catalogo (pestaña Categorías). No hay FK
+   * entre tablas: la relación es por texto igual. En cotización el vínculo explícito es por línea:
+   * `refaccion_id` o `maquina_id`.
+   */
+  async function goToMaquinasFromRefaccionSegmentos(categoria, subcategoria) {
     const c = String(categoria || '').trim();
-    if (!c) return;
+    const s = String(subcategoria || '').trim();
+    if (!c && !s) {
+      showToast('No hay línea ni parte de catálogo en esta refacción.', 'warning');
+      return;
+    }
     const mod = qs('#modal');
     if (mod) mod.classList.add('hidden');
     showPanel('maquinas', { skipLoad: true });
     try {
       await loadMaquinas();
     } catch (_) {}
-    const catSel = qs('#filtro-categoria-maq');
-    const inp = qs('#tabla-maquinas .filter-input[data-key="categoria"]');
-    if (inp) inp.value = '';
-    let applied = false;
-    if (catSel) {
-      const hasOpt = Array.from(catSel.options).some(o => o.value === c);
-      if (hasOpt) {
-        catSel.value = c;
-        applied = true;
-      }
+    const inpCat = qs('#tabla-maquinas .filter-input[data-key="categoria"]');
+    const inpSub = qs('#tabla-maquinas .filter-input[data-key="subcategoria"]');
+    if (inpSub) inpSub.value = '';
+    if (inpCat) inpCat.value = '';
+    let appliedCat = false;
+    if (c && inpCat) {
+      inpCat.value = c;
+      appliedCat = true;
     }
-    if (!applied && inp) {
-      inp.value = c;
-      applied = true;
-    }
-    if (!applied) showToast('No hay coincidencia en el filtro de categorías de máquinas. Revisa el catálogo o filtra manualmente.', 'warning');
+    if (s && inpSub) inpSub.value = s;
+    if (c && !appliedCat) showToast('No hay coincidencia en el filtro de nombre de máquina. Revisa el catálogo o filtra manualmente.', 'warning');
     applyMaquinasFiltersAndRender();
   }
 
+  async function goToMaquinasFromRefaccionCategoria(categoria) {
+    return goToMaquinasFromRefaccionSegmentos(categoria, null);
+  }
+
+  /** Desde vista previa de máquina: ir a Refacciones con los mismos segmentos de catálogo (dropdowns + filtros). */
+  async function goToRefaccionesFromMaquinaSegmentos(categoria, subcategoria) {
+    const c = String(categoria || '').trim();
+    const s = String(subcategoria || '').trim();
+    if (!c && !s) {
+      showToast('No hay línea ni parte de catálogo en esta máquina.', 'warning');
+      return;
+    }
+    const mod = qs('#modal');
+    if (mod) mod.classList.add('hidden');
+    showPanel('refacciones', { skipLoad: true });
+    try {
+      await loadRefacciones();
+    } catch (_) {}
+    const selCat = qs('#filtro-categoria-ref');
+    const selSub = qs('#filtro-subcategoria-ref');
+    const inpCatTbl = qs('#tabla-refacciones .filter-input[data-key="categoria"]');
+    if (inpCatTbl) inpCatTbl.value = '';
+    if (c) {
+      const inDropdown = selCat && Array.from(selCat.options).some(o => o.value === c);
+      if (inDropdown) {
+        selCat.value = c;
+      } else if (inpCatTbl) {
+        selCat.value = '';
+        inpCatTbl.value = c;
+      } else if (selCat) selCat.value = '';
+    } else if (selCat) selCat.value = '';
+    refillRefaccionSubcategoriaOptions();
+    if (s && selSub) {
+      const hasOpt = Array.from(selSub.options).some(o => o.value === s);
+      if (hasOpt) selSub.value = s;
+      else showToast('La parte no está en el desplegable del árbol; revisa Categorías o filtra manualmente.', 'warning');
+    }
+    applyRefaccionesFiltersAndRender();
+  }
+
   // ----- COTIZACIONES (módulo rehecho: carga + render explícitos) -----
-  function previewCotizacion(c) {
-    const moneda = c.moneda || 'MXN';
-    const totalFmt = c.total != null ? (moneda === 'USD' ? 'US$' + Number(c.total).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '$' + Number(c.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })) : '—';
+  /** HTML de vista previa tipo documento comercial (alineado al PDF de cotización). */
+  function buildCotizacionPreviewDocHtml(cot) {
+    const tipoLabel = cot.tipo === 'mano_obra' ? 'Mano de obra' : cot.tipo === 'refacciones' ? 'Refacciones' : (cot.tipo || 'Cotización');
+    const moneda = (cot.moneda || 'USD').toUpperCase();
+    const tipoCambio = Number(cot.tipo_cambio) || 0;
+    const subtotal = Number(cot.subtotal) || 0;
+    const iva = Number(cot.iva) || 0;
+    const total = Number(cot.total) || subtotal + iva;
+    function fmtDate(s) { return s ? String(s).slice(0, 10) : '—'; }
+    function validHasta(fecha) { const d = new Date(fecha || Date.now()); d.setDate(d.getDate() + 30); return d.toISOString().slice(0, 10); }
+    function fmtMonto(n) {
+      if (moneda === 'USD') return 'US$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return '$' + Number(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    function fmtUsd(n) { return 'US$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function fmtMxn(n) { return '$' + Number(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function tipoLineaLbl(t) {
+      const m = { refaccion: 'Refacción', vuelta: 'Vuelta', mano_obra: 'Mano de obra', equipo: 'Equipo / máquina', otro: 'Otro' };
+      const k = String(t || '').trim();
+      return escapeHtml(m[k] || (k || '—'));
+    }
+    function lineDesc(l) {
+      let desc = l.refaccion_descripcion
+        ? (l.codigo ? (l.codigo + ' — ' + l.refaccion_descripcion) : l.refaccion_descripcion)
+        : (l.descripcion || '');
+      if (String(l.tipo_linea || '') === 'vuelta' && !String(desc || '').trim()) {
+        const parts = [];
+        if (Number(l.es_ida)) parts.push('Ida');
+        const ht = Number(l.horas_trabajo) || 0;
+        const htr = Number(l.horas_traslado) || 0;
+        if (ht) parts.push(ht + 'h trabajo');
+        if (htr) parts.push(htr + 'h traslado');
+        desc = parts.length ? parts.join(' · ') : 'Vuelta';
+      }
+      return escapeHtml(desc);
+    }
+    function unitUsdMxn(l) {
+      const pu = Number(l.precio_unitario || 0);
+      let usd; let mxn;
+      if (moneda === 'USD') {
+        usd = pu;
+        mxn = tipoCambio > 0 ? pu * tipoCambio : null;
+      } else {
+        mxn = pu;
+        if (l.precio_usd != null && l.precio_usd !== '') usd = Number(l.precio_usd);
+        else usd = tipoCambio > 0 ? pu / tipoCambio : null;
+      }
+      return { usd, mxn };
+    }
+    const lineas = Array.isArray(cot.lineas) ? cot.lineas : [];
+    let rows = '';
+    if (lineas.length > 0) {
+      rows = lineas.map((l) => {
+        const { usd, mxn } = unitUsdMxn(l);
+        const colUsd = usd != null && !isNaN(usd) ? fmtUsd(usd) : '—';
+        const colMxn = mxn != null && !isNaN(mxn) ? fmtMxn(mxn) : '—';
+        return `<tr>
+          <td>${tipoLineaLbl(l.tipo_linea)}</td>
+          <td class="cdp-num">${escapeHtml(String(l.codigo || '—'))}</td>
+          <td>${escapeHtml(String(l.maquina_nombre || '—'))}</td>
+          <td class="cdp-desc">${lineDesc(l)}</td>
+          <td class="cdp-num">${Number(l.cantidad || 1)}</td>
+          <td class="cdp-num">${colUsd}</td>
+          <td class="cdp-num">${colMxn}</td>
+          <td class="cdp-num cdp-num--strong">${fmtMonto(Number(l.subtotal || (l.cantidad || 1) * (l.precio_unitario || 0)))}</td>
+        </tr>`;
+      }).join('');
+    } else {
+      rows = `<tr>
+        <td>${escapeHtml(tipoLabel)}</td>
+        <td class="cdp-num">—</td>
+        <td>—</td>
+        <td class="cdp-desc">${escapeHtml(tipoLabel)}</td>
+        <td class="cdp-num">1</td>
+        <td class="cdp-num">—</td>
+        <td class="cdp-num">—</td>
+        <td class="cdp-num cdp-num--strong">${fmtMonto(subtotal)}</td>
+      </tr>`;
+    }
+    const vendedorTxt = [cot.vendedor_catalogo_nombre, cot.vendedor, cot.vendedor_puesto].filter(Boolean).join(' · ') || '—';
+    const descPct = cot.descuento_pct != null && Number(cot.descuento_pct) > 0 ? String(cot.descuento_pct) + '%' : null;
+    const tcLine = tipoCambio > 0 ? `<p class="cdp-tc-note">Tipo de cambio: 1 USD = $${Number(tipoCambio).toFixed(2)} MXN</p>` : '';
+    const equivUsd = moneda === 'USD' && tipoCambio > 0
+      ? `<p class="cdp-equiv"><span>Equivalente MXN</span><span>${fmtMxn(total * tipoCambio)}</span></p>`
+      : '';
+    return `
+<div class="cotizacion-doc-preview">
+  <div class="cdp-hero">
+    <div class="cdp-hero-main">
+      <span class="cdp-kicker">Documento</span>
+      <h3 class="cdp-doc-title">COTIZACIÓN</h3>
+      <p class="cdp-folio-line"><strong>${escapeHtml(String(cot.folio || '—'))}</strong></p>
+    </div>
+    <div class="cdp-hero-meta">
+      <div><span class="cdp-mini-k">Emisión</span><span class="cdp-mini-v">${fmtDate(cot.fecha)}</span></div>
+      <div><span class="cdp-mini-k">Vigencia</span><span class="cdp-mini-v">${fmtDate(validHasta(cot.fecha))}</span></div>
+      <div><span class="cdp-mini-k">Modalidad</span><span class="cdp-mini-v">${escapeHtml(tipoLabel)}</span></div>
+    </div>
+  </div>
+  <div class="cdp-strip">
+    <span class="cdp-pill"><i class="fas fa-coins"></i> ${escapeHtml(moneda)}${tipoCambio > 0 ? ' · T.C. ' + Number(tipoCambio).toFixed(2) : ''}</span>
+    <span class="cdp-pill"><i class="fas fa-percent"></i> IVA 16%</span>
+    <span class="cdp-pill cdp-pill--accent"><i class="fas fa-file-invoice-dollar"></i> Total ${fmtMonto(total)}</span>
+  </div>
+  <div class="cdp-grid-2">
+    <div class="cdp-card cdp-card--client">
+      <div class="cdp-card-head"><i class="fas fa-building"></i> Cliente</div>
+      <p class="cdp-client-name">${escapeHtml(String(cot.cliente_nombre || '—'))}</p>
+    </div>
+    <div class="cdp-card cdp-card--money">
+      <div class="cdp-card-head"><i class="fas fa-calculator"></i> Resumen (${escapeHtml(moneda)})</div>
+      <div class="cdp-money-row"><span>Subtotal</span><span>${fmtMonto(subtotal)}</span></div>
+      <div class="cdp-money-row"><span>IVA 16%</span><span>${fmtMonto(iva)}</span></div>
+      <div class="cdp-money-row cdp-money-row--total"><span>Total</span><span>${fmtMonto(total)}</span></div>
+      ${equivUsd}
+      ${tcLine}
+    </div>
+  </div>
+  <div class="cdp-table-scroll">
+    <table class="cdp-table">
+      <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Código</th>
+          <th>Máquina</th>
+          <th>Concepto</th>
+          <th class="cdp-th-num">Cant.</th>
+          <th class="cdp-th-num">P.u. USD</th>
+          <th class="cdp-th-num">P.u. MXN</th>
+          <th class="cdp-th-num">Subtotal (${escapeHtml(moneda)})</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>
+  <div class="cdp-footer-meta">
+    <span><i class="fas fa-user-tie"></i> ${escapeHtml(vendedorTxt)}</span>
+    ${descPct ? `<span><i class="fas fa-tag"></i> Descuento ${escapeHtml(descPct)}</span>` : ''}
+    ${cot.fecha_aprobacion ? `<span><i class="fas fa-check-circle"></i> Aprobación ${fmtDate(cot.fecha_aprobacion)}</span>` : ''}
+  </div>
+  ${cot.notas ? `<div class="cdp-notes-block"><strong>Notas</strong><p>${escapeHtml(String(cot.notas))}</p></div>` : ''}
+  <p class="cdp-disclaimer">Los importes en la columna Subtotal están expresados en <strong>${escapeHtml(moneda)}</strong>. Columnas USD/MXN son referencia. Vigencia sujeta a disponibilidad.</p>
+</div>`;
+  }
+
+  async function previewCotizacion(c) {
+    if (!c || c.id == null) return;
     const estadoColors = { pendiente: 'pvc-badge--warning', aplicada: 'pvc-badge--success', venta: 'pvc-badge--success', cancelada: 'pvc-badge--danger' };
-    openPreviewCard({
-      title: c.folio || 'Cotización',
-      subtitle: c.cliente_nombre || '',
-      icon: 'fa-file-invoice-dollar',
-      color: 'linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%)',
-      badge: c.estado || 'pendiente',
-      badgeClass: estadoColors[c.estado] || 'pvc-badge--warning',
-      sections: [{
-        title: 'Datos generales', icon: 'fa-info-circle',
-        fields: [
-          { label: 'Folio', value: c.folio, icon: 'fa-hashtag' },
-          { label: 'Cliente', value: c.cliente_nombre, icon: 'fa-user-tie' },
-          { label: 'Tipo', value: c.tipo, icon: 'fa-tag' },
-          { label: 'Fecha', value: (c.fecha || '').toString().slice(0, 10), icon: 'fa-calendar' },
-          { label: 'Vendedor', value: [c.vendedor, c.vendedor_puesto].filter(Boolean).join(' · ') || '—', icon: 'fa-user' },
-          { label: 'Descuento %', value: c.descuento_pct != null && Number(c.descuento_pct) > 0 ? String(c.descuento_pct) + '%' : '—', icon: 'fa-percent' },
-          { label: 'Estado', value: c.estado, icon: 'fa-flag', badge: true, badgeClass: estadoColors[c.estado] || '' },
-        ]
-      }, {
-        title: 'Montos', icon: 'fa-dollar-sign',
-        fields: [
-          { label: 'Moneda', value: moneda, icon: 'fa-money-bill' },
-          { label: 'Tipo de cambio', value: c.tipo_cambio ? '$' + Number(c.tipo_cambio).toFixed(2) : '', icon: 'fa-exchange-alt' },
-          { label: 'Subtotal', value: c.subtotal != null ? '$' + Number(c.subtotal).toLocaleString('es-MX', { minimumFractionDigits: 2 }) : '', icon: 'fa-calculator' },
-          { label: 'IVA (16%)', value: c.iva != null ? '$' + Number(c.iva).toLocaleString('es-MX', { minimumFractionDigits: 2 }) : '', icon: 'fa-percent' },
-          { label: 'Total', value: totalFmt, icon: 'fa-dollar-sign' },
-          { label: 'Fecha aprobación', value: c.fecha_aprobacion ? (c.fecha_aprobacion + '').slice(0, 10) : '', icon: 'fa-check-circle' },
-        ]
-      }, c.notas ? {
-        title: 'Notas', icon: 'fa-sticky-note',
-        fields: [{ label: 'Notas', value: c.notas, full: true }]
-      } : null].filter(Boolean)
-    });
+    showLoading();
+    try {
+      const cot = await fetchJson(API + '/cotizaciones/' + c.id);
+      const html = buildCotizacionPreviewDocHtml(cot);
+      openPreviewCard({
+        title: cot.folio || 'Cotización',
+        subtitle: cot.cliente_nombre || '',
+        icon: 'fa-file-invoice-dollar',
+        color: 'linear-gradient(125deg, #1e3a5f 0%, #2563eb 52%, #0d9488 100%)',
+        badge: cot.estado || 'pendiente',
+        badgeClass: estadoColors[c.estado] || 'pvc-badge--warning',
+        sections: [],
+        customBodyHtml: html,
+        previewCardClass: 'preview-card--cotizacion-doc'
+      });
+    } catch (e) {
+      showToast(parseApiError(e) || 'No se pudo cargar la cotización.', 'error');
+    } finally {
+      hideLoading();
+    }
   }
   function renderCotizaciones(data, totalInSystem) {
     const panel = qs('#panel-cotizaciones');
@@ -2045,7 +2763,7 @@
     const _canEdit = canEdit(); const _canDelete = canDelete();
     list.forEach(c => {
       const vig = getVigenciaSemaphore(c);
-      const moneda = c.moneda || 'MXN';
+      const moneda = c.moneda || 'USD';
       const totalFmt = c.total != null
         ? (moneda === 'USD' ? 'US$' + Number(c.total).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '$' + Number(c.total).toLocaleString('es-MX', { minimumFractionDigits: 2 }))
         : '';
@@ -2121,6 +2839,11 @@
   }
 
   async function loadCotizaciones() {
+    if (!canAccessCotizaciones()) {
+      cotizacionesCache = [];
+      applyCotizacionesFiltersAndRender();
+      return;
+    }
     showLoading();
     const table = qs('#tabla-cotizaciones');
     if (table && table.querySelector('tbody')) renderTableSkeleton('tabla-cotizaciones', 7);
@@ -2133,6 +2856,7 @@
       showToast(parseApiError(e) || 'No se pudieron cargar las cotizaciones.', 'error');
     } finally {
       hideLoading();
+      refreshDavidComisionesCotPanel();
     }
   }
 
@@ -2142,6 +2866,117 @@
       showToast('Cotización eliminada correctamente.', 'success');
       loadCotizaciones();
     } catch (e) { showToast(parseApiError(e) || 'No se pudo eliminar.', 'error'); }
+  }
+
+  function resolveRefaccionIdFromDeleteInput(raw) {
+    const s = String(raw || '').trim();
+    if (!s) return null;
+    if (/^\d+$/.test(s)) return parseInt(s, 10);
+    const list = toArray(refaccionesCache);
+    const found = list.find(function (r) {
+      return String(r.codigo || '')
+        .trim()
+        .toLowerCase() === s.toLowerCase();
+    });
+    return found && found.id != null ? Number(found.id) : null;
+  }
+
+  function resolveCotizacionIdFromDeleteInput(raw) {
+    const s = String(raw || '').trim();
+    if (!s) return null;
+    if (/^\d+$/.test(s)) return parseInt(s, 10);
+    const list = toArray(cotizacionesCache);
+    const found = list.find(function (c) {
+      return String(c.folio || '')
+        .trim()
+        .toLowerCase() === s.toLowerCase();
+    });
+    return found && found.id != null ? Number(found.id) : null;
+  }
+
+  function syncModuleDeleteZonesVisibility() {
+    qsAll('.module-delete-zone').forEach(function (el) {
+      el.classList.toggle('hidden', !canDelete());
+    });
+  }
+
+  function setupModuleDeleteZones() {
+    if (setupModuleDeleteZones._done) return;
+    setupModuleDeleteZones._done = true;
+
+    qs('#btn-delete-cliente-zona')?.addEventListener('click', function () {
+      if (!canDelete()) {
+        showToast('Solo el administrador puede eliminar registros.', 'error');
+        return;
+      }
+      const raw = qs('#delete-cliente-id') && qs('#delete-cliente-id').value;
+      const id = parseInt(String(raw || '').trim(), 10);
+      if (!Number.isFinite(id)) {
+        showToast('Escribe el ID numérico del cliente (columna Id en la tabla).', 'error');
+        return;
+      }
+      openConfirmModal('¿Eliminar el cliente con ID ' + id + '? Si tiene máquinas u otros vínculos, el servidor puede rechazar la operación.', function () {
+        deleteCliente(id);
+        const inp = qs('#delete-cliente-id');
+        if (inp) inp.value = '';
+      });
+    });
+
+    qs('#btn-delete-refaccion-zona')?.addEventListener('click', function () {
+      if (!canDelete()) {
+        showToast('Solo el administrador puede eliminar registros.', 'error');
+        return;
+      }
+      const raw = qs('#delete-refaccion-id') && qs('#delete-refaccion-id').value;
+      const id = resolveRefaccionIdFromDeleteInput(raw);
+      if (id == null) {
+        showToast('No se encontró: escribe el ID numérico o el código exacto de la refacción.', 'error');
+        return;
+      }
+      openConfirmModal('¿Eliminar esta refacción del catálogo? Esta acción no se puede deshacer.', function () {
+        deleteRefaccion(id);
+        const inp = qs('#delete-refaccion-id');
+        if (inp) inp.value = '';
+      });
+    });
+
+    qs('#btn-delete-maquina-zona')?.addEventListener('click', function () {
+      if (!canDelete()) {
+        showToast('Solo el administrador puede eliminar registros.', 'error');
+        return;
+      }
+      const raw = qs('#delete-maquina-id') && qs('#delete-maquina-id').value;
+      const id = parseInt(String(raw || '').trim(), 10);
+      if (!Number.isFinite(id)) {
+        showToast('Escribe el ID numérico de la máquina (columna Id en la tabla).', 'error');
+        return;
+      }
+      openConfirmModal('¿Eliminar esta máquina del catálogo? Esta acción no se puede deshacer.', function () {
+        deleteMaquina(id);
+        const inp = qs('#delete-maquina-id');
+        if (inp) inp.value = '';
+      });
+    });
+
+    qs('#btn-delete-cotizacion-zona')?.addEventListener('click', function () {
+      if (!canDelete()) {
+        showToast('Solo el administrador puede eliminar registros.', 'error');
+        return;
+      }
+      const raw = qs('#delete-cotizacion-id') && qs('#delete-cotizacion-id').value;
+      const id = resolveCotizacionIdFromDeleteInput(raw);
+      if (id == null) {
+        showToast('No se encontró: escribe el ID numérico o el folio exacto de la cotización.', 'error');
+        return;
+      }
+      openConfirmModal('¿Eliminar esta cotización? Se quitarán también sus líneas. Esta acción no se puede deshacer.', function () {
+        deleteCotizacion(id);
+        const inp = qs('#delete-cotizacion-id');
+        if (inp) inp.value = '';
+      });
+    });
+
+    syncModuleDeleteZonesVisibility();
   }
 
   async function aplicarCotizacion(id) {
@@ -3215,8 +4050,8 @@
       </div>
       <div class="form-row">
         <div class="form-group"><label>Fecha realizado</label><input type="date" id="m-frealiz-mant" value="${mant.fecha_realizada ? String(mant.fecha_realizada).slice(0, 10) : ''}"></div>
-        <div class="form-group"><label>Costo (MXN)</label><input type="number" id="m-costo-mant" step="0.01" min="0" value="${Number(mant.costo) || 0}"></div>
-        <div class="form-group"><label>Pagado (MXN)</label><input type="number" id="m-pagado-mant" step="0.01" min="0" value="${Number(mant.pagado) || 0}"></div>
+        <div class="form-group"><label>Costo (USD)</label><input type="number" id="m-costo-mant" step="0.01" min="0" value="${Number(mant.costo) || 0}"></div>
+        <div class="form-group"><label>Pagado (USD)</label><input type="number" id="m-pagado-mant" step="0.01" min="0" value="${Number(mant.pagado) || 0}"></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label><input type="checkbox" id="m-alerta-env-mant" ${Number(mant.alerta_enviada) === 1 ? 'checked' : ''}> Recordatorio enviado (manual)</label></div>
@@ -3368,7 +4203,7 @@
         <div class="form-group"><label>Fecha</label><input type="date" id="m-fecha-bono" value="${bono && bono.fecha || new Date().toISOString().slice(0,10)}"></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>Monto bono (MXN) *</label><input type="number" id="m-monto-bono" step="0.01" min="0" value="${bono && bono.monto_bono != null && bono.monto_bono !== '' ? Number(bono.monto_bono) : (isNew ? DEFAULT_BONO_MXN : 0)}"></div>
+        <div class="form-group"><label>Monto bono (USD) *</label><input type="number" id="m-monto-bono" step="0.01" min="0" value="${bono && bono.monto_bono != null && bono.monto_bono !== '' ? Number(bono.monto_bono) : (isNew ? DEFAULT_BONO_USD : 0)}"></div>
         <div class="form-group"><label>Pagado</label>
           <select id="m-pagado-bono">
             <option value="0" ${!bono || !bono.pagado ? 'selected' : ''}>No</option>
@@ -3556,7 +4391,7 @@
         <div class="form-group"><label>Fecha fin *</label><input type="date" id="m-ffin-viaje" value="${viaje && viaje.fecha_fin ? String(viaje.fecha_fin).slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
         <div class="form-group"><label>Días</label><input type="number" id="m-dias-viaje" min="1" step="1" value="${viaje && viaje.dias ? Number(viaje.dias) : 1}" readonly></div>
       </div>
-      <p style="font-size:0.85rem;color:#6b7280;margin-top:-0.5rem">Viáticos: $1,000 MXN por día. <strong id="m-total-viaticos-preview">$${((viaje && viaje.dias) ? Number(viaje.dias) : 1) * 1000}</strong></p>
+      <p style="font-size:0.85rem;color:#6b7280;margin-top:-0.5rem">Viáticos: US$1,000 por día. <strong id="m-total-viaticos-preview">US$${((viaje && viaje.dias) ? Number(viaje.dias) : 1) * 1000}</strong></p>
       <div class="form-row">
         <div class="form-group"><label>Reporte (opcional)</label>
           <select id="m-reporte-viaje"><option value="">— Ninguno —</option>${reportesOpts}</select>
@@ -3720,7 +4555,7 @@
     const csvBtn = qs('#modal-body #liq-export-csv');
     if (csvBtn) {
       csvBtn.onclick = () => {
-        const header = ['Técnico', 'Días viaje', 'Viáticos MXN', 'Bonos MXN', 'Total MXN'];
+        const header = ['Técnico', 'Días viaje', 'Viáticos USD', 'Bonos USD', 'Total USD'];
         const lines = [
           header.map(escapeCsv).join(','),
           ...rows.map((d) =>
@@ -4006,11 +4841,11 @@
   // ----- PREVIEW CARD ---- Tarjeta hermosa para ver todos los datos de un registro
   /**
    * openPreviewCard(config)
-   * config: { title, subtitle, icon, color, badge, badgeClass, sections, footerHtml }
+   * config: { title, subtitle, icon, color, badge, badgeClass, sections, footerHtml, underHeaderHtml }
    * sections: [{ title, icon, fields: [{ label, value, full, badge, badgeClass, icon }] }]
    */
   function openPreviewCard(config) {
-    const { title = '', subtitle = '', icon = 'fa-file-alt', color = 'var(--config-primary)', badge = '', badgeClass = '', sections = [], footerHtml = '' } = config;
+    const { title = '', subtitle = '', icon = 'fa-file-alt', color = 'var(--config-primary)', badge = '', badgeClass = '', sections = [], footerHtml = '', underHeaderHtml = '', customBodyHtml = null, previewCardClass = '' } = config;
     const sectionsHtml = sections.map(sec => {
       if (!sec || !sec.fields || !sec.fields.length) return '';
       const fieldsHtml = sec.fields.filter(f => f.value !== undefined && f.value !== null && f.value !== '').map(f => {
@@ -4028,8 +4863,11 @@
         <div class="pvc-fields">${fieldsHtml}</div>
       </div>`;
     }).join('');
+    const bodyMain = customBodyHtml != null && String(customBodyHtml).trim() !== ''
+      ? customBodyHtml
+      : (sectionsHtml || '<p class="pvc-empty">Sin información adicional.</p>');
     const body = `
-      <div class="preview-card">
+      <div class="preview-card ${previewCardClass || ''}">
         <div class="pvc-header" style="background:${color}">
           <div class="pvc-header-icon"><i class="fas ${icon}"></i></div>
           <div class="pvc-header-info">
@@ -4038,13 +4876,21 @@
           </div>
           ${badge ? `<span class="pvc-badge pvc-badge--header ${badgeClass}">${escapeHtml(badge)}</span>` : ''}
         </div>
-        <div class="pvc-body">${sectionsHtml || '<p class="pvc-empty">Sin información adicional.</p>'}</div>
+        ${underHeaderHtml || ''}
+        <div class="pvc-body">${bodyMain}</div>
         ${footerHtml ? `<div class="pvc-footer">${footerHtml}</div>` : ''}
         <div class="pvc-close-row">
           <button type="button" class="btn outline" id="modal-btn-cancel"><i class="fas fa-times"></i> Cerrar</button>
         </div>
       </div>`;
     openModal(title, body);
+    if (underHeaderHtml) {
+      setTimeout(() => {
+        qs('#modal-body')?.querySelectorAll('.js-refaccion-open-media').forEach((btn) => {
+          btn.addEventListener('click', () => openRefaccionMediaFull(btn.getAttribute('data-url')));
+        });
+      }, 0);
+    }
   }
 
   // ----- MODAL GENÉRICO ----- Focus trap, foco al abrir/cerrar, Escape cierra
@@ -4053,7 +4899,7 @@
     const modalBox = qs('#modal .modal-box');
     const previousFocus = document.activeElement;
     if (modalBox) {
-      modalBox.classList.remove('pdf-preview-modal', 'dragging', 'modal-cotizacion');
+      modalBox.classList.remove('pdf-preview-modal', 'dragging', 'modal-cotizacion', 'modal-box--refaccion-preview', 'modal-box--ref-stock');
       modalBox.style.left = '';
       modalBox.style.top = '';
       modalBox.style.width = '';
@@ -4063,6 +4909,7 @@
     }
     qs('#modal-title').textContent = title;
     qs('#modal-body').innerHTML = bodyHtml;
+    if (modalBox && /ref-pvc-hero/.test(String(bodyHtml || ''))) modalBox.classList.add('modal-box--refaccion-preview');
     modal.classList.remove('hidden');
     clearInvalidMarks();
     const focusables = () => modal.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
@@ -4136,10 +4983,24 @@
   // ----- MODAL CLIENTE -----
   function openModalCliente(cliente) {
     const isNew = !cliente || !cliente.id;
+    const hasConst = !!(cliente && cliente.has_constancia);
+    const constanciaNombreEsc = cliente && cliente.constancia_nombre ? escapeHtml(cliente.constancia_nombre) : '';
+    let pendingConstanciaDataUrl = null;
+    let pendingConstanciaName = null;
+    let pendingConstanciaThumb = null;
+    let constanciaClear = false;
     const body = `
       <div class="client-upload-area">
         <label class="upload-label"><i class="fas fa-file-invoice"></i> Constancia o datos fiscales (documento)</label>
-        <p class="upload-hint">Sube PDF, Word, Excel o una imagen (JPG, PNG, GIF, WebP) para detectar nombre, RFC, dirección, etc. Los PDF escaneados sin texto seleccionable pueden fallar; en ese caso usa foto o PDF con texto.</p>
+        <p class="upload-hint">Sube PDF, Word, Excel o una imagen (JPG, PNG, GIF, WebP) para detectar nombre, RFC, dirección, etc. Los PDF escaneados sin texto seleccionable pueden fallar; en ese caso usa foto o PDF con texto. El archivo queda guardado al pulsar <strong>Guardar</strong>.</p>
+        <div id="m-constancia-existing" class="${hasConst && !isNew ? '' : 'hidden'}">
+          <p class="form-hint" style="margin-top:0"><i class="fas fa-paperclip"></i> Constancia en sistema${constanciaNombreEsc ? ': <strong>' + constanciaNombreEsc + '</strong>' : ''}</p>
+          <div class="form-row" style="gap:0.5rem;flex-wrap:wrap;margin-top:0.35rem">
+            <button type="button" class="btn small outline" id="m-btn-dl-constancia"><i class="fas fa-download"></i> Descargar</button>
+            <button type="button" class="btn small danger outline" id="m-btn-rm-constancia"><i class="fas fa-times"></i> Quitar constancia</button>
+          </div>
+        </div>
+        <p id="m-constancia-pending-hint" class="upload-hint hidden" style="margin-top:0.5rem"></p>
         <input type="file" id="m-file-fiscal" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/msword,.doc,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.xlsx,application/vnd.ms-excel,.xls" class="input-file">
         <div id="m-upload-status" class="upload-status hidden"></div>
         <div id="m-extract-hints" class="extract-hints hidden"></div>
@@ -4163,6 +5024,27 @@
     const fileInput = qs('#m-file-fiscal');
     const statusEl = qs('#m-upload-status');
     const hintsEl = qs('#m-extract-hints');
+    const pendingHintEl = qs('#m-constancia-pending-hint');
+    if (!isNew && cliente.id) {
+      const btnDl = qs('#m-btn-dl-constancia');
+      if (btnDl) btnDl.addEventListener('click', () => downloadClienteConstanciaFile(cliente.id, cliente.constancia_nombre || 'constancia'));
+      const btnRm = qs('#m-btn-rm-constancia');
+      if (btnRm) {
+        btnRm.addEventListener('click', () => {
+          constanciaClear = true;
+          pendingConstanciaDataUrl = null;
+          pendingConstanciaName = null;
+          pendingConstanciaThumb = null;
+          if (fileInput) fileInput.value = '';
+          const ex = qs('#m-constancia-existing');
+          if (ex) ex.classList.add('hidden');
+          if (pendingHintEl) {
+            pendingHintEl.textContent = 'Se eliminará la constancia al guardar.';
+            pendingHintEl.classList.remove('hidden');
+          }
+        });
+      }
+    }
     if (fileInput && statusEl && hintsEl) {
       fileInput.addEventListener('change', async function () {
         const file = this.files && this.files[0];
@@ -4189,6 +5071,30 @@
           statusEl.classList.add('upload-error');
           return;
         }
+        let fullDataUrl;
+        try {
+          fullDataUrl = await new Promise((resolve, reject) => {
+            const r = new FileReader();
+            r.onload = () => resolve(r.result);
+            r.onerror = reject;
+            r.readAsDataURL(file);
+          });
+        } catch (_) {
+          statusEl.textContent = 'No se pudo leer el archivo.';
+          statusEl.classList.remove('hidden', 'upload-ok');
+          statusEl.classList.add('upload-error');
+          return;
+        }
+        constanciaClear = false;
+        pendingConstanciaDataUrl = fullDataUrl;
+        pendingConstanciaName = file.name || 'constancia';
+        pendingConstanciaThumb = /^image\//.test(mime) ? await makeImageThumbDataUrl(fullDataUrl) : null;
+        if (pendingHintEl) {
+          pendingHintEl.textContent = 'Archivo listo: se guardará al pulsar Guardar (' + (pendingConstanciaName || '') + ').';
+          pendingHintEl.classList.remove('hidden');
+        }
+        const ex = qs('#m-constancia-existing');
+        if (ex) ex.classList.add('hidden');
         const analyzingLabel = /^image\//.test(mime) ? 'Analizando imagen…' : 'Analizando documento…';
         statusEl.textContent = analyzingLabel;
         statusEl.classList.remove('hidden', 'upload-ok', 'upload-error');
@@ -4196,15 +5102,7 @@
         hintsEl.classList.add('hidden');
         hintsEl.innerHTML = '';
         try {
-          const base64 = await new Promise((resolve, reject) => {
-            const r = new FileReader();
-            r.onload = () => {
-              const s = r.result;
-              resolve(s && s.indexOf('base64,') !== -1 ? s.split('base64,')[1] : s);
-            };
-            r.onerror = reject;
-            r.readAsDataURL(file);
-          });
+          const base64 = fullDataUrl && fullDataUrl.indexOf('base64,') !== -1 ? fullDataUrl.split('base64,')[1] : fullDataUrl;
           const data = await fetchJson(API + '/ai/extract-client', { method: 'POST', body: JSON.stringify({ fileBase64: base64, mimeType: mime, fileName: file.name || '' }) });
           const d = data.data || {};
           if (d.nombre) qs('#m-nombre').value = d.nombre;
@@ -4252,6 +5150,12 @@
         direccion: qs('#m-direccion').value.trim() || null,
         ciudad: qs('#m-ciudad').value.trim() || null,
       };
+      if (constanciaClear) payload.constancia_clear = true;
+      else if (pendingConstanciaDataUrl) {
+        payload.constancia_url = pendingConstanciaDataUrl;
+        payload.constancia_nombre = pendingConstanciaName || 'constancia';
+        payload.constancia_thumb_url = pendingConstanciaThumb || null;
+      }
       const btn = qs('#m-save');
       const origText = btn.innerHTML;
       btn.disabled = true;
@@ -4269,8 +5173,26 @@
   }
 
   // ----- MODAL REFACCIÓN -----
-  function openModalRefaccion(refaccion) {
+  async function openModalRefaccion(refaccion) {
     const isNew = !refaccion || !refaccion.id;
+    const tree = await fetchJson(API + '/categorias-catalogo').catch(() => ({ categorias: [] }));
+    const cats = toArray(tree.categorias);
+    const curCat = refaccion && refaccion.categoria ? String(refaccion.categoria).trim() : '';
+    const curSub = refaccion && refaccion.subcategoria ? String(refaccion.subcategoria).trim() : '';
+    const catOpts = '<option value="">— Seleccionar —</option>' + cats.map(c => `<option value="${escapeHtml(c.nombre)}" ${curCat === c.nombre ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`).join('');
+    const catObj = cats.find(c => c.nombre === curCat);
+    const subs = catObj && catObj.subcategorias ? catObj.subcategorias : [];
+    const subOpts = '<option value="">— (opcional) —</option>' + subs.map(s => `<option value="${escapeHtml(s.nombre)}" ${curSub === s.nombre ? 'selected' : ''}>${escapeHtml(s.nombre)}</option>`).join('');
+    let precioUsdInicial = '';
+    if (!isNew && refaccion) {
+      const u = Number(refaccion.precio_usd);
+      if (Number.isFinite(u) && u > 0) precioUsdInicial = u;
+      else {
+        const v = resolveRefaccionPrecioUsd(refaccion);
+        if (v != null) precioUsdInicial = v;
+      }
+    }
+    const tcHint = (typeof tipoCambioActual === 'number' && tipoCambioActual > 0) ? tipoCambioActual.toFixed(2) : '17.00';
     const body = `
       <div class="form-row">
         <div class="form-group"><label>Código *</label><input type="text" id="m-codigo" maxlength="50" value="${escapeHtml(refaccion && refaccion.codigo) || ''}" required placeholder="Identificador único"></div>
@@ -4278,17 +5200,22 @@
       </div>
       <div class="form-group"><label>Descripción *</label><input type="text" id="m-descripcion" maxlength="250" value="${escapeHtml(refaccion && refaccion.descripcion) || ''}" required></div>
       <div class="form-row">
-        <div class="form-group"><label>Categoría</label><input type="text" id="m-categoria" maxlength="80" value="${escapeHtml(refaccion && refaccion.categoria) || ''}" placeholder="Ej. Fresadora, Torno…"></div>
-        <div class="form-group"><label>Subcategoría</label><input type="text" id="m-subcategoria" maxlength="80" value="${escapeHtml(refaccion && refaccion.subcategoria) || ''}" placeholder="Ej. Husillo, Motor…"></div>
+        <div class="form-group"><label>Categoría</label><select id="m-categoria">${catOpts}</select></div>
+        <div class="form-group"><label>Subcategoría</label><select id="m-subcategoria">${subOpts}</select></div>
       </div>
+      <p class="form-hint" style="margin-top:0">Las listas salen del módulo <strong>Categorías</strong> (solo administrador). Si faltan valores, pide al admin que los dé de alta.</p>
       <div class="form-row">
         <div class="form-group"><label>Zona (Estante/Rack)</label><input type="text" id="m-zona" maxlength="80" value="${escapeHtml(refaccion && refaccion.zona) || ''}" placeholder="Ej. Estante A-3"></div>
+        <div class="form-group"><label>Bloque</label><input type="text" id="m-bloque" maxlength="80" value="${escapeHtml(refaccion && refaccion.bloque) || ''}" placeholder="Ej. B-2"></div>
+      </div>
+      <div class="form-row">
         <div class="form-group"><label>Stock actual</label><input type="number" id="m-stock" step="0.01" min="0" value="${refaccion && refaccion.stock != null ? refaccion.stock : 0}"></div>
         <div class="form-group"><label>Stock mínimo</label><input type="number" id="m-stock-min" step="0.01" min="0" value="${refaccion && refaccion.stock_minimo != null ? refaccion.stock_minimo : 1}"></div>
       </div>
-      <div class="form-row">
-        <div class="form-group"><label>Precio MXN</label><input type="number" id="m-precio" step="0.01" min="0" value="${refaccion && refaccion.precio_unitario != null ? refaccion.precio_unitario : ''}" placeholder="0"></div>
-        <div class="form-group"><label>Precio USD</label><input type="number" id="m-precio-usd" step="0.01" min="0" value="${refaccion && refaccion.precio_usd != null ? refaccion.precio_usd : ''}" placeholder="0"></div>
+      <div class="form-group">
+        <label>Precio lista (USD) *</label>
+        <input type="number" id="m-precio-usd" step="0.01" min="0" value="${precioUsdInicial !== '' ? precioUsdInicial : ''}" placeholder="0.00" required>
+        <p class="form-hint" style="margin-top:0.35rem">El tipo de cambio USD/MXN actual (Banxico, ≈ <strong>${tcHint}</strong>) se guarda en el registro al crear la primera vez y no se sobrescribe al editar.</p>
       </div>
       <div class="form-group"><label>Nº parte en manual (Assembly of Parts)</label><input type="text" id="m-noparte" maxlength="80" value="${escapeHtml(refaccion && refaccion.numero_parte_manual) || ''}" placeholder="Ej. 12-34-567"></div>
       <div class="form-row">
@@ -4299,7 +5226,7 @@
           <input type="hidden" id="m-imagen" value="${escapeHtml(refaccion && refaccion.imagen_url) || ''}">
         </div>
         <div class="form-group">
-          <label>Foto 2: Diagrama de ensamblado</label>
+          <label>Foto 2: Pieza (diagrama)</label>
           <input type="file" id="m-foto2-file" accept="image/*" style="margin-bottom:0.3rem">
           ${refaccion && refaccion.manual_url ? `<div class="ref-foto-preview-wrap"><img src="${escapeHtml(refaccion.manual_url)}" class="ref-foto-thumb" alt="Foto 2"><button type="button" class="btn small danger" id="m-foto2-clear" style="margin-left:0.5rem"><i class="fas fa-times"></i></button></div>` : ''}
           <input type="hidden" id="m-manual" value="${escapeHtml(refaccion && refaccion.manual_url) || ''}">
@@ -4311,6 +5238,19 @@
       </div>
     `;
     openModal(isNew ? 'Nueva refacción' : 'Editar refacción', body);
+    const selCat = qs('#m-categoria');
+    const selSub = qs('#m-subcategoria');
+    function refillSubcat() {
+      if (!selCat || !selSub) return;
+      const name = selCat.value;
+      const cat = cats.find(c => c.nombre === name);
+      const list = cat && cat.subcategorias ? cat.subcategorias : [];
+      const keep = selSub.value;
+      selSub.innerHTML = '<option value="">— (opcional) —</option>' + list.map(s => `<option value="${escapeHtml(s.nombre)}">${escapeHtml(s.nombre)}</option>`).join('');
+      if (keep && list.some(s => s.nombre === keep)) selSub.value = keep;
+      else if (curSub && list.some(s => s.nombre === curSub)) selSub.value = curSub;
+    }
+    if (selCat) selCat.addEventListener('change', refillSubcat);
     // Clear buttons for existing photos
     const foto1ClearBtn = qs('#m-foto1-clear');
     const foto2ClearBtn = qs('#m-foto2-clear');
@@ -4320,11 +5260,12 @@
       clearInvalidMarks();
       const codigo = qs('#m-codigo').value.trim();
       const descripcion = qs('#m-descripcion').value.trim();
-      const precio = parseFloat(qs('#m-precio').value) || 0;
-      let err = validateRequired(codigo, 'Código es obligatorio');
+      const precioUsd = parseFloat(qs('#m-precio-usd').value);
+  let err = validateRequired(codigo, 'Código es obligatorio');
       if (err) { markInvalid('m-codigo', err); return; }
       err = validateRequired(descripcion, 'Descripción es obligatoria');
       if (err) { markInvalid('m-descripcion', err); return; }
+      if (!Number.isFinite(precioUsd) || precioUsd < 0) { markInvalid('m-precio-usd', 'Indica un precio en USD válido'); return; }
       // Read file inputs as base64 data URLs if selected
       const readFileAsDataUrl = (fileInput) => new Promise((res) => {
         const file = fileInput && fileInput.files && fileInput.files[0];
@@ -4340,13 +5281,13 @@
         codigo,
         descripcion,
         zona: qs('#m-zona').value.trim() || null,
+        bloque: qs('#m-bloque') && qs('#m-bloque').value.trim() ? qs('#m-bloque').value.trim() : null,
         stock: parseFloat(qs('#m-stock').value) || 0,
         stock_minimo: parseFloat(qs('#m-stock-min').value) || 1,
-        precio_unitario: precio,
-        precio_usd: parseFloat(qs('#m-precio-usd').value) || 0,
+        precio_usd: precioUsd,
         unidad: qs('#m-unidad').value.trim() || 'PZA',
-        categoria: qs('#m-categoria').value.trim() || null,
-        subcategoria: qs('#m-subcategoria').value.trim() || null,
+        categoria: selCat && selCat.value.trim() ? selCat.value.trim() : null,
+        subcategoria: selSub && selSub.value.trim() ? selSub.value.trim() : null,
         imagen_url: foto1Data || qs('#m-imagen').value.trim() || null,
         manual_url: foto2Data || qs('#m-manual').value.trim() || null,
         numero_parte_manual: qs('#m-noparte').value.trim() || null,
@@ -4371,7 +5312,7 @@
   function openModalRefaccionImagen(ref) {
     const isImage = (url) => url && (url.startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(url));
     const foto1 = ref.imagen_url ? (isImage(ref.imagen_url) ? `<div style="text-align:center"><p style="font-size:0.8rem;color:#6b7280;margin-bottom:0.4rem">Manual de partes</p><img src="${escapeHtml(ref.imagen_url)}" alt="Foto 1" style="max-width:100%;max-height:320px;border-radius:8px;border:1px solid #e2e8f0"></div>` : `<div><a href="${escapeHtml(ref.imagen_url)}" target="_blank" class="btn outline"><i class="fas fa-external-link-alt"></i> Ver foto 1</a></div>`) : '<p style="color:#6b7280;font-size:0.85rem">Sin foto 1.</p>';
-    const foto2 = ref.manual_url ? (isImage(ref.manual_url) ? `<div style="text-align:center"><p style="font-size:0.8rem;color:#6b7280;margin-bottom:0.4rem">Diagrama de ensamblado</p><img src="${escapeHtml(ref.manual_url)}" alt="Foto 2" style="max-width:100%;max-height:320px;border-radius:8px;border:1px solid #e2e8f0"></div>` : `<div><a href="${escapeHtml(ref.manual_url)}" target="_blank" class="btn outline"><i class="fas fa-external-link-alt"></i> Abrir manual / PDF / enlace</a></div>`) : '<p style="color:#6b7280;font-size:0.85rem">Sin manual o diagrama.</p>';
+    const foto2 = ref.manual_url ? (isImage(ref.manual_url) ? `<div style="text-align:center"><p style="font-size:0.8rem;color:#6b7280;margin-bottom:0.4rem">Pieza</p><img src="${escapeHtml(ref.manual_url)}" alt="Foto 2" style="max-width:100%;max-height:320px;border-radius:8px;border:1px solid #e2e8f0"></div>` : `<div><a href="${escapeHtml(ref.manual_url)}" target="_blank" class="btn outline"><i class="fas fa-external-link-alt"></i> Abrir manual / PDF / enlace</a></div>`) : '<p style="color:#6b7280;font-size:0.85rem">Sin pieza o diagrama.</p>';
     const body = `
       <p style="margin-bottom:0.75rem"><strong>Código:</strong> ${escapeHtml(ref.codigo)} &nbsp; <strong>Nº parte:</strong> ${escapeHtml(ref.numero_parte_manual || '—')}</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">${foto1}${foto2}</div>
@@ -4379,42 +5320,188 @@
     openModal('Refacción: ' + (ref.descripcion || ref.codigo), body);
   }
 
-  // Modal de ajuste de stock manual
+  // Modal de inventario: entrada/salida por cantidad o conteo físico (compatible con FIFO en servidor).
   function openModalAjusteStock(ref) {
+    if (!canAdjustStock()) {
+      showToast('Tu cuenta no tiene permiso para mover inventario.', 'error');
+      return;
+    }
+    const base = Number(ref.stock) || 0;
+    const uMed = escapeHtml(ref.unidad || 'PZA');
+    const defaultCosto = Number(ref.precio_usd) > 0 ? ref.precio_usd : (resolveRefaccionPrecioUsd(ref) || 0);
     const body = `
-      <p style="margin-bottom:1rem">Stock actual: <strong>${Number(ref.stock || 0)}</strong> ${escapeHtml(ref.unidad || 'PZA')}</p>
-      <div class="form-row">
-        <div class="form-group"><label>Tipo</label>
-          <select id="m-tipo-mov">
-            <option value="entrada">Entrada (+)</option>
-            <option value="salida">Salida (−)</option>
-          </select>
+      <div class="ref-stock-modal">
+        <p class="form-hint" style="margin-top:0"><i class="fas fa-warehouse"></i> <strong>${escapeHtml(ref.codigo)}</strong> — ${escapeHtml(ref.descripcion || '')}</p>
+        <div class="ref-stock-summary">
+          <span>Stock actual: <strong id="m-stock-base">${base.toLocaleString('es-MX')}</strong> ${uMed}</span>
+          <span class="ref-stock-min">Mínimo: <strong>${Number(ref.stock_minimo != null ? ref.stock_minimo : 1)}</strong></span>
         </div>
-        <div class="form-group"><label>Cantidad *</label><input type="number" id="m-cant-mov" min="0.01" step="0.01" value="1"></div>
-        <div class="form-group"><label>Costo unitario (MXN)</label><input type="number" id="m-costo-mov" min="0" step="0.01" value="${ref.precio_unitario || 0}"></div>
-      </div>
-      <div class="form-group"><label>Referencia</label><input type="text" id="m-ref-mov" maxlength="100" placeholder="Nº orden, proveedor…"></div>
-      <div class="form-actions">
-        <button type="button" class="btn primary" id="m-save"><i class="fas fa-boxes"></i> Aplicar</button>
-        <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
+        <div class="ref-stock-mode" role="tablist" aria-label="Tipo de movimiento">
+          <button type="button" class="btn small primary ref-stock-tab active" data-mode="delta" id="m-tab-delta">Entrada / salida</button>
+          <button type="button" class="btn small outline ref-stock-tab" data-mode="abs" id="m-tab-abs">Conteo físico</button>
+        </div>
+        <div id="m-panel-delta" class="ref-stock-panel">
+          <div class="form-row">
+            <div class="form-group"><label>Tipo</label>
+              <select id="m-tipo-mov" aria-label="Tipo de movimiento">
+                <option value="entrada">Entrada (+)</option>
+                <option value="salida">Salida (−)</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Cantidad *</label><input type="number" id="m-cant-mov" min="0.01" step="0.01" value="1" aria-describedby="m-preview-line"></div>
+            <div class="form-group"><label>Costo unitario (USD)</label><input type="number" id="m-costo-mov" min="0" step="0.01" value="${defaultCosto}"></div>
+          </div>
+          <div class="form-group"><label>Referencia</label><input type="text" id="m-ref-mov" maxlength="100" placeholder="Nº orden, proveedor, factura…" autocomplete="off"></div>
+        </div>
+        <div id="m-panel-abs" class="ref-stock-panel hidden">
+          <p class="form-hint" style="margin-top:0">Indica el <strong>stock contado</strong> en almacén. El sistema registra la diferencia como entrada o salida (auditoría FIFO).</p>
+          <div class="form-row">
+            <div class="form-group"><label>Stock final (conteo) *</label><input type="number" id="m-nuevo-stock" min="0" step="0.01" value="${base}"></div>
+            <div class="form-group"><label>Costo unitario (USD)</label><input type="number" id="m-costo-abs" min="0" step="0.01" value="${defaultCosto}"></div>
+          </div>
+          <div class="form-group"><label>Referencia</label><input type="text" id="m-ref-abs" maxlength="100" placeholder="Inventario físico, auditoría…" autocomplete="off"></div>
+        </div>
+        <p id="m-preview-line" class="ref-stock-preview" aria-live="polite"></p>
+        <div class="ref-stock-mov-block">
+          <h4 class="ref-stock-mov-title"><i class="fas fa-history"></i> Últimos movimientos</h4>
+          <div id="m-mov-list" class="ref-stock-mov-list"><span class="muted">Cargando…</span></div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn primary" id="m-save"><i class="fas fa-check"></i> Aplicar</button>
+          <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
+        </div>
       </div>
     `;
-    openModal('Ajustar stock: ' + escapeHtml(ref.codigo), body);
+    openModal('Inventario: ' + escapeHtml(ref.codigo), body);
+    const modalBox = qs('#modal .modal-box');
+    if (modalBox) modalBox.classList.add('modal-box--ref-stock');
+
+    const panelD = qs('#m-panel-delta');
+    const panelA = qs('#m-panel-abs');
+    const tabD = qs('#m-tab-delta');
+    const tabA = qs('#m-tab-abs');
+    let mode = 'delta';
+
+    function setMode(m) {
+      mode = m;
+      const isDelta = m === 'delta';
+      panelD.classList.toggle('hidden', !isDelta);
+      panelA.classList.toggle('hidden', isDelta);
+      tabD.classList.toggle('primary', isDelta);
+      tabD.classList.toggle('outline', !isDelta);
+      tabD.classList.toggle('active', isDelta);
+      tabA.classList.toggle('primary', !isDelta);
+      tabA.classList.toggle('outline', isDelta);
+      tabA.classList.toggle('active', !isDelta);
+      updatePreview();
+    }
+    tabD.addEventListener('click', () => setMode('delta'));
+    tabA.addEventListener('click', () => setMode('abs'));
+
+    function updatePreview() {
+      const el = qs('#m-preview-line');
+      if (!el) return;
+      if (mode === 'delta') {
+        const cant = parseFloat(qs('#m-cant-mov') && qs('#m-cant-mov').value) || 0;
+        const tipo = qs('#m-tipo-mov') && qs('#m-tipo-mov').value;
+        let nuevo = base;
+        if (tipo === 'entrada') nuevo = base + cant;
+        else nuevo = Math.max(0, base - cant);
+        el.textContent = cant > 0 ? `Tras el movimiento: ${nuevo.toLocaleString('es-MX')} ${ref.unidad || 'PZA'}` : 'Indica una cantidad mayor que 0.';
+      } else {
+        const nuevo = parseFloat(qs('#m-nuevo-stock') && qs('#m-nuevo-stock').value);
+        if (!Number.isFinite(nuevo) || nuevo < 0) {
+          el.textContent = 'Indica un stock final válido (≥ 0).';
+          return;
+        }
+        const diff = nuevo - base;
+        if (Math.abs(diff) < 1e-9) el.textContent = 'Sin cambio respecto al stock actual.';
+        else el.textContent = `Ajuste: ${diff > 0 ? '+' : ''}${diff.toLocaleString('es-MX')} → stock final ${nuevo.toLocaleString('es-MX')} ${ref.unidad || 'PZA'}`;
+      }
+    }
+
+    ['#m-tipo-mov', '#m-cant-mov', '#m-nuevo-stock'].forEach(sel => {
+      const n = qs(sel);
+      if (n) n.addEventListener('input', updatePreview);
+      if (n) n.addEventListener('change', updatePreview);
+    });
+    updatePreview();
+
+    fetchJson(API + '/refacciones/' + ref.id + '/movimientos')
+      .then((rows) => {
+        const wrap = qs('#m-mov-list');
+        if (!wrap) return;
+        const list = Array.isArray(rows) ? rows.slice(0, 8) : [];
+        if (!list.length) {
+          wrap.innerHTML = '<span class="muted">Sin movimientos registrados aún.</span>';
+          return;
+        }
+        const tipoLabel = (t) => (t === 'salida' ? 'Salida' : 'Entrada');
+        wrap.innerHTML = `
+          <table class="ref-stock-mov-table">
+            <thead><tr><th>Fecha</th><th>Tipo</th><th>Cant.</th><th>Ref.</th></tr></thead>
+            <tbody>
+              ${list.map((m) => {
+                const refM = String(m.referencia != null ? m.referencia : '');
+                return `
+                <tr>
+                  <td>${escapeHtml(m.fecha || '—')}</td>
+                  <td>${tipoLabel(m.tipo)}</td>
+                  <td>${m.cantidad != null ? Number(m.cantidad).toLocaleString('es-MX') : '—'}</td>
+                  <td>${escapeHtml(refM.slice(0, 48))}${refM.length > 48 ? '…' : ''}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>`;
+      })
+      .catch(() => {
+        const wrap = qs('#m-mov-list');
+        if (wrap) wrap.innerHTML = '<span class="muted">No se pudo cargar el historial.</span>';
+      });
+
     qs('#m-save').onclick = async () => {
-      const cant = parseFloat(qs('#m-cant-mov').value) || 0;
-      if (cant <= 0) { showToast('La cantidad debe ser mayor que 0.', 'error'); return; }
-      const payload = {
-        tipo: qs('#m-tipo-mov').value,
-        cantidad: cant,
-        costo_unitario: parseFloat(qs('#m-costo-mov').value) || 0,
-        referencia: qs('#m-ref-mov').value.trim() || null,
-      };
+      const btn = qs('#m-save');
+      const orig = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aplicando…';
       try {
-        await fetchJson(API + '/refacciones/' + ref.id + '/ajuste-stock', { method: 'POST', body: JSON.stringify(payload) });
+        if (mode === 'abs') {
+          const nuevo = parseFloat(qs('#m-nuevo-stock').value);
+          if (!Number.isFinite(nuevo) || nuevo < 0) {
+            showToast('Indica un stock final válido (≥ 0).', 'error');
+            return;
+          }
+          const payload = {
+            modo: 'absoluto',
+            nuevo_stock: nuevo,
+            costo_unitario: parseFloat(qs('#m-costo-abs').value) || 0,
+            referencia: (qs('#m-ref-abs').value || '').trim() || null,
+          };
+          await fetchJson(API + '/refacciones/' + ref.id + '/ajuste-stock', { method: 'POST', body: JSON.stringify(payload) });
+        } else {
+          const cant = parseFloat(qs('#m-cant-mov').value) || 0;
+          if (cant <= 0) {
+            showToast('La cantidad debe ser mayor que 0.', 'error');
+            return;
+          }
+          const payload = {
+            tipo: qs('#m-tipo-mov').value,
+            cantidad: cant,
+            costo_unitario: parseFloat(qs('#m-costo-mov').value) || 0,
+            referencia: (qs('#m-ref-mov').value || '').trim() || null,
+          };
+          await fetchJson(API + '/refacciones/' + ref.id + '/ajuste-stock', { method: 'POST', body: JSON.stringify(payload) });
+        }
         qs('#modal').classList.add('hidden');
-        showToast('Stock actualizado.', 'success');
+        if (modalBox) modalBox.classList.remove('modal-box--ref-stock');
+        showToast('Inventario actualizado.', 'success');
         loadRefacciones();
-      } catch (e) { showToast(parseApiError(e), 'error'); }
+      } catch (e) {
+        showToast(parseApiError(e) || 'No se pudo aplicar el movimiento.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = orig;
+      }
     };
   }
 
@@ -4423,80 +5510,69 @@
     const isNew = !maquina || !maquina.id;
     const clientes = await fetchJson(API + '/clientes').catch(() => []);
     const defaultClienteId = clientes[0] && clientes[0].id != null ? Number(clientes[0].id) : null;
-    const catalogoUm = toArray(await fetchJson(API + '/catalogo-universal-maquinas').catch(() => []));
-    const catOpts = CATEGORIAS_MAQUINAS.map(c => `<option value="${c}" ${maquina && maquina.categoria === c ? 'selected' : ''}>${c}</option>`).join('');
-    const catalogoOpts = catalogoUm.map((row, idx) => `<option value="${idx}" data-json="1">${escapeHtml(row.modelo)}</option>`).join('');
+    const tree = await fetchJson(API + '/categorias-catalogo').catch(() => ({ categorias: [] }));
+    const cats = toArray(tree.categorias);
+    const curCat = maquina && maquina.categoria ? String(maquina.categoria).trim() : '';
+    const curSub = maquina && maquina.subcategoria ? String(maquina.subcategoria).trim() : '';
+    const catOpts = '<option value="">-- Seleccionar --</option>' + cats.map(c => `<option value="${escapeHtml(c.nombre)}" ${curCat === c.nombre ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`).join('');
+    const catObj = cats.find(c => c.nombre === curCat);
+    const subs = catObj && catObj.subcategorias ? catObj.subcategorias : [];
+    const subOpts = '<option value="">— (opcional) —</option>' + subs.map(s => `<option value="${escapeHtml(s.nombre)}" ${curSub === s.nombre ? 'selected' : ''}>${escapeHtml(s.nombre)}</option>`).join('');
     const body = `
-      <p class="form-hint" style="margin-top:0"><i class="fas fa-book"></i> Catálogo <strong>UNIVERSAL 2025</strong>: elige un modelo o captura manual. Las imágenes del JSON se cargan al seleccionar; puedes <strong>subir archivos aquí</strong> (tienen prioridad). Clic en el <strong>ID</strong> en la tabla para cambiar solo la foto principal.</p>
-      <div class="form-group maq-catalogo-block">
-        <label>Importar desde catálogo Universal</label>
-        <select id="m-catalogo-um">
-          <option value="">— Sin importar (captura manual) —</option>
-          ${catalogoOpts}
-        </select>
-        <div class="form-row" style="margin-top:0.65rem">
-          <div class="form-group" style="margin-bottom:0">
-            <label>Foto pieza / parte</label>
-            <input type="file" id="m-cat-file-pieza" accept="image/*">
+      <div class="cotz-modal">
+        <section class="cotz-card" aria-labelledby="maq-sec-machine">
+          <h4 class="cotz-card-title" id="maq-sec-machine"><span class="cotz-step-num">1</span> Máquina</h4>
+          <p class="form-hint" style="margin-top:0"><i class="fas fa-layer-group"></i> <strong>Nombre de la máquina</strong> (campo categoría), <strong>parte</strong> (subcategoría) y <strong>versión</strong> (modelo) definen el equipo. El catálogo de nombres/partes lo administra el administrador en <strong>Categorías</strong>. En la tabla, clic en el <strong>ID</strong> para cambiar solo la imagen principal.</p>
+          <div class="form-group"><label>Nombre de la máquina *</label>
+            <select id="m-categoria">${catOpts}</select>
           </div>
-          <div class="form-group" style="margin-bottom:0">
-            <label>Foto diagrama ensamble</label>
-            <input type="file" id="m-cat-file-ensamble" accept="image/*">
+          <div class="form-group"><label>Parte</label>
+            <select id="m-subcategoria">${subOpts}</select>
           </div>
+          <div class="form-group"><label>Versión / modelo *</label><input type="text" id="m-modelo" maxlength="120" value="${escapeHtml(maquina && maquina.modelo) || ''}" required placeholder="Ej: GH1440A, CTX 510…"></div>
+        </section>
+        <section class="cotz-card" aria-labelledby="maq-sec-spec">
+          <h4 class="cotz-card-title" id="maq-sec-spec"><span class="cotz-step-num">2</span> Archivos</h4>
+          <p class="form-hint" style="margin-top:0"><i class="fas fa-images"></i> Los archivos se guardan en el registro (data URL). La imagen de especificaciones puede ser <strong>PDF</strong> u otra imagen.</p>
+          <div class="form-row" style="margin-top:0.65rem">
+            <div class="form-group" style="margin-bottom:0">
+              <label>Imagen de carga máquina</label>
+              <input type="file" id="m-cat-file-pieza" accept="image/*">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>Especificaciones de máquina (opcional)</label>
+              <input type="file" id="m-cat-file-ensamble" accept="image/*,application/pdf">
+            </div>
+          </div>
+          <input type="hidden" id="m-h-imagen-pieza" value="${escapeHtml(maquina && maquina.imagen_pieza_url) || ''}">
+          <input type="hidden" id="m-h-imagen-ensamble" value="${escapeHtml(maquina && maquina.imagen_ensamble_url) || ''}">
+        </section>
+        <div class="form-actions">
+          <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
+          <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
         </div>
-        <p class="form-hint" style="margin:0.35rem 0 0;font-size:0.8rem">Misma lógica que refacciones (imagen en base64 al guardar).</p>
-        <input type="hidden" id="m-h-imagen-pieza" value="${escapeHtml(maquina && maquina.imagen_pieza_url) || ''}">
-        <input type="hidden" id="m-h-imagen-ensamble" value="${escapeHtml(maquina && maquina.imagen_ensamble_url) || ''}">
-        <input type="hidden" id="m-h-categoria-principal" value="${escapeHtml(maquina && maquina.categoria_principal) || ''}">
-      </div>
-      <div class="form-group"><label>Categoría *</label>
-        <select id="m-categoria">
-          <option value="">-- Seleccionar --</option>
-          ${catOpts}
-        </select>
-      </div>
-      <div class="form-group"><label>Modelo *</label><input type="text" id="m-modelo" maxlength="120" value="${escapeHtml(maquina && maquina.modelo) || ''}" required placeholder="Ej: GH1440A, CTX 510…"></div>
-      <div class="form-group"><label>Ficha técnica</label>
-        <textarea id="m-ficha_tecnica" rows="4" maxlength="8000" placeholder="URL del PDF o nota interna">${escapeHtml(maquina && maquina.ficha_tecnica) || ''}</textarea>
-      </div>
-      <div class="form-actions">
-        <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
-        <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
       </div>
     `;
     openModal(isNew ? 'Nueva máquina' : 'Editar máquina', body);
-    const catSel = qs('#m-catalogo-um');
-    if (catSel && catalogoUm.length) {
-      catSel.addEventListener('change', () => {
-        const i = parseInt(catSel.value, 10);
-        if (!Number.isFinite(i) || !catalogoUm[i]) return;
-        const row = catalogoUm[i];
-        const modeloEl = qs('#m-modelo');
-        const catEl = qs('#m-categoria');
-        const hp = qs('#m-h-imagen-pieza');
-        const he = qs('#m-h-imagen-ensamble');
-        const hcp = qs('#m-h-categoria-principal');
-        if (modeloEl) modeloEl.value = row.modelo || '';
-        if (catEl && row.categoria) {
-          catEl.value = CATEGORIAS_MAQUINAS.includes(row.categoria) ? row.categoria : catEl.value;
-          if (!CATEGORIAS_MAQUINAS.includes(row.categoria)) {
-            const opt = document.createElement('option');
-            opt.value = row.categoria;
-            opt.selected = true;
-            catEl.appendChild(opt);
-          }
-        }
-        if (hcp && row.categoria_principal) hcp.value = row.categoria_principal;
-        if (hp && row.imagen_pieza_url) hp.value = row.imagen_pieza_url;
-        if (he && row.imagen_ensamble_url) he.value = row.imagen_ensamble_url;
-      });
+    const selMaqCat = qs('#m-categoria');
+    const selMaqSub = qs('#m-subcategoria');
+    function refillMaqSub() {
+      if (!selMaqCat || !selMaqSub) return;
+      const name = selMaqCat.value;
+      const cat = cats.find(c => c.nombre === name);
+      const list = cat && cat.subcategorias ? cat.subcategorias : [];
+      const keep = selMaqSub.value;
+      selMaqSub.innerHTML = '<option value="">— (opcional) —</option>' + list.map(s => `<option value="${escapeHtml(s.nombre)}">${escapeHtml(s.nombre)}</option>`).join('');
+      if (keep && list.some(s => s.nombre === keep)) selMaqSub.value = keep;
+      else if (curSub && list.some(s => s.nombre === curSub)) selMaqSub.value = curSub;
     }
+    if (selMaqCat) selMaqCat.addEventListener('change', refillMaqSub);
     qs('#m-save').onclick = async () => {
       clearInvalidMarks();
       const modelo = (qs('#m-modelo').value || '').trim();
-      let err = validateRequired(modelo, 'El modelo de la máquina es obligatorio');
+      let err = validateRequired(modelo, 'La versión o modelo de la máquina es obligatorio');
       if (err) { markInvalid('m-modelo', err); return; }
-      const errCat = validateRequired(qs('#m-categoria').value.trim(), 'La categoría es obligatoria');
+      const errCat = validateRequired(selMaqCat && selMaqCat.value.trim(), 'El nombre de la máquina es obligatorio');
       if (errCat) { markInvalid('m-categoria', errCat); return; }
       const fotoPieza = await readFileAsDataUrlInput(qs('#m-cat-file-pieza'));
       const fotoEns = await readFileAsDataUrlInput(qs('#m-cat-file-ensamble'));
@@ -4509,19 +5585,24 @@
       const clienteIdFinal = (maquina && maquina.cliente_id != null)
         ? Number(maquina.cliente_id)
         : (defaultClienteId != null ? defaultClienteId : null);
-      const cpHidden = (qs('#m-h-categoria-principal') && qs('#m-h-categoria-principal').value.trim()) || null;
+      const catVal = selMaqCat && selMaqCat.value.trim() ? selMaqCat.value.trim() : null;
+      const subVal = selMaqSub && selMaqSub.value.trim() ? selMaqSub.value.trim() : null;
+      const ftKeep = !isNew && maquina && maquina.ficha_tecnica != null && String(maquina.ficha_tecnica).trim() !== ''
+        ? String(maquina.ficha_tecnica).trim()
+        : null;
       const payload = {
         nombre: modelo,
         codigo: !isNew && maquina && maquina.codigo != null ? String(maquina.codigo).trim() || null : null,
         marca: null,
-        categoria: qs('#m-categoria').value.trim() || null,
-        categoria_principal: cpHidden || (!isNew && maquina ? (maquina.categoria_principal || null) : null),
+        categoria: catVal,
+        categoria_principal: catVal,
+        subcategoria: subVal,
         modelo,
         numero_serie: !isNew && maquina ? (maquina.numero_serie != null && String(maquina.numero_serie).trim() !== '' ? String(maquina.numero_serie).trim() : null) : null,
         ubicacion: !isNew && maquina ? (maquina.ubicacion != null && String(maquina.ubicacion).trim() !== '' ? String(maquina.ubicacion).trim() : null) : null,
         imagen_pieza_url: imagenPieza,
         imagen_ensamble_url: imagenEns,
-        ficha_tecnica: (qs('#m-ficha_tecnica') && qs('#m-ficha_tecnica').value.trim()) || null,
+        ficha_tecnica: ftKeep,
         stock: Number.isFinite(stockNum) ? stockNum : 0,
         precio_lista_usd: Number.isFinite(plUsd) ? plUsd : 0,
       };
@@ -4545,8 +5626,7 @@
   async function openModalCotizacion(cot) {
     const isNew = !cot || !cot.id;
     const clientes = await fetchJson(API + '/clientes').catch(() => []);
-    // Catálogo completo solo para este modal: `maquinasCache` global suele estar filtrado por
-    // la pestaña Máquinas (#filtro-cliente-maq) y no incluye todos los clientes → selects vacíos.
+    // Catálogo completo para el modal si hiciera falta; `maquinasCache` carga el listado completo en la pestaña.
     const maquinasCatalogoModal = toArray(await fetchJson(API + '/maquinas').catch(() => []));
     if (!Array.isArray(refaccionesCache) || refaccionesCache.length === 0) {
       refaccionesCache = await fetchJson(API + '/refacciones').catch(() => []);
@@ -4554,6 +5634,15 @@
     try {
       const tecRaw = await fetchJson(API + '/tecnicos').catch(() => []);
       tecnicosCache = toArray(tecRaw);
+    } catch (_) {}
+    try {
+      const tarRaw = await fetchJson(API + '/tarifas').catch(() => null);
+      if (tarRaw && typeof tarRaw === 'object') {
+        try {
+          const prev = JSON.parse(localStorage.getItem('tarifas_cache') || '{}');
+          localStorage.setItem('tarifas_cache', JSON.stringify({ ...prev, ...tarRaw }));
+        } catch (_) {}
+      }
     } catch (_) {}
     const vendedoresOpts = (tecnicosCache || [])
       .filter((t) => Number(t.es_vendedor) === 1)
@@ -4568,20 +5657,8 @@
       .map((c) => `<option value="${c.id}" ${cot && cot.cliente_id == c.id ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`)
       .join('');
 
-    const cotMoneda = (cot && cot.moneda ? String(cot.moneda) : 'MXN').toUpperCase();
+    const cotMoneda = (cot && cot.moneda ? String(cot.moneda) : 'USD').toUpperCase();
     const cotTc = cot && cot.tipo_cambio != null ? Number(cot.tipo_cambio) : 17.0;
-    const maqIds = (() => {
-      try {
-        const raw = cot && cot.maquinas_ids;
-        if (!raw) return [];
-        if (Array.isArray(raw)) return raw.map((x) => Number(x)).filter(Boolean);
-        const arr = JSON.parse(String(raw));
-        return Array.isArray(arr) ? arr.map((x) => Number(x)).filter(Boolean) : [];
-      } catch (_) {
-        return [];
-      }
-    })();
-
     // Se renderiza vacío y se llena dinámicamente tras abrir modal (para usar cliente seleccionado real).
     const maquinasOpts = '';
 
@@ -4604,15 +5681,14 @@
           <div class="form-row">
             <div class="form-group">
               <label>Moneda</label>
-              <select id="cotz-moneda">
-                <option value="MXN" ${cotMoneda === 'MXN' ? 'selected' : ''}>MXN</option>
-                <option value="USD" ${cotMoneda === 'USD' ? 'selected' : ''}>USD</option>
+              <select id="cotz-moneda" title="Todas las cotizaciones en USD">
+                <option value="USD" selected>USD</option>
               </select>
             </div>
             <div class="form-group">
               <label>Tipo de cambio</label>
               <input type="number" id="cotz-tc" step="0.01" min="0" value="${Number.isFinite(cotTc) ? cotTc.toFixed(2) : '17.00'}" placeholder="17.00">
-              <div class="hint">Precios de lista en USD se convierten con este tipo de cambio (MXN = USD × TC). Las vueltas calculadas por tarifa también se recalculan al guardar o con el botón de abajo.</div>
+              <div class="hint">Listas de refacciones y equipo en USD. El tipo de cambio convierte a pesos solo si en el futuro se usa otra moneda; hoy las cotizaciones son USD. Las vueltas usan tarifas internas en MXN y se expresan en USD con este T.C.</div>
               <div class="form-actions" style="margin-top:0.5rem;flex-wrap:wrap;gap:0.35rem">
                 <button type="button" class="btn small outline" id="cotz-recalc-lineas" title="Recalcula refacciones/equipo en USD×TC y vueltas por tarifa (sin cerrar el modal)"><i class="fas fa-sync-alt"></i> Actualizar partidas con este T.C.</button>
               </div>
@@ -4632,7 +5708,7 @@
                 <input type="text" id="cotz-vendedor-puesto" class="input-readonly" readonly value="" placeholder="—">
               </div>
             </div>
-            <p class="hint" id="cotz-comision-hint" style="font-size:0.85rem;">Los precios son estándar desde lista × TC. Las comisiones dependen del vendedor (David: 10% en equipo y refacciones; demás vendedores: 10% solo refacciones).</p>
+            <p class="hint" id="cotz-comision-hint" style="font-size:0.85rem;">Los precios son estándar desde lista × TC. Las comisiones dependen del vendedor (David Cantú: 15% en equipo/máquina y 15% en refacciones según reglas; ver panel Comisiones David Cantú si eres administrador; demás vendedores con comisión en refacciones: típicamente 10%).</p>
             <div class="form-row">
               <div class="form-group">
                 <label>Descuento autorizado (% sobre subtotal de partidas)</label>
@@ -4640,12 +5716,6 @@
               </div>
             </div>
           </div>
-        </section>
-
-        <section class="cotz-card cotz-card--maquinas" aria-labelledby="cotz-h-maq">
-          <h4 class="cotz-card-title" id="cotz-h-maq"><span class="cotz-step-num">2</span> Equipos (opcional)</h4>
-          <p class="hint cotz-maquinas-intro" id="cotz-maquinas-hint">Marca los equipos que aplican. Si no hay filas, registra máquinas para el cliente en la pestaña Máquinas.</p>
-          <div id="cotz-maquinas-list" class="cotz-maquinas-list" role="group" aria-label="Máquinas de la cotización"></div>
         </section>
 
         <div class="cotz-inventory-hint" role="note">
@@ -4656,7 +5726,7 @@
         </div>
 
         <section class="cotz-card cotz-card--lineas" aria-labelledby="cotz-h-lineas">
-          <h4 class="cotz-card-title" id="cotz-h-lineas"><span class="cotz-step-num">3</span> Partidas</h4>
+          <h4 class="cotz-card-title" id="cotz-h-lineas"><span class="cotz-step-num">2</span> Partidas</h4>
           <div class="table-wrap cotz-lineas-table-wrap">
             <table class="data-table" id="tabla-cot-lineas">
               <thead>
@@ -4666,7 +5736,7 @@
                   <th>Máquina</th>
                   <th>Descripción</th>
                   <th>Cant</th>
-                  <th>P.u.</th>
+                  <th>P.u. (USD)</th>
                   <th>Subt.</th>
                   <th class="th-actions"></th>
                 </tr>
@@ -4685,29 +5755,42 @@
             <button type="button" class="btn small outline" id="cot-line-cancel">Cerrar formulario</button>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>Tipo de línea</label>
-              <select id="cot-line-tipo">
-                <option value="refaccion">Refacción (lista USD × TC)</option>
-                <option value="equipo">Equipo / máquina (lista USD × TC)</option>
-                <option value="mano_obra">Mano de obra</option>
-                <option value="vuelta">Vuelta (ida + horas × tarifa)</option>
-                <option value="otro">Otro</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Máquina (opcional)</label>
-              <select id="cot-line-maq">
-                <option value="">— Sin máquina —</option>
+          <div class="form-group cotz-line-tipo-row">
+            <label>Tipo de línea</label>
+            <select id="cot-line-tipo">
+              <option value="refaccion">Refacción (lista USD × TC)</option>
+              <option value="equipo">Equipo / máquina (lista USD × TC)</option>
+              <option value="mano_obra">Mano de obra</option>
+              <option value="vuelta">Vuelta (ida + horas × tarifa)</option>
+              <option value="otro">Otro</option>
+            </select>
+            <p class="hint" style="margin:0.35rem 0 0;font-size:0.8rem">Refacción y equipo son partidas distintas: elige el tipo y luego solo el catálogo que corresponda.</p>
+          </div>
+
+          <div class="cotz-line-block cotz-line-block--ref" id="cot-line-ref-wrap">
+            <div class="cotz-line-block-head"><i class="fas fa-cog"></i> Refacción</div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>Del catálogo</label>
+              <select id="cot-line-refaccion">
+                ${(refaccionesCache || []).slice(0, 200).map(r => `<option value="${r.id}">${escapeHtml((r.codigo || '') + ' — ' + (r.descripcion || ''))}</option>`).join('')}
               </select>
             </div>
           </div>
 
-          <div class="form-group" id="cot-line-ref-wrap">
-            <label>Refacción</label>
-            <select id="cot-line-refaccion">
-              ${(refaccionesCache || []).slice(0, 200).map(r => `<option value="${r.id}">${escapeHtml((r.codigo || '') + ' — ' + (r.descripcion || ''))}</option>`).join('')}
+          <div class="cotz-line-block cotz-line-block--eq" id="cot-line-eq-wrap" style="display:none">
+            <div class="cotz-line-block-head"><i class="fas fa-industry"></i> Equipo (catálogo completo)</div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>Máquina</label>
+              <select id="cot-line-maq">
+                <option value="">— Elige equipo —</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" id="cot-line-maq-opt-wrap" style="display:none">
+            <label>Ligar a máquina (opcional)</label>
+            <select id="cot-line-maq-opt">
+              <option value="">— Sin máquina —</option>
             </select>
           </div>
 
@@ -4779,7 +5862,7 @@
               </div>
             </div>
             <div class="cotz-mo-hint">
-              <i class="fas fa-calculator"></i> Precio sugerido desde Tarifas. Puedes ajustar cantidad y precio abajo.
+              <i class="fas fa-calculator"></i> Importe total desde tarifas en <strong>USD</strong> (hora técnico, ayudante, viáticos/día en MXN convertidos con el T.C.). Cantidad queda en <strong>1</strong> (una partida = el total calculado).
             </div>
           </div>
 
@@ -4800,7 +5883,7 @@
         </div>
 
         <section class="cotz-card cotz-card--totals" aria-labelledby="cotz-h-tot">
-          <h4 class="cotz-card-title" id="cotz-h-tot"><span class="cotz-step-num">4</span> Importes</h4>
+          <h4 class="cotz-card-title" id="cotz-h-tot"><span class="cotz-step-num">3</span> Importes</h4>
           <div class="form-row cotz-totals-row">
             <div class="form-group"><label>Subtotal</label><input type="text" id="cotz-subtotal" class="input-readonly" readonly value="${Number(cot && cot.subtotal || 0).toFixed(2)}"></div>
             <div class="form-group"><label>IVA (16%)</label><input type="text" id="cotz-iva" class="input-readonly" readonly value="${Number(cot && cot.iva || 0).toFixed(2)}"></div>
@@ -4822,16 +5905,6 @@
     function qm(sel) {
       return modalRoot ? modalRoot.querySelector(sel) : null;
     }
-    /** El modal puede re-renderizar; buscar el contenedor de checkboxes de forma robusta. */
-    function getCotzMaquinasListEl() {
-      const modal = qs('#modal');
-      if (modal && !modal.classList.contains('hidden')) {
-        const inModal = modal.querySelector('#cotz-maquinas-list');
-        if (inModal) return inModal;
-      }
-      return qs('#modal-body #cotz-maquinas-list') || qs('#cotz-maquinas-list');
-    }
-
     function getCotzFechaInput() {
       return qm('#cotz-fecha') || qs('#modal-body #cotz-fecha');
     }
@@ -4860,14 +5933,6 @@
       });
       return ids;
     }
-    function getSelectedMaquinaIdsFromUi() {
-      const wrap = getCotzMaquinasListEl();
-      if (!wrap) return [];
-      return Array.from(wrap.querySelectorAll('input.cotz-maq-cb:checked'))
-        .map((el) => Number(el.value))
-        .filter((n) => Number.isFinite(n) && n > 0);
-    }
-
     function renderLineas(lineas) {
       const tbody = qm('#tabla-cot-lineas tbody');
       if (!tbody) return;
@@ -4941,134 +6006,47 @@
     let bitacorasForCot = [];
     let maquinasForModal = [];
 
-    function filterMaquinasPorCliente(catalog, clienteId) {
-      const cid = Number(clienteId);
-      if (!Number.isFinite(cid) || cid <= 0) return toArray(catalog).slice();
-      const arr = toArray(catalog);
-      let out = arr.filter((m) => Number(m.cliente_id) === cid);
-      if (out.length) return out;
-      out = arr.filter((m) => String(m.cliente_id) === String(cid));
-      if (out.length) return out;
-      return arr.filter((m) => m.cliente_id == cid);
+    /** Etiqueta de máquina para selects de cotización: nombre máquina · parte · versión (sin cliente). */
+    function cotMaqCatalogLabel(m) {
+      if (!m) return '';
+      const parts = [m.categoria, m.subcategoria, m.modelo || m.nombre].filter((x) => x != null && String(x).trim() !== '');
+      if (parts.length) return parts.map((x) => String(x).trim()).join(' · ');
+      return String(m.numero_serie || ('#' + m.id)).trim();
     }
-
-    function setMaquinasOptions(maqs, selectedIds, richLabels) {
-      const list = toArray(maqs);
-      const selIds = Array.isArray(selectedIds) ? selectedIds.map((x) => Number(x)).filter(Boolean) : [];
-      function optLabel(m) {
-        const base = m.nombre || m.modelo || m.numero_serie || ('#' + m.id);
-        if (richLabels && (m.cliente_nombre || m.cliente_id != null)) {
-          return (m.cliente_nombre || ('Cliente ' + m.cliente_id)) + ' — ' + base;
-        }
-        return base;
+    function cotMaqPool() {
+      const src = maquinasForModal && maquinasForModal.length ? maquinasForModal : maquinasCatalogoModal;
+      return [...toArray(src)].sort((a, b) =>
+        cotMaqCatalogLabel(a).localeCompare(cotMaqCatalogLabel(b), 'es', { sensitivity: 'base' }));
+    }
+    function populateCotLineMaqSelects(preserveMaq, preserveOpt) {
+      const list = cotMaqPool();
+      const eqSel = qm('#cot-line-maq');
+      const optSel = qm('#cot-line-maq-opt');
+      const eqOpts =
+        '<option value="">— Elige equipo —</option>' +
+        list.map((m) => `<option value="${m.id}">${escapeHtml(cotMaqCatalogLabel(m))}</option>`).join('');
+      const optOpts =
+        '<option value="">— Sin máquina —</option>' +
+        list.map((m) => `<option value="${m.id}">${escapeHtml(cotMaqCatalogLabel(m))}</option>`).join('');
+      const vEq = preserveMaq != null ? String(preserveMaq) : (eqSel && eqSel.value);
+      const vOp = preserveOpt != null ? String(preserveOpt) : (optSel && optSel.value);
+      if (eqSel) {
+        eqSel.innerHTML = eqOpts;
+        if (vEq && list.some((m) => String(m.id) === vEq)) eqSel.value = vEq;
       }
-      const optionsHtml = list
-        .map((m) => {
-          const sel = selIds.includes(Number(m.id)) ? 'selected' : '';
-          return `<option value="${m.id}" ${sel}>${escapeHtml(optLabel(m))}</option>`;
-        })
-        .join('');
-      const listEl = getCotzMaquinasListEl();
-      let usingPresentationDummy = false;
-      const clienteSel = qm('#cotz-cliente_id');
-      const cliOpt = clienteSel?.selectedOptions?.[0];
-      const clienteNom = (cliOpt && cliOpt.textContent) ? cliOpt.textContent.trim() : '';
-      if (listEl) {
-        if (!list.length) {
-          usingPresentationDummy = true;
-          const dummyLines = [
-            'Compresor de Tornillo #2 — área principal',
-            'Robot soldador FANUC — línea de ensamble',
-            'Celda CNC / centro de mecanizado',
-            'Banda transporte / proceso',
-          ];
-          const introCliente = clienteNom
-            ? ` <strong>${escapeHtml(clienteNom)}</strong>:`
-            : '';
-          listEl.innerHTML =
-            '<p class="hint cotz-maquinas-dummy-intro">Vista demo' +
-            introCliente +
-            ' equipos de ejemplo (solo pantalla). Marca para ver el flujo; <strong>no se guardan</strong> hasta tener equipos en el catálogo. Si la lista sigue vacía, en la pestaña <strong>Demo</strong> usa <em>Asegurar equipos por cliente</em>.</p>' +
-            dummyLines
-              .map(
-                (label, i) =>
-                  `<label class="cotz-maq-row cotz-maq-row-dummy"><input type="checkbox" class="cotz-maq-cb cotz-maq-cb-dummy" value="0" data-dummy="1" id="cotz-dummy-maq-${i}"> <span class="cotz-maq-label">${escapeHtml(label)}</span></label>`
-              )
-              .join('');
-        } else {
-          listEl.innerHTML = list
-            .map((m) => {
-              const chk = selIds.includes(Number(m.id)) ? 'checked' : '';
-              return `<label class="cotz-maq-row"><input type="checkbox" class="cotz-maq-cb" value="${m.id}" ${chk}> <span class="cotz-maq-label">${escapeHtml(optLabel(m))}</span></label>`;
-            })
-            .join('');
-        }
-      }
-      const single = qm('#cot-line-maq');
-      if (single) {
-        const current = single.value;
-        if (!list.length) {
-          single.innerHTML =
-            '<option value="">— Sin máquina —</option>' +
-            '<optgroup label="Ejemplos (solo vista)">' +
-            ['Compresor industrial', 'Celda CNC', 'Línea transporte'].map((t) => `<option value="" disabled>${escapeHtml(t)}</option>`).join('') +
-            '</optgroup>';
-        } else {
-          single.innerHTML = '<option value="">— Sin máquina —</option>' + (optionsHtml || '');
-        }
-        if (current && Number(current) > 0) single.value = current;
-      }
-      const hint = qm('#cotz-maquinas-hint');
-      if (hint) {
-        if (usingPresentationDummy) {
-          hint.textContent =
-            'Son filas solo para demo. Para datos reales como en otros clientes: pestaña Demo → «Asegurar equipos por cliente», o registra máquinas en la pestaña Máquinas.';
-          hint.style.color = '#64748b';
-        } else if (richLabels) {
-          hint.textContent =
-            'Mostrando todas las máquinas del catálogo (etiqueta: cliente — equipo). Si no ves la del cliente, revisa en Máquinas que el equipo tenga asignado ese cliente.';
-          hint.style.color = '#b45309';
-        } else {
-          hint.textContent = 'Marca las que apliquen a esta cotización. Puedes elegir varias.';
-          hint.style.color = '#64748b';
-        }
+      if (optSel) {
+        optSel.innerHTML = optOpts;
+        if (vOp && list.some((m) => String(m.id) === vOp)) optSel.value = vOp;
       }
     }
-
-    async function refreshMaquinasForSelectedCliente(keepSelectedIds) {
-      const clienteId = Number(qm('#cotz-cliente_id')?.value) || null;
-      const selected = keepSelectedIds != null ? keepSelectedIds : (() => {
-        try { return getSelectedMaquinaIdsFromUi(); } catch (_) { return []; }
-      })();
-      // Respaldo inmediato + placeholder: si aún no hay equipos en caché para este cliente, mostrar filas demo YA (evita caja vacía mientras llega el API).
-      if (clienteId) {
-        const cached = filterMaquinasPorCliente(maquinasCatalogoModal, clienteId);
-        if (cached.length) setMaquinasOptions(cached, selected, false);
-        else setMaquinasOptions([], selected, false);
-      } else if (maquinasCatalogoModal.length) {
-        setMaquinasOptions(maquinasCatalogoModal, selected, false);
-      } else {
-        setMaquinasOptions([], selected, false);
-      }
+    async function refreshCotLineMaqDropdowns() {
       try {
-        if (clienteId) {
-          const raw = await fetchJson(`${API}/maquinas?cliente_id=${encodeURIComponent(String(clienteId))}`);
-          maquinasForModal = toArray(raw);
-        } else {
-          const raw = await fetchJson(`${API}/maquinas`);
-          maquinasForModal = toArray(raw);
-        }
+        const raw = await fetchJson(`${API}/maquinas`);
+        maquinasForModal = toArray(raw);
       } catch (_) {
-        maquinasForModal = clienteId
-          ? filterMaquinasPorCliente(maquinasCatalogoModal, clienteId)
-          : maquinasCatalogoModal.slice();
+        maquinasForModal = toArray(maquinasCatalogoModal).slice();
       }
-      if (clienteId && (!Array.isArray(maquinasForModal) || maquinasForModal.length === 0)) {
-        const fb = filterMaquinasPorCliente(maquinasCatalogoModal, clienteId);
-        if (fb.length) maquinasForModal = fb;
-      }
-      // Sin rellenar con todo el catálogo: en demo se confunde con otros clientes. Si sigue vacío → setMaquinasOptions muestra filas demo.
-      setMaquinasOptions(maquinasForModal, selected, false);
+      populateCotLineMaqSelects();
     }
 
     async function refreshCotizacion() {
@@ -5092,19 +6070,13 @@
 
     // Mini panel (Opción A): abre selector para agregar línea
     let lastLineDraft = null;
-    function getFirstSelectedMaquinaId() {
-      const ids = getSelectedMaquinaIdsFromUi();
-      if (ids && ids.length) return Number(ids[0]) || null;
-      return null;
-    }
     function buildDefaultLineDraft() {
       const headerTipo = qm('#cotz-tipo')?.value || (cot && cot.tipo) || 'refacciones';
       const tipoLinea = headerTipo === 'mano_obra' ? 'mano_obra' : 'refaccion';
       const refId = Number(qm('#cot-line-refaccion')?.value) || null;
-      const maqId = getFirstSelectedMaquinaId();
       return {
         tipo_linea: tipoLinea,
-        maquina_id: maqId,
+        maquina_id: null,
         refaccion_id: refId,
         descripcion: '',
         cantidad: 1,
@@ -5115,12 +6087,19 @@
       if (!d) return;
       const tipoEl = qm('#cot-line-tipo');
       const maqEl = qm('#cot-line-maq');
+      const maqOptEl = qm('#cot-line-maq-opt');
       const refEl = qm('#cot-line-refaccion');
       const descEl = qm('#cot-line-desc');
       const cantEl = qm('#cot-line-cant');
       const precioEl = qm('#cot-line-precio');
       if (tipoEl) tipoEl.value = d.tipo_linea || 'refaccion';
-      if (maqEl) maqEl.value = d.maquina_id ? String(d.maquina_id) : '';
+      const tl = d.tipo_linea || 'refaccion';
+      const mid = d.maquina_id ? String(d.maquina_id) : '';
+      if (maqEl) maqEl.value = tl === 'equipo' ? mid : '';
+      if (maqOptEl) {
+        maqOptEl.value =
+          tl === 'vuelta' || tl === 'mano_obra' || tl === 'otro' ? mid : '';
+      }
       if (refEl && d.refaccion_id) refEl.value = String(d.refaccion_id);
       if (descEl) descEl.value = d.descripcion || '';
       if (cantEl) cantEl.value = String(Number(d.cantidad || 1));
@@ -5155,13 +6134,18 @@
     function updateCotVueltaPreview() {
       const prev = qm('#cot-line-vuelta-preview');
       if (!prev) return;
-      const mon = (qm('#cotz-moneda')?.value || 'MXN').toUpperCase();
+      const mon = (qm('#cotz-moneda')?.value || 'USD').toUpperCase();
       const tc = Number(qm('#cotz-tc')?.value) || 17;
       const baseMxn = calcCotVueltaBaseMxn();
       const pu = mon === 'USD' && tc > 0 ? Math.round((baseMxn / tc) * 100) / 100 : Math.round(baseMxn * 100) / 100;
       const unitLbl = mon === 'USD' ? 'USD' : 'MXN';
-      prev.textContent = `Sugerido (1 partida): ${pu.toFixed(2)} ${unitLbl} · base MXN ${baseMxn.toFixed(2)} (ida + horas × tarifa)`;
+      prev.textContent = `Sugerido (1 partida): ${pu.toFixed(2)} ${unitLbl} · base tarifas MXN ${baseMxn.toFixed(2)} (ida + horas × tarifa)`;
     }
+    /**
+     * Mano de obra: importe total de la partida (cantidad = 1).
+     * - Cotización en USD: horas × tarifas `*_usd` y `ayudante_usd`; viáticos/día = MXN ÷ T.C.
+     * - Cotización en MXN: horas × tarifas `*_mxn` y `ayudante_mxn`; viáticos en MXN directo.
+     */
     function calcManoObraPrice() {
       const tipoTec = qm('#cot-line-mo-tipo-tec')?.value || 'mecanico';
       const zona = qm('#cot-line-mo-zona')?.value || 'a';
@@ -5169,43 +6153,67 @@
       const hrsTrabajo = Number(qm('#cot-line-mo-hrs-trabajo')?.value) || 0;
       const ayudantes = Number(qm('#cot-line-mo-ayudantes')?.value) || 0;
       const viaticoDias = Number(qm('#cot-line-mo-viaticos-dias')?.value) || 0;
-      const tarifaHora = getTarifaVal(`${tipoTec}_mxn`);
-      const tarifaAyudante = getTarifaVal('ayudante_mxn');
-      const tarifaViatico = getTarifaVal(`zona_${zona}_viatico`);
-      const precio = (hrsTrabajo * tarifaHora)
-        + (hrsTraslado * tarifaHora)
-        + (ayudantes * hrsTrabajo * tarifaAyudante)
-        + (viaticoDias * tarifaViatico);
+      const tc = Number(qm('#cotz-tc')?.value) || 17;
+      const mon = (qm('#cotz-moneda')?.value || 'USD').toUpperCase();
+      const viaticoMxn = getTarifaVal(`zona_${zona}_viatico`);
+      let pu = 0;
+      if (mon === 'USD') {
+        let tarifaHoraUsd = getTarifaVal(`${tipoTec}_usd`);
+        if (!tarifaHoraUsd) {
+          const mxnH = getTarifaVal(`${tipoTec}_mxn`);
+          tarifaHoraUsd = tc > 0 && mxnH ? mxnH / tc : 0;
+        }
+        let tarifaAyudanteUsd = getTarifaVal('ayudante_usd');
+        if (!tarifaAyudanteUsd) {
+          const mxnA = getTarifaVal('ayudante_mxn');
+          tarifaAyudanteUsd = tc > 0 && mxnA ? mxnA / tc : 0;
+        }
+        const viaticoUsd = tc > 0 && viaticoMxn ? viaticoMxn / tc : 0;
+        const totalUsd =
+          (hrsTrabajo * tarifaHoraUsd)
+          + (hrsTraslado * tarifaHoraUsd)
+          + (ayudantes * hrsTrabajo * tarifaAyudanteUsd)
+          + (viaticoDias * viaticoUsd);
+        pu = Math.round(totalUsd * 100) / 100;
+      } else {
+        const tarifaHoraMxn = getTarifaVal(`${tipoTec}_mxn`);
+        const tarifaAyudanteMxn = getTarifaVal('ayudante_mxn');
+        const totalMxn =
+          (hrsTrabajo * tarifaHoraMxn)
+          + (hrsTraslado * tarifaHoraMxn)
+          + (ayudantes * hrsTrabajo * tarifaAyudanteMxn)
+          + (viaticoDias * viaticoMxn);
+        pu = Math.round(totalMxn * 100) / 100;
+      }
       const descParts = [];
       if (hrsTrabajo) descParts.push(`${hrsTrabajo}h trabajo`);
       if (hrsTraslado) descParts.push(`${hrsTraslado}h traslado`);
       if (ayudantes) descParts.push(`${ayudantes} ayudante(s)`);
       const zonaLabel = zona === 'a' ? 'A-Local' : zona === 'b' ? 'B-Regional' : 'C-Nacional';
       const desc = `M.O. Zona ${zonaLabel} – ${descParts.join(', ')}`;
-      if (qm('#cot-line-precio')) qm('#cot-line-precio').value = precio.toFixed(2);
-      if (qm('#cot-line-cant')) qm('#cot-line-cant').value = hrsTrabajo || 1;
+      if (qm('#cot-line-precio')) qm('#cot-line-precio').value = pu.toFixed(2);
+      if (qm('#cot-line-cant')) qm('#cot-line-cant').value = '1';
       if (qm('#cot-line-desc')) qm('#cot-line-desc').value = desc;
     }
     function fillPrecioListaLinea() {
       const t = qm('#cot-line-tipo')?.value || 'refaccion';
       const tc = Number(qm('#cotz-tc')?.value) || 17;
-      const mon = (qm('#cotz-moneda')?.value || 'MXN').toUpperCase();
+      const mon = (qm('#cotz-moneda')?.value || 'USD').toUpperCase();
       const precioEl = qm('#cot-line-precio');
       if (t === 'refaccion') {
         const rid = Number(qm('#cot-line-refaccion')?.value);
         const r = (refaccionesCache || []).find((x) => Number(x.id) === rid);
         if (r && precioEl) {
           const usd = resolveRefaccionPrecioUsd(r);
-          const mxn = Number(r.precio_unitario) || 0;
           const pu = mon === 'USD'
             ? (usd != null ? usd : 0)
-            : (mxn > 0 ? mxn : (usd != null && usd > 0 ? Math.round(usd * tc * 100) / 100 : 0));
+            : (usd != null && usd > 0 ? Math.round(usd * tc * 100) / 100 : 0);
           precioEl.value = pu.toFixed(2);
         }
       }
       if (t === 'equipo') {
         const mid = Number(qm('#cot-line-maq')?.value);
-        const m = (maquinasCatalogoModal || []).find((x) => Number(x.id) === mid);
+        const m = cotMaqPool().find((x) => Number(x.id) === mid);
         if (m && precioEl) {
           const usd = Number(m.precio_lista_usd) || 0;
           const pu = mon === 'USD' ? usd : (usd > 0 ? Math.round(usd * tc * 100) / 100 : 0);
@@ -5216,6 +6224,7 @@
         updateCotVueltaPreview();
         if (precioEl && !(Number(precioEl.value) > 0)) precioEl.value = '0';
       }
+      if (t === 'mano_obra') calcManoObraPrice();
     }
     function syncVendedorCotz() {
       const id = qm('#cotz-vendedor-id')?.value;
@@ -5244,12 +6253,19 @@
     function syncLinePanelFields() {
       const t = qm('#cot-line-tipo')?.value || 'refaccion';
       const refWrap = qm('#cot-line-ref-wrap');
+      const eqWrap = qm('#cot-line-eq-wrap');
+      const maqOptWrap = qm('#cot-line-maq-opt-wrap');
       const descWrap = qm('#cot-line-desc-wrap');
       const descLabel = qm('#cot-line-desc-label');
       const bitWrap = qm('#cot-line-bit-wrap');
       const moWrap = qm('#cot-line-mo-wrap');
       const vuWrap = qm('#cot-line-vuelta-wrap');
       if (refWrap) refWrap.style.display = t === 'refaccion' ? '' : 'none';
+      if (eqWrap) eqWrap.style.display = t === 'equipo' ? '' : 'none';
+      if (maqOptWrap) {
+        maqOptWrap.style.display =
+          t === 'vuelta' || t === 'mano_obra' || t === 'otro' ? '' : 'none';
+      }
       if (descWrap) {
         if (t === 'vuelta') {
           descWrap.style.display = '';
@@ -5280,9 +6296,8 @@
       if (!clienteId) { showToast('Selecciona un cliente.', 'warning'); return null; }
       if (!fecha) { showToast('Selecciona una fecha.', 'warning'); return null; }
       const tipo = qm('#cotz-tipo')?.value || 'refacciones';
-      const moneda = (qm('#cotz-moneda')?.value || 'MXN').toUpperCase();
+      const moneda = (qm('#cotz-moneda')?.value || 'USD').toUpperCase();
       const tc = Number(qm('#cotz-tc')?.value) || 17.0;
-      const maquinas_ids = getSelectedMaquinaIdsFromUi();
       const vid = qm('#cotz-vendedor-id')?.value ? Number(qm('#cotz-vendedor-id').value) : null;
       const vend = (tecnicosCache || []).find((x) => Number(x.id) === Number(vid));
       const payload = {
@@ -5291,7 +6306,7 @@
         fecha,
         moneda,
         tipo_cambio: tc,
-        maquinas_ids,
+        maquinas_ids: [],
         vendedor_personal_id: vid && vid > 0 ? vid : null,
         descuento_pct: Math.min(100, Math.max(0, Number(qm('#cotz-descuento-pct')?.value) || 0)),
         vendedor: vend ? vend.nombre : null,
@@ -5363,18 +6378,8 @@
     syncLinePanelFields();
     syncVendedorCotz();
 
-    // Si el usuario cambia las máquinas seleccionadas, el "draft" debe tomar la primera seleccionada
-    getCotzMaquinasListEl()?.addEventListener('change', () => {
-      const first = getFirstSelectedMaquinaId();
-      if (!lastLineDraft) lastLineDraft = buildDefaultLineDraft();
-      lastLineDraft.maquina_id = first;
-    });
-
     qm('#cotz-cliente_id')?.addEventListener('change', async () => {
-      await refreshMaquinasForSelectedCliente([]);
-      const first = getFirstSelectedMaquinaId();
-      if (!lastLineDraft) lastLineDraft = buildDefaultLineDraft();
-      lastLineDraft.maquina_id = first;
+      await refreshCotLineMaqDropdowns();
     });
 
     qm('#cot-line-new-bit')?.addEventListener('click', async () => {
@@ -5404,7 +6409,7 @@
     }
 
     try {
-      await refreshMaquinasForSelectedCliente(maqIds);
+      await refreshCotLineMaqDropdowns();
       if (currentCotId) await loadBitacorasForCotizacion();
     } catch (_) {}
 
@@ -5413,11 +6418,15 @@
       if (!bitId) return;
       const bit = (bitacorasForCot || []).find((b) => Number(b.id) === bitId);
       if (!bit) return;
-      // Autorellenar mano de obra desde bitácora (editable)
       const horas = Number(bit.tiempo_horas) || 0;
       const act = (bit.actividades || '').trim();
       const tec = (bit.tecnico || '').trim();
-      if (qm('#cot-line-cant')) qm('#cot-line-cant').value = String(horas || 1);
+      if ((qm('#cot-line-tipo')?.value || '') === 'mano_obra') {
+        if (qm('#cot-line-mo-hrs-trabajo')) qm('#cot-line-mo-hrs-trabajo').value = String(horas || 1);
+        calcManoObraPrice();
+      } else if (qm('#cot-line-cant')) {
+        qm('#cot-line-cant').value = String(horas || 1);
+      }
       if (qm('#cot-line-desc')) qm('#cot-line-desc').value = (tec && act) ? `${act} (${tec})` : (act || tec || '');
     });
 
@@ -5434,7 +6443,11 @@
       const tipoLinea = qm('#cot-line-tipo')?.value || 'refaccion';
       const cant = Number(qm('#cot-line-cant')?.value) || 0;
       const precio = Number(qm('#cot-line-precio')?.value) || 0;
-      const maqId = Number(qm('#cot-line-maq')?.value) || null;
+      const maqEquipo = Number(qm('#cot-line-maq')?.value) || null;
+      const maqOpt = Number(qm('#cot-line-maq-opt')?.value) || null;
+      let maqId = null;
+      if (tipoLinea === 'equipo') maqId = maqEquipo;
+      else if (tipoLinea === 'vuelta' || tipoLinea === 'mano_obra' || tipoLinea === 'otro') maqId = maqOpt;
       const bitId = Number(qm('#cot-line-bitacora')?.value) || null;
       if (tipoLinea === 'equipo' && !maqId) {
         showToast('Selecciona la máquina / equipo para la línea de venta.', 'warning');
@@ -5443,7 +6456,7 @@
       let payload = { tipo_linea: tipoLinea, cantidad: cant, precio_unitario: precio, maquina_id: maqId, bitacora_id: bitId };
       if (tipoLinea === 'refaccion') {
         const refId = Number(qm('#cot-line-refaccion')?.value) || null;
-        payload = { ...payload, refaccion_id: refId };
+        payload = { ...payload, refaccion_id: refId, maquina_id: null };
       } else if (tipoLinea === 'vuelta') {
         const desc = qm('#cot-line-desc')?.value?.trim() || '';
         payload = {
@@ -5456,6 +6469,27 @@
           horas_trabajo: Number(qm('#cot-line-vuelta-hrs-trabajo')?.value) || 0,
           horas_traslado: Number(qm('#cot-line-vuelta-hrs-traslado')?.value) || 0,
           descripcion: desc || null,
+        };
+      } else if (tipoLinea === 'mano_obra') {
+        const desc = qm('#cot-line-desc')?.value?.trim() || '';
+        const tipoTecMo = qm('#cot-line-mo-tipo-tec')?.value || 'mecanico';
+        const zonaMo = qm('#cot-line-mo-zona')?.value || 'a';
+        const htr = Number(qm('#cot-line-mo-hrs-traslado')?.value) || 0;
+        const ht = Number(qm('#cot-line-mo-hrs-trabajo')?.value) || 0;
+        const ayu = Number(qm('#cot-line-mo-ayudantes')?.value) || 0;
+        const via = Number(qm('#cot-line-mo-viaticos-dias')?.value) || 0;
+        payload = {
+          tipo_linea: 'mano_obra',
+          cantidad: 1,
+          precio_unitario: precio,
+          maquina_id: maqId,
+          bitacora_id: bitId || null,
+          descripcion: desc || null,
+          horas_trabajo: ht,
+          horas_traslado: htr,
+          zona: zonaMo,
+          ayudantes: ayu,
+          tarifa_aplicada: JSON.stringify({ tipo_tecnico: tipoTecMo, viaticos_dias: via }),
         };
       } else if (tipoLinea !== 'equipo') {
         const desc = qm('#cot-line-desc')?.value?.trim() || '';
@@ -5486,10 +6520,13 @@
       const isEquipo = String(linea.tipo_linea || '') === 'equipo';
       const isMO = String(linea.tipo_linea || '') === 'mano_obra';
       const isVuelta = String(linea.tipo_linea || '') === 'vuelta';
-      const clienteIdParaMaq = Number(qm('#cotz-cliente_id')?.value) || Number(cot && cot.cliente_id) || null;
-      const maqOpts = ['<option value="">— Sin máquina —</option>']
-        .concat((maquinasCatalogoModal || []).filter((m) => !clienteIdParaMaq || Number(m.cliente_id) === Number(clienteIdParaMaq))
-          .map((m) => `<option value="${m.id}" ${Number(linea.maquina_id) === Number(m.id) ? 'selected' : ''}>${escapeHtml(m.nombre || m.modelo || m.numero_serie || ('#' + m.id))}</option>`))
+      const pool = cotMaqPool();
+      const mid = Number(linea.maquina_id) || null;
+      const maqOptsEq = ['<option value="">— Elige equipo —</option>']
+        .concat(pool.map((m) => `<option value="${m.id}" ${mid === Number(m.id) ? 'selected' : ''}>${escapeHtml(cotMaqCatalogLabel(m))}</option>`))
+        .join('');
+      const maqOptsOpt = ['<option value="">— Sin máquina —</option>']
+        .concat(pool.map((m) => `<option value="${m.id}" ${mid === Number(m.id) ? 'selected' : ''}>${escapeHtml(cotMaqCatalogLabel(m))}</option>`))
         .join('');
       const refOpts = (refaccionesCache || []).slice(0, 200).map((r) => `<option value="${r.id}" ${Number(linea.refaccion_id) === Number(r.id) ? 'selected' : ''}>${escapeHtml((r.codigo || '') + ' — ' + (r.descripcion || ''))}</option>`).join('');
       const bitOpts = ['<option value="">— Sin bitácora —</option>']
@@ -5500,25 +6537,27 @@
         }))
         .join('');
       const html = `
-        <div class="form-row">
-          <div class="form-group">
-            <label>Tipo de línea</label>
-            <select id="e-line-tipo">
-              <option value="refaccion" ${String(linea.tipo_linea) === 'refaccion' ? 'selected' : ''}>Refacción</option>
-              <option value="equipo" ${String(linea.tipo_linea) === 'equipo' ? 'selected' : ''}>Equipo / máquina</option>
-              <option value="mano_obra" ${String(linea.tipo_linea) === 'mano_obra' ? 'selected' : ''}>Mano de obra</option>
-              <option value="vuelta" ${String(linea.tipo_linea) === 'vuelta' ? 'selected' : ''}>Vuelta</option>
-              <option value="otro" ${String(linea.tipo_linea) === 'otro' ? 'selected' : ''}>Otro</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Máquina (opcional)</label>
-            <select id="e-line-maq">${maqOpts}</select>
-          </div>
+        <div class="form-group">
+          <label>Tipo de línea</label>
+          <select id="e-line-tipo">
+            <option value="refaccion" ${String(linea.tipo_linea) === 'refaccion' ? 'selected' : ''}>Refacción</option>
+            <option value="equipo" ${String(linea.tipo_linea) === 'equipo' ? 'selected' : ''}>Equipo / máquina</option>
+            <option value="mano_obra" ${String(linea.tipo_linea) === 'mano_obra' ? 'selected' : ''}>Mano de obra</option>
+            <option value="vuelta" ${String(linea.tipo_linea) === 'vuelta' ? 'selected' : ''}>Vuelta</option>
+            <option value="otro" ${String(linea.tipo_linea) === 'otro' ? 'selected' : ''}>Otro</option>
+          </select>
         </div>
         <div class="form-group" id="e-line-ref-wrap" style="${isRef ? '' : 'display:none'}">
           <label>Refacción</label>
           <select id="e-line-ref">${refOpts}</select>
+        </div>
+        <div class="form-group" id="e-line-eq-wrap" style="${isEquipo ? '' : 'display:none'}">
+          <label>Máquina (catálogo)</label>
+          <select id="e-line-maq-eq">${maqOptsEq}</select>
+        </div>
+        <div class="form-group" id="e-line-maq-opt-wrap" style="${isVuelta || isMO || String(linea.tipo_linea) === 'otro' ? '' : 'display:none'}">
+          <label>Ligar a máquina (opcional)</label>
+          <select id="e-line-maq-opt">${maqOptsOpt}</select>
         </div>
         <div class="form-group" id="e-line-desc-wrap" style="${isRef || isEquipo ? 'display:none' : ''}">
           <label>Descripción</label>
@@ -5558,30 +6597,75 @@
       function syncEditFields() {
         const t = qs('#e-line-tipo')?.value || 'otro';
         const refWrap = qs('#e-line-ref-wrap');
+        const eqWrap = qs('#e-line-eq-wrap');
+        const maqOptWrap = qs('#e-line-maq-opt-wrap');
         const descWrap = qs('#e-line-desc-wrap');
         const bitWrap = qs('#e-line-bit-wrap');
         const vuWrap = qs('#e-line-vuelta-wrap');
         if (refWrap) refWrap.style.display = t === 'refaccion' ? '' : 'none';
+        if (eqWrap) eqWrap.style.display = t === 'equipo' ? '' : 'none';
+        if (maqOptWrap) {
+          maqOptWrap.style.display =
+            t === 'vuelta' || t === 'mano_obra' || t === 'otro' ? '' : 'none';
+        }
         if (descWrap) descWrap.style.display = t === 'refaccion' || t === 'equipo' ? 'none' : '';
         if (bitWrap) bitWrap.style.display = t === 'mano_obra' ? '' : 'none';
         if (vuWrap) vuWrap.style.display = t === 'vuelta' ? '' : 'none';
       }
-      qs('#e-line-tipo')?.addEventListener('change', syncEditFields);
+      function fillEditPrecioLista() {
+        const t = qs('#e-line-tipo')?.value || 'otro';
+        const tc = Number(qm('#cotz-tc')?.value) || 17;
+        const mon = (qm('#cotz-moneda')?.value || 'USD').toUpperCase();
+        const precioEl = qs('#e-line-precio');
+        if (!precioEl) return;
+        if (t === 'refaccion') {
+          const rid = Number(qs('#e-line-ref')?.value);
+          const r = (refaccionesCache || []).find((x) => Number(x.id) === rid);
+          if (r) {
+            const usd = resolveRefaccionPrecioUsd(r);
+            const pu = mon === 'USD'
+              ? (usd != null ? usd : 0)
+              : (usd != null && usd > 0 ? Math.round(usd * tc * 100) / 100 : 0);
+            precioEl.value = pu.toFixed(2);
+          }
+        } else if (t === 'equipo') {
+          const mid = Number(qs('#e-line-maq-eq')?.value);
+          const m = cotMaqPool().find((x) => Number(x.id) === mid);
+          if (m) {
+            const usd = Number(m.precio_lista_usd) || 0;
+            const pu = mon === 'USD' ? usd : (usd > 0 ? Math.round(usd * tc * 100) / 100 : 0);
+            precioEl.value = pu.toFixed(2);
+          }
+        }
+      }
+      qs('#e-line-ref')?.addEventListener('change', fillEditPrecioLista);
+      qs('#e-line-maq-eq')?.addEventListener('change', fillEditPrecioLista);
+      qs('#e-line-tipo')?.addEventListener('change', () => {
+        syncEditFields();
+        fillEditPrecioLista();
+      });
       syncEditFields();
       if (qs('#e-line-open-bit')) {
         qs('#e-line-open-bit').addEventListener('click', () => editBitacora(linea.bitacora_id));
       }
       qs('#e-line-save')?.addEventListener('click', async () => {
         const tipoLinea = qs('#e-line-tipo')?.value || 'otro';
+        let maquina_id = null;
+        if (tipoLinea === 'equipo') maquina_id = Number(qs('#e-line-maq-eq')?.value) || null;
+        else if (tipoLinea === 'vuelta' || tipoLinea === 'mano_obra' || tipoLinea === 'otro') {
+          maquina_id = Number(qs('#e-line-maq-opt')?.value) || null;
+        }
         const payload = {
           tipo_linea: tipoLinea,
-          maquina_id: Number(qs('#e-line-maq')?.value) || null,
+          maquina_id,
           cantidad: Number(qs('#e-line-cant')?.value) || 0,
           precio_unitario: Number(qs('#e-line-precio')?.value) || 0,
           bitacora_id: Number(qs('#e-line-bit')?.value) || null,
         };
-        if (tipoLinea === 'refaccion') payload.refaccion_id = Number(qs('#e-line-ref')?.value) || null;
-        else if (tipoLinea !== 'equipo') payload.descripcion = qs('#e-line-desc')?.value?.trim() || null;
+        if (tipoLinea === 'refaccion') {
+          payload.refaccion_id = Number(qs('#e-line-ref')?.value) || null;
+          payload.maquina_id = null;
+        } else if (tipoLinea !== 'equipo') payload.descripcion = qs('#e-line-desc')?.value?.trim() || null;
         if (tipoLinea === 'vuelta') {
           payload.cantidad = 1;
           payload.es_ida = !!qs('#e-line-vuelta-ida')?.checked;
@@ -5608,9 +6692,8 @@
       const clienteId = parseInt(qm('#cotz-cliente_id')?.value, 10);
       if (!clienteId) { markInvalid(qm('#cotz-cliente_id'), 'Selecciona un cliente'); return; }
       const tipo = qm('#cotz-tipo')?.value;
-      const moneda = (qm('#cotz-moneda')?.value || 'MXN').toUpperCase();
+      const moneda = (qm('#cotz-moneda')?.value || 'USD').toUpperCase();
       const tc = Number(qm('#cotz-tc')?.value) || 0;
-      const maquinas_ids = getSelectedMaquinaIdsFromUi();
       const vid = qm('#cotz-vendedor-id')?.value ? Number(qm('#cotz-vendedor-id').value) : null;
       const vend = (tecnicosCache || []).find((x) => Number(x.id) === Number(vid));
       const payload = {
@@ -5619,7 +6702,7 @@
         fecha,
         moneda,
         tipo_cambio: tc > 0 ? tc : 17.0,
-        maquinas_ids,
+        maquinas_ids: [],
         vendedor_personal_id: vid && vid > 0 ? vid : null,
         descuento_pct: Math.min(100, Math.max(0, Number(qm('#cotz-descuento-pct')?.value) || 0)),
         vendedor: vend ? vend.nombre : null,
@@ -5903,7 +6986,8 @@
     const stack = !!opts.stack;
     const onSaved = typeof opts.onSaved === 'function' ? opts.onSaved : null;
     const isNew = !bit || !bit.id;
-    const [incidentes, cotizaciones] = await Promise.all([fetchJson(API + '/incidentes').catch(() => []), fetchJson(API + '/cotizaciones').catch(() => [])]);
+    const cotFetch = canAccessCotizaciones() ? fetchJson(API + '/cotizaciones').catch(() => []) : Promise.resolve([]);
+    const [incidentes, cotizaciones] = await Promise.all([fetchJson(API + '/incidentes').catch(() => []), cotFetch]);
     const incOpt = incidentes.map(i => `<option value="${i.id}" ${bit && bit.incidente_id == i.id ? 'selected' : ''}>${escapeHtml(i.folio || '')} - ${escapeHtml((i.descripcion || '').slice(0, 30))}</option>`).join('');
     const cotOpt = cotizaciones.map(c => `<option value="${c.id}" ${bit && bit.cotizacion_id == c.id ? 'selected' : ''}>${escapeHtml(c.folio || '')}</option>`).join('');
     const body = `
@@ -6051,20 +7135,160 @@
     );
   }
 
+  function renderUsuariosTecnicoSelect(userId, tecnicosList, currentId) {
+    const cur = currentId != null && currentId !== '' ? Number(currentId) : null;
+    const opts = ['<option value="">— Sin vincular —</option>'].concat(
+      (tecnicosList || []).map(function (t) {
+        const tid = Number(t.id);
+        const sel = cur != null && Number.isFinite(cur) && Number.isFinite(tid) && cur === tid ? ' selected' : '';
+        const vend = Number(t.es_vendedor) === 1 ? ' · vendedor' : '';
+        return '<option value="' + escapeHtml(String(tid)) + '"' + sel + '>' + escapeHtml(String(t.nombre || '')) + escapeHtml(vend) + '</option>';
+      })
+    );
+    return (
+      '<select class="filter-input usuarios-tecnico-select" data-user-id="' +
+      userId +
+      '" title="Vincular a Personal: con rol Usuario solo podrá cotizar si ese registro es vendedor (operador/admin no requieren esto).">' +
+      opts.join('') +
+      '</select>'
+    );
+  }
+
+  function getUsuariosNotifyEmail() {
+    const el = qs('#usuarios-notify-email');
+    return el && el.value ? String(el.value).trim() : '';
+  }
+
+  function openMailtoUsuarioEliminado(row) {
+    if (!row) return;
+    const to = getUsuariosNotifyEmail();
+    const subject = 'Usuario eliminado del sistema: ' + (row.username || '');
+    const body =
+      'Se eliminó la cuenta del sistema.\r\n\r\n' +
+      'Usuario: ' +
+      (row.username || '—') +
+      '\r\n' +
+      'Nombre: ' +
+      (row.display_name || '—') +
+      '\r\n' +
+      'Rol: ' +
+      (row.role || '—') +
+      '\r\n' +
+      'Eliminado: ' +
+      (row.eliminado_en || '—') +
+      '\r\n' +
+      'Eliminado por: ' +
+      (row.eliminado_por_username || '—') +
+      '\r\n';
+    const href = to
+      ? 'mailto:' + encodeURIComponent(to) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body)
+      : 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    window.location.href = href;
+  }
+
+  function openMailtoUsuariosEliminadosResumen(rows) {
+    const list = toArray(rows);
+    if (!list.length) {
+      showToast('No hay registros para incluir en el correo.', 'warning');
+      return;
+    }
+    const to = getUsuariosNotifyEmail();
+    const subject = 'Resumen: usuarios eliminados del sistema (' + list.length + ')';
+    const body =
+      'Resumen de cuentas eliminadas:\r\n\r\n' +
+      list
+        .map(function (r, i) {
+          return (
+            (i + 1) +
+            '. ' +
+            (r.username || '—') +
+            ' | ' +
+            (r.display_name || '—') +
+            ' | rol ' +
+            (r.role || '—') +
+            ' | eliminado ' +
+            (r.eliminado_en || '—') +
+            ' por ' +
+            (r.eliminado_por_username || '—')
+          );
+        })
+        .join('\r\n') +
+      '\r\n';
+    const href = to
+      ? 'mailto:' + encodeURIComponent(to) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body)
+      : 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    window.location.href = href;
+  }
+
+  async function loadAppDeletedUsers() {
+    const tbody = qs('#tabla-usuarios-eliminados-body');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">Cargando…</td></tr>';
+    try {
+      const rows = await fetchJson(API + '/app-users/deleted');
+      const list = toArray(rows);
+      appUsersDeletedCache = list;
+      if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">No hay eliminaciones registradas.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = list
+        .map(function (r) {
+          return (
+            '<tr><td>' +
+            escapeHtml(r.username) +
+            '</td><td>' +
+            escapeHtml(r.display_name || '—') +
+            '</td><td>' +
+            escapeHtml(r.role || '—') +
+            '</td><td class="muted">' +
+            escapeHtml(r.eliminado_en || '—') +
+            '</td><td>' +
+            escapeHtml(r.eliminado_por_username || '—') +
+            '</td><td><button type="button" class="btn small outline usuarios-email-one-btn" data-del-id="' +
+            escapeHtml(String(r.id)) +
+            '" title="Abrir correo con texto de esta baja"><i class="fas fa-envelope"></i></button></td></tr>'
+          );
+        })
+        .join('');
+    } catch (e) {
+      appUsersDeletedCache = [];
+      tbody.innerHTML =
+        '<tr><td colspan="6" class="empty">' + escapeHtml(parseApiError(e) || 'No se pudo cargar el historial.') + '</td></tr>';
+    }
+  }
+
   async function loadAppUsers() {
     const tbody = qs('#tabla-usuarios-body');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="5" class="empty">Cargando…</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Cargando…</td></tr>';
     try {
-      const rows = toArray(await fetchJson(API + '/app-users'));
-      if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty">No hay usuarios registrados.</td></tr>';
+      const [rows, tecnicos] = await Promise.all([
+        fetchJson(API + '/app-users'),
+        fetchJson(API + '/tecnicos').catch(() => []),
+      ]);
+      const list = toArray(rows);
+      const tecList = toArray(tecnicos);
+      const me = getSessionUser();
+      const activeAdmins = list.filter(function (u) {
+        return u.role === 'admin' && (u.activo === 1 || u.activo === true);
+      }).length;
+      if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay usuarios registrados.</td></tr>';
+        loadAppDeletedUsers();
         return;
       }
-      tbody.innerHTML = rows
+      tbody.innerHTML = list
         .map(function (r) {
           const id = r.id;
           const activo = !!(r.activo === 1 || r.activo === true);
+          const isSelf = me && Number(me.id) === Number(id);
+          const rowIsActiveAdmin = r.role === 'admin' && activo;
+          const blockLastAdmin = rowIsActiveAdmin && activeAdmins <= 1;
+          const canDelete = !isSelf && !blockLastAdmin;
+          let delTitle = 'Eliminar cuenta del sistema';
+          if (isSelf) delTitle = 'No puedes eliminar tu propia cuenta';
+          else if (blockLastAdmin) delTitle = 'No se puede eliminar el único administrador activo';
           return (
             '<tr data-user-row="' +
             id +
@@ -6074,6 +7298,8 @@
             escapeHtml(r.display_name || '—') +
             '</td><td>' +
             renderUsuariosRoleSelect(id, r.role || 'invitado') +
+            '</td><td>' +
+            renderUsuariosTecnicoSelect(id, tecList, r.tecnico_id) +
             '</td><td><input type="checkbox" class="usuarios-activo-check" id="usuarios-act-' +
             id +
             '" data-user-id="' +
@@ -6082,13 +7308,229 @@
             (activo ? 'checked' : '') +
             '></td><td class="muted">' +
             escapeHtml(r.creado_en || '—') +
-            '</td></tr>'
+            '</td><td><button type="button" class="btn small danger usuarios-delete-btn" data-user-id="' +
+            id +
+            '" title="' +
+            escapeHtml(delTitle) +
+            '" ' +
+            (canDelete ? '' : 'disabled') +
+            '><i class="fas fa-user-minus"></i></button></td></tr>'
           );
         })
         .join('');
     } catch (e) {
       tbody.innerHTML =
-        '<tr><td colspan="5" class="empty">' + escapeHtml(parseApiError(e) || 'No se pudo cargar usuarios.') + '</td></tr>';
+        '<tr><td colspan="7" class="empty">' + escapeHtml(parseApiError(e) || 'No se pudo cargar usuarios.') + '</td></tr>';
+    }
+    loadAppDeletedUsers();
+  }
+
+  async function loadCategoriasAdminPanel() {
+    const tbody = qs('#tabla-categorias-admin-body');
+    const padreSel = qs('#cat-admin-sub-padre');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="3" class="empty">Cargando…</td></tr>';
+    try {
+      const tree = await fetchJson(API + '/categorias-catalogo');
+      categoriasAdminTree = tree;
+      const cats = toArray(tree.categorias);
+      if (padreSel) {
+        padreSel.innerHTML = cats
+          .map((c) => '<option value="' + escapeHtml(String(c.id)) + '">' + escapeHtml(c.nombre) + '</option>')
+          .join('');
+        if (!padreSel.options.length) padreSel.innerHTML = '<option value="">(Sin categorías)</option>';
+      }
+      if (!cats.length) {
+        tbody.innerHTML =
+          '<tr><td colspan="3" class="empty">No hay categorías. Agrega una arriba.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = cats
+        .map((c) => {
+          const subs = toArray(c.subcategorias);
+          const subHtml = subs.length
+            ? '<ul style="margin:0;padding-left:1.1rem;max-width:420px;">' +
+              subs
+                .map(
+                  (s) =>
+                    '<li style="margin:0.2rem 0;">' +
+                    escapeHtml(s.nombre) +
+                    ' <button type="button" class="btn small outline cat-admin-edit-sub" data-id="' +
+                    escapeHtml(String(s.id)) +
+                    '" data-cat-id="' +
+                    escapeHtml(String(c.id)) +
+                    '" title="Editar"><i class="fas fa-edit"></i></button> ' +
+                    '<button type="button" class="btn small danger cat-admin-del-sub" data-id="' +
+                    escapeHtml(String(s.id)) +
+                    '" title="Eliminar"><i class="fas fa-trash"></i></button></li>'
+                )
+                .join('') +
+              '</ul>'
+            : '<span class="muted">—</span>';
+          return (
+            '<tr data-cat-id="' +
+            escapeHtml(String(c.id)) +
+            '"><td><strong>' +
+            escapeHtml(c.nombre) +
+            '</strong> ' +
+            '<button type="button" class="btn small outline cat-admin-edit-cat" data-id="' +
+            escapeHtml(String(c.id)) +
+            '" title="Editar"><i class="fas fa-edit"></i></button> ' +
+            '<button type="button" class="btn small danger cat-admin-del-cat" data-id="' +
+            escapeHtml(String(c.id)) +
+            '" title="Eliminar"><i class="fas fa-trash"></i></button></td><td>' +
+            subHtml +
+            '</td><td class="muted">—</td></tr>'
+          );
+        })
+        .join('');
+    } catch (e) {
+      tbody.innerHTML =
+        '<tr><td colspan="3" class="empty">' + escapeHtml(parseApiError(e) || 'No se pudo cargar el catálogo.') + '</td></tr>';
+    }
+  }
+
+  function setupCategoriasAdminPanel() {
+    const addCat = qs('#cat-admin-add-categoria');
+    const addSub = qs('#cat-admin-add-sub');
+    const tbody = qs('#tabla-categorias-admin-body');
+    if (addCat && !addCat._bound) {
+      addCat._bound = true;
+      addCat.addEventListener('click', async () => {
+        const inp = qs('#cat-admin-new-nombre');
+        const nombre = inp && inp.value ? String(inp.value).trim() : '';
+        if (!nombre) {
+          showToast('Escribe el nombre de la categoría.', 'error');
+          return;
+        }
+        addCat.disabled = true;
+        try {
+          await fetchJson(API + '/admin/categorias-catalogo/categorias', {
+            method: 'POST',
+            body: JSON.stringify({ nombre: nombre, orden: 0 }),
+          });
+          if (inp) inp.value = '';
+          showToast('Categoría creada.', 'success');
+          await loadCategoriasAdminPanel();
+          if (typeof loadRefacciones === 'function') loadRefacciones();
+        } catch (e) {
+          showToast(parseApiError(e) || 'No se pudo crear la categoría.', 'error');
+        } finally {
+          addCat.disabled = false;
+        }
+      });
+    }
+    if (addSub && !addSub._bound) {
+      addSub._bound = true;
+      addSub.addEventListener('click', async () => {
+        const padre = qs('#cat-admin-sub-padre');
+        const inp = qs('#cat-admin-new-sub');
+        const categoria_id = padre && padre.value ? Number(padre.value) : NaN;
+        const nombre = inp && inp.value ? String(inp.value).trim() : '';
+        if (!Number.isFinite(categoria_id)) {
+          showToast('Selecciona la categoría padre.', 'error');
+          return;
+        }
+        if (!nombre) {
+          showToast('Escribe el nombre de la subcategoría.', 'error');
+          return;
+        }
+        addSub.disabled = true;
+        try {
+          await fetchJson(API + '/admin/categorias-catalogo/subcategorias', {
+            method: 'POST',
+            body: JSON.stringify({ categoria_id: categoria_id, nombre: nombre, orden: 0 }),
+          });
+          if (inp) inp.value = '';
+          showToast('Subcategoría creada.', 'success');
+          await loadCategoriasAdminPanel();
+          if (typeof loadRefacciones === 'function') loadRefacciones();
+        } catch (e) {
+          showToast(parseApiError(e) || 'No se pudo crear la subcategoría.', 'error');
+        } finally {
+          addSub.disabled = false;
+        }
+      });
+    }
+    if (tbody && !tbody._catAdminDeleg) {
+      tbody._catAdminDeleg = true;
+      tbody.addEventListener('click', async (ev) => {
+        const t = ev.target.closest('button');
+        if (!t) return;
+        if (t.classList.contains('cat-admin-edit-cat')) {
+          const id = t.dataset.id;
+          const row = categoriasAdminTree && toArray(categoriasAdminTree.categorias).find((c) => String(c.id) === String(id));
+          const cur = row ? row.nombre : '';
+          const n = window.prompt('Nuevo nombre de categoría:', cur);
+          if (n == null) return;
+          const nombre = String(n).trim();
+          if (!nombre) return;
+          try {
+            await fetchJson(API + '/admin/categorias-catalogo/categorias/' + id, {
+              method: 'PUT',
+              body: JSON.stringify({ nombre: nombre, orden: row && row.orden != null ? row.orden : 0 }),
+            });
+            showToast('Categoría actualizada.', 'success');
+            await loadCategoriasAdminPanel();
+            if (typeof loadRefacciones === 'function') loadRefacciones();
+          } catch (e) {
+            showToast(parseApiError(e) || 'No se pudo actualizar.', 'error');
+          }
+          return;
+        }
+        if (t.classList.contains('cat-admin-del-cat')) {
+          const id = t.dataset.id;
+          if (!window.confirm('¿Eliminar esta categoría? Se eliminarán también sus subcategorías.')) return;
+          try {
+            await fetchJson(API + '/admin/categorias-catalogo/categorias/' + id, { method: 'DELETE' });
+            showToast('Categoría eliminada.', 'success');
+            await loadCategoriasAdminPanel();
+            if (typeof loadRefacciones === 'function') loadRefacciones();
+          } catch (e) {
+            showToast(parseApiError(e) || 'No se pudo eliminar.', 'error');
+          }
+          return;
+        }
+        if (t.classList.contains('cat-admin-edit-sub')) {
+          const id = t.dataset.id;
+          const catId = t.dataset.catId;
+          const cat = categoriasAdminTree && toArray(categoriasAdminTree.categorias).find((c) => String(c.id) === String(catId));
+          const sub = cat && toArray(cat.subcategorias).find((s) => String(s.id) === String(id));
+          const cur = sub ? sub.nombre : '';
+          const n = window.prompt('Nuevo nombre de subcategoría:', cur);
+          if (n == null) return;
+          const nombre = String(n).trim();
+          if (!nombre) return;
+          try {
+            await fetchJson(API + '/admin/categorias-catalogo/subcategorias/' + id, {
+              method: 'PUT',
+              body: JSON.stringify({
+                nombre: nombre,
+                orden: sub && sub.orden != null ? sub.orden : 0,
+                categoria_id: Number(catId),
+              }),
+            });
+            showToast('Subcategoría actualizada.', 'success');
+            await loadCategoriasAdminPanel();
+            if (typeof loadRefacciones === 'function') loadRefacciones();
+          } catch (e) {
+            showToast(parseApiError(e) || 'No se pudo actualizar.', 'error');
+          }
+          return;
+        }
+        if (t.classList.contains('cat-admin-del-sub')) {
+          const id = t.dataset.id;
+          if (!window.confirm('¿Eliminar esta subcategoría?')) return;
+          try {
+            await fetchJson(API + '/admin/categorias-catalogo/subcategorias/' + id, { method: 'DELETE' });
+            showToast('Subcategoría eliminada.', 'success');
+            await loadCategoriasAdminPanel();
+            if (typeof loadRefacciones === 'function') loadRefacciones();
+          } catch (e) {
+            showToast(parseApiError(e) || 'No se pudo eliminar.', 'error');
+          }
+        }
+      });
     }
   }
 
@@ -6142,8 +7584,31 @@
               body: JSON.stringify({ role: t.value }),
             });
             showToast('Rol actualizado.', 'success');
+            const me = getSessionUser();
+            if (me && Number(me.id) === id) {
+              await refreshSessionUser();
+              updateCotizacionesTabVisibility();
+            }
           } catch (e) {
             showToast(parseApiError(e) || 'No se pudo actualizar el rol.', 'error');
+            loadAppUsers();
+          }
+        }
+        if (t.classList && t.classList.contains('usuarios-tecnico-select')) {
+          try {
+            const v = t.value === '' ? null : parseInt(t.value, 10);
+            await fetchJson(API + '/app-users/' + id, {
+              method: 'PATCH',
+              body: JSON.stringify({ tecnico_id: v }),
+            });
+            showToast('Vinculación a Personal actualizada.', 'success');
+            const me = getSessionUser();
+            if (me && Number(me.id) === id) {
+              await refreshSessionUser();
+              updateCotizacionesTabVisibility();
+            }
+          } catch (e) {
+            showToast(parseApiError(e) || 'No se pudo actualizar la vinculación.', 'error');
             loadAppUsers();
           }
         }
@@ -6159,6 +7624,60 @@
             loadAppUsers();
           }
         }
+      });
+    }
+    if (tbody && !tbody._usuariosDelClick) {
+      tbody._usuariosDelClick = true;
+      tbody.addEventListener('click', async function (ev) {
+        const btn = ev.target && ev.target.closest && ev.target.closest('button.usuarios-delete-btn');
+        if (!btn || btn.disabled) return;
+        const id = parseInt(btn.dataset.userId, 10);
+        if (!Number.isFinite(id)) return;
+        if (!window.confirm('¿Eliminar esta cuenta del sistema? No se puede deshacer. Quedará registrado en el historial.')) return;
+        btn.disabled = true;
+        try {
+          await fetchJson(API + '/app-users/' + id, { method: 'DELETE' });
+          showToast('Usuario eliminado.', 'success');
+          await loadAppUsers();
+        } catch (e) {
+          showToast(parseApiError(e) || 'No se pudo eliminar.', 'error');
+          loadAppUsers();
+        }
+      });
+    }
+    const tbodyDel = qs('#tabla-usuarios-eliminados-body');
+    if (tbodyDel && !tbodyDel._emailDeleg) {
+      tbodyDel._emailDeleg = true;
+      tbodyDel.addEventListener('click', function (ev) {
+        const btn = ev.target && ev.target.closest && ev.target.closest('button.usuarios-email-one-btn');
+        if (!btn) return;
+        const did = parseInt(btn.dataset.delId, 10);
+        if (!Number.isFinite(did)) return;
+        const row = appUsersDeletedCache.find(function (x) {
+          return Number(x.id) === did;
+        });
+        openMailtoUsuarioEliminado(row);
+      });
+    }
+    const btnResumen = qs('#btn-usuarios-email-resumen');
+    if (btnResumen && !btnResumen._bound) {
+      btnResumen._bound = true;
+      btnResumen.addEventListener('click', function () {
+        openMailtoUsuariosEliminadosResumen(appUsersDeletedCache);
+      });
+    }
+    const emailNotify = qs('#usuarios-notify-email');
+    if (emailNotify && !emailNotify._bound) {
+      emailNotify._bound = true;
+      try {
+        const k = 'usuariosEliminadosNotifyEmail';
+        const saved = typeof localStorage !== 'undefined' ? localStorage.getItem(k) : '';
+        if (saved) emailNotify.value = saved;
+      } catch (_) {}
+      emailNotify.addEventListener('change', function () {
+        try {
+          localStorage.setItem('usuariosEliminadosNotifyEmail', String(emailNotify.value || '').trim());
+        } catch (_) {}
       });
     }
   }
@@ -6309,11 +7828,12 @@
     grid.innerHTML = '';
     grid.appendChild(loading);
     try {
+      const showCot = canAccessCotizaciones();
       const raw = await Promise.all([
         fetchJson(API + '/clientes').catch(() => []),
         fetchJson(API + '/refacciones').catch(() => []),
         fetchJson(API + '/maquinas').catch(() => []),
-        fetchJson(API + '/cotizaciones').catch(() => []),
+        showCot ? fetchJson(API + '/cotizaciones').catch(() => []) : Promise.resolve([]),
         fetchJson(API + '/bitacoras').catch(() => []),
         fetchJson(API + '/dashboard-stats').catch(() => null),
       ]);
@@ -6337,7 +7857,7 @@
       const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
       const ciudades = new Set(clientesCtx.map(c => (c.ciudad || '').trim()).filter(Boolean)).size;
       const conRfc = clientesCtx.filter(c => (c.rfc || '').trim()).length;
-      const valorCatalogo = refacciones.reduce((s, r) => s + (Number(r.precio_unitario) || 0), 0);
+      const valorCatalogo = refacciones.reduce((s, r) => s + (resolveRefaccionPrecioUsd(r) || 0), 0);
       const promPrecio = refacciones.length ? valorCatalogo / refacciones.length : 0;
       const marcas = new Set(refacciones.map(r => (r.marca || '').trim()).filter(Boolean)).size;
       const maqPorCliente = {};
@@ -6363,7 +7883,8 @@
       const execEl = document.createElement('div');
       execEl.className = 'dashboard-exec-scorecards';
       execEl.setAttribute('aria-label', 'Scorecard ejecutivo');
-      execEl.innerHTML = `
+      execEl.innerHTML = showCot
+        ? `
         <article class="dashboard-score-tile dashboard-score-tile--revenue" data-crossfilter-entity="cotizaciones" title="Clic: filtrar vista por cotizaciones (como Power BI)">
           <span class="dashboard-score-eyebrow">Ingresos cotizados</span>
           <span class="dashboard-score-label">Monto del mes</span>
@@ -6388,12 +7909,26 @@
           <strong class="dashboard-score-value">${escapeHtml(bitHorasMes.toFixed(1))} h</strong>
           <span class="dashboard-score-meta"><i class="fas fa-hard-hat"></i> ${escapeHtml(String(bitEsteMes))} registros · ${escapeHtml(String(tecnicos))} técnicos</span>
         </article>
+      `
+        : `
+        <article class="dashboard-score-tile dashboard-score-tile--risk" data-crossfilter-entity="refacciones" title="Clic: filtrar vista por refacciones">
+          <span class="dashboard-score-eyebrow">Catálogo</span>
+          <span class="dashboard-score-label">Refacciones en sistema</span>
+          <strong class="dashboard-score-value">${escapeHtml(String(refacciones.length))}</strong>
+          <span class="dashboard-score-meta"><i class="fas fa-cogs"></i> Partidas en catálogo</span>
+        </article>
+        <article class="dashboard-score-tile dashboard-score-tile--ops" data-crossfilter-entity="bitacoras" title="Clic: filtrar vista por bitácora">
+          <span class="dashboard-score-eyebrow">Productividad</span>
+          <span class="dashboard-score-label">Horas registradas · mes</span>
+          <strong class="dashboard-score-value">${escapeHtml(bitHorasMes.toFixed(1))} h</strong>
+          <span class="dashboard-score-meta"><i class="fas fa-hard-hat"></i> ${escapeHtml(String(bitEsteMes))} registros · ${escapeHtml(String(tecnicos))} técnicos</span>
+        </article>
       `;
       grid.appendChild(execEl);
 
       const resumenKpi = [
         { label: 'Clientes', value: clientesCtx.length, icon: 'fa-users', cf: 'clientes' },
-        { label: 'Cotizaciones (monto)', value: formatMoney(cotTotal), icon: 'fa-file-invoice-dollar', cf: 'cotizaciones' },
+        ...(showCot ? [{ label: 'Cotizaciones (monto)', value: formatMoney(cotTotal), icon: 'fa-file-invoice-dollar', cf: 'cotizaciones' }] : []),
         { label: 'Refacciones (catálogo)', value: refacciones.length, icon: 'fa-cogs', cf: 'refacciones' },
         { label: 'Horas en bitácora', value: bitHoras.toFixed(1) + ' h', icon: 'fa-clock', cf: 'bitacoras' },
       ];
@@ -6406,7 +7941,9 @@
         { id: 'clientes', icon: 'fa-users', title: 'Clientes', goto: 'clientes', rows: [{ label: 'Total', value: clientesCtx.length, v: 'neutral' }, { label: 'Ciudades', value: ciudades, v: 'neutral' }, { label: 'Con RFC', value: conRfc, v: 'positive' }] },
         { id: 'refacciones', icon: 'fa-cogs', title: 'Refacciones', goto: 'refacciones', rows: [{ label: 'Total', value: refacciones.length, v: 'neutral' }, { label: 'Valor catálogo', value: formatMoney(valorCatalogo), v: 'positive' }, { label: 'Precio promedio', value: formatMoney(promPrecio), v: 'neutral' }, { label: 'Marcas', value: marcas, v: 'neutral' }] },
         { id: 'maquinas', icon: 'fa-industry', title: 'Máquinas', goto: 'maquinas', rows: [{ label: 'Total', value: maquinas.length, v: 'neutral' }, { label: 'Clientes con equipo', value: Object.keys(maqPorCliente).length, v: 'neutral' }, topClienteMaq ? { label: 'Top cliente', value: topClienteMaq[0] + ' (' + topClienteMaq[1] + ')', v: 'neutral', long: true } : null].filter(Boolean) },
-        { id: 'cotizaciones', icon: 'fa-file-invoice-dollar', title: 'Cotizaciones', goto: 'cotizaciones', rows: [{ label: 'Total', value: cotizacionesCtx.length, v: 'neutral' }, { label: 'Monto total', value: formatMoney(cotTotal), v: 'positive' }, { label: 'Este mes', value: cotEsteMes, v: 'positive' }, { label: 'Refacciones / Mano obra', value: cotRefacciones + ' / ' + cotManoObra, v: 'neutral' }] },
+        ...(showCot
+          ? [{ id: 'cotizaciones', icon: 'fa-file-invoice-dollar', title: 'Cotizaciones', goto: 'cotizaciones', rows: [{ label: 'Total', value: cotizacionesCtx.length, v: 'neutral' }, { label: 'Monto total', value: formatMoney(cotTotal), v: 'positive' }, { label: 'Este mes', value: cotEsteMes, v: 'positive' }, { label: 'Refacciones / Mano obra', value: cotRefacciones + ' / ' + cotManoObra, v: 'neutral' }] }]
+          : []),
         { id: 'bitacoras', icon: 'fa-clock', title: 'Bitácora de horas', goto: 'bitacoras', rows: [{ label: 'Registros', value: bitacorasCtx.length, v: 'neutral' }, { label: 'Horas totales', value: bitHoras.toFixed(1), v: 'positive' }, { label: 'Técnicos', value: tecnicos, v: 'neutral' }, { label: 'Este mes', value: bitEsteMes, v: 'positive' }] },
       ];
       cards.forEach((card) => {
@@ -6436,11 +7973,13 @@
 
       // Rellenar cachés y tablas con los datos ya cargados (si algo falla no rompemos el dashboard)
       try {
-        cotizacionesCache = cotizaciones;
+        cotizacionesCache = showCot ? cotizaciones : [];
         bitacorasCache = bitacoras;
-        const filtCot = applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones');
+        if (showCot) {
+          const filtCot = applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones');
+          renderCotizaciones(filtCot, cotizacionesCache.length);
+        }
         const filtBit = applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras');
-        renderCotizaciones(filtCot, cotizacionesCache.length);
         renderBitacoras(filtBit, bitacorasCache.length);
         fetchJson(API + '/incidentes')
           .then((r) => { incidentesCache = toArray(r); updateHeaderUrgencies(); })
@@ -6655,7 +8194,7 @@
     await loadSeedStatus();
     await loadStorageHealth();
     await loadDashboard();
-    await loadCotizaciones();
+    if (canAccessCotizaciones()) await loadCotizaciones();
     await loadIncidentes();
     await loadBitacoras();
     await loadMaquinas();
@@ -6768,7 +8307,7 @@
     await loadClientes();
     await loadRefacciones();
     await loadMaquinas();
-    await loadCotizaciones();
+    if (canAccessCotizaciones()) await loadCotizaciones();
     await loadBitacoras();
     fillClientesSelect();
     showToast('Respaldo restaurado correctamente.', 'success');
@@ -6815,7 +8354,7 @@
     await loadClientes();
     await loadRefacciones();
     await loadMaquinas();
-    await loadCotizaciones();
+    if (canAccessCotizaciones()) await loadCotizaciones();
     await loadBitacoras();
     fillClientesSelect();
     showToast('Backup restaurado desde lista automática.', 'success');
@@ -6978,7 +8517,7 @@
       loadRefacciones();
       loadMaquinas();
       fillClientesSelect();
-      await loadCotizaciones();
+      if (canAccessCotizaciones()) await loadCotizaciones();
       await loadBitacoras();
       if (typeof loadTecnicos === 'function') loadTecnicos();
       if (typeof loadMantenimientoGarantia === 'function') loadMantenimientoGarantia();
@@ -6998,8 +8537,9 @@
 
   async function fillClientesSelect() {
     try {
-      const data = await fetchJson(API + '/clientes');
       const sel = qs('#filtro-cliente-maq');
+      if (!sel) return;
+      const data = await fetchJson(API + '/clientes');
       const first = '<option value="">Todos los clientes</option>';
       sel.innerHTML = first + data.map(c => `<option value="${c.id}">${escapeHtml(c.nombre)}</option>`).join('');
     } catch (_) {}
@@ -7022,7 +8562,11 @@
     const tid = 'tabla-refacciones';
     const q = (qs('#buscar-refacciones') && qs('#buscar-refacciones').value || '').trim();
     let filtered = applyFilters(refaccionesCache, getFilterValues('#tabla-refacciones'), tid);
-    if (q) filtered = filtered.filter(r => [r.codigo, r.descripcion, r.marca].some(v => normalizeForSearch(v).includes(normalizeForSearch(q))));
+    const fc = qs('#filtro-categoria-ref') && qs('#filtro-categoria-ref').value;
+    if (fc) filtered = filtered.filter(r => r.categoria === fc);
+    const fsu = qs('#filtro-subcategoria-ref') && qs('#filtro-subcategoria-ref').value;
+    if (fsu) filtered = filtered.filter(r => r.subcategoria === fsu);
+    if (q) filtered = filtered.filter(r => [r.codigo, r.descripcion, r.categoria, r.subcategoria, r.zona].some(v => normalizeForSearch(v).includes(normalizeForSearch(q))));
     const pageSize = getPageSize(tid);
     let page = getPaginationState(tid);
     const maxPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
@@ -7034,10 +8578,6 @@
   function applyMaquinasFiltersAndRender() {
     const tid = 'tabla-maquinas';
     let filtered = applyFilters(applyGlobalBranchFilterRows(maquinasCache), getFilterValues('#tabla-maquinas'), tid);
-    const catFilter = qs('#filtro-categoria-maq') && qs('#filtro-categoria-maq').value;
-    if (catFilter) filtered = filtered.filter(m => m.categoria === catFilter);
-    const zonaFilter = qs('#filtro-zona-maq') && qs('#filtro-zona-maq').value;
-    if (zonaFilter) filtered = filtered.filter(m => m.ubicacion === zonaFilter);
     const pageSize = getPageSize(tid);
     let page = getPaginationState(tid);
     const maxPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
@@ -7095,7 +8635,10 @@
       ventasCache = Array.isArray(data) ? data : [];
       renderVentas(ventasCache);
     } catch (e) { console.error(e); }
-    finally { hideLoading(); }
+    finally {
+      hideLoading();
+      refreshDavidComisionesCotPanel();
+    }
   }
 
   function renderVentas(data) {
@@ -7110,11 +8653,11 @@
     }
 
     // Resumen bar
-    const totalMXN = data.reduce((s, v) => s + (Number(v.total) || 0), 0);
+    const totalVentasUsd = data.reduce((s, v) => s + (Number(v.total) || 0), 0);
     const resBar = qs('#ventas-resumen-bar');
     if (resBar) {
       resBar.classList.remove('hidden');
-      resBar.innerHTML = `<i class="fas fa-chart-bar"></i> <strong>${data.length}</strong> ventas &nbsp;|&nbsp; Total: <strong>${formatMoney(totalMXN)}</strong>`;
+      resBar.innerHTML = `<i class="fas fa-chart-bar"></i> <strong>${data.length}</strong> ventas &nbsp;|&nbsp; Total: <strong>${formatMoney(totalVentasUsd)} USD</strong>`;
     }
 
     const TARIFAS = {};
@@ -7451,6 +8994,8 @@
 
   async function openModalRevisionMaquina(rev) {
     await fetchRevisionMaquinasCatalogo();
+    const treeRm = await fetchJson(API + '/categorias-catalogo').catch(() => ({ categorias: [] }));
+    const catNames = toArray(treeRm.categorias).map(c => c.nombre);
     const catalog = revisionMaquinasCatalogoCache.length ? revisionMaquinasCatalogoCache : maquinasCache;
     const isNew = !rev || !rev.id;
     const preMaqId = rev && rev.maquina_id != null ? rev.maquina_id : null;
@@ -7461,10 +9006,10 @@
     const catFromMaq = rev && rev.maquina_id && catalog.find(x => String(x.id) === String(rev.maquina_id));
     const effectiveCat = catVal || (catFromMaq && catFromMaq.categoria) || '';
     let catExtra = '';
-    if (effectiveCat && !CATEGORIAS_MAQUINAS.includes(effectiveCat)) {
+    if (effectiveCat && !catNames.includes(effectiveCat)) {
       catExtra = `<option value="${escapeHtml(effectiveCat)}" selected>${escapeHtml(effectiveCat)} (histórico)</option>`;
     }
-    const catOpts = CATEGORIAS_MAQUINAS.map(c =>
+    const catOpts = catNames.map(c =>
       `<option value="${escapeHtml(c)}" ${effectiveCat === c ? 'selected' : ''}>${escapeHtml(c)}</option>`
     ).join('');
     const body = `
@@ -7506,7 +9051,7 @@
           const catEl = qs('#rm-cat');
           const rawCat = (opt.dataset.cat || '').trim();
           if (catEl) {
-            if (rawCat && CATEGORIAS_MAQUINAS.includes(rawCat)) catEl.value = rawCat;
+            if (rawCat && catNames.includes(rawCat)) catEl.value = rawCat;
             else if (rawCat) {
               const has = Array.from(catEl.options).some(o => o.value === rawCat);
               if (!has) {
@@ -7516,7 +9061,7 @@
                 catEl.insertBefore(o, catEl.firstChild);
               }
               catEl.value = rawCat;
-            } else catEl.value = 'Centro de Maquinado';
+            } else if (catNames.length) catEl.value = catNames[0];
           }
           qs('#rm-modelo').value = opt.dataset.modelo || '';
           qs('#rm-serie').value = opt.dataset.serie || '';
@@ -7632,6 +9177,7 @@
     } catch (_) {}
   }
   fetchAndShowTipoCambio();
+  setInterval(fetchAndShowTipoCambio, 60 * 1000);
   refreshAlertasHeader();
   setInterval(refreshAlertasHeader, 3 * 60 * 1000);
 
@@ -7644,34 +9190,62 @@
     } catch (e) { console.error(e); }
   }
 
-  function previewTecnico(t) {
+  async function previewTecnico(t) {
+    let full = t;
+    if (t && t.id) {
+      try { full = await fetchJson(API + '/tecnicos/' + t.id); } catch (_) {}
+    }
+    const puestoTxt = (full.puesto || full.rol || '').trim() || '—';
+    const ineThumb = full.ine_thumb_url || full.ine_foto_url;
+    const licThumb = full.licencia_thumb_url || full.licencia_foto_url;
+    const ineOpen = full.ine_foto_url || full.ine_thumb_url;
+    const licOpen = full.licencia_foto_url || full.licencia_thumb_url;
+    let underHeaderHtml = '';
+    if (ineThumb || licThumb) {
+      const parts = [];
+      if (ineThumb) {
+        parts.push(
+          '<div class="tec-pvc-doc"><span class="tec-pvc-doc-label">INE</span>' +
+          '<button type="button" class="tec-pvc-doc-thumb js-refaccion-open-media" data-url="' + escapeHtml(ineOpen) + '" title="Ver INE">' +
+          '<img src="' + escapeHtml(ineThumb) + '" alt="INE" loading="lazy"></button></div>'
+        );
+      }
+      if (licThumb) {
+        parts.push(
+          '<div class="tec-pvc-doc"><span class="tec-pvc-doc-label">Licencia</span>' +
+          '<button type="button" class="tec-pvc-doc-thumb js-refaccion-open-media" data-url="' + escapeHtml(licOpen) + '" title="Ver licencia">' +
+          '<img src="' + escapeHtml(licThumb) + '" alt="Licencia" loading="lazy"></button></div>'
+        );
+      }
+      underHeaderHtml = '<div class="tec-pvc-docs">' + parts.join('') + '</div>';
+    }
     openPreviewCard({
-      title: t.nombre || 'Personal',
-      subtitle: [t.puesto, t.departamento].filter(Boolean).join(' · ') || (t.ocupado ? 'En servicio' : 'Disponible'),
+      title: full.nombre || 'Personal',
+      subtitle: [full.puesto || full.rol, full.departamento].filter(Boolean).join(' · ') || (full.ocupado ? 'En servicio' : 'Disponible'),
       icon: 'fa-hard-hat',
       color: 'linear-gradient(135deg, #0891b2 0%, #164e63 100%)',
-      badge: t.activo ? 'Activo' : 'Inactivo',
-      badgeClass: t.activo ? 'pvc-badge--success' : 'pvc-badge--danger',
+      badge: full.activo ? 'Activo' : 'Inactivo',
+      badgeClass: full.activo ? 'pvc-badge--success' : 'pvc-badge--danger',
+      underHeaderHtml,
       sections: [{
         title: 'Información', icon: 'fa-user',
         fields: [
-          { label: 'ID', value: t.id, icon: 'fa-hashtag' },
-          { label: 'Nombre', value: t.nombre, icon: 'fa-user', full: true },
-          { label: 'Rol', value: t.rol || '—', icon: 'fa-id-badge' },
-          { label: 'Puesto', value: t.puesto || '—', icon: 'fa-briefcase' },
-          { label: 'Departamento', value: t.departamento || '—', icon: 'fa-building' },
-          { label: 'Profesión', value: t.profesion || '—', icon: 'fa-graduation-cap' },
-          { label: 'Vendedor', value: Number(t.es_vendedor) === 1 ? 'Sí' : 'No', icon: 'fa-handshake' },
+          { label: 'ID', value: full.id, icon: 'fa-hashtag' },
+          { label: 'Nombre', value: full.nombre, icon: 'fa-user', full: true },
+          { label: 'Puesto', value: puestoTxt, icon: 'fa-briefcase' },
+          { label: 'Departamento', value: full.departamento || '—', icon: 'fa-building' },
+          { label: 'Profesión', value: full.profesion || '—', icon: 'fa-graduation-cap' },
+          { label: 'Vendedor', value: Number(full.es_vendedor) === 1 ? 'Sí' : 'No', icon: 'fa-handshake' },
           ...(canViewCommissions() ? [
-            { label: 'Comisión % equipo', value: t.comision_maquinas_pct != null ? String(t.comision_maquinas_pct) : '—', icon: 'fa-percent' },
-            { label: 'Comisión % refacciones', value: t.comision_refacciones_pct != null ? String(t.comision_refacciones_pct) : '—', icon: 'fa-percent' },
+            { label: 'Comisión % equipo', value: full.comision_maquinas_pct != null ? String(full.comision_maquinas_pct) : '—', icon: 'fa-percent' },
+            { label: 'Comisión % refacciones', value: full.comision_refacciones_pct != null ? String(full.comision_refacciones_pct) : '—', icon: 'fa-percent' },
           ] : []),
-          { label: 'Estado', value: t.activo ? 'Activo' : 'Inactivo', icon: 'fa-toggle-on', badge: true, badgeClass: t.activo ? 'pvc-badge--success' : 'pvc-badge--danger' },
-          { label: 'Disponibilidad', value: t.ocupado ? '🔒 Ocupado' : '✓ Disponible', icon: 'fa-clock', badge: true, badgeClass: t.ocupado ? 'pvc-badge--warning' : 'pvc-badge--success' },
+          { label: 'Estado', value: full.activo ? 'Activo' : 'Inactivo', icon: 'fa-toggle-on', badge: true, badgeClass: full.activo ? 'pvc-badge--success' : 'pvc-badge--danger' },
+          { label: 'Disponibilidad', value: full.ocupado ? '🔒 Ocupado' : '✓ Disponible', icon: 'fa-clock', badge: true, badgeClass: full.ocupado ? 'pvc-badge--warning' : 'pvc-badge--success' },
         ]
-      }, t.habilidades ? {
+      }, full.habilidades ? {
         title: 'Habilidades / Especialidades', icon: 'fa-tools',
-        fields: [{ label: 'Habilidades', value: t.habilidades, full: true }]
+        fields: [{ label: 'Habilidades', value: full.habilidades, full: true }]
       } : null].filter(Boolean)
     });
   }
@@ -7679,7 +9253,7 @@
     const tbody = qs('#tabla-tecnicos tbody');
     if (!tbody) return;
     const q = (qs('#buscar-tecnicos')?.value || '').toLowerCase();
-    const filtered = q ? data.filter(t => (t.nombre || '').toLowerCase().includes(q) || (t.habilidades || '').toLowerCase().includes(q) || (t.puesto || '').toLowerCase().includes(q) || (t.departamento || '').toLowerCase().includes(q)) : data;
+    const filtered = q ? data.filter(t => (t.nombre || '').toLowerCase().includes(q) || (t.habilidades || '').toLowerCase().includes(q) || (t.puesto || '').toLowerCase().includes(q) || (t.rol || '').toLowerCase().includes(q) || (t.departamento || '').toLowerCase().includes(q)) : data;
     tbody.innerHTML = '';
     if (!filtered.length) {
       tbody.innerHTML = '<tr><td colspan="9" class="empty">No hay personal registrado.</td></tr>';
@@ -7691,13 +9265,20 @@
       const activoBadge = t.activo ? '<span class="badge semaforo-verde">Activo</span>' : '<span class="badge semaforo-gris">Inactivo</span>';
       const vendBadge = Number(t.es_vendedor) === 1 ? '<span class="badge badge-ok">Vende</span>' : '<span class="badge badge-warn">No ventas</span>';
       const tr = document.createElement('tr');
+      const puestoCell = (t.puesto || t.rol || '').trim() || '—';
+      const ineMini = t.ine_thumb_url
+        ? `<span class="tec-doc-slot" title="INE"><img src="${escapeHtml(t.ine_thumb_url)}" alt="" loading="lazy"></span>`
+        : '<span class="tec-doc-slot" title="Sin INE">—</span>';
+      const licMini = t.licencia_thumb_url
+        ? `<span class="tec-doc-slot" title="Licencia"><img src="${escapeHtml(t.licencia_thumb_url)}" alt="" loading="lazy"></span>`
+        : '<span class="tec-doc-slot" title="Sin licencia">—</span>';
       tr.innerHTML = `
         <td><strong>${escapeHtml(t.nombre || '')}</strong></td>
-        <td style="font-size:0.82rem">${escapeHtml(t.rol || '—')}</td>
-        <td style="font-size:0.82rem">${escapeHtml(t.puesto || '—')}</td>
+        <td style="font-size:0.82rem">${escapeHtml(puestoCell)}</td>
         <td style="font-size:0.82rem">${escapeHtml(t.departamento || '—')}</td>
         <td>${vendBadge}</td>
         <td style="font-size:0.82rem;color:var(--text-secondary)">${escapeHtml(t.habilidades || '—')}</td>
+        <td><div class="tec-personal-docs-row">${ineMini}${licMini}</div></td>
         <td>${ocupadoBadge}</td>
         <td>${activoBadge}</td>
         <td class="th-actions">
@@ -7726,43 +9307,70 @@
     });
   }
 
-  function openModalTecnico(tec) {
+  async function openModalTecnico(tec) {
     const isNew = !tec || !tec.id;
+    let full = tec;
+    if (tec && tec.id) {
+      try { full = await fetchJson(API + '/tecnicos/' + tec.id); } catch (_) { full = tec; }
+    }
     const showCom = canViewCommissions();
     const comRow = showCom ? `
       <div class="form-row">
-        <div class="form-group"><label>Comisión % equipo (máquinas)</label><input type="number" id="m-tec-com-m" min="0" max="100" step="0.5" value="${tec && tec.comision_maquinas_pct != null ? escapeHtml(String(tec.comision_maquinas_pct)) : '0'}"></div>
-        <div class="form-group"><label>Comisión % refacciones</label><input type="number" id="m-tec-com-r" min="0" max="100" step="0.5" value="${tec && tec.comision_refacciones_pct != null ? escapeHtml(String(tec.comision_refacciones_pct)) : '10'}"></div>
+        <div class="form-group"><label>Comisión % equipo (máquinas)</label><input type="number" id="m-tec-com-m" min="0" max="100" step="0.5" value="${full && full.comision_maquinas_pct != null ? escapeHtml(String(full.comision_maquinas_pct)) : '0'}"></div>
+        <div class="form-group"><label>Comisión % refacciones</label><input type="number" id="m-tec-com-r" min="0" max="100" step="0.5" value="${full && full.comision_refacciones_pct != null ? escapeHtml(String(full.comision_refacciones_pct)) : '10'}"></div>
       </div>` : '';
+    const hasIne = !!(full && (full.ine_thumb_url || full.ine_foto_url));
+    const hasLic = !!(full && (full.licencia_thumb_url || full.licencia_foto_url));
+    const inePrevSrc = (full && (full.ine_thumb_url || full.ine_foto_url)) || '';
+    const licPrevSrc = (full && (full.licencia_thumb_url || full.licencia_foto_url)) || '';
     const body = `
       <div class="form-group"><label>Nombre *</label>
-        <input type="text" id="m-tec-nombre" maxlength="100" value="${escapeHtml(tec && tec.nombre || '')}" placeholder="Ej. Juan Pérez" required>
+        <input type="text" id="m-tec-nombre" maxlength="100" value="${escapeHtml(full && full.nombre || '')}" placeholder="Ej. Juan Pérez" required>
       </div>
+      <div class="form-group"><label>Puesto</label><input type="text" id="m-tec-puesto" maxlength="120" value="${escapeHtml((full && (full.puesto || full.rol)) || '')}" placeholder="Ej. Líder comercial, Jefe de área…"></div>
       <div class="form-row">
-        <div class="form-group"><label>Rol</label><input type="text" id="m-tec-rol" maxlength="120" value="${escapeHtml(tec && tec.rol || '')}" placeholder="Ej. Líder comercial"></div>
-        <div class="form-group"><label>Puesto</label><input type="text" id="m-tec-puesto" maxlength="120" value="${escapeHtml(tec && tec.puesto || '')}" placeholder="Ej. Jefe de Área"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>Departamento</label><input type="text" id="m-tec-depto" maxlength="120" value="${escapeHtml(tec && tec.departamento || '')}"></div>
-        <div class="form-group"><label>Profesión</label><input type="text" id="m-tec-prof" maxlength="120" value="${escapeHtml(tec && tec.profesion || '')}"></div>
+        <div class="form-group"><label>Departamento</label><input type="text" id="m-tec-depto" maxlength="120" value="${escapeHtml(full && full.departamento || '')}"></div>
+        <div class="form-group"><label>Profesión</label><input type="text" id="m-tec-prof" maxlength="120" value="${escapeHtml(full && full.profesion || '')}"></div>
       </div>
       <div class="form-group"><label>Habilidades / Especialidades</label>
-        <textarea id="m-tec-habilidades" rows="3" maxlength="500" placeholder="Ej. CNC Fanuc, Electroerosión, PLC Siemens, Soldadura MIG…">${escapeHtml(tec && tec.habilidades || '')}</textarea>
+        <textarea id="m-tec-habilidades" rows="3" maxlength="500" placeholder="Ej. CNC Fanuc, Electroerosión, PLC Siemens, Soldadura MIG…">${escapeHtml(full && full.habilidades || '')}</textarea>
         <div class="hint">Separa con comas. Aparece en la tabla y en el dropdown de asignación.</div>
+      </div>
+      <div class="form-row tec-upload-pair">
+        <div class="form-group tec-upload-box">
+          <label><i class="fas fa-id-card"></i> INE (imagen)</label>
+          <input type="file" id="m-tec-ine" accept="image/*">
+          <div id="m-tec-ine-existing" class="${hasIne && !isNew ? '' : 'hidden'}">
+            <p class="form-hint" style="margin-top:0.35rem"><i class="fas fa-image"></i> INE en sistema</p>
+            <img id="m-tec-ine-img" class="tec-upload-preview" src="${escapeHtml(inePrevSrc)}" alt="INE">
+            <button type="button" class="btn small danger outline" id="m-tec-ine-rm" style="margin-top:0.35rem"><i class="fas fa-times"></i> Quitar INE</button>
+          </div>
+          <img id="m-tec-ine-new" class="tec-upload-preview hidden" alt="Vista previa INE">
+        </div>
+        <div class="form-group tec-upload-box">
+          <label><i class="fas fa-car"></i> Licencia de conducir</label>
+          <input type="file" id="m-tec-lic" accept="image/*">
+          <div id="m-tec-lic-existing" class="${hasLic && !isNew ? '' : 'hidden'}">
+            <p class="form-hint" style="margin-top:0.35rem"><i class="fas fa-image"></i> Licencia en sistema</p>
+            <img id="m-tec-lic-img" class="tec-upload-preview" src="${escapeHtml(licPrevSrc)}" alt="Licencia">
+            <button type="button" class="btn small danger outline" id="m-tec-lic-rm" style="margin-top:0.35rem"><i class="fas fa-times"></i> Quitar licencia</button>
+          </div>
+          <img id="m-tec-lic-new" class="tec-upload-preview hidden" alt="Vista previa licencia">
+        </div>
       </div>
       <div class="form-row">
         <div class="form-group"><label>¿Vendedor?</label>
           <select id="m-tec-es-vendedor">
-            <option value="0" ${tec && Number(tec.es_vendedor) !== 1 ? 'selected' : ''}>No</option>
-            <option value="1" ${tec && Number(tec.es_vendedor) === 1 ? 'selected' : ''}>Sí</option>
+            <option value="0" ${full && Number(full.es_vendedor) !== 1 ? 'selected' : ''}>No</option>
+            <option value="1" ${full && Number(full.es_vendedor) === 1 ? 'selected' : ''}>Sí</option>
           </select>
         </div>
       </div>
       ${comRow}
       ${!isNew ? `<div class="form-group"><label>Estado</label>
         <select id="m-tec-activo">
-          <option value="1" ${tec && tec.activo != 0 ? 'selected' : ''}>Activo</option>
-          <option value="0" ${tec && tec.activo == 0 ? 'selected' : ''}>Inactivo</option>
+          <option value="1" ${full && full.activo != 0 ? 'selected' : ''}>Activo</option>
+          <option value="0" ${full && full.activo == 0 ? 'selected' : ''}>Inactivo</option>
         </select>
       </div>` : ''}
       <div class="form-actions">
@@ -7770,15 +9378,99 @@
         <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
       </div>`;
     openModal(isNew ? 'Nueva persona' : 'Editar personal', body);
+
+    let pendingIneFull = null;
+    let pendingIneThumb = null;
+    let pendingLicFull = null;
+    let pendingLicThumb = null;
+    let ineClear = false;
+    let licenciaClear = false;
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result || ''));
+        r.onerror = () => reject(new Error('lectura'));
+        r.readAsDataURL(file);
+      });
+    }
+
+    const ineInput = qs('#m-tec-ine');
+    const licInput = qs('#m-tec-lic');
+    const ineNewEl = qs('#m-tec-ine-new');
+    const licNewEl = qs('#m-tec-lic-new');
+    const ineEx = qs('#m-tec-ine-existing');
+    const licEx = qs('#m-tec-lic-existing');
+
+    qs('#m-tec-ine-rm')?.addEventListener('click', () => {
+      ineClear = true;
+      pendingIneFull = null;
+      pendingIneThumb = null;
+      if (ineInput) ineInput.value = '';
+      if (ineNewEl) { ineNewEl.classList.add('hidden'); ineNewEl.removeAttribute('src'); }
+      if (ineEx) ineEx.classList.add('hidden');
+    });
+    qs('#m-tec-lic-rm')?.addEventListener('click', () => {
+      licenciaClear = true;
+      pendingLicFull = null;
+      pendingLicThumb = null;
+      if (licInput) licInput.value = '';
+      if (licNewEl) { licNewEl.classList.add('hidden'); licNewEl.removeAttribute('src'); }
+      if (licEx) licEx.classList.add('hidden');
+    });
+
+    ineInput?.addEventListener('change', async () => {
+      const file = ineInput.files && ineInput.files[0];
+      if (!file || !/^image\//.test(file.type)) {
+        if (file) showToast('Selecciona una imagen (JPG, PNG, etc.).', 'error');
+        return;
+      }
+      try {
+        const dataUrl = await readFileAsDataUrl(file);
+        pendingIneFull = dataUrl;
+        pendingIneThumb = await makeImageThumbDataUrl(dataUrl, 96);
+        ineClear = false;
+        if (ineEx) ineEx.classList.add('hidden');
+        if (ineNewEl) {
+          ineNewEl.src = dataUrl;
+          ineNewEl.classList.remove('hidden');
+        }
+      } catch (_) {
+        showToast('No se pudo leer la imagen de INE.', 'error');
+      }
+    });
+
+    licInput?.addEventListener('change', async () => {
+      const file = licInput.files && licInput.files[0];
+      if (!file || !/^image\//.test(file.type)) {
+        if (file) showToast('Selecciona una imagen (JPG, PNG, etc.).', 'error');
+        return;
+      }
+      try {
+        const dataUrl = await readFileAsDataUrl(file);
+        pendingLicFull = dataUrl;
+        pendingLicThumb = await makeImageThumbDataUrl(dataUrl, 96);
+        licenciaClear = false;
+        if (licEx) licEx.classList.add('hidden');
+        if (licNewEl) {
+          licNewEl.src = dataUrl;
+          licNewEl.classList.remove('hidden');
+        }
+      } catch (_) {
+        showToast('No se pudo leer la imagen de licencia.', 'error');
+      }
+    });
+
     qs('#m-save').onclick = async () => {
       const nombre = qs('#m-tec-nombre')?.value.trim();
       if (!nombre) { showToast('El nombre es obligatorio.', 'error'); return; }
-      const comM = canViewCommissions() ? (Number(qs('#m-tec-com-m')?.value) || 0) : (Number(tec && tec.comision_maquinas_pct) || 0);
-      const comR = canViewCommissions() ? (Number(qs('#m-tec-com-r')?.value) || 0) : (Number(tec && tec.comision_refacciones_pct) || 10);
+      const comM = canViewCommissions() ? (Number(qs('#m-tec-com-m')?.value) || 0) : (Number(full && full.comision_maquinas_pct) || 0);
+      const comR = canViewCommissions() ? (Number(qs('#m-tec-com-r')?.value) || 0) : (Number(full && full.comision_refacciones_pct) || 10);
+      const puestoVal = qs('#m-tec-puesto')?.value.trim() || null;
       const payload = {
         nombre,
-        rol: qs('#m-tec-rol')?.value.trim() || null,
-        puesto: qs('#m-tec-puesto')?.value.trim() || null,
+        rol: puestoVal,
+        puesto: puestoVal,
         departamento: qs('#m-tec-depto')?.value.trim() || null,
         profesion: qs('#m-tec-prof')?.value.trim() || null,
         habilidades: qs('#m-tec-habilidades')?.value.trim() || null,
@@ -7787,6 +9479,18 @@
         comision_refacciones_pct: comR,
         activo: isNew ? 1 : parseInt(qs('#m-tec-activo')?.value || '1', 10),
       };
+      if (pendingIneFull) {
+        payload.ine_foto_url = pendingIneFull;
+        payload.ine_thumb_url = pendingIneThumb || null;
+      }
+      if (pendingLicFull) {
+        payload.licencia_foto_url = pendingLicFull;
+        payload.licencia_thumb_url = pendingLicThumb || null;
+      }
+      if (!isNew) {
+        if (ineClear) payload.ine_clear = true;
+        if (licenciaClear) payload.licencia_clear = true;
+      }
       try {
         if (isNew) await fetchJson(API + '/tecnicos', { method: 'POST', body: JSON.stringify(payload) });
         else await fetchJson(API + '/tecnicos/' + tec.id, { method: 'PUT', body: JSON.stringify(payload) });
@@ -7817,10 +9521,11 @@
         const desc = (row.getCell(1).text || row.getCell(1).value || '').toString().trim();
         if (!desc) return;
         const unidad = (row.getCell(2).text || row.getCell(2).value || 'PZA').toString().trim() || 'PZA';
-        const precioRaw = row.getCell(3).value;
+        const precioUsdRaw = row.getCell(3).value;
         const stockRaw = row.getCell(4).value;
         const categoria = (row.getCell(5).text || row.getCell(5).value || '').toString().trim();
         const zona = (row.getCell(6).text || row.getCell(6).value || '').toString().trim();
+        const bloque = (row.getCell(7).text || row.getCell(7).value || '').toString().trim();
         // Intentar extraer código del inicio de la descripción (números + guiones)
         const codeMatch = desc.match(/^([\d\-A-Z]+(?:\s[\d\-A-Z]+)?)\s+(.+)$/);
         const codigo = codeMatch ? codeMatch[1].trim() : desc.slice(0, 20).replace(/\s+/g, '-').toUpperCase();
@@ -7829,10 +9534,11 @@
           codigo,
           descripcion,
           unidad,
-          precio_unitario: Number(precioRaw) || 0,
+          precio_usd: Number(precioUsdRaw) || 0,
           stock: Number(stockRaw) || 0,
           categoria: categoria || null,
           zona: zona || null,
+          bloque: bloque || null,
           activo: 1,
         });
       });
@@ -7858,7 +9564,8 @@
           }
           showToast(`Importación completada: ${ok} registros, ${errors} errores.`, errors ? 'warning' : 'success');
           loadRefacciones();
-        }
+        },
+        { confirmLabel: 'Cargar', confirmIcon: 'fa-file-import', confirmClass: 'btn primary' }
       );
     } catch (e) {
       showToast('Error al leer el archivo: ' + (e.message || e), 'error');
@@ -7881,9 +9588,6 @@
   // ----- EVENT LISTENERS -----
   qs('#buscar-clientes').addEventListener('input', debounce(loadClientes, 350));
   qs('#buscar-refacciones').addEventListener('input', debounce(loadRefacciones, 350));
-  qs('#filtro-cliente-maq').addEventListener('change', loadMaquinas);
-  qs('#filtro-categoria-maq') && qs('#filtro-categoria-maq').addEventListener('change', applyMaquinasFiltersAndRender);
-  qs('#filtro-zona-maq') && qs('#filtro-zona-maq').addEventListener('change', applyMaquinasFiltersAndRender);
   const toggleViewBtn = qs('#toggle-view-maquinas');
   if (toggleViewBtn) {
     toggleViewBtn.addEventListener('click', () => {
@@ -8030,6 +9734,38 @@
   qs('#export-excel-maquinas').addEventListener('click', () => exportToExcel(applyFilters(maquinasCache, getFilterValues('#tabla-maquinas'), 'tabla-maquinas'), 'tabla-maquinas', 'maquinas'));
   qs('#export-cotizaciones').addEventListener('click', () => exportToCsv(enrichCotizacionesForExport(applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones')), 'tabla-cotizaciones', 'cotizaciones'));
   qs('#export-excel-cotizaciones').addEventListener('click', () => exportToExcel(enrichCotizacionesForExport(applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones')), 'tabla-cotizaciones', 'cotizaciones'));
+  const btnEmailDavidCom = qs('#btn-email-david-comisiones');
+  if (btnEmailDavidCom) {
+    btnEmailDavidCom.addEventListener('click', function () {
+      if (!canViewCommissions()) return;
+      const rows = davidComisionesRowsCache || [];
+      if (!rows.length) {
+        showToast('No hay líneas de comisión para incluir. Revisa que existan ventas aprobadas que apliquen las reglas.', 'warning');
+        return;
+      }
+      let sumMxn = 0;
+      let sumUsd = 0;
+      const lines = rows.map(function (r) {
+        const fakeV = { moneda: r.moneda };
+        const mStr = fmtCotizacionMontoMoneda(fakeV, r.monto);
+        const bStr = fmtCotizacionMontoMoneda(fakeV, r.base);
+        if (r.moneda === 'USD') sumUsd += r.monto;
+        else sumMxn += r.monto;
+        return [r.folio, r.fecha, r.concepto, 'Base ' + bStr, r.pct + '%', mStr].join(' — ');
+      });
+      let tot = '';
+      if (sumMxn > 0) tot += 'Total comisión MXN: ' + formatMoney(sumMxn) + '\n';
+      if (sumUsd > 0) tot += 'Total comisión USD: US$' + sumUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\n';
+      const body =
+        'Resumen comisiones David Cantú (reglas: 15% refacciones con cliente David Cantú; 15% máquina vendida por David Cantú)\n\n' +
+        lines.join('\n') +
+        '\n\n' +
+        tot +
+        '\n—\nGenerado desde el sistema de cotizaciones.';
+      const subject = 'Comisiones David Cantú — ' + new Date().toISOString().slice(0, 10);
+      window.location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    });
+  }
   const btnExportReportes = qs('#export-reportes');
   if (btnExportReportes) btnExportReportes.addEventListener('click', () => exportToCsv(getFilteredReportes(), 'tabla-reportes', 'reportes'));
   const expInc = qs('#export-incidentes');
@@ -8116,7 +9852,11 @@
       const uK = getSessionUser();
       if (serverConfig.auditUi && uK && uK.role === 'admin') tabMap['8'] = 'auditoria';
       const tab = tabMap[e.key];
-      if (tab) { e.preventDefault(); showPanel(tab); }
+      if (tab) {
+        e.preventDefault();
+        if (tab === 'cotizaciones' && !canAccessCotizaciones()) return;
+        showPanel(tab);
+      }
     }
     if (!inInput && e.key === 'k' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
@@ -8318,6 +10058,10 @@
         try { localStorage.removeItem(LAST_TAB_KEY); } catch (_) {}
         last = null;
       }
+      if (last === 'cotizaciones' && !canAccessCotizaciones()) {
+        try { localStorage.removeItem(LAST_TAB_KEY); } catch (_) {}
+        last = null;
+      }
       if (last && VALID_TABS.indexOf(last) >= 0) showPanel(last);
     } catch (_) {}
   }
@@ -8335,7 +10079,7 @@
       { id: 'clientes', label: 'Clientes', icon: 'fa-users' },
       { id: 'refacciones', label: 'Refacciones', icon: 'fa-cogs' },
       { id: 'maquinas', label: 'Máquinas', icon: 'fa-industry' },
-      { id: 'cotizaciones', label: 'Cotizaciones', icon: 'fa-file-invoice-dollar' },
+      ...(canAccessCotizaciones() ? [{ id: 'cotizaciones', label: 'Cotizaciones', icon: 'fa-file-invoice-dollar' }] : []),
       { id: 'bonos', label: 'Bonos', icon: 'fa-award' },
       { id: 'viajes', label: 'Viajes', icon: 'fa-plane' },
       { id: 'bitacoras', label: 'Bitácora de horas', icon: 'fa-clock' },
@@ -8343,27 +10087,32 @@
       { id: 'acerca', label: 'Acerca de', icon: 'fa-info-circle' },
     ];
     const uPal = getSessionUser();
-    let adminInsert = 9;
-    if (canAccessAdminOnlyModules()) {
-      sections.splice(5, 0,
+    const bonosIdx = sections.findIndex(s => s.id === 'bonos');
+    if (canAccessAdminOnlyModules() && bonosIdx >= 0) {
+      sections.splice(
+        bonosIdx,
+        0,
         { id: 'prospeccion', label: 'Prospección', icon: 'fa-map-marked-alt' },
         { id: 'tarifas', label: 'Tarifas', icon: 'fa-tags' },
         { id: 'tecnicos', label: 'Personal / Técnicos', icon: 'fa-users' }
       );
-      adminInsert += 3;
     }
+    let insertBeforeAcerca = sections.findIndex(s => s.id === 'acerca');
+    if (insertBeforeAcerca < 0) insertBeforeAcerca = sections.length;
     if (serverConfig.auditUi && uPal && uPal.role === 'admin') {
-      sections.splice(adminInsert, 0, { id: 'auditoria', label: 'Auditoría (admin)', icon: 'fa-clipboard-list' });
-      adminInsert++;
+      sections.splice(insertBeforeAcerca, 0, { id: 'auditoria', label: 'Auditoría (admin)', icon: 'fa-clipboard-list' });
+      insertBeforeAcerca++;
     }
     if (serverConfig.authRequired && uPal && uPal.role === 'admin') {
-      sections.splice(adminInsert, 0, { id: 'usuarios', label: 'Usuarios y permisos (admin)', icon: 'fa-user-shield' });
+      sections.splice(insertBeforeAcerca, 0, { id: 'usuarios', label: 'Usuarios y permisos (admin)', icon: 'fa-user-shield' });
     }
     function render(q) {
       const qn = (q || '').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       const sectionItems = sections.filter(s => !qn || s.label.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(qn)).map(s => ({ type: 'section', ...s }));
       const clientItems = (clientesCache || []).filter(c => !qn || (c.nombre || '').toLowerCase().includes(qn) || (c.codigo || '').toLowerCase().includes(qn)).slice(0, 5).map(c => ({ type: 'cliente', id: c.id, label: c.nombre, meta: c.codigo, icon: 'fa-user' }));
-      const cotItems = (cotizacionesCache || []).filter(c => !qn || (c.folio || '').toLowerCase().includes(qn)).slice(0, 5).map(c => ({ type: 'cotizacion', id: c.id, label: c.folio, meta: c.cliente_nombre, icon: 'fa-file-invoice' }));
+      const cotItems = canAccessCotizaciones()
+        ? (cotizacionesCache || []).filter(c => !qn || (c.folio || '').toLowerCase().includes(qn)).slice(0, 5).map(c => ({ type: 'cotizacion', id: c.id, label: c.folio, meta: c.cliente_nombre, icon: 'fa-file-invoice' }))
+        : [];
       const incItems = (incidentesCache || []).filter(i => !qn || (i.folio || '').toLowerCase().includes(qn)).slice(0, 5).map(i => ({ type: 'incidente', id: i.id, label: i.folio, meta: i.cliente_nombre, icon: 'fa-exclamation-triangle' }));
       const refItems = (refaccionesCache || []).filter(r => !qn || (r.codigo || '').toLowerCase().includes(qn) || (r.descripcion || '').toLowerCase().includes(qn)).slice(0, 5).map(r => ({ type: 'refaccion', id: r.id, label: r.codigo || 'Refacción', meta: r.descripcion, icon: 'fa-cog' }));
       const maqItems = (maquinasCache || []).filter(m => !qn || (m.nombre || '').toLowerCase().includes(qn) || (m.cliente_nombre || '').toLowerCase().includes(qn)).slice(0, 5).map(m => ({ type: 'maquina', id: m.id, label: m.nombre, meta: m.cliente_nombre, icon: 'fa-industry' }));
@@ -9025,7 +10774,7 @@
       qs('#seed-status').innerHTML =
         `Listo: <strong>${data.incidentes || 0}</strong> incidentes, <strong>${data.bitacoras || 0}</strong> bitácoras, <strong>${data.cotizaciones || 0}</strong> cotizaciones agregados.${enTxt}`;
       loadSeedStatus();
-      await loadCotizaciones();
+      if (canAccessCotizaciones()) await loadCotizaciones();
       await loadIncidentes();
       await loadBitacoras();
       if (typeof loadTecnicos === 'function') loadTecnicos();
@@ -9124,7 +10873,10 @@
     initTheme();
     syncSessionHeader();
     updateAuditTabVisibility();
+    updateCotizacionesTabVisibility();
     setupUsuariosPanel();
+    setupModuleDeleteZones();
+    setupCategoriasAdminPanel();
     initSoundToggleButton();
     renderNotificationsPanel();
     updateNotificationsBadge();
@@ -9157,7 +10909,7 @@
         loadClientes();
         loadRefacciones();
         loadMaquinas();
-        loadCotizaciones();
+        if (canAccessCotizaciones()) loadCotizaciones();
         loadIncidentes();
         loadBitacoras();
       }, REFRESH_INTERVAL_MS);
@@ -9178,6 +10930,8 @@
       syncThemeColorMeta();
       return;
     }
+    await refreshSessionUser();
+    updateAuditTabVisibility();
     finishBoot();
   }
   boot();

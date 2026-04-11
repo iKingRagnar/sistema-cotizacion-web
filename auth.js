@@ -129,6 +129,8 @@ function isAdminOnlyApiPath(url) {
 /** usuario/operador: POST permitido (cotizaciones, líneas, aplicar, reportes, IA prospectos). */
 function postAllowedForStaff(url) {
   const p = normalizeApiPath(url);
+  /** Inventario: entrada/salida o conteo físico (no edita catálogo completo). */
+  if (/^\/api\/refacciones\/\d+\/ajuste-stock$/.test(p)) return true;
   if (p === '/api/cotizaciones') return true;
   if (/^\/api\/cotizaciones\/\d+\/lineas$/.test(p)) return true;
   if (/^\/api\/cotizaciones\/\d+\/recalc-lineas$/.test(p)) return true;
@@ -264,7 +266,8 @@ function createApiMiddleware() {
           return next();
         }
         return res.status(403).json({
-          error: 'No tienes permiso para crear este tipo de registro. Solo cotizaciones, líneas, aplicar cotización, reportes, bonos y viajes.',
+          error:
+            'No tienes permiso para esta acción. Permitido: cotizaciones, líneas, aplicar cotización, reportes, bonos, viajes e inventario de refacciones (ajuste de stock).',
         });
       }
       if (isModify) {
@@ -284,6 +287,43 @@ function createApiMiddleware() {
   };
 }
 
+/** admin/operador: siempre pueden cotizar. usuario: solo si está vinculado a Personal y es_vendedor=1 */
+function computeCanCotizar(role, tecnicoId, esVendedorBool) {
+  const r = String(role || '');
+  if (r === 'admin' || r === 'operador') return true;
+  if (r === 'usuario' && tecnicoId && esVendedorBool) return true;
+  return false;
+}
+
+async function buildUserProfileFromRow(u) {
+  if (!u) return null;
+  let tecnicoId = u.tecnico_id != null && u.tecnico_id !== '' ? Number(u.tecnico_id) : null;
+  if (!Number.isFinite(tecnicoId)) tecnicoId = null;
+  let esVendedor = false;
+  if (tecnicoId) {
+    const t = await db.getOne('SELECT es_vendedor FROM tecnicos WHERE id = ?', [tecnicoId]);
+    esVendedor = !!(t && Number(t.es_vendedor) === 1);
+  }
+  const canCotizar = computeCanCotizar(u.role, tecnicoId, esVendedor);
+  return {
+    id: u.id,
+    username: u.username,
+    role: u.role,
+    displayName: u.display_name || u.username,
+    tecnicoId,
+    esVendedor,
+    canCotizar,
+  };
+}
+
+async function canUserAccessCotizaciones(userId) {
+  if (!AUTH_ENABLED) return true;
+  const u = await db.getOne('SELECT * FROM app_users WHERE id = ?', [userId]);
+  if (!u) return false;
+  const p = await buildUserProfileFromRow(u);
+  return !!(p && p.canCotizar);
+}
+
 async function attemptLogin(username, password) {
   const u = await db.getOne(
     'SELECT * FROM app_users WHERE lower(username) = lower(?) AND activo = 1',
@@ -292,14 +332,10 @@ async function attemptLogin(username, password) {
   if (!u || !verifyPassword(password, u.password_hash)) return null;
   const exp = Date.now() + TOKEN_MS;
   const token = signToken({ sub: u.id, u: u.username, r: u.role, d: u.display_name || u.username, exp });
+  const user = await buildUserProfileFromRow(u);
   return {
     token,
-    user: {
-      id: u.id,
-      username: u.username,
-      role: u.role,
-      displayName: u.display_name || u.username,
-    },
+    user,
   };
 }
 
@@ -371,6 +407,8 @@ module.exports = {
   getPublicConfig,
   createApiMiddleware,
   attemptLogin,
+  buildUserProfileFromRow,
+  canUserAccessCotizaciones,
   ensureSeedUsers,
   ensurePinnedAppUsers,
   verifyToken,

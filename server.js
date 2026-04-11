@@ -110,22 +110,38 @@ app.post('/api/auth/login', async (req, res) => {
 
 app.use(auth.createApiMiddleware());
 
-app.get('/api/auth/me', (req, res) => {
+/** Cotizaciones: solo admin, operador, o usuario vinculado a Personal con es_vendedor */
+app.use(async (req, res, next) => {
+  try {
+    const pathOnly = String(req.originalUrl || '').split('?')[0];
+    if (!pathOnly.startsWith('/api/cotizaciones')) return next();
+    if (!auth.AUTH_ENABLED) return next();
+    if (!req.authUser) return res.status(401).json({ error: 'No autorizado. Inicia sesión.' });
+    const ok = await auth.canUserAccessCotizaciones(req.authUser.id);
+    if (!ok) {
+      return res.status(403).json({
+        error:
+          'No tienes acceso a cotizaciones. Un administrador debe vincular tu cuenta a un registro de Personal marcado como vendedor, o asignarte rol operador/administrador.',
+      });
+    }
+    return next();
+  } catch (e) {
+    return next(e);
+  }
+});
+
+app.get('/api/auth/me', async (req, res) => {
   try {
     if (!auth.AUTH_ENABLED) {
       return res.json({
-        user: { id: 0, username: 'local', role: 'admin', displayName: 'Local' },
+        user: { id: 0, username: 'local', role: 'admin', displayName: 'Local', canCotizar: true, tecnicoId: null, esVendedor: false },
       });
     }
     if (!req.authUser) return res.status(401).json({ error: 'No autorizado. Inicia sesión.' });
-    res.json({
-      user: {
-        id: req.authUser.id,
-        username: req.authUser.username,
-        role: req.authUser.role,
-        displayName: req.authUser.displayName,
-      },
-    });
+    const row = await db.getOne('SELECT * FROM app_users WHERE id=?', [req.authUser.id]);
+    if (!row) return res.status(401).json({ error: 'Usuario no encontrado' });
+    const user = await auth.buildUserProfileFromRow(row);
+    res.json({ user });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -139,7 +155,22 @@ app.get('/api/app-users', async (req, res) => {
       return res.status(403).json({ error: 'Solo el administrador puede ver usuarios' });
     }
     const rows = await db.getAll(
-      'SELECT id, username, role, display_name, activo, creado_en FROM app_users ORDER BY username ASC'
+      'SELECT id, username, role, display_name, activo, creado_en, tecnico_id FROM app_users ORDER BY username ASC'
+    );
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+/** Historial de usuarios eliminados (misma pestaña Usuarios; solo admin) */
+app.get('/api/app-users/deleted', async (req, res) => {
+  try {
+    if (!req.authUser || req.authUser.role !== 'admin') {
+      return res.status(403).json({ error: 'Solo el administrador puede ver el historial de eliminados' });
+    }
+    const rows = await db.getAll(
+      'SELECT id, original_user_id, username, display_name, role, tecnico_id, usuario_creado_en, eliminado_en, eliminado_por_user_id, eliminado_por_username FROM app_users_deleted ORDER BY eliminado_en DESC'
     );
     res.json(rows);
   } catch (e) {
@@ -152,7 +183,7 @@ app.post('/api/app-users', async (req, res) => {
     if (!req.authUser || req.authUser.role !== 'admin') {
       return res.status(403).json({ error: 'Solo el administrador puede crear usuarios' });
     }
-    const { username, password, role, display_name } = req.body || {};
+    const { username, password, role, display_name, tecnico_id } = req.body || {};
     const u = String(username || '').trim().toLowerCase();
     if (!u || !password) return res.status(400).json({ error: 'Usuario y contraseña requeridos' });
     if (!/^[a-z0-9._-]{2,64}$/.test(u)) {
@@ -163,12 +194,19 @@ app.post('/api/app-users', async (req, res) => {
     const exists = await db.getOne('SELECT id FROM app_users WHERE lower(username)=?', [u]);
     if (exists) return res.status(409).json({ error: 'Ese nombre de usuario ya existe' });
     const dn = String(display_name || u).trim() || u;
+    let tid = null;
+    if (tecnico_id != null && String(tecnico_id).trim() !== '') {
+      tid = parseInt(tecnico_id, 10);
+      if (!Number.isFinite(tid)) return res.status(400).json({ error: 'tecnico_id inválido' });
+      const ex = await db.getOne('SELECT id FROM tecnicos WHERE id=?', [tid]);
+      if (!ex) return res.status(400).json({ error: 'Personal (tecnico_id) no encontrado' });
+    }
     await db.runQuery(
-      'INSERT INTO app_users (username, password_hash, role, display_name, activo) VALUES (?,?,?,?,1)',
-      [u, auth.hashPassword(String(password)), r, dn]
+      'INSERT INTO app_users (username, password_hash, role, display_name, activo, tecnico_id) VALUES (?,?,?,?,1,?)',
+      [u, auth.hashPassword(String(password)), r, dn, tid]
     );
     const row = await db.getOne(
-      'SELECT id, username, role, display_name, activo, creado_en FROM app_users WHERE lower(username)=?',
+      'SELECT id, username, role, display_name, activo, creado_en, tecnico_id FROM app_users WHERE lower(username)=?',
       [u]
     );
     res.status(201).json(row);
@@ -219,15 +257,68 @@ app.patch('/api/app-users/:id', async (req, res) => {
       password_hash = auth.hashPassword(String(b.password));
     }
 
+    let tecnico_id = target.tecnico_id != null ? target.tecnico_id : null;
+    if (b.tecnico_id !== undefined) {
+      if (b.tecnico_id === null || b.tecnico_id === '') {
+        tecnico_id = null;
+      } else {
+        const tid = parseInt(b.tecnico_id, 10);
+        if (!Number.isFinite(tid)) return res.status(400).json({ error: 'tecnico_id inválido' });
+        const ex = await db.getOne('SELECT id FROM tecnicos WHERE id=?', [tid]);
+        if (!ex) return res.status(400).json({ error: 'Personal (tecnico_id) no encontrado' });
+        tecnico_id = tid;
+      }
+    }
+
     await db.runQuery(
-      'UPDATE app_users SET role=?, display_name=?, activo=?, password_hash=? WHERE id=?',
-      [role, display_name, activo, password_hash, id]
+      'UPDATE app_users SET role=?, display_name=?, activo=?, password_hash=?, tecnico_id=? WHERE id=?',
+      [role, display_name, activo, password_hash, tecnico_id, id]
     );
     const row = await db.getOne(
-      'SELECT id, username, role, display_name, activo, creado_en FROM app_users WHERE id=?',
+      'SELECT id, username, role, display_name, activo, creado_en, tecnico_id FROM app_users WHERE id=?',
       [id]
     );
     res.json(row);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.delete('/api/app-users/:id', async (req, res) => {
+  try {
+    if (!req.authUser || req.authUser.role !== 'admin') {
+      return res.status(403).json({ error: 'Solo el administrador puede eliminar usuarios' });
+    }
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'ID inválido' });
+    if (Number(req.authUser.id) === id) {
+      return res.status(400).json({ error: 'No puedes eliminar tu propia cuenta' });
+    }
+    const target = await db.getOne('SELECT * FROM app_users WHERE id=?', [id]);
+    if (!target) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    const admins = await db.getAll("SELECT id FROM app_users WHERE role='admin' AND activo=1");
+    const isTargetAdmin = target.role === 'admin' && Number(target.activo) === 1;
+    if (isTargetAdmin && admins.length <= 1) {
+      return res.status(400).json({ error: 'No se puede eliminar el único administrador activo' });
+    }
+
+    const eliminador = await db.getOne('SELECT id, username FROM app_users WHERE id=?', [req.authUser.id]);
+    await db.runQuery(
+      `INSERT INTO app_users_deleted (original_user_id, username, display_name, role, tecnico_id, usuario_creado_en, eliminado_por_user_id, eliminado_por_username) VALUES (?,?,?,?,?,?,?,?)`,
+      [
+        target.id,
+        target.username,
+        target.display_name,
+        target.role,
+        target.tecnico_id != null ? target.tecnico_id : null,
+        target.creado_en || null,
+        eliminador ? eliminador.id : null,
+        eliminador ? eliminador.username : null,
+      ]
+    );
+    await db.runQuery('DELETE FROM app_users WHERE id=?', [id]);
+    res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -261,6 +352,35 @@ function normalizeForSearch(str) {
   return String(str).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
+/** Respuesta API sin el data URL pesado; incluye has_constancia y constancia_kind. */
+function publicClienteRow(row) {
+  if (!row || typeof row !== 'object') return row;
+  const o = { ...row };
+  const url = o.constancia_url;
+  if (url && String(url).trim()) {
+    o.has_constancia = true;
+    const s = String(url);
+    o.constancia_kind = s.startsWith('data:image/') ? 'image' : (s.indexOf('application/pdf') !== -1 ? 'pdf' : 'file');
+  } else {
+    o.has_constancia = false;
+    o.constancia_kind = null;
+  }
+  delete o.constancia_url;
+  return o;
+}
+
+function parseDataUrlConstancia(dataUrl) {
+  if (!dataUrl || typeof dataUrl !== 'string') return null;
+  const m = /^data:([^;]+);base64,([\s\S]+)$/.exec(dataUrl.trim());
+  if (!m) return null;
+  try {
+    const mime = m[1].split(';')[0].trim().toLowerCase();
+    return { mime, buffer: Buffer.from(m[2], 'base64') };
+  } catch (_) {
+    return null;
+  }
+}
+
 // --- API Catálogos ---
 app.get('/api/clientes', async (req, res) => {
   try {
@@ -271,7 +391,31 @@ app.get('/api/clientes', async (req, res) => {
       rows = rows.filter(c => normalizeForSearch(c.nombre).includes(normQ) || normalizeForSearch(c.codigo).includes(normQ) || normalizeForSearch(c.rfc).includes(normQ));
       rows = rows.slice(0, 100);
     }
-    res.json(rows);
+    res.json(rows.map((r) => publicClienteRow(r)));
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.get('/api/clientes/:id/constancia', async (req, res) => {
+  try {
+    const row = await db.getOne('SELECT constancia_url, constancia_nombre FROM clientes WHERE id = ?', [req.params.id]);
+    if (!row || !row.constancia_url) return res.status(404).end();
+    const parsed = parseDataUrlConstancia(row.constancia_url);
+    if (!parsed) return res.status(400).json({ error: 'Constancia inválida' });
+    const dl = req.query.download === '1' || req.query.download === 'true';
+    let name = (row.constancia_nombre || 'constancia').replace(/[^\w.\-\u00C0-\u024f]/g, '_') || 'constancia';
+    const mime = parsed.mime;
+    let ext = '';
+    if (mime.includes('pdf')) ext = '.pdf';
+    else if (mime.includes('jpeg')) ext = '.jpg';
+    else if (mime.includes('png')) ext = '.png';
+    else if (mime.includes('gif')) ext = '.gif';
+    else if (mime.includes('webp')) ext = '.webp';
+    if (name.indexOf('.') < 0) name += ext;
+    res.setHeader('Content-Type', mime);
+    res.setHeader('Content-Disposition', dl ? `attachment; filename="${name}"` : `inline; filename="${name}"`);
+    res.send(parsed.buffer);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -281,7 +425,7 @@ app.get('/api/clientes/:id', async (req, res) => {
   try {
     const row = await db.getOne('SELECT * FROM clientes WHERE id = ?', [req.params.id]);
     if (!row) return res.status(404).json({ error: 'No encontrado' });
-    res.json(row);
+    res.json(publicClienteRow(row));
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -289,14 +433,24 @@ app.get('/api/clientes/:id', async (req, res) => {
 
 app.post('/api/clientes', async (req, res) => {
   try {
-    const { codigo, nombre, rfc, contacto, direccion, telefono, email, ciudad } = req.body || {};
+    const body = req.body || {};
+    let {
+      codigo, nombre, rfc, contacto, direccion, telefono, email, ciudad,
+      constancia_url, constancia_nombre, constancia_thumb_url,
+    } = body;
+    if (body.constancia_clear === true) {
+      constancia_url = null;
+      constancia_nombre = null;
+      constancia_thumb_url = null;
+    }
     await db.runQuery(
-      `INSERT INTO clientes (codigo, nombre, rfc, contacto, direccion, telefono, email, ciudad)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [codigo || null, nombre || '', rfc || null, contacto || null, direccion || null, telefono || null, email || null, ciudad || null]
+      `INSERT INTO clientes (codigo, nombre, rfc, contacto, direccion, telefono, email, ciudad, constancia_url, constancia_nombre, constancia_thumb_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [codigo || null, nombre || '', rfc || null, contacto || null, direccion || null, telefono || null, email || null, ciudad || null,
+       constancia_url || null, constancia_nombre || null, constancia_thumb_url || null]
     );
     const r = await db.getOne('SELECT * FROM clientes ORDER BY id DESC LIMIT 1');
-    res.status(201).json(r);
+    res.status(201).json(publicClienteRow(r));
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -304,13 +458,35 @@ app.post('/api/clientes', async (req, res) => {
 
 app.put('/api/clientes/:id', async (req, res) => {
   try {
-    const { codigo, nombre, rfc, contacto, direccion, telefono, email, ciudad } = req.body || {};
+    const body = req.body || {};
+    const cur = await db.getOne('SELECT * FROM clientes WHERE id = ?', [req.params.id]);
+    if (!cur) return res.status(404).json({ error: 'No encontrado' });
+    const {
+      codigo, nombre, rfc, contacto, direccion, telefono, email, ciudad,
+    } = body;
+    let constancia_url;
+    let constancia_nombre;
+    let constancia_thumb_url;
+    if (body.constancia_clear === true) {
+      constancia_url = null;
+      constancia_nombre = null;
+      constancia_thumb_url = null;
+    } else if (typeof body.constancia_url === 'string' && body.constancia_url.trim()) {
+      constancia_url = body.constancia_url;
+      constancia_nombre = body.constancia_nombre || null;
+      constancia_thumb_url = body.constancia_thumb_url || null;
+    } else {
+      constancia_url = cur.constancia_url;
+      constancia_nombre = cur.constancia_nombre;
+      constancia_thumb_url = cur.constancia_thumb_url;
+    }
     await db.runQuery(
-      `UPDATE clientes SET codigo=?, nombre=?, rfc=?, contacto=?, direccion=?, telefono=?, email=?, ciudad=? WHERE id=?`,
-      [codigo || null, nombre || '', rfc || null, contacto || null, direccion || null, telefono || null, email || null, ciudad || null, req.params.id]
+      `UPDATE clientes SET codigo=?, nombre=?, rfc=?, contacto=?, direccion=?, telefono=?, email=?, ciudad=?, constancia_url=?, constancia_nombre=?, constancia_thumb_url=? WHERE id=?`,
+      [codigo || null, nombre || '', rfc || null, contacto || null, direccion || null, telefono || null, email || null, ciudad || null,
+       constancia_url || null, constancia_nombre || null, constancia_thumb_url || null, req.params.id]
     );
     const r = await db.getOne('SELECT * FROM clientes WHERE id = ?', [req.params.id]);
-    res.json(r || {});
+    res.json(publicClienteRow(r || {}));
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -355,20 +531,49 @@ app.get('/api/refacciones/:id', async (req, res) => {
 
 app.post('/api/refacciones', async (req, res) => {
   try {
-    const { codigo, descripcion, zona, stock, stock_minimo, precio_unitario, precio_usd, unidad, categoria, subcategoria, imagen_url, manual_url, numero_parte_manual } = req.body || {};
+    const tcSnap = await fetchTipoCambioBanxico();
+    const tcReg = Number(tcSnap && tcSnap.valor) > 0 ? Number(tcSnap.valor) : 17;
+    const {
+      codigo,
+      descripcion,
+      zona,
+      bloque,
+      stock,
+      stock_minimo,
+      precio_usd,
+      unidad,
+      categoria,
+      subcategoria,
+      imagen_url,
+      manual_url,
+      numero_parte_manual,
+    } = req.body || {};
+    const puUsd = Number(precio_usd) || 0;
     await db.runQuery(
-      `INSERT INTO refacciones (codigo, descripcion, zona, stock, stock_minimo, precio_unitario, precio_usd, unidad, categoria, subcategoria, imagen_url, manual_url, numero_parte_manual)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [codigo || '', descripcion || '', zona || null, Number(stock) || 0, Number(stock_minimo) || 1,
-       Number(precio_unitario) || 0, Number(precio_usd) || 0, unidad || 'PZA',
-       categoria || null, subcategoria || null, imagen_url || null, manual_url || null, numero_parte_manual || null]
+      `INSERT INTO refacciones (codigo, descripcion, zona, bloque, stock, stock_minimo, precio_unitario, precio_usd, tipo_cambio_registro, unidad, categoria, subcategoria, imagen_url, manual_url, numero_parte_manual)
+       VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        codigo || '',
+        descripcion || '',
+        zona || null,
+        bloque != null && String(bloque).trim() !== '' ? String(bloque).trim() : null,
+        Number(stock) || 0,
+        Number(stock_minimo) || 1,
+        puUsd,
+        tcReg,
+        unidad || 'PZA',
+        categoria || null,
+        subcategoria || null,
+        imagen_url || null,
+        manual_url || null,
+        numero_parte_manual || null,
+      ]
     );
     const r = await db.getOne('SELECT * FROM refacciones ORDER BY id DESC LIMIT 1');
-    // Registrar entrada en movimientos_stock si hay stock inicial
     if (r && Number(stock) > 0) {
       await db.runQuery(
         `INSERT INTO movimientos_stock (refaccion_id, tipo, cantidad, costo_unitario, referencia, fecha) VALUES (?, 'entrada', ?, ?, 'Alta inicial', date('now','localtime'))`,
-        [r.id, Number(stock), Number(precio_unitario) || 0]
+        [r.id, Number(stock), puUsd]
       );
     }
     res.status(201).json(r);
@@ -379,13 +584,47 @@ app.post('/api/refacciones', async (req, res) => {
 
 app.put('/api/refacciones/:id', async (req, res) => {
   try {
-    const { codigo, descripcion, zona, stock, stock_minimo, precio_unitario, precio_usd, unidad, categoria, subcategoria, imagen_url, manual_url, numero_parte_manual } = req.body || {};
+    const {
+      codigo,
+      descripcion,
+      zona,
+      bloque,
+      stock,
+      stock_minimo,
+      precio_usd,
+      unidad,
+      categoria,
+      subcategoria,
+      imagen_url,
+      manual_url,
+      numero_parte_manual,
+    } = req.body || {};
+    const prev = await db.getOne('SELECT tipo_cambio_registro FROM refacciones WHERE id=?', [req.params.id]);
+    let tcReg = prev && Number(prev.tipo_cambio_registro) > 0 ? Number(prev.tipo_cambio_registro) : null;
+    if (tcReg == null) {
+      const tcSnap = await fetchTipoCambioBanxico();
+      tcReg = Number(tcSnap && tcSnap.valor) > 0 ? Number(tcSnap.valor) : 17;
+    }
+    const puUsd = Number(precio_usd) || 0;
     await db.runQuery(
-      `UPDATE refacciones SET codigo=?, descripcion=?, zona=?, stock=?, stock_minimo=?, precio_unitario=?, precio_usd=?, unidad=?, categoria=?, subcategoria=?, imagen_url=?, manual_url=?, numero_parte_manual=? WHERE id=?`,
-      [codigo || '', descripcion || '', zona || null, Number(stock) || 0, Number(stock_minimo) || 1,
-       Number(precio_unitario) || 0, Number(precio_usd) || 0, unidad || 'PZA',
-       categoria || null, subcategoria || null, imagen_url || null, manual_url || null, numero_parte_manual || null,
-       req.params.id]
+      `UPDATE refacciones SET codigo=?, descripcion=?, zona=?, bloque=?, stock=?, stock_minimo=?, precio_unitario=0, precio_usd=?, tipo_cambio_registro=?, unidad=?, categoria=?, subcategoria=?, imagen_url=?, manual_url=?, numero_parte_manual=? WHERE id=?`,
+      [
+        codigo || '',
+        descripcion || '',
+        zona || null,
+        bloque != null && String(bloque).trim() !== '' ? String(bloque).trim() : null,
+        Number(stock) || 0,
+        Number(stock_minimo) || 1,
+        puUsd,
+        tcReg,
+        unidad || 'PZA',
+        categoria || null,
+        subcategoria || null,
+        imagen_url || null,
+        manual_url || null,
+        numero_parte_manual || null,
+        req.params.id,
+      ]
     );
     const r = await db.getOne('SELECT * FROM refacciones WHERE id = ?', [req.params.id]);
     res.json(r || {});
@@ -394,21 +633,51 @@ app.put('/api/refacciones/:id', async (req, res) => {
   }
 });
 
-// Ajuste rápido de stock (entrada manual)
+// Ajuste de inventario: entrada/salida por cantidad, o conteo físico (stock absoluto). Movimientos compatibles con FIFO.
 app.post('/api/refacciones/:id/ajuste-stock', async (req, res) => {
   try {
-    const { cantidad, tipo, costo_unitario, referencia } = req.body || {};
+    const { modo, nuevo_stock, cantidad, tipo, costo_unitario, referencia } = req.body || {};
     const ref = await db.getOne('SELECT * FROM refacciones WHERE id = ?', [req.params.id]);
     if (!ref) return res.status(404).json({ error: 'No encontrado' });
+    const anterior = Number(ref.stock) || 0;
+    const refTxt = (referencia != null && String(referencia).trim() !== '') ? String(referencia).trim() : null;
+    const costo = Number(costo_unitario) || 0;
+
+    const modoAbsoluto =
+      modo === 'absoluto' ||
+      modo === 'fijar' ||
+      modo === 'conteo';
+
+    if (modoAbsoluto) {
+      const nuevo = Number(nuevo_stock);
+      if (!Number.isFinite(nuevo) || nuevo < 0) {
+        return res.status(400).json({ error: 'Indica un stock final válido (≥ 0).' });
+      }
+      const diff = nuevo - anterior;
+      await db.runQuery('UPDATE refacciones SET stock=? WHERE id=?', [nuevo, req.params.id]);
+      if (Math.abs(diff) < 1e-9) {
+        return res.json({ ok: true, stock: nuevo, anterior, diff: 0, sin_movimiento: true });
+      }
+      const tipoMov = diff > 0 ? 'entrada' : 'salida';
+      const cant = Math.abs(diff);
+      const refLabel = (refTxt || 'Conteo físico / ajuste') + ` (${anterior} → ${nuevo})`;
+      await db.runQuery(
+        `INSERT INTO movimientos_stock (refaccion_id, tipo, cantidad, costo_unitario, referencia, fecha) VALUES (?, ?, ?, ?, ?, date('now','localtime'))`,
+        [req.params.id, tipoMov, cant, costo, refLabel]
+      );
+      return res.json({ ok: true, stock: nuevo, anterior, diff, tipo_movimiento: tipoMov });
+    }
+
     const cant = Number(cantidad) || 0;
+    if (cant <= 0) return res.status(400).json({ error: 'La cantidad debe ser mayor que 0.' });
     const tipoMov = tipo === 'salida' ? 'salida' : 'entrada';
-    const nuevoStock = tipoMov === 'entrada' ? ref.stock + cant : Math.max(0, ref.stock - cant);
+    const nuevoStock = tipoMov === 'entrada' ? anterior + cant : Math.max(0, anterior - cant);
     await db.runQuery('UPDATE refacciones SET stock=? WHERE id=?', [nuevoStock, req.params.id]);
     await db.runQuery(
       `INSERT INTO movimientos_stock (refaccion_id, tipo, cantidad, costo_unitario, referencia, fecha) VALUES (?, ?, ?, ?, ?, date('now','localtime'))`,
-      [req.params.id, tipoMov, cant, Number(costo_unitario) || 0, referencia || 'Ajuste manual']
+      [req.params.id, tipoMov, cant, costo, refTxt || 'Ajuste manual']
     );
-    res.json({ ok: true, stock: nuevoStock });
+    res.json({ ok: true, stock: nuevoStock, anterior, diff: nuevoStock - anterior, tipo_movimiento: tipoMov });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -491,6 +760,129 @@ app.get('/api/catalogo-universal-maquinas', async (req, res) => {
   }
 });
 
+/** Árbol categorías + subcategorías para selects (lectura autenticada). */
+app.get('/api/categorias-catalogo', async (req, res) => {
+  try {
+    const cats = await db.getAll('SELECT id, nombre, orden FROM catalogo_categorias ORDER BY orden ASC, nombre ASC');
+    const subs = await db.getAll(
+      'SELECT id, categoria_id, nombre, orden FROM catalogo_subcategorias ORDER BY orden ASC, nombre ASC'
+    );
+    const byCat = {};
+    subs.forEach((s) => {
+      const k = s.categoria_id;
+      if (!byCat[k]) byCat[k] = [];
+      byCat[k].push({ id: s.id, nombre: s.nombre, orden: s.orden });
+    });
+    res.json({
+      categorias: (cats || []).map((c) => ({
+        id: c.id,
+        nombre: c.nombre,
+        orden: c.orden,
+        subcategorias: byCat[c.id] || [],
+      })),
+    });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.post('/api/admin/categorias-catalogo/categorias', async (req, res) => {
+  try {
+    const nombre = req.body && req.body.nombre != null ? String(req.body.nombre).trim() : '';
+    if (!nombre) return res.status(400).json({ error: 'Nombre obligatorio' });
+    const orden = req.body && req.body.orden != null ? Number(req.body.orden) : 0;
+    await db.runQuery('INSERT INTO catalogo_categorias (nombre, orden) VALUES (?, ?)', [nombre, Number.isFinite(orden) ? orden : 0]);
+    const row = await db.getOne('SELECT * FROM catalogo_categorias WHERE nombre = ?', [nombre]);
+    res.status(201).json(row);
+  } catch (e) {
+    if (String(e.message || e).indexOf('UNIQUE') >= 0) return res.status(409).json({ error: 'Ya existe esa categoría' });
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.put('/api/admin/categorias-catalogo/categorias/:id', async (req, res) => {
+  try {
+    const nombre = req.body && req.body.nombre != null ? String(req.body.nombre).trim() : '';
+    if (!nombre) return res.status(400).json({ error: 'Nombre obligatorio' });
+    const orden = req.body && req.body.orden != null ? Number(req.body.orden) : 0;
+    const n = await db.runMutationCount('UPDATE catalogo_categorias SET nombre=?, orden=? WHERE id=?', [
+      nombre,
+      Number.isFinite(orden) ? orden : 0,
+      req.params.id,
+    ]);
+    if (!n) return res.status(404).json({ error: 'No encontrado' });
+    const row = await db.getOne('SELECT * FROM catalogo_categorias WHERE id = ?', [req.params.id]);
+    res.json(row || {});
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.delete('/api/admin/categorias-catalogo/categorias/:id', async (req, res) => {
+  try {
+    const n = await db.runMutationCount('DELETE FROM catalogo_categorias WHERE id = ?', [req.params.id]);
+    if (!n) return res.status(404).json({ error: 'No encontrado' });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.post('/api/admin/categorias-catalogo/subcategorias', async (req, res) => {
+  try {
+    const categoriaId = req.body && req.body.categoria_id != null ? Number(req.body.categoria_id) : NaN;
+    const nombre = req.body && req.body.nombre != null ? String(req.body.nombre).trim() : '';
+    if (!nombre || !Number.isFinite(categoriaId)) return res.status(400).json({ error: 'categoria_id y nombre obligatorios' });
+    const orden = req.body && req.body.orden != null ? Number(req.body.orden) : 0;
+    await db.runQuery('INSERT INTO catalogo_subcategorias (categoria_id, nombre, orden) VALUES (?, ?, ?)', [
+      categoriaId,
+      nombre,
+      Number.isFinite(orden) ? orden : 0,
+    ]);
+    const row = await db.getOne(
+      'SELECT * FROM catalogo_subcategorias WHERE categoria_id = ? AND nombre = ?',
+      [categoriaId, nombre]
+    );
+    res.status(201).json(row);
+  } catch (e) {
+    if (String(e.message || e).indexOf('UNIQUE') >= 0) return res.status(409).json({ error: 'Ya existe esa subcategoría en la categoría' });
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.put('/api/admin/categorias-catalogo/subcategorias/:id', async (req, res) => {
+  try {
+    const nombre = req.body && req.body.nombre != null ? String(req.body.nombre).trim() : '';
+    if (!nombre) return res.status(400).json({ error: 'Nombre obligatorio' });
+    const orden = req.body && req.body.orden != null ? Number(req.body.orden) : 0;
+    let categoriaId = req.body && req.body.categoria_id != null ? Number(req.body.categoria_id) : NaN;
+    if (!Number.isFinite(categoriaId)) {
+      const cur = await db.getOne('SELECT categoria_id FROM catalogo_subcategorias WHERE id = ?', [req.params.id]);
+      categoriaId = cur && cur.categoria_id != null ? Number(cur.categoria_id) : NaN;
+    }
+    if (!Number.isFinite(categoriaId)) return res.status(400).json({ error: 'categoria_id inválido' });
+    const n = await db.runMutationCount(
+      'UPDATE catalogo_subcategorias SET categoria_id=?, nombre=?, orden=? WHERE id=?',
+      [categoriaId, nombre, Number.isFinite(orden) ? orden : 0, req.params.id]
+    );
+    if (!n) return res.status(404).json({ error: 'No encontrado' });
+    const row = await db.getOne('SELECT * FROM catalogo_subcategorias WHERE id = ?', [req.params.id]);
+    res.json(row || {});
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.delete('/api/admin/categorias-catalogo/subcategorias/:id', async (req, res) => {
+  try {
+    const n = await db.runMutationCount('DELETE FROM catalogo_subcategorias WHERE id = ?', [req.params.id]);
+    if (!n) return res.status(404).json({ error: 'No encontrado' });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
 app.post('/api/maquinas', async (req, res) => {
   try {
     const {
@@ -503,6 +895,7 @@ app.post('/api/maquinas', async (req, res) => {
       ubicacion,
       categoria,
       categoria_principal,
+      subcategoria,
       imagen_pieza_url,
       imagen_ensamble_url,
       stock,
@@ -520,8 +913,8 @@ app.post('/api/maquinas', async (req, res) => {
     const stockNum = stock != null && stock !== '' ? Number(stock) : 0;
     const plUsd = precio_lista_usd != null && precio_lista_usd !== '' ? Number(precio_lista_usd) : 0;
     await db.runQuery(
-      `INSERT INTO maquinas (cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion, categoria, categoria_principal, imagen_pieza_url, imagen_ensamble_url, stock, precio_lista_usd, ficha_tecnica)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO maquinas (cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion, categoria, categoria_principal, subcategoria, imagen_pieza_url, imagen_ensamble_url, stock, precio_lista_usd, ficha_tecnica)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         cid,
         codigo || null,
@@ -532,6 +925,7 @@ app.post('/api/maquinas', async (req, res) => {
         ubicacion || null,
         categoria || null,
         categoria_principal || null,
+        subcategoria != null && String(subcategoria).trim() !== '' ? String(subcategoria).trim() : null,
         imagen_pieza_url || null,
         imagen_ensamble_url || null,
         Number.isFinite(stockNum) ? stockNum : 0,
@@ -558,6 +952,7 @@ app.put('/api/maquinas/:id', async (req, res) => {
       ubicacion,
       categoria,
       categoria_principal,
+      subcategoria,
       imagen_pieza_url,
       imagen_ensamble_url,
       stock,
@@ -576,7 +971,7 @@ app.put('/api/maquinas/:id', async (req, res) => {
       cidPut = first && first.id != null ? Number(first.id) : null;
     }
     await db.runQuery(
-      `UPDATE maquinas SET cliente_id=?, codigo=?, nombre=?, marca=?, modelo=?, numero_serie=?, ubicacion=?, categoria=?, categoria_principal=?,
+      `UPDATE maquinas SET cliente_id=?, codigo=?, nombre=?, marca=?, modelo=?, numero_serie=?, ubicacion=?, categoria=?, categoria_principal=?, subcategoria=?,
        imagen_pieza_url=?, imagen_ensamble_url=?, stock=?, precio_lista_usd=?, ficha_tecnica=? WHERE id=?`,
       [
         cidPut,
@@ -588,6 +983,7 @@ app.put('/api/maquinas/:id', async (req, res) => {
         ubicacion || null,
         categoria || null,
         categoria_principal || null,
+        subcategoria != null && String(subcategoria).trim() !== '' ? String(subcategoria).trim() : null,
         imagen_pieza_url || null,
         imagen_ensamble_url || null,
         Number.isFinite(stockNum) ? stockNum : 0,
@@ -687,7 +1083,7 @@ async function fetchTipoCambioBanxico() {
   return tipoCambioCache;
 }
 fetchTipoCambioBanxico();
-setInterval(fetchTipoCambioBanxico, 60 * 60 * 1000);
+setInterval(fetchTipoCambioBanxico, 60 * 1000);
 
 app.get('/api/tipo-cambio', async (req, res) => {
   try {
@@ -802,7 +1198,7 @@ const DEFAULT_TARIFAS = {
   zona_c_km: '12',
   comision_ref: '15',
   comision_svc: '15',
-  comision_maq_david: '10',
+  comision_maq_david: '15',
   bono_20k: '1000',
   bono_40k: '2000',
   bono_dia: '500',
@@ -1045,7 +1441,7 @@ function calcLinea(tipo, cantidad, precioUnitario, moneda, tipoCambio) {
   const tot = Math.round((st + iv) * 100) / 100;
   const tcRaw = Number(tipoCambio);
   const tc = Number.isFinite(tcRaw) && tcRaw > 0 ? tcRaw : 0;
-  const mon = (moneda || 'MXN').toUpperCase();
+  const mon = (moneda || 'USD').toUpperCase();
   const puUsd = mon === 'USD' ? pu : (tc > 0 ? Math.round((pu / tc) * 100) / 100 : 0);
   return {
     tipo_linea: tipo,
@@ -1075,7 +1471,7 @@ async function precioUnitarioVueltaDesdeTarifas(cot, esIda, horasTrabajo, horasT
   const htr = Number(horasTraslado) || 0;
   const baseMxn = (esIda ? idaMxn : 0) + ht * hrMxn + htr * hrMxn;
   const tc = tipoCambioCotizacionEfectivo(cot);
-  const mon = (cot.moneda || 'MXN').toUpperCase();
+  const mon = (cot.moneda || 'USD').toUpperCase();
   if (mon === 'USD') return tc > 0 ? Math.round((baseMxn / tc) * 100) / 100 : Math.round(baseMxn * 100) / 100;
   return Math.round(baseMxn * 100) / 100;
 }
@@ -1169,16 +1565,16 @@ async function registrarSalidaStockFifo(refaccionId, cantidadTotal, cotizacionId
 async function precioUnitarioDesdeLista(cot, tipo, refaccionId, maquinaId, precioUnitario) {
   let pu = Number(precioUnitario);
   if (pu > 0) return pu;
-  const mon = (cot.moneda || 'MXN').toUpperCase();
+  const mon = (cot.moneda || 'USD').toUpperCase();
   const tc = tipoCambioCotizacionEfectivo(cot);
   const refIdNum = refaccionId != null ? Number(refaccionId) : NaN;
   const maqIdNum = maquinaId != null ? Number(maquinaId) : NaN;
   if (tipo === 'refaccion' && Number.isFinite(refIdNum) && refIdNum > 0) {
-    const ref = await db.getOne('SELECT precio_usd, precio_unitario FROM refacciones WHERE id=?', [refIdNum]);
+    const ref = await db.getOne('SELECT precio_usd FROM refacciones WHERE id=?', [refIdNum]);
     if (!ref) return 0;
     const usd = Number(ref.precio_usd) || 0;
     if (usd > 0) return mon === 'USD' ? usd : Math.round(usd * tc * 100) / 100;
-    return Number(ref.precio_unitario) || 0;
+    return 0;
   }
   if (tipo === 'equipo' && Number.isFinite(maqIdNum) && maqIdNum > 0) {
     const m = await db.getOne('SELECT precio_lista_usd FROM maquinas WHERE id=?', [maqIdNum]);
@@ -1431,7 +1827,7 @@ app.post('/api/cotizaciones', async (req, res) => {
     const iv = Number(iva) || 0;
     const tot = Number(total) != null ? Number(total) : st + iv;
     const tc = Number(tipo_cambio) || 17.0;
-    const mon = moneda || 'MXN';
+    const mon = moneda || 'USD';
     const maqIds = typeof maquinas_ids === 'string' ? maquinas_ids : JSON.stringify(maquinas_ids || []);
     const dct = Math.min(100, Math.max(0, Number(descuento_pct) || 0));
     const vid = vendedor_personal_id != null && String(vendedor_personal_id).trim() !== '' ? Number(vendedor_personal_id) : null;
@@ -1500,9 +1896,9 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
       ? (vendedor != null && String(vendedor).trim() !== '' ? String(vendedor).trim() : null)
       : existing.vendedor;
     const nextTc = (tipo_cambio != null && String(tipo_cambio).trim() !== '') ? (Number(tipo_cambio) || 17.0) : (Number(existing.tipo_cambio) || 17.0);
-    const nextMon = (moneda != null && String(moneda).trim() !== '') ? String(moneda).trim().toUpperCase() : (existing.moneda || 'MXN');
+    const nextMon = (moneda != null && String(moneda).trim() !== '') ? String(moneda).trim().toUpperCase() : (existing.moneda || 'USD');
     const tcChanged = hasBody && Object.prototype.hasOwnProperty.call(req.body, 'tipo_cambio') && nextTc !== (Number(existing.tipo_cambio) || 17.0);
-    const monChanged = hasBody && Object.prototype.hasOwnProperty.call(req.body, 'moneda') && nextMon !== String(existing.moneda || 'MXN').toUpperCase();
+    const monChanged = hasBody && Object.prototype.hasOwnProperty.call(req.body, 'moneda') && nextMon !== String(existing.moneda || 'USD').toUpperCase();
     await db.runQuery(
       `UPDATE cotizaciones
        SET folio=?, cliente_id=?, tipo=?, fecha=?, tipo_cambio=?, moneda=?, maquinas_ids=?, estado=?, notas=?,
@@ -1679,6 +2075,16 @@ app.delete('/api/catalogos/:id', async (req, res) => {
   }
 });
 
+/** Lista API: sin data URLs pesados de INE/licencia; deja miniaturas y banderas. */
+function publicTecnicoListRow(t) {
+  const o = { ...t };
+  delete o.ine_foto_url;
+  delete o.licencia_foto_url;
+  o.has_ine = !!(t.ine_thumb_url || t.ine_foto_url);
+  o.has_licencia = !!(t.licencia_thumb_url || t.licencia_foto_url);
+  return o;
+}
+
 // Tecnicos
 app.get('/api/tecnicos', async (req, res) => {
   try {
@@ -1688,11 +2094,12 @@ app.get('/api/tecnicos', async (req, res) => {
     const ocupados = new Set(reportesActivos.map(r => r.tecnico));
     const strip = shouldStripCommissions(req);
     const enriched = rows.map(t => {
-      const base = { ...t, ocupado: ocupados.has(t.nombre) ? 1 : 0 };
+      let base = { ...t, ocupado: ocupados.has(t.nombre) ? 1 : 0 };
       if (strip) {
         delete base.comision_maquinas_pct;
         delete base.comision_refacciones_pct;
       }
+      base = publicTecnicoListRow(base);
       return base;
     });
     res.json(enriched);
@@ -1700,8 +2107,25 @@ app.get('/api/tecnicos', async (req, res) => {
     res.status(500).json({ error: String(e.message) });
   }
 });
+
+app.get('/api/tecnicos/:id', async (req, res) => {
+  try {
+    const row = await db.getOne('SELECT * FROM tecnicos WHERE id=?', [req.params.id]);
+    if (!row) return res.status(404).json({ error: 'No encontrado' });
+    const strip = shouldStripCommissions(req);
+    const o = { ...row };
+    if (strip) {
+      delete o.comision_maquinas_pct;
+      delete o.comision_refacciones_pct;
+    }
+    res.json(o);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
 app.post('/api/tecnicos', async (req, res) => {
   try {
+    const body = req.body || {};
     const {
       nombre,
       habilidades,
@@ -1714,7 +2138,11 @@ app.post('/api/tecnicos', async (req, res) => {
       es_vendedor,
       comision_maquinas_pct,
       comision_refacciones_pct,
-    } = req.body || {};
+    } = body;
+    let ine_foto_url = typeof body.ine_foto_url === 'string' && body.ine_foto_url.trim() ? body.ine_foto_url.trim() : null;
+    let ine_thumb_url = typeof body.ine_thumb_url === 'string' && body.ine_thumb_url.trim() ? body.ine_thumb_url.trim() : null;
+    let licencia_foto_url = typeof body.licencia_foto_url === 'string' && body.licencia_foto_url.trim() ? body.licencia_foto_url.trim() : null;
+    let licencia_thumb_url = typeof body.licencia_thumb_url === 'string' && body.licencia_thumb_url.trim() ? body.licencia_thumb_url.trim() : null;
     if (!nombre) return res.status(400).json({ error: 'nombre requerido' });
     const isAdmin = auth.AUTH_ENABLED && req.authUser && req.authUser.role === 'admin';
     let cMaq = Number(comision_maquinas_pct) || 0;
@@ -1724,8 +2152,8 @@ app.post('/api/tecnicos', async (req, res) => {
       cRef = 10;
     }
     await db.runQuery(
-      `INSERT OR IGNORE INTO tecnicos (nombre, habilidades, ocupado, disponible_desde, rol, puesto, departamento, profesion, es_vendedor, comision_maquinas_pct, comision_refacciones_pct)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT OR IGNORE INTO tecnicos (nombre, habilidades, ocupado, disponible_desde, rol, puesto, departamento, profesion, es_vendedor, comision_maquinas_pct, comision_refacciones_pct, ine_foto_url, ine_thumb_url, licencia_foto_url, licencia_thumb_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         nombre,
         habilidades || null,
@@ -1738,10 +2166,14 @@ app.post('/api/tecnicos', async (req, res) => {
         es_vendedor ? 1 : 0,
         cMaq,
         cRef,
+        ine_foto_url,
+        ine_thumb_url,
+        licencia_foto_url,
+        licencia_thumb_url,
       ]
     );
     await db.runQuery(
-      `UPDATE tecnicos SET habilidades=?, ocupado=?, disponible_desde=?, rol=?, puesto=?, departamento=?, profesion=?, es_vendedor=?, comision_maquinas_pct=?, comision_refacciones_pct=? WHERE nombre=?`,
+      `UPDATE tecnicos SET habilidades=?, ocupado=?, disponible_desde=?, rol=?, puesto=?, departamento=?, profesion=?, es_vendedor=?, comision_maquinas_pct=?, comision_refacciones_pct=?, ine_foto_url=?, ine_thumb_url=?, licencia_foto_url=?, licencia_thumb_url=? WHERE nombre=?`,
       [
         habilidades || null,
         ocupado ? 1 : 0,
@@ -1753,17 +2185,29 @@ app.post('/api/tecnicos', async (req, res) => {
         es_vendedor ? 1 : 0,
         cMaq,
         cRef,
+        ine_foto_url,
+        ine_thumb_url,
+        licencia_foto_url,
+        licencia_thumb_url,
         nombre,
       ]
     );
     const r = await db.getOne('SELECT * FROM tecnicos WHERE nombre=?', [nombre]);
-    res.status(201).json(r);
+    const strip = shouldStripCommissions(req);
+    let out = { ...r };
+    if (strip) {
+      delete out.comision_maquinas_pct;
+      delete out.comision_refacciones_pct;
+    }
+    out = publicTecnicoListRow(out);
+    res.status(201).json(out);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
 });
 app.put('/api/tecnicos/:id', async (req, res) => {
   try {
+    const body = req.body || {};
     const {
       nombre,
       habilidades,
@@ -1777,11 +2221,41 @@ app.put('/api/tecnicos/:id', async (req, res) => {
       es_vendedor,
       comision_maquinas_pct,
       comision_refacciones_pct,
-    } = req.body || {};
+    } = body;
     if (!nombre) return res.status(400).json({ error: 'nombre requerido' });
+    const cur = await db.getOne('SELECT * FROM tecnicos WHERE id=?', [req.params.id]);
+    if (!cur) return res.status(404).json({ error: 'No encontrado' });
+
+    let ine_foto_url;
+    let ine_thumb_url;
+    if (body.ine_clear === true) {
+      ine_foto_url = null;
+      ine_thumb_url = null;
+    } else if (typeof body.ine_foto_url === 'string' && body.ine_foto_url.trim()) {
+      ine_foto_url = body.ine_foto_url.trim();
+      ine_thumb_url = typeof body.ine_thumb_url === 'string' && body.ine_thumb_url.trim() ? body.ine_thumb_url.trim() : null;
+    } else {
+      ine_foto_url = cur.ine_foto_url;
+      ine_thumb_url = cur.ine_thumb_url;
+    }
+
+    let licencia_foto_url;
+    let licencia_thumb_url;
+    if (body.licencia_clear === true) {
+      licencia_foto_url = null;
+      licencia_thumb_url = null;
+    } else if (typeof body.licencia_foto_url === 'string' && body.licencia_foto_url.trim()) {
+      licencia_foto_url = body.licencia_foto_url.trim();
+      licencia_thumb_url = typeof body.licencia_thumb_url === 'string' && body.licencia_thumb_url.trim() ? body.licencia_thumb_url.trim() : null;
+    } else {
+      licencia_foto_url = cur.licencia_foto_url;
+      licencia_thumb_url = cur.licencia_thumb_url;
+    }
+
     await db.runQuery(
       `UPDATE tecnicos SET nombre=?, habilidades=?, activo=?, ocupado=?, disponible_desde=?,
-       rol=?, puesto=?, departamento=?, profesion=?, es_vendedor=?, comision_maquinas_pct=?, comision_refacciones_pct=?
+       rol=?, puesto=?, departamento=?, profesion=?, es_vendedor=?, comision_maquinas_pct=?, comision_refacciones_pct=?,
+       ine_foto_url=?, ine_thumb_url=?, licencia_foto_url=?, licencia_thumb_url=?
        WHERE id=?`,
       [
         nombre,
@@ -1796,11 +2270,22 @@ app.put('/api/tecnicos/:id', async (req, res) => {
         es_vendedor ? 1 : 0,
         Number(comision_maquinas_pct) || 0,
         Number(comision_refacciones_pct) || 0,
+        ine_foto_url || null,
+        ine_thumb_url || null,
+        licencia_foto_url || null,
+        licencia_thumb_url || null,
         req.params.id,
       ]
     );
     const r = await db.getOne('SELECT * FROM tecnicos WHERE id=?', [req.params.id]);
-    res.json(r);
+    const strip = shouldStripCommissions(req);
+    let out = { ...r };
+    if (strip) {
+      delete out.comision_maquinas_pct;
+      delete out.comision_refacciones_pct;
+    }
+    out = publicTecnicoListRow(out);
+    res.json(out);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -2166,6 +2651,7 @@ const WIPE_DELETE_ORDER = [
   'audit_log',
   'catalogos',
   'tecnicos',
+  'app_users_deleted',
   'app_users',
 ];
 const WIPE_ALL_CONFIRM = 'BORRAR-TODO-EL-SISTEMA';
@@ -2466,10 +2952,14 @@ async function runSeedDemoCore(_forceIgnored) {
       const r = await db.getOne('SELECT id FROM clientes ORDER BY id DESC LIMIT 1');
       if (r) idMap[clientes.indexOf(c) + 1] = r.id;
     }
+    const tcSeed = 17.0;
     for (const r of refacciones) {
+      const puUsd = r.precio_usd != null && Number(r.precio_usd) > 0
+        ? Number(r.precio_usd)
+        : (r.precio_unitario != null && Number(r.precio_unitario) > 0 ? Math.round((Number(r.precio_unitario) / tcSeed) * 100) / 100 : 0);
       await db.runQuery(
-        `INSERT INTO refacciones (codigo, descripcion, precio_unitario, unidad) VALUES (?, ?, ?, ?)`,
-        [safeStrReq(r.codigo), safeStrReq(r.descripcion), r.precio_unitario != null ? Number(r.precio_unitario) : 0, safeStr(r.unidad) || 'PZA']
+        `INSERT INTO refacciones (codigo, descripcion, precio_unitario, precio_usd, tipo_cambio_registro, unidad) VALUES (?, ?, 0, ?, ?, ?)`,
+        [safeStrReq(r.codigo), safeStrReq(r.descripcion), puUsd, tcSeed, safeStr(r.unidad) || 'PZA']
       );
     }
     for (const m of maquinas) {
@@ -2596,7 +3086,7 @@ async function runSeedDemoCore(_forceIgnored) {
         (tipo === 'mano_obra' ? 'COT-MO' : 'COT-REF') + '-' + fecha.replace(/-/g, '') + '-' + String(1001 + i);
       const folio = await folioUnicoEnTabla('cotizaciones', folioBase);
       await db.runQuery(
-        `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total, tipo_cambio, moneda, maquinas_ids, estado, notas) VALUES (?, ?, ?, ?, 0, 0, 0, 17.0, 'MXN', '[]', 'borrador', ?)`,
+        `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total, tipo_cambio, moneda, maquinas_ids, estado, notas) VALUES (?, ?, ?, ?, 0, 0, 0, 17.0, 'USD', '[]', 'borrador', ?)`,
         [folio, clienteId, tipo, fecha, tipo === 'mano_obra' ? 'Cotización demo (mano de obra ligada a bitácora).' : 'Cotización demo (refacciones + vueltas).']
       );
       const cotRow = await db.getOne('SELECT id FROM cotizaciones ORDER BY id DESC LIMIT 1');
@@ -2604,17 +3094,18 @@ async function runSeedDemoCore(_forceIgnored) {
       if (!cotId) { cotizacionesCount++; continue; }
 
       // Crear líneas coherentes: refacciones (2) + vuelta (1) o mano de obra ligada a bitácora + posible vuelta
-      const refDb = await db.getAll('SELECT id, precio_unitario FROM refacciones ORDER BY id DESC LIMIT 50');
+      const refDb = await db.getAll('SELECT id, precio_usd, precio_unitario FROM refacciones ORDER BY id DESC LIMIT 50');
       const maqsCliente = maquinasDb.filter(m => m.cliente_id === clienteId);
       const maqId = maqsCliente.length ? maqsCliente[i % maqsCliente.length].id : null;
+      const puVueltaUsd = Math.round((650 / 17) * 100) / 100;
 
       if (tipo === 'refacciones') {
         const picks = refDb.length ? [refDb[i % refDb.length], refDb[(i + 7) % refDb.length]] : [];
         let orden = 0;
         for (const p of picks) {
           const cant = (1 + (i % 3));
-          const precio = Number(p.precio_unitario) || (450 + (i % 6) * 75);
-          const calc = calcLinea('refaccion', cant, precio, 'MXN', 17.0);
+          const precioUsd = Number(p.precio_usd) > 0 ? Number(p.precio_usd) : (Number(p.precio_unitario) > 0 ? Math.round((Number(p.precio_unitario) / 17) * 100) / 100 : 25 + (i % 6) * 5);
+          const calc = calcLinea('refaccion', cant, precioUsd, 'USD', 17.0);
           await db.runQuery(
             `INSERT INTO cotizacion_lineas (cotizacion_id, refaccion_id, maquina_id, bitacora_id, tipo_linea, descripcion, cantidad, precio_unitario, precio_usd, subtotal, iva, total, orden)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -2622,7 +3113,7 @@ async function runSeedDemoCore(_forceIgnored) {
           );
         }
         // Vuelta demo (traslado)
-        const calcV = calcLinea('vuelta', 1, 650, 'MXN', 17.0);
+        const calcV = calcLinea('vuelta', 1, puVueltaUsd, 'USD', 17.0);
         await db.runQuery(
           `INSERT INTO cotizacion_lineas (cotizacion_id, refaccion_id, maquina_id, bitacora_id, tipo_linea, descripcion, cantidad, precio_unitario, precio_usd, subtotal, iva, total, orden)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -2639,15 +3130,15 @@ async function runSeedDemoCore(_forceIgnored) {
         );
         const bitRow = await db.getOne('SELECT id FROM bitacoras ORDER BY id DESC LIMIT 1');
         const bitId = bitRow && bitRow.id;
-        const tarifa = 750; // MXN/h demo
-        const calcMO = calcLinea('mano_obra', horas, tarifa, 'MXN', 17.0);
+        const tarifaUsd = Math.round((750 / 17) * 100) / 100;
+        const calcMO = calcLinea('mano_obra', horas, tarifaUsd, 'USD', 17.0);
         await db.runQuery(
           `INSERT INTO cotizacion_lineas (cotizacion_id, refaccion_id, maquina_id, bitacora_id, tipo_linea, descripcion, cantidad, precio_unitario, precio_usd, subtotal, iva, total, orden)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [cotId, null, maqId, bitId || null, 'mano_obra', actividadesMO, calcMO.cantidad, calcMO.precio_unitario, calcMO.precio_usd, calcMO.subtotal, calcMO.iva, calcMO.total, 0]
         );
         if (i % 3 === 0) {
-          const calcV2 = calcLinea('vuelta', 1, 650, 'MXN', 17.0);
+          const calcV2 = calcLinea('vuelta', 1, puVueltaUsd, 'USD', 17.0);
           await db.runQuery(
             `INSERT INTO cotizacion_lineas (cotizacion_id, refaccion_id, maquina_id, bitacora_id, tipo_linea, descripcion, cantidad, precio_unitario, precio_usd, subtotal, iva, total, orden)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
