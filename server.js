@@ -2140,7 +2140,6 @@ const WIPE_DELETE_ORDER = [
   'garantias',
   'maquinas',
   'refacciones',
-  'prospectos',
   'tarifas',
   'clientes',
   'cron_jobs_log',
@@ -2152,7 +2151,7 @@ const WIPE_DELETE_ORDER = [
 const WIPE_ALL_CONFIRM = 'BORRAR-TODO-EL-SISTEMA';
 
 /**
- * Vacía todas las tablas de datos y deja el sistema como instalación nueva (catálogos, técnicos base, tarifas, usuarios seed).
+ * Vacía tablas de datos (excepto prospectos — Prospección) y deja el sistema como instalación nueva (catálogos, técnicos base, tarifas, usuarios seed).
  */
 async function wipeAllSystemData() {
   const out = { tables: {} };
@@ -2998,18 +2997,20 @@ app.post('/api/wipe-all-data', async (req, res) => {
       return res.status(400).json({
         error: `Confirmación incorrecta. Escribe exactamente: ${WIPE_ALL_CONFIRM}`,
         hint:
-          'Se eliminan todos los registros de negocio (clientes, refacciones, máquinas, cotizaciones, reportes, usuarios de aplicación, auditoría, etc.). Luego se recrean catálogos, técnicos base, tarifas por defecto y usuario admin inicial.',
+          'Se eliminan todos los registros de negocio salvo Prospección: la tabla prospectos no se borra. Luego se recrean catálogos, técnicos base, tarifas por defecto y usuario admin inicial.',
       });
     }
     const deleted = await wipeAllSystemData();
     const [c] = await db.getAll('SELECT COUNT(*) as n FROM clientes');
     const [r] = await db.getAll('SELECT COUNT(*) as n FROM refacciones');
+    const [p] = await db.getAll('SELECT COUNT(*) as n FROM prospectos');
     res.json({
       ok: true,
       deleted,
       seed_status: {
         clientes: c && c.n,
         refacciones: r && r.n,
+        prospectos: p && p.n,
       },
     });
   } catch (e) {
@@ -3026,6 +3027,7 @@ const BACKUP_TABLES = [
   'incidentes',
   'bitacoras',
   'mantenimientos',
+  'prospectos',
   'tecnicos',
   'app_users',
   'audit_log',
@@ -3144,6 +3146,7 @@ app.post('/api/backup/import', async (req, res) => {
       return res.status(400).json({ error: 'Respaldo inválido. Debe contener { backup: { data: ... } }' });
     }
     const data = backup.data;
+    const replaceProspectos = Object.prototype.hasOwnProperty.call(data, 'prospectos');
     if (!db.useTurso) {
       await db.runQuery('PRAGMA foreign_keys = OFF');
       await db.runQuery('PRAGMA wal_checkpoint(FULL)');
@@ -3151,13 +3154,44 @@ app.post('/api/backup/import', async (req, res) => {
     await db.runQuery('BEGIN');
     try {
       // Orden para respetar dependencias al limpiar e insertar.
-      const deleteOrder = ['cotizacion_lineas', 'bitacoras', 'incidentes', 'cotizaciones', 'mantenimientos', 'maquinas', 'refacciones', 'clientes', 'tecnicos', 'audit_log', 'app_users'];
+      const deleteOrder = [
+        'cotizacion_lineas',
+        'bitacoras',
+        'incidentes',
+        'cotizaciones',
+        'mantenimientos',
+        'maquinas',
+        'refacciones',
+        'clientes',
+        'prospectos',
+        'tecnicos',
+        'audit_log',
+        'app_users',
+      ];
       for (const t of deleteOrder) {
+        if (t === 'prospectos' && !replaceProspectos) continue;
         await db.runQuery(`DELETE FROM ${t}`);
       }
-      const insertOrder = ['clientes', 'refacciones', 'maquinas', 'cotizaciones', 'cotizacion_lineas', 'incidentes', 'bitacoras', 'mantenimientos', 'tecnicos', 'app_users', 'audit_log'];
+      const insertOrder = [
+        'clientes',
+        'refacciones',
+        'maquinas',
+        'cotizaciones',
+        'cotizacion_lineas',
+        'incidentes',
+        'bitacoras',
+        'mantenimientos',
+        'prospectos',
+        'tecnicos',
+        'app_users',
+        'audit_log',
+      ];
       const counts = {};
       for (const t of insertOrder) {
+        if (t === 'prospectos' && !replaceProspectos) {
+          counts[t] = 'omitido (respaldo sin clave prospectos; se mantienen filas actuales)';
+          continue;
+        }
         const rows = Array.isArray(data[t]) ? data[t] : [];
         if (!rows.length) {
           counts[t] = 0;
@@ -4660,6 +4694,35 @@ app.get('/api/prospectos', async (req, res) => {
       'SELECT * FROM prospectos ORDER BY COALESCE(score_ia,0) DESC, potencial_usd DESC, id DESC LIMIT 500'
     );
     res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+/** Reemplaza toda la tabla prospectos (recuperación desde respaldo o JSON exportado). Solo admin si hay auth. */
+app.post('/api/prospectos/import-replace', async (req, res) => {
+  try {
+    if (!requireAdminIfAuth(req, res)) return;
+    const rows = req.body && Array.isArray(req.body.rows) ? req.body.rows : null;
+    if (!rows) {
+      return res.status(400).json({
+        error: 'Envía JSON { "rows": [ ... ] } con el mismo formato que data.prospectos en Exportar respaldo.',
+      });
+    }
+    await db.runQuery('DELETE FROM prospectos');
+    const colsInfo = await db.getAll('PRAGMA table_info(prospectos)');
+    const validCols = (colsInfo || []).map((c) => c.name);
+    let inserted = 0;
+    for (const row of rows) {
+      if (!row || typeof row !== 'object') continue;
+      const cols = validCols.filter((c) => Object.prototype.hasOwnProperty.call(row, c));
+      if (!cols.length) continue;
+      const placeholders = cols.map(() => '?').join(',');
+      const values = cols.map((c) => row[c]);
+      await db.runQuery(`INSERT INTO prospectos (${cols.join(',')}) VALUES (${placeholders})`, values);
+      inserted++;
+    }
+    res.json({ ok: true, inserted, received: rows.length });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }

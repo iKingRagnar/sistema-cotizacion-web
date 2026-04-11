@@ -8916,10 +8916,10 @@
   if (btnWipeAllSystem) {
     btnWipeAllSystem.addEventListener('click', async () => {
       const ok1 = window.confirm(
-        '¿Borrar TODOS los datos del sistema?\n\n' +
-          'Se eliminan clientes, refacciones, máquinas, cotizaciones, usuarios de la app y el resto de tablas. ' +
-          'Luego se recrea una base “limpia” (admin inicial, catálogos, etc.).\n\n' +
-          'NO HAY VUELTA ATRÁS. Si hay autenticación, solo un administrador puede continuar.'
+        '¿Borrar casi todos los datos del sistema?\n\n' +
+          'Se eliminan clientes, refacciones, máquinas, cotizaciones, usuarios de la app y el resto, ' +
+          'pero NO se borra Prospección (prospectos).\n\n' +
+          'NO HAY VUELTA ATRÁS para lo que sí se borra. Si hay autenticación, solo un administrador puede continuar.'
       );
       if (!ok1) return;
       const phrase = window.prompt(
@@ -8937,8 +8937,11 @@
           body: JSON.stringify({ confirm: 'BORRAR-TODO-EL-SISTEMA' }),
         });
         const d = data.deleted || {};
+        const pr = data.seed_status && data.seed_status.prospectos;
         showToast(
-          'Sistema vaciado. Filas eliminadas: ' + (d.deleted_total != null ? d.deleted_total : '—'),
+          'Sistema vaciado. Filas eliminadas: ' +
+            (d.deleted_total != null ? d.deleted_total : '—') +
+            (pr != null ? ' · Prospección: ' + pr + ' registro(s) conservados.' : ''),
           'success'
         );
         await refreshAfterFullWipe();
