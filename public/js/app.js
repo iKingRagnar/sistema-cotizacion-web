@@ -1620,6 +1620,18 @@
   const CATEGORIAS_MAQUINAS = ['Centro de Maquinado', 'Torno CNC', 'Electroerosionadora por Hilo', 'Electroerosionadora por Penetración', 'Fresadora CNC', 'Rectificadora', 'Torno Convencional', 'Otro'];
   let maquinasViewMode = 'tabla'; // 'tabla' | 'tarjetas'
 
+  function formatMaquinaFichaTecnicaCell(m) {
+    const raw = m && m.ficha_tecnica != null ? String(m.ficha_tecnica).trim() : '';
+    if (!raw) return '<span class="muted">—</span>';
+    if (/^https?:\/\//i.test(raw)) {
+      const host = raw.replace(/^https?:\/\//i, '');
+      const label = host.length > 42 ? host.slice(0, 39) + '…' : host;
+      return `<a href="${escapeHtml(raw)}" target="_blank" rel="noopener noreferrer" class="link-ficha-tecnica" title="${escapeHtml(raw)}"><i class="fas fa-external-link-alt"></i> ${escapeHtml(label)}</a>`;
+    }
+    const display = raw.length > 56 ? escapeHtml(raw.slice(0, 53)) + '…' : escapeHtml(raw);
+    return `<span title="${escapeHtml(raw)}">${display}</span>`;
+  }
+
   function previewMaquina(m) {
     const imgFields = [];
     if (m.imagen_pieza_url) {
@@ -1640,6 +1652,15 @@
         icon: 'fa-object-group',
       });
     }
+    const ftRaw = (m.ficha_tecnica || '').trim();
+    let fichaSpec = { label: 'Ficha técnica', value: '—', icon: 'fa-file-lines', full: true };
+    if (ftRaw) {
+      if (/^https?:\/\//i.test(ftRaw)) {
+        fichaSpec = { label: 'Ficha técnica', value: `<a href="${escapeHtml(ftRaw)}" target="_blank" rel="noopener noreferrer">Abrir enlace</a>`, html: true, icon: 'fa-file-lines', full: true };
+      } else {
+        fichaSpec = { label: 'Ficha técnica', value: ftRaw, icon: 'fa-file-lines', full: true };
+      }
+    }
     openPreviewCard({
       title: m.modelo || m.nombre || 'Máquina',
       subtitle: [m.categoria_principal, m.categoria].filter(Boolean).join(' · ') || '',
@@ -1659,6 +1680,7 @@
             { label: 'Categoría', value: m.categoria, icon: 'fa-layer-group' },
             { label: 'Modelo', value: m.modelo || m.nombre, icon: 'fa-tag', full: true },
             { label: 'Número de serie', value: m.numero_serie, icon: 'fa-barcode' },
+            fichaSpec,
             { label: 'Código interno', value: m.codigo, icon: 'fa-code' },
             { label: 'Stock (almacén demo)', value: m.stock != null ? String(m.stock) : '0', icon: 'fa-warehouse' },
           ],
@@ -1680,6 +1702,12 @@
     const modelo = escapeHtml(m.modelo || m.nombre || '—');
     const serie = escapeHtml(m.numero_serie || '—');
     const cliente = escapeHtml(m.cliente_nombre || '—');
+    const ft = (m.ficha_tecnica || '').trim();
+    const fichaLine = ft
+      ? (/^https?:\/\//i.test(ft)
+        ? `<div class="maq-card-row"><i class="fas fa-file-lines"></i> <strong>Ficha técnica:</strong> <a href="${escapeHtml(ft)}" target="_blank" rel="noopener noreferrer">Abrir</a></div>`
+        : `<div class="maq-card-row" title="${escapeHtml(ft)}"><i class="fas fa-file-lines"></i> ${escapeHtml(ft.length > 72 ? ft.slice(0, 69) + '…' : ft)}</div>`)
+      : '';
     const thumb = m.imagen_pieza_url
       ? `<div class="maq-card-thumb"><img src="${escapeHtml(m.imagen_pieza_url)}" alt="" loading="lazy"></div>`
       : `<div class="maq-card-thumb maq-card-thumb--empty"><i class="fas fa-image"></i></div>`;
@@ -1693,6 +1721,7 @@
         <div class="maq-card-modelo">${modelo}</div>
         <div class="maq-card-body">
           <div class="maq-card-row"><i class="fas fa-barcode"></i> <strong>Serie:</strong> ${serie}</div>
+          ${fichaLine}
           <div class="maq-card-row"><i class="fas fa-user-tie"></i> <strong>Cliente:</strong> ${cliente}</div>
         </div>
         <div class="maq-card-actions">
@@ -1709,6 +1738,12 @@
     const modelo = escapeHtml(m.modelo || m.nombre || '—');
     const serie = escapeHtml(m.numero_serie || '—');
     const cliente = escapeHtml(m.cliente_nombre || '—');
+    const ft = (m.ficha_tecnica || '').trim();
+    const fichaTd = ft
+      ? (/^https?:\/\//i.test(ft)
+        ? `<a href="${escapeHtml(ft)}" target="_blank" rel="noopener noreferrer">${escapeHtml(ft)}</a>`
+        : escapeHtml(ft))
+      : '—';
     const imgs = (m.imagen_pieza_url || m.imagen_ensamble_url)
       ? `<div class="maq-ficha-imgs">
           ${m.imagen_pieza_url ? `<figure><figcaption>Pieza / parte</figcaption><img src="${escapeHtml(m.imagen_pieza_url)}" alt="Pieza"></figure>` : ''}
@@ -1727,6 +1762,7 @@
         ${imgs}
         <table class="maq-ficha-table">
           <tr><th>Nº de Serie</th><td>${serie}</td></tr>
+          <tr><th>Ficha técnica</th><td>${fichaTd}</td></tr>
           <tr><th>Cliente</th><td>${cliente}</td></tr>
           <tr><th>Zona</th><td>${zona}</td></tr>
           <tr><th>Stock</th><td>${escapeHtml(String(m.stock != null ? m.stock : 0))}</td></tr>
@@ -1767,7 +1803,7 @@
     if (!tbody) return;
     tbody.innerHTML = '';
     if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay máquinas. Carga datos demo o agrega una nueva.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="empty">No hay máquinas. Carga datos demo o agrega una nueva.</td></tr>';
       return;
     }
     const _canEdit = canEdit(); const _canDelete = canDelete();
@@ -1777,9 +1813,7 @@
         <td>${m.id}</td>
         <td>${escapeHtml(m.categoria || '')}</td>
         <td><strong>${escapeHtml(m.modelo || m.nombre || '')}</strong></td>
-        <td>${escapeHtml(m.cliente_nombre || '')}</td>
-        <td>${escapeHtml(m.numero_serie || '')}</td>
-        <td>${escapeHtml(m.ubicacion || '')}</td>
+        <td>${formatMaquinaFichaTecnicaCell(m)}</td>
         <td class="th-actions">
           <button type="button" class="btn small outline btn-view-maq" data-id="${m.id}" title="Ver ficha"><i class="fas fa-eye"></i></button>
           ${_canEdit ? `<button type="button" class="btn small primary btn-edit-maq" data-id="${m.id}"><i class="fas fa-edit"></i></button>` : ''}
@@ -1811,7 +1845,7 @@
 
   async function loadMaquinas() {
     showLoading();
-    renderTableSkeleton('tabla-maquinas', 7);
+    renderTableSkeleton('tabla-maquinas', 5);
     const clienteId = qs('#filtro-cliente-maq') && qs('#filtro-cliente-maq').value;
     const url = clienteId ? `${API}/maquinas?cliente_id=${clienteId}` : `${API}/maquinas`;
     try {
@@ -4329,6 +4363,9 @@
           </select>
         </div>
       </div>
+      <div class="form-group"><label>Ficha técnica</label>
+        <textarea id="m-ficha_tecnica" rows="3" maxlength="8000" placeholder="URL del PDF o nota interna">${escapeHtml(maquina && maquina.ficha_tecnica) || ''}</textarea>
+      </div>
       <div class="form-row">
         <div class="form-group"><label>URL imagen — pieza / parte (manual)</label><input type="url" id="m-img-pieza" value="${escapeHtml(maquina && maquina.imagen_pieza_url) || ''}" placeholder="https://… o /img/maquinas/…"></div>
         <div class="form-group"><label>URL imagen — diagrama ensamble</label><input type="url" id="m-img-ensamble" value="${escapeHtml(maquina && maquina.imagen_ensamble_url) || ''}" placeholder="https://… o /img/maquinas/…"></div>
@@ -4383,6 +4420,7 @@
         ubicacion: qs('#m-ubicacion').value.trim() || null,
         imagen_pieza_url: (qs('#m-img-pieza') && qs('#m-img-pieza').value.trim()) || null,
         imagen_ensamble_url: (qs('#m-img-ensamble') && qs('#m-img-ensamble').value.trim()) || null,
+        ficha_tecnica: (qs('#m-ficha_tecnica') && qs('#m-ficha_tecnica').value.trim()) || null,
         stock: Number.isFinite(stockNum) ? stockNum : 0,
         precio_lista_usd: qs('#m-precio-lista-usd') && qs('#m-precio-lista-usd').value !== '' ? Number(qs('#m-precio-lista-usd').value) : 0,
       };

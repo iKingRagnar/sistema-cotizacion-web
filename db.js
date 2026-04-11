@@ -390,6 +390,7 @@ async function runMigrations() {
     `ALTER TABLE cotizaciones ADD COLUMN vendedor_personal_id INTEGER`,
     `ALTER TABLE cotizaciones ADD COLUMN descuento_pct REAL DEFAULT 0`,
     `ALTER TABLE maquinas ADD COLUMN precio_lista_usd REAL DEFAULT 0`,
+    `ALTER TABLE maquinas ADD COLUMN ficha_tecnica TEXT`,
   ];
   for (const sql of migrations) {
     try {

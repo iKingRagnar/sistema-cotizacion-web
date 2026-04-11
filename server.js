@@ -507,13 +507,14 @@ app.post('/api/maquinas', async (req, res) => {
       imagen_ensamble_url,
       stock,
       precio_lista_usd,
+      ficha_tecnica,
     } = req.body || {};
     if (!cliente_id) return res.status(400).json({ error: 'cliente_id requerido' });
     const stockNum = stock != null && stock !== '' ? Number(stock) : 0;
     const plUsd = precio_lista_usd != null && precio_lista_usd !== '' ? Number(precio_lista_usd) : 0;
     await db.runQuery(
-      `INSERT INTO maquinas (cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion, categoria, categoria_principal, imagen_pieza_url, imagen_ensamble_url, stock, precio_lista_usd)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO maquinas (cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion, categoria, categoria_principal, imagen_pieza_url, imagen_ensamble_url, stock, precio_lista_usd, ficha_tecnica)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         cliente_id,
         codigo || null,
@@ -528,6 +529,7 @@ app.post('/api/maquinas', async (req, res) => {
         imagen_ensamble_url || null,
         Number.isFinite(stockNum) ? stockNum : 0,
         Number.isFinite(plUsd) ? plUsd : 0,
+        ficha_tecnica != null && String(ficha_tecnica).trim() !== '' ? String(ficha_tecnica).trim() : null,
       ]
     );
     const r = await db.getOne('SELECT * FROM maquinas ORDER BY id DESC LIMIT 1');
@@ -553,12 +555,13 @@ app.put('/api/maquinas/:id', async (req, res) => {
       imagen_ensamble_url,
       stock,
       precio_lista_usd,
+      ficha_tecnica,
     } = req.body || {};
     const stockNum = stock != null && stock !== '' ? Number(stock) : 0;
     const plUsd = precio_lista_usd != null && precio_lista_usd !== '' ? Number(precio_lista_usd) : 0;
     await db.runQuery(
       `UPDATE maquinas SET cliente_id=?, codigo=?, nombre=?, marca=?, modelo=?, numero_serie=?, ubicacion=?, categoria=?, categoria_principal=?,
-       imagen_pieza_url=?, imagen_ensamble_url=?, stock=?, precio_lista_usd=? WHERE id=?`,
+       imagen_pieza_url=?, imagen_ensamble_url=?, stock=?, precio_lista_usd=?, ficha_tecnica=? WHERE id=?`,
       [
         cliente_id || null,
         codigo || null,
@@ -573,6 +576,7 @@ app.put('/api/maquinas/:id', async (req, res) => {
         imagen_ensamble_url || null,
         Number.isFinite(stockNum) ? stockNum : 0,
         Number.isFinite(plUsd) ? plUsd : 0,
+        ficha_tecnica != null && String(ficha_tecnica).trim() !== '' ? String(ficha_tecnica).trim() : null,
         req.params.id,
       ]
     );
