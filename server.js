@@ -1008,8 +1008,17 @@ app.delete('/api/maquinas/:id', async (req, res) => {
   }
 });
 
-// --- Tipo de cambio: Banxico (token opcional) + respaldo ExchangeRate-API (clave en env) ---
-let tipoCambioCache = { valor: 17.0, fecha: null, fuente: 'default', banxico: null, exchangerate: null };
+// --- Tipo de cambio: Banxico (token opcional) + ExchangeRate-API + Frankfurter / open.er-api (sin clave) ---
+// Cache en servidor: actualización de red como máximo cada 3 h (TTL); el cliente puede leer cache sin forzar red.
+const TC_CACHE_TTL_MS = 3 * 60 * 60 * 1000;
+let tipoCambioCache = {
+  valor: 17.0,
+  fecha: null,
+  fuente: 'default',
+  fetchedAt: 0,
+  banxico: null,
+  exchangerate: null,
+};
 
 function httpsGetJson(url, timeoutMs = 8000) {
   const https = require('https');
@@ -1026,11 +1035,31 @@ function httpsGetJson(url, timeoutMs = 8000) {
   });
 }
 
-async function fetchTipoCambioBanxico() {
+function normalizeTcValor(v) {
+  const n = Number(v);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.round(n * 10000) / 10000;
+}
+
+async function fetchTipoCambioFromNetwork() {
   const prev = { ...tipoCambioCache };
+  const apply = (v, fuente, fechaStr) => {
+    const valor = normalizeTcValor(v);
+    if (valor == null) return null;
+    tipoCambioCache = {
+      valor,
+      fecha: fechaStr || new Date().toISOString().slice(0, 10),
+      fuente,
+      fetchedAt: Date.now(),
+      banxico: fuente === 'banxico' ? valor : prev.banxico,
+      exchangerate: fuente !== 'banxico' ? valor : prev.exchangerate,
+    };
+    return tipoCambioCache;
+  };
+
   const parseBanxicoDato = (data) => {
     const dato = data?.bmx?.series?.[0]?.datos?.[0]?.dato;
-    if (dato != null && !isNaN(parseFloat(dato))) return parseFloat(dato);
+    if (dato != null && !isNaN(parseFloat(String(dato).replace(',', '.')))) return parseFloat(String(dato).replace(',', '.'));
     return null;
   };
   const tokenPreferido = (process.env.BANXICO_TOKEN || process.env.BANXICO_API_TOKEN || '').trim();
@@ -1040,18 +1069,10 @@ async function fetchTipoCambioBanxico() {
     try {
       const url = `https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43718/datos/oportuno?token=${encodeURIComponent(tok)}`;
       const data = await httpsGetJson(url);
-      const v = parseBanxicoDato(data);
-      if (v != null) {
-        tipoCambioCache = {
-          valor: v,
-          fecha: new Date().toISOString().slice(0, 10),
-          fuente: 'banxico',
-          banxico: v,
-          exchangerate: prev.exchangerate,
-        };
-        return tipoCambioCache;
-      }
-    } catch (_) { /* siguiente fuente */ }
+      const raw = parseBanxicoDato(data);
+      const v = normalizeTcValor(raw);
+      if (v != null) return apply(v, 'banxico', new Date().toISOString().slice(0, 10));
+    } catch (_) { /* siguiente */ }
   }
 
   const erKey = (process.env.EXCHANGE_RATE_API_KEY || '').trim();
@@ -1060,37 +1081,164 @@ async function fetchTipoCambioBanxico() {
       const url = `https://v6.exchangerate-api.com/v6/${encodeURIComponent(erKey)}/latest/USD`;
       const data = await httpsGetJson(url);
       const mxn = data?.conversion_rates?.MXN;
-      if (mxn != null && !isNaN(parseFloat(mxn))) {
-        const v = parseFloat(mxn);
+      const v = normalizeTcValor(mxn);
+      if (v != null) {
         const fechaUp = data.time_last_update_utc ? String(data.time_last_update_utc).slice(0, 10) : new Date().toISOString().slice(0, 10);
-        tipoCambioCache = {
-          valor: v,
-          fecha: fechaUp,
-          fuente: 'exchangerate-api',
-          banxico: prev.banxico,
-          exchangerate: v,
-        };
-        return tipoCambioCache;
+        return apply(v, 'exchangerate-api', fechaUp);
       }
-    } catch (_) { /* mantener cache */ }
+    } catch (_) { /* siguiente */ }
   }
 
+  try {
+    const data = await httpsGetJson('https://api.frankfurter.app/latest?from=USD&to=MXN');
+    const mxn = data?.rates?.MXN;
+    const v = normalizeTcValor(mxn);
+    if (v != null) return apply(v, 'frankfurter', data.date || new Date().toISOString().slice(0, 10));
+  } catch (_) { /* siguiente */ }
+
+  try {
+    const data = await httpsGetJson('https://open.er-api.com/v6/latest/USD');
+    const mxn = data?.conversion_rates?.MXN;
+    const v = normalizeTcValor(mxn);
+    if (v != null) {
+      const fechaUp = data.time_last_update_utc ? String(data.time_last_update_utc).slice(0, 10) : new Date().toISOString().slice(0, 10);
+      return apply(v, 'open-er-api', fechaUp);
+    }
+  } catch (_) { /* siguiente */ }
+
   if (prev.valor && prev.valor > 0) {
-    tipoCambioCache = { ...prev, fuente: prev.fuente || 'cache' };
+    tipoCambioCache = { ...prev, fuente: prev.fuente === 'default' ? 'cache' : prev.fuente, fetchedAt: Date.now() };
     return tipoCambioCache;
   }
-  tipoCambioCache = { valor: 17.0, fecha: null, fuente: 'default', banxico: null, exchangerate: null };
+  tipoCambioCache = {
+    valor: 17.0,
+    fecha: null,
+    fuente: 'default',
+    fetchedAt: Date.now(),
+    banxico: null,
+    exchangerate: null,
+  };
   return tipoCambioCache;
 }
-fetchTipoCambioBanxico();
-setInterval(fetchTipoCambioBanxico, 60 * 1000);
+
+async function refreshTipoCambioIfStale() {
+  const now = Date.now();
+  if (tipoCambioCache.fetchedAt && now - tipoCambioCache.fetchedAt < TC_CACHE_TTL_MS && tipoCambioCache.valor > 0) {
+    return tipoCambioCache;
+  }
+  return fetchTipoCambioFromNetwork();
+}
+
+refreshTipoCambioIfStale().catch(() => {});
+setInterval(() => { refreshTipoCambioIfStale().catch(() => {}); }, TC_CACHE_TTL_MS);
 
 app.get('/api/tipo-cambio', async (req, res) => {
   try {
-    const tc = await fetchTipoCambioBanxico();
+    const tc = await refreshTipoCambioIfStale();
     res.json(tc);
   } catch (e) {
     res.json(tipoCambioCache);
+  }
+});
+
+/**
+ * Vaciar por completo la tabla de un módulo (solo administrador con auth).
+ * Body: { modulo: "refacciones"|"prospectos"|..., confirm: "VACIAR-REFACCIONES" }
+ */
+async function vaciarModuloTabla(modulo) {
+  const m = String(modulo || '').trim().toLowerCase();
+  const run = async (fn) => {
+    if (db.useTurso) return fn();
+    await db.runQuery('BEGIN');
+    try {
+      const out = await fn();
+      await db.runQuery('COMMIT');
+      return out;
+    } catch (e) {
+      try {
+        await db.runQuery('ROLLBACK');
+      } catch (_) {}
+      throw e;
+    }
+  };
+  switch (m) {
+    case 'prospectos':
+      return run(async () => ({ modulo: m, deleted: await db.runMutationCount('DELETE FROM prospectos') }));
+    case 'refacciones':
+      return run(async () => {
+        await db.runQuery('DELETE FROM movimientos_stock');
+        await db.runQuery('UPDATE cotizacion_lineas SET refaccion_id = NULL WHERE refaccion_id IS NOT NULL');
+        const deleted = await db.runMutationCount('DELETE FROM refacciones');
+        return { modulo: m, deleted };
+      });
+    case 'cotizaciones':
+      return run(async () => {
+        await db.runQuery('UPDATE movimientos_stock SET cotizacion_id = NULL WHERE cotizacion_id IS NOT NULL');
+        await db.runQuery('DELETE FROM cotizacion_lineas');
+        const deleted = await db.runMutationCount('DELETE FROM cotizaciones');
+        return { modulo: m, deleted };
+      });
+    case 'incidentes':
+      return run(async () => ({ modulo: m, deleted: await db.runMutationCount('DELETE FROM incidentes') }));
+    case 'bitacoras':
+      return run(async () => ({ modulo: m, deleted: await db.runMutationCount('DELETE FROM bitacoras') }));
+    case 'reportes':
+      return run(async () => {
+        await db.runQuery('UPDATE bonos SET reporte_id = NULL WHERE reporte_id IS NOT NULL');
+        await db.runQuery('UPDATE viajes SET reporte_id = NULL WHERE reporte_id IS NOT NULL');
+        const deleted = await db.runMutationCount('DELETE FROM reportes');
+        return { modulo: m, deleted };
+      });
+    case 'bonos':
+      return run(async () => ({ modulo: m, deleted: await db.runMutationCount('DELETE FROM bonos') }));
+    case 'viajes':
+      return run(async () => ({ modulo: m, deleted: await db.runMutationCount('DELETE FROM viajes') }));
+    case 'maquinas':
+      return run(async () => {
+        await db.runQuery('DELETE FROM mantenimientos WHERE maquina_id IS NOT NULL');
+        await db.runQuery('DELETE FROM revision_maquinas WHERE maquina_id IS NOT NULL');
+        await db.runQuery('UPDATE incidentes SET maquina_id = NULL WHERE maquina_id IS NOT NULL');
+        const deleted = await db.runMutationCount('DELETE FROM maquinas');
+        return { modulo: m, deleted };
+      });
+    case 'clientes':
+      return run(async () => {
+        await db.runQuery('UPDATE movimientos_stock SET cotizacion_id = NULL WHERE cotizacion_id IS NOT NULL');
+        await db.runQuery('DELETE FROM cotizacion_lineas');
+        await db.runQuery('DELETE FROM cotizaciones');
+        await db.runQuery('DELETE FROM bitacoras');
+        await db.runQuery('DELETE FROM bonos');
+        await db.runQuery('DELETE FROM viajes');
+        await db.runQuery('DELETE FROM mantenimientos_garantia');
+        await db.runQuery('DELETE FROM mantenimientos');
+        await db.runQuery('DELETE FROM revision_maquinas');
+        await db.runQuery('DELETE FROM reportes');
+        await db.runQuery('DELETE FROM incidentes');
+        await db.runQuery('DELETE FROM garantias');
+        await db.runQuery('DELETE FROM maquinas');
+        const deleted = await db.runMutationCount('DELETE FROM clientes');
+        return { modulo: m, deleted };
+      });
+    default:
+      throw new Error(
+        'Módulo no soportado. Usa: refacciones, prospectos, cotizaciones, incidentes, bitacoras, reportes, bonos, viajes, maquinas, clientes'
+      );
+  }
+}
+
+app.post('/api/admin/vaciar-modulo', async (req, res) => {
+  try {
+    if (!requireAdminIfAuth(req, res)) return;
+    const modulo = String((req.body && req.body.modulo) || '').trim().toLowerCase();
+    const confirm = String((req.body && req.body.confirm) || '').trim();
+    const tag = modulo.toUpperCase().replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
+    if (confirm !== `VACIAR-${tag}`) {
+      return res.status(400).json({ error: `Confirma escribiendo exactamente: VACIAR-${tag}` });
+    }
+    const out = await vaciarModuloTabla(modulo);
+    res.json(Object.assign({ ok: true }, out));
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
   }
 });
 
@@ -5465,6 +5613,100 @@ app.get('/api/liquidacion-mensual', async (req, res) => {
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
 
+/** Prospectos: semilla mínima si la tabla está vacía + ampliación diaria simulada (leads sintéticos). */
+const PROSPECTOS_SEED_FILAS = [
+  { empresa: 'Aceros del Norte S.A.', zona: 'Nuevo León', lat: 25.6866, lng: -100.3161, tipo: 'Torno CNC CTX', ind: 'Automotriz', usd: 185000, est: 'calificado' },
+  { empresa: 'Fundidora Santa Catarina', zona: 'Nuevo León', lat: 25.6751, lng: -100.4614, tipo: 'Electroerosión hilo', ind: 'Metal-mecánica', usd: 92000, est: 'negociación' },
+  { empresa: 'Manufacturas Regiomontanas', zona: 'Nuevo León', lat: 25.6488, lng: -100.2891, tipo: 'Refacciones Fanuc', ind: 'Plástico', usd: 45000, est: 'nuevo' },
+  { empresa: 'Industrias García', zona: 'Coahuila', lat: 25.4232, lng: -101.0053, tipo: 'Centro mecanizado 5 ejes', ind: 'Aeroespacial', usd: 240000, est: 'calificado' },
+  { empresa: 'Torreón Precision Parts', zona: 'Coahuila', lat: 25.5428, lng: -103.4068, tipo: 'Robot soldadura ARC Mate', ind: 'Agroindustria', usd: 78000, est: 'propuesta' },
+  { empresa: 'Láser del Norte', zona: 'Chihuahua', lat: 28.6329, lng: -106.0691, tipo: 'Láser fiber + chiller', ind: 'Electrónica', usd: 112000, est: 'negociación' },
+  { empresa: 'Reynosa Tooling', zona: 'Tamaulipas', lat: 26.0508, lng: -98.2978, tipo: 'Máquina BT-1000', ind: 'Automotriz', usd: 198000, est: 'nuevo' },
+  { empresa: 'Matamoros Industrial', zona: 'Tamaulipas', lat: 25.8697, lng: -97.5028, tipo: 'Rectificadora + variadores', ind: 'Energía', usd: 56000, est: 'calificado' },
+  { empresa: 'Querétaro Aerospace Hub', zona: 'Querétaro', lat: 20.5888, lng: -100.3899, tipo: 'Célula robot Fanuc', ind: 'Aeroespacial', usd: 310000, est: 'propuesta' },
+  { empresa: 'Silao Manufacturing', zona: 'Guanajuato', lat: 20.9174, lng: -101.2923, tipo: 'Torno CNC + refacciones', ind: 'Automotriz', usd: 87000, est: 'nuevo' },
+  { empresa: 'Pesquería Industrial Park', zona: 'Nuevo León', lat: 25.7856, lng: -100.1884, tipo: 'Compresor + mantenimiento', ind: 'Alimentos', usd: 34000, est: 'calificado' },
+  { empresa: 'Monclova Heavy', zona: 'Coahuila', lat: 26.9063, lng: -101.4206, tipo: 'Prensa hidráulica', ind: 'Minería', usd: 125000, est: 'negociación' },
+];
+const PROSPECTOS_DIA_EXTRA = [
+  { empresa: 'Chihuahua Industrial Supply', zona: 'Chihuahua', lat: 28.6353, lng: -106.0889, tipo: 'Variadores y servos', ind: 'Manufactura', usd: 48000 },
+  { empresa: 'Saltillo Robotics', zona: 'Coahuila', lat: 25.4233, lng: -101.0053, tipo: 'Integración Fanuc', ind: 'Automotriz', usd: 132000 },
+  { empresa: 'Toluca Metalmecánica', zona: 'Estado de México', lat: 19.2827, lng: -99.6557, tipo: 'Rectificado y metrología', ind: 'Aero', usd: 61000 },
+  { empresa: 'Puebla Plásticos', zona: 'Puebla', lat: 19.0414, lng: -98.2063, tipo: 'Célula de inyección', ind: 'Plástico', usd: 94000 },
+  { empresa: 'Veracruz Port Mfg', zona: 'Veracruz', lat: 19.1738, lng: -96.1342, tipo: 'Mantenimiento barcos', ind: 'Energía', usd: 72000 },
+  { empresa: 'Mérida Food Tech', zona: 'Yucatán', lat: 20.9674, lng: -89.5926, tipo: 'Línea envasado', ind: 'Alimentos', usd: 55000 },
+  { empresa: 'Culiacán Agrícola', zona: 'Sinaloa', lat: 24.7903, lng: -107.3878, tipo: 'Bombas y sistemas', ind: 'Agro', usd: 38000 },
+  { empresa: 'Cancún Packaging', zona: 'Quintana Roo', lat: 21.1619, lng: -86.8515, tipo: 'Sellado y etiquetado', ind: 'Empaque', usd: 42000 },
+];
+
+async function ensureProspectosDemoSeed() {
+  const row = await db.getOne('SELECT COUNT(*) as n FROM prospectos');
+  const n = Number(row && row.n) || 0;
+  if (n > 0) return { inserted: 0, reason: 'already_has_rows' };
+  let inserted = 0;
+  for (let i = 0; i < PROSPECTOS_SEED_FILAS.length; i++) {
+    const p = PROSPECTOS_SEED_FILAS[i];
+    const dias = 3 + (i % 20);
+    const uc = new Date(Date.now() - dias * 86400000).toISOString().slice(0, 10);
+    const score = 55 + (i % 40) + (p.usd > 100000 ? 10 : 0);
+    await db.runQuery(
+      `INSERT INTO prospectos (empresa, zona, lat, lng, tipo_interes, industria, potencial_usd, ultimo_contacto, score_ia, estado, notas)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [p.empresa, p.zona, p.lat, p.lng, p.tipo, p.ind, p.usd, uc, score, p.est, `${SEED_PROSPECTO_TAG}:${i + 1}`]
+    );
+    inserted++;
+  }
+  console.log('[prospectos] Semilla por defecto insertada:', inserted);
+  return { inserted };
+}
+
+async function expandProspectosDaily() {
+  const dia = new Date().toISOString().slice(0, 10);
+  const ya = await db.getOne(`SELECT COUNT(*) as n FROM prospectos WHERE COALESCE(notas,'') LIKE ?`, [`auto:diario:${dia}%`]);
+  if (ya && Number(ya.n) > 0) return { added: 0, reason: 'already_ran_today' };
+  const idx = Math.floor(Date.now() / 86400000) % PROSPECTOS_DIA_EXTRA.length;
+  const p = PROSPECTOS_DIA_EXTRA[idx];
+  const uc = dia;
+  const score = 50 + (idx % 35);
+  const estados = ['nuevo', 'calificado', 'negociación', 'propuesta'];
+  await db.runQuery(
+    `INSERT INTO prospectos (empresa, zona, lat, lng, tipo_interes, industria, potencial_usd, ultimo_contacto, score_ia, estado, notas)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      p.empresa + ' · seguimiento',
+      p.zona,
+      p.lat + (Math.random() * 0.08 - 0.04),
+      p.lng + (Math.random() * 0.08 - 0.04),
+      p.tipo,
+      p.ind,
+      p.usd,
+      uc,
+      score,
+      estados[idx % estados.length],
+      `auto:diario:${dia}:${idx}`,
+    ]
+  );
+  console.log('[prospectos] Ampliación diaria: 1 registro (' + dia + ')');
+  return { added: 1 };
+}
+
+let prospectosDailySchedulerStarted = false;
+function startProspectosDailyScheduler() {
+  if (prospectosDailySchedulerStarted) return;
+  prospectosDailySchedulerStarted = true;
+  if (process.env.VERCEL) {
+    console.log('[prospectos] Ampliación diaria: omitida en Vercel (sin proceso largo). Usa servidor Node o Cron.');
+    return;
+  }
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  setInterval(() => {
+    expandProspectosDaily().catch((e) => console.warn('[prospectos-daily]', e && e.message));
+  }, DAY_MS);
+  setTimeout(() => {
+    expandProspectosDaily().catch((e) => console.warn('[prospectos-daily]', e && e.message));
+  }, 120000);
+}
+
 function resolvePublicIndexHtmlPath() {
   const rel = path.join('public', 'index.html');
   const candidates = [path.join(__dirname, rel), path.join(process.cwd(), rel)];
@@ -5540,6 +5782,12 @@ async function runPostListenStartup() {
     }
   }
   await backfillCatalogDefaults();
+  try {
+    await ensureProspectosDemoSeed();
+    startProspectosDailyScheduler();
+  } catch (e) {
+    console.warn('[prospectos] Semilla / scheduler:', e && e.message);
+  }
   if (process.env.VERCEL) {
     console.log('[backup-auto] Omitido en Vercel (serverless). Usa export manual o un Cron si necesitas JSON periódico.');
   } else {

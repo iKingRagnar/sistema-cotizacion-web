@@ -231,11 +231,32 @@
     const u = getSessionUser();
     return !!(u && u.role === 'admin');
   }
+  /** Texto estable para categoría/subcategoría cuando el API o el import devuelven un objeto. */
+  function refCategoriaLabel(c) {
+    if (c == null || c === '') return '';
+    if (typeof c === 'object') {
+      return String(
+        c.nombre != null
+          ? c.nombre
+          : c.name != null
+            ? c.name
+            : c.label != null
+              ? c.label
+              : c.id != null
+                ? c.id
+                : ''
+      ).trim();
+    }
+    return String(c).trim();
+  }
   /** Pestaña y API de cotizaciones: admin/operador siempre; usuario solo si está vinculado a Personal como vendedor. */
   function canAccessCotizaciones() {
     if (!serverConfig.authRequired) return true;
     const u = getSessionUser();
-    return !!(u && u.canCotizar);
+    if (!u) return false;
+    const r = String(u.role || '');
+    if (r === 'admin' || r === 'operador') return true;
+    return !!(u.canCotizar);
   }
   async function refreshSessionUser() {
     if (!serverConfig.authRequired || !getAuthToken()) return;
@@ -2003,7 +2024,7 @@
       tr.innerHTML = `
         <td>${imgThumb}</td>
         <td>${escapeHtml(r.descripcion || '')}</td>
-        <td>${escapeHtml(r.categoria || '')}${r.subcategoria ? ' / ' + escapeHtml(r.subcategoria) : ''}</td>
+        <td>${escapeHtml(refCategoriaLabel(r.categoria))}${refCategoriaLabel(r.subcategoria) ? ' / ' + escapeHtml(refCategoriaLabel(r.subcategoria)) : ''}</td>
         <td>${escapeHtml(r.zona || '')}</td>
         <td>${escapeHtml(r.bloque || '')}</td>
         <td class="${stockBajo ? 'stock-bajo' : ''}">${r.stock != null ? Number(r.stock).toLocaleString('es-MX') : '0'}</td>
@@ -2114,7 +2135,12 @@
         fetchJson(API + '/refacciones'),
         fetchJson(API + '/categorias-catalogo').catch(() => ({ categorias: [] })),
       ]);
-      refaccionesCache = data;
+      refaccionesCache = toArray(data).map(function (r) {
+        return Object.assign({}, r, {
+          categoria: refCategoriaLabel(r.categoria),
+          subcategoria: refCategoriaLabel(r.subcategoria),
+        });
+      });
       populateRefaccionCategoriaFiltersFromTree(tree);
       applyRefaccionesFiltersAndRender();
     } catch (e) {
@@ -2973,6 +2999,51 @@
         deleteCotizacion(id);
         const inp = qs('#delete-cotizacion-id');
         if (inp) inp.value = '';
+      });
+    });
+
+    qsAll('.btn-vaciar-modulo').forEach(function (btn) {
+      if (btn._vaciarBound) return;
+      btn._vaciarBound = true;
+      btn.addEventListener('click', function () {
+        const mod = String(btn.getAttribute('data-modulo') || '').trim().toLowerCase();
+        if (!mod) return;
+        if (!canDelete()) {
+          showToast('Solo el administrador puede vaciar tablas.', 'error');
+          return;
+        }
+        const tag =
+          'VACIAR-' +
+          mod
+            .toUpperCase()
+            .replace(/[^a-z0-9]+/gi, '-')
+            .replace(/^-|-$/g, '');
+        openConfirmModal(
+          'Se borrarán todas las filas del módulo «' + mod + '». No hay deshacer. ¿Continuar?',
+          function () {
+            const c = window.prompt('Para confirmar, escribe exactamente: ' + tag);
+            if (c !== tag) {
+              if (c != null && String(c).trim() !== '') showToast('Confirmación incorrecta.', 'error');
+              return;
+            }
+            fetchJson(API + '/admin/vaciar-modulo', {
+              method: 'POST',
+              body: JSON.stringify({ modulo: mod, confirm: c }),
+            })
+              .then(function (j) {
+                const n = j && j.deleted != null ? j.deleted : '';
+                showToast('Tabla vaciada' + (n !== '' ? ' (' + n + ' filas).' : '.'), 'success');
+                if (mod === 'refacciones') loadRefacciones();
+                else if (mod === 'clientes') loadClientes();
+                else if (mod === 'maquinas') loadMaquinas();
+                else if (mod === 'cotizaciones') loadCotizaciones();
+                else if (mod === 'prospectos' && typeof loadProspeccion === 'function') loadProspeccion();
+              })
+              .catch(function (e) {
+                showToast(parseApiError(e) || 'No se pudo vaciar.', 'error');
+              });
+          }
+        );
       });
     });
 
@@ -5629,7 +5700,13 @@
     // Catálogo completo para el modal si hiciera falta; `maquinasCache` carga el listado completo en la pestaña.
     const maquinasCatalogoModal = toArray(await fetchJson(API + '/maquinas').catch(() => []));
     if (!Array.isArray(refaccionesCache) || refaccionesCache.length === 0) {
-      refaccionesCache = await fetchJson(API + '/refacciones').catch(() => []);
+      const rawRef = await fetchJson(API + '/refacciones').catch(() => []);
+      refaccionesCache = toArray(rawRef).map(function (r) {
+        return Object.assign({}, r, {
+          categoria: refCategoriaLabel(r.categoria),
+          subcategoria: refCategoriaLabel(r.subcategoria),
+        });
+      });
     }
     try {
       const tecRaw = await fetchJson(API + '/tecnicos').catch(() => []);
@@ -9177,7 +9254,7 @@
     } catch (_) {}
   }
   fetchAndShowTipoCambio();
-  setInterval(fetchAndShowTipoCambio, 60 * 1000);
+  setInterval(fetchAndShowTipoCambio, 3 * 60 * 60 * 1000);
   refreshAlertasHeader();
   setInterval(refreshAlertasHeader, 3 * 60 * 1000);
 

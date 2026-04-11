@@ -266,6 +266,10 @@
           </div>
           <button type="button" id="btn-delete-cliente-zona" class="btn danger"><i class="fas fa-trash"></i> Eliminar</button>
         </div>
+        <p class="hint" style="margin:0.75rem 0 0 0;padding-top:0.75rem;border-top:1px solid rgba(0,0,0,.08);">
+          <strong>Vaciar todo el módulo</strong> (irreversible). Solo administrador.
+          <button type="button" class="btn danger outline btn-vaciar-modulo" data-modulo="clientes"><i class="fas fa-database"></i> Vaciar tabla de clientes</button>
+        </p>
       </div>
     </section>
 
@@ -292,7 +296,7 @@
       </div>
       <div id="ref-stock-alert-bar" class="stock-alert-bar hidden" aria-live="polite"></div>
       <div class="table-wrap">
-        <table class="data-table filterable-table" id="tabla-refacciones" data-cache="refaccionesCache">
+        <table class="data-table data-table--fluid filterable-table" id="tabla-refacciones" data-cache="refaccionesCache">
           <thead>
             <tr>
               <th>Código</th><th>Descripción</th><th>Categoría</th><th>Zona</th><th>Bloque</th><th>Stock</th><th>Mín.</th><th>Precio USD</th><th>Unidad</th>
@@ -325,6 +329,10 @@
           </div>
           <button type="button" id="btn-delete-refaccion-zona" class="btn danger"><i class="fas fa-trash"></i> Eliminar</button>
         </div>
+        <p class="hint" style="margin:0.75rem 0 0 0;padding-top:0.75rem;border-top:1px solid rgba(0,0,0,.08);">
+          <strong>Vaciar todo el módulo</strong> (irreversible). Solo administrador.
+          <button type="button" class="btn danger outline btn-vaciar-modulo" data-modulo="refacciones"><i class="fas fa-database"></i> Vaciar tabla de refacciones</button>
+        </p>
       </div>
     </section>
 
@@ -372,6 +380,10 @@
           </div>
           <button type="button" id="btn-delete-maquina-zona" class="btn danger"><i class="fas fa-trash"></i> Eliminar</button>
         </div>
+        <p class="hint" style="margin:0.75rem 0 0 0;padding-top:0.75rem;border-top:1px solid rgba(0,0,0,.08);">
+          <strong>Vaciar todo el módulo</strong> (irreversible). Solo administrador.
+          <button type="button" class="btn danger outline btn-vaciar-modulo" data-modulo="maquinas"><i class="fas fa-database"></i> Vaciar tabla de máquinas</button>
+        </p>
       </div>
     </section>
 
@@ -443,6 +455,10 @@
           </div>
           <button type="button" id="btn-delete-cotizacion-zona" class="btn danger"><i class="fas fa-trash"></i> Eliminar</button>
         </div>
+        <p class="hint" style="margin:0.75rem 0 0 0;padding-top:0.75rem;border-top:1px solid rgba(0,0,0,.08);">
+          <strong>Vaciar todo el módulo</strong> (irreversible). Solo administrador.
+          <button type="button" class="btn danger outline btn-vaciar-modulo" data-modulo="cotizaciones"><i class="fas fa-database"></i> Vaciar tabla de cotizaciones</button>
+        </p>
       </div>
     </section>
 
@@ -502,6 +518,11 @@
           <tbody></tbody>
         </table>
         <div class="table-footer" id="footer-tabla-prospeccion" aria-live="polite"></div>
+      </div>
+      <div class="card module-delete-zone" style="margin-top:1rem;padding:1rem 1.25rem;">
+        <h3 style="margin:0 0 0.5rem 0;font-size:1rem;"><i class="fas fa-trash-alt"></i> Vaciar prospectos</h3>
+        <p class="hint" style="margin:0 0 0.75rem 0;">Elimina <strong>todos</strong> los registros de la tabla de prospección. Solo administrador.</p>
+        <button type="button" class="btn danger outline btn-vaciar-modulo" data-modulo="prospectos"><i class="fas fa-database"></i> Vaciar tabla de prospectos</button>
       </div>
     </section>
 
