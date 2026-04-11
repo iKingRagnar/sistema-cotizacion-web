@@ -942,7 +942,7 @@
       <div class="card card-demo">
         <h2><i class="fas fa-database"></i> Cargar datos demo</h2>
         <p class="demo-version-banner" style="margin:0 0 0.75rem 0;padding:0.55rem 0.7rem;border-radius:8px;border:1px solid #0d9488;background:rgba(13,148,136,0.14);font-size:0.88rem;line-height:1.45;">
-          <strong>Qué deberías ver con la versión nueva:</strong> un botón gris <strong>«Asegurar equipos por cliente (2 por cliente, demo)»</strong> debajo del botón verde. Con ~30 clientes, el contador de arriba debería pasar a unas <strong>60 máquinas</strong> (2 por cliente). Si sigues viendo solo <strong>15 máquinas</strong> y <strong>no</strong> aparece ese botón gris, no estás viendo el último código: en el navegador usa recarga forzada (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>) y confirma que en Render se desplegó el mismo proyecto que incluye estos archivos en <code>public/</code>.
+          <strong>Qué deberías ver con la versión nueva:</strong> botón gris <strong>«Asegurar equipos por cliente»</strong>; más abajo (antes de respaldos) un recuadro <strong>«Datos demo: contador y borrado selectivo»</strong> con botón rojo <strong>«Borrar solo registros demo»</strong>. Si no aparece, no estás en el último despliegue: en Render ejecuta un deploy desde <code>main</code> y en el navegador recarga forzada (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>).
         </p>
         <p>Importa desde <strong>SistemaGestion_Demo.xlsm</strong> (exportado a <code>seed-demo.json</code>): clientes, refacciones, máquinas, <strong>incidentes</strong>, <strong>bitácoras</strong> y cotizaciones de ejemplo.</p>
         <p class="hint"><strong>Datos reales:</strong> el demo completo <strong>no borra nada</strong> y solo se ejecuta si la base está vacía (sin clientes). Con clientes ya cargados, usa el botón verde de abajo o «Asegurar equipos por cliente».</p>
@@ -958,18 +958,18 @@
         <button type="button" id="btn-seed-demo" class="btn primary big">Cargar todo el demo (solo si no hay clientes)</button>
         <p class="hint" style="margin-top:0.5rem;">Si ya tienes clientes cargados y solo quieres agregar incidentes, bitácoras y cotizaciones de ejemplo:</p>
         <button type="button" id="btn-seed-extra" class="btn big" style="background:#0d9488;color:#fff;margin-top:0.5rem;">Cargar solo incidentes, bitácoras y cotizaciones demo</button>
-        <div class="card" style="margin-top:1rem;padding:0.85rem 1rem;border:1px solid #e2e8f0;border-radius:10px;background:#fafafa;">
-          <h3 style="margin:0 0 0.5rem 0;font-size:1.05rem;"><i class="fas fa-flask"></i> Datos demo: contador y borrado selectivo</h3>
-          <p class="hint" style="margin:0 0 0.5rem 0;">Aquí puedes ver cuántos registros están marcados como <strong>demo</strong> (mismas reglas que el seed: cotizaciones con «Cotización demo», incidentes <code>INC-DEMO-*</code>, equipos <code>SN-DEMO-*</code> / «Equipo demo —», reportes REP con descripciones demo, garantías serie demo/SINCOV, prospectos con <code>demo:prospecto</code>, mantenimientos/bonos con prefijos <code>seed_demo_*</code>). <strong>No</strong> se borran clientes, refacciones ni el personal cargado por el demo.</p>
+        <p class="hint" style="margin-top:0.75rem;">Si faltan equipos en el selector de cotizaciones (misma info que en Autopartes):</p>
+        <button type="button" id="btn-ensure-demo-maquinas" class="btn big outline" style="margin-top:0.35rem;"><i class="fas fa-cogs"></i> Asegurar equipos por cliente (2 por cliente, demo)</button>
+        <div id="demo-dummy-panel" class="card" style="margin-top:1rem;padding:0.95rem 1.05rem;border:2px solid #f59e0b;border-radius:12px;background:linear-gradient(180deg,#fffbeb 0%,#fff7ed 100%);box-shadow:0 4px 14px rgba(245,158,11,0.12);">
+          <h3 style="margin:0 0 0.5rem 0;font-size:1.08rem;color:#9a3412;"><i class="fas fa-flask"></i> Datos demo: contador y borrado selectivo</h3>
+          <p class="hint" style="margin:0 0 0.5rem 0;">Registros marcados como <strong>demo</strong> (mismas reglas que el seed: «Cotización demo», <code>INC-DEMO-*</code>, <code>SN-DEMO-*</code> / «Equipo demo —», reportes REP demo, garantías SN-DEMO/SINCOV, <code>demo:prospecto</code>, prefijos <code>seed_demo_*</code>). <strong>No</strong> se borran clientes ni refacciones.</p>
           <p id="demo-dummy-stats" class="hint" style="margin:0 0 0.65rem 0;font-family:ui-monospace,monospace;font-size:0.82rem;line-height:1.5;">Pulsa «Actualizar contador» para cargar números.</p>
           <div class="toolbar" style="flex-wrap:wrap;gap:0.5rem;">
             <button type="button" id="btn-demo-dummy-refresh" class="btn small outline"><i class="fas fa-rotate"></i> Actualizar contador demo</button>
-            <button type="button" id="btn-demo-dummy-delete" class="btn small" style="background:#b91c1c;color:#fff;border:none;"><i class="fas fa-trash-alt"></i> Borrar solo registros demo</button>
+            <button type="button" id="btn-demo-dummy-delete" class="btn small" style="background:#b91c1c;color:#fff;border:none;font-weight:700;"><i class="fas fa-trash-alt"></i> Borrar solo registros demo</button>
           </div>
-          <p class="hint" style="margin:0.55rem 0 0 0;font-size:0.8rem;">El borrado pide confirmación y, si hay login activo, solo el <strong>administrador</strong> puede ejecutarlo. Debes escribir exactamente: <kbd>BORRAR-DATOS-DEMO</kbd></p>
+          <p class="hint" style="margin:0.55rem 0 0 0;font-size:0.8rem;">Confirmación obligatoria; con login activo solo <strong>admin</strong>. Escribe: <kbd>BORRAR-DATOS-DEMO</kbd></p>
         </div>
-        <p class="hint" style="margin-top:0.75rem;">Si faltan equipos en el selector de cotizaciones (misma info que en Autopartes):</p>
-        <button type="button" id="btn-ensure-demo-maquinas" class="btn big outline" style="margin-top:0.35rem;"><i class="fas fa-cogs"></i> Asegurar equipos por cliente (2 por cliente, demo)</button>
         <hr style="margin:1rem 0;border:none;border-top:1px solid #e2e8f0;">
         <p class="hint">Respaldo completo de datos (recomendado):</p>
         <div class="toolbar">
@@ -1109,6 +1109,6 @@
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=85"></script>
+  <script src="js/app.js?v=86-demo-dummy"></script>
 </body>
 </html>
