@@ -513,6 +513,19 @@ async function seedCatalogosDefaults() {
   }
 }
 
+/**
+ * Tras vaciar todas las tablas de negocio: catálogos por defecto, técnicos mínimos si hace falta, pricing demo.
+ * No crea usuarios de app (eso hace auth.ensureSeedUsers en server.js).
+ */
+async function reseedAfterFullWipe() {
+  await seedCatalogosDefaults();
+  const rows = await getAll('SELECT COUNT(*) as c FROM tecnicos');
+  if (rows[0] && Number(rows[0].c) === 0) {
+    await runQuery("INSERT INTO tecnicos (nombre) VALUES ('Juan Pérez'), ('María García'), ('Carlos López')");
+  }
+  await seedPersonalAndPricing();
+}
+
 /** Datos demo: personal (vendedores + comisiones), precios USD en refacciones y lista en máquinas. */
 async function seedPersonalAndPricing() {
   const david = await getOne("SELECT id, puesto FROM tecnicos WHERE nombre = 'David Cantú' LIMIT 1");
@@ -677,4 +690,4 @@ function getStorageInfo() {
   return { mode: 'sqlite', path: sqliteResolvedPath || null };
 }
 
-module.exports = { init, runQuery, getAll, getOne, useTurso, getStorageInfo, runMutationCount };
+module.exports = { init, runQuery, getAll, getOne, useTurso, getStorageInfo, runMutationCount, reseedAfterFullWipe };

@@ -6503,7 +6503,6 @@
       updateHeaderSystemStatus();
       if (lastEl) lastEl.textContent = 'Última actualización: ' + formatLastUpdate(now);
       if (isAutoRefresh) showToast('Datos actualizados automáticamente (cada 12 h).', 'success');
-      loadDemoDummyStats();
     } catch (e) {
       el.textContent = 'No se pudo conectar con el servidor.';
       systemStatusState.registros = 'sin conexión';
@@ -6512,39 +6511,7 @@
     }
   }
 
-  async function loadDemoDummyStats() {
-    const el = qs('#demo-dummy-stats');
-    if (!el) return;
-    try {
-      const st = await fetchJson(API + '/demo-dummy-stats');
-      const labels = {
-        movimientos_stock: 'Mov. stock (cotiz. demo)',
-        cotizacion_lineas: 'Líneas cotiz. demo',
-        bitacoras: 'Bitácoras (demo)',
-        cotizaciones: 'Cotizaciones demo',
-        incidentes: 'Incidentes INC-DEMO',
-        bonos: 'Bonos demo',
-        viajes: 'Viajes (rep. demo)',
-        reportes: 'Reportes REP demo',
-        mantenimientos_garantia: 'Mant. garantía demo',
-        garantias: 'Garantías SN-DEMO / SINCOV',
-        prospectos: 'Prospectos demo',
-        mantenimientos: 'Mantenimientos seed_demo_cal',
-        revision_maquinas: 'Revisión máquinas (equipo demo)',
-        maquinas: 'Máquinas demo',
-        total: 'Total aprox. filas demo',
-      };
-      const lines = Object.keys(labels).map((k) => {
-        const v = st[k];
-        return `${labels[k]}: <strong>${v != null ? v : '—'}</strong>`;
-      });
-      el.innerHTML = lines.join('<br>');
-    } catch (_) {
-      el.textContent = 'No se pudo cargar el contador demo.';
-    }
-  }
-
-  async function refreshAfterDemoDummyDelete() {
+  async function refreshAfterFullWipe() {
     await loadSeedStatus();
     await loadStorageHealth();
     await loadDashboard();
@@ -6560,6 +6527,7 @@
     if (typeof loadBonos === 'function') await loadBonos();
     if (typeof loadViajes === 'function') await loadViajes();
     if (typeof loadProspeccion === 'function') await loadProspeccion();
+    if (typeof syncSessionHeader === 'function') syncSessionHeader();
   }
 
   async function loadStorageHealth() {
@@ -8944,44 +8912,36 @@
     });
   }
 
-  const btnDemoDummyRefresh = qs('#btn-demo-dummy-refresh');
-  if (btnDemoDummyRefresh) {
-    btnDemoDummyRefresh.addEventListener('click', async () => {
-      btnDemoDummyRefresh.disabled = true;
-      await loadDemoDummyStats();
-      btnDemoDummyRefresh.disabled = false;
-      showToast('Contador demo actualizado.', 'success');
-    });
-  }
-  const btnDemoDummyDelete = qs('#btn-demo-dummy-delete');
-  if (btnDemoDummyDelete) {
-    btnDemoDummyDelete.addEventListener('click', async () => {
+  const btnWipeAllSystem = qs('#btn-wipe-all-system');
+  if (btnWipeAllSystem) {
+    btnWipeAllSystem.addEventListener('click', async () => {
       const ok1 = window.confirm(
-        '¿Borrar solo los registros marcados como DEMO?\n\n' +
-          'No se eliminan clientes ni refacciones. Si hay autenticación activa, solo un administrador puede continuar.\n\n' +
-          'Esta acción no se puede deshacer.'
+        '¿Borrar TODOS los datos del sistema?\n\n' +
+          'Se eliminan clientes, refacciones, máquinas, cotizaciones, usuarios de la app y el resto de tablas. ' +
+          'Luego se recrea una base “limpia” (admin inicial, catálogos, etc.).\n\n' +
+          'NO HAY VUELTA ATRÁS. Si hay autenticación, solo un administrador puede continuar.'
       );
       if (!ok1) return;
       const phrase = window.prompt(
-        'Para confirmar, escribe exactamente (mayúsculas y guiones):\nBORRAR-DATOS-DEMO'
+        'Para confirmar, escribe exactamente (mayúsculas y guiones):\nBORRAR-TODO-EL-SISTEMA'
       );
       if (phrase == null) return;
-      if (String(phrase).trim() !== 'BORRAR-DATOS-DEMO') {
+      if (String(phrase).trim() !== 'BORRAR-TODO-EL-SISTEMA') {
         showToast('Frase de confirmación incorrecta.', 'error');
         return;
       }
-      btnDemoDummyDelete.disabled = true;
+      btnWipeAllSystem.disabled = true;
       try {
-        const data = await fetchJson(API + '/demo-delete-dummies', {
+        const data = await fetchJson(API + '/wipe-all-data', {
           method: 'POST',
-          body: JSON.stringify({ confirm: 'BORRAR-DATOS-DEMO' }),
+          body: JSON.stringify({ confirm: 'BORRAR-TODO-EL-SISTEMA' }),
         });
         const d = data.deleted || {};
         showToast(
-          'Registros demo eliminados. Total filas: ' + (d.deleted_total != null ? d.deleted_total : '—'),
+          'Sistema vaciado. Filas eliminadas: ' + (d.deleted_total != null ? d.deleted_total : '—'),
           'success'
         );
-        await refreshAfterDemoDummyDelete();
+        await refreshAfterFullWipe();
       } catch (e) {
         let msg = parseApiError(e);
         try {
@@ -8990,7 +8950,7 @@
         } catch (_) {}
         showToast(msg, 'error');
       } finally {
-        btnDemoDummyDelete.disabled = false;
+        btnWipeAllSystem.disabled = false;
       }
     });
   }

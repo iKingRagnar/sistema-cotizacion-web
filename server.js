@@ -2123,23 +2123,65 @@ const SEED_CAL_NOTA = 'seed_demo_cal';
 const SEED_SIN_SERIE = 'SN-SINCOV-';
 const SEED_BONO_NOTA = 'seed_demo_bono';
 const SEED_PROSPECTO_TAG = 'demo:prospecto';
-/** Descripciones exactas de reportes insertados por runSeedDemoCore (REP-VEN/SRV + fecha). */
-const DEMO_REPORTE_DESCS = [
-  'Mantenimiento preventivo demo',
-  'Reparación demo',
-  'Instalación de equipo demo',
-  'Capacitación técnica demo',
-  'Ajuste y calibración demo',
+
+/** Borrado total: orden respetando FKs declaradas en el esquema. */
+const WIPE_DELETE_ORDER = [
+  'movimientos_stock',
+  'cotizacion_lineas',
+  'bitacoras',
+  'bonos',
+  'viajes',
+  'mantenimientos_garantia',
+  'mantenimientos',
+  'revision_maquinas',
+  'reportes',
+  'incidentes',
+  'cotizaciones',
+  'garantias',
+  'maquinas',
+  'refacciones',
+  'prospectos',
+  'tarifas',
+  'clientes',
+  'cron_jobs_log',
+  'audit_log',
+  'catalogos',
+  'tecnicos',
+  'app_users',
 ];
-const DEMO_DELETE_CONFIRM = 'BORRAR-DATOS-DEMO';
+const WIPE_ALL_CONFIRM = 'BORRAR-TODO-EL-SISTEMA';
 
-function sqlDemoReportesSubquery() {
-  const ph = DEMO_REPORTE_DESCS.map(() => '?').join(', ');
-  return `(folio LIKE 'REP-VEN-%' OR folio LIKE 'REP-SRV-%') AND descripcion IN (${ph})`;
-}
-
-async function sqlDeleteCount(sql, params = []) {
-  return db.runMutationCount(sql, params);
+/**
+ * Vacía todas las tablas de datos y deja el sistema como instalación nueva (catálogos, técnicos base, tarifas, usuarios seed).
+ */
+async function wipeAllSystemData() {
+  const out = { tables: {} };
+  async function runDeletes() {
+    for (const t of WIPE_DELETE_ORDER) {
+      const n = await db.runMutationCount(`DELETE FROM ${t}`);
+      out.tables[t] = n;
+    }
+    out.deleted_total = Object.values(out.tables).reduce((a, b) => a + Number(b || 0), 0);
+  }
+  if (db.useTurso) {
+    await runDeletes();
+  } else {
+    await db.runQuery('BEGIN');
+    try {
+      await runDeletes();
+      await db.runQuery('COMMIT');
+    } catch (e) {
+      try {
+        await db.runQuery('ROLLBACK');
+      } catch (_) {}
+      throw e;
+    }
+  }
+  await db.reseedAfterFullWipe();
+  await ensureTarifasDefaults();
+  await auth.ensureSeedUsers();
+  await auth.ensurePinnedAppUsers();
+  return out;
 }
 
 /**
@@ -2381,168 +2423,6 @@ async function runSeedDemoEnrichment() {
   } catch (_) {}
 
   return out;
-}
-
-async function getDemoDummyStats() {
-  const repQ = sqlDemoReportesSubquery();
-  const paramsRep = DEMO_REPORTE_DESCS.slice();
-  const [
-    cotizaciones,
-    incidentes,
-    bitacoras,
-    movimientos_stock,
-    cotizacion_lineas,
-    reportes,
-    bonos,
-    viajes,
-    mantenimientos_garantia,
-    garantias,
-    prospectos,
-    mantenimientos,
-    revision_maquinas,
-    maquinas,
-  ] = await Promise.all([
-    db.getOne(`SELECT COUNT(*) AS n FROM cotizaciones WHERE COALESCE(notas,'') LIKE '%Cotización demo%'`),
-    db.getOne(`SELECT COUNT(*) AS n FROM incidentes WHERE COALESCE(folio,'') LIKE 'INC-DEMO-%'`),
-    db.getOne(
-      `SELECT COUNT(*) AS n FROM bitacoras WHERE cotizacion_id IN (SELECT id FROM cotizaciones WHERE COALESCE(notas,'') LIKE '%Cotización demo%')
-       OR incidente_id IN (SELECT id FROM incidentes WHERE COALESCE(folio,'') LIKE 'INC-DEMO-%')`
-    ),
-    db.getOne(
-      `SELECT COUNT(*) AS n FROM movimientos_stock WHERE cotizacion_id IN (SELECT id FROM cotizaciones WHERE COALESCE(notas,'') LIKE '%Cotización demo%')`
-    ),
-    db.getOne(
-      `SELECT COUNT(*) AS n FROM cotizacion_lineas WHERE cotizacion_id IN (SELECT id FROM cotizaciones WHERE COALESCE(notas,'') LIKE '%Cotización demo%')`
-    ),
-    db.getOne(`SELECT COUNT(*) AS n FROM reportes WHERE ${repQ}`, paramsRep),
-    db.getOne(
-      `SELECT COUNT(*) AS n FROM bonos WHERE COALESCE(notas,'') LIKE ? OR reporte_id IN (SELECT id FROM reportes WHERE ${repQ})`,
-      [`${SEED_BONO_NOTA}%`, ...paramsRep]
-    ),
-    db.getOne(`SELECT COUNT(*) AS n FROM viajes WHERE reporte_id IN (SELECT id FROM reportes WHERE ${repQ})`, paramsRep),
-    db.getOne(
-      `SELECT COUNT(*) AS n FROM mantenimientos_garantia WHERE COALESCE(notas,'') LIKE ?
-       OR garantia_id IN (SELECT id FROM garantias WHERE COALESCE(numero_serie,'') LIKE 'SN-DEMO%' OR COALESCE(numero_serie,'') LIKE ?)`,
-      [`${SEED_CAL_NOTA}%`, `${SEED_SIN_SERIE}%`]
-    ),
-    db.getOne(
-      `SELECT COUNT(*) AS n FROM garantias WHERE COALESCE(numero_serie,'') LIKE 'SN-DEMO%' OR COALESCE(numero_serie,'') LIKE ?`,
-      [`${SEED_SIN_SERIE}%`]
-    ),
-    db.getOne(`SELECT COUNT(*) AS n FROM prospectos WHERE COALESCE(notas,'') LIKE ?`, [`${SEED_PROSPECTO_TAG}%`]),
-    db.getOne(`SELECT COUNT(*) AS n FROM mantenimientos WHERE COALESCE(descripcion_falla,'') LIKE ?`, [`${SEED_CAL_NOTA}%`]),
-    db.getOne(
-      `SELECT COUNT(*) AS n FROM revision_maquinas WHERE maquina_id IN (
-         SELECT id FROM maquinas WHERE COALESCE(numero_serie,'') LIKE 'SN-DEMO%' OR COALESCE(nombre,'') LIKE 'Equipo demo —%'
-         OR (COALESCE(marca,'') = 'Demo seed' AND COALESCE(ubicacion,'') = 'Planta principal (demo)')
-       )`
-    ),
-    db.getOne(
-      `SELECT COUNT(*) AS n FROM maquinas WHERE COALESCE(numero_serie,'') LIKE 'SN-DEMO%' OR COALESCE(nombre,'') LIKE 'Equipo demo —%'
-       OR (COALESCE(marca,'') = 'Demo seed' AND COALESCE(ubicacion,'') = 'Planta principal (demo)')`
-    ),
-  ]);
-  const n = (x) => Number(x && x.n) || 0;
-  const counts = {
-    movimientos_stock: n(movimientos_stock),
-    cotizacion_lineas: n(cotizacion_lineas),
-    bitacoras: n(bitacoras),
-    cotizaciones: n(cotizaciones),
-    incidentes: n(incidentes),
-    bonos: n(bonos),
-    viajes: n(viajes),
-    reportes: n(reportes),
-    mantenimientos_garantia: n(mantenimientos_garantia),
-    garantias: n(garantias),
-    prospectos: n(prospectos),
-    mantenimientos: n(mantenimientos),
-    revision_maquinas: n(revision_maquinas),
-    maquinas: n(maquinas),
-  };
-  counts.total =
-    counts.movimientos_stock +
-    counts.cotizacion_lineas +
-    counts.bitacoras +
-    counts.cotizaciones +
-    counts.incidentes +
-    counts.bonos +
-    counts.viajes +
-    counts.reportes +
-    counts.mantenimientos_garantia +
-    counts.garantias +
-    counts.prospectos +
-    counts.mantenimientos +
-    counts.revision_maquinas +
-    counts.maquinas;
-  return counts;
-}
-
-async function deleteDemoDummiesTx() {
-  const repQ = sqlDemoReportesSubquery();
-  const paramsRep = DEMO_REPORTE_DESCS.slice();
-  const out = {};
-  async function runDeletes() {
-    out.movimientos_stock = await sqlDeleteCount(
-      `DELETE FROM movimientos_stock WHERE cotizacion_id IN (SELECT id FROM cotizaciones WHERE COALESCE(notas,'') LIKE '%Cotización demo%')`
-    );
-    out.cotizacion_lineas = await sqlDeleteCount(
-      `DELETE FROM cotizacion_lineas WHERE cotizacion_id IN (SELECT id FROM cotizaciones WHERE COALESCE(notas,'') LIKE '%Cotización demo%')`
-    );
-    out.bitacoras = await sqlDeleteCount(
-      `DELETE FROM bitacoras WHERE cotizacion_id IN (SELECT id FROM cotizaciones WHERE COALESCE(notas,'') LIKE '%Cotización demo%')
-       OR incidente_id IN (SELECT id FROM incidentes WHERE COALESCE(folio,'') LIKE 'INC-DEMO-%')`
-    );
-    out.cotizaciones = await sqlDeleteCount(`DELETE FROM cotizaciones WHERE COALESCE(notas,'') LIKE '%Cotización demo%'`);
-    out.incidentes = await sqlDeleteCount(`DELETE FROM incidentes WHERE COALESCE(folio,'') LIKE 'INC-DEMO-%'`);
-    out.bonos = await sqlDeleteCount(
-      `DELETE FROM bonos WHERE COALESCE(notas,'') LIKE ? OR reporte_id IN (SELECT id FROM reportes WHERE ${repQ})`,
-      [`${SEED_BONO_NOTA}%`, ...paramsRep]
-    );
-    out.viajes = await sqlDeleteCount(
-      `DELETE FROM viajes WHERE reporte_id IN (SELECT id FROM reportes WHERE ${repQ})`,
-      paramsRep
-    );
-    out.reportes = await sqlDeleteCount(`DELETE FROM reportes WHERE ${repQ}`, paramsRep);
-    out.mantenimientos_garantia = await sqlDeleteCount(
-      `DELETE FROM mantenimientos_garantia WHERE COALESCE(notas,'') LIKE ?
-       OR garantia_id IN (SELECT id FROM garantias WHERE COALESCE(numero_serie,'') LIKE 'SN-DEMO%' OR COALESCE(numero_serie,'') LIKE ?)`,
-      [`${SEED_CAL_NOTA}%`, `${SEED_SIN_SERIE}%`]
-    );
-    out.garantias = await sqlDeleteCount(
-      `DELETE FROM garantias WHERE COALESCE(numero_serie,'') LIKE 'SN-DEMO%' OR COALESCE(numero_serie,'') LIKE ?`,
-      [`${SEED_SIN_SERIE}%`]
-    );
-    out.prospectos = await sqlDeleteCount(`DELETE FROM prospectos WHERE COALESCE(notas,'') LIKE ?`, [`${SEED_PROSPECTO_TAG}%`]);
-    out.mantenimientos = await sqlDeleteCount(
-      `DELETE FROM mantenimientos WHERE COALESCE(descripcion_falla,'') LIKE ?`,
-      [`${SEED_CAL_NOTA}%`]
-    );
-    out.revision_maquinas = await sqlDeleteCount(
-      `DELETE FROM revision_maquinas WHERE maquina_id IN (
-         SELECT id FROM maquinas WHERE COALESCE(numero_serie,'') LIKE 'SN-DEMO%' OR COALESCE(nombre,'') LIKE 'Equipo demo —%'
-         OR (COALESCE(marca,'') = 'Demo seed' AND COALESCE(ubicacion,'') = 'Planta principal (demo)')
-       )`
-    );
-    out.maquinas = await sqlDeleteCount(
-      `DELETE FROM maquinas WHERE COALESCE(numero_serie,'') LIKE 'SN-DEMO%' OR COALESCE(nombre,'') LIKE 'Equipo demo —%'
-       OR (COALESCE(marca,'') = 'Demo seed' AND COALESCE(ubicacion,'') = 'Planta principal (demo)')`
-    );
-    out.deleted_total = Object.keys(out).reduce((s, k) => s + (typeof out[k] === 'number' ? out[k] : 0), 0);
-  }
-  /* Turso/libSQL: cada execute() es una petición aislada; BEGIN/COMMIT no abre transacción entre llamadas → "cannot commit - no transaction". */
-  if (db.useTurso) {
-    await runDeletes();
-    return out;
-  }
-  await db.runQuery('BEGIN');
-  try {
-    await runDeletes();
-    await db.runQuery('COMMIT');
-    return out;
-  } catch (e) {
-    try { await db.runQuery('ROLLBACK'); } catch (_) {}
-    throw e;
-  }
 }
 
 async function runSeedDemoCore(_forceIgnored) {
@@ -3110,27 +2990,28 @@ app.get('/api/seed-status', async (req, res) => {
   }
 });
 
-app.get('/api/demo-dummy-stats', async (req, res) => {
-  try {
-    const counts = await getDemoDummyStats();
-    res.json(counts);
-  } catch (e) {
-    res.status(500).json({ error: String(e.message) });
-  }
-});
-
-app.post('/api/demo-delete-dummies', async (req, res) => {
+app.post('/api/wipe-all-data', async (req, res) => {
   try {
     if (!requireAdminIfAuth(req, res)) return;
     const confirm = req.body && req.body.confirm != null ? String(req.body.confirm).trim() : '';
-    if (confirm !== DEMO_DELETE_CONFIRM) {
+    if (confirm !== WIPE_ALL_CONFIRM) {
       return res.status(400).json({
-        error: `Confirmación incorrecta. Escribe exactamente: ${DEMO_DELETE_CONFIRM}`,
-        hint: 'Se borran solo filas marcadas como demo (cotizaciones con nota «Cotización demo», incidentes INC-DEMO-*, equipos SN-DEMO / Equipo demo —, reportes REP-VEN/SRV con descripciones demo, etc.). No se eliminan clientes ni refacciones.',
+        error: `Confirmación incorrecta. Escribe exactamente: ${WIPE_ALL_CONFIRM}`,
+        hint:
+          'Se eliminan todos los registros de negocio (clientes, refacciones, máquinas, cotizaciones, reportes, usuarios de aplicación, auditoría, etc.). Luego se recrean catálogos, técnicos base, tarifas por defecto y usuario admin inicial.',
       });
     }
-    const deleted = await deleteDemoDummiesTx();
-    res.json({ ok: true, deleted, stats_after: await getDemoDummyStats() });
+    const deleted = await wipeAllSystemData();
+    const [c] = await db.getAll('SELECT COUNT(*) as n FROM clientes');
+    const [r] = await db.getAll('SELECT COUNT(*) as n FROM refacciones');
+    res.json({
+      ok: true,
+      deleted,
+      seed_status: {
+        clientes: c && c.n,
+        refacciones: r && r.n,
+      },
+    });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
