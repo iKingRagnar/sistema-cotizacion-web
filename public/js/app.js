@@ -1380,9 +1380,12 @@
     title.textContent = 'Confirmar';
     msgEl.textContent = message || '¿Eliminar este registro?';
     applyOkButton();
+    const confirmBox = qs('#confirm-modal .modal-box');
+    if (confirmBox) confirmBox.classList.toggle('modal-box--theme-dark', document.body.classList.contains('dark-theme'));
     modal.classList.remove('hidden');
     const close = () => {
       modal.classList.add('hidden');
+      if (confirmBox) confirmBox.classList.remove('modal-box--theme-dark');
       resetOkButton();
       btnOk.onclick = null;
       btnCancel.onclick = null;
@@ -5487,7 +5490,7 @@
     const modalBox = qs('#modal .modal-box');
     const previousFocus = document.activeElement;
     if (modalBox) {
-      modalBox.classList.remove('pdf-preview-modal', 'dragging', 'modal-cotizacion', 'modal-box--refaccion-preview', 'modal-box--ref-stock');
+      modalBox.classList.remove('pdf-preview-modal', 'dragging', 'modal-cotizacion', 'modal-box--refaccion-preview', 'modal-box--ref-stock', 'modal-box--theme-dark');
       modalBox.style.left = '';
       modalBox.style.top = '';
       modalBox.style.width = '';
@@ -5499,6 +5502,7 @@
     qs('#modal-body').innerHTML = bodyHtml;
     wireModalMediaOpenButtons(qs('#modal-body'));
     if (modalBox && /ref-pvc-hero/.test(String(bodyHtml || ''))) modalBox.classList.add('modal-box--refaccion-preview');
+    if (modalBox) modalBox.classList.toggle('modal-box--theme-dark', document.body.classList.contains('dark-theme'));
     modal.classList.remove('hidden');
     clearInvalidMarks();
     const focusables = () => modal.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
@@ -5538,6 +5542,8 @@
     qs('#modal-stack-title').textContent = title;
     qs('#modal-stack-body').innerHTML = bodyHtml;
     wireModalMediaOpenButtons(qs('#modal-stack-body'));
+    const stackBox = qs('#modal-stack .modal-box');
+    if (stackBox) stackBox.classList.toggle('modal-box--theme-dark', document.body.classList.contains('dark-theme'));
     modal.classList.remove('hidden');
     clearInvalidMarks();
     const focusables = () => modal.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
@@ -10628,6 +10634,13 @@
   function toggleTheme() {
     const dark = document.body.classList.toggle('dark-theme');
     localStorage.setItem('cotizacion-dark', dark ? '1' : '0');
+    [['#modal', '#modal .modal-box'], ['#modal-stack', '#modal-stack .modal-box'], ['#confirm-modal', '#confirm-modal .modal-box']].forEach(
+      ([wrapSel, boxSel]) => {
+        const wrap = qs(wrapSel);
+        const box = qs(boxSel);
+        if (wrap && box && !wrap.classList.contains('hidden')) box.classList.toggle('modal-box--theme-dark', dark);
+      }
+    );
     const icon = qs('#theme-icon');
     if (icon) { icon.classList.toggle('fa-moon', !dark); icon.classList.toggle('fa-sun', dark); }
     const hcEnabled = localStorage.getItem('cotizacion-dark-hc') === '1';

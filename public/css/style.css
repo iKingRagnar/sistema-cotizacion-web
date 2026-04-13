@@ -3595,6 +3595,87 @@ body.dark-theme .modal-header {
 }
 body.dark-theme .modal-header h3 { color: #f1f5f9; }
 body.dark-theme .close:hover { color: #f8fafc; background: rgba(255, 255, 255, 0.1); }
+
+/* Modales: shell oscuro aplicado por JS (modal-box--theme-dark) para que no queden fondos “modo sol” si falla la cascada body.dark-theme */
+.modal-box.modal-box--theme-dark {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+  box-shadow: var(--shadow-xl), 0 0 0 1px rgba(15, 23, 42, 0.45);
+}
+.modal-box.modal-box--theme-dark .modal-header {
+  background: #0f172a;
+  border-bottom-color: #334155;
+}
+.modal-box.modal-box--theme-dark .modal-header h3 {
+  color: #f1f5f9;
+}
+.modal-box.modal-box--theme-dark .close {
+  color: #94a3b8;
+}
+.modal-box.modal-box--theme-dark .close:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.1);
+}
+.modal-box.modal-box--theme-dark .modal-body {
+  background: transparent;
+  color: inherit;
+}
+.modal-box.modal-box--theme-dark.modal-cotizacion .modal-body {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.6) 0%, #1e293b 14%);
+}
+.modal-box.modal-box--theme-dark .form-group label {
+  color: #cbd5e1;
+}
+.modal-box.modal-box--theme-dark .form-group input,
+.modal-box.modal-box--theme-dark .form-group select,
+.modal-box.modal-box--theme-dark .form-group textarea {
+  background: #0f172a;
+  border-color: #475569;
+  color: #e2e8f0;
+}
+.modal-box.modal-box--theme-dark .form-group input:focus,
+.modal-box.modal-box--theme-dark .form-group select:focus,
+.modal-box.modal-box--theme-dark .form-group textarea:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+}
+.modal-box.modal-box--theme-dark .table-simple th,
+.modal-box.modal-box--theme-dark .table-simple td {
+  border-color: #334155;
+  color: #e2e8f0;
+}
+.modal-box.modal-box--theme-dark .table-simple thead th {
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+  color: #f1f5f9;
+  font-weight: 600;
+}
+.modal-box.modal-box--theme-dark .table-simple tbody tr:nth-child(even) td {
+  background: rgba(15, 23, 42, 0.55);
+}
+.modal-box.modal-box--theme-dark .table-simple tbody tr:nth-child(odd) td {
+  background: transparent;
+}
+.modal-box.modal-box--theme-dark .table-simple tbody tr:hover td {
+  background: rgba(56, 189, 248, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.15);
+}
+.modal-box.modal-box--theme-dark .hint {
+  color: #94a3b8;
+}
+body.dark-theme.dark-high-contrast .modal-box.modal-box--theme-dark .table-simple thead th {
+  background: #1e293b;
+  color: #f8fafc;
+}
+body.dark-theme.dark-high-contrast .modal-box.modal-box--theme-dark .table-simple th,
+body.dark-theme.dark-high-contrast .modal-box.modal-box--theme-dark .table-simple td {
+  border-color: #475569;
+  color: #f1f5f9;
+}
+body.dark-theme.dark-high-contrast .modal-box.modal-box--theme-dark .table-simple tbody tr:nth-child(even) td {
+  background: #020617;
+}
+
 body.dark-theme .form-group label { color: #cbd5e1; }
 body.dark-theme .form-group input,
 body.dark-theme .form-group select,
@@ -3958,7 +4039,41 @@ body.dark-theme .stock-alert-bar strong {
 /* Tabla simple dentro de modal */
 .table-simple { border-collapse: collapse; font-size: 0.85rem; }
 .table-simple th, .table-simple td { border: 1px solid #e5e7eb; padding: 0.4rem 0.7rem; text-align: left; }
-.table-simple thead th { background: #f9fafb; font-weight: 600; }
+.table-simple thead th { background: #f9fafb; font-weight: 600; color: #111827; }
+
+/* Tablas compactas en modales (p. ej. liquidación mensual): mismo criterio que .data-table en tema oscuro */
+body.dark-theme .table-simple th,
+body.dark-theme .table-simple td {
+  border-color: #334155;
+  color: #e2e8f0;
+}
+body.dark-theme .table-simple thead th {
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+  color: #f1f5f9;
+  font-weight: 600;
+}
+body.dark-theme .table-simple tbody tr:nth-child(even) td {
+  background: rgba(15, 23, 42, 0.55);
+}
+body.dark-theme .table-simple tbody tr:nth-child(odd) td {
+  background: transparent;
+}
+body.dark-theme .table-simple tbody tr:hover td {
+  background: rgba(56, 189, 248, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.15);
+}
+body.dark-theme.dark-high-contrast .table-simple thead th {
+  background: #1e293b;
+  color: #f8fafc;
+}
+body.dark-theme.dark-high-contrast .table-simple th,
+body.dark-theme.dark-high-contrast .table-simple td {
+  border-color: #475569;
+  color: #f1f5f9;
+}
+body.dark-theme.dark-high-contrast .table-simple tbody tr:nth-child(even) td {
+  background: #020617;
+}
 
 /* Semáforo estados cotización */
 .semaforo-verde { color: #065f46; background: #d1fae5; padding: 0.15rem 0.5rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
