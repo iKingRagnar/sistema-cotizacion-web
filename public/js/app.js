@@ -1979,12 +1979,17 @@
 
   function clienteConstanciaThumbHtml(c) {
     if (!c || !c.has_constancia) return '';
+    const openUrl = c.id != null ? (API + '/clientes/' + encodeURIComponent(c.id) + '/constancia') : '';
     if (c.constancia_kind === 'image' && c.constancia_thumb_url) {
-      return `<span class="cliente-const-slot" title="Constancia fiscal"><img src="${escapeHtml(c.constancia_thumb_url)}" alt="" class="cliente-const-mini" loading="lazy"></span>`;
+      return `<button type="button" class="cliente-const-slot js-refaccion-open-media" data-url="${escapeHtml(openUrl)}" title="Constancia fiscal (clic para abrir)">
+        <img src="${escapeHtml(c.constancia_thumb_url)}" alt="" class="cliente-const-mini" loading="lazy">
+      </button>`;
     }
     const icon = c.constancia_kind === 'pdf' ? 'fa-file-pdf' : 'fa-file-alt';
     const cls = c.constancia_kind === 'pdf' ? 'cliente-const-slot--pdf' : 'cliente-const-slot--file';
-    return `<span class="cliente-const-slot ${cls}" title="Constancia (${c.constancia_kind === 'pdf' ? 'PDF' : 'documento'})"><i class="fas ${icon}"></i></span>`;
+    return `<button type="button" class="cliente-const-slot ${cls} js-refaccion-open-media" data-url="${escapeHtml(openUrl)}" title="Constancia (${c.constancia_kind === 'pdf' ? 'PDF' : 'documento'}) · clic para abrir">
+      <i class="fas ${icon}"></i>
+    </button>`;
   }
 
   function previewCliente(c) {
@@ -2399,7 +2404,11 @@
     const isImage = (url) => url && (String(url).startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(String(url)));
     const cur = m.imagen_pieza_url
       ? (isImage(m.imagen_pieza_url)
-        ? `<div class="ref-foto-preview-wrap"><img src="${escapeHtml(m.imagen_pieza_url)}" class="ref-foto-thumb" alt="Vista previa"></div>`
+        ? `<div class="ref-foto-preview-wrap">
+             <button type="button" class="js-refaccion-open-media" data-media-ref="${registerPvcMediaUrl(m.imagen_pieza_url)}" title="Ver imagen completa" style="border:none;background:transparent;padding:0;cursor:zoom-in;">
+               <img src="${escapeHtml(m.imagen_pieza_url)}" class="ref-foto-thumb" alt="Vista previa" loading="lazy">
+             </button>
+           </div>`
         : `<p><a href="${escapeHtml(m.imagen_pieza_url)}" target="_blank" rel="noopener noreferrer" class="btn outline"><i class="fas fa-external-link-alt"></i> Ver imagen actual</a></p>`)
       : '<p class="hint" style="margin:0">Sin imagen de catálogo. Elige un archivo abajo.</p>';
     const body = `
@@ -5477,6 +5486,8 @@
       }
     }
     const tcHint = (typeof tipoCambioActual === 'number' && tipoCambioActual > 0) ? tipoCambioActual.toFixed(2) : '17.00';
+    const foto1Ref = refaccion && refaccion.imagen_url ? registerPvcMediaUrl(refaccion.imagen_url) : '';
+    const foto2Ref = refaccion && refaccion.manual_url ? registerPvcMediaUrl(refaccion.manual_url) : '';
     const body = `
       <div class="form-row">
         <div class="form-group"><label>Código *</label><input type="text" id="m-codigo" maxlength="50" value="${escapeHtml(refaccion && refaccion.codigo) || ''}" required placeholder="Identificador único"></div>
@@ -5506,13 +5517,23 @@
         <div class="form-group">
           <label>Foto 1: Manual de partes</label>
           <input type="file" id="m-foto1-file" accept="image/*" style="margin-bottom:0.3rem">
-          ${refaccion && refaccion.imagen_url ? `<div class="ref-foto-preview-wrap"><img src="${escapeHtml(refaccion.imagen_url)}" class="ref-foto-thumb" alt="Foto 1"><button type="button" class="btn small danger" id="m-foto1-clear" style="margin-left:0.5rem"><i class="fas fa-times"></i></button></div>` : ''}
+          ${refaccion && refaccion.imagen_url ? `<div class="ref-foto-preview-wrap">
+            <button type="button" class="js-refaccion-open-media" data-media-ref="${foto1Ref}" title="Ver imagen completa" style="border:none;background:transparent;padding:0;cursor:zoom-in;">
+              <img src="${escapeHtml(refaccion.imagen_url)}" class="ref-foto-thumb" alt="Foto 1" loading="lazy">
+            </button>
+            <button type="button" class="btn small danger" id="m-foto1-clear" style="margin-left:0.5rem"><i class="fas fa-times"></i></button>
+          </div>` : ''}
           <input type="hidden" id="m-imagen" value="${escapeHtml(refaccion && refaccion.imagen_url) || ''}">
         </div>
         <div class="form-group">
           <label>Foto 2: Pieza (diagrama)</label>
           <input type="file" id="m-foto2-file" accept="image/*" style="margin-bottom:0.3rem">
-          ${refaccion && refaccion.manual_url ? `<div class="ref-foto-preview-wrap"><img src="${escapeHtml(refaccion.manual_url)}" class="ref-foto-thumb" alt="Foto 2"><button type="button" class="btn small danger" id="m-foto2-clear" style="margin-left:0.5rem"><i class="fas fa-times"></i></button></div>` : ''}
+          ${refaccion && refaccion.manual_url ? `<div class="ref-foto-preview-wrap">
+            <button type="button" class="js-refaccion-open-media" data-media-ref="${foto2Ref}" title="Ver imagen completa" style="border:none;background:transparent;padding:0;cursor:zoom-in;">
+              <img src="${escapeHtml(refaccion.manual_url)}" class="ref-foto-thumb" alt="Foto 2" loading="lazy">
+            </button>
+            <button type="button" class="btn small danger" id="m-foto2-clear" style="margin-left:0.5rem"><i class="fas fa-times"></i></button>
+          </div>` : ''}
           <input type="hidden" id="m-manual" value="${escapeHtml(refaccion && refaccion.manual_url) || ''}">
         </div>
       </div>
@@ -5830,6 +5851,16 @@
           </div>
           <input type="hidden" id="m-h-imagen-pieza" value="${escapeHtml(maquina && maquina.imagen_pieza_url) || ''}">
           <input type="hidden" id="m-h-imagen-ensamble" value="${escapeHtml(maquina && maquina.imagen_ensamble_url) || ''}">
+          <div class="form-row" style="margin-top:0.75rem;gap:1rem;align-items:flex-start">
+            <div class="form-group" style="margin-bottom:0;flex:1;min-width:0">
+              <label style="font-size:0.85rem">Vista previa imagen</label>
+              <div id="m-prev-pieza">${(maquina && maquina.imagen_pieza_url) ? previewMediaThumbBlock(maquina.imagen_pieza_url, 'Imagen de carga máquina') : '<span class="muted">—</span>'}</div>
+            </div>
+            <div class="form-group" style="margin-bottom:0;flex:1;min-width:0">
+              <label style="font-size:0.85rem">Vista previa especificaciones</label>
+              <div id="m-prev-ensamble">${(maquina && maquina.imagen_ensamble_url) ? previewMediaThumbBlock(maquina.imagen_ensamble_url, 'Especificaciones') : '<span class="muted">—</span>'}</div>
+            </div>
+          </div>
         </section>
         <div class="form-actions">
           <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
@@ -5851,6 +5882,29 @@
       else if (curSub && list.some(s => s.nombre === curSub)) selMaqSub.value = curSub;
     }
     if (selMaqCat) selMaqCat.addEventListener('change', refillMaqSub);
+
+    const prevPieza = qs('#m-prev-pieza');
+    const prevEns = qs('#m-prev-ensamble');
+    function renderMaqMediaPrev(target, url, title) {
+      if (!target) return;
+      const u = (url || '').trim();
+      target.innerHTML = u ? previewMediaThumbBlock(u, title) : '<span class="muted">—</span>';
+      wireModalMediaOpenButtons(target);
+    }
+    renderMaqMediaPrev(prevPieza, qs('#m-h-imagen-pieza')?.value || '', 'Imagen de carga máquina');
+    renderMaqMediaPrev(prevEns, qs('#m-h-imagen-ensamble')?.value || '', 'Especificaciones');
+    qs('#m-cat-file-pieza')?.addEventListener('change', async () => {
+      const dataUrl = await readFileAsDataUrlInput(qs('#m-cat-file-pieza'));
+      if (!dataUrl) return;
+      qs('#m-h-imagen-pieza').value = dataUrl;
+      renderMaqMediaPrev(prevPieza, dataUrl, 'Imagen de carga máquina');
+    });
+    qs('#m-cat-file-ensamble')?.addEventListener('change', async () => {
+      const dataUrl = await readFileAsDataUrlInput(qs('#m-cat-file-ensamble'));
+      if (!dataUrl) return;
+      qs('#m-h-imagen-ensamble').value = dataUrl;
+      renderMaqMediaPrev(prevEns, dataUrl, 'Especificaciones');
+    });
     qs('#m-save').onclick = async () => {
       clearInvalidMarks();
       const modelo = (qs('#m-modelo').value || '').trim();
@@ -9557,10 +9611,10 @@
       const tr = document.createElement('tr');
       const puestoCell = (t.puesto || t.rol || '').trim() || '—';
       const ineMini = t.ine_thumb_url
-        ? `<span class="tec-doc-slot" title="INE"><img src="${escapeHtml(t.ine_thumb_url)}" alt="" loading="lazy"></span>`
+        ? `<button type="button" class="tec-doc-slot js-refaccion-open-media" data-url="${escapeHtml(t.ine_thumb_url)}" title="INE (clic para abrir)"><img src="${escapeHtml(t.ine_thumb_url)}" alt="" loading="lazy"></button>`
         : '<span class="tec-doc-slot" title="Sin INE">—</span>';
       const licMini = t.licencia_thumb_url
-        ? `<span class="tec-doc-slot" title="Licencia"><img src="${escapeHtml(t.licencia_thumb_url)}" alt="" loading="lazy"></span>`
+        ? `<button type="button" class="tec-doc-slot js-refaccion-open-media" data-url="${escapeHtml(t.licencia_thumb_url)}" title="Licencia (clic para abrir)"><img src="${escapeHtml(t.licencia_thumb_url)}" alt="" loading="lazy"></button>`
         : '<span class="tec-doc-slot" title="Sin licencia">—</span>';
       tr.innerHTML = `
         <td><strong>${escapeHtml(t.nombre || '')}</strong></td>
@@ -9613,6 +9667,8 @@
     const hasLic = !!(full && (full.licencia_thumb_url || full.licencia_foto_url));
     const inePrevSrc = (full && (full.ine_thumb_url || full.ine_foto_url)) || '';
     const licPrevSrc = (full && (full.licencia_thumb_url || full.licencia_foto_url)) || '';
+    const inePrevRef = inePrevSrc ? registerPvcMediaUrl(inePrevSrc) : '';
+    const licPrevRef = licPrevSrc ? registerPvcMediaUrl(licPrevSrc) : '';
     const body = `
       <div class="form-group"><label>Nombre *</label>
         <input type="text" id="m-tec-nombre" maxlength="100" value="${escapeHtml(full && full.nombre || '')}" placeholder="Ej. Juan Pérez" required>
@@ -9632,20 +9688,24 @@
           <input type="file" id="m-tec-ine" accept="image/*">
           <div id="m-tec-ine-existing" class="${hasIne && !isNew ? '' : 'hidden'}">
             <p class="form-hint" style="margin-top:0.35rem"><i class="fas fa-image"></i> INE en sistema</p>
-            <img id="m-tec-ine-img" class="tec-upload-preview" src="${escapeHtml(inePrevSrc)}" alt="INE">
+            <button type="button" class="js-refaccion-open-media" data-media-ref="${inePrevRef}" title="Ver INE" style="border:none;background:transparent;padding:0;cursor:zoom-in;">
+              <img id="m-tec-ine-img" class="tec-upload-preview" src="${escapeHtml(inePrevSrc)}" alt="INE" loading="lazy">
+            </button>
             <button type="button" class="btn small danger outline" id="m-tec-ine-rm" style="margin-top:0.35rem"><i class="fas fa-times"></i> Quitar INE</button>
           </div>
-          <img id="m-tec-ine-new" class="tec-upload-preview hidden" alt="Vista previa INE">
+          <img id="m-tec-ine-new" class="tec-upload-preview hidden js-refaccion-open-media" alt="Vista previa INE">
         </div>
         <div class="form-group tec-upload-box">
           <label><i class="fas fa-car"></i> Licencia de conducir</label>
           <input type="file" id="m-tec-lic" accept="image/*">
           <div id="m-tec-lic-existing" class="${hasLic && !isNew ? '' : 'hidden'}">
             <p class="form-hint" style="margin-top:0.35rem"><i class="fas fa-image"></i> Licencia en sistema</p>
-            <img id="m-tec-lic-img" class="tec-upload-preview" src="${escapeHtml(licPrevSrc)}" alt="Licencia">
+            <button type="button" class="js-refaccion-open-media" data-media-ref="${licPrevRef}" title="Ver licencia" style="border:none;background:transparent;padding:0;cursor:zoom-in;">
+              <img id="m-tec-lic-img" class="tec-upload-preview" src="${escapeHtml(licPrevSrc)}" alt="Licencia" loading="lazy">
+            </button>
             <button type="button" class="btn small danger outline" id="m-tec-lic-rm" style="margin-top:0.35rem"><i class="fas fa-times"></i> Quitar licencia</button>
           </div>
-          <img id="m-tec-lic-new" class="tec-upload-preview hidden" alt="Vista previa licencia">
+          <img id="m-tec-lic-new" class="tec-upload-preview hidden js-refaccion-open-media" alt="Vista previa licencia">
         </div>
       </div>
       <div class="form-row">
@@ -9723,6 +9783,7 @@
         if (ineEx) ineEx.classList.add('hidden');
         if (ineNewEl) {
           ineNewEl.src = dataUrl;
+          ineNewEl.setAttribute('data-media-ref', registerPvcMediaUrl(dataUrl));
           ineNewEl.classList.remove('hidden');
         }
       } catch (_) {
@@ -9744,6 +9805,7 @@
         if (licEx) licEx.classList.add('hidden');
         if (licNewEl) {
           licNewEl.src = dataUrl;
+          licNewEl.setAttribute('data-media-ref', registerPvcMediaUrl(dataUrl));
           licNewEl.classList.remove('hidden');
         }
       } catch (_) {
