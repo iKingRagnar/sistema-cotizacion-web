@@ -542,8 +542,46 @@ body.theme-industrial #tabla-refacciones thead .filter-row input.filter-input,
 body.theme-industrial #tabla-refacciones thead .filter-row select.filter-input,
 body.theme-industrial #tabla-refacciones thead .filter-row textarea.filter-input {
   background: #1c1917 !important;
+  background-color: #1c1917 !important;
   border-color: #57534e !important;
   color: #fafaf9 !important;
+}
+/* Autofill: style.css fuerza caja blanca con #tabla-refacciones + !important */
+body.theme-industrial #tabla-refacciones thead .filter-row input.filter-input:-webkit-autofill,
+body.theme-industrial #tabla-refacciones thead .filter-row input.filter-input:-webkit-autofill:hover,
+body.theme-industrial #tabla-refacciones thead .filter-row input.filter-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fafaf9 !important;
+  box-shadow: 0 0 0 1000px #1c1917 inset !important;
+  transition: background-color 99999s ease-out;
+}
+body.theme-industrial #panel-refacciones .toolbar select {
+  background: rgba(28, 25, 23, 0.96) !important;
+  background-color: rgba(28, 25, 23, 0.96) !important;
+  border-color: rgba(234, 179, 8, 0.28) !important;
+  color: #fafaf9 !important;
+  box-shadow: none !important;
+}
+body.theme-industrial #panel-refacciones .toolbar select:focus {
+  outline: none;
+  border-color: rgba(234, 179, 8, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.18) !important;
+}
+/* Filas stock bajo: quitar lavanda clara de style.css */
+body.theme-industrial #tabla-refacciones.data-table tr.row-stock-bajo td {
+  background: rgba(55, 22, 8, 0.58) !important;
+  background-color: rgba(55, 22, 8, 0.58) !important;
+  box-shadow: inset 3px 0 0 rgba(234, 179, 8, 0.65) !important;
+  color: #e7e5e4;
+}
+body.theme-industrial #tabla-refacciones.data-table tbody tr:nth-child(even).row-stock-bajo td {
+  background: rgba(42, 16, 6, 0.65) !important;
+  background-color: rgba(42, 16, 6, 0.65) !important;
+}
+body.theme-industrial #tabla-refacciones.data-table td.stock-bajo {
+  color: #fde68a !important;
+}
+body.theme-industrial #panel-refacciones .ref-table-scroll-x {
+  background: transparent;
 }
 body.theme-industrial #tabla-refacciones.data-table tbody tr:nth-child(even) {
   background: rgba(28, 25, 23, 0.82) !important;
@@ -616,6 +654,57 @@ body.theme-industrial .ref-cat-pill--part {
   background: rgba(68, 64, 60, 0.95);
   color: #e7e5e4;
   border-color: #57534e;
+}
+
+/* Prospección / paneles UX: misma base que máquinas (style.css usa losa clara en .panel.panel-ux) */
+body.theme-industrial .panel.panel-ux {
+  background: transparent;
+  border-color: rgba(234, 179, 8, 0.14);
+  box-shadow: none;
+}
+body.theme-industrial .section-header--ux {
+  border-bottom-color: rgba(234, 179, 8, 0.18);
+}
+body.theme-industrial .section-header--ux h2 {
+  color: #fafaf9;
+}
+body.theme-industrial .section-header--ux .section-sub {
+  color: #a8a29e;
+}
+body.theme-industrial .section-header--ux .section-sub code {
+  color: #fde68a;
+  background: rgba(12, 10, 9, 0.45);
+  padding: 0.12rem 0.35rem;
+  border-radius: 6px;
+  border: 1px solid rgba(234, 179, 8, 0.22);
+}
+body.theme-industrial .search--ux {
+  background: #1c1917 !important;
+  background-color: #1c1917 !important;
+  border-color: #57534e !important;
+  color: #fafaf9 !important;
+}
+body.theme-industrial .search--ux:focus {
+  border-color: #eab308 !important;
+  box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.2) !important;
+}
+body.theme-industrial .search--ux::placeholder {
+  color: #78716c;
+  opacity: 1;
+}
+body.theme-industrial .prospeccion-kpi {
+  background: rgba(28, 25, 23, 0.92);
+  border-color: rgba(234, 179, 8, 0.2);
+}
+body.theme-industrial .prospeccion-kpi-lbl {
+  color: #a8a29e;
+}
+body.theme-industrial .prospeccion-kpi-val {
+  color: #eab308;
+}
+body.theme-industrial .prospeccion-map-wrap {
+  background: rgba(12, 10, 9, 0.55);
+  border-color: rgba(234, 179, 8, 0.22);
 }
 
 /* Spinner global (si aparece) */
