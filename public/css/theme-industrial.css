@@ -866,3 +866,191 @@ body.theme-industrial .dashboard-stat-card .stat-value {
 body.theme-industrial .dashboard-stat-card h4.dashboard-stat-card-title-cf {
   color: #d6d3d1;
 }
+
+/* =============================================================================
+   Revisión máquinas, Tarifas, Mantenimientos (bloques claros / teal en style.css)
+   ============================================================================= */
+
+/* --- Revisión de máquinas --- */
+body.theme-industrial #panel-revision-maquinas .toolbar select {
+  background: rgba(28, 25, 23, 0.96) !important;
+  background-color: rgba(28, 25, 23, 0.96) !important;
+  border-color: rgba(234, 179, 8, 0.28) !important;
+  color: #fafaf9 !important;
+  box-shadow: none !important;
+}
+body.theme-industrial #panel-revision-maquinas .toolbar select:focus {
+  outline: none;
+  border-color: rgba(234, 179, 8, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.18) !important;
+}
+body.theme-industrial #panel-revision-maquinas .revision-maq-catalog-wrap {
+  background: rgba(28, 25, 23, 0.78);
+  border: 1px solid rgba(234, 179, 8, 0.24);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+body.theme-industrial #panel-revision-maquinas .revision-maq-catalog-heading {
+  color: #fafaf9;
+}
+body.theme-industrial #panel-revision-maquinas .revision-maq-catalog-heading i {
+  color: #eab308;
+}
+body.theme-industrial #panel-revision-maquinas .revision-maq-catalog-intro {
+  color: #a8a29e;
+}
+body.theme-industrial #panel-revision-maquinas .revision-maq-card {
+  background: linear-gradient(180deg, #292524 0%, #1c1917 100%);
+  border-color: rgba(234, 179, 8, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+body.theme-industrial #panel-revision-maquinas .revision-maq-card:hover {
+  border-color: rgba(234, 179, 8, 0.38);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(234, 179, 8, 0.12);
+}
+body.theme-industrial #panel-revision-maquinas .revision-maq-card-title {
+  color: #fde68a;
+}
+body.theme-industrial #panel-revision-maquinas .revision-maq-card-serie {
+  color: #a8a29e;
+}
+body.theme-industrial #panel-revision-maquinas .revision-maq-card-client {
+  color: #e7e5e4;
+}
+body.theme-industrial #panel-revision-maquinas .revision-maq-pill {
+  background: rgba(12, 10, 9, 0.88);
+  border: 1px solid #57534e;
+  color: #d6d3d1;
+}
+
+/* --- Tarifas --- */
+body.theme-industrial #panel-tarifas .tarifas-section {
+  background: rgba(28, 25, 23, 0.92);
+  border-color: rgba(234, 179, 8, 0.22);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+body.theme-industrial #panel-tarifas .tarifas-section-title {
+  color: #fafaf9;
+}
+body.theme-industrial #panel-tarifas .tarifas-section-title i {
+  color: #eab308;
+}
+body.theme-industrial #panel-tarifas .tarifas-hint {
+  color: #a8a29e;
+}
+body.theme-industrial #panel-tarifas .tarifas-form-grid label,
+body.theme-industrial #panel-tarifas .form-group label {
+  color: #d6d3d1;
+}
+body.theme-industrial #panel-tarifas .tarifas-notas-list li {
+  color: #d6d3d1;
+}
+body.theme-industrial #panel-tarifas .tarifa-input,
+body.theme-industrial #panel-tarifas .tarifa-input-text {
+  background: #1c1917 !important;
+  background-color: #1c1917 !important;
+  border-color: #57534e !important;
+  color: #fafaf9 !important;
+}
+body.theme-industrial #panel-tarifas .tarifa-input:focus,
+body.theme-industrial #panel-tarifas .tarifa-input-text:focus {
+  outline: 2px solid rgba(234, 179, 8, 0.45);
+  border-color: #eab308;
+}
+body.theme-industrial #panel-tarifas #tabla-tarifas-mano-obra td,
+body.theme-industrial #panel-tarifas #tabla-tarifas-traslado td {
+  color: #e7e5e4;
+}
+body.theme-industrial #panel-tarifas #tabla-tarifas-mano-obra tbody tr:nth-child(even),
+body.theme-industrial #panel-tarifas #tabla-tarifas-traslado tbody tr:nth-child(even) {
+  background: rgba(12, 10, 9, 0.4) !important;
+}
+body.theme-industrial #panel-tarifas #tabla-tarifas-mano-obra tbody tr:hover,
+body.theme-industrial #panel-tarifas #tabla-tarifas-traslado tbody tr:hover {
+  background: rgba(234, 179, 8, 0.09) !important;
+  box-shadow: inset 3px 0 0 #ca8a04 !important;
+}
+
+/* --- Mantenimientos por garantía (calendario + barra prioridad) --- */
+body.theme-industrial #panel-mantenimiento-garantia .mant-gar-hint {
+  background: rgba(12, 10, 9, 0.72);
+  border-color: rgba(234, 179, 8, 0.24);
+  color: #e7e5e4;
+}
+body.theme-industrial #panel-mantenimiento-garantia .mant-gar-dry-wrap {
+  color: #a8a29e;
+}
+body.theme-industrial #panel-mantenimiento-garantia #mant-gar-month {
+  background: #1c1917;
+  border-color: #57534e;
+  color: #fafaf9;
+}
+body.theme-industrial #panel-mantenimiento-garantia .cal-month-summary {
+  background: rgba(28, 25, 23, 0.92);
+  border: 1px solid rgba(234, 179, 8, 0.22);
+  color: #d6d3d1;
+}
+body.theme-industrial #panel-mantenimiento-garantia .cal-month-summary strong {
+  color: #eab308;
+}
+body.theme-industrial #panel-mantenimiento-garantia .cal-cell.cal-day,
+body.theme-industrial #panel-mantenimiento-garantia .cal-day {
+  background: #292524 !important;
+  background-color: #292524 !important;
+  border-color: #44403c !important;
+}
+body.theme-industrial #panel-mantenimiento-garantia .cal-cell.cal-day--has-events {
+  background: rgba(41, 37, 36, 0.98) !important;
+  background-color: rgba(41, 37, 36, 0.98) !important;
+  border-color: rgba(234, 179, 8, 0.28) !important;
+}
+body.theme-industrial #panel-mantenimiento-garantia .cal-day.cal-today {
+  border-color: #eab308 !important;
+  box-shadow: 0 0 0 1px rgba(234, 179, 8, 0.35);
+}
+body.theme-industrial #panel-mantenimiento-garantia .cal-day-num {
+  color: #fafaf9 !important;
+}
+body.theme-industrial #panel-mantenimiento-garantia .cal-header {
+  color: #a8a29e;
+}
+body.theme-industrial #panel-mantenimiento-garantia .cal-more {
+  color: #78716c;
+}
+body.theme-industrial #panel-mantenimiento-garantia .cal-legend {
+  color: #a8a29e;
+}
+body.theme-industrial #panel-mantenimiento-garantia .cal-day--click:hover {
+  background: rgba(234, 179, 8, 0.12) !important;
+  box-shadow: inset 0 0 0 1px rgba(234, 179, 8, 0.35);
+}
+body.theme-industrial #panel-mantenimiento-garantia .cal-day--click:focus {
+  outline: 2px solid #eab308;
+  outline-offset: 2px;
+}
+body.theme-industrial #panel-mantenimiento-garantia .cal-grid--animated .cal-day:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Detalle día (lista en modal / panel lateral) */
+body.theme-industrial .mant-dia-card {
+  background: linear-gradient(180deg, #292524 0%, #1c1917 100%);
+  border-color: rgba(234, 179, 8, 0.2);
+}
+body.theme-industrial .mant-dia-client {
+  color: #fafaf9;
+}
+body.theme-industrial .mant-dia-fields {
+  color: #d6d3d1;
+}
+body.theme-industrial .mant-dia-fields i {
+  color: #eab308;
+}
+body.theme-industrial .mant-dia-sub {
+  color: #a8a29e;
+}
+body.theme-industrial .mant-dia-empty {
+  color: #a8a29e;
+}
+body.theme-industrial .mant-dia-empty i {
+  color: #57534e;
+}
