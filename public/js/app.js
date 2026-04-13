@@ -2365,6 +2365,52 @@
   }
 
   function previewMaquina(m) {
+    const isImageUrl = (url) =>
+      url && (String(url).startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(String(url)));
+    const piezaUrl = m.imagen_pieza_url || '';
+    const ensUrl = m.imagen_ensamble_url || '';
+    const piezaThumb = piezaUrl ? piezaUrl : '/img/maquinas/placeholder-pieza.svg';
+    const ensThumb = ensUrl && isImageUrl(ensUrl) ? ensUrl : '/img/maquinas/placeholder-ensamble.svg';
+    const piezaBtnAttrs = piezaUrl
+      ? `class="ref-pvc-hero-frame js-refaccion-open-media" data-url="${escapeHtml(piezaUrl)}" title="Clic para ver imagen completa"`
+      : `class="ref-pvc-hero-frame" title="Sin imagen de carga máquina" disabled`;
+    const ensBtnAttrs = ensUrl
+      ? `class="ref-pvc-hero-doc js-refaccion-open-media" data-url="${escapeHtml(ensUrl)}" title="Clic para abrir"`
+      : `class="ref-pvc-hero-doc" title="Sin archivo de especificaciones"`;
+    const ensKicker = ensUrl
+      ? (String(ensUrl).startsWith('data:application/pdf') || /\.pdf(\?|$)/i.test(String(ensUrl)) ? 'PDF' : (isImageUrl(ensUrl) ? 'Imagen' : 'Archivo'))
+      : '—';
+    const underHeaderHtml = `
+      <div class="ref-pvc-hero">
+        <div class="ref-pvc-hero-inner ref-pvc-hero-inner--split">
+          <div class="ref-pvc-hero-main">
+            <div class="ref-pvc-hero-kicker ref-pvc-hero-kicker--accent"><i class="fas fa-image"></i> Imagen de carga máquina</div>
+            <button type="button" ${piezaBtnAttrs}>
+              <img src="${escapeHtml(piezaThumb)}" alt="Imagen de carga máquina" loading="lazy">
+              <span class="ref-pvc-hero-shine"></span>
+              ${piezaUrl ? '<span class="ref-pvc-hero-cta"><i class="fas fa-magnifying-glass-plus"></i> Ver</span>' : ''}
+            </button>
+          </div>
+          <div class="ref-pvc-hero-side ref-pvc-hero-side--thumb">
+            <div class="ref-pvc-hero-kicker"><i class="fas fa-file-lines"></i> Especificaciones · ${escapeHtml(ensKicker)}</div>
+            ${ensUrl && isImageUrl(ensUrl)
+              ? `<button type="button" class="ref-pvc-hero-frame js-refaccion-open-media" data-url="${escapeHtml(ensUrl)}" title="Clic para ver especificaciones">
+                   <img src="${escapeHtml(ensThumb)}" alt="Especificaciones" loading="lazy">
+                   <span class="ref-pvc-hero-shine"></span>
+                   <span class="ref-pvc-hero-cta"><i class="fas fa-magnifying-glass-plus"></i> Ver</span>
+                 </button>`
+              : `<button type="button" ${ensBtnAttrs}>
+                   <span class="ref-pvc-hero-doc-icon"><i class="fas ${ensUrl ? 'fa-file' : 'fa-file-circle-xmark'}"></i></span>
+                   <div>
+                     <div style="font-weight:800;line-height:1.1">${ensUrl ? 'Abrir archivo' : 'Sin archivo'}</div>
+                     <div style="opacity:0.75;font-size:0.82rem;line-height:1.3">${ensUrl ? 'PDF o imagen (clic para abrir)' : 'Sube un PDF o imagen en Editar máquina'}</div>
+                   </div>
+                   <span class="ref-pvc-hero-doc-arrow"><i class="fas fa-arrow-up-right-from-square"></i></span>
+                 </button>`}
+          </div>
+        </div>
+      </div>
+    `;
     const imgFields = [];
     if (m.imagen_pieza_url) {
       imgFields.push({
@@ -2400,6 +2446,7 @@
       color: 'linear-gradient(135deg, #1e3a5f 0%, #3b5998 100%)',
       badge: m.activo === 0 ? 'Inactiva' : 'Activa',
       badgeClass: m.activo === 0 ? 'pvc-badge--danger' : 'pvc-badge--success',
+      underHeaderHtml,
       sections: [
         ...(imgFields.length
           ? [{ title: 'Imágenes y archivos', icon: 'fa-images', fields: imgFields }]
