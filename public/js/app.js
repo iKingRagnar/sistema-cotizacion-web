@@ -1136,6 +1136,27 @@
     return String(btn.getAttribute('data-url') || '');
   }
 
+  /** Respaldar apertura de imagen/PDF: onclick en HTML (no depende de delegación en #modal). */
+  function __pvcOpenMediaByRef(btn, ev) {
+    if (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    }
+    if (!btn) return;
+    const url = pvcMediaUrlFromBtn(btn);
+    if (!url) {
+      showToast('No se pudo abrir la imagen. Recarga la página (F5).', 'error');
+      return;
+    }
+    openRefaccionMediaFull(url);
+  }
+  try {
+    window.__pvcOpenMediaByRef = __pvcOpenMediaByRef;
+  } catch (_) {}
+
+  /** Pegar en <button …> de medios (espacio inicial). */
+  const PVC_INLINE_OPEN_ATTR = ' onclick="if(window.__pvcOpenMediaByRef)window.__pvcOpenMediaByRef(this,event)"';
+
   function confirmar(msg) {
     return confirm(msg || '¿Eliminar este registro?');
   }
@@ -1824,7 +1845,7 @@
         return (
           '<div class="ref-pvc-hero-main">' +
           '<span class="ref-pvc-hero-kicker"><i class="fas fa-barcode"></i> Número de parte</span>' +
-          '<button type="button" class="ref-pvc-hero-frame js-refaccion-open-media" data-url="' + escapeHtml(url) + '" title="Ver imagen completa">' +
+          '<button type="button" class="ref-pvc-hero-frame js-refaccion-open-media" data-url="' + escapeHtml(url) + '" title="Ver imagen completa"' + PVC_INLINE_OPEN_ATTR + '>' +
           '<img src="' + escapeHtml(url) + '" alt="Número de parte" loading="lazy">' +
           '<span class="ref-pvc-hero-shine"></span>' +
           '<span class="ref-pvc-hero-cta"><i class="fas fa-expand-alt"></i> Abrir imagen</span>' +
@@ -1858,7 +1879,7 @@
           '<div class="ref-pvc-pieza-ring"></div>' +
           '<img src="' + escapeHtml(url) + '" alt="Vista pieza" loading="lazy">' +
           '</div>' +
-          '<button type="button" class="ref-pvc-pieza-mini-zoom js-refaccion-open-media" data-url="' + escapeHtml(url) + '" title="Ver imagen completa">' +
+          '<button type="button" class="ref-pvc-pieza-mini-zoom js-refaccion-open-media" data-url="' + escapeHtml(url) + '" title="Ver imagen completa"' + PVC_INLINE_OPEN_ATTR + '>' +
           '<i class="fas fa-search-plus"></i></button>' +
           '</aside>'
         );
@@ -1877,7 +1898,7 @@
         return (
           '<div class="ref-pvc-hero-main ref-pvc-hero-main--solo">' +
           '<span class="ref-pvc-hero-kicker"><i class="fas fa-puzzle-piece"></i> Pieza</span>' +
-          '<button type="button" class="ref-pvc-hero-frame js-refaccion-open-media" data-url="' + escapeHtml(url) + '">' +
+          '<button type="button" class="ref-pvc-hero-frame js-refaccion-open-media" data-url="' + escapeHtml(url) + '"' + PVC_INLINE_OPEN_ATTR + '>' +
           '<img src="' + escapeHtml(url) + '" alt="Pieza" loading="lazy">' +
           '<span class="ref-pvc-hero-shine"></span>' +
           '<span class="ref-pvc-hero-cta"><i class="fas fa-expand-alt"></i> Abrir imagen</span>' +
@@ -1920,7 +1941,7 @@
     const mediaRef = registerPvcMediaUrl(u);
     if (isImg) {
       return `<div class="pvc-preview-media">
-        <button type="button" class="pvc-preview-media-btn js-refaccion-open-media" data-media-ref="${mediaRef}" title="Ver imagen completa">
+        <button type="button" class="pvc-preview-media-btn js-refaccion-open-media" data-media-ref="${mediaRef}"${PVC_INLINE_OPEN_ATTR} title="Ver imagen completa">
           <img src="${escapeHtml(u)}" class="ref-foto-thumb" alt="${escapeHtml(title || '')}" style="max-height:140px;max-width:100%;object-fit:contain;border-radius:8px;border:1px solid var(--border-color,#e5e7eb);">
         </button>
       </div>`;
@@ -1929,7 +1950,7 @@
     const icon = isPdf ? 'fa-file-pdf' : 'fa-file-alt';
     const cls = isPdf ? 'cliente-const-slot--pdf' : 'cliente-const-slot--file';
     return `<div class="pvc-preview-media">
-      <button type="button" class="cliente-const-slot ${cls} js-refaccion-open-media" data-media-ref="${mediaRef}" style="width:88px;height:88px;display:inline-flex;align-items:center;justify-content:center;" title="${escapeHtml((title || 'Archivo') + ' · clic para abrir')}">
+      <button type="button" class="cliente-const-slot ${cls} js-refaccion-open-media" data-media-ref="${mediaRef}"${PVC_INLINE_OPEN_ATTR} style="width:88px;height:88px;display:inline-flex;align-items:center;justify-content:center;" title="${escapeHtml((title || 'Archivo') + ' · clic para abrir')}">
         <i class="fas ${icon} fa-2x"></i>
       </button>
     </div>`;
@@ -2403,10 +2424,10 @@
     const piezaMediaRef = piezaUrl ? registerPvcMediaUrl(piezaUrl) : '';
     const ensMediaRef = ensUrl ? registerPvcMediaUrl(ensUrl) : '';
     const piezaBtnAttrs = piezaUrl
-      ? `class="ref-pvc-hero-frame js-refaccion-open-media" data-media-ref="${piezaMediaRef}" title="Clic para ver imagen completa"`
+      ? `class="ref-pvc-hero-frame js-refaccion-open-media" data-media-ref="${piezaMediaRef}"${PVC_INLINE_OPEN_ATTR} title="Clic para ver imagen completa"`
       : `class="ref-pvc-hero-frame" title="Sin imagen de carga máquina" disabled`;
     const ensBtnAttrs = ensUrl
-      ? `class="ref-pvc-hero-doc js-refaccion-open-media" data-media-ref="${ensMediaRef}" title="Clic para abrir"`
+      ? `class="ref-pvc-hero-doc js-refaccion-open-media" data-media-ref="${ensMediaRef}"${PVC_INLINE_OPEN_ATTR} title="Clic para abrir"`
       : `class="ref-pvc-hero-doc" title="Sin archivo de especificaciones"`;
     const ensKicker = ensUrl
       ? (String(ensUrl).startsWith('data:application/pdf') || /\.pdf(\?|$)/i.test(String(ensUrl)) ? 'PDF' : (isImageUrl(ensUrl) ? 'Imagen' : 'Archivo'))
@@ -2425,7 +2446,7 @@
           <div class="ref-pvc-hero-side ref-pvc-hero-side--thumb">
             <div class="ref-pvc-hero-kicker"><i class="fas fa-file-lines"></i> Especificaciones · ${escapeHtml(ensKicker)}</div>
             ${ensUrl && isImageUrl(ensUrl)
-              ? `<button type="button" class="ref-pvc-hero-frame js-refaccion-open-media" data-media-ref="${ensMediaRef}" title="Clic para ver especificaciones">
+              ? `<button type="button" class="ref-pvc-hero-frame js-refaccion-open-media" data-media-ref="${ensMediaRef}"${PVC_INLINE_OPEN_ATTR} title="Clic para ver especificaciones">
                    <img src="${escapeHtml(ensThumb)}" alt="Especificaciones" loading="lazy">
                    <span class="ref-pvc-hero-shine"></span>
                    <span class="ref-pvc-hero-cta"><i class="fas fa-magnifying-glass-plus"></i> Ver</span>
@@ -9452,14 +9473,14 @@
       if (ineThumb) {
         parts.push(
           '<div class="tec-pvc-doc"><span class="tec-pvc-doc-label">INE</span>' +
-          '<button type="button" class="tec-pvc-doc-thumb js-refaccion-open-media" data-url="' + escapeHtml(ineOpen) + '" title="Ver INE">' +
+          '<button type="button" class="tec-pvc-doc-thumb js-refaccion-open-media" data-url="' + escapeHtml(ineOpen) + '" title="Ver INE"' + PVC_INLINE_OPEN_ATTR + '>' +
           '<img src="' + escapeHtml(ineThumb) + '" alt="INE" loading="lazy"></button></div>'
         );
       }
       if (licThumb) {
         parts.push(
           '<div class="tec-pvc-doc"><span class="tec-pvc-doc-label">Licencia</span>' +
-          '<button type="button" class="tec-pvc-doc-thumb js-refaccion-open-media" data-url="' + escapeHtml(licOpen) + '" title="Ver licencia">' +
+          '<button type="button" class="tec-pvc-doc-thumb js-refaccion-open-media" data-url="' + escapeHtml(licOpen) + '" title="Ver licencia"' + PVC_INLINE_OPEN_ATTR + '>' +
           '<img src="' + escapeHtml(licThumb) + '" alt="Licencia" loading="lazy"></button></div>'
         );
       }
@@ -10430,24 +10451,6 @@
     navigator.serviceWorker.register('/service-worker.js').then((reg) => {
       try { reg.update(); } catch (_) {}
     }).catch(() => {});
-  }
-
-  const modalEl = qs('#modal');
-  if (modalEl) {
-    modalEl.addEventListener('click', (e) => {
-      const t = e.target;
-      if (!t || !t.closest) return;
-      const btn = t.closest('.js-refaccion-open-media');
-      if (!btn || btn.disabled || !modalEl.contains(btn)) return;
-      e.preventDefault();
-      e.stopPropagation();
-      const url = pvcMediaUrlFromBtn(btn);
-      if (!url) {
-        showToast('No se pudo resolver la imagen/archivo. Recarga la página (F5) e inténtalo otra vez.', 'error');
-        return;
-      }
-      openRefaccionMediaFull(url);
-    });
   }
 
   const offlineBanner = qs('#offline-banner');

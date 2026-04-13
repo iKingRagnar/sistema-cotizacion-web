@@ -4641,6 +4641,12 @@ body.dark-theme .login-role-card span { color: #64748b; }
   overflow: hidden;
   font-family: var(--font-sans);
 }
+/* Asegurar que botones de medios reciban el clic (onclick + js-refaccion-open-media). */
+.preview-card .js-refaccion-open-media {
+  pointer-events: auto;
+  position: relative;
+  z-index: 2;
+}
 .pvc-header {
   padding: 1.75rem 2rem;
   display: flex;
