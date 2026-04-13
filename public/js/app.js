@@ -2809,25 +2809,6 @@
         </div>
       </div>
     `;
-    const imgFields = [];
-    if (m.imagen_pieza_url) {
-      imgFields.push({
-        label: 'Imagen de carga máquina',
-        value: previewMediaThumbBlock(m.imagen_pieza_url, 'Imagen máquina'),
-        html: true,
-        full: true,
-        icon: 'fa-image',
-      });
-    }
-    if (m.imagen_ensamble_url) {
-      imgFields.push({
-        label: 'Especificaciones de máquina (archivo)',
-        value: previewMediaThumbBlock(m.imagen_ensamble_url, 'Especificaciones'),
-        html: true,
-        full: true,
-        icon: 'fa-file-lines',
-      });
-    }
     const ftRaw = (m.ficha_tecnica || '').trim();
     let fichaSpec = { label: 'Ficha técnica', value: '—', icon: 'fa-file-lines', full: true };
     if (ftRaw) {
@@ -2846,9 +2827,6 @@
       badgeClass: m.activo === 0 ? 'pvc-badge--danger' : 'pvc-badge--success',
       underHeaderHtml,
       sections: [
-        ...(imgFields.length
-          ? [{ title: 'Imágenes y archivos', icon: 'fa-images', fields: imgFields }]
-          : []),
         {
           title: 'Especificaciones', icon: 'fa-cog',
           fields: [
