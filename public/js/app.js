@@ -1899,12 +1899,20 @@
     if (!u) return '';
     const isImg = u.startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(u);
     if (isImg) {
-      return `<div class="pvc-preview-media"><img src="${escapeHtml(u)}" class="ref-foto-thumb" alt="${escapeHtml(title || '')}" style="max-height:140px;max-width:100%;object-fit:contain;border-radius:8px;border:1px solid var(--border-color,#e5e7eb);"></div>`;
+      return `<div class="pvc-preview-media">
+        <button type="button" class="pvc-preview-media-btn js-refaccion-open-media" data-url="${escapeHtml(u)}" title="Ver imagen completa">
+          <img src="${escapeHtml(u)}" class="ref-foto-thumb" alt="${escapeHtml(title || '')}" style="max-height:140px;max-width:100%;object-fit:contain;border-radius:8px;border:1px solid var(--border-color,#e5e7eb);">
+        </button>
+      </div>`;
     }
     const isPdf = u.startsWith('data:application/pdf') || /\.pdf(\?|$)/i.test(u) || /application\/pdf/i.test(u);
     const icon = isPdf ? 'fa-file-pdf' : 'fa-file-alt';
     const cls = isPdf ? 'cliente-const-slot--pdf' : 'cliente-const-slot--file';
-    return `<div class="pvc-preview-media"><span class="cliente-const-slot ${cls}" style="width:88px;height:88px;display:inline-flex;align-items:center;justify-content:center;" title="${escapeHtml(title || 'Archivo')}"><i class="fas ${icon} fa-2x"></i></span></div>`;
+    return `<div class="pvc-preview-media">
+      <button type="button" class="cliente-const-slot ${cls} js-refaccion-open-media" data-url="${escapeHtml(u)}" style="width:88px;height:88px;display:inline-flex;align-items:center;justify-content:center;" title="${escapeHtml((title || 'Archivo') + ' · clic para abrir')}">
+        <i class="fas ${icon} fa-2x"></i>
+      </button>
+    </div>`;
   }
 
   function clienteConstanciaThumbHtml(c) {
@@ -5100,13 +5108,11 @@
         </div>
       </div>`;
     openModal(title, body);
-    if (underHeaderHtml) {
-      setTimeout(() => {
-        qs('#modal-body')?.querySelectorAll('.js-refaccion-open-media').forEach((btn) => {
-          btn.addEventListener('click', () => openRefaccionMediaFull(btn.getAttribute('data-url')));
-        });
-      }, 0);
-    }
+    setTimeout(() => {
+      qs('#modal-body')?.querySelectorAll('.js-refaccion-open-media').forEach((btn) => {
+        btn.addEventListener('click', () => openRefaccionMediaFull(btn.getAttribute('data-url')));
+      });
+    }, 0);
   }
 
   // ----- MODAL GENÉRICO ----- Focus trap, foco al abrir/cerrar, Escape cierra
