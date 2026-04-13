@@ -1117,6 +1117,25 @@
     return div.innerHTML;
   }
 
+  /** URLs largas (p. ej. data:image base64) no caben fiable en atributos HTML; se guardan aquí y el DOM usa data-media-ref corto. */
+  const _pvcMediaUrlRegistry = Object.create(null);
+  let _pvcMediaUrlSeq = 0;
+  function clearPvcMediaUrlRegistry() {
+    Object.keys(_pvcMediaUrlRegistry).forEach((k) => { delete _pvcMediaUrlRegistry[k]; });
+    _pvcMediaUrlSeq = 0;
+  }
+  function registerPvcMediaUrl(url) {
+    const id = 'pvc' + (++_pvcMediaUrlSeq);
+    _pvcMediaUrlRegistry[id] = String(url || '');
+    return id;
+  }
+  function pvcMediaUrlFromBtn(btn) {
+    if (!btn) return '';
+    const ref = btn.getAttribute('data-media-ref');
+    if (ref && Object.prototype.hasOwnProperty.call(_pvcMediaUrlRegistry, ref)) return _pvcMediaUrlRegistry[ref];
+    return String(btn.getAttribute('data-url') || '');
+  }
+
   function confirmar(msg) {
     return confirm(msg || '¿Eliminar este registro?');
   }
@@ -1898,9 +1917,10 @@
     const u = String(url || '');
     if (!u) return '';
     const isImg = u.startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(u);
+    const mediaRef = registerPvcMediaUrl(u);
     if (isImg) {
       return `<div class="pvc-preview-media">
-        <button type="button" class="pvc-preview-media-btn js-refaccion-open-media" data-url="${escapeHtml(u)}" title="Ver imagen completa">
+        <button type="button" class="pvc-preview-media-btn js-refaccion-open-media" data-media-ref="${mediaRef}" title="Ver imagen completa">
           <img src="${escapeHtml(u)}" class="ref-foto-thumb" alt="${escapeHtml(title || '')}" style="max-height:140px;max-width:100%;object-fit:contain;border-radius:8px;border:1px solid var(--border-color,#e5e7eb);">
         </button>
       </div>`;
@@ -1909,7 +1929,7 @@
     const icon = isPdf ? 'fa-file-pdf' : 'fa-file-alt';
     const cls = isPdf ? 'cliente-const-slot--pdf' : 'cliente-const-slot--file';
     return `<div class="pvc-preview-media">
-      <button type="button" class="cliente-const-slot ${cls} js-refaccion-open-media" data-url="${escapeHtml(u)}" style="width:88px;height:88px;display:inline-flex;align-items:center;justify-content:center;" title="${escapeHtml((title || 'Archivo') + ' · clic para abrir')}">
+      <button type="button" class="cliente-const-slot ${cls} js-refaccion-open-media" data-media-ref="${mediaRef}" style="width:88px;height:88px;display:inline-flex;align-items:center;justify-content:center;" title="${escapeHtml((title || 'Archivo') + ' · clic para abrir')}">
         <i class="fas ${icon} fa-2x"></i>
       </button>
     </div>`;
@@ -2373,17 +2393,20 @@
   }
 
   function previewMaquina(m) {
+    clearPvcMediaUrlRegistry();
     const isImageUrl = (url) =>
       url && (String(url).startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(String(url)));
     const piezaUrl = m.imagen_pieza_url || '';
     const ensUrl = m.imagen_ensamble_url || '';
     const piezaThumb = piezaUrl ? piezaUrl : '/img/maquinas/placeholder-pieza.svg';
     const ensThumb = ensUrl && isImageUrl(ensUrl) ? ensUrl : '/img/maquinas/placeholder-ensamble.svg';
+    const piezaMediaRef = piezaUrl ? registerPvcMediaUrl(piezaUrl) : '';
+    const ensMediaRef = ensUrl ? registerPvcMediaUrl(ensUrl) : '';
     const piezaBtnAttrs = piezaUrl
-      ? `class="ref-pvc-hero-frame js-refaccion-open-media" data-url="${escapeHtml(piezaUrl)}" title="Clic para ver imagen completa"`
+      ? `class="ref-pvc-hero-frame js-refaccion-open-media" data-media-ref="${piezaMediaRef}" title="Clic para ver imagen completa"`
       : `class="ref-pvc-hero-frame" title="Sin imagen de carga máquina" disabled`;
     const ensBtnAttrs = ensUrl
-      ? `class="ref-pvc-hero-doc js-refaccion-open-media" data-url="${escapeHtml(ensUrl)}" title="Clic para abrir"`
+      ? `class="ref-pvc-hero-doc js-refaccion-open-media" data-media-ref="${ensMediaRef}" title="Clic para abrir"`
       : `class="ref-pvc-hero-doc" title="Sin archivo de especificaciones"`;
     const ensKicker = ensUrl
       ? (String(ensUrl).startsWith('data:application/pdf') || /\.pdf(\?|$)/i.test(String(ensUrl)) ? 'PDF' : (isImageUrl(ensUrl) ? 'Imagen' : 'Archivo'))
@@ -2402,7 +2425,7 @@
           <div class="ref-pvc-hero-side ref-pvc-hero-side--thumb">
             <div class="ref-pvc-hero-kicker"><i class="fas fa-file-lines"></i> Especificaciones · ${escapeHtml(ensKicker)}</div>
             ${ensUrl && isImageUrl(ensUrl)
-              ? `<button type="button" class="ref-pvc-hero-frame js-refaccion-open-media" data-url="${escapeHtml(ensUrl)}" title="Clic para ver especificaciones">
+              ? `<button type="button" class="ref-pvc-hero-frame js-refaccion-open-media" data-media-ref="${ensMediaRef}" title="Clic para ver especificaciones">
                    <img src="${escapeHtml(ensThumb)}" alt="Especificaciones" loading="lazy">
                    <span class="ref-pvc-hero-shine"></span>
                    <span class="ref-pvc-hero-cta"><i class="fas fa-magnifying-glass-plus"></i> Ver</span>
@@ -5110,7 +5133,11 @@
     openModal(title, body);
     setTimeout(() => {
       qs('#modal-body')?.querySelectorAll('.js-refaccion-open-media').forEach((btn) => {
-        btn.addEventListener('click', () => openRefaccionMediaFull(btn.getAttribute('data-url')));
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openRefaccionMediaFull(pvcMediaUrlFromBtn(btn));
+        });
       });
     }, 0);
   }

@@ -5277,7 +5277,7 @@ body.dark-theme .cdp-disclaimer { color: #64748b; }
 .ref-img-lightbox {
   position: fixed;
   inset: 0;
-  z-index: 10050;
+  z-index: 2147483001;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5322,6 +5322,26 @@ body.dark-theme .cdp-disclaimer { color: #64748b; }
   transition: background 0.2s, transform 0.2s;
 }
 .ref-img-lightbox-close:hover { background: rgba(255,255,255,0.22); transform: scale(1.05); }
+
+.pvc-preview-media-btn {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: zoom-in;
+  border-radius: 8px;
+  text-align: left;
+}
+.pvc-preview-media-btn:focus-visible {
+  outline: 2px solid var(--config-accent, #0d9488);
+  outline-offset: 2px;
+}
+body.dark-theme .pvc-preview-media-btn img {
+  border-color: #334155 !important;
+}
 
 @media (max-width: 640px) {
   .ref-pvc-hero-inner--split {
