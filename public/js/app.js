@@ -2293,15 +2293,12 @@
         <td class="ref-td-price">${formatRefaccionPrecioUsdCell(r)}</td>
         <td class="ref-td-unit">${escapeHtml(r.unidad || 'PZA')}</td>
         <td class="th-actions ref-td-actions">
-          <details class="ds-row-actions">
-            <summary class="ds-row-actions__trigger" aria-label="Menú de acciones"><i class="fas fa-ellipsis-vertical"></i></summary>
-            <div class="ds-row-actions__panel" role="menu">
-              <button type="button" class="ds-menu-item btn-preview-ref" data-id="${r.id}" role="menuitem"><i class="fas fa-eye"></i><span>Vista previa</span></button>
-              ${_canStock ? `<button type="button" class="ds-menu-item btn-stock-ref" data-id="${r.id}" role="menuitem"><i class="fas fa-boxes"></i><span>Inventario</span></button>` : ''}
-              ${_canEdit ? `<button type="button" class="ds-menu-item btn-edit-ref" data-id="${r.id}" role="menuitem"><i class="fas fa-edit"></i><span>Editar</span></button>` : ''}
-              ${_canDelete ? `<button type="button" class="ds-menu-item ds-menu-item--danger btn-delete-ref" data-id="${r.id}" role="menuitem"><i class="fas fa-trash-alt"></i><span>Eliminar</span></button>` : ''}
-            </div>
-          </details>
+          <div class="row-actions-inline" role="group" aria-label="Acciones">
+            <button type="button" class="btn small outline btn-preview-ref" data-id="${r.id}" title="Vista previa"><i class="fas fa-eye"></i></button>
+            ${_canStock ? `<button type="button" class="btn small outline btn-stock-ref" data-id="${r.id}" title="Inventario"><i class="fas fa-boxes"></i></button>` : ''}
+            ${_canEdit ? `<button type="button" class="btn small primary btn-edit-ref" data-id="${r.id}" title="Editar"><i class="fas fa-edit"></i></button>` : ''}
+            ${_canDelete ? `<button type="button" class="btn small danger btn-delete-ref" data-id="${r.id}" title="Eliminar"><i class="fas fa-trash-alt"></i></button>` : ''}
+          </div>
         </td>
       `;
       tbody.appendChild(tr);

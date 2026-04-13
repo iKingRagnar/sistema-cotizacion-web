@@ -5348,6 +5348,17 @@ body.dark-theme .cdp-disclaimer { color: #64748b; }
 .pvc-preview-media-btn img {
   pointer-events: none;
 }
+
+/* Refacciones: acciones inline (sin menú de 3 puntos) */
+.row-actions-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+.row-actions-inline .btn.small {
+  margin: 0;
+}
 .pvc-preview-media-btn:focus-visible {
   outline: 2px solid var(--config-accent, #0d9488);
   outline-offset: 2px;
