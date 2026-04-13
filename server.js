@@ -39,6 +39,27 @@ function getAdminNotifyEmails() {
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
+/** Respuesta HTTP para errores SQLite típicos al guardar refacciones (código único). */
+function refaccionesSqliteErrorResponse(err) {
+  const m = String(err && err.message ? err.message : '');
+  if (/UNIQUE constraint failed:\s*refacciones\.codigo/i.test(m)) {
+    return {
+      status: 409,
+      body: {
+        error:
+          'Ya existe una refacción con ese código. Usa otro código único o edita la refacción que ya está en el catálogo.',
+      },
+    };
+  }
+  if (/SQLITE_CONSTRAINT/i.test(m) && /refacciones/i.test(m)) {
+    return {
+      status: 409,
+      body: { error: 'No se puede guardar: el dato choca con otro registro (revisa código u otros campos únicos).' },
+    };
+  }
+  return null;
+}
+
 /** Sin BD: útil en Vercel para ver que la función vive aunque falle Turso. */
 app.get('/health', (req, res) => {
   res.status(200).type('text/plain').send('ok');
@@ -595,6 +616,8 @@ app.post('/api/refacciones', async (req, res) => {
     }
     res.status(201).json(r);
   } catch (e) {
+    const mapped = refaccionesSqliteErrorResponse(e);
+    if (mapped) return res.status(mapped.status).json(mapped.body);
     res.status(500).json({ error: String(e.message) });
   }
 });
@@ -646,6 +669,8 @@ app.put('/api/refacciones/:id', async (req, res) => {
     const r = await db.getOne('SELECT * FROM refacciones WHERE id = ?', [req.params.id]);
     res.json(r || {});
   } catch (e) {
+    const mapped = refaccionesSqliteErrorResponse(e);
+    if (mapped) return res.status(mapped.status).json(mapped.body);
     res.status(500).json({ error: String(e.message) });
   }
 });

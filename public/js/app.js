@@ -587,6 +587,9 @@
         return o.error;
       }
     } catch (_) {}
+    if (/UNIQUE constraint failed:\s*refacciones\.codigo/i.test(msg)) {
+      return 'Ya existe una refacción con ese código. Usa otro código o edita la existente.';
+    }
     return msg;
   }
 
@@ -5868,6 +5871,20 @@
       err = validateRequired(descripcion, 'Descripción es obligatoria');
       if (err) { markInvalid('m-descripcion', err); return; }
       if (!Number.isFinite(precioUsd) || precioUsd < 0) { markInvalid('m-precio-usd', 'Indica un precio en USD válido'); return; }
+      const codigoKey = codigo.toLowerCase();
+      const dupRef = (refaccionesCache || []).find(
+        (r) =>
+          r &&
+          String(r.codigo || '')
+            .trim()
+            .toLowerCase() === codigoKey &&
+          (isNew || Number(r.id) !== Number(refaccion.id))
+      );
+      if (dupRef) {
+        markInvalid('m-codigo', 'Ese código ya está en uso en el catálogo activo.');
+        showToast('Ya hay una refacción con ese código. Cambia el código o edita la existente.', 'error');
+        return;
+      }
       // Read file inputs as base64 data URLs if selected
       const readFileAsDataUrl = (fileInput) => new Promise((res) => {
         const file = fileInput && fileInput.files && fileInput.files[0];
