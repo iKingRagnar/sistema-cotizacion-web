@@ -5131,15 +5131,6 @@
         </div>
       </div>`;
     openModal(title, body);
-    setTimeout(() => {
-      qs('#modal-body')?.querySelectorAll('.js-refaccion-open-media').forEach((btn) => {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          openRefaccionMediaFull(pvcMediaUrlFromBtn(btn));
-        });
-      });
-    }, 0);
   }
 
   // ----- MODAL GENÉRICO ----- Focus trap, foco al abrir/cerrar, Escape cierra
@@ -10436,7 +10427,28 @@
   }
 
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+    navigator.serviceWorker.register('/service-worker.js').then((reg) => {
+      try { reg.update(); } catch (_) {}
+    }).catch(() => {});
+  }
+
+  const modalEl = qs('#modal');
+  if (modalEl) {
+    modalEl.addEventListener(
+      'click',
+      (e) => {
+        const t = e.target;
+        if (!t || !t.closest) return;
+        const btn = t.closest('.js-refaccion-open-media');
+        if (!btn || btn.disabled || !modalEl.contains(btn)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const url = pvcMediaUrlFromBtn(btn);
+        if (!url) return;
+        openRefaccionMediaFull(url);
+      },
+      true
+    );
   }
 
   const offlineBanner = qs('#offline-banner');

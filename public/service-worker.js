@@ -1,5 +1,6 @@
-const CACHE_NAME = 'cotizacion-pro-v24';
-const STATIC_URLS = ['/', '/index.html', '/css/style.css', '/js/app.js', '/favicon.svg', '/manifest.json'];
+/** Bump al desplegar para limpiar caches viejas (HTML/JS con ?v=). No precargar /js/app.js (la página usa app.js?v=…). */
+const CACHE_NAME = 'cotizacion-pro-v26';
+const STATIC_URLS = ['/', '/index.html', '/css/style.css', '/favicon.svg', '/manifest.json'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
@@ -14,9 +15,21 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  if (e.request.url.startsWith(self.location.origin) && (e.request.url.endsWith('.html') || e.request.url.endsWith('.css') || e.request.url.endsWith('.js') || e.request.url.endsWith('.svg') || e.request.url.endsWith('manifest.json'))) {
-    e.respondWith(
-      caches.match(e.request).then((cached) => cached || fetch(e.request).then((r) => { const clone = r.clone(); caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone)); return r; }))
-    );
-  }
+  const url = new URL(e.request.url);
+  if (url.origin !== self.location.origin || e.request.method !== 'GET') return;
+  const p = url.pathname;
+  const isStatic =
+    /\.(html|css|js|svg|json)$/i.test(p) || p.endsWith('manifest.json');
+  if (!isStatic) return;
+  e.respondWith(
+    fetch(e.request)
+      .then((r) => {
+        if (r.ok) {
+          const clone = r.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+        }
+        return r;
+      })
+      .catch(() => caches.match(e.request))
+  );
 });
