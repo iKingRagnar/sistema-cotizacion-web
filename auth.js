@@ -110,7 +110,8 @@ function attachUser(req) {
 function isPublicPath(url) {
   return (
     url.startsWith('/api/config') ||
-    url.startsWith('/api/auth/login')
+    url.startsWith('/api/auth/login') ||
+    url.startsWith('/api/ping')
   );
 }
 
