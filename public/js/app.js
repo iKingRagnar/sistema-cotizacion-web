@@ -10434,21 +10434,20 @@
 
   const modalEl = qs('#modal');
   if (modalEl) {
-    modalEl.addEventListener(
-      'click',
-      (e) => {
-        const t = e.target;
-        if (!t || !t.closest) return;
-        const btn = t.closest('.js-refaccion-open-media');
-        if (!btn || btn.disabled || !modalEl.contains(btn)) return;
-        e.preventDefault();
-        e.stopPropagation();
-        const url = pvcMediaUrlFromBtn(btn);
-        if (!url) return;
-        openRefaccionMediaFull(url);
-      },
-      true
-    );
+    modalEl.addEventListener('click', (e) => {
+      const t = e.target;
+      if (!t || !t.closest) return;
+      const btn = t.closest('.js-refaccion-open-media');
+      if (!btn || btn.disabled || !modalEl.contains(btn)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const url = pvcMediaUrlFromBtn(btn);
+      if (!url) {
+        showToast('No se pudo resolver la imagen/archivo. Recarga la página (F5) e inténtalo otra vez.', 'error');
+        return;
+      }
+      openRefaccionMediaFull(url);
+    });
   }
 
   const offlineBanner = qs('#offline-banner');

@@ -5156,6 +5156,7 @@ body.dark-theme .cdp-disclaimer { color: #64748b; }
   max-height: min(52vh, 320px);
   object-fit: contain;
   vertical-align: middle;
+  pointer-events: none;
 }
 .ref-pvc-hero-shine {
   pointer-events: none;
@@ -5182,6 +5183,7 @@ body.dark-theme .cdp-disclaimer { color: #64748b; }
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.12);
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  pointer-events: none;
 }
 .ref-pvc-hero-doc {
   display: flex;
@@ -5334,6 +5336,11 @@ body.dark-theme .cdp-disclaimer { color: #64748b; }
   cursor: zoom-in;
   border-radius: 8px;
   text-align: left;
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+.pvc-preview-media-btn img {
+  pointer-events: none;
 }
 .pvc-preview-media-btn:focus-visible {
   outline: 2px solid var(--config-accent, #0d9488);
