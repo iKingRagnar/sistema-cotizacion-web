@@ -1146,6 +1146,11 @@ async function refreshTipoCambioIfStale() {
   return fetchTipoCambioFromNetwork();
 }
 
+// Compatibilidad: en rutas legacy se usa este nombre.
+async function fetchTipoCambioBanxico() {
+  return refreshTipoCambioIfStale();
+}
+
 refreshTipoCambioIfStale().catch(() => {});
 setInterval(() => { refreshTipoCambioIfStale().catch(() => {}); }, TC_CACHE_TTL_MS);
 
