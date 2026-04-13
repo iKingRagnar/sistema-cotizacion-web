@@ -12,7 +12,7 @@
     "bitacora:pendientes": "node scripts/bitacora-pestaña-pendientes.js"
   },
   "engines": {
-    "node": ">=18"
+    "node": "20.x"
   },
   "dependencies": {
     "@libsql/client": "^0.14.0",
