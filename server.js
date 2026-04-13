@@ -44,6 +44,23 @@ app.get('/health', (req, res) => {
   res.status(200).type('text/plain').send('ok');
 });
 
+/** Diagnóstico: build/commit desplegado (Render/Vercel/local). */
+app.get('/api/ping', (req, res) => {
+  const commit =
+    process.env.VERCEL_GIT_COMMIT_SHA ||
+    process.env.VERCEL_GIT_COMMIT ||
+    process.env.RENDER_GIT_COMMIT ||
+    process.env.GIT_COMMIT ||
+    null;
+  res.json({
+    ok: true,
+    env: process.env.VERCEL ? 'vercel' : (process.env.RENDER ? 'render' : 'local'),
+    commit,
+    branch: process.env.VERCEL_GIT_COMMIT_REF || process.env.GIT_BRANCH || null,
+    now: new Date().toISOString(),
+  });
+});
+
 /** BD lista antes del resto de rutas (initServer al final del archivo, hoisting). */
 app.use((req, res, next) => {
   initServer()

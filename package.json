@@ -7,6 +7,7 @@
     "start": "node server.js",
     "dev": "node server.js",
     "vercel:env": "node scripts/vercel-env.js",
+    "smoke:vercel": "node scripts/smoke-vercel.cjs https://sistema-cotizacion-web.vercel.app",
     "bitacora:s11": "node scripts/bitacora-s11-estilos.js",
     "bitacora:pendientes": "node scripts/bitacora-pestaña-pendientes.js"
   },
