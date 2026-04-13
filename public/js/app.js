@@ -890,7 +890,13 @@
     if (id === 'bonos') loadBonos();
     if (id === 'viajes') loadViajes();
     if (id === 'bitacoras') loadBitacoras();
-    if (id === 'demo') loadSeedStatus();
+    if (id === 'demo') {
+      loadSeedStatus();
+      {
+        const du = getSessionUser();
+        if (!serverConfig.authRequired || normalizeRole(du && du.role) === 'admin') loadBackupFilesList();
+      }
+    }
     if (id === 'acerca') { /* solo mostrar panel */ }
     if (id === 'auditoria') loadAuditLog();
     if (id === 'usuarios') loadAppUsers();
@@ -9151,6 +9157,10 @@
     if (id === 'bitacoras') loadBitacoras();
     if (id === 'prospeccion') loadProspeccion();
     if (id === 'usuarios') loadAppUsers();
+    if (id === 'demo') {
+      const ru = getSessionUser();
+      if (!serverConfig.authRequired || normalizeRole(ru && ru.role) === 'admin') loadBackupFilesList();
+    }
     loadSeedStatus(false);
     loadStorageHealth();
     if (!silent) showToast('Datos actualizados.', 'success');
@@ -11594,8 +11604,6 @@
     });
   }
 
-  loadBackupFilesList();
-
   let refreshIntervalId = null;
   function finishBoot() {
     showLoginOverlay(false);
@@ -11616,6 +11624,13 @@
     loadSeedStatus();
     loadStorageHealth();
     loadRecentAuditNotifications();
+    /* Backups: API exige admin si hay auth; no pedir antes del login (evita 401/toast en pantalla de acceso). */
+    {
+      const bootUser = getSessionUser();
+      if (!serverConfig.authRequired || normalizeRole(bootUser && bootUser.role) === 'admin') {
+        loadBackupFilesList();
+      }
+    }
     window.addEventListener('focus', function () {
       const now = Date.now();
       if (now - lastQuickRefreshAt < 20000) return;
