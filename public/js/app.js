@@ -1993,11 +1993,44 @@
   }
 
   function previewCliente(c) {
+    clearPvcMediaUrlRegistry();
+    const openUrl = c && c.id != null ? (API + '/clientes/' + encodeURIComponent(c.id) + '/constancia') : '';
+    const hasConst = !!(c && c.has_constancia);
+    const constKind = (c && c.constancia_kind) ? String(c.constancia_kind) : '';
+    const constThumb = (c && c.constancia_thumb_url) ? String(c.constancia_thumb_url) : '';
+    const constRef = constThumb ? registerPvcMediaUrl(constThumb) : '';
+    const constKicker = constKind === 'pdf' ? 'PDF' : (constKind === 'image' ? 'Imagen' : (hasConst ? 'Archivo' : '—'));
+    const underHeaderHtml = hasConst
+      ? `
+        <div class="ref-pvc-hero">
+          <div class="ref-pvc-hero-inner ref-pvc-hero-inner--single">
+            <div class="ref-pvc-hero-main ref-pvc-hero-main--solo">
+              <div class="ref-pvc-hero-kicker ref-pvc-hero-kicker--accent"><i class="fas fa-file-invoice"></i> Constancia fiscal · ${escapeHtml(constKicker)}</div>
+              ${constKind === 'image' && constThumb
+                ? `<button type="button" class="ref-pvc-hero-frame js-refaccion-open-media" data-url="${escapeHtml(openUrl)}" title="Clic para abrir constancia">
+                     <img src="${escapeHtml(constThumb)}" alt="Constancia fiscal" loading="lazy">
+                     <span class="ref-pvc-hero-shine"></span>
+                     <span class="ref-pvc-hero-cta"><i class="fas fa-magnifying-glass-plus"></i> Ver</span>
+                   </button>`
+                : `<button type="button" class="ref-pvc-hero-doc js-refaccion-open-media" data-url="${escapeHtml(openUrl)}" title="Clic para abrir constancia">
+                     <span class="ref-pvc-hero-doc-icon"><i class="fas ${constKind === 'pdf' ? 'fa-file-pdf' : 'fa-file'}"></i></span>
+                     <div>
+                       <div style="font-weight:800;line-height:1.1">Abrir constancia</div>
+                       <div style="opacity:0.75;font-size:0.82rem;line-height:1.3">${escapeHtml(constKind === 'pdf' ? 'PDF (clic para abrir)' : 'Archivo (clic para abrir)')}</div>
+                     </div>
+                     <span class="ref-pvc-hero-doc-arrow"><i class="fas fa-arrow-up-right-from-square"></i></span>
+                   </button>`}
+            </div>
+          </div>
+        </div>
+      `
+      : '';
     openPreviewCard({
       title: c.nombre || 'Cliente',
       subtitle: c.codigo ? 'Código: ' + c.codigo : '',
       icon: 'fa-user-tie',
       color: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a9e 100%)',
+      underHeaderHtml,
       sections: [{
         title: 'Información fiscal', icon: 'fa-file-invoice',
         fields: [
