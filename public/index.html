@@ -12,7 +12,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Syne:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/design-tokens.css?v=1">
   <link rel="stylesheet" href="css/design-system.css?v=2">
-  <link rel="stylesheet" href="css/style.css?v=67-modal-theme-dark-class">
+  <link rel="stylesheet" href="css/style.css?v=68-theme-switcher-3">
+  <link rel="stylesheet" href="css/theme-industrial.css?v=1-industrial-metal">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
@@ -148,7 +149,11 @@
         <button type="button" id="btn-guided-tour" class="btn-icon-header" title="Tour guiado de la plataforma" aria-label="Tour guiado"><i class="fas fa-route"></i></button>
         <button type="button" id="shortcuts-btn" class="btn-icon-header" title="Atajos de teclado (Ctrl+/)">?</button>
         <button type="button" id="contrast-toggle" class="btn-icon-header" title="Alto contraste en modo oscuro" aria-label="Alto contraste" aria-pressed="false"><i class="fas fa-adjust"></i></button>
-        <button type="button" id="theme-toggle" class="btn-icon-header" title="Tema claro/oscuro" aria-label="Cambiar tema"><i class="fas fa-moon" id="theme-icon"></i></button>
+        <div class="theme-switcher" role="group" aria-label="Tema visual">
+          <button type="button" class="btn-icon-header theme-switcher-btn" data-theme="light" id="theme-btn-light" title="Tema claro (sol)" aria-label="Tema claro" aria-pressed="false"><i class="fas fa-sun"></i></button>
+          <button type="button" class="btn-icon-header theme-switcher-btn" data-theme="industrial" id="theme-btn-industrial" title="Tema industrial (metal y franjas)" aria-label="Tema industrial" aria-pressed="false"><i class="fas fa-circle-half-stroke"></i></button>
+          <button type="button" class="btn-icon-header theme-switcher-btn" data-theme="dark" id="theme-btn-dark" title="Tema oscuro (luna)" aria-label="Tema oscuro" aria-pressed="false"><i class="fas fa-moon"></i></button>
+        </div>
       </div>
     </div>
   </header>
@@ -1246,7 +1251,7 @@
 
   <footer class="app-footer" role="contentinfo">
     <p>Sistema de Cotización y Gestión · <span class="footer-version">v4</span> · Uso profesional · Cotizaciones, incidentes y bitácora en un solo lugar
-      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 56 · JS 107</strong></span></p>
+      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 57 · JS 108</strong></span></p>
     <p class="footer-tip"><kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> atajos de sección · <kbd>Esc</kbd> cierra modales</p>
   </footer>
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
@@ -1257,6 +1262,6 @@
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=107-backup-list-after-auth"></script>
+  <script src="js/app.js?v=108-theme-industrial-3way"></script>
 </body>
 </html>

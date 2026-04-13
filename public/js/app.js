@@ -1387,11 +1387,13 @@
     msgEl.textContent = message || '¿Eliminar este registro?';
     applyOkButton();
     const confirmBox = qs('#confirm-modal .modal-box');
-    if (confirmBox) confirmBox.classList.toggle('modal-box--theme-dark', document.body.classList.contains('dark-theme'));
+    if (confirmBox) applyModalThemeToBox(confirmBox);
     modal.classList.remove('hidden');
     const close = () => {
       modal.classList.add('hidden');
-      if (confirmBox) confirmBox.classList.remove('modal-box--theme-dark');
+      if (confirmBox) {
+        confirmBox.classList.remove('modal-box--theme-dark', 'modal-box--theme-industrial');
+      }
       resetOkButton();
       btnOk.onclick = null;
       btnCancel.onclick = null;
@@ -5496,7 +5498,15 @@
     const modalBox = qs('#modal .modal-box');
     const previousFocus = document.activeElement;
     if (modalBox) {
-      modalBox.classList.remove('pdf-preview-modal', 'dragging', 'modal-cotizacion', 'modal-box--refaccion-preview', 'modal-box--ref-stock', 'modal-box--theme-dark');
+      modalBox.classList.remove(
+        'pdf-preview-modal',
+        'dragging',
+        'modal-cotizacion',
+        'modal-box--refaccion-preview',
+        'modal-box--ref-stock',
+        'modal-box--theme-dark',
+        'modal-box--theme-industrial'
+      );
       modalBox.style.left = '';
       modalBox.style.top = '';
       modalBox.style.width = '';
@@ -5508,7 +5518,7 @@
     qs('#modal-body').innerHTML = bodyHtml;
     wireModalMediaOpenButtons(qs('#modal-body'));
     if (modalBox && /ref-pvc-hero/.test(String(bodyHtml || ''))) modalBox.classList.add('modal-box--refaccion-preview');
-    if (modalBox) modalBox.classList.toggle('modal-box--theme-dark', document.body.classList.contains('dark-theme'));
+    if (modalBox) applyModalThemeToBox(modalBox);
     modal.classList.remove('hidden');
     clearInvalidMarks();
     const focusables = () => modal.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
@@ -5549,7 +5559,7 @@
     qs('#modal-stack-body').innerHTML = bodyHtml;
     wireModalMediaOpenButtons(qs('#modal-stack-body'));
     const stackBox = qs('#modal-stack .modal-box');
-    if (stackBox) stackBox.classList.toggle('modal-box--theme-dark', document.body.classList.contains('dark-theme'));
+    if (stackBox) applyModalThemeToBox(stackBox);
     modal.classList.remove('hidden');
     clearInvalidMarks();
     const focusables = () => modal.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
@@ -10619,57 +10629,96 @@
     openModal('Atajos de teclado', html);
   }
 
-  function syncThemeColorMeta() {
-    const m = qs('#meta-theme-color');
-    if (!m) return;
-    const primary = (serverConfig && serverConfig.primaryHex) || '#1e3a5f';
-    m.setAttribute('content', document.body.classList.contains('dark-theme') ? '#0f172a' : primary);
+  const THEME_STORAGE_KEY = 'cotizacion-theme';
+  const VALID_THEMES = ['light', 'dark', 'industrial'];
+  function normalizeTheme(t) {
+    return VALID_THEMES.indexOf(t) >= 0 ? t : 'light';
   }
-  function initTheme() {
-    const dark = localStorage.getItem('cotizacion-dark') === '1';
-    const hc = localStorage.getItem('cotizacion-dark-hc') === '1';
-    const icon = qs('#theme-icon');
-    const contrastBtn = qs('#contrast-toggle');
-    if (dark) { document.body.classList.add('dark-theme'); if (icon) { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); } }
-    else { document.body.classList.remove('dark-theme'); if (icon) { icon.classList.remove('fa-sun'); icon.classList.add('fa-moon'); } }
-    document.body.classList.toggle('dark-high-contrast', dark && hc);
-    if (contrastBtn) {
-      contrastBtn.classList.toggle('is-active', dark && hc);
-      contrastBtn.setAttribute('aria-pressed', dark && hc ? 'true' : 'false');
-      contrastBtn.disabled = !dark;
-      contrastBtn.title = dark ? 'Alto contraste en modo oscuro' : 'Activa tema oscuro para usar alto contraste';
+  function getTheme() {
+    try {
+      let t = localStorage.getItem(THEME_STORAGE_KEY);
+      if (!t) {
+        const legacy = localStorage.getItem('cotizacion-dark');
+        t = legacy === '1' ? 'dark' : 'light';
+        localStorage.setItem(THEME_STORAGE_KEY, t);
+      }
+      return normalizeTheme(t);
+    } catch (_) {
+      return 'light';
     }
-    syncThemeColorMeta();
   }
-  function toggleTheme() {
-    const dark = document.body.classList.toggle('dark-theme');
-    localStorage.setItem('cotizacion-dark', dark ? '1' : '0');
+  function applyModalThemeToBox(box) {
+    if (!box) return;
+    box.classList.remove('modal-box--theme-dark', 'modal-box--theme-industrial');
+    const th = getTheme();
+    if (th === 'dark') box.classList.add('modal-box--theme-dark');
+    else if (th === 'industrial') box.classList.add('modal-box--theme-industrial');
+  }
+  function syncOpenModalsTheme() {
     [['#modal', '#modal .modal-box'], ['#modal-stack', '#modal-stack .modal-box'], ['#confirm-modal', '#confirm-modal .modal-box']].forEach(
       ([wrapSel, boxSel]) => {
         const wrap = qs(wrapSel);
         const box = qs(boxSel);
-        if (wrap && box && !wrap.classList.contains('hidden')) box.classList.toggle('modal-box--theme-dark', dark);
+        if (wrap && box && !wrap.classList.contains('hidden')) applyModalThemeToBox(box);
       }
     );
-    const icon = qs('#theme-icon');
-    if (icon) { icon.classList.toggle('fa-moon', !dark); icon.classList.toggle('fa-sun', dark); }
-    const hcEnabled = localStorage.getItem('cotizacion-dark-hc') === '1';
-    document.body.classList.toggle('dark-high-contrast', dark && hcEnabled);
-    const contrastBtn = qs('#contrast-toggle');
-    if (contrastBtn) {
-      contrastBtn.classList.toggle('is-active', dark && hcEnabled);
-      contrastBtn.setAttribute('aria-pressed', dark && hcEnabled ? 'true' : 'false');
-      contrastBtn.disabled = !dark;
-      contrastBtn.title = dark ? 'Alto contraste en modo oscuro' : 'Activa tema oscuro para usar alto contraste';
+  }
+  function setTheme(mode) {
+    mode = normalizeTheme(mode);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, mode);
+    } catch (_) {}
+    document.body.classList.remove('dark-theme', 'theme-industrial', 'dark-high-contrast');
+    if (mode === 'dark') document.body.classList.add('dark-theme');
+    if (mode === 'industrial') document.body.classList.add('theme-industrial');
+    const darkModeForContrast = mode === 'dark';
+    let hc = false;
+    try {
+      hc = darkModeForContrast && localStorage.getItem('cotizacion-dark-hc') === '1';
+    } catch (_) {}
+    if (hc) document.body.classList.add('dark-high-contrast');
+    qsAll('.theme-switcher-btn').forEach((b) => {
+      const active = b.getAttribute('data-theme') === mode;
+      b.classList.toggle('is-active', active);
+      b.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    const contrastBtnEarly = qs('#contrast-toggle');
+    if (contrastBtnEarly) {
+      contrastBtnEarly.classList.toggle('is-active', hc);
+      contrastBtnEarly.setAttribute('aria-pressed', hc ? 'true' : 'false');
+      contrastBtnEarly.disabled = !darkModeForContrast;
+      contrastBtnEarly.title = darkModeForContrast
+        ? 'Alto contraste en modo oscuro'
+        : 'Activa tema oscuro para usar alto contraste';
     }
+    syncOpenModalsTheme();
     syncThemeColorMeta();
   }
-  const themeBtn = qs('#theme-toggle');
-  if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+  function syncThemeColorMeta() {
+    const m = qs('#meta-theme-color');
+    if (!m) return;
+    const primary = (serverConfig && serverConfig.primaryHex) || '#1e3a5f';
+    const th = getTheme();
+    if (th === 'dark') m.setAttribute('content', '#0f172a');
+    else if (th === 'industrial') m.setAttribute('content', '#292524');
+    else m.setAttribute('content', primary);
+  }
+  function initTheme() {
+    setTheme(getTheme());
+  }
+  function wireThemeSwitcher() {
+    qsAll('.theme-switcher-btn').forEach((btn) => {
+      btn.addEventListener('click', function () {
+        const next = btn.getAttribute('data-theme');
+        if (next) setTheme(next);
+      });
+    });
+  }
+  wireThemeSwitcher();
   const contrastBtn = qs('#contrast-toggle');
   if (contrastBtn) {
     contrastBtn.addEventListener('click', function () {
-      if (!document.body.classList.contains('dark-theme')) {
+      if (getTheme() !== 'dark') {
         showToast('Activa tema oscuro para usar alto contraste.', 'error');
         return;
       }

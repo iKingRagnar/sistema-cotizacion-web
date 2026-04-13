@@ -1,0 +1,390 @@
+/**
+ * Tema "Industrial" (media luna): fondo metal / franjas suaves + acentos amarillo-oro.
+ * Complementa tema claro y oscuro; no sustituye reglas globales no duplicadas aquí.
+ */
+
+body.theme-industrial {
+  background-color: #1c1917;
+  color: #e7e5e4;
+}
+
+body.theme-industrial::before {
+  animation: none;
+  transform: none;
+  filter: saturate(0.92);
+  background:
+    repeating-linear-gradient(
+      -32deg,
+      rgba(12, 10, 9, 0.55) 0 18px,
+      rgba(234, 179, 8, 0.07) 18px 20px,
+      rgba(12, 10, 9, 0.55) 20px 40px
+    ),
+    linear-gradient(168deg, #57534e 0%, #44403c 18%, #292524 48%, #1c1917 78%, #0c0a09 100%),
+    repeating-linear-gradient(
+      88deg,
+      rgba(255, 255, 255, 0.04) 0 1px,
+      transparent 1px 6px
+    );
+  background-blend-mode: normal, normal, overlay;
+}
+
+body.theme-industrial::after {
+  animation: none;
+  opacity: 0.42;
+  background-image:
+    linear-gradient(rgba(250, 204, 21, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: radial-gradient(ellipse 90% 72% at 50% 36%, #000 0%, transparent 76%);
+}
+
+html:has(body.theme-industrial) {
+  scrollbar-color: #78716c #1c1917;
+}
+html:has(body.theme-industrial)::-webkit-scrollbar-track {
+  background: #1c1917;
+}
+html:has(body.theme-industrial)::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #a8a29e 0%, #78716c 100%);
+  border: 2px solid #1c1917;
+}
+html:has(body.theme-industrial)::-webkit-scrollbar-thumb:hover {
+  background: #d6d3d1;
+}
+
+body.theme-industrial ::selection {
+  background: rgba(234, 179, 8, 0.35);
+  color: #0c0a09;
+}
+
+/* Franja tipo “cinta” bajo el header */
+body.theme-industrial .header {
+  background: linear-gradient(125deg, #292524 0%, #44403c 40%, #57534e 72%, #44403c 100%);
+  background-size: 200% 200%;
+  animation: none;
+  box-shadow:
+    0 4px 28px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+body.theme-industrial .header::after {
+  height: 4px;
+  opacity: 1;
+  background: repeating-linear-gradient(
+    90deg,
+    #eab308 0 18px,
+    #0c0a09 18px 36px
+  );
+  border-radius: 0;
+}
+
+body.theme-industrial .tabs {
+  background: rgba(28, 25, 23, 0.92);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  backdrop-filter: blur(16px) saturate(120%);
+  border-bottom: 1px solid rgba(234, 179, 8, 0.35);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+body.theme-industrial .tab {
+  background: rgba(41, 37, 36, 0.9);
+  border-color: #57534e;
+  color: #d6d3d1;
+}
+body.theme-industrial .tab:hover {
+  background: #44403c;
+  border-color: #a8a29e;
+  color: #fafaf9;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+body.theme-industrial .tab.active {
+  background: linear-gradient(135deg, #ca8a04 0%, #eab308 42%, #a16207 100%);
+  border-color: rgba(250, 250, 249, 0.35);
+  color: #0c0a09;
+  font-weight: 700;
+  box-shadow:
+    0 4px 22px rgba(234, 179, 8, 0.35),
+    0 0 0 1px rgba(12, 10, 9, 0.25) inset;
+  animation: none;
+}
+body.theme-industrial .tab.active:hover {
+  color: #0c0a09;
+  filter: brightness(1.05);
+}
+body.theme-industrial .tab.highlight {
+  border-color: rgba(234, 179, 8, 0.65);
+  color: #fef9c3;
+  background: rgba(234, 179, 8, 0.12);
+}
+body.theme-industrial .tab.highlight:hover {
+  border-color: #fde047;
+  color: #fffbeb;
+  background: rgba(234, 179, 8, 0.2);
+}
+
+body.theme-industrial .content {
+  color: #e7e5e4;
+}
+
+body.theme-industrial .section-header {
+  border: 1px solid rgba(234, 179, 8, 0.35);
+  border-radius: 16px;
+  padding: 0.85rem 1rem;
+  background:
+    linear-gradient(180deg, rgba(41, 37, 36, 0.98) 0%, rgba(28, 25, 23, 0.99) 100%),
+    linear-gradient(125deg, rgba(234, 179, 8, 0.12) 0%, transparent 55%);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+body.theme-industrial .section-header::before {
+  background: linear-gradient(180deg, #eab308 0%, #ca8a04 55%, #57534e 100%);
+  box-shadow: 0 0 18px rgba(234, 179, 8, 0.35);
+}
+body.theme-industrial .section-header h2 {
+  color: #fafaf9;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+body.theme-industrial .section-header h2 i {
+  color: #0c0a09;
+  background: linear-gradient(145deg, #fde047 0%, #eab308 100%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 6px 14px rgba(0, 0, 0, 0.4);
+}
+
+body.theme-industrial .table-wrap {
+  background: #292524;
+  border-color: #57534e;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(234, 179, 8, 0.12);
+}
+body.theme-industrial .table-wrap:hover {
+  border-color: #a8a29e;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(234, 179, 8, 0.2);
+}
+
+body.theme-industrial .data-table th {
+  background: linear-gradient(180deg, #44403c 0%, #292524 100%);
+  color: #fafaf9;
+  border-bottom-color: #57534e;
+}
+body.theme-industrial .data-table td {
+  border-bottom-color: #44403c;
+  color: #e7e5e4;
+}
+body.theme-industrial .data-table tbody tr:nth-child(even) {
+  background: #1c1917;
+}
+body.theme-industrial .data-table tbody tr:hover {
+  background: rgba(234, 179, 8, 0.08) !important;
+  box-shadow: inset 0 0 0 1px rgba(234, 179, 8, 0.22);
+}
+
+body.theme-industrial .filter-row td {
+  background: #0c0a09;
+  border-bottom-color: #44403c;
+}
+
+body.theme-industrial .card,
+body.theme-industrial .empty-card {
+  background: #292524;
+  border-color: #57534e;
+  color: #e7e5e4;
+}
+body.theme-industrial .card h2,
+body.theme-industrial .empty-card h3 {
+  color: #fafaf9;
+}
+
+body.theme-industrial .btn:not(.primary):not(.danger) {
+  background: #44403c;
+  color: #fafaf9;
+  border-color: #57534e;
+}
+body.theme-industrial .btn:not(.primary):not(.danger):hover {
+  background: #57534e;
+  border-color: #a8a29e;
+  color: #fff;
+}
+
+body.theme-industrial .btn.primary {
+  background: linear-gradient(145deg, #ca8a04 0%, #eab308 45%, #a16207 100%);
+  color: #0c0a09;
+  font-weight: 700;
+  box-shadow: 0 2px 14px rgba(234, 179, 8, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+body.theme-industrial .btn.primary:hover {
+  background: linear-gradient(145deg, #eab308 0%, #fde047 50%, #ca8a04 100%);
+  box-shadow: 0 6px 22px rgba(234, 179, 8, 0.45);
+}
+body.theme-industrial .btn.outline {
+  background: transparent;
+  color: #fafaf9;
+  border-color: #a8a29e;
+}
+body.theme-industrial .btn.outline:hover {
+  background: rgba(234, 179, 8, 0.12);
+  border-color: #eab308;
+  color: #fff;
+}
+
+body.theme-industrial .search,
+body.theme-industrial input.filter-input,
+body.theme-industrial select.filter-input,
+body.theme-industrial textarea.filter-input {
+  background: #0c0a09;
+  border-color: #57534e;
+  color: #fafaf9;
+}
+
+body.theme-industrial .modal-box {
+  background: #292524;
+  border-color: #57534e;
+  color: #e7e5e4;
+}
+body.theme-industrial .modal-header {
+  background: #1c1917;
+  border-bottom-color: rgba(234, 179, 8, 0.35);
+}
+body.theme-industrial .modal-header h3 {
+  color: #fafaf9;
+}
+body.theme-industrial .close {
+  color: #a8a29e;
+}
+body.theme-industrial .close:hover {
+  color: #fef3c7;
+  background: rgba(234, 179, 8, 0.15);
+}
+
+body.theme-industrial .form-group label {
+  color: #d6d3d1;
+}
+body.theme-industrial .form-group input,
+body.theme-industrial .form-group select,
+body.theme-industrial .form-group textarea {
+  background: #0c0a09;
+  border-color: #57534e;
+  color: #fafaf9;
+}
+
+body.theme-industrial .app-footer {
+  border-top-color: #44403c;
+  background: linear-gradient(180deg, transparent 0%, rgba(12, 10, 9, 0.92) 100%);
+}
+body.theme-industrial .app-footer p,
+body.theme-industrial .app-footer .footer-version {
+  color: #a8a29e;
+}
+
+body.theme-industrial .login-card {
+  background: #292524;
+  border: 1px solid #57534e;
+}
+body.theme-industrial .login-card h2 {
+  color: #fafaf9;
+}
+body.theme-industrial .login-hint {
+  color: #a8a29e;
+}
+
+body.theme-industrial .tab:focus-visible,
+body.theme-industrial .btn:focus-visible,
+body.theme-industrial .btn-icon-header:focus-visible {
+  outline-color: #eab308;
+}
+
+/* Tablas compactas en modales (liquidación, etc.) */
+body.theme-industrial .table-simple th,
+body.theme-industrial .table-simple td {
+  border-color: #57534e;
+  color: #e7e5e4;
+}
+body.theme-industrial .table-simple thead th {
+  background: linear-gradient(180deg, #44403c 0%, #292524 100%);
+  color: #fefce8;
+  font-weight: 600;
+}
+body.theme-industrial .table-simple tbody tr:nth-child(even) td {
+  background: rgba(12, 10, 9, 0.45);
+}
+body.theme-industrial .table-simple tbody tr:hover td {
+  background: rgba(234, 179, 8, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(234, 179, 8, 0.2);
+}
+
+/* Shell de modal aplicado por JS (misma idea que theme-dark) */
+.modal-box.modal-box--theme-industrial {
+  background: #292524;
+  border-color: #57534e;
+  color: #e7e5e4;
+  box-shadow: var(--shadow-xl), 0 0 0 1px rgba(234, 179, 8, 0.12);
+}
+.modal-box.modal-box--theme-industrial .modal-header {
+  background: #1c1917;
+  border-bottom-color: rgba(234, 179, 8, 0.35);
+}
+.modal-box.modal-box--theme-industrial .modal-header h3 {
+  color: #fafaf9;
+}
+.modal-box.modal-box--theme-industrial .close {
+  color: #a8a29e;
+}
+.modal-box.modal-box--theme-industrial .close:hover {
+  color: #fef3c7;
+  background: rgba(234, 179, 8, 0.15);
+}
+.modal-box.modal-box--theme-industrial .modal-body {
+  background: transparent;
+  color: inherit;
+}
+.modal-box.modal-box--theme-industrial.modal-cotizacion .modal-body {
+  background: linear-gradient(180deg, rgba(28, 25, 23, 0.75) 0%, #292524 14%);
+}
+.modal-box.modal-box--theme-industrial .form-group label {
+  color: #d6d3d1;
+}
+.modal-box.modal-box--theme-industrial .form-group input,
+.modal-box.modal-box--theme-industrial .form-group select,
+.modal-box.modal-box--theme-industrial .form-group textarea {
+  background: #0c0a09;
+  border-color: #57534e;
+  color: #fafaf9;
+}
+.modal-box.modal-box--theme-industrial .form-group input:focus,
+.modal-box.modal-box--theme-industrial .form-group select:focus,
+.modal-box.modal-box--theme-industrial .form-group textarea:focus {
+  border-color: #eab308;
+  box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.22);
+}
+.modal-box.modal-box--theme-industrial .table-simple th,
+.modal-box.modal-box--theme-industrial .table-simple td {
+  border-color: #57534e;
+  color: #e7e5e4;
+}
+.modal-box.modal-box--theme-industrial .table-simple thead th {
+  background: linear-gradient(180deg, #44403c 0%, #292524 100%);
+  color: #fefce8;
+  font-weight: 600;
+}
+.modal-box.modal-box--theme-industrial .table-simple tbody tr:nth-child(even) td {
+  background: rgba(12, 10, 9, 0.45);
+}
+.modal-box.modal-box--theme-industrial .table-simple tbody tr:hover td {
+  background: rgba(234, 179, 8, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(234, 179, 8, 0.2);
+}
+.modal-box.modal-box--theme-industrial .hint {
+  color: #a8a29e;
+}
+.modal-box.modal-box--theme-industrial .btn.primary {
+  background: linear-gradient(145deg, #ca8a04 0%, #eab308 50%, #a16207 100%);
+  color: #0c0a09;
+}
+.modal-box.modal-box--theme-industrial .btn.outline {
+  background: transparent;
+  color: #fafaf9;
+  border-color: #a8a29e;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.theme-industrial .header {
+    background-position: 50% 50%;
+  }
+}
