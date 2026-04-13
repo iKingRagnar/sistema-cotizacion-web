@@ -1153,6 +1153,71 @@
         showToast('No se pudo abrir la imagen/archivo. Recarga la página (F5).', 'error');
         return;
       }
+      // Si es un endpoint protegido (/api/...), abrir con Authorization (window.open no manda headers).
+      if (String(url).startsWith('/api/') && serverConfig && serverConfig.authRequired) {
+        const headers = {};
+        const tok = getAuthToken();
+        if (tok) headers['Authorization'] = 'Bearer ' + tok;
+        fetch(url, { headers })
+          .then(async (r) => {
+            if (!r.ok) {
+              let msg = 'No autorizado. Inicia sesión.';
+              try {
+                const j = await r.json();
+                if (j && j.error) msg = j.error;
+              } catch (_) {}
+              throw new Error(msg);
+            }
+            const ct = String(r.headers.get('content-type') || '');
+            const blob = await r.blob();
+            const objUrl = URL.createObjectURL(blob);
+            if (/^image\//i.test(ct) || /^image\//i.test(blob.type)) {
+              // Abrir directamente el lightbox con blob URL.
+              const prev = document.getElementById('ref-img-lightbox');
+              if (prev) prev.remove();
+              const wrap = document.createElement('div');
+              wrap.id = 'ref-img-lightbox';
+              wrap.className = 'ref-img-lightbox';
+              wrap.setAttribute('role', 'dialog');
+              wrap.setAttribute('aria-modal', 'true');
+              const inner = document.createElement('div');
+              inner.className = 'ref-img-lightbox-inner';
+              const imgEl = document.createElement('img');
+              imgEl.alt = '';
+              imgEl.src = objUrl;
+              inner.appendChild(imgEl);
+              const closeBtn = document.createElement('button');
+              closeBtn.type = 'button';
+              closeBtn.className = 'ref-img-lightbox-close';
+              closeBtn.setAttribute('aria-label', 'Cerrar');
+              closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+              wrap.appendChild(closeBtn);
+              wrap.appendChild(inner);
+              document.body.appendChild(wrap);
+              const close = () => {
+                wrap.classList.add('ref-img-lightbox--out');
+                setTimeout(() => {
+                  wrap.remove();
+                  document.removeEventListener('keydown', onKey);
+                  try { URL.revokeObjectURL(objUrl); } catch (_) {}
+                }, 200);
+              };
+              function onKey(ev) {
+                if (ev.key === 'Escape') close();
+              }
+              document.addEventListener('keydown', onKey);
+              wrap.addEventListener('click', (ev) => { if (ev.target === wrap || (ev.target && ev.target.closest('.ref-img-lightbox-close'))) close(); });
+              requestAnimationFrame(() => wrap.classList.add('ref-img-lightbox--in'));
+              return;
+            }
+            try { window.open(objUrl, '_blank', 'noopener,noreferrer'); } catch (_) {}
+            setTimeout(() => { try { URL.revokeObjectURL(objUrl); } catch (_) {} }, 60_000);
+          })
+          .catch((err) => {
+            showToast(String(err && err.message ? err.message : err) || 'No se pudo abrir el archivo.', 'error');
+          });
+        return;
+      }
       openRefaccionMediaFull(url);
     }, true);
   })();
@@ -1794,6 +1859,47 @@
   function openRefaccionMediaFull(url) {
     const u = String(url || '');
     if (!u) return;
+    function openLightboxImgSrc(src) {
+      const prev = document.getElementById('ref-img-lightbox');
+      if (prev) prev.remove();
+      const wrap = document.createElement('div');
+      wrap.id = 'ref-img-lightbox';
+      wrap.className = 'ref-img-lightbox';
+      wrap.setAttribute('role', 'dialog');
+      wrap.setAttribute('aria-modal', 'true');
+      const inner = document.createElement('div');
+      inner.className = 'ref-img-lightbox-inner';
+      const imgEl = document.createElement('img');
+      imgEl.alt = '';
+      imgEl.src = src;
+      inner.appendChild(imgEl);
+      const closeBtn = document.createElement('button');
+      closeBtn.type = 'button';
+      closeBtn.className = 'ref-img-lightbox-close';
+      closeBtn.setAttribute('aria-label', 'Cerrar');
+      closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+      wrap.appendChild(closeBtn);
+      wrap.appendChild(inner);
+      document.body.appendChild(wrap);
+      const shouldRevoke = String(src || '').startsWith('blob:');
+      const close = () => {
+        wrap.classList.add('ref-img-lightbox--out');
+        setTimeout(() => {
+          wrap.remove();
+          document.removeEventListener('keydown', onKey);
+          if (shouldRevoke) {
+            try { URL.revokeObjectURL(src); } catch (_) {}
+          }
+        }, 200);
+      };
+      function onKey(e) {
+        if (e.key === 'Escape') close();
+      }
+      document.addEventListener('keydown', onKey);
+      wrap.addEventListener('click', (e) => { if (e.target === wrap || (e.target && e.target.closest('.ref-img-lightbox-close'))) close(); });
+      requestAnimationFrame(() => wrap.classList.add('ref-img-lightbox--in'));
+    }
+
     const isImg = u.startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(u);
     if (!isImg) {
       try { window.open(u, '_blank', 'noopener,noreferrer'); } catch (_) {}
@@ -1806,30 +1912,7 @@
     wrap.className = 'ref-img-lightbox';
     wrap.setAttribute('role', 'dialog');
     wrap.setAttribute('aria-modal', 'true');
-    const inner = document.createElement('div');
-    inner.className = 'ref-img-lightbox-inner';
-    const imgEl = document.createElement('img');
-    imgEl.alt = '';
-    imgEl.src = u;
-    inner.appendChild(imgEl);
-    const closeBtn = document.createElement('button');
-    closeBtn.type = 'button';
-    closeBtn.className = 'ref-img-lightbox-close';
-    closeBtn.setAttribute('aria-label', 'Cerrar');
-    closeBtn.innerHTML = '<i class="fas fa-times"></i>';
-    wrap.appendChild(closeBtn);
-    wrap.appendChild(inner);
-    document.body.appendChild(wrap);
-    const close = () => {
-      wrap.classList.add('ref-img-lightbox--out');
-      setTimeout(() => { wrap.remove(); document.removeEventListener('keydown', onKey); }, 200);
-    };
-    function onKey(e) {
-      if (e.key === 'Escape') close();
-    }
-    document.addEventListener('keydown', onKey);
-    wrap.addEventListener('click', (e) => { if (e.target === wrap || (e.target && e.target.closest('.ref-img-lightbox-close'))) close(); });
-    requestAnimationFrame(() => wrap.classList.add('ref-img-lightbox--in'));
+    openLightboxImgSrc(u);
   }
 
   /** Tras innerHTML del modal: addEventListener en cada .js-refaccion-open-media (onclick en HTML no es fiable con innerHTML/CSP). */
