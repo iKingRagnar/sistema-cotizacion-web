@@ -388,3 +388,392 @@ body.theme-industrial .table-simple tbody tr:hover td {
     background-position: 50% 50%;
   }
 }
+
+/* =============================================================================
+   Industrial — alinear dashboard, cabeceras “cristal/azul” y tablas en TODOS
+   los módulos (misma especificidad que reglas premium en style.css).
+   ============================================================================= */
+
+/* Dashboard: quitar bloque azul aislado; acentos oro en lugar de cyan */
+body.theme-industrial #panel-dashboards.panel-dashboard {
+  background: linear-gradient(180deg, #1c1917 0%, #0c0a09 50%, #1c1917 100%);
+  border-top: 1px solid rgba(234, 179, 8, 0.22);
+}
+body.theme-industrial .dashboard-title {
+  color: #fafaf9;
+  text-shadow: 0 2px 18px rgba(234, 179, 8, 0.16);
+}
+body.theme-industrial .dashboard-title i {
+  color: #fde047;
+}
+body.theme-industrial .dashboard-subtitle strong {
+  color: #fde68a;
+}
+body.theme-industrial .dashboard-crossfilter-bar {
+  background: linear-gradient(90deg, rgba(234, 179, 8, 0.14) 0%, rgba(68, 64, 60, 0.35) 100%);
+  border-color: rgba(234, 179, 8, 0.32);
+}
+body.theme-industrial .dashboard-crossfilter-clear {
+  border-color: rgba(234, 179, 8, 0.5) !important;
+  color: #fef9c3 !important;
+}
+body.theme-industrial #panel-dashboards .dashboard-surface .dashboard-card.is-crossfilter-match,
+body.theme-industrial #panel-dashboards .dashboard-surface .dashboard-score-tile.is-crossfilter-match {
+  box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.42), 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+body.theme-industrial .dashboard-loading {
+  color: #a8a29e;
+}
+body.theme-industrial .dashboard-loading .loading-spinner {
+  border-color: rgba(255, 255, 255, 0.1);
+  border-top-color: #eab308;
+}
+body.theme-industrial .dashboard-card-action {
+  color: #fde68a;
+}
+body.theme-industrial .dashboard-card-action:hover {
+  color: #fef9c3;
+}
+body.theme-industrial .dashboard-section-title i {
+  color: #eab308;
+}
+body.theme-industrial .dashboard-forecast-card h4 {
+  color: #fde047;
+}
+body.theme-industrial .dashboard-forecast-card .stat-label {
+  color: #fde68a;
+}
+body.theme-industrial .dashboard-card {
+  border-color: rgba(234, 179, 8, 0.12);
+}
+body.theme-industrial .dashboard-stat-card {
+  border-color: rgba(234, 179, 8, 0.1);
+}
+
+/* Cabeceras de sección globales (sustituye blanco / lavanda) */
+body.theme-industrial .section-header {
+  background: linear-gradient(135deg, rgba(41, 37, 36, 0.98) 0%, rgba(28, 25, 23, 0.99) 100%);
+  border-color: rgba(234, 179, 8, 0.28);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+body.theme-industrial .section-header::before {
+  background: linear-gradient(180deg, #eab308 0%, #ca8a04 50%, #57534e 100%);
+  box-shadow: 0 0 14px rgba(234, 179, 8, 0.32);
+}
+body.theme-industrial .section-header h2 {
+  color: #fafaf9;
+}
+
+/* Paneles premium (cotizaciones, incidentes, bitácora, refacciones) */
+body.theme-industrial #panel-cotizaciones .section-header,
+body.theme-industrial #panel-incidentes .section-header,
+body.theme-industrial #panel-bitacoras .section-header,
+body.theme-industrial #panel-refacciones .section-header {
+  background: linear-gradient(135deg, rgba(41, 37, 36, 0.98) 0%, rgba(28, 25, 23, 0.98) 100%);
+  border-color: rgba(234, 179, 8, 0.3);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+body.theme-industrial #panel-cotizaciones .section-header h2 i,
+body.theme-industrial #panel-incidentes .section-header h2 i,
+body.theme-industrial #panel-bitacoras .section-header h2 i,
+body.theme-industrial #panel-refacciones .section-header h2 i {
+  background: linear-gradient(135deg, #ca8a04 0%, #eab308 45%, #a16207 100%);
+  color: #0c0a09;
+  animation: none;
+}
+
+body.theme-industrial #panel-cotizaciones .table-wrap,
+body.theme-industrial #panel-incidentes .table-wrap,
+body.theme-industrial #panel-bitacoras .table-wrap,
+body.theme-industrial #panel-refacciones .table-wrap {
+  background: rgba(28, 25, 23, 0.94);
+  border-color: rgba(234, 179, 8, 0.22);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(234, 179, 8, 0.08) inset;
+  backdrop-filter: blur(8px);
+}
+
+/* Cabecera de columnas + fila de filtros: todas las data-table */
+body.theme-industrial .data-table thead tr:first-child th {
+  background: linear-gradient(180deg, #44403c 0%, #292524 100%) !important;
+  color: #fefce8 !important;
+  box-shadow: 0 2px 0 rgba(234, 179, 8, 0.2);
+  border-bottom-color: #57534e !important;
+}
+body.theme-industrial .data-table thead .filter-row td,
+body.theme-industrial .filter-row td {
+  background: #0c0a09 !important;
+  border-bottom-color: #44403c !important;
+  color: #e7e5e4;
+}
+
+body.theme-industrial .data-table tbody tr {
+  color: #e7e5e4;
+}
+body.theme-industrial .data-table tbody tr:nth-child(even) {
+  background: rgba(28, 25, 23, 0.72) !important;
+}
+body.theme-industrial .data-table tbody tr:hover {
+  background: rgba(234, 179, 8, 0.09) !important;
+  box-shadow: inset 4px 0 0 #ca8a04 !important;
+}
+
+body.theme-industrial .data-table td {
+  color: #e7e5e4;
+  border-bottom-color: #44403c;
+}
+body.theme-industrial .data-table td.empty.filter-empty {
+  color: #a8a29e;
+}
+
+/* Refacciones: reglas #tabla-refacciones ganan a las globales claras */
+body.theme-industrial #tabla-refacciones thead tr:first-child th {
+  background: linear-gradient(180deg, #44403c 0%, #292524 100%) !important;
+  color: #fefce8 !important;
+  border-bottom-color: #57534e !important;
+}
+body.theme-industrial #tabla-refacciones thead tr:first-child th.th-actions {
+  background: linear-gradient(180deg, #44403c 0%, #292524 100%) !important;
+}
+body.theme-industrial #tabla-refacciones thead .filter-row td {
+  background: #0c0a09 !important;
+  border-bottom-color: #44403c !important;
+}
+body.theme-industrial #tabla-refacciones thead .filter-row input.filter-input,
+body.theme-industrial #tabla-refacciones thead .filter-row select.filter-input,
+body.theme-industrial #tabla-refacciones thead .filter-row textarea.filter-input {
+  background: #1c1917 !important;
+  border-color: #57534e !important;
+  color: #fafaf9 !important;
+}
+body.theme-industrial #tabla-refacciones.data-table tbody tr:nth-child(even) {
+  background: rgba(28, 25, 23, 0.82) !important;
+}
+body.theme-industrial #tabla-refacciones.data-table tbody tr:hover {
+  background: rgba(234, 179, 8, 0.1) !important;
+  box-shadow: inset 3px 0 0 #eab308 !important;
+}
+
+/* Cotizaciones / incidentes / bitácora: cabecera explícita */
+body.theme-industrial #tabla-cotizaciones thead tr:first-child th,
+body.theme-industrial #tabla-incidentes thead tr:first-child th,
+body.theme-industrial #tabla-bitacoras thead tr:first-child th {
+  background: linear-gradient(180deg, #44403c 0%, #292524 100%) !important;
+  color: #fefce8 !important;
+  border-bottom-color: #57534e !important;
+}
+body.theme-industrial #tabla-cotizaciones tbody tr:hover,
+body.theme-industrial #tabla-incidentes tbody tr:hover,
+body.theme-industrial #tabla-bitacoras tbody tr:hover {
+  background: rgba(234, 179, 8, 0.09) !important;
+}
+
+/* Filtros en tablas con inputs (cotizaciones, incidentes, bitácora) */
+body.theme-industrial #tabla-cotizaciones .filter-row td,
+body.theme-industrial #tabla-incidentes .filter-row td,
+body.theme-industrial #tabla-bitacoras .filter-row td {
+  background: #0c0a09 !important;
+  border-bottom-color: #44403c !important;
+}
+body.theme-industrial #tabla-cotizaciones input.filter-input,
+body.theme-industrial #tabla-cotizaciones select.filter-input,
+body.theme-industrial #tabla-cotizaciones textarea.filter-input,
+body.theme-industrial #tabla-incidentes input.filter-input,
+body.theme-industrial #tabla-incidentes select.filter-input,
+body.theme-industrial #tabla-incidentes textarea.filter-input,
+body.theme-industrial #tabla-bitacoras input.filter-input,
+body.theme-industrial #tabla-bitacoras select.filter-input,
+body.theme-industrial #tabla-bitacoras textarea.filter-input {
+  background: #1c1917 !important;
+  border-color: #57534e !important;
+  color: #fafaf9 !important;
+}
+body.theme-industrial #tabla-cotizaciones .filter-date-select,
+body.theme-industrial #tabla-cotizaciones .filter-date-input,
+body.theme-industrial #tabla-incidentes .filter-date-select,
+body.theme-industrial #tabla-incidentes .filter-date-input,
+body.theme-industrial #tabla-bitacoras .filter-date-select,
+body.theme-industrial #tabla-bitacoras .filter-date-input {
+  background: #1c1917 !important;
+  color: #fafaf9 !important;
+  border-color: #57534e !important;
+}
+
+/* Barra de stock bajo en refacciones */
+body.theme-industrial .stock-alert-bar,
+body.theme-industrial #ref-stock-alert-bar.stock-alert-bar {
+  background: linear-gradient(135deg, rgba(66, 32, 6, 0.96) 0%, rgba(113, 63, 18, 0.92) 100%);
+  border-color: rgba(251, 191, 36, 0.45);
+  color: #fde68a;
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.12) inset, 0 12px 36px rgba(0, 0, 0, 0.35);
+}
+body.theme-industrial #ref-stock-alert-bar.stock-alert-bar strong,
+body.theme-industrial .stock-alert-bar strong {
+  color: #fffbeb;
+}
+
+/* Píldoras categoría refacciones (fondo blanco en tema oscuro de catálogo) */
+body.theme-industrial .ref-cat-pill--part {
+  background: rgba(68, 64, 60, 0.95);
+  color: #e7e5e4;
+  border-color: #57534e;
+}
+
+/* Spinner global (si aparece) */
+body.theme-industrial .global-loading .loading-spinner {
+  border-color: #44403c;
+  border-top-color: #eab308;
+}
+body.theme-industrial .global-loading .loading-text {
+  color: #d6d3d1;
+}
+
+/* Paneles con tabla: refuerzo (un ID en style.css gana a body.theme-industrial .table-wrap sin ID) */
+body.theme-industrial #panel-clientes .table-wrap,
+body.theme-industrial #panel-maquinas .table-wrap,
+body.theme-industrial #panel-ventas .table-wrap,
+body.theme-industrial #panel-prospeccion .table-wrap,
+body.theme-industrial #panel-revision-maquinas .table-wrap,
+body.theme-industrial #panel-tarifas .table-wrap,
+body.theme-industrial #panel-reportes .table-wrap,
+body.theme-industrial #panel-garantias .table-wrap,
+body.theme-industrial #panel-mantenimiento-garantia .table-wrap,
+body.theme-industrial #panel-garantias-sin-cobertura .table-wrap,
+body.theme-industrial #panel-bonos .table-wrap,
+body.theme-industrial #panel-viajes .table-wrap,
+body.theme-industrial #panel-tecnicos .table-wrap,
+body.theme-industrial #panel-auditoria .table-wrap,
+body.theme-industrial #panel-usuarios .table-wrap,
+body.theme-industrial #panel-categorias-catalogo .table-wrap,
+body.theme-industrial #panel-demo .table-wrap {
+  background: rgba(28, 25, 23, 0.94);
+  border-color: rgba(234, 179, 8, 0.22);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(234, 179, 8, 0.08) inset;
+  backdrop-filter: blur(8px);
+}
+body.theme-industrial #panel-clientes .table-wrap:hover,
+body.theme-industrial #panel-maquinas .table-wrap:hover,
+body.theme-industrial #panel-ventas .table-wrap:hover,
+body.theme-industrial #panel-prospeccion .table-wrap:hover,
+body.theme-industrial #panel-revision-maquinas .table-wrap:hover,
+body.theme-industrial #panel-tarifas .table-wrap:hover,
+body.theme-industrial #panel-reportes .table-wrap:hover,
+body.theme-industrial #panel-garantias .table-wrap:hover,
+body.theme-industrial #panel-mantenimiento-garantia .table-wrap:hover,
+body.theme-industrial #panel-garantias-sin-cobertura .table-wrap:hover,
+body.theme-industrial #panel-bonos .table-wrap:hover,
+body.theme-industrial #panel-viajes .table-wrap:hover,
+body.theme-industrial #panel-tecnicos .table-wrap:hover,
+body.theme-industrial #panel-auditoria .table-wrap:hover,
+body.theme-industrial #panel-usuarios .table-wrap:hover,
+body.theme-industrial #panel-categorias-catalogo .table-wrap:hover,
+body.theme-industrial #panel-demo .table-wrap:hover {
+  border-color: rgba(234, 179, 8, 0.35);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(234, 179, 8, 0.14) inset;
+}
+
+/* Filtros en cabecera de tabla (input.filter-input gana por orden en style.css sin body) */
+body.theme-industrial .data-table thead .filter-row input:not([type="checkbox"]):not([type="radio"]),
+body.theme-industrial .data-table thead .filter-row textarea,
+body.theme-industrial .data-table thead .filter-row select {
+  background: #1c1917 !important;
+  border-color: #57534e !important;
+  color: #fafaf9 !important;
+}
+body.theme-industrial .data-table thead .filter-row input:focus,
+body.theme-industrial .data-table thead .filter-row textarea:focus,
+body.theme-industrial .data-table thead .filter-row select:focus {
+  border-color: #eab308 !important;
+  box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.22) !important;
+}
+body.theme-industrial .data-table .filter-date-wrap .filter-date-select,
+body.theme-industrial .data-table .filter-date-wrap .filter-date-input {
+  background: #1c1917 !important;
+  border-color: #57534e !important;
+  color: #fafaf9 !important;
+}
+body.theme-industrial .data-table .filter-date-wrap .filter-date-select:focus,
+body.theme-industrial .data-table .filter-date-wrap .filter-date-input:focus {
+  border-color: #eab308 !important;
+}
+
+/* Dashboard: tarjetas ejecutivas, pronósticos y botones (menos cyan/azul) */
+body.theme-industrial .btn-dashboard-refresh:hover {
+  border-color: rgba(234, 179, 8, 0.45) !important;
+  color: #fef9c3 !important;
+}
+body.theme-industrial .dashboard-kpi-strip {
+  background: rgba(12, 10, 9, 0.55);
+  border-color: rgba(234, 179, 8, 0.18);
+}
+body.theme-industrial .dashboard-kpi-item i {
+  color: #eab308;
+}
+body.theme-industrial .dashboard-score-tile {
+  background: linear-gradient(145deg, rgba(41, 37, 36, 0.95) 0%, rgba(28, 25, 23, 0.98) 55%, rgba(12, 10, 9, 1) 100%);
+  border-color: rgba(234, 179, 8, 0.14);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+body.theme-industrial .dashboard-score-tile:hover {
+  border-color: rgba(234, 179, 8, 0.22);
+}
+body.theme-industrial .dashboard-score-tile--revenue::before {
+  background: linear-gradient(180deg, #eab308 0%, #ca8a04 50%, #a16207 100%);
+}
+body.theme-industrial .dashboard-score-tile--pipeline::before {
+  background: linear-gradient(180deg, #fde68a 0%, #d97706 50%, #92400e 100%);
+}
+body.theme-industrial .dashboard-score-tile--risk::before {
+  background: linear-gradient(180deg, #fb923c 0%, #ea580c 55%, #9a3412 100%);
+}
+body.theme-industrial .dashboard-score-tile--ops::before {
+  background: linear-gradient(180deg, #a8a29e 0%, #78716c 50%, #44403c 100%);
+}
+body.theme-industrial .dashboard-score-eyebrow {
+  color: #78716c;
+}
+body.theme-industrial .dashboard-score-label {
+  color: #a8a29e;
+}
+body.theme-industrial .dashboard-score-meta i {
+  color: #eab308;
+}
+body.theme-industrial .dashboard-card {
+  background: linear-gradient(180deg, #292524 0%, #1c1917 100%);
+  border-color: rgba(234, 179, 8, 0.1);
+}
+body.theme-industrial .dashboard-card[data-dashboard="clientes"] .dashboard-card-icon {
+  background: linear-gradient(135deg, #ca8a04 0%, #a16207 100%);
+}
+body.theme-industrial .dashboard-card[data-dashboard="refacciones"] .dashboard-card-icon {
+  background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
+}
+body.theme-industrial .dashboard-card[data-dashboard="maquinas"] .dashboard-card-icon {
+  background: linear-gradient(135deg, #78716c 0%, #57534e 100%);
+}
+body.theme-industrial .dashboard-card[data-dashboard="cotizaciones"] .dashboard-card-icon {
+  background: linear-gradient(135deg, #65a30d 0%, #4d7c0f 100%);
+}
+body.theme-industrial .dashboard-card[data-dashboard="incidentes"] .dashboard-card-icon {
+  background: linear-gradient(135deg, #ea580c 0%, #9a3412 100%);
+}
+body.theme-industrial .dashboard-card[data-dashboard="bitacoras"] .dashboard-card-icon {
+  background: linear-gradient(135deg, #a16207 0%, #713f12 100%);
+}
+body.theme-industrial .dashboard-forecast-card {
+  background: rgba(234, 179, 8, 0.08);
+  border-color: rgba(234, 179, 8, 0.22);
+}
+body.theme-industrial .dashboard-forecast-legend {
+  background: rgba(234, 179, 8, 0.08);
+  border-left-color: #eab308;
+}
+body.theme-industrial .dashboard-stat-card h4,
+body.theme-industrial .dashboard-stat-card .stat-label {
+  color: #a8a29e;
+}
+body.theme-industrial .dashboard-stat-card .stat-value {
+  color: #fafaf9;
+}
+body.theme-industrial .dashboard-stat-card h4.dashboard-stat-card-title-cf {
+  color: #d6d3d1;
+}

@@ -8763,12 +8763,20 @@
           const nCot = cotizacionesCtx.length;
           const nBit = bitacorasCtx.length;
           const donutCtx = document.getElementById('chart-donut');
+          const industrialUi = document.body.classList.contains('theme-industrial');
           if (donutCtx && (nCot + nBit > 0)) {
             chartDonut = new Chart(donutCtx, {
               type: 'doughnut',
               data: {
                 labels: ['Cotizaciones', 'Bitácoras'],
-                datasets: [{ data: [nCot, nBit], backgroundColor: ['#059669', '#7c3aed'], borderColor: '#1e293b', borderWidth: 2 }],
+                datasets: [
+                  {
+                    data: [nCot, nBit],
+                    backgroundColor: industrialUi ? ['#ca8a04', '#57534e'] : ['#059669', '#7c3aed'],
+                    borderColor: industrialUi ? '#292524' : '#1e293b',
+                    borderWidth: 2,
+                  },
+                ],
               },
               options: {
                 responsive: true,
@@ -8792,8 +8800,20 @@
               data: {
                 labels: ['Semana', 'Mes', 'Año'],
                 datasets: [
-                  { label: 'Actual', data: [p.semana_actual?.cotizaciones?.count ?? 0, p.mes_actual?.cotizaciones?.count ?? 0, p.año_actual?.cotizaciones?.count ?? 0], backgroundColor: 'rgba(56,189,248,0.8)', borderColor: '#38bdf8', borderWidth: 1 },
-                  { label: 'Anterior', data: [p.semana_anterior?.cotizaciones?.count ?? 0, p.mes_anterior?.cotizaciones?.count ?? 0, p.año_anterior?.cotizaciones?.count ?? 0], backgroundColor: 'rgba(148,163,184,0.6)', borderColor: '#94a3b8', borderWidth: 1 },
+                  {
+                    label: 'Actual',
+                    data: [p.semana_actual?.cotizaciones?.count ?? 0, p.mes_actual?.cotizaciones?.count ?? 0, p.año_actual?.cotizaciones?.count ?? 0],
+                    backgroundColor: industrialUi ? 'rgba(234,179,8,0.82)' : 'rgba(56,189,248,0.8)',
+                    borderColor: industrialUi ? '#ca8a04' : '#38bdf8',
+                    borderWidth: 1,
+                  },
+                  {
+                    label: 'Anterior',
+                    data: [p.semana_anterior?.cotizaciones?.count ?? 0, p.mes_anterior?.cotizaciones?.count ?? 0, p.año_anterior?.cotizaciones?.count ?? 0],
+                    backgroundColor: industrialUi ? 'rgba(120,113,108,0.75)' : 'rgba(148,163,184,0.6)',
+                    borderColor: industrialUi ? '#78716c' : '#94a3b8',
+                    borderWidth: 1,
+                  },
                 ],
               },
               options: {
