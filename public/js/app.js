@@ -238,6 +238,10 @@
     const u = getSessionUser();
     return !!(u && normalizeRole(u.role) === 'admin');
   }
+  /** Descargar vistas previas / archivos subidos: mismo criterio que módulos solo admin (sin auth en local, todos; con auth, solo rol admin). */
+  function canDownloadUploadedMedia() {
+    return canAccessAdminOnlyModules();
+  }
   function refCategoriaLabel(c, depth) {
     const d = (depth | 0);
     if (d > 8) return '';
@@ -1136,6 +1140,107 @@
     return String(btn.getAttribute('data-url') || '');
   }
 
+  function pvcExtFromMime(mime) {
+    const m = String(mime || '').toLowerCase();
+    if (m.indexOf('pdf') >= 0) return '.pdf';
+    if (m.indexOf('png') >= 0) return '.png';
+    if (m.indexOf('jpeg') >= 0 || m.indexOf('jpg') >= 0) return '.jpg';
+    if (m.indexOf('webp') >= 0) return '.webp';
+    if (m.indexOf('gif') >= 0) return '.gif';
+    if (m.indexOf('svg') >= 0) return '.svg';
+    return '';
+  }
+  function pvcExtFromUrlPath(u) {
+    try {
+      const q = String(u || '').split('?')[0];
+      const m = q.match(/(\.[a-z0-9]{2,5})$/i);
+      return m ? m[1] : '';
+    } catch (_) {
+      return '';
+    }
+  }
+  function pvcTriggerBlobDownload(blob, filename) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename || 'archivo';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => {
+      try { URL.revokeObjectURL(a.href); } catch (_) {}
+    }, 2500);
+  }
+  async function downloadPvcMedia(btn) {
+    if (!canDownloadUploadedMedia()) {
+      showToast('Solo el administrador puede descargar archivos.', 'error');
+      return;
+    }
+    const url = pvcMediaUrlFromBtn(btn);
+    let suggested = String(btn.getAttribute('data-download-name') || '').trim() || 'archivo';
+    suggested = suggested.replace(/[^\w.\-\u00C0-\u024f]/g, '_') || 'archivo';
+    const u = String(url || '');
+    if (!u) {
+      showToast('No hay archivo para descargar.', 'error');
+      return;
+    }
+    try {
+      if (u.startsWith('/api/') && serverConfig && serverConfig.authRequired) {
+        let fetchUrl = u;
+        if (/\/clientes\/[^/]+\/constancia/i.test(u) && u.indexOf('download=') < 0) {
+          fetchUrl = u + (u.indexOf('?') >= 0 ? '&' : '?') + 'download=1';
+        }
+        const headers = {};
+        const tok = getAuthToken();
+        if (tok) headers['Authorization'] = 'Bearer ' + tok;
+        const r = await fetch(fetchUrl, { headers });
+        if (!r.ok) {
+          let msg = 'No autorizado. Inicia sesión.';
+          try {
+            const j = await r.json();
+            if (j && j.error) msg = j.error;
+          } catch (_) {}
+          throw new Error(msg);
+        }
+        const blob = await r.blob();
+        let fn = suggested;
+        if (fn.indexOf('.') < 0) {
+          const ex = pvcExtFromMime(blob.type) || pvcExtFromUrlPath(u);
+          fn += ex || '.bin';
+        }
+        pvcTriggerBlobDownload(blob, fn);
+        return;
+      }
+      if (u.startsWith('data:')) {
+        const r = await fetch(u);
+        const blob = await r.blob();
+        let fn = suggested;
+        if (fn.indexOf('.') < 0) {
+          fn += pvcExtFromMime(blob.type) || '.bin';
+        }
+        pvcTriggerBlobDownload(blob, fn);
+        return;
+      }
+      if (u.startsWith('blob:')) {
+        const r = await fetch(u);
+        const blob = await r.blob();
+        let fn = suggested;
+        if (fn.indexOf('.') < 0) fn += pvcExtFromMime(blob.type) || '.bin';
+        pvcTriggerBlobDownload(blob, fn);
+        return;
+      }
+      const r = await fetch(u, { credentials: 'same-origin' });
+      if (!r.ok) throw new Error('fetch');
+      const blob = await r.blob();
+      let fn = suggested;
+      if (fn.indexOf('.') < 0) {
+        fn += pvcExtFromMime(blob.type) || pvcExtFromUrlPath(u) || '.bin';
+      }
+      pvcTriggerBlobDownload(blob, fn);
+    } catch (_) {
+      showToast('No se pudo descargar el archivo.', 'error');
+    }
+  }
+
   /** Fallback ultra-robusto: captura clics de medios en todo el documento. */
   (function bindGlobalMediaOpenCapture() {
     document.addEventListener('click', function (e) {
@@ -1220,6 +1325,26 @@
       }
       openRefaccionMediaFull(url);
     }, true);
+  })();
+
+  (function bindGlobalMediaDownloadCapture() {
+    document.addEventListener(
+      'click',
+      function (e) {
+        const t = e && e.target;
+        if (!t || !t.closest) return;
+        const btn = t.closest('.js-refaccion-download-media');
+        if (!btn || btn.disabled) return;
+        if (!document.body.contains(btn)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+          e.stopImmediatePropagation();
+        } catch (_) {}
+        void downloadPvcMedia(btn);
+      },
+      true
+    );
   })();
 
   function confirmar(msg) {
@@ -1936,6 +2061,66 @@
     });
   }
 
+  function pvcMediaDownloadButtonHtml(mediaRef, dataUrl, downloadName, extraClass) {
+    if (!canDownloadUploadedMedia()) return '';
+    const refAttr = mediaRef ? ' data-media-ref="' + escapeHtml(mediaRef) + '"' : '';
+    const urlAttr = !mediaRef && dataUrl ? ' data-url="' + escapeHtml(dataUrl) + '"' : '';
+    const dn = downloadName ? ' data-download-name="' + escapeHtml(downloadName) + '"' : '';
+    const cls = 'ref-pvc-hero-cta-btn ref-pvc-hero-cta-btn--dl js-refaccion-download-media' + (extraClass ? ' ' + extraClass : '');
+    return (
+      '<button type="button" class="' +
+      cls +
+      '"' +
+      refAttr +
+      urlAttr +
+      dn +
+      ' title="Descargar"><i class="fas fa-download"></i> Descargar</button>'
+    );
+  }
+  function heroCtaRowHtml(mediaRef, dataUrl, downloadName) {
+    const openAttr = mediaRef
+      ? 'data-media-ref="' + escapeHtml(mediaRef) + '"'
+      : 'data-url="' + escapeHtml(dataUrl) + '"';
+    const dl = pvcMediaDownloadButtonHtml(mediaRef, dataUrl, downloadName);
+    return (
+      '<div class="ref-pvc-hero-cta-row">' +
+      '<button type="button" class="ref-pvc-hero-cta-btn js-refaccion-open-media" ' +
+      openAttr +
+      ' title="Ver completo"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>' +
+      dl +
+      '</div>'
+    );
+  }
+  function heroFrameImageHtml(mediaRef, dataUrl, imgSrc, alt, downloadName) {
+    const openAttr = mediaRef
+      ? 'data-media-ref="' + escapeHtml(mediaRef) + '"'
+      : 'data-url="' + escapeHtml(dataUrl) + '"';
+    return (
+      '<div class="ref-pvc-hero-frame">' +
+      '<button type="button" class="ref-pvc-hero-frame-hit js-refaccion-open-media" ' +
+      openAttr +
+      ' title="Ver imagen completa">' +
+      '<img src="' + escapeHtml(imgSrc) + '" alt="' + escapeHtml(alt || '') + '" loading="lazy">' +
+      '<span class="ref-pvc-hero-shine"></span>' +
+      '</button>' +
+      heroCtaRowHtml(mediaRef, dataUrl, downloadName) +
+      '</div>'
+    );
+  }
+  function pvcDownloadBtnCompactHtml(mediaRef, dataUrl, downloadName) {
+    if (!canDownloadUploadedMedia()) return '';
+    const refAttr = mediaRef ? ' data-media-ref="' + escapeHtml(mediaRef) + '"' : '';
+    const urlAttr = !mediaRef && dataUrl ? ' data-url="' + escapeHtml(dataUrl) + '"' : '';
+    const dn = downloadName ? ' data-download-name="' + escapeHtml(downloadName) + '"' : '';
+    return (
+      '<button type="button" class="btn small outline pvc-dl-mini js-refaccion-download-media"' +
+      refAttr +
+      urlAttr +
+      dn +
+      ' title="Descargar" aria-label="Descargar"><i class="fas fa-download"></i></button>'
+    );
+  }
+
   /** Bloque bajo el título: imagen principal (número de parte) + miniatura pieza. */
   function buildRefaccionPreviewUnderHeader(r) {
     const imgPart = r.imagen_url ? String(r.imagen_url).trim() : '';
@@ -1946,14 +2131,12 @@
 
     function blockNumeroParte(url) {
       if (isImg(url)) {
+        const ref = registerPvcMediaUrl(url);
         return (
           '<div class="ref-pvc-hero-main">' +
           '<span class="ref-pvc-hero-kicker"><i class="fas fa-barcode"></i> Número de parte</span>' +
-          '<button type="button" class="ref-pvc-hero-frame js-refaccion-open-media" data-url="' + escapeHtml(url) + '" title="Ver imagen completa">' +
-          '<img src="' + escapeHtml(url) + '" alt="Número de parte" loading="lazy">' +
-          '<span class="ref-pvc-hero-shine"></span>' +
-          '<span class="ref-pvc-hero-cta"><i class="fas fa-expand-alt"></i> Abrir imagen</span>' +
-          '</button></div>'
+          heroFrameImageHtml(ref, null, url, 'Número de parte', 'refaccion-numero-parte') +
+          '</div>'
         );
       }
       if (isPdf(url)) {
@@ -1976,6 +2159,8 @@
 
     function blockPiezaThumb(url, compact) {
       if (isImg(url)) {
+        const ref = registerPvcMediaUrl(url);
+        const dl = pvcMediaDownloadButtonHtml(ref, null, 'refaccion-pieza-mini', 'ref-pvc-pieza-mini-dl');
         return (
           '<aside class="ref-pvc-hero-side' + (compact ? ' ref-pvc-hero-side--thumb' : '') + '">' +
           '<span class="ref-pvc-hero-kicker ref-pvc-hero-kicker--accent"><i class="fas fa-puzzle-piece"></i> Pieza</span>' +
@@ -1983,8 +2168,13 @@
           '<div class="ref-pvc-pieza-ring"></div>' +
           '<img src="' + escapeHtml(url) + '" alt="Vista pieza" loading="lazy">' +
           '</div>' +
-          '<button type="button" class="ref-pvc-pieza-mini-zoom js-refaccion-open-media" data-url="' + escapeHtml(url) + '" title="Ver imagen completa">' +
+          '<div class="ref-pvc-pieza-actions">' +
+          dl +
+          '<button type="button" class="ref-pvc-pieza-mini-zoom js-refaccion-open-media" data-media-ref="' +
+          escapeHtml(ref) +
+          '" title="Ver imagen completa">' +
           '<i class="fas fa-search-plus"></i></button>' +
+          '</div>' +
           '</aside>'
         );
       }
@@ -1999,14 +2189,12 @@
 
     function blockPiezaSolo(url) {
       if (isImg(url)) {
+        const ref = registerPvcMediaUrl(url);
         return (
           '<div class="ref-pvc-hero-main ref-pvc-hero-main--solo">' +
           '<span class="ref-pvc-hero-kicker"><i class="fas fa-puzzle-piece"></i> Pieza</span>' +
-          '<button type="button" class="ref-pvc-hero-frame js-refaccion-open-media" data-url="' + escapeHtml(url) + '">' +
-          '<img src="' + escapeHtml(url) + '" alt="Pieza" loading="lazy">' +
-          '<span class="ref-pvc-hero-shine"></span>' +
-          '<span class="ref-pvc-hero-cta"><i class="fas fa-expand-alt"></i> Abrir imagen</span>' +
-          '</button></div>'
+          heroFrameImageHtml(ref, null, url, 'Pieza', 'refaccion-pieza') +
+          '</div>'
         );
       }
       if (isPdf(url)) {
@@ -2043,36 +2231,48 @@
     if (!u) return '';
     const isImg = u.startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(u);
     const mediaRef = registerPvcMediaUrl(u);
+    const dl = pvcDownloadBtnCompactHtml(mediaRef, null, slugifyDownloadName(title || 'archivo'));
     if (isImg) {
       return `<div class="pvc-preview-media">
+        <div class="pvc-preview-media-row">
         <button type="button" class="pvc-preview-media-btn js-refaccion-open-media" data-media-ref="${mediaRef}" title="Ver imagen completa">
           <img src="${escapeHtml(u)}" class="ref-foto-thumb" alt="${escapeHtml(title || '')}" style="max-height:140px;max-width:100%;object-fit:contain;border-radius:8px;border:1px solid var(--border-color,#e5e7eb);">
         </button>
+        ${dl}
+        </div>
       </div>`;
     }
     const isPdf = u.startsWith('data:application/pdf') || /\.pdf(\?|$)/i.test(u) || /application\/pdf/i.test(u);
     const icon = isPdf ? 'fa-file-pdf' : 'fa-file-alt';
     const cls = isPdf ? 'cliente-const-slot--pdf' : 'cliente-const-slot--file';
     return `<div class="pvc-preview-media">
+      <div class="pvc-preview-media-row">
       <button type="button" class="cliente-const-slot ${cls} js-refaccion-open-media" data-media-ref="${mediaRef}" style="width:88px;height:88px;display:inline-flex;align-items:center;justify-content:center;" title="${escapeHtml((title || 'Archivo') + ' · clic para abrir')}">
         <i class="fas ${icon} fa-2x"></i>
       </button>
+      ${dl}
+      </div>
     </div>`;
+  }
+  function slugifyDownloadName(s) {
+    const t = String(s || 'archivo').trim() || 'archivo';
+    return t.replace(/[^\w.\-\u00C0-\u024f]/g, '_').replace(/_+/g, '_');
   }
 
   function clienteConstanciaThumbHtml(c) {
     if (!c || !c.has_constancia) return '';
     const openUrl = c.id != null ? (API + '/clientes/' + encodeURIComponent(c.id) + '/constancia') : '';
+    const dl = pvcDownloadBtnCompactHtml(null, openUrl, 'cliente-constancia');
     if (c.constancia_kind === 'image' && c.constancia_thumb_url) {
-      return `<button type="button" class="cliente-const-slot js-refaccion-open-media" data-url="${escapeHtml(openUrl)}" title="Constancia fiscal (clic para abrir)">
+      return `<span class="cliente-const-inline"><button type="button" class="cliente-const-slot js-refaccion-open-media" data-url="${escapeHtml(openUrl)}" title="Constancia fiscal (clic para abrir)">
         <img src="${escapeHtml(c.constancia_thumb_url)}" alt="" class="cliente-const-mini" loading="lazy">
-      </button>`;
+      </button>${dl}</span>`;
     }
     const icon = c.constancia_kind === 'pdf' ? 'fa-file-pdf' : 'fa-file-alt';
     const cls = c.constancia_kind === 'pdf' ? 'cliente-const-slot--pdf' : 'cliente-const-slot--file';
-    return `<button type="button" class="cliente-const-slot ${cls} js-refaccion-open-media" data-url="${escapeHtml(openUrl)}" title="Constancia (${c.constancia_kind === 'pdf' ? 'PDF' : 'documento'}) · clic para abrir">
+    return `<span class="cliente-const-inline"><button type="button" class="cliente-const-slot ${cls} js-refaccion-open-media" data-url="${escapeHtml(openUrl)}" title="Constancia (${c.constancia_kind === 'pdf' ? 'PDF' : 'documento'}) · clic para abrir">
       <i class="fas ${icon}"></i>
-    </button>`;
+    </button>${dl}</span>`;
   }
 
   function previewCliente(c) {
@@ -2090,19 +2290,18 @@
             <div class="ref-pvc-hero-main ref-pvc-hero-main--solo">
               <div class="ref-pvc-hero-kicker ref-pvc-hero-kicker--accent"><i class="fas fa-file-invoice"></i> Constancia fiscal · ${escapeHtml(constKicker)}</div>
               ${constKind === 'image' && constThumb
-                ? `<button type="button" class="ref-pvc-hero-frame js-refaccion-open-media" data-url="${escapeHtml(openUrl)}" title="Clic para abrir constancia">
-                     <img src="${escapeHtml(constThumb)}" alt="Constancia fiscal" loading="lazy">
-                     <span class="ref-pvc-hero-shine"></span>
-                     <span class="ref-pvc-hero-cta"><i class="fas fa-magnifying-glass-plus"></i> Ver</span>
-                   </button>`
-                : `<button type="button" class="ref-pvc-hero-doc js-refaccion-open-media" data-url="${escapeHtml(openUrl)}" title="Clic para abrir constancia">
+                ? heroFrameImageHtml(null, openUrl, constThumb, 'Constancia fiscal', 'cliente-constancia')
+                : `<div class="ref-pvc-hero-doc-row">
+                   <button type="button" class="ref-pvc-hero-doc js-refaccion-open-media" data-url="${escapeHtml(openUrl)}" title="Clic para abrir constancia">
                      <span class="ref-pvc-hero-doc-icon"><i class="fas ${constKind === 'pdf' ? 'fa-file-pdf' : 'fa-file'}"></i></span>
                      <div>
                        <div style="font-weight:800;line-height:1.1">Abrir constancia</div>
                        <div style="opacity:0.75;font-size:0.82rem;line-height:1.3">${escapeHtml(constKind === 'pdf' ? 'PDF (clic para abrir)' : 'Archivo (clic para abrir)')}</div>
                      </div>
                      <span class="ref-pvc-hero-doc-arrow"><i class="fas fa-arrow-up-right-from-square"></i></span>
-                   </button>`}
+                   </button>
+                   ${pvcMediaDownloadButtonHtml(null, openUrl, 'cliente-constancia', 'ref-pvc-hero-doc-dl')}
+                   </div>`}
             </div>
           </div>
         </div>
@@ -2132,7 +2331,7 @@
           { label: 'Ciudad', value: c.ciudad, icon: 'fa-city' },
         ]
       }],
-      footerHtml: c.has_constancia
+      footerHtml: c.has_constancia && canDownloadUploadedMedia()
         ? '<button type="button" class="btn primary" id="pvc-dl-constancia"><i class="fas fa-download"></i> Descargar constancia</button>'
         : '',
     });
@@ -2515,15 +2714,21 @@
 
   function openModalMaquinaImagen(m) {
     const isImage = (url) => url && (String(url).startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(String(url)));
-    const cur = m.imagen_pieza_url
-      ? (isImage(m.imagen_pieza_url)
-        ? `<div class="ref-foto-preview-wrap">
-             <button type="button" class="js-refaccion-open-media" data-media-ref="${registerPvcMediaUrl(m.imagen_pieza_url)}" title="Ver imagen completa" style="border:none;background:transparent;padding:0;cursor:zoom-in;">
+    let cur = '<p class="hint" style="margin:0">Sin imagen de catálogo. Elige un archivo abajo.</p>';
+    if (m.imagen_pieza_url) {
+      if (isImage(m.imagen_pieza_url)) {
+        const imgRef = registerPvcMediaUrl(m.imagen_pieza_url);
+        cur =
+          `<div class="ref-foto-preview-wrap">
+             <button type="button" class="js-refaccion-open-media" data-media-ref="${imgRef}" title="Ver imagen completa" style="border:none;background:transparent;padding:0;cursor:zoom-in;">
                <img src="${escapeHtml(m.imagen_pieza_url)}" class="ref-foto-thumb" alt="Vista previa" loading="lazy">
              </button>
-           </div>`
-        : `<p><a href="${escapeHtml(m.imagen_pieza_url)}" target="_blank" rel="noopener noreferrer" class="btn outline"><i class="fas fa-external-link-alt"></i> Ver imagen actual</a></p>`)
-      : '<p class="hint" style="margin:0">Sin imagen de catálogo. Elige un archivo abajo.</p>';
+             ${pvcDownloadBtnCompactHtml(imgRef, null, 'maquina-imagen-modal')}
+           </div>`;
+      } else {
+        cur = `<p><a href="${escapeHtml(m.imagen_pieza_url)}" target="_blank" rel="noopener noreferrer" class="btn outline"><i class="fas fa-external-link-alt"></i> Ver imagen actual</a></p>`;
+      }
+    }
     const body = `
       <p style="margin-top:0"><strong>${escapeHtml(m.modelo || m.nombre || 'Máquina')}</strong> · ID sistema: <strong>${m.id}</strong></p>
       ${cur}
@@ -2566,9 +2771,6 @@
     const ensThumb = ensUrl && isImageUrl(ensUrl) ? ensUrl : '/img/maquinas/placeholder-ensamble.svg';
     const piezaMediaRef = piezaUrl ? registerPvcMediaUrl(piezaUrl) : '';
     const ensMediaRef = ensUrl ? registerPvcMediaUrl(ensUrl) : '';
-    const piezaBtnAttrs = piezaUrl
-      ? `class="ref-pvc-hero-frame js-refaccion-open-media" data-media-ref="${piezaMediaRef}" title="Clic para ver imagen completa"`
-      : `class="ref-pvc-hero-frame" title="Sin imagen de carga máquina" disabled`;
     const ensBtnAttrs = ensUrl
       ? `class="ref-pvc-hero-doc js-refaccion-open-media" data-media-ref="${ensMediaRef}" title="Clic para abrir"`
       : `class="ref-pvc-hero-doc" title="Sin archivo de especificaciones"`;
@@ -2580,28 +2782,29 @@
         <div class="ref-pvc-hero-inner ref-pvc-hero-inner--split">
           <div class="ref-pvc-hero-main">
             <div class="ref-pvc-hero-kicker ref-pvc-hero-kicker--accent"><i class="fas fa-image"></i> Imagen de carga máquina</div>
-            <button type="button" ${piezaBtnAttrs}>
-              <img src="${escapeHtml(piezaThumb)}" alt="Imagen de carga máquina" loading="lazy">
-              <span class="ref-pvc-hero-shine"></span>
-              ${piezaUrl ? '<span class="ref-pvc-hero-cta"><i class="fas fa-magnifying-glass-plus"></i> Ver</span>' : ''}
-            </button>
+            ${
+              piezaUrl
+                ? heroFrameImageHtml(piezaMediaRef, null, piezaThumb, 'Imagen de carga máquina', 'maquina-imagen-carga')
+                : '<div class="ref-pvc-hero-frame ref-pvc-hero-frame--empty" title="Sin imagen de carga máquina"><span class="ref-pvc-hero-frame-empty-inner">Sin imagen</span></div>'
+            }
           </div>
           <div class="ref-pvc-hero-side ref-pvc-hero-side--thumb">
             <div class="ref-pvc-hero-kicker"><i class="fas fa-file-lines"></i> Especificaciones · ${escapeHtml(ensKicker)}</div>
-            ${ensUrl && isImageUrl(ensUrl)
-              ? `<button type="button" class="ref-pvc-hero-frame js-refaccion-open-media" data-media-ref="${ensMediaRef}" title="Clic para ver especificaciones">
-                   <img src="${escapeHtml(ensThumb)}" alt="Especificaciones" loading="lazy">
-                   <span class="ref-pvc-hero-shine"></span>
-                   <span class="ref-pvc-hero-cta"><i class="fas fa-magnifying-glass-plus"></i> Ver</span>
-                 </button>`
-              : `<button type="button" ${ensBtnAttrs}>
+            ${
+              ensUrl && isImageUrl(ensUrl)
+                ? heroFrameImageHtml(ensMediaRef, null, ensThumb, 'Especificaciones', 'maquina-especificaciones')
+                : `<div class="ref-pvc-hero-doc-row">
+                   <button type="button" ${ensBtnAttrs}>
                    <span class="ref-pvc-hero-doc-icon"><i class="fas ${ensUrl ? 'fa-file' : 'fa-file-circle-xmark'}"></i></span>
                    <div>
                      <div style="font-weight:800;line-height:1.1">${ensUrl ? 'Abrir archivo' : 'Sin archivo'}</div>
                      <div style="opacity:0.75;font-size:0.82rem;line-height:1.3">${ensUrl ? 'PDF o imagen (clic para abrir)' : 'Sube un PDF o imagen en Editar máquina'}</div>
                    </div>
                    <span class="ref-pvc-hero-doc-arrow"><i class="fas fa-arrow-up-right-from-square"></i></span>
-                 </button>`}
+                 </button>
+                 ${ensUrl ? pvcMediaDownloadButtonHtml(ensMediaRef, null, 'maquina-especificaciones', 'ref-pvc-hero-doc-dl') : ''}
+                 </div>`
+            }
           </div>
         </div>
       </div>
@@ -5634,6 +5837,7 @@
             <button type="button" class="js-refaccion-open-media" data-media-ref="${foto1Ref}" title="Ver imagen completa" style="border:none;background:transparent;padding:0;cursor:zoom-in;">
               <img src="${escapeHtml(refaccion.imagen_url)}" class="ref-foto-thumb" alt="Foto 1" loading="lazy">
             </button>
+            ${pvcDownloadBtnCompactHtml(foto1Ref, null, 'refaccion-foto1')}
             <button type="button" class="btn small danger" id="m-foto1-clear" style="margin-left:0.5rem"><i class="fas fa-times"></i></button>
           </div>` : ''}
           <input type="hidden" id="m-imagen" value="${escapeHtml(refaccion && refaccion.imagen_url) || ''}">
@@ -5645,6 +5849,7 @@
             <button type="button" class="js-refaccion-open-media" data-media-ref="${foto2Ref}" title="Ver imagen completa" style="border:none;background:transparent;padding:0;cursor:zoom-in;">
               <img src="${escapeHtml(refaccion.manual_url)}" class="ref-foto-thumb" alt="Foto 2" loading="lazy">
             </button>
+            ${pvcDownloadBtnCompactHtml(foto2Ref, null, 'refaccion-foto2')}
             <button type="button" class="btn small danger" id="m-foto2-clear" style="margin-left:0.5rem"><i class="fas fa-times"></i></button>
           </div>` : ''}
           <input type="hidden" id="m-manual" value="${escapeHtml(refaccion && refaccion.manual_url) || ''}">
@@ -9662,16 +9867,20 @@
       const parts = [];
       if (ineThumb) {
         parts.push(
-          '<div class="tec-pvc-doc"><span class="tec-pvc-doc-label">INE</span>' +
+          '<div class="tec-pvc-doc"><span class="tec-pvc-doc-label">INE</span><div class="tec-pvc-doc-thumb-row">' +
           '<button type="button" class="tec-pvc-doc-thumb js-refaccion-open-media" data-url="' + escapeHtml(ineOpen) + '" title="Ver INE">' +
-          '<img src="' + escapeHtml(ineThumb) + '" alt="INE" loading="lazy"></button></div>'
+          '<img src="' + escapeHtml(ineThumb) + '" alt="INE" loading="lazy"></button>' +
+          pvcDownloadBtnCompactHtml(null, ineOpen, 'tecnico-ine') +
+          '</div></div>'
         );
       }
       if (licThumb) {
         parts.push(
-          '<div class="tec-pvc-doc"><span class="tec-pvc-doc-label">Licencia</span>' +
+          '<div class="tec-pvc-doc"><span class="tec-pvc-doc-label">Licencia</span><div class="tec-pvc-doc-thumb-row">' +
           '<button type="button" class="tec-pvc-doc-thumb js-refaccion-open-media" data-url="' + escapeHtml(licOpen) + '" title="Ver licencia">' +
-          '<img src="' + escapeHtml(licThumb) + '" alt="Licencia" loading="lazy"></button></div>'
+          '<img src="' + escapeHtml(licThumb) + '" alt="Licencia" loading="lazy"></button>' +
+          pvcDownloadBtnCompactHtml(null, licOpen, 'tecnico-licencia') +
+          '</div></div>'
         );
       }
       underHeaderHtml = '<div class="tec-pvc-docs">' + parts.join('') + '</div>';
@@ -9723,11 +9932,13 @@
       const vendBadge = Number(t.es_vendedor) === 1 ? '<span class="badge badge-ok">Vende</span>' : '<span class="badge badge-warn">No ventas</span>';
       const tr = document.createElement('tr');
       const puestoCell = (t.puesto || t.rol || '').trim() || '—';
+      const ineOpenU = t.ine_foto_url || t.ine_thumb_url;
+      const licOpenU = t.licencia_foto_url || t.licencia_thumb_url;
       const ineMini = t.ine_thumb_url
-        ? `<button type="button" class="tec-doc-slot js-refaccion-open-media" data-url="${escapeHtml(t.ine_thumb_url)}" title="INE (clic para abrir)"><img src="${escapeHtml(t.ine_thumb_url)}" alt="" loading="lazy"></button>`
+        ? `<span class="tec-doc-slot-wrap"><button type="button" class="tec-doc-slot js-refaccion-open-media" data-url="${escapeHtml(t.ine_thumb_url)}" title="INE (clic para abrir)"><img src="${escapeHtml(t.ine_thumb_url)}" alt="" loading="lazy"></button>${pvcDownloadBtnCompactHtml(null, ineOpenU, 'tecnico-ine')}</span>`
         : '<span class="tec-doc-slot" title="Sin INE">—</span>';
       const licMini = t.licencia_thumb_url
-        ? `<button type="button" class="tec-doc-slot js-refaccion-open-media" data-url="${escapeHtml(t.licencia_thumb_url)}" title="Licencia (clic para abrir)"><img src="${escapeHtml(t.licencia_thumb_url)}" alt="" loading="lazy"></button>`
+        ? `<span class="tec-doc-slot-wrap"><button type="button" class="tec-doc-slot js-refaccion-open-media" data-url="${escapeHtml(t.licencia_thumb_url)}" title="Licencia (clic para abrir)"><img src="${escapeHtml(t.licencia_thumb_url)}" alt="" loading="lazy"></button>${pvcDownloadBtnCompactHtml(null, licOpenU, 'tecnico-licencia')}</span>`
         : '<span class="tec-doc-slot" title="Sin licencia">—</span>';
       tr.innerHTML = `
         <td><strong>${escapeHtml(t.nombre || '')}</strong></td>
@@ -9804,6 +10015,7 @@
             <button type="button" class="js-refaccion-open-media" data-media-ref="${inePrevRef}" title="Ver INE" style="border:none;background:transparent;padding:0;cursor:zoom-in;">
               <img id="m-tec-ine-img" class="tec-upload-preview" src="${escapeHtml(inePrevSrc)}" alt="INE" loading="lazy">
             </button>
+            ${pvcDownloadBtnCompactHtml(inePrevRef, null, 'tecnico-ine')}
             <button type="button" class="btn small danger outline" id="m-tec-ine-rm" style="margin-top:0.35rem"><i class="fas fa-times"></i> Quitar INE</button>
           </div>
           <img id="m-tec-ine-new" class="tec-upload-preview hidden js-refaccion-open-media" alt="Vista previa INE">
@@ -9816,6 +10028,7 @@
             <button type="button" class="js-refaccion-open-media" data-media-ref="${licPrevRef}" title="Ver licencia" style="border:none;background:transparent;padding:0;cursor:zoom-in;">
               <img id="m-tec-lic-img" class="tec-upload-preview" src="${escapeHtml(licPrevSrc)}" alt="Licencia" loading="lazy">
             </button>
+            ${pvcDownloadBtnCompactHtml(licPrevRef, null, 'tecnico-licencia')}
             <button type="button" class="btn small danger outline" id="m-tec-lic-rm" style="margin-top:0.35rem"><i class="fas fa-times"></i> Quitar licencia</button>
           </div>
           <img id="m-tec-lic-new" class="tec-upload-preview hidden js-refaccion-open-media" alt="Vista previa licencia">
