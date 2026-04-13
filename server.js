@@ -402,7 +402,7 @@ function parseDataUrlConstancia(dataUrl) {
 app.get('/api/clientes', async (req, res) => {
   try {
     const q = (req.query.q || '').trim();
-    let rows = await db.getAll('SELECT * FROM clientes ORDER BY nombre LIMIT 500', []);
+    let rows = await db.getAll('SELECT * FROM clientes ORDER BY id DESC LIMIT 500', []);
     if (q) {
       const normQ = normalizeForSearch(q);
       rows = rows.filter(c => normalizeForSearch(c.nombre).includes(normQ) || normalizeForSearch(c.codigo).includes(normQ) || normalizeForSearch(c.rfc).includes(normQ));
@@ -522,10 +522,10 @@ app.delete('/api/clientes/:id', async (req, res) => {
 app.get('/api/refacciones', async (req, res) => {
   try {
     const q = (req.query.q || '').trim();
-    let sql = 'SELECT * FROM refacciones WHERE activo = 1 ORDER BY codigo';
+    let sql = 'SELECT * FROM refacciones WHERE activo = 1 ORDER BY id DESC';
     let params = [];
     if (q) {
-      sql = 'SELECT * FROM refacciones WHERE activo = 1 AND (codigo LIKE ? OR descripcion LIKE ?) ORDER BY codigo LIMIT 100';
+      sql = 'SELECT * FROM refacciones WHERE activo = 1 AND (codigo LIKE ? OR descripcion LIKE ?) ORDER BY id DESC LIMIT 100';
       const p = `%${q}%`;
       params = [p, p];
     }
@@ -742,10 +742,10 @@ app.get('/api/maquinas', async (req, res) => {
     const raw = req.query && req.query.cliente_id;
     const clienteNum = raw != null && raw !== '' ? Number(raw) : NaN;
     // COALESCE: filas antiguas con activo NULL deben verse como activas (antes quedaban fuera del listado).
-    let sql = 'SELECT m.*, c.nombre as cliente_nombre FROM maquinas m LEFT JOIN clientes c ON c.id = m.cliente_id WHERE COALESCE(m.activo, 1) = 1 ORDER BY m.nombre';
+    let sql = 'SELECT m.*, c.nombre as cliente_nombre FROM maquinas m LEFT JOIN clientes c ON c.id = m.cliente_id WHERE COALESCE(m.activo, 1) = 1 ORDER BY m.id DESC';
     let params = [];
     if (Number.isFinite(clienteNum) && clienteNum > 0) {
-      sql = 'SELECT m.*, c.nombre as cliente_nombre FROM maquinas m LEFT JOIN clientes c ON c.id = m.cliente_id WHERE COALESCE(m.activo, 1) = 1 AND m.cliente_id = ? ORDER BY m.nombre';
+      sql = 'SELECT m.*, c.nombre as cliente_nombre FROM maquinas m LEFT JOIN clientes c ON c.id = m.cliente_id WHERE COALESCE(m.activo, 1) = 1 AND m.cliente_id = ? ORDER BY m.id DESC';
       params = [clienteNum];
     }
     const rows = await db.getAll(sql, params);
@@ -2258,7 +2258,7 @@ function publicTecnicoListRow(t) {
 // Tecnicos
 app.get('/api/tecnicos', async (req, res) => {
   try {
-    const rows = await db.getAll('SELECT * FROM tecnicos WHERE activo=1 ORDER BY nombre');
+    const rows = await db.getAll('SELECT * FROM tecnicos WHERE activo=1 ORDER BY id DESC');
     // Enrich with ocupado status: técnico tiene reporte abierto o en_proceso
     const reportesActivos = await db.getAll("SELECT tecnico FROM reportes WHERE estatus IN ('abierto','en_proceso') AND tecnico IS NOT NULL AND tecnico != ''");
     const ocupados = new Set(reportesActivos.map(r => r.tecnico));

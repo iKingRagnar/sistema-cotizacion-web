@@ -5752,6 +5752,7 @@
         else await fetchJson(API + '/clientes/' + cliente.id, { method: 'PUT', body: JSON.stringify(payload) });
         qs('#modal').classList.add('hidden');
         showToast(isNew ? 'Cliente guardado correctamente.' : 'Cliente actualizado correctamente.', 'success');
+        if (isNew) setPaginationPage('tabla-clientes', 0);
         loadClientes();
         fillClientesSelect();
       } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar. Revisa los datos e intenta de nuevo.', 'error'); }
@@ -5902,6 +5903,7 @@
         else await fetchJson(API + '/refacciones/' + refaccion.id, { method: 'PUT', body: JSON.stringify(payload) });
         qs('#modal').classList.add('hidden');
         showToast(isNew ? 'Refacción guardada correctamente.' : 'Refacción actualizada correctamente.', 'success');
+        if (isNew) setPaginationPage('tabla-refacciones', 0);
         loadRefacciones();
         if (typeof fillRefaccionesSelect === 'function') fillRefaccionesSelect();
       } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar. Revisa los datos.', 'error'); }
@@ -6110,7 +6112,9 @@
   async function openModalMaquina(maquina) {
     const isNew = !maquina || !maquina.id;
     const clientes = await fetchJson(API + '/clientes').catch(() => []);
-    const defaultClienteId = clientes[0] && clientes[0].id != null ? Number(clientes[0].id) : null;
+    const clientesByNombre = [...toArray(clientes)].sort((a, b) =>
+      String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', { sensitivity: 'base' }));
+    const defaultClienteId = clientesByNombre[0] && clientesByNombre[0].id != null ? Number(clientesByNombre[0].id) : null;
     const tree = await fetchJson(API + '/categorias-catalogo').catch(() => ({ categorias: [] }));
     const cats = toArray(tree.categorias);
     const curCat = maquina && maquina.categoria ? String(maquina.categoria).trim() : '';
@@ -6250,6 +6254,7 @@
         else await fetchJson(API + '/maquinas/' + maquina.id, { method: 'PUT', body: JSON.stringify(payload) });
         qs('#modal').classList.add('hidden');
         showToast(isNew ? 'Máquina guardada correctamente.' : 'Máquina actualizada correctamente.', 'success');
+        if (isNew) setPaginationPage('tabla-maquinas', 0);
         loadMaquinas();
       } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar. Revisa los datos.', 'error'); }
       finally { btn.disabled = false; btn.innerHTML = origText; }
@@ -6286,6 +6291,7 @@
     } catch (_) {}
     const vendedoresOpts = (tecnicosCache || [])
       .filter((t) => Number(t.es_vendedor) === 1)
+      .sort((a, b) => String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', { sensitivity: 'base' }))
       .map((t) => {
         const sel = cot && cot.vendedor_personal_id && Number(cot.vendedor_personal_id) === Number(t.id) ? 'selected' : '';
         return `<option value="${t.id}" ${sel}>${escapeHtml(t.nombre)} — ${escapeHtml(t.puesto || 'Vendedor')}</option>`;
@@ -6293,7 +6299,9 @@
       .join('');
     const descInicial = cot && cot.descuento_pct != null ? Number(cot.descuento_pct) : 0;
     const cotClienteId = cot && cot.cliente_id ? Number(cot.cliente_id) : null;
-    const clienteOpts = clientes
+    const clientesCotSorted = [...toArray(clientes)].sort((a, b) =>
+      String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', { sensitivity: 'base' }));
+    const clienteOpts = clientesCotSorted
       .map((c) => `<option value="${c.id}" ${cot && cot.cliente_id == c.id ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`)
       .join('');
 
@@ -6412,7 +6420,10 @@
             <div class="form-group" style="margin-bottom:0">
               <label>Del catálogo</label>
               <select id="cot-line-refaccion">
-                ${(refaccionesCache || []).slice(0, 200).map(r => `<option value="${r.id}">${escapeHtml((r.codigo || '') + ' — ' + (r.descripcion || ''))}</option>`).join('')}
+                ${[...toArray(refaccionesCache)]
+                  .sort((a, b) => String(a.codigo || '').localeCompare(String(b.codigo || ''), 'es', { sensitivity: 'base' }))
+                  .slice(0, 200)
+                  .map(r => `<option value="${r.id}">${escapeHtml((r.codigo || '') + ' — ' + (r.descripcion || ''))}</option>`).join('')}
               </select>
             </div>
           </div>
@@ -7168,7 +7179,10 @@
       const maqOptsOpt = ['<option value="">— Sin máquina —</option>']
         .concat(pool.map((m) => `<option value="${m.id}" ${mid === Number(m.id) ? 'selected' : ''}>${escapeHtml(cotMaqCatalogLabel(m))}</option>`))
         .join('');
-      const refOpts = (refaccionesCache || []).slice(0, 200).map((r) => `<option value="${r.id}" ${Number(linea.refaccion_id) === Number(r.id) ? 'selected' : ''}>${escapeHtml((r.codigo || '') + ' — ' + (r.descripcion || ''))}</option>`).join('');
+      const refOpts = [...toArray(refaccionesCache)]
+        .sort((a, b) => String(a.codigo || '').localeCompare(String(b.codigo || ''), 'es', { sensitivity: 'base' }))
+        .slice(0, 200)
+        .map((r) => `<option value="${r.id}" ${Number(linea.refaccion_id) === Number(r.id) ? 'selected' : ''}>${escapeHtml((r.codigo || '') + ' — ' + (r.descripcion || ''))}</option>`).join('');
       const bitOpts = ['<option value="">— Sin bitácora —</option>']
         .concat((bitacorasForCot || []).map((b) => {
           const label = (b.fecha ? String(b.fecha).slice(0, 10) : '') + ' · ' + (b.tecnico || 'Técnico') + ' · ' + (Number(b.tiempo_horas || 0).toFixed(1) + ' h');
@@ -9180,8 +9194,10 @@
       const sel = qs('#filtro-cliente-maq');
       if (!sel) return;
       const data = await fetchJson(API + '/clientes');
+      const sorted = [...toArray(data)].sort((a, b) =>
+        String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', { sensitivity: 'base' }));
       const first = '<option value="">Todos los clientes</option>';
-      sel.innerHTML = first + data.map(c => `<option value="${c.id}">${escapeHtml(c.nombre)}</option>`).join('');
+      sel.innerHTML = first + sorted.map(c => `<option value="${c.id}">${escapeHtml(c.nombre)}</option>`).join('');
     } catch (_) {}
   }
 
@@ -10152,6 +10168,7 @@
         else await fetchJson(API + '/tecnicos/' + tec.id, { method: 'PUT', body: JSON.stringify(payload) });
         qs('#modal').classList.add('hidden');
         showToast(isNew ? 'Persona creada.' : 'Persona actualizada.', 'success');
+        if (isNew) setPaginationPage('tabla-tecnicos', 0);
         loadTecnicos();
       } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar.', 'error'); }
     };
