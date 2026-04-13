@@ -1136,6 +1136,27 @@
     return String(btn.getAttribute('data-url') || '');
   }
 
+  /** Fallback ultra-robusto: captura clics de medios en todo el documento. */
+  (function bindGlobalMediaOpenCapture() {
+    document.addEventListener('click', function (e) {
+      const t = e && e.target;
+      if (!t || !t.closest) return;
+      const btn = t.closest('.js-refaccion-open-media');
+      if (!btn || btn.disabled) return;
+      // Evita interferir con navegación normal fuera de la UI del sistema
+      if (!document.body.contains(btn)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      try { e.stopImmediatePropagation(); } catch (_) {}
+      const url = pvcMediaUrlFromBtn(btn);
+      if (!url) {
+        showToast('No se pudo abrir la imagen/archivo. Recarga la página (F5).', 'error');
+        return;
+      }
+      openRefaccionMediaFull(url);
+    }, true);
+  })();
+
   function confirmar(msg) {
     return confirm(msg || '¿Eliminar este registro?');
   }
