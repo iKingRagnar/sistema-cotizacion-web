@@ -617,9 +617,20 @@
   let tecnicosCache = [];
   let appUsersDeletedCache = [];
   let lastQuickRefreshAt = 0;
+  function prefersReducedMotion() {
+    try {
+      return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    } catch (_) {
+      return false;
+    }
+  }
   function spawnLoginParticles() {
     const overlay = qs('#login-overlay');
     if (!overlay || overlay._particlesSpawned) return;
+    if (prefersReducedMotion()) {
+      overlay._particlesSpawned = true;
+      return;
+    }
     overlay._particlesSpawned = true;
     const colors = [
       'rgba(14,148,163,0.7)', 'rgba(99,102,241,0.6)',
@@ -640,6 +651,38 @@
       overlay.appendChild(p);
     }
   }
+
+  /** Misma animación de “burbujas” que el login, detrás del tablero (tema metal). */
+  function spawnAppParticles() {
+    const layer = qs('#app-particles-layer');
+    if (!layer || layer._particlesSpawned) return;
+    if (prefersReducedMotion()) {
+      layer._particlesSpawned = true;
+      return;
+    }
+    layer._particlesSpawned = true;
+    const colors = [
+      'rgba(148,163,184,0.45)',
+      'rgba(203,213,225,0.32)',
+      'rgba(94,234,212,0.22)',
+      'rgba(255,255,255,0.14)',
+      'rgba(100,116,139,0.42)',
+    ];
+    const count = 26;
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('span');
+      p.className = 'app-particle';
+      const size = (Math.random() * 5 + 3).toFixed(1) + 'px';
+      const left = (Math.random() * 100).toFixed(1) + '%';
+      const dur = (Math.random() * 10 + 8).toFixed(1) + 's';
+      const delay = (Math.random() * 12).toFixed(1) + 's';
+      const px = ((Math.random() - 0.5) * 90).toFixed(1) + 'px';
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      p.style.cssText = '--size:' + size + ';--lft:' + left + ';--dur:' + dur + ';--delay:' + delay + ';--px:' + px + ';--color:' + color;
+      layer.appendChild(p);
+    }
+  }
+
   function showLoginOverlay(show) {
     const el = qs('#login-overlay');
     if (!el) return;
@@ -11848,6 +11891,7 @@
   let refreshIntervalId = null;
   function finishBoot() {
     showLoginOverlay(false);
+    spawnAppParticles();
     initTheme();
     syncSessionHeader();
     updateAuditTabVisibility();

@@ -5910,8 +5910,24 @@ body.dark-theme .ref-pvc-hero-kicker { color: #94a3b8; }
   box-shadow: 0 8px 20px rgba(0,0,0,0.25);
 }
 
-/* Floating particles (rendered via CSS counters + pseudo-elements — supplemented by JS) */
-.login-particle {
+/* Capa de partículas detrás del contenido (misma animación que el login) */
+body > #app-particles-layer.app-particles-layer {
+  position: fixed !important;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0 !important;
+}
+body.login-open > #app-particles-layer.app-particles-layer {
+  visibility: hidden;
+  opacity: 0;
+}
+
+/* Floating particles (login + app principal; JS inserta spans) */
+.login-particle,
+.app-particle {
   position: absolute;
   border-radius: 50%;
   pointer-events: none;
