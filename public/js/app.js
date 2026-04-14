@@ -665,21 +665,152 @@
     }
     updateCotizacionesTabVisibility();
     updateCommissionsUiVisibility();
+    syncAdminHubCardVisibility();
+  }
+  function syncAdminHubCardVisibility() {
+    const u = getSessionUser();
+    const showUsers = !!(serverConfig.authRequired && u && normalizeRole(u.role) === 'admin');
+    const showAudit = !!(serverConfig.auditUi && u && normalizeRole(u.role) === 'admin');
+    const showCat = !!(serverConfig.authRequired && u && normalizeRole(u.role) === 'admin');
+    const showComm = canViewCommissions();
+    const showAdminMod = canAccessAdminOnlyModules();
+    const showDemo = !!u;
+    const map = [
+      ['admin-hub-card-usuarios', showUsers],
+      ['admin-hub-card-auditoria', showAudit],
+      ['admin-hub-card-categorias', showCat],
+      ['admin-hub-card-bonos', showComm],
+      ['admin-hub-card-viajes', showComm],
+      ['admin-hub-card-prospeccion', showAdminMod],
+      ['admin-hub-card-tarifas', showAdminMod],
+      ['admin-hub-card-tecnicos', showAdminMod],
+      ['admin-hub-card-demo', showDemo],
+    ];
+    let n = 0;
+    map.forEach(function ([id, ok]) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.toggle('hidden', !ok);
+      if (ok) n += 1;
+    });
+    const mas = qs('#profile-menu-mas');
+    if (mas) mas.classList.toggle('hidden', n === 0);
+  }
+  function closeHeaderProfileMenu() {
+    const m = qs('#header-profile-menu');
+    const b = qs('#btn-header-profile');
+    if (m) m.classList.add('hidden');
+    if (b) b.setAttribute('aria-expanded', 'false');
+  }
+  function toggleHeaderProfileMenu() {
+    const m = qs('#header-profile-menu');
+    const b = qs('#btn-header-profile');
+    if (!m || !b) return;
+    const open = m.classList.contains('hidden');
+    if (open) {
+      m.classList.remove('hidden');
+      b.setAttribute('aria-expanded', 'true');
+    } else {
+      closeHeaderProfileMenu();
+    }
+  }
+  function closeAdminHubOverlay() {
+    const h = qs('#admin-hub-overlay');
+    if (h) h.classList.add('hidden');
+    document.body.classList.remove('admin-hub-open');
+  }
+  function openAdminHubOverlay() {
+    syncAdminHubCardVisibility();
+    const h = qs('#admin-hub-overlay');
+    if (h) h.classList.remove('hidden');
+    document.body.classList.add('admin-hub-open');
+  }
+  function wireHeaderProfileAndAdminHub() {
+    const btnProf = qs('#btn-header-profile');
+    const wrap = qs('#header-profile-wrap');
+    if (btnProf && wrap) {
+      btnProf.addEventListener('click', function (e) {
+        e.stopPropagation();
+        toggleHeaderProfileMenu();
+      });
+    }
+    const mas = qs('#profile-menu-mas');
+    if (mas) {
+      mas.addEventListener('click', function () {
+        closeHeaderProfileMenu();
+        openAdminHubOverlay();
+      });
+    }
+    const pLogout = qs('#profile-menu-logout');
+    if (pLogout) {
+      pLogout.addEventListener('click', function () {
+        closeHeaderProfileMenu();
+        const legacy = qs('#btn-logout');
+        if (legacy) legacy.click();
+      });
+    }
+    document.addEventListener(
+      'click',
+      function (e) {
+        const w = qs('#header-profile-wrap');
+        if (!w || w.classList.contains('hidden')) return;
+        if (w.contains(e.target)) return;
+        closeHeaderProfileMenu();
+      },
+      true
+    );
+    const hub = qs('#admin-hub-overlay');
+    const hubClose = qs('#admin-hub-close');
+    const hubPanel = qs('#admin-hub-panel');
+    if (hub) {
+      hub.addEventListener('click', function (e) {
+        if (e.target === hub) closeAdminHubOverlay();
+      });
+    }
+    if (hubClose) hubClose.addEventListener('click', closeAdminHubOverlay);
+    if (hubPanel) {
+      hubPanel.addEventListener('click', function (e) {
+        const card = e.target && e.target.closest && e.target.closest('[data-hub-tab]');
+        if (!card || !hubPanel.contains(card)) return;
+        const tab = card.getAttribute('data-hub-tab');
+        if (!tab) return;
+        closeAdminHubOverlay();
+        showPanel(tab, { skipLoad: false });
+      });
+    }
   }
   function syncSessionHeader() {
     const wrap = qs('#header-session');
     const label = qs('#header-session-user');
     const out = qs('#btn-logout');
+    const profileWrap = qs('#header-profile-wrap');
+    const pname = qs('#header-profile-name');
+    const prole = qs('#header-profile-role');
     if (!wrap || !label) return;
     const u = getSessionUser();
     if (u) {
-      wrap.classList.remove('hidden');
-      label.textContent = (u.displayName || u.username || '') + ' · ' + getRoleLabel(u.role);
-      if (out) out.classList.remove('hidden');
+      wrap.classList.add('hidden');
+      if (out) out.classList.add('hidden');
+      if (profileWrap) {
+        profileWrap.classList.remove('hidden');
+        const disp = String((u.displayName || u.username || '') || '').trim();
+        const uname = String((u.username || '') || '').trim();
+        if (pname) pname.textContent = disp || uname || 'Usuario';
+        if (prole) prole.textContent = getRoleLabel(u.role);
+        const pmDisp = qs('#profile-menu-display');
+        const pmUser = qs('#profile-menu-user');
+        const pmRole = qs('#profile-menu-role');
+        if (pmDisp) pmDisp.textContent = disp || uname || 'Usuario';
+        if (pmUser) pmUser.textContent = uname || '—';
+        if (pmRole) pmRole.textContent = getRoleLabel(u.role);
+      }
     } else {
       wrap.classList.add('hidden');
       if (out) out.classList.add('hidden');
+      if (profileWrap) profileWrap.classList.add('hidden');
+      closeHeaderProfileMenu();
     }
+    syncAdminHubCardVisibility();
     syncModuleDeleteZonesVisibility();
   }
   function setupLoginForm() {
@@ -10608,6 +10739,16 @@
 
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
+      const hub = qs('#admin-hub-overlay');
+      if (hub && !hub.classList.contains('hidden')) {
+        closeAdminHubOverlay();
+        return;
+      }
+      const pm = qs('#header-profile-menu');
+      if (pm && !pm.classList.contains('hidden')) {
+        closeHeaderProfileMenu();
+        return;
+      }
       const modal = qs('#modal');
       if (modal && !modal.classList.contains('hidden')) modal.classList.add('hidden');
     }
@@ -10767,6 +10908,7 @@
       location.reload();
     });
   }
+  wireHeaderProfileAndAdminHub();
 
   /** Primera visita: tips rápidos (se guarda al cerrar el modal) */
   function startGuidedTour() {

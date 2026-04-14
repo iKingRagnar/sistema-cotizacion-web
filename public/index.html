@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="css/style.css?v=69-apex-pro-shell">
   <link rel="stylesheet" href="css/theme-industrial.css?v=6-apex-harmony">
   <link rel="stylesheet" href="css/layout-rail.css?v=2-sidebar-dashboard-width">
+  <link rel="stylesheet" href="css/header-profile.css?v=1-profile-admin-hub">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
@@ -150,6 +151,26 @@
         <button type="button" id="btn-guided-tour" class="btn-icon-header" title="Tour guiado de la plataforma" aria-label="Tour guiado"><i class="fas fa-route"></i></button>
         <button type="button" id="shortcuts-btn" class="btn-icon-header" title="Atajos de teclado (Ctrl+/)">?</button>
         <button type="button" id="contrast-toggle" class="btn-icon-header" title="Alto contraste en modo oscuro" aria-label="Alto contraste" aria-pressed="false"><i class="fas fa-adjust"></i></button>
+        <div id="header-profile-wrap" class="header-profile-wrap hidden" data-profile-wrap>
+          <div class="header-profile-meta" aria-hidden="true">
+            <span id="header-profile-name" class="header-profile-name"></span>
+            <span id="header-profile-role" class="header-profile-role"></span>
+          </div>
+          <button type="button" id="btn-header-profile" class="btn-header-profile" aria-expanded="false" aria-haspopup="true" aria-controls="header-profile-menu" title="Cuenta y sesión">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+              <circle cx="12" cy="9" r="3.5" fill="none" stroke="currentColor" stroke-width="1.75"/>
+              <path d="M6.5 20v-0.5a5.5 5.5 0 0111 0v0.5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <div id="header-profile-menu" class="header-profile-menu hidden" role="menu" aria-label="Menú de cuenta">
+            <div class="header-profile-menu-user">
+              <strong id="profile-menu-display"></strong>
+              <div class="header-profile-menu-meta"><span id="profile-menu-user"></span> · <span id="profile-menu-role"></span></div>
+            </div>
+            <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-mas">Más opciones…</button>
+            <button type="button" class="header-profile-menu-item danger" role="menuitem" id="profile-menu-logout">Cerrar sesión</button>
+          </div>
+        </div>
         <div class="theme-switcher" role="group" aria-label="Tema visual">
           <button type="button" class="btn-icon-header theme-switcher-btn" data-theme="light" id="theme-btn-light" title="Tema claro (sol)" aria-label="Tema claro" aria-pressed="false"><i class="fas fa-sun"></i></button>
           <button type="button" class="btn-icon-header theme-switcher-btn" data-theme="industrial" id="theme-btn-industrial" title="Tema industrial (metal y franjas)" aria-label="Tema industrial" aria-pressed="false"><i class="fas fa-circle-half-stroke"></i></button>
@@ -1174,6 +1195,63 @@
     </div>
   </div>
 
+  <div id="admin-hub-overlay" class="admin-hub-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="admin-hub-title">
+    <div class="admin-hub-panel" id="admin-hub-panel">
+      <div class="admin-hub-header">
+        <h2 id="admin-hub-title">Panel de administración</h2>
+        <button type="button" class="btn-icon-header" id="admin-hub-close" aria-label="Cerrar panel de administración"><i class="fas fa-times"></i></button>
+      </div>
+      <p class="admin-hub-intro">Accesos rápidos a las mismas funciones que ya tienes en <strong>Módulos</strong>; aquí van reunidas para trabajar más ordenado.</p>
+      <div class="admin-hub-grid" id="admin-hub-grid">
+        <button type="button" class="admin-hub-card hidden" id="admin-hub-card-usuarios" data-hub-tab="usuarios">
+          <i class="fas fa-user-shield" aria-hidden="true"></i>
+          <span class="admin-hub-card-title">Usuarios</span>
+          <span class="admin-hub-card-desc">Crear cuentas, roles y permisos.</span>
+        </button>
+        <button type="button" class="admin-hub-card hidden" id="admin-hub-card-auditoria" data-hub-tab="auditoria">
+          <i class="fas fa-clipboard-list" aria-hidden="true"></i>
+          <span class="admin-hub-card-title">Auditoría</span>
+          <span class="admin-hub-card-desc">Historial de cambios en el sistema.</span>
+        </button>
+        <button type="button" class="admin-hub-card hidden" id="admin-hub-card-categorias" data-hub-tab="categorias-catalogo">
+          <i class="fas fa-sitemap" aria-hidden="true"></i>
+          <span class="admin-hub-card-title">Categorías</span>
+          <span class="admin-hub-card-desc">Catálogo y subcategorías administrables.</span>
+        </button>
+        <button type="button" class="admin-hub-card hidden" id="admin-hub-card-bonos" data-hub-tab="bonos">
+          <i class="fas fa-award" aria-hidden="true"></i>
+          <span class="admin-hub-card-title">Bonos</span>
+          <span class="admin-hub-card-desc">Liquidación y comisiones de capacitación.</span>
+        </button>
+        <button type="button" class="admin-hub-card hidden" id="admin-hub-card-viajes" data-hub-tab="viajes">
+          <i class="fas fa-plane" aria-hidden="true"></i>
+          <span class="admin-hub-card-title">Viajes</span>
+          <span class="admin-hub-card-desc">Viáticos y liquidación mensual.</span>
+        </button>
+        <button type="button" class="admin-hub-card hidden" id="admin-hub-card-prospeccion" data-hub-tab="prospeccion">
+          <i class="fas fa-map-marked-alt" aria-hidden="true"></i>
+          <span class="admin-hub-card-title">Prospección</span>
+          <span class="admin-hub-card-desc">Mapa y pipeline de prospectos.</span>
+        </button>
+        <button type="button" class="admin-hub-card hidden" id="admin-hub-card-tarifas" data-hub-tab="tarifas">
+          <i class="fas fa-tags" aria-hidden="true"></i>
+          <span class="admin-hub-card-title">Tarifas</span>
+          <span class="admin-hub-card-desc">Mano de obra, traslados y esquemas.</span>
+        </button>
+        <button type="button" class="admin-hub-card hidden" id="admin-hub-card-tecnicos" data-hub-tab="tecnicos">
+          <i class="fas fa-users" aria-hidden="true"></i>
+          <span class="admin-hub-card-title">Personal</span>
+          <span class="admin-hub-card-desc">Puestos, vendedores y comisiones.</span>
+        </button>
+        <button type="button" class="admin-hub-card hidden" id="admin-hub-card-demo" data-hub-tab="demo">
+          <i class="fas fa-database" aria-hidden="true"></i>
+          <span class="admin-hub-card-title">Cargar demo y respaldos</span>
+          <span class="admin-hub-card-desc">Datos de ejemplo, exportar/importar, persistencia.</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div id="ai-widget-wrap" class="ai-widget-wrap collapsed" aria-label="Agente de Soporte - Asistente con IA">
     <div id="ai-fab-nudge" class="ai-fab-nudge hidden" role="status" aria-live="polite" aria-atomic="true">
       <button type="button" class="ai-fab-nudge-close" id="ai-fab-nudge-close" aria-label="Cerrar aviso" title="Cerrar">×</button>
@@ -1258,7 +1336,7 @@
 
   <footer class="app-footer" role="contentinfo">
     <p>Sistema de Cotización y Gestión · <span class="footer-version">v4</span> · Uso profesional · Cotizaciones, incidentes y bitácora en un solo lugar
-      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 58 · JS 111</strong></span></p>
+      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 59 · JS 112</strong></span></p>
     <p class="footer-tip"><kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> atajos de sección · <kbd>Esc</kbd> cierra modales</p>
   </footer>
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
@@ -1269,6 +1347,6 @@
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=112-layout-rail-note"></script>
+  <script src="js/app.js?v=113-profile-admin-hub"></script>
 </body>
 </html>
