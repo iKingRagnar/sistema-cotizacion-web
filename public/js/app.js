@@ -633,15 +633,16 @@
     }
     overlay._particlesSpawned = true;
     const colors = [
-      'rgba(14,148,163,0.7)', 'rgba(99,102,241,0.6)',
-      'rgba(255,255,255,0.4)', 'rgba(14,148,163,0.4)',
-      'rgba(30,58,95,0.8)',
+      'rgba(45,212,191,0.92)', 'rgba(56,189,248,0.9)', 'rgba(167,139,250,0.88)',
+      'rgba(251,191,36,0.9)', 'rgba(244,114,182,0.85)', 'rgba(52,211,153,0.9)',
+      'rgba(255,255,255,0.78)', 'rgba(94,234,212,0.88)', 'rgba(129,140,248,0.86)',
+      'rgba(253,224,71,0.82)',
     ];
-    const count = 28;
+    const count = 32;
     for (let i = 0; i < count; i++) {
       const p = document.createElement('span');
       p.className = 'login-particle';
-      const size = (Math.random() * 6 + 3).toFixed(1) + 'px';
+      const size = (Math.random() * 7 + 4).toFixed(1) + 'px';
       const left = (Math.random() * 100).toFixed(1) + '%';
       const dur = (Math.random() * 10 + 7).toFixed(1) + 's';
       const delay = (Math.random() * 10).toFixed(1) + 's';
@@ -662,17 +663,16 @@
     }
     layer._particlesSpawned = true;
     const colors = [
-      'rgba(148,163,184,0.45)',
-      'rgba(203,213,225,0.32)',
-      'rgba(94,234,212,0.22)',
-      'rgba(255,255,255,0.14)',
-      'rgba(100,116,139,0.42)',
+      'rgba(45,212,191,0.88)', 'rgba(56,189,248,0.85)', 'rgba(167,139,250,0.82)',
+      'rgba(251,191,36,0.82)', 'rgba(244,114,182,0.78)', 'rgba(52,211,153,0.86)',
+      'rgba(255,255,255,0.72)', 'rgba(129,140,248,0.8)', 'rgba(253,224,71,0.75)',
+      'rgba(34,211,238,0.84)',
     ];
-    const count = 26;
+    const count = 30;
     for (let i = 0; i < count; i++) {
       const p = document.createElement('span');
       p.className = 'app-particle';
-      const size = (Math.random() * 5 + 3).toFixed(1) + 'px';
+      const size = (Math.random() * 6 + 4).toFixed(1) + 'px';
       const left = (Math.random() * 100).toFixed(1) + '%';
       const dur = (Math.random() * 10 + 8).toFixed(1) + 's';
       const delay = (Math.random() * 12).toFixed(1) + 's';

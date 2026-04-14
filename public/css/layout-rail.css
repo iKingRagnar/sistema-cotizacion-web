@@ -270,7 +270,9 @@ body.dark-theme .tabs.tabs--rail .tab {
 /* Industrial (metal plateado): rail acorde al body */
 body.theme-industrial .sidebar-nav {
   border-right-color: #334155;
-  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.94) 0%, rgba(15, 23, 42, 0.97) 100%);
+  -webkit-backdrop-filter: blur(16px) saturate(118%);
+  backdrop-filter: blur(16px) saturate(118%);
 }
 
 body.theme-industrial .sidebar-nav-title {
