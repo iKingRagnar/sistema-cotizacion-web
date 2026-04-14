@@ -173,7 +173,7 @@
           <div id="header-profile-menu" class="header-profile-menu hidden" role="menu" aria-label="Menú de cuenta">
             <div class="header-profile-menu-user">
               <strong id="profile-menu-display"></strong>
-              <div class="header-profile-menu-meta"><span id="profile-menu-user"></span> · <span id="profile-menu-role"></span></div>
+              <div class="header-profile-menu-meta"><span id="profile-menu-fullname"></span></div>
             </div>
             <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-mas">Más opciones…</button>
             <button type="button" class="header-profile-menu-item danger" role="menuitem" id="profile-menu-logout">Cerrar sesión</button>
@@ -1011,7 +1011,7 @@
     <section id="panel-usuarios" class="panel" aria-label="Usuarios y permisos">
       <div class="section-header">
         <h2><i class="fas fa-user-shield"></i> Usuarios y permisos</h2>
-        <p class="hint">Solo el administrador puede crear cuentas y asignar roles. Puede <strong>eliminar usuarios</strong> (no a ti mismo ni al único admin activo); cada baja queda registrada abajo. <strong>Invitado / Consulta</strong> = solo ver. <strong>Usuario / Operador</strong> = cotizaciones y reportes (sin editar catálogos maestros).</p>
+        <p class="hint">Solo el administrador puede crear cuentas y asignar roles. <strong>Nombre completo</strong> es el que verá cada usuario bajo su rol en el menú del perfil (monito). Puede <strong>eliminar usuarios</strong> (no a ti mismo ni al único admin activo); cada baja queda registrada abajo. <strong>Invitado / Consulta</strong> = solo ver. <strong>Usuario / Operador</strong> = cotizaciones y reportes (sin editar catálogos maestros).</p>
       </div>
       <div class="card" style="margin-bottom:1rem;padding:1rem 1.25rem;">
         <h3 style="margin:0 0 0.75rem 0;font-size:1rem;">Nuevo usuario</h3>
@@ -1025,8 +1025,8 @@
             <input type="password" id="usuarios-new-password" autocomplete="new-password" class="filter-input">
           </div>
           <div class="form-group" style="min-width:160px;">
-            <label for="usuarios-new-display">Nombre para mostrar</label>
-            <input type="text" id="usuarios-new-display" autocomplete="off" class="filter-input">
+            <label for="usuarios-new-display">Nombre completo</label>
+            <input type="text" id="usuarios-new-display" autocomplete="name" placeholder="Ej. David Orlando Cantú" class="filter-input">
           </div>
           <div class="form-group" style="min-width:180px;">
             <label for="usuarios-new-role">Rol</label>
@@ -1350,7 +1350,7 @@
 
   <footer class="app-footer" role="contentinfo">
     <p>Sistema de Cotización y Gestión · <span class="footer-version">v4</span> · Uso profesional · Cotizaciones, incidentes y bitácora en un solo lugar
-      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 61 · JS 114</strong></span></p>
+      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 63 · JS 115</strong></span></p>
     <p class="footer-tip"><kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> atajos de sección · <kbd>Esc</kbd> cierra modales</p>
   </footer>
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
@@ -1361,6 +1361,6 @@
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=114-sidebar-rail-toggle"></script>
+  <script src="js/app.js?v=115-profile-display-name"></script>
 </body>
 </html>

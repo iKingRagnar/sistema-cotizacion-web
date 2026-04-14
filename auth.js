@@ -362,7 +362,7 @@ async function ensureSeedUsers() {
   const seedDemo = process.env.AUTH_SEED_DEMO_USERS === '1' || process.env.AUTH_SEED_DEMO_USERS === 'true';
   await db.runQuery(
     'INSERT INTO app_users (username, password_hash, role, display_name) VALUES (?,?,?,?)',
-    ['admin', hashPassword(adminPass), 'admin', 'Administrador']
+    ['admin', hashPassword(adminPass), 'admin', 'Usuario principal']
   );
   console.log('[auth] Usuario administrador inicial creado (admin). El admin puede crear más cuentas desde la app.');
   console.log('  admin / ' + adminPass);

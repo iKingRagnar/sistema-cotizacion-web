@@ -227,6 +227,17 @@
     };
     return labels[role] || role || '—';
   }
+
+  /** Segunda línea del menú del monito: nombre completo (display_name). Si en BD quedó igual que el rol (semilla vieja), muestra el usuario. */
+  function profileMenuSecondaryName(u) {
+    if (!u) return '—';
+    const uname = String(u.username || '').trim();
+    const raw = String(u.displayName || '').trim();
+    const roleLabel = getRoleLabel(u.role);
+    if (!raw) return uname || '—';
+    if (roleLabel && raw.toLowerCase() === String(roleLabel).toLowerCase()) return uname || raw;
+    return raw;
+  }
   /** Comisiones, bonos y % de ganancia: solo administrador cuando la app exige login. */
   function canViewCommissions() {
     if (!serverConfig.authRequired) return true;
@@ -794,16 +805,15 @@
       if (out) out.classList.add('hidden');
       if (profileWrap) {
         profileWrap.classList.remove('hidden');
-        const disp = String((u.displayName || u.username || '') || '').trim();
+        const roleLabel = getRoleLabel(u.role);
+        const fullLine = profileMenuSecondaryName(u);
         const uname = String((u.username || '') || '').trim();
-        if (pname) pname.textContent = disp || uname || 'Usuario';
-        if (prole) prole.textContent = getRoleLabel(u.role);
+        if (pname) pname.textContent = fullLine || uname || 'Usuario';
+        if (prole) prole.textContent = roleLabel;
         const pmDisp = qs('#profile-menu-display');
-        const pmUser = qs('#profile-menu-user');
-        const pmRole = qs('#profile-menu-role');
-        if (pmDisp) pmDisp.textContent = disp || uname || 'Usuario';
-        if (pmUser) pmUser.textContent = uname || '—';
-        if (pmRole) pmRole.textContent = getRoleLabel(u.role);
+        const pmFull = qs('#profile-menu-fullname');
+        if (pmDisp) pmDisp.textContent = roleLabel;
+        if (pmFull) pmFull.textContent = fullLine;
       }
     } else {
       wrap.classList.add('hidden');
@@ -8155,9 +8165,11 @@
             id +
             '"><td>' +
             escapeHtml(r.username) +
-            '</td><td>' +
+            '</td><td><span class="usuarios-display-label">' +
             escapeHtml(r.display_name || '—') +
-            '</td><td>' +
+            '</span> <button type="button" class="btn small outline usuarios-edit-display-btn" data-user-id="' +
+            id +
+            '" title="Editar nombre completo"><i class="fas fa-user-edit" aria-hidden="true"></i><span class="visually-hidden"> Editar nombre</span></button></td><td>' +
             renderUsuariosRoleSelect(id, r.role || 'invitado') +
             '</td><td>' +
             renderUsuariosTecnicoSelect(id, tecList, r.tecnico_id) +
@@ -8490,6 +8502,43 @@
     if (tbody && !tbody._usuariosDelClick) {
       tbody._usuariosDelClick = true;
       tbody.addEventListener('click', async function (ev) {
+        const editBtn = ev.target && ev.target.closest && ev.target.closest('button.usuarios-edit-display-btn');
+        if (editBtn) {
+          ev.preventDefault();
+          const id = parseInt(editBtn.dataset.userId, 10);
+          if (!Number.isFinite(id)) return;
+          const td = editBtn.closest('td');
+          const span = td && td.querySelector('.usuarios-display-label');
+          let cur = span ? String(span.textContent || '').trim() : '';
+          if (cur === '—') cur = '';
+          const n = window.prompt('Nombre completo (menú de perfil y listados):', cur);
+          if (n == null) return;
+          const display_name = String(n).trim();
+          if (!display_name) {
+            showToast('El nombre no puede quedar vacío.', 'error');
+            return;
+          }
+          editBtn.disabled = true;
+          try {
+            await fetchJson(API + '/app-users/' + id, {
+              method: 'PATCH',
+              body: JSON.stringify({ display_name: display_name }),
+            });
+            showToast('Nombre actualizado.', 'success');
+            const me = getSessionUser();
+            if (me && Number(me.id) === id) {
+              await refreshSessionUser();
+              syncSessionHeader();
+            }
+            await loadAppUsers();
+          } catch (e) {
+            showToast(parseApiError(e) || 'No se pudo actualizar el nombre.', 'error');
+            loadAppUsers();
+          } finally {
+            editBtn.disabled = false;
+          }
+          return;
+        }
         const btn = ev.target && ev.target.closest && ev.target.closest('button.usuarios-delete-btn');
         if (!btn || btn.disabled) return;
         const id = parseInt(btn.dataset.userId, 10);
