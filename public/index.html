@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="css/design-system.css?v=3-apex-base">
   <link rel="stylesheet" href="css/style.css?v=69-apex-pro-shell">
   <link rel="stylesheet" href="css/theme-industrial.css?v=6-apex-harmony">
+  <link rel="stylesheet" href="css/layout-rail.css?v=2-sidebar-dashboard-width">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
@@ -158,7 +159,10 @@
     </div>
   </header>
 
-  <nav class="tabs" role="navigation" aria-label="Secciones principales">
+  <div class="app-frame">
+    <aside class="sidebar-nav" id="app-sidebar-nav" aria-label="Navegación de módulos">
+      <p class="sidebar-nav-title">Módulos</p>
+      <nav class="tabs tabs--rail" role="navigation" aria-label="Secciones principales">
     <button type="button" data-tab="dashboards" class="tab active" title="Resumen general (Ctrl+0)"><i class="fas fa-chart-pie"></i> Dashboards</button>
     <button type="button" data-tab="clientes" class="tab" title="Clientes (Ctrl+1)"><i class="fas fa-users"></i> Clientes</button>
     <button type="button" data-tab="refacciones" class="tab" title="Refacciones (Ctrl+2)"><i class="fas fa-cogs"></i> Refacciones</button>
@@ -181,8 +185,9 @@
     <button type="button" data-tab="categorias-catalogo" class="tab hidden" id="tab-categorias-catalogo" title="Categorías y subcategorías (solo admin)"><i class="fas fa-sitemap"></i> Categorías</button>
     <button type="button" data-tab="demo" class="tab highlight" title="Cargar datos de ejemplo"><i class="fas fa-database"></i> Cargar demo</button>
     <button type="button" data-tab="acerca" class="tab" title="Acerca de (Ctrl+7)"><i class="fas fa-info-circle"></i> Acerca de</button>
-  </nav>
-
+      </nav>
+    </aside>
+    <div class="app-main">
   <main class="content" id="main-content">
     <!-- DASHBOARDS -->
     <section id="panel-dashboards" class="panel panel-dashboard active" aria-label="Resumen por segmento">
@@ -1166,6 +1171,8 @@
       </div>
     </section>
   </main>
+    </div>
+  </div>
 
   <div id="ai-widget-wrap" class="ai-widget-wrap collapsed" aria-label="Agente de Soporte - Asistente con IA">
     <div id="ai-fab-nudge" class="ai-fab-nudge hidden" role="status" aria-live="polite" aria-atomic="true">
@@ -1251,7 +1258,7 @@
 
   <footer class="app-footer" role="contentinfo">
     <p>Sistema de Cotización y Gestión · <span class="footer-version">v4</span> · Uso profesional · Cotizaciones, incidentes y bitácora en un solo lugar
-      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 57 · JS 108</strong></span></p>
+      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 58 · JS 111</strong></span></p>
     <p class="footer-tip"><kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> atajos de sección · <kbd>Esc</kbd> cierra modales</p>
   </footer>
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
@@ -1262,6 +1269,6 @@
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=111-apex-theme-meta-default"></script>
+  <script src="js/app.js?v=112-layout-rail-note"></script>
 </body>
 </html>
