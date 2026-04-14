@@ -10,6 +10,11 @@
   flex-shrink: 0;
 }
 
+/* Último bloque del header: monito al tope derecho (después del tema) */
+.header-profile-wrap--end {
+  margin-left: 0.35rem;
+}
+
 .header-profile-wrap.hidden {
   display: none !important;
 }
