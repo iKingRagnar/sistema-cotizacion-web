@@ -130,6 +130,13 @@ body > * {
   position: relative;
   z-index: 1;
 }
+
+/* app-frame va después del <header> en el DOM: con el mismo z-index el marco principal
+   pintaba encima y recortaba/tapaba menús del header (perfil, notificaciones). */
+body > .header {
+  z-index: 40;
+}
+
 @media (prefers-reduced-motion: reduce) {
   body::before,
   body::after {
@@ -883,6 +890,7 @@ body.dark-theme #tabla-bitacoras th.th-actions {
   letter-spacing: 0.01em;
   position: relative;
   overflow: visible;
+  isolation: isolate;
   animation: none;
 }
 @media (prefers-reduced-motion: reduce) {
