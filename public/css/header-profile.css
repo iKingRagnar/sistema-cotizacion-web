@@ -166,29 +166,29 @@ body.dark-theme .header-profile-menu-item.danger:hover {
 }
 
 body.theme-industrial .header-profile-menu {
-  background: #292524;
-  border-color: #57534e;
-  color: #e7e5e4;
+  background: #1e293b;
+  border-color: #475569;
+  color: #e2e8f0;
 }
 
 body.theme-industrial .header-profile-menu-user {
-  border-bottom-color: #44403c;
+  border-bottom-color: #334155;
 }
 
 body.theme-industrial .header-profile-menu-user strong {
-  color: #fafaf9;
+  color: #f8fafc;
 }
 
 body.theme-industrial .header-profile-menu-meta {
-  color: #a8a29e;
+  color: #94a3b8;
 }
 
 body.theme-industrial .header-profile-menu-item {
-  color: #e7e5e4;
+  color: #e2e8f0;
 }
 
 body.theme-industrial .header-profile-menu-item:hover {
-  background: #44403c;
+  background: #334155;
 }
 
 /* Panel administración */
@@ -341,41 +341,41 @@ body.dark-theme .admin-hub-card-desc {
 }
 
 body.theme-industrial .admin-hub-panel {
-  background: #292524;
-  border-color: #57534e;
+  background: #1e293b;
+  border-color: #475569;
 }
 
 body.theme-industrial .admin-hub-header {
-  border-bottom-color: #44403c;
+  border-bottom-color: #334155;
 }
 
 body.theme-industrial .admin-hub-header h2 {
-  color: #fafaf9;
+  color: #f8fafc;
 }
 
 body.theme-industrial .admin-hub-intro {
-  color: #a8a29e;
-  border-bottom-color: #44403c;
+  color: #94a3b8;
+  border-bottom-color: #334155;
 }
 
 body.theme-industrial .admin-hub-card {
-  background: linear-gradient(180deg, #292524 0%, #1c1917 100%);
-  border-color: #57534e;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border-color: #475569;
 }
 
 body.theme-industrial .admin-hub-card i {
-  color: #eab308;
+  color: #94a3b8;
 }
 
 body.theme-industrial .admin-hub-card:hover {
-  border-color: #eab308;
-  box-shadow: 0 6px 20px rgba(234, 179, 8, 0.15);
+  border-color: #cbd5e1;
+  box-shadow: 0 6px 20px rgba(148, 163, 184, 0.2);
 }
 
 body.theme-industrial .admin-hub-card-title {
-  color: #fafaf9;
+  color: #f8fafc;
 }
 
 body.theme-industrial .admin-hub-card-desc {
-  color: #a8a29e;
+  color: #94a3b8;
 }

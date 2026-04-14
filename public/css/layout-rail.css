@@ -267,27 +267,27 @@ body.dark-theme .tabs.tabs--rail .tab {
   }
 }
 
-/* Industrial (media luna): rail acorde, sin competir con franjas del body */
+/* Industrial (metal plateado): rail acorde al body */
 body.theme-industrial .sidebar-nav {
-  border-right-color: #44403c;
-  background: linear-gradient(180deg, #292524 0%, #1c1917 100%);
+  border-right-color: #334155;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
 }
 
 body.theme-industrial .sidebar-nav-title {
-  color: #a8a29e;
+  color: #94a3b8;
 }
 
 body.theme-industrial .btn-sidebar-rail-toggle {
-  border-color: #57534e;
-  background: rgba(41, 37, 36, 0.9);
-  color: #e7e5e4;
+  border-color: #475569;
+  background: rgba(51, 65, 85, 0.9);
+  color: #e2e8f0;
   box-shadow: none;
 }
 
 body.theme-industrial .btn-sidebar-rail-toggle:hover {
-  background: #44403c;
-  border-color: #a8a29e;
-  color: #fafaf9;
+  background: #334155;
+  border-color: #94a3b8;
+  color: #f8fafc;
 }
 
 body.theme-industrial .tabs.tabs--rail {
@@ -295,25 +295,25 @@ body.theme-industrial .tabs.tabs--rail {
 }
 
 body.theme-industrial .tabs.tabs--rail .tab {
-  border-color: #57534e;
-  color: #d6d3d1;
-  background: rgba(41, 37, 36, 0.85);
+  border-color: #475569;
+  color: #cbd5e1;
+  background: rgba(51, 65, 85, 0.85);
 }
 
 body.theme-industrial .tabs.tabs--rail .tab:hover {
-  background: #44403c;
-  border-color: #a8a29e;
-  color: #fafaf9;
+  background: #334155;
+  border-color: #94a3b8;
+  color: #f8fafc;
 }
 
 body.theme-industrial .tabs.tabs--rail .tab.active {
-  color: #0c0a09;
+  color: #020617;
 }
 
 @media (max-width: 960px) {
   body.theme-industrial .sidebar-nav {
-    border-bottom-color: #44403c;
-    background: rgba(28, 25, 23, 0.96);
+    border-bottom-color: #334155;
+    background: rgba(30, 41, 59, 0.96);
   }
 }
 

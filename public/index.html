@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" id="meta-theme-color" content="#0c1222">
+  <meta name="theme-color" id="meta-theme-color" content="#0f172a">
   <title>Gestor Administrativo · Profesional</title>
   <meta name="description" content="Gestor Administrativo para clientes, refacciones, máquinas, cotizaciones, incidentes y bitácora de horas. Control total en un solo lugar.">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -12,14 +12,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/design-tokens.css?v=3-apex-base">
   <link rel="stylesheet" href="css/design-system.css?v=3-apex-base">
-  <link rel="stylesheet" href="css/style.css?v=71-header-z-profile-menu">
-  <link rel="stylesheet" href="css/theme-industrial.css?v=6-apex-harmony">
-  <link rel="stylesheet" href="css/layout-rail.css?v=4-sidebar-rail-toggle">
-  <link rel="stylesheet" href="css/header-profile.css?v=3-no-meta-in-bar">
+  <link rel="stylesheet" href="css/style.css?v=72-single-metal-theme">
+  <link rel="stylesheet" href="css/theme-industrial.css?v=7-metal-silver">
+  <link rel="stylesheet" href="css/layout-rail.css?v=5-metal-rail">
+  <link rel="stylesheet" href="css/header-profile.css?v=4-metal-hub">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
-<body>
+<body class="theme-industrial">
   <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
   <div id="offline-banner" class="offline-banner hidden" role="alert" aria-live="polite">Sin conexión. Algunas funciones pueden no estar disponibles.</div>
   <div id="login-overlay" class="login-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="login-title">
@@ -150,15 +150,6 @@
         </div>
         <div id="header-session" class="header-session hidden" aria-live="polite"><span class="header-session-label" id="header-session-user"></span></div>
         <button type="button" id="btn-logout" class="btn-icon-header hidden" title="Cerrar sesión" aria-label="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></button>
-        <button type="button" id="btn-sound-toggle" class="btn-icon-header" title="Música de fondo" aria-label="Música de fondo (Num+ y Num− volumen)" aria-pressed="false"><i class="fas fa-volume-up"></i></button>
-        <button type="button" id="btn-guided-tour" class="btn-icon-header" title="Tour guiado de la plataforma" aria-label="Tour guiado"><i class="fas fa-route"></i></button>
-        <button type="button" id="shortcuts-btn" class="btn-icon-header" title="Atajos de teclado (Ctrl+/)">?</button>
-        <button type="button" id="contrast-toggle" class="btn-icon-header" title="Alto contraste en modo oscuro" aria-label="Alto contraste" aria-pressed="false"><i class="fas fa-adjust"></i></button>
-        <div class="theme-switcher" role="group" aria-label="Tema visual">
-          <button type="button" class="btn-icon-header theme-switcher-btn" data-theme="light" id="theme-btn-light" title="Tema claro (sol)" aria-label="Tema claro" aria-pressed="false"><i class="fas fa-sun"></i></button>
-          <button type="button" class="btn-icon-header theme-switcher-btn" data-theme="industrial" id="theme-btn-industrial" title="Tema industrial (metal y franjas)" aria-label="Tema industrial" aria-pressed="false"><i class="fas fa-circle-half-stroke"></i></button>
-          <button type="button" class="btn-icon-header theme-switcher-btn" data-theme="dark" id="theme-btn-dark" title="Tema oscuro (luna)" aria-label="Tema oscuro" aria-pressed="false"><i class="fas fa-moon"></i></button>
-        </div>
         <div id="header-profile-wrap" class="header-profile-wrap hidden" data-profile-wrap>
           <div class="header-profile-meta visually-hidden">
             <span id="header-profile-name" class="header-profile-name"></span>
@@ -1350,7 +1341,7 @@
 
   <footer class="app-footer" role="contentinfo">
     <p>Sistema de Cotización y Gestión · <span class="footer-version">v4</span> · Uso profesional · Cotizaciones, incidentes y bitácora en un solo lugar
-      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 63 · JS 115</strong></span></p>
+      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 64 · JS 116</strong></span></p>
     <p class="footer-tip"><kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> atajos de sección · <kbd>Esc</kbd> cierra modales</p>
   </footer>
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
@@ -1361,6 +1352,6 @@
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=115-profile-display-name"></script>
+  <script src="js/app.js?v=116-single-metal-theme"></script>
 </body>
 </html>

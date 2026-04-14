@@ -1,11 +1,11 @@
 /**
- * Tema "Industrial" (media luna): metal + acento oro.
- * Misma jerarquía que Apex (claro / oscuro): recolor de acento y superficies; sin duplicar reglas globales.
+ * Tema único “Industrial / media luna”: franjas y relieve tipo metal, acento plateado (pizarra / cromo).
+ * Antes oro/café; ahora gris frío armonizado. No hay tema claro/oscuro alterno en la UI.
  */
 
 body.theme-industrial {
-  background-color: #1c1917;
-  color: #e7e5e4;
+  background-color: #0f172a;
+  color: #e2e8f0;
 }
 
 body.theme-industrial::before {
@@ -15,11 +15,11 @@ body.theme-industrial::before {
   background:
     repeating-linear-gradient(
       -32deg,
-      rgba(12, 10, 9, 0.55) 0 18px,
-      rgba(234, 179, 8, 0.07) 18px 20px,
-      rgba(12, 10, 9, 0.55) 20px 40px
+      rgba(15, 23, 42, 0.55) 0 18px,
+      rgba(148, 163, 184, 0.07) 18px 20px,
+      rgba(15, 23, 42, 0.55) 20px 40px
     ),
-    linear-gradient(168deg, #57534e 0%, #44403c 18%, #292524 48%, #1c1917 78%, #0c0a09 100%),
+    linear-gradient(168deg, #475569 0%, #334155 18%, #1e293b 48%, #0f172a 78%, #020617 100%),
     repeating-linear-gradient(
       88deg,
       rgba(255, 255, 255, 0.04) 0 1px,
@@ -32,34 +32,34 @@ body.theme-industrial::after {
   animation: none;
   opacity: 0.42;
   background-image:
-    linear-gradient(rgba(250, 204, 21, 0.04) 1px, transparent 1px),
+    linear-gradient(rgba(203, 213, 225, 0.04) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
   background-size: 52px 52px;
   mask-image: radial-gradient(ellipse 90% 72% at 50% 36%, #000 0%, transparent 76%);
 }
 
 html:has(body.theme-industrial) {
-  scrollbar-color: #78716c #1c1917;
+  scrollbar-color: #64748b #0f172a;
 }
 html:has(body.theme-industrial)::-webkit-scrollbar-track {
-  background: #1c1917;
+  background: #0f172a;
 }
 html:has(body.theme-industrial)::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #a8a29e 0%, #78716c 100%);
-  border: 2px solid #1c1917;
+  background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
+  border: 2px solid #0f172a;
 }
 html:has(body.theme-industrial)::-webkit-scrollbar-thumb:hover {
-  background: #d6d3d1;
+  background: #cbd5e1;
 }
 
 body.theme-industrial ::selection {
-  background: rgba(234, 179, 8, 0.35);
-  color: #0c0a09;
+  background: rgba(148, 163, 184, 0.35);
+  color: #020617;
 }
 
 /* Franja tipo “cinta” bajo el header */
 body.theme-industrial .header {
-  background: linear-gradient(125deg, #292524 0%, #44403c 40%, #57534e 72%, #44403c 100%);
+  background: linear-gradient(125deg, #1e293b 0%, #334155 40%, #475569 72%, #334155 100%);
   background-size: 200% 200%;
   animation: none;
   box-shadow:
@@ -71,156 +71,156 @@ body.theme-industrial .header::after {
   opacity: 1;
   background: repeating-linear-gradient(
     90deg,
-    #eab308 0 18px,
-    #0c0a09 18px 36px
+    #94a3b8 0 18px,
+    #020617 18px 36px
   );
   border-radius: 0;
 }
 
 body.theme-industrial .tabs {
-  background: rgba(28, 25, 23, 0.92);
+  background: rgba(30, 41, 59, 0.92);
   -webkit-backdrop-filter: blur(16px) saturate(120%);
   backdrop-filter: blur(16px) saturate(120%);
-  border-bottom: 1px solid rgba(234, 179, 8, 0.35);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 body.theme-industrial .tab {
-  background: rgba(41, 37, 36, 0.9);
-  border-color: #57534e;
-  color: #d6d3d1;
+  background: rgba(51, 65, 85, 0.9);
+  border-color: #475569;
+  color: #cbd5e1;
 }
 body.theme-industrial .tab:hover {
-  background: #44403c;
-  border-color: #a8a29e;
-  color: #fafaf9;
+  background: #334155;
+  border-color: #94a3b8;
+  color: #f8fafc;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 body.theme-industrial .tab.active {
-  background: linear-gradient(135deg, #ca8a04 0%, #eab308 42%, #a16207 100%);
-  border-color: rgba(250, 250, 249, 0.35);
-  color: #0c0a09;
+  background: linear-gradient(135deg, #64748b 0%, #94a3b8 42%, #475569 100%);
+  border-color: rgba(248, 250, 252, 0.35);
+  color: #020617;
   font-weight: 700;
   box-shadow:
-    0 4px 22px rgba(234, 179, 8, 0.35),
-    0 0 0 1px rgba(12, 10, 9, 0.25) inset;
+    0 4px 22px rgba(148, 163, 184, 0.35),
+    0 0 0 1px rgba(15, 23, 42, 0.25) inset;
   animation: none;
 }
 body.theme-industrial .tab.active:hover {
-  color: #0c0a09;
+  color: #020617;
   filter: brightness(1.05);
 }
 body.theme-industrial .tab.highlight {
-  border-color: rgba(234, 179, 8, 0.65);
-  color: #fef9c3;
-  background: rgba(234, 179, 8, 0.12);
+  border-color: rgba(148, 163, 184, 0.65);
+  color: #f1f5f9;
+  background: rgba(148, 163, 184, 0.12);
 }
 body.theme-industrial .tab.highlight:hover {
-  border-color: #fde047;
-  color: #fffbeb;
-  background: rgba(234, 179, 8, 0.2);
+  border-color: #e2e8f0;
+  color: #f8fafc;
+  background: rgba(148, 163, 184, 0.2);
 }
 
 body.theme-industrial .content {
-  color: #e7e5e4;
+  color: #e2e8f0;
 }
 
 body.theme-industrial .section-header {
-  border: 1px solid rgba(234, 179, 8, 0.35);
+  border: 1px solid rgba(148, 163, 184, 0.35);
   border-radius: 16px;
   padding: 0.85rem 1rem;
   background:
-    linear-gradient(180deg, rgba(41, 37, 36, 0.98) 0%, rgba(28, 25, 23, 0.99) 100%),
-    linear-gradient(125deg, rgba(234, 179, 8, 0.12) 0%, transparent 55%);
+    linear-gradient(180deg, rgba(51, 65, 85, 0.98) 0%, rgba(30, 41, 59, 0.99) 100%),
+    linear-gradient(125deg, rgba(148, 163, 184, 0.12) 0%, transparent 55%);
   box-shadow:
     0 12px 40px rgba(0, 0, 0, 0.45),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 body.theme-industrial .section-header::before {
-  background: linear-gradient(180deg, #eab308 0%, #ca8a04 55%, #57534e 100%);
-  box-shadow: 0 0 18px rgba(234, 179, 8, 0.35);
+  background: linear-gradient(180deg, #94a3b8 0%, #64748b 55%, #475569 100%);
+  box-shadow: 0 0 18px rgba(148, 163, 184, 0.35);
 }
 body.theme-industrial .section-header h2 {
-  color: #fafaf9;
+  color: #f8fafc;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
 }
 body.theme-industrial .section-header h2 i {
-  color: #0c0a09;
-  background: linear-gradient(145deg, #fde047 0%, #eab308 100%);
+  color: #020617;
+  background: linear-gradient(145deg, #e2e8f0 0%, #94a3b8 100%);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 6px 14px rgba(0, 0, 0, 0.4);
 }
 
 body.theme-industrial .table-wrap {
-  background: #292524;
-  border-color: #57534e;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(234, 179, 8, 0.12);
+  background: #1e293b;
+  border-color: #475569;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(148, 163, 184, 0.12);
 }
 body.theme-industrial .table-wrap:hover {
-  border-color: #a8a29e;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(234, 179, 8, 0.2);
+  border-color: #94a3b8;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(148, 163, 184, 0.2);
 }
 
 body.theme-industrial .data-table th {
-  background: linear-gradient(180deg, #44403c 0%, #292524 100%);
-  color: #fafaf9;
-  border-bottom-color: #57534e;
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+  color: #f8fafc;
+  border-bottom-color: #475569;
 }
 body.theme-industrial .data-table td {
-  border-bottom-color: #44403c;
-  color: #e7e5e4;
+  border-bottom-color: #334155;
+  color: #e2e8f0;
 }
 body.theme-industrial .data-table tbody tr:nth-child(even) {
-  background: #1c1917;
+  background: #0f172a;
 }
 body.theme-industrial .data-table tbody tr:hover {
-  background: rgba(234, 179, 8, 0.08) !important;
-  box-shadow: inset 0 0 0 1px rgba(234, 179, 8, 0.22);
+  background: rgba(148, 163, 184, 0.08) !important;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.22);
 }
 
 body.theme-industrial .filter-row td {
-  background: #0c0a09;
-  border-bottom-color: #44403c;
+  background: #020617;
+  border-bottom-color: #334155;
 }
 
 body.theme-industrial .card,
 body.theme-industrial .empty-card {
-  background: #292524;
-  border-color: #57534e;
-  color: #e7e5e4;
+  background: #1e293b;
+  border-color: #475569;
+  color: #e2e8f0;
 }
 body.theme-industrial .card h2,
 body.theme-industrial .empty-card h3 {
-  color: #fafaf9;
+  color: #f8fafc;
 }
 
 body.theme-industrial .btn:not(.primary):not(.danger) {
-  background: #44403c;
-  color: #fafaf9;
-  border-color: #57534e;
+  background: #334155;
+  color: #f8fafc;
+  border-color: #475569;
 }
 body.theme-industrial .btn:not(.primary):not(.danger):hover {
-  background: #57534e;
-  border-color: #a8a29e;
+  background: #475569;
+  border-color: #94a3b8;
   color: #fff;
 }
 
 body.theme-industrial .btn.primary {
-  background: linear-gradient(145deg, #ca8a04 0%, #eab308 45%, #a16207 100%);
-  color: #0c0a09;
+  background: linear-gradient(145deg, #64748b 0%, #94a3b8 45%, #475569 100%);
+  color: #020617;
   font-weight: 700;
-  box-shadow: 0 2px 14px rgba(234, 179, 8, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  box-shadow: 0 2px 14px rgba(148, 163, 184, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
 }
 body.theme-industrial .btn.primary:hover {
-  background: linear-gradient(145deg, #eab308 0%, #fde047 50%, #ca8a04 100%);
-  box-shadow: 0 6px 22px rgba(234, 179, 8, 0.45);
+  background: linear-gradient(145deg, #94a3b8 0%, #e2e8f0 50%, #64748b 100%);
+  box-shadow: 0 6px 22px rgba(148, 163, 184, 0.45);
 }
 body.theme-industrial .btn.outline {
   background: transparent;
-  color: #fafaf9;
-  border-color: #a8a29e;
+  color: #f8fafc;
+  border-color: #94a3b8;
 }
 body.theme-industrial .btn.outline:hover {
-  background: rgba(234, 179, 8, 0.12);
-  border-color: #eab308;
+  background: rgba(148, 163, 184, 0.12);
+  border-color: #94a3b8;
   color: #fff;
 }
 
@@ -228,159 +228,159 @@ body.theme-industrial .search,
 body.theme-industrial input.filter-input,
 body.theme-industrial select.filter-input,
 body.theme-industrial textarea.filter-input {
-  background: #0c0a09;
-  border-color: #57534e;
-  color: #fafaf9;
+  background: #020617;
+  border-color: #475569;
+  color: #f8fafc;
 }
 
 body.theme-industrial .modal-box {
-  background: #292524;
-  border-color: #57534e;
-  color: #e7e5e4;
+  background: #1e293b;
+  border-color: #475569;
+  color: #e2e8f0;
 }
 body.theme-industrial .modal-header {
-  background: #1c1917;
-  border-bottom-color: rgba(234, 179, 8, 0.35);
+  background: #0f172a;
+  border-bottom-color: rgba(148, 163, 184, 0.35);
 }
 body.theme-industrial .modal-header h3 {
-  color: #fafaf9;
+  color: #f8fafc;
 }
 body.theme-industrial .close {
-  color: #a8a29e;
+  color: #94a3b8;
 }
 body.theme-industrial .close:hover {
-  color: #fef3c7;
-  background: rgba(234, 179, 8, 0.15);
+  color: #e2e8f0;
+  background: rgba(148, 163, 184, 0.15);
 }
 
 body.theme-industrial .form-group label {
-  color: #d6d3d1;
+  color: #cbd5e1;
 }
 body.theme-industrial .form-group input,
 body.theme-industrial .form-group select,
 body.theme-industrial .form-group textarea {
-  background: #0c0a09;
-  border-color: #57534e;
-  color: #fafaf9;
+  background: #020617;
+  border-color: #475569;
+  color: #f8fafc;
 }
 
 body.theme-industrial .app-footer {
-  border-top-color: #44403c;
-  background: linear-gradient(180deg, transparent 0%, rgba(12, 10, 9, 0.92) 100%);
+  border-top-color: #334155;
+  background: linear-gradient(180deg, transparent 0%, rgba(15, 23, 42, 0.92) 100%);
 }
 body.theme-industrial .app-footer p,
 body.theme-industrial .app-footer .footer-version {
-  color: #a8a29e;
+  color: #94a3b8;
 }
 
 body.theme-industrial .login-card {
-  background: #292524;
-  border: 1px solid #57534e;
+  background: #1e293b;
+  border: 1px solid #475569;
 }
 body.theme-industrial .login-card h2 {
-  color: #fafaf9;
+  color: #f8fafc;
 }
 body.theme-industrial .login-hint {
-  color: #a8a29e;
+  color: #94a3b8;
 }
 
 body.theme-industrial .tab:focus-visible,
 body.theme-industrial .btn:focus-visible,
 body.theme-industrial .btn-icon-header:focus-visible {
-  outline-color: #eab308;
+  outline-color: #94a3b8;
 }
 
 /* Tablas compactas en modales (liquidación, etc.) */
 body.theme-industrial .table-simple th,
 body.theme-industrial .table-simple td {
-  border-color: #57534e;
-  color: #e7e5e4;
+  border-color: #475569;
+  color: #e2e8f0;
 }
 body.theme-industrial .table-simple thead th {
-  background: linear-gradient(180deg, #44403c 0%, #292524 100%);
-  color: #fefce8;
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+  color: #f8fafc;
   font-weight: 600;
 }
 body.theme-industrial .table-simple tbody tr:nth-child(even) td {
-  background: rgba(12, 10, 9, 0.45);
+  background: rgba(15, 23, 42, 0.45);
 }
 body.theme-industrial .table-simple tbody tr:hover td {
-  background: rgba(234, 179, 8, 0.1);
-  box-shadow: inset 0 0 0 1px rgba(234, 179, 8, 0.2);
+  background: rgba(148, 163, 184, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.2);
 }
 
 /* Shell de modal aplicado por JS (misma idea que theme-dark) */
 .modal-box.modal-box--theme-industrial {
-  background: #292524;
-  border-color: #57534e;
-  color: #e7e5e4;
-  box-shadow: var(--shadow-xl), 0 0 0 1px rgba(234, 179, 8, 0.12);
+  background: #1e293b;
+  border-color: #475569;
+  color: #e2e8f0;
+  box-shadow: var(--shadow-xl), 0 0 0 1px rgba(148, 163, 184, 0.12);
 }
 .modal-box.modal-box--theme-industrial .modal-header {
-  background: #1c1917;
-  border-bottom-color: rgba(234, 179, 8, 0.35);
+  background: #0f172a;
+  border-bottom-color: rgba(148, 163, 184, 0.35);
 }
 .modal-box.modal-box--theme-industrial .modal-header h3 {
-  color: #fafaf9;
+  color: #f8fafc;
 }
 .modal-box.modal-box--theme-industrial .close {
-  color: #a8a29e;
+  color: #94a3b8;
 }
 .modal-box.modal-box--theme-industrial .close:hover {
-  color: #fef3c7;
-  background: rgba(234, 179, 8, 0.15);
+  color: #e2e8f0;
+  background: rgba(148, 163, 184, 0.15);
 }
 .modal-box.modal-box--theme-industrial .modal-body {
   background: transparent;
   color: inherit;
 }
 .modal-box.modal-box--theme-industrial.modal-cotizacion .modal-body {
-  background: linear-gradient(180deg, rgba(28, 25, 23, 0.75) 0%, #292524 14%);
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.75) 0%, #1e293b 14%);
 }
 .modal-box.modal-box--theme-industrial .form-group label {
-  color: #d6d3d1;
+  color: #cbd5e1;
 }
 .modal-box.modal-box--theme-industrial .form-group input,
 .modal-box.modal-box--theme-industrial .form-group select,
 .modal-box.modal-box--theme-industrial .form-group textarea {
-  background: #0c0a09;
-  border-color: #57534e;
-  color: #fafaf9;
+  background: #020617;
+  border-color: #475569;
+  color: #f8fafc;
 }
 .modal-box.modal-box--theme-industrial .form-group input:focus,
 .modal-box.modal-box--theme-industrial .form-group select:focus,
 .modal-box.modal-box--theme-industrial .form-group textarea:focus {
-  border-color: #eab308;
-  box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.22);
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
 }
 .modal-box.modal-box--theme-industrial .table-simple th,
 .modal-box.modal-box--theme-industrial .table-simple td {
-  border-color: #57534e;
-  color: #e7e5e4;
+  border-color: #475569;
+  color: #e2e8f0;
 }
 .modal-box.modal-box--theme-industrial .table-simple thead th {
-  background: linear-gradient(180deg, #44403c 0%, #292524 100%);
-  color: #fefce8;
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+  color: #f8fafc;
   font-weight: 600;
 }
 .modal-box.modal-box--theme-industrial .table-simple tbody tr:nth-child(even) td {
-  background: rgba(12, 10, 9, 0.45);
+  background: rgba(15, 23, 42, 0.45);
 }
 .modal-box.modal-box--theme-industrial .table-simple tbody tr:hover td {
-  background: rgba(234, 179, 8, 0.1);
-  box-shadow: inset 0 0 0 1px rgba(234, 179, 8, 0.2);
+  background: rgba(148, 163, 184, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.2);
 }
 .modal-box.modal-box--theme-industrial .hint {
-  color: #a8a29e;
+  color: #94a3b8;
 }
 .modal-box.modal-box--theme-industrial .btn.primary {
-  background: linear-gradient(145deg, #ca8a04 0%, #eab308 50%, #a16207 100%);
-  color: #0c0a09;
+  background: linear-gradient(145deg, #64748b 0%, #94a3b8 50%, #475569 100%);
+  color: #020617;
 }
 .modal-box.modal-box--theme-industrial .btn.outline {
   background: transparent;
-  color: #fafaf9;
-  border-color: #a8a29e;
+  color: #f8fafc;
+  border-color: #94a3b8;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -396,72 +396,72 @@ body.theme-industrial .table-simple tbody tr:hover td {
 
 /* Dashboard: quitar bloque azul aislado; acentos oro en lugar de cyan */
 body.theme-industrial #panel-dashboards.panel-dashboard {
-  background: linear-gradient(180deg, #1c1917 0%, #0c0a09 50%, #1c1917 100%);
-  border-top: 1px solid rgba(234, 179, 8, 0.22);
+  background: linear-gradient(180deg, #0f172a 0%, #020617 50%, #0f172a 100%);
+  border-top: 1px solid rgba(148, 163, 184, 0.22);
 }
 body.theme-industrial .dashboard-title {
-  color: #fafaf9;
-  text-shadow: 0 2px 18px rgba(234, 179, 8, 0.16);
+  color: #f8fafc;
+  text-shadow: 0 2px 18px rgba(148, 163, 184, 0.16);
 }
 body.theme-industrial .dashboard-title i {
-  color: #fde047;
+  color: #e2e8f0;
 }
 body.theme-industrial .dashboard-subtitle strong {
-  color: #fde68a;
+  color: #cbd5e1;
 }
 body.theme-industrial .dashboard-crossfilter-bar {
-  background: linear-gradient(90deg, rgba(234, 179, 8, 0.14) 0%, rgba(68, 64, 60, 0.35) 100%);
-  border-color: rgba(234, 179, 8, 0.32);
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.14) 0%, rgba(71, 85, 105, 0.35) 100%);
+  border-color: rgba(148, 163, 184, 0.32);
 }
 body.theme-industrial .dashboard-crossfilter-clear {
-  border-color: rgba(234, 179, 8, 0.5) !important;
-  color: #fef9c3 !important;
+  border-color: rgba(148, 163, 184, 0.5) !important;
+  color: #f1f5f9 !important;
 }
 body.theme-industrial #panel-dashboards .dashboard-surface .dashboard-card.is-crossfilter-match,
 body.theme-industrial #panel-dashboards .dashboard-surface .dashboard-score-tile.is-crossfilter-match {
-  box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.42), 0 8px 28px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.42), 0 8px 28px rgba(0, 0, 0, 0.35);
 }
 body.theme-industrial .dashboard-loading {
-  color: #a8a29e;
+  color: #94a3b8;
 }
 body.theme-industrial .dashboard-loading .loading-spinner {
   border-color: rgba(255, 255, 255, 0.1);
-  border-top-color: #eab308;
+  border-top-color: #94a3b8;
 }
 body.theme-industrial .dashboard-card-action {
-  color: #fde68a;
+  color: #cbd5e1;
 }
 body.theme-industrial .dashboard-card-action:hover {
-  color: #fef9c3;
+  color: #f1f5f9;
 }
 body.theme-industrial .dashboard-section-title i {
-  color: #eab308;
+  color: #94a3b8;
 }
 body.theme-industrial .dashboard-forecast-card h4 {
-  color: #fde047;
+  color: #e2e8f0;
 }
 body.theme-industrial .dashboard-forecast-card .stat-label {
-  color: #fde68a;
+  color: #cbd5e1;
 }
 body.theme-industrial .dashboard-card {
-  border-color: rgba(234, 179, 8, 0.12);
+  border-color: rgba(148, 163, 184, 0.12);
 }
 body.theme-industrial .dashboard-stat-card {
-  border-color: rgba(234, 179, 8, 0.1);
+  border-color: rgba(148, 163, 184, 0.1);
 }
 
 /* Cabeceras de sección globales (sustituye blanco / lavanda) */
 body.theme-industrial .section-header {
-  background: linear-gradient(135deg, rgba(41, 37, 36, 0.98) 0%, rgba(28, 25, 23, 0.99) 100%);
-  border-color: rgba(234, 179, 8, 0.28);
+  background: linear-gradient(135deg, rgba(51, 65, 85, 0.98) 0%, rgba(30, 41, 59, 0.99) 100%);
+  border-color: rgba(148, 163, 184, 0.28);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 body.theme-industrial .section-header::before {
-  background: linear-gradient(180deg, #eab308 0%, #ca8a04 50%, #57534e 100%);
-  box-shadow: 0 0 14px rgba(234, 179, 8, 0.32);
+  background: linear-gradient(180deg, #94a3b8 0%, #64748b 50%, #475569 100%);
+  box-shadow: 0 0 14px rgba(148, 163, 184, 0.32);
 }
 body.theme-industrial .section-header h2 {
-  color: #fafaf9;
+  color: #f8fafc;
 }
 
 /* Paneles premium (cotizaciones, incidentes, bitácora, refacciones) */
@@ -469,16 +469,16 @@ body.theme-industrial #panel-cotizaciones .section-header,
 body.theme-industrial #panel-incidentes .section-header,
 body.theme-industrial #panel-bitacoras .section-header,
 body.theme-industrial #panel-refacciones .section-header {
-  background: linear-gradient(135deg, rgba(41, 37, 36, 0.98) 0%, rgba(28, 25, 23, 0.98) 100%);
-  border-color: rgba(234, 179, 8, 0.3);
+  background: linear-gradient(135deg, rgba(51, 65, 85, 0.98) 0%, rgba(30, 41, 59, 0.98) 100%);
+  border-color: rgba(148, 163, 184, 0.3);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 body.theme-industrial #panel-cotizaciones .section-header h2 i,
 body.theme-industrial #panel-incidentes .section-header h2 i,
 body.theme-industrial #panel-bitacoras .section-header h2 i,
 body.theme-industrial #panel-refacciones .section-header h2 i {
-  background: linear-gradient(135deg, #ca8a04 0%, #eab308 45%, #a16207 100%);
-  color: #0c0a09;
+  background: linear-gradient(135deg, #64748b 0%, #94a3b8 45%, #475569 100%);
+  color: #020617;
   animation: none;
 }
 
@@ -486,131 +486,131 @@ body.theme-industrial #panel-cotizaciones .table-wrap,
 body.theme-industrial #panel-incidentes .table-wrap,
 body.theme-industrial #panel-bitacoras .table-wrap,
 body.theme-industrial #panel-refacciones .table-wrap {
-  background: rgba(28, 25, 23, 0.94);
-  border-color: rgba(234, 179, 8, 0.22);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(234, 179, 8, 0.08) inset;
+  background: rgba(30, 41, 59, 0.94);
+  border-color: rgba(148, 163, 184, 0.22);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(148, 163, 184, 0.08) inset;
   backdrop-filter: blur(8px);
 }
 
 /* Cabecera de columnas + fila de filtros: todas las data-table */
 body.theme-industrial .data-table thead tr:first-child th {
-  background: linear-gradient(180deg, #44403c 0%, #292524 100%) !important;
-  color: #fefce8 !important;
-  box-shadow: 0 2px 0 rgba(234, 179, 8, 0.2);
-  border-bottom-color: #57534e !important;
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important;
+  color: #f8fafc !important;
+  box-shadow: 0 2px 0 rgba(148, 163, 184, 0.2);
+  border-bottom-color: #475569 !important;
 }
 body.theme-industrial .data-table thead .filter-row td,
 body.theme-industrial .filter-row td {
-  background: #0c0a09 !important;
-  border-bottom-color: #44403c !important;
-  color: #e7e5e4;
+  background: #020617 !important;
+  border-bottom-color: #334155 !important;
+  color: #e2e8f0;
 }
 
 body.theme-industrial .data-table tbody tr {
-  color: #e7e5e4;
+  color: #e2e8f0;
 }
 body.theme-industrial .data-table tbody tr:nth-child(even) {
-  background: rgba(28, 25, 23, 0.72) !important;
+  background: rgba(30, 41, 59, 0.72) !important;
 }
 body.theme-industrial .data-table tbody tr:hover {
-  background: rgba(234, 179, 8, 0.09) !important;
-  box-shadow: inset 4px 0 0 #ca8a04 !important;
+  background: rgba(148, 163, 184, 0.09) !important;
+  box-shadow: inset 4px 0 0 #64748b !important;
 }
 
 body.theme-industrial .data-table td {
-  color: #e7e5e4;
-  border-bottom-color: #44403c;
+  color: #e2e8f0;
+  border-bottom-color: #334155;
 }
 body.theme-industrial .data-table td.empty.filter-empty {
-  color: #a8a29e;
+  color: #94a3b8;
 }
 
 /* Refacciones: reglas #tabla-refacciones ganan a las globales claras */
 body.theme-industrial #tabla-refacciones thead tr:first-child th {
-  background: linear-gradient(180deg, #44403c 0%, #292524 100%) !important;
-  color: #fefce8 !important;
-  border-bottom-color: #57534e !important;
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important;
+  color: #f8fafc !important;
+  border-bottom-color: #475569 !important;
 }
 body.theme-industrial #tabla-refacciones thead tr:first-child th.th-actions {
-  background: linear-gradient(180deg, #44403c 0%, #292524 100%) !important;
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important;
 }
 body.theme-industrial #tabla-refacciones thead .filter-row td {
-  background: #0c0a09 !important;
-  border-bottom-color: #44403c !important;
+  background: #020617 !important;
+  border-bottom-color: #334155 !important;
 }
 body.theme-industrial #tabla-refacciones thead .filter-row input.filter-input,
 body.theme-industrial #tabla-refacciones thead .filter-row select.filter-input,
 body.theme-industrial #tabla-refacciones thead .filter-row textarea.filter-input {
-  background: #1c1917 !important;
-  background-color: #1c1917 !important;
-  border-color: #57534e !important;
-  color: #fafaf9 !important;
+  background: #0f172a !important;
+  background-color: #0f172a !important;
+  border-color: #475569 !important;
+  color: #f8fafc !important;
 }
 /* Autofill: style.css fuerza caja blanca con #tabla-refacciones + !important */
 body.theme-industrial #tabla-refacciones thead .filter-row input.filter-input:-webkit-autofill,
 body.theme-industrial #tabla-refacciones thead .filter-row input.filter-input:-webkit-autofill:hover,
 body.theme-industrial #tabla-refacciones thead .filter-row input.filter-input:-webkit-autofill:focus {
-  -webkit-text-fill-color: #fafaf9 !important;
-  box-shadow: 0 0 0 1000px #1c1917 inset !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  box-shadow: 0 0 0 1000px #0f172a inset !important;
   transition: background-color 99999s ease-out;
 }
 body.theme-industrial #panel-refacciones .toolbar select {
-  background: rgba(28, 25, 23, 0.96) !important;
-  background-color: rgba(28, 25, 23, 0.96) !important;
-  border-color: rgba(234, 179, 8, 0.28) !important;
-  color: #fafaf9 !important;
+  background: rgba(30, 41, 59, 0.96) !important;
+  background-color: rgba(30, 41, 59, 0.96) !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
+  color: #f8fafc !important;
   box-shadow: none !important;
 }
 body.theme-industrial #panel-refacciones .toolbar select:focus {
   outline: none;
-  border-color: rgba(234, 179, 8, 0.55) !important;
-  box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.18) !important;
+  border-color: rgba(148, 163, 184, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.18) !important;
 }
 /* Filas stock bajo: quitar lavanda clara de style.css */
 body.theme-industrial #tabla-refacciones.data-table tr.row-stock-bajo td {
-  background: rgba(55, 22, 8, 0.58) !important;
-  background-color: rgba(55, 22, 8, 0.58) !important;
-  box-shadow: inset 3px 0 0 rgba(234, 179, 8, 0.65) !important;
-  color: #e7e5e4;
+  background: rgba(30, 58, 95, 0.58) !important;
+  background-color: rgba(30, 58, 95, 0.58) !important;
+  box-shadow: inset 3px 0 0 rgba(148, 163, 184, 0.65) !important;
+  color: #e2e8f0;
 }
 body.theme-industrial #tabla-refacciones.data-table tbody tr:nth-child(even).row-stock-bajo td {
-  background: rgba(42, 16, 6, 0.65) !important;
-  background-color: rgba(42, 16, 6, 0.65) !important;
+  background: rgba(15, 23, 42, 0.65) !important;
+  background-color: rgba(15, 23, 42, 0.65) !important;
 }
 body.theme-industrial #tabla-refacciones.data-table td.stock-bajo {
-  color: #fde68a !important;
+  color: #cbd5e1 !important;
 }
 body.theme-industrial #panel-refacciones .ref-table-scroll-x {
   background: transparent;
 }
 body.theme-industrial #tabla-refacciones.data-table tbody tr:nth-child(even) {
-  background: rgba(28, 25, 23, 0.82) !important;
+  background: rgba(30, 41, 59, 0.82) !important;
 }
 body.theme-industrial #tabla-refacciones.data-table tbody tr:hover {
-  background: rgba(234, 179, 8, 0.1) !important;
-  box-shadow: inset 3px 0 0 #eab308 !important;
+  background: rgba(148, 163, 184, 0.1) !important;
+  box-shadow: inset 3px 0 0 #94a3b8 !important;
 }
 
 /* Cotizaciones / incidentes / bitácora: cabecera explícita */
 body.theme-industrial #tabla-cotizaciones thead tr:first-child th,
 body.theme-industrial #tabla-incidentes thead tr:first-child th,
 body.theme-industrial #tabla-bitacoras thead tr:first-child th {
-  background: linear-gradient(180deg, #44403c 0%, #292524 100%) !important;
-  color: #fefce8 !important;
-  border-bottom-color: #57534e !important;
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important;
+  color: #f8fafc !important;
+  border-bottom-color: #475569 !important;
 }
 body.theme-industrial #tabla-cotizaciones tbody tr:hover,
 body.theme-industrial #tabla-incidentes tbody tr:hover,
 body.theme-industrial #tabla-bitacoras tbody tr:hover {
-  background: rgba(234, 179, 8, 0.09) !important;
+  background: rgba(148, 163, 184, 0.09) !important;
 }
 
 /* Filtros en tablas con inputs (cotizaciones, incidentes, bitácora) */
 body.theme-industrial #tabla-cotizaciones .filter-row td,
 body.theme-industrial #tabla-incidentes .filter-row td,
 body.theme-industrial #tabla-bitacoras .filter-row td {
-  background: #0c0a09 !important;
-  border-bottom-color: #44403c !important;
+  background: #020617 !important;
+  border-bottom-color: #334155 !important;
 }
 body.theme-industrial #tabla-cotizaciones input.filter-input,
 body.theme-industrial #tabla-cotizaciones select.filter-input,
@@ -621,9 +621,9 @@ body.theme-industrial #tabla-incidentes textarea.filter-input,
 body.theme-industrial #tabla-bitacoras input.filter-input,
 body.theme-industrial #tabla-bitacoras select.filter-input,
 body.theme-industrial #tabla-bitacoras textarea.filter-input {
-  background: #1c1917 !important;
-  border-color: #57534e !important;
-  color: #fafaf9 !important;
+  background: #0f172a !important;
+  border-color: #475569 !important;
+  color: #f8fafc !important;
 }
 body.theme-industrial #tabla-cotizaciones .filter-date-select,
 body.theme-industrial #tabla-cotizaciones .filter-date-input,
@@ -631,9 +631,9 @@ body.theme-industrial #tabla-incidentes .filter-date-select,
 body.theme-industrial #tabla-incidentes .filter-date-input,
 body.theme-industrial #tabla-bitacoras .filter-date-select,
 body.theme-industrial #tabla-bitacoras .filter-date-input {
-  background: #1c1917 !important;
-  color: #fafaf9 !important;
-  border-color: #57534e !important;
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #475569 !important;
 }
 
 /* Barra de stock bajo en refacciones */
@@ -641,79 +641,79 @@ body.theme-industrial .stock-alert-bar,
 body.theme-industrial #ref-stock-alert-bar.stock-alert-bar {
   background: linear-gradient(135deg, rgba(66, 32, 6, 0.96) 0%, rgba(113, 63, 18, 0.92) 100%);
   border-color: rgba(251, 191, 36, 0.45);
-  color: #fde68a;
+  color: #cbd5e1;
   box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.12) inset, 0 12px 36px rgba(0, 0, 0, 0.35);
 }
 body.theme-industrial #ref-stock-alert-bar.stock-alert-bar strong,
 body.theme-industrial .stock-alert-bar strong {
-  color: #fffbeb;
+  color: #f8fafc;
 }
 
 /* Píldoras categoría refacciones (fondo blanco en tema oscuro de catálogo) */
 body.theme-industrial .ref-cat-pill--part {
-  background: rgba(68, 64, 60, 0.95);
-  color: #e7e5e4;
-  border-color: #57534e;
+  background: rgba(71, 85, 105, 0.95);
+  color: #e2e8f0;
+  border-color: #475569;
 }
 
 /* Prospección / paneles UX: misma base que máquinas (style.css usa losa clara en .panel.panel-ux) */
 body.theme-industrial .panel.panel-ux {
   background: transparent;
-  border-color: rgba(234, 179, 8, 0.14);
+  border-color: rgba(148, 163, 184, 0.14);
   box-shadow: none;
 }
 body.theme-industrial .section-header--ux {
-  border-bottom-color: rgba(234, 179, 8, 0.18);
+  border-bottom-color: rgba(148, 163, 184, 0.18);
 }
 body.theme-industrial .section-header--ux h2 {
-  color: #fafaf9;
+  color: #f8fafc;
 }
 body.theme-industrial .section-header--ux .section-sub {
-  color: #a8a29e;
+  color: #94a3b8;
 }
 body.theme-industrial .section-header--ux .section-sub code {
-  color: #fde68a;
-  background: rgba(12, 10, 9, 0.45);
+  color: #cbd5e1;
+  background: rgba(15, 23, 42, 0.45);
   padding: 0.12rem 0.35rem;
   border-radius: 6px;
-  border: 1px solid rgba(234, 179, 8, 0.22);
+  border: 1px solid rgba(148, 163, 184, 0.22);
 }
 body.theme-industrial .search--ux {
-  background: #1c1917 !important;
-  background-color: #1c1917 !important;
-  border-color: #57534e !important;
-  color: #fafaf9 !important;
+  background: #0f172a !important;
+  background-color: #0f172a !important;
+  border-color: #475569 !important;
+  color: #f8fafc !important;
 }
 body.theme-industrial .search--ux:focus {
-  border-color: #eab308 !important;
-  box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.2) !important;
+  border-color: #94a3b8 !important;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.2) !important;
 }
 body.theme-industrial .search--ux::placeholder {
-  color: #78716c;
+  color: #64748b;
   opacity: 1;
 }
 body.theme-industrial .prospeccion-kpi {
-  background: rgba(28, 25, 23, 0.92);
-  border-color: rgba(234, 179, 8, 0.2);
+  background: rgba(30, 41, 59, 0.92);
+  border-color: rgba(148, 163, 184, 0.2);
 }
 body.theme-industrial .prospeccion-kpi-lbl {
-  color: #a8a29e;
+  color: #94a3b8;
 }
 body.theme-industrial .prospeccion-kpi-val {
-  color: #eab308;
+  color: #94a3b8;
 }
 body.theme-industrial .prospeccion-map-wrap {
-  background: rgba(12, 10, 9, 0.55);
-  border-color: rgba(234, 179, 8, 0.22);
+  background: rgba(15, 23, 42, 0.55);
+  border-color: rgba(148, 163, 184, 0.22);
 }
 
 /* Spinner global (si aparece) */
 body.theme-industrial .global-loading .loading-spinner {
-  border-color: #44403c;
-  border-top-color: #eab308;
+  border-color: #334155;
+  border-top-color: #94a3b8;
 }
 body.theme-industrial .global-loading .loading-text {
-  color: #d6d3d1;
+  color: #cbd5e1;
 }
 
 /* Paneles con tabla: refuerzo (un ID en style.css gana a body.theme-industrial .table-wrap sin ID) */
@@ -734,9 +734,9 @@ body.theme-industrial #panel-auditoria .table-wrap,
 body.theme-industrial #panel-usuarios .table-wrap,
 body.theme-industrial #panel-categorias-catalogo .table-wrap,
 body.theme-industrial #panel-demo .table-wrap {
-  background: rgba(28, 25, 23, 0.94);
-  border-color: rgba(234, 179, 8, 0.22);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(234, 179, 8, 0.08) inset;
+  background: rgba(30, 41, 59, 0.94);
+  border-color: rgba(148, 163, 184, 0.22);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(148, 163, 184, 0.08) inset;
   backdrop-filter: blur(8px);
 }
 body.theme-industrial #panel-clientes .table-wrap:hover,
@@ -756,88 +756,88 @@ body.theme-industrial #panel-auditoria .table-wrap:hover,
 body.theme-industrial #panel-usuarios .table-wrap:hover,
 body.theme-industrial #panel-categorias-catalogo .table-wrap:hover,
 body.theme-industrial #panel-demo .table-wrap:hover {
-  border-color: rgba(234, 179, 8, 0.35);
-  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(234, 179, 8, 0.14) inset;
+  border-color: rgba(148, 163, 184, 0.35);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(148, 163, 184, 0.14) inset;
 }
 
 /* Filtros en cabecera de tabla (input.filter-input gana por orden en style.css sin body) */
 body.theme-industrial .data-table thead .filter-row input:not([type="checkbox"]):not([type="radio"]),
 body.theme-industrial .data-table thead .filter-row textarea,
 body.theme-industrial .data-table thead .filter-row select {
-  background: #1c1917 !important;
-  border-color: #57534e !important;
-  color: #fafaf9 !important;
+  background: #0f172a !important;
+  border-color: #475569 !important;
+  color: #f8fafc !important;
 }
 body.theme-industrial .data-table thead .filter-row input:focus,
 body.theme-industrial .data-table thead .filter-row textarea:focus,
 body.theme-industrial .data-table thead .filter-row select:focus {
-  border-color: #eab308 !important;
-  box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.22) !important;
+  border-color: #94a3b8 !important;
+  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.22) !important;
 }
 body.theme-industrial .data-table .filter-date-wrap .filter-date-select,
 body.theme-industrial .data-table .filter-date-wrap .filter-date-input {
-  background: #1c1917 !important;
-  border-color: #57534e !important;
-  color: #fafaf9 !important;
+  background: #0f172a !important;
+  border-color: #475569 !important;
+  color: #f8fafc !important;
 }
 body.theme-industrial .data-table .filter-date-wrap .filter-date-select:focus,
 body.theme-industrial .data-table .filter-date-wrap .filter-date-input:focus {
-  border-color: #eab308 !important;
+  border-color: #94a3b8 !important;
 }
 
 /* Dashboard: tarjetas ejecutivas, pronósticos y botones (menos cyan/azul) */
 body.theme-industrial .btn-dashboard-refresh:hover {
-  border-color: rgba(234, 179, 8, 0.45) !important;
-  color: #fef9c3 !important;
+  border-color: rgba(148, 163, 184, 0.45) !important;
+  color: #f1f5f9 !important;
 }
 body.theme-industrial .dashboard-kpi-strip {
-  background: rgba(12, 10, 9, 0.55);
-  border-color: rgba(234, 179, 8, 0.18);
+  background: rgba(15, 23, 42, 0.55);
+  border-color: rgba(148, 163, 184, 0.18);
 }
 body.theme-industrial .dashboard-kpi-item i {
-  color: #eab308;
+  color: #94a3b8;
 }
 body.theme-industrial .dashboard-score-tile {
-  background: linear-gradient(145deg, rgba(41, 37, 36, 0.95) 0%, rgba(28, 25, 23, 0.98) 55%, rgba(12, 10, 9, 1) 100%);
-  border-color: rgba(234, 179, 8, 0.14);
+  background: linear-gradient(145deg, rgba(51, 65, 85, 0.95) 0%, rgba(30, 41, 59, 0.98) 55%, rgba(15, 23, 42, 1) 100%);
+  border-color: rgba(148, 163, 184, 0.14);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 body.theme-industrial .dashboard-score-tile:hover {
-  border-color: rgba(234, 179, 8, 0.22);
+  border-color: rgba(148, 163, 184, 0.22);
 }
 body.theme-industrial .dashboard-score-tile--revenue::before {
-  background: linear-gradient(180deg, #eab308 0%, #ca8a04 50%, #a16207 100%);
+  background: linear-gradient(180deg, #94a3b8 0%, #64748b 50%, #475569 100%);
 }
 body.theme-industrial .dashboard-score-tile--pipeline::before {
-  background: linear-gradient(180deg, #fde68a 0%, #d97706 50%, #92400e 100%);
+  background: linear-gradient(180deg, #cbd5e1 0%, #d97706 50%, #92400e 100%);
 }
 body.theme-industrial .dashboard-score-tile--risk::before {
   background: linear-gradient(180deg, #fb923c 0%, #ea580c 55%, #9a3412 100%);
 }
 body.theme-industrial .dashboard-score-tile--ops::before {
-  background: linear-gradient(180deg, #a8a29e 0%, #78716c 50%, #44403c 100%);
+  background: linear-gradient(180deg, #94a3b8 0%, #64748b 50%, #334155 100%);
 }
 body.theme-industrial .dashboard-score-eyebrow {
-  color: #78716c;
+  color: #64748b;
 }
 body.theme-industrial .dashboard-score-label {
-  color: #a8a29e;
+  color: #94a3b8;
 }
 body.theme-industrial .dashboard-score-meta i {
-  color: #eab308;
+  color: #94a3b8;
 }
 body.theme-industrial .dashboard-card {
-  background: linear-gradient(180deg, #292524 0%, #1c1917 100%);
-  border-color: rgba(234, 179, 8, 0.1);
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border-color: rgba(148, 163, 184, 0.1);
 }
 body.theme-industrial .dashboard-card[data-dashboard="clientes"] .dashboard-card-icon {
-  background: linear-gradient(135deg, #ca8a04 0%, #a16207 100%);
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
 }
 body.theme-industrial .dashboard-card[data-dashboard="refacciones"] .dashboard-card-icon {
-  background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
+  background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
 }
 body.theme-industrial .dashboard-card[data-dashboard="maquinas"] .dashboard-card-icon {
-  background: linear-gradient(135deg, #78716c 0%, #57534e 100%);
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
 }
 body.theme-industrial .dashboard-card[data-dashboard="cotizaciones"] .dashboard-card-icon {
   background: linear-gradient(135deg, #65a30d 0%, #4d7c0f 100%);
@@ -846,25 +846,25 @@ body.theme-industrial .dashboard-card[data-dashboard="incidentes"] .dashboard-ca
   background: linear-gradient(135deg, #ea580c 0%, #9a3412 100%);
 }
 body.theme-industrial .dashboard-card[data-dashboard="bitacoras"] .dashboard-card-icon {
-  background: linear-gradient(135deg, #a16207 0%, #713f12 100%);
+  background: linear-gradient(135deg, #475569 0%, #713f12 100%);
 }
 body.theme-industrial .dashboard-forecast-card {
-  background: rgba(234, 179, 8, 0.08);
-  border-color: rgba(234, 179, 8, 0.22);
+  background: rgba(148, 163, 184, 0.08);
+  border-color: rgba(148, 163, 184, 0.22);
 }
 body.theme-industrial .dashboard-forecast-legend {
-  background: rgba(234, 179, 8, 0.08);
-  border-left-color: #eab308;
+  background: rgba(148, 163, 184, 0.08);
+  border-left-color: #94a3b8;
 }
 body.theme-industrial .dashboard-stat-card h4,
 body.theme-industrial .dashboard-stat-card .stat-label {
-  color: #a8a29e;
+  color: #94a3b8;
 }
 body.theme-industrial .dashboard-stat-card .stat-value {
-  color: #fafaf9;
+  color: #f8fafc;
 }
 body.theme-industrial .dashboard-stat-card h4.dashboard-stat-card-title-cf {
-  color: #d6d3d1;
+  color: #cbd5e1;
 }
 
 /* =============================================================================
@@ -873,158 +873,158 @@ body.theme-industrial .dashboard-stat-card h4.dashboard-stat-card-title-cf {
 
 /* --- Revisión de máquinas --- */
 body.theme-industrial #panel-revision-maquinas .toolbar select {
-  background: rgba(28, 25, 23, 0.96) !important;
-  background-color: rgba(28, 25, 23, 0.96) !important;
-  border-color: rgba(234, 179, 8, 0.28) !important;
-  color: #fafaf9 !important;
+  background: rgba(30, 41, 59, 0.96) !important;
+  background-color: rgba(30, 41, 59, 0.96) !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
+  color: #f8fafc !important;
   box-shadow: none !important;
 }
 body.theme-industrial #panel-revision-maquinas .toolbar select:focus {
   outline: none;
-  border-color: rgba(234, 179, 8, 0.55) !important;
-  box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.18) !important;
+  border-color: rgba(148, 163, 184, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.18) !important;
 }
 body.theme-industrial #panel-revision-maquinas .revision-maq-catalog-wrap {
-  background: rgba(28, 25, 23, 0.78);
-  border: 1px solid rgba(234, 179, 8, 0.24);
+  background: rgba(30, 41, 59, 0.78);
+  border: 1px solid rgba(148, 163, 184, 0.24);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 body.theme-industrial #panel-revision-maquinas .revision-maq-catalog-heading {
-  color: #fafaf9;
+  color: #f8fafc;
 }
 body.theme-industrial #panel-revision-maquinas .revision-maq-catalog-heading i {
-  color: #eab308;
+  color: #94a3b8;
 }
 body.theme-industrial #panel-revision-maquinas .revision-maq-catalog-intro {
-  color: #a8a29e;
+  color: #94a3b8;
 }
 body.theme-industrial #panel-revision-maquinas .revision-maq-card {
-  background: linear-gradient(180deg, #292524 0%, #1c1917 100%);
-  border-color: rgba(234, 179, 8, 0.2);
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border-color: rgba(148, 163, 184, 0.2);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 body.theme-industrial #panel-revision-maquinas .revision-maq-card:hover {
-  border-color: rgba(234, 179, 8, 0.38);
-  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(234, 179, 8, 0.12);
+  border-color: rgba(148, 163, 184, 0.38);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(148, 163, 184, 0.12);
 }
 body.theme-industrial #panel-revision-maquinas .revision-maq-card-title {
-  color: #fde68a;
+  color: #cbd5e1;
 }
 body.theme-industrial #panel-revision-maquinas .revision-maq-card-serie {
-  color: #a8a29e;
+  color: #94a3b8;
 }
 body.theme-industrial #panel-revision-maquinas .revision-maq-card-client {
-  color: #e7e5e4;
+  color: #e2e8f0;
 }
 body.theme-industrial #panel-revision-maquinas .revision-maq-pill {
-  background: rgba(12, 10, 9, 0.88);
-  border: 1px solid #57534e;
-  color: #d6d3d1;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid #475569;
+  color: #cbd5e1;
 }
 
 /* --- Tarifas --- */
 body.theme-industrial #panel-tarifas .tarifas-section {
-  background: rgba(28, 25, 23, 0.92);
-  border-color: rgba(234, 179, 8, 0.22);
+  background: rgba(30, 41, 59, 0.92);
+  border-color: rgba(148, 163, 184, 0.22);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 body.theme-industrial #panel-tarifas .tarifas-section-title {
-  color: #fafaf9;
+  color: #f8fafc;
 }
 body.theme-industrial #panel-tarifas .tarifas-section-title i {
-  color: #eab308;
+  color: #94a3b8;
 }
 body.theme-industrial #panel-tarifas .tarifas-hint {
-  color: #a8a29e;
+  color: #94a3b8;
 }
 body.theme-industrial #panel-tarifas .tarifas-form-grid label,
 body.theme-industrial #panel-tarifas .form-group label {
-  color: #d6d3d1;
+  color: #cbd5e1;
 }
 body.theme-industrial #panel-tarifas .tarifas-notas-list li {
-  color: #d6d3d1;
+  color: #cbd5e1;
 }
 body.theme-industrial #panel-tarifas .tarifa-input,
 body.theme-industrial #panel-tarifas .tarifa-input-text {
-  background: #1c1917 !important;
-  background-color: #1c1917 !important;
-  border-color: #57534e !important;
-  color: #fafaf9 !important;
+  background: #0f172a !important;
+  background-color: #0f172a !important;
+  border-color: #475569 !important;
+  color: #f8fafc !important;
 }
 body.theme-industrial #panel-tarifas .tarifa-input:focus,
 body.theme-industrial #panel-tarifas .tarifa-input-text:focus {
-  outline: 2px solid rgba(234, 179, 8, 0.45);
-  border-color: #eab308;
+  outline: 2px solid rgba(148, 163, 184, 0.45);
+  border-color: #94a3b8;
 }
 body.theme-industrial #panel-tarifas #tabla-tarifas-mano-obra td,
 body.theme-industrial #panel-tarifas #tabla-tarifas-traslado td {
-  color: #e7e5e4;
+  color: #e2e8f0;
 }
 body.theme-industrial #panel-tarifas #tabla-tarifas-mano-obra tbody tr:nth-child(even),
 body.theme-industrial #panel-tarifas #tabla-tarifas-traslado tbody tr:nth-child(even) {
-  background: rgba(12, 10, 9, 0.4) !important;
+  background: rgba(15, 23, 42, 0.4) !important;
 }
 body.theme-industrial #panel-tarifas #tabla-tarifas-mano-obra tbody tr:hover,
 body.theme-industrial #panel-tarifas #tabla-tarifas-traslado tbody tr:hover {
-  background: rgba(234, 179, 8, 0.09) !important;
-  box-shadow: inset 3px 0 0 #ca8a04 !important;
+  background: rgba(148, 163, 184, 0.09) !important;
+  box-shadow: inset 3px 0 0 #64748b !important;
 }
 
 /* --- Mantenimientos por garantía (calendario + barra prioridad) --- */
 body.theme-industrial #panel-mantenimiento-garantia .mant-gar-hint {
-  background: rgba(12, 10, 9, 0.72);
-  border-color: rgba(234, 179, 8, 0.24);
-  color: #e7e5e4;
+  background: rgba(15, 23, 42, 0.72);
+  border-color: rgba(148, 163, 184, 0.24);
+  color: #e2e8f0;
 }
 body.theme-industrial #panel-mantenimiento-garantia .mant-gar-dry-wrap {
-  color: #a8a29e;
+  color: #94a3b8;
 }
 body.theme-industrial #panel-mantenimiento-garantia #mant-gar-month {
-  background: #1c1917;
-  border-color: #57534e;
-  color: #fafaf9;
+  background: #0f172a;
+  border-color: #475569;
+  color: #f8fafc;
 }
 body.theme-industrial #panel-mantenimiento-garantia .cal-month-summary {
-  background: rgba(28, 25, 23, 0.92);
-  border: 1px solid rgba(234, 179, 8, 0.22);
-  color: #d6d3d1;
+  background: rgba(30, 41, 59, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  color: #cbd5e1;
 }
 body.theme-industrial #panel-mantenimiento-garantia .cal-month-summary strong {
-  color: #eab308;
+  color: #94a3b8;
 }
 body.theme-industrial #panel-mantenimiento-garantia .cal-cell.cal-day,
 body.theme-industrial #panel-mantenimiento-garantia .cal-day {
-  background: #292524 !important;
-  background-color: #292524 !important;
-  border-color: #44403c !important;
+  background: #1e293b !important;
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
 }
 body.theme-industrial #panel-mantenimiento-garantia .cal-cell.cal-day--has-events {
-  background: rgba(41, 37, 36, 0.98) !important;
-  background-color: rgba(41, 37, 36, 0.98) !important;
-  border-color: rgba(234, 179, 8, 0.28) !important;
+  background: rgba(51, 65, 85, 0.98) !important;
+  background-color: rgba(51, 65, 85, 0.98) !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
 }
 body.theme-industrial #panel-mantenimiento-garantia .cal-day.cal-today {
-  border-color: #eab308 !important;
-  box-shadow: 0 0 0 1px rgba(234, 179, 8, 0.35);
+  border-color: #94a3b8 !important;
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.35);
 }
 body.theme-industrial #panel-mantenimiento-garantia .cal-day-num {
-  color: #fafaf9 !important;
+  color: #f8fafc !important;
 }
 body.theme-industrial #panel-mantenimiento-garantia .cal-header {
-  color: #a8a29e;
+  color: #94a3b8;
 }
 body.theme-industrial #panel-mantenimiento-garantia .cal-more {
-  color: #78716c;
+  color: #64748b;
 }
 body.theme-industrial #panel-mantenimiento-garantia .cal-legend {
-  color: #a8a29e;
+  color: #94a3b8;
 }
 body.theme-industrial #panel-mantenimiento-garantia .cal-day--click:hover {
-  background: rgba(234, 179, 8, 0.12) !important;
-  box-shadow: inset 0 0 0 1px rgba(234, 179, 8, 0.35);
+  background: rgba(148, 163, 184, 0.12) !important;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.35);
 }
 body.theme-industrial #panel-mantenimiento-garantia .cal-day--click:focus {
-  outline: 2px solid #eab308;
+  outline: 2px solid #94a3b8;
   outline-offset: 2px;
 }
 body.theme-industrial #panel-mantenimiento-garantia .cal-grid--animated .cal-day:hover {
@@ -1033,51 +1033,51 @@ body.theme-industrial #panel-mantenimiento-garantia .cal-grid--animated .cal-day
 
 /* Detalle día (lista en modal / panel lateral) */
 body.theme-industrial .mant-dia-card {
-  background: linear-gradient(180deg, #292524 0%, #1c1917 100%);
-  border-color: rgba(234, 179, 8, 0.2);
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border-color: rgba(148, 163, 184, 0.2);
 }
 body.theme-industrial .mant-dia-client {
-  color: #fafaf9;
+  color: #f8fafc;
 }
 body.theme-industrial .mant-dia-fields {
-  color: #d6d3d1;
+  color: #cbd5e1;
 }
 body.theme-industrial .mant-dia-fields i {
-  color: #eab308;
+  color: #94a3b8;
 }
 body.theme-industrial .mant-dia-sub {
-  color: #a8a29e;
+  color: #94a3b8;
 }
 body.theme-industrial .mant-dia-empty {
-  color: #a8a29e;
+  color: #94a3b8;
 }
 body.theme-industrial .mant-dia-empty i {
-  color: #57534e;
+  color: #475569;
 }
 
 /* Modal máquina / cotización: .cotz-card sigue en teal en style.css; aquí alineamos a media luna */
 body.theme-industrial .modal-box.modal-box--theme-industrial .cotz-card {
-  background: rgba(28, 25, 23, 0.94);
-  border-color: rgba(234, 179, 8, 0.22);
+  background: rgba(30, 41, 59, 0.94);
+  border-color: rgba(148, 163, 184, 0.22);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 body.theme-industrial .modal-box.modal-box--theme-industrial .cotz-card-title {
-  color: #fde68a;
+  color: #cbd5e1;
 }
 body.theme-industrial .modal-box.modal-box--theme-industrial .cotz-step-num {
-  background: linear-gradient(135deg, #eab308 0%, #a16207 100%);
-  box-shadow: 0 2px 10px rgba(234, 179, 8, 0.28);
-  color: #0c0a09;
+  background: linear-gradient(135deg, #94a3b8 0%, #475569 100%);
+  box-shadow: 0 2px 10px rgba(148, 163, 184, 0.28);
+  color: #020617;
 }
 body.theme-industrial .modal-box.modal-box--theme-industrial .cotz-modal .form-hint,
 body.theme-industrial .modal-box.modal-box--theme-industrial .form-hint {
-  color: #a8a29e;
+  color: #94a3b8;
 }
 body.theme-industrial .modal-box.modal-box--theme-industrial .cotz-inventory-hint {
-  background: rgba(12, 10, 9, 0.6);
-  border-color: rgba(234, 179, 8, 0.3);
-  color: #fde68a;
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(148, 163, 184, 0.3);
+  color: #cbd5e1;
 }
 body.theme-industrial .modal-box.modal-box--theme-industrial .cotz-inventory-hint i {
-  color: #eab308;
+  color: #94a3b8;
 }

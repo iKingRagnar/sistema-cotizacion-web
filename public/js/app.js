@@ -10877,22 +10877,14 @@
   }
 
   const THEME_STORAGE_KEY = 'cotizacion-theme';
+  /** Tema único: aspecto “industrial / media luna” (plateado en CSS). Sin selector en barra. */
+  const FIXED_THEME = 'industrial';
   const VALID_THEMES = ['light', 'dark', 'industrial'];
   function normalizeTheme(t) {
-    return VALID_THEMES.indexOf(t) >= 0 ? t : 'light';
+    return VALID_THEMES.indexOf(t) >= 0 ? t : FIXED_THEME;
   }
   function getTheme() {
-    try {
-      let t = localStorage.getItem(THEME_STORAGE_KEY);
-      if (!t) {
-        const legacy = localStorage.getItem('cotizacion-dark');
-        t = legacy === '1' ? 'dark' : 'light';
-        localStorage.setItem(THEME_STORAGE_KEY, t);
-      }
-      return normalizeTheme(t);
-    } catch (_) {
-      return 'light';
-    }
+    return FIXED_THEME;
   }
   function applyModalThemeToBox(box) {
     if (!box) return;
@@ -10911,70 +10903,22 @@
     );
   }
   function setTheme(mode) {
-    mode = normalizeTheme(mode);
+    mode = FIXED_THEME;
     try {
       localStorage.setItem(THEME_STORAGE_KEY, mode);
     } catch (_) {}
     document.body.classList.remove('dark-theme', 'theme-industrial', 'dark-high-contrast');
-    if (mode === 'dark') document.body.classList.add('dark-theme');
-    if (mode === 'industrial') document.body.classList.add('theme-industrial');
-    const darkModeForContrast = mode === 'dark';
-    let hc = false;
-    try {
-      hc = darkModeForContrast && localStorage.getItem('cotizacion-dark-hc') === '1';
-    } catch (_) {}
-    if (hc) document.body.classList.add('dark-high-contrast');
-    qsAll('.theme-switcher-btn').forEach((b) => {
-      const active = b.getAttribute('data-theme') === mode;
-      b.classList.toggle('is-active', active);
-      b.setAttribute('aria-pressed', active ? 'true' : 'false');
-    });
-    const contrastBtnEarly = qs('#contrast-toggle');
-    if (contrastBtnEarly) {
-      contrastBtnEarly.classList.toggle('is-active', hc);
-      contrastBtnEarly.setAttribute('aria-pressed', hc ? 'true' : 'false');
-      contrastBtnEarly.disabled = !darkModeForContrast;
-      contrastBtnEarly.title = darkModeForContrast
-        ? 'Alto contraste en modo oscuro'
-        : 'Activa tema oscuro para usar alto contraste';
-    }
+    document.body.classList.add('theme-industrial');
     syncOpenModalsTheme();
     syncThemeColorMeta();
   }
   function syncThemeColorMeta() {
     const m = qs('#meta-theme-color');
     if (!m) return;
-    const primary = (serverConfig && serverConfig.primaryHex) || '#0c1222';
-    const th = getTheme();
-    if (th === 'dark') m.setAttribute('content', '#0f172a');
-    else if (th === 'industrial') m.setAttribute('content', '#292524');
-    else m.setAttribute('content', primary);
+    m.setAttribute('content', '#0f172a');
   }
   function initTheme() {
-    setTheme(getTheme());
-  }
-  function wireThemeSwitcher() {
-    qsAll('.theme-switcher-btn').forEach((btn) => {
-      btn.addEventListener('click', function () {
-        const next = btn.getAttribute('data-theme');
-        if (next) setTheme(next);
-      });
-    });
-  }
-  wireThemeSwitcher();
-  const contrastBtn = qs('#contrast-toggle');
-  if (contrastBtn) {
-    contrastBtn.addEventListener('click', function () {
-      if (getTheme() !== 'dark') {
-        showToast('Activa tema oscuro para usar alto contraste.', 'error');
-        return;
-      }
-      const active = document.body.classList.toggle('dark-high-contrast');
-      localStorage.setItem('cotizacion-dark-hc', active ? '1' : '0');
-      contrastBtn.classList.toggle('is-active', active);
-      contrastBtn.setAttribute('aria-pressed', active ? 'true' : 'false');
-      showToast(active ? 'Alto contraste activado.' : 'Alto contraste desactivado.', 'success');
-    });
+    setTheme(FIXED_THEME);
   }
   const logoutBtn = qs('#btn-logout');
   if (logoutBtn) {
