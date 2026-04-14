@@ -1,24 +1,24 @@
 /**
- * Design tokens — ERP refacciones (premium corporativo)
- * Sincronizado con docs/DESIGN_SYSTEM.md
+ * Design tokens — Apex (base profesional)
+ * Alineado con style.css :root; temas sol / luna / industrial recolorean encima.
  */
 :root {
   /* Brand */
   --ds-color-primary-50: #f0fdfa;
-  --ds-color-primary-600: #0d9488;
-  --ds-color-primary-700: #0f766e;
+  --ds-color-primary-600: #0f766e;
+  --ds-color-primary-700: #115e59;
   --ds-color-secondary-50: #eff6ff;
-  --ds-color-secondary-600: #2563eb;
+  --ds-color-secondary-600: #1d4ed8;
 
   /* Neutrals */
-  --ds-color-bg: #f8fafc;
+  --ds-color-bg: #eef1f6;
   --ds-color-surface: #ffffff;
-  --ds-color-surface-muted: #f1f5f9;
-  --ds-color-border: #e2e8f0;
-  --ds-color-border-strong: #cbd5e1;
-  --ds-color-text: #0f172a;
-  --ds-color-text-secondary: #475569;
-  --ds-color-text-muted: #64748b;
+  --ds-color-surface-muted: #f1f4f9;
+  --ds-color-border: #e1e7ef;
+  --ds-color-border-strong: #c8d2e0;
+  --ds-color-text: #0c1222;
+  --ds-color-text-secondary: #3d4a5f;
+  --ds-color-text-muted: #5c6b82;
 
   /* Semantic */
   --ds-color-success-bg: #ecfdf5;
@@ -31,8 +31,8 @@
   --ds-color-info-fg: #1d4ed8;
 
   /* Accent data */
-  --ds-color-accent-violet: #6366f1;
-  --ds-color-accent-amber: #d97706;
+  --ds-color-accent-violet: #4f46e5;
+  --ds-color-accent-amber: #b45309;
 
   /* Radius */
   --ds-radius-sm: 6px;
@@ -43,14 +43,14 @@
   --ds-radius-full: 9999px;
 
   /* Shadow */
-  --ds-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --ds-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
-  --ds-shadow-lg: 0 12px 40px rgba(15, 23, 42, 0.1);
-  --ds-shadow-ring: 0 0 0 3px rgba(13, 148, 136, 0.15);
+  --ds-shadow-sm: 0 1px 2px rgba(12, 18, 34, 0.05);
+  --ds-shadow-md: 0 4px 14px rgba(12, 18, 34, 0.07);
+  --ds-shadow-lg: 0 18px 48px rgba(12, 18, 34, 0.1);
+  --ds-shadow-ring: 0 0 0 3px rgba(15, 118, 110, 0.18);
 
   /* Typography */
-  --ds-font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, Segoe UI, sans-serif;
-  --ds-font-display: 'Syne', var(--ds-font-sans);
+  --ds-font-sans: 'Manrope', system-ui, -apple-system, Segoe UI, sans-serif;
+  --ds-font-display: 'Sora', var(--ds-font-sans);
   --ds-text-xs: 0.75rem;
   --ds-text-sm: 0.875rem;
   --ds-text-base: 1rem;

@@ -10722,7 +10722,7 @@
   function syncThemeColorMeta() {
     const m = qs('#meta-theme-color');
     if (!m) return;
-    const primary = (serverConfig && serverConfig.primaryHex) || '#1e3a5f';
+    const primary = (serverConfig && serverConfig.primaryHex) || '#0c1222';
     const th = getTheme();
     if (th === 'dark') m.setAttribute('content', '#0f172a');
     else if (th === 'industrial') m.setAttribute('content', '#292524');

@@ -1,6 +1,6 @@
 /**
- * Tema "Industrial" (media luna): fondo metal / franjas suaves + acentos amarillo-oro.
- * Complementa tema claro y oscuro; no sustituye reglas globales no duplicadas aquí.
+ * Tema "Industrial" (media luna): metal + acento oro.
+ * Misma jerarquía que Apex (claro / oscuro): recolor de acento y superficies; sin duplicar reglas globales.
  */
 
 body.theme-industrial {

@@ -40,7 +40,7 @@
 
 .ds-row-actions[open] > summary {
   background: var(--ds-color-primary-50);
-  border-color: rgba(13, 148, 136, 0.35);
+  border-color: rgba(15, 118, 110, 0.35);
   color: var(--ds-color-primary-700);
 }
 
@@ -118,9 +118,9 @@
 /* Shell tabla premium */
 .ref-table-shell {
   border-radius: var(--ds-radius-2xl);
-  border: 1px solid rgba(226, 232, 240, 0.95);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 250, 252, 0.98) 100%);
-  box-shadow: var(--ds-shadow-md), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+  border: 1px solid var(--ds-color-border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, var(--ds-color-surface-muted) 100%);
+  box-shadow: var(--ds-shadow-md), 0 0 0 1px rgba(255, 255, 255, 0.75) inset;
   overflow: visible;
 }
 
