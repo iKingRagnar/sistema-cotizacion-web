@@ -969,7 +969,42 @@ body.dark-theme #tabla-bitacoras th.th-actions {
 .header-alerts .alert-badge i { font-size: 0.9em; opacity: 0.95; }
 .header-alerts .alert-badge.alert-urgent { background: rgba(220,38,38,0.35); border-color: rgba(255,255,255,0.3); }
 .header-alerts .alert-badge.alert-urgent:hover { background: rgba(220,38,38,0.5); }
-.header-actions { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+  justify-content: flex-start;
+}
+.header-actions-primary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.header-actions-tail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
 
 /* Selector de 3 temas (sol / industrial / luna) */
 .theme-switcher {
@@ -3249,6 +3284,13 @@ textarea.filter-input:focus { outline: none; border-color: #1e3a5f; box-shadow: 
 @media (max-width: 768px) {
   .header { padding: 1.1rem 1rem; }
   .header-inner { flex-direction: column; align-items: flex-start; }
+  .header-actions { width: 100%; }
+  .header-actions-primary { width: 100%; }
+  .header-actions-tail {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
   .header-alerts { width: 100%; justify-content: flex-start; }
   .header-brand { gap: 0.75rem; }
   .header-logo { width: 36px; height: 36px; }

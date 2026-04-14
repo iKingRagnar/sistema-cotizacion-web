@@ -12,10 +12,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/design-tokens.css?v=3-apex-base">
   <link rel="stylesheet" href="css/design-system.css?v=3-apex-base">
-  <link rel="stylesheet" href="css/style.css?v=69-apex-pro-shell">
+  <link rel="stylesheet" href="css/style.css?v=70-header-actions-tail">
   <link rel="stylesheet" href="css/theme-industrial.css?v=6-apex-harmony">
   <link rel="stylesheet" href="css/layout-rail.css?v=2-sidebar-dashboard-width">
-  <link rel="stylesheet" href="css/header-profile.css?v=2-profile-far-right">
+  <link rel="stylesheet" href="css/header-profile.css?v=3-no-meta-in-bar">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
@@ -110,6 +110,7 @@
         </div>
       </div>
       <div class="header-actions">
+        <div class="header-actions-primary">
         <select id="global-branch-filter" class="header-branch-filter" title="Sucursales — filtro global">
           <option value="">Todas las sucursales</option>
         </select>
@@ -119,6 +120,8 @@
           <span id="header-slot-alertas" class="header-slot-alertas"></span>
         </div>
         <div id="header-system-status" class="header-system-status" aria-live="polite">Estado: iniciando…</div>
+        </div>
+        <div class="header-actions-tail">
         <div class="header-notifications-wrap">
           <button type="button" id="btn-notifications" class="btn-icon-header" title="Centro de notificaciones" aria-label="Centro de notificaciones">
             <i class="fas fa-bell"></i>
@@ -156,12 +159,12 @@
           <button type="button" class="btn-icon-header theme-switcher-btn" data-theme="industrial" id="theme-btn-industrial" title="Tema industrial (metal y franjas)" aria-label="Tema industrial" aria-pressed="false"><i class="fas fa-circle-half-stroke"></i></button>
           <button type="button" class="btn-icon-header theme-switcher-btn" data-theme="dark" id="theme-btn-dark" title="Tema oscuro (luna)" aria-label="Tema oscuro" aria-pressed="false"><i class="fas fa-moon"></i></button>
         </div>
-        <div id="header-profile-wrap" class="header-profile-wrap header-profile-wrap--end hidden" data-profile-wrap>
-          <div class="header-profile-meta" aria-hidden="true">
+        <div id="header-profile-wrap" class="header-profile-wrap hidden" data-profile-wrap>
+          <div class="header-profile-meta visually-hidden">
             <span id="header-profile-name" class="header-profile-name"></span>
             <span id="header-profile-role" class="header-profile-role"></span>
           </div>
-          <button type="button" id="btn-header-profile" class="btn-header-profile" aria-expanded="false" aria-haspopup="true" aria-controls="header-profile-menu" title="Cuenta y sesión">
+          <button type="button" id="btn-header-profile" class="btn-header-profile" aria-expanded="false" aria-haspopup="true" aria-controls="header-profile-menu" title="Cuenta y sesión" aria-describedby="header-profile-name">
             <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
               <circle cx="12" cy="9" r="3.5" fill="none" stroke="currentColor" stroke-width="1.75"/>
               <path d="M6.5 20v-0.5a5.5 5.5 0 0111 0v0.5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
@@ -175,6 +178,7 @@
             <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-mas">Más opciones…</button>
             <button type="button" class="header-profile-menu-item danger" role="menuitem" id="profile-menu-logout">Cerrar sesión</button>
           </div>
+        </div>
         </div>
       </div>
     </div>
@@ -1336,7 +1340,7 @@
 
   <footer class="app-footer" role="contentinfo">
     <p>Sistema de Cotización y Gestión · <span class="footer-version">v4</span> · Uso profesional · Cotizaciones, incidentes y bitácora en un solo lugar
-      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 59b · JS 112</strong></span></p>
+      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 60 · JS 112</strong></span></p>
     <p class="footer-tip"><kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> atajos de sección · <kbd>Esc</kbd> cierra modales</p>
   </footer>
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
