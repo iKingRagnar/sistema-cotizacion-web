@@ -5512,7 +5512,8 @@
       modalBox.style.width = '';
       modalBox.style.height = '';
       modalBox.style.maxHeight = '';
-      if (/cotizaci/i.test(String(title || ''))) modalBox.classList.add('modal-cotizacion');
+      const _t = String(title || '');
+      if (/cotizaci/i.test(_t) || /m\u00e1quina/i.test(_t) || /maquina/i.test(_t)) modalBox.classList.add('modal-cotizacion');
     }
     qs('#modal-title').textContent = title;
     qs('#modal-body').innerHTML = bodyHtml;
@@ -6174,6 +6175,10 @@
             <select id="m-subcategoria">${subOpts}</select>
           </div>
           <div class="form-group"><label>Versión / modelo *</label><input type="text" id="m-modelo" maxlength="120" value="${escapeHtml(maquina && maquina.modelo) || ''}" required placeholder="Ej: GH1440A, CTX 510…"></div>
+          <div class="form-group"><label>Ficha técnica (opcional)</label>
+            <textarea id="m-ficha-tecnica" rows="2" maxlength="4000" placeholder="Enlace, nota o referencia (se muestra en la columna «Ficha técnica» del catálogo).">${escapeHtml(maquina && maquina.ficha_tecnica != null ? String(maquina.ficha_tecnica) : '')}</textarea>
+            <p class="form-hint" style="margin:0.35rem 0 0;font-size:0.8rem"><i class="fas fa-info-circle"></i> Distinto del archivo de <strong>Especificaciones</strong> (imagen/PDF arriba): aquí va texto o URL corta.</p>
+          </div>
         </section>
         <section class="cotz-card" aria-labelledby="maq-sec-spec">
           <h4 class="cotz-card-title" id="maq-sec-spec"><span class="cotz-step-num">2</span> Archivos</h4>
@@ -6264,9 +6269,9 @@
         : (defaultClienteId != null ? defaultClienteId : null);
       const catVal = selMaqCat && selMaqCat.value.trim() ? selMaqCat.value.trim() : null;
       const subVal = selMaqSub && selMaqSub.value.trim() ? selMaqSub.value.trim() : null;
-      const ftKeep = !isNew && maquina && maquina.ficha_tecnica != null && String(maquina.ficha_tecnica).trim() !== ''
-        ? String(maquina.ficha_tecnica).trim()
-        : null;
+      const fichaEl = qs('#m-ficha-tecnica');
+      const fichaTxt = fichaEl && typeof fichaEl.value === 'string' ? fichaEl.value.trim() : '';
+      const ficha_tecnica = fichaTxt !== '' ? fichaTxt : null;
       const payload = {
         nombre: modelo,
         codigo: !isNew && maquina && maquina.codigo != null ? String(maquina.codigo).trim() || null : null,
@@ -6279,7 +6284,7 @@
         ubicacion: !isNew && maquina ? (maquina.ubicacion != null && String(maquina.ubicacion).trim() !== '' ? String(maquina.ubicacion).trim() : null) : null,
         imagen_pieza_url: imagenPieza,
         imagen_ensamble_url: imagenEns,
-        ficha_tecnica: ftKeep,
+        ficha_tecnica,
         stock: Number.isFinite(stockNum) ? stockNum : 0,
         precio_lista_usd: Number.isFinite(plUsd) ? plUsd : 0,
       };
