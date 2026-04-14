@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="css/design-system.css?v=3-apex-base">
   <link rel="stylesheet" href="css/style.css?v=70-header-actions-tail">
   <link rel="stylesheet" href="css/theme-industrial.css?v=6-apex-harmony">
-  <link rel="stylesheet" href="css/layout-rail.css?v=2-sidebar-dashboard-width">
+  <link rel="stylesheet" href="css/layout-rail.css?v=4-sidebar-rail-toggle">
   <link rel="stylesheet" href="css/header-profile.css?v=3-no-meta-in-bar">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
@@ -186,8 +186,18 @@
 
   <div class="app-frame">
     <aside class="sidebar-nav" id="app-sidebar-nav" aria-label="Navegación de módulos">
-      <p class="sidebar-nav-title">Módulos</p>
-      <nav class="tabs tabs--rail" role="navigation" aria-label="Secciones principales">
+      <div class="sidebar-nav-toolbar">
+        <button type="button" id="btn-sidebar-rail-toggle" class="btn-sidebar-rail-toggle" aria-expanded="true" aria-controls="sidebar-rail-tabs" title="Ocultar lista de módulos (más espacio para el contenido)">
+          <span class="visually-hidden">Mostrar u ocultar lista de módulos</span>
+          <svg class="sidebar-rail-burger-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+            <rect x="4" y="6.25" width="16" height="2" rx="0.5" fill="currentColor"/>
+            <rect x="4" y="11" width="16" height="2" rx="0.5" fill="currentColor"/>
+            <rect x="4" y="15.75" width="16" height="2" rx="0.5" fill="currentColor"/>
+          </svg>
+        </button>
+        <p class="sidebar-nav-title" id="sidebar-rail-heading">Módulos</p>
+      </div>
+      <nav id="sidebar-rail-tabs" class="tabs tabs--rail" role="navigation" aria-labelledby="sidebar-rail-heading">
     <button type="button" data-tab="dashboards" class="tab active" title="Resumen general (Ctrl+0)"><i class="fas fa-chart-pie"></i> Dashboards</button>
     <button type="button" data-tab="clientes" class="tab" title="Clientes (Ctrl+1)"><i class="fas fa-users"></i> Clientes</button>
     <button type="button" data-tab="refacciones" class="tab" title="Refacciones (Ctrl+2)"><i class="fas fa-cogs"></i> Refacciones</button>
@@ -1340,7 +1350,7 @@
 
   <footer class="app-footer" role="contentinfo">
     <p>Sistema de Cotización y Gestión · <span class="footer-version">v4</span> · Uso profesional · Cotizaciones, incidentes y bitácora en un solo lugar
-      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 60 · JS 112</strong></span></p>
+      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 61 · JS 114</strong></span></p>
     <p class="footer-tip"><kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> atajos de sección · <kbd>Esc</kbd> cierra modales</p>
   </footer>
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
@@ -1351,6 +1361,6 @@
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=113-profile-admin-hub"></script>
+  <script src="js/app.js?v=114-sidebar-rail-toggle"></script>
 </body>
 </html>

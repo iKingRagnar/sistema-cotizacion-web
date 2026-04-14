@@ -2,6 +2,7 @@
   const API = '/api';
   const AUTH_TOKEN_KEY = 'cotizacion-auth-token';
   const AUTH_USER_KEY = 'cotizacion-auth-user';
+  const SIDEBAR_RAIL_COLLAPSED_KEY = 'cotizacion-sidebar-rail-collapsed';
   const SOUND_PREF_KEY = 'cotizacion-sound';
   const BGM_MUTED_KEY = 'cotizacion-bgm-muted';
   const BGM_VOL_KEY = 'cotizacion-bgm-vol';
@@ -1042,6 +1043,37 @@
   qsAll('.tab').forEach(t => {
     t.addEventListener('click', () => showPanel(t.dataset.tab));
   });
+
+  function isSidebarRailCollapsedStored() {
+    try {
+      return localStorage.getItem(SIDEBAR_RAIL_COLLAPSED_KEY) === '1';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function applySidebarRailCollapsed(collapsed) {
+    document.body.classList.toggle('sidebar-rail-collapsed', collapsed);
+    const btn = qs('#btn-sidebar-rail-toggle');
+    if (btn) {
+      btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      btn.title = collapsed
+        ? 'Mostrar lista de módulos'
+        : 'Ocultar lista de módulos (más espacio para el contenido)';
+    }
+    try {
+      localStorage.setItem(SIDEBAR_RAIL_COLLAPSED_KEY, collapsed ? '1' : '0');
+    } catch (_) {}
+  }
+
+  (function initSidebarRailToggle() {
+    const btn = qs('#btn-sidebar-rail-toggle');
+    if (!btn) return;
+    applySidebarRailCollapsed(isSidebarRailCollapsedStored());
+    btn.addEventListener('click', function () {
+      applySidebarRailCollapsed(!document.body.classList.contains('sidebar-rail-collapsed'));
+    });
+  })();
 
   async function fetchJson(url, opts = {}) {
     const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
