@@ -166,21 +166,21 @@ body.dark-theme .header-profile-menu-item.danger:hover {
   background: rgba(127, 29, 29, 0.35);
 }
 
-/* Cristal más legible que el shell puro 0.42 (misma familia visual que notificaciones) */
+/* Menú cuenta: casi sólido (prioridad legibilidad sobre cristal) */
 body.theme-industrial .header-profile-menu {
-  background: rgba(15, 23, 42, 0.72) !important;
-  border: 1px solid rgba(148, 163, 184, 0.32);
+  background: rgba(15, 23, 42, 0.94) !important;
+  border: 1px solid rgba(148, 163, 184, 0.38);
   color: #e2e8f0;
   box-shadow:
-    0 24px 56px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  -webkit-backdrop-filter: blur(22px) saturate(125%);
-  backdrop-filter: blur(22px) saturate(125%);
+    0 24px 56px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(14px) saturate(118%);
+  backdrop-filter: blur(14px) saturate(118%);
 }
 
 body.theme-industrial .header-profile-menu-user {
-  border-bottom-color: rgba(148, 163, 184, 0.28);
-  background: rgba(2, 6, 23, 0.48);
+  border-bottom-color: rgba(148, 163, 184, 0.32);
+  background: rgba(2, 6, 23, 0.72);
 }
 
 body.theme-industrial .header-profile-menu-user strong {
@@ -194,11 +194,11 @@ body.theme-industrial .header-profile-menu-meta {
 
 body.theme-industrial .header-profile-menu-item {
   color: #e2e8f0;
-  background: rgba(2, 6, 23, 0.12);
+  background: rgba(15, 23, 42, 0.55);
 }
 
 body.theme-industrial .header-profile-menu-item:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(51, 65, 85, 0.75);
 }
 
 body.theme-industrial .header-profile-menu-item.danger:hover {
