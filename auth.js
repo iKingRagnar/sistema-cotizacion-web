@@ -107,12 +107,20 @@ function attachUser(req) {
   };
 }
 
+/** Acepta `req.originalUrl` con o sin host (p. ej. proxy / Vercel). */
+function normalizeRequestApiPath(url) {
+  const raw = String(url || '').split('?')[0];
+  const i = raw.indexOf('/api');
+  return i === -1 ? raw : raw.slice(i);
+}
+
 function isPublicPath(url) {
+  const p = normalizeRequestApiPath(url);
   return (
-    url.startsWith('/api/config') ||
-    url.startsWith('/api/auth/login') ||
-    url.startsWith('/api/ping') ||
-    url.startsWith('/api/tipo-cambio-banxico')
+    p.startsWith('/api/config') ||
+    p.startsWith('/api/auth/login') ||
+    p.startsWith('/api/ping') ||
+    p.startsWith('/api/tipo-cambio-banxico')
   );
 }
 
@@ -200,11 +208,12 @@ function wrapAuditJson(req, res) {
 
 function createApiMiddleware() {
   return function apiAuthAudit(req, res, next) {
-    if (!req.originalUrl.startsWith('/api')) return next();
+    const apiPath = normalizeRequestApiPath(req.originalUrl);
+    if (!apiPath.startsWith('/api')) return next();
 
     attachUser(req);
 
-    if (isPublicPath(req.originalUrl)) return next();
+    if (isPublicPath(apiPath)) return next();
 
     if (req.originalUrl.startsWith('/api/audit')) {
       if (!AUTH_ENABLED) {

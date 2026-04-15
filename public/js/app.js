@@ -6748,26 +6748,52 @@
       .join('');
 
     const cotMoneda = (cot && cot.moneda ? String(cot.moneda) : 'USD').toUpperCase();
-    let cotTc = cot && cot.tipo_cambio != null ? Number(cot.tipo_cambio) : NaN;
+    let cotTc =
+      cot && cot.tipo_cambio != null && cot.tipo_cambio !== '' ? Number(cot.tipo_cambio) : NaN;
+
     let banxicoTcHint = '';
+    try {
+      const bx = await fetchJson(API + '/tipo-cambio-banxico').catch((err) => ({
+        __fetch_err: true,
+        msg: String(err && err.message ? err.message : err || 'Error de red'),
+      }));
+      if (bx && bx.__fetch_err) {
+        banxicoTcHint =
+          '<p class="hint" style="margin:0.35rem 0 0;font-size:0.78rem;color:var(--danger,#b91c1c)">Banxico: no se pudo consultar (' +
+          escapeHtml(bx.msg) +
+          ').</p>';
+      } else if (bx && Number(bx.valor) > 0) {
+        if (isNew && (!Number.isFinite(cotTc) || cotTc <= 0)) {
+          cotTc = Math.round(Number(bx.valor) * 100) / 100;
+        }
+        const fd = bx.fecha_dato ? escapeHtml(String(bx.fecha_dato)) : '';
+        const au = bx.actualizado ? escapeHtml(String(bx.actualizado).slice(0, 19).replace('T', ' ')) : '';
+        const vtxt = Number(bx.valor).toFixed(4);
+        banxicoTcHint =
+          '<p class="hint" style="margin:0.35rem 0 0;font-size:0.78rem">Banxico (' +
+          escapeHtml(String(bx.serie || 'SF60653')) +
+          '): <strong>' +
+          vtxt +
+          '</strong> MXN/USD' +
+          (fd ? ' · fecha ' + fd : '') +
+          (au ? ' · sync ' + au + ' UTC' : '') +
+          '.</p>';
+      } else if (bx && bx.token_configured === false) {
+        banxicoTcHint =
+          '<p class="hint" style="margin:0.35rem 0 0;font-size:0.78rem">Banxico: el servidor no tiene <code>BANXICO_TOKEN</code>. Con token SieAPI, el T.C. se guarda y se sugiere en cotizaciones nuevas.</p>';
+      } else {
+        const err = bx && bx.error_ultima_consulta ? escapeHtml(String(bx.error_ultima_consulta).slice(0, 140)) : 'Sin dato aún.';
+        banxicoTcHint =
+          '<p class="hint" style="margin:0.35rem 0 0;font-size:0.78rem">Banxico: sin valor en servidor. Último intento: ' +
+          err +
+          '</p>';
+      }
+    } catch (_) {
+      banxicoTcHint =
+        '<p class="hint" style="margin:0.35rem 0 0;font-size:0.78rem">Banxico: error al cargar la referencia.</p>';
+    }
     if (!Number.isFinite(cotTc) || cotTc <= 0) {
       cotTc = 17.0;
-      if (isNew) {
-        try {
-          const bx = await fetchJson(API + '/tipo-cambio-banxico').catch(() => null);
-          const v = bx && Number(bx.valor);
-          if (Number.isFinite(v) && v > 0) {
-            cotTc = Math.round(v * 100) / 100;
-            const fd = bx.fecha_dato ? String(bx.fecha_dato) : '';
-            const au = bx.actualizado ? String(bx.actualizado).slice(0, 16).replace('T', ' ') : '';
-            banxicoTcHint =
-              `<p class="hint" style="margin:0.35rem 0 0;font-size:0.78rem">Referencia Banxico (FIX): <strong>${cotTc.toFixed(2)}</strong> MXN/USD` +
-              (fd ? ` · fecha dato ${escapeHtml(fd)}` : '') +
-              (au ? ` · sincronizado ${escapeHtml(au)} UTC` : '') +
-              `.</p>`;
-          }
-        } catch (_) {}
-      }
     }
     // Se renderiza vacío y se llena dinámicamente tras abrir modal (para usar cliente seleccionado real).
     const maquinasOpts = '';

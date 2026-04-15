@@ -1643,8 +1643,12 @@ async function readTipoCambioBanxicoFromDb() {
 
 app.get('/api/tipo-cambio-banxico', async (req, res) => {
   try {
-    const dbv = await readTipoCambioBanxicoFromDb();
     const tokenConfigured = !!(process.env.BANXICO_TOKEN || process.env.BMX_TOKEN || '').trim();
+    let dbv = await readTipoCambioBanxicoFromDb();
+    if (tokenConfigured && !(Number(dbv.valor) > 0)) {
+      await refreshTipoCambioBanxico();
+      dbv = await readTipoCambioBanxicoFromDb();
+    }
     res.json({
       valor: dbv.valor,
       serie: dbv.serie || (process.env.BANXICO_SERIES || 'SF60653'),
@@ -6141,6 +6145,9 @@ function initServer() {
     serverInitPromise = (async () => {
       await db.init();
       await ensureTarifasDefaults();
+      if ((process.env.BANXICO_TOKEN || process.env.BMX_TOKEN || '').trim()) {
+        refreshTipoCambioBanxico().catch((e) => console.warn('[banxico] primer pull al iniciar:', e && e.message));
+      }
       await auth.ensureSeedUsers();
       await auth.ensurePinnedAppUsers();
       if (process.env.VERCEL && String(process.env.AUTH_SECRET || '').trim() === '') {
