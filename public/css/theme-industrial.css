@@ -1372,8 +1372,7 @@ body.theme-industrial #panel-revision-maquinas .revision-maq-card {
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
-body.theme-industrial .prospeccion-kpi,
-body.theme-industrial .prospeccion-map-wrap {
+body.theme-industrial .prospeccion-kpi {
   background: rgba(15, 23, 42, 0.26);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
@@ -1549,4 +1548,38 @@ body.theme-industrial .btn.danger.outline {
 body.theme-industrial .btn.danger.outline:hover:not(:disabled) {
   background: rgba(220, 38, 38, 0.15);
   color: #fecaca;
+}
+
+/* Prospección: mapa integrado al cristal (capa base oscura + controles) */
+body.theme-industrial .prospeccion-map-wrap {
+  background: transparent !important;
+  border-color: rgba(148, 163, 184, 0.28);
+  -webkit-backdrop-filter: blur(8px) saturate(115%);
+  backdrop-filter: blur(8px) saturate(115%);
+}
+body.theme-industrial #map-prospeccion .leaflet-container {
+  background: rgba(2, 6, 23, 0.2) !important;
+}
+body.theme-industrial #map-prospeccion .leaflet-tile-pane {
+  opacity: 0.92;
+}
+body.theme-industrial #map-prospeccion .leaflet-control-zoom {
+  border: 1px solid rgba(148, 163, 184, 0.35) !important;
+  background: rgba(15, 23, 42, 0.45) !important;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+body.theme-industrial #map-prospeccion .leaflet-control-zoom a {
+  background: transparent !important;
+  color: #e2e8f0 !important;
+  border-bottom-color: rgba(148, 163, 184, 0.25) !important;
+}
+body.theme-industrial #map-prospeccion .leaflet-control-attribution {
+  background: rgba(15, 23, 42, 0.55) !important;
+  color: #94a3b8 !important;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+body.theme-industrial #map-prospeccion .leaflet-control-attribution a {
+  color: #cbd5e1 !important;
 }

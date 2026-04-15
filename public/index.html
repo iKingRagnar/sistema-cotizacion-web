@@ -13,8 +13,8 @@
   <link rel="stylesheet" href="css/design-tokens.css?v=3-apex-base">
   <link rel="stylesheet" href="css/design-system.css?v=3-apex-base">
   <link rel="stylesheet" href="css/style.css?v=74-fondo-glass">
-  <link rel="stylesheet" href="css/theme-industrial.css?v=11-glass-menus-clientes">
-  <link rel="stylesheet" href="css/layout-rail.css?v=7-transparent-rail">
+  <link rel="stylesheet" href="css/theme-industrial.css?v=12-sidebar-map-audio">
+  <link rel="stylesheet" href="css/layout-rail.css?v=8-sidebar-global-strip">
   <link rel="stylesheet" href="css/header-profile.css?v=5-glass-menus-admin">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
@@ -111,18 +111,10 @@
         </div>
       </div>
       <div class="header-actions">
-        <div class="header-actions-primary">
-        <select id="global-branch-filter" class="header-branch-filter" title="Sucursales — filtro global">
-          <option value="">Todas las sucursales</option>
-        </select>
-        <div id="header-alerts" class="header-alerts" aria-live="polite">
-          <span id="header-slot-tc" class="header-slot-tc"></span>
-          <span id="header-slot-urgent" class="header-slot-urgent"></span>
-          <span id="header-slot-alertas" class="header-slot-alertas"></span>
-        </div>
-        <div id="header-system-status" class="header-system-status" aria-live="polite">Estado: iniciando…</div>
-        </div>
         <div class="header-actions-tail">
+        <button type="button" id="btn-sound-toggle" class="btn-icon-header" title="Música de fondo" aria-label="Silenciar o activar música de fondo" aria-pressed="false">
+          <i class="fas fa-volume-up" aria-hidden="true"></i>
+        </button>
         <div class="header-notifications-wrap">
           <button type="button" id="btn-notifications" class="btn-icon-header" title="Centro de notificaciones" aria-label="Centro de notificaciones">
             <i class="fas fa-bell"></i>
@@ -188,6 +180,17 @@
           </svg>
         </button>
         <p class="sidebar-nav-title" id="sidebar-rail-heading">Módulos</p>
+      </div>
+      <div class="sidebar-global-strip" aria-label="Filtro global, alertas y estado del sistema">
+        <select id="global-branch-filter" class="header-branch-filter sidebar-branch-filter" title="Sucursales — filtro global">
+          <option value="">Todas las sucursales</option>
+        </select>
+        <div id="header-alerts" class="header-alerts sidebar-header-alerts" aria-live="polite">
+          <span id="header-slot-tc" class="header-slot-tc"></span>
+          <span id="header-slot-urgent" class="header-slot-urgent"></span>
+          <span id="header-slot-alertas" class="header-slot-alertas"></span>
+        </div>
+        <div id="header-system-status" class="header-system-status sidebar-system-status" aria-live="polite">Estado: iniciando…</div>
       </div>
       <nav id="sidebar-rail-tabs" class="tabs tabs--rail" role="navigation" aria-labelledby="sidebar-rail-heading">
     <button type="button" data-tab="dashboards" class="tab active" title="Resumen general (Ctrl+0)"><i class="fas fa-chart-pie"></i> Dashboards</button>
@@ -1353,6 +1356,6 @@
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=118-fondo-glass"></script>
+  <script src="js/app.js?v=119-sidebar-bgm-map"></script>
 </body>
 </html>

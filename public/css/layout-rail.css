@@ -79,6 +79,36 @@
   font-family: var(--font-sans, system-ui);
 }
 
+/* Filtro global + alertas + estado (antes en la barra superior; ahora en el rail) */
+.sidebar-global-strip {
+  padding: 0.5rem 0.65rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  border-bottom: 1px solid #dce3ee;
+  flex-shrink: 0;
+}
+.sidebar-branch-filter {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.sidebar-header-alerts {
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.sidebar-system-status {
+  font-size: 0.68rem;
+  line-height: 1.3;
+  white-space: normal;
+  word-break: break-word;
+}
+
+body.sidebar-rail-collapsed .sidebar-global-strip {
+  display: none;
+}
+
 /* Rail colapsado: solo el botón; el contenido principal usa el ancho liberado */
 body.sidebar-rail-collapsed .sidebar-nav {
   flex: 0 0 3.35rem;
@@ -274,6 +304,13 @@ body.theme-industrial .sidebar-nav {
   -webkit-backdrop-filter: blur(22px) saturate(128%);
   backdrop-filter: blur(22px) saturate(128%);
   box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.04);
+}
+
+body.theme-industrial .sidebar-global-strip {
+  border-bottom-color: rgba(148, 163, 184, 0.22);
+  background: rgba(2, 6, 23, 0.12);
+  -webkit-backdrop-filter: blur(12px) saturate(118%);
+  backdrop-filter: blur(12px) saturate(118%);
 }
 
 body.theme-industrial .sidebar-nav-title {
