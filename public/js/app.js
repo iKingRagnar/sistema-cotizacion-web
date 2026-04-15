@@ -6764,7 +6764,7 @@
           ').</p>';
       } else if (bx && Number(bx.valor) > 0) {
         if (isNew && (!Number.isFinite(cotTc) || cotTc <= 0)) {
-          cotTc = Math.round(Number(bx.valor) * 100) / 100;
+          cotTc = Math.round(Number(bx.valor) * 10000) / 10000;
         }
         const fd = bx.fecha_dato ? escapeHtml(String(bx.fecha_dato)) : '';
         const au = bx.actualizado ? escapeHtml(String(bx.actualizado).slice(0, 19).replace('T', ' ')) : '';
@@ -6842,7 +6842,7 @@
             </div>
             <div class="form-group">
               <label>Tipo de cambio</label>
-              <input type="number" id="cotz-tc" step="0.01" min="0" value="${Number.isFinite(cotTc) ? cotTc.toFixed(2) : '17.00'}" placeholder="17.00">
+              <input type="number" id="cotz-tc" step="0.0001" min="0" value="${Number.isFinite(cotTc) ? cotTc.toFixed(4) : '17.0000'}" placeholder="17.3056">
               <div class="hint">Listas de refacciones y equipo en USD. <strong>Tipo de cambio = pesos mexicanos por 1 USD</strong> (suele verse ~18–21; si en otra página ves ~0.05, es USD por peso, no uses ese número aquí). Las vueltas usan tarifas en MXN y se expresan en USD con este T.C.</div>
               ${banxicoTcHint}
               <div class="form-actions" style="margin-top:0.5rem;flex-wrap:wrap;gap:0.35rem">
