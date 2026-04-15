@@ -1623,6 +1623,34 @@ async function pullExchangerateApi() {
   return { ok: true, valor: valor4, serie: 'exchangerate-api.com', fecha_dato: String(fecha) };
 }
 
+async function pullFixerUsdMxn() {
+  const key = (process.env.FIXER_API_KEY || '').trim();
+  if (!key) return { ok: false, error: 'no_fixer_key' };
+  // Plan free de Fixer normalmente usa base EUR; calculamos MXN por 1 USD = rate(MXN)/rate(USD).
+  const url = `https://data.fixer.io/api/latest?access_key=${encodeURIComponent(key)}&symbols=USD,MXN`;
+  const ctrl =
+    typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+      ? AbortSignal.timeout(20000)
+      : undefined;
+  const r = await fetch(url, { ...(ctrl ? { signal: ctrl } : {}) });
+  const json = await r.json().catch(() => ({}));
+  if (!r.ok || json.success === false) {
+    const msg =
+      (json && json.error && (json.error.info || json.error.type)) ||
+      `Fixer HTTP ${r.status}`;
+    throw new Error(String(msg));
+  }
+  const rates = json.rates || {};
+  const usd = Number(rates.USD);
+  const mxn = Number(rates.MXN);
+  if (!Number.isFinite(usd) || usd <= 0) throw new Error('Fixer sin USD');
+  if (!Number.isFinite(mxn) || mxn <= 0) throw new Error('Fixer sin MXN');
+  const mxnPerUsd = mxn / usd;
+  const valor4 = Math.round(mxnPerUsd * 10000) / 10000;
+  const fecha = json.date || '';
+  return { ok: true, valor: valor4, serie: 'fixer.io (base EUR)', fecha_dato: String(fecha) };
+}
+
 async function pullFrankfurterUsdMxn() {
   const url = 'https://api.frankfurter.app/latest?from=USD&to=MXN';
   const ctrl =
@@ -1640,7 +1668,7 @@ async function pullFrankfurterUsdMxn() {
 }
 
 /**
- * Orden: Banxico (FIX, token) → ExchangeRate-API (clave) → Frankfurter (gratis, referencia ECB).
+ * Orden: Banxico (FIX, token) → Fixer (clave) → ExchangeRate-API (clave) → Frankfurter (gratis, referencia ECB).
  * Guarda en `tipo_cambio_banxico` (MXN por 1 USD) para compatibilidad con el modal de cotización.
  */
 async function refreshTipoCambioReferencia() {
@@ -1655,6 +1683,18 @@ async function refreshTipoCambioReferencia() {
     } catch (e) {
       banxicoPollState.lastError = String(e && e.message ? e.message : e);
       console.warn('[tc-ref] Banxico:', banxicoPollState.lastError);
+    }
+  }
+  if ((process.env.FIXER_API_KEY || '').trim()) {
+    try {
+      const fx = await pullFixerUsdMxn();
+      if (fx.ok && isPlausibleMxnPerUsd(fx.valor)) {
+        await persistTipoCambioReferencia(fx.valor, 'fixer', fx.fecha_dato, fx.serie);
+        return { ok: true, fuente: 'fixer', valor: fx.valor };
+      }
+    } catch (e) {
+      banxicoPollState.lastError = String(e && e.message ? e.message : e);
+      console.warn('[tc-ref] Fixer:', banxicoPollState.lastError);
     }
   }
   if ((process.env.EXCHANGE_RATE_API_KEY || '').trim()) {
@@ -1685,7 +1725,7 @@ async function refreshTipoCambioReferencia() {
     console.warn('[tc-ref] Frankfurter:', banxicoPollState.lastError);
   }
   const msg =
-    'No se obtuvo tipo de cambio: opciones — (1) BANXICO_TOKEN SieAPI, (2) EXCHANGE_RATE_API_KEY, o (3) red para Frankfurter.';
+    'No se obtuvo tipo de cambio: opciones — (1) BANXICO_TOKEN SieAPI, (2) FIXER_API_KEY, (3) EXCHANGE_RATE_API_KEY, o (4) red para Frankfurter.';
   banxicoPollState.lastError = msg;
   return { ok: false, error: msg };
 }
@@ -1726,6 +1766,7 @@ async function readTipoCambioBanxicoFromDb() {
 app.get('/api/tipo-cambio-banxico', async (req, res) => {
   try {
     const tokenConfigured = !!(process.env.BANXICO_TOKEN || process.env.BMX_TOKEN || '').trim();
+    const fixerConfigured = !!(process.env.FIXER_API_KEY || '').trim();
     const erConfigured = !!(process.env.EXCHANGE_RATE_API_KEY || '').trim();
     let dbv = await readTipoCambioBanxicoFromDb();
     if (!(Number(dbv.valor) > 0)) {
@@ -1739,6 +1780,7 @@ app.get('/api/tipo-cambio-banxico', async (req, res) => {
       fecha_dato: dbv.fecha_dato,
       actualizado: dbv.actualizado,
       token_configured: tokenConfigured,
+      fixer_configured: fixerConfigured,
       exchangerate_configured: erConfigured,
       intervalo_horas: Math.round(BANXICO_REFRESH_MS / (60 * 60 * 1000)),
       ultima_consulta_ok: banxicoPollState.lastOk,

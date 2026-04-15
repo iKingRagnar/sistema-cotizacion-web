@@ -6773,6 +6773,8 @@
         const tit =
           fuente === 'banxico'
             ? 'Banxico (FIX)'
+            : fuente === 'fixer'
+              ? 'Fixer'
             : fuente === 'exchangerate-api'
               ? 'ExchangeRate-API'
               : fuente === 'frankfurter'
@@ -6797,7 +6799,7 @@
           '</p>';
       } else if (bx && bx.token_configured === false && !bx.exchangerate_configured) {
         banxicoTcHint =
-          '<p class="hint" style="margin:0.35rem 0 0;font-size:0.78rem">Tipo de cambio: el servidor intentó fuentes gratuitas (Frankfurter). Para el <strong>FIX Banxico</strong> agrega <code>BANXICO_TOKEN</code>; opcional <code>EXCHANGE_RATE_API_KEY</code> (exchangerate-api.com).</p>';
+          '<p class="hint" style="margin:0.35rem 0 0;font-size:0.78rem">Tipo de cambio: el servidor intentó fuentes gratuitas (Frankfurter). Para el <strong>FIX Banxico</strong> agrega <code>BANXICO_TOKEN</code>; opcional <code>FIXER_API_KEY</code> (fixer.io) o <code>EXCHANGE_RATE_API_KEY</code> (exchangerate-api.com).</p>';
       } else {
         const err = bx && bx.error_ultima_consulta ? escapeHtml(String(bx.error_ultima_consulta).slice(0, 140)) : 'Sin dato aún.';
         banxicoTcHint =
