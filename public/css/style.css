@@ -5957,6 +5957,20 @@ body.dark-theme .ref-pvc-hero-kicker { color: #94a3b8; }
 }
 
 /* ---------- Login (misma estructura, look ejecutivo) ---------- */
+/* Crédito esquina superior derecha (misma tipografía que header; no pegado al borde) */
+.login-overlay-powered-by {
+  position: absolute;
+  top: max(1.1rem, env(safe-area-inset-top, 0px) + 0.45rem);
+  right: max(1.85rem, env(safe-area-inset-right, 0px) + 0.65rem);
+  left: auto;
+  z-index: 2;
+  margin: 0;
+  transform: none;
+  text-align: right;
+  max-width: min(300px, calc(100vw - 3.5rem));
+  pointer-events: none;
+}
+
 #login-overlay {
   background-color: #070b14;
   background-image:
