@@ -10200,11 +10200,17 @@
     if (!prospeccionMap) {
       prospeccionMap = L.map(el, { scrollWheelZoom: true });
       var useIndustrialTiles = document.body && document.body.classList.contains('theme-industrial');
+      /* Industrial (Sol y Luna): Voyager — legible y cromático; evita dark_all (bloque negro). Fuera de industrial: OSM estándar. */
       var tileUrl = useIndustrialTiles
-        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+        ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
         : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
       var tileOpts = useIndustrialTiles
-        ? { attribution: '&copy; OpenStreetMap &copy; CARTO', subdomains: 'abcd', maxZoom: 20 }
+        ? {
+            attribution:
+              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20,
+          }
         : { attribution: '&copy; OpenStreetMap', maxZoom: 19 };
       L.tileLayer(tileUrl, tileOpts).addTo(prospeccionMap);
       prospeccionMarkersLayer = L.layerGroup().addTo(prospeccionMap);
@@ -11708,6 +11714,18 @@
     try {
       const pd = qs('#panel-dashboards');
       if (pd && pd.classList.contains('active')) loadDashboard();
+    } catch (_) {}
+    /* Prospección: al cambiar tema, destruir Leaflet para que se regenere con estilos/controles acordes */
+    try {
+      if (prospeccionMap && typeof prospeccionMap.remove === 'function') {
+        prospeccionMap.remove();
+        prospeccionMap = null;
+        prospeccionMarkersLayer = null;
+      }
+      const pp = qs('#panel-prospeccion');
+      if (pp && pp.classList.contains('active') && typeof renderProspeccionFromCache === 'function') {
+        renderProspeccionFromCache();
+      }
     } catch (_) {}
   }
   function syncThemeColorMeta() {
