@@ -885,7 +885,8 @@ body.dark-theme #tabla-bitacoras th.th-actions {
   background: linear-gradient(115deg, #060a12 0%, #0c1222 38%, #152a45 72%, #0f766e 108%);
   background-size: 100% 100%;
   color: #fff;
-  padding: 1.35rem 1.65rem;
+  /* Izquierda = padding del rail (.sidebar-nav-toolbar 0.65rem) para alinear marca con “Módulos” */
+  padding: 1.35rem 1.65rem 1.35rem 0.65rem;
   box-shadow: 0 8px 32px rgba(6, 10, 18, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
   letter-spacing: 0.01em;
   position: relative;
@@ -917,7 +918,8 @@ body.dark-theme #tabla-bitacoras th.th-actions {
   position: relative;
   z-index: 1;
   max-width: 1400px;
-  margin: 0 auto;
+  margin-left: 0;
+  margin-right: auto;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -1158,6 +1160,8 @@ body.theme-industrial.appearance-light .header-logo {
   border-radius: 14px;
   /* Recorte mínimo del perímetro del JPG: quita halos blancos típicos sin filtros ni blend (colores del logo intactos). */
   clip-path: inset(4px round 14px);
+  /* Compensa inset izquierdo del clip para alinear caja visible con el rail */
+  margin-left: -4px;
 }
 .header-brand-text {
   display: flex;
