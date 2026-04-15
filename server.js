@@ -1535,6 +1535,155 @@ app.put('/api/tarifas', async (req, res) => {
   }
 });
 
+// --- Banxico: tipo de cambio (SieAPI) → tabla `tarifas`, lectura pública ---
+const BANXICO_API_BASE = 'https://www.banxico.org.mx/SieAPIRest/service/v1';
+const BANXICO_REFRESH_MS =
+  (Math.max(1, parseInt(process.env.BANXICO_INTERVAL_HOURS || '3', 10) || 3)) * 60 * 60 * 1000;
+const banxicoPollState = { lastOk: null, lastError: null };
+
+async function upsertTarifaBanxico(clave, valor) {
+  await db.runQuery(
+    `INSERT INTO tarifas (clave, valor, actualizado_en) VALUES (?, ?, datetime('now','localtime'))
+     ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor, actualizado_en=excluded.actualizado_en`,
+    [clave, String(valor)]
+  );
+}
+
+/**
+ * Consulta el dato más reciente (oportuno) de la serie y guarda `tipo_cambio_banxico` en tarifas.
+ * Requiere token: https://www.banxico.org.mx/SieAPIRest/service/v1/token
+ * Serie por defecto SF60653 = FIX (pesos por dólar); alternativa frecuente SF43718 = interbancario.
+ */
+async function refreshTipoCambioBanxico() {
+  const token = (process.env.BANXICO_TOKEN || process.env.BMX_TOKEN || '').trim();
+  const series = (process.env.BANXICO_SERIES || 'SF60653').trim();
+  if (!token) {
+    banxicoPollState.lastError = 'missing_token';
+    return { ok: false, error: 'Falta BANXICO_TOKEN (o BMX_TOKEN) en el entorno del servidor.' };
+  }
+  const url = `${BANXICO_API_BASE}/series/${encodeURIComponent(series)}/datos/oportuno`;
+  try {
+    const ctrl =
+      typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+        ? AbortSignal.timeout(25000)
+        : undefined;
+    const r = await fetch(url, {
+      headers: { 'Bmx-Token': token },
+      ...(ctrl ? { signal: ctrl } : {}),
+    });
+    const text = await r.text();
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch (_) {
+      throw new Error(`Respuesta no JSON (${r.status}): ${text.slice(0, 180)}`);
+    }
+    if (!r.ok) {
+      const msg = (json && (json.message || json.error)) || `HTTP ${r.status}`;
+      throw new Error(String(msg));
+    }
+    const serieObj = json && json.bmx && json.bmx.series && json.bmx.series[0];
+    const datos = serieObj && serieObj.datos;
+    if (!Array.isArray(datos) || datos.length === 0) {
+      throw new Error('Banxico no devolvió observaciones para la serie.');
+    }
+    const last = datos[datos.length - 1];
+    const raw = String(last.dato != null ? last.dato : '').trim();
+    if (!raw || /^N\/?[ED]$/i.test(raw)) {
+      throw new Error('Dato Banxico no disponible (N/D o N/E).');
+    }
+    const valor = Number(String(raw).replace(',', '.'));
+    if (!Number.isFinite(valor) || valor <= 0) {
+      throw new Error('Valor Banxico inválido: ' + raw);
+    }
+    const fechaDato = String(last.fecha || '');
+    const iso = new Date().toISOString();
+    const valor4 = Math.round(valor * 10000) / 10000;
+    await upsertTarifaBanxico('tipo_cambio_banxico', String(valor4));
+    await upsertTarifaBanxico('tipo_cambio_banxico_serie', series);
+    await upsertTarifaBanxico('tipo_cambio_banxico_fecha_dato', fechaDato);
+    await upsertTarifaBanxico('tipo_cambio_banxico_actualizado_iso', iso);
+    banxicoPollState.lastOk = iso;
+    banxicoPollState.lastError = null;
+    console.log('[banxico] Serie', series, '→', valor4, 'MXN/USD · fecha dato', fechaDato);
+    return { ok: true, valor: valor4, serie: series, fecha_dato: fechaDato, actualizado: iso };
+  } catch (e) {
+    const msg = String(e && e.message ? e.message : e);
+    banxicoPollState.lastError = msg;
+    console.warn('[banxico]', msg);
+    return { ok: false, error: msg };
+  }
+}
+
+async function readTipoCambioBanxicoFromDb() {
+  const out = {
+    valor: null,
+    serie: null,
+    fecha_dato: null,
+    actualizado: null,
+  };
+  const rows = await db.getAll(
+    `SELECT clave, valor FROM tarifas WHERE clave IN (
+      'tipo_cambio_banxico','tipo_cambio_banxico_serie','tipo_cambio_banxico_fecha_dato','tipo_cambio_banxico_actualizado_iso'
+    )`
+  );
+  const map = {};
+  (rows || []).forEach((r) => {
+    if (r && r.clave) map[r.clave] = r.valor;
+  });
+  if (map.tipo_cambio_banxico != null) {
+    const n = Number(String(map.tipo_cambio_banxico).replace(',', '.'));
+    if (Number.isFinite(n) && n > 0) out.valor = Math.round(n * 10000) / 10000;
+  }
+  out.serie = map.tipo_cambio_banxico_serie || null;
+  out.fecha_dato = map.tipo_cambio_banxico_fecha_dato || null;
+  out.actualizado = map.tipo_cambio_banxico_actualizado_iso || null;
+  return out;
+}
+
+app.get('/api/tipo-cambio-banxico', async (req, res) => {
+  try {
+    const dbv = await readTipoCambioBanxicoFromDb();
+    const tokenConfigured = !!(process.env.BANXICO_TOKEN || process.env.BMX_TOKEN || '').trim();
+    res.json({
+      valor: dbv.valor,
+      serie: dbv.serie || (process.env.BANXICO_SERIES || 'SF60653'),
+      fecha_dato: dbv.fecha_dato,
+      actualizado: dbv.actualizado,
+      token_configured: tokenConfigured,
+      intervalo_horas: Math.round(BANXICO_REFRESH_MS / (60 * 60 * 1000)),
+      ultima_consulta_ok: banxicoPollState.lastOk,
+      error_ultima_consulta: banxicoPollState.lastError,
+    });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message || e) });
+  }
+});
+
+function startBanxicoTipoCambioScheduler() {
+  const token = (process.env.BANXICO_TOKEN || process.env.BMX_TOKEN || '').trim();
+  if (!token) {
+    console.log(
+      '[banxico] Sincronización desactivada: agrega BANXICO_TOKEN en el servidor (registro en Banxico SieAPI).'
+    );
+    return;
+  }
+  setTimeout(() => {
+    refreshTipoCambioBanxico().catch((err) => console.warn('[banxico] arranque', err));
+  }, 12000);
+  setInterval(() => {
+    refreshTipoCambioBanxico().catch((err) => console.warn('[banxico] intervalo', err));
+  }, BANXICO_REFRESH_MS);
+  console.log(
+    '[banxico] Activo: cada',
+    Math.round(BANXICO_REFRESH_MS / (60 * 60 * 1000)),
+    'h · serie',
+    (process.env.BANXICO_SERIES || 'SF60653').trim(),
+    '·',
+    BANXICO_API_BASE
+  );
+}
+
 // --- Revisión de Máquinas ---
 app.get('/api/revision-maquinas', async (req, res) => {
   try {
@@ -5969,6 +6118,11 @@ async function runPostListenStartup() {
     startProspectosDailyScheduler();
   } catch (e) {
     console.warn('[prospectos] Semilla / scheduler:', e && e.message);
+  }
+  try {
+    startBanxicoTipoCambioScheduler();
+  } catch (e) {
+    console.warn('[banxico] Scheduler:', e && e.message);
   }
   if (process.env.VERCEL) {
     console.log('[backup-auto] Omitido en Vercel (serverless). Usa export manual o un Cron si necesitas JSON periódico.');

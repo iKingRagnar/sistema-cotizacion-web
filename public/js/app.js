@@ -6748,7 +6748,27 @@
       .join('');
 
     const cotMoneda = (cot && cot.moneda ? String(cot.moneda) : 'USD').toUpperCase();
-    const cotTc = cot && cot.tipo_cambio != null ? Number(cot.tipo_cambio) : 17.0;
+    let cotTc = cot && cot.tipo_cambio != null ? Number(cot.tipo_cambio) : NaN;
+    let banxicoTcHint = '';
+    if (!Number.isFinite(cotTc) || cotTc <= 0) {
+      cotTc = 17.0;
+      if (isNew) {
+        try {
+          const bx = await fetchJson(API + '/tipo-cambio-banxico').catch(() => null);
+          const v = bx && Number(bx.valor);
+          if (Number.isFinite(v) && v > 0) {
+            cotTc = Math.round(v * 100) / 100;
+            const fd = bx.fecha_dato ? String(bx.fecha_dato) : '';
+            const au = bx.actualizado ? String(bx.actualizado).slice(0, 16).replace('T', ' ') : '';
+            banxicoTcHint =
+              `<p class="hint" style="margin:0.35rem 0 0;font-size:0.78rem">Referencia Banxico (FIX): <strong>${cotTc.toFixed(2)}</strong> MXN/USD` +
+              (fd ? ` · fecha dato ${escapeHtml(fd)}` : '') +
+              (au ? ` · sincronizado ${escapeHtml(au)} UTC` : '') +
+              `.</p>`;
+          }
+        } catch (_) {}
+      }
+    }
     // Se renderiza vacío y se llena dinámicamente tras abrir modal (para usar cliente seleccionado real).
     const maquinasOpts = '';
 
@@ -6779,6 +6799,7 @@
               <label>Tipo de cambio</label>
               <input type="number" id="cotz-tc" step="0.01" min="0" value="${Number.isFinite(cotTc) ? cotTc.toFixed(2) : '17.00'}" placeholder="17.00">
               <div class="hint">Listas de refacciones y equipo en USD. El tipo de cambio convierte a pesos solo si en el futuro se usa otra moneda; hoy las cotizaciones son USD. Las vueltas usan tarifas internas en MXN y se expresan en USD con este T.C.</div>
+              ${banxicoTcHint}
               <div class="form-actions" style="margin-top:0.5rem;flex-wrap:wrap;gap:0.35rem">
                 <button type="button" class="btn small outline" id="cotz-recalc-lineas" title="Recalcula refacciones/equipo en USD×TC y vueltas por tarifa (sin cerrar el modal)"><i class="fas fa-sync-alt"></i> Actualizar partidas con este T.C.</button>
               </div>
