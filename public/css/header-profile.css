@@ -4,6 +4,7 @@
 
 .header-profile-wrap {
   position: relative;
+  isolation: isolate;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -165,19 +166,21 @@ body.dark-theme .header-profile-menu-item.danger:hover {
   background: rgba(127, 29, 29, 0.35);
 }
 
-/* Misma “cáscara” que el panel de notificaciones (legible, cristal medio) */
+/* Cristal más legible que el shell puro 0.42 (misma familia visual que notificaciones) */
 body.theme-industrial .header-profile-menu {
-  background: rgba(15, 23, 42, 0.42) !important;
-  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(15, 23, 42, 0.72) !important;
+  border: 1px solid rgba(148, 163, 184, 0.32);
   color: #e2e8f0;
-  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    0 24px 56px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
   -webkit-backdrop-filter: blur(22px) saturate(125%);
   backdrop-filter: blur(22px) saturate(125%);
 }
 
 body.theme-industrial .header-profile-menu-user {
-  border-bottom-color: rgba(148, 163, 184, 0.22);
-  background: rgba(2, 6, 23, 0.22);
+  border-bottom-color: rgba(148, 163, 184, 0.28);
+  background: rgba(2, 6, 23, 0.48);
 }
 
 body.theme-industrial .header-profile-menu-user strong {
@@ -191,11 +194,11 @@ body.theme-industrial .header-profile-menu-meta {
 
 body.theme-industrial .header-profile-menu-item {
   color: #e2e8f0;
-  background: transparent;
+  background: rgba(2, 6, 23, 0.12);
 }
 
 body.theme-industrial .header-profile-menu-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 body.theme-industrial .header-profile-menu-item.danger:hover {

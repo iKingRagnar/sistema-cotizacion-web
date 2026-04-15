@@ -1599,18 +1599,20 @@ body.theme-industrial #map-prospeccion .leaflet-control-attribution a {
   color: #cbd5e1 !important;
 }
 
-/* --- Carga final: menú monito = misma receta que .notifications-panel (gana a hojas anteriores) --- */
+/* --- Menú monito: más opaco que 0.42 (área vacía); perceptualmente alineado a notificaciones --- */
 body.theme-industrial .header-profile-menu {
-  background: rgba(15, 23, 42, 0.42) !important;
-  border: 1px solid rgba(148, 163, 184, 0.28) !important;
-  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.4) !important;
+  background: rgba(15, 23, 42, 0.72) !important;
+  border: 1px solid rgba(148, 163, 184, 0.32) !important;
+  box-shadow:
+    0 24px 56px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
   -webkit-backdrop-filter: blur(22px) saturate(125%) !important;
   backdrop-filter: blur(22px) saturate(125%) !important;
   color: #e2e8f0 !important;
 }
 body.theme-industrial .header-profile-menu-user {
-  border-bottom: 1px solid rgba(148, 163, 184, 0.22) !important;
-  background: rgba(2, 6, 23, 0.35) !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.28) !important;
+  background: rgba(2, 6, 23, 0.48) !important;
 }
 body.theme-industrial .header-profile-menu-user strong {
   color: #f8fafc !important;
@@ -1621,10 +1623,13 @@ body.theme-industrial .header-profile-menu-meta {
 }
 body.theme-industrial .header-profile-menu-item {
   color: #e2e8f0 !important;
-  background: transparent !important;
+  background: rgba(2, 6, 23, 0.12) !important;
+}
+body.theme-industrial .header-profile-menu-item + .header-profile-menu-item {
+  border-top: 1px solid rgba(51, 65, 85, 0.45);
 }
 body.theme-industrial .header-profile-menu-item:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
 }
 body.theme-industrial .header-profile-menu-item.danger:hover {
   background: rgba(220, 38, 38, 0.22) !important;
