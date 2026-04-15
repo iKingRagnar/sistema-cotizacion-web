@@ -2186,24 +2186,252 @@ body.theme-industrial.appearance-light .prospeccion-map-wrap {
   border-color: rgba(15, 23, 42, 0.1);
 }
 
-/* Dashboard: tarjetas cristal claras */
+/* Dashboard Sol: contenedor + gráficas + comparativo + pronósticos (mismo vidrio que scorecards) */
 body.theme-industrial.appearance-light #panel-dashboards.panel-dashboard {
-  background: transparent;
+  background: rgba(248, 250, 252, 0.42);
+  -webkit-backdrop-filter: blur(12px) saturate(118%);
+  backdrop-filter: blur(12px) saturate(118%);
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-title {
+  color: #0f172a;
+  text-shadow: none;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-title i {
+  color: #0d9488;
+  opacity: 1;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-subtitle {
+  color: #64748b;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-subtitle strong {
+  color: #0f766e;
+  font-weight: 700;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .btn-dashboard-refresh {
+  color: #334155;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .btn-dashboard-refresh:hover {
+  color: #042f2e;
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(13, 148, 136, 0.4);
+}
+
+body.theme-industrial.appearance-light .dashboard-crossfilter-bar {
+  background: linear-gradient(90deg, rgba(45, 212, 191, 0.16) 0%, rgba(255, 255, 255, 0.72) 100%);
+  border-color: rgba(13, 148, 136, 0.28);
+}
+
+body.theme-industrial.appearance-light .dashboard-crossfilter-text {
+  color: #1e293b;
+}
+
+body.theme-industrial.appearance-light .dashboard-crossfilter-clear {
+  border-color: rgba(13, 148, 136, 0.45) !important;
+  color: #0f766e !important;
 }
 
 body.theme-industrial.appearance-light .dashboard-card,
 body.theme-industrial.appearance-light .dashboard-score-tile,
 body.theme-industrial.appearance-light .dashboard-kpi-strip,
 body.theme-industrial.appearance-light .dashboard-crossfilter-bar {
-  background: rgba(255, 255, 255, 0.62);
-  border-color: rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(15, 23, 42, 0.1);
   -webkit-backdrop-filter: blur(14px) saturate(118%);
   backdrop-filter: blur(14px) saturate(118%);
   box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
 }
 
-body.theme-industrial.appearance-light .dashboard-kpi-item i {
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-charts {
+  margin-top: 1.5rem;
+  padding: 1.2rem 1.3rem 1.35rem;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.07);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  backdrop-filter: blur(16px) saturate(120%);
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-advanced {
+  margin-top: 1.25rem;
+  padding: 1.2rem 1.3rem 1.45rem;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.07);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  backdrop-filter: blur(16px) saturate(120%);
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-section-title {
+  color: #0f172a;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-section-title i {
   color: #0d9488;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-chart-wrap {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-chart-caption {
+  color: #475569;
+  font-weight: 600;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-stat-card {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(15, 23, 42, 0.1);
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-stat-card h4,
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-stat-card h4.dashboard-stat-card-title-cf {
+  color: #475569;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-stat-card .stat-label {
+  color: #64748b;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-stat-card .stat-value {
+  color: #0f172a;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-stat-card .stat-row {
+  border-bottom-color: rgba(15, 23, 42, 0.08);
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-stat-card .stat-row.stat-row-crossfilter:hover {
+  background: rgba(45, 212, 191, 0.1);
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-hint {
+  color: #64748b;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-forecast-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(13, 148, 136, 0.24);
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-forecast-card h4 {
+  color: #0f766e;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-forecast-card .stat-label {
+  color: #334155;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-forecast-card .stat-value {
+  color: #0f172a;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-forecast-legend {
+  background: rgba(241, 245, 249, 0.95);
+  border-left-color: #0d9488;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-score-eyebrow {
+  color: #64748b;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-score-label {
+  color: #475569;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-score-value {
+  color: #0f172a;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-score-meta {
+  color: #64748b;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-score-meta i {
+  color: #0d9488;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-kpi-item {
+  color: #475569;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-kpi-item strong {
+  color: #0f172a;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-kpi-item i {
+  color: #0d9488;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-card-title {
+  color: #0f172a;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-metric dt {
+  color: #64748b;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-metric dd {
+  color: #0f172a;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dash-value-neutral {
+  color: #334155 !important;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-card-action {
+  color: #0d9488;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-card-action:hover {
+  color: #0f766e;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-loading {
+  color: #64748b;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-loading .loading-spinner {
+  border: 3px solid rgba(15, 23, 42, 0.12);
+  border-top-color: #0d9488;
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-surface .dashboard-card.is-crossfilter-match,
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-surface .dashboard-score-tile.is-crossfilter-match {
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.45), 0 8px 28px rgba(13, 148, 136, 0.12);
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-surface .dashboard-kpi-item.is-crossfilter-match {
+  background: rgba(45, 212, 191, 0.2);
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-surface .dashboard-stat-card.is-crossfilter-match {
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.42);
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-kpi-item[data-crossfilter-entity]:hover {
+  background: rgba(45, 212, 191, 0.1);
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-card-header {
+  border-bottom-color: rgba(15, 23, 42, 0.08);
+}
+
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-card-progress {
+  border-top-color: rgba(15, 23, 42, 0.08);
 }
 
 body.theme-industrial.appearance-light .header-branch-filter,

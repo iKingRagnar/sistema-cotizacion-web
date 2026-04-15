@@ -117,6 +117,10 @@
       const nBit = bitacorasCtx.length;
       const donutCtx = document.getElementById('chart-donut');
       const industrialUi = document.body.classList.contains('theme-industrial');
+      const appearanceLight = document.body.classList.contains('appearance-light');
+      const chartLegendColor = appearanceLight ? '#334155' : industrialUi ? '#e2e8f0' : '#1e293b';
+      const chartTickColor = appearanceLight ? '#475569' : '#94a3b8';
+      const chartGridColor = appearanceLight ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255,255,255,0.06)';
       if (donutCtx && (nCot + nBit > 0)) {
         chartDonut = new Chart(donutCtx, {
           type: 'doughnut',
@@ -125,8 +129,12 @@
             datasets: [
               {
                 data: [nCot, nBit],
-                backgroundColor: industrialUi ? ['#ca8a04', '#57534e'] : ['#059669', '#7c3aed'],
-                borderColor: industrialUi ? '#292524' : '#1e293b',
+                backgroundColor: industrialUi
+                  ? appearanceLight
+                    ? ['#d97706', '#64748b']
+                    : ['#ca8a04', '#57534e']
+                  : ['#059669', '#7c3aed'],
+                borderColor: industrialUi ? (appearanceLight ? '#f8fafc' : '#292524') : '#1e293b',
                 borderWidth: 2,
               },
             ],
@@ -141,7 +149,7 @@
               const i = elements[0].index;
               if (keys[i]) setDashboardCrossFilterEntity(keys[i]);
             },
-            plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0', font: { size: 12 } } } },
+            plugins: { legend: { position: 'bottom', labels: { color: chartLegendColor, font: { size: 12 } } } },
           },
         });
       }
@@ -156,15 +164,23 @@
               {
                 label: 'Actual',
                 data: [p.semana_actual?.cotizaciones?.count ?? 0, p.mes_actual?.cotizaciones?.count ?? 0, p.año_actual?.cotizaciones?.count ?? 0],
-                backgroundColor: industrialUi ? 'rgba(234,179,8,0.82)' : 'rgba(56,189,248,0.8)',
-                borderColor: industrialUi ? '#ca8a04' : '#38bdf8',
+                backgroundColor: industrialUi
+                  ? appearanceLight
+                    ? 'rgba(217, 119, 6, 0.85)'
+                    : 'rgba(234,179,8,0.82)'
+                  : 'rgba(56,189,248,0.8)',
+                borderColor: industrialUi ? (appearanceLight ? '#b45309' : '#ca8a04') : '#38bdf8',
                 borderWidth: 1,
               },
               {
                 label: 'Anterior',
                 data: [p.semana_anterior?.cotizaciones?.count ?? 0, p.mes_anterior?.cotizaciones?.count ?? 0, p.año_anterior?.cotizaciones?.count ?? 0],
-                backgroundColor: industrialUi ? 'rgba(120,113,108,0.75)' : 'rgba(148,163,184,0.6)',
-                borderColor: industrialUi ? '#78716c' : '#94a3b8',
+                backgroundColor: industrialUi
+                  ? appearanceLight
+                    ? 'rgba(100, 116, 139, 0.65)'
+                    : 'rgba(120,113,108,0.75)'
+                  : 'rgba(148,163,184,0.6)',
+                borderColor: industrialUi ? (appearanceLight ? '#64748b' : '#78716c') : '#94a3b8',
                 borderWidth: 1,
               },
             ],
@@ -179,8 +195,11 @@
               const i = elements[0].index;
               if (periods[i]) setDashboardCrossFilterPeriod(periods[i]);
             },
-            scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.06)' } }, y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.06)' } } },
-            plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0' } } },
+            scales: {
+              x: { ticks: { color: chartTickColor }, grid: { color: chartGridColor } },
+              y: { beginAtZero: true, ticks: { color: chartTickColor }, grid: { color: chartGridColor } },
+            },
+            plugins: { legend: { position: 'bottom', labels: { color: chartLegendColor } } },
           },
         });
       }
@@ -11685,6 +11704,11 @@
     syncOpenModalsTheme();
     syncThemeColorMeta();
     try { syncThemeToggleButtonUi(); } catch (_) {}
+    /* Dashboard: Chart.js usa colores de leyenda/ejes según tema; recargar si el panel está activo */
+    try {
+      const pd = qs('#panel-dashboards');
+      if (pd && pd.classList.contains('active')) loadDashboard();
+    } catch (_) {}
   }
   function syncThemeColorMeta() {
     const m = qs('#meta-theme-color');
