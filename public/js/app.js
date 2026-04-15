@@ -6759,7 +6759,7 @@
       }));
       if (bx && bx.__fetch_err) {
         banxicoTcHint =
-          '<p class="hint" style="margin:0.35rem 0 0;font-size:0.78rem;color:var(--danger,#b91c1c)">Banxico: no se pudo consultar (' +
+          '<p class="hint" style="margin:0.35rem 0 0;font-size:0.78rem;color:var(--danger,#b91c1c)">Tipo de cambio referencia: no se pudo consultar (' +
           escapeHtml(bx.msg) +
           ').</p>';
       } else if (bx && Number(bx.valor) > 0) {
@@ -6769,28 +6769,45 @@
         const fd = bx.fecha_dato ? escapeHtml(String(bx.fecha_dato)) : '';
         const au = bx.actualizado ? escapeHtml(String(bx.actualizado).slice(0, 19).replace('T', ' ')) : '';
         const vtxt = Number(bx.valor).toFixed(4);
+        const fuente = String(bx.fuente || '');
+        const tit =
+          fuente === 'banxico'
+            ? 'Banxico (FIX)'
+            : fuente === 'exchangerate-api'
+              ? 'ExchangeRate-API'
+              : fuente === 'frankfurter'
+                ? 'Frankfurter/ECB'
+                : 'Referencia';
+        const notaFrank =
+          fuente === 'frankfurter'
+            ? ' <em>No</em> es el FIX del DOF; para Banxico oficial define <code>BANXICO_TOKEN</code> en el servidor.'
+            : '';
         banxicoTcHint =
-          '<p class="hint" style="margin:0.35rem 0 0;font-size:0.78rem">Banxico (' +
-          escapeHtml(String(bx.serie || 'SF60653')) +
+          '<p class="hint" style="margin:0.35rem 0 0;font-size:0.78rem">' +
+          tit +
+          ' (' +
+          escapeHtml(String(bx.serie || '')) +
           '): <strong>' +
           vtxt +
-          '</strong> MXN/USD' +
-          (fd ? ' · fecha ' + fd : '') +
+          '</strong> MXN por 1 USD' +
+          (fd ? ' · ' + fd : '') +
           (au ? ' · sync ' + au + ' UTC' : '') +
-          '.</p>';
-      } else if (bx && bx.token_configured === false) {
+          '.' +
+          notaFrank +
+          '</p>';
+      } else if (bx && bx.token_configured === false && !bx.exchangerate_configured) {
         banxicoTcHint =
-          '<p class="hint" style="margin:0.35rem 0 0;font-size:0.78rem">Banxico: el servidor no tiene <code>BANXICO_TOKEN</code>. Con token SieAPI, el T.C. se guarda y se sugiere en cotizaciones nuevas.</p>';
+          '<p class="hint" style="margin:0.35rem 0 0;font-size:0.78rem">Tipo de cambio: el servidor intentó fuentes gratuitas (Frankfurter). Para el <strong>FIX Banxico</strong> agrega <code>BANXICO_TOKEN</code>; opcional <code>EXCHANGE_RATE_API_KEY</code> (exchangerate-api.com).</p>';
       } else {
         const err = bx && bx.error_ultima_consulta ? escapeHtml(String(bx.error_ultima_consulta).slice(0, 140)) : 'Sin dato aún.';
         banxicoTcHint =
-          '<p class="hint" style="margin:0.35rem 0 0;font-size:0.78rem">Banxico: sin valor en servidor. Último intento: ' +
+          '<p class="hint" style="margin:0.35rem 0 0;font-size:0.78rem">Tipo de cambio referencia: sin valor. Último intento: ' +
           err +
           '</p>';
       }
     } catch (_) {
       banxicoTcHint =
-        '<p class="hint" style="margin:0.35rem 0 0;font-size:0.78rem">Banxico: error al cargar la referencia.</p>';
+        '<p class="hint" style="margin:0.35rem 0 0;font-size:0.78rem">Tipo de cambio referencia: error al cargar.</p>';
     }
     if (!Number.isFinite(cotTc) || cotTc <= 0) {
       cotTc = 17.0;
@@ -6824,7 +6841,7 @@
             <div class="form-group">
               <label>Tipo de cambio</label>
               <input type="number" id="cotz-tc" step="0.01" min="0" value="${Number.isFinite(cotTc) ? cotTc.toFixed(2) : '17.00'}" placeholder="17.00">
-              <div class="hint">Listas de refacciones y equipo en USD. El tipo de cambio convierte a pesos solo si en el futuro se usa otra moneda; hoy las cotizaciones son USD. Las vueltas usan tarifas internas en MXN y se expresan en USD con este T.C.</div>
+              <div class="hint">Listas de refacciones y equipo en USD. <strong>Tipo de cambio = pesos mexicanos por 1 USD</strong> (suele verse ~18–21; si en otra página ves ~0.05, es USD por peso, no uses ese número aquí). Las vueltas usan tarifas en MXN y se expresan en USD con este T.C.</div>
               ${banxicoTcHint}
               <div class="form-actions" style="margin-top:0.5rem;flex-wrap:wrap;gap:0.35rem">
                 <button type="button" class="btn small outline" id="cotz-recalc-lineas" title="Recalcula refacciones/equipo en USD×TC y vueltas por tarifa (sin cerrar el modal)"><i class="fas fa-sync-alt"></i> Actualizar partidas con este T.C.</button>

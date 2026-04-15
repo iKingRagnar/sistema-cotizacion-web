@@ -1535,7 +1535,7 @@ app.put('/api/tarifas', async (req, res) => {
   }
 });
 
-// --- Banxico: tipo de cambio (SieAPI) → tabla `tarifas`, lectura pública ---
+// --- Tipo de cambio referencia (Banxico SieAPI → respaldo ExchangeRate-API → Frankfurter/ECB) ---
 const BANXICO_API_BASE = 'https://www.banxico.org.mx/SieAPIRest/service/v1';
 const BANXICO_REFRESH_MS =
   (Math.max(1, parseInt(process.env.BANXICO_INTERVAL_HOURS || '3', 10) || 3)) * 60 * 60 * 1000;
@@ -1549,70 +1549,150 @@ async function upsertTarifaBanxico(clave, valor) {
   );
 }
 
-/**
- * Consulta el dato más reciente (oportuno) de la serie y guarda `tipo_cambio_banxico` en tarifas.
- * Requiere token: https://www.banxico.org.mx/SieAPIRest/service/v1/token
- * Serie por defecto SF60653 = FIX (pesos por dólar); alternativa frecuente SF43718 = interbancario.
- */
-async function refreshTipoCambioBanxico() {
+/** Pesos mexicanos por 1 USD (cotización típica México 2024–2026). Rechaza inversos u otros pares. */
+function isPlausibleMxnPerUsd(n) {
+  const x = Number(n);
+  return Number.isFinite(x) && x >= 8 && x <= 55;
+}
+
+async function persistTipoCambioReferencia(valor4, fuente, fechaDato, serieLabel) {
+  const iso = new Date().toISOString();
+  await upsertTarifaBanxico('tipo_cambio_banxico', String(valor4));
+  await upsertTarifaBanxico('tipo_cambio_fuente', String(fuente || ''));
+  await upsertTarifaBanxico('tipo_cambio_banxico_serie', String(serieLabel || ''));
+  await upsertTarifaBanxico('tipo_cambio_banxico_fecha_dato', String(fechaDato || ''));
+  await upsertTarifaBanxico('tipo_cambio_banxico_actualizado_iso', iso);
+  banxicoPollState.lastOk = iso;
+  banxicoPollState.lastError = null;
+  console.log('[tc-ref]', fuente, valor4, 'MXN/USD', fechaDato || '');
+}
+
+async function pullBanxicoFix() {
   const token = (process.env.BANXICO_TOKEN || process.env.BMX_TOKEN || '').trim();
   const series = (process.env.BANXICO_SERIES || 'SF60653').trim();
-  if (!token) {
-    banxicoPollState.lastError = 'missing_token';
-    return { ok: false, error: 'Falta BANXICO_TOKEN (o BMX_TOKEN) en el entorno del servidor.' };
-  }
+  if (!token) return { ok: false, error: 'no_token' };
   const url = `${BANXICO_API_BASE}/series/${encodeURIComponent(series)}/datos/oportuno`;
+  const ctrl =
+    typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+      ? AbortSignal.timeout(25000)
+      : undefined;
+  const r = await fetch(url, {
+    headers: { 'Bmx-Token': token },
+    ...(ctrl ? { signal: ctrl } : {}),
+  });
+  const text = await r.text();
+  let json;
   try {
-    const ctrl =
-      typeof AbortSignal !== 'undefined' && AbortSignal.timeout
-        ? AbortSignal.timeout(25000)
-        : undefined;
-    const r = await fetch(url, {
-      headers: { 'Bmx-Token': token },
-      ...(ctrl ? { signal: ctrl } : {}),
-    });
-    const text = await r.text();
-    let json;
-    try {
-      json = JSON.parse(text);
-    } catch (_) {
-      throw new Error(`Respuesta no JSON (${r.status}): ${text.slice(0, 180)}`);
-    }
-    if (!r.ok) {
-      const msg = (json && (json.message || json.error)) || `HTTP ${r.status}`;
-      throw new Error(String(msg));
-    }
-    const serieObj = json && json.bmx && json.bmx.series && json.bmx.series[0];
-    const datos = serieObj && serieObj.datos;
-    if (!Array.isArray(datos) || datos.length === 0) {
-      throw new Error('Banxico no devolvió observaciones para la serie.');
-    }
-    const last = datos[datos.length - 1];
-    const raw = String(last.dato != null ? last.dato : '').trim();
-    if (!raw || /^N\/?[ED]$/i.test(raw)) {
-      throw new Error('Dato Banxico no disponible (N/D o N/E).');
-    }
-    const valor = Number(String(raw).replace(',', '.'));
-    if (!Number.isFinite(valor) || valor <= 0) {
-      throw new Error('Valor Banxico inválido: ' + raw);
-    }
-    const fechaDato = String(last.fecha || '');
-    const iso = new Date().toISOString();
-    const valor4 = Math.round(valor * 10000) / 10000;
-    await upsertTarifaBanxico('tipo_cambio_banxico', String(valor4));
-    await upsertTarifaBanxico('tipo_cambio_banxico_serie', series);
-    await upsertTarifaBanxico('tipo_cambio_banxico_fecha_dato', fechaDato);
-    await upsertTarifaBanxico('tipo_cambio_banxico_actualizado_iso', iso);
-    banxicoPollState.lastOk = iso;
-    banxicoPollState.lastError = null;
-    console.log('[banxico] Serie', series, '→', valor4, 'MXN/USD · fecha dato', fechaDato);
-    return { ok: true, valor: valor4, serie: series, fecha_dato: fechaDato, actualizado: iso };
-  } catch (e) {
-    const msg = String(e && e.message ? e.message : e);
-    banxicoPollState.lastError = msg;
-    console.warn('[banxico]', msg);
-    return { ok: false, error: msg };
+    json = JSON.parse(text);
+  } catch (_) {
+    throw new Error(`Banxico no JSON (${r.status}): ${text.slice(0, 160)}`);
   }
+  if (!r.ok) {
+    const msg = (json && (json.message || json.error)) || `HTTP ${r.status}`;
+    throw new Error(String(msg));
+  }
+  const serieObj = json && json.bmx && json.bmx.series && json.bmx.series[0];
+  const datos = serieObj && serieObj.datos;
+  if (!Array.isArray(datos) || datos.length === 0) throw new Error('Banxico sin observaciones');
+  const last = datos[datos.length - 1];
+  const raw = String(last.dato != null ? last.dato : '').trim();
+  if (!raw || /^N\/?[ED]$/i.test(raw)) throw new Error('Banxico N/D');
+  const valor = Number(String(raw).replace(',', '.'));
+  if (!Number.isFinite(valor) || valor <= 0) throw new Error('Banxico valor inválido');
+  const valor4 = Math.round(valor * 10000) / 10000;
+  return { ok: true, valor: valor4, serie: series, fecha_dato: String(last.fecha || '') };
+}
+
+async function pullExchangerateApi() {
+  const key = (process.env.EXCHANGE_RATE_API_KEY || '').trim();
+  if (!key) return { ok: false, error: 'no_exchangerate_key' };
+  const url = `https://v6.exchangerate-api.com/v6/${encodeURIComponent(key)}/latest/USD`;
+  const ctrl =
+    typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+      ? AbortSignal.timeout(20000)
+      : undefined;
+  const r = await fetch(url, { ...(ctrl ? { signal: ctrl } : {}) });
+  const json = await r.json().catch(() => ({}));
+  if (!r.ok || json.result !== 'success') {
+    throw new Error((json && json['error-type']) || `ExchangeRate-API HTTP ${r.status}`);
+  }
+  const mxn = json.conversion_rates && Number(json.conversion_rates.MXN);
+  if (!Number.isFinite(mxn) || mxn <= 0) throw new Error('ExchangeRate-API sin MXN');
+  const valor4 = Math.round(mxn * 10000) / 10000;
+  const fecha = json.time_last_update_utc || json.time_last_update || '';
+  return { ok: true, valor: valor4, serie: 'exchangerate-api.com', fecha_dato: String(fecha) };
+}
+
+async function pullFrankfurterUsdMxn() {
+  const url = 'https://api.frankfurter.app/latest?from=USD&to=MXN';
+  const ctrl =
+    typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+      ? AbortSignal.timeout(20000)
+      : undefined;
+  const r = await fetch(url, { ...(ctrl ? { signal: ctrl } : {}) });
+  const json = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(`Frankfurter HTTP ${r.status}`);
+  const mxn = json.rates && Number(json.rates.MXN);
+  if (!Number.isFinite(mxn) || mxn <= 0) throw new Error('Frankfurter sin MXN');
+  const valor4 = Math.round(mxn * 10000) / 10000;
+  const fecha = json.date || '';
+  return { ok: true, valor: valor4, serie: 'Frankfurter ECB', fecha_dato: fecha };
+}
+
+/**
+ * Orden: Banxico (FIX, token) → ExchangeRate-API (clave) → Frankfurter (gratis, referencia ECB).
+ * Guarda en `tipo_cambio_banxico` (MXN por 1 USD) para compatibilidad con el modal de cotización.
+ */
+async function refreshTipoCambioReferencia() {
+  const token = (process.env.BANXICO_TOKEN || process.env.BMX_TOKEN || '').trim();
+  if (token) {
+    try {
+      const b = await pullBanxicoFix();
+      if (b.ok && isPlausibleMxnPerUsd(b.valor)) {
+        await persistTipoCambioReferencia(b.valor, 'banxico', b.fecha_dato, b.serie);
+        return { ok: true, fuente: 'banxico', valor: b.valor };
+      }
+    } catch (e) {
+      banxicoPollState.lastError = String(e && e.message ? e.message : e);
+      console.warn('[tc-ref] Banxico:', banxicoPollState.lastError);
+    }
+  }
+  if ((process.env.EXCHANGE_RATE_API_KEY || '').trim()) {
+    try {
+      const e = await pullExchangerateApi();
+      if (e.ok && isPlausibleMxnPerUsd(e.valor)) {
+        await persistTipoCambioReferencia(e.valor, 'exchangerate-api', e.fecha_dato, e.serie);
+        return { ok: true, fuente: 'exchangerate-api', valor: e.valor };
+      }
+    } catch (e) {
+      banxicoPollState.lastError = String(e && e.message ? e.message : e);
+      console.warn('[tc-ref] ExchangeRate-API:', banxicoPollState.lastError);
+    }
+  }
+  try {
+    const f = await pullFrankfurterUsdMxn();
+    if (f.ok && isPlausibleMxnPerUsd(f.valor)) {
+      await persistTipoCambioReferencia(f.valor, 'frankfurter', f.fecha_dato, f.serie);
+      return {
+        ok: true,
+        fuente: 'frankfurter',
+        valor: f.valor,
+        nota: 'Referencia internacional (ECB). Para FIX oficial México use BANXICO_TOKEN.',
+      };
+    }
+  } catch (e) {
+    banxicoPollState.lastError = String(e && e.message ? e.message : e);
+    console.warn('[tc-ref] Frankfurter:', banxicoPollState.lastError);
+  }
+  const msg =
+    'No se obtuvo tipo de cambio: opciones — (1) BANXICO_TOKEN SieAPI, (2) EXCHANGE_RATE_API_KEY, o (3) red para Frankfurter.';
+  banxicoPollState.lastError = msg;
+  return { ok: false, error: msg };
+}
+
+/** @deprecated nombre; usa refreshTipoCambioReferencia */
+async function refreshTipoCambioBanxico() {
+  return refreshTipoCambioReferencia();
 }
 
 async function readTipoCambioBanxicoFromDb() {
@@ -1621,10 +1701,11 @@ async function readTipoCambioBanxicoFromDb() {
     serie: null,
     fecha_dato: null,
     actualizado: null,
+    fuente: null,
   };
   const rows = await db.getAll(
     `SELECT clave, valor FROM tarifas WHERE clave IN (
-      'tipo_cambio_banxico','tipo_cambio_banxico_serie','tipo_cambio_banxico_fecha_dato','tipo_cambio_banxico_actualizado_iso'
+      'tipo_cambio_banxico','tipo_cambio_fuente','tipo_cambio_banxico_serie','tipo_cambio_banxico_fecha_dato','tipo_cambio_banxico_actualizado_iso'
     )`
   );
   const map = {};
@@ -1635,6 +1716,7 @@ async function readTipoCambioBanxicoFromDb() {
     const n = Number(String(map.tipo_cambio_banxico).replace(',', '.'));
     if (Number.isFinite(n) && n > 0) out.valor = Math.round(n * 10000) / 10000;
   }
+  out.fuente = map.tipo_cambio_fuente || null;
   out.serie = map.tipo_cambio_banxico_serie || null;
   out.fecha_dato = map.tipo_cambio_banxico_fecha_dato || null;
   out.actualizado = map.tipo_cambio_banxico_actualizado_iso || null;
@@ -1644,17 +1726,20 @@ async function readTipoCambioBanxicoFromDb() {
 app.get('/api/tipo-cambio-banxico', async (req, res) => {
   try {
     const tokenConfigured = !!(process.env.BANXICO_TOKEN || process.env.BMX_TOKEN || '').trim();
+    const erConfigured = !!(process.env.EXCHANGE_RATE_API_KEY || '').trim();
     let dbv = await readTipoCambioBanxicoFromDb();
-    if (tokenConfigured && !(Number(dbv.valor) > 0)) {
-      await refreshTipoCambioBanxico();
+    if (!(Number(dbv.valor) > 0)) {
+      await refreshTipoCambioReferencia();
       dbv = await readTipoCambioBanxicoFromDb();
     }
     res.json({
       valor: dbv.valor,
+      fuente: dbv.fuente || null,
       serie: dbv.serie || (process.env.BANXICO_SERIES || 'SF60653'),
       fecha_dato: dbv.fecha_dato,
       actualizado: dbv.actualizado,
       token_configured: tokenConfigured,
+      exchangerate_configured: erConfigured,
       intervalo_horas: Math.round(BANXICO_REFRESH_MS / (60 * 60 * 1000)),
       ultima_consulta_ok: banxicoPollState.lastOk,
       error_ultima_consulta: banxicoPollState.lastError,
@@ -1665,26 +1750,16 @@ app.get('/api/tipo-cambio-banxico', async (req, res) => {
 });
 
 function startBanxicoTipoCambioScheduler() {
-  const token = (process.env.BANXICO_TOKEN || process.env.BMX_TOKEN || '').trim();
-  if (!token) {
-    console.log(
-      '[banxico] Sincronización desactivada: agrega BANXICO_TOKEN en el servidor (registro en Banxico SieAPI).'
-    );
-    return;
-  }
   setTimeout(() => {
-    refreshTipoCambioBanxico().catch((err) => console.warn('[banxico] arranque', err));
+    refreshTipoCambioReferencia().catch((err) => console.warn('[tc-ref] arranque', err));
   }, 12000);
   setInterval(() => {
-    refreshTipoCambioBanxico().catch((err) => console.warn('[banxico] intervalo', err));
+    refreshTipoCambioReferencia().catch((err) => console.warn('[tc-ref] intervalo', err));
   }, BANXICO_REFRESH_MS);
   console.log(
-    '[banxico] Activo: cada',
+    '[tc-ref] Scheduler cada',
     Math.round(BANXICO_REFRESH_MS / (60 * 60 * 1000)),
-    'h · serie',
-    (process.env.BANXICO_SERIES || 'SF60653').trim(),
-    '·',
-    BANXICO_API_BASE
+    'h — Banxico (token) → ExchangeRate-API (clave) → Frankfurter (sin clave)'
   );
 }
 
@@ -6145,9 +6220,7 @@ function initServer() {
     serverInitPromise = (async () => {
       await db.init();
       await ensureTarifasDefaults();
-      if ((process.env.BANXICO_TOKEN || process.env.BMX_TOKEN || '').trim()) {
-        refreshTipoCambioBanxico().catch((e) => console.warn('[banxico] primer pull al iniciar:', e && e.message));
-      }
+      refreshTipoCambioReferencia().catch((e) => console.warn('[tc-ref] primer pull al iniciar:', e && e.message));
       await auth.ensureSeedUsers();
       await auth.ensurePinnedAppUsers();
       if (process.env.VERCEL && String(process.env.AUTH_SECRET || '').trim() === '') {
