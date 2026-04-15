@@ -10767,6 +10767,39 @@
     );
   }
 
+  const btnTarifasMoUsdDesdeTc = qs('#btn-tarifas-mo-usd-desde-mxn-tc');
+  if (btnTarifasMoUsdDesdeTc) {
+    btnTarifasMoUsdDesdeTc.addEventListener('click', () => {
+      const tcEl = qs('#tarifa-tipo-cambio-banxico');
+      const tc = Number(String(tcEl && tcEl.value != null ? tcEl.value : '').replace(',', '.'));
+      if (!Number.isFinite(tc) || tc <= 0) {
+        showToast(
+          'Indica un tipo de cambio válido arriba («MXN por 1 USD») o pulsa «Sincronizar desde servidor».',
+          'warning'
+        );
+        return;
+      }
+      const tabla = qs('#tabla-tarifas-mano-obra');
+      if (!tabla) return;
+      const pairs = [
+        ['mecanico_mxn', 'mecanico_usd'],
+        ['electronico_mxn', 'electronico_usd'],
+        ['cnc_mxn', 'cnc_usd'],
+        ['ayudante_mxn', 'ayudante_usd'],
+      ];
+      pairs.forEach(([mxnKey, usdKey]) => {
+        const mxnInp = tabla.querySelector('.tarifa-input[data-key="' + mxnKey + '"]');
+        const usdInp = tabla.querySelector('.tarifa-usd-4dec[data-key="' + usdKey + '"]');
+        if (!mxnInp || !usdInp) return;
+        const mxn = Number(String(mxnInp.value).replace(',', '.'));
+        if (!Number.isFinite(mxn) || mxn < 0) return;
+        const usd = Math.round((mxn / tc) * 10000) / 10000;
+        usdInp.value = usd.toFixed(4);
+      });
+      showToast('USD/h = MXN/h ÷ T.C. Revisa y pulsa Guardar si te conviene.', 'success');
+    });
+  }
+
   // Filtros de revisión de máquinas
   qs('#filtro-entregado-rev') && qs('#filtro-entregado-rev').addEventListener('change', () => renderRevisionMaquinas(revisionMaquinasCache));
   qs('#filtro-prueba-rev') && qs('#filtro-prueba-rev').addEventListener('change', () => renderRevisionMaquinas(revisionMaquinasCache));

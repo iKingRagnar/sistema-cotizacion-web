@@ -666,7 +666,7 @@
         </div>
         <div class="tarifas-section">
           <h3 class="tarifas-section-title"><i class="fas fa-clock"></i> Tarifas de mano de obra por hora</h3>
-          <p class="tarifas-hint">Define el costo por hora según el tipo de técnico. Se usa para calcular cotizaciones de mano de obra.</p>
+          <p class="tarifas-hint">Define el costo por hora según el tipo de técnico. Se usa para calcular cotizaciones de mano de obra. <strong>Importante:</strong> el bloque superior es el <em>tipo de cambio</em> (pesos por 1 USD, misma referencia Banxico que en cotizaciones). La columna <em>Tarifa hora (USD)</em> no es el T.C.: son <strong>dólares por hora de trabajo</strong> (precio en USD). No se actualizan solas cuando cambia el T.C.; si quieres alinearlas con el T.C. actual, usa el botón de conversión MXN ÷ T.C.</p>
           <table class="data-table" id="tabla-tarifas-mano-obra">
             <thead><tr><th>Tipo de técnico</th><th>Tarifa hora (MXN)</th><th>Tarifa hora (USD, 4 dec.)</th><th>Notas</th></tr></thead>
             <tbody>
@@ -676,6 +676,9 @@
               <tr><td>Ayudante</td><td><input type="number" class="tarifa-input" data-key="ayudante_mxn" min="0" step="50"></td><td><input type="text" class="tarifa-input tarifa-usd-4dec" data-key="ayudante_usd" inputmode="decimal" autocomplete="off" placeholder="15.0000" title="Cuatro decimales"></td><td><input type="text" class="tarifa-input-text" data-key="ayudante_nota"></td></tr>
             </tbody>
           </table>
+          <div class="toolbar" style="margin-top:0.65rem;flex-wrap:wrap;gap:0.35rem">
+            <button type="button" id="btn-tarifas-mo-usd-desde-mxn-tc" class="btn small outline" title="Toma el T.C. del campo «MXN por 1 USD» arriba y rellena cada tarifa USD/h como (tarifa MXN/h) ÷ T.C."><i class="fas fa-calculator"></i> Rellenar USD/h con MXN ÷ T.C.</button>
+          </div>
         </div>
         <div class="tarifas-section">
           <h3 class="tarifas-section-title"><i class="fas fa-road"></i> Tarifas de traslado / viáticos</h3>
@@ -1404,6 +1407,6 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=136-cotz-tc-banxico-maxAgeMs" defer></script>
+  <script src="js/app.js?v=137-tarifas-mo-usd-explica" defer></script>
 </body>
 </html>
