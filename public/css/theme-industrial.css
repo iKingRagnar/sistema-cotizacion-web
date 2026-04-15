@@ -2517,17 +2517,4 @@ body.theme-industrial.appearance-light .close:hover {
   background: rgba(15, 23, 42, 0.06);
 }
 
-body.theme-industrial.appearance-light.login-open .login-card h2,
-body.theme-industrial.appearance-light.login-open .login-field label {
-  color: #0f172a;
-  text-shadow: none;
-}
-body.theme-industrial.appearance-light.login-open .login-field input {
-  color: #0f172a !important;
-  background: rgba(255, 255, 255, 0.85) !important;
-  border-color: rgba(15, 23, 42, 0.15) !important;
-}
-body.theme-industrial.appearance-light.login-open .login-card {
-  background: rgba(255, 255, 255, 0.88) !important;
-  border-color: rgba(15, 23, 42, 0.12) !important;
-}
+/* Login (portada): no heredar “Sol”; misma cristalera oscura con `body.theme-industrial.login-open` más arriba */
