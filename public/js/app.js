@@ -2988,6 +2988,13 @@
 
   let tipoCambioActual = 17.0; // MXN por 1 USD; misma referencia que cotizaciones / tarifas (Banxico FIX en servidor)
 
+  /** T.C. cotización: máximo 4 decimales (evita ruido float / pegados largos). */
+  function normalizaTipoCambioCotizacion4(tc) {
+    const n = Number(String(tc ?? '').replace(',', '.'));
+    if (!Number.isFinite(n) || n <= 0) return null;
+    return Math.round(n * 10000) / 10000;
+  }
+
   /** Precio lista en USD: prioridad a precio_usd; legado: MXN congelado con tipo_cambio_registro o TC actual. */
   function resolveRefaccionPrecioUsd(r) {
     const usd = Number(r.precio_usd);
@@ -3992,7 +3999,7 @@
     try {
       await fetchJson(`${API}/cotizaciones/${id}`, {
         method: 'PUT',
-        body: JSON.stringify({ tipo_cambio: Number(tc) }),
+        body: JSON.stringify({ tipo_cambio: normalizaTipoCambioCotizacion4(tc) ?? 17 }),
       });
       await loadCotizaciones({ force: true });
       showToast('Tipo de cambio actualizado.', 'success');
@@ -6751,6 +6758,9 @@
     const cotMoneda = (cot && cot.moneda ? String(cot.moneda) : 'USD').toUpperCase();
     let cotTc =
       cot && cot.tipo_cambio != null && cot.tipo_cambio !== '' ? Number(cot.tipo_cambio) : NaN;
+    if (Number.isFinite(cotTc) && cotTc > 0) {
+      cotTc = Math.round(cotTc * 10000) / 10000;
+    }
 
     let banxicoTcHint = '';
     try {
@@ -7554,7 +7564,7 @@
       if (!fecha) { showToast('Selecciona una fecha.', 'warning'); return null; }
       const tipo = qm('#cotz-tipo')?.value || 'refacciones';
       const moneda = (qm('#cotz-moneda')?.value || 'USD').toUpperCase();
-      const tc = Number(qm('#cotz-tc')?.value) || 17.0;
+      const tc = normalizaTipoCambioCotizacion4(Number(qm('#cotz-tc')?.value)) ?? 17.0;
       const vid = qm('#cotz-vendedor-id')?.value ? Number(qm('#cotz-vendedor-id').value) : null;
       const vend = (tecnicosCache || []).find((x) => Number(x.id) === Number(vid));
       const payload = {
@@ -7599,6 +7609,12 @@
     qm('#cot-line-maq')?.addEventListener('change', fillPrecioListaLinea);
     qm('#cotz-tc')?.addEventListener('input', fillPrecioListaLinea);
     qm('#cotz-tc')?.addEventListener('change', fillPrecioListaLinea);
+    qm('#cotz-tc')?.addEventListener('blur', () => {
+      const el = qm('#cotz-tc');
+      if (!el) return;
+      const x = Number(String(el.value).replace(',', '.'));
+      if (Number.isFinite(x) && x > 0) el.value = (Math.round(x * 10000) / 10000).toFixed(4);
+    });
     qm('#cotz-moneda')?.addEventListener('change', fillPrecioListaLinea);
     qm('#cotz-vendedor-id')?.addEventListener('change', syncVendedorCotz);
     ['#cot-line-vuelta-ida', '#cot-line-vuelta-hrs-traslado', '#cot-line-vuelta-hrs-trabajo'].forEach((sel) => {
@@ -8019,7 +8035,7 @@
       if (!clienteId) { markInvalid(qm('#cotz-cliente_id'), 'Selecciona un cliente'); return; }
       const tipo = qm('#cotz-tipo')?.value;
       const moneda = (qm('#cotz-moneda')?.value || 'USD').toUpperCase();
-      const tc = Number(qm('#cotz-tc')?.value) || 0;
+      const tc = normalizaTipoCambioCotizacion4(Number(qm('#cotz-tc')?.value)) ?? 17.0;
       const vid = qm('#cotz-vendedor-id')?.value ? Number(qm('#cotz-vendedor-id').value) : null;
       const vend = (tecnicosCache || []).find((x) => Number(x.id) === Number(vid));
       const payload = {
@@ -8027,7 +8043,7 @@
         tipo,
         fecha,
         moneda,
-        tipo_cambio: tc > 0 ? tc : 17.0,
+        tipo_cambio: tc,
         maquinas_ids: [],
         vendedor_personal_id: vid && vid > 0 ? vid : null,
         descuento_pct: Math.min(100, Math.max(0, Number(qm('#cotz-descuento-pct')?.value) || 0)),

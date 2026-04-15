@@ -1676,6 +1676,7 @@ app.get('/api/tipo-cambio-banxico', async (req, res) => {
       String(req.query.refresh || req.query.force || '').trim().toLowerCase() === 'true';
     await ensureTipoCambioReferenciaEnDb(force);
     const dbv = await readTipoCambioBanxicoFromDb();
+    const maxAgeMs = BANXICO_REFRESH_MS;
     const updatedAtMsAfter = dbv.actualizado ? new Date(String(dbv.actualizado)).getTime() : NaN;
     const staleNow = !Number.isFinite(updatedAtMsAfter) || (Date.now() - updatedAtMsAfter) > maxAgeMs;
     res.json({
