@@ -469,7 +469,7 @@
         logo.removeAttribute('aria-hidden');
         logo.alt = short;
       } else {
-        logo.src = 'fondos/universal-logo.jpg?v=3';
+        logo.src = 'fondos/universal-logo.jpg?v=4';
         logo.alt = 'Universal';
       }
     }

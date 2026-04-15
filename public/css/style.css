@@ -1140,8 +1140,13 @@ body.dark-theme #tabla-bitacoras th.th-actions {
   flex-shrink: 0;
   border-radius: 14px;
   overflow: hidden;
-  background: #060a12;
+  /* Solo rellena bandas del object-fit:contain; tono cercano al header oscuro (no recolorea el logo). */
+  background: #0f172a;
   box-shadow: 0 3px 14px rgba(0, 0, 0, 0.28);
+}
+body.theme-industrial.appearance-light .header-logo {
+  background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.1);
 }
 .header-logo--brand {
   width: auto;
@@ -1151,8 +1156,8 @@ body.dark-theme #tabla-bitacoras th.th-actions {
   object-fit: contain;
   display: block;
   border-radius: 14px;
-  /* Suaviza bordes del asset sin blend (el login sí usa blend para el mate blanco). */
-  clip-path: inset(1px round 13px);
+  /* Recorte mínimo del perímetro del JPG: quita halos blancos típicos sin filtros ni blend (colores del logo intactos). */
+  clip-path: inset(4px round 14px);
 }
 .header-brand-text {
   display: flex;
@@ -4660,35 +4665,22 @@ body.login-open { overflow: hidden; }
   z-index: 2;
   max-width: 480px;
 }
+/* Marco “caja” retirado: el logo flota sobre el panel de login; sin blend ni cambio de color del asset. */
 .login-brand-logo {
   width: auto;
   max-width: min(300px, 88vw);
-  min-height: 56px;
+  min-height: 0;
   height: auto;
-  padding: 0.45rem 0.65rem;
-  overflow: hidden;
-  background: rgba(2, 6, 23, 0.45);
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  border-radius: 16px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  margin-bottom: 1.75rem;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  padding: 0;
+  margin: 0 0 1.75rem;
+  overflow: visible;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  display: block;
+  box-shadow: none;
   box-sizing: border-box;
-}
-/*
- * Solo pantalla de login: JPG con rectángulo blanco — placa ~ tono del panel + darken
- * hace que el blanco tome el color de la placa y el texto negro siga legible (no usar en header).
- */
-.login-brand-logo--blend {
-  background: #1e293b;
-  border-color: rgba(100, 116, 139, 0.45);
-  isolation: isolate;
-}
-.login-brand-logo--blend .login-brand-hero-img,
-.login-brand-logo--blend img {
-  mix-blend-mode: darken;
+  line-height: 0;
 }
 .login-brand-logo .login-brand-hero-img,
 .login-brand-logo img {
@@ -4700,6 +4692,8 @@ body.login-open { overflow: hidden; }
   object-fit: contain;
   object-position: left center;
   filter: none;
+  /* Mismo criterio que header: solo recortar píxeles del borde del archivo (halos), no el interior. */
+  clip-path: inset(4px round 16px);
 }
 .login-brand-title {
   font-size: 2.2rem;
