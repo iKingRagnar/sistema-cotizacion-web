@@ -44,6 +44,165 @@
   };
   /** Evita llamar varias veces a /demo-ensure-maquinas en la misma carga de página. */
   let seedDemoEnsureOnce = false;
+  /** Tras `loadDashboard`, la primera apertura de estas pestañas puede usar datos ya traídos (menos red y menos bloqueo del hilo principal). */
+  let skipNextClientesFetchAfterDashboard = false;
+  let skipNextMaquinasFetchAfterDashboard = false;
+  let skipNextCotizacionesFetchAfterDashboard = false;
+  let skipNextBitacorasFetchAfterDashboard = false;
+  /** maquina_id → cotización pendiente que ya incluye esa máquina (evita duplicar cotización). */
+  let maquinaIdBloqueoCotizacionMap = new Map();
+  let almacenMaquinasSnapshot = [];
+  let almacenRevisionSnapshot = [];
+
+  /** ExcelJS solo al exportar/importar XLSX (evita ~1MB de JS en cada carga de página). */
+  let excelJsLoadPromise = null;
+  function ensureExcelJs() {
+    if (typeof ExcelJS !== 'undefined') return Promise.resolve();
+    if (excelJsLoadPromise) return excelJsLoadPromise;
+    excelJsLoadPromise = new Promise(function (resolve, reject) {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';
+      s.async = true;
+      s.onload = function () {
+        if (typeof ExcelJS !== 'undefined') resolve();
+        else reject(new Error('ExcelJS'));
+      };
+      s.onerror = function () { reject(new Error('exceljs')); };
+      document.head.appendChild(s);
+    });
+    return excelJsLoadPromise;
+  }
+
+  /** Chart.js solo cuando hace falta (dashboard con gráficos); no bloquea el primer paint. */
+  let chartJsLoadPromise = null;
+  function ensureChartJs() {
+    if (typeof Chart !== 'undefined') return Promise.resolve();
+    if (chartJsLoadPromise) return chartJsLoadPromise;
+    chartJsLoadPromise = new Promise(function (resolve, reject) {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
+      s.crossOrigin = 'anonymous';
+      s.async = true;
+      s.onload = function () {
+        if (typeof Chart !== 'undefined') resolve();
+        else reject(new Error('Chart'));
+      };
+      s.onerror = function () { reject(new Error('chartjs')); };
+      document.head.appendChild(s);
+    });
+    return chartJsLoadPromise;
+  }
+
+  /** Gráficos del dashboard: carga Chart en idle para no competir con API + DOM principal. */
+  function renderDashboardChartsDeferred(cotizacionesCtx, bitacorasCtx, dashboardStats) {
+    const chartsEl = qs('#dashboard-charts');
+    if (!chartsEl || !dashboardStats || !dashboardStats.periodos) {
+      if (chartsEl) chartsEl.style.display = 'none';
+      return;
+    }
+    const run = async function () {
+      try {
+        await ensureChartJs();
+      } catch (_) {
+        chartsEl.style.display = 'none';
+        return;
+      }
+      if (typeof Chart === 'undefined') {
+        chartsEl.style.display = 'none';
+        return;
+      }
+      chartsEl.style.display = '';
+      if (chartDonut) {
+        chartDonut.destroy();
+        chartDonut = null;
+      }
+      if (chartBars) {
+        chartBars.destroy();
+        chartBars = null;
+      }
+      const nCot = cotizacionesCtx.length;
+      const nBit = bitacorasCtx.length;
+      const donutCtx = document.getElementById('chart-donut');
+      const industrialUi = document.body.classList.contains('theme-industrial');
+      if (donutCtx && (nCot + nBit > 0)) {
+        chartDonut = new Chart(donutCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Cotizaciones', 'Bitácoras'],
+            datasets: [
+              {
+                data: [nCot, nBit],
+                backgroundColor: industrialUi ? ['#ca8a04', '#57534e'] : ['#059669', '#7c3aed'],
+                borderColor: industrialUi ? '#292524' : '#1e293b',
+                borderWidth: 2,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            onHover: function (e, els) { if (e.native && e.native.target) e.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
+            onClick: function (_evt, elements) {
+              if (!elements || !elements.length) return;
+              const keys = ['cotizaciones', 'bitacoras'];
+              const i = elements[0].index;
+              if (keys[i]) setDashboardCrossFilterEntity(keys[i]);
+            },
+            plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0', font: { size: 12 } } } },
+          },
+        });
+      }
+      const barCtx = document.getElementById('chart-bars');
+      if (barCtx && dashboardStats.periodos) {
+        const p = dashboardStats.periodos;
+        chartBars = new Chart(barCtx, {
+          type: 'bar',
+          data: {
+            labels: ['Semana', 'Mes', 'Año'],
+            datasets: [
+              {
+                label: 'Actual',
+                data: [p.semana_actual?.cotizaciones?.count ?? 0, p.mes_actual?.cotizaciones?.count ?? 0, p.año_actual?.cotizaciones?.count ?? 0],
+                backgroundColor: industrialUi ? 'rgba(234,179,8,0.82)' : 'rgba(56,189,248,0.8)',
+                borderColor: industrialUi ? '#ca8a04' : '#38bdf8',
+                borderWidth: 1,
+              },
+              {
+                label: 'Anterior',
+                data: [p.semana_anterior?.cotizaciones?.count ?? 0, p.mes_anterior?.cotizaciones?.count ?? 0, p.año_anterior?.cotizaciones?.count ?? 0],
+                backgroundColor: industrialUi ? 'rgba(120,113,108,0.75)' : 'rgba(148,163,184,0.6)',
+                borderColor: industrialUi ? '#78716c' : '#94a3b8',
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            onHover: function (e, els) { if (e.native && e.native.target) e.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
+            onClick: function (_evt, elements) {
+              if (!elements || !elements.length) return;
+              const periods = ['semana', 'mes', 'año'];
+              const i = elements[0].index;
+              if (periods[i]) setDashboardCrossFilterPeriod(periods[i]);
+            },
+            scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.06)' } }, y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.06)' } } },
+            plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0' } } },
+          },
+        });
+      }
+    };
+    const fail = function () { chartsEl.style.display = 'none'; };
+    try {
+      if (typeof requestIdleCallback === 'function') {
+        requestIdleCallback(function () { run().catch(fail); }, { timeout: 5000 });
+      } else {
+        setTimeout(function () { run().catch(fail); }, 1);
+      }
+    } catch (_) {
+      setTimeout(function () { run().catch(fail); }, 1);
+    }
+  }
 
   function qs(s) { return document.querySelector(s); }
   function qsAll(s) { return document.querySelectorAll(s); }
@@ -610,7 +769,7 @@
   }
 
   const LAST_TAB_KEY = 'cotizacion-last-tab';
-  const VALID_TABS = ['dashboards', 'clientes', 'refacciones', 'maquinas', 'cotizaciones', 'reportes', 'garantias', 'mantenimiento-garantia', 'garantias-sin-cobertura', 'bonos', 'viajes', 'bitacoras', 'prospeccion'];
+  const VALID_TABS = ['dashboards', 'clientes', 'refacciones', 'maquinas', 'almacen', 'cotizaciones', 'reportes', 'garantias', 'mantenimiento-garantia', 'garantias-sin-cobertura', 'bonos', 'viajes', 'bitacoras', 'prospeccion'];
   const TABS_PERSIST = VALID_TABS.concat(['auditoria', 'usuarios', 'categorias-catalogo']);
   let reportesCache = [];
   let garantiasCache = [];
@@ -982,6 +1141,8 @@
       clientes: 'Clientes',
       refacciones: 'Refacciones',
       maquinas: 'Máquinas',
+      almacen: 'Almacén',
+      'revision-maquinas': 'Revisión máquinas',
       cotizaciones: 'Cotizaciones',
       reportes: 'Reportes',
       garantias: 'Garantías',
@@ -1108,6 +1269,7 @@
     if (id === 'ventas') loadVentas();
     if (id === 'prospeccion') loadProspeccion();
     if (id === 'revision-maquinas') loadRevisionMaquinas();
+    if (id === 'almacen') loadAlmacen();
     if (id === 'tarifas') loadTarifas();
     if (id === 'tecnicos') loadTecnicos();
   }
@@ -1978,7 +2140,12 @@
   async function exportToExcel(data, tableId, filenameLabel) {
     const tbl = qs('#' + tableId);
     if (!tbl || !data || !data.length) { showToast('No hay datos para exportar.', 'error'); return; }
-    if (typeof ExcelJS === 'undefined') { showToast('La exportación a Excel no está disponible. Recarga la página.', 'error'); return; }
+    try {
+      await ensureExcelJs();
+    } catch (_) {
+      showToast('No se pudo cargar la librería de Excel. Revisa la conexión.', 'error');
+      return;
+    }
     showToast('Exportando a Excel…', 'success');
     const { keys, headers } = getTableKeysAndHeaders(tableId);
     const sampleSize = Math.min(20, data.length);
@@ -2633,11 +2800,20 @@
     try {
       await fetchJson(API + '/clientes/' + id, { method: 'DELETE' });
       showToast('Cliente eliminado correctamente.', 'success');
-      loadClientes();
+      loadClientes({ force: true });
     } catch (e) { showToast(parseApiError(e) || 'No se pudo eliminar.', 'error'); }
   }
 
-  async function loadClientes() {
+  async function loadClientes(opts) {
+    const force = !!(opts && opts.force);
+    if (force) skipNextClientesFetchAfterDashboard = false;
+    else if (skipNextClientesFetchAfterDashboard) {
+      skipNextClientesFetchAfterDashboard = false;
+      rebuildClientCityMaps();
+      updateGlobalBranchOptions();
+      applyClientesFiltersAndRender();
+      return;
+    }
     showLoading();
     renderTableSkeleton('tabla-clientes', 8);
     try {
@@ -3004,7 +3180,7 @@
         await fetchJson(API + '/maquinas/' + m.id, { method: 'PUT', body: JSON.stringify(payload) });
         qs('#modal').classList.add('hidden');
         showToast('Imagen guardada.', 'success');
-        loadMaquinas();
+        loadMaquinas({ force: true });
       } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar la imagen.', 'error'); }
       finally { btn.disabled = false; btn.innerHTML = orig; }
     };
@@ -3275,11 +3451,18 @@
     try {
       await fetchJson(API + '/maquinas/' + id, { method: 'DELETE' });
       showToast('Máquina eliminada correctamente.', 'success');
-      loadMaquinas();
+      loadMaquinas({ force: true });
     } catch (e) { showToast(parseApiError(e) || 'No se pudo eliminar.', 'error'); }
   }
 
-  async function loadMaquinas() {
+  async function loadMaquinas(opts) {
+    const force = !!(opts && opts.force);
+    if (force) skipNextMaquinasFetchAfterDashboard = false;
+    else if (skipNextMaquinasFetchAfterDashboard) {
+      skipNextMaquinasFetchAfterDashboard = false;
+      applyMaquinasFiltersAndRender();
+      return;
+    }
     showLoading();
     renderTableSkeleton('tabla-maquinas', 6);
     try {
@@ -3307,7 +3490,7 @@
     if (mod) mod.classList.add('hidden');
     showPanel('maquinas', { skipLoad: true });
     try {
-      await loadMaquinas();
+      await loadMaquinas({ force: true });
     } catch (_) {}
     const inpCat = qs('#tabla-maquinas .filter-input[data-key="categoria"]');
     const inpSub = qs('#tabla-maquinas .filter-input[data-key="subcategoria"]');
@@ -3634,10 +3817,19 @@
     animateTableRows('tabla-cotizaciones');
   }
 
-  async function loadCotizaciones() {
+  async function loadCotizaciones(opts) {
+    const force = !!(opts && opts.force);
     if (!canAccessCotizaciones()) {
+      skipNextCotizacionesFetchAfterDashboard = false;
       cotizacionesCache = [];
       applyCotizacionesFiltersAndRender();
+      return;
+    }
+    if (force) skipNextCotizacionesFetchAfterDashboard = false;
+    else if (skipNextCotizacionesFetchAfterDashboard) {
+      skipNextCotizacionesFetchAfterDashboard = false;
+      applyCotizacionesFiltersAndRender();
+      refreshDavidComisionesCotPanel();
       return;
     }
     showLoading();
@@ -3653,6 +3845,13 @@
     } finally {
       hideLoading();
       refreshDavidComisionesCotPanel();
+      try {
+        if (qs('#panel-almacen') && qs('#panel-almacen').classList.contains('active')) {
+          refreshMaquinaBloqueoCotizacionMap(null).then(function () {
+            renderAlmacenTable();
+          });
+        }
+      } catch (_) {}
     }
   }
 
@@ -3660,8 +3859,43 @@
     try {
       await fetchJson(API + '/cotizaciones/' + id, { method: 'DELETE' });
       showToast('Cotización eliminada correctamente.', 'success');
-      loadCotizaciones();
+      loadCotizaciones({ force: true });
     } catch (e) { showToast(parseApiError(e) || 'No se pudo eliminar.', 'error'); }
+  }
+
+  async function refreshMaquinaBloqueoCotizacionMap(excludeCotId) {
+    maquinaIdBloqueoCotizacionMap = new Map();
+    if (!canAccessCotizaciones()) return;
+    const ex = excludeCotId != null && excludeCotId !== '' ? Number(excludeCotId) : 0;
+    const list = toArray(cotizacionesCache).filter(
+      (c) => String(c.estado || '').toLowerCase() === 'pendiente' && Number(c.id) !== ex && Number(c.id) > 0
+    );
+    const details = await Promise.all(
+      list.map((c) => fetchJson(API + '/cotizaciones/' + c.id).catch(() => null))
+    );
+    details.forEach((full, i) => {
+      const c = list[i];
+      if (!full || !Array.isArray(full.lineas)) return;
+      full.lineas.forEach((l) => {
+        const mid = l.maquina_id != null ? Number(l.maquina_id) : null;
+        if (!mid || !Number.isFinite(mid)) return;
+        if (!maquinaIdBloqueoCotizacionMap.has(mid)) {
+          maquinaIdBloqueoCotizacionMap.set(mid, {
+            cotId: c.id,
+            folio: full.folio != null && String(full.folio).trim() !== '' ? String(full.folio) : String(c.id),
+          });
+        }
+      });
+    });
+  }
+
+  function isMaquinaBloqueadaPorOtraCot(maquinaId, excludeCotId) {
+    const bid = maquinaId != null && Number.isFinite(Number(maquinaId)) ? Number(maquinaId) : null;
+    if (bid == null) return null;
+    const lock = maquinaIdBloqueoCotizacionMap.get(bid);
+    if (!lock) return null;
+    if (excludeCotId != null && Number(lock.cotId) === Number(excludeCotId)) return null;
+    return lock;
   }
 
   function resolveRefaccionIdFromDeleteInput(raw) {
@@ -3804,9 +4038,9 @@
                 const n = j && j.deleted != null ? j.deleted : '';
                 showToast('Tabla vaciada' + (n !== '' ? ' (' + n + ' filas).' : '.'), 'success');
                 if (mod === 'refacciones') loadRefacciones();
-                else if (mod === 'clientes') loadClientes();
-                else if (mod === 'maquinas') loadMaquinas();
-                else if (mod === 'cotizaciones') loadCotizaciones();
+                else if (mod === 'clientes') loadClientes({ force: true });
+                else if (mod === 'maquinas') loadMaquinas({ force: true });
+                else if (mod === 'cotizaciones') loadCotizaciones({ force: true });
                 else if (mod === 'prospectos' && typeof loadProspeccion === 'function') loadProspeccion();
               })
               .catch(function (e) {
@@ -3824,7 +4058,7 @@
     try {
       await fetchJson(API + '/cotizaciones/' + id + '/aplicar', { method: 'POST', body: JSON.stringify({}) });
       showToast('Cotización aplicada como venta. Inventario actualizado.', 'success');
-      loadCotizaciones();
+      loadCotizaciones({ force: true });
       loadRefacciones();
       loadVentas();
       if (typeof refreshAlertasHeader === 'function') refreshAlertasHeader();
@@ -3837,7 +4071,7 @@
         method: 'PUT',
         body: JSON.stringify({ tipo_cambio: Number(tc) }),
       });
-      await loadCotizaciones();
+      await loadCotizaciones({ force: true });
       showToast('Tipo de cambio actualizado.', 'success');
     } catch (e) {
       showToast(parseApiError(e) || 'No se pudo actualizar el tipo de cambio.', 'error');
@@ -5655,7 +5889,14 @@
     animateTableRows('tabla-bitacoras');
   }
 
-  async function loadBitacoras() {
+  async function loadBitacoras(opts) {
+    const force = !!(opts && opts.force);
+    if (force) skipNextBitacorasFetchAfterDashboard = false;
+    else if (skipNextBitacorasFetchAfterDashboard) {
+      skipNextBitacorasFetchAfterDashboard = false;
+      applyBitacorasFiltersAndRender();
+      return;
+    }
     showLoading();
     renderTableSkeleton('tabla-bitacoras', 10);
     try {
@@ -5675,7 +5916,7 @@
     try {
       await fetchJson(API + '/bitacoras/' + id, { method: 'DELETE' });
       showToast('Registro de bitácora eliminado correctamente.', 'success');
-      loadBitacoras();
+      loadBitacoras({ force: true });
     } catch (e) { showToast(parseApiError(e) || 'No se pudo eliminar.', 'error'); }
   }
 
@@ -6014,7 +6255,7 @@
         qs('#modal').classList.add('hidden');
         showToast(isNew ? 'Cliente guardado correctamente.' : 'Cliente actualizado correctamente.', 'success');
         if (isNew) setPaginationPage('tabla-clientes', 0);
-        loadClientes();
+        loadClientes({ force: true });
         fillClientesSelect();
       } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar. Revisa los datos e intenta de nuevo.', 'error'); }
       finally { btn.disabled = false; btn.innerHTML = origText; }
@@ -6534,7 +6775,7 @@
         qs('#modal').classList.add('hidden');
         showToast(isNew ? 'Máquina guardada correctamente.' : 'Máquina actualizada correctamente.', 'success');
         if (isNew) setPaginationPage('tabla-maquinas', 0);
-        loadMaquinas();
+        loadMaquinas({ force: true });
       } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar. Revisa los datos.', 'error'); }
       finally { btn.disabled = false; btn.innerHTML = origText; }
     };
@@ -6952,14 +7193,23 @@
       const list = cotMaqPool();
       const eqSel = qm('#cot-line-maq');
       const optSel = qm('#cot-line-maq-opt');
-      const eqOpts =
-        '<option value="">— Elige equipo —</option>' +
-        list.map((m) => `<option value="${m.id}">${escapeHtml(cotMaqCatalogLabel(m))}</option>`).join('');
-      const optOpts =
-        '<option value="">— Sin máquina —</option>' +
-        list.map((m) => `<option value="${m.id}">${escapeHtml(cotMaqCatalogLabel(m))}</option>`).join('');
+      const exCot = currentCotId != null ? Number(currentCotId) : null;
       const vEq = preserveMaq != null ? String(preserveMaq) : (eqSel && eqSel.value);
       const vOp = preserveOpt != null ? String(preserveOpt) : (optSel && optSel.value);
+      function optHtml(m, selectedVal) {
+        const lock = isMaquinaBloqueadaPorOtraCot(m.id, exCot);
+        const selected = selectedVal && String(selectedVal) === String(m.id);
+        const dis = lock && !selected ? ' disabled' : '';
+        const suf = lock ? ' — Ocupada (folio ' + escapeHtml(lock.folio) + ')' : '';
+        const sel = selected ? ' selected' : '';
+        return `<option value="${m.id}"${sel}${dis}>${escapeHtml(cotMaqCatalogLabel(m) + suf)}</option>`;
+      }
+      const eqOpts =
+        '<option value="">— Elige equipo —</option>' +
+        list.map((m) => optHtml(m, vEq)).join('');
+      const optOpts =
+        '<option value="">— Sin máquina —</option>' +
+        list.map((m) => optHtml(m, vOp)).join('');
       if (eqSel) {
         eqSel.innerHTML = eqOpts;
         if (vEq && list.some((m) => String(m.id) === vEq)) eqSel.value = vEq;
@@ -6976,6 +7226,9 @@
       } catch (_) {
         maquinasForModal = toArray(maquinasCatalogoModal).slice();
       }
+      try {
+        await refreshMaquinaBloqueoCotizacionMap(currentCotId);
+      } catch (_) {}
       populateCotLineMaqSelects();
     }
 
@@ -7383,6 +7636,18 @@
         showToast('Selecciona la máquina / equipo para la línea de venta.', 'warning');
         return;
       }
+      if (maqId) {
+        const lock = isMaquinaBloqueadaPorOtraCot(maqId, currentCotId);
+        if (lock) {
+          showToast(
+            'Esta máquina ya está en la cotización pendiente ' +
+              lock.folio +
+              '. Cancela o concluye esa cotización antes de volver a cotizar el mismo equipo.',
+            'error'
+          );
+          return;
+        }
+      }
       let payload = { tipo_linea: tipoLinea, cantidad: cant, precio_unitario: precio, maquina_id: maqId, bitacora_id: bitId };
       if (tipoLinea === 'refaccion') {
         const refId = Number(qm('#cot-line-refaccion')?.value) || null;
@@ -7445,18 +7710,29 @@
       }
     });
 
-    function openModalEditarLinea(linea) {
+    async function openModalEditarLinea(linea) {
+      try {
+        await refreshMaquinaBloqueoCotizacionMap(currentCotId);
+      } catch (_) {}
       const isRef = String(linea.tipo_linea || '') === 'refaccion';
       const isEquipo = String(linea.tipo_linea || '') === 'equipo';
       const isMO = String(linea.tipo_linea || '') === 'mano_obra';
       const isVuelta = String(linea.tipo_linea || '') === 'vuelta';
       const pool = cotMaqPool();
       const mid = Number(linea.maquina_id) || null;
+      const exCot = currentCotId != null ? Number(currentCotId) : null;
+      function maqOptionTag(m, selectedMid) {
+        const lock = isMaquinaBloqueadaPorOtraCot(m.id, exCot);
+        const selected = selectedMid != null && Number(selectedMid) === Number(m.id);
+        const dis = lock && !selected ? ' disabled' : '';
+        const suf = lock && !selected ? ' — Ocupada (folio ' + escapeHtml(String(lock.folio)) + ')' : '';
+        return `<option value="${m.id}"${selected ? ' selected' : ''}${dis}>${escapeHtml(cotMaqCatalogLabel(m) + suf)}</option>`;
+      }
       const maqOptsEq = ['<option value="">— Elige equipo —</option>']
-        .concat(pool.map((m) => `<option value="${m.id}" ${mid === Number(m.id) ? 'selected' : ''}>${escapeHtml(cotMaqCatalogLabel(m))}</option>`))
+        .concat(pool.map((m) => maqOptionTag(m, mid)))
         .join('');
       const maqOptsOpt = ['<option value="">— Sin máquina —</option>']
-        .concat(pool.map((m) => `<option value="${m.id}" ${mid === Number(m.id) ? 'selected' : ''}>${escapeHtml(cotMaqCatalogLabel(m))}</option>`))
+        .concat(pool.map((m) => maqOptionTag(m, mid)))
         .join('');
       const refOpts = [...toArray(refaccionesCache)]
         .sort((a, b) => String(a.codigo || '').localeCompare(String(b.codigo || ''), 'es', { sensitivity: 'base' }))
@@ -7588,6 +7864,18 @@
         else if (tipoLinea === 'vuelta' || tipoLinea === 'mano_obra' || tipoLinea === 'otro') {
           maquina_id = Number(qs('#e-line-maq-opt')?.value) || null;
         }
+        if (maquina_id) {
+          const lock = isMaquinaBloqueadaPorOtraCot(maquina_id, currentCotId);
+          if (lock) {
+            showToast(
+              'Esta máquina ya está en la cotización pendiente ' +
+                lock.folio +
+                '. No se puede mover esta línea a ese equipo hasta liberar la otra cotización.',
+              'error'
+            );
+            return;
+          }
+        }
         const payload = {
           tipo_linea: tipoLinea,
           maquina_id,
@@ -7659,7 +7947,7 @@
           await refreshCotizacion();
           showToast('Cotización actualizada.', 'success');
         }
-        loadCotizaciones();
+        loadCotizaciones({ force: true });
       } catch (e) {
         showToast(parseApiError(e) || 'No se pudo guardar. Revisa los datos.', 'error');
       } finally {
@@ -7975,7 +8263,7 @@
         if (stack) qs('#modal-stack').classList.add('hidden');
         else qs('#modal').classList.add('hidden');
         showToast(isNew ? 'Registro de bitácora guardado correctamente.' : 'Bitácora actualizada correctamente.', 'success');
-        loadBitacoras();
+        loadBitacoras({ force: true });
         if (onSaved) await onSaved();
       } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar. Indica incidente o cotización y fecha.', 'error'); }
       finally { btn.disabled = false; btn.innerHTML = origText; }
@@ -8818,6 +9106,16 @@
       const cotizaciones = toArr(raw[3]);
       const bitacoras = toArr(raw[4]);
       const dashboardStats = raw[5] && typeof raw[5] === 'object' ? raw[5] : null;
+      try {
+        clientesCache = clientes;
+        rebuildClientCityMaps();
+        updateGlobalBranchOptions();
+        skipNextClientesFetchAfterDashboard = true;
+        maquinasCache = maquinas;
+        skipNextMaquinasFetchAfterDashboard = true;
+      } catch (e) {
+        console.warn('Dashboard: prime caches', e);
+      }
       const clientesCtx = applyGlobalBranchFilterRows(clientes);
       const clienteNamesCtx = new Set(clientesCtx.map(c => String(c && c.nombre || '').trim().toLowerCase()).filter(Boolean));
       const maquinasCtx = globalBranchFilter ? maquinas.filter(m => clienteNamesCtx.has(String(m && m.cliente_nombre || '').trim().toLowerCase())) : maquinas;
@@ -8945,19 +9243,29 @@
         btn.addEventListener('click', () => showPanel(btn.dataset.goto));
       });
 
-      // Rellenar cachés y tablas con los datos ya cargados (si algo falla no rompemos el dashboard)
+      // Cachés desde el mismo payload; pintar tablas pesadas solo si esa pestaña está activa (evita bloquear el hilo al cargar el dashboard).
       try {
         cotizacionesCache = showCot ? cotizaciones : [];
         bitacorasCache = bitacoras;
-        if (showCot) {
+        if (showCot) skipNextCotizacionesFetchAfterDashboard = true;
+        skipNextBitacorasFetchAfterDashboard = true;
+        const tabEl = document.querySelector('.tab.active');
+        const tid = tabEl && tabEl.dataset ? tabEl.dataset.tab : '';
+        if (showCot && tid === 'cotizaciones') {
           const filtCot = applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones');
           renderCotizaciones(filtCot, cotizacionesCache.length);
         }
-        const filtBit = applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras');
-        renderBitacoras(filtBit, bitacorasCache.length);
-        fetchJson(API + '/incidentes')
-          .then((r) => { incidentesCache = toArray(r); updateHeaderUrgencies(); })
-          .catch(() => {});
+        if (tid === 'bitacoras') {
+          const filtBit = applyFilters(bitacorasCache, getFilterValues('#tabla-bitacoras'), 'tabla-bitacoras');
+          renderBitacoras(filtBit, bitacorasCache.length);
+        }
+        const runInc = function () {
+          fetchJson(API + '/incidentes')
+            .then((r) => { incidentesCache = toArray(r); updateHeaderUrgencies(); })
+            .catch(function () {});
+        };
+        if (typeof requestIdleCallback === 'function') requestIdleCallback(runInc, { timeout: 2500 });
+        else setTimeout(runInc, 1);
       } catch (err) {
         console.error('Dashboard prefill tablas:', err);
       }
@@ -9029,99 +9337,22 @@
           pronEl.innerHTML = '<p class="dashboard-hint">No hay datos suficientes para pronósticos.</p>';
         }
 
-        // Gráficos (donut + barras) si Chart.js está disponible
-        const chartsEl = qs('#dashboard-charts');
-        if (chartsEl && typeof Chart !== 'undefined') {
-          chartsEl.style.display = '';
-          if (chartDonut) {
-            chartDonut.destroy();
-            chartDonut = null;
-          }
-          if (chartBars) {
-            chartBars.destroy();
-            chartBars = null;
-          }
-          const nCot = cotizacionesCtx.length;
-          const nBit = bitacorasCtx.length;
-          const donutCtx = document.getElementById('chart-donut');
-          const industrialUi = document.body.classList.contains('theme-industrial');
-          if (donutCtx && (nCot + nBit > 0)) {
-            chartDonut = new Chart(donutCtx, {
-              type: 'doughnut',
-              data: {
-                labels: ['Cotizaciones', 'Bitácoras'],
-                datasets: [
-                  {
-                    data: [nCot, nBit],
-                    backgroundColor: industrialUi ? ['#ca8a04', '#57534e'] : ['#059669', '#7c3aed'],
-                    borderColor: industrialUi ? '#292524' : '#1e293b',
-                    borderWidth: 2,
-                  },
-                ],
-              },
-              options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                onHover: function (e, els) { if (e.native && e.native.target) e.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
-                onClick: function (_evt, elements) {
-                  if (!elements || !elements.length) return;
-                  const keys = ['cotizaciones', 'bitacoras'];
-                  const i = elements[0].index;
-                  if (keys[i]) setDashboardCrossFilterEntity(keys[i]);
-                },
-                plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0', font: { size: 12 } } } },
-              },
-            });
-          }
-          const barCtx = document.getElementById('chart-bars');
-          if (barCtx && dashboardStats.periodos) {
-            const p = dashboardStats.periodos;
-            chartBars = new Chart(barCtx, {
-              type: 'bar',
-              data: {
-                labels: ['Semana', 'Mes', 'Año'],
-                datasets: [
-                  {
-                    label: 'Actual',
-                    data: [p.semana_actual?.cotizaciones?.count ?? 0, p.mes_actual?.cotizaciones?.count ?? 0, p.año_actual?.cotizaciones?.count ?? 0],
-                    backgroundColor: industrialUi ? 'rgba(234,179,8,0.82)' : 'rgba(56,189,248,0.8)',
-                    borderColor: industrialUi ? '#ca8a04' : '#38bdf8',
-                    borderWidth: 1,
-                  },
-                  {
-                    label: 'Anterior',
-                    data: [p.semana_anterior?.cotizaciones?.count ?? 0, p.mes_anterior?.cotizaciones?.count ?? 0, p.año_anterior?.cotizaciones?.count ?? 0],
-                    backgroundColor: industrialUi ? 'rgba(120,113,108,0.75)' : 'rgba(148,163,184,0.6)',
-                    borderColor: industrialUi ? '#78716c' : '#94a3b8',
-                    borderWidth: 1,
-                  },
-                ],
-              },
-              options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                onHover: function (e, els) { if (e.native && e.native.target) e.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
-                onClick: function (_evt, elements) {
-                  if (!elements || !elements.length) return;
-                  const periods = ['semana', 'mes', 'año'];
-                  const i = elements[0].index;
-                  if (periods[i]) setDashboardCrossFilterPeriod(periods[i]);
-                },
-                scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.06)' } }, y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.06)' } } },
-                plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0' } } },
-              },
-            });
-          }
-        } else if (chartsEl) {
-          chartsEl.style.display = 'none';
-        }
+        renderDashboardChartsDeferred(cotizacionesCtx, bitacorasCtx, dashboardStats);
         } else if (adv) {
           adv.style.display = 'none';
+          const ceHide = qs('#dashboard-charts');
+          if (ceHide) ceHide.style.display = 'none';
+          if (chartDonut) { chartDonut.destroy(); chartDonut = null; }
+          if (chartBars) { chartBars.destroy(); chartBars = null; }
         }
       } catch (errAdv) {
         console.error('Dashboard estadísticas/gráficos:', errAdv);
         const adv = qs('#dashboard-advanced');
         if (adv) adv.style.display = 'none';
+        const ceErr = qs('#dashboard-charts');
+        if (ceErr) ceErr.style.display = 'none';
+        if (chartDonut) { chartDonut.destroy(); chartDonut = null; }
+        if (chartBars) { chartBars.destroy(); chartBars = null; }
       }
       initDashboardCrossfilterBindings();
       syncDashboardCrossFilterUi();
@@ -9188,10 +9419,11 @@
     await loadSeedStatus();
     await loadStorageHealth();
     await loadDashboard();
-    if (canAccessCotizaciones()) await loadCotizaciones();
+    if (canAccessCotizaciones()) await loadCotizaciones({ force: true });
     await loadIncidentes();
-    await loadBitacoras();
-    await loadMaquinas();
+    await loadBitacoras({ force: true });
+    await loadMaquinas({ force: true });
+    await loadClientes({ force: true });
     fillClientesSelect();
     if (typeof loadReportes === 'function') await loadReportes();
     if (typeof loadGarantias === 'function') await loadGarantias();
@@ -9298,11 +9530,11 @@
     await loadSeedStatus();
     await loadStorageHealth();
     await loadDashboard();
-    await loadClientes();
+    await loadClientes({ force: true });
     await loadRefacciones();
-    await loadMaquinas();
-    if (canAccessCotizaciones()) await loadCotizaciones();
-    await loadBitacoras();
+    await loadMaquinas({ force: true });
+    if (canAccessCotizaciones()) await loadCotizaciones({ force: true });
+    await loadBitacoras({ force: true });
     fillClientesSelect();
     showToast('Respaldo restaurado correctamente.', 'success');
   }
@@ -9345,11 +9577,11 @@
     await loadSeedStatus();
     await loadStorageHealth();
     await loadDashboard();
-    await loadClientes();
+    await loadClientes({ force: true });
     await loadRefacciones();
-    await loadMaquinas();
-    if (canAccessCotizaciones()) await loadCotizaciones();
-    await loadBitacoras();
+    await loadMaquinas({ force: true });
+    if (canAccessCotizaciones()) await loadCotizaciones({ force: true });
+    await loadBitacoras({ force: true });
     fillClientesSelect();
     showToast('Backup restaurado desde lista automática.', 'success');
   }
@@ -9456,16 +9688,17 @@
     const active = document.querySelector('.tab.active');
     const id = active && active.dataset ? active.dataset.tab : 'dashboards';
     if (id === 'dashboards') loadDashboard();
-    if (id === 'clientes') loadClientes();
+    if (id === 'clientes') loadClientes({ force: true });
     if (id === 'refacciones') loadRefacciones();
-    if (id === 'maquinas') loadMaquinas();
-    if (id === 'cotizaciones') loadCotizaciones();
+    if (id === 'maquinas') loadMaquinas({ force: true });
+    if (id === 'almacen') loadAlmacen();
+    if (id === 'cotizaciones') loadCotizaciones({ force: true });
     if (id === 'garantias') loadGarantias();
     if (id === 'mantenimiento-garantia') loadMantenimientoGarantia();
     if (id === 'garantias-sin-cobertura') loadGarantiasSinCobertura();
     if (id === 'bonos') loadBonos();
     if (id === 'viajes') loadViajes();
-    if (id === 'bitacoras') loadBitacoras();
+    if (id === 'bitacoras') loadBitacoras({ force: true });
     if (id === 'prospeccion') loadProspeccion();
     if (id === 'usuarios') loadAppUsers();
     if (id === 'demo') {
@@ -9511,12 +9744,12 @@
         `<strong>${data.bonos || 0}</strong> bonos, <strong>${data.viajes || 0}</strong> viajes.${enLine}`;
       btn.textContent = 'Datos demo cargados';
       loadSeedStatus();
-      loadClientes();
+      loadClientes({ force: true });
       loadRefacciones();
-      loadMaquinas();
+      loadMaquinas({ force: true });
       fillClientesSelect();
-      if (canAccessCotizaciones()) await loadCotizaciones();
-      await loadBitacoras();
+      if (canAccessCotizaciones()) await loadCotizaciones({ force: true });
+      await loadBitacoras({ force: true });
       if (typeof loadTecnicos === 'function') loadTecnicos();
       if (typeof loadMantenimientoGarantia === 'function') loadMantenimientoGarantia();
       if (typeof loadGarantiasSinCobertura === 'function') loadGarantiasSinCobertura();
@@ -9537,8 +9770,15 @@
     try {
       const sel = qs('#filtro-cliente-maq');
       if (!sel) return;
-      const data = await fetchJson(API + '/clientes');
-      const sorted = [...toArray(data)].sort((a, b) =>
+      let rows = toArray(clientesCache);
+      if (!rows.length) {
+        const data = await fetchJson(API + '/clientes');
+        rows = toArray(data);
+        clientesCache = rows;
+        rebuildClientCityMaps();
+        updateGlobalBranchOptions();
+      }
+      const sorted = [...rows].sort((a, b) =>
         String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', { sensitivity: 'base' }));
       const first = '<option value="">Todos los clientes</option>';
       sel.innerHTML = first + sorted.map(c => `<option value="${c.id}">${escapeHtml(c.nombre)}</option>`).join('');
@@ -9898,6 +10138,167 @@
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 0);
   }
 
+  // ----- ALMACÉN (modelo, sucursal, serie, estado revisión, cotización pendiente) -----
+  async function loadAlmacen() {
+    showLoading();
+    try {
+      await refreshMaquinaBloqueoCotizacionMap(null);
+      const [maqRaw, revRaw] = await Promise.all([
+        fetchJson(API + '/maquinas').catch(() => []),
+        fetchJson(API + '/revision-maquinas').catch(() => []),
+      ]);
+      almacenMaquinasSnapshot = toArray(maqRaw);
+      almacenRevisionSnapshot = toArray(revRaw);
+      if (!toArray(clientesCache).length) {
+        try {
+          clientesCache = toArray(await fetchJson(API + '/clientes'));
+          rebuildClientCityMaps();
+          updateGlobalBranchOptions();
+        } catch (_) {}
+      }
+      const sel = qs('#filtro-sucursal-almacen');
+      if (sel) {
+        const cur = sel.value || '';
+        const cities = [
+          ...new Set(
+            almacenMaquinasSnapshot.map((m) => ciudadSucursalMaquina(m)).filter((c) => c && c !== '—')
+          ),
+        ].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+        sel.innerHTML =
+          '<option value="">Todas las sucursales</option>' +
+          cities.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+        if (cur && cities.includes(cur)) sel.value = cur;
+      }
+      renderAlmacenTable();
+    } catch (e) {
+      console.error(e);
+      showToast(parseApiError(e) || 'No se pudo cargar almacén.', 'error');
+    } finally {
+      hideLoading();
+    }
+  }
+
+  function ciudadSucursalMaquina(m) {
+    if (!m) return '—';
+    if (m.ciudad && String(m.ciudad).trim()) return String(m.ciudad).trim();
+    const cid = m.cliente_id;
+    if (cid != null && clientesCache && clientesCache.length) {
+      const c = clientesCache.find((x) => String(x.id) === String(cid));
+      if (c && c.ciudad) return String(c.ciudad).trim();
+    }
+    const nom = (m.cliente_nombre || '').trim();
+    if (nom) {
+      const k = nom.toLowerCase();
+      if (clienteCityByName[k]) return clienteCityByName[k];
+    }
+    const u = (m.ubicacion && String(m.ubicacion).trim()) || '';
+    return u || '—';
+  }
+
+  function modeloAlmacenDisplay(m) {
+    return String(m.modelo || m.nombre || m.categoria || '—').trim();
+  }
+
+  function latestRevisionForMaquinaId(revs, maquinaId) {
+    const idStr = String(maquinaId);
+    const list = (revs || []).filter((r) => r.maquina_id != null && String(r.maquina_id) === idStr);
+    if (!list.length) return null;
+    return list.reduce((a, b) => (Number(b.id) > Number(a.id) ? b : a));
+  }
+
+  function estadoAlmacenDesdeRevision(rev) {
+    if (!rev) return { label: 'Sin probar', hint: 'Sin registro en Revisión Máquinas', cls: 'badge-warn' };
+    const ent = rev.entregado === 'Si';
+    const prFin = rev.prueba === 'Finalizada';
+    if (ent && prFin) return { label: 'Lista para entregar', hint: 'Entregada y prueba finalizada', cls: 'badge-ok' };
+    if (ent) return { label: 'Entrega inmediata', hint: 'Marcada como entregada; prueba no finalizada', cls: 'badge-info' };
+    return { label: 'Sin probar', hint: 'Sin entregar o en proceso de prueba', cls: 'badge-warn' };
+  }
+
+  function renderAlmacenTable() {
+    const tbody = qs('#tabla-almacen tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    const maquinas = almacenMaquinasSnapshot || [];
+    const revs = almacenRevisionSnapshot || [];
+    const q = (qs('#buscar-almacen') && qs('#buscar-almacen').value || '').trim();
+    const suc = (qs('#filtro-sucursal-almacen') && qs('#filtro-sucursal-almacen').value || '').trim();
+    let rows = applyGlobalBranchFilterRows(maquinas.slice());
+    if (suc) rows = rows.filter((m) => ciudadSucursalMaquina(m) === suc);
+    if (q) {
+      const nq = normalizeForSearch(q);
+      rows = rows.filter((m) =>
+        [m.modelo, m.nombre, m.categoria, m.subcategoria, m.numero_serie, m.cliente_nombre].some((v) =>
+          normalizeForSearch(v).includes(nq)
+        )
+      );
+    }
+    if (!rows.length) {
+      tbody.innerHTML =
+        '<tr><td colspan="6" class="empty">Sin equipos que coincidan. <strong>Máquinas</strong> define modelo y serie; <strong>Revisión Máquinas</strong> el estado; <strong>Cotizaciones</strong> pendientes bloquean duplicar equipo.</td></tr>';
+      return;
+    }
+    rows.sort((a, b) =>
+      String(modeloAlmacenDisplay(a)).localeCompare(String(modeloAlmacenDisplay(b)), 'es', { sensitivity: 'base' })
+    );
+    rows.forEach((m) => {
+      const tr = document.createElement('tr');
+      const modelo = modeloAlmacenDisplay(m);
+      const sucursal = ciudadSucursalMaquina(m);
+      const serie = (m.numero_serie && String(m.numero_serie).trim()) || '—';
+      const rev = latestRevisionForMaquinaId(revs, m.id);
+      const est = estadoAlmacenDesdeRevision(rev);
+      const lock = maquinaIdBloqueoCotizacionMap.get(Number(m.id));
+      const cotCell = lock
+        ? `<button type="button" class="link-btn btn-almacen-open-cot" data-cot-id="${lock.cotId}" title="Abrir cotización pendiente">${escapeHtml(lock.folio)}</button>`
+        : '—';
+      const revBtn =
+        rev && rev.id
+          ? `<button type="button" class="btn small outline btn-almacen-open-rev" title="Ir a Revisión Máquinas"><i class="fas fa-tools"></i></button>`
+          : `<button type="button" class="btn small outline btn-almacen-new-rev" data-maq-id="${m.id}" title="Nueva revisión"><i class="fas fa-plus"></i></button>`;
+      const subLine = [m.categoria, m.subcategoria].filter((x) => x && String(x).trim()).join(' · ');
+      tr.innerHTML = `
+        <td><strong>${escapeHtml(modelo)}</strong>${subLine ? `<div class="muted" style="font-size:0.82rem">${escapeHtml(subLine)}</div>` : ''}</td>
+        <td>${escapeHtml(sucursal)}</td>
+        <td>${escapeHtml(serie)}</td>
+        <td><span class="badge ${est.cls}" title="${escapeHtml(est.hint)}">${escapeHtml(est.label)}</span></td>
+        <td>${cotCell}</td>
+        <td class="th-actions">${revBtn}</td>`;
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.btn-almacen-open-cot').forEach((btn) => {
+      btn.addEventListener('click', async function (e) {
+        e.preventDefault();
+        const cid = Number(btn.dataset.cotId);
+        if (!cid) return;
+        try {
+          const cot = await fetchJson(API + '/cotizaciones/' + cid);
+          showPanel('cotizaciones', { skipLoad: true });
+          openModalCotizacion(cot);
+        } catch (err) {
+          showToast(parseApiError(err) || 'No se pudo abrir la cotización.', 'error');
+        }
+      });
+    });
+    tbody.querySelectorAll('.btn-almacen-open-rev').forEach((btn) => {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        showPanel('revision-maquinas');
+        loadRevisionMaquinas();
+      });
+    });
+    tbody.querySelectorAll('.btn-almacen-new-rev').forEach((btn) => {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        const id = Number(btn.dataset.maqId);
+        showPanel('revision-maquinas');
+        loadRevisionMaquinas().then(function () {
+          openModalRevisionMaquina({ maquina_id: id });
+        });
+      });
+    });
+  }
+
   // ----- REVISIÓN DE MÁQUINAS -----
   let revisionMaquinasCache = [];
   let revisionMaquinasCatalogoCache = [];
@@ -9948,7 +10349,15 @@
       renderRevisionMaquinasCatalog();
       renderRevisionMaquinas(revisionMaquinasCache);
     } catch (e) { console.error(e); }
-    finally { hideLoading(); }
+    finally {
+      hideLoading();
+      try {
+        if (qs('#panel-almacen') && qs('#panel-almacen').classList.contains('active')) {
+          almacenRevisionSnapshot = (revisionMaquinasCache || []).slice();
+          renderAlmacenTable();
+        }
+      } catch (_) {}
+    }
   }
 
   function renderRevisionMaquinas(data) {
@@ -10529,7 +10938,12 @@
   // ----- IMPORTAR XLSX REFACCIONES -----
   async function importRefaccionesXlsx(file) {
     if (!file) return;
-    if (typeof ExcelJS === 'undefined') { showToast('ExcelJS no disponible. Recarga la página.', 'error'); return; }
+    try {
+      await ensureExcelJs();
+    } catch (_) {
+      showToast('No se pudo cargar la librería de Excel. Revisa la conexión.', 'error');
+      return;
+    }
     showToast('Leyendo archivo…', 'info');
     try {
       const buffer = await file.arrayBuffer();
@@ -10673,6 +11087,12 @@
   bindTableFilters('tabla-garantias-sin', applyGarantiasSinFiltersAndRender);
   const dashboardRefresh = qs('#dashboard-refresh');
   if (dashboardRefresh) dashboardRefresh.addEventListener('click', () => loadDashboard());
+  const btnRefreshAlmacen = qs('#btn-refresh-almacen');
+  if (btnRefreshAlmacen) btnRefreshAlmacen.addEventListener('click', () => loadAlmacen());
+  const buscarAlmacen = qs('#buscar-almacen');
+  if (buscarAlmacen) buscarAlmacen.addEventListener('input', debounce(() => renderAlmacenTable(), 250));
+  const filtroSucursalAlmacen = qs('#filtro-sucursal-almacen');
+  if (filtroSucursalAlmacen) filtroSucursalAlmacen.addEventListener('change', () => renderAlmacenTable());
   const dashboardGoBackups = qs('#dashboard-go-backups');
   if (dashboardGoBackups) dashboardGoBackups.addEventListener('click', () => showPanel('demo'));
   const dashboardGoExecutivePdf = qs('#dashboard-go-executive-pdf');
@@ -11133,6 +11553,7 @@
       { id: 'clientes', label: 'Clientes', icon: 'fa-users' },
       { id: 'refacciones', label: 'Refacciones', icon: 'fa-cogs' },
       { id: 'maquinas', label: 'Máquinas', icon: 'fa-industry' },
+      { id: 'almacen', label: 'Almacén', icon: 'fa-warehouse' },
       ...(canAccessCotizaciones() ? [{ id: 'cotizaciones', label: 'Cotizaciones', icon: 'fa-file-invoice-dollar' }] : []),
       { id: 'bonos', label: 'Bonos', icon: 'fa-award' },
       { id: 'viajes', label: 'Viajes', icon: 'fa-plane' },
@@ -11830,9 +12251,9 @@
       qs('#seed-status').innerHTML =
         `Listo: <strong>${data.incidentes || 0}</strong> incidentes, <strong>${data.bitacoras || 0}</strong> bitácoras, <strong>${data.cotizaciones || 0}</strong> cotizaciones agregados.${enTxt}`;
       loadSeedStatus();
-      if (canAccessCotizaciones()) await loadCotizaciones();
+      if (canAccessCotizaciones()) await loadCotizaciones({ force: true });
       await loadIncidentes();
-      await loadBitacoras();
+      await loadBitacoras({ force: true });
       if (typeof loadTecnicos === 'function') loadTecnicos();
       if (typeof loadMantenimientoGarantia === 'function') loadMantenimientoGarantia();
       if (typeof loadGarantiasSinCobertura === 'function') loadGarantiasSinCobertura();
@@ -11862,7 +12283,7 @@
         qs('#seed-status').innerHTML =
           `Equipos listos: se insertaron <strong>${data.inserted || 0}</strong> registro(s); total máquinas activas en catálogo: <strong>${data.maquinas_activas ?? '—'}</strong> (clientes: ${data.clientes ?? '—'}).`;
         loadSeedStatus();
-        loadMaquinas();
+        loadMaquinas({ force: true });
         fillClientesSelect();
         showToast('Equipos demo asegurados por cliente. Abre una cotización y elige cualquier cliente.', 'success');
       } catch (e) {
@@ -11924,7 +12345,15 @@
   let refreshIntervalId = null;
   function finishBoot() {
     showLoginOverlay(false);
-    spawnAppParticles();
+    try {
+      if (typeof requestIdleCallback === 'function') {
+        requestIdleCallback(function () { try { spawnAppParticles(); } catch (_) {} }, { timeout: 2000 });
+      } else {
+        setTimeout(function () { try { spawnAppParticles(); } catch (_) {} }, 100);
+      }
+    } catch (_) {
+      spawnAppParticles();
+    }
     initTheme();
     syncSessionHeader();
     updateAuditTabVisibility();
@@ -11937,18 +12366,18 @@
     updateNotificationsBadge();
     initOnboarding();
     restoreLastTabOrDefault();
-    loadDashboard();
-    fillClientesSelect();
-    loadSeedStatus();
-    loadStorageHealth();
-    loadRecentAuditNotifications();
-    /* Backups: API exige admin si hay auth; no pedir antes del login (evita 401/toast en pantalla de acceso). */
-    {
+    loadDashboard()
+      .then(function () { fillClientesSelect(); })
+      .catch(function () { fillClientesSelect(); });
+    setTimeout(function () {
+      loadSeedStatus();
+      loadStorageHealth();
+      loadRecentAuditNotifications();
       const bootUser = getSessionUser();
       if (!serverConfig.authRequired || normalizeRole(bootUser && bootUser.role) === 'admin') {
         loadBackupFilesList();
       }
-    }
+    }, 0);
     window.addEventListener('focus', function () {
       const now = Date.now();
       if (now - lastQuickRefreshAt < 20000) return;
@@ -11968,12 +12397,12 @@
       refreshIntervalId = setInterval(function () {
         loadSeedStatus(true);
         loadDashboard();
-        loadClientes();
+        loadClientes({ force: true });
         loadRefacciones();
-        loadMaquinas();
-        if (canAccessCotizaciones()) loadCotizaciones();
+        loadMaquinas({ force: true });
+        if (canAccessCotizaciones()) loadCotizaciones({ force: true });
         loadIncidentes();
-        loadBitacoras();
+        loadBitacoras({ force: true });
       }, REFRESH_INTERVAL_MS);
     }
   }
