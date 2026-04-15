@@ -24,8 +24,8 @@ function getPublicConfig() {
     auditUi: AUTH_ENABLED,
     /** Si es false, no se insertan filas en audit_log (mutaciones no quedan registradas). */
     auditLoggingEnabled: AUDIT_ENABLED,
-    appName: process.env.APP_NAME || 'Gestor Administrativo',
-    shortName: process.env.APP_SHORT_NAME || 'Gestor Administrativo',
+    appName: process.env.APP_NAME || 'Servicio Tecnico',
+    shortName: process.env.APP_SHORT_NAME || 'Servicio Tecnico',
     tagline: process.env.APP_TAGLINE || 'Gestión de operaciones, incidentes, bitácora y catálogos en una sola plataforma',
     buildTag,
     logoUrl: (process.env.APP_LOGO_URL || '').trim(),
