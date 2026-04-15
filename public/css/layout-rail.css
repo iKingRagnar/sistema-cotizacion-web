@@ -109,11 +109,6 @@ body.sidebar-rail-collapsed .sidebar-global-strip {
   display: none;
 }
 
-/* Con sesión en el shell (login cerrado + token): rail solo lista módulos — sin sucursales/TC/alertas/estado aquí */
-body.app-session-active .sidebar-global-strip {
-  display: none !important;
-}
-
 /* Rail colapsado: solo el botón; el contenido principal usa el ancho liberado */
 body.sidebar-rail-collapsed .sidebar-nav {
   flex: 0 0 3.35rem;

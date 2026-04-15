@@ -462,19 +462,15 @@
     if (lbTagline) lbTagline.textContent = c.tagline || '';
     updateDocumentTitleFromActiveTab();
     const logo = qs('#header-brand-logo');
-    const logoWrap = qs('#header-brand-logo-wrap');
     if (logo) {
+      logo.classList.add('header-logo', 'header-logo--brand');
       if (c.logoUrl) {
         logo.src = c.logoUrl;
         logo.removeAttribute('aria-hidden');
         logo.alt = short;
-        logo.classList.add('header-logo--brand');
-        if (logoWrap) logoWrap.classList.remove('header-brand-logo-plate--matte');
       } else {
-        logo.src = 'fondos/universal-logo.jpg?v=2';
+        logo.src = 'fondos/universal-logo.jpg?v=3';
         logo.alt = 'Universal';
-        logo.classList.add('header-logo--brand');
-        if (logoWrap) logoWrap.classList.add('header-brand-logo-plate--matte');
       }
     }
     const desc = document.querySelector('meta[name="description"]');
@@ -775,19 +771,12 @@
     }
   }
 
-  /** Token + shell visible: oculta rail strip (sucursales/TC/alertas/estado) vía CSS `body.app-session-active`. */
-  function syncAppSessionChrome() {
-    const tok = !!getAuthToken();
-    const loginOpen = document.body.classList.contains('login-open');
-    document.body.classList.toggle('app-session-active', tok && !loginOpen);
-  }
   function showLoginOverlay(show) {
     const el = qs('#login-overlay');
     if (!el) return;
     el.classList.toggle('hidden', !show);
     document.body.classList.toggle('login-open', !!show);
     if (show) spawnLoginParticles();
-    syncAppSessionChrome();
   }
   function updateAuditTabVisibility() {
     const tab = qs('#tab-auditoria');
@@ -975,7 +964,6 @@
     }
     syncAdminHubCardVisibility();
     syncModuleDeleteZonesVisibility();
-    syncAppSessionChrome();
   }
   function setupLoginForm() {
     const form = qs('#login-form');
@@ -12531,7 +12519,6 @@
     updateAuditTabVisibility();
     initThemeToggleButton();
     syncSessionHeader();
-    syncAppSessionChrome();
     if (!getAuthToken()) {
       showLoginOverlay(true);
       const hint = qs('#login-hint');

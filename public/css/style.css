@@ -1136,28 +1136,12 @@ body.dark-theme #tabla-bitacoras th.th-actions {
   border-color: rgba(45, 212, 191, 0.6);
   box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.25) inset;
 }
-/* Logotipo con “mate” blanco en JPG: placa sólida + multiply (regla marca / cerebro §12.2) */
-.header-brand-logo-plate {
+.header-logo {
   flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   border-radius: 14px;
   overflow: hidden;
-  line-height: 0;
-}
-.header-brand-logo-plate--matte {
   background: #060a12;
   box-shadow: 0 3px 14px rgba(0, 0, 0, 0.28);
-  isolation: isolate;
-  padding: 1px 8px;
-}
-.header-brand-logo-plate--matte .header-logo--brand {
-  mix-blend-mode: multiply;
-}
-body.theme-industrial.appearance-light .header-brand-logo-plate--matte {
-  background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
-  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.12);
 }
 .header-logo--brand {
   width: auto;
@@ -1166,6 +1150,9 @@ body.theme-industrial.appearance-light .header-brand-logo-plate--matte {
   max-width: min(520px, 50vw);
   object-fit: contain;
   display: block;
+  border-radius: 14px;
+  /* Suaviza bordes del asset sin blend (el login sí usa blend para el mate blanco). */
+  clip-path: inset(1px round 13px);
 }
 .header-brand-text {
   display: flex;
@@ -4690,14 +4677,18 @@ body.login-open { overflow: hidden; }
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   box-sizing: border-box;
 }
-/* Misma lógica que header: placa oscura + multiply para JPG con fondo blanco */
-.login-brand-logo--matte {
-  background: #060a12;
+/*
+ * Solo pantalla de login: JPG con rectángulo blanco — placa ~ tono del panel + darken
+ * hace que el blanco tome el color de la placa y el texto negro siga legible (no usar en header).
+ */
+.login-brand-logo--blend {
+  background: #1e293b;
+  border-color: rgba(100, 116, 139, 0.45);
   isolation: isolate;
 }
-.login-brand-logo--matte .login-brand-hero-img,
-.login-brand-logo--matte img {
-  mix-blend-mode: multiply;
+.login-brand-logo--blend .login-brand-hero-img,
+.login-brand-logo--blend img {
+  mix-blend-mode: darken;
 }
 .login-brand-logo .login-brand-hero-img,
 .login-brand-logo img {
