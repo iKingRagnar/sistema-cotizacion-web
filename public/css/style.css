@@ -916,19 +916,39 @@ body.dark-theme #tabla-bitacoras th.th-actions {
 .header-inner {
   position: relative;
   z-index: 1;
-  max-width: 1400px;
-  margin: 0 auto;
-  display: flex;
-  flex-wrap: wrap;
+  /* Alineación 1:1 con el rail de “MÓDULOS”: 2 columnas (rail + contenido). */
+  --rail-w: clamp(248px, 26vw, 288px);
+  max-width: none;
+  margin: 0;
+  display: grid;
+  grid-template-columns: var(--rail-w) 1fr;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  column-gap: 1rem;
+  row-gap: 0.75rem;
+  padding-left: 0;
 }
 .header-brand {
+  width: 100%;
+  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
+  justify-content: stretch;
+}
+.header-brand-logo-wrap {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Si el asset trae negro “de más”, aquí se pierde contra el fondo */
+  background: rgba(2, 6, 23, 0.32);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.header-title {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 }
 .header-alerts {
   flex-shrink: 0;
@@ -985,6 +1005,7 @@ body.dark-theme #tabla-bitacoras th.th-actions {
   flex: 1;
   min-width: 0;
   justify-content: flex-start;
+  grid-column: 2;
 }
 .header-actions-primary {
   display: flex;
@@ -1143,10 +1164,10 @@ body.dark-theme #tabla-bitacoras th.th-actions {
   box-shadow: 0 3px 14px rgba(0, 0, 0, 0.28);
 }
 .header-logo--brand {
-  width: auto;
+  width: 100%;
   /* Mantener el logo dentro del alto del header (sin “rebasar” la franja). */
   height: 72px;
-  max-width: min(460px, 42vw);
+  max-width: 100%;
   object-fit: contain;
   border-radius: 14px;
   overflow: hidden;
@@ -3389,7 +3410,11 @@ textarea.filter-input:focus { outline: none; border-color: #1e3a5f; box-shadow: 
 @media (max-width: 768px) {
   /* Alinea el borde izquierdo con el rail (padding 0.65rem) */
   .header { padding: 0.85rem 0.65rem; }
-  .header-inner { flex-direction: column; align-items: flex-start; }
+  .header-inner {
+    grid-template-columns: 1fr;
+    padding-left: 0;
+  }
+  .header-title { grid-column: 1; }
   .header-actions { width: 100%; }
   .header-actions-primary { width: 100%; }
   .header-actions-tail {
@@ -3398,8 +3423,8 @@ textarea.filter-input:focus { outline: none; border-color: #1e3a5f; box-shadow: 
     justify-content: flex-end;
   }
   .header-alerts { width: 100%; justify-content: flex-start; }
-  .header-brand { gap: 0.75rem; }
-  .header-logo--brand { height: 64px; max-width: min(420px, 92vw); }
+  .header-brand { width: 100%; }
+  .header-logo--brand { height: 64px; max-width: 100%; }
   .header .header-brand-service { font-size: 1.15rem; }
   .header-powered-by {
     font-size: 0.88rem;
