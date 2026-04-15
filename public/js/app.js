@@ -1057,7 +1057,7 @@
   }
   /** Título de la pestaña del navegador según la sección activa */
   function updateDocumentTitle(panelId) {
-    const base = serverConfig.shortName || serverConfig.appName || 'Cotización Pro';
+    const base = serverConfig.shortName || serverConfig.appName || 'Servicio Técnico';
     const map = {
       dashboards: 'Dashboard',
       clientes: 'Clientes',
@@ -6826,8 +6826,8 @@
                   <th>Máquina</th>
                   <th>Descripción</th>
                   <th>Cant</th>
-                  <th>P.u. (USD)</th>
-                  <th>Subt.</th>
+                  <th id="cot-lineas-th-pu">P.u. (MXN)</th>
+                  <th id="cot-lineas-th-sub">Subt. (MXN)</th>
                   <th class="th-actions"></th>
                 </tr>
               </thead>
@@ -6954,14 +6954,15 @@
 
           <div class="form-row">
             <div class="form-group" id="cot-line-cant-group">
-              <label>Cantidad / Horas</label>
+              <label id="cot-line-cant-label">Cantidad / Horas</label>
               <input type="number" id="cot-line-cant" step="0.25" min="0" value="1">
             </div>
             <div class="form-group">
-              <label>Precio unitario</label>
+              <label id="cot-line-precio-label">Precio unitario</label>
               <input type="number" id="cot-line-precio" step="0.01" min="0" value="0">
             </div>
           </div>
+          <p id="cot-line-ref-eq-hint" class="hint" style="display:none;margin:0.35rem 0 0;font-size:0.78rem">Catálogo en <strong>USD</strong>; aquí el precio unitario va en <strong>MXN</strong> (lista USD × tipo de cambio). Los totales del paso 3 siguen en la moneda de la cotización.</p>
 
           <div class="form-actions cotz-add-actions">
             <button type="button" class="btn primary" id="cot-line-add"><i class="fas fa-plus"></i> Agregar a la cotización</button>
@@ -6990,6 +6991,27 @@
     const modalRoot = qs('#modal-body');
     function qm(sel) {
       return modalRoot ? modalRoot.querySelector(sel) : null;
+    }
+    function cotzMonedaModal() {
+      return (qm('#cotz-moneda')?.value || 'USD').toUpperCase();
+    }
+    function cotzTcModal() {
+      const t = Number(qm('#cotz-tc')?.value);
+      return t > 0 ? t : 17;
+    }
+    /** Lista catálogo en USD → valor mostrado en MXN cuando la cotización es USD. */
+    function listaUsdTomxnDisplayed(usd) {
+      if (cotzMonedaModal() !== 'USD') return Number(usd) || 0;
+      return Math.round(Number(usd || 0) * cotzTcModal() * 100) / 100;
+    }
+    /** Input en MXN (ref/equipo, cot USD) → precio unitario en USD para la API. */
+    function precioRefEquipoInputToStoredUsd(raw, tipoLinea) {
+      if (tipoLinea !== 'refaccion' && tipoLinea !== 'equipo') return Number(raw) || 0;
+      if (cotzMonedaModal() !== 'USD') return Number(raw) || 0;
+      const tc = cotzTcModal();
+      const v = Number(raw) || 0;
+      if (tc <= 0) return v;
+      return Math.round((v / tc) * 1e6) / 1e6;
     }
     function getCotzFechaInput() {
       return qm('#cotz-fecha') || qs('#modal-body #cotz-fecha');
@@ -7024,6 +7046,12 @@
       if (!tbody) return;
       tbody.innerHTML = '';
       const rows = Array.isArray(lineas) ? lineas : [];
+      const tc = cotzTcModal();
+      const mon = cotzMonedaModal();
+      const thPu = qm('#cot-lineas-th-pu');
+      const thSub = qm('#cot-lineas-th-sub');
+      if (thPu) thPu.textContent = mon === 'USD' ? 'P.u. (MXN)' : ('P.u. (' + mon + ')');
+      if (thSub) thSub.textContent = mon === 'USD' ? 'Subt. (MXN)' : ('Subt. (' + mon + ')');
       if (!rows.length) {
         tbody.innerHTML = '<tr><td colspan="8" class="empty">No hay líneas. Agrega refacciones, vueltas o mano de obra.</td></tr>';
         return;
@@ -7045,14 +7073,18 @@
         const tipoLbl = l.tipo_linea === 'equipo' ? 'equipo' : String(l.tipo_linea || '');
         const codigoCell = l.codigo ? escapeHtml(String(l.codigo)) : '—';
         const maqCell = l.maquina_nombre ? escapeHtml(String(l.maquina_nombre)) : '—';
+        const puUsd = Number(l.precio_unitario || 0);
+        const subtUsd = Number(l.subtotal || 0);
+        const puDisp = mon === 'USD' ? (puUsd * tc) : puUsd;
+        const subtDisp = mon === 'USD' ? (subtUsd * tc) : subtUsd;
         tr.innerHTML = `
           <td>${escapeHtml(tipoLbl)}</td>
           <td class="td-text-wrap">${codigoCell}</td>
           <td class="td-text-wrap">${maqCell}</td>
           <td class="td-text-wrap">${escapeHtml(String(desc || ''))}</td>
           <td class="num">${Number(l.cantidad || 0)}</td>
-          <td class="num">${Number(l.precio_unitario || 0).toFixed(2)}</td>
-          <td class="num">${Number(l.subtotal || 0).toFixed(2)}</td>
+          <td class="num">${puDisp.toFixed(2)}</td>
+          <td class="num">${subtDisp.toFixed(2)}</td>
           <td class="th-actions">
             <button type="button" class="btn small outline btn-edit-line" data-id="${l.id}" title="Editar"><i class="fas fa-pen"></i></button>
             <button type="button" class="btn small danger btn-del-line" data-id="${l.id}" title="Eliminar"><i class="fas fa-trash"></i></button>
@@ -7201,7 +7233,11 @@
       if (refEl && d.refaccion_id) refEl.value = String(d.refaccion_id);
       if (descEl) descEl.value = d.descripcion || '';
       if (cantEl) cantEl.value = String(Number(d.cantidad || 1));
-      if (precioEl) precioEl.value = String(Number(d.precio_unitario || 0));
+      if (precioEl) {
+        const storedUsd = Number(d.precio_unitario || 0);
+        const showMxn = cotzMonedaModal() === 'USD' && (tl === 'refaccion' || tl === 'equipo');
+        precioEl.value = showMxn ? listaUsdTomxnDisplayed(storedUsd).toFixed(2) : storedUsd.toFixed(2);
+      }
     }
     function showLinePanel() {
       const p = qm('#cot-line-panel');
@@ -7332,18 +7368,19 @@
     }
     function fillPrecioListaLinea() {
       const t = qm('#cot-line-tipo')?.value || 'refaccion';
-      const tc = Number(qm('#cotz-tc')?.value) || 17;
-      const mon = (qm('#cotz-moneda')?.value || 'USD').toUpperCase();
+      const tc = cotzTcModal();
+      const mon = cotzMonedaModal();
       const precioEl = qm('#cot-line-precio');
       if (t === 'refaccion') {
         const rid = Number(qm('#cot-line-refaccion')?.value);
         const r = (refaccionesCache || []).find((x) => Number(x.id) === rid);
         if (r && precioEl) {
           const usd = resolveRefaccionPrecioUsd(r);
-          const pu = mon === 'USD'
-            ? (usd != null ? usd : 0)
-            : (usd != null && usd > 0 ? Math.round(usd * tc * 100) / 100 : 0);
-          precioEl.value = pu.toFixed(2);
+          if (mon === 'USD') {
+            precioEl.value = (usd != null ? listaUsdTomxnDisplayed(usd) : 0).toFixed(2);
+          } else {
+            precioEl.value = (usd != null && usd > 0 ? Math.round(usd * tc * 100) / 100 : 0).toFixed(2);
+          }
         }
       }
       if (t === 'equipo') {
@@ -7351,8 +7388,11 @@
         const m = cotMaqPool().find((x) => Number(x.id) === mid);
         if (m && precioEl) {
           const usd = Number(m.precio_lista_usd) || 0;
-          const pu = mon === 'USD' ? usd : (usd > 0 ? Math.round(usd * tc * 100) / 100 : 0);
-          precioEl.value = pu.toFixed(2);
+          if (mon === 'USD') {
+            precioEl.value = listaUsdTomxnDisplayed(usd).toFixed(2);
+          } else {
+            precioEl.value = (usd > 0 ? Math.round(usd * tc * 100) / 100 : 0).toFixed(2);
+          }
         }
       }
       if (t === 'vuelta') {
@@ -7413,10 +7453,23 @@
       if (bitWrap) bitWrap.style.display = t === 'mano_obra' ? '' : 'none';
       if (moWrap) moWrap.style.display = t === 'mano_obra' ? '' : 'none';
       if (vuWrap) vuWrap.style.display = t === 'vuelta' ? '' : 'none';
-      const cantLab = qm('#cot-line-cant')?.closest('.form-group')?.querySelector('label');
+      const cantLab = qm('#cot-line-cant-label');
       const cantGroup = qm('#cot-line-cant-group');
+      const precioLab = qm('#cot-line-precio-label');
+      const refEqHint = qm('#cot-line-ref-eq-hint');
+      const mon = cotzMonedaModal();
       if (cantGroup) cantGroup.style.display = t === 'mano_obra' || t === 'vuelta' ? 'none' : '';
-      if (cantLab) cantLab.textContent = t === 'vuelta' ? 'Cantidad (fija 1 en servidor)' : 'Cantidad / Horas';
+      if (cantLab) {
+        if (t === 'vuelta') cantLab.textContent = 'Cantidad (fija 1 en servidor)';
+        else if (t === 'refaccion' || t === 'equipo' || t === 'otro') cantLab.textContent = 'Cantidad';
+        else cantLab.textContent = 'Cantidad / Horas';
+      }
+      if (precioLab) {
+        if (mon === 'USD' && (t === 'refaccion' || t === 'equipo')) precioLab.textContent = 'Precio unitario (MXN)';
+        else if (t === 'mano_obra') precioLab.textContent = 'Precio unitario (USD)';
+        else precioLab.textContent = 'Precio unitario';
+      }
+      if (refEqHint) refEqHint.style.display = mon === 'USD' && (t === 'refaccion' || t === 'equipo') ? '' : 'none';
       if (t === 'mano_obra') calcManoObraPrice();
       if (t === 'refaccion' || t === 'equipo') fillPrecioListaLinea();
       if (t === 'vuelta') {
@@ -7579,7 +7632,8 @@
       if (!currentCotId) return;
       const tipoLinea = qm('#cot-line-tipo')?.value || 'refaccion';
       const cant = Number(qm('#cot-line-cant')?.value) || 0;
-      const precio = Number(qm('#cot-line-precio')?.value) || 0;
+      const precioRaw = Number(qm('#cot-line-precio')?.value) || 0;
+      const precio = precioRefEquipoInputToStoredUsd(precioRaw, tipoLinea);
       const maqEquipo = Number(qm('#cot-line-maq')?.value) || null;
       const maqOpt = Number(qm('#cot-line-maq-opt')?.value) || null;
       let maqId = null;
@@ -7702,6 +7756,13 @@
           return `<option value="${b.id}" ${sel}>${escapeHtml(label)}</option>`;
         }))
         .join('');
+      const monEdit = cotzMonedaModal();
+      const tlStored = String(linea.tipo_linea || '');
+      const puStored = Number(linea.precio_unitario || 0);
+      const precioEditInitial =
+        monEdit === 'USD' && (tlStored === 'refaccion' || tlStored === 'equipo')
+          ? listaUsdTomxnDisplayed(puStored).toFixed(2)
+          : puStored.toFixed(2);
       const html = `
         <div class="form-group">
           <label>Tipo de línea</label>
@@ -7743,14 +7804,14 @@
           </div>
           <p class="hint" style="margin:0;font-size:0.8rem">Precio en <strong>0</strong> recalcula por tarifas al guardar; si capturas precio &gt; 0 queda manual.</p>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Cantidad / Horas</label>
+        <div class="form-row" id="e-line-cant-precio-row">
+          <div class="form-group" id="e-line-cant-group">
+            <label id="e-line-cant-label">Cantidad</label>
             <input type="number" id="e-line-cant" step="0.25" min="0" value="${Number(linea.cantidad || 0)}">
           </div>
           <div class="form-group">
-            <label>Precio unitario</label>
-            <input type="number" id="e-line-precio" step="0.01" min="0" value="${Number(linea.precio_unitario || 0)}">
+            <label id="e-line-precio-label">Precio unitario</label>
+            <input type="number" id="e-line-precio" step="0.01" min="0" value="${precioEditInitial}">
           </div>
         </div>
         <div class="form-actions">
@@ -7777,6 +7838,21 @@
         if (descWrap) descWrap.style.display = t === 'refaccion' || t === 'equipo' ? 'none' : '';
         if (bitWrap) bitWrap.style.display = t === 'mano_obra' ? '' : 'none';
         if (vuWrap) vuWrap.style.display = t === 'vuelta' ? '' : 'none';
+        const cantGroup = qs('#e-line-cant-group');
+        const cantLab = qs('#e-line-cant-label');
+        const precioLab = qs('#e-line-precio-label');
+        const monE = (qm('#cotz-moneda')?.value || 'USD').toUpperCase();
+        if (cantGroup) cantGroup.style.display = t === 'mano_obra' || t === 'vuelta' ? 'none' : '';
+        if (cantLab) {
+          if (t === 'vuelta') cantLab.textContent = 'Cantidad (fija 1 en servidor)';
+          else if (t === 'refaccion' || t === 'equipo' || t === 'otro') cantLab.textContent = 'Cantidad';
+          else cantLab.textContent = 'Cantidad / Horas';
+        }
+        if (precioLab) {
+          if (monE === 'USD' && (t === 'refaccion' || t === 'equipo')) precioLab.textContent = 'Precio unitario (MXN)';
+          else if (t === 'mano_obra') precioLab.textContent = 'Precio unitario (USD)';
+          else precioLab.textContent = 'Precio unitario';
+        }
       }
       function fillEditPrecioLista() {
         const t = qs('#e-line-tipo')?.value || 'otro';
@@ -7789,9 +7865,12 @@
           const r = (refaccionesCache || []).find((x) => Number(x.id) === rid);
           if (r) {
             const usd = resolveRefaccionPrecioUsd(r);
-            const pu = mon === 'USD'
-              ? (usd != null ? usd : 0)
-              : (usd != null && usd > 0 ? Math.round(usd * tc * 100) / 100 : 0);
+            const pu =
+              mon === 'USD'
+                ? (usd != null ? listaUsdTomxnDisplayed(usd) : 0)
+                : usd != null && usd > 0
+                  ? Math.round(usd * tc * 100) / 100
+                  : 0;
             precioEl.value = pu.toFixed(2);
           }
         } else if (t === 'equipo') {
@@ -7799,7 +7878,7 @@
           const m = cotMaqPool().find((x) => Number(x.id) === mid);
           if (m) {
             const usd = Number(m.precio_lista_usd) || 0;
-            const pu = mon === 'USD' ? usd : (usd > 0 ? Math.round(usd * tc * 100) / 100 : 0);
+            const pu = mon === 'USD' ? listaUsdTomxnDisplayed(usd) : usd > 0 ? Math.round(usd * tc * 100) / 100 : 0;
             precioEl.value = pu.toFixed(2);
           }
         }
@@ -7833,11 +7912,13 @@
             return;
           }
         }
+        const precioRawEdit = Number(qs('#e-line-precio')?.value) || 0;
+        const precioUsdStored = precioRefEquipoInputToStoredUsd(precioRawEdit, tipoLinea);
         const payload = {
           tipo_linea: tipoLinea,
           maquina_id,
           cantidad: Number(qs('#e-line-cant')?.value) || 0,
-          precio_unitario: Number(qs('#e-line-precio')?.value) || 0,
+          precio_unitario: precioUsdStored,
           bitacora_id: Number(qs('#e-line-bit')?.value) || null,
         };
         if (tipoLinea === 'refaccion') {
