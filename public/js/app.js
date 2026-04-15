@@ -250,6 +250,10 @@
     const u = getSessionUser();
     return !!(u && normalizeRole(u.role) === 'admin');
   }
+  /** Demo, respaldos y borrado masivo: solo admin con login (misma política que módulos solo admin). */
+  function canAccessDemoAdminPanel() {
+    return canAccessAdminOnlyModules();
+  }
   /** Descargar vistas previas / archivos subidos: mismo criterio que módulos solo admin (sin auth en local, todos; con auth, solo rol admin). */
   function canDownloadUploadedMedia() {
     return canAccessAdminOnlyModules();
@@ -702,6 +706,16 @@
     if (tabUsers) tabUsers.classList.toggle('hidden', !showUsers);
     const showCatAdmin = !!(serverConfig.authRequired && u && u.role === 'admin');
     if (tabCat) tabCat.classList.toggle('hidden', !showCatAdmin);
+    const tabDemo = qs('#tab-demo');
+    const showDemoTab = canAccessDemoAdminPanel();
+    if (tabDemo) tabDemo.classList.toggle('hidden', !showDemoTab);
+    const goBackups = qs('#dashboard-go-backups');
+    if (goBackups) goBackups.classList.toggle('hidden', !showDemoTab);
+    if (!showDemoTab) {
+      const activeTab = document.querySelector('.tab.active');
+      const at = activeTab && activeTab.dataset && activeTab.dataset.tab;
+      if (at === 'demo') showPanel('dashboards');
+    }
     if (serverConfig.authRequired && u && u.role !== 'admin') {
       const activeTab = document.querySelector('.tab.active');
       const at = activeTab && activeTab.dataset && activeTab.dataset.tab;
@@ -730,7 +744,7 @@
     const showCat = !!(serverConfig.authRequired && u && normalizeRole(u.role) === 'admin');
     const showComm = canViewCommissions();
     const showAdminMod = canAccessAdminOnlyModules();
-    const showDemo = !!u;
+    const showDemo = canAccessDemoAdminPanel();
     const map = [
       ['admin-hub-card-usuarios', showUsers],
       ['admin-hub-card-auditoria', showAudit],
@@ -1021,6 +1035,10 @@
         showToast('Solo el administrador puede gestionar categorías y subcategorías.', 'error');
         return;
       }
+    }
+    if (id === 'demo' && !canAccessDemoAdminPanel()) {
+      showToast('Solo el administrador puede acceder a Cargar demo, respaldos y acciones masivas.', 'error');
+      return;
     }
     if ((id === 'bonos' || id === 'viajes') && !canViewCommissions()) {
       showToast('Solo el administrador puede ver bonos, viajes y comisiones.', 'error');
@@ -10988,7 +11006,7 @@
 
   /** Primera visita: tips rápidos (se guarda al cerrar el modal) */
   function startGuidedTour() {
-    const steps = [
+    const stepsAll = [
       { panel: 'dashboards', title: 'Dashboard ejecutivo', text: 'Aquí ves KPIs, scorecards, comparativos y gráficas. Puedes cruzar filtros con clics como en BI.', icon: 'fa-chart-pie', gradient: 'g-teal', bullets: ['Cruza filtros por entidad y periodo', 'Monitorea indicadores semanales/mensuales', 'Accede rápido a respaldos y reportes'] },
       { panel: 'clientes', title: 'Catálogo de clientes', text: 'Registra clientes, RFC, ciudad y contacto. La ciudad alimenta el filtro global por sucursal.', icon: 'fa-users', gradient: 'g-blue', bullets: ['Alta rápida con validaciones', 'Datos listos para cotizaciones/incidentes', 'Ciudad usada para filtro global'] },
       { panel: 'cotizaciones', title: 'Cotizaciones profesionales', text: 'Crea y exporta cotizaciones. Desde aquí también puedes generar PDF cliente o interno.', icon: 'fa-file-invoice-dollar', gradient: 'g-indigo', bullets: ['Flujo de creación y edición ágil', 'PDF de una página optimizado A4', 'Vista previa antes de imprimir'] },
@@ -10996,6 +11014,9 @@
       { panel: 'bitacoras', title: 'Bitácora de horas', text: 'Registra actividades y horas por incidente/cotización para trazabilidad.', icon: 'fa-clock', gradient: 'g-violet', bullets: ['Historial técnico por actividad', 'Base para control de productividad', 'Reporte PDF cliente/interno'] },
       { panel: 'demo', title: 'Respaldos y persistencia', text: 'Aquí gestionas estado de persistencia, backups manuales y automáticos.', icon: 'fa-shield-halved', gradient: 'g-slate', bullets: ['Exporta/importa respaldo JSON', 'Backups automáticos con retención', 'Estado de almacenamiento en tiempo real'] },
     ];
+    const steps = stepsAll.filter(function (s) {
+      return s.panel !== 'demo' || canAccessDemoAdminPanel();
+    });
     let idx = 0;
     function draw() {
       const s = steps[idx];
@@ -11091,6 +11112,10 @@
         try { localStorage.removeItem(LAST_TAB_KEY); } catch (_) {}
         last = null;
       }
+      if (last === 'demo' && !canAccessDemoAdminPanel()) {
+        try { localStorage.removeItem(LAST_TAB_KEY); } catch (_) {}
+        last = null;
+      }
       if (last && VALID_TABS.indexOf(last) >= 0) showPanel(last);
     } catch (_) {}
   }
@@ -11112,7 +11137,7 @@
       { id: 'bonos', label: 'Bonos', icon: 'fa-award' },
       { id: 'viajes', label: 'Viajes', icon: 'fa-plane' },
       { id: 'bitacoras', label: 'Bitácora de horas', icon: 'fa-clock' },
-      { id: 'demo', label: 'Cargar demo', icon: 'fa-database' },
+      ...(canAccessDemoAdminPanel() ? [{ id: 'demo', label: 'Cargar demo', icon: 'fa-database' }] : []),
       { id: 'acerca', label: 'Acerca de', icon: 'fa-info-circle' },
     ];
     const uPal = getSessionUser();
