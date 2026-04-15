@@ -1769,7 +1769,16 @@ app.get('/api/tipo-cambio-banxico', async (req, res) => {
     const fixerConfigured = !!(process.env.FIXER_API_KEY || '').trim();
     const erConfigured = !!(process.env.EXCHANGE_RATE_API_KEY || '').trim();
     let dbv = await readTipoCambioBanxicoFromDb();
-    if (!(Number(dbv.valor) > 0)) {
+    const force =
+      String(req.query.refresh || req.query.force || '').trim() === '1' ||
+      String(req.query.refresh || req.query.force || '').trim().toLowerCase() === 'true';
+    const maxAgeMs = BANXICO_REFRESH_MS;
+    const updatedAtMs = dbv.actualizado ? new Date(String(dbv.actualizado)).getTime() : NaN;
+    const isStale = !Number.isFinite(updatedAtMs) || (Date.now() - updatedAtMs) > maxAgeMs;
+
+    // En serverless (Vercel) los intervalos no son confiables; refrescamos por demanda si está “viejo”
+    // o si el cliente lo solicita explícitamente.
+    if (force || !(Number(dbv.valor) > 0) || isStale) {
       await refreshTipoCambioReferencia();
       dbv = await readTipoCambioBanxicoFromDb();
     }
@@ -1782,6 +1791,7 @@ app.get('/api/tipo-cambio-banxico', async (req, res) => {
       token_configured: tokenConfigured,
       fixer_configured: fixerConfigured,
       exchangerate_configured: erConfigured,
+      stale: isStale,
       intervalo_horas: Math.round(BANXICO_REFRESH_MS / (60 * 60 * 1000)),
       ultima_consulta_ok: banxicoPollState.lastOk,
       error_ultima_consulta: banxicoPollState.lastError,
