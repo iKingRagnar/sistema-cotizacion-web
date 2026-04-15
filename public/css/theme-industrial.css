@@ -1432,3 +1432,121 @@ body.theme-industrial #panel-refacciones .ref-cat-pill--part {
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
+
+/* Clientes: miniatura constancia — sin caja blanca (theme-industrial no usa .dark-theme) */
+body.theme-industrial .cliente-const-slot {
+  background: transparent !important;
+  border-color: rgba(148, 163, 184, 0.4);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+}
+body.theme-industrial .cliente-const-slot--pdf {
+  background: rgba(127, 29, 29, 0.25) !important;
+  border-color: rgba(248, 113, 113, 0.35);
+}
+body.theme-industrial .cliente-const-mini {
+  object-fit: contain;
+  object-position: center;
+}
+
+/* Notificaciones (campana): cristal, sin panel blanco */
+body.theme-industrial .notifications-panel {
+  background: rgba(15, 23, 42, 0.42) !important;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.4);
+  -webkit-backdrop-filter: blur(22px) saturate(125%);
+  backdrop-filter: blur(22px) saturate(125%);
+  color: #e2e8f0;
+}
+body.theme-industrial .notifications-header {
+  border-bottom-color: rgba(148, 163, 184, 0.22);
+}
+body.theme-industrial .notifications-header strong {
+  color: #f8fafc;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+body.theme-industrial .notifications-date {
+  background: rgba(2, 6, 23, 0.35) !important;
+  border-color: rgba(148, 163, 184, 0.35) !important;
+  color: #e2e8f0 !important;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+body.theme-industrial .notifications-tools .btn.small.outline {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(148, 163, 184, 0.35);
+  color: #f1f5f9;
+}
+body.theme-industrial .notifications-tools .btn.small.outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(226, 232, 240, 0.45);
+}
+body.theme-industrial .notification-item {
+  color: #e2e8f0;
+  border-bottom-color: rgba(51, 65, 85, 0.55);
+  border-left-color: rgba(148, 163, 184, 0.35);
+  background: rgba(2, 6, 23, 0.12);
+}
+body.theme-industrial .notification-item .meta {
+  color: #94a3b8;
+}
+body.theme-industrial .notification-item.level-error {
+  background: rgba(127, 29, 29, 0.22) !important;
+}
+body.theme-industrial .notification-item.level-info {
+  background: rgba(30, 58, 138, 0.2) !important;
+}
+body.theme-industrial .notification-item.level-success {
+  background: rgba(6, 78, 59, 0.22) !important;
+}
+
+/* Command palette (“Más opciones…”) */
+body.theme-industrial .command-palette {
+  background: rgba(2, 6, 23, 0.45);
+  -webkit-backdrop-filter: blur(12px) saturate(118%);
+  backdrop-filter: blur(12px) saturate(118%);
+}
+body.theme-industrial .command-palette-box {
+  background: rgba(15, 23, 42, 0.42) !important;
+  border: 1px solid rgba(148, 163, 184, 0.28) !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.42);
+  -webkit-backdrop-filter: blur(22px) saturate(125%);
+  backdrop-filter: blur(22px) saturate(125%);
+  color: #e2e8f0;
+}
+body.theme-industrial .command-palette-box input {
+  border-bottom-color: rgba(148, 163, 184, 0.25) !important;
+  color: #f8fafc;
+}
+body.theme-industrial .command-palette-item:hover,
+body.theme-industrial .command-palette-item:focus {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+body.theme-industrial .command-palette-item:focus-visible {
+  outline: 2px solid rgba(45, 212, 191, 0.55);
+  outline-offset: -2px;
+}
+
+/* Botones peligro: silueta cristal, mismo lenguaje visual */
+body.theme-industrial .btn.danger {
+  background: rgba(220, 38, 38, 0.2);
+  color: #fecaca;
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  box-shadow: none;
+  -webkit-backdrop-filter: blur(8px) saturate(115%);
+  backdrop-filter: blur(8px) saturate(115%);
+}
+body.theme-industrial .btn.danger:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.36);
+  color: #fff;
+  border-color: rgba(252, 165, 165, 0.55);
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.25);
+}
+body.theme-industrial .btn.danger.outline {
+  background: transparent;
+  color: #fca5a5;
+  border-color: rgba(248, 113, 113, 0.5);
+}
+body.theme-industrial .btn.danger.outline:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.15);
+  color: #fecaca;
+}
