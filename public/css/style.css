@@ -2209,6 +2209,30 @@ body.dark-theme .data-table thead tr:first-child th { background: #334155; box-s
   gap: 0.25rem;
 }
 
+/* Usuarios (admin): nombre + botón editar alineados a la derecha */
+#tabla-usuarios.data-table td.usuarios-td-nombre {
+  max-width: none;
+  overflow: visible;
+}
+.usuarios-td-nombre {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  vertical-align: middle;
+}
+.usuarios-display-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+}
+.usuarios-nombre-actions {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
 .data-table td.empty.filter-empty { padding: 1.25rem; color: #64748b; }
 .data-table td.empty.filter-empty .clear-filters-inline { margin-left: 0.5rem; }
 .sla-cell { white-space: nowrap; }

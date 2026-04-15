@@ -277,12 +277,17 @@ body.theme-industrial .app-footer .footer-version {
   color: #94a3b8;
 }
 
+/* Login en industrial: cristal (no panel sólido); refino con body.login-open abajo */
 body.theme-industrial .login-card {
-  background: #1e293b;
-  border: 1px solid #475569;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.4);
+  -webkit-backdrop-filter: blur(22px) saturate(125%);
+  backdrop-filter: blur(22px) saturate(125%);
 }
 body.theme-industrial .login-card h2 {
   color: #f8fafc;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 body.theme-industrial .login-hint {
   color: #94a3b8;
@@ -1586,4 +1591,97 @@ body.theme-industrial #map-prospeccion .leaflet-control-attribution {
 }
 body.theme-industrial #map-prospeccion .leaflet-control-attribution a {
   color: #cbd5e1 !important;
+}
+
+/* --- Carga final: menú monito = misma receta que .notifications-panel (gana a hojas anteriores) --- */
+body.theme-industrial .header-profile-menu {
+  background: rgba(15, 23, 42, 0.42) !important;
+  border: 1px solid rgba(148, 163, 184, 0.28) !important;
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.4) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(125%) !important;
+  backdrop-filter: blur(22px) saturate(125%) !important;
+  color: #e2e8f0 !important;
+}
+body.theme-industrial .header-profile-menu-user {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.22) !important;
+  background: rgba(2, 6, 23, 0.35) !important;
+}
+body.theme-industrial .header-profile-menu-user strong {
+  color: #f8fafc !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+body.theme-industrial .header-profile-menu-meta {
+  color: #94a3b8 !important;
+}
+body.theme-industrial .header-profile-menu-item {
+  color: #e2e8f0 !important;
+  background: transparent !important;
+}
+body.theme-industrial .header-profile-menu-item:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+body.theme-industrial .header-profile-menu-item.danger:hover {
+  background: rgba(220, 38, 38, 0.22) !important;
+}
+
+/* Login (pre-sesión): fondo protagonista como la app + burbujas más visibles + paneles casi cristal */
+body.theme-industrial.login-open #login-overlay {
+  background-image:
+    linear-gradient(125deg, rgba(5, 10, 22, 0.52) 0%, rgba(12, 18, 36, 0.42) 45%, rgba(6, 20, 40, 0.38) 100%),
+    linear-gradient(180deg, rgba(2, 6, 23, 0.2) 0%, transparent 42%, rgba(2, 6, 23, 0.32) 100%),
+    url('/assets/fondo-glass.jpg');
+  background-size: cover, cover, cover;
+  background-position: center, center, center;
+}
+body.theme-industrial.login-open #login-overlay::before {
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(45, 212, 191, 0.34) 0%, transparent 52%),
+    radial-gradient(circle at 90% 78%, rgba(167, 139, 250, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 48% 92%, rgba(251, 191, 36, 0.14) 0%, transparent 58%),
+    radial-gradient(circle at 70% 30%, rgba(56, 189, 248, 0.12) 0%, transparent 45%);
+}
+body.theme-industrial.login-open .login-brand-panel {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.05) 0%, rgba(2, 6, 23, 0.22) 100%);
+}
+body.theme-industrial.login-open .login-form-panel {
+  background: rgba(2, 6, 23, 0.08);
+}
+body.theme-industrial.login-open .login-card {
+  background: rgba(15, 23, 42, 0.32) !important;
+  border-color: rgba(148, 163, 184, 0.26) !important;
+}
+body.theme-industrial.login-open .login-field label {
+  color: #cbd5e1;
+}
+body.theme-industrial.login-open .login-field input {
+  background: rgba(2, 6, 23, 0.45) !important;
+  border-color: rgba(148, 163, 184, 0.35) !important;
+  color: #f8fafc !important;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+body.theme-industrial.login-open .login-roles-info {
+  border-top: 1px solid rgba(148, 163, 184, 0.22);
+}
+body.theme-industrial.login-open .login-roles-title {
+  color: #cbd5e1;
+}
+body.theme-industrial.login-open .login-role-card {
+  background: rgba(15, 23, 42, 0.28) !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+body.theme-industrial.login-open .login-role-card strong {
+  color: #f1f5f9 !important;
+}
+body.theme-industrial.login-open .login-role-card span {
+  color: #94a3b8 !important;
+}
+body.theme-industrial.login-open #login-overlay .login-particle {
+  box-shadow:
+    0 0 14px 3px rgba(255, 255, 255, 0.48),
+    0 0 36px 8px rgba(56, 189, 248, 0.32),
+    0 0 52px 14px rgba(167, 139, 250, 0.22);
+  filter: saturate(1.15);
 }

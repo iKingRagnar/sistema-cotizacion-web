@@ -638,11 +638,12 @@
       'rgba(255,255,255,0.78)', 'rgba(94,234,212,0.88)', 'rgba(129,140,248,0.86)',
       'rgba(253,224,71,0.82)',
     ];
-    const count = 32;
+    const industrial = document.body && document.body.classList.contains('theme-industrial');
+    const count = industrial ? 52 : 32;
     for (let i = 0; i < count; i++) {
       const p = document.createElement('span');
       p.className = 'login-particle';
-      const size = (Math.random() * 7 + 4).toFixed(1) + 'px';
+      const size = (Math.random() * (industrial ? 9 : 7) + (industrial ? 5 : 4)).toFixed(1) + 'px';
       const left = (Math.random() * 100).toFixed(1) + '%';
       const dur = (Math.random() * 10 + 7).toFixed(1) + 's';
       const delay = (Math.random() * 10).toFixed(1) + 's';
@@ -8208,11 +8209,11 @@
             id +
             '"><td>' +
             escapeHtml(r.username) +
-            '</td><td><span class="usuarios-display-label">' +
+            '</td><td class="usuarios-td-nombre"><span class="usuarios-display-label">' +
             escapeHtml(r.display_name || '—') +
-            '</span> <button type="button" class="btn small outline usuarios-edit-display-btn" data-user-id="' +
+            '</span><span class="usuarios-nombre-actions"><button type="button" class="btn small outline usuarios-edit-display-btn" data-user-id="' +
             id +
-            '" title="Editar nombre completo"><i class="fas fa-user-edit" aria-hidden="true"></i><span class="visually-hidden"> Editar nombre</span></button></td><td>' +
+            '" title="Editar nombre completo"><i class="fas fa-user-edit" aria-hidden="true"></i><span class="visually-hidden"> Editar nombre</span></button></span></td><td>' +
             renderUsuariosRoleSelect(id, r.role || 'invitado') +
             '</td><td>' +
             renderUsuariosTecnicoSelect(id, tecList, r.tecnico_id) +
