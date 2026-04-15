@@ -688,7 +688,7 @@
         <div class="tarifas-section tarifas-nota-calc">
           <h3 class="tarifas-section-title"><i class="fas fa-info-circle"></i> Cómo se calculan las tarifas</h3>
           <ul class="tarifas-notas-list">
-            <li>Cotización de <strong>mano de obra</strong>: (Hrs trabajo × tarifa/hr) + (Hrs traslado × tarifa traslado) + (Días × viático/día × nº personas). Tope: 2 personas en viaje.</li>
+            <li>Cotización de <strong>mano de obra</strong>: misma lógica en MXN que la hoja <strong>TARIFAS</strong> de <em>AGENDA SERVICIO</em> (traslado en carro h×2000; mecánico h×1000 + recargos 2/3 personas; electrónico h×1500 o ×1,4 con ayudante; viáticos 1 o 2 personas por días), luego conversión a USD con el T.C. Ajustes opcionales con claves <code>mo_agenda_*</code> en tarifas.</li>
             <li class="comm-admin-only">Cotización de <strong>refacciones</strong>: precio USD × tipo de cambio Banxico (o manual). Comisión del <span id="nota-comision-ref">15</span>% sobre total.</li>
             <li class="comm-admin-only">Cotización de <strong>máquina</strong>: precio USD × tipo de cambio. Si vendedor = David Cantú: comisión del <span id="nota-comision-maq">15</span>% (resumen en <strong>Cotizaciones → Comisiones David Cantú</strong>).</li>
             <li class="comm-admin-only"><strong>Bono por facturación</strong>: $<span id="nota-bono-20k">1,000</span> por cada $20,000 facturados. Si supera $40,000: bono máximo $<span id="nota-bono-40k">2,000</span>.</li>
@@ -1389,6 +1389,6 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=125-almacen-cot-bloqueo" defer></script>
+  <script src="js/app.js?v=126-mo-agenda-servicio" defer></script>
 </body>
 </html>

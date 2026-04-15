@@ -7008,14 +7008,6 @@
                 </select>
               </div>
               <div class="form-group">
-                <label>Zona de servicio</label>
-                <select id="cot-line-mo-zona">
-                  <option value="a">A – Local (Monterrey)</option>
-                  <option value="b">B – Regional (Guanajuato, QRO)</option>
-                  <option value="c">C – Nacional (CDMX, GDL)</option>
-                </select>
-              </div>
-              <div class="form-group">
                 <label>Horas traslado</label>
                 <input type="number" id="cot-line-mo-hrs-traslado" step="0.5" min="0" value="0">
               </div>
@@ -7032,13 +7024,14 @@
                 <input type="number" id="cot-line-mo-viaticos-dias" step="1" min="0" value="0">
               </div>
             </div>
+            <p class="hint" style="margin:0.35rem 0 0;font-size:0.78rem">Mecánico: <strong>0</strong> ayudantes = 1 técnico (h×1000 MXN); <strong>1</strong> = esquema 2 personas (+400 MXN); <strong>2+</strong> = 3 personas (+900 MXN). Electrónico: con <strong>1+</strong> ayudante = h×1500×1,4. Traslado en carro: h×2000 MXN. Viáticos: 1 pers. = días×1800+1200; 2+ pers. en campo = días×3600+1900 (hoja <em>TARIFAS</em>, Agenda Servicio).</p>
             <div class="cotz-mo-hint">
-              <i class="fas fa-calculator"></i> Importe total desde tarifas en <strong>USD</strong> (hora técnico, ayudante, viáticos/día en MXN convertidos con el T.C.). Cantidad queda en <strong>1</strong> (una partida = el total calculado).
+              <i class="fas fa-calculator"></i> Total en <strong>USD</strong> = suma de conceptos en MXN (lógica anterior) ÷ tipo de cambio. La partida lleva <strong>cantidad 1</strong> (importe en precio unitario).
             </div>
           </div>
 
           <div class="form-row">
-            <div class="form-group">
+            <div class="form-group" id="cot-line-cant-group">
               <label>Cantidad / Horas</label>
               <input type="number" id="cot-line-cant" step="0.25" min="0" value="1">
             </div>
@@ -7326,54 +7319,91 @@
     }
     /**
      * Mano de obra: importe total de la partida (cantidad = 1).
-     * - Cotización en USD: horas × tarifas `*_usd` y `ayudante_usd`; viáticos/día = MXN ÷ T.C.
-     * - Cotización en MXN: horas × tarifas `*_mxn` y `ayudante_mxn`; viáticos en MXN directo.
+     * Base MXN alineada a la hoja TARIFAS de AGENDA SERVICIO.xlsx (traslado carro, mecánico 1–3 pers.,
+     * electrónico 1–2 pers., viáticos 1–2 pers.) con claves opcionales `mo_agenda_*` en tarifas para ajustar.
+     * Cotización en USD: total MXN ÷ T.C.
      */
+    function calcManoObraMxnAgendaServicio(tipoTec, hrsTraslado, hrsTrabajo, ayudantes, viaticoDias) {
+      const hinT = Math.max(0, Number(hrsTraslado) || 0);
+      const hinW = Math.max(0, Number(hrsTrabajo) || 0);
+      const ayu = Math.max(0, Math.floor(Number(ayudantes) || 0));
+      const vd = Math.max(0, Math.floor(Number(viaticoDias) || 0));
+
+      const trHr = Number(getTarifaVal('mo_agenda_traslado_carro_mxn_hr')) || 2000;
+      const trMx = hinT * trHr;
+
+      const mecHr =
+        Number(getTarifaVal('mo_agenda_mecanico_mxn_hr')) ||
+        Number(getTarifaVal('mecanico_mxn')) ||
+        1000;
+      const mec2Extra = Number(getTarifaVal('mo_agenda_mecanico_2pers_extra_mxn')) || 400;
+      const mec3Extra = Number(getTarifaVal('mo_agenda_mecanico_3pers_extra_mxn')) || 900;
+      const elecHr =
+        Number(getTarifaVal('mo_agenda_electronico_mxn_hr')) ||
+        Number(getTarifaVal('electronico_mxn')) ||
+        1500;
+      const elec2Mult = Number(getTarifaVal('mo_agenda_electronico_2pers_mult')) || 1.4;
+
+      let trabajoMx = 0;
+      const tt = String(tipoTec || 'mecanico').toLowerCase();
+      if (tt === 'mecanico') {
+        if (ayu >= 2) trabajoMx = hinW * mecHr + mec3Extra;
+        else if (ayu === 1) trabajoMx = hinW * mecHr + mec2Extra;
+        else trabajoMx = hinW * mecHr;
+      } else if (tt === 'electronico') {
+        if (ayu >= 1) trabajoMx = hinW * elecHr * elec2Mult;
+        else trabajoMx = hinW * elecHr;
+      } else {
+        const cncHr = Number(getTarifaVal('cnc_mxn')) || mecHr;
+        trabajoMx = hinW * cncHr;
+      }
+
+      const v1d = Number(getTarifaVal('mo_agenda_viatico1_por_dia_mxn')) || 1800;
+      const v1f = Number(getTarifaVal('mo_agenda_viatico1_fijo_mxn')) || 1200;
+      const v2d = Number(getTarifaVal('mo_agenda_viatico2_por_dia_mxn')) || 3600;
+      const v2f = Number(getTarifaVal('mo_agenda_viatico2_fijo_mxn')) || 1900;
+      let viaticoMx = 0;
+      if (vd > 0) {
+        if (ayu >= 1) viaticoMx = vd * v2d + v2f;
+        else viaticoMx = vd * v1d + v1f;
+      }
+
+      return {
+        trMx,
+        trabajoMx,
+        viaticoMx,
+        totalMxn: trMx + trabajoMx + viaticoMx,
+        ayu,
+        tt,
+      };
+    }
     function calcManoObraPrice() {
       const tipoTec = qm('#cot-line-mo-tipo-tec')?.value || 'mecanico';
-      const zona = qm('#cot-line-mo-zona')?.value || 'a';
       const hrsTraslado = Number(qm('#cot-line-mo-hrs-traslado')?.value) || 0;
       const hrsTrabajo = Number(qm('#cot-line-mo-hrs-trabajo')?.value) || 0;
       const ayudantes = Number(qm('#cot-line-mo-ayudantes')?.value) || 0;
       const viaticoDias = Number(qm('#cot-line-mo-viaticos-dias')?.value) || 0;
       const tc = Number(qm('#cotz-tc')?.value) || 17;
       const mon = (qm('#cotz-moneda')?.value || 'USD').toUpperCase();
-      const viaticoMxn = getTarifaVal(`zona_${zona}_viatico`);
+      const agg = calcManoObraMxnAgendaServicio(tipoTec, hrsTraslado, hrsTrabajo, ayudantes, viaticoDias);
       let pu = 0;
       if (mon === 'USD') {
-        let tarifaHoraUsd = getTarifaVal(`${tipoTec}_usd`);
-        if (!tarifaHoraUsd) {
-          const mxnH = getTarifaVal(`${tipoTec}_mxn`);
-          tarifaHoraUsd = tc > 0 && mxnH ? mxnH / tc : 0;
-        }
-        let tarifaAyudanteUsd = getTarifaVal('ayudante_usd');
-        if (!tarifaAyudanteUsd) {
-          const mxnA = getTarifaVal('ayudante_mxn');
-          tarifaAyudanteUsd = tc > 0 && mxnA ? mxnA / tc : 0;
-        }
-        const viaticoUsd = tc > 0 && viaticoMxn ? viaticoMxn / tc : 0;
-        const totalUsd =
-          (hrsTrabajo * tarifaHoraUsd)
-          + (hrsTraslado * tarifaHoraUsd)
-          + (ayudantes * hrsTrabajo * tarifaAyudanteUsd)
-          + (viaticoDias * viaticoUsd);
-        pu = Math.round(totalUsd * 100) / 100;
+        pu = tc > 0 ? Math.round((agg.totalMxn / tc) * 100) / 100 : 0;
       } else {
-        const tarifaHoraMxn = getTarifaVal(`${tipoTec}_mxn`);
-        const tarifaAyudanteMxn = getTarifaVal('ayudante_mxn');
-        const totalMxn =
-          (hrsTrabajo * tarifaHoraMxn)
-          + (hrsTraslado * tarifaHoraMxn)
-          + (ayudantes * hrsTrabajo * tarifaAyudanteMxn)
-          + (viaticoDias * viaticoMxn);
-        pu = Math.round(totalMxn * 100) / 100;
+        pu = Math.round(agg.totalMxn * 100) / 100;
       }
       const descParts = [];
-      if (hrsTrabajo) descParts.push(`${hrsTrabajo}h trabajo`);
-      if (hrsTraslado) descParts.push(`${hrsTraslado}h traslado`);
-      if (ayudantes) descParts.push(`${ayudantes} ayudante(s)`);
-      const zonaLabel = zona === 'a' ? 'A-Local' : zona === 'b' ? 'B-Regional' : 'C-Nacional';
-      const desc = `M.O. Zona ${zonaLabel} – ${descParts.join(', ')}`;
+      if (hrsTraslado) descParts.push(`${hrsTraslado}h traslado (carro)`);
+      if (hrsTrabajo) {
+        const tlab = agg.tt === 'electronico' ? 'Electrónico' : agg.tt === 'cnc' ? 'CNC' : 'Mecánico';
+        descParts.push(`${hrsTrabajo}h ${tlab}${Math.floor(ayudantes) ? ` +${Math.floor(ayudantes)} ayud.` : ''}`);
+      }
+      if (viaticoDias) {
+        descParts.push(
+          `${viaticoDias}d viáticos (${Math.floor(ayudantes) >= 1 ? '2 pers.' : '1 pers.'})`
+        );
+      }
+      const desc = `M.O. (Agenda Servicio) – ${descParts.length ? descParts.join(' · ') : 'sin horas/días'}`;
       if (qm('#cot-line-precio')) qm('#cot-line-precio').value = pu.toFixed(2);
       if (qm('#cot-line-cant')) qm('#cot-line-cant').value = '1';
       if (qm('#cot-line-desc')) qm('#cot-line-desc').value = desc;
@@ -7462,6 +7492,8 @@
       if (moWrap) moWrap.style.display = t === 'mano_obra' ? '' : 'none';
       if (vuWrap) vuWrap.style.display = t === 'vuelta' ? '' : 'none';
       const cantLab = qm('#cot-line-cant')?.closest('.form-group')?.querySelector('label');
+      const cantGroup = qm('#cot-line-cant-group');
+      if (cantGroup) cantGroup.style.display = t === 'mano_obra' || t === 'vuelta' ? 'none' : '';
       if (cantLab) cantLab.textContent = t === 'vuelta' ? 'Cantidad (fija 1 en servidor)' : 'Cantidad / Horas';
       if (t === 'mano_obra') calcManoObraPrice();
       if (t === 'refaccion' || t === 'equipo') fillPrecioListaLinea();
@@ -7553,7 +7585,7 @@
     }
     qm('#cotz-recalc-lineas')?.addEventListener('click', postRecalcCotizacionLineas);
     // Mano de obra: recalcular precio cuando cambia cualquier campo
-    ['#cot-line-mo-tipo-tec','#cot-line-mo-zona','#cot-line-mo-hrs-traslado',
+    ['#cot-line-mo-tipo-tec','#cot-line-mo-hrs-traslado',
      '#cot-line-mo-hrs-trabajo','#cot-line-mo-ayudantes','#cot-line-mo-viaticos-dias'].forEach(sel => {
       qm(sel)?.addEventListener('input', calcManoObraPrice);
       qm(sel)?.addEventListener('change', calcManoObraPrice);
@@ -7668,7 +7700,6 @@
       } else if (tipoLinea === 'mano_obra') {
         const desc = qm('#cot-line-desc')?.value?.trim() || '';
         const tipoTecMo = qm('#cot-line-mo-tipo-tec')?.value || 'mecanico';
-        const zonaMo = qm('#cot-line-mo-zona')?.value || 'a';
         const htr = Number(qm('#cot-line-mo-hrs-traslado')?.value) || 0;
         const ht = Number(qm('#cot-line-mo-hrs-trabajo')?.value) || 0;
         const ayu = Number(qm('#cot-line-mo-ayudantes')?.value) || 0;
@@ -7682,9 +7713,13 @@
           descripcion: desc || null,
           horas_trabajo: ht,
           horas_traslado: htr,
-          zona: zonaMo,
+          zona: null,
           ayudantes: ayu,
-          tarifa_aplicada: JSON.stringify({ tipo_tecnico: tipoTecMo, viaticos_dias: via }),
+          tarifa_aplicada: JSON.stringify({
+            tipo_tecnico: tipoTecMo,
+            viaticos_dias: via,
+            esquema: 'agenda_servicio_tarifas',
+          }),
         };
       } else if (tipoLinea !== 'equipo') {
         const desc = qm('#cot-line-desc')?.value?.trim() || '';
