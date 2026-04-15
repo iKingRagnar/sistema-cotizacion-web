@@ -1273,6 +1273,24 @@ body.theme-industrial .table-wrap:hover {
   border-color: rgba(148, 163, 184, 0.38);
 }
 
+/* Inline code/kbd: el tema claro deja chip gris claro + texto claro heredado = ilegible */
+body.theme-industrial .card code,
+body.theme-industrial .card kbd,
+body.theme-industrial .empty-card code,
+body.theme-industrial .empty-card kbd {
+  background: rgba(15, 23, 42, 0.92) !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(148, 163, 184, 0.45) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+body.theme-industrial #demo-dummy-panel code,
+body.theme-industrial #demo-dummy-panel kbd {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+  border: 1px solid #94a3b8 !important;
+  box-shadow: none;
+}
+
 body.theme-industrial .data-table thead tr:first-child th {
   background: rgba(30, 41, 59, 0.45) !important;
   -webkit-backdrop-filter: blur(12px) saturate(115%);
