@@ -771,12 +771,19 @@
     }
   }
 
+  /** Token + shell visible: oculta rail strip (sucursales/TC/alertas/estado) vía CSS `body.app-session-active`. */
+  function syncAppSessionChrome() {
+    const tok = !!getAuthToken();
+    const loginOpen = document.body.classList.contains('login-open');
+    document.body.classList.toggle('app-session-active', tok && !loginOpen);
+  }
   function showLoginOverlay(show) {
     const el = qs('#login-overlay');
     if (!el) return;
     el.classList.toggle('hidden', !show);
     document.body.classList.toggle('login-open', !!show);
     if (show) spawnLoginParticles();
+    syncAppSessionChrome();
   }
   function updateAuditTabVisibility() {
     const tab = qs('#tab-auditoria');
@@ -964,6 +971,7 @@
     }
     syncAdminHubCardVisibility();
     syncModuleDeleteZonesVisibility();
+    syncAppSessionChrome();
   }
   function setupLoginForm() {
     const form = qs('#login-form');
@@ -12519,6 +12527,7 @@
     updateAuditTabVisibility();
     initThemeToggleButton();
     syncSessionHeader();
+    syncAppSessionChrome();
     if (!getAuthToken()) {
       showLoginOverlay(true);
       const hint = qs('#login-hint');
