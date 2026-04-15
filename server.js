@@ -1400,6 +1400,17 @@ const DEFAULT_TARIFAS = {
   /** Vuelta (ida): cargo fijo MXN + horas trabajo/traslado × tarifa hora MXN; se convierte con T.C. si la cotización es USD */
   vuelta_ida_mxn: '650',
   vuelta_hora_mxn: '450',
+  /** Mano de obra — hoja TARIFAS de AGENDA SERVICIO.xlsx (traslado, mecánico 1–3 pers., electrónico 1–2, viáticos 1–2). */
+  mo_agenda_traslado_carro_mxn_hr: '2000',
+  mo_agenda_mecanico_mxn_hr: '1000',
+  mo_agenda_mecanico_2pers_extra_mxn: '400',
+  mo_agenda_mecanico_3pers_extra_mxn: '900',
+  mo_agenda_electronico_mxn_hr: '1500',
+  mo_agenda_electronico_2pers_mult: '1.4',
+  mo_agenda_viatico1_por_dia_mxn: '1800',
+  mo_agenda_viatico1_fijo_mxn: '1200',
+  mo_agenda_viatico2_por_dia_mxn: '3600',
+  mo_agenda_viatico2_fijo_mxn: '1900',
 };
 
 async function ensureTarifasDefaults() {
@@ -1671,9 +1682,102 @@ async function precioUnitarioVueltaDesdeTarifas(cot, esIda, horasTrabajo, horasT
   return Math.round(baseMxn * 100) / 100;
 }
 
+function parseTarifaAplicadaJson(tarifa_aplicada) {
+  if (tarifa_aplicada == null) return {};
+  if (typeof tarifa_aplicada === 'object') return tarifa_aplicada;
+  try {
+    return JSON.parse(String(tarifa_aplicada));
+  } catch (_) {
+    return {};
+  }
+}
+
+function isAgendaServicioManoObraTarifa(tarifa_aplicada) {
+  const j = parseTarifaAplicadaJson(tarifa_aplicada);
+  return String(j.esquema || '') === 'agenda_servicio_tarifas';
+}
+
+/**
+ * Misma lógica que `calcManoObraMxnAgendaServicio` en public/js/app.js — tablas lineales de AGENDA SERVICIO.xlsx (TARIFAS).
+ * Totales en MXN; en cotización USD el precio unitario de la línea es totalMxn ÷ T.C.
+ */
+async function calcManoObraMxnAgendaServicioAsync(tipoTec, hrsTraslado, hrsTrabajo, ayudantes, viaticoDias) {
+  const hinT = Math.max(0, Number(hrsTraslado) || 0);
+  const hinW = Math.max(0, Number(hrsTrabajo) || 0);
+  const ayu = Math.max(0, Math.floor(Number(ayudantes) || 0));
+  const vd = Math.max(0, Math.floor(Number(viaticoDias) || 0));
+
+  const trHr = await getTarifaNum('mo_agenda_traslado_carro_mxn_hr', 2000);
+  const trMx = hinT * trHr;
+
+  const mecHr = await getTarifaNum('mo_agenda_mecanico_mxn_hr', 1000);
+  const mec2Extra = await getTarifaNum('mo_agenda_mecanico_2pers_extra_mxn', 400);
+  const mec3Extra = await getTarifaNum('mo_agenda_mecanico_3pers_extra_mxn', 900);
+  const elecHr = await getTarifaNum('mo_agenda_electronico_mxn_hr', 1500);
+  const elec2Mult = await getTarifaNum('mo_agenda_electronico_2pers_mult', 1.4);
+
+  let trabajoMx = 0;
+  const tt = String(tipoTec || 'mecanico').toLowerCase();
+  if (tt === 'mecanico') {
+    if (ayu >= 2) trabajoMx = hinW * mecHr + mec3Extra;
+    else if (ayu === 1) trabajoMx = hinW * mecHr + mec2Extra;
+    else trabajoMx = hinW * mecHr;
+  } else if (tt === 'electronico') {
+    if (ayu >= 1) trabajoMx = hinW * elecHr * elec2Mult;
+    else trabajoMx = hinW * elecHr;
+  } else {
+    const cncHr = (await getTarifaNum('cnc_mxn', 0)) || mecHr;
+    trabajoMx = hinW * cncHr;
+  }
+
+  const v1d = await getTarifaNum('mo_agenda_viatico1_por_dia_mxn', 1800);
+  const v1f = await getTarifaNum('mo_agenda_viatico1_fijo_mxn', 1200);
+  const v2d = await getTarifaNum('mo_agenda_viatico2_por_dia_mxn', 3600);
+  const v2f = await getTarifaNum('mo_agenda_viatico2_fijo_mxn', 1900);
+  let viaticoMx = 0;
+  if (vd > 0) {
+    if (ayu >= 1) viaticoMx = vd * v2d + v2f;
+    else viaticoMx = vd * v1d + v1f;
+  }
+
+  return {
+    trMx,
+    trabajoMx,
+    viaticoMx,
+    totalMxn: trMx + trabajoMx + viaticoMx,
+    tt,
+  };
+}
+
+/** Precio unitario de la partida (cantidad=1) en moneda de la cotización. */
+async function precioUnitarioManoObraAgenda(cot, o) {
+  const ta = o.tarifa_aplicada;
+  if (!isAgendaServicioManoObraTarifa(ta)) {
+    const p = Number(o.precio_unitario);
+    return Number.isFinite(p) ? Math.round(p * 1e6) / 1e6 : 0;
+  }
+  const j = parseTarifaAplicadaJson(ta);
+  const tipoTec = j.tipo_tecnico || 'mecanico';
+  const viaticoDias = Number(j.viaticos_dias) || 0;
+  const agg = await calcManoObraMxnAgendaServicioAsync(
+    tipoTec,
+    o.horas_traslado,
+    o.horas_trabajo,
+    o.ayudantes,
+    viaticoDias
+  );
+  const mon = (cot.moneda || 'USD').toUpperCase();
+  const tc = tipoCambioCotizacionEfectivo(cot);
+  if (mon === 'USD') {
+    return tc > 0 ? Math.round((agg.totalMxn / tc) * 100) / 100 : Math.round(agg.totalMxn * 100) / 100;
+  }
+  return Math.round(agg.totalMxn * 100) / 100;
+}
+
 /**
  * Recalcula precios de todas las líneas tras cambiar moneda o tipo de cambio (lista USD×TC, vueltas desde tarifas).
- * Mano de obra / otro: conserva precio_unitario y cantidad del usuario, solo recalcula columnas derivadas.
+ * Mano de obra con `tarifa_aplicada` esquema agenda: recalcula precio desde TARIFAS (MXN) y T.C. si la cotización es USD.
+ * Otros tipos (otro): conserva precio_unitario del usuario; solo recalcula columnas derivadas.
  * @param {object} [cotPatch] — Tras PUT de moneda/TC, mezclar aquí para no depender de un SELECT inmediato (p. ej. Turso).
  */
 async function recalcCotizacionLineasPrecios(cotizacionId, cotPatch = null) {
@@ -1700,6 +1804,15 @@ async function recalcCotizacionLineasPrecios(cotizacionId, cotPatch = null) {
       const stored = Number(l.precio_unitario) || 0;
       const pu = Number.isFinite(puLista) && puLista > 0 ? puLista : stored;
       calc = calcLinea(tipo, l.cantidad, pu, cotEff.moneda, tcLinea);
+    } else if (tipo === 'mano_obra') {
+      const puMo = await precioUnitarioManoObraAgenda(cotEff, {
+        precio_unitario: l.precio_unitario,
+        horas_traslado: l.horas_traslado,
+        horas_trabajo: l.horas_trabajo,
+        ayudantes: l.ayudantes,
+        tarifa_aplicada: l.tarifa_aplicada,
+      });
+      calc = calcLinea(tipo, l.cantidad, puMo, cotEff.moneda, tcLinea);
     } else {
       calc = calcLinea(tipo, l.cantidad, Number(l.precio_unitario) || 0, cotEff.moneda, tcLinea);
     }
@@ -1857,6 +1970,15 @@ app.post('/api/cotizaciones/:id/lineas', async (req, res) => {
           ? manual
           : await precioUnitarioVueltaDesdeTarifas(cot, !!es_ida, horas_trabajo, horas_traslado);
       calc = calcLinea('vuelta', 1, puV, cot.moneda, cot.tipo_cambio);
+    } else if (tipo === 'mano_obra') {
+      const puMo = await precioUnitarioManoObraAgenda(cot, {
+        precio_unitario,
+        horas_traslado,
+        horas_trabajo,
+        ayudantes,
+        tarifa_aplicada,
+      });
+      calc = calcLinea(tipo, cantidad, puMo, cot.moneda, cot.tipo_cambio);
     } else {
       const puLista = await precioUnitarioDesdeLista(cot, tipo, refaccion_id, maquina_id, precio_unitario);
       calc = calcLinea(tipo, cantidad, puLista, cot.moneda, cot.tipo_cambio);
@@ -1930,6 +2052,19 @@ app.put('/api/cotizaciones/:id/lineas/:lineaId', async (req, res) => {
           ? manualV
           : await precioUnitarioVueltaDesdeTarifas(cot, esIdaPut, htPut, htrPut);
       calc = calcLinea('vuelta', 1, puV, cot.moneda, cot.tipo_cambio);
+    } else if (nextTipo === 'mano_obra') {
+      const htMo = (req.body && 'horas_trabajo' in req.body) ? Number(req.body.horas_trabajo) : (linea.horas_trabajo || 0);
+      const htrMo = (req.body && 'horas_traslado' in req.body) ? Number(req.body.horas_traslado) : (linea.horas_traslado || 0);
+      const ayuMo = (req.body && 'ayudantes' in req.body) ? Number(req.body.ayudantes) : (linea.ayudantes || 0);
+      const taPut = (req.body && 'tarifa_aplicada' in req.body) ? req.body.tarifa_aplicada : linea.tarifa_aplicada;
+      const puMo = await precioUnitarioManoObraAgenda(cot, {
+        precio_unitario: nextPrecioRaw,
+        horas_traslado: htrMo,
+        horas_trabajo: htMo,
+        ayudantes: ayuMo,
+        tarifa_aplicada: taPut,
+      });
+      calc = calcLinea(nextTipo, nextCantidad, puMo, cot.moneda, cot.tipo_cambio);
     } else {
       const nextPrecio = await precioUnitarioDesdeLista(cot, nextTipo, nextRefaccionId, nextMaquinaId, nextPrecioRaw);
       calc = calcLinea(nextTipo, nextCantidad, nextPrecio, cot.moneda, cot.tipo_cambio);
