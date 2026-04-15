@@ -2209,21 +2209,35 @@ body.dark-theme .data-table thead tr:first-child th { background: #334155; box-s
   gap: 0.25rem;
 }
 
-/* Usuarios (admin): nombre + botón editar alineados a la derecha */
+/* Usuarios (admin): columna Nombre ancha + fila interna flex → botón editar alineado junto a Rol */
+#tabla-usuarios.data-table {
+  table-layout: fixed;
+  width: 100%;
+}
+#tabla-usuarios.data-table thead th:nth-child(2),
+#tabla-usuarios.data-table td.usuarios-td-nombre {
+  width: 32%;
+  min-width: 220px;
+}
 #tabla-usuarios.data-table td.usuarios-td-nombre {
   max-width: none;
   overflow: visible;
+  vertical-align: middle;
 }
-.usuarios-td-nombre {
+.usuarios-nombre-cell {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.65rem;
-  vertical-align: middle;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 .usuarios-display-label {
   flex: 1 1 auto;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   text-align: left;
 }
 .usuarios-nombre-actions {
@@ -2231,6 +2245,7 @@ body.dark-theme .data-table thead tr:first-child th { background: #334155; box-s
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
+  margin-left: 0.25rem;
 }
 
 .data-table td.empty.filter-empty { padding: 1.25rem; color: #64748b; }

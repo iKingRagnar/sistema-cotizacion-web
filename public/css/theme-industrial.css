@@ -1507,6 +1507,11 @@ body.theme-industrial #tabla-categorias-admin .cat-admin-sub-li {
   border-bottom-color: rgba(51, 65, 85, 0.55);
 }
 
+body.theme-industrial #tabla-usuarios.data-table td.usuarios-td-nombre {
+  max-width: none !important;
+  overflow: visible !important;
+}
+
 /* Command palette (“Más opciones…”) */
 body.theme-industrial .command-palette {
   background: rgba(2, 6, 23, 0.45);

@@ -8209,11 +8209,11 @@
             id +
             '"><td>' +
             escapeHtml(r.username) +
-            '</td><td class="usuarios-td-nombre"><span class="usuarios-display-label">' +
+            '</td><td class="usuarios-td-nombre"><div class="usuarios-nombre-cell"><span class="usuarios-display-label">' +
             escapeHtml(r.display_name || '—') +
             '</span><span class="usuarios-nombre-actions"><button type="button" class="btn small outline usuarios-edit-display-btn" data-user-id="' +
             id +
-            '" title="Editar nombre completo"><i class="fas fa-user-edit" aria-hidden="true"></i><span class="visually-hidden"> Editar nombre</span></button></span></td><td>' +
+            '" title="Editar nombre completo"><i class="fas fa-user-edit" aria-hidden="true"></i><span class="visually-hidden"> Editar nombre</span></button></span></div></td><td>' +
             renderUsuariosRoleSelect(id, r.role || 'invitado') +
             '</td><td>' +
             renderUsuariosTecnicoSelect(id, tecList, r.tecnico_id) +
@@ -8554,7 +8554,7 @@
           const id = parseInt(editBtn.dataset.userId, 10);
           if (!Number.isFinite(id)) return;
           const td = editBtn.closest('td');
-          const span = td && td.querySelector('.usuarios-display-label');
+          const span = td && td.querySelector('.usuarios-nombre-cell .usuarios-display-label');
           let cur = span ? String(span.textContent || '').trim() : '';
           if (cur === '—') cur = '';
           const n = window.prompt('Nombre completo (menú de perfil y listados):', cur);
