@@ -461,6 +461,7 @@
     if (lbName) lbName.textContent = c.appName || short;
     if (lbTagline) lbTagline.textContent = c.tagline || '';
     updateDocumentTitleFromActiveTab();
+    normalizePoweredByCredits();
     const logo = qs('#header-brand-logo');
     if (logo) {
       logo.classList.add('header-logo', 'header-logo--brand');
@@ -12513,7 +12514,16 @@
       }, REFRESH_INTERVAL_MS);
     }
   }
+  /** Quitar “:” inicial en créditos (HTML viejo en caché o copias sin actualizar). */
+  function normalizePoweredByCredits() {
+    qsAll('.header-powered-by').forEach(function (el) {
+      const s = String(el.textContent || '').trim();
+      if (s.startsWith(':')) el.textContent = s.replace(/^:\s*/, '').trim();
+    });
+  }
+
   async function boot() {
+    normalizePoweredByCredits();
     await fetchServerConfig();
     applyBranding();
     updateAuditTabVisibility();
