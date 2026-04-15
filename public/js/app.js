@@ -2986,7 +2986,7 @@
     }
   }
 
-  let tipoCambioActual = 17.0; // tipo de cambio USD/MXN actualizado desde Banxico
+  let tipoCambioActual = 17.0; // MXN por 1 USD; misma referencia que cotizaciones / tarifas (Banxico FIX en servidor)
 
   /** Precio lista en USD: prioridad a precio_usd; legado: MXN congelado con tipo_cambio_registro o TC actual. */
   function resolveRefaccionPrecioUsd(r) {
@@ -6205,7 +6205,7 @@
         if (v != null) precioUsdInicial = v;
       }
     }
-    const tcHint = (typeof tipoCambioActual === 'number' && tipoCambioActual > 0) ? tipoCambioActual.toFixed(2) : '17.00';
+    const tcHint = (typeof tipoCambioActual === 'number' && tipoCambioActual > 0) ? tipoCambioActual.toFixed(4) : '17.0000';
     const foto1Ref = refaccion && refaccion.imagen_url ? registerPvcMediaUrl(refaccion.imagen_url) : '';
     const foto2Ref = refaccion && refaccion.manual_url ? registerPvcMediaUrl(refaccion.manual_url) : '';
     const body = `
@@ -10613,6 +10613,32 @@
 
   // ----- TARIFAS -----
   let tarifasCache = {};
+  function updateTarifasTcMetaFromCache(cache) {
+    const meta = qs('#tarifas-tc-meta');
+    if (!meta) return;
+    const c = cache || tarifasCache || {};
+    const fuente = c.tipo_cambio_fuente;
+    const fd = c.tipo_cambio_banxico_fecha_dato;
+    const au = c.tipo_cambio_banxico_actualizado_iso;
+    if (!fuente && !fd && !au) {
+      meta.textContent = '';
+      return;
+    }
+    const tit =
+      fuente === 'banxico'
+        ? 'Banxico (FIX)'
+        : fuente === 'fixer'
+          ? 'Fixer'
+          : fuente === 'exchangerate-api'
+            ? 'ExchangeRate-API'
+            : fuente === 'frankfurter'
+              ? 'Frankfurter/ECB'
+              : (fuente || 'Referencia');
+    const parts = [tit];
+    if (fd) parts.push('dato ' + String(fd));
+    if (au) parts.push('sync ' + String(au).slice(0, 19).replace('T', ' ') + ' UTC');
+    meta.textContent = parts.join(' · ');
+  }
   async function loadTarifas() {
     try {
       const data = await fetchJson(API + '/tarifas');
@@ -10628,6 +10654,12 @@
         const key = inp.dataset.key;
         if (key && tarifasCache[key] !== undefined) inp.value = tarifasCache[key];
       });
+      const tcBan = qs('#tarifa-tipo-cambio-banxico');
+      if (tcBan && tarifasCache.tipo_cambio_banxico != null && String(tarifasCache.tipo_cambio_banxico).trim() !== '') {
+        const x = Number(String(tarifasCache.tipo_cambio_banxico).replace(',', '.'));
+        if (Number.isFinite(x) && x > 0) tcBan.value = (Math.round(x * 10000) / 10000).toFixed(4);
+      }
+      updateTarifasTcMetaFromCache(tarifasCache);
       // Sincronizar notas de cómo se calculan
       const updateNota = (id, key, fmt) => {
         const el = qs(id);
@@ -10648,7 +10680,14 @@
     btnSaveTarifas.addEventListener('click', async () => {
       const updates = {};
       document.querySelectorAll('.tarifa-input').forEach(inp => {
-        if (inp.dataset.key) updates[inp.dataset.key] = inp.value;
+        if (!inp.dataset.key) return;
+        if (inp.dataset.key === 'tipo_cambio_banxico') {
+          const x = Number(String(inp.value).replace(',', '.'));
+          updates[inp.dataset.key] =
+            Number.isFinite(x) && x > 0 ? String(Math.round(x * 10000) / 10000) : inp.value;
+          return;
+        }
+        updates[inp.dataset.key] = inp.value;
       });
       document.querySelectorAll('.tarifa-input-text').forEach(inp => {
         if (inp.dataset.key) updates[inp.dataset.key] = inp.value;
@@ -10680,15 +10719,25 @@
     try {
       const tc = await fetchJson(API + '/tipo-cambio');
       if (tc && tc.valor) {
-        tipoCambioActual = Number(tc.valor);
+        const raw = Number(tc.valor);
+        tipoCambioActual = Number.isFinite(raw) && raw > 0 ? Math.round(raw * 10000) / 10000 : tipoCambioActual;
         const el = qs('#header-slot-tc') || qs('#header-alerts');
         if (el) {
           el.innerHTML = '';
           const badge = document.createElement('span');
           badge.className = 'tc-badge';
-          const fuente = tc.fuente === 'banxico' ? 'Banxico' : tc.fuente === 'exchangerate-api' ? 'ExchangeRate-API' : (tc.fuente || 'referencia');
+          const fuente =
+            tc.fuente === 'banxico'
+              ? 'Banxico (FIX)'
+              : tc.fuente === 'fixer'
+                ? 'Fixer'
+                : tc.fuente === 'exchangerate-api'
+                  ? 'ExchangeRate-API'
+                  : tc.fuente === 'frankfurter'
+                    ? 'Frankfurter/ECB'
+                    : tc.fuente || 'referencia';
           badge.title = `Tipo de cambio (${fuente})${tc.fecha ? ' · ' + tc.fecha : ''}`;
-          badge.innerHTML = `<i class="fas fa-dollar-sign"></i> TC: $${tipoCambioActual.toFixed(2)}`;
+          badge.innerHTML = `<i class="fas fa-dollar-sign"></i> TC: $${tipoCambioActual.toFixed(4)}`;
           badge.style.cssText = 'background:var(--config-accent,#0d9488);color:#fff;padding:3px 8px;border-radius:12px;font-size:0.78rem;font-weight:600;cursor:default';
           el.appendChild(badge);
         }
@@ -10697,6 +10746,38 @@
   }
   fetchAndShowTipoCambio();
   setInterval(fetchAndShowTipoCambio, 3 * 60 * 60 * 1000);
+
+  const btnTarifasSyncTc = qs('#btn-tarifas-sync-tc-banxico');
+  if (btnTarifasSyncTc) {
+    btnTarifasSyncTc.addEventListener('click', async () => {
+      try {
+        btnTarifasSyncTc.disabled = true;
+        const bx = await fetchJson(API + '/tipo-cambio-banxico?refresh=1');
+        const inp = qs('#tarifa-tipo-cambio-banxico');
+        if (inp && Number(bx.valor) > 0) {
+          const v4 = Math.round(Number(bx.valor) * 10000) / 10000;
+          inp.value = v4.toFixed(4);
+          tarifasCache.tipo_cambio_banxico = String(v4);
+          if (bx.fuente != null) tarifasCache.tipo_cambio_fuente = bx.fuente;
+          if (bx.fecha_dato != null) tarifasCache.tipo_cambio_banxico_fecha_dato = bx.fecha_dato;
+          if (bx.actualizado != null) tarifasCache.tipo_cambio_banxico_actualizado_iso = bx.actualizado;
+          updateTarifasTcMetaFromCache(tarifasCache);
+          try {
+            localStorage.setItem('tarifas_cache', JSON.stringify(tarifasCache));
+          } catch (_) {}
+        }
+        if (Number(bx.valor) > 0) {
+          tipoCambioActual = Math.round(Number(bx.valor) * 10000) / 10000;
+        }
+        await fetchAndShowTipoCambio();
+        showToast('Tipo de cambio sincronizado con el servidor (misma referencia que cotizaciones).', 'success');
+      } catch (e) {
+        showToast(parseApiError(e), 'error');
+      } finally {
+        btnTarifasSyncTc.disabled = false;
+      }
+    });
+  }
   refreshAlertasHeader();
   setInterval(refreshAlertasHeader, 3 * 60 * 1000);
 

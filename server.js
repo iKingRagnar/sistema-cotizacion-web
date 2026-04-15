@@ -1050,143 +1050,10 @@ app.delete('/api/maquinas/:id', async (req, res) => {
   }
 });
 
-// --- Tipo de cambio: Banxico (token opcional) + ExchangeRate-API + Frankfurter / open.er-api (sin clave) ---
-// Cache en servidor: actualización de red como máximo cada 3 h (TTL); el cliente puede leer cache sin forzar red.
-const TC_CACHE_TTL_MS = 3 * 60 * 60 * 1000;
-let tipoCambioCache = {
-  valor: 17.0,
-  fecha: null,
-  fuente: 'default',
-  fetchedAt: 0,
-  banxico: null,
-  exchangerate: null,
-};
-
-function httpsGetJson(url, timeoutMs = 8000) {
-  const https = require('https');
-  return new Promise((resolve, reject) => {
-    const req2 = https.get(url, { headers: { Accept: 'application/json' } }, (r) => {
-      let body = '';
-      r.on('data', d => { body += d; });
-      r.on('end', () => {
-        try { resolve(JSON.parse(body)); } catch (e) { reject(e); }
-      });
-    });
-    req2.on('error', reject);
-    req2.setTimeout(timeoutMs, () => { req2.destroy(); reject(new Error('timeout')); });
-  });
-}
-
-function normalizeTcValor(v) {
-  const n = Number(v);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.round(n * 10000) / 10000;
-}
-
-async function fetchTipoCambioFromNetwork() {
-  const prev = { ...tipoCambioCache };
-  const apply = (v, fuente, fechaStr) => {
-    const valor = normalizeTcValor(v);
-    if (valor == null) return null;
-    tipoCambioCache = {
-      valor,
-      fecha: fechaStr || new Date().toISOString().slice(0, 10),
-      fuente,
-      fetchedAt: Date.now(),
-      banxico: fuente === 'banxico' ? valor : prev.banxico,
-      exchangerate: fuente !== 'banxico' ? valor : prev.exchangerate,
-    };
-    return tipoCambioCache;
-  };
-
-  const parseBanxicoDato = (data) => {
-    const dato = data?.bmx?.series?.[0]?.datos?.[0]?.dato;
-    if (dato != null && !isNaN(parseFloat(String(dato).replace(',', '.')))) return parseFloat(String(dato).replace(',', '.'));
-    return null;
-  };
-  const tokenPreferido = (process.env.BANXICO_TOKEN || process.env.BANXICO_API_TOKEN || '').trim();
-  const tokens = tokenPreferido ? [tokenPreferido, 'none'] : ['none'];
-
-  for (const tok of tokens) {
-    try {
-      const url = `https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43718/datos/oportuno?token=${encodeURIComponent(tok)}`;
-      const data = await httpsGetJson(url);
-      const raw = parseBanxicoDato(data);
-      const v = normalizeTcValor(raw);
-      if (v != null) return apply(v, 'banxico', new Date().toISOString().slice(0, 10));
-    } catch (_) { /* siguiente */ }
-  }
-
-  const erKey = (process.env.EXCHANGE_RATE_API_KEY || '').trim();
-  if (erKey) {
-    try {
-      const url = `https://v6.exchangerate-api.com/v6/${encodeURIComponent(erKey)}/latest/USD`;
-      const data = await httpsGetJson(url);
-      const mxn = data?.conversion_rates?.MXN;
-      const v = normalizeTcValor(mxn);
-      if (v != null) {
-        const fechaUp = data.time_last_update_utc ? String(data.time_last_update_utc).slice(0, 10) : new Date().toISOString().slice(0, 10);
-        return apply(v, 'exchangerate-api', fechaUp);
-      }
-    } catch (_) { /* siguiente */ }
-  }
-
-  try {
-    const data = await httpsGetJson('https://api.frankfurter.app/latest?from=USD&to=MXN');
-    const mxn = data?.rates?.MXN;
-    const v = normalizeTcValor(mxn);
-    if (v != null) return apply(v, 'frankfurter', data.date || new Date().toISOString().slice(0, 10));
-  } catch (_) { /* siguiente */ }
-
-  try {
-    const data = await httpsGetJson('https://open.er-api.com/v6/latest/USD');
-    const mxn = data?.conversion_rates?.MXN;
-    const v = normalizeTcValor(mxn);
-    if (v != null) {
-      const fechaUp = data.time_last_update_utc ? String(data.time_last_update_utc).slice(0, 10) : new Date().toISOString().slice(0, 10);
-      return apply(v, 'open-er-api', fechaUp);
-    }
-  } catch (_) { /* siguiente */ }
-
-  if (prev.valor && prev.valor > 0) {
-    tipoCambioCache = { ...prev, fuente: prev.fuente === 'default' ? 'cache' : prev.fuente, fetchedAt: Date.now() };
-    return tipoCambioCache;
-  }
-  tipoCambioCache = {
-    valor: 17.0,
-    fecha: null,
-    fuente: 'default',
-    fetchedAt: Date.now(),
-    banxico: null,
-    exchangerate: null,
-  };
-  return tipoCambioCache;
-}
-
-async function refreshTipoCambioIfStale() {
-  const now = Date.now();
-  if (tipoCambioCache.fetchedAt && now - tipoCambioCache.fetchedAt < TC_CACHE_TTL_MS && tipoCambioCache.valor > 0) {
-    return tipoCambioCache;
-  }
-  return fetchTipoCambioFromNetwork();
-}
-
-// Compatibilidad: en rutas legacy se usa este nombre.
-async function fetchTipoCambioBanxico() {
-  return refreshTipoCambioIfStale();
-}
-
-refreshTipoCambioIfStale().catch(() => {});
-setInterval(() => { refreshTipoCambioIfStale().catch(() => {}); }, TC_CACHE_TTL_MS);
-
-app.get('/api/tipo-cambio', async (req, res) => {
-  try {
-    const tc = await refreshTipoCambioIfStale();
-    res.json(tc);
-  } catch (e) {
-    res.json(tipoCambioCache);
-  }
-});
+// --- Tipo de cambio (referencia) ---
+// La fuente de verdad es la misma que `/api/tipo-cambio-banxico` y `tipo_cambio_banxico` en `tarifas`
+// (refreshTipoCambioReferencia → Banxico FIX con token, luego Fixer / ExchangeRate / Frankfurter).
+// `fetchTipoCambioBanxico` y `GET /api/tipo-cambio` se registran junto a `readTipoCambioBanxicoFromDb` más abajo.
 
 /**
  * Vaciar por completo la tabla de un módulo (solo administrador con auth).
@@ -1763,25 +1630,52 @@ async function readTipoCambioBanxicoFromDb() {
   return out;
 }
 
+async function ensureTipoCambioReferenciaEnDb(force) {
+  let dbv = await readTipoCambioBanxicoFromDb();
+  const maxAgeMs = BANXICO_REFRESH_MS;
+  const updatedAtMs = dbv.actualizado ? new Date(String(dbv.actualizado)).getTime() : NaN;
+  const isStale = !Number.isFinite(updatedAtMs) || (Date.now() - updatedAtMs) > maxAgeMs;
+  if (force || !(Number(dbv.valor) > 0) || isStale) {
+    await refreshTipoCambioReferencia();
+    dbv = await readTipoCambioBanxicoFromDb();
+  }
+  return dbv;
+}
+
+/** Misma referencia que cotizaciones (`tipo_cambio_banxico` en tarifas); usado en refacciones y `GET /api/tipo-cambio`. */
+async function fetchTipoCambioBanxico() {
+  await ensureTipoCambioReferenciaEnDb(false);
+  const dbv = await readTipoCambioBanxicoFromDb();
+  const raw = Number(dbv.valor);
+  const valor = Number.isFinite(raw) && raw > 0 ? Math.round(raw * 10000) / 10000 : 17.0;
+  const fetchedAt = dbv.actualizado ? new Date(String(dbv.actualizado)).getTime() : Date.now();
+  return {
+    valor,
+    fecha: dbv.fecha_dato || null,
+    fuente: dbv.fuente || 'default',
+    fetchedAt,
+  };
+}
+
+app.get('/api/tipo-cambio', async (req, res) => {
+  try {
+    const tc = await fetchTipoCambioBanxico();
+    res.json(tc);
+  } catch (e) {
+    res.json({ valor: 17.0, fecha: null, fuente: 'default', fetchedAt: Date.now() });
+  }
+});
+
 app.get('/api/tipo-cambio-banxico', async (req, res) => {
   try {
     const tokenConfigured = !!(process.env.BANXICO_TOKEN || process.env.BMX_TOKEN || '').trim();
     const fixerConfigured = !!(process.env.FIXER_API_KEY || '').trim();
     const erConfigured = !!(process.env.EXCHANGE_RATE_API_KEY || '').trim();
-    let dbv = await readTipoCambioBanxicoFromDb();
     const force =
       String(req.query.refresh || req.query.force || '').trim() === '1' ||
       String(req.query.refresh || req.query.force || '').trim().toLowerCase() === 'true';
-    const maxAgeMs = BANXICO_REFRESH_MS;
-    const updatedAtMs = dbv.actualizado ? new Date(String(dbv.actualizado)).getTime() : NaN;
-    const isStale = !Number.isFinite(updatedAtMs) || (Date.now() - updatedAtMs) > maxAgeMs;
-
-    // En serverless (Vercel) los intervalos no son confiables; refrescamos por demanda si está “viejo”
-    // o si el cliente lo solicita explícitamente.
-    if (force || !(Number(dbv.valor) > 0) || isStale) {
-      await refreshTipoCambioReferencia();
-      dbv = await readTipoCambioBanxicoFromDb();
-    }
+    await ensureTipoCambioReferenciaEnDb(force);
+    const dbv = await readTipoCambioBanxicoFromDb();
     const updatedAtMsAfter = dbv.actualizado ? new Date(String(dbv.actualizado)).getTime() : NaN;
     const staleNow = !Number.isFinite(updatedAtMsAfter) || (Date.now() - updatedAtMsAfter) > maxAgeMs;
     res.json({

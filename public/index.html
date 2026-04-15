@@ -650,6 +650,20 @@
         </div>
       </div>
       <div class="tarifas-container">
+        <div class="tarifas-section" id="tarifas-section-tc">
+          <h3 class="tarifas-section-title"><i class="fas fa-exchange-alt"></i> Tipo de cambio (referencia cotizaciones)</h3>
+          <p class="tarifas-hint">Mismo origen que el modal de <strong>Cotizaciones</strong> (FIX Banxico con token en servidor, o respaldos Fixer / ExchangeRate / Frankfurter). Se guarda en tarifas como <code>tipo_cambio_banxico</code> (MXN por 1 USD, cuatro decimales).</p>
+          <div class="tarifas-form-grid" style="align-items:flex-end">
+            <div class="form-group" style="min-width:12rem">
+              <label for="tarifa-tipo-cambio-banxico">MXN por 1 USD</label>
+              <input type="number" id="tarifa-tipo-cambio-banxico" class="tarifa-input" data-key="tipo_cambio_banxico" min="0" step="0.0001" placeholder="18.3056" title="Cuatro decimales; alinear con Banxico desde el botón o al guardar tras editar">
+            </div>
+            <div class="form-group">
+              <button type="button" id="btn-tarifas-sync-tc-banxico" class="btn outline small" title="Consulta de nuevo la referencia en el servidor y rellena el campo (también actualiza el badge del encabezado)"><i class="fas fa-sync-alt"></i> Sincronizar desde servidor</button>
+            </div>
+          </div>
+          <p class="hint" id="tarifas-tc-meta" style="margin-top:0.35rem;font-size:0.8rem;color:var(--muted,#64748b)"></p>
+        </div>
         <div class="tarifas-section">
           <h3 class="tarifas-section-title"><i class="fas fa-clock"></i> Tarifas de mano de obra por hora</h3>
           <p class="tarifas-hint">Define el costo por hora según el tipo de técnico. Se usa para calcular cotizaciones de mano de obra.</p>
@@ -1390,6 +1404,6 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=133-powered-by-sin-dos-puntos" defer></script>
+  <script src="js/app.js?v=134-tarifas-tc-banxico-4dec" defer></script>
 </body>
 </html>
