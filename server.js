@@ -1782,6 +1782,8 @@ app.get('/api/tipo-cambio-banxico', async (req, res) => {
       await refreshTipoCambioReferencia();
       dbv = await readTipoCambioBanxicoFromDb();
     }
+    const updatedAtMsAfter = dbv.actualizado ? new Date(String(dbv.actualizado)).getTime() : NaN;
+    const staleNow = !Number.isFinite(updatedAtMsAfter) || (Date.now() - updatedAtMsAfter) > maxAgeMs;
     res.json({
       valor: dbv.valor,
       fuente: dbv.fuente || null,
@@ -1791,7 +1793,7 @@ app.get('/api/tipo-cambio-banxico', async (req, res) => {
       token_configured: tokenConfigured,
       fixer_configured: fixerConfigured,
       exchangerate_configured: erConfigured,
-      stale: isStale,
+      stale: staleNow,
       intervalo_horas: Math.round(BANXICO_REFRESH_MS / (60 * 60 * 1000)),
       ultima_consulta_ok: banxicoPollState.lastOk,
       error_ultima_consulta: banxicoPollState.lastError,
@@ -1811,7 +1813,7 @@ function startBanxicoTipoCambioScheduler() {
   console.log(
     '[tc-ref] Scheduler cada',
     Math.round(BANXICO_REFRESH_MS / (60 * 60 * 1000)),
-    'h — Banxico (token) → ExchangeRate-API (clave) → Frankfurter (sin clave)'
+    'h — Banxico (token) → Fixer (clave) → ExchangeRate-API (clave) → Frankfurter (sin clave)'
   );
 }
 
