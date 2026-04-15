@@ -1,9 +1,9 @@
 /**
- * Tema único “Industrial / media luna”: franjas y relieve tipo metal, acento plateado (pizarra / cromo).
- * Antes oro/café; ahora gris frío armonizado. No hay tema claro/oscuro alterno en la UI.
+ * Industrial: “Luna” = cristal oscuro + pizarra/cromo (selectores `body.theme-industrial:not(.appearance-light)`).
+ * “Sol” = `body.theme-industrial.appearance-light` — mismo lenguaje de vidrio y acento teal, velos claros.
  */
 
-body.theme-industrial {
+body.theme-industrial:not(.appearance-light) {
   background-color: #0f172a;
   color: #e2e8f0;
 }
@@ -60,7 +60,7 @@ body.theme-industrial ::selection {
 }
 
 /* Franja tipo “cinta” bajo el header */
-body.theme-industrial .header {
+body.theme-industrial:not(.appearance-light) .header {
   background: linear-gradient(125deg, #1e293b 0%, #334155 40%, #475569 72%, #334155 100%);
   background-size: 200% 200%;
   animation: none;
@@ -70,7 +70,7 @@ body.theme-industrial .header {
     0 4px 28px rgba(0, 0, 0, 0.45),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
-body.theme-industrial .header::after {
+body.theme-industrial:not(.appearance-light) .header::after {
   height: 4px;
   opacity: 1;
   background: repeating-linear-gradient(
@@ -81,25 +81,25 @@ body.theme-industrial .header::after {
   border-radius: 0;
 }
 
-body.theme-industrial .tabs {
+body.theme-industrial:not(.appearance-light) .tabs {
   background: rgba(30, 41, 59, 0.92);
   -webkit-backdrop-filter: blur(16px) saturate(120%);
   backdrop-filter: blur(16px) saturate(120%);
   border-bottom: 1px solid rgba(148, 163, 184, 0.35);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
-body.theme-industrial .tab {
+body.theme-industrial:not(.appearance-light) .tab {
   background: rgba(51, 65, 85, 0.9);
   border-color: #475569;
   color: #cbd5e1;
 }
-body.theme-industrial .tab:hover {
+body.theme-industrial:not(.appearance-light) .tab:hover {
   background: #334155;
   border-color: #94a3b8;
   color: #f8fafc;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
-body.theme-industrial .tab.active {
+body.theme-industrial:not(.appearance-light) .tab.active {
   background: linear-gradient(135deg, #64748b 0%, #94a3b8 42%, #475569 100%);
   border-color: rgba(248, 250, 252, 0.35);
   color: #020617;
@@ -109,26 +109,26 @@ body.theme-industrial .tab.active {
     0 0 0 1px rgba(15, 23, 42, 0.25) inset;
   animation: none;
 }
-body.theme-industrial .tab.active:hover {
+body.theme-industrial:not(.appearance-light) .tab.active:hover {
   color: #020617;
   filter: brightness(1.05);
 }
-body.theme-industrial .tab.highlight {
+body.theme-industrial:not(.appearance-light) .tab.highlight {
   border-color: rgba(148, 163, 184, 0.65);
   color: #f1f5f9;
   background: rgba(148, 163, 184, 0.12);
 }
-body.theme-industrial .tab.highlight:hover {
+body.theme-industrial:not(.appearance-light) .tab.highlight:hover {
   border-color: #e2e8f0;
   color: #f8fafc;
   background: rgba(148, 163, 184, 0.2);
 }
 
-body.theme-industrial .content {
+body.theme-industrial:not(.appearance-light) .content {
   color: #e2e8f0;
 }
 
-body.theme-industrial .section-header {
+body.theme-industrial:not(.appearance-light) .section-header {
   border: 1px solid rgba(148, 163, 184, 0.35);
   border-radius: 16px;
   padding: 0.85rem 1rem;
@@ -139,182 +139,182 @@ body.theme-industrial .section-header {
     0 12px 40px rgba(0, 0, 0, 0.45),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
-body.theme-industrial .section-header::before {
+body.theme-industrial:not(.appearance-light) .section-header::before {
   background: linear-gradient(180deg, #94a3b8 0%, #64748b 55%, #475569 100%);
   box-shadow: 0 0 18px rgba(148, 163, 184, 0.35);
 }
-body.theme-industrial .section-header h2 {
+body.theme-industrial:not(.appearance-light) .section-header h2 {
   color: #f8fafc;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
 }
-body.theme-industrial .section-header h2 i {
+body.theme-industrial:not(.appearance-light) .section-header h2 i {
   color: #020617;
   background: linear-gradient(145deg, #e2e8f0 0%, #94a3b8 100%);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 6px 14px rgba(0, 0, 0, 0.4);
 }
 
-body.theme-industrial .table-wrap {
+body.theme-industrial:not(.appearance-light) .table-wrap {
   background: #1e293b;
   border-color: #475569;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(148, 163, 184, 0.12);
 }
-body.theme-industrial .table-wrap:hover {
+body.theme-industrial:not(.appearance-light) .table-wrap:hover {
   border-color: #94a3b8;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(148, 163, 184, 0.2);
 }
 
-body.theme-industrial .data-table th {
+body.theme-industrial:not(.appearance-light) .data-table th {
   background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
   color: #f8fafc;
   border-bottom-color: #475569;
 }
-body.theme-industrial .data-table td {
+body.theme-industrial:not(.appearance-light) .data-table td {
   border-bottom-color: #334155;
   color: #e2e8f0;
 }
-body.theme-industrial .data-table tbody tr:nth-child(even) {
+body.theme-industrial:not(.appearance-light) .data-table tbody tr:nth-child(even) {
   background: #0f172a;
 }
-body.theme-industrial .data-table tbody tr:hover {
+body.theme-industrial:not(.appearance-light) .data-table tbody tr:hover {
   background: rgba(148, 163, 184, 0.08) !important;
   box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.22);
 }
 
-body.theme-industrial .filter-row td {
+body.theme-industrial:not(.appearance-light) .filter-row td {
   background: #020617;
   border-bottom-color: #334155;
 }
 
-body.theme-industrial .card,
-body.theme-industrial .empty-card {
+body.theme-industrial:not(.appearance-light) .card,
+body.theme-industrial:not(.appearance-light) .empty-card {
   background: #1e293b;
   border-color: #475569;
   color: #e2e8f0;
 }
-body.theme-industrial .card h2,
-body.theme-industrial .empty-card h3 {
+body.theme-industrial:not(.appearance-light) .card h2,
+body.theme-industrial:not(.appearance-light) .empty-card h3 {
   color: #f8fafc;
 }
 
-body.theme-industrial .btn:not(.primary):not(.danger) {
+body.theme-industrial:not(.appearance-light) .btn:not(.primary):not(.danger) {
   background: #334155;
   color: #f8fafc;
   border-color: #475569;
 }
-body.theme-industrial .btn:not(.primary):not(.danger):hover {
+body.theme-industrial:not(.appearance-light) .btn:not(.primary):not(.danger):hover {
   background: #475569;
   border-color: #94a3b8;
   color: #fff;
 }
 
-body.theme-industrial .btn.primary {
+body.theme-industrial:not(.appearance-light) .btn.primary {
   background: linear-gradient(145deg, #64748b 0%, #94a3b8 45%, #475569 100%);
   color: #020617;
   font-weight: 700;
   box-shadow: 0 2px 14px rgba(148, 163, 184, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
 }
-body.theme-industrial .btn.primary:hover {
+body.theme-industrial:not(.appearance-light) .btn.primary:hover {
   background: linear-gradient(145deg, #94a3b8 0%, #e2e8f0 50%, #64748b 100%);
   box-shadow: 0 6px 22px rgba(148, 163, 184, 0.45);
 }
-body.theme-industrial .btn.outline {
+body.theme-industrial:not(.appearance-light) .btn.outline {
   background: transparent;
   color: #f8fafc;
   border-color: #94a3b8;
 }
-body.theme-industrial .btn.outline:hover {
+body.theme-industrial:not(.appearance-light) .btn.outline:hover {
   background: rgba(148, 163, 184, 0.12);
   border-color: #94a3b8;
   color: #fff;
 }
 
-body.theme-industrial .search,
-body.theme-industrial input.filter-input,
-body.theme-industrial select.filter-input,
-body.theme-industrial textarea.filter-input {
+body.theme-industrial:not(.appearance-light) .search,
+body.theme-industrial:not(.appearance-light) input.filter-input,
+body.theme-industrial:not(.appearance-light) select.filter-input,
+body.theme-industrial:not(.appearance-light) textarea.filter-input {
   background: #020617;
   border-color: #475569;
   color: #f8fafc;
 }
 
-body.theme-industrial .modal-box {
+body.theme-industrial:not(.appearance-light) .modal-box {
   background: #1e293b;
   border-color: #475569;
   color: #e2e8f0;
 }
-body.theme-industrial .modal-header {
+body.theme-industrial:not(.appearance-light) .modal-header {
   background: #0f172a;
   border-bottom-color: rgba(148, 163, 184, 0.35);
 }
-body.theme-industrial .modal-header h3 {
+body.theme-industrial:not(.appearance-light) .modal-header h3 {
   color: #f8fafc;
 }
-body.theme-industrial .close {
+body.theme-industrial:not(.appearance-light) .close {
   color: #94a3b8;
 }
-body.theme-industrial .close:hover {
+body.theme-industrial:not(.appearance-light) .close:hover {
   color: #e2e8f0;
   background: rgba(148, 163, 184, 0.15);
 }
 
-body.theme-industrial .form-group label {
+body.theme-industrial:not(.appearance-light) .form-group label {
   color: #cbd5e1;
 }
-body.theme-industrial .form-group input,
-body.theme-industrial .form-group select,
-body.theme-industrial .form-group textarea {
+body.theme-industrial:not(.appearance-light) .form-group input,
+body.theme-industrial:not(.appearance-light) .form-group select,
+body.theme-industrial:not(.appearance-light) .form-group textarea {
   background: #020617;
   border-color: #475569;
   color: #f8fafc;
 }
 
-body.theme-industrial .app-footer {
+body.theme-industrial:not(.appearance-light) .app-footer {
   border-top-color: #334155;
   background: linear-gradient(180deg, transparent 0%, rgba(15, 23, 42, 0.92) 100%);
 }
-body.theme-industrial .app-footer p,
-body.theme-industrial .app-footer .footer-version {
+body.theme-industrial:not(.appearance-light) .app-footer p,
+body.theme-industrial:not(.appearance-light) .app-footer .footer-version {
   color: #94a3b8;
 }
 
 /* Login en industrial: cristal muy ligero (alineado a “ya logueado”); refino con body.login-open */
-body.theme-industrial .login-card {
+body.theme-industrial:not(.appearance-light) .login-card {
   background: rgba(15, 23, 42, 0.18);
   border: 1px solid rgba(148, 163, 184, 0.22);
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.28);
   -webkit-backdrop-filter: blur(14px) saturate(118%);
   backdrop-filter: blur(14px) saturate(118%);
 }
-body.theme-industrial .login-card h2 {
+body.theme-industrial:not(.appearance-light) .login-card h2 {
   color: #f8fafc;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55), 0 0 18px rgba(0, 0, 0, 0.35);
 }
-body.theme-industrial .login-hint {
+body.theme-industrial:not(.appearance-light) .login-hint {
   color: #cbd5e1;
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
 }
 
-body.theme-industrial .tab:focus-visible,
-body.theme-industrial .btn:focus-visible,
-body.theme-industrial .btn-icon-header:focus-visible {
+body.theme-industrial:not(.appearance-light) .tab:focus-visible,
+body.theme-industrial:not(.appearance-light) .btn:focus-visible,
+body.theme-industrial:not(.appearance-light) .btn-icon-header:focus-visible {
   outline-color: #94a3b8;
 }
 
 /* Tablas compactas en modales (liquidación, etc.) */
-body.theme-industrial .table-simple th,
-body.theme-industrial .table-simple td {
+body.theme-industrial:not(.appearance-light) .table-simple th,
+body.theme-industrial:not(.appearance-light) .table-simple td {
   border-color: #475569;
   color: #e2e8f0;
 }
-body.theme-industrial .table-simple thead th {
+body.theme-industrial:not(.appearance-light) .table-simple thead th {
   background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
   color: #f8fafc;
   font-weight: 600;
 }
-body.theme-industrial .table-simple tbody tr:nth-child(even) td {
+body.theme-industrial:not(.appearance-light) .table-simple tbody tr:nth-child(even) td {
   background: rgba(15, 23, 42, 0.45);
 }
-body.theme-industrial .table-simple tbody tr:hover td {
+body.theme-industrial:not(.appearance-light) .table-simple tbody tr:hover td {
   background: rgba(148, 163, 184, 0.1);
   box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.2);
 }
@@ -394,7 +394,7 @@ body.theme-industrial .table-simple tbody tr:hover td {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body.theme-industrial .header {
+  body.theme-industrial:not(.appearance-light) .header {
     animation: none;
   }
 }
@@ -405,97 +405,97 @@ body.theme-industrial .table-simple tbody tr:hover td {
    ============================================================================= */
 
 /* Dashboard: quitar bloque azul aislado; acentos oro en lugar de cyan */
-body.theme-industrial #panel-dashboards.panel-dashboard {
+body.theme-industrial:not(.appearance-light) #panel-dashboards.panel-dashboard {
   background: linear-gradient(180deg, #0f172a 0%, #020617 50%, #0f172a 100%);
   border-top: 1px solid rgba(148, 163, 184, 0.22);
 }
-body.theme-industrial .dashboard-title {
+body.theme-industrial:not(.appearance-light) .dashboard-title {
   color: #f8fafc;
   text-shadow: 0 2px 18px rgba(148, 163, 184, 0.16);
 }
-body.theme-industrial .dashboard-title i {
+body.theme-industrial:not(.appearance-light) .dashboard-title i {
   color: #e2e8f0;
 }
-body.theme-industrial .dashboard-subtitle strong {
+body.theme-industrial:not(.appearance-light) .dashboard-subtitle strong {
   color: #cbd5e1;
 }
-body.theme-industrial .dashboard-crossfilter-bar {
+body.theme-industrial:not(.appearance-light) .dashboard-crossfilter-bar {
   background: linear-gradient(90deg, rgba(148, 163, 184, 0.14) 0%, rgba(71, 85, 105, 0.35) 100%);
   border-color: rgba(148, 163, 184, 0.32);
 }
-body.theme-industrial .dashboard-crossfilter-clear {
+body.theme-industrial:not(.appearance-light) .dashboard-crossfilter-clear {
   border-color: rgba(148, 163, 184, 0.5) !important;
   color: #f1f5f9 !important;
 }
-body.theme-industrial #panel-dashboards .dashboard-surface .dashboard-card.is-crossfilter-match,
-body.theme-industrial #panel-dashboards .dashboard-surface .dashboard-score-tile.is-crossfilter-match {
+body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-surface .dashboard-card.is-crossfilter-match,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-surface .dashboard-score-tile.is-crossfilter-match {
   box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.42), 0 8px 28px rgba(0, 0, 0, 0.35);
 }
-body.theme-industrial .dashboard-loading {
+body.theme-industrial:not(.appearance-light) .dashboard-loading {
   color: #94a3b8;
 }
-body.theme-industrial .dashboard-loading .loading-spinner {
+body.theme-industrial:not(.appearance-light) .dashboard-loading .loading-spinner {
   border-color: rgba(255, 255, 255, 0.1);
   border-top-color: #94a3b8;
 }
-body.theme-industrial .dashboard-card-action {
+body.theme-industrial:not(.appearance-light) .dashboard-card-action {
   color: #cbd5e1;
 }
-body.theme-industrial .dashboard-card-action:hover {
+body.theme-industrial:not(.appearance-light) .dashboard-card-action:hover {
   color: #f1f5f9;
 }
-body.theme-industrial .dashboard-section-title i {
+body.theme-industrial:not(.appearance-light) .dashboard-section-title i {
   color: #94a3b8;
 }
-body.theme-industrial .dashboard-forecast-card h4 {
+body.theme-industrial:not(.appearance-light) .dashboard-forecast-card h4 {
   color: #e2e8f0;
 }
-body.theme-industrial .dashboard-forecast-card .stat-label {
+body.theme-industrial:not(.appearance-light) .dashboard-forecast-card .stat-label {
   color: #cbd5e1;
 }
-body.theme-industrial .dashboard-card {
+body.theme-industrial:not(.appearance-light) .dashboard-card {
   border-color: rgba(148, 163, 184, 0.12);
 }
-body.theme-industrial .dashboard-stat-card {
+body.theme-industrial:not(.appearance-light) .dashboard-stat-card {
   border-color: rgba(148, 163, 184, 0.1);
 }
 
 /* Cabeceras de sección globales (sustituye blanco / lavanda) */
-body.theme-industrial .section-header {
+body.theme-industrial:not(.appearance-light) .section-header {
   background: linear-gradient(135deg, rgba(51, 65, 85, 0.98) 0%, rgba(30, 41, 59, 0.99) 100%);
   border-color: rgba(148, 163, 184, 0.28);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
-body.theme-industrial .section-header::before {
+body.theme-industrial:not(.appearance-light) .section-header::before {
   background: linear-gradient(180deg, #94a3b8 0%, #64748b 50%, #475569 100%);
   box-shadow: 0 0 14px rgba(148, 163, 184, 0.32);
 }
-body.theme-industrial .section-header h2 {
+body.theme-industrial:not(.appearance-light) .section-header h2 {
   color: #f8fafc;
 }
 
 /* Paneles premium (cotizaciones, incidentes, bitácora, refacciones) */
-body.theme-industrial #panel-cotizaciones .section-header,
-body.theme-industrial #panel-incidentes .section-header,
-body.theme-industrial #panel-bitacoras .section-header,
-body.theme-industrial #panel-refacciones .section-header {
+body.theme-industrial:not(.appearance-light) #panel-cotizaciones .section-header,
+body.theme-industrial:not(.appearance-light) #panel-incidentes .section-header,
+body.theme-industrial:not(.appearance-light) #panel-bitacoras .section-header,
+body.theme-industrial:not(.appearance-light) #panel-refacciones .section-header {
   background: linear-gradient(135deg, rgba(51, 65, 85, 0.98) 0%, rgba(30, 41, 59, 0.98) 100%);
   border-color: rgba(148, 163, 184, 0.3);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
-body.theme-industrial #panel-cotizaciones .section-header h2 i,
-body.theme-industrial #panel-incidentes .section-header h2 i,
-body.theme-industrial #panel-bitacoras .section-header h2 i,
-body.theme-industrial #panel-refacciones .section-header h2 i {
+body.theme-industrial:not(.appearance-light) #panel-cotizaciones .section-header h2 i,
+body.theme-industrial:not(.appearance-light) #panel-incidentes .section-header h2 i,
+body.theme-industrial:not(.appearance-light) #panel-bitacoras .section-header h2 i,
+body.theme-industrial:not(.appearance-light) #panel-refacciones .section-header h2 i {
   background: linear-gradient(135deg, #64748b 0%, #94a3b8 45%, #475569 100%);
   color: #020617;
   animation: none;
 }
 
-body.theme-industrial #panel-cotizaciones .table-wrap,
-body.theme-industrial #panel-incidentes .table-wrap,
-body.theme-industrial #panel-bitacoras .table-wrap,
-body.theme-industrial #panel-refacciones .table-wrap {
+body.theme-industrial:not(.appearance-light) #panel-cotizaciones .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-incidentes .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-bitacoras .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-refacciones .table-wrap {
   background: rgba(30, 41, 59, 0.94);
   border-color: rgba(148, 163, 184, 0.22);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(148, 163, 184, 0.08) inset;
@@ -503,379 +503,379 @@ body.theme-industrial #panel-refacciones .table-wrap {
 }
 
 /* Cabecera de columnas + fila de filtros: todas las data-table */
-body.theme-industrial .data-table thead tr:first-child th {
+body.theme-industrial:not(.appearance-light) .data-table thead tr:first-child th {
   background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important;
   color: #f8fafc !important;
   box-shadow: 0 2px 0 rgba(148, 163, 184, 0.2);
   border-bottom-color: #475569 !important;
 }
-body.theme-industrial .data-table thead .filter-row td,
-body.theme-industrial .filter-row td {
+body.theme-industrial:not(.appearance-light) .data-table thead .filter-row td,
+body.theme-industrial:not(.appearance-light) .filter-row td {
   background: #020617 !important;
   border-bottom-color: #334155 !important;
   color: #e2e8f0;
 }
 
-body.theme-industrial .data-table tbody tr {
+body.theme-industrial:not(.appearance-light) .data-table tbody tr {
   color: #e2e8f0;
 }
-body.theme-industrial .data-table tbody tr:nth-child(even) {
+body.theme-industrial:not(.appearance-light) .data-table tbody tr:nth-child(even) {
   background: rgba(30, 41, 59, 0.72) !important;
 }
-body.theme-industrial .data-table tbody tr:hover {
+body.theme-industrial:not(.appearance-light) .data-table tbody tr:hover {
   background: rgba(148, 163, 184, 0.09) !important;
   box-shadow: inset 4px 0 0 #64748b !important;
 }
 
-body.theme-industrial .data-table td {
+body.theme-industrial:not(.appearance-light) .data-table td {
   color: #e2e8f0;
   border-bottom-color: #334155;
 }
-body.theme-industrial .data-table td.empty.filter-empty {
+body.theme-industrial:not(.appearance-light) .data-table td.empty.filter-empty {
   color: #94a3b8;
 }
 
 /* Refacciones: reglas #tabla-refacciones ganan a las globales claras */
-body.theme-industrial #tabla-refacciones thead tr:first-child th {
+body.theme-industrial:not(.appearance-light) #tabla-refacciones thead tr:first-child th {
   background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important;
   color: #f8fafc !important;
   border-bottom-color: #475569 !important;
 }
-body.theme-industrial #tabla-refacciones thead tr:first-child th.th-actions {
+body.theme-industrial:not(.appearance-light) #tabla-refacciones thead tr:first-child th.th-actions {
   background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important;
 }
-body.theme-industrial #tabla-refacciones thead .filter-row td {
+body.theme-industrial:not(.appearance-light) #tabla-refacciones thead .filter-row td {
   background: #020617 !important;
   border-bottom-color: #334155 !important;
 }
-body.theme-industrial #tabla-refacciones thead .filter-row input.filter-input,
-body.theme-industrial #tabla-refacciones thead .filter-row select.filter-input,
-body.theme-industrial #tabla-refacciones thead .filter-row textarea.filter-input {
+body.theme-industrial:not(.appearance-light) #tabla-refacciones thead .filter-row input.filter-input,
+body.theme-industrial:not(.appearance-light) #tabla-refacciones thead .filter-row select.filter-input,
+body.theme-industrial:not(.appearance-light) #tabla-refacciones thead .filter-row textarea.filter-input {
   background: #0f172a !important;
   background-color: #0f172a !important;
   border-color: #475569 !important;
   color: #f8fafc !important;
 }
 /* Autofill: style.css fuerza caja blanca con #tabla-refacciones + !important */
-body.theme-industrial #tabla-refacciones thead .filter-row input.filter-input:-webkit-autofill,
-body.theme-industrial #tabla-refacciones thead .filter-row input.filter-input:-webkit-autofill:hover,
-body.theme-industrial #tabla-refacciones thead .filter-row input.filter-input:-webkit-autofill:focus {
+body.theme-industrial:not(.appearance-light) #tabla-refacciones thead .filter-row input.filter-input:-webkit-autofill,
+body.theme-industrial:not(.appearance-light) #tabla-refacciones thead .filter-row input.filter-input:-webkit-autofill:hover,
+body.theme-industrial:not(.appearance-light) #tabla-refacciones thead .filter-row input.filter-input:-webkit-autofill:focus {
   -webkit-text-fill-color: #f8fafc !important;
   box-shadow: 0 0 0 1000px #0f172a inset !important;
   transition: background-color 99999s ease-out;
 }
-body.theme-industrial #panel-refacciones .toolbar select {
+body.theme-industrial:not(.appearance-light) #panel-refacciones .toolbar select {
   background: rgba(30, 41, 59, 0.96) !important;
   background-color: rgba(30, 41, 59, 0.96) !important;
   border-color: rgba(148, 163, 184, 0.28) !important;
   color: #f8fafc !important;
   box-shadow: none !important;
 }
-body.theme-industrial #panel-refacciones .toolbar select:focus {
+body.theme-industrial:not(.appearance-light) #panel-refacciones .toolbar select:focus {
   outline: none;
   border-color: rgba(148, 163, 184, 0.55) !important;
   box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.18) !important;
 }
 /* Filas stock bajo: quitar lavanda clara de style.css */
-body.theme-industrial #tabla-refacciones.data-table tr.row-stock-bajo td {
+body.theme-industrial:not(.appearance-light) #tabla-refacciones.data-table tr.row-stock-bajo td {
   background: rgba(30, 58, 95, 0.58) !important;
   background-color: rgba(30, 58, 95, 0.58) !important;
   box-shadow: inset 3px 0 0 rgba(148, 163, 184, 0.65) !important;
   color: #e2e8f0;
 }
-body.theme-industrial #tabla-refacciones.data-table tbody tr:nth-child(even).row-stock-bajo td {
+body.theme-industrial:not(.appearance-light) #tabla-refacciones.data-table tbody tr:nth-child(even).row-stock-bajo td {
   background: rgba(15, 23, 42, 0.65) !important;
   background-color: rgba(15, 23, 42, 0.65) !important;
 }
-body.theme-industrial #tabla-refacciones.data-table td.stock-bajo {
+body.theme-industrial:not(.appearance-light) #tabla-refacciones.data-table td.stock-bajo {
   color: #cbd5e1 !important;
 }
-body.theme-industrial #panel-refacciones .ref-table-scroll-x {
+body.theme-industrial:not(.appearance-light) #panel-refacciones .ref-table-scroll-x {
   background: transparent;
 }
-body.theme-industrial #tabla-refacciones.data-table tbody tr:nth-child(even) {
+body.theme-industrial:not(.appearance-light) #tabla-refacciones.data-table tbody tr:nth-child(even) {
   background: rgba(30, 41, 59, 0.82) !important;
 }
-body.theme-industrial #tabla-refacciones.data-table tbody tr:hover {
+body.theme-industrial:not(.appearance-light) #tabla-refacciones.data-table tbody tr:hover {
   background: rgba(148, 163, 184, 0.1) !important;
   box-shadow: inset 3px 0 0 #94a3b8 !important;
 }
 
 /* Cotizaciones / incidentes / bitácora: cabecera explícita */
-body.theme-industrial #tabla-cotizaciones thead tr:first-child th,
-body.theme-industrial #tabla-incidentes thead tr:first-child th,
-body.theme-industrial #tabla-bitacoras thead tr:first-child th {
+body.theme-industrial:not(.appearance-light) #tabla-cotizaciones thead tr:first-child th,
+body.theme-industrial:not(.appearance-light) #tabla-incidentes thead tr:first-child th,
+body.theme-industrial:not(.appearance-light) #tabla-bitacoras thead tr:first-child th {
   background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important;
   color: #f8fafc !important;
   border-bottom-color: #475569 !important;
 }
-body.theme-industrial #tabla-cotizaciones tbody tr:hover,
-body.theme-industrial #tabla-incidentes tbody tr:hover,
-body.theme-industrial #tabla-bitacoras tbody tr:hover {
+body.theme-industrial:not(.appearance-light) #tabla-cotizaciones tbody tr:hover,
+body.theme-industrial:not(.appearance-light) #tabla-incidentes tbody tr:hover,
+body.theme-industrial:not(.appearance-light) #tabla-bitacoras tbody tr:hover {
   background: rgba(148, 163, 184, 0.09) !important;
 }
 
 /* Filtros en tablas con inputs (cotizaciones, incidentes, bitácora) */
-body.theme-industrial #tabla-cotizaciones .filter-row td,
-body.theme-industrial #tabla-incidentes .filter-row td,
-body.theme-industrial #tabla-bitacoras .filter-row td {
+body.theme-industrial:not(.appearance-light) #tabla-cotizaciones .filter-row td,
+body.theme-industrial:not(.appearance-light) #tabla-incidentes .filter-row td,
+body.theme-industrial:not(.appearance-light) #tabla-bitacoras .filter-row td {
   background: #020617 !important;
   border-bottom-color: #334155 !important;
 }
-body.theme-industrial #tabla-cotizaciones input.filter-input,
-body.theme-industrial #tabla-cotizaciones select.filter-input,
-body.theme-industrial #tabla-cotizaciones textarea.filter-input,
-body.theme-industrial #tabla-incidentes input.filter-input,
-body.theme-industrial #tabla-incidentes select.filter-input,
-body.theme-industrial #tabla-incidentes textarea.filter-input,
-body.theme-industrial #tabla-bitacoras input.filter-input,
-body.theme-industrial #tabla-bitacoras select.filter-input,
-body.theme-industrial #tabla-bitacoras textarea.filter-input {
+body.theme-industrial:not(.appearance-light) #tabla-cotizaciones input.filter-input,
+body.theme-industrial:not(.appearance-light) #tabla-cotizaciones select.filter-input,
+body.theme-industrial:not(.appearance-light) #tabla-cotizaciones textarea.filter-input,
+body.theme-industrial:not(.appearance-light) #tabla-incidentes input.filter-input,
+body.theme-industrial:not(.appearance-light) #tabla-incidentes select.filter-input,
+body.theme-industrial:not(.appearance-light) #tabla-incidentes textarea.filter-input,
+body.theme-industrial:not(.appearance-light) #tabla-bitacoras input.filter-input,
+body.theme-industrial:not(.appearance-light) #tabla-bitacoras select.filter-input,
+body.theme-industrial:not(.appearance-light) #tabla-bitacoras textarea.filter-input {
   background: #0f172a !important;
   border-color: #475569 !important;
   color: #f8fafc !important;
 }
-body.theme-industrial #tabla-cotizaciones .filter-date-select,
-body.theme-industrial #tabla-cotizaciones .filter-date-input,
-body.theme-industrial #tabla-incidentes .filter-date-select,
-body.theme-industrial #tabla-incidentes .filter-date-input,
-body.theme-industrial #tabla-bitacoras .filter-date-select,
-body.theme-industrial #tabla-bitacoras .filter-date-input {
+body.theme-industrial:not(.appearance-light) #tabla-cotizaciones .filter-date-select,
+body.theme-industrial:not(.appearance-light) #tabla-cotizaciones .filter-date-input,
+body.theme-industrial:not(.appearance-light) #tabla-incidentes .filter-date-select,
+body.theme-industrial:not(.appearance-light) #tabla-incidentes .filter-date-input,
+body.theme-industrial:not(.appearance-light) #tabla-bitacoras .filter-date-select,
+body.theme-industrial:not(.appearance-light) #tabla-bitacoras .filter-date-input {
   background: #0f172a !important;
   color: #f8fafc !important;
   border-color: #475569 !important;
 }
 
 /* Barra de stock bajo en refacciones */
-body.theme-industrial .stock-alert-bar,
-body.theme-industrial #ref-stock-alert-bar.stock-alert-bar {
+body.theme-industrial:not(.appearance-light) .stock-alert-bar,
+body.theme-industrial:not(.appearance-light) #ref-stock-alert-bar.stock-alert-bar {
   background: linear-gradient(135deg, rgba(66, 32, 6, 0.96) 0%, rgba(113, 63, 18, 0.92) 100%);
   border-color: rgba(251, 191, 36, 0.45);
   color: #cbd5e1;
   box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.12) inset, 0 12px 36px rgba(0, 0, 0, 0.35);
 }
-body.theme-industrial #ref-stock-alert-bar.stock-alert-bar strong,
-body.theme-industrial .stock-alert-bar strong {
+body.theme-industrial:not(.appearance-light) #ref-stock-alert-bar.stock-alert-bar strong,
+body.theme-industrial:not(.appearance-light) .stock-alert-bar strong {
   color: #f8fafc;
 }
 
 /* Píldoras categoría refacciones (fondo blanco en tema oscuro de catálogo) */
-body.theme-industrial .ref-cat-pill--part {
+body.theme-industrial:not(.appearance-light) .ref-cat-pill--part {
   background: rgba(71, 85, 105, 0.95);
   color: #e2e8f0;
   border-color: #475569;
 }
 
 /* Prospección / paneles UX: misma base que máquinas (style.css usa losa clara en .panel.panel-ux) */
-body.theme-industrial .panel.panel-ux {
+body.theme-industrial:not(.appearance-light) .panel.panel-ux {
   background: transparent;
   border-color: rgba(148, 163, 184, 0.14);
   box-shadow: none;
 }
-body.theme-industrial .section-header--ux {
+body.theme-industrial:not(.appearance-light) .section-header--ux {
   border-bottom-color: rgba(148, 163, 184, 0.18);
 }
-body.theme-industrial .section-header--ux h2 {
+body.theme-industrial:not(.appearance-light) .section-header--ux h2 {
   color: #f8fafc;
 }
-body.theme-industrial .section-header--ux .section-sub {
+body.theme-industrial:not(.appearance-light) .section-header--ux .section-sub {
   color: #94a3b8;
 }
-body.theme-industrial .section-header--ux .section-sub code {
+body.theme-industrial:not(.appearance-light) .section-header--ux .section-sub code {
   color: #cbd5e1;
   background: rgba(15, 23, 42, 0.45);
   padding: 0.12rem 0.35rem;
   border-radius: 6px;
   border: 1px solid rgba(148, 163, 184, 0.22);
 }
-body.theme-industrial .search--ux {
+body.theme-industrial:not(.appearance-light) .search--ux {
   background: #0f172a !important;
   background-color: #0f172a !important;
   border-color: #475569 !important;
   color: #f8fafc !important;
 }
-body.theme-industrial .search--ux:focus {
+body.theme-industrial:not(.appearance-light) .search--ux:focus {
   border-color: #94a3b8 !important;
   box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.2) !important;
 }
-body.theme-industrial .search--ux::placeholder {
+body.theme-industrial:not(.appearance-light) .search--ux::placeholder {
   color: #64748b;
   opacity: 1;
 }
-body.theme-industrial .prospeccion-kpi {
+body.theme-industrial:not(.appearance-light) .prospeccion-kpi {
   background: rgba(30, 41, 59, 0.92);
   border-color: rgba(148, 163, 184, 0.2);
 }
-body.theme-industrial .prospeccion-kpi-lbl {
+body.theme-industrial:not(.appearance-light) .prospeccion-kpi-lbl {
   color: #94a3b8;
 }
-body.theme-industrial .prospeccion-kpi-val {
+body.theme-industrial:not(.appearance-light) .prospeccion-kpi-val {
   color: #94a3b8;
 }
-body.theme-industrial .prospeccion-map-wrap {
+body.theme-industrial:not(.appearance-light) .prospeccion-map-wrap {
   background: rgba(15, 23, 42, 0.55);
   border-color: rgba(148, 163, 184, 0.22);
 }
 
 /* Spinner global (si aparece) */
-body.theme-industrial .global-loading .loading-spinner {
+body.theme-industrial:not(.appearance-light) .global-loading .loading-spinner {
   border-color: #334155;
   border-top-color: #94a3b8;
 }
-body.theme-industrial .global-loading .loading-text {
+body.theme-industrial:not(.appearance-light) .global-loading .loading-text {
   color: #cbd5e1;
 }
 
 /* Paneles con tabla: refuerzo (un ID en style.css gana a body.theme-industrial .table-wrap sin ID) */
-body.theme-industrial #panel-clientes .table-wrap,
-body.theme-industrial #panel-maquinas .table-wrap,
-body.theme-industrial #panel-almacen .table-wrap,
-body.theme-industrial #panel-ventas .table-wrap,
-body.theme-industrial #panel-prospeccion .table-wrap,
-body.theme-industrial #panel-revision-maquinas .table-wrap,
-body.theme-industrial #panel-tarifas .table-wrap,
-body.theme-industrial #panel-reportes .table-wrap,
-body.theme-industrial #panel-garantias .table-wrap,
-body.theme-industrial #panel-mantenimiento-garantia .table-wrap,
-body.theme-industrial #panel-garantias-sin-cobertura .table-wrap,
-body.theme-industrial #panel-bonos .table-wrap,
-body.theme-industrial #panel-viajes .table-wrap,
-body.theme-industrial #panel-tecnicos .table-wrap,
-body.theme-industrial #panel-auditoria .table-wrap,
-body.theme-industrial #panel-usuarios .table-wrap,
-body.theme-industrial #panel-categorias-catalogo .table-wrap,
-body.theme-industrial #panel-demo .table-wrap {
+body.theme-industrial:not(.appearance-light) #panel-clientes .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-maquinas .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-almacen .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-ventas .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-prospeccion .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-revision-maquinas .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-tarifas .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-reportes .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-garantias .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-garantias-sin-cobertura .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-bonos .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-viajes .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-tecnicos .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-auditoria .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-usuarios .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-categorias-catalogo .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-demo .table-wrap {
   background: rgba(30, 41, 59, 0.94);
   border-color: rgba(148, 163, 184, 0.22);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(148, 163, 184, 0.08) inset;
   backdrop-filter: blur(8px);
 }
-body.theme-industrial #panel-clientes .table-wrap:hover,
-body.theme-industrial #panel-maquinas .table-wrap:hover,
-body.theme-industrial #panel-almacen .table-wrap:hover,
-body.theme-industrial #panel-ventas .table-wrap:hover,
-body.theme-industrial #panel-prospeccion .table-wrap:hover,
-body.theme-industrial #panel-revision-maquinas .table-wrap:hover,
-body.theme-industrial #panel-tarifas .table-wrap:hover,
-body.theme-industrial #panel-reportes .table-wrap:hover,
-body.theme-industrial #panel-garantias .table-wrap:hover,
-body.theme-industrial #panel-mantenimiento-garantia .table-wrap:hover,
-body.theme-industrial #panel-garantias-sin-cobertura .table-wrap:hover,
-body.theme-industrial #panel-bonos .table-wrap:hover,
-body.theme-industrial #panel-viajes .table-wrap:hover,
-body.theme-industrial #panel-tecnicos .table-wrap:hover,
-body.theme-industrial #panel-auditoria .table-wrap:hover,
-body.theme-industrial #panel-usuarios .table-wrap:hover,
-body.theme-industrial #panel-categorias-catalogo .table-wrap:hover,
-body.theme-industrial #panel-demo .table-wrap:hover {
+body.theme-industrial:not(.appearance-light) #panel-clientes .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-maquinas .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-almacen .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-ventas .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-prospeccion .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-revision-maquinas .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-tarifas .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-reportes .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-garantias .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-garantias-sin-cobertura .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-bonos .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-viajes .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-tecnicos .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-auditoria .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-usuarios .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-categorias-catalogo .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-demo .table-wrap:hover {
   border-color: rgba(148, 163, 184, 0.35);
   box-shadow: 0 16px 44px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(148, 163, 184, 0.14) inset;
 }
 
 /* Filtros en cabecera de tabla (input.filter-input gana por orden en style.css sin body) */
-body.theme-industrial .data-table thead .filter-row input:not([type="checkbox"]):not([type="radio"]),
-body.theme-industrial .data-table thead .filter-row textarea,
-body.theme-industrial .data-table thead .filter-row select {
+body.theme-industrial:not(.appearance-light) .data-table thead .filter-row input:not([type="checkbox"]):not([type="radio"]),
+body.theme-industrial:not(.appearance-light) .data-table thead .filter-row textarea,
+body.theme-industrial:not(.appearance-light) .data-table thead .filter-row select {
   background: #0f172a !important;
   border-color: #475569 !important;
   color: #f8fafc !important;
 }
-body.theme-industrial .data-table thead .filter-row input:focus,
-body.theme-industrial .data-table thead .filter-row textarea:focus,
-body.theme-industrial .data-table thead .filter-row select:focus {
+body.theme-industrial:not(.appearance-light) .data-table thead .filter-row input:focus,
+body.theme-industrial:not(.appearance-light) .data-table thead .filter-row textarea:focus,
+body.theme-industrial:not(.appearance-light) .data-table thead .filter-row select:focus {
   border-color: #94a3b8 !important;
   box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.22) !important;
 }
-body.theme-industrial .data-table .filter-date-wrap .filter-date-select,
-body.theme-industrial .data-table .filter-date-wrap .filter-date-input {
+body.theme-industrial:not(.appearance-light) .data-table .filter-date-wrap .filter-date-select,
+body.theme-industrial:not(.appearance-light) .data-table .filter-date-wrap .filter-date-input {
   background: #0f172a !important;
   border-color: #475569 !important;
   color: #f8fafc !important;
 }
-body.theme-industrial .data-table .filter-date-wrap .filter-date-select:focus,
-body.theme-industrial .data-table .filter-date-wrap .filter-date-input:focus {
+body.theme-industrial:not(.appearance-light) .data-table .filter-date-wrap .filter-date-select:focus,
+body.theme-industrial:not(.appearance-light) .data-table .filter-date-wrap .filter-date-input:focus {
   border-color: #94a3b8 !important;
 }
 
 /* Dashboard: tarjetas ejecutivas, pronósticos y botones (menos cyan/azul) */
-body.theme-industrial .btn-dashboard-refresh:hover {
+body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh:hover {
   border-color: rgba(148, 163, 184, 0.45) !important;
   color: #f1f5f9 !important;
 }
-body.theme-industrial .dashboard-kpi-strip {
+body.theme-industrial:not(.appearance-light) .dashboard-kpi-strip {
   background: rgba(15, 23, 42, 0.55);
   border-color: rgba(148, 163, 184, 0.18);
 }
-body.theme-industrial .dashboard-kpi-item i {
+body.theme-industrial:not(.appearance-light) .dashboard-kpi-item i {
   color: #94a3b8;
 }
-body.theme-industrial .dashboard-score-tile {
+body.theme-industrial:not(.appearance-light) .dashboard-score-tile {
   background: linear-gradient(145deg, rgba(51, 65, 85, 0.95) 0%, rgba(30, 41, 59, 0.98) 55%, rgba(15, 23, 42, 1) 100%);
   border-color: rgba(148, 163, 184, 0.14);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
-body.theme-industrial .dashboard-score-tile:hover {
+body.theme-industrial:not(.appearance-light) .dashboard-score-tile:hover {
   border-color: rgba(148, 163, 184, 0.22);
 }
-body.theme-industrial .dashboard-score-tile--revenue::before {
+body.theme-industrial:not(.appearance-light) .dashboard-score-tile--revenue::before {
   background: linear-gradient(180deg, #94a3b8 0%, #64748b 50%, #475569 100%);
 }
-body.theme-industrial .dashboard-score-tile--pipeline::before {
+body.theme-industrial:not(.appearance-light) .dashboard-score-tile--pipeline::before {
   background: linear-gradient(180deg, #cbd5e1 0%, #d97706 50%, #92400e 100%);
 }
-body.theme-industrial .dashboard-score-tile--risk::before {
+body.theme-industrial:not(.appearance-light) .dashboard-score-tile--risk::before {
   background: linear-gradient(180deg, #fb923c 0%, #ea580c 55%, #9a3412 100%);
 }
-body.theme-industrial .dashboard-score-tile--ops::before {
+body.theme-industrial:not(.appearance-light) .dashboard-score-tile--ops::before {
   background: linear-gradient(180deg, #94a3b8 0%, #64748b 50%, #334155 100%);
 }
-body.theme-industrial .dashboard-score-eyebrow {
+body.theme-industrial:not(.appearance-light) .dashboard-score-eyebrow {
   color: #64748b;
 }
-body.theme-industrial .dashboard-score-label {
+body.theme-industrial:not(.appearance-light) .dashboard-score-label {
   color: #94a3b8;
 }
-body.theme-industrial .dashboard-score-meta i {
+body.theme-industrial:not(.appearance-light) .dashboard-score-meta i {
   color: #94a3b8;
 }
-body.theme-industrial .dashboard-card {
+body.theme-industrial:not(.appearance-light) .dashboard-card {
   background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
   border-color: rgba(148, 163, 184, 0.1);
 }
-body.theme-industrial .dashboard-card[data-dashboard="clientes"] .dashboard-card-icon {
+body.theme-industrial:not(.appearance-light) .dashboard-card[data-dashboard="clientes"] .dashboard-card-icon {
   background: linear-gradient(135deg, #64748b 0%, #475569 100%);
 }
-body.theme-industrial .dashboard-card[data-dashboard="refacciones"] .dashboard-card-icon {
+body.theme-industrial:not(.appearance-light) .dashboard-card[data-dashboard="refacciones"] .dashboard-card-icon {
   background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
 }
-body.theme-industrial .dashboard-card[data-dashboard="maquinas"] .dashboard-card-icon {
+body.theme-industrial:not(.appearance-light) .dashboard-card[data-dashboard="maquinas"] .dashboard-card-icon {
   background: linear-gradient(135deg, #64748b 0%, #475569 100%);
 }
-body.theme-industrial .dashboard-card[data-dashboard="cotizaciones"] .dashboard-card-icon {
+body.theme-industrial:not(.appearance-light) .dashboard-card[data-dashboard="cotizaciones"] .dashboard-card-icon {
   background: linear-gradient(135deg, #65a30d 0%, #4d7c0f 100%);
 }
-body.theme-industrial .dashboard-card[data-dashboard="incidentes"] .dashboard-card-icon {
+body.theme-industrial:not(.appearance-light) .dashboard-card[data-dashboard="incidentes"] .dashboard-card-icon {
   background: linear-gradient(135deg, #ea580c 0%, #9a3412 100%);
 }
-body.theme-industrial .dashboard-card[data-dashboard="bitacoras"] .dashboard-card-icon {
+body.theme-industrial:not(.appearance-light) .dashboard-card[data-dashboard="bitacoras"] .dashboard-card-icon {
   background: linear-gradient(135deg, #475569 0%, #713f12 100%);
 }
-body.theme-industrial .dashboard-forecast-card {
+body.theme-industrial:not(.appearance-light) .dashboard-forecast-card {
   background: rgba(148, 163, 184, 0.08);
   border-color: rgba(148, 163, 184, 0.22);
 }
-body.theme-industrial .dashboard-forecast-legend {
+body.theme-industrial:not(.appearance-light) .dashboard-forecast-legend {
   background: rgba(148, 163, 184, 0.08);
   border-left-color: #94a3b8;
 }
-body.theme-industrial .dashboard-stat-card h4,
-body.theme-industrial .dashboard-stat-card .stat-label {
+body.theme-industrial:not(.appearance-light) .dashboard-stat-card h4,
+body.theme-industrial:not(.appearance-light) .dashboard-stat-card .stat-label {
   color: #94a3b8;
 }
-body.theme-industrial .dashboard-stat-card .stat-value {
+body.theme-industrial:not(.appearance-light) .dashboard-stat-card .stat-value {
   color: #f8fafc;
 }
-body.theme-industrial .dashboard-stat-card h4.dashboard-stat-card-title-cf {
+body.theme-industrial:not(.appearance-light) .dashboard-stat-card h4.dashboard-stat-card-title-cf {
   color: #cbd5e1;
 }
 
@@ -884,213 +884,213 @@ body.theme-industrial .dashboard-stat-card h4.dashboard-stat-card-title-cf {
    ============================================================================= */
 
 /* --- Revisión de máquinas --- */
-body.theme-industrial #panel-revision-maquinas .toolbar select {
+body.theme-industrial:not(.appearance-light) #panel-revision-maquinas .toolbar select {
   background: rgba(30, 41, 59, 0.96) !important;
   background-color: rgba(30, 41, 59, 0.96) !important;
   border-color: rgba(148, 163, 184, 0.28) !important;
   color: #f8fafc !important;
   box-shadow: none !important;
 }
-body.theme-industrial #panel-revision-maquinas .toolbar select:focus {
+body.theme-industrial:not(.appearance-light) #panel-revision-maquinas .toolbar select:focus {
   outline: none;
   border-color: rgba(148, 163, 184, 0.55) !important;
   box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.18) !important;
 }
-body.theme-industrial #panel-revision-maquinas .revision-maq-catalog-wrap {
+body.theme-industrial:not(.appearance-light) #panel-revision-maquinas .revision-maq-catalog-wrap {
   background: rgba(30, 41, 59, 0.78);
   border: 1px solid rgba(148, 163, 184, 0.24);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
-body.theme-industrial #panel-revision-maquinas .revision-maq-catalog-heading {
+body.theme-industrial:not(.appearance-light) #panel-revision-maquinas .revision-maq-catalog-heading {
   color: #f8fafc;
 }
-body.theme-industrial #panel-revision-maquinas .revision-maq-catalog-heading i {
+body.theme-industrial:not(.appearance-light) #panel-revision-maquinas .revision-maq-catalog-heading i {
   color: #94a3b8;
 }
-body.theme-industrial #panel-revision-maquinas .revision-maq-catalog-intro {
+body.theme-industrial:not(.appearance-light) #panel-revision-maquinas .revision-maq-catalog-intro {
   color: #94a3b8;
 }
-body.theme-industrial #panel-revision-maquinas .revision-maq-card {
+body.theme-industrial:not(.appearance-light) #panel-revision-maquinas .revision-maq-card {
   background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
   border-color: rgba(148, 163, 184, 0.2);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
-body.theme-industrial #panel-revision-maquinas .revision-maq-card:hover {
+body.theme-industrial:not(.appearance-light) #panel-revision-maquinas .revision-maq-card:hover {
   border-color: rgba(148, 163, 184, 0.38);
   box-shadow: 0 8px 26px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(148, 163, 184, 0.12);
 }
-body.theme-industrial #panel-revision-maquinas .revision-maq-card-title {
+body.theme-industrial:not(.appearance-light) #panel-revision-maquinas .revision-maq-card-title {
   color: #cbd5e1;
 }
-body.theme-industrial #panel-revision-maquinas .revision-maq-card-serie {
+body.theme-industrial:not(.appearance-light) #panel-revision-maquinas .revision-maq-card-serie {
   color: #94a3b8;
 }
-body.theme-industrial #panel-revision-maquinas .revision-maq-card-client {
+body.theme-industrial:not(.appearance-light) #panel-revision-maquinas .revision-maq-card-client {
   color: #e2e8f0;
 }
-body.theme-industrial #panel-revision-maquinas .revision-maq-pill {
+body.theme-industrial:not(.appearance-light) #panel-revision-maquinas .revision-maq-pill {
   background: rgba(15, 23, 42, 0.88);
   border: 1px solid #475569;
   color: #cbd5e1;
 }
 
 /* --- Tarifas --- */
-body.theme-industrial #panel-tarifas .tarifas-section {
+body.theme-industrial:not(.appearance-light) #panel-tarifas .tarifas-section {
   background: rgba(30, 41, 59, 0.92);
   border-color: rgba(148, 163, 184, 0.22);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
-body.theme-industrial #panel-tarifas .tarifas-section-title {
+body.theme-industrial:not(.appearance-light) #panel-tarifas .tarifas-section-title {
   color: #f8fafc;
 }
-body.theme-industrial #panel-tarifas .tarifas-section-title i {
+body.theme-industrial:not(.appearance-light) #panel-tarifas .tarifas-section-title i {
   color: #94a3b8;
 }
-body.theme-industrial #panel-tarifas .tarifas-hint {
+body.theme-industrial:not(.appearance-light) #panel-tarifas .tarifas-hint {
   color: #94a3b8;
 }
-body.theme-industrial #panel-tarifas .tarifas-form-grid label,
-body.theme-industrial #panel-tarifas .form-group label {
+body.theme-industrial:not(.appearance-light) #panel-tarifas .tarifas-form-grid label,
+body.theme-industrial:not(.appearance-light) #panel-tarifas .form-group label {
   color: #cbd5e1;
 }
-body.theme-industrial #panel-tarifas .tarifas-notas-list li {
+body.theme-industrial:not(.appearance-light) #panel-tarifas .tarifas-notas-list li {
   color: #cbd5e1;
 }
-body.theme-industrial #panel-tarifas .tarifa-input,
-body.theme-industrial #panel-tarifas .tarifa-input-text {
+body.theme-industrial:not(.appearance-light) #panel-tarifas .tarifa-input,
+body.theme-industrial:not(.appearance-light) #panel-tarifas .tarifa-input-text {
   background: #0f172a !important;
   background-color: #0f172a !important;
   border-color: #475569 !important;
   color: #f8fafc !important;
 }
-body.theme-industrial #panel-tarifas .tarifa-input:focus,
-body.theme-industrial #panel-tarifas .tarifa-input-text:focus {
+body.theme-industrial:not(.appearance-light) #panel-tarifas .tarifa-input:focus,
+body.theme-industrial:not(.appearance-light) #panel-tarifas .tarifa-input-text:focus {
   outline: 2px solid rgba(148, 163, 184, 0.45);
   border-color: #94a3b8;
 }
-body.theme-industrial #panel-tarifas #tabla-tarifas-mano-obra td,
-body.theme-industrial #panel-tarifas #tabla-tarifas-traslado td {
+body.theme-industrial:not(.appearance-light) #panel-tarifas #tabla-tarifas-mano-obra td,
+body.theme-industrial:not(.appearance-light) #panel-tarifas #tabla-tarifas-traslado td {
   color: #e2e8f0;
 }
-body.theme-industrial #panel-tarifas #tabla-tarifas-mano-obra tbody tr:nth-child(even),
-body.theme-industrial #panel-tarifas #tabla-tarifas-traslado tbody tr:nth-child(even) {
+body.theme-industrial:not(.appearance-light) #panel-tarifas #tabla-tarifas-mano-obra tbody tr:nth-child(even),
+body.theme-industrial:not(.appearance-light) #panel-tarifas #tabla-tarifas-traslado tbody tr:nth-child(even) {
   background: rgba(15, 23, 42, 0.4) !important;
 }
-body.theme-industrial #panel-tarifas #tabla-tarifas-mano-obra tbody tr:hover,
-body.theme-industrial #panel-tarifas #tabla-tarifas-traslado tbody tr:hover {
+body.theme-industrial:not(.appearance-light) #panel-tarifas #tabla-tarifas-mano-obra tbody tr:hover,
+body.theme-industrial:not(.appearance-light) #panel-tarifas #tabla-tarifas-traslado tbody tr:hover {
   background: rgba(148, 163, 184, 0.09) !important;
   box-shadow: inset 3px 0 0 #64748b !important;
 }
 
 /* --- Mantenimientos por garantía (calendario + barra prioridad) --- */
-body.theme-industrial #panel-mantenimiento-garantia .mant-gar-hint {
+body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .mant-gar-hint {
   background: rgba(15, 23, 42, 0.72);
   border-color: rgba(148, 163, 184, 0.24);
   color: #e2e8f0;
 }
-body.theme-industrial #panel-mantenimiento-garantia .mant-gar-dry-wrap {
+body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .mant-gar-dry-wrap {
   color: #94a3b8;
 }
-body.theme-industrial #panel-mantenimiento-garantia #mant-gar-month {
+body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia #mant-gar-month {
   background: #0f172a;
   border-color: #475569;
   color: #f8fafc;
 }
-body.theme-industrial #panel-mantenimiento-garantia .cal-month-summary {
+body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .cal-month-summary {
   background: rgba(30, 41, 59, 0.92);
   border: 1px solid rgba(148, 163, 184, 0.22);
   color: #cbd5e1;
 }
-body.theme-industrial #panel-mantenimiento-garantia .cal-month-summary strong {
+body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .cal-month-summary strong {
   color: #94a3b8;
 }
-body.theme-industrial #panel-mantenimiento-garantia .cal-cell.cal-day,
-body.theme-industrial #panel-mantenimiento-garantia .cal-day {
+body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .cal-cell.cal-day,
+body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .cal-day {
   background: #1e293b !important;
   background-color: #1e293b !important;
   border-color: #334155 !important;
 }
-body.theme-industrial #panel-mantenimiento-garantia .cal-cell.cal-day--has-events {
+body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .cal-cell.cal-day--has-events {
   background: rgba(51, 65, 85, 0.98) !important;
   background-color: rgba(51, 65, 85, 0.98) !important;
   border-color: rgba(148, 163, 184, 0.28) !important;
 }
-body.theme-industrial #panel-mantenimiento-garantia .cal-day.cal-today {
+body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .cal-day.cal-today {
   border-color: #94a3b8 !important;
   box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.35);
 }
-body.theme-industrial #panel-mantenimiento-garantia .cal-day-num {
+body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .cal-day-num {
   color: #f8fafc !important;
 }
-body.theme-industrial #panel-mantenimiento-garantia .cal-header {
+body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .cal-header {
   color: #94a3b8;
 }
-body.theme-industrial #panel-mantenimiento-garantia .cal-more {
+body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .cal-more {
   color: #64748b;
 }
-body.theme-industrial #panel-mantenimiento-garantia .cal-legend {
+body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .cal-legend {
   color: #94a3b8;
 }
-body.theme-industrial #panel-mantenimiento-garantia .cal-day--click:hover {
+body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .cal-day--click:hover {
   background: rgba(148, 163, 184, 0.12) !important;
   box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.35);
 }
-body.theme-industrial #panel-mantenimiento-garantia .cal-day--click:focus {
+body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .cal-day--click:focus {
   outline: 2px solid #94a3b8;
   outline-offset: 2px;
 }
-body.theme-industrial #panel-mantenimiento-garantia .cal-grid--animated .cal-day:hover {
+body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .cal-grid--animated .cal-day:hover {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 /* Detalle día (lista en modal / panel lateral) */
-body.theme-industrial .mant-dia-card {
+body.theme-industrial:not(.appearance-light) .mant-dia-card {
   background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
   border-color: rgba(148, 163, 184, 0.2);
 }
-body.theme-industrial .mant-dia-client {
+body.theme-industrial:not(.appearance-light) .mant-dia-client {
   color: #f8fafc;
 }
-body.theme-industrial .mant-dia-fields {
+body.theme-industrial:not(.appearance-light) .mant-dia-fields {
   color: #cbd5e1;
 }
-body.theme-industrial .mant-dia-fields i {
+body.theme-industrial:not(.appearance-light) .mant-dia-fields i {
   color: #94a3b8;
 }
-body.theme-industrial .mant-dia-sub {
+body.theme-industrial:not(.appearance-light) .mant-dia-sub {
   color: #94a3b8;
 }
-body.theme-industrial .mant-dia-empty {
+body.theme-industrial:not(.appearance-light) .mant-dia-empty {
   color: #94a3b8;
 }
-body.theme-industrial .mant-dia-empty i {
+body.theme-industrial:not(.appearance-light) .mant-dia-empty i {
   color: #475569;
 }
 
 /* Modal máquina / cotización: .cotz-card sigue en teal en style.css; aquí alineamos a media luna */
-body.theme-industrial .modal-box.modal-box--theme-industrial .cotz-card {
+body.theme-industrial:not(.appearance-light) .modal-box.modal-box--theme-industrial .cotz-card {
   background: rgba(30, 41, 59, 0.94);
   border-color: rgba(148, 163, 184, 0.22);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
-body.theme-industrial .modal-box.modal-box--theme-industrial .cotz-card-title {
+body.theme-industrial:not(.appearance-light) .modal-box.modal-box--theme-industrial .cotz-card-title {
   color: #cbd5e1;
 }
-body.theme-industrial .modal-box.modal-box--theme-industrial .cotz-step-num {
+body.theme-industrial:not(.appearance-light) .modal-box.modal-box--theme-industrial .cotz-step-num {
   background: linear-gradient(135deg, #94a3b8 0%, #475569 100%);
   box-shadow: 0 2px 10px rgba(148, 163, 184, 0.28);
   color: #020617;
 }
-body.theme-industrial .modal-box.modal-box--theme-industrial .cotz-modal .form-hint,
-body.theme-industrial .modal-box.modal-box--theme-industrial .form-hint {
+body.theme-industrial:not(.appearance-light) .modal-box.modal-box--theme-industrial .cotz-modal .form-hint,
+body.theme-industrial:not(.appearance-light) .modal-box.modal-box--theme-industrial .form-hint {
   color: #94a3b8;
 }
-body.theme-industrial .modal-box.modal-box--theme-industrial .cotz-inventory-hint {
+body.theme-industrial:not(.appearance-light) .modal-box.modal-box--theme-industrial .cotz-inventory-hint {
   background: rgba(15, 23, 42, 0.6);
   border-color: rgba(148, 163, 184, 0.3);
   color: #cbd5e1;
 }
-body.theme-industrial .modal-box.modal-box--theme-industrial .cotz-inventory-hint i {
+body.theme-industrial:not(.appearance-light) .modal-box.modal-box--theme-industrial .cotz-inventory-hint i {
   color: #94a3b8;
 }
 
@@ -1098,7 +1098,7 @@ body.theme-industrial .modal-box.modal-box--theme-industrial .cotz-inventory-hin
    Cristal — shell transparente: se ve el fondo Glass y las partículas detrás
    ============================================================================= */
 
-body.theme-industrial .header {
+body.theme-industrial:not(.appearance-light) .header {
   background: rgba(15, 23, 42, 0.22);
   background-image: none;
   box-shadow: 0 8px 36px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.06);
@@ -1106,377 +1106,377 @@ body.theme-industrial .header {
   backdrop-filter: blur(20px) saturate(128%);
   border-bottom: 1px solid rgba(148, 163, 184, 0.2);
 }
-body.theme-industrial .header::before {
+body.theme-industrial:not(.appearance-light) .header::before {
   opacity: 0.035;
 }
-body.theme-industrial .header::after {
+body.theme-industrial:not(.appearance-light) .header::after {
   height: 2px;
   opacity: 0.55;
   background: linear-gradient(90deg, transparent 0%, rgba(148, 163, 184, 0.35) 50%, transparent 100%);
 }
-body.theme-industrial .header h1,
-body.theme-industrial .header .subtitle,
-body.theme-industrial .header .version {
+body.theme-industrial:not(.appearance-light) .header h1,
+body.theme-industrial:not(.appearance-light) .header .subtitle,
+body.theme-industrial:not(.appearance-light) .header .version {
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
 }
-body.theme-industrial .header-branch-filter {
+body.theme-industrial:not(.appearance-light) .header-branch-filter {
   background: rgba(2, 6, 23, 0.32) !important;
   border-color: rgba(148, 163, 184, 0.32) !important;
   color: #f8fafc !important;
   -webkit-backdrop-filter: blur(10px) saturate(120%);
   backdrop-filter: blur(10px) saturate(120%);
 }
-body.theme-industrial .header-system-status {
+body.theme-industrial:not(.appearance-light) .header-system-status {
   background: rgba(13, 148, 136, 0.14) !important;
   border-color: rgba(45, 212, 191, 0.32) !important;
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
-body.theme-industrial .header-session {
+body.theme-industrial:not(.appearance-light) .header-session {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.18);
 }
-body.theme-industrial .header-alerts .alert-badge {
+body.theme-industrial:not(.appearance-light) .header-alerts .alert-badge {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.22);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
-body.theme-industrial .btn-icon-header {
+body.theme-industrial:not(.appearance-light) .btn-icon-header {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(148, 163, 184, 0.28);
 }
-body.theme-industrial .btn-icon-header:hover {
+body.theme-industrial:not(.appearance-light) .btn-icon-header:hover {
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(226, 232, 240, 0.38);
 }
 
-body.theme-industrial .tabs {
+body.theme-industrial:not(.appearance-light) .tabs {
   background: rgba(15, 23, 42, 0.25);
   border-bottom: 1px solid rgba(148, 163, 184, 0.22);
   box-shadow: none;
   -webkit-backdrop-filter: blur(18px) saturate(122%);
   backdrop-filter: blur(18px) saturate(122%);
 }
-body.theme-industrial .tab {
+body.theme-industrial:not(.appearance-light) .tab {
   background: transparent;
   border: 1px solid rgba(148, 163, 184, 0.22);
   color: #e2e8f0;
   box-shadow: none;
 }
-body.theme-industrial .tab:hover {
+body.theme-industrial:not(.appearance-light) .tab:hover {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(226, 232, 240, 0.32);
   color: #f8fafc;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
-body.theme-industrial .tab.active {
+body.theme-industrial:not(.appearance-light) .tab.active {
   background: rgba(45, 212, 191, 0.14);
   border-color: rgba(45, 212, 191, 0.5);
   color: #f0fdfa;
   box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.15), 0 6px 20px rgba(0, 0, 0, 0.2);
   font-weight: 700;
 }
-body.theme-industrial .tab.active:hover {
+body.theme-industrial:not(.appearance-light) .tab.active:hover {
   color: #f0fdfa;
   filter: none;
 }
-body.theme-industrial .tab.highlight {
+body.theme-industrial:not(.appearance-light) .tab.highlight {
   background: rgba(251, 191, 36, 0.08);
   border-color: rgba(251, 191, 36, 0.35);
   color: #fef3c7;
 }
-body.theme-industrial .tab.highlight:hover {
+body.theme-industrial:not(.appearance-light) .tab.highlight:hover {
   background: rgba(251, 191, 36, 0.12);
   color: #fffbeb;
 }
 
-body.theme-industrial .section-header {
+body.theme-industrial:not(.appearance-light) .section-header {
   background: rgba(15, 23, 42, 0.26) !important;
   border: 1px solid rgba(148, 163, 184, 0.28);
   -webkit-backdrop-filter: blur(18px) saturate(122%);
   backdrop-filter: blur(18px) saturate(122%);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
-body.theme-industrial .section-header::before {
+body.theme-industrial:not(.appearance-light) .section-header::before {
   background: linear-gradient(180deg, rgba(148, 163, 184, 0.75) 0%, rgba(100, 116, 139, 0.65) 100%);
   box-shadow: 0 0 12px rgba(148, 163, 184, 0.22);
 }
-body.theme-industrial .section-header h2 i {
+body.theme-industrial:not(.appearance-light) .section-header h2 i {
   background: rgba(255, 255, 255, 0.12);
   color: #f8fafc;
   border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.22);
 }
-body.theme-industrial #panel-cotizaciones .section-header,
-body.theme-industrial #panel-incidentes .section-header,
-body.theme-industrial #panel-bitacoras .section-header,
-body.theme-industrial #panel-refacciones .section-header {
+body.theme-industrial:not(.appearance-light) #panel-cotizaciones .section-header,
+body.theme-industrial:not(.appearance-light) #panel-incidentes .section-header,
+body.theme-industrial:not(.appearance-light) #panel-bitacoras .section-header,
+body.theme-industrial:not(.appearance-light) #panel-refacciones .section-header {
   background: rgba(15, 23, 42, 0.26) !important;
   border-color: rgba(148, 163, 184, 0.28);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
-body.theme-industrial #panel-cotizaciones .section-header h2 i,
-body.theme-industrial #panel-incidentes .section-header h2 i,
-body.theme-industrial #panel-bitacoras .section-header h2 i,
-body.theme-industrial #panel-refacciones .section-header h2 i {
+body.theme-industrial:not(.appearance-light) #panel-cotizaciones .section-header h2 i,
+body.theme-industrial:not(.appearance-light) #panel-incidentes .section-header h2 i,
+body.theme-industrial:not(.appearance-light) #panel-bitacoras .section-header h2 i,
+body.theme-industrial:not(.appearance-light) #panel-refacciones .section-header h2 i {
   background: rgba(255, 255, 255, 0.12);
   color: #f8fafc;
   border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.22);
 }
 
-body.theme-industrial .table-wrap,
-body.theme-industrial #panel-cotizaciones .table-wrap,
-body.theme-industrial #panel-incidentes .table-wrap,
-body.theme-industrial #panel-bitacoras .table-wrap,
-body.theme-industrial #panel-refacciones .table-wrap,
-body.theme-industrial #panel-clientes .table-wrap,
-body.theme-industrial #panel-maquinas .table-wrap,
-body.theme-industrial #panel-almacen .table-wrap,
-body.theme-industrial #panel-ventas .table-wrap,
-body.theme-industrial #panel-prospeccion .table-wrap,
-body.theme-industrial #panel-revision-maquinas .table-wrap,
-body.theme-industrial #panel-tarifas .table-wrap,
-body.theme-industrial #panel-reportes .table-wrap,
-body.theme-industrial #panel-garantias .table-wrap,
-body.theme-industrial #panel-mantenimiento-garantia .table-wrap,
-body.theme-industrial #panel-garantias-sin-cobertura .table-wrap,
-body.theme-industrial #panel-bonos .table-wrap,
-body.theme-industrial #panel-viajes .table-wrap,
-body.theme-industrial #panel-tecnicos .table-wrap,
-body.theme-industrial #panel-auditoria .table-wrap,
-body.theme-industrial #panel-usuarios .table-wrap,
-body.theme-industrial #panel-categorias-catalogo .table-wrap,
-body.theme-industrial #panel-demo .table-wrap {
+body.theme-industrial:not(.appearance-light) .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-cotizaciones .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-incidentes .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-bitacoras .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-refacciones .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-clientes .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-maquinas .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-almacen .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-ventas .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-prospeccion .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-revision-maquinas .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-tarifas .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-reportes .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-garantias .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-garantias-sin-cobertura .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-bonos .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-viajes .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-tecnicos .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-auditoria .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-usuarios .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-categorias-catalogo .table-wrap,
+body.theme-industrial:not(.appearance-light) #panel-demo .table-wrap {
   background: rgba(15, 23, 42, 0.2) !important;
   border-color: rgba(148, 163, 184, 0.26);
   -webkit-backdrop-filter: blur(16px) saturate(120%);
   backdrop-filter: blur(16px) saturate(120%);
   box-shadow: 0 10px 32px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(148, 163, 184, 0.08) inset;
 }
-body.theme-industrial #panel-clientes .table-wrap:hover,
-body.theme-industrial #panel-maquinas .table-wrap:hover,
-body.theme-industrial #panel-almacen .table-wrap:hover,
-body.theme-industrial #panel-ventas .table-wrap:hover,
-body.theme-industrial #panel-prospeccion .table-wrap:hover,
-body.theme-industrial #panel-revision-maquinas .table-wrap:hover,
-body.theme-industrial #panel-tarifas .table-wrap:hover,
-body.theme-industrial #panel-reportes .table-wrap:hover,
-body.theme-industrial #panel-garantias .table-wrap:hover,
-body.theme-industrial #panel-mantenimiento-garantia .table-wrap:hover,
-body.theme-industrial #panel-garantias-sin-cobertura .table-wrap:hover,
-body.theme-industrial #panel-bonos .table-wrap:hover,
-body.theme-industrial #panel-viajes .table-wrap:hover,
-body.theme-industrial #panel-tecnicos .table-wrap:hover,
-body.theme-industrial #panel-auditoria .table-wrap:hover,
-body.theme-industrial #panel-usuarios .table-wrap:hover,
-body.theme-industrial #panel-categorias-catalogo .table-wrap:hover,
-body.theme-industrial #panel-demo .table-wrap:hover,
-body.theme-industrial .table-wrap:hover {
+body.theme-industrial:not(.appearance-light) #panel-clientes .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-maquinas .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-almacen .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-ventas .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-prospeccion .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-revision-maquinas .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-tarifas .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-reportes .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-garantias .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-garantias-sin-cobertura .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-bonos .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-viajes .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-tecnicos .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-auditoria .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-usuarios .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-categorias-catalogo .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) #panel-demo .table-wrap:hover,
+body.theme-industrial:not(.appearance-light) .table-wrap:hover {
   border-color: rgba(148, 163, 184, 0.38);
 }
 
 /* Inline code/kbd: el tema claro deja chip gris claro + texto claro heredado = ilegible */
-body.theme-industrial .card code,
-body.theme-industrial .card kbd,
-body.theme-industrial .empty-card code,
-body.theme-industrial .empty-card kbd {
+body.theme-industrial:not(.appearance-light) .card code,
+body.theme-industrial:not(.appearance-light) .card kbd,
+body.theme-industrial:not(.appearance-light) .empty-card code,
+body.theme-industrial:not(.appearance-light) .empty-card kbd {
   background: rgba(15, 23, 42, 0.92) !important;
   color: #f1f5f9 !important;
   border: 1px solid rgba(148, 163, 184, 0.45) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
-body.theme-industrial #demo-dummy-panel code,
-body.theme-industrial #demo-dummy-panel kbd {
+body.theme-industrial:not(.appearance-light) #demo-dummy-panel code,
+body.theme-industrial:not(.appearance-light) #demo-dummy-panel kbd {
   background: #e2e8f0 !important;
   color: #0f172a !important;
   border: 1px solid #94a3b8 !important;
   box-shadow: none;
 }
 
-body.theme-industrial .data-table thead tr:first-child th {
+body.theme-industrial:not(.appearance-light) .data-table thead tr:first-child th {
   background: rgba(30, 41, 59, 0.45) !important;
   -webkit-backdrop-filter: blur(12px) saturate(115%);
   backdrop-filter: blur(12px) saturate(115%);
   color: #f8fafc !important;
   border-bottom-color: rgba(148, 163, 184, 0.28) !important;
 }
-body.theme-industrial #tabla-refacciones thead tr:first-child th,
-body.theme-industrial #tabla-refacciones thead tr:first-child th.th-actions {
+body.theme-industrial:not(.appearance-light) #tabla-refacciones thead tr:first-child th,
+body.theme-industrial:not(.appearance-light) #tabla-refacciones thead tr:first-child th.th-actions {
   background: rgba(30, 41, 59, 0.45) !important;
 }
-body.theme-industrial #tabla-cotizaciones thead tr:first-child th,
-body.theme-industrial #tabla-incidentes thead tr:first-child th,
-body.theme-industrial #tabla-bitacoras thead tr:first-child th {
+body.theme-industrial:not(.appearance-light) #tabla-cotizaciones thead tr:first-child th,
+body.theme-industrial:not(.appearance-light) #tabla-incidentes thead tr:first-child th,
+body.theme-industrial:not(.appearance-light) #tabla-bitacoras thead tr:first-child th {
   background: rgba(30, 41, 59, 0.45) !important;
   border-bottom-color: rgba(148, 163, 184, 0.28) !important;
 }
 
-body.theme-industrial .filter-row td,
-body.theme-industrial .data-table thead .filter-row td {
+body.theme-industrial:not(.appearance-light) .filter-row td,
+body.theme-industrial:not(.appearance-light) .data-table thead .filter-row td {
   background: rgba(2, 6, 23, 0.36) !important;
   border-bottom-color: rgba(51, 65, 85, 0.55) !important;
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
-body.theme-industrial #tabla-refacciones thead .filter-row td {
+body.theme-industrial:not(.appearance-light) #tabla-refacciones thead .filter-row td {
   background: rgba(2, 6, 23, 0.36) !important;
 }
-body.theme-industrial #tabla-cotizaciones .filter-row td,
-body.theme-industrial #tabla-incidentes .filter-row td,
-body.theme-industrial #tabla-bitacoras .filter-row td {
+body.theme-industrial:not(.appearance-light) #tabla-cotizaciones .filter-row td,
+body.theme-industrial:not(.appearance-light) #tabla-incidentes .filter-row td,
+body.theme-industrial:not(.appearance-light) #tabla-bitacoras .filter-row td {
   background: rgba(2, 6, 23, 0.36) !important;
 }
 
-body.theme-industrial .data-table tbody tr:nth-child(odd) {
+body.theme-industrial:not(.appearance-light) .data-table tbody tr:nth-child(odd) {
   background: rgba(15, 23, 42, 0.12) !important;
 }
-body.theme-industrial .data-table tbody tr:nth-child(even) {
+body.theme-industrial:not(.appearance-light) .data-table tbody tr:nth-child(even) {
   background: rgba(15, 23, 42, 0.22) !important;
 }
-body.theme-industrial #tabla-refacciones.data-table tbody tr:nth-child(even) {
+body.theme-industrial:not(.appearance-light) #tabla-refacciones.data-table tbody tr:nth-child(even) {
   background: rgba(15, 23, 42, 0.22) !important;
 }
-body.theme-industrial #tabla-refacciones.data-table tr.row-stock-bajo td {
+body.theme-industrial:not(.appearance-light) #tabla-refacciones.data-table tr.row-stock-bajo td {
   background: rgba(30, 58, 95, 0.35) !important;
 }
-body.theme-industrial #tabla-refacciones.data-table tbody tr:nth-child(even).row-stock-bajo td {
+body.theme-industrial:not(.appearance-light) #tabla-refacciones.data-table tbody tr:nth-child(even).row-stock-bajo td {
   background: rgba(15, 23, 42, 0.32) !important;
 }
 
-body.theme-industrial .card,
-body.theme-industrial .empty-card {
+body.theme-industrial:not(.appearance-light) .card,
+body.theme-industrial:not(.appearance-light) .empty-card {
   background: rgba(15, 23, 42, 0.24);
   border-color: rgba(148, 163, 184, 0.28);
   -webkit-backdrop-filter: blur(14px) saturate(118%);
   backdrop-filter: blur(14px) saturate(118%);
 }
 
-body.theme-industrial #panel-dashboards.panel-dashboard {
+body.theme-industrial:not(.appearance-light) #panel-dashboards.panel-dashboard {
   background: transparent;
   border-top-color: rgba(148, 163, 184, 0.18);
 }
-body.theme-industrial .dashboard-card {
+body.theme-industrial:not(.appearance-light) .dashboard-card {
   background: rgba(15, 23, 42, 0.28);
   -webkit-backdrop-filter: blur(16px) saturate(118%);
   backdrop-filter: blur(16px) saturate(118%);
 }
-body.theme-industrial .dashboard-score-tile {
+body.theme-industrial:not(.appearance-light) .dashboard-score-tile {
   background: rgba(30, 41, 59, 0.3);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
   box-shadow: 0 4px 22px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
-body.theme-industrial .dashboard-kpi-strip {
+body.theme-industrial:not(.appearance-light) .dashboard-kpi-strip {
   background: rgba(15, 23, 42, 0.26);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
-body.theme-industrial .dashboard-crossfilter-bar {
+body.theme-industrial:not(.appearance-light) .dashboard-crossfilter-bar {
   background: rgba(15, 23, 42, 0.28);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
 
-body.theme-industrial .app-footer {
+body.theme-industrial:not(.appearance-light) .app-footer {
   background: linear-gradient(180deg, transparent 0%, rgba(15, 23, 42, 0.45) 100%);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
 
-body.theme-industrial #panel-tarifas .tarifas-section {
+body.theme-industrial:not(.appearance-light) #panel-tarifas .tarifas-section {
   background: rgba(15, 23, 42, 0.26);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
 }
-body.theme-industrial #panel-revision-maquinas .revision-maq-catalog-wrap {
+body.theme-industrial:not(.appearance-light) #panel-revision-maquinas .revision-maq-catalog-wrap {
   background: rgba(15, 23, 42, 0.24);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
 }
-body.theme-industrial #panel-revision-maquinas .revision-maq-card {
+body.theme-industrial:not(.appearance-light) #panel-revision-maquinas .revision-maq-card {
   background: rgba(15, 23, 42, 0.28);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
-body.theme-industrial .prospeccion-kpi {
+body.theme-industrial:not(.appearance-light) .prospeccion-kpi {
   background: rgba(15, 23, 42, 0.26);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
 
-body.theme-industrial .sidebar-nav-title {
+body.theme-industrial:not(.appearance-light) .sidebar-nav-title {
   color: #cbd5e1;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
 }
-body.theme-industrial .tabs.tabs--rail .tab i {
+body.theme-industrial:not(.appearance-light) .tabs.tabs--rail .tab i {
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
 }
 
 /* Refacciones: design-system (.ref-table-shell) aportaba gradiente casi opaco; alinear al cristal del resto */
-body.theme-industrial #panel-refacciones .table-wrap.ref-table-shell {
+body.theme-industrial:not(.appearance-light) #panel-refacciones .table-wrap.ref-table-shell {
   background: rgba(15, 23, 42, 0.14) !important;
   border-color: rgba(148, 163, 184, 0.26);
   box-shadow: 0 10px 32px rgba(0, 0, 0, 0.16), 0 0 0 1px rgba(148, 163, 184, 0.07) inset;
   -webkit-backdrop-filter: blur(20px) saturate(122%);
   backdrop-filter: blur(20px) saturate(122%);
 }
-body.theme-industrial #panel-refacciones .section-header {
+body.theme-industrial:not(.appearance-light) #panel-refacciones .section-header {
   background: rgba(15, 23, 42, 0.2) !important;
   -webkit-backdrop-filter: blur(20px) saturate(122%);
   backdrop-filter: blur(20px) saturate(122%);
 }
-body.theme-industrial #tabla-refacciones thead tr:first-child th,
-body.theme-industrial #tabla-refacciones thead tr:first-child th.th-actions {
+body.theme-industrial:not(.appearance-light) #tabla-refacciones thead tr:first-child th,
+body.theme-industrial:not(.appearance-light) #tabla-refacciones thead tr:first-child th.th-actions {
   background: rgba(30, 41, 59, 0.32) !important;
 }
-body.theme-industrial #tabla-refacciones thead .filter-row td {
+body.theme-industrial:not(.appearance-light) #tabla-refacciones thead .filter-row td {
   background: rgba(2, 6, 23, 0.28) !important;
 }
-body.theme-industrial #tabla-refacciones.data-table tbody tr:nth-child(odd) {
+body.theme-industrial:not(.appearance-light) #tabla-refacciones.data-table tbody tr:nth-child(odd) {
   background: rgba(15, 23, 42, 0.07) !important;
 }
-body.theme-industrial #tabla-refacciones.data-table tbody tr:nth-child(even) {
+body.theme-industrial:not(.appearance-light) #tabla-refacciones.data-table tbody tr:nth-child(even) {
   background: rgba(15, 23, 42, 0.13) !important;
 }
-body.theme-industrial #tabla-refacciones.data-table tbody tr:hover {
+body.theme-industrial:not(.appearance-light) #tabla-refacciones.data-table tbody tr:hover {
   background: rgba(148, 163, 184, 0.11) !important;
 }
-body.theme-industrial #panel-refacciones .toolbar select {
+body.theme-industrial:not(.appearance-light) #panel-refacciones .toolbar select {
   background: rgba(15, 23, 42, 0.32) !important;
   background-color: rgba(15, 23, 42, 0.32) !important;
   -webkit-backdrop-filter: blur(10px) saturate(118%);
   backdrop-filter: blur(10px) saturate(118%);
 }
-body.theme-industrial #ref-stock-alert-bar.stock-alert-bar {
+body.theme-industrial:not(.appearance-light) #ref-stock-alert-bar.stock-alert-bar {
   background: linear-gradient(135deg, rgba(66, 32, 6, 0.52) 0%, rgba(113, 63, 18, 0.48) 100%);
   -webkit-backdrop-filter: blur(12px) saturate(115%);
   backdrop-filter: blur(12px) saturate(115%);
 }
-body.theme-industrial #panel-refacciones .ref-cat-pill--part {
+body.theme-industrial:not(.appearance-light) #panel-refacciones .ref-cat-pill--part {
   background: rgba(71, 85, 105, 0.42);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
 
 /* Clientes: miniatura constancia — sin caja blanca (theme-industrial no usa .dark-theme) */
-body.theme-industrial .cliente-const-slot {
+body.theme-industrial:not(.appearance-light) .cliente-const-slot {
   background: transparent !important;
   border-color: rgba(148, 163, 184, 0.4);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
 }
-body.theme-industrial .cliente-const-slot--pdf {
+body.theme-industrial:not(.appearance-light) .cliente-const-slot--pdf {
   background: rgba(127, 29, 29, 0.25) !important;
   border-color: rgba(248, 113, 113, 0.35);
 }
-body.theme-industrial .cliente-const-mini {
+body.theme-industrial:not(.appearance-light) .cliente-const-mini {
   object-fit: contain;
   object-position: center;
 }
 
 /* Notificaciones (campana): cristal, sin panel blanco */
-body.theme-industrial .notifications-panel {
+body.theme-industrial:not(.appearance-light) .notifications-panel {
   background: rgba(15, 23, 42, 0.42) !important;
   border: 1px solid rgba(148, 163, 184, 0.28);
   box-shadow: 0 24px 56px rgba(0, 0, 0, 0.4);
@@ -1484,64 +1484,64 @@ body.theme-industrial .notifications-panel {
   backdrop-filter: blur(22px) saturate(125%);
   color: #e2e8f0;
 }
-body.theme-industrial .notifications-header {
+body.theme-industrial:not(.appearance-light) .notifications-header {
   border-bottom-color: rgba(148, 163, 184, 0.22);
 }
-body.theme-industrial .notifications-header strong {
+body.theme-industrial:not(.appearance-light) .notifications-header strong {
   color: #f8fafc;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
-body.theme-industrial .notifications-date {
+body.theme-industrial:not(.appearance-light) .notifications-date {
   background: rgba(2, 6, 23, 0.35) !important;
   border-color: rgba(148, 163, 184, 0.35) !important;
   color: #e2e8f0 !important;
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
-body.theme-industrial .notifications-tools .btn.small.outline {
+body.theme-industrial:not(.appearance-light) .notifications-tools .btn.small.outline {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(148, 163, 184, 0.35);
   color: #f1f5f9;
 }
-body.theme-industrial .notifications-tools .btn.small.outline:hover {
+body.theme-industrial:not(.appearance-light) .notifications-tools .btn.small.outline:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(226, 232, 240, 0.45);
 }
-body.theme-industrial .notification-item {
+body.theme-industrial:not(.appearance-light) .notification-item {
   color: #e2e8f0;
   border-bottom-color: rgba(51, 65, 85, 0.55);
   border-left-color: rgba(148, 163, 184, 0.35);
   background: rgba(2, 6, 23, 0.12);
 }
-body.theme-industrial .notification-item .meta {
+body.theme-industrial:not(.appearance-light) .notification-item .meta {
   color: #94a3b8;
 }
-body.theme-industrial .notification-item.level-error {
+body.theme-industrial:not(.appearance-light) .notification-item.level-error {
   background: rgba(127, 29, 29, 0.22) !important;
 }
-body.theme-industrial .notification-item.level-info {
+body.theme-industrial:not(.appearance-light) .notification-item.level-info {
   background: rgba(30, 58, 138, 0.2) !important;
 }
-body.theme-industrial .notification-item.level-success {
+body.theme-industrial:not(.appearance-light) .notification-item.level-success {
   background: rgba(6, 78, 59, 0.22) !important;
 }
 
-body.theme-industrial #tabla-categorias-admin .cat-admin-sub-li {
+body.theme-industrial:not(.appearance-light) #tabla-categorias-admin .cat-admin-sub-li {
   border-bottom-color: rgba(51, 65, 85, 0.55);
 }
 
-body.theme-industrial #tabla-usuarios.data-table td.usuarios-td-nombre {
+body.theme-industrial:not(.appearance-light) #tabla-usuarios.data-table td.usuarios-td-nombre {
   max-width: none !important;
   overflow: visible !important;
 }
 
 /* Command palette (“Más opciones…”) */
-body.theme-industrial .command-palette {
+body.theme-industrial:not(.appearance-light) .command-palette {
   background: rgba(2, 6, 23, 0.45);
   -webkit-backdrop-filter: blur(12px) saturate(118%);
   backdrop-filter: blur(12px) saturate(118%);
 }
-body.theme-industrial .command-palette-box {
+body.theme-industrial:not(.appearance-light) .command-palette-box {
   background: rgba(15, 23, 42, 0.42) !important;
   border: 1px solid rgba(148, 163, 184, 0.28) !important;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.42);
@@ -1549,21 +1549,21 @@ body.theme-industrial .command-palette-box {
   backdrop-filter: blur(22px) saturate(125%);
   color: #e2e8f0;
 }
-body.theme-industrial .command-palette-box input {
+body.theme-industrial:not(.appearance-light) .command-palette-box input {
   border-bottom-color: rgba(148, 163, 184, 0.25) !important;
   color: #f8fafc;
 }
-body.theme-industrial .command-palette-item:hover,
-body.theme-industrial .command-palette-item:focus {
+body.theme-industrial:not(.appearance-light) .command-palette-item:hover,
+body.theme-industrial:not(.appearance-light) .command-palette-item:focus {
   background: rgba(255, 255, 255, 0.08) !important;
 }
-body.theme-industrial .command-palette-item:focus-visible {
+body.theme-industrial:not(.appearance-light) .command-palette-item:focus-visible {
   outline: 2px solid rgba(45, 212, 191, 0.55);
   outline-offset: -2px;
 }
 
 /* Botones peligro: silueta cristal, mismo lenguaje visual */
-body.theme-industrial .btn.danger {
+body.theme-industrial:not(.appearance-light) .btn.danger {
   background: rgba(220, 38, 38, 0.2);
   color: #fecaca;
   border: 1px solid rgba(248, 113, 113, 0.45);
@@ -1571,58 +1571,58 @@ body.theme-industrial .btn.danger {
   -webkit-backdrop-filter: blur(8px) saturate(115%);
   backdrop-filter: blur(8px) saturate(115%);
 }
-body.theme-industrial .btn.danger:hover:not(:disabled) {
+body.theme-industrial:not(.appearance-light) .btn.danger:hover:not(:disabled) {
   background: rgba(220, 38, 38, 0.36);
   color: #fff;
   border-color: rgba(252, 165, 165, 0.55);
   box-shadow: 0 6px 20px rgba(220, 38, 38, 0.25);
 }
-body.theme-industrial .btn.danger.outline {
+body.theme-industrial:not(.appearance-light) .btn.danger.outline {
   background: transparent;
   color: #fca5a5;
   border-color: rgba(248, 113, 113, 0.5);
 }
-body.theme-industrial .btn.danger.outline:hover:not(:disabled) {
+body.theme-industrial:not(.appearance-light) .btn.danger.outline:hover:not(:disabled) {
   background: rgba(220, 38, 38, 0.15);
   color: #fecaca;
 }
 
 /* Prospección: mapa integrado al cristal (capa base oscura + controles) */
-body.theme-industrial .prospeccion-map-wrap {
+body.theme-industrial:not(.appearance-light) .prospeccion-map-wrap {
   background: transparent !important;
   border-color: rgba(148, 163, 184, 0.28);
   -webkit-backdrop-filter: blur(8px) saturate(115%);
   backdrop-filter: blur(8px) saturate(115%);
 }
-body.theme-industrial #map-prospeccion .leaflet-container {
+body.theme-industrial:not(.appearance-light) #map-prospeccion .leaflet-container {
   background: rgba(2, 6, 23, 0.2) !important;
 }
-body.theme-industrial #map-prospeccion .leaflet-tile-pane {
+body.theme-industrial:not(.appearance-light) #map-prospeccion .leaflet-tile-pane {
   opacity: 0.92;
 }
-body.theme-industrial #map-prospeccion .leaflet-control-zoom {
+body.theme-industrial:not(.appearance-light) #map-prospeccion .leaflet-control-zoom {
   border: 1px solid rgba(148, 163, 184, 0.35) !important;
   background: rgba(15, 23, 42, 0.45) !important;
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
-body.theme-industrial #map-prospeccion .leaflet-control-zoom a {
+body.theme-industrial:not(.appearance-light) #map-prospeccion .leaflet-control-zoom a {
   background: transparent !important;
   color: #e2e8f0 !important;
   border-bottom-color: rgba(148, 163, 184, 0.25) !important;
 }
-body.theme-industrial #map-prospeccion .leaflet-control-attribution {
+body.theme-industrial:not(.appearance-light) #map-prospeccion .leaflet-control-attribution {
   background: rgba(15, 23, 42, 0.55) !important;
   color: #94a3b8 !important;
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
-body.theme-industrial #map-prospeccion .leaflet-control-attribution a {
+body.theme-industrial:not(.appearance-light) #map-prospeccion .leaflet-control-attribution a {
   color: #cbd5e1 !important;
 }
 
 /* --- Menú monito: casi opaco (legible; poco cristal) --- */
-body.theme-industrial .header-profile-menu {
+body.theme-industrial:not(.appearance-light) .header-profile-menu {
   background: rgba(15, 23, 42, 0.94) !important;
   border: 1px solid rgba(148, 163, 184, 0.38) !important;
   box-shadow:
@@ -1632,28 +1632,28 @@ body.theme-industrial .header-profile-menu {
   backdrop-filter: blur(14px) saturate(118%) !important;
   color: #e2e8f0 !important;
 }
-body.theme-industrial .header-profile-menu-user {
+body.theme-industrial:not(.appearance-light) .header-profile-menu-user {
   border-bottom: 1px solid rgba(148, 163, 184, 0.32) !important;
   background: rgba(2, 6, 23, 0.72) !important;
 }
-body.theme-industrial .header-profile-menu-user strong {
+body.theme-industrial:not(.appearance-light) .header-profile-menu-user strong {
   color: #f8fafc !important;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
-body.theme-industrial .header-profile-menu-meta {
+body.theme-industrial:not(.appearance-light) .header-profile-menu-meta {
   color: #94a3b8 !important;
 }
-body.theme-industrial .header-profile-menu-item {
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item {
   color: #e2e8f0 !important;
   background: rgba(15, 23, 42, 0.55) !important;
 }
-body.theme-industrial .header-profile-menu-item + .header-profile-menu-item {
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item + .header-profile-menu-item {
   border-top: 1px solid rgba(51, 65, 85, 0.45);
 }
-body.theme-industrial .header-profile-menu-item:hover {
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item:hover {
   background: rgba(51, 65, 85, 0.75) !important;
 }
-body.theme-industrial .header-profile-menu-item.danger:hover {
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item.danger:hover {
   background: rgba(220, 38, 38, 0.22) !important;
 }
 
@@ -1740,117 +1740,555 @@ body.theme-industrial.login-open #login-overlay .login-particle {
   filter: saturate(1.2);
 }
 
-/* —— Tema “día” (sol): mismo chrome industrial con velos claros sobre nano-machining —— */
+/* —— Sol (día): cristal claro + acento teal (misma familia que pestañas rail en Luna), sin paneles “Luna” heredados —— */
 body.theme-industrial.appearance-light {
   color: #0f172a;
+  background-color: #f1f5f9;
 }
+
+body.theme-industrial.appearance-light ::selection {
+  background: rgba(13, 148, 136, 0.22);
+  color: #020617;
+}
+
 body.theme-industrial.appearance-light::before {
   background:
     repeating-linear-gradient(
       88deg,
-      rgba(255, 255, 255, 0.06) 0 1px,
+      rgba(255, 255, 255, 0.08) 0 1px,
       transparent 1px 6px
     ),
-    linear-gradient(168deg, rgba(248, 250, 252, 0.88) 0%, rgba(241, 245, 249, 0.72) 45%, rgba(226, 232, 240, 0.82) 100%),
+    linear-gradient(168deg, rgba(248, 250, 252, 0.62) 0%, rgba(241, 245, 249, 0.5) 42%, rgba(226, 232, 240, 0.58) 100%),
     url('/fondos/nano-machining-services.webp') center / cover no-repeat;
 }
+
 body.theme-industrial.appearance-light::after {
-  opacity: 0.14;
+  opacity: 0.1;
 }
+
+html:has(body.theme-industrial.appearance-light) {
+  scrollbar-color: #94a3b8 #e2e8f0;
+}
+html:has(body.theme-industrial.appearance-light)::-webkit-scrollbar-track {
+  background: #e2e8f0;
+}
+html:has(body.theme-industrial.appearance-light)::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 100%);
+  border: 2px solid #e2e8f0;
+}
+
 body.theme-industrial.appearance-light .header {
-  background: linear-gradient(125deg, rgba(255, 255, 255, 0.92) 0%, rgba(226, 232, 240, 0.88) 50%, rgba(241, 245, 249, 0.9) 100%);
+  background: linear-gradient(125deg, rgba(255, 255, 255, 0.78) 0%, rgba(241, 245, 249, 0.72) 50%, rgba(255, 255, 255, 0.82) 100%);
+  -webkit-backdrop-filter: blur(18px) saturate(125%);
+  backdrop-filter: blur(18px) saturate(125%);
   box-shadow:
-    0 4px 24px rgba(15, 23, 42, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    0 4px 24px rgba(15, 23, 42, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
 }
+
 body.theme-industrial.appearance-light .header h1,
 body.theme-industrial.appearance-light .header .subtitle,
 body.theme-industrial.appearance-light .header .header-brand-service {
   color: #0f172a;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
 }
+
 body.theme-industrial.appearance-light .header .version,
 body.theme-industrial.appearance-light .header .badge-pro {
   color: #0f172a;
-  border-color: rgba(15, 23, 42, 0.2);
-  background: rgba(255, 255, 255, 0.65);
+  border-color: rgba(15, 23, 42, 0.14);
+  background: rgba(255, 255, 255, 0.72);
 }
+
 body.theme-industrial.appearance-light .btn-icon-header {
   color: #0f172a;
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(15, 23, 42, 0.1);
 }
+
 body.theme-industrial.appearance-light .btn-icon-header:hover {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(13, 148, 136, 0.35);
 }
+
+/* Pestañas horizontales (si existen fuera del rail) */
 body.theme-industrial.appearance-light .tabs {
-  background: rgba(248, 250, 252, 0.92);
-  border-bottom-color: rgba(15, 23, 42, 0.1);
+  background: rgba(248, 250, 252, 0.82);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  backdrop-filter: blur(14px) saturate(120%);
+  border-bottom-color: rgba(15, 23, 42, 0.08);
+  box-shadow: none;
 }
+
 body.theme-industrial.appearance-light .tab {
-  background: rgba(255, 255, 255, 0.75);
-  border-color: rgba(148, 163, 184, 0.45);
+  background: rgba(255, 255, 255, 0.55);
+  border-color: rgba(148, 163, 184, 0.35);
   color: #334155;
 }
+
 body.theme-industrial.appearance-light .tab:hover {
   color: #0f172a;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(13, 148, 136, 0.28);
 }
+
 body.theme-industrial.appearance-light .tab.active {
-  color: #0f172a;
-  background: linear-gradient(135deg, #e2e8f0 0%, #f8fafc 100%);
-  border-color: rgba(15, 23, 42, 0.18);
+  color: #042f2e;
+  background: rgba(45, 212, 191, 0.2);
+  border-color: rgba(13, 148, 136, 0.42);
+  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.12), 0 6px 18px rgba(15, 23, 42, 0.08);
 }
+
+/* Rail lateral: misma lógica que Luna (teal activo), texto legible sobre vidrio blanco */
+body.theme-industrial.appearance-light .sidebar-nav {
+  background: rgba(255, 255, 255, 0.58);
+  border-right-color: rgba(15, 23, 42, 0.08);
+  -webkit-backdrop-filter: blur(22px) saturate(128%);
+  backdrop-filter: blur(22px) saturate(128%);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.65);
+}
+
+body.theme-industrial.appearance-light .sidebar-nav-toolbar {
+  border-bottom-color: rgba(15, 23, 42, 0.08);
+}
+
+body.theme-industrial.appearance-light .sidebar-nav-title {
+  color: #475569;
+  text-shadow: none;
+}
+
+body.theme-industrial.appearance-light .btn-sidebar-rail-toggle {
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.55);
+  color: #0f172a;
+}
+
+body.theme-industrial.appearance-light .btn-sidebar-rail-toggle:hover {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(13, 148, 136, 0.35);
+  color: #042f2e;
+}
+
+body.theme-industrial.appearance-light .tabs.tabs--rail {
+  background: transparent;
+}
+
+body.theme-industrial.appearance-light .tabs.tabs--rail .tab {
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  color: #334155;
+  background: rgba(255, 255, 255, 0.42);
+  box-shadow: none;
+}
+
+body.theme-industrial.appearance-light .tabs.tabs--rail .tab:hover {
+  background: rgba(255, 255, 255, 0.78);
+  border-color: rgba(13, 148, 136, 0.32);
+  color: #0f172a;
+}
+
+body.theme-industrial.appearance-light .tabs.tabs--rail .tab.active {
+  color: #042f2e;
+  font-weight: 700;
+  background: rgba(45, 212, 191, 0.22);
+  border-color: rgba(13, 148, 136, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(45, 212, 191, 0.14),
+    0 4px 16px rgba(15, 23, 42, 0.08);
+}
+
+body.theme-industrial.appearance-light .tabs.tabs--rail .tab.active:hover {
+  color: #042f2e;
+  filter: none;
+}
+
+body.theme-industrial.appearance-light .tabs.tabs--rail .tab i {
+  filter: none;
+}
+
+@media (max-width: 960px) {
+  body.theme-industrial.appearance-light .sidebar-nav {
+    border-bottom-color: rgba(15, 23, 42, 0.08);
+    background: rgba(255, 255, 255, 0.72);
+  }
+}
+
+body.theme-industrial.appearance-light .content {
+  color: #1e293b;
+}
+
+body.theme-industrial.appearance-light .section-header,
 body.theme-industrial.appearance-light #panel-refacciones .section-header,
 body.theme-industrial.appearance-light #panel-cotizaciones .section-header,
 body.theme-industrial.appearance-light #panel-bitacoras .section-header,
-body.theme-industrial.appearance-light #panel-incidentes .section-header,
-body.theme-industrial.appearance-light .section-header {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(241, 245, 249, 0.92) 100%);
+body.theme-industrial.appearance-light #panel-incidentes .section-header {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.88) 0%, rgba(241, 245, 249, 0.82) 100%) !important;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  -webkit-backdrop-filter: blur(16px) saturate(122%);
+  backdrop-filter: blur(16px) saturate(122%);
+  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   color: #0f172a;
 }
+
+body.theme-industrial.appearance-light .section-header::before {
+  background: linear-gradient(180deg, rgba(45, 212, 191, 0.95) 0%, rgba(13, 148, 136, 0.85) 55%, rgba(15, 118, 110, 0.9) 100%);
+  box-shadow: 0 0 14px rgba(13, 148, 136, 0.35);
+}
+
+body.theme-industrial.appearance-light .section-header h2,
 body.theme-industrial.appearance-light #panel-refacciones .section-header h2,
 body.theme-industrial.appearance-light #panel-cotizaciones .section-header h2,
 body.theme-industrial.appearance-light #panel-bitacoras .section-header h2,
-body.theme-industrial.appearance-light #panel-incidentes .section-header h2,
-body.theme-industrial.appearance-light .section-header h2 {
+body.theme-industrial.appearance-light #panel-incidentes .section-header h2 {
   color: #0f172a;
+  text-shadow: none;
 }
-body.theme-industrial.appearance-light #panel-refacciones .table-wrap,
-body.theme-industrial.appearance-light #panel-cotizaciones .table-wrap,
-body.theme-industrial.appearance-light #panel-bitacoras .table-wrap,
-body.theme-industrial.appearance-light #panel-incidentes .table-wrap,
-body.theme-industrial.appearance-light #panel-clientes .table-wrap,
-body.theme-industrial.appearance-light #panel-maquinas .table-wrap,
-body.theme-industrial.appearance-light #panel-almacen .table-wrap {
-  background: rgba(255, 255, 255, 0.88);
-  border-color: rgba(15, 23, 42, 0.08);
+
+body.theme-industrial.appearance-light .section-header h2 i,
+body.theme-industrial.appearance-light #panel-cotizaciones .section-header h2 i,
+body.theme-industrial.appearance-light #panel-incidentes .section-header h2 i,
+body.theme-industrial.appearance-light #panel-bitacoras .section-header h2 i,
+body.theme-industrial.appearance-light #panel-refacciones .section-header h2 i {
+  color: #042f2e;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(204, 251, 241, 0.9) 100%);
+  border: 1px solid rgba(13, 148, 136, 0.28);
+  box-shadow: 0 2px 10px rgba(13, 148, 136, 0.15);
 }
+
+/* Todas las tablas envueltas: vidrio claro (antes ganaban reglas con ID solo en Luna) */
+body.theme-industrial.appearance-light .table-wrap,
+body.theme-industrial.appearance-light #panel-refacciones .table-wrap.ref-table-shell {
+  background: rgba(255, 255, 255, 0.62) !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(122%);
+  backdrop-filter: blur(16px) saturate(122%);
+  box-shadow: 0 12px 36px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.65) inset;
+}
+
+body.theme-industrial.appearance-light .table-wrap:hover {
+  border-color: rgba(13, 148, 136, 0.32) !important;
+  box-shadow: 0 16px 44px rgba(15, 23, 42, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.85) inset;
+}
+
 body.theme-industrial.appearance-light .data-table {
   color: #0f172a;
 }
-body.theme-industrial.appearance-light .data-table thead th {
-  color: #0f172a;
-  background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+
+body.theme-industrial.appearance-light .data-table thead tr:first-child th {
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, rgba(226, 232, 240, 0.88) 100%) !important;
+  color: #0f172a !important;
+  border-bottom-color: rgba(15, 23, 42, 0.1) !important;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
-body.theme-industrial.appearance-light .sidebar-nav {
-  background: rgba(248, 250, 252, 0.94);
-  border-color: rgba(15, 23, 42, 0.08);
+
+body.theme-industrial.appearance-light .data-table td {
+  color: #1e293b;
+  border-bottom-color: rgba(15, 23, 42, 0.07);
 }
-body.theme-industrial.appearance-light .sidebar-nav-title {
+
+body.theme-industrial.appearance-light .data-table tbody tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.45) !important;
+}
+
+body.theme-industrial.appearance-light .data-table tbody tr:nth-child(even) {
+  background: rgba(241, 245, 249, 0.72) !important;
+}
+
+body.theme-industrial.appearance-light .data-table tbody tr:hover {
+  background: rgba(45, 212, 191, 0.12) !important;
+  box-shadow: inset 3px 0 0 rgba(13, 148, 136, 0.55) !important;
+}
+
+body.theme-industrial.appearance-light .filter-row td,
+body.theme-industrial.appearance-light .data-table thead .filter-row td {
+  background: rgba(248, 250, 252, 0.92) !important;
+  border-bottom-color: rgba(15, 23, 42, 0.08) !important;
   color: #334155;
 }
-body.theme-industrial.appearance-light .header-branch-filter,
-body.theme-industrial.appearance-light .sidebar-branch-filter {
-  background: rgba(255, 255, 255, 0.85);
+
+body.theme-industrial.appearance-light .data-table thead .filter-row input:not([type="checkbox"]):not([type="radio"]),
+body.theme-industrial.appearance-light .data-table thead .filter-row textarea,
+body.theme-industrial.appearance-light .data-table thead .filter-row select,
+body.theme-industrial.appearance-light #tabla-cotizaciones input.filter-input,
+body.theme-industrial.appearance-light #tabla-cotizaciones select.filter-input,
+body.theme-industrial.appearance-light #tabla-cotizaciones textarea.filter-input,
+body.theme-industrial.appearance-light #tabla-incidentes input.filter-input,
+body.theme-industrial.appearance-light #tabla-incidentes select.filter-input,
+body.theme-industrial.appearance-light #tabla-incidentes textarea.filter-input,
+body.theme-industrial.appearance-light #tabla-bitacoras input.filter-input,
+body.theme-industrial.appearance-light #tabla-bitacoras select.filter-input,
+body.theme-industrial.appearance-light #tabla-bitacoras textarea.filter-input,
+body.theme-industrial.appearance-light #tabla-refacciones thead .filter-row input.filter-input,
+body.theme-industrial.appearance-light #tabla-refacciones thead .filter-row select.filter-input,
+body.theme-industrial.appearance-light #tabla-refacciones thead .filter-row textarea.filter-input {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  color: #0f172a !important;
+}
+
+body.theme-industrial.appearance-light .data-table .filter-date-wrap .filter-date-select,
+body.theme-industrial.appearance-light .data-table .filter-date-wrap .filter-date-input,
+body.theme-industrial.appearance-light #tabla-cotizaciones .filter-date-select,
+body.theme-industrial.appearance-light #tabla-cotizaciones .filter-date-input,
+body.theme-industrial.appearance-light #tabla-incidentes .filter-date-select,
+body.theme-industrial.appearance-light #tabla-incidentes .filter-date-input,
+body.theme-industrial.appearance-light #tabla-bitacoras .filter-date-select,
+body.theme-industrial.appearance-light #tabla-bitacoras .filter-date-input {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  color: #0f172a !important;
+}
+
+body.theme-industrial.appearance-light .search,
+body.theme-industrial.appearance-light input.filter-input,
+body.theme-industrial.appearance-light select.filter-input,
+body.theme-industrial.appearance-light textarea.filter-input {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #0f172a;
+}
+
+body.theme-industrial.appearance-light .btn.primary {
+  background: linear-gradient(145deg, #0f766e 0%, #14b8a6 45%, #0d9488 100%);
+  color: #f0fdfa;
+  border: 1px solid rgba(13, 148, 136, 0.45);
+  box-shadow: 0 2px 14px rgba(13, 148, 136, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+body.theme-industrial.appearance-light .btn.primary:hover {
+  background: linear-gradient(145deg, #14b8a6 0%, #5eead4 48%, #0f766e 100%);
+  box-shadow: 0 6px 20px rgba(13, 148, 136, 0.3);
+}
+
+body.theme-industrial.appearance-light .btn:not(.primary):not(.danger) {
+  background: rgba(255, 255, 255, 0.72);
   color: #0f172a;
   border-color: rgba(15, 23, 42, 0.12);
 }
-body.theme-industrial.appearance-light .header-system-status {
-  background: rgba(255, 255, 255, 0.55);
-  color: #334155;
+
+body.theme-industrial.appearance-light .btn:not(.primary):not(.danger):hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(13, 148, 136, 0.35);
+  color: #042f2e;
+}
+
+body.theme-industrial.appearance-light .btn.outline {
+  background: transparent;
+  color: #0f172a;
+  border-color: rgba(13, 148, 136, 0.4);
+}
+
+body.theme-industrial.appearance-light .btn.outline:hover {
+  background: rgba(45, 212, 191, 0.12);
+  border-color: rgba(13, 148, 136, 0.55);
+  color: #042f2e;
+}
+
+body.theme-industrial.appearance-light .card,
+body.theme-industrial.appearance-light .empty-card {
+  background: rgba(255, 255, 255, 0.68);
+  border-color: rgba(15, 23, 42, 0.1);
+  color: #1e293b;
+  -webkit-backdrop-filter: blur(14px) saturate(118%);
+  backdrop-filter: blur(14px) saturate(118%);
+}
+
+body.theme-industrial.appearance-light .card h2,
+body.theme-industrial.appearance-light .empty-card h3 {
+  color: #0f172a;
+}
+
+body.theme-industrial.appearance-light .modal-box {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(15, 23, 42, 0.1);
+  color: #1e293b;
+}
+
+body.theme-industrial.appearance-light .modal-header {
+  background: rgba(241, 245, 249, 0.95);
+  border-bottom-color: rgba(15, 23, 42, 0.08);
+}
+
+body.theme-industrial.appearance-light .modal-header h3 {
+  color: #0f172a;
+}
+
+body.theme-industrial.appearance-light .form-group label {
+  color: #475569;
+}
+
+body.theme-industrial.appearance-light .form-group input,
+body.theme-industrial.appearance-light .form-group select,
+body.theme-industrial.appearance-light .form-group textarea {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #0f172a;
+}
+
+body.theme-industrial.appearance-light .app-footer {
+  border-top-color: rgba(15, 23, 42, 0.08);
+  background: linear-gradient(180deg, transparent 0%, rgba(241, 245, 249, 0.85) 100%);
+}
+
+body.theme-industrial.appearance-light .app-footer p,
+body.theme-industrial.appearance-light .app-footer .footer-version {
+  color: #64748b;
+}
+
+/* Paneles UX (Bonos, técnicos, etc.): volver a chips claros con acento teal */
+body.theme-industrial.appearance-light .panel.panel-ux {
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.82) 0%, rgba(248, 250, 252, 0.72) 100%);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+body.theme-industrial.appearance-light .section-header--ux {
+  border-bottom-color: rgba(15, 23, 42, 0.08);
+}
+
+body.theme-industrial.appearance-light .section-header--ux h2 {
+  color: #0f172a;
+}
+
+body.theme-industrial.appearance-light .section-header--ux .section-sub {
+  color: #64748b;
+}
+
+body.theme-industrial.appearance-light .section-header--ux .section-sub code {
+  color: #0f172a;
+  background: rgba(241, 245, 249, 0.95);
   border-color: rgba(15, 23, 42, 0.1);
 }
+
+body.theme-industrial.appearance-light .search--ux {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(13, 148, 136, 0.28) !important;
+  color: #0f172a !important;
+}
+
+body.theme-industrial.appearance-light .search--ux:focus {
+  border-color: rgba(13, 148, 136, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15) !important;
+}
+
+body.theme-industrial.appearance-light .prospeccion-kpi {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+body.theme-industrial.appearance-light .prospeccion-kpi-lbl,
+body.theme-industrial.appearance-light .prospeccion-kpi-val {
+  color: #475569;
+}
+
+body.theme-industrial.appearance-light .prospeccion-map-wrap {
+  background: rgba(255, 255, 255, 0.55);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+/* Dashboard: tarjetas cristal claras */
+body.theme-industrial.appearance-light #panel-dashboards.panel-dashboard {
+  background: transparent;
+}
+
+body.theme-industrial.appearance-light .dashboard-card,
+body.theme-industrial.appearance-light .dashboard-score-tile,
+body.theme-industrial.appearance-light .dashboard-kpi-strip,
+body.theme-industrial.appearance-light .dashboard-crossfilter-bar {
+  background: rgba(255, 255, 255, 0.62);
+  border-color: rgba(15, 23, 42, 0.08);
+  -webkit-backdrop-filter: blur(14px) saturate(118%);
+  backdrop-filter: blur(14px) saturate(118%);
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
+}
+
+body.theme-industrial.appearance-light .dashboard-kpi-item i {
+  color: #0d9488;
+}
+
+body.theme-industrial.appearance-light .header-branch-filter,
+body.theme-industrial.appearance-light .sidebar-branch-filter {
+  background: rgba(255, 255, 255, 0.78);
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.1);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+body.theme-industrial.appearance-light .header-system-status {
+  background: rgba(45, 212, 191, 0.12);
+  color: #0f172a;
+  border-color: rgba(13, 148, 136, 0.28);
+}
+
+/* Perfil / notificaciones: menús claros (las reglas Luna-only ya no aplican en Sol) */
+body.theme-industrial.appearance-light .header-profile-menu {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border: 1px solid rgba(15, 23, 42, 0.1) !important;
+  color: #1e293b !important;
+  box-shadow: 0 24px 56px rgba(15, 23, 42, 0.12) !important;
+}
+
+body.theme-industrial.appearance-light .header-profile-menu-user {
+  background: rgba(241, 245, 249, 0.95) !important;
+  border-bottom-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+body.theme-industrial.appearance-light .header-profile-menu-user strong {
+  color: #0f172a !important;
+  text-shadow: none;
+}
+
+body.theme-industrial.appearance-light .header-profile-menu-meta {
+  color: #64748b !important;
+}
+
+body.theme-industrial.appearance-light .header-profile-menu-item {
+  color: #1e293b !important;
+  background: transparent !important;
+}
+
+body.theme-industrial.appearance-light .header-profile-menu-item:hover {
+  background: rgba(45, 212, 191, 0.12) !important;
+}
+
+body.theme-industrial.appearance-light .notifications-panel {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border: 1px solid rgba(15, 23, 42, 0.1) !important;
+  color: #1e293b;
+  box-shadow: 0 24px 56px rgba(15, 23, 42, 0.12);
+}
+
+body.theme-industrial.appearance-light .notifications-header strong {
+  color: #0f172a;
+  text-shadow: none;
+}
+
+body.theme-industrial.appearance-light .notifications-date {
+  background: rgba(241, 245, 249, 0.95) !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+  color: #334155 !important;
+}
+
+body.theme-industrial.appearance-light .notification-item {
+  color: #334155;
+  border-bottom-color: rgba(15, 23, 42, 0.08);
+  background: rgba(248, 250, 252, 0.65);
+}
+
+body.theme-industrial.appearance-light .notification-item .meta {
+  color: #64748b;
+}
+
+body.theme-industrial.appearance-light .close {
+  color: #64748b;
+}
+
+body.theme-industrial.appearance-light .close:hover {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.06);
+}
+
 body.theme-industrial.appearance-light.login-open .login-card h2,
 body.theme-industrial.appearance-light.login-open .login-field label {
   color: #0f172a;
