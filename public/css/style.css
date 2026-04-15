@@ -4672,7 +4672,8 @@ body.login-open { overflow: hidden; }
   min-height: 0;
   height: auto;
   padding: 0;
-  margin: 0 0 1.75rem;
+  /* Compensa clip-path simétrico en la img: el trazo visible queda alineado con el título (ej. la S). */
+  margin: 0 0 1.75rem -4px;
   overflow: visible;
   background: transparent;
   border: none;
