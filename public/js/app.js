@@ -7403,11 +7403,16 @@
         else viaticoMx = vd * v1d + v1f;
       }
 
+      const mxn2 = (x) => Math.round(Number(x) * 100) / 100;
+      const trR = mxn2(trMx);
+      const tbR = mxn2(trabajoMx);
+      const viR = mxn2(viaticoMx);
+
       return {
-        trMx,
-        trabajoMx,
-        viaticoMx,
-        totalMxn: trMx + trabajoMx + viaticoMx,
+        trMx: trR,
+        trabajoMx: tbR,
+        viaticoMx: viR,
+        totalMxn: mxn2(trR + tbR + viR),
         ayu,
         tt,
       };
