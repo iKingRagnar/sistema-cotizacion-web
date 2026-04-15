@@ -1138,16 +1138,16 @@ body.dark-theme #tabla-bitacoras th.th-actions {
 }
 .header-logo {
   flex-shrink: 0;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  border-radius: 0;
+  box-shadow: none;
 }
 .header-logo--brand {
   width: auto;
-  height: 68px;
-  max-width: 320px;
+  height: 88px;
+  max-width: min(520px, 46vw);
   object-fit: contain;
-  border-radius: 8px;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.28);
+  border-radius: 0;
+  box-shadow: none;
 }
 .header-brand-text {
   display: flex;
@@ -3383,7 +3383,8 @@ textarea.filter-input:focus { outline: none; border-color: #1e3a5f; box-shadow: 
 }
 
 @media (max-width: 768px) {
-  .header { padding: 1.1rem 1rem; }
+  /* Alinea el borde izquierdo con el rail (padding 0.65rem) */
+  .header { padding: 0.85rem 0.65rem; }
   .header-inner { flex-direction: column; align-items: flex-start; }
   .header-actions { width: 100%; }
   .header-actions-primary { width: 100%; }
@@ -3394,7 +3395,7 @@ textarea.filter-input:focus { outline: none; border-color: #1e3a5f; box-shadow: 
   }
   .header-alerts { width: 100%; justify-content: flex-start; }
   .header-brand { gap: 0.75rem; }
-  .header-logo--brand { height: 56px; max-width: 260px; }
+  .header-logo--brand { height: 78px; max-width: min(420px, 92vw); }
   .header .header-brand-service { font-size: 1.15rem; }
   .header-powered-by {
     font-size: 0.88rem;
