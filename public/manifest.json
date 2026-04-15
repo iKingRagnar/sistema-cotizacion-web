@@ -1,7 +1,7 @@
 {
-  "name": "Sistema de Cotización y Gestión",
-  "short_name": "Cotización Pro",
-  "description": "Cotizaciones, incidentes, bitácora de horas y catálogos en una sola plataforma",
+  "name": "Universal · Servicio Técnico",
+  "short_name": "Servicio Técnico",
+  "description": "Servicio técnico Universal: cotizaciones, incidentes, bitácora y catálogos",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",

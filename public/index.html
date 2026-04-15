@@ -4,18 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" id="meta-theme-color" content="#0f172a">
-  <title>Gestor Administrativo · Profesional</title>
-  <meta name="description" content="Gestor Administrativo para clientes, refacciones, máquinas, cotizaciones, incidentes y bitácora de horas. Control total en un solo lugar.">
+  <title>Servicio Técnico · Universal</title>
+  <meta name="description" content="Servicio técnico Universal: clientes, refacciones, máquinas, cotizaciones, incidentes y bitácora de horas.">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;600;700&family=Manrope:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/design-tokens.css?v=3-apex-base">
   <link rel="stylesheet" href="css/design-system.css?v=3-apex-base">
-  <link rel="stylesheet" href="css/style.css?v=78-login-brand-hero">
+  <link rel="stylesheet" href="css/style.css?v=79-header-brand-theme">
   <link rel="stylesheet" href="css/layout-rail.css?v=8-sidebar-global-strip">
   <link rel="stylesheet" href="css/header-profile.css?v=9-profile-menu-casi-solido">
-  <link rel="stylesheet" href="css/theme-industrial.css?v=19-demo-code-kbd">
+  <link rel="stylesheet" href="css/theme-industrial.css?v=20-nano-appearance">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
@@ -28,10 +28,10 @@
       <div class="login-brand-panel">
         <div class="login-brand-content">
           <div class="login-brand-logo" aria-hidden="true">
-            <img src="assets/login-brand-hero.png?v=1" alt="" width="72" height="72" class="login-brand-hero-img" decoding="async">
+            <img src="fondos/universal-logo.jpg?v=1" alt="" width="120" height="72" class="login-brand-hero-img" decoding="async">
           </div>
-          <h1 class="login-brand-title" id="login-brand-name">Gestor Administrativo</h1>
-          <p class="login-brand-tagline" id="login-brand-tagline">Gestión de operaciones, incidentes, bitácora y catálogos en una sola plataforma</p>
+          <h1 class="login-brand-title" id="login-brand-name">Servicio Técnico</h1>
+          <p class="login-brand-tagline" id="login-brand-tagline">Universal · Operaciones, incidentes, bitácora y catálogos</p>
           <div class="login-brand-features">
             <div class="login-feature-item"><i class="fas fa-shield-alt"></i><span>Acceso seguro por roles</span></div>
             <div class="login-feature-item"><i class="fas fa-chart-line"></i><span>Dashboards en tiempo real</span></div>
@@ -104,16 +104,17 @@
   <header class="header">
     <div class="header-inner">
       <div class="header-brand">
-        <img src="favicon.svg" alt="" class="header-logo" width="40" height="40" aria-hidden="true" id="header-brand-logo">
-        <div>
-          <h1><span id="app-title-name">Gestor Administrativo</span> <span class="version">v4</span> <span class="badge-pro">Suite</span></h1>
-          <p class="subtitle" id="app-tagline">Gestión de operaciones, incidentes, bitácora y catálogos en una sola plataforma</p>
+        <img src="fondos/universal-logo.jpg?v=1" alt="Universal" class="header-logo header-logo--brand" width="160" height="48" id="header-brand-logo" decoding="async">
+        <div class="header-brand-text">
+          <h1 class="header-brand-service" id="app-title-name">Servicio Técnico</h1>
+          <p class="subtitle header-brand-meta" id="app-header-meta"><span class="version">v4</span> <span class="badge-pro">Suite</span></p>
         </div>
       </div>
       <div class="header-actions">
         <div class="header-actions-tail">
-        <button type="button" id="btn-sound-toggle" class="btn-icon-header" title="Música de fondo" aria-label="Silenciar o activar música de fondo" aria-pressed="false">
-          <i class="fas fa-volume-up" aria-hidden="true"></i>
+        <span class="header-powered-by" aria-label="Créditos">: powered by Ing. David Cantú</span>
+        <button type="button" id="btn-theme-toggle" class="btn-icon-header" title="Tema claro u oscuro" aria-label="Cambiar tema claro u oscuro" aria-pressed="false">
+          <i class="fas fa-sun" aria-hidden="true"></i>
         </button>
         <div class="header-notifications-wrap">
           <button type="button" id="btn-notifications" class="btn-icon-header" title="Centro de notificaciones" aria-label="Centro de notificaciones">
@@ -1389,6 +1390,6 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=126-mo-agenda-servicio" defer></script>
+  <script src="js/app.js?v=127-brand-theme-nano" defer></script>
 </body>
 </html>

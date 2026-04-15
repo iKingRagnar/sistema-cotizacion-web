@@ -26,7 +26,7 @@ body.theme-industrial::before {
       rgba(15, 23, 42, 0.28) 20px 40px
     ),
     linear-gradient(168deg, rgba(2, 6, 23, 0.74) 0%, rgba(15, 23, 42, 0.48) 45%, rgba(2, 6, 23, 0.8) 100%),
-    url('/assets/fondo-glass.jpg') center / cover no-repeat;
+    url('/fondos/nano-machining-services.webp') center / cover no-repeat;
   background-blend-mode: normal, normal, normal, normal;
 }
 
@@ -729,6 +729,7 @@ body.theme-industrial .global-loading .loading-text {
 /* Paneles con tabla: refuerzo (un ID en style.css gana a body.theme-industrial .table-wrap sin ID) */
 body.theme-industrial #panel-clientes .table-wrap,
 body.theme-industrial #panel-maquinas .table-wrap,
+body.theme-industrial #panel-almacen .table-wrap,
 body.theme-industrial #panel-ventas .table-wrap,
 body.theme-industrial #panel-prospeccion .table-wrap,
 body.theme-industrial #panel-revision-maquinas .table-wrap,
@@ -751,6 +752,7 @@ body.theme-industrial #panel-demo .table-wrap {
 }
 body.theme-industrial #panel-clientes .table-wrap:hover,
 body.theme-industrial #panel-maquinas .table-wrap:hover,
+body.theme-industrial #panel-almacen .table-wrap:hover,
 body.theme-industrial #panel-ventas .table-wrap:hover,
 body.theme-industrial #panel-prospeccion .table-wrap:hover,
 body.theme-industrial #panel-revision-maquinas .table-wrap:hover,
@@ -1231,6 +1233,7 @@ body.theme-industrial #panel-bitacoras .table-wrap,
 body.theme-industrial #panel-refacciones .table-wrap,
 body.theme-industrial #panel-clientes .table-wrap,
 body.theme-industrial #panel-maquinas .table-wrap,
+body.theme-industrial #panel-almacen .table-wrap,
 body.theme-industrial #panel-ventas .table-wrap,
 body.theme-industrial #panel-prospeccion .table-wrap,
 body.theme-industrial #panel-revision-maquinas .table-wrap,
@@ -1254,6 +1257,7 @@ body.theme-industrial #panel-demo .table-wrap {
 }
 body.theme-industrial #panel-clientes .table-wrap:hover,
 body.theme-industrial #panel-maquinas .table-wrap:hover,
+body.theme-industrial #panel-almacen .table-wrap:hover,
 body.theme-industrial #panel-ventas .table-wrap:hover,
 body.theme-industrial #panel-prospeccion .table-wrap:hover,
 body.theme-industrial #panel-revision-maquinas .table-wrap:hover,
@@ -1658,7 +1662,7 @@ body.theme-industrial.login-open #login-overlay {
   background-image:
     linear-gradient(125deg, rgba(5, 10, 22, 0.28) 0%, rgba(12, 18, 36, 0.22) 45%, rgba(6, 20, 40, 0.18) 100%),
     linear-gradient(180deg, rgba(2, 6, 23, 0.08) 0%, transparent 48%, rgba(2, 6, 23, 0.14) 100%),
-    url('/assets/fondo-glass.jpg');
+    url('/fondos/nano-machining-services.webp');
   background-size: cover, cover, cover;
   background-position: center, center, center;
 }
@@ -1734,4 +1738,130 @@ body.theme-industrial.login-open #login-overlay .login-particle {
     0 0 40px 10px rgba(56, 189, 248, 0.36),
     0 0 56px 16px rgba(167, 139, 250, 0.26);
   filter: saturate(1.2);
+}
+
+/* —— Tema “día” (sol): mismo chrome industrial con velos claros sobre nano-machining —— */
+body.theme-industrial.appearance-light {
+  color: #0f172a;
+}
+body.theme-industrial.appearance-light::before {
+  background:
+    repeating-linear-gradient(
+      88deg,
+      rgba(255, 255, 255, 0.06) 0 1px,
+      transparent 1px 6px
+    ),
+    linear-gradient(168deg, rgba(248, 250, 252, 0.88) 0%, rgba(241, 245, 249, 0.72) 45%, rgba(226, 232, 240, 0.82) 100%),
+    url('/fondos/nano-machining-services.webp') center / cover no-repeat;
+}
+body.theme-industrial.appearance-light::after {
+  opacity: 0.14;
+}
+body.theme-industrial.appearance-light .header {
+  background: linear-gradient(125deg, rgba(255, 255, 255, 0.92) 0%, rgba(226, 232, 240, 0.88) 50%, rgba(241, 245, 249, 0.9) 100%);
+  box-shadow:
+    0 4px 24px rgba(15, 23, 42, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+body.theme-industrial.appearance-light .header h1,
+body.theme-industrial.appearance-light .header .subtitle,
+body.theme-industrial.appearance-light .header .header-brand-service {
+  color: #0f172a;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+body.theme-industrial.appearance-light .header .version,
+body.theme-industrial.appearance-light .header .badge-pro {
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.2);
+  background: rgba(255, 255, 255, 0.65);
+}
+body.theme-industrial.appearance-light .btn-icon-header {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+}
+body.theme-industrial.appearance-light .btn-icon-header:hover {
+  background: rgba(255, 255, 255, 0.85);
+}
+body.theme-industrial.appearance-light .tabs {
+  background: rgba(248, 250, 252, 0.92);
+  border-bottom-color: rgba(15, 23, 42, 0.1);
+}
+body.theme-industrial.appearance-light .tab {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: rgba(148, 163, 184, 0.45);
+  color: #334155;
+}
+body.theme-industrial.appearance-light .tab:hover {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.95);
+}
+body.theme-industrial.appearance-light .tab.active {
+  color: #0f172a;
+  background: linear-gradient(135deg, #e2e8f0 0%, #f8fafc 100%);
+  border-color: rgba(15, 23, 42, 0.18);
+}
+body.theme-industrial.appearance-light #panel-refacciones .section-header,
+body.theme-industrial.appearance-light #panel-cotizaciones .section-header,
+body.theme-industrial.appearance-light #panel-bitacoras .section-header,
+body.theme-industrial.appearance-light #panel-incidentes .section-header,
+body.theme-industrial.appearance-light .section-header {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(241, 245, 249, 0.92) 100%);
+  color: #0f172a;
+}
+body.theme-industrial.appearance-light #panel-refacciones .section-header h2,
+body.theme-industrial.appearance-light #panel-cotizaciones .section-header h2,
+body.theme-industrial.appearance-light #panel-bitacoras .section-header h2,
+body.theme-industrial.appearance-light #panel-incidentes .section-header h2,
+body.theme-industrial.appearance-light .section-header h2 {
+  color: #0f172a;
+}
+body.theme-industrial.appearance-light #panel-refacciones .table-wrap,
+body.theme-industrial.appearance-light #panel-cotizaciones .table-wrap,
+body.theme-industrial.appearance-light #panel-bitacoras .table-wrap,
+body.theme-industrial.appearance-light #panel-incidentes .table-wrap,
+body.theme-industrial.appearance-light #panel-clientes .table-wrap,
+body.theme-industrial.appearance-light #panel-maquinas .table-wrap,
+body.theme-industrial.appearance-light #panel-almacen .table-wrap {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+body.theme-industrial.appearance-light .data-table {
+  color: #0f172a;
+}
+body.theme-industrial.appearance-light .data-table thead th {
+  color: #0f172a;
+  background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+}
+body.theme-industrial.appearance-light .sidebar-nav {
+  background: rgba(248, 250, 252, 0.94);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+body.theme-industrial.appearance-light .sidebar-nav-title {
+  color: #334155;
+}
+body.theme-industrial.appearance-light .header-branch-filter,
+body.theme-industrial.appearance-light .sidebar-branch-filter {
+  background: rgba(255, 255, 255, 0.85);
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.12);
+}
+body.theme-industrial.appearance-light .header-system-status {
+  background: rgba(255, 255, 255, 0.55);
+  color: #334155;
+  border-color: rgba(15, 23, 42, 0.1);
+}
+body.theme-industrial.appearance-light.login-open .login-card h2,
+body.theme-industrial.appearance-light.login-open .login-field label {
+  color: #0f172a;
+  text-shadow: none;
+}
+body.theme-industrial.appearance-light.login-open .login-field input {
+  color: #0f172a !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(15, 23, 42, 0.15) !important;
+}
+body.theme-industrial.appearance-light.login-open .login-card {
+  background: rgba(255, 255, 255, 0.88) !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
 }

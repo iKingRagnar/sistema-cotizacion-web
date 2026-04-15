@@ -1141,6 +1141,65 @@ body.dark-theme #tabla-bitacoras th.th-actions {
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
+.header-logo--brand {
+  width: auto;
+  height: 46px;
+  max-width: 200px;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.28);
+}
+.header-brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+h1.header-brand-service,
+.header .header-brand-service {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.38rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  color: #f8fafc;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
+}
+body.theme-industrial.appearance-light .header .header-brand-service {
+  color: #0f172a;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+.header-brand-meta {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.header-powered-by {
+  font-family: "Dancing Script", "Brush Script MT", "Segoe Script", cursive;
+  font-style: italic;
+  font-weight: 600;
+  font-size: clamp(0.95rem, 1.15vw, 1.12rem);
+  margin-right: 0.1rem;
+  margin-left: 0.1rem;
+  transform: translateX(-6px);
+  white-space: nowrap;
+  letter-spacing: 0.03em;
+  color: rgba(248, 250, 252, 0.98);
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.92),
+    0 0 20px rgba(0, 0, 0, 0.55),
+    0 0 1px rgba(0, 0, 0, 0.9);
+}
+body.theme-industrial.appearance-light .header-powered-by {
+  color: #0b1220;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 1),
+    0 0 18px rgba(255, 255, 255, 0.92),
+    0 0 1px rgba(255, 255, 255, 0.85);
+}
 .header h1 {
   margin: 0;
   font-family: var(--font-display);
@@ -3335,7 +3394,15 @@ textarea.filter-input:focus { outline: none; border-color: #1e3a5f; box-shadow: 
   }
   .header-alerts { width: 100%; justify-content: flex-start; }
   .header-brand { gap: 0.75rem; }
-  .header-logo { width: 36px; height: 36px; }
+  .header-logo--brand { height: 40px; max-width: 160px; }
+  .header .header-brand-service { font-size: 1.15rem; }
+  .header-powered-by {
+    font-size: 0.88rem;
+    transform: translateX(-4px);
+    max-width: 42vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .header h1 { font-size: 1.2rem; }
   .header .badge-pro { font-size: 0.6rem; padding: 0.15rem 0.4rem; }
   .header .subtitle { font-size: 0.82rem; margin-top: 0.35rem; }
@@ -3393,6 +3460,7 @@ textarea.filter-input:focus { outline: none; border-color: #1e3a5f; box-shadow: 
 }
 
 @media (max-width: 480px) {
+  .header .header-brand-service { font-size: 1.02rem; }
   .header h1 { font-size: 1.05rem; flex-wrap: wrap; }
   .header .version { margin-left: 0; margin-top: 0.2rem; display: inline-block; }
   .header .badge-pro { margin-left: 0.2rem; }
