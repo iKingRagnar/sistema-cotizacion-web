@@ -389,7 +389,7 @@ body.theme-industrial .table-simple tbody tr:hover td {
 
 @media (prefers-reduced-motion: reduce) {
   body.theme-industrial .header {
-    background-position: 50% 50%;
+    animation: none;
   }
 }
 
@@ -1084,4 +1084,305 @@ body.theme-industrial .modal-box.modal-box--theme-industrial .cotz-inventory-hin
 }
 body.theme-industrial .modal-box.modal-box--theme-industrial .cotz-inventory-hint i {
   color: #94a3b8;
+}
+
+/* =============================================================================
+   Cristal — shell transparente: se ve el fondo Glass y las partículas detrás
+   ============================================================================= */
+
+body.theme-industrial .header {
+  background: rgba(15, 23, 42, 0.22);
+  background-image: none;
+  box-shadow: 0 8px 36px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  -webkit-backdrop-filter: blur(20px) saturate(128%);
+  backdrop-filter: blur(20px) saturate(128%);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+body.theme-industrial .header::before {
+  opacity: 0.035;
+}
+body.theme-industrial .header::after {
+  height: 2px;
+  opacity: 0.55;
+  background: linear-gradient(90deg, transparent 0%, rgba(148, 163, 184, 0.35) 50%, transparent 100%);
+}
+body.theme-industrial .header h1,
+body.theme-industrial .header .subtitle,
+body.theme-industrial .header .version {
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+}
+body.theme-industrial .header-branch-filter {
+  background: rgba(2, 6, 23, 0.32) !important;
+  border-color: rgba(148, 163, 184, 0.32) !important;
+  color: #f8fafc !important;
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  backdrop-filter: blur(10px) saturate(120%);
+}
+body.theme-industrial .header-system-status {
+  background: rgba(13, 148, 136, 0.14) !important;
+  border-color: rgba(45, 212, 191, 0.32) !important;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+body.theme-industrial .header-session {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+body.theme-industrial .header-alerts .alert-badge {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.22);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+body.theme-industrial .btn-icon-header {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(148, 163, 184, 0.28);
+}
+body.theme-industrial .btn-icon-header:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(226, 232, 240, 0.38);
+}
+
+body.theme-industrial .tabs {
+  background: rgba(15, 23, 42, 0.25);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+  box-shadow: none;
+  -webkit-backdrop-filter: blur(18px) saturate(122%);
+  backdrop-filter: blur(18px) saturate(122%);
+}
+body.theme-industrial .tab {
+  background: transparent;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  color: #e2e8f0;
+  box-shadow: none;
+}
+body.theme-industrial .tab:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(226, 232, 240, 0.32);
+  color: #f8fafc;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+body.theme-industrial .tab.active {
+  background: rgba(45, 212, 191, 0.14);
+  border-color: rgba(45, 212, 191, 0.5);
+  color: #f0fdfa;
+  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.15), 0 6px 20px rgba(0, 0, 0, 0.2);
+  font-weight: 700;
+}
+body.theme-industrial .tab.active:hover {
+  color: #f0fdfa;
+  filter: none;
+}
+body.theme-industrial .tab.highlight {
+  background: rgba(251, 191, 36, 0.08);
+  border-color: rgba(251, 191, 36, 0.35);
+  color: #fef3c7;
+}
+body.theme-industrial .tab.highlight:hover {
+  background: rgba(251, 191, 36, 0.12);
+  color: #fffbeb;
+}
+
+body.theme-industrial .section-header {
+  background: rgba(15, 23, 42, 0.26) !important;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  -webkit-backdrop-filter: blur(18px) saturate(122%);
+  backdrop-filter: blur(18px) saturate(122%);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+body.theme-industrial .section-header::before {
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.75) 0%, rgba(100, 116, 139, 0.65) 100%);
+  box-shadow: 0 0 12px rgba(148, 163, 184, 0.22);
+}
+body.theme-industrial .section-header h2 i {
+  background: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.22);
+}
+body.theme-industrial #panel-cotizaciones .section-header,
+body.theme-industrial #panel-incidentes .section-header,
+body.theme-industrial #panel-bitacoras .section-header,
+body.theme-industrial #panel-refacciones .section-header {
+  background: rgba(15, 23, 42, 0.26) !important;
+  border-color: rgba(148, 163, 184, 0.28);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+body.theme-industrial #panel-cotizaciones .section-header h2 i,
+body.theme-industrial #panel-incidentes .section-header h2 i,
+body.theme-industrial #panel-bitacoras .section-header h2 i,
+body.theme-industrial #panel-refacciones .section-header h2 i {
+  background: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.22);
+}
+
+body.theme-industrial .table-wrap,
+body.theme-industrial #panel-cotizaciones .table-wrap,
+body.theme-industrial #panel-incidentes .table-wrap,
+body.theme-industrial #panel-bitacoras .table-wrap,
+body.theme-industrial #panel-refacciones .table-wrap,
+body.theme-industrial #panel-clientes .table-wrap,
+body.theme-industrial #panel-maquinas .table-wrap,
+body.theme-industrial #panel-ventas .table-wrap,
+body.theme-industrial #panel-prospeccion .table-wrap,
+body.theme-industrial #panel-revision-maquinas .table-wrap,
+body.theme-industrial #panel-tarifas .table-wrap,
+body.theme-industrial #panel-reportes .table-wrap,
+body.theme-industrial #panel-garantias .table-wrap,
+body.theme-industrial #panel-mantenimiento-garantia .table-wrap,
+body.theme-industrial #panel-garantias-sin-cobertura .table-wrap,
+body.theme-industrial #panel-bonos .table-wrap,
+body.theme-industrial #panel-viajes .table-wrap,
+body.theme-industrial #panel-tecnicos .table-wrap,
+body.theme-industrial #panel-auditoria .table-wrap,
+body.theme-industrial #panel-usuarios .table-wrap,
+body.theme-industrial #panel-categorias-catalogo .table-wrap,
+body.theme-industrial #panel-demo .table-wrap {
+  background: rgba(15, 23, 42, 0.2) !important;
+  border-color: rgba(148, 163, 184, 0.26);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  backdrop-filter: blur(16px) saturate(120%);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(148, 163, 184, 0.08) inset;
+}
+body.theme-industrial #panel-clientes .table-wrap:hover,
+body.theme-industrial #panel-maquinas .table-wrap:hover,
+body.theme-industrial #panel-ventas .table-wrap:hover,
+body.theme-industrial #panel-prospeccion .table-wrap:hover,
+body.theme-industrial #panel-revision-maquinas .table-wrap:hover,
+body.theme-industrial #panel-tarifas .table-wrap:hover,
+body.theme-industrial #panel-reportes .table-wrap:hover,
+body.theme-industrial #panel-garantias .table-wrap:hover,
+body.theme-industrial #panel-mantenimiento-garantia .table-wrap:hover,
+body.theme-industrial #panel-garantias-sin-cobertura .table-wrap:hover,
+body.theme-industrial #panel-bonos .table-wrap:hover,
+body.theme-industrial #panel-viajes .table-wrap:hover,
+body.theme-industrial #panel-tecnicos .table-wrap:hover,
+body.theme-industrial #panel-auditoria .table-wrap:hover,
+body.theme-industrial #panel-usuarios .table-wrap:hover,
+body.theme-industrial #panel-categorias-catalogo .table-wrap:hover,
+body.theme-industrial #panel-demo .table-wrap:hover,
+body.theme-industrial .table-wrap:hover {
+  border-color: rgba(148, 163, 184, 0.38);
+}
+
+body.theme-industrial .data-table thead tr:first-child th {
+  background: rgba(30, 41, 59, 0.45) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(115%);
+  backdrop-filter: blur(12px) saturate(115%);
+  color: #f8fafc !important;
+  border-bottom-color: rgba(148, 163, 184, 0.28) !important;
+}
+body.theme-industrial #tabla-refacciones thead tr:first-child th,
+body.theme-industrial #tabla-refacciones thead tr:first-child th.th-actions {
+  background: rgba(30, 41, 59, 0.45) !important;
+}
+body.theme-industrial #tabla-cotizaciones thead tr:first-child th,
+body.theme-industrial #tabla-incidentes thead tr:first-child th,
+body.theme-industrial #tabla-bitacoras thead tr:first-child th {
+  background: rgba(30, 41, 59, 0.45) !important;
+  border-bottom-color: rgba(148, 163, 184, 0.28) !important;
+}
+
+body.theme-industrial .filter-row td,
+body.theme-industrial .data-table thead .filter-row td {
+  background: rgba(2, 6, 23, 0.36) !important;
+  border-bottom-color: rgba(51, 65, 85, 0.55) !important;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+body.theme-industrial #tabla-refacciones thead .filter-row td {
+  background: rgba(2, 6, 23, 0.36) !important;
+}
+body.theme-industrial #tabla-cotizaciones .filter-row td,
+body.theme-industrial #tabla-incidentes .filter-row td,
+body.theme-industrial #tabla-bitacoras .filter-row td {
+  background: rgba(2, 6, 23, 0.36) !important;
+}
+
+body.theme-industrial .data-table tbody tr:nth-child(odd) {
+  background: rgba(15, 23, 42, 0.12) !important;
+}
+body.theme-industrial .data-table tbody tr:nth-child(even) {
+  background: rgba(15, 23, 42, 0.22) !important;
+}
+body.theme-industrial #tabla-refacciones.data-table tbody tr:nth-child(even) {
+  background: rgba(15, 23, 42, 0.22) !important;
+}
+body.theme-industrial #tabla-refacciones.data-table tr.row-stock-bajo td {
+  background: rgba(30, 58, 95, 0.35) !important;
+}
+body.theme-industrial #tabla-refacciones.data-table tbody tr:nth-child(even).row-stock-bajo td {
+  background: rgba(15, 23, 42, 0.32) !important;
+}
+
+body.theme-industrial .card,
+body.theme-industrial .empty-card {
+  background: rgba(15, 23, 42, 0.24);
+  border-color: rgba(148, 163, 184, 0.28);
+  -webkit-backdrop-filter: blur(14px) saturate(118%);
+  backdrop-filter: blur(14px) saturate(118%);
+}
+
+body.theme-industrial #panel-dashboards.panel-dashboard {
+  background: transparent;
+  border-top-color: rgba(148, 163, 184, 0.18);
+}
+body.theme-industrial .dashboard-card {
+  background: rgba(15, 23, 42, 0.28);
+  -webkit-backdrop-filter: blur(16px) saturate(118%);
+  backdrop-filter: blur(16px) saturate(118%);
+}
+body.theme-industrial .dashboard-score-tile {
+  background: rgba(30, 41, 59, 0.3);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 4px 22px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+body.theme-industrial .dashboard-kpi-strip {
+  background: rgba(15, 23, 42, 0.26);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+body.theme-industrial .dashboard-crossfilter-bar {
+  background: rgba(15, 23, 42, 0.28);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+body.theme-industrial .app-footer {
+  background: linear-gradient(180deg, transparent 0%, rgba(15, 23, 42, 0.45) 100%);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+body.theme-industrial #panel-tarifas .tarifas-section {
+  background: rgba(15, 23, 42, 0.26);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+body.theme-industrial #panel-revision-maquinas .revision-maq-catalog-wrap {
+  background: rgba(15, 23, 42, 0.24);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+body.theme-industrial #panel-revision-maquinas .revision-maq-card {
+  background: rgba(15, 23, 42, 0.28);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+body.theme-industrial .prospeccion-kpi,
+body.theme-industrial .prospeccion-map-wrap {
+  background: rgba(15, 23, 42, 0.26);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+body.theme-industrial .sidebar-nav-title {
+  color: #cbd5e1;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+}
+body.theme-industrial .tabs.tabs--rail .tab i {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
 }
