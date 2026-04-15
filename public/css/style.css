@@ -1136,13 +1136,28 @@ body.dark-theme #tabla-bitacoras th.th-actions {
   border-color: rgba(45, 212, 191, 0.6);
   box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.25) inset;
 }
-.header-logo {
+/* Logotipo con “mate” blanco en JPG: placa sólida + multiply (regla marca / cerebro §12.2) */
+.header-brand-logo-plate {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 14px;
   overflow: hidden;
-  /* Fondo del header para ocultar transparencias/recortes feos del asset */
+  line-height: 0;
+}
+.header-brand-logo-plate--matte {
   background: #060a12;
   box-shadow: 0 3px 14px rgba(0, 0, 0, 0.28);
+  isolation: isolate;
+  padding: 1px 8px;
+}
+.header-brand-logo-plate--matte .header-logo--brand {
+  mix-blend-mode: multiply;
+}
+body.theme-industrial.appearance-light .header-brand-logo-plate--matte {
+  background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.12);
 }
 .header-logo--brand {
   width: auto;
@@ -1150,10 +1165,7 @@ body.dark-theme #tabla-bitacoras th.th-actions {
   height: 78px;
   max-width: min(520px, 50vw);
   object-fit: contain;
-  border-radius: 14px;
-  overflow: hidden;
-  /* Recorte mínimo: dejar ver el logotipo completo; el fondo del contenedor limpia bordes del asset */
-  clip-path: inset(0.5px round 14px);
+  display: block;
 }
 .header-brand-text {
   display: flex;
@@ -4666,8 +4678,8 @@ body.login-open { overflow: hidden; }
   max-width: min(300px, 88vw);
   min-height: 56px;
   height: auto;
-  padding: 0.4rem 0.55rem;
-  overflow: visible;
+  padding: 0.45rem 0.65rem;
+  overflow: hidden;
   background: rgba(2, 6, 23, 0.45);
   border: 1px solid rgba(148, 163, 184, 0.35);
   border-radius: 16px;
@@ -4677,6 +4689,15 @@ body.login-open { overflow: hidden; }
   margin-bottom: 1.75rem;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   box-sizing: border-box;
+}
+/* Misma lógica que header: placa oscura + multiply para JPG con fondo blanco */
+.login-brand-logo--matte {
+  background: #060a12;
+  isolation: isolate;
+}
+.login-brand-logo--matte .login-brand-hero-img,
+.login-brand-logo--matte img {
+  mix-blend-mode: multiply;
 }
 .login-brand-logo .login-brand-hero-img,
 .login-brand-logo img {

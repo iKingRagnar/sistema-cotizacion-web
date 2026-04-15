@@ -462,15 +462,19 @@
     if (lbTagline) lbTagline.textContent = c.tagline || '';
     updateDocumentTitleFromActiveTab();
     const logo = qs('#header-brand-logo');
+    const logoWrap = qs('#header-brand-logo-wrap');
     if (logo) {
       if (c.logoUrl) {
         logo.src = c.logoUrl;
         logo.removeAttribute('aria-hidden');
         logo.alt = short;
+        logo.classList.add('header-logo--brand');
+        if (logoWrap) logoWrap.classList.remove('header-brand-logo-plate--matte');
       } else {
-        logo.src = 'fondos/universal-logo.jpg?v=1';
+        logo.src = 'fondos/universal-logo.jpg?v=2';
         logo.alt = 'Universal';
         logo.classList.add('header-logo--brand');
+        if (logoWrap) logoWrap.classList.add('header-brand-logo-plate--matte');
       }
     }
     const desc = document.querySelector('meta[name="description"]');
