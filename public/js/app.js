@@ -8265,20 +8265,22 @@
         .map((c) => {
           const subs = toArray(c.subcategorias);
           const subHtml = subs.length
-            ? '<ul style="margin:0;padding-left:1.1rem;max-width:420px;">' +
+            ? '<ul class="cat-admin-sub-ul">' +
               subs
                 .map(
                   (s) =>
-                    '<li style="margin:0.2rem 0;">' +
+                    '<li class="cat-admin-sub-li">' +
+                    '<span class="cat-admin-sub-name">' +
                     escapeHtml(s.nombre) +
-                    ' <button type="button" class="btn small outline cat-admin-edit-sub" data-id="' +
+                    '</span><span class="cat-admin-sub-actions">' +
+                    '<button type="button" class="btn small outline cat-admin-edit-sub" data-id="' +
                     escapeHtml(String(s.id)) +
                     '" data-cat-id="' +
                     escapeHtml(String(c.id)) +
-                    '" title="Editar"><i class="fas fa-edit"></i></button> ' +
+                    '" title="Editar"><i class="fas fa-edit"></i></button>' +
                     '<button type="button" class="btn small danger cat-admin-del-sub" data-id="' +
                     escapeHtml(String(s.id)) +
-                    '" title="Eliminar"><i class="fas fa-trash"></i></button></li>'
+                    '" title="Eliminar"><i class="fas fa-trash"></i></button></span></li>'
                 )
                 .join('') +
               '</ul>'
@@ -8286,15 +8288,15 @@
           return (
             '<tr data-cat-id="' +
             escapeHtml(String(c.id)) +
-            '"><td><strong>' +
+            '"><td class="cat-admin-td-cat"><span class="cat-admin-cat-label"><strong>' +
             escapeHtml(c.nombre) +
-            '</strong> ' +
+            '</strong></span><span class="cat-admin-cat-actions">' +
             '<button type="button" class="btn small outline cat-admin-edit-cat" data-id="' +
             escapeHtml(String(c.id)) +
-            '" title="Editar"><i class="fas fa-edit"></i></button> ' +
+            '" title="Editar"><i class="fas fa-edit"></i></button>' +
             '<button type="button" class="btn small danger cat-admin-del-cat" data-id="' +
             escapeHtml(String(c.id)) +
-            '" title="Eliminar"><i class="fas fa-trash"></i></button></td><td>' +
+            '" title="Eliminar"><i class="fas fa-trash"></i></button></span></td><td>' +
             subHtml +
             '</td><td class="muted">—</td></tr>'
           );

@@ -1498,6 +1498,10 @@ body.theme-industrial .notification-item.level-success {
   background: rgba(6, 78, 59, 0.22) !important;
 }
 
+body.theme-industrial #tabla-categorias-admin .cat-admin-sub-li {
+  border-bottom-color: rgba(51, 65, 85, 0.55);
+}
+
 /* Command palette (“Más opciones…”) */
 body.theme-industrial .command-palette {
   background: rgba(2, 6, 23, 0.45);

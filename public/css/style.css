@@ -2152,6 +2152,63 @@ body.dark-theme .data-table thead tr:first-child th { background: #334155; box-s
   }
 }
 .data-table .btn.small { margin: 0 0.15rem; }
+
+/* Catálogo categorías (admin): texto a la izquierda, editar/eliminar en columna fija */
+#tabla-categorias-admin.data-table td.cat-admin-td-cat,
+#tabla-categorias-admin.data-table td:nth-child(2) {
+  max-width: none;
+}
+#tabla-categorias-admin.data-table td.cat-admin-td-cat {
+  overflow: visible;
+}
+.cat-admin-td-cat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  vertical-align: middle;
+}
+.cat-admin-cat-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+}
+.cat-admin-cat-actions {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.cat-admin-sub-ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-width: 100%;
+}
+.cat-admin-sub-li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0.25rem 0;
+  padding: 0.2rem 0;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+}
+.cat-admin-sub-li:last-child {
+  border-bottom: none;
+}
+.cat-admin-sub-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+}
+.cat-admin-sub-actions {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
 .data-table td.empty.filter-empty { padding: 1.25rem; color: #64748b; }
 .data-table td.empty.filter-empty .clear-filters-inline { margin-left: 0.5rem; }
 .sla-cell { white-space: nowrap; }
@@ -3448,6 +3505,9 @@ body.dark-theme .data-table th {
   border-bottom-color: #475569;
 }
 body.dark-theme .data-table td { border-bottom-color: #334155; }
+body.dark-theme .cat-admin-sub-li {
+  border-bottom-color: #334155;
+}
 body.dark-theme .data-table tbody tr:nth-child(even) { background: #0f172a; }
 body.dark-theme .card, body.dark-theme .empty-card { background: #1e293b; border-color: #334155; color: #e2e8f0; }
 body.dark-theme .card h2, body.dark-theme .empty-card h3 { color: #f1f5f9; }

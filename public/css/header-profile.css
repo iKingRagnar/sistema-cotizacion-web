@@ -165,17 +165,19 @@ body.dark-theme .header-profile-menu-item.danger:hover {
   background: rgba(127, 29, 29, 0.35);
 }
 
+/* Misma “cáscara” que el panel de notificaciones (legible, cristal medio) */
 body.theme-industrial .header-profile-menu {
-  background: rgba(15, 23, 42, 0.42);
+  background: rgba(15, 23, 42, 0.42) !important;
   border: 1px solid rgba(148, 163, 184, 0.28);
   color: #e2e8f0;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.4);
   -webkit-backdrop-filter: blur(22px) saturate(125%);
   backdrop-filter: blur(22px) saturate(125%);
 }
 
 body.theme-industrial .header-profile-menu-user {
   border-bottom-color: rgba(148, 163, 184, 0.22);
+  background: rgba(2, 6, 23, 0.22);
 }
 
 body.theme-industrial .header-profile-menu-user strong {
@@ -355,12 +357,13 @@ body.theme-industrial .admin-hub-overlay {
   backdrop-filter: blur(14px) saturate(118%);
 }
 
+/* Misma legibilidad que notificaciones / menú usuario (cristal medio) */
 body.theme-industrial .admin-hub-panel {
-  background: rgba(15, 23, 42, 0.38);
+  background: rgba(15, 23, 42, 0.42);
   border: 1px solid rgba(148, 163, 184, 0.28);
-  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.4);
-  -webkit-backdrop-filter: blur(24px) saturate(125%);
-  backdrop-filter: blur(24px) saturate(125%);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.4);
+  -webkit-backdrop-filter: blur(22px) saturate(125%);
+  backdrop-filter: blur(22px) saturate(125%);
 }
 
 body.theme-industrial .admin-hub-header {
