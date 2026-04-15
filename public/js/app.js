@@ -10613,6 +10613,23 @@
 
   // ----- TARIFAS -----
   let tarifasCache = {};
+  /** Tarifa hora USD en tabla mano de obra: siempre 4 decimales visibles (type=text; los number del navegador quitan ceros). */
+  function normalizeTarifaUsdManoStr(raw) {
+    const x = Number(String(raw || '').replace(',', '.').trim());
+    if (!Number.isFinite(x) || x < 0) return '';
+    return (Math.round(x * 10000) / 10000).toFixed(4);
+  }
+  function applyTarifaUsdMano4decFromCache(cache) {
+    const c = cache || tarifasCache || {};
+    document.querySelectorAll('#tabla-tarifas-mano-obra .tarifa-usd-4dec').forEach((inp) => {
+      const key = inp.dataset.key;
+      if (!key || c[key] === undefined || c[key] === null) return;
+      const s = String(c[key]).trim();
+      if (s === '') return;
+      const f = normalizeTarifaUsdManoStr(s);
+      if (f !== '') inp.value = f;
+    });
+  }
   function updateTarifasTcMetaFromCache(cache) {
     const meta = qs('#tarifas-tc-meta');
     if (!meta) return;
@@ -10659,6 +10676,7 @@
         const x = Number(String(tarifasCache.tipo_cambio_banxico).replace(',', '.'));
         if (Number.isFinite(x) && x > 0) tcBan.value = (Math.round(x * 10000) / 10000).toFixed(4);
       }
+      applyTarifaUsdMano4decFromCache(tarifasCache);
       updateTarifasTcMetaFromCache(tarifasCache);
       // Sincronizar notas de cómo se calculan
       const updateNota = (id, key, fmt) => {
@@ -10687,6 +10705,15 @@
             Number.isFinite(x) && x > 0 ? String(Math.round(x * 10000) / 10000) : inp.value;
           return;
         }
+        if (inp.classList.contains('tarifa-usd-4dec') && inp.dataset.key) {
+          const f = normalizeTarifaUsdManoStr(inp.value);
+          if (f === '') {
+            updates[inp.dataset.key] = inp.value;
+            return;
+          }
+          updates[inp.dataset.key] = String(Math.round(Number(f) * 10000) / 10000);
+          return;
+        }
         updates[inp.dataset.key] = inp.value;
       });
       document.querySelectorAll('.tarifa-input-text').forEach(inp => {
@@ -10703,10 +10730,25 @@
       try {
         await fetchJson(API + '/tarifas', { method: 'PUT', body: JSON.stringify(updates) });
         tarifasCache = { ...tarifasCache, ...updates };
+        applyTarifaUsdMano4decFromCache(tarifasCache);
         try { localStorage.setItem('tarifas_cache', JSON.stringify(tarifasCache)); } catch (_) {}
         showToast('Tarifas guardadas correctamente.', 'success');
       } catch (e) { showToast(parseApiError(e), 'error'); }
     });
+  }
+
+  const tablaTarifasMano = qs('#tabla-tarifas-mano-obra');
+  if (tablaTarifasMano) {
+    tablaTarifasMano.addEventListener(
+      'blur',
+      (ev) => {
+        const t = ev.target;
+        if (!(t instanceof HTMLInputElement) || !t.classList.contains('tarifa-usd-4dec')) return;
+        const f = normalizeTarifaUsdManoStr(t.value);
+        if (f !== '') t.value = f;
+      },
+      true
+    );
   }
 
   // Filtros de revisión de máquinas

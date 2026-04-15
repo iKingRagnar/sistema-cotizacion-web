@@ -668,12 +668,12 @@
           <h3 class="tarifas-section-title"><i class="fas fa-clock"></i> Tarifas de mano de obra por hora</h3>
           <p class="tarifas-hint">Define el costo por hora según el tipo de técnico. Se usa para calcular cotizaciones de mano de obra.</p>
           <table class="data-table" id="tabla-tarifas-mano-obra">
-            <thead><tr><th>Tipo de técnico</th><th>Tarifa hora (MXN)</th><th>Tarifa hora (USD)</th><th>Notas</th></tr></thead>
+            <thead><tr><th>Tipo de técnico</th><th>Tarifa hora (MXN)</th><th>Tarifa hora (USD, 4 dec.)</th><th>Notas</th></tr></thead>
             <tbody>
-              <tr><td>Técnico mecánico</td><td><input type="number" class="tarifa-input" data-key="mecanico_mxn" min="0" step="50" placeholder="0"></td><td><input type="number" class="tarifa-input" data-key="mecanico_usd" min="0" step="5" placeholder="0"></td><td><input type="text" class="tarifa-input-text" data-key="mecanico_nota" placeholder="Notas…"></td></tr>
-              <tr><td>Técnico electrónico</td><td><input type="number" class="tarifa-input" data-key="electronico_mxn" min="0" step="50"></td><td><input type="number" class="tarifa-input" data-key="electronico_usd" min="0" step="5"></td><td><input type="text" class="tarifa-input-text" data-key="electronico_nota"></td></tr>
-              <tr><td>Técnico CNC / Programación</td><td><input type="number" class="tarifa-input" data-key="cnc_mxn" min="0" step="50"></td><td><input type="number" class="tarifa-input" data-key="cnc_usd" min="0" step="5"></td><td><input type="text" class="tarifa-input-text" data-key="cnc_nota"></td></tr>
-              <tr><td>Ayudante</td><td><input type="number" class="tarifa-input" data-key="ayudante_mxn" min="0" step="50"></td><td><input type="number" class="tarifa-input" data-key="ayudante_usd" min="0" step="5"></td><td><input type="text" class="tarifa-input-text" data-key="ayudante_nota"></td></tr>
+              <tr><td>Técnico mecánico</td><td><input type="number" class="tarifa-input" data-key="mecanico_mxn" min="0" step="50" placeholder="0"></td><td><input type="text" class="tarifa-input tarifa-usd-4dec" data-key="mecanico_usd" inputmode="decimal" autocomplete="off" placeholder="25.0000" title="Cuatro decimales (misma precisión que tipo de cambio en cotizaciones)"></td><td><input type="text" class="tarifa-input-text" data-key="mecanico_nota" placeholder="Notas…"></td></tr>
+              <tr><td>Técnico electrónico</td><td><input type="number" class="tarifa-input" data-key="electronico_mxn" min="0" step="50"></td><td><input type="text" class="tarifa-input tarifa-usd-4dec" data-key="electronico_usd" inputmode="decimal" autocomplete="off" placeholder="30.0000" title="Cuatro decimales"></td><td><input type="text" class="tarifa-input-text" data-key="electronico_nota"></td></tr>
+              <tr><td>Técnico CNC / Programación</td><td><input type="number" class="tarifa-input" data-key="cnc_mxn" min="0" step="50"></td><td><input type="text" class="tarifa-input tarifa-usd-4dec" data-key="cnc_usd" inputmode="decimal" autocomplete="off" placeholder="38.0000" title="Cuatro decimales"></td><td><input type="text" class="tarifa-input-text" data-key="cnc_nota"></td></tr>
+              <tr><td>Ayudante</td><td><input type="number" class="tarifa-input" data-key="ayudante_mxn" min="0" step="50"></td><td><input type="text" class="tarifa-input tarifa-usd-4dec" data-key="ayudante_usd" inputmode="decimal" autocomplete="off" placeholder="15.0000" title="Cuatro decimales"></td><td><input type="text" class="tarifa-input-text" data-key="ayudante_nota"></td></tr>
             </tbody>
           </table>
         </div>
@@ -1404,6 +1404,6 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=134-tarifas-tc-banxico-4dec" defer></script>
+  <script src="js/app.js?v=135-tarifas-usd-4dec" defer></script>
 </body>
 </html>
