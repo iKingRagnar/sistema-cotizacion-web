@@ -8,3 +8,5 @@ _verify-*.sqlite*
 
 # Local Claude / IDE tooling
 .claude/
+.vercel
+.env*.local
