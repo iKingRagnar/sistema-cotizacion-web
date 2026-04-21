@@ -2105,8 +2105,19 @@
       return;
     }
     const draftSubject = `${title} — ${new Date().toISOString().slice(0, 10)}`;
+    const templateOptions = [
+      { id: 'executive', label: 'Ejecutivo', intro: 'Buen día, comparto el resumen ejecutivo actualizado para seguimiento directivo.' },
+      { id: 'operational', label: 'Operativo', intro: 'Buen día, comparto el corte operativo con el detalle de los registros visibles.' },
+      { id: 'monthly-close', label: 'Cierre mensual', intro: 'Buen día, comparto el reporte de cierre del periodo para validación y archivo.' },
+    ];
     const body = `
       <div class="form-grid">
+        <div class="form-group">
+          <label>Plantilla</label>
+          <select id="rep-mail-template">
+            ${templateOptions.map((t) => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.label)}</option>`).join('')}
+          </select>
+        </div>
         <div class="form-group">
           <label>Para (varios correos separados por coma o punto y coma)</label>
           <input type="text" id="rep-mail-to" placeholder="cliente@empresa.com, direccion@empresa.com">
@@ -2126,14 +2137,61 @@
         <div class="form-group">
           <label><input type="checkbox" id="rep-mail-attach-pdf" checked> Adjuntar PDF</label>
         </div>
+        <div class="form-group">
+          <label>Programación</label>
+          <select id="rep-mail-frequency">
+            <option value="">No programar</option>
+            <option value="daily">Diario</option>
+            <option value="weekly">Semanal</option>
+          </select>
+        </div>
+        <div class="form-group" id="rep-mail-weekday-wrap" style="display:none;">
+          <label>Día semanal</label>
+          <select id="rep-mail-weekday">
+            <option value="1">Lunes</option>
+            <option value="2">Martes</option>
+            <option value="3">Miércoles</option>
+            <option value="4">Jueves</option>
+            <option value="5">Viernes</option>
+            <option value="6">Sábado</option>
+            <option value="0">Domingo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Hora (24h)</label>
+          <input type="time" id="rep-mail-time" value="09:00">
+        </div>
       </div>
       ${buildReportPreviewHtml(rep, title)}
       <div style="margin-top:0.85rem;display:flex;justify-content:flex-end;gap:0.5rem;">
+        <button type="button" class="btn outline" id="rep-mail-schedule-btn"><i class="fas fa-calendar-alt"></i> Programar automático</button>
         <button type="button" class="btn primary" id="rep-mail-send-btn"><i class="fas fa-paper-plane"></i> Enviar reporte</button>
       </div>
     `;
     openModal(`Enviar reporte — ${title}`, body);
     const sendBtn = qs('#rep-mail-send-btn');
+    const scheduleBtn = qs('#rep-mail-schedule-btn');
+    const templateSel = qs('#rep-mail-template');
+    const frequencySel = qs('#rep-mail-frequency');
+    const weekdayWrap = qs('#rep-mail-weekday-wrap');
+    const introInput = qs('#rep-mail-intro');
+    const subjectInput = qs('#rep-mail-subject');
+    if (templateSel && introInput && subjectInput) {
+      const syncTemplate = () => {
+        const found = templateOptions.find((t) => t.id === templateSel.value) || templateOptions[0];
+        introInput.value = found.intro;
+        subjectInput.value = `${title} [${found.label}] — ${new Date().toISOString().slice(0, 10)}`;
+      };
+      templateSel.addEventListener('change', syncTemplate);
+      syncTemplate();
+    }
+    if (frequencySel && weekdayWrap) {
+      const syncFreq = () => {
+        weekdayWrap.style.display = frequencySel.value === 'weekly' ? '' : 'none';
+      };
+      frequencySel.addEventListener('change', syncFreq);
+      syncFreq();
+    }
     if (!sendBtn) return;
     sendBtn.addEventListener('click', async () => {
       const toRaw = (qs('#rep-mail-to') && qs('#rep-mail-to').value) || '';
@@ -2141,6 +2199,7 @@
       const subject = ((qs('#rep-mail-subject') && qs('#rep-mail-subject').value) || '').trim() || draftSubject;
       const intro = ((qs('#rep-mail-intro') && qs('#rep-mail-intro').value) || '').trim();
       const attachPdf = !!(qs('#rep-mail-attach-pdf') && qs('#rep-mail-attach-pdf').checked);
+      const template = (qs('#rep-mail-template') && qs('#rep-mail-template').value) || 'executive';
       const toList = parseEmailsInput(toRaw);
       const ccList = parseEmailsInput(ccRaw);
       showLoading();
@@ -2150,6 +2209,7 @@
           title,
           subject,
           intro,
+          template,
           attachPdf,
           tableHeader: rep.headers,
           tableRows: rep.rows,
@@ -2170,6 +2230,48 @@
         hideLoading();
       }
     });
+    if (scheduleBtn) {
+      scheduleBtn.addEventListener('click', async () => {
+        const toRaw = (qs('#rep-mail-to') && qs('#rep-mail-to').value) || '';
+        const ccRaw = (qs('#rep-mail-cc') && qs('#rep-mail-cc').value) || '';
+        const subject = ((qs('#rep-mail-subject') && qs('#rep-mail-subject').value) || '').trim() || draftSubject;
+        const intro = ((qs('#rep-mail-intro') && qs('#rep-mail-intro').value) || '').trim();
+        const attachPdf = !!(qs('#rep-mail-attach-pdf') && qs('#rep-mail-attach-pdf').checked);
+        const template = (qs('#rep-mail-template') && qs('#rep-mail-template').value) || 'executive';
+        const frequency = (qs('#rep-mail-frequency') && qs('#rep-mail-frequency').value) || '';
+        const weekday = Number((qs('#rep-mail-weekday') && qs('#rep-mail-weekday').value) || 1);
+        const runAt = ((qs('#rep-mail-time') && qs('#rep-mail-time').value) || '09:00').trim();
+        if (!frequency) {
+          showToast('Selecciona frecuencia diaria o semanal para programar.', 'warning');
+          return;
+        }
+        showLoading();
+        try {
+          const payload = {
+            module: moduleName,
+            title,
+            subject,
+            intro,
+            attachPdf,
+            template,
+            to: parseEmailsInput(toRaw),
+            cc: parseEmailsInput(ccRaw),
+            frequency,
+            weekday,
+            runAt,
+          };
+          await fetchJson(API + '/admin/report-schedules', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+          });
+          showToast('Programación guardada correctamente.', 'success');
+        } catch (e) {
+          showToast(parseApiError(e) || 'No se pudo guardar la programación.', 'error');
+        } finally {
+          hideLoading();
+        }
+      });
+    }
   }
   function detectExcelColumnFormat(header, key, sampleValues) {
     const headerLower = (header || '').toLowerCase();

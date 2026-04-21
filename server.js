@@ -5126,6 +5126,150 @@ function createSimplePdfBuffer(title, headers, rows) {
   return Buffer.from(pdf, 'utf8');
 }
 
+const REPORT_SCHEDULES_KEY = 'report_email_schedules_v1';
+let reportSchedulerTimer = null;
+let reportSchedulerBusy = false;
+
+function hhmmNow(dt) {
+  const h = String(dt.getHours()).padStart(2, '0');
+  const m = String(dt.getMinutes()).padStart(2, '0');
+  return `${h}:${m}`;
+}
+
+function schedulePeriodStamp(s, dt) {
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, '0');
+  const d = String(dt.getDate()).padStart(2, '0');
+  if (s.frequency === 'weekly') return `W-${y}-${m}-${d}-D${dt.getDay()}`;
+  return `D-${y}-${m}-${d}`;
+}
+
+async function getReportSchedules() {
+  const row = await db.getOne('SELECT valor FROM tarifas WHERE clave=?', [REPORT_SCHEDULES_KEY]);
+  if (!row || !row.valor) return [];
+  try {
+    const parsed = JSON.parse(String(row.valor));
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+async function saveReportSchedules(list) {
+  const payload = JSON.stringify(Array.isArray(list) ? list : []);
+  await db.runQuery(
+    `INSERT INTO tarifas (clave, valor, actualizado_en) VALUES (?, ?, datetime('now','localtime'))
+     ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor, actualizado_en=datetime('now','localtime')`,
+    [REPORT_SCHEDULES_KEY, payload]
+  );
+}
+
+async function buildModuleReportRows(moduleName) {
+  const m = String(moduleName || '').trim().toLowerCase();
+  if (m === 'cotizaciones') {
+    const rows = await db.getAll(
+      `SELECT folio, COALESCE(cliente_nombre,'') as cliente, COALESCE(tipo,'') as tipo,
+              COALESCE(fecha,'') as fecha, COALESCE(moneda,'MXN') as moneda,
+              ROUND(COALESCE(total,0), 2) as total, COALESCE(estado,'') as estado
+         FROM vista_cotizaciones ORDER BY id DESC LIMIT 300`
+    );
+    return {
+      headers: ['Folio', 'Cliente', 'Tipo', 'Fecha', 'Moneda', 'Total', 'Estado'],
+      rows: rows.map((r) => [r.folio, r.cliente, r.tipo, r.fecha, r.moneda, r.total, r.estado]),
+    };
+  }
+  if (m === 'ventas') {
+    const rows = await db.getAll(
+      `SELECT folio, COALESCE(fecha_aprobacion, fecha, '') as fecha, COALESCE(cliente_nombre,'') as cliente,
+              COALESCE(tipo,'') as tipo, ROUND(COALESCE(total,0),2) as total, COALESCE(moneda,'MXN') as moneda
+         FROM vista_cotizaciones
+        WHERE COALESCE(estado,'')='aplicada'
+        ORDER BY id DESC LIMIT 300`
+    );
+    return {
+      headers: ['Folio', 'Fecha aprobación', 'Cliente', 'Tipo', 'Total', 'Moneda'],
+      rows: rows.map((r) => [r.folio, r.fecha, r.cliente, r.tipo, r.total, r.moneda]),
+    };
+  }
+  if (m === 'bonos') {
+    const rows = await db.getAll(
+      `SELECT COALESCE(tecnico,'') as tecnico, COALESCE(reporte_folio,'') as reporte, COALESCE(tipo_capacitacion,'') as tipo,
+              ROUND(COALESCE(monto_bono,0),2) as monto, COALESCE(fecha,'') as fecha, COALESCE(pagado,0) as pagado
+         FROM vista_bonos ORDER BY id DESC LIMIT 300`
+    );
+    return {
+      headers: ['Técnico', 'Reporte', 'Tipo capacitación', 'Monto', 'Fecha', 'Pagado'],
+      rows: rows.map((r) => [r.tecnico, r.reporte, r.tipo, r.monto, r.fecha, Number(r.pagado) ? 'Sí' : 'No']),
+    };
+  }
+  return { headers: ['Info'], rows: [['Módulo no soportado para programación']] };
+}
+
+async function sendReportEmail(payload, actorUser) {
+  const moduleName = String(payload && payload.module || '').trim();
+  const title = String(payload && payload.title || '').trim() || `Reporte de ${moduleName || 'módulo'}`;
+  const tableHeader = Array.isArray(payload && payload.tableHeader) ? payload.tableHeader : [];
+  const tableRows = Array.isArray(payload && payload.tableRows) ? payload.tableRows : [];
+  const toRaw = payload && payload.to;
+  const ccRaw = payload && payload.cc;
+  const subjectCustom = String(payload && payload.subject || '').trim();
+  const intro = String(payload && payload.intro || '').trim();
+  const attachPdf = !!(payload && payload.attachPdf);
+  if (!moduleName) throw new Error('Módulo requerido');
+  if (!tableRows.length) throw new Error('Sin filas para enviar');
+
+  const recipients = [...new Set([...splitEmailList(toRaw), ...getAdminNotifyEmails()].filter(Boolean))];
+  const ccRecipients = [...new Set(splitEmailList(ccRaw))];
+  if (!recipients.length) throw new Error('No hay destinatarios configurados');
+  const t = getTransporter();
+  if (!t) throw new Error('SMTP no configurado (SMTP_HOST/PORT/USER/PASS)');
+
+  const rowsLimited = tableRows.slice(0, 300).map((r) =>
+    Array.isArray(r) ? r.map((v) => String(v == null ? '' : v)) : [String(r == null ? '' : r)]
+  );
+  const html = buildEmailHtml({
+    title,
+    subtitle: `Módulo: ${moduleName} · Fecha: ${new Date().toLocaleString('es-MX')}`,
+    rows: [
+      ['Registros incluidos', String(rowsLimited.length)],
+      ['Generado por', (actorUser && (actorUser.displayName || actorUser.username)) || 'Sistema'],
+      ...(intro ? [['Mensaje', intro]] : []),
+    ],
+    tableHeader: tableHeader.map((h) => String(h || '')),
+    tableRows: rowsLimited,
+    footer: 'Reporte generado automáticamente por Sistema de Cotización.',
+    accentColor: '#0ea5e9',
+  });
+  const textRows = rowsLimited.map((r) => '- ' + r.join(' | ')).join('\n');
+  const subject = subjectCustom || `${title} — ${new Date().toISOString().slice(0, 10)}`;
+  const text = `${title}\n\nMódulo: ${moduleName}\nRegistros: ${rowsLimited.length}\n${intro ? `\nMensaje: ${intro}\n` : '\n'}\n${textRows}`;
+  const attachments = [];
+  if (attachPdf) {
+    attachments.push({
+      filename: `${moduleName}-reporte-${new Date().toISOString().slice(0, 10)}.pdf`,
+      content: createSimplePdfBuffer(title, tableHeader, rowsLimited),
+      contentType: 'application/pdf',
+    });
+  }
+
+  await t.sendMail({
+    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    to: recipients.join(', '),
+    cc: ccRecipients.length ? ccRecipients.join(', ') : undefined,
+    subject,
+    text,
+    html,
+    attachments,
+  });
+  return {
+    ok: true,
+    to: recipients.join(', '),
+    cc: ccRecipients.join(', '),
+    rows: rowsLimited.length,
+    attachPdf,
+  };
+}
+
 /** Envía correo al aprobar una cotización: info cliente + líneas con código y moneda */
 async function enviarCorreoAprobacion(cot, cliente) {
   const t = createMailTransport();
@@ -5441,68 +5585,143 @@ app.post('/api/reports/email-export', async (req, res) => {
     const title = String((req.body && req.body.title) || '').trim() || `Reporte de ${moduleName || 'módulo'}`;
     const tableHeader = Array.isArray(req.body && req.body.tableHeader) ? req.body.tableHeader : [];
     const tableRows = Array.isArray(req.body && req.body.tableRows) ? req.body.tableRows : [];
-    const toRaw = req.body && req.body.to;
-    const ccRaw = req.body && req.body.cc;
-    const subjectCustom = String((req.body && req.body.subject) || '').trim();
-    const intro = String((req.body && req.body.intro) || '').trim();
-    const attachPdf = !!(req.body && req.body.attachPdf);
-    if (!moduleName) return res.status(400).json({ error: 'Módulo requerido' });
-    if (!tableRows.length) return res.status(400).json({ error: 'Sin filas para enviar' });
-
-    const recipients = [...new Set([...splitEmailList(toRaw), ...getAdminNotifyEmails()].filter(Boolean))];
-    const ccRecipients = [...new Set(splitEmailList(ccRaw))];
-    if (!recipients.length) return res.status(400).json({ error: 'No hay destinatarios configurados' });
-    const t = getTransporter();
-    if (!t) return res.status(400).json({ error: 'SMTP no configurado (SMTP_HOST/PORT/USER/PASS)' });
-
-    const rowsLimited = tableRows.slice(0, 300).map((r) =>
-      Array.isArray(r) ? r.map((v) => String(v == null ? '' : v)) : [String(r == null ? '' : r)]
+    const out = await sendReportEmail(
+      {
+        module: moduleName,
+        title,
+        tableHeader,
+        tableRows,
+        to: req.body && req.body.to,
+        cc: req.body && req.body.cc,
+        subject: req.body && req.body.subject,
+        intro: req.body && req.body.intro,
+        attachPdf: req.body && req.body.attachPdf,
+      },
+      req.authUser
     );
-    const html = buildEmailHtml({
-      title,
-      subtitle: `Módulo: ${moduleName} · Fecha: ${new Date().toLocaleString('es-MX')}`,
-      rows: [
-        ['Registros incluidos', String(rowsLimited.length)],
-        ['Generado por', (req.authUser && (req.authUser.displayName || req.authUser.username)) || 'Sistema'],
-        ...(intro ? [['Mensaje', intro]] : []),
-      ],
-      tableHeader: tableHeader.map((h) => String(h || '')),
-      tableRows: rowsLimited,
-      footer: 'Reporte generado automáticamente por Sistema de Cotización.',
-      accentColor: '#0ea5e9',
-    });
-    const textRows = rowsLimited.map((r) => '- ' + r.join(' | ')).join('\n');
-    const subject = subjectCustom || `${title} — ${new Date().toISOString().slice(0, 10)}`;
-    const text = `${title}\n\nMódulo: ${moduleName}\nRegistros: ${rowsLimited.length}\n${intro ? `\nMensaje: ${intro}\n` : '\n'}\n${textRows}`;
-    const attachments = [];
-    if (attachPdf) {
-      attachments.push({
-        filename: `${moduleName}-reporte-${new Date().toISOString().slice(0, 10)}.pdf`,
-        content: createSimplePdfBuffer(title, tableHeader, rowsLimited),
-        contentType: 'application/pdf',
-      });
-    }
-
-    await t.sendMail({
-      from: process.env.SMTP_FROM || process.env.SMTP_USER,
-      to: recipients.join(', '),
-      cc: ccRecipients.length ? ccRecipients.join(', ') : undefined,
-      subject,
-      text,
-      html,
-      attachments,
-    });
-    res.json({
-      ok: true,
-      to: recipients.join(', '),
-      cc: ccRecipients.join(', '),
-      rows: rowsLimited.length,
-      attachPdf,
-    });
+    res.json(out);
   } catch (e) {
     res.status(500).json({ error: String(e.message || e) });
   }
 });
+
+app.get('/api/admin/report-schedules', async (req, res) => {
+  try {
+    if (!req.authUser || req.authUser.role !== 'admin') {
+      return res.status(403).json({ error: 'Solo administrador' });
+    }
+    const rows = await getReportSchedules();
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message || e) });
+  }
+});
+
+app.post('/api/admin/report-schedules', async (req, res) => {
+  try {
+    if (!req.authUser || req.authUser.role !== 'admin') {
+      return res.status(403).json({ error: 'Solo administrador' });
+    }
+    const b = req.body || {};
+    const moduleName = String(b.module || '').trim().toLowerCase();
+    const title = String(b.title || `Reporte de ${moduleName}`).trim();
+    const subject = String(b.subject || '').trim();
+    const intro = String(b.intro || '').trim();
+    const template = String(b.template || 'executive').trim();
+    const frequency = String(b.frequency || '').trim();
+    const runAt = String(b.runAt || '09:00').trim();
+    const weekday = Number(b.weekday);
+    const attachPdf = !!b.attachPdf;
+    if (!moduleName) return res.status(400).json({ error: 'Módulo requerido' });
+    if (!['daily', 'weekly'].includes(frequency)) return res.status(400).json({ error: 'Frecuencia inválida' });
+    if (!/^\d{2}:\d{2}$/.test(runAt)) return res.status(400).json({ error: 'Hora inválida (HH:MM)' });
+    if (frequency === 'weekly' && !(weekday >= 0 && weekday <= 6)) {
+      return res.status(400).json({ error: 'weekday inválido (0=domingo..6=sábado)' });
+    }
+    const to = splitEmailList(b.to);
+    const cc = splitEmailList(b.cc);
+    const current = await getReportSchedules();
+    const id = `${moduleName}:${template}`;
+    const next = current.filter((x) => x && x.id !== id);
+    next.push({
+      id,
+      module: moduleName,
+      title,
+      subject,
+      intro,
+      template,
+      to,
+      cc,
+      frequency,
+      weekday: frequency === 'weekly' ? weekday : null,
+      runAt,
+      attachPdf,
+      enabled: true,
+      updatedBy: req.authUser.username || 'admin',
+      updatedAt: new Date().toISOString(),
+      lastPeriodStamp: null,
+    });
+    await saveReportSchedules(next);
+    res.json({ ok: true, id });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message || e) });
+  }
+});
+
+async function runReportSchedulesTick() {
+  if (reportSchedulerBusy) return;
+  reportSchedulerBusy = true;
+  try {
+    const now = new Date();
+    const nowHm = hhmmNow(now);
+    const schedules = await getReportSchedules();
+    if (!schedules.length) return;
+    let changed = false;
+    for (const s of schedules) {
+      if (!s || !s.enabled) continue;
+      if (!s.module || !s.frequency || !s.runAt) continue;
+      if (s.runAt !== nowHm) continue;
+      if (s.frequency === 'weekly' && Number(s.weekday) !== now.getDay()) continue;
+      const stamp = schedulePeriodStamp(s, now);
+      if (s.lastPeriodStamp === stamp) continue;
+      try {
+        const rep = await buildModuleReportRows(s.module);
+        await sendReportEmail(
+          {
+            module: s.module,
+            title: s.title || `Reporte de ${s.module}`,
+            subject: s.subject || '',
+            intro: s.intro || '',
+            tableHeader: rep.headers,
+            tableRows: rep.rows,
+            to: Array.isArray(s.to) ? s.to : [],
+            cc: Array.isArray(s.cc) ? s.cc : [],
+            attachPdf: !!s.attachPdf,
+          },
+          { username: 'scheduler', displayName: 'Scheduler' }
+        );
+        s.lastPeriodStamp = stamp;
+        s.lastSentAt = new Date().toISOString();
+        changed = true;
+        console.log('[report-scheduler] Enviado', s.id, 'periodo', stamp);
+      } catch (err) {
+        console.error('[report-scheduler] Error en', s.id, err && err.message ? err.message : err);
+      }
+    }
+    if (changed) await saveReportSchedules(schedules);
+  } finally {
+    reportSchedulerBusy = false;
+  }
+}
+
+function startReportSchedulesScheduler() {
+  if (reportSchedulerTimer) return;
+  reportSchedulerTimer = setInterval(() => {
+    runReportSchedulesTick().catch((e) => console.error('[report-scheduler]', e && e.message ? e.message : e));
+  }, 60 * 1000);
+  reportSchedulerTimer.unref && reportSchedulerTimer.unref();
+  runReportSchedulesTick().catch(() => {});
+}
 
 async function trySendMonthlyBundleForPreviousMonth() {
   const tz = process.env.TZ || 'America/Mexico_City';
@@ -6344,6 +6563,7 @@ async function runPostListenStartup() {
     console.log('[backup-auto] Directorio:', getBackupDir());
     console.log('[backup-auto] Retención: max archivos =', BACKUP_AUTO_MAX_FILES, '| max días =', BACKUP_AUTO_MAX_AGE_DAYS);
     startMonthlyAdminReportsScheduler();
+    startReportSchedulesScheduler();
   }
 }
 
