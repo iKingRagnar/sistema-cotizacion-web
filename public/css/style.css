@@ -5436,6 +5436,57 @@ body.dark-theme .cdp-disclaimer { color: #64748b; }
 .modal-box.modal-box--refaccion-preview {
   max-width: min(92vw, 720px);
 }
+
+/* Reporte por correo: modal moderno y legible */
+.report-mail-modal {
+  display: grid;
+  gap: 0.9rem;
+}
+.report-mail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem 0.9rem;
+}
+.report-mail-grid .form-group {
+  margin-bottom: 0;
+}
+.report-mail-grid .form-group:has(textarea),
+.report-mail-grid .form-group:has(#rep-mail-subject) {
+  grid-column: 1 / -1;
+}
+.report-mail-input {
+  border-radius: 10px !important;
+  min-height: 40px;
+}
+.report-mail-grid textarea.report-mail-input {
+  min-height: 86px;
+  resize: vertical;
+}
+.report-mail-preview-wrap {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 12px;
+  padding: 0.6rem;
+  background: rgba(248, 250, 252, 0.65);
+}
+.report-mail-preview-wrap .data-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.report-mail-actions .btn {
+  min-width: 170px;
+}
+@media (max-width: 980px) {
+  .report-mail-grid {
+    grid-template-columns: 1fr;
+  }
+  .report-mail-actions {
+    flex-direction: column;
+  }
+  .report-mail-actions .btn {
+    width: 100%;
+  }
+}
 .ref-pvc-hero {
   position: relative;
   padding: 0 1.75rem 1.35rem;

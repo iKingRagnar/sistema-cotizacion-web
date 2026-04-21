@@ -2289,7 +2289,8 @@
       { id: 'monthly-close', label: 'Cierre mensual', intro: 'Buen día, comparto el reporte de cierre del periodo para validación y archivo.' },
     ];
     const body = `
-      <div class="form-grid">
+      <div class="report-mail-modal">
+      <div class="form-grid report-mail-grid">
         <div class="form-group">
           <label>Plantilla</label>
           <select id="rep-mail-template">
@@ -2298,19 +2299,19 @@
         </div>
         <div class="form-group">
           <label>Para (varios correos separados por coma o punto y coma)</label>
-          <input type="text" id="rep-mail-to" placeholder="cliente@empresa.com, direccion@empresa.com">
+          <input type="text" id="rep-mail-to" placeholder="cliente@empresa.com, direccion@empresa.com" class="report-mail-input">
         </div>
         <div class="form-group">
           <label>CC (opcional)</label>
-          <input type="text" id="rep-mail-cc" placeholder="coordinacion@empresa.com">
+          <input type="text" id="rep-mail-cc" placeholder="coordinacion@empresa.com" class="report-mail-input">
         </div>
         <div class="form-group">
           <label>Asunto</label>
-          <input type="text" id="rep-mail-subject" value="${escapeHtml(draftSubject)}">
+          <input type="text" id="rep-mail-subject" value="${escapeHtml(draftSubject)}" class="report-mail-input">
         </div>
         <div class="form-group">
           <label>Mensaje introductorio (opcional)</label>
-          <textarea id="rep-mail-intro" rows="3" placeholder="Buen día, comparto reporte actualizado..."></textarea>
+          <textarea id="rep-mail-intro" rows="3" placeholder="Buen día, comparto reporte actualizado..." class="report-mail-input"></textarea>
         </div>
         <div class="form-group">
           <label><input type="checkbox" id="rep-mail-attach-pdf" checked> Adjuntar PDF</label>
@@ -2337,13 +2338,14 @@
         </div>
         <div class="form-group">
           <label>Hora (24h)</label>
-          <input type="time" id="rep-mail-time" value="09:00">
+          <input type="time" id="rep-mail-time" value="09:00" class="report-mail-input">
         </div>
       </div>
-      ${buildReportPreviewHtml(rep, title)}
-      <div style="margin-top:0.85rem;display:flex;justify-content:flex-end;gap:0.5rem;">
+      <div class="report-mail-preview-wrap">${buildReportPreviewHtml(rep, title)}</div>
+      <div class="report-mail-actions" style="margin-top:0.85rem;display:flex;justify-content:flex-end;gap:0.5rem;">
         <button type="button" class="btn outline" id="rep-mail-schedule-btn"><i class="fas fa-calendar-alt"></i> Programar automático</button>
         <button type="button" class="btn primary" id="rep-mail-send-btn"><i class="fas fa-paper-plane"></i> Enviar reporte</button>
+      </div>
       </div>
     `;
     openModal(`Enviar reporte — ${title}`, body);
@@ -2394,7 +2396,7 @@
           to: toList,
           cc: ccList,
         };
-        const r = await fetchJson(API + '/api/reports/email-export', {
+        const r = await fetchJson(API + '/reports/email-export', {
           method: 'POST',
           body: JSON.stringify(payload),
         });
