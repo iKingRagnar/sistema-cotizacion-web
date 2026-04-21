@@ -61,8 +61,12 @@ const ADMIN_ONLY_HREFS = new Set([
   "/personal",
 ]);
 
-export function navForRole(role: string | null | undefined): NavItem[] {
+export function navForRole(
+  role: string | null | undefined,
+  tabPermissions?: Record<string, boolean> | null
+): NavItem[] {
   const r = (role || "").toLowerCase();
-  if (r === "admin") return mainNav;
-  return mainNav.filter((item) => !ADMIN_ONLY_HREFS.has(item.href));
+  const roleFiltered = r === "admin" ? mainNav : mainNav.filter((item) => !ADMIN_ONLY_HREFS.has(item.href));
+  if (!tabPermissions || typeof tabPermissions !== "object") return roleFiltered;
+  return roleFiltered.filter((item) => tabPermissions[item.href] !== false);
 }

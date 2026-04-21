@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { mainNav } from "@/config/nav";
 import { apiFetch } from "@/lib/api";
 import { getStoredUser } from "@/lib/session";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -23,6 +24,8 @@ type AppUser = {
   display_name?: string | null;
   activo?: number | null;
   creado_en?: string | null;
+  tab_permissions?: Record<string, boolean> | string | null;
+  column_permissions?: Record<string, string[]> | string | null;
 };
 
 const ROLES = [
@@ -37,6 +40,9 @@ export default function UsuariosPage() {
   const qc = useQueryClient();
   const [allowed, setAllowed] = useState(false);
   const [form, setForm] = useState({ username: "", password: "", display_name: "", role: "invitado" });
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [tabPermissions, setTabPermissions] = useState<Record<string, boolean>>({});
+  const [columnsRaw, setColumnsRaw] = useState("{}");
 
   useEffect(() => {
     setAllowed(getStoredUser()?.role === "admin");
@@ -79,6 +85,42 @@ export default function UsuariosPage() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const accessM = useMutation({
+    mutationFn: (payload: { id: number; body: Record<string, unknown> }) =>
+      apiFetch<AppUser>(`/api/app-users/${payload.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload.body),
+      }),
+    onSuccess: () => {
+      toast.success("Permisos actualizados");
+      qc.invalidateQueries({ queryKey: ["app-users"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  function parseJsonObject<T>(value: unknown, fallback: T): T {
+    if (!value) return fallback;
+    if (typeof value === "object") return value as T;
+    if (typeof value !== "string") return fallback;
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return fallback;
+    }
+  }
+
+  useEffect(() => {
+    const users = q.data ?? [];
+    if (!users.length) return;
+    const current = selectedUserId ? users.find((u) => u.id === selectedUserId) : users[0];
+    if (!current) return;
+    if (selectedUserId == null) setSelectedUserId(current.id);
+    const tabs = parseJsonObject<Record<string, boolean>>(current.tab_permissions, {});
+    setTabPermissions(tabs);
+    const cols = parseJsonObject<Record<string, string[]>>(current.column_permissions, {});
+    setColumnsRaw(JSON.stringify(cols, null, 2));
+  }, [q.data, selectedUserId]);
 
   const columns = useMemo<ColumnDef<AppUser>[]>(
     () => [
@@ -217,6 +259,76 @@ export default function UsuariosPage() {
 
       <GlassCard className="p-4 md:p-6">
         <DataTable columns={columns} data={q.data ?? []} />
+      </GlassCard>
+
+      <GlassCard className="p-4 md:p-6 space-y-4">
+        <h3 className="text-sm font-medium">Permisos por pestaña y columnas</h3>
+        <p className="text-sm text-muted-foreground">
+          Activa o desactiva pestañas por usuario. Para columnas, usa JSON por ruta con nombres de columna
+          (accessorKey, id o header). Ejemplo: {`{"/ventas":["folio","total"]}`}.
+        </p>
+        <div className="space-y-1.5">
+          <Label htmlFor="perm-user">Usuario</Label>
+          <select
+            id="perm-user"
+            className="flex h-9 w-full rounded-md border border-input bg-muted/30 px-3 py-1 text-sm shadow-sm"
+            value={selectedUserId ?? ""}
+            onChange={(e) => setSelectedUserId(Number(e.target.value))}
+          >
+            {(q.data ?? []).map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.username} ({u.role})
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="grid gap-2 md:grid-cols-2">
+          {mainNav.map((item) => (
+            <label key={item.href} className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={tabPermissions[item.href] !== false}
+                onCheckedChange={(v) =>
+                  setTabPermissions((prev) => ({
+                    ...prev,
+                    [item.href]: v === true,
+                  }))
+                }
+              />
+              <span>{item.label}</span>
+              <span className="text-xs text-muted-foreground">{item.href}</span>
+            </label>
+          ))}
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="columns-json">Columnas visibles por ruta (JSON)</Label>
+          <textarea
+            id="columns-json"
+            className="min-h-40 w-full rounded-md border border-input bg-muted/20 px-3 py-2 text-xs font-mono"
+            value={columnsRaw}
+            onChange={(e) => setColumnsRaw(e.target.value)}
+            spellCheck={false}
+          />
+        </div>
+        <Button
+          type="button"
+          disabled={!selectedUserId || accessM.isPending}
+          onClick={() => {
+            try {
+              const parsed = JSON.parse(columnsRaw || "{}") as Record<string, string[]>;
+              accessM.mutate({
+                id: selectedUserId as number,
+                body: {
+                  tab_permissions: tabPermissions,
+                  column_permissions: parsed,
+                },
+              });
+            } catch {
+              toast.error("JSON de columnas inválido");
+            }
+          }}
+        >
+          Guardar permisos
+        </Button>
       </GlassCard>
     </div>
   );

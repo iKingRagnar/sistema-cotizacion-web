@@ -148,6 +148,8 @@ function getSchema() {
       role TEXT NOT NULL DEFAULT 'operador',
       display_name TEXT,
       activo INTEGER DEFAULT 1,
+      tab_permissions TEXT,
+      column_permissions TEXT,
       creado_en TEXT DEFAULT (datetime('now','localtime'))
     )`,
     `CREATE TABLE IF NOT EXISTS audit_log (
@@ -422,6 +424,9 @@ async function runMigrations() {
     `ALTER TABLE tecnicos ADD COLUMN licencia_thumb_url TEXT`,
     /* Vincular cuenta de app al registro de Personal (para permiso de cotizar si es_vendedor) */
     `ALTER TABLE app_users ADD COLUMN tecnico_id INTEGER`,
+    /* Permisos por pestaña y columnas visibles por ruta (JSON) */
+    `ALTER TABLE app_users ADD COLUMN tab_permissions TEXT`,
+    `ALTER TABLE app_users ADD COLUMN column_permissions TEXT`,
     /* Historial de cuentas eliminadas (solo admin; auditoría + avisos por correo) */
     `CREATE TABLE IF NOT EXISTS app_users_deleted (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

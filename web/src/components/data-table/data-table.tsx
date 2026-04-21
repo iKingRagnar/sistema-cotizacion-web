@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { getStoredUser } from "@/lib/session";
 import {
   flexRender,
   getCoreRowModel,
@@ -21,6 +22,7 @@ import {
 } from "@tanstack/react-table";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 
 type DataTableProps<TData, TValue> = {
   columns: ColumnDef<TData, TValue>[];
@@ -36,11 +38,28 @@ export function DataTable<TData, TValue>({
   className,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
+  const pathname = usePathname();
   const tableData = useMemo(() => data, [data]);
+  const visibleColumns = useMemo(() => {
+    const user = getStoredUser();
+    const allowed = user?.columnPermissions?.[pathname || ""];
+    if (!Array.isArray(allowed) || allowed.length === 0) return columns;
+    const allowedSet = new Set(allowed.map((x) => String(x).trim().toLowerCase()).filter(Boolean));
+    return columns.filter((col) => {
+      const accessor = typeof col.accessorKey === "string" ? col.accessorKey : "";
+      const id = typeof col.id === "string" ? col.id : "";
+      const header = typeof col.header === "string" ? col.header : "";
+      const keys = [accessor, id, header]
+        .map((x) => x.trim().toLowerCase())
+        .filter(Boolean);
+      if (keys.length === 0) return true;
+      return keys.some((k) => allowedSet.has(k));
+    });
+  }, [columns, pathname]);
 
   const table = useReactTable({
     data: tableData,
-    columns,
+    columns: visibleColumns,
     state: { sorting },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
@@ -84,7 +103,7 @@ export function DataTable<TData, TValue>({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={visibleColumns.length || 1} className="h-24 text-center text-muted-foreground">
                   Sin datos.
                 </TableCell>
               </TableRow>

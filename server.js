@@ -186,6 +186,17 @@ app.get('/api/auth/me', async (req, res) => {
 });
 
 const APP_USER_ROLES = ['admin', 'usuario', 'operador', 'consulta', 'invitado'];
+const APP_TABS = [
+  '/', '/clientes', '/prospectos', '/refacciones', '/maquinas', '/catalogos', '/cotizaciones', '/ventas', '/viajes',
+  '/revision-maquinas', '/tarifas', '/reportes', '/garantias', '/mantenimientos', '/sin-cobertura', '/bonos',
+  '/personal', '/bitacora', '/usuarios', '/auditoria',
+];
+
+function cleanAccessPayload(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  if (Array.isArray(raw)) return null;
+  return raw;
+}
 
 app.get('/api/app-users', async (req, res) => {
   try {
@@ -193,7 +204,7 @@ app.get('/api/app-users', async (req, res) => {
       return res.status(403).json({ error: 'Solo el administrador puede ver usuarios' });
     }
     const rows = await db.getAll(
-      'SELECT id, username, role, display_name, activo, creado_en, tecnico_id FROM app_users ORDER BY username ASC'
+      'SELECT id, username, role, display_name, activo, creado_en, tecnico_id, tab_permissions, column_permissions FROM app_users ORDER BY username ASC'
     );
     res.json(rows);
   } catch (e) {
@@ -244,7 +255,7 @@ app.post('/api/app-users', async (req, res) => {
       [u, auth.hashPassword(String(password)), r, dn, tid]
     );
     const row = await db.getOne(
-      'SELECT id, username, role, display_name, activo, creado_en, tecnico_id FROM app_users WHERE lower(username)=?',
+      'SELECT id, username, role, display_name, activo, creado_en, tecnico_id, tab_permissions, column_permissions FROM app_users WHERE lower(username)=?',
       [u]
     );
     res.status(201).json(row);
@@ -308,12 +319,50 @@ app.patch('/api/app-users/:id', async (req, res) => {
       }
     }
 
+    let tab_permissions = target.tab_permissions || null;
+    if (b.tab_permissions !== undefined) {
+      if (b.tab_permissions === null) {
+        tab_permissions = null;
+      } else {
+      const tabs = cleanAccessPayload(b.tab_permissions);
+      if (tabs === null) return res.status(400).json({ error: 'tab_permissions debe ser objeto JSON o null' });
+      for (const [k, v] of Object.entries(tabs)) {
+        if (!APP_TABS.includes(String(k))) {
+          return res.status(400).json({ error: `Pestaña no válida en tab_permissions: ${k}` });
+        }
+        if (typeof v !== 'boolean') {
+          return res.status(400).json({ error: `tab_permissions.${k} debe ser booleano` });
+        }
+      }
+      tab_permissions = JSON.stringify(tabs);
+      }
+    }
+
+    let column_permissions = target.column_permissions || null;
+    if (b.column_permissions !== undefined) {
+      if (b.column_permissions === null) {
+        column_permissions = null;
+      } else {
+      const columns = cleanAccessPayload(b.column_permissions);
+      if (columns === null) return res.status(400).json({ error: 'column_permissions debe ser objeto JSON o null' });
+      for (const [k, v] of Object.entries(columns)) {
+        if (!APP_TABS.includes(String(k))) {
+          return res.status(400).json({ error: `Ruta no válida en column_permissions: ${k}` });
+        }
+        if (!Array.isArray(v) || v.some((x) => typeof x !== 'string')) {
+          return res.status(400).json({ error: `column_permissions.${k} debe ser arreglo de strings` });
+        }
+      }
+      column_permissions = JSON.stringify(columns);
+      }
+    }
+
     await db.runQuery(
-      'UPDATE app_users SET role=?, display_name=?, activo=?, password_hash=?, tecnico_id=? WHERE id=?',
-      [role, display_name, activo, password_hash, tecnico_id, id]
+      'UPDATE app_users SET role=?, display_name=?, activo=?, password_hash=?, tecnico_id=?, tab_permissions=?, column_permissions=? WHERE id=?',
+      [role, display_name, activo, password_hash, tecnico_id, tab_permissions, column_permissions, id]
     );
     const row = await db.getOne(
-      'SELECT id, username, role, display_name, activo, creado_en, tecnico_id FROM app_users WHERE id=?',
+      'SELECT id, username, role, display_name, activo, creado_en, tecnico_id, tab_permissions, column_permissions FROM app_users WHERE id=?',
       [id]
     );
     res.json(row);

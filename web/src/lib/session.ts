@@ -7,6 +7,8 @@ export type SessionUser = {
   username: string;
   role: string;
   displayName: string;
+  tabPermissions?: Record<string, boolean> | null;
+  columnPermissions?: Record<string, string[]> | null;
 };
 
 export function getStoredUser(): SessionUser | null {

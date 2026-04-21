@@ -15,7 +15,8 @@ export function AppSidebar({ className }: { className?: string }) {
   const [items, setItems] = useState<NavItem[]>(mainNav);
 
   useEffect(() => {
-    setItems(navForRole(getStoredUser()?.role));
+    const user = getStoredUser();
+    setItems(navForRole(user?.role, user?.tabPermissions));
   }, [pathname]);
 
   return (
