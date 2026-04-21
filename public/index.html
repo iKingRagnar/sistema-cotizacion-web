@@ -1151,6 +1151,23 @@
           </table>
         </div>
       </div>
+      <div class="card" style="margin-top:1rem;padding:1rem 1.25rem;">
+        <div class="section-header" style="margin-bottom:0.75rem;">
+          <h3 style="margin:0;font-size:1rem;"><i class="fas fa-calendar-alt"></i> Programaciones automáticas de reportes</h3>
+          <button type="button" id="btn-report-schedules-refresh" class="btn outline small"><i class="fas fa-sync-alt"></i> Actualizar</button>
+        </div>
+        <p class="hint" style="margin:0 0 0.75rem 0;">Admin puede editar o eliminar programaciones creadas desde los botones de envío en Cotizaciones, Ventas y Bonos.</p>
+        <div class="table-wrap">
+          <table class="data-table" id="tabla-report-schedules">
+            <thead>
+              <tr>
+                <th>ID</th><th>Módulo</th><th>Frecuencia</th><th>Hora</th><th>Destinatarios</th><th>Último envío</th><th>Activo</th><th style="width:10rem;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-report-schedules-body"></tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
     <!-- CATEGORÍAS / SUBCATEGORÍAS (solo admin con login) -->

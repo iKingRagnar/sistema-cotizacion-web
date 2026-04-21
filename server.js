@@ -5668,6 +5668,66 @@ app.post('/api/admin/report-schedules', async (req, res) => {
   }
 });
 
+app.patch('/api/admin/report-schedules/:id', async (req, res) => {
+  try {
+    if (!req.authUser || req.authUser.role !== 'admin') {
+      return res.status(403).json({ error: 'Solo administrador' });
+    }
+    const id = decodeURIComponent(String(req.params.id || '').trim());
+    if (!id) return res.status(400).json({ error: 'ID requerido' });
+    const list = await getReportSchedules();
+    const idx = list.findIndex((x) => x && String(x.id) === id);
+    if (idx < 0) return res.status(404).json({ error: 'Programación no encontrada' });
+    const cur = list[idx];
+    const b = req.body || {};
+    if (b.enabled !== undefined) cur.enabled = !!b.enabled;
+    if (b.frequency !== undefined) {
+      const f = String(b.frequency || '').trim();
+      if (!['daily', 'weekly'].includes(f)) return res.status(400).json({ error: 'Frecuencia inválida' });
+      cur.frequency = f;
+    }
+    if (b.runAt !== undefined) {
+      const hh = String(b.runAt || '').trim();
+      if (!/^\d{2}:\d{2}$/.test(hh)) return res.status(400).json({ error: 'Hora inválida (HH:MM)' });
+      cur.runAt = hh;
+    }
+    if (b.weekday !== undefined) {
+      if (b.weekday === null || b.weekday === '') cur.weekday = null;
+      else {
+        const wd = Number(b.weekday);
+        if (!(wd >= 0 && wd <= 6)) return res.status(400).json({ error: 'weekday inválido' });
+        cur.weekday = wd;
+      }
+    }
+    if (b.to !== undefined) cur.to = splitEmailList(b.to);
+    if (b.cc !== undefined) cur.cc = splitEmailList(b.cc);
+    cur.updatedAt = new Date().toISOString();
+    cur.updatedBy = req.authUser.username || 'admin';
+    list[idx] = cur;
+    await saveReportSchedules(list);
+    res.json({ ok: true, id, schedule: cur });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message || e) });
+  }
+});
+
+app.delete('/api/admin/report-schedules/:id', async (req, res) => {
+  try {
+    if (!req.authUser || req.authUser.role !== 'admin') {
+      return res.status(403).json({ error: 'Solo administrador' });
+    }
+    const id = decodeURIComponent(String(req.params.id || '').trim());
+    if (!id) return res.status(400).json({ error: 'ID requerido' });
+    const list = await getReportSchedules();
+    const next = list.filter((x) => !(x && String(x.id) === id));
+    if (next.length === list.length) return res.status(404).json({ error: 'Programación no encontrada' });
+    await saveReportSchedules(next);
+    res.json({ ok: true, id });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message || e) });
+  }
+});
+
 async function runReportSchedulesTick() {
   if (reportSchedulerBusy) return;
   reportSchedulerBusy = true;

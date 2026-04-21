@@ -723,6 +723,7 @@
   let viajesCache = [];
   let tecnicosCache = [];
   let appUsersDeletedCache = [];
+  let reportSchedulesCache = [];
   let lastQuickRefreshAt = 0;
   function prefersReducedMotion() {
     try {
@@ -8872,6 +8873,7 @@
       if (!list.length) {
         tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay usuarios registrados.</td></tr>';
         loadAppDeletedUsers();
+        loadReportSchedules();
         return;
       }
       tbody.innerHTML = list
@@ -8921,6 +8923,51 @@
         '<tr><td colspan="7" class="empty">' + escapeHtml(parseApiError(e) || 'No se pudo cargar usuarios.') + '</td></tr>';
     }
     loadAppDeletedUsers();
+    loadReportSchedules();
+  }
+
+  async function loadReportSchedules() {
+    const tbody = qs('#tabla-report-schedules-body');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">Cargando…</td></tr>';
+    try {
+      const rows = await fetchJson(API + '/admin/report-schedules');
+      const list = toArray(rows);
+      reportSchedulesCache = list;
+      if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty">No hay programaciones configuradas.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = list
+        .map((r) => {
+          const dest = []
+            .concat(Array.isArray(r.to) ? r.to : [])
+            .concat(Array.isArray(r.cc) ? r.cc.map((x) => 'cc:' + x) : [])
+            .filter(Boolean)
+            .join(', ');
+          const freq = r.frequency === 'weekly' ? ('Semanal (día ' + r.weekday + ')') : 'Diario';
+          return (
+            '<tr data-sched-id="' + escapeHtml(String(r.id || '')) + '">' +
+            '<td>' + escapeHtml(String(r.id || '')) + '</td>' +
+            '<td>' + escapeHtml(String(r.module || '')) + '</td>' +
+            '<td>' + escapeHtml(freq) + '</td>' +
+            '<td>' + escapeHtml(String(r.runAt || '')) + '</td>' +
+            '<td>' + escapeHtml(dest || 'admins') + '</td>' +
+            '<td class="muted">' + escapeHtml(String(r.lastSentAt || '—')) + '</td>' +
+            '<td><input type="checkbox" class="usuarios-sched-enabled" data-sched-id="' + escapeHtml(String(r.id || '')) + '" ' + (r.enabled ? 'checked' : '') + '></td>' +
+            '<td>' +
+            '<button type="button" class="btn small outline usuarios-sched-edit" data-sched-id="' + escapeHtml(String(r.id || '')) + '" title="Editar"><i class="fas fa-edit"></i></button> ' +
+            '<button type="button" class="btn small danger usuarios-sched-delete" data-sched-id="' + escapeHtml(String(r.id || '')) + '" title="Eliminar"><i class="fas fa-trash"></i></button>' +
+            '</td>' +
+            '</tr>'
+          );
+        })
+        .join('');
+    } catch (e) {
+      reportSchedulesCache = [];
+      tbody.innerHTML =
+        '<tr><td colspan="8" class="empty">' + escapeHtml(parseApiError(e) || 'No se pudo cargar programaciones.') + '</td></tr>';
+    }
   }
 
   async function loadCategoriasAdminPanel() {
@@ -9315,6 +9362,82 @@
         try {
           localStorage.setItem('usuariosEliminadosNotifyEmail', String(emailNotify.value || '').trim());
         } catch (_) {}
+      });
+    }
+    const btnRefreshSchedules = qs('#btn-report-schedules-refresh');
+    if (btnRefreshSchedules && !btnRefreshSchedules._bound) {
+      btnRefreshSchedules._bound = true;
+      btnRefreshSchedules.addEventListener('click', function () {
+        loadReportSchedules();
+      });
+    }
+    const tbodySched = qs('#tabla-report-schedules-body');
+    if (tbodySched && !tbodySched._schedDeleg) {
+      tbodySched._schedDeleg = true;
+      tbodySched.addEventListener('change', async function (ev) {
+        const t = ev.target;
+        if (!t || !t.classList || !t.classList.contains('usuarios-sched-enabled')) return;
+        const id = String(t.dataset.schedId || '').trim();
+        if (!id) return;
+        try {
+          await fetchJson(API + '/admin/report-schedules/' + encodeURIComponent(id), {
+            method: 'PATCH',
+            body: JSON.stringify({ enabled: !!t.checked }),
+          });
+          showToast('Programación actualizada.', 'success');
+        } catch (e) {
+          showToast(parseApiError(e) || 'No se pudo actualizar.', 'error');
+          loadReportSchedules();
+        }
+      });
+      tbodySched.addEventListener('click', async function (ev) {
+        const editBtn = ev.target && ev.target.closest && ev.target.closest('button.usuarios-sched-edit');
+        if (editBtn) {
+          const id = String(editBtn.dataset.schedId || '').trim();
+          const row = reportSchedulesCache.find((x) => String(x.id) === id);
+          if (!row) return;
+          const runAt = window.prompt('Hora HH:MM', String(row.runAt || '09:00'));
+          if (runAt == null) return;
+          const freq = window.prompt('Frecuencia: daily o weekly', String(row.frequency || 'daily'));
+          if (freq == null) return;
+          const weekday = freq === 'weekly'
+            ? window.prompt('Día semanal (0=Dom..6=Sab)', String(row.weekday == null ? 1 : row.weekday))
+            : String(row.weekday == null ? '' : row.weekday);
+          if (weekday == null) return;
+          const to = window.prompt('Destinatarios TO (coma o ;)', Array.isArray(row.to) ? row.to.join(', ') : '');
+          if (to == null) return;
+          const cc = window.prompt('Destinatarios CC (coma o ;)', Array.isArray(row.cc) ? row.cc.join(', ') : '');
+          if (cc == null) return;
+          try {
+            await fetchJson(API + '/admin/report-schedules/' + encodeURIComponent(id), {
+              method: 'PATCH',
+              body: JSON.stringify({
+                runAt: String(runAt).trim(),
+                frequency: String(freq).trim(),
+                weekday: String(freq).trim() === 'weekly' ? Number(weekday) : null,
+                to: parseEmailsInput(to),
+                cc: parseEmailsInput(cc),
+              }),
+            });
+            showToast('Programación editada.', 'success');
+            loadReportSchedules();
+          } catch (e) {
+            showToast(parseApiError(e) || 'No se pudo editar programación.', 'error');
+          }
+          return;
+        }
+        const delBtn = ev.target && ev.target.closest && ev.target.closest('button.usuarios-sched-delete');
+        if (!delBtn) return;
+        const id = String(delBtn.dataset.schedId || '').trim();
+        if (!id) return;
+        if (!window.confirm('¿Eliminar esta programación automática?')) return;
+        try {
+          await fetchJson(API + '/admin/report-schedules/' + encodeURIComponent(id), { method: 'DELETE' });
+          showToast('Programación eliminada.', 'success');
+          loadReportSchedules();
+        } catch (e) {
+          showToast(parseApiError(e) || 'No se pudo eliminar programación.', 'error');
+        }
       });
     }
   }
