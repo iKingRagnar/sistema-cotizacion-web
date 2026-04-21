@@ -5487,6 +5487,92 @@ body.dark-theme .cdp-disclaimer { color: #64748b; }
     width: 100%;
   }
 }
+
+/* ===== Modal UI refresh (global) ===== */
+.modal {
+  backdrop-filter: blur(6px) saturate(115%);
+}
+.modal-box:not(.pdf-preview-modal) {
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+}
+.modal-box:not(.pdf-preview-modal) .modal-header {
+  padding: 0.95rem 1.1rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.9) 100%);
+}
+.modal-box:not(.pdf-preview-modal) .modal-header h3 {
+  font-size: 1.03rem;
+  letter-spacing: 0.01em;
+}
+.modal-box:not(.pdf-preview-modal) .modal-body {
+  padding: 1rem 1.1rem;
+}
+.modal-box:not(.pdf-preview-modal) .form-grid {
+  gap: 0.65rem 0.9rem;
+}
+.modal-box:not(.pdf-preview-modal) .form-group {
+  margin-bottom: 0.7rem;
+}
+.modal-box:not(.pdf-preview-modal) .form-group label {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #475569;
+}
+.modal-box:not(.pdf-preview-modal) .form-group input,
+.modal-box:not(.pdf-preview-modal) .form-group select,
+.modal-box:not(.pdf-preview-modal) .form-group textarea {
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  min-height: 40px;
+}
+.modal-box:not(.pdf-preview-modal) .form-group textarea {
+  min-height: 92px;
+}
+.modal-box:not(.pdf-preview-modal) .form-group input:focus,
+.modal-box:not(.pdf-preview-modal) .form-group select:focus,
+.modal-box:not(.pdf-preview-modal) .form-group textarea:focus {
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.14);
+}
+.modal-box:not(.pdf-preview-modal) .form-actions,
+.modal-box:not(.pdf-preview-modal) .report-mail-actions {
+  padding-top: 0.35rem;
+  border-top: 1px dashed rgba(148, 163, 184, 0.35);
+}
+.modal-box:not(.pdf-preview-modal) .table-simple,
+.modal-box:not(.pdf-preview-modal) .data-table {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+}
+body.dark-theme .modal-box:not(.pdf-preview-modal),
+.modal-box.modal-box--theme-industrial {
+  border-color: rgba(71, 85, 105, 0.55);
+  box-shadow: 0 24px 64px rgba(2, 6, 23, 0.45);
+}
+body.dark-theme .modal-box:not(.pdf-preview-modal) .modal-header,
+.modal-box.modal-box--theme-industrial .modal-header {
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.92) 0%, rgba(15, 23, 42, 0.88) 100%);
+  border-bottom-color: rgba(71, 85, 105, 0.5);
+}
+body.dark-theme .modal-box:not(.pdf-preview-modal) .form-group label,
+.modal-box.modal-box--theme-industrial .form-group label {
+  color: #cbd5e1;
+}
+body.dark-theme .modal-box:not(.pdf-preview-modal) .form-group input,
+body.dark-theme .modal-box:not(.pdf-preview-modal) .form-group select,
+body.dark-theme .modal-box:not(.pdf-preview-modal) .form-group textarea,
+.modal-box.modal-box--theme-industrial .form-group input,
+.modal-box.modal-box--theme-industrial .form-group select,
+.modal-box.modal-box--theme-industrial .form-group textarea {
+  background: #0f172a;
+  border-color: #334155;
+  color: #e2e8f0;
+}
 .ref-pvc-hero {
   position: relative;
   padding: 0 1.75rem 1.35rem;
