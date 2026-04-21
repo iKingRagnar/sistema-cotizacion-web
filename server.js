@@ -190,6 +190,10 @@ const APP_TABS = [
   '/', '/clientes', '/prospectos', '/refacciones', '/maquinas', '/catalogos', '/cotizaciones', '/ventas', '/viajes',
   '/revision-maquinas', '/tarifas', '/reportes', '/garantias', '/mantenimientos', '/sin-cobertura', '/bonos',
   '/personal', '/bitacora', '/usuarios', '/auditoria',
+  // UI clásica (public/index.html)
+  'dashboards', 'clientes', 'refacciones', 'maquinas', 'almacen', 'cotizaciones', 'ventas', 'prospeccion',
+  'revision-maquinas', 'tarifas', 'reportes', 'garantias', 'mantenimiento-garantia', 'garantias-sin-cobertura',
+  'bonos', 'viajes', 'tecnicos', 'bitacoras', 'usuarios', 'auditoria', 'categorias-catalogo', 'demo', 'acerca',
 ];
 
 function cleanAccessPayload(raw) {

@@ -1107,6 +1107,27 @@
           <button type="button" id="btn-usuarios-create" class="btn primary"><i class="fas fa-user-plus"></i> Crear usuario</button>
         </div>
       </div>
+      <div class="card" style="margin-bottom:1rem;padding:1rem 1.25rem;">
+        <h3 style="margin:0 0 0.5rem 0;font-size:1rem;"><i class="fas fa-user-lock"></i> Permisos por pestaña y columnas</h3>
+        <p class="hint" style="margin:0 0 0.75rem 0;">Selecciona un usuario, marca qué pestañas puede ver y qué columnas puede ver en cada tabla.</p>
+        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;">
+          <div class="form-group" style="min-width:260px;flex:1;">
+            <label for="usuarios-perm-user">Usuario</label>
+            <select id="usuarios-perm-user" class="filter-input"></select>
+          </div>
+          <button type="button" id="btn-usuarios-save-access" class="btn primary"><i class="fas fa-save"></i> Guardar permisos</button>
+        </div>
+        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-start;margin-top:0.75rem;">
+          <div class="card" style="padding:0.75rem;min-width:260px;flex:1;">
+            <h4 style="margin:0 0 0.5rem 0;font-size:0.95rem;">Pestañas visibles</h4>
+            <div id="usuarios-perm-tabs-wrap" style="display:grid;gap:0.4rem;"></div>
+          </div>
+          <div class="card" style="padding:0.75rem;min-width:320px;flex:2;">
+            <h4 style="margin:0 0 0.5rem 0;font-size:0.95rem;">Columnas visibles por tabla</h4>
+            <div id="usuarios-perm-columns-wrap" style="display:grid;gap:0.65rem;"></div>
+          </div>
+        </div>
+      </div>
       <div class="table-wrap">
         <table class="data-table" id="tabla-usuarios">
           <thead>
