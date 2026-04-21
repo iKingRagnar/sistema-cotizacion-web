@@ -5068,6 +5068,64 @@ function buildEmailHtml({ title, subtitle, rows, tableHeader, tableRows, footer,
   </body></html>`;
 }
 
+function splitEmailList(raw) {
+  if (!raw) return [];
+  const arr = Array.isArray(raw) ? raw : String(raw).split(/[;,]/g);
+  return arr.map((x) => String(x || '').trim()).filter(Boolean);
+}
+
+function escapePdfText(str) {
+  return String(str || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/\(/g, '\\(')
+    .replace(/\)/g, '\\)')
+    .replace(/\r/g, ' ')
+    .replace(/\n/g, ' ');
+}
+
+function createSimplePdfBuffer(title, headers, rows) {
+  const safeHeaders = (headers || []).map((h) => String(h || '').trim());
+  const lines = [];
+  lines.push(title || 'Reporte');
+  lines.push(`Fecha: ${new Date().toLocaleString('es-MX')}`);
+  lines.push('------------------------------------------------------------');
+  if (safeHeaders.length) lines.push(safeHeaders.join(' | '));
+  for (const r of rows || []) {
+    lines.push((Array.isArray(r) ? r : [r]).map((v) => String(v == null ? '' : v)).join(' | '));
+  }
+  const clipped = lines.slice(0, 260);
+  const content = [
+    'BT',
+    '/F1 10 Tf',
+    '36 806 Td',
+    '14 TL',
+    ...clipped.map((ln, idx) => `${idx === 0 ? '' : 'T* '}((${escapePdfText(ln).slice(0, 160)})) Tj`),
+    'ET',
+  ].join('\n');
+
+  const objects = [];
+  objects.push('1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj');
+  objects.push('2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj');
+  objects.push('3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj');
+  objects.push(`4 0 obj << /Length ${Buffer.byteLength(content, 'utf8')} >> stream\n${content}\nendstream endobj`);
+  objects.push('5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj');
+
+  let pdf = '%PDF-1.4\n';
+  const offsets = [0];
+  for (const obj of objects) {
+    offsets.push(Buffer.byteLength(pdf, 'utf8'));
+    pdf += obj + '\n';
+  }
+  const xrefPos = Buffer.byteLength(pdf, 'utf8');
+  pdf += `xref\n0 ${objects.length + 1}\n`;
+  pdf += '0000000000 65535 f \n';
+  for (let i = 1; i <= objects.length; i++) {
+    pdf += `${String(offsets[i]).padStart(10, '0')} 00000 n \n`;
+  }
+  pdf += `trailer << /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefPos}\n%%EOF`;
+  return Buffer.from(pdf, 'utf8');
+}
+
 /** Envía correo al aprobar una cotización: info cliente + líneas con código y moneda */
 async function enviarCorreoAprobacion(cot, cliente) {
   const t = createMailTransport();
@@ -5383,11 +5441,16 @@ app.post('/api/reports/email-export', async (req, res) => {
     const title = String((req.body && req.body.title) || '').trim() || `Reporte de ${moduleName || 'módulo'}`;
     const tableHeader = Array.isArray(req.body && req.body.tableHeader) ? req.body.tableHeader : [];
     const tableRows = Array.isArray(req.body && req.body.tableRows) ? req.body.tableRows : [];
-    const toRaw = String((req.body && req.body.to) || '').trim();
+    const toRaw = req.body && req.body.to;
+    const ccRaw = req.body && req.body.cc;
+    const subjectCustom = String((req.body && req.body.subject) || '').trim();
+    const intro = String((req.body && req.body.intro) || '').trim();
+    const attachPdf = !!(req.body && req.body.attachPdf);
     if (!moduleName) return res.status(400).json({ error: 'Módulo requerido' });
     if (!tableRows.length) return res.status(400).json({ error: 'Sin filas para enviar' });
 
-    const recipients = [...new Set([...(toRaw ? [toRaw] : []), ...getAdminNotifyEmails()].filter(Boolean))];
+    const recipients = [...new Set([...splitEmailList(toRaw), ...getAdminNotifyEmails()].filter(Boolean))];
+    const ccRecipients = [...new Set(splitEmailList(ccRaw))];
     if (!recipients.length) return res.status(400).json({ error: 'No hay destinatarios configurados' });
     const t = getTransporter();
     if (!t) return res.status(400).json({ error: 'SMTP no configurado (SMTP_HOST/PORT/USER/PASS)' });
@@ -5401,6 +5464,7 @@ app.post('/api/reports/email-export', async (req, res) => {
       rows: [
         ['Registros incluidos', String(rowsLimited.length)],
         ['Generado por', (req.authUser && (req.authUser.displayName || req.authUser.username)) || 'Sistema'],
+        ...(intro ? [['Mensaje', intro]] : []),
       ],
       tableHeader: tableHeader.map((h) => String(h || '')),
       tableRows: rowsLimited,
@@ -5408,17 +5472,33 @@ app.post('/api/reports/email-export', async (req, res) => {
       accentColor: '#0ea5e9',
     });
     const textRows = rowsLimited.map((r) => '- ' + r.join(' | ')).join('\n');
-    const subject = `${title} — ${new Date().toISOString().slice(0, 10)}`;
-    const text = `${title}\n\nMódulo: ${moduleName}\nRegistros: ${rowsLimited.length}\n\n${textRows}`;
+    const subject = subjectCustom || `${title} — ${new Date().toISOString().slice(0, 10)}`;
+    const text = `${title}\n\nMódulo: ${moduleName}\nRegistros: ${rowsLimited.length}\n${intro ? `\nMensaje: ${intro}\n` : '\n'}\n${textRows}`;
+    const attachments = [];
+    if (attachPdf) {
+      attachments.push({
+        filename: `${moduleName}-reporte-${new Date().toISOString().slice(0, 10)}.pdf`,
+        content: createSimplePdfBuffer(title, tableHeader, rowsLimited),
+        contentType: 'application/pdf',
+      });
+    }
 
     await t.sendMail({
       from: process.env.SMTP_FROM || process.env.SMTP_USER,
       to: recipients.join(', '),
+      cc: ccRecipients.length ? ccRecipients.join(', ') : undefined,
       subject,
       text,
       html,
+      attachments,
     });
-    res.json({ ok: true, to: recipients.join(', '), rows: rowsLimited.length });
+    res.json({
+      ok: true,
+      to: recipients.join(', '),
+      cc: ccRecipients.join(', '),
+      rows: rowsLimited.length,
+      attachPdf,
+    });
   } catch (e) {
     res.status(500).json({ error: String(e.message || e) });
   }

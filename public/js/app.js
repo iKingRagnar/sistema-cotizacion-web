@@ -2067,6 +2067,33 @@
     return { headers, rows: outRows };
   }
 
+  function buildReportPreviewHtml(report, title) {
+    const headers = (report && report.headers) || [];
+    const rows = (report && report.rows) || [];
+    const head = headers.map((h) => `<th>${escapeHtml(h)}</th>`).join('');
+    const body = rows.slice(0, 20).map((r) => `<tr>${r.map((c) => `<td>${escapeHtml(String(c || ''))}</td>`).join('')}</tr>`).join('');
+    return `
+      <div style="margin-top:0.5rem">
+        <p style="margin:0 0 0.5rem 0;color:var(--text-muted,#6b7280);font-size:0.9rem;">
+          Vista previa de <strong>${escapeHtml(title)}</strong> (${rows.length} registro(s), se muestran hasta 20 filas).
+        </p>
+        <div style="max-height:280px;overflow:auto;border:1px solid var(--border-color,#e5e7eb);border-radius:8px;">
+          <table class="data-table" style="margin:0;">
+            <thead><tr>${head}</tr></thead>
+            <tbody>${body || `<tr><td colspan="${Math.max(1, headers.length)}">Sin datos</td></tr>`}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  function parseEmailsInput(raw) {
+    return String(raw || '')
+      .split(/[;,]/g)
+      .map((x) => x.trim())
+      .filter(Boolean);
+  }
+
   async function sendTableReportEmail(opts) {
     const moduleName = String(opts && opts.moduleName || '').trim();
     const tableId = String(opts && opts.tableId || '').trim();
@@ -2077,27 +2104,72 @@
       showToast('No hay registros visibles para enviar en el reporte.', 'warning');
       return;
     }
-    const to = (window.prompt('Correo destino (opcional, dejar vacío = solo admins):', '') || '').trim();
-    showLoading();
-    try {
-      const payload = {
-        module: moduleName,
-        title,
-        tableHeader: rep.headers,
-        tableRows: rep.rows,
-        to: to || null,
-      };
-      const r = await fetchJson(API + '/api/reports/email-export', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-      const toMsg = r && r.to ? r.to : 'admins';
-      showToast('Reporte enviado por correo a: ' + toMsg, 'success');
-    } catch (e) {
-      showToast(parseApiError(e) || 'No se pudo enviar el reporte por correo.', 'error');
-    } finally {
-      hideLoading();
-    }
+    const draftSubject = `${title} — ${new Date().toISOString().slice(0, 10)}`;
+    const body = `
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Para (varios correos separados por coma o punto y coma)</label>
+          <input type="text" id="rep-mail-to" placeholder="cliente@empresa.com, direccion@empresa.com">
+        </div>
+        <div class="form-group">
+          <label>CC (opcional)</label>
+          <input type="text" id="rep-mail-cc" placeholder="coordinacion@empresa.com">
+        </div>
+        <div class="form-group">
+          <label>Asunto</label>
+          <input type="text" id="rep-mail-subject" value="${escapeHtml(draftSubject)}">
+        </div>
+        <div class="form-group">
+          <label>Mensaje introductorio (opcional)</label>
+          <textarea id="rep-mail-intro" rows="3" placeholder="Buen día, comparto reporte actualizado..."></textarea>
+        </div>
+        <div class="form-group">
+          <label><input type="checkbox" id="rep-mail-attach-pdf" checked> Adjuntar PDF</label>
+        </div>
+      </div>
+      ${buildReportPreviewHtml(rep, title)}
+      <div style="margin-top:0.85rem;display:flex;justify-content:flex-end;gap:0.5rem;">
+        <button type="button" class="btn primary" id="rep-mail-send-btn"><i class="fas fa-paper-plane"></i> Enviar reporte</button>
+      </div>
+    `;
+    openModal(`Enviar reporte — ${title}`, body);
+    const sendBtn = qs('#rep-mail-send-btn');
+    if (!sendBtn) return;
+    sendBtn.addEventListener('click', async () => {
+      const toRaw = (qs('#rep-mail-to') && qs('#rep-mail-to').value) || '';
+      const ccRaw = (qs('#rep-mail-cc') && qs('#rep-mail-cc').value) || '';
+      const subject = ((qs('#rep-mail-subject') && qs('#rep-mail-subject').value) || '').trim() || draftSubject;
+      const intro = ((qs('#rep-mail-intro') && qs('#rep-mail-intro').value) || '').trim();
+      const attachPdf = !!(qs('#rep-mail-attach-pdf') && qs('#rep-mail-attach-pdf').checked);
+      const toList = parseEmailsInput(toRaw);
+      const ccList = parseEmailsInput(ccRaw);
+      showLoading();
+      try {
+        const payload = {
+          module: moduleName,
+          title,
+          subject,
+          intro,
+          attachPdf,
+          tableHeader: rep.headers,
+          tableRows: rep.rows,
+          to: toList,
+          cc: ccList,
+        };
+        const r = await fetchJson(API + '/api/reports/email-export', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        const toMsg = r && r.to ? r.to : 'admins';
+        showToast('Reporte enviado por correo a: ' + toMsg, 'success');
+        const modal = qs('#modal');
+        if (modal) modal.classList.add('hidden');
+      } catch (e) {
+        showToast(parseApiError(e) || 'No se pudo enviar el reporte por correo.', 'error');
+      } finally {
+        hideLoading();
+      }
+    });
   }
   function detectExcelColumnFormat(header, key, sampleValues) {
     const headerLower = (header || '').toLowerCase();
