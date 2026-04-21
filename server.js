@@ -5225,7 +5225,7 @@ async function sendReportEmail(payload, actorUser) {
   const recipients = [...new Set([...splitEmailList(toRaw), ...getAdminNotifyEmails()].filter(Boolean))];
   const ccRecipients = [...new Set(splitEmailList(ccRaw))];
   if (!recipients.length) throw new Error('No hay destinatarios configurados');
-  const t = getTransporter();
+  const t = createMailTransport();
   if (!t) throw new Error('SMTP no configurado (SMTP_HOST/PORT/USER/PASS)');
 
   const rowsLimited = tableRows.slice(0, 300).map((r) =>
