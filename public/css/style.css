@@ -7257,3 +7257,183 @@ body.dark-theme .ref-stock-modal .ref-stock-preview {
     grid-template-columns: 1fr;
   }
 }
+
+/* ========== Global polish pass v2 (clean/professional) ========== */
+:root {
+  --ui-surface-1: #ffffff;
+  --ui-surface-2: #f7f9fc;
+  --ui-border-soft: #dbe3ee;
+  --ui-border-strong: #c9d4e4;
+  --ui-text-main: #0f172a;
+  --ui-text-muted: #55657d;
+  --ui-shadow-soft: 0 10px 26px rgba(15, 23, 42, 0.06);
+  --ui-shadow-lift: 0 16px 42px rgba(15, 23, 42, 0.11);
+}
+
+.header {
+  backdrop-filter: saturate(140%) blur(10px);
+  background: linear-gradient(135deg, rgba(8, 16, 34, 0.93) 0%, rgba(18, 48, 75, 0.88) 52%, rgba(9, 70, 92, 0.82) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 10px 26px rgba(4, 10, 20, 0.3);
+}
+
+.app-frame {
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.sidebar-nav {
+  border: 1px solid var(--ui-border-soft);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(247, 250, 255, 0.93) 100%);
+  box-shadow: var(--ui-shadow-soft);
+}
+
+.sidebar-nav .tab {
+  border-radius: 10px;
+  margin: 2px 0;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.sidebar-nav .tab.active {
+  background: linear-gradient(135deg, #0f766e 0%, #0ea5e9 100%);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 8px 20px rgba(14, 116, 144, 0.28);
+}
+
+.panel {
+  border-radius: 16px;
+  border: 1px solid var(--ui-border-soft);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(249, 251, 255, 0.96) 100%);
+  box-shadow: var(--ui-shadow-soft);
+}
+
+.panel > h2,
+.panel h2 {
+  color: var(--ui-text-main);
+  letter-spacing: 0.01em;
+}
+
+.toolbar {
+  border: 1px solid var(--ui-border-soft);
+  border-radius: 14px;
+  padding: 0.8rem;
+  background: var(--ui-surface-2);
+}
+
+.card {
+  border: 1px solid var(--ui-border-soft);
+  border-radius: 16px;
+  background: var(--ui-surface-1);
+  box-shadow: var(--ui-shadow-soft);
+}
+
+.card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--ui-shadow-lift);
+}
+
+.form-group label {
+  color: var(--ui-text-muted);
+  font-weight: 600;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  border: 1px solid var(--ui-border-soft);
+  background: #fff;
+  color: var(--ui-text-main);
+  border-radius: 10px;
+  min-height: 40px;
+  transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.form-group input:hover,
+.form-group select:hover,
+.form-group textarea:hover {
+  border-color: var(--ui-border-strong);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.16);
+}
+
+.btn {
+  border-radius: 10px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.btn.primary {
+  background: linear-gradient(135deg, #0f766e 0%, #0ea5e9 100%);
+  border-color: transparent;
+  box-shadow: 0 8px 20px rgba(14, 116, 144, 0.24);
+}
+
+.btn.primary:hover {
+  filter: brightness(1.02);
+  transform: translateY(-1px);
+}
+
+.btn.outline {
+  background: #fff;
+  border-color: var(--ui-border-strong);
+}
+
+.table-wrap {
+  border: 1px solid var(--ui-border-soft);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+}
+
+.data-table th {
+  font-size: 0.78rem;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: #42546c;
+  background: linear-gradient(180deg, #f3f7fc 0%, #edf2f8 100%);
+  border-bottom: 1px solid var(--ui-border-soft);
+}
+
+.data-table td {
+  color: #1f2a3a;
+}
+
+.data-table tbody tr:nth-child(even) {
+  background: #f8fbff;
+}
+
+.data-table tbody tr:hover {
+  background: #ecf7ff !important;
+}
+
+.modal-box:not(.pdf-preview-modal) {
+  border: 1px solid var(--ui-border-soft);
+  border-radius: 16px;
+  box-shadow: 0 22px 58px rgba(15, 23, 42, 0.2);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+}
+
+.notifications-panel {
+  border: 1px solid rgba(145, 163, 186, 0.35);
+  box-shadow: 0 22px 48px rgba(3, 8, 18, 0.25);
+}
+
+body.dark-theme .panel,
+body.dark-theme .card,
+body.dark-theme .table-wrap,
+body.dark-theme .toolbar,
+body.dark-theme .sidebar-nav {
+  border-color: rgba(148, 163, 184, 0.25);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.34);
+}
+
+body.dark-theme .data-table tbody tr:hover {
+  background: rgba(30, 64, 96, 0.44) !important;
+}

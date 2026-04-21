@@ -5003,8 +5003,19 @@ function fechasMantenimientoPar(fechaEntrega, tipoMaquina, offsetAnios) {
   return [m1.toISOString().slice(0, 10), m2.toISOString().slice(0, 10)];
 }
 
+function getSmtpMissingConfig() {
+  const smtpUrl = (process.env.SMTP_URL || '').trim();
+  if (smtpUrl) return [];
+  const missing = [];
+  if (!(process.env.SMTP_HOST || '').trim()) missing.push('SMTP_HOST');
+  if (!(process.env.SMTP_USER || '').trim()) missing.push('SMTP_USER');
+  return missing;
+}
+
 function createMailTransport() {
   if (!nodemailer) return null;
+  const smtpUrl = (process.env.SMTP_URL || '').trim();
+  if (smtpUrl) return nodemailer.createTransport(smtpUrl);
   const host = (process.env.SMTP_HOST || '').trim();
   const user = (process.env.SMTP_USER || '').trim();
   const pass = (process.env.SMTP_PASS || '').trim();
@@ -5226,7 +5237,14 @@ async function sendReportEmail(payload, actorUser) {
   const ccRecipients = [...new Set(splitEmailList(ccRaw))];
   if (!recipients.length) throw new Error('No hay destinatarios configurados');
   const t = createMailTransport();
-  if (!t) throw new Error('SMTP no configurado (SMTP_HOST/PORT/USER/PASS)');
+  if (!t) {
+    const missing = getSmtpMissingConfig();
+    throw new Error(
+      missing.length
+        ? `SMTP no configurado. Faltan: ${missing.join(', ')} (o define SMTP_URL)`
+        : 'SMTP no configurado. Revisa SMTP_URL o SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS.'
+    );
+  }
 
   const rowsLimited = tableRows.slice(0, 300).map((r) =>
     Array.isArray(r) ? r.map((v) => String(v == null ? '' : v)) : [String(r == null ? '' : r)]
