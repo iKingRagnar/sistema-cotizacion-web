@@ -5374,6 +5374,56 @@ async function sendMonthlyAdminEmail(periodoYm) {
   return { sent: true, periodo: bounds.label };
 }
 
+app.post('/api/reports/email-export', async (req, res) => {
+  try {
+    if (auth.AUTH_ENABLED && !req.authUser) {
+      return res.status(401).json({ error: 'No autorizado. Inicia sesión.' });
+    }
+    const moduleName = String((req.body && req.body.module) || '').trim();
+    const title = String((req.body && req.body.title) || '').trim() || `Reporte de ${moduleName || 'módulo'}`;
+    const tableHeader = Array.isArray(req.body && req.body.tableHeader) ? req.body.tableHeader : [];
+    const tableRows = Array.isArray(req.body && req.body.tableRows) ? req.body.tableRows : [];
+    const toRaw = String((req.body && req.body.to) || '').trim();
+    if (!moduleName) return res.status(400).json({ error: 'Módulo requerido' });
+    if (!tableRows.length) return res.status(400).json({ error: 'Sin filas para enviar' });
+
+    const recipients = [...new Set([...(toRaw ? [toRaw] : []), ...getAdminNotifyEmails()].filter(Boolean))];
+    if (!recipients.length) return res.status(400).json({ error: 'No hay destinatarios configurados' });
+    const t = getTransporter();
+    if (!t) return res.status(400).json({ error: 'SMTP no configurado (SMTP_HOST/PORT/USER/PASS)' });
+
+    const rowsLimited = tableRows.slice(0, 300).map((r) =>
+      Array.isArray(r) ? r.map((v) => String(v == null ? '' : v)) : [String(r == null ? '' : r)]
+    );
+    const html = buildEmailHtml({
+      title,
+      subtitle: `Módulo: ${moduleName} · Fecha: ${new Date().toLocaleString('es-MX')}`,
+      rows: [
+        ['Registros incluidos', String(rowsLimited.length)],
+        ['Generado por', (req.authUser && (req.authUser.displayName || req.authUser.username)) || 'Sistema'],
+      ],
+      tableHeader: tableHeader.map((h) => String(h || '')),
+      tableRows: rowsLimited,
+      footer: 'Reporte generado automáticamente por Sistema de Cotización.',
+      accentColor: '#0ea5e9',
+    });
+    const textRows = rowsLimited.map((r) => '- ' + r.join(' | ')).join('\n');
+    const subject = `${title} — ${new Date().toISOString().slice(0, 10)}`;
+    const text = `${title}\n\nMódulo: ${moduleName}\nRegistros: ${rowsLimited.length}\n\n${textRows}`;
+
+    await t.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: recipients.join(', '),
+      subject,
+      text,
+      html,
+    });
+    res.json({ ok: true, to: recipients.join(', '), rows: rowsLimited.length });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message || e) });
+  }
+});
+
 async function trySendMonthlyBundleForPreviousMonth() {
   const tz = process.env.TZ || 'America/Mexico_City';
   const now = new Date();

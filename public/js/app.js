@@ -2043,6 +2043,62 @@
     a.click();
     showToast('CSV descargado correctamente.', 'success');
   }
+
+  function collectVisibleTableReport(tableId, maxRows) {
+    const table = qs('#' + tableId);
+    if (!table) return { headers: [], rows: [] };
+    const ths = Array.from(table.querySelectorAll('thead tr:first-child th'));
+    const headers = ths
+      .map((th) => String((th.textContent || '').trim()))
+      .filter((h) => h && !/acciones/i.test(h));
+    const outRows = [];
+    const trs = Array.from(table.querySelectorAll('tbody tr'));
+    for (const tr of trs) {
+      if (tr.classList.contains('empty')) continue;
+      const tds = Array.from(tr.querySelectorAll('td'));
+      if (!tds.length) continue;
+      const row = [];
+      for (let i = 0; i < headers.length && i < tds.length; i++) {
+        row.push(String((tds[i].innerText || tds[i].textContent || '').trim()).replace(/\s+/g, ' '));
+      }
+      if (row.some((x) => x)) outRows.push(row);
+      if (outRows.length >= (maxRows || 300)) break;
+    }
+    return { headers, rows: outRows };
+  }
+
+  async function sendTableReportEmail(opts) {
+    const moduleName = String(opts && opts.moduleName || '').trim();
+    const tableId = String(opts && opts.tableId || '').trim();
+    const title = String(opts && opts.title || moduleName || 'Reporte').trim();
+    if (!moduleName || !tableId) return;
+    const rep = collectVisibleTableReport(tableId, 300);
+    if (!rep.rows.length) {
+      showToast('No hay registros visibles para enviar en el reporte.', 'warning');
+      return;
+    }
+    const to = (window.prompt('Correo destino (opcional, dejar vacío = solo admins):', '') || '').trim();
+    showLoading();
+    try {
+      const payload = {
+        module: moduleName,
+        title,
+        tableHeader: rep.headers,
+        tableRows: rep.rows,
+        to: to || null,
+      };
+      const r = await fetchJson(API + '/api/reports/email-export', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      const toMsg = r && r.to ? r.to : 'admins';
+      showToast('Reporte enviado por correo a: ' + toMsg, 'success');
+    } catch (e) {
+      showToast(parseApiError(e) || 'No se pudo enviar el reporte por correo.', 'error');
+    } finally {
+      hideLoading();
+    }
+  }
   function detectExcelColumnFormat(header, key, sampleValues) {
     const headerLower = (header || '').toLowerCase();
     const keyLower = (key || '').toLowerCase();
@@ -11507,6 +11563,24 @@
   qs('#export-excel-maquinas').addEventListener('click', () => exportToExcel(applyFilters(maquinasCache, getFilterValues('#tabla-maquinas'), 'tabla-maquinas'), 'tabla-maquinas', 'maquinas'));
   qs('#export-cotizaciones').addEventListener('click', () => exportToCsv(enrichCotizacionesForExport(applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones')), 'tabla-cotizaciones', 'cotizaciones'));
   qs('#export-excel-cotizaciones').addEventListener('click', () => exportToExcel(enrichCotizacionesForExport(applyFilters(cotizacionesCache, getFilterValues('#tabla-cotizaciones'), 'tabla-cotizaciones')), 'tabla-cotizaciones', 'cotizaciones'));
+  const btnEmailCotizaciones = qs('#email-cotizaciones');
+  if (btnEmailCotizaciones) {
+    btnEmailCotizaciones.addEventListener('click', () =>
+      sendTableReportEmail({ moduleName: 'cotizaciones', tableId: 'tabla-cotizaciones', title: 'Reporte de Cotizaciones' })
+    );
+  }
+  const btnEmailVentas = qs('#email-ventas');
+  if (btnEmailVentas) {
+    btnEmailVentas.addEventListener('click', () =>
+      sendTableReportEmail({ moduleName: 'ventas', tableId: 'tabla-ventas', title: 'Reporte de Ventas' })
+    );
+  }
+  const btnEmailBonos = qs('#email-bonos');
+  if (btnEmailBonos) {
+    btnEmailBonos.addEventListener('click', () =>
+      sendTableReportEmail({ moduleName: 'bonos', tableId: 'tabla-bonos', title: 'Reporte de Bonos' })
+    );
+  }
   const btnEmailDavidCom = qs('#btn-email-david-comisiones');
   if (btnEmailDavidCom) {
     btnEmailDavidCom.addEventListener('click', function () {
