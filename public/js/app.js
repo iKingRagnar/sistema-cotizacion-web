@@ -3265,7 +3265,7 @@
       rebuildClientCityMaps();
       updateGlobalBranchOptions();
       applyClientesFiltersAndRender();
-    } catch (e) { renderClientes([]); console.error(e); }
+    } catch (e) { renderClientes([]); showToast(parseApiError(e) || 'No se pudo cargar el catálogo de clientes.', 'error'); }
     finally { hideLoading(); }
   }
 
