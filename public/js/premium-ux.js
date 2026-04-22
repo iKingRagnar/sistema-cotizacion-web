@@ -1,0 +1,424 @@
+/**
+ * premium-ux.js — UX enhancements premium
+ * 1. Cmd+K / Ctrl+K búsqueda global (módulos + registros de tablas visibles)
+ * 2. Atajos de teclado + cheat sheet (tecla "?")
+ * 3. Skeleton loaders automáticos en tablas vacías
+ * 4. Filtros guardados (vistas) con localStorage
+ */
+(function premiumUX() {
+  'use strict';
+
+  const LS_PREFIX = 'prem-ux:';
+  const isEditing = (el) => el && el.matches && el.matches('input, textarea, select, [contenteditable="true"]');
+
+  /* ═══════════════════════════════════════════════════════════
+     1. CMD+K — búsqueda global
+     ═══════════════════════════════════════════════════════════ */
+  function initCommandK() {
+    const modal = document.createElement('div');
+    modal.className = 'prem-cmdk';
+    modal.innerHTML = `
+      <div class="prem-cmdk-backdrop"></div>
+      <div class="prem-cmdk-panel" role="dialog" aria-label="Búsqueda global">
+        <div class="prem-cmdk-input-wrap">
+          <i class="fas fa-search"></i>
+          <input type="text" class="prem-cmdk-input" placeholder="Buscar módulo, cliente, folio, refacción..." autocomplete="off" spellcheck="false">
+          <kbd class="prem-cmdk-esc">ESC</kbd>
+        </div>
+        <div class="prem-cmdk-results" role="listbox"></div>
+        <div class="prem-cmdk-footer">
+          <span><kbd>↑</kbd><kbd>↓</kbd> navegar</span>
+          <span><kbd>↵</kbd> abrir</span>
+          <span><kbd>esc</kbd> cerrar</span>
+          <span class="prem-cmdk-brand">⌘K · Búsqueda global</span>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const input = modal.querySelector('.prem-cmdk-input');
+    const results = modal.querySelector('.prem-cmdk-results');
+    const backdrop = modal.querySelector('.prem-cmdk-backdrop');
+
+    let isOpen = false;
+    let selectedIdx = 0;
+    let currentResults = [];
+
+    function open() {
+      isOpen = true;
+      modal.classList.add('open');
+      input.value = '';
+      refresh();
+      setTimeout(() => input.focus(), 30);
+    }
+    function close() {
+      isOpen = false;
+      modal.classList.remove('open');
+    }
+
+    function refresh() {
+      const q = input.value.toLowerCase().trim();
+      const items = [];
+      const seen = new Set();
+
+      // 1. Módulos (tabs del sidebar)
+      document.querySelectorAll('.tabs.tabs--rail .tab').forEach(tab => {
+        if (tab.classList.contains('hidden')) return;
+        const text = (tab.textContent || '').trim();
+        if (!text) return;
+        const key = 'mod:' + text;
+        if (seen.has(key)) return;
+        if (!q || text.toLowerCase().includes(q)) {
+          seen.add(key);
+          items.push({
+            icon: (tab.querySelector('i')?.className) || 'fas fa-circle',
+            title: text,
+            subtitle: 'Módulo',
+            action: () => { tab.click(); tab.scrollIntoView({ block: 'nearest' }); }
+          });
+        }
+      });
+
+      // 2. Registros de tablas visibles (si hay query ≥2 chars)
+      if (q && q.length >= 2) {
+        document.querySelectorAll('.panel.active table.data-table tbody tr').forEach((tr, idx) => {
+          if (idx > 80) return;
+          const text = (tr.textContent || '').toLowerCase();
+          if (text.includes(q)) {
+            const cells = tr.querySelectorAll('td');
+            if (!cells.length) return;
+            const first  = (cells[0]?.textContent || '').trim();
+            const second = (cells[1]?.textContent || '').trim();
+            const third  = (cells[2]?.textContent || '').trim();
+            const title = [first, second].filter(Boolean).join(' · ').slice(0, 100) || 'Registro';
+            items.push({
+              icon: 'fas fa-file-alt',
+              title,
+              subtitle: third ? third.slice(0, 60) : 'Registro en tabla',
+              action: () => {
+                tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                tr.classList.add('prem-cmdk-highlight');
+                setTimeout(() => tr.classList.remove('prem-cmdk-highlight'), 2400);
+              }
+            });
+          }
+        });
+      }
+
+      currentResults = items.slice(0, 30);
+      selectedIdx = 0;
+      render();
+    }
+
+    function render() {
+      if (!currentResults.length) {
+        results.innerHTML = '<div class="prem-cmdk-empty"><i class="fas fa-inbox"></i><span>Sin resultados</span></div>';
+        return;
+      }
+      results.innerHTML = currentResults.map((it, i) => `
+        <div class="prem-cmdk-item ${i === selectedIdx ? 'selected' : ''}" data-idx="${i}" role="option">
+          <i class="${it.icon}"></i>
+          <div class="prem-cmdk-item-text">
+            <div class="prem-cmdk-item-title">${escapeText(it.title)}</div>
+            <div class="prem-cmdk-item-sub">${escapeText(it.subtitle)}</div>
+          </div>
+          <i class="fas fa-arrow-right prem-cmdk-item-arrow"></i>
+        </div>
+      `).join('');
+
+      results.querySelectorAll('.prem-cmdk-item').forEach(el => {
+        el.addEventListener('click', () => {
+          const idx = parseInt(el.dataset.idx, 10);
+          currentResults[idx]?.action();
+          close();
+        });
+      });
+
+      // Scroll seleccionado a la vista
+      const sel = results.querySelector('.prem-cmdk-item.selected');
+      if (sel) sel.scrollIntoView({ block: 'nearest' });
+    }
+
+    function escapeText(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    // Atajo global
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        isOpen ? close() : open();
+        return;
+      }
+      if (!isOpen) return;
+
+      if (e.key === 'Escape') { e.preventDefault(); close(); }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); selectedIdx = Math.min(selectedIdx + 1, currentResults.length - 1); render(); }
+      else if (e.key === 'ArrowUp')   { e.preventDefault(); selectedIdx = Math.max(selectedIdx - 1, 0); render(); }
+      else if (e.key === 'Enter')     { e.preventDefault(); currentResults[selectedIdx]?.action(); close(); }
+    });
+
+    input.addEventListener('input', refresh);
+    backdrop.addEventListener('click', close);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     2. CHEAT SHEET DE ATAJOS — tecla "?"
+     ═══════════════════════════════════════════════════════════ */
+  function initShortcutsCheatSheet() {
+    const modal = document.createElement('div');
+    modal.className = 'prem-shortcuts';
+    modal.innerHTML = `
+      <div class="prem-shortcuts-backdrop"></div>
+      <div class="prem-shortcuts-panel" role="dialog" aria-label="Atajos de teclado">
+        <div class="prem-shortcuts-head">
+          <h2><i class="fas fa-keyboard"></i> Atajos de teclado</h2>
+          <button class="prem-shortcuts-close-x" aria-label="Cerrar"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="prem-shortcuts-grid">
+          <div class="prem-shortcuts-group">
+            <h3>Navegación</h3>
+            <div class="prem-shortcut"><span>Búsqueda global</span><span class="kbd-group"><kbd>Ctrl</kbd><span>+</span><kbd>K</kbd></span></div>
+            <div class="prem-shortcut"><span>Mostrar/cerrar esta guía</span><span class="kbd-group"><kbd>?</kbd></span></div>
+            <div class="prem-shortcut"><span>Cerrar modal</span><span class="kbd-group"><kbd>Esc</kbd></span></div>
+          </div>
+          <div class="prem-shortcuts-group">
+            <h3>Módulos</h3>
+            <div class="prem-shortcut"><span>Dashboard</span><span class="kbd-group"><kbd>Ctrl</kbd><span>+</span><kbd>1</kbd></span></div>
+            <div class="prem-shortcut"><span>Clientes</span><span class="kbd-group"><kbd>Ctrl</kbd><span>+</span><kbd>2</kbd></span></div>
+            <div class="prem-shortcut"><span>Refacciones</span><span class="kbd-group"><kbd>Ctrl</kbd><span>+</span><kbd>3</kbd></span></div>
+            <div class="prem-shortcut"><span>Cotizaciones</span><span class="kbd-group"><kbd>Ctrl</kbd><span>+</span><kbd>4</kbd></span></div>
+          </div>
+          <div class="prem-shortcuts-group">
+            <h3>Tablas</h3>
+            <div class="prem-shortcut"><span>Enviar filtro</span><span class="kbd-group"><kbd>Enter</kbd></span></div>
+            <div class="prem-shortcut"><span>Limpiar filtros</span><span class="kbd-group"><kbd>Esc</kbd></span></div>
+            <div class="prem-shortcut"><span>Enfocar búsqueda</span><span class="kbd-group"><kbd>/</kbd></span></div>
+          </div>
+        </div>
+        <div class="prem-shortcuts-footer">
+          <span>¿Sugerencia? Escríbele al administrador.</span>
+          <button class="btn primary prem-shortcuts-close">Entendido</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    function open()  { modal.classList.add('open'); }
+    function close() { modal.classList.remove('open'); }
+
+    modal.querySelector('.prem-shortcuts-backdrop').addEventListener('click', close);
+    modal.querySelector('.prem-shortcuts-close').addEventListener('click', close);
+    modal.querySelector('.prem-shortcuts-close-x').addEventListener('click', close);
+
+    document.addEventListener('keydown', (e) => {
+      if (isEditing(e.target)) return;
+      if (e.key === '?') { e.preventDefault(); modal.classList.contains('open') ? close() : open(); }
+      else if (e.key === 'Escape' && modal.classList.contains('open')) close();
+      else if (e.key === '/' && !isEditing(e.target)) {
+        const search = document.querySelector('.panel.active input[type="search"], .panel.active .search-input');
+        if (search) { e.preventDefault(); search.focus(); }
+      }
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     3. SKELETON LOADERS automáticos
+     Inyecta filas skeleton cuando una tabla .data-table queda con
+     tbody vacío > 250ms (señal de que está cargando)
+     ═══════════════════════════════════════════════════════════ */
+  function initSkeletonLoaders() {
+    const markEmpty = (tbody) => {
+      if (!tbody || tbody.querySelector('.prem-skel-row')) return;
+      const table = tbody.closest('table');
+      const cols = table?.querySelector('thead tr:first-child')?.children.length || 5;
+      const rows = 6;
+      let html = '';
+      for (let r = 0; r < rows; r++) {
+        html += '<tr class="prem-skel-row">';
+        for (let c = 0; c < cols; c++) html += '<td><span class="prem-skel"></span></td>';
+        html += '</tr>';
+      }
+      tbody.innerHTML = html;
+    };
+
+    const mo = new MutationObserver((muts) => {
+      for (const m of muts) {
+        if (m.type !== 'childList') continue;
+        const target = m.target;
+        if (target.tagName === 'TBODY' && target.children.length === 0) {
+          const table = target.closest('table.data-table');
+          if (table && !table.classList.contains('no-skel')) {
+            setTimeout(() => {
+              if (target.children.length === 0) markEmpty(target);
+            }, 260);
+          }
+        }
+      }
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+
+    // Inicial: tablas que arrancan vacías
+    setTimeout(() => {
+      document.querySelectorAll('table.data-table tbody').forEach(tb => {
+        if (tb.children.length === 0) markEmpty(tb);
+      });
+    }, 400);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     4. FILTROS GUARDADOS — "Vistas" con localStorage
+     Inyecta botón "Vistas" en .prem-filter-bar cada vez que se crea
+     ═══════════════════════════════════════════════════════════ */
+  function initSavedFilters() {
+    function attach(table) {
+      if (table._savedFiltersAttached) return;
+      const wrap = table.closest('.table-wrap, .md-table-wrap');
+      if (!wrap) return;
+      const filterRow = table.querySelector('thead .filter-row');
+      if (!filterRow) return;
+      table._savedFiltersAttached = true;
+
+      // Crear bar container arriba del table-wrap
+      const bar = document.createElement('div');
+      bar.className = 'prem-views-bar';
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'prem-views-btn';
+      btn.innerHTML = '<i class="fas fa-bookmark"></i> Vistas';
+      btn.title = 'Guardar/cargar filtros';
+
+      const dropdown = document.createElement('div');
+      dropdown.className = 'prem-views-dropdown';
+
+      bar.appendChild(btn);
+      bar.appendChild(dropdown);
+      wrap.insertAdjacentElement('beforebegin', bar);
+
+      const storageKey = LS_PREFIX + 'views:' + (table.id || 'tbl');
+
+      function readViews() {
+        try { return JSON.parse(localStorage.getItem(storageKey) || '[]'); }
+        catch { return []; }
+      }
+      function writeViews(list) {
+        try { localStorage.setItem(storageKey, JSON.stringify(list)); } catch {}
+      }
+
+      function currentValues() {
+        const vals = {};
+        filterRow.querySelectorAll('input[data-key], select[data-key]').forEach(inp => {
+          if (inp.value && inp.value.trim()) vals[inp.dataset.key + ':' + (inp.className.includes('date-input') ? 'date' : '')] = inp.value;
+        });
+        return vals;
+      }
+
+      function applyValues(vals) {
+        filterRow.querySelectorAll('input[data-key], select[data-key]').forEach(inp => {
+          const k = inp.dataset.key + ':' + (inp.className.includes('date-input') ? 'date' : '');
+          inp.value = vals[k] || '';
+          inp.dispatchEvent(new Event('input', { bubbles: true }));
+          inp.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+      }
+
+      function renderDropdown() {
+        const views = readViews();
+        const current = currentValues();
+        const hasCurrent = Object.keys(current).length > 0;
+        let html = '';
+        if (views.length) {
+          html += '<div class="prem-views-section">Mis vistas</div>';
+          views.forEach((v, i) => {
+            html += `
+              <div class="prem-views-item">
+                <button class="prem-views-load" data-idx="${i}"><i class="fas fa-filter"></i> ${escapeAttr(v.name)}</button>
+                <button class="prem-views-del" data-idx="${i}" title="Eliminar"><i class="fas fa-times"></i></button>
+              </div>
+            `;
+          });
+        } else {
+          html += '<div class="prem-views-empty">Aún no hay vistas guardadas</div>';
+        }
+        html += '<div class="prem-views-divider"></div>';
+        if (hasCurrent) {
+          html += '<button class="prem-views-save"><i class="fas fa-plus"></i> Guardar filtro actual</button>';
+        } else {
+          html += '<div class="prem-views-hint">Aplica algún filtro para poder guardarlo.</div>';
+        }
+        if (views.length) {
+          html += '<button class="prem-views-clear"><i class="fas fa-eraser"></i> Limpiar filtros aplicados</button>';
+        }
+        dropdown.innerHTML = html;
+
+        dropdown.querySelectorAll('.prem-views-load').forEach(b => b.addEventListener('click', () => {
+          const i = parseInt(b.dataset.idx, 10);
+          applyValues(views[i].values);
+          closeDropdown();
+        }));
+        dropdown.querySelectorAll('.prem-views-del').forEach(b => b.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const i = parseInt(b.dataset.idx, 10);
+          views.splice(i, 1);
+          writeViews(views);
+          renderDropdown();
+        }));
+        const saveBtn = dropdown.querySelector('.prem-views-save');
+        if (saveBtn) saveBtn.addEventListener('click', () => {
+          const name = prompt('Nombre para esta vista:');
+          if (!name || !name.trim()) return;
+          views.push({ name: name.trim().slice(0, 40), values: currentValues() });
+          writeViews(views);
+          renderDropdown();
+        });
+        const clearBtn = dropdown.querySelector('.prem-views-clear');
+        if (clearBtn) clearBtn.addEventListener('click', () => {
+          applyValues({});
+          closeDropdown();
+        });
+      }
+
+      function escapeAttr(s) {
+        return String(s).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      function openDropdown()  { renderDropdown(); bar.classList.add('open'); }
+      function closeDropdown() { bar.classList.remove('open'); }
+
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        bar.classList.contains('open') ? closeDropdown() : openDropdown();
+      });
+      document.addEventListener('click', (e) => {
+        if (!bar.contains(e.target)) closeDropdown();
+      });
+    }
+
+    document.querySelectorAll('table.data-table').forEach(attach);
+    const mo = new MutationObserver((muts) => {
+      for (const m of muts) for (const n of m.addedNodes) {
+        if (n.nodeType !== 1) continue;
+        if (n.matches?.('table.data-table')) attach(n);
+        n.querySelectorAll?.('table.data-table').forEach(attach);
+      }
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+  }
+
+  /* ─── Bootstrap ─────────────────────────────────────────── */
+  function boot() {
+    initCommandK();
+    initShortcutsCheatSheet();
+    initSkeletonLoaders();
+    initSavedFilters();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();
