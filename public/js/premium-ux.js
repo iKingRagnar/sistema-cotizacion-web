@@ -1148,6 +1148,61 @@
     mo.observe(document.body, { childList: true, subtree: true });
   }
 
+  /* ═══════════════════════════════════════════════════════════
+     12. RIPPLE EFFECT — Material-style en todos los botones
+     ═══════════════════════════════════════════════════════════ */
+  function initRippleEffect() {
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.btn, button, .tab');
+      if (!btn) return;
+      if (btn.disabled) return;
+      // No ripples en botones de sidebar collapsed (ya tienen tooltip)
+      if (btn.closest('.prem-cmdk, .prem-shortcuts')) return;
+
+      const rect = btn.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      const ripple = document.createElement('span');
+      ripple.className = 'prem-ripple';
+      ripple.style.width = ripple.style.height = size + 'px';
+      ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+      ripple.style.top  = (e.clientY - rect.top  - size / 2) + 'px';
+
+      // Si el btn tiene color oscuro, ripple oscuro. Si es claro, ripple blanco.
+      const bg = getComputedStyle(btn).backgroundColor;
+      const match = bg.match(/\d+/g);
+      if (match) {
+        const [r, g, b] = match.map(Number);
+        const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        if (lum > 0.7) ripple.style.background = 'rgba(15,23,42,.14)';
+      }
+
+      btn.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 650);
+    }, true);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     13. SIDEBAR COLLAPSE TOOLTIPS — agrega title si falta
+     ═══════════════════════════════════════════════════════════ */
+  function initSidebarTooltips() {
+    function ensureTitles() {
+      document.querySelectorAll('.tabs.tabs--rail .tab').forEach(tab => {
+        if (!tab.getAttribute('title')) {
+          // Extrae texto del tab (sin el icono)
+          const text = [...tab.childNodes]
+            .filter(n => n.nodeType === 3)
+            .map(n => n.textContent.trim())
+            .filter(Boolean)
+            .join(' ');
+          if (text) tab.setAttribute('title', text);
+        }
+      });
+    }
+    ensureTitles();
+    const mo = new MutationObserver(ensureTitles);
+    mo.observe(document.body, { childList: true, subtree: true });
+  }
+
   /* ─── Bootstrap ─────────────────────────────────────────── */
   function boot() {
     initExternalFilters();   // PRIMERO: saca filtros antes de medir layout
@@ -1161,6 +1216,8 @@
     initColumnReorder();
     initAttachments();
     initDashboardReorder();
+    initRippleEffect();
+    initSidebarTooltips();
   }
 
   if (document.readyState === 'loading') {

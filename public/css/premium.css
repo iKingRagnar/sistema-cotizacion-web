@@ -2362,3 +2362,806 @@ body.md3-on .btn.text,
 body.md3-on button.text {
   color: #2563eb !important;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   47. TYPOGRAPHY PREMIUM — Inter como tipografía principal
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body, body.md3-on,
+body.md3-on .panel,
+body.md3-on .card,
+body.md3-on table.data-table,
+body.md3-on .toolbar,
+body.md3-on .modal-dialog,
+body.md3-on .md-modal-panel {
+  font-family: 'Inter', 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-feature-settings: 'cv11', 'ss01', 'ss03', 'tnum' on;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body.md3-on h1, body.md3-on h2, body.md3-on h3, body.md3-on h4, body.md3-on h5, body.md3-on h6 {
+  font-family: 'Inter', sans-serif !important;
+  letter-spacing: -.022em;
+  line-height: 1.25;
+}
+
+body.md3-on .dash-value,
+body.md3-on .dashboard-card-value {
+  font-family: 'Inter', sans-serif !important;
+  font-feature-settings: 'tnum' on, 'cv11' on;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.04em !important;
+}
+
+/* Numbers tabular en tablas (alinea decimales) */
+body.md3-on table.data-table tbody td {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   48. MICROINTERACCIONES — transitions globales suaves
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .btn,
+body.md3-on button,
+body.md3-on .card,
+body.md3-on .dashboard-card,
+body.md3-on .admin-hub-card,
+body.md3-on .badge,
+body.md3-on [class*="badge-"],
+body.md3-on .estatus-pill,
+body.md3-on .status-pill,
+body.md3-on .semaforo,
+body.md3-on .tab,
+body.md3-on a:not(.btn) {
+  transition: transform .18s cubic-bezier(.34,1.56,.64,1),
+              box-shadow .2s cubic-bezier(.4,0,.2,1),
+              background-color .15s ease,
+              border-color .15s ease,
+              color .15s ease,
+              opacity .15s ease !important;
+}
+
+/* Button ripple — el JS añade .prem-ripple, este CSS la anima */
+.prem-ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,.5);
+  transform: scale(0);
+  pointer-events: none;
+  animation: premRippleAnim .6s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes premRippleAnim {
+  to { transform: scale(4); opacity: 0; }
+}
+
+body.md3-on .btn,
+body.md3-on button {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Focus ring elegante (no el feo del navegador) */
+body.md3-on *:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.28), 0 0 0 1.5px rgba(37,99,235,.65) !important;
+  border-radius: 8px;
+}
+
+/* Hover-lift universal en cards interactivas */
+body.md3-on .card:not(.no-hover):hover,
+body.md3-on .admin-hub-card:hover,
+body.md3-on .dashboard-card:hover {
+  transform: translateY(-2px) !important;
+}
+
+/* Active scale-down feedback (tap feel) */
+body.md3-on .btn:active:not(:disabled),
+body.md3-on button:active:not(:disabled),
+body.md3-on .tab:active {
+  transform: scale(.97) !important;
+  transition-duration: .08s !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   49. GLASSMORPHISM + ELEVATION SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --elev-1: 0 1px 2px rgba(15,23,42,.06), 0 1px 3px rgba(15,23,42,.04);
+  --elev-2: 0 4px 8px rgba(15,23,42,.06), 0 2px 4px rgba(15,23,42,.04);
+  --elev-3: 0 10px 24px rgba(15,23,42,.08), 0 4px 12px rgba(15,23,42,.06);
+  --elev-4: 0 16px 40px rgba(15,23,42,.12), 0 8px 20px rgba(15,23,42,.08);
+  --elev-blue: 0 8px 28px rgba(37,99,235,.18), 0 2px 8px rgba(37,99,235,.10);
+}
+
+body.md3-on .table-wrap,
+body.md3-on .md-table-wrap {
+  box-shadow: var(--elev-2), inset 0 0 0 1px rgba(15,23,42,.04) !important;
+  background: rgba(255,255,255,.96) !important;
+  backdrop-filter: blur(8px);
+}
+
+body.md3-on .dashboard-card,
+body.md3-on .card,
+body.md3-on .admin-hub-card {
+  background: rgba(255,255,255,.94) !important;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--elev-1) !important;
+}
+
+body.md3-on .dashboard-card:hover,
+body.md3-on .card:hover {
+  box-shadow: var(--elev-3) !important;
+}
+
+/* Section header glow más sofisticado */
+body.md3-on .section-header {
+  box-shadow: var(--elev-blue) !important;
+  position: relative;
+}
+body.md3-on .section-header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 80% at 100% 0%, rgba(255,255,255,.18) 0%, transparent 60%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   50. ENTRANCE ANIMATIONS — page, lists, modal, toast
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes premPanelIn {
+  from { opacity: 0; transform: translateY(16px) scale(.99); filter: blur(4px); }
+  to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+body.md3-on .panel.active {
+  animation: premPanelIn .42s cubic-bezier(.16,.78,.27,1) both !important;
+}
+
+@keyframes premStaggerIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+body.md3-on .dashboard-grid > .dashboard-card {
+  animation: premStaggerIn .32s cubic-bezier(.4,0,.2,1) both !important;
+}
+body.md3-on .dashboard-grid > .dashboard-card:nth-child(1) { animation-delay: 0ms; }
+body.md3-on .dashboard-grid > .dashboard-card:nth-child(2) { animation-delay: 40ms; }
+body.md3-on .dashboard-grid > .dashboard-card:nth-child(3) { animation-delay: 80ms; }
+body.md3-on .dashboard-grid > .dashboard-card:nth-child(4) { animation-delay: 110ms; }
+body.md3-on .dashboard-grid > .dashboard-card:nth-child(5) { animation-delay: 135ms; }
+body.md3-on .dashboard-grid > .dashboard-card:nth-child(6) { animation-delay: 155ms; }
+body.md3-on .dashboard-grid > .dashboard-card:nth-child(n+7) { animation-delay: 170ms; }
+
+@keyframes premModalIn {
+  from { opacity: 0; transform: scale(.92) translateY(20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+body.md3-on .modal-dialog,
+body.md3-on .modal-content,
+body.md3-on .md-modal-panel {
+  animation: premModalIn .35s cubic-bezier(.34,1.56,.64,1) both !important;
+}
+
+/* Toggle de fondos al abrir modal */
+@keyframes premBackdropIn {
+  from { opacity: 0; backdrop-filter: blur(0); }
+  to   { opacity: 1; backdrop-filter: blur(4px); }
+}
+body.md3-on .modal-backdrop,
+body.md3-on .md-modal-backdrop {
+  animation: premBackdropIn .25s ease both !important;
+  background: rgba(15,23,42,.42) !important;
+  backdrop-filter: blur(4px);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   51. SIDEBAR POLISH — indicador active suave + iconos animados
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .tabs.tabs--rail .tab {
+  position: relative;
+  padding: 10px 14px !important;
+  transition: all .2s cubic-bezier(.4,0,.2,1) !important;
+}
+
+/* Indicador suave a la izquierda del tab activo */
+body.md3-on .tabs.tabs--rail .tab.active {
+  background: linear-gradient(135deg, #2563eb 0%, #0d9488 100%) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 6px 18px rgba(37,99,235,.32), inset 0 1px 0 rgba(255,255,255,.18) !important;
+  transform: translateX(2px);
+}
+
+body.md3-on .tabs.tabs--rail .tab.active::before {
+  content: '';
+  position: absolute;
+  left: -10px; top: 25%; bottom: 25%;
+  width: 3px;
+  background: #2563eb;
+  border-radius: 0 4px 4px 0;
+  box-shadow: 0 0 8px #2563eb, 0 0 12px rgba(37,99,235,.5);
+}
+
+body.md3-on .tabs.tabs--rail .tab i {
+  transition: transform .2s cubic-bezier(.4,0,.2,1) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  text-align: center;
+}
+
+body.md3-on .tabs.tabs--rail .tab:hover i {
+  transform: scale(1.18) rotate(-3deg);
+}
+
+body.md3-on .tabs.tabs--rail .tab.active i {
+  transform: scale(1.05);
+}
+
+/* Sidebar nav title con icono */
+body.md3-on .sidebar-nav-title::before {
+  content: '\f0c9';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  margin-right: 6px;
+  color: #94a3b8;
+  font-size: .65rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   52. ICONOS CONTEXTUALES — añadidos via ::before donde faltan
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Footer de tabla con icono */
+body.md3-on .table-footer::before {
+  content: '\f0ce';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  color: #94a3b8;
+  margin-right: 6px;
+  font-size: .76rem;
+}
+
+/* Hint con icono de info */
+body.md3-on .hint::before {
+  content: '\f05a';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  color: #2563eb;
+  margin-right: 8px;
+}
+
+/* Empty card icon más vivo (tipo iluminado) */
+body.md3-on .empty-card .empty-icon {
+  background: linear-gradient(135deg, rgba(37,99,235,.08), rgba(13,148,136,.06));
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  font-size: 2.4rem;
+  color: #2563eb;
+  position: relative;
+  box-shadow: inset 0 0 0 1px rgba(37,99,235,.08), 0 8px 24px rgba(37,99,235,.06);
+}
+body.md3-on .empty-card .empty-icon::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px dashed rgba(37,99,235,.18);
+  animation: premSpin 18s linear infinite;
+}
+@keyframes premSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Botones de acción en tabla — iconos más visibles */
+body.md3-on table.data-table td.th-actions .btn,
+body.md3-on table.data-table td.th-actions button {
+  width: 32px !important;
+  min-width: 32px !important;
+  padding: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+body.md3-on table.data-table td.th-actions .btn i {
+  font-size: .85rem;
+  margin: 0;
+}
+
+/* Filter bar header con animación */
+.prem-ext-filter-head > i {
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.prem-ext-filter-bar:hover .prem-ext-filter-head > i {
+  transform: rotate(-12deg) scale(1.15);
+  color: #1d4ed8 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   53. ESTADOS Y BADGES CON GLOW
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .semaforo-ok, body.md3-on .semaforo-verde,
+body.md3-on .badge-success, body.md3-on .badge.success,
+body.md3-on .badge-mant-ok, body.md3-on .badge-bono-pagado,
+body.md3-on .pvc-badge--success,
+body.md3-on .status-pill-ok,
+body.md3-on .estatus-cerrado, body.md3-on .estatus-finalizado, body.md3-on .estatus-aplicada, body.md3-on .estatus-venta {
+  box-shadow: 0 0 0 1px rgba(110,231,183,.4), 0 2px 6px rgba(16,185,129,.12);
+}
+body.md3-on .semaforo-bad, body.md3-on .semaforo-rojo,
+body.md3-on .badge-error, body.md3-on .badge-danger,
+body.md3-on .badge-mant-bad, body.md3-on .pvc-badge--error,
+body.md3-on .status-pill-bad,
+body.md3-on .estatus-cancelada, body.md3-on .estatus-rechazada, body.md3-on .estatus-error {
+  box-shadow: 0 0 0 1px rgba(252,165,165,.4), 0 2px 6px rgba(239,68,68,.12);
+}
+body.md3-on .semaforo-warn, body.md3-on .semaforo-amarillo,
+body.md3-on .badge-warning, body.md3-on .badge-mant-warn,
+body.md3-on .badge-bono-pendiente, body.md3-on .pvc-badge--warning,
+body.md3-on .status-pill-warn,
+body.md3-on .estatus-revision, body.md3-on .estatus-en-proceso, body.md3-on .estatus-cotizacion {
+  box-shadow: 0 0 0 1px rgba(252,211,77,.4), 0 2px 6px rgba(245,158,11,.12);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   54. CUSTOM SCROLLBAR PREMIUM
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on ::-webkit-scrollbar { width: 10px; height: 10px; }
+body.md3-on ::-webkit-scrollbar-track { background: transparent; }
+body.md3-on ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #cbd5e1, #94a3b8);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: background .2s ease;
+}
+body.md3-on ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #2563eb, #0d9488);
+  background-clip: content-box;
+}
+body.md3-on ::-webkit-scrollbar-corner { background: transparent; }
+
+/* Scrollbar fina en sidebar (estaba bien, refinar) */
+body.md3-on .tabs.tabs--rail::-webkit-scrollbar { width: 4px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   55. HEADER DE LA APP — refinado
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on header.header,
+body.md3-on .header {
+  background: linear-gradient(135deg, #0c1120 0%, #131c2e 35%, #1e3a8a 75%, #0d9488 100%) !important;
+  background-size: 200% 200% !important;
+  animation: premHeaderShift 14s ease-in-out infinite !important;
+  border-bottom: none !important;
+  box-shadow: 0 4px 24px rgba(15,23,42,.16) !important;
+  padding: 14px 22px !important;
+  position: relative;
+  overflow: hidden;
+}
+
+body.md3-on header.header::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(80% 60% at 20% 50%, rgba(96,165,250,.12), transparent 70%);
+  pointer-events: none;
+}
+
+@keyframes premHeaderShift {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   56. DASHBOARD CARDS — más visuales
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .dashboard-card {
+  padding: 22px !important;
+  border-radius: 18px !important;
+  position: relative;
+  overflow: hidden;
+}
+
+body.md3-on .dashboard-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #2563eb, #0d9488, #0ea5e9);
+  background-size: 200% 100%;
+  animation: premGradShift 6s ease infinite;
+  opacity: 0;
+  transition: opacity .3s ease;
+}
+@keyframes premGradShift {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+body.md3-on .dashboard-card:hover::before {
+  opacity: 1;
+}
+
+body.md3-on .dashboard-card-icon {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 14px !important;
+  background: linear-gradient(135deg, rgba(37,99,235,.14), rgba(13,148,136,.10)) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1.1rem !important;
+  color: #2563eb !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 4px 12px rgba(37,99,235,.08);
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+
+body.md3-on .dashboard-card:hover .dashboard-card-icon {
+  transform: scale(1.08) rotate(-4deg);
+}
+
+body.md3-on .dash-value {
+  font-size: 1.7rem !important;
+  font-weight: 800 !important;
+  background: linear-gradient(135deg, #0f172a, #1e40af);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+body.md3-on .dash-value-positive {
+  background: linear-gradient(135deg, #047857, #10b981);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+body.md3-on .dash-value-negative {
+  background: linear-gradient(135deg, #991b1b, #ef4444);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   57. BUTTONS REFINADOS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .btn:not(.outline):not(.outlined):not(.text):not(.tonal):not(.danger):not(.success):not(.warning):not(.elevated):not(.small):not([class*="sidebar"]) {
+  padding: 9px 18px !important;
+  font-weight: 600 !important;
+  letter-spacing: -.005em !important;
+  position: relative;
+}
+
+body.md3-on .btn.primary,
+body.md3-on .btn[class~="primary"] {
+  background: linear-gradient(135deg, #2563eb 0%, #0d9488 100%) !important;
+  color: #fff !important;
+  box-shadow: 0 6px 18px rgba(37,99,235,.32), inset 0 1px 0 rgba(255,255,255,.2) !important;
+}
+body.md3-on .btn.primary:hover {
+  box-shadow: 0 10px 28px rgba(37,99,235,.42), inset 0 1px 0 rgba(255,255,255,.3) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Iconos en botones con espacio correcto */
+body.md3-on .btn i + *,
+body.md3-on button i + * {
+  margin-left: 6px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   58. TABLE ROWS — entrada más suave
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes premRowSlide {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+body.md3-on table.data-table tbody tr {
+  animation: premRowSlide .25s cubic-bezier(.4,0,.2,1) both !important;
+}
+
+body.md3-on table.data-table tbody tr:hover {
+  transform: scale(1.003);
+  box-shadow: inset 4px 0 0 #2563eb, 0 4px 12px rgba(15,23,42,.06) !important;
+  z-index: 1;
+  position: relative;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   59. FORM ELEMENTS POLISH
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .form-group input:focus,
+body.md3-on .form-group select:focus,
+body.md3-on .form-group textarea:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 4px rgba(37,99,235,.14), inset 0 1px 2px rgba(15,23,42,.04) !important;
+  background: #fff !important;
+}
+
+body.md3-on .form-group label {
+  font-size: .72rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .05em !important;
+  text-transform: uppercase !important;
+  color: #64748b !important;
+  margin-bottom: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+/* Iconito sutil antes del label si tiene data-icon */
+body.md3-on .form-group label[data-icon]::before {
+  content: attr(data-icon);
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  color: #2563eb;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   60. LOADING SPINNER PREMIUM
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .loading-spinner {
+  width: 36px; height: 36px;
+  border: 3px solid #e0e7ff;
+  border-top-color: #2563eb;
+  border-right-color: #0d9488;
+  border-radius: 50%;
+  animation: premSpinFast .9s cubic-bezier(.4,0,.2,1) infinite;
+  position: relative;
+}
+body.md3-on .loading-spinner::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border: 2px dashed rgba(37,99,235,.2);
+  border-radius: 50%;
+  animation: premSpin 8s linear infinite reverse;
+}
+@keyframes premSpinFast {
+  to { transform: rotate(360deg); }
+}
+
+body.md3-on #global-loading {
+  background: rgba(255,255,255,.78) !important;
+  backdrop-filter: blur(8px);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   61. PANEL PADDING / RHYTHM
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .panel.active {
+  padding: 22px 24px !important;
+}
+
+@media (max-width: 768px) {
+  body.md3-on .panel.active { padding: 14px 12px !important; }
+  body.md3-on .dashboard-card { padding: 18px !important; }
+  body.md3-on .section-header { padding: 14px 16px !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   62. REDUCED MOTION RESPECT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  body.md3-on *,
+  body.md3-on *::before,
+  body.md3-on *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+  body.md3-on .panel.active,
+  body.md3-on .dashboard-card,
+  body.md3-on .modal-dialog {
+    animation: none !important;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   63. SIDEBAR COLLAPSE PERFECT — minimizar/expandir suave + tooltip
+   El truco font-size:0 colapsa el texto-node (no se puede :not(i) en text)
+   y restauramos el font-size sólo en el icono. Tooltip aparece al hover.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Transición suave del ancho del sidebar */
+body.md3-on .sidebar-nav {
+  transition: width .28s cubic-bezier(.4,0,.2,1),
+              flex-basis .28s cubic-bezier(.4,0,.2,1) !important;
+}
+
+/* Tabs: transición fina entre collapsed y expanded */
+body.md3-on .tabs.tabs--rail .tab,
+body.md3-on .sidebar-nav .tab {
+  transition: font-size .22s cubic-bezier(.4,0,.2,1),
+              padding .22s cubic-bezier(.4,0,.2,1),
+              gap .22s cubic-bezier(.4,0,.2,1),
+              background-color .15s ease,
+              transform .18s cubic-bezier(.34,1.56,.64,1),
+              box-shadow .2s ease,
+              color .15s ease !important;
+  white-space: nowrap;
+  overflow: hidden;
+  position: relative;
+}
+
+/* COLLAPSED: el truco — font-size: 0 colapsa text nodes; padding centrado */
+body.sidebar-rail-collapsed.md3-on .sidebar-nav,
+body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail {
+  scrollbar-width: none;
+}
+body.sidebar-rail-collapsed.md3-on .sidebar-nav { width: 64px !important; flex-basis: 64px !important; min-width: 64px !important; }
+
+body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail {
+  padding: 8px 6px 24px !important;
+}
+
+body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail .tab,
+body.sidebar-rail-collapsed.md3-on .sidebar-nav .tab {
+  font-size: 0 !important;       /* colapsa TEXT NODE */
+  padding: 11px 0 !important;
+  gap: 0 !important;
+  justify-content: center !important;
+  width: 52px !important;
+  min-width: 52px !important;
+  margin: 2px auto !important;
+}
+
+/* Restaurar fuente sólo en icono y badge */
+body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail .tab > i,
+body.sidebar-rail-collapsed.md3-on .sidebar-nav .tab > i,
+body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail .tab > .fas,
+body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail .tab > .far,
+body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail .tab > .fab,
+body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail .tab > .fa {
+  font-size: 1.05rem !important;
+  width: auto !important;
+  margin: 0 !important;
+}
+body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail .tab > .tab-badge {
+  font-size: .58rem !important;
+  position: absolute !important;
+  top: 4px !important;
+  right: 4px !important;
+  padding: 1px 5px !important;
+  border-radius: 9999px !important;
+}
+
+/* Esconder título "MÓDULOS" cuando está colapsado */
+body.sidebar-rail-collapsed.md3-on .sidebar-nav-title {
+  font-size: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Toolbar (donde vive el botón hamburger) — centrar el toggle */
+body.sidebar-rail-collapsed.md3-on .sidebar-nav-toolbar {
+  padding: 10px 6px !important;
+  justify-content: center !important;
+}
+
+/* TOOLTIP al hacer hover sobre tab colapsada — muestra nombre del módulo */
+body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail .tab::after {
+  content: attr(title);
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-6px) scale(.95);
+  background: #0f172a;
+  color: #fff;
+  font-size: .76rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .15s ease, transform .18s cubic-bezier(.34,1.56,.64,1);
+  z-index: 1000;
+  box-shadow: 0 8px 24px rgba(15,23,42,.24), 0 2px 6px rgba(15,23,42,.16);
+}
+body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail .tab::before {
+  content: '';
+  position: absolute;
+  left: calc(100% + 4px);
+  top: 50%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-right-color: #0f172a;
+  opacity: 0;
+  transition: opacity .15s ease;
+  z-index: 1001;
+  pointer-events: none;
+}
+body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail .tab:hover::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0) scale(1);
+}
+body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail .tab:hover::before {
+  opacity: 1;
+}
+
+/* Hover background expandido para feel de botón */
+body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail .tab:hover {
+  background: #eff6ff !important;
+  transform: scale(1.06);
+}
+body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail .tab.active:hover {
+  transform: scale(1.04);
+}
+
+/* Indicador active más sutil cuando está colapsado */
+body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail .tab.active {
+  border-radius: 12px !important;
+}
+body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail .tab.active::before {
+  display: none;  /* el lateral indicator no funciona en collapsed */
+}
+
+/* Botón rail-toggle más visible y bien centrado */
+body.md3-on .btn-sidebar-rail-toggle {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 10px !important;
+  background: linear-gradient(135deg, #eff6ff, #f0f9ff) !important;
+  border: 1.5px solid #dbeafe !important;
+  color: #2563eb !important;
+  cursor: pointer;
+  font-size: 1rem !important;
+  margin: 0 !important;
+  box-shadow: 0 1px 2px rgba(15,23,42,.04);
+}
+body.md3-on .btn-sidebar-rail-toggle:hover {
+  background: linear-gradient(135deg, #dbeafe, #e0f2fe) !important;
+  border-color: #93c5fd !important;
+  color: #1e40af !important;
+  transform: scale(1.06);
+  box-shadow: 0 4px 12px rgba(37,99,235,.18);
+}
+body.sidebar-rail-collapsed.md3-on .btn-sidebar-rail-toggle i {
+  transform: rotate(180deg);
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+body.md3-on .btn-sidebar-rail-toggle i {
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+
+/* En mobile, ignorar collapsed (el sidebar es drawer) */
+@media (max-width: 768px) {
+  body.sidebar-rail-collapsed.md3-on .sidebar-nav { width: 272px !important; flex-basis: 272px !important; }
+  body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail .tab { font-size: .82rem !important; padding: 10px 14px !important; width: auto !important; justify-content: flex-start !important; gap: 9px !important; }
+  body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail .tab > i { font-size: 1rem !important; width: 18px !important; }
+  body.sidebar-rail-collapsed.md3-on .sidebar-nav-title { font-size: .6rem !important; padding: 0 14px !important; height: auto !important; }
+  body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail .tab::after,
+  body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail .tab::before { display: none !important; }
+}
