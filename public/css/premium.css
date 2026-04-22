@@ -4386,3 +4386,582 @@ body.md3-on .btn[id^="nueva"]:hover {
 body.md3-on .app-main::before {
   content: 'v51-life';
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+   92. CONSOLIDACIÓN FINAL — DESIGN SYSTEM RESET
+   Esta sección OVERRIDA todas las anteriores para lograr un diseño
+   coherente, simétrico y profesional. Inspiración: Linear, Stripe
+   Dashboard, Vercel. Una sola identidad cromática (navy + electric blue).
+   Color reservado SÓLO para status (success/danger/warning/info).
+   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Paleta primaria UNIFICADA */
+  --ds-primary:    #1e3a8a;
+  --ds-primary-2:  #2563eb;
+  --ds-primary-3:  #3b82f6;
+  --ds-grad:       linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+
+  /* Neutrals — escala slate */
+  --ds-bg:         #f8fafc;
+  --ds-surface:    #ffffff;
+  --ds-border:     #e2e8f0;
+  --ds-border-2:   #cbd5e1;
+  --ds-text:       #0f172a;
+  --ds-text-2:     #475569;
+  --ds-text-3:     #94a3b8;
+
+  /* Status reservado — 4 colores únicamente */
+  --ds-success:    #059669;
+  --ds-danger:     #dc2626;
+  --ds-warning:    #d97706;
+  --ds-info:       #0284c7;
+
+  /* Spacing escala 4px */
+  --ds-1: 4px;  --ds-2: 8px;  --ds-3: 12px; --ds-4: 16px;
+  --ds-5: 20px; --ds-6: 24px; --ds-8: 32px; --ds-12: 48px;
+
+  /* Radius unificado */
+  --ds-r-sm: 6px;  --ds-r:    10px; --ds-r-lg: 14px; --ds-r-xl: 20px;
+
+  /* Shadows */
+  --ds-elev-1: 0 1px 2px rgba(15,23,42,.04), 0 1px 3px rgba(15,23,42,.06);
+  --ds-elev-2: 0 2px 4px rgba(15,23,42,.05), 0 4px 12px rgba(15,23,42,.06);
+  --ds-elev-3: 0 8px 24px rgba(15,23,42,.10), 0 4px 12px rgba(15,23,42,.06);
+}
+
+/* ── BG: plano sin radial ambient ────────────────────────────────────── */
+body.md3-on,
+body.md3-on .app-main {
+  background: var(--ds-bg) !important;
+  background-attachment: scroll !important;
+}
+
+/* ── SECTION HEADER UNIFICADO ────────────────────────────────────────── */
+/* Override TODOS los per-panel gradients de las secciones 5 y 85 */
+body.md3-on .section-header,
+body.md3-on #panel-clientes .section-header,
+body.md3-on #panel-refacciones .section-header,
+body.md3-on #panel-almacen .section-header,
+body.md3-on #panel-cotizaciones .section-header,
+body.md3-on #panel-ventas .section-header,
+body.md3-on #panel-prospeccion .section-header,
+body.md3-on #panel-bonos .section-header,
+body.md3-on #panel-viajes .section-header,
+body.md3-on #panel-tarifas .section-header,
+body.md3-on #panel-tecnicos .section-header,
+body.md3-on #panel-bitacoras .section-header,
+body.md3-on #panel-auditoria .section-header,
+body.md3-on #panel-usuarios .section-header,
+body.md3-on #panel-categorias-catalogo .section-header,
+body.md3-on #panel-revision-maquinas .section-header,
+body.md3-on #panel-mantenimiento-garantia .section-header,
+body.md3-on #panel-reportes .section-header,
+body.md3-on #panel-garantias .section-header,
+body.md3-on #panel-incidentes .section-header,
+body.md3-on #panel-maquinas .section-header,
+body.md3-on #panel-garantias-sin-cobertura .section-header {
+  background: var(--ds-surface) !important;
+  color: var(--ds-text) !important;
+  border: 1px solid var(--ds-border) !important;
+  border-left: 4px solid var(--ds-primary-2) !important;
+  border-radius: var(--ds-r-lg) !important;
+  box-shadow: var(--ds-elev-1) !important;
+  padding: 16px 20px !important;
+  margin: 0 0 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  position: relative;
+  overflow: visible;
+  animation: none !important;
+}
+
+/* Eliminar pseudoelementos decorativos del section-header */
+body.md3-on .section-header::before,
+body.md3-on .section-header::after {
+  display: none !important;
+}
+
+/* Texto del header — oscuro siempre */
+body.md3-on .section-header,
+body.md3-on .section-header h1,
+body.md3-on .section-header h2,
+body.md3-on .section-header h3,
+body.md3-on .section-header h4 {
+  color: var(--ds-text) !important;
+  font-weight: 700 !important;
+  letter-spacing: -.01em;
+}
+body.md3-on .section-header h2 {
+  font-size: 1.05rem !important;
+  margin: 0 !important;
+}
+body.md3-on .section-header h2 *:not(i):not(.fas):not(.far) {
+  color: var(--ds-text) !important;
+}
+
+/* Icon del header — gradiente único, tamaño consistente */
+body.md3-on .section-header h2 i,
+body.md3-on .section-header h2 .fas,
+body.md3-on .section-header h2 .far {
+  background: var(--ds-grad) !important;
+  color: #fff !important;
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: var(--ds-r) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1.05rem !important;
+  box-shadow: 0 4px 12px rgba(37,99,235,.28), inset 0 1px 0 rgba(255,255,255,.2) !important;
+  flex-shrink: 0;
+  backdrop-filter: none !important;
+}
+
+/* ── TOOLBAR DENTRO de section-header — limpia ─────────────────────── */
+body.md3-on .section-header > .toolbar,
+body.md3-on .section-header .toolbar {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  padding: 0 !important;
+  margin: 0 0 0 auto !important;
+  gap: 8px !important;
+  border-radius: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap;
+}
+
+/* Outline buttons en header — neutral slate */
+body.md3-on .section-header .btn.outline,
+body.md3-on .section-header .btn.outlined {
+  background: var(--ds-surface) !important;
+  border: 1px solid var(--ds-border) !important;
+  color: var(--ds-text-2) !important;
+  height: 36px !important;
+  padding: 0 14px !important;
+  border-radius: var(--ds-r-sm) !important;
+  font-weight: 600 !important;
+  font-size: .82rem !important;
+  letter-spacing: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+body.md3-on .section-header .btn.outline:hover,
+body.md3-on .section-header .btn.outlined:hover {
+  background: #f1f5f9 !important;
+  border-color: var(--ds-primary-2) !important;
+  color: var(--ds-primary-2) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(37,99,235,.16) !important;
+}
+body.md3-on .section-header .btn.outline i,
+body.md3-on .section-header .btn.outlined i {
+  color: inherit !important;
+}
+
+/* Primary button en header — gradient único */
+body.md3-on .section-header .btn.primary,
+body.md3-on .section-header .btn[id^="nuevo"],
+body.md3-on .section-header .btn[id^="nueva"],
+body.md3-on .section-header .btn[id*="-nuevo"],
+body.md3-on .section-header .btn[id*="-nueva"] {
+  background: var(--ds-grad) !important;
+  background-size: 100% 100% !important;
+  color: #fff !important;
+  border: none !important;
+  height: 36px !important;
+  padding: 0 18px !important;
+  border-radius: var(--ds-r-sm) !important;
+  font-weight: 700 !important;
+  font-size: .82rem !important;
+  box-shadow: 0 4px 12px rgba(37,99,235,.32) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+body.md3-on .section-header .btn.primary i { color: #fff !important; }
+body.md3-on .section-header .btn.primary:hover {
+  box-shadow: 0 6px 18px rgba(37,99,235,.42) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Inputs/checkboxes/labels dentro del header — fondo claro, texto oscuro */
+body.md3-on .section-header input[type="search"],
+body.md3-on .section-header input[type="text"],
+body.md3-on .section-header select {
+  background: var(--ds-surface) !important;
+  border: 1px solid var(--ds-border) !important;
+  color: var(--ds-text) !important;
+  height: 36px !important;
+  border-radius: var(--ds-r-sm) !important;
+  padding: 0 12px !important;
+  font-size: .82rem !important;
+}
+body.md3-on .section-header input::placeholder { color: var(--ds-text-3) !important; }
+body.md3-on .section-header input:focus,
+body.md3-on .section-header select:focus {
+  border-color: var(--ds-primary-2) !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.14) !important;
+  background: var(--ds-surface) !important;
+}
+body.md3-on .section-header .toolbar-checkbox,
+body.md3-on .section-header .toolbar-label,
+body.md3-on .section-header label,
+body.md3-on .section-header .toolbar-checkbox *,
+body.md3-on .section-header .toolbar-label * {
+  color: var(--ds-text-2) !important;
+  font-size: .82rem !important;
+}
+
+/* ── PANEL backgrounds — sin tinte ambient ─────────────────────────── */
+body.md3-on #panel-clientes.active,
+body.md3-on #panel-refacciones.active,
+body.md3-on #panel-almacen.active,
+body.md3-on #panel-cotizaciones.active,
+body.md3-on #panel-ventas.active,
+body.md3-on #panel-prospeccion.active,
+body.md3-on #panel-bonos.active,
+body.md3-on #panel-viajes.active,
+body.md3-on #panel-maquinas.active,
+body.md3-on #panel-tecnicos.active,
+body.md3-on #panel-tarifas.active,
+body.md3-on #panel-bitacoras.active,
+body.md3-on #panel-reportes.active,
+body.md3-on #panel-garantias.active,
+body.md3-on #panel-incidentes.active,
+body.md3-on #panel-revision-maquinas.active,
+body.md3-on #panel-mantenimiento-garantia.active,
+body.md3-on #panel-usuarios.active,
+body.md3-on #panel-auditoria.active,
+body.md3-on #panel-categorias-catalogo.active {
+  background: transparent !important;
+}
+
+/* Panel padding consistente */
+body.md3-on .panel.active {
+  padding: 24px !important;
+  display: flex !important;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── SIDEBAR — iconos slate uniforme, sin per-module colors ─────────── */
+body.md3-on .tabs.tabs--rail .tab[data-tab] i,
+body.md3-on .tabs.tabs--rail .tab i {
+  color: var(--ds-text-2) !important;
+  filter: none !important;
+}
+body.md3-on .tabs.tabs--rail .tab.active i,
+body.md3-on .tabs.tabs--rail .tab.active[data-tab] i {
+  color: #fff !important;
+}
+body.md3-on .tabs.tabs--rail .tab:not(.active):hover i {
+  color: var(--ds-primary-2) !important;
+  filter: none !important;
+  transform: none !important;
+}
+body.md3-on .tabs.tabs--rail .tab:hover i {
+  transform: scale(1.08) !important;
+}
+
+/* Active gradient unificado */
+body.md3-on .tabs.tabs--rail .tab.active {
+  background: var(--ds-grad) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 14px rgba(37,99,235,.32) !important;
+}
+
+/* ── HEADER APP — gradient navy sin animación ───────────────────────── */
+body.md3-on header.header,
+body.md3-on .header {
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
+  background-size: 100% 100% !important;
+  animation: none !important;
+  border-bottom: 1px solid #1e293b !important;
+  padding: 14px 22px !important;
+  box-shadow: 0 1px 8px rgba(0,0,0,.18) !important;
+}
+body.md3-on header.header::before,
+body.md3-on .header::before { display: none !important; }
+
+/* ── AVATAR — gradient único, contraste fuerte ─────────────────────── */
+.prem-user-avatar {
+  background: var(--ds-grad) !important;
+  border: 2px solid rgba(255,255,255,.4) !important;
+  box-shadow: 0 4px 14px rgba(37,99,235,.32), inset 0 1px 0 rgba(255,255,255,.25) !important;
+  width: 38px !important;
+  height: 38px !important;
+  font-size: 1rem !important;
+}
+
+/* ── TABLE thead — gradient único ──────────────────────────────────── */
+body.md3-on table.data-table thead,
+body.md3-on .table-wrap > table thead {
+  background: var(--ds-grad) !important;
+}
+body.md3-on table.data-table thead th {
+  font-size: .68rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .07em !important;
+  padding: 12px 14px !important;
+  text-transform: uppercase !important;
+}
+
+/* ── CARDS uniformes ──────────────────────────────────────────────── */
+body.md3-on .card,
+body.md3-on .dashboard-card,
+body.md3-on .admin-hub-card {
+  background: var(--ds-surface) !important;
+  border: 1px solid var(--ds-border) !important;
+  border-radius: var(--ds-r-lg) !important;
+  box-shadow: var(--ds-elev-1) !important;
+  backdrop-filter: none !important;
+  padding: 20px !important;
+}
+body.md3-on .dashboard-card:hover,
+body.md3-on .card:hover {
+  box-shadow: var(--ds-elev-2) !important;
+  transform: translateY(-2px) !important;
+}
+/* Eliminar la barra superior animada de dashboard cards (visual noise) */
+body.md3-on .dashboard-card::before {
+  display: none !important;
+}
+
+/* dash-value — ya no text-fill gradient (poco legible) */
+body.md3-on .dash-value {
+  -webkit-text-fill-color: var(--ds-text) !important;
+  background: none !important;
+  color: var(--ds-text) !important;
+  font-size: 1.6rem !important;
+  font-weight: 800 !important;
+}
+body.md3-on .dash-value-positive {
+  -webkit-text-fill-color: var(--ds-success) !important;
+  color: var(--ds-success) !important;
+}
+body.md3-on .dash-value-negative {
+  -webkit-text-fill-color: var(--ds-danger) !important;
+  color: var(--ds-danger) !important;
+}
+
+/* ── MODAL HEADER — gradient único ─────────────────────────────────── */
+body.md3-on .modal-header,
+body.md3-on .md-modal-header {
+  background: var(--ds-grad) !important;
+}
+
+/* ── STATUS BADGES — solo 4 colores reservados ────────────────────── */
+body.md3-on .badge-success, body.md3-on .badge.success,
+body.md3-on .badge-mant-ok, body.md3-on .badge-bono-pagado,
+body.md3-on .pvc-badge--success, body.md3-on .status-pill-ok,
+body.md3-on .estatus-cerrado, body.md3-on .estatus-finalizado,
+body.md3-on .estatus-aplicada, body.md3-on .estatus-venta,
+body.md3-on .semaforo-ok, body.md3-on .semaforo-verde {
+  background: #ecfdf5 !important;
+  color: var(--ds-success) !important;
+  border: 1px solid #a7f3d0 !important;
+  box-shadow: none !important;
+}
+body.md3-on .badge-error, body.md3-on .badge-danger, body.md3-on .badge.danger,
+body.md3-on .badge-mant-bad, body.md3-on .pvc-badge--error,
+body.md3-on .status-pill-bad,
+body.md3-on .estatus-cancelada, body.md3-on .estatus-rechazada, body.md3-on .estatus-error,
+body.md3-on .semaforo-bad, body.md3-on .semaforo-rojo {
+  background: #fef2f2 !important;
+  color: var(--ds-danger) !important;
+  border: 1px solid #fecaca !important;
+  box-shadow: none !important;
+}
+body.md3-on .badge-warning, body.md3-on .badge.warning,
+body.md3-on .badge-mant-warn, body.md3-on .badge-bono-pendiente,
+body.md3-on .pvc-badge--warning, body.md3-on .status-pill-warn,
+body.md3-on .estatus-revision, body.md3-on .estatus-en-proceso, body.md3-on .estatus-cotizacion,
+body.md3-on .semaforo-warn, body.md3-on .semaforo-amarillo {
+  background: #fffbeb !important;
+  color: var(--ds-warning) !important;
+  border: 1px solid #fde68a !important;
+  box-shadow: none !important;
+}
+body.md3-on .badge-info, body.md3-on .badge.info,
+body.md3-on .estatus-abierta, body.md3-on .estatus-abierto, body.md3-on .estatus-pendiente,
+body.md3-on .badge-mant-pendiente, body.md3-on .status-pill-neutral,
+body.md3-on .semaforo-gray, body.md3-on .semaforo-gris {
+  background: #eff6ff !important;
+  color: var(--ds-info) !important;
+  border: 1px solid #bfdbfe !important;
+  box-shadow: none !important;
+}
+
+/* Eliminar shimmer de badges (visual noise) */
+body.md3-on .badge::after,
+body.md3-on .estatus-pill::after,
+body.md3-on .status-pill::after,
+body.md3-on .semaforo::after,
+body.md3-on [class*="badge-"]::after {
+  display: none !important;
+}
+
+/* ── ACTION BUTTONS — colores semánticos coherentes ────────────────── */
+body.md3-on .prem-action-view,
+body.md3-on .prem-action-view:hover {
+  background: var(--ds-info) !important;
+  color: #fff !important;
+}
+body.md3-on .prem-action-edit,
+body.md3-on .prem-action-edit:hover {
+  background: var(--ds-primary-2) !important;
+  color: #fff !important;
+}
+body.md3-on .prem-action-delete,
+body.md3-on .prem-action-delete:hover {
+  background: var(--ds-danger) !important;
+  color: #fff !important;
+}
+body.md3-on .prem-action-duplicate,
+body.md3-on .prem-action-duplicate:hover {
+  background: var(--ds-text-2) !important;
+  color: #fff !important;
+}
+body.md3-on .prem-action-mail,
+body.md3-on .prem-action-mail:hover {
+  background: var(--ds-warning) !important;
+  color: #fff !important;
+}
+body.md3-on .prem-action-check,
+body.md3-on .prem-action-check:hover {
+  background: var(--ds-success) !important;
+  color: #fff !important;
+}
+
+/* ── TABLA contenedor uniforme ────────────────────────────────────── */
+body.md3-on .table-wrap,
+body.md3-on .md-table-wrap {
+  background: var(--ds-surface) !important;
+  border: 1px solid var(--ds-border) !important;
+  border-radius: var(--ds-r-lg) !important;
+  box-shadow: var(--ds-elev-1) !important;
+  backdrop-filter: none !important;
+}
+
+/* Hover de fila SIN scale (causa layout shift) */
+body.md3-on table.data-table tbody tr:hover {
+  transform: none !important;
+  background: #f8fafc !important;
+  box-shadow: inset 3px 0 0 var(--ds-primary-2) !important;
+}
+
+/* ── DASHBOARD title — limpio sin badge gigante ───────────────────── */
+body.md3-on .dashboard-title i {
+  background: var(--ds-grad) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(37,99,235,.28) !important;
+  width: 38px !important;
+  height: 38px !important;
+}
+body.md3-on .dashboard-card-icon {
+  background: linear-gradient(135deg, rgba(37,99,235,.12), rgba(37,99,235,.06)) !important;
+  color: var(--ds-primary-2) !important;
+  box-shadow: none !important;
+}
+
+/* ── DEBUG MARKER eliminado ───────────────────────────────────────── */
+body.md3-on .app-main::before {
+  display: none !important;
+}
+
+/* ── EMPTY CARD limpia ────────────────────────────────────────────── */
+body.md3-on .empty-card {
+  background: var(--ds-surface) !important;
+  border: 2px dashed var(--ds-border-2) !important;
+}
+body.md3-on .empty-card .empty-icon {
+  background: var(--ds-grad) !important;
+  color: #fff !important;
+  width: 72px !important;
+  height: 72px !important;
+  font-size: 2rem !important;
+  box-shadow: 0 8px 20px rgba(37,99,235,.24) !important;
+}
+body.md3-on .empty-card .empty-icon::after {
+  display: none !important;
+}
+
+/* ── PANEL ENTRANCE — más sobria ──────────────────────────────────── */
+@keyframes dsPanelIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+body.md3-on .panel.active {
+  animation: dsPanelIn .25s cubic-bezier(.4,0,.2,1) both !important;
+}
+
+/* ── HINT — info box limpia ─────────────────────────────────────── */
+body.md3-on .hint {
+  background: #eff6ff !important;
+  color: var(--ds-info) !important;
+  border-left: 3px solid var(--ds-primary-2) !important;
+  border-radius: 0 var(--ds-r-sm) var(--ds-r-sm) 0 !important;
+  padding: 10px 14px !important;
+  font-size: .82rem !important;
+  font-weight: 500 !important;
+}
+
+/* ── PREM EXTERNAL FILTER BAR — limpio ────────────────────────────── */
+.prem-ext-filter-bar {
+  background: var(--ds-surface) !important;
+  border: 1px solid var(--ds-border) !important;
+  border-radius: var(--ds-r-lg) !important;
+  padding: 14px 16px !important;
+  margin-bottom: 0 !important;
+  box-shadow: var(--ds-elev-1) !important;
+}
+.prem-ext-filter-head > i {
+  color: var(--ds-primary-2) !important;
+}
+.prem-ext-filter-bar input,
+.prem-ext-filter-bar select {
+  background: #f8fafc !important;
+  border: 1px solid var(--ds-border) !important;
+  color: var(--ds-text) !important;
+  height: 34px !important;
+  border-radius: var(--ds-r-sm) !important;
+}
+.prem-ext-filter-bar input:focus,
+.prem-ext-filter-bar select:focus {
+  background: #fff !important;
+  border-color: var(--ds-primary-2) !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.14) !important;
+}
+
+/* ── VIEWS BAR — limpia ───────────────────────────────────────────── */
+.prem-views-btn {
+  background: var(--ds-surface) !important;
+  border: 1px solid var(--ds-border) !important;
+  color: var(--ds-text-2) !important;
+  height: 32px !important;
+  padding: 0 12px !important;
+  border-radius: var(--ds-r-sm) !important;
+}
+.prem-views-btn:hover {
+  background: #eff6ff !important;
+  border-color: var(--ds-primary-2) !important;
+  color: var(--ds-primary-2) !important;
+}
+.prem-views-btn i { color: var(--ds-primary-2) !important; }
+
+/* ── NOTIFICACIONES BADGE en sidebar ──────────────────────────────── */
+body.md3-on .tab-badge {
+  background: var(--ds-danger) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 6px rgba(220,38,38,.45) !important;
+}
