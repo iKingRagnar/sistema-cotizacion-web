@@ -1,68 +1,169 @@
 /**
- * Design tokens — Apex (base profesional)
- * Alineado con style.css :root; temas sol / luna / industrial recolorean encima.
+ * Design Tokens — Material Design 3 (Google)
+ * Paleta, tipografía, elevación, radios y espaciado MD3.
  */
 :root {
-  /* Brand */
-  --ds-color-primary-50: #f0fdfa;
-  --ds-color-primary-600: #0f766e;
-  --ds-color-primary-700: #115e59;
-  --ds-color-secondary-50: #eff6ff;
-  --ds-color-secondary-600: #1d4ed8;
-
-  /* Neutrals */
-  --ds-color-bg: #eef1f6;
-  --ds-color-surface: #ffffff;
-  --ds-color-surface-muted: #f1f4f9;
-  --ds-color-border: #e1e7ef;
-  --ds-color-border-strong: #c8d2e0;
-  --ds-color-text: #0c1222;
-  --ds-color-text-secondary: #3d4a5f;
-  --ds-color-text-muted: #5c6b82;
-
+  /* Primary — Google Blue */
+  --md-primary:               #1A73E8;
+  --md-on-primary:            #FFFFFF;
+  --md-primary-container:     #D3E3FD;
+  --md-on-primary-container:  #041E49;
+  /* Secondary — Google Green */
+  --md-secondary:             #34A853;
+  --md-on-secondary:          #FFFFFF;
+  --md-secondary-container:   #C9EBD3;
+  --md-on-secondary-container:#0A3D1F;
+  /* Tertiary — Google Orange */
+  --md-tertiary:              #E37400;
+  --md-on-tertiary:           #FFFFFF;
+  --md-tertiary-container:    #FFDDB4;
+  --md-on-tertiary-container: #4A1F00;
+  /* Error — Google Red */
+  --md-error:                 #B3261E;
+  --md-on-error:              #FFFFFF;
+  --md-error-container:       #F9DEDC;
+  --md-on-error-container:    #410E0B;
+  /* Surfaces */
+  --md-background:            #F8F9FA;
+  --md-on-background:         #1C1B1F;
+  --md-surface:               #FFFFFF;
+  --md-on-surface:            #202124;
+  --md-surface-variant:       #F1F3F4;
+  --md-on-surface-variant:    #49454F;
+  --md-surface-container-lowest:  #FFFFFF;
+  --md-surface-container-low:     #F5F6F8;
+  --md-surface-container:         #EFF0F2;
+  --md-surface-container-high:    #E9EAEC;
+  --md-surface-container-highest: #E3E4E6;
+  /* Outline */
+  --md-outline:               #DADCE0;
+  --md-outline-variant:       #C4C7C5;
+  /* Inverse */
+  --md-inverse-surface:       #313033;
+  --md-inverse-on-surface:    #F4EFF4;
+  --md-inverse-primary:       #8BB4F8;
   /* Semantic */
-  --ds-color-success-bg: #ecfdf5;
-  --ds-color-success-fg: #047857;
-  --ds-color-warning-bg: #fffbeb;
-  --ds-color-warning-fg: #b45309;
-  --ds-color-error-bg: #fef2f2;
-  --ds-color-error-fg: #b91c1c;
-  --ds-color-info-bg: #eff6ff;
-  --ds-color-info-fg: #1d4ed8;
-
-  /* Accent data */
-  --ds-color-accent-violet: #4f46e5;
-  --ds-color-accent-amber: #b45309;
-
-  /* Radius */
-  --ds-radius-sm: 6px;
-  --ds-radius-md: 10px;
-  --ds-radius-lg: 12px;
-  --ds-radius-xl: 16px;
-  --ds-radius-2xl: 18px;
-  --ds-radius-full: 9999px;
-
-  /* Shadow */
-  --ds-shadow-sm: 0 1px 2px rgba(12, 18, 34, 0.05);
-  --ds-shadow-md: 0 4px 14px rgba(12, 18, 34, 0.07);
-  --ds-shadow-lg: 0 18px 48px rgba(12, 18, 34, 0.1);
-  --ds-shadow-ring: 0 0 0 3px rgba(15, 118, 110, 0.18);
-
+  --color-success-bg: #E6F4EA;
+  --color-success-fg: #137333;
+  --color-warning-bg: #FEF7E0;
+  --color-warning-fg: #B06000;
+  --color-error-bg:   #FCE8E6;
+  --color-error-fg:   #C5221F;
+  --color-info-bg:    #E8F0FE;
+  --color-info-fg:    #1967D2;
   /* Typography */
-  --ds-font-sans: 'Manrope', system-ui, -apple-system, Segoe UI, sans-serif;
-  --ds-font-display: 'Sora', var(--ds-font-sans);
-  --ds-text-xs: 0.75rem;
-  --ds-text-sm: 0.875rem;
-  --ds-text-base: 1rem;
-
-  /* Spacing scale (4px base) */
-  --ds-space-1: 0.25rem;
-  --ds-space-2: 0.5rem;
-  --ds-space-3: 0.75rem;
-  --ds-space-4: 1rem;
-  --ds-space-6: 1.5rem;
-}
-
-body.ds-tokens-loaded {
-  /* hook opcional para debugging */
+  --font-sans:    'Roboto', 'Google Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Google Sans', 'Roboto', system-ui, sans-serif;
+  --text-xs:   0.75rem;
+  --text-sm:   0.8125rem;
+  --text-base: 0.875rem;
+  --text-md:   1rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.25rem;
+  --text-2xl:  1.375rem;
+  --text-3xl:  1.75rem;
+  /* Elevation (MD3) */
+  --elevation-0: none;
+  --elevation-1: 0 1px 2px rgba(60,64,67,.30), 0 1px 3px rgba(60,64,67,.15);
+  --elevation-2: 0 1px 2px rgba(60,64,67,.30), 0 2px 6px rgba(60,64,67,.15);
+  --elevation-3: 0 4px 8px rgba(60,64,67,.20), 0 1px 3px rgba(60,64,67,.12);
+  --elevation-4: 0 6px 10px rgba(60,64,67,.18), 0 2px 4px rgba(60,64,67,.12);
+  --elevation-5: 0 8px 12px rgba(60,64,67,.16), 0 4px 8px rgba(60,64,67,.10);
+  --shadow-sm:   var(--elevation-1);
+  --shadow-md:   var(--elevation-3);
+  --shadow-lg:   var(--elevation-5);
+  --shadow-card: var(--elevation-1);
+  --shadow-focus:0 0 0 3px rgba(26,115,232,.28);
+  /* Radius (MD3) */
+  --radius-xs:   4px;
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   28px;
+  --radius-full: 9999px;
+  /* Spacing (8px base) */
+  --space-1:  4px;  --space-2:  8px;  --space-3:  12px;
+  --space-4:  16px; --space-5:  20px; --space-6:  24px;
+  --space-8:  32px; --space-10: 40px; --space-12: 48px;
+  /* Layout */
+  --header-height:     64px;
+  --sidebar-width:     256px;
+  --sidebar-collapsed: 72px;
+  /* Motion */
+  --motion-duration-short:   150ms;
+  --motion-duration-medium:  250ms;
+  --motion-duration-long:    350ms;
+  --motion-easing-standard:  cubic-bezier(0.2, 0, 0, 1);
+  --motion-easing-enter:     cubic-bezier(0, 0, 0, 1);
+  --motion-easing-exit:      cubic-bezier(0.3, 0, 1, 1);
+  /* Backward-compat aliases (app.js / CSS heredado) */
+  --config-primary:      var(--md-primary);
+  --config-accent:       var(--md-primary);
+  --brand-teal:          var(--md-primary);
+  --brand-teal-deep:     #1557B0;
+  --brand-sky:           #1A73E8;
+  --alive-violet:        var(--md-primary);
+  --alive-cyan:          var(--md-secondary);
+  --alive-mint:          #0D9488;
+  --focus-ring:          var(--md-primary);
+  --focus-ring-offset:   #fff;
+  --ease-out-expo:       var(--motion-easing-standard);
+  --ease-out-back:       cubic-bezier(0.34,1.56,0.64,1);
+  --ease-in-out-smooth:  cubic-bezier(0.65,0,0.35,1);
+  --ease-out-quart:      cubic-bezier(0.25,1,0.5,1);
+  --duration-instant:    100ms;
+  --duration-fast:       var(--motion-duration-short);
+  --duration-normal:     var(--motion-duration-medium);
+  --duration-slow:       var(--motion-duration-long);
+  --shadow-brand:        var(--shadow-md);
+  --shadow-xl:           var(--shadow-lg);
+  --glow-cyan:           0 8px 28px rgba(26,115,232,.20);
+  --glow-violet:         0 8px 28px rgba(26,115,232,.12);
+  --glass-bg:            rgba(255,255,255,.90);
+  --glass-border:        rgba(255,255,255,.70);
+  --radius-md-legacy:    var(--radius-md);
+  /* DS token aliases */
+  --ds-color-primary-50:    #E8F0FE;
+  --ds-color-primary-600:   var(--md-primary);
+  --ds-color-primary-700:   #1557B0;
+  --ds-color-secondary-50:  #E6F4EA;
+  --ds-color-secondary-600: var(--md-secondary);
+  --ds-color-bg:            var(--md-background);
+  --ds-color-surface:       var(--md-surface);
+  --ds-color-surface-muted: var(--md-surface-container-low);
+  --ds-color-border:        var(--md-outline);
+  --ds-color-border-strong: var(--md-outline-variant);
+  --ds-color-text:          var(--md-on-surface);
+  --ds-color-text-secondary:var(--md-on-surface-variant);
+  --ds-color-text-muted:    #80868B;
+  --ds-color-success-bg:    var(--color-success-bg);
+  --ds-color-success-fg:    var(--color-success-fg);
+  --ds-color-warning-bg:    var(--color-warning-bg);
+  --ds-color-warning-fg:    var(--color-warning-fg);
+  --ds-color-error-bg:      var(--color-error-bg);
+  --ds-color-error-fg:      var(--color-error-fg);
+  --ds-color-info-bg:       var(--color-info-bg);
+  --ds-color-info-fg:       var(--color-info-fg);
+  --ds-color-accent-violet: var(--md-primary);
+  --ds-color-accent-amber:  var(--md-tertiary);
+  --ds-radius-sm:   var(--radius-xs);
+  --ds-radius-md:   var(--radius-sm);
+  --ds-radius-lg:   var(--radius-md);
+  --ds-radius-xl:   var(--radius-lg);
+  --ds-radius-2xl:  var(--radius-xl);
+  --ds-radius-full: var(--radius-full);
+  --ds-shadow-sm:   var(--shadow-sm);
+  --ds-shadow-md:   var(--shadow-md);
+  --ds-shadow-lg:   var(--shadow-lg);
+  --ds-shadow-ring: var(--shadow-focus);
+  --ds-font-sans:   var(--font-sans);
+  --ds-font-display:var(--font-display);
+  --ds-text-xs:     var(--text-xs);
+  --ds-text-sm:     var(--text-sm);
+  --ds-text-base:   var(--text-base);
+  --ds-space-1:     var(--space-1);
+  --ds-space-2:     var(--space-2);
+  --ds-space-3:     var(--space-3);
+  --ds-space-4:     var(--space-4);
+  --ds-space-6:     var(--space-6);
 }
