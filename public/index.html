@@ -3,23 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" id="meta-theme-color" content="#0f172a">
+  <meta name="theme-color" id="meta-theme-color" content="#1A73E8">
   <title>Servicio Técnico · Universal</title>
   <meta name="description" content="Servicio técnico Universal: clientes, refacciones, máquinas, cotizaciones, incidentes y bitácora de horas.">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <!-- Google Fonts — Roboto + Google Sans (Material Design 3) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;600;700&family=Manrope:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/design-tokens.css?v=3-apex-base">
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Font Awesome (iconos — se mantiene) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
+  <!-- CSS Tokens MD3 (base) -->
+  <link rel="stylesheet" href="css/design-tokens.css?v=4-md3">
+  <!-- CSS heredados (funcionalidad JS depende de clases; se sobreescriben por material.css) -->
   <link rel="stylesheet" href="css/design-system.css?v=3-apex-base">
   <link rel="stylesheet" href="css/style.css?v=87-bonos-resumen-bar-themes">
   <link rel="stylesheet" href="css/layout-rail.css?v=11-hide-sidebar-global-strip">
   <link rel="stylesheet" href="css/header-profile.css?v=9-profile-menu-casi-solido">
   <link rel="stylesheet" href="css/theme-industrial.css?v=24-prospeccion-map-voyager">
+  <!-- ★ Material Design 3 — Hoja maestra (última = mayor prioridad) -->
+  <link rel="stylesheet" href="css/material.css?v=1-md3">
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
+  <!-- MD3 migration: fuerza tema claro en primera visita post-rediseño -->
+  <script>
+    (function(){
+      try {
+        var v = localStorage.getItem('cotizacion-md3-migrated');
+        if (!v) { localStorage.setItem('cotizacion-theme','light'); localStorage.setItem('cotizacion-md3-migrated','1'); }
+      } catch(e){}
+    })();
+  </script>
 </head>
-<body class="theme-industrial">
+<body class="theme-industrial appearance-light">
   <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
   <div id="offline-banner" class="offline-banner hidden" role="alert" aria-live="polite">Sin conexión. Algunas funciones pueden no estar disponibles.</div>
   <div id="login-overlay" class="login-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="login-title">
@@ -1454,16 +1469,4 @@
 
   <footer class="app-footer" role="contentinfo">
     <p>Sistema de Cotización y Gestión · <span class="footer-version">v4</span> · Uso profesional · Cotizaciones, incidentes y bitácora en un solo lugar
-      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 65 · JS 124</strong></span></p>
-    <p class="footer-tip"><kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> atajos de sección · <kbd>Esc</kbd> cierra modales</p>
-  </footer>
-  <div id="toast-container" class="toast-container" aria-live="polite"></div>
-  <div id="global-loading" class="global-loading hidden" aria-hidden="true">
-    <div class="loading-spinner"></div>
-    <span class="loading-text">Cargando…</span>
-  </div>
-  <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
-  <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=140-prospeccion-map-voyager" defer></script>
-</body>
-</html>
+      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shif
