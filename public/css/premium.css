@@ -3165,3 +3165,226 @@ body.md3-on .btn-sidebar-rail-toggle i {
   body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail .tab::after,
   body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail .tab::before { display: none !important; }
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   64. PANEL TRANSITION — fade out viejo, fade in nuevo
+   Como app.js togglea .active class, animamos la entrada con una curva más
+   sofisticada (blur + slide + scale) y fade out al salir.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes premPanelOut {
+  from { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  to   { opacity: 0; transform: translateY(-10px) scale(.99); filter: blur(3px); }
+}
+
+body.md3-on .panel:not(.active) {
+  /* No se anima fuera por defecto, pero deja la transición lista */
+  opacity: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   65. ROW CLICK HIGHLIGHT — pulso azul al click
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes premRowClick {
+  0%   { background: rgba(37,99,235,.22) !important; }
+  100% { background: inherit !important; }
+}
+body.md3-on table.data-table tbody tr.prem-row-clicked {
+  animation: premRowClick .6s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   66. TOAST BOUNCE — entrada con spring
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes premToastEnterBounce {
+  0%   { opacity: 0; transform: translateX(80px) scale(.85); }
+  60%  { opacity: 1; transform: translateX(-6px) scale(1.02); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+.prem-toast {
+  animation: premToastEnterBounce .42s cubic-bezier(.34,1.56,.64,1) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   67. SKELETON VARIATIONS — anchos diferentes según tipo de columna
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.prem-skel-row td:first-child .prem-skel { width: 30%; height: 12px; }
+.prem-skel-row td:nth-child(2) .prem-skel { width: 75%; }
+.prem-skel-row td:nth-child(3) .prem-skel { width: 55%; }
+.prem-skel-row td:nth-child(4) .prem-skel { width: 40%; }
+.prem-skel-row td:nth-child(5) .prem-skel { width: 35%; height: 18px; border-radius: 9999px; } /* badge-like */
+.prem-skel-row td:nth-child(6) .prem-skel { width: 50%; }
+.prem-skel-row td:nth-child(7) .prem-skel { width: 45%; }
+.prem-skel-row td:nth-child(n+8) .prem-skel { width: 40%; }
+.prem-skel-row td:last-child .prem-skel { width: 25%; }
+
+/* Variación entre filas para que se vea natural */
+.prem-skel-row:nth-child(odd)  td:first-child .prem-skel { width: 35%; }
+.prem-skel-row:nth-child(even) td:first-child .prem-skel { width: 28%; }
+.prem-skel-row:nth-child(3n) td:nth-child(2) .prem-skel { width: 65%; }
+.prem-skel-row:nth-child(4n) td:nth-child(2) .prem-skel { width: 85%; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   68. NUMERIC INPUT ARROWS REFINADOS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Webkit: ocultar default + custom arrows opcionales con :hover */
+body.md3-on input[type="number"]::-webkit-outer-spin-button,
+body.md3-on input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+body.md3-on input[type="number"] { -moz-appearance: textfield; }
+
+/* Date inputs: indicador del calendario más visible */
+body.md3-on input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(40%) sepia(85%) saturate(2000%) hue-rotate(210deg);
+  opacity: .7;
+  transition: opacity .15s ease, transform .15s ease;
+}
+body.md3-on input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   69. DRAG HANDLES VISIBLES — para cards reordenables
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .prem-draggable-card {
+  position: relative;
+}
+body.md3-on .prem-draggable-card::after {
+  content: '';
+  position: absolute;
+  top: 12px; right: 12px;
+  width: 16px; height: 16px;
+  background-image:
+    radial-gradient(circle, #cbd5e1 1.6px, transparent 1.6px),
+    radial-gradient(circle, #cbd5e1 1.6px, transparent 1.6px),
+    radial-gradient(circle, #cbd5e1 1.6px, transparent 1.6px),
+    radial-gradient(circle, #cbd5e1 1.6px, transparent 1.6px),
+    radial-gradient(circle, #cbd5e1 1.6px, transparent 1.6px),
+    radial-gradient(circle, #cbd5e1 1.6px, transparent 1.6px);
+  background-position: 0 0, 8px 0, 0 6px, 8px 6px, 0 12px, 8px 12px;
+  background-size: 4px 4px;
+  background-repeat: no-repeat;
+  opacity: .35;
+  transition: opacity .2s ease, color .2s ease;
+  cursor: grab;
+  pointer-events: none;
+  font-family: 'Font Awesome 6 Free' !important;
+  font-weight: 900;
+}
+/* Reemplazo simpler con FontAwesome */
+body.md3-on .prem-draggable-card::after {
+  content: '\f142\f142';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  background: none;
+  letter-spacing: -2px;
+  font-size: .7rem;
+  color: #cbd5e1;
+  width: auto; height: auto;
+}
+body.md3-on .prem-draggable-card:hover::after {
+  opacity: 1;
+  color: #2563eb;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   70. PREMIUM TOOLTIPS — para cualquier elemento con [data-prem-tooltip]
+   También se aplica a [title] (el JS lo migra)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-prem-tooltip] {
+  position: relative;
+}
+[data-prem-tooltip]:hover::before,
+[data-prem-tooltip]:focus-visible::before {
+  content: attr(data-prem-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: #0f172a;
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 600;
+  padding: 6px 11px;
+  border-radius: 7px;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+  box-shadow: 0 6px 20px rgba(15,23,42,.24), 0 2px 6px rgba(15,23,42,.16);
+  opacity: 0;
+  animation: premTooltipIn .18s cubic-bezier(.34,1.56,.64,1) .35s forwards;
+}
+[data-prem-tooltip]:hover::after,
+[data-prem-tooltip]:focus-visible::after {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #0f172a;
+  z-index: 999;
+  pointer-events: none;
+  opacity: 0;
+  animation: premTooltipIn .18s ease .35s forwards;
+}
+@keyframes premTooltipIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Posiciones según data-prem-tooltip-pos */
+[data-prem-tooltip][data-prem-tooltip-pos="bottom"]:hover::before {
+  bottom: auto;
+  top: calc(100% + 8px);
+}
+[data-prem-tooltip][data-prem-tooltip-pos="bottom"]:hover::after {
+  bottom: auto;
+  top: calc(100% + 2px);
+  border-top-color: transparent;
+  border-bottom-color: #0f172a;
+}
+[data-prem-tooltip][data-prem-tooltip-pos="right"]:hover::before {
+  bottom: auto; top: 50%; left: calc(100% + 10px);
+  transform: translateY(-50%);
+}
+[data-prem-tooltip][data-prem-tooltip-pos="right"]:hover::after {
+  bottom: auto; top: 50%; left: calc(100% + 4px);
+  transform: translateY(-50%);
+  border: 5px solid transparent;
+  border-right-color: #0f172a;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   71. SKIP-TO-CONTENT LINK (a11y)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.prem-skip-link {
+  position: fixed;
+  top: -100px; left: 12px;
+  background: #2563eb;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 0 0 10px 10px;
+  font-weight: 700;
+  text-decoration: none;
+  z-index: 10000;
+  box-shadow: 0 4px 16px rgba(15,23,42,.24);
+  transition: top .2s ease;
+}
+.prem-skip-link:focus {
+  top: 0;
+  outline: none;
+}

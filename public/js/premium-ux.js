@@ -846,7 +846,9 @@
         }
       }
 
-      async function uploadFile(file) {
+      async function uploadFile(rawFile) {
+        // Comprimir imagen si aplica (>1MB y es image/*)
+        const file = window.premCompressImage ? await window.premCompressImage(rawFile) : rawFile;
         if (file.size > 8 * 1024 * 1024) {
           if (window.premToast) window.premToast(`"${file.name}" excede 8 MB`, { type: 'error' });
           return;
@@ -1203,9 +1205,180 @@
     mo.observe(document.body, { childList: true, subtree: true });
   }
 
+  /* ═══════════════════════════════════════════════════════════
+     14. PREMIUM TOOLTIPS — migra cualquier [title] a [data-prem-tooltip]
+     Excluye sidebar tabs (que ya tienen su propio tooltip CSS)
+     ═══════════════════════════════════════════════════════════ */
+  function initPremiumTooltips() {
+    function migrate(root) {
+      const els = (root.querySelectorAll
+        ? root.querySelectorAll('[title]:not([data-prem-tooltip])')
+        : []);
+      els.forEach(el => {
+        // Saltar tabs de sidebar (CSS ya maneja su tooltip)
+        if (el.closest('.tabs.tabs--rail')) return;
+        // Saltar elementos cuyo title está vacío
+        const t = el.getAttribute('title');
+        if (!t || !t.trim()) return;
+        el.setAttribute('data-prem-tooltip', t.trim().slice(0, 120));
+        el.removeAttribute('title');
+      });
+    }
+    migrate(document);
+    const mo = new MutationObserver(muts => {
+      for (const m of muts) for (const n of m.addedNodes) {
+        if (n.nodeType === 1) migrate(n);
+      }
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     15. ARIA AUTO-LABELS — botones de acción de tabla sin label
+     ═══════════════════════════════════════════════════════════ */
+  function initAriaLabels() {
+    const ICON_LABELS = {
+      'fa-edit':       'Editar',
+      'fa-pen':        'Editar',
+      'fa-pencil':     'Editar',
+      'fa-trash':      'Eliminar',
+      'fa-trash-alt':  'Eliminar',
+      'fa-times':      'Cerrar',
+      'fa-eye':        'Ver detalles',
+      'fa-eye-slash':  'Ocultar',
+      'fa-print':      'Imprimir',
+      'fa-download':   'Descargar',
+      'fa-upload':     'Subir',
+      'fa-copy':       'Copiar',
+      'fa-clone':      'Duplicar',
+      'fa-envelope':   'Enviar correo',
+      'fa-file-pdf':   'Descargar PDF',
+      'fa-file-csv':   'Exportar CSV',
+      'fa-file-excel': 'Exportar Excel',
+      'fa-plus':       'Agregar',
+      'fa-check':      'Confirmar',
+      'fa-sync':       'Actualizar',
+      'fa-sync-alt':   'Actualizar',
+      'fa-undo':       'Deshacer',
+      'fa-redo':       'Rehacer',
+      'fa-search':     'Buscar',
+      'fa-filter':     'Filtrar',
+      'fa-cog':        'Configurar',
+      'fa-link':       'Vincular',
+      'fa-unlink':     'Desvincular',
+    };
+    function label(btn) {
+      if (btn.getAttribute('aria-label') || (btn.textContent || '').trim().length > 1) return;
+      const i = btn.querySelector('i');
+      if (!i) return;
+      for (const cls of i.classList) {
+        if (ICON_LABELS[cls]) {
+          btn.setAttribute('aria-label', ICON_LABELS[cls]);
+          if (!btn.getAttribute('data-prem-tooltip') && !btn.getAttribute('title')) {
+            btn.setAttribute('data-prem-tooltip', ICON_LABELS[cls]);
+          }
+          return;
+        }
+      }
+    }
+    function scan(root) {
+      (root.querySelectorAll
+        ? root.querySelectorAll('table.data-table td.th-actions button, table.data-table td.th-actions .btn')
+        : []
+      ).forEach(label);
+    }
+    scan(document);
+    const mo = new MutationObserver(muts => {
+      for (const m of muts) for (const n of m.addedNodes) {
+        if (n.nodeType === 1) scan(n);
+      }
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     16. ROW CLICK HIGHLIGHT — pulso azul al click de fila
+     ═══════════════════════════════════════════════════════════ */
+  function initRowClickHighlight() {
+    document.addEventListener('click', (e) => {
+      // Skip si está activo modo selección bulk (ya tiene su highlight)
+      if (document.body.classList.contains('prem-select-mode')) return;
+      const tr = e.target.closest('table.data-table tbody tr');
+      if (!tr) return;
+      // Skip cuando se hace click en botones/links/inputs (no es un click de fila)
+      if (e.target.closest('button, a, input, select, textarea, label')) return;
+      tr.classList.remove('prem-row-clicked');
+      // Force reflow para reiniciar la animación
+      void tr.offsetWidth;
+      tr.classList.add('prem-row-clicked');
+      setTimeout(() => tr.classList.remove('prem-row-clicked'), 700);
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     17. IMAGE COMPRESSION en upload de attachments
+     Si el archivo es imagen >1MB, redimensiona a max 1600px y
+     re-encoda como JPEG calidad .85 antes de enviar.
+     Hook: intercepta FileReader.readAsDataURL en attachments.
+     ═══════════════════════════════════════════════════════════ */
+  function compressImage(file, maxDim = 1600, quality = 0.85) {
+    return new Promise((resolve) => {
+      if (!file.type.startsWith('image/')) return resolve(file);
+      if (file.size < 1024 * 1024 && !/heic|tiff/i.test(file.type)) return resolve(file);
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          let { width, height } = img;
+          if (Math.max(width, height) > maxDim) {
+            const ratio = maxDim / Math.max(width, height);
+            width = Math.round(width * ratio);
+            height = Math.round(height * ratio);
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            if (!blob) return resolve(file);
+            // Si la "comprimida" salió más grande, devolver original
+            if (blob.size >= file.size) return resolve(file);
+            const out = new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' });
+            resolve(out);
+          }, 'image/jpeg', quality);
+        };
+        img.onerror = () => resolve(file);
+        img.src = reader.result;
+      };
+      reader.onerror = () => resolve(file);
+      reader.readAsDataURL(file);
+    });
+  }
+  // Expone para que initAttachments y otros lo usen
+  window.premCompressImage = compressImage;
+
+  /* ═══════════════════════════════════════════════════════════
+     18. SKIP-TO-CONTENT LINK (a11y)
+     ═══════════════════════════════════════════════════════════ */
+  function initSkipLink() {
+    if (document.querySelector('.prem-skip-link')) return;
+    const link = document.createElement('a');
+    link.className = 'prem-skip-link';
+    link.href = '#main-content';
+    link.textContent = 'Ir al contenido principal';
+    document.body.insertBefore(link, document.body.firstChild);
+    // Asegurar que existe el target
+    const main = document.querySelector('.app-main, main, #app-main');
+    if (main && !main.id) main.id = 'main-content';
+  }
+
   /* ─── Bootstrap ─────────────────────────────────────────── */
   function boot() {
-    initExternalFilters();   // PRIMERO: saca filtros antes de medir layout
+    initSkipLink();
+    initExternalFilters();
     initCommandK();
     initShortcutsCheatSheet();
     initSkeletonLoaders();
@@ -1218,6 +1391,9 @@
     initDashboardReorder();
     initRippleEffect();
     initSidebarTooltips();
+    initPremiumTooltips();
+    initAriaLabels();
+    initRowClickHighlight();
   }
 
   if (document.readyState === 'loading') {
