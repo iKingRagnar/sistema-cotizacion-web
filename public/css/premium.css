@@ -3580,3 +3580,435 @@ body.md3-on .header {
 form > [data-prem-attach] {
   margin-top: 18px;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   78. PULL-TO-REFRESH INDICATOR (mobile)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.prem-ptr-indicator {
+  position: fixed;
+  top: 0; left: 50%;
+  transform: translate(-50%, -100%);
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-top: none;
+  border-radius: 0 0 14px 14px;
+  padding: 10px 18px;
+  display: flex; align-items: center; gap: 10px;
+  font-size: .82rem;
+  color: #475569;
+  font-weight: 600;
+  box-shadow: 0 6px 20px rgba(15,23,42,.14);
+  z-index: 950;
+  transition: transform .2s ease;
+  pointer-events: none;
+}
+.prem-ptr-indicator i {
+  color: #2563eb;
+  transition: transform .2s ease;
+}
+.prem-ptr-indicator.prem-ptr-ready i { transform: rotate(180deg); }
+.prem-ptr-indicator.prem-ptr-loading i {
+  animation: premSpin 1s linear infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   79. PWA INSTALL BANNER
+   ═══════════════════════════════════════════════════════════════════════════ */
+.prem-pwa-banner {
+  position: fixed;
+  bottom: 16px; left: 16px; right: 16px;
+  max-width: 460px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, #2563eb, #0d9488);
+  color: #fff;
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 16px 40px rgba(37,99,235,.32), 0 4px 12px rgba(15,23,42,.18);
+  z-index: 980;
+  animation: premToastEnterBounce .4s cubic-bezier(.34,1.56,.64,1);
+}
+.prem-pwa-icon {
+  background: rgba(255,255,255,.2);
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+}
+.prem-pwa-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.prem-pwa-text strong { font-size: .92rem; }
+.prem-pwa-text span { font-size: .76rem; opacity: .85; }
+.prem-pwa-install {
+  background: #fff;
+  color: #1e40af;
+  border: none;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: .82rem;
+  transition: transform .15s ease;
+}
+.prem-pwa-install:hover { transform: scale(1.05); }
+.prem-pwa-dismiss {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,.85);
+  cursor: pointer;
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.prem-pwa-dismiss:hover { background: rgba(255,255,255,.15); color: #fff; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   80. AUDIT LOG TIMELINE MODAL
+   ═══════════════════════════════════════════════════════════════════════════ */
+.prem-audit-modal,
+.prem-webhooks-modal {
+  position: fixed; inset: 0; z-index: 1100;
+  display: none;
+  align-items: center; justify-content: center;
+  padding: 20px;
+}
+.prem-audit-modal.open,
+.prem-webhooks-modal.open { display: flex; animation: premFadeIn .16s ease; }
+
+.prem-audit-backdrop,
+.prem-webhooks-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(15,23,42,.55);
+  backdrop-filter: blur(6px);
+}
+.prem-audit-panel,
+.prem-webhooks-panel {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 720px;
+  max-height: 88vh;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(15,23,42,.36);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  animation: premScaleIn .25s cubic-bezier(.34,1.56,.64,1);
+}
+
+.prem-audit-head,
+.prem-webhooks-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 22px;
+  background: linear-gradient(135deg, #1e40af, #2563eb 60%, #0d9488);
+  color: #fff;
+}
+.prem-audit-head h2,
+.prem-webhooks-head h2 {
+  margin: 0; font-size: 1.05rem; font-weight: 700;
+  display: flex; align-items: center; gap: 10px; color: #fff;
+}
+.prem-audit-head h2 i,
+.prem-webhooks-head h2 i {
+  background: rgba(255,255,255,.18);
+  width: 34px; height: 34px; border-radius: 9px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.prem-audit-close,
+.prem-webhooks-close {
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.25);
+  color: #fff; cursor: pointer;
+  width: 34px; height: 34px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.prem-audit-body,
+.prem-webhooks-body {
+  padding: 22px;
+  overflow-y: auto;
+  background: #f8faff;
+}
+
+.prem-audit-loading {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 14px; padding: 60px 20px; color: #64748b; font-size: .88rem;
+}
+.prem-audit-empty {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 12px; padding: 60px 20px; color: #94a3b8; font-size: .88rem;
+}
+.prem-audit-empty i { font-size: 2.4rem; color: #cbd5e1; }
+
+.prem-audit-timeline {
+  display: flex; flex-direction: column;
+  gap: 16px;
+  position: relative;
+}
+.prem-audit-timeline::before {
+  content: '';
+  position: absolute;
+  left: 17px; top: 12px; bottom: 12px;
+  width: 2px;
+  background: linear-gradient(180deg, #cbd5e1, #e2e8f0);
+}
+
+.prem-audit-entry {
+  display: flex; gap: 14px;
+  position: relative;
+}
+.prem-audit-dot {
+  flex-shrink: 0;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #fff;
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(15,23,42,.16), 0 0 0 4px #f8faff;
+}
+.prem-audit-dot i { font-size: .82rem; }
+
+.prem-audit-content {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.prem-audit-meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  font-size: .8rem;
+  color: #475569;
+  margin-bottom: 6px;
+}
+.prem-audit-meta strong { color: #1e293b; font-weight: 700; }
+.prem-audit-meta time { color: #94a3b8; margin-left: auto; font-size: .72rem; }
+
+.prem-audit-detail {
+  font-size: .82rem;
+  color: #64748b;
+  margin-bottom: 8px;
+  background: #f8faff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border-left: 3px solid #cbd5e1;
+}
+
+.prem-audit-diff {
+  list-style: none;
+  padding: 0; margin: 8px 0 0;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.prem-audit-diff li {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+  font-size: .76rem;
+  background: #fefce8;
+  border: 1px solid #fef3c7;
+  border-radius: 7px;
+  padding: 5px 9px;
+}
+.prem-audit-diff li b { color: #1e293b; font-weight: 700; }
+.prem-audit-diff .prem-audit-from {
+  color: #991b1b;
+  background: #fee2e2;
+  padding: 2px 7px; border-radius: 5px;
+  text-decoration: line-through;
+  font-family: 'Roboto Mono', monospace;
+  font-size: .72rem;
+}
+.prem-audit-diff .prem-audit-to {
+  color: #065f46;
+  background: #d1fae5;
+  padding: 2px 7px; border-radius: 5px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: .72rem;
+}
+.prem-audit-diff i { color: #94a3b8; font-size: .65rem; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   81. WEBHOOKS MANAGEMENT MODAL
+   ═══════════════════════════════════════════════════════════════════════════ */
+.prem-webhooks-list {
+  display: flex; flex-direction: column;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+.prem-webhooks-empty {
+  text-align: center;
+  padding: 30px 20px;
+  color: #94a3b8;
+}
+.prem-webhooks-empty i { font-size: 2.2rem; color: #cbd5e1; margin-bottom: 10px; display: block; }
+
+.prem-webhook-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex; flex-direction: column;
+  gap: 8px;
+  transition: all .15s ease;
+}
+.prem-webhook-card:hover {
+  border-color: #bfdbfe;
+  box-shadow: 0 4px 12px rgba(37,99,235,.08);
+}
+.prem-webhook-card.inactive { opacity: .55; }
+
+.prem-webhook-row {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px;
+}
+.prem-webhook-info {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: .88rem;
+}
+.prem-webhook-info strong { color: #1e293b; }
+.prem-webhook-type {
+  font-size: .68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 5px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.prem-wh-type-slack    { background: #f5e6ff; color: #6b21a8; }
+.prem-wh-type-discord  { background: #e0e7ff; color: #4338ca; }
+.prem-wh-type-teams    { background: #dbeafe; color: #1e40af; }
+.prem-wh-type-generic  { background: #f1f5f9; color: #475569; }
+
+.prem-wh-status {
+  font-size: .65rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 5px;
+}
+.prem-wh-status.ok   { background: #d1fae5; color: #065f46; }
+.prem-wh-status.bad  { background: #fee2e2; color: #991b1b; }
+.prem-wh-status.off  { background: #f1f5f9; color: #64748b; }
+
+.prem-webhook-actions { display: flex; gap: 4px; }
+.prem-webhook-actions button {
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  width: 32px; height: 32px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all .12s ease;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: .78rem;
+}
+.prem-webhook-actions button:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e40af;
+}
+.prem-webhook-actions .prem-wh-del:hover {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #ef4444;
+}
+
+.prem-webhook-url {
+  font-family: 'Roboto Mono', monospace;
+  font-size: .7rem;
+  color: #94a3b8;
+  background: #f8faff;
+  padding: 4px 8px;
+  border-radius: 5px;
+  word-break: break-all;
+}
+.prem-webhook-events {
+  display: flex; flex-wrap: wrap; gap: 4px;
+}
+.prem-wh-evt {
+  font-size: .65rem;
+  background: #eff6ff;
+  color: #1e40af;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.prem-webhook-error {
+  font-size: .72rem;
+  color: #991b1b;
+  background: #fee2e2;
+  padding: 5px 9px;
+  border-radius: 6px;
+}
+
+.prem-webhooks-form {
+  background: #fff;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.prem-webhooks-form h3 {
+  margin: 0;
+  font-size: .92rem;
+  color: #1e293b;
+  display: flex; align-items: center; gap: 6px;
+}
+.prem-webhooks-form h3 i { color: #2563eb; }
+.prem-wh-form-row { display: flex; gap: 10px; }
+.prem-wh-form-row input { flex: 1; }
+.prem-webhooks-form input[type="text"],
+.prem-webhooks-form input[type="url"],
+.prem-webhooks-form select {
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  color: #1e293b;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: .85rem;
+  outline: none;
+  transition: border-color .15s ease;
+}
+.prem-webhooks-form input:focus,
+.prem-webhooks-form select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+}
+.prem-wh-events {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  font-size: .8rem;
+  color: #475569;
+}
+.prem-wh-events label:first-child {
+  width: 100%;
+  font-weight: 700;
+  color: #1e293b;
+  font-size: .76rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 4px;
+}
+.prem-wh-evt-chk {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  cursor: pointer;
+  background: #f8faff;
+  font-size: .74rem;
+}
+.prem-wh-evt-chk:has(input:checked) {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e40af;
+  font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   82. CACHE-BUSTING marker (para verificar visualmente que la versión nueva carga)
+   ═══════════════════════════════════════════════════════════════════════════ */
+body.md3-on .app-main::before {
+  content: 'v50';
+  position: fixed;
+  bottom: 4px; right: 6px;
+  font-size: 9px;
+  color: rgba(15,23,42,.18);
+  font-family: 'Roboto Mono', monospace;
+  pointer-events: none;
+  z-index: 1;
+}

@@ -1665,6 +1665,419 @@
     mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'aria-hidden'] });
   }
 
+  /* ═══════════════════════════════════════════════════════════
+     25. PULL-TO-REFRESH (mobile)
+     Gesto down desde top: muestra spinner, dispara click en el botón
+     de refresh activo (search por #*-refresh, .btn-refresh, etc.)
+     ═══════════════════════════════════════════════════════════ */
+  function initPullToRefresh() {
+    if (!('ontouchstart' in window)) return;
+
+    const indicator = document.createElement('div');
+    indicator.className = 'prem-ptr-indicator';
+    indicator.innerHTML = '<i class="fas fa-arrow-down"></i><span>Suelta para actualizar</span>';
+    document.body.appendChild(indicator);
+
+    let startY = 0;
+    let pulling = false;
+    let triggered = false;
+    const THRESHOLD = 80;
+
+    document.addEventListener('touchstart', (e) => {
+      if (window.scrollY > 8) return;
+      const target = e.target.closest('.app-main, .panel, body');
+      if (!target) return;
+      startY = e.touches[0].clientY;
+      pulling = true;
+      triggered = false;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+      if (!pulling) return;
+      const dy = e.touches[0].clientY - startY;
+      if (dy <= 0) return;
+      if (window.scrollY > 8) { pulling = false; indicator.style.transform = 'translateY(-100%)'; return; }
+      const pull = Math.min(dy * 0.5, 120);
+      indicator.style.transform = `translateY(${pull - 60}px)`;
+      indicator.classList.toggle('prem-ptr-ready', pull >= THRESHOLD);
+      if (pull >= THRESHOLD) triggered = true;
+    }, { passive: true });
+
+    document.addEventListener('touchend', () => {
+      if (!pulling) return;
+      pulling = false;
+      if (triggered) {
+        indicator.classList.add('prem-ptr-loading');
+        indicator.querySelector('span').textContent = 'Actualizando…';
+        // Buscar botón de refresh del panel activo
+        const panel = document.querySelector('.panel.active');
+        const refreshBtn = panel?.querySelector('#dashboard-refresh, [id$="-refresh"], .btn-refresh, .btn-actualizar')
+          || document.querySelector('#dashboard-refresh');
+        if (refreshBtn) refreshBtn.click();
+        else location.reload();
+        setTimeout(() => {
+          indicator.style.transform = 'translateY(-100%)';
+          indicator.classList.remove('prem-ptr-loading', 'prem-ptr-ready');
+          indicator.querySelector('span').textContent = 'Suelta para actualizar';
+        }, 800);
+      } else {
+        indicator.style.transform = 'translateY(-100%)';
+        indicator.classList.remove('prem-ptr-ready');
+      }
+    }, { passive: true });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     26. PWA INSTALL PROMPT — custom UI con beforeinstallprompt
+     ═══════════════════════════════════════════════════════════ */
+  function initPWAInstall() {
+    let deferredPrompt = null;
+    const dismissedKey = LS_PREFIX + 'pwa-install-dismissed';
+    if (localStorage.getItem(dismissedKey)) return;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      showBanner();
+    });
+
+    function showBanner() {
+      if (document.querySelector('.prem-pwa-banner')) return;
+      const banner = document.createElement('div');
+      banner.className = 'prem-pwa-banner';
+      banner.innerHTML = `
+        <div class="prem-pwa-icon"><i class="fas fa-mobile-alt"></i></div>
+        <div class="prem-pwa-text">
+          <strong>Instalar app</strong>
+          <span>Acceso rápido y modo offline</span>
+        </div>
+        <button class="prem-pwa-install">Instalar</button>
+        <button class="prem-pwa-dismiss" aria-label="Cerrar"><i class="fas fa-times"></i></button>
+      `;
+      document.body.appendChild(banner);
+
+      banner.querySelector('.prem-pwa-install').addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted' && window.premToast) window.premToast('App instalada', { type: 'success' });
+        deferredPrompt = null;
+        banner.remove();
+      });
+      banner.querySelector('.prem-pwa-dismiss').addEventListener('click', () => {
+        try { localStorage.setItem(dismissedKey, '1'); } catch {}
+        banner.remove();
+      });
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     27. AUDIT LOG VIEWER — botón "Historial" en cada fila + modal
+     timeline. Usa /api/audit/:type/:id (backend ya existe).
+     Activación: row context menu (right-click) o tecla "h" sobre fila.
+     ═══════════════════════════════════════════════════════════ */
+  function initAuditViewer() {
+    // Modal único reusable
+    const modal = document.createElement('div');
+    modal.className = 'prem-audit-modal';
+    modal.innerHTML = `
+      <div class="prem-audit-backdrop"></div>
+      <div class="prem-audit-panel" role="dialog" aria-label="Historial de cambios">
+        <div class="prem-audit-head">
+          <h2><i class="fas fa-history"></i> Historial de cambios</h2>
+          <button class="prem-audit-close" aria-label="Cerrar"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="prem-audit-body"><div class="prem-audit-loading">Cargando…</div></div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    function close() { modal.classList.remove('open'); }
+    modal.querySelector('.prem-audit-backdrop').addEventListener('click', close);
+    modal.querySelector('.prem-audit-close').addEventListener('click', close);
+
+    async function open(entityType, entityId) {
+      const body = modal.querySelector('.prem-audit-body');
+      body.innerHTML = '<div class="prem-audit-loading"><div class="loading-spinner"></div><span>Cargando historial…</span></div>';
+      modal.classList.add('open');
+      try {
+        const res = await fetch(`/api/audit/${encodeURIComponent(entityType)}/${encodeURIComponent(entityId)}`, { credentials: 'same-origin' });
+        const rows = await res.json();
+        if (!Array.isArray(rows) || !rows.length) {
+          body.innerHTML = '<div class="prem-audit-empty"><i class="fas fa-inbox"></i><span>Sin cambios registrados</span></div>';
+          return;
+        }
+        body.innerHTML = '<div class="prem-audit-timeline">' + rows.map(r => renderEntry(r)).join('') + '</div>';
+      } catch (e) {
+        body.innerHTML = `<div class="prem-audit-empty"><i class="fas fa-exclamation-triangle"></i><span>Error: ${(e.message || '').slice(0, 80)}</span></div>`;
+      }
+    }
+    window.premAuditOpen = open;
+
+    function renderEntry(r) {
+      const icon = { POST: 'fa-plus', PUT: 'fa-pen', PATCH: 'fa-pen', DELETE: 'fa-trash', GET: 'fa-eye' }[r.method] || 'fa-circle';
+      const color = { POST: '#10b981', PUT: '#2563eb', PATCH: '#2563eb', DELETE: '#ef4444', GET: '#64748b' }[r.method] || '#64748b';
+      const date = formatAuditDate(r.creado_en);
+      let diffHtml = '';
+      if (r.diff_json) {
+        try {
+          const diff = JSON.parse(r.diff_json);
+          const keys = Object.keys(diff || {});
+          if (keys.length) {
+            diffHtml = '<ul class="prem-audit-diff">' + keys.map(k => `
+              <li><b>${escapeText(k)}:</b>
+                <span class="prem-audit-from">${escapeText(String(diff[k].from ?? '∅'))}</span>
+                <i class="fas fa-arrow-right"></i>
+                <span class="prem-audit-to">${escapeText(String(diff[k].to ?? '∅'))}</span>
+              </li>`).join('') + '</ul>';
+          }
+        } catch {}
+      }
+      return `
+        <div class="prem-audit-entry">
+          <div class="prem-audit-dot" style="background:${color}"><i class="fas ${icon}"></i></div>
+          <div class="prem-audit-content">
+            <div class="prem-audit-meta">
+              <strong>${escapeText(r.username || 'sistema')}</strong>
+              <span>${escapeText(r.method)} ${escapeText(r.path)}</span>
+              <time>${date}</time>
+            </div>
+            ${r.detail ? `<div class="prem-audit-detail">${escapeText(r.detail.slice(0, 200))}</div>` : ''}
+            ${diffHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    function formatAuditDate(s) {
+      if (!s) return '';
+      try { return new Date(s.replace(' ', 'T')).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' }); }
+      catch { return s; }
+    }
+    function escapeText(t) { const d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; }
+
+    // Right-click en fila → menu con "Historial" si la tabla mapea a un entity_type
+    const TABLE_ENTITY_MAP = {
+      'tabla-clientes':       'cliente',
+      'tabla-cotizaciones':   'cotizacion',
+      'tabla-incidentes':     'incidente',
+      'tabla-maquinas':       'maquina',
+      'tabla-refacciones':    'refaccion',
+      'tabla-reportes':       'reporte',
+      'tabla-garantias':      'garantia',
+      'tabla-mantenimientos': 'mantenimiento',
+    };
+
+    document.addEventListener('contextmenu', (e) => {
+      const tr = e.target.closest('table.data-table tbody tr');
+      if (!tr) return;
+      const table = tr.closest('table');
+      const type = TABLE_ENTITY_MAP[table?.id];
+      if (!type) return;
+      // Buscar id en data-id, data-row-id o primera celda numérica
+      const id = tr.dataset.id || tr.dataset.rowId
+        || (tr.querySelector('td:first-child')?.textContent.trim().match(/^\d+$/) ? tr.querySelector('td:first-child').textContent.trim() : null);
+      if (!id) return;
+      e.preventDefault();
+      open(type, id);
+    });
+
+    // Tecla "h" sobre fila → historial
+    document.addEventListener('keydown', (e) => {
+      if (isEditing(e.target)) return;
+      if (e.key !== 'h' && e.key !== 'H') return;
+      const tr = document.querySelector('table.data-table tbody tr:hover');
+      if (!tr) return;
+      const table = tr.closest('table');
+      const type = TABLE_ENTITY_MAP[table?.id];
+      if (!type) return;
+      const id = tr.dataset.id || tr.dataset.rowId
+        || (tr.querySelector('td:first-child')?.textContent.trim().match(/^\d+$/) ? tr.querySelector('td:first-child').textContent.trim() : null);
+      if (!id) return;
+      e.preventDefault();
+      open(type, id);
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     28. WEBHOOKS MANAGEMENT — modal CRUD accesible via Cmd+K "/webhooks"
+     ═══════════════════════════════════════════════════════════ */
+  function initWebhooksUI() {
+    const EVENTS = [
+      ['incidente.creado', 'Nuevo incidente'],
+      ['incidente.cerrado', 'Incidente cerrado'],
+      ['cotizacion.creada', 'Nueva cotización'],
+      ['cotizacion.aprobada', 'Cotización aprobada'],
+      ['reporte.creado', 'Nuevo reporte'],
+      ['reporte.finalizado', 'Reporte finalizado'],
+      ['stock.critico', 'Stock crítico'],
+    ];
+    const TYPES = [['slack', 'Slack'], ['discord', 'Discord'], ['teams', 'Teams'], ['generic', 'Genérico (JSON)']];
+
+    const modal = document.createElement('div');
+    modal.className = 'prem-webhooks-modal';
+    modal.innerHTML = `
+      <div class="prem-webhooks-backdrop"></div>
+      <div class="prem-webhooks-panel" role="dialog" aria-label="Webhooks">
+        <div class="prem-webhooks-head">
+          <h2><i class="fas fa-bolt"></i> Webhooks · Notificaciones salientes</h2>
+          <button class="prem-webhooks-close" aria-label="Cerrar"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="prem-webhooks-body"></div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    function close() { modal.classList.remove('open'); }
+    modal.querySelector('.prem-webhooks-backdrop').addEventListener('click', close);
+    modal.querySelector('.prem-webhooks-close').addEventListener('click', close);
+
+    async function refresh() {
+      const body = modal.querySelector('.prem-webhooks-body');
+      body.innerHTML = '<div class="prem-audit-loading"><div class="loading-spinner"></div></div>';
+      try {
+        const res = await fetch('/api/webhooks', { credentials: 'same-origin' });
+        const list = await res.json();
+        body.innerHTML = renderList(list || []) + renderForm();
+        wireUp();
+      } catch (e) {
+        body.innerHTML = `<div class="prem-audit-empty"><i class="fas fa-exclamation-triangle"></i><span>${e.message}</span></div>`;
+      }
+    }
+
+    function renderList(list) {
+      if (!list.length) return '<div class="prem-webhooks-empty"><i class="fas fa-inbox"></i><p>No hay webhooks configurados</p></div>';
+      return '<div class="prem-webhooks-list">' + list.map(w => {
+        const evts = (() => { try { return JSON.parse(w.eventos || '[]'); } catch { return []; } })();
+        const lastStatus = w.ultimo_status ? `<span class="prem-wh-status ${w.ultimo_status >= 200 && w.ultimo_status < 300 ? 'ok' : 'bad'}">HTTP ${w.ultimo_status}</span>` : '';
+        return `
+          <div class="prem-webhook-card ${w.activo ? '' : 'inactive'}" data-id="${w.id}">
+            <div class="prem-webhook-row">
+              <div class="prem-webhook-info">
+                <strong>${escapeText(w.nombre)}</strong>
+                <span class="prem-webhook-type prem-wh-type-${w.tipo}">${w.tipo}</span>
+                ${lastStatus}
+                ${w.activo ? '<span class="prem-wh-status ok">activo</span>' : '<span class="prem-wh-status off">inactivo</span>'}
+              </div>
+              <div class="prem-webhook-actions">
+                <button class="prem-wh-test" title="Probar"><i class="fas fa-paper-plane"></i></button>
+                <button class="prem-wh-toggle" title="${w.activo ? 'Desactivar' : 'Activar'}"><i class="fas fa-${w.activo ? 'pause' : 'play'}"></i></button>
+                <button class="prem-wh-del" title="Eliminar"><i class="fas fa-trash"></i></button>
+              </div>
+            </div>
+            <div class="prem-webhook-url">${escapeText(w.url)}</div>
+            <div class="prem-webhook-events">${evts.map(e => `<span class="prem-wh-evt">${e}</span>`).join('') || '<i>sin eventos</i>'}</div>
+            ${w.ultimo_error ? `<div class="prem-webhook-error"><i class="fas fa-exclamation-circle"></i> ${escapeText(w.ultimo_error)}</div>` : ''}
+          </div>
+        `;
+      }).join('') + '</div>';
+    }
+
+    function renderForm() {
+      return `
+        <form class="prem-webhooks-form">
+          <h3><i class="fas fa-plus"></i> Nuevo webhook</h3>
+          <div class="prem-wh-form-row">
+            <input type="text" name="nombre" placeholder="Nombre (ej: Slack #incidentes)" required>
+            <select name="tipo">${TYPES.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>
+          </div>
+          <input type="url" name="url" placeholder="URL del webhook (https://hooks.slack.com/...)" required>
+          <div class="prem-wh-events">
+            <label>Eventos a enviar:</label>
+            ${EVENTS.map(([v, l]) => `<label class="prem-wh-evt-chk"><input type="checkbox" name="evt" value="${v}"> ${l}</label>`).join('')}
+          </div>
+          <button type="submit" class="btn primary"><i class="fas fa-save"></i> Crear webhook</button>
+        </form>
+      `;
+    }
+
+    function wireUp() {
+      const body = modal.querySelector('.prem-webhooks-body');
+      body.querySelectorAll('.prem-wh-test').forEach(b => b.addEventListener('click', async (e) => {
+        const id = e.currentTarget.closest('.prem-webhook-card').dataset.id;
+        try {
+          const r = await fetch(`/api/webhooks/${id}/test`, { method: 'POST', credentials: 'same-origin' });
+          const d = await r.json();
+          if (window.premToast) window.premToast(d.ok ? 'Webhook OK' : `Error HTTP ${d.status}`, { type: d.ok ? 'success' : 'error' });
+          refresh();
+        } catch (e) { if (window.premToast) window.premToast(e.message, { type: 'error' }); }
+      }));
+      body.querySelectorAll('.prem-wh-toggle').forEach(b => b.addEventListener('click', async (e) => {
+        const card = e.currentTarget.closest('.prem-webhook-card');
+        const id = card.dataset.id;
+        const active = !card.classList.contains('inactive');
+        try {
+          const cur = await (await fetch('/api/webhooks', { credentials: 'same-origin' })).json();
+          const w = (cur || []).find(x => x.id == id);
+          if (!w) return;
+          await fetch(`/api/webhooks/${id}`, {
+            method: 'PUT', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...w, activo: !active, eventos: JSON.parse(w.eventos || '[]') }),
+          });
+          refresh();
+        } catch (e) { if (window.premToast) window.premToast(e.message, { type: 'error' }); }
+      }));
+      body.querySelectorAll('.prem-wh-del').forEach(b => b.addEventListener('click', async (e) => {
+        const id = e.currentTarget.closest('.prem-webhook-card').dataset.id;
+        if (!confirm('¿Eliminar este webhook?')) return;
+        await fetch(`/api/webhooks/${id}`, { method: 'DELETE', credentials: 'same-origin' });
+        refresh();
+      }));
+
+      const form = body.querySelector('.prem-webhooks-form');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = new FormData(form);
+        const eventos = [...form.querySelectorAll('input[name="evt"]:checked')].map(i => i.value);
+        try {
+          const r = await fetch('/api/webhooks', {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              nombre: data.get('nombre'),
+              url: data.get('url'),
+              tipo: data.get('tipo'),
+              eventos, activo: 1,
+            }),
+          });
+          if (!r.ok) throw new Error('Error al crear');
+          if (window.premToast) window.premToast('Webhook creado', { type: 'success' });
+          refresh();
+        } catch (e) { if (window.premToast) window.premToast(e.message, { type: 'error' }); }
+      });
+    }
+
+    function escapeText(t) { const d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; }
+
+    window.premWebhooksOpen = () => { modal.classList.add('open'); refresh(); };
+
+    // Cmd+K command "/webhooks" o atajo Ctrl+Shift+W
+    document.addEventListener('keydown', (e) => {
+      if (isEditing(e.target)) return;
+      if (e.ctrlKey && e.shiftKey && (e.key === 'w' || e.key === 'W')) {
+        e.preventDefault();
+        window.premWebhooksOpen();
+      }
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     29. CONFETTI HOOK EN premToast
+     premToast('Guardado', { type: 'success', confetti: true })
+     ═══════════════════════════════════════════════════════════ */
+  function initToastConfetti() {
+    const orig = window.premToast;
+    if (!orig) return;
+    window.premToast = function (msg, opts = {}) {
+      const handle = orig(msg, opts);
+      if (opts.confetti && window.premConfetti) {
+        window.premConfetti({ duration: 1600, particles: 60 });
+      }
+      return handle;
+    };
+  }
+
   /* ─── Bootstrap ─────────────────────────────────────────── */
   function boot() {
     initSkipLink();
@@ -1690,6 +2103,11 @@
     initPrintButtons();
     initSwipeActions();
     initAutoAttachments();
+    initPullToRefresh();
+    initPWAInstall();
+    initAuditViewer();
+    initWebhooksUI();
+    initToastConfetti();   // DESPUÉS de initToastHelper para wrappear
   }
 
   if (document.readyState === 'loading') {
