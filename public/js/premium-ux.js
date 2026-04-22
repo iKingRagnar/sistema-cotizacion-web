@@ -408,12 +408,362 @@
     mo.observe(document.body, { childList: true, subtree: true });
   }
 
+  /* ═══════════════════════════════════════════════════════════
+     5. BULK ACTIONS — modo selección múltiple + barra flotante
+     ═══════════════════════════════════════════════════════════ */
+  function initBulkActions() {
+    let mode = false;
+    const selected = new Set();
+    let lastClickedRow = null;
+
+    // Floating action bar
+    const bar = document.createElement('div');
+    bar.className = 'prem-bulk-bar';
+    bar.innerHTML = `
+      <div class="prem-bulk-info">
+        <i class="fas fa-check-square"></i>
+        <span class="prem-bulk-count">0 seleccionados</span>
+      </div>
+      <div class="prem-bulk-actions">
+        <button type="button" class="prem-bulk-export" title="Descargar CSV"><i class="fas fa-file-csv"></i> Exportar CSV</button>
+        <button type="button" class="prem-bulk-print" title="Imprimir solo lo seleccionado"><i class="fas fa-print"></i> Imprimir</button>
+        <button type="button" class="prem-bulk-cancel"><i class="fas fa-times"></i> Cancelar</button>
+      </div>
+    `;
+    document.body.appendChild(bar);
+
+    function updateBar() {
+      const n = selected.size;
+      bar.classList.toggle('open', n > 0 || mode);
+      bar.querySelector('.prem-bulk-count').textContent =
+        n === 0 ? 'Modo selección activo · clic en filas' :
+        n === 1 ? '1 seleccionado' : `${n} seleccionados`;
+    }
+    function clearSelection() {
+      selected.forEach(tr => tr.classList.remove('prem-row-selected'));
+      selected.clear();
+      lastClickedRow = null;
+      updateBar();
+    }
+    function toggleMode() {
+      mode = !mode;
+      document.body.classList.toggle('prem-select-mode', mode);
+      if (!mode) clearSelection();
+      else updateBar();
+    }
+
+    bar.querySelector('.prem-bulk-cancel').addEventListener('click', () => {
+      mode = false;
+      document.body.classList.remove('prem-select-mode');
+      clearSelection();
+    });
+
+    bar.querySelector('.prem-bulk-export').addEventListener('click', () => {
+      if (!selected.size) return;
+      const rows = [...selected];
+      const table = rows[0].closest('table');
+      if (!table) return;
+      const headers = [...table.querySelectorAll('thead tr:first-child th')]
+        .filter(th => !th.classList.contains('th-actions'))
+        .map(th => th.textContent.trim());
+      const csv = [headers.map(csvCell).join(',')];
+      rows.forEach(tr => {
+        const cells = [...tr.querySelectorAll('td')]
+          .filter(td => !td.classList.contains('th-actions'))
+          .map(td => csvCell(td.textContent.trim()));
+        csv.push(cells.join(','));
+      });
+      const blob = new Blob(['\uFEFF' + csv.join('\n')], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+      a.href = url; a.download = `seleccion-${ts}.csv`; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+
+    bar.querySelector('.prem-bulk-print').addEventListener('click', () => {
+      if (!selected.size) return;
+      // Marcar selección para que el @media print sólo muestre estas filas
+      const allRows = document.querySelectorAll('table.data-table tbody tr');
+      allRows.forEach(tr => tr.classList.toggle('prem-print-only', selected.has(tr)));
+      document.body.classList.add('prem-print-selection');
+      window.print();
+      setTimeout(() => {
+        document.body.classList.remove('prem-print-selection');
+        allRows.forEach(tr => tr.classList.remove('prem-print-only'));
+      }, 600);
+    });
+
+    function csvCell(v) {
+      const s = String(v ?? '');
+      return /[,"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    }
+
+    // Click en fila → toggle selección (sólo en modo selección)
+    document.addEventListener('click', (e) => {
+      // Atajo: shift+click activa modo + selecciona
+      const isShift = e.shiftKey;
+      const isCtrl  = e.ctrlKey || e.metaKey;
+      if (!mode && !isShift && !isCtrl) return;
+
+      const tr = e.target.closest('table.data-table tbody tr');
+      if (!tr) return;
+      // Skip rows especiales
+      if (tr.classList.contains('empty-row') || tr.classList.contains('prem-skel-row')) return;
+      if (tr.querySelector('td[colspan]')) return;
+      // Skip clicks en botones/links/inputs
+      if (e.target.closest('button, a, input, select, textarea')) return;
+
+      e.preventDefault();
+      if ((isShift || isCtrl) && !mode) {
+        mode = true;
+        document.body.classList.add('prem-select-mode');
+      }
+
+      if (e.shiftKey && lastClickedRow && lastClickedRow !== tr) {
+        const rows = [...tr.parentElement.children];
+        const i1 = rows.indexOf(lastClickedRow);
+        const i2 = rows.indexOf(tr);
+        const [s, ee] = i1 < i2 ? [i1, i2] : [i2, i1];
+        for (let i = s; i <= ee; i++) {
+          const r = rows[i];
+          if (!r.classList.contains('empty-row') && !r.classList.contains('prem-skel-row')) {
+            r.classList.add('prem-row-selected');
+            selected.add(r);
+          }
+        }
+      } else {
+        if (selected.has(tr)) {
+          tr.classList.remove('prem-row-selected');
+          selected.delete(tr);
+        } else {
+          tr.classList.add('prem-row-selected');
+          selected.add(tr);
+          lastClickedRow = tr;
+        }
+      }
+      updateBar();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (isEditing(e.target)) return;
+      if (e.key === 'Escape' && (mode || selected.size > 0)) {
+        mode = false;
+        document.body.classList.remove('prem-select-mode');
+        clearSelection();
+      }
+    });
+
+    // Expose toggle (para botón en cheat sheet u otros)
+    window.premBulkToggle = toggleMode;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     6. TOAST HELPER — window.premToast con Deshacer
+     Uso:  premToast('Mensaje', { type:'success', actionLabel:'Deshacer', onAction: ()=>{}, duration: 6000 })
+     ═══════════════════════════════════════════════════════════ */
+  function initToastHelper() {
+    let container = document.getElementById('prem-toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'prem-toast-container';
+      container.className = 'prem-toast-container';
+      document.body.appendChild(container);
+    }
+
+    const ICONS = {
+      success: 'fa-check-circle',
+      error:   'fa-times-circle',
+      warning: 'fa-exclamation-triangle',
+      info:    'fa-info-circle',
+    };
+
+    window.premToast = function (message, opts = {}) {
+      const type = opts.type || 'info';
+      const duration = Math.max(2000, opts.duration || (opts.actionLabel ? 6000 : 3500));
+      const t = document.createElement('div');
+      t.className = `prem-toast prem-toast--${type}`;
+      t.innerHTML = `
+        <i class="fas ${ICONS[type] || ICONS.info} prem-toast-icon"></i>
+        <span class="prem-toast-msg"></span>
+        ${opts.actionLabel ? '<button class="prem-toast-action"></button>' : ''}
+        <button class="prem-toast-close" aria-label="Cerrar"><i class="fas fa-times"></i></button>
+        <div class="prem-toast-progress"></div>
+      `;
+      t.querySelector('.prem-toast-msg').textContent = message;
+      const actionBtn = t.querySelector('.prem-toast-action');
+      if (actionBtn) {
+        actionBtn.textContent = opts.actionLabel;
+        actionBtn.addEventListener('click', () => {
+          try { opts.onAction && opts.onAction(); } finally { dismiss(); }
+        });
+      }
+      const progress = t.querySelector('.prem-toast-progress');
+      progress.style.animationDuration = duration + 'ms';
+
+      const dismiss = () => {
+        t.classList.add('prem-toast-leave');
+        setTimeout(() => t.remove(), 220);
+      };
+      t.querySelector('.prem-toast-close').addEventListener('click', dismiss);
+      const timer = setTimeout(dismiss, duration);
+      t.addEventListener('mouseenter', () => clearTimeout(timer));
+
+      container.appendChild(t);
+      return { dismiss };
+    };
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     7. SPARKLINES DECORATIVOS en dashboard cards
+     No usa data real (sería engañoso); añade un acento visual
+     animado en gradient debajo del valor para sensación premium.
+     ═══════════════════════════════════════════════════════════ */
+  function initDashboardSparklines() {
+    function attach(card) {
+      if (card._sparkDone) return;
+      card._sparkDone = true;
+      const accent = document.createElement('div');
+      accent.className = 'prem-card-accent';
+      // Tres gotas animadas dan sensación de live
+      accent.innerHTML = '<span></span><span></span><span></span>';
+      card.appendChild(accent);
+    }
+
+    document.querySelectorAll('.dashboard-card').forEach(attach);
+    const mo = new MutationObserver(muts => {
+      for (const m of muts) for (const n of m.addedNodes) {
+        if (n.nodeType !== 1) continue;
+        if (n.classList?.contains('dashboard-card')) attach(n);
+        n.querySelectorAll?.('.dashboard-card').forEach(attach);
+      }
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     8. DRAG-TO-REORDER columnas — con localStorage persist
+     Limitación: no aplica a tablas con la primera columna .th-actions
+     (no tendría sentido) y respeta el orden de filter-row para que
+     los filtros sigan alineados.
+     ═══════════════════════════════════════════════════════════ */
+  function initColumnReorder() {
+    function attach(table) {
+      if (table._reorderInit || !table.id) return;
+      table._reorderInit = true;
+      const headerRow = table.querySelector('thead tr:first-child');
+      if (!headerRow) return;
+
+      const ths = [...headerRow.children];
+      ths.forEach((th, i) => {
+        if (th.classList.contains('th-actions')) return;
+        th.draggable = true;
+        th.dataset.colIdx = String(i);
+        th.classList.add('prem-draggable-th');
+      });
+
+      // Restaurar orden guardado
+      const storageKey = LS_PREFIX + 'cols:' + table.id;
+      const savedOrder = readJSON(storageKey);
+      if (Array.isArray(savedOrder) && savedOrder.length === ths.length) {
+        applyOrder(table, savedOrder);
+      }
+
+      let dragSrc = null;
+      headerRow.addEventListener('dragstart', (e) => {
+        const th = e.target.closest('th');
+        if (!th || !th.draggable) return;
+        dragSrc = th;
+        th.classList.add('prem-th-dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', th.dataset.colIdx);
+      });
+      headerRow.addEventListener('dragend', () => {
+        dragSrc?.classList.remove('prem-th-dragging');
+        headerRow.querySelectorAll('th').forEach(th => th.classList.remove('prem-th-dropzone'));
+        dragSrc = null;
+      });
+      headerRow.addEventListener('dragover', (e) => {
+        const th = e.target.closest('th');
+        if (!th || !dragSrc || th === dragSrc || th.classList.contains('th-actions')) return;
+        e.preventDefault();
+        headerRow.querySelectorAll('th').forEach(t => t.classList.remove('prem-th-dropzone'));
+        th.classList.add('prem-th-dropzone');
+      });
+      headerRow.addEventListener('drop', (e) => {
+        const th = e.target.closest('th');
+        if (!th || !dragSrc || th === dragSrc) return;
+        e.preventDefault();
+        const fromIdx = currentIndex(headerRow, dragSrc);
+        const toIdx   = currentIndex(headerRow, th);
+        moveColumn(table, fromIdx, toIdx);
+        // Persistir nuevo orden
+        const newOrder = [...headerRow.children].map(t => parseInt(t.dataset.colIdx, 10));
+        writeJSON(storageKey, newOrder);
+      });
+    }
+
+    function currentIndex(parent, child) {
+      return [...parent.children].indexOf(child);
+    }
+
+    function moveColumn(table, fromIdx, toIdx) {
+      if (fromIdx === toIdx) return;
+      const headerRow = table.querySelector('thead tr:first-child');
+      const filterRow = table.querySelector('thead .filter-row');
+      const rows = [headerRow, filterRow, ...table.querySelectorAll('tbody tr')].filter(Boolean);
+      rows.forEach(r => {
+        const cells = [...r.children];
+        if (fromIdx >= cells.length || toIdx >= cells.length) return;
+        const moved = cells[fromIdx];
+        const target = cells[toIdx];
+        if (fromIdx < toIdx) target.after(moved);
+        else target.before(moved);
+      });
+    }
+
+    function applyOrder(table, order) {
+      const headerRow = table.querySelector('thead tr:first-child');
+      const currentOrder = [...headerRow.children].map(t => parseInt(t.dataset.colIdx, 10));
+      // Para cada posición destino, mover la columna correcta
+      for (let i = 0; i < order.length; i++) {
+        const want = order[i];
+        const at = currentOrder.indexOf(want);
+        if (at >= 0 && at !== i) {
+          moveColumn(table, at, i);
+          currentOrder.splice(i, 0, currentOrder.splice(at, 1)[0]);
+        }
+      }
+    }
+
+    function readJSON(k) {
+      try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch { return null; }
+    }
+    function writeJSON(k, v) {
+      try { localStorage.setItem(k, JSON.stringify(v)); } catch {}
+    }
+
+    document.querySelectorAll('table.data-table').forEach(attach);
+    const mo = new MutationObserver(muts => {
+      for (const m of muts) for (const n of m.addedNodes) {
+        if (n.nodeType !== 1) continue;
+        if (n.matches?.('table.data-table')) attach(n);
+        n.querySelectorAll?.('table.data-table').forEach(attach);
+      }
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+  }
+
   /* ─── Bootstrap ─────────────────────────────────────────── */
   function boot() {
     initCommandK();
     initShortcutsCheatSheet();
     initSkeletonLoaders();
     initSavedFilters();
+    initBulkActions();
+    initToastHelper();
+    initDashboardSparklines();
+    initColumnReorder();
   }
 
   if (document.readyState === 'loading') {

@@ -1738,3 +1738,261 @@ body.md3-on table.data-table thead .filter-row td.th-actions {
   .prem-cmdk { padding: 6vh 8px 8px; }
   .prem-shortcuts-grid { grid-template-columns: 1fr; }
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   39. BULK ACTIONS — modo selección + barra flotante
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.prem-bulk-bar {
+  position: fixed;
+  bottom: -120px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; align-items: center; gap: 16px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(15,23,42,.36), 0 4px 12px rgba(15,23,42,.18);
+  z-index: 900;
+  opacity: 0;
+  transition: bottom .3s cubic-bezier(.4,0,.2,1), opacity .25s ease;
+  flex-wrap: wrap; max-width: calc(100vw - 32px);
+}
+.prem-bulk-bar.open {
+  bottom: 24px;
+  opacity: 1;
+}
+.prem-bulk-info {
+  display: flex; align-items: center; gap: 8px;
+  padding-right: 14px;
+  border-right: 1px solid rgba(255,255,255,.16);
+  font-size: .88rem; font-weight: 600;
+}
+.prem-bulk-info i {
+  background: rgba(34,197,94,.22);
+  color: #4ade80;
+  width: 28px; height: 28px; border-radius: 7px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: .8rem;
+}
+.prem-bulk-actions {
+  display: flex; gap: 6px;
+}
+.prem-bulk-actions button {
+  background: rgba(255,255,255,.12);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.18);
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: .78rem; font-weight: 600;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: all .15s ease;
+}
+.prem-bulk-actions button:hover {
+  background: rgba(255,255,255,.22);
+  border-color: rgba(255,255,255,.35);
+  transform: translateY(-1px);
+}
+.prem-bulk-actions .prem-bulk-cancel {
+  background: transparent;
+  border-color: rgba(239,68,68,.4);
+  color: #fca5a5;
+}
+.prem-bulk-actions .prem-bulk-cancel:hover {
+  background: rgba(239,68,68,.16);
+  color: #fff;
+}
+
+/* Cursor + estado de fila en modo selección */
+body.prem-select-mode table.data-table tbody tr {
+  cursor: pointer;
+}
+body.prem-select-mode table.data-table tbody tr:hover:not(.prem-skel-row) {
+  background: rgba(37,99,235,.06) !important;
+}
+
+body.md3-on table.data-table tbody tr.prem-row-selected {
+  background: linear-gradient(90deg, rgba(37,99,235,.14), rgba(13,148,136,.08)) !important;
+  box-shadow: inset 4px 0 0 #2563eb !important;
+}
+body.md3-on table.data-table tbody tr.prem-row-selected td {
+  font-weight: 600 !important;
+  color: #0f172a !important;
+}
+
+/* Print solo selección */
+@media print {
+  body.prem-print-selection table.data-table tbody tr:not(.prem-print-only) {
+    display: none !important;
+  }
+  .prem-bulk-bar { display: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   40. PREM TOAST — sistema de notificaciones premium con Deshacer
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.prem-toast-container {
+  position: fixed;
+  top: 20px; right: 20px;
+  z-index: 1200;
+  display: flex; flex-direction: column;
+  gap: 10px;
+  max-width: 420px;
+  pointer-events: none;
+}
+.prem-toast-container > * { pointer-events: auto; }
+
+.prem-toast {
+  display: flex; align-items: center; gap: 12px;
+  background: #fff;
+  padding: 12px 14px 12px 16px;
+  border-radius: 12px;
+  box-shadow: 0 10px 36px rgba(15,23,42,.18), 0 2px 8px rgba(15,23,42,.08);
+  border-left: 4px solid #64748b;
+  font-size: .88rem;
+  position: relative; overflow: hidden;
+  animation: premToastEnter .25s cubic-bezier(.4,0,.2,1);
+  min-width: 280px;
+}
+.prem-toast.prem-toast-leave {
+  animation: premToastLeave .22s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes premToastEnter {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes premToastLeave {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(40px); }
+}
+
+.prem-toast--success { border-left-color: #10b981; }
+.prem-toast--error   { border-left-color: #ef4444; }
+.prem-toast--warning { border-left-color: #f59e0b; }
+.prem-toast--info    { border-left-color: #2563eb; }
+
+.prem-toast-icon { font-size: 1.05rem; flex-shrink: 0; }
+.prem-toast--success .prem-toast-icon { color: #10b981; }
+.prem-toast--error   .prem-toast-icon { color: #ef4444; }
+.prem-toast--warning .prem-toast-icon { color: #f59e0b; }
+.prem-toast--info    .prem-toast-icon { color: #2563eb; }
+
+.prem-toast-msg {
+  flex: 1; color: #1e293b; font-weight: 500; line-height: 1.4;
+}
+
+.prem-toast-action {
+  background: transparent;
+  border: none;
+  color: #2563eb;
+  font-weight: 700;
+  font-size: .82rem;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 6px;
+  transition: background .12s ease;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  flex-shrink: 0;
+}
+.prem-toast-action:hover { background: rgba(37,99,235,.1); }
+
+.prem-toast-close {
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  cursor: pointer;
+  width: 24px; height: 24px;
+  border-radius: 5px;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: color .12s, background .12s;
+  flex-shrink: 0;
+}
+.prem-toast-close:hover {
+  color: #475569;
+  background: #f1f5f9;
+}
+
+.prem-toast-progress {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, currentColor, transparent);
+  opacity: .4;
+  transform-origin: left;
+  animation: premToastProgress linear forwards;
+}
+@keyframes premToastProgress {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   41. SPARKLINE DECORATIVO (acento animado en dashboard cards)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .dashboard-card { position: relative; overflow: hidden; }
+
+.prem-card-accent {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent 0%, rgba(37,99,235,.18) 30%, rgba(13,148,136,.18) 70%, transparent 100%);
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 12px;
+  pointer-events: none;
+}
+.prem-card-accent span {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: #2563eb;
+  box-shadow: 0 0 6px rgba(37,99,235,.6);
+  animation: premPulse2 1.6s ease-in-out infinite;
+}
+.prem-card-accent span:nth-child(2) {
+  background: #0d9488;
+  box-shadow: 0 0 6px rgba(13,148,136,.6);
+  animation-delay: .25s;
+}
+.prem-card-accent span:nth-child(3) {
+  background: #0ea5e9;
+  box-shadow: 0 0 6px rgba(14,165,233,.6);
+  animation-delay: .5s;
+}
+@keyframes premPulse2 {
+  0%, 100% { opacity: .35; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.4); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   42. DRAG-TO-REORDER columnas
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on table.data-table thead th.prem-draggable-th {
+  cursor: grab;
+  user-select: none;
+  transition: background .12s ease;
+}
+body.md3-on table.data-table thead th.prem-draggable-th:active {
+  cursor: grabbing;
+}
+body.md3-on table.data-table thead th.prem-th-dragging {
+  opacity: .5;
+  background: rgba(37,99,235,.4) !important;
+}
+body.md3-on table.data-table thead th.prem-th-dropzone {
+  position: relative;
+}
+body.md3-on table.data-table thead th.prem-th-dropzone::before {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; left: -2px;
+  width: 3px;
+  background: #fbbf24;
+  box-shadow: 0 0 8px #fbbf24;
+  border-radius: 2px;
+  z-index: 10;
+}
