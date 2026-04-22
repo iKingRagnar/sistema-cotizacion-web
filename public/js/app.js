@@ -3498,7 +3498,7 @@
       applyRefaccionesFiltersAndRender();
     } catch (e) {
       renderRefacciones([]);
-      console.error(e);
+      showToast(parseApiError(e) || 'No se pudo cargar el catálogo de refacciones.', 'error');
     }
     finally {
       hideLoading();
