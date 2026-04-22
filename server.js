@@ -38,19 +38,31 @@ function getAdminNotifyEmails() {
 }
 
 /* Compresión gzip/brotli — el cliente recibe el formato más eficiente que soporte.
-   Skip para EventStream y respuestas <1KB para evitar overhead. */
+   Defensivo: si compression no se instala o crashea, el server sigue arrancando. */
 try {
   const compression = require('compression');
-  app.use(compression({
-    threshold: 1024,
-    filter: (req, res) => {
-      if (req.headers['x-no-compression']) return false;
-      const ct = res.getHeader('Content-Type') || '';
-      if (String(ct).includes('text/event-stream')) return false;
-      return compression.filter(req, res);
-    },
-  }));
-} catch (_) { /* compression opcional */ }
+  if (typeof compression === 'function') {
+    app.use(compression({
+      threshold: 1024,
+      filter: (req, res) => {
+        try {
+          if (req.headers && req.headers['x-no-compression']) return false;
+          const ct = (res && typeof res.getHeader === 'function') ? (res.getHeader('Content-Type') || '') : '';
+          if (String(ct).includes('text/event-stream')) return false;
+          return compression.filter(req, res);
+        } catch (_) { return false; }
+      },
+    }));
+  }
+} catch (_) { /* compression opcional — sin él el server sigue funcionando */ }
+
+/* Capturar errores no manejados para que NUNCA crasheen el server en prod. */
+process.on('uncaughtException', (err) => {
+  console.error('[uncaughtException]', err && err.stack || err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[unhandledRejection]', reason);
+});
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
