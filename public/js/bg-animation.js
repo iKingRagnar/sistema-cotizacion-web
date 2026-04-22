@@ -237,11 +237,51 @@
     }, { passive: true });
   }
 
+  /* ═══════════════════════════════════════════════════════════
+     4. MOBILE SIDEBAR — hamburger drawer para pantallas < 768px
+     ═══════════════════════════════════════════════════════════ */
+  function initMobileSidebar() {
+    const header = document.querySelector('header.header, header.app-header, .app-header');
+    if (!header) return;
+
+    // Overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'prem-sidebar-overlay';
+    document.body.appendChild(overlay);
+
+    // Hamburger button
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'prem-hamburger';
+    btn.setAttribute('aria-label', 'Abrir menú');
+    btn.innerHTML = '<i class="fas fa-bars"></i>';
+    header.insertBefore(btn, header.firstChild);
+
+    function open()  { document.body.classList.add('prem-sidebar-open'); btn.setAttribute('aria-label', 'Cerrar menú'); }
+    function close() { document.body.classList.remove('prem-sidebar-open'); btn.setAttribute('aria-label', 'Abrir menú'); }
+
+    btn.addEventListener('click', () => {
+      document.body.classList.contains('prem-sidebar-open') ? close() : open();
+    });
+    overlay.addEventListener('click', close);
+
+    // Cerrar al seleccionar módulo en mobile
+    document.addEventListener('click', e => {
+      if (window.innerWidth > 768) return;
+      if (e.target.closest('.tabs.tabs--rail .tab')) close();
+    });
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 768) close();
+    }, { passive: true });
+  }
+
   /* ─── Bootstrap ─────────────────────────────────────────── */
   function boot() {
     // initSidebarParticles() — desactivado: sidebar es light, partículas son para fondo oscuro
     initParallaxGradient();
     initTableSpotlight();
+    initMobileSidebar();
   }
 
   if (document.readyState === 'loading') {
