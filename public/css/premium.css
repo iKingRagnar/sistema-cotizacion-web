@@ -307,38 +307,72 @@ body.md3-on table.data-table thead::after {
   background: rgba(255,255,255,.1);
 }
 
-/* Fila de filtros (dentro de thead) */
+/* Fila de filtros — display:flex saca la fila del layout de columnas de la tabla
+   sin mover el DOM, así app.js sigue encontrando los inputs con querySelectorAll */
+body.md3-on table.data-table thead .filter-row,
+body.md3-on .table-wrap > table thead .filter-row {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 8px 14px !important;
+  background: #f0f6ff !important;
+  border-top: 2px solid #e2e8f0 !important;
+  overflow-x: auto !important;
+}
+
 body.md3-on table.data-table thead .filter-row td,
 body.md3-on .table-wrap > table thead .filter-row td {
-  background: rgba(30,64,175,.88) !important;
-  padding: 6px 8px !important;
-  border-bottom: 1px solid rgba(255,255,255,.08) !important;
+  display: flex !important;
+  flex: 1 1 90px !important;
+  min-width: 60px !important;
+  max-width: 210px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  height: auto !important;
+  overflow: hidden !important;
+}
+
+body.md3-on table.data-table thead .filter-row td.th-actions,
+body.md3-on .table-wrap > table thead .filter-row td.th-actions {
+  flex: 0 0 auto !important;
+  max-width: none !important;
 }
 
 body.md3-on table.data-table thead .filter-row input,
 body.md3-on table.data-table thead .filter-row select,
-body.md3-on table.data-table thead .filter-row textarea {
-  background: rgba(255,255,255,.11) !important;
-  border: 1px solid rgba(255,255,255,.16) !important;
-  color: rgba(255,255,255,.95) !important;
-  border-radius: 6px !important;
+body.md3-on table.data-table thead .filter-row textarea,
+body.md3-on .table-wrap > table thead .filter-row input,
+body.md3-on .table-wrap > table thead .filter-row select {
+  background: #fff !important;
+  border: 1.5px solid #bfdbfe !important;
+  color: #1e293b !important;
+  border-radius: 7px !important;
   font-size: .75rem !important;
   height: 28px !important;
   padding: 0 8px !important;
-  transition: background .15s ease, border-color .15s ease !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  transition: border-color .15s ease, box-shadow .15s ease !important;
 }
-body.md3-on table.data-table thead .filter-row input::placeholder {
-  color: rgba(255,255,255,.38) !important;
+
+body.md3-on table.data-table thead .filter-row input::placeholder,
+body.md3-on table.data-table thead .filter-row select::placeholder {
+  color: #94a3b8 !important;
 }
+
 body.md3-on table.data-table thead .filter-row input:focus,
 body.md3-on table.data-table thead .filter-row select:focus {
-  background: rgba(255,255,255,.18) !important;
-  border-color: rgba(255,255,255,.35) !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 2px rgba(37,99,235,.14) !important;
   outline: none !important;
+  background: #fff !important;
 }
+
 body.md3-on table.data-table thead .filter-row select option {
-  background: #1e3a8a !important;
-  color: #fff !important;
+  background: #fff !important;
+  color: #1e293b !important;
 }
 
 /* ── Filas ────────────────────────────────────────────────────────────── */
@@ -913,4 +947,133 @@ body.md3-on.md3-dark .hint { background: rgba(37,99,235,.12) !important; color: 
   body.md3-on table.data-table tbody tr { animation: none !important; }
   body.md3-on .dashboard-card:hover { transform: none !important; }
   body.md3-on .btn:hover { transform: none !important; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   28. CONTRASTE UNIVERSAL — texto legible en TODOS los fondos
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Section headers — todos los hijos heredan blanco */
+body.md3-on .section-header,
+body.md3-on .section-header h1,
+body.md3-on .section-header h2,
+body.md3-on .section-header h3,
+body.md3-on .section-header h4,
+body.md3-on .section-header span:not(.badge):not(.estatus-pill),
+body.md3-on .section-header label,
+body.md3-on .section-header small,
+body.md3-on .section-header p {
+  color: #fff !important;
+}
+
+body.md3-on .section-header i,
+body.md3-on .section-header .fas,
+body.md3-on .section-header .far,
+body.md3-on .section-header .fab,
+body.md3-on .section-header .fa {
+  color: rgba(255,255,255,.92) !important;
+}
+
+/* Modal headers — texto siempre blanco */
+body.md3-on .modal-header,
+body.md3-on .modal-header h1,
+body.md3-on .modal-header h2,
+body.md3-on .modal-header h3,
+body.md3-on .modal-header span:not(.badge),
+body.md3-on .modal-header i,
+body.md3-on .modal-header .fas,
+body.md3-on .modal-header .far,
+body.md3-on .md-modal-header,
+body.md3-on .md-modal-header h1,
+body.md3-on .md-modal-header h2,
+body.md3-on .md-modal-header h3,
+body.md3-on .md-modal-header span:not(.badge),
+body.md3-on .md-modal-header i {
+  color: #fff !important;
+}
+
+/* Tabla thead — encabezados de columnas */
+body.md3-on table.data-table thead th,
+body.md3-on .table-wrap > table thead th {
+  color: rgba(255,255,255,.97) !important;
+}
+body.md3-on table.data-table thead th i,
+body.md3-on table.data-table thead th .fas,
+body.md3-on table.data-table thead th .far {
+  color: rgba(255,255,255,.85) !important;
+}
+
+/* Botones con gradiente/color — texto siempre blanco */
+body.md3-on .btn.danger,
+body.md3-on .btn.success,
+body.md3-on .btn.primary,
+body.md3-on .dashboard-card-action {
+  color: #fff !important;
+}
+body.md3-on .btn.danger i,
+body.md3-on .btn.success i,
+body.md3-on .btn.primary i {
+  color: rgba(255,255,255,.9) !important;
+}
+
+/* Stock alert bar */
+body.md3-on .stock-alert-bar,
+body.md3-on .stock-alert-bar * {
+  color: #fef2f2 !important;
+}
+
+/* Sidebar — mejorar legibilidad de items inactivos */
+body.md3-on .tabs.tabs--rail .tab {
+  color: rgba(226,232,240,.78) !important;
+}
+body.md3-on .tabs.tabs--rail .tab i {
+  color: rgba(186,200,218,.82) !important;
+}
+body.md3-on .tabs.tabs--rail .tab:hover {
+  color: #f1f5f9 !important;
+}
+body.md3-on .tabs.tabs--rail .tab:hover i {
+  color: #bfdbfe !important;
+}
+
+/* Sidebar nav title label */
+body.md3-on .sidebar-nav-title {
+  color: rgba(186,200,218,.72) !important;
+}
+
+/* Botones en sidebar */
+body.md3-on .btn-sidebar-rail-toggle {
+  color: rgba(226,232,240,.88) !important;
+}
+
+/* Body text en superficie clara — nunca invisible */
+body.md3-on .panel,
+body.md3-on .content,
+body.md3-on .app-main {
+  color: #1e293b;
+}
+
+/* Form labels sobre fondo claro */
+body.md3-on .form-group label {
+  color: #475569 !important;
+}
+
+/* Table body text */
+body.md3-on table.data-table tbody td {
+  color: #1e293b !important;
+}
+
+/* Footer tabla */
+body.md3-on .table-footer {
+  color: #475569 !important;
+}
+
+/* Hint blocks */
+body.md3-on .hint {
+  color: #1e40af !important;
+}
+
+/* Pagination buttons sin color heredan texto oscuro */
+body.md3-on .pagination-wrap .btn:not(.active):not([aria-current="page"]) {
+  color: #475569 !important;
 }
