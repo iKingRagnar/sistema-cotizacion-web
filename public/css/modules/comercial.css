@@ -1,0 +1,223 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   MÓDULOS COMERCIAL — Cotizaciones · Ventas · Prospección · Bonos
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Panel base ──────────────────────────────────────────────────────────── */
+body.md3-on #panel-cotizaciones,
+body.md3-on #panel-ventas,
+body.md3-on #panel-prospeccion,
+body.md3-on #panel-bonos {
+  display: none;
+  background: var(--md-sys-color-surface);
+}
+body.md3-on #panel-cotizaciones.active,
+body.md3-on #panel-ventas.active,
+body.md3-on #panel-prospeccion.active,
+body.md3-on #panel-bonos.active {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-sys-spacing-4);
+  padding: 0;
+}
+
+/* ── Comisiones David Cantú card (cotizaciones) ──────────────────────────── */
+body.md3-on .cotizacion-comisiones-david-wrap {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-large);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  overflow: hidden;
+}
+body.md3-on .cotizacion-comisiones-david-wrap.hidden { display: none; }
+
+body.md3-on .david-comisiones-card { padding: var(--md-sys-spacing-5); }
+
+body.md3-on .david-comisiones-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--md-sys-spacing-3);
+  margin-bottom: var(--md-sys-spacing-4);
+  padding-bottom: var(--md-sys-spacing-4);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+body.md3-on .david-comisiones-head h3 {
+  font: var(--md-sys-typescale-title-medium);
+  color: var(--md-sys-color-on-surface);
+  margin: 0 0 var(--md-sys-spacing-1);
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-2);
+}
+body.md3-on .david-comisiones-sub {
+  font: var(--md-sys-typescale-body-small);
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+body.md3-on .david-comisiones-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--md-sys-spacing-3);
+  margin-bottom: var(--md-sys-spacing-3);
+}
+
+body.md3-on .david-comisiones-total {
+  font: var(--md-sys-typescale-title-large);
+  color: var(--md-sys-color-tertiary);
+  font-weight: 600;
+  padding-top: var(--md-sys-spacing-3);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Empty state card (cotizaciones/bitácoras) ───────────────────────────── */
+body.md3-on .empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--md-sys-spacing-3);
+  padding: var(--md-sys-spacing-12) var(--md-sys-spacing-6);
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-large);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+body.md3-on .empty-card.hidden { display: none; }
+body.md3-on .empty-card .empty-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--md-sys-color-secondary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: var(--md-sys-color-on-secondary-container);
+}
+body.md3-on .empty-card h3 {
+  font: var(--md-sys-typescale-title-large);
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+body.md3-on .empty-card p {
+  font: var(--md-sys-typescale-body-medium);
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+  max-width: 40ch;
+}
+
+/* ── Toolbar checkbox (cotizaciones «incluir aplicadas») ─────────────────── */
+body.md3-on .toolbar-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-2);
+  font: var(--md-sys-typescale-label-large);
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  padding: var(--md-sys-spacing-2) var(--md-sys-spacing-3);
+  border-radius: var(--md-sys-shape-corner-full);
+  transition: background var(--md-sys-motion-duration-short3);
+  user-select: none;
+}
+body.md3-on .toolbar-checkbox:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+}
+
+/* ── Ventas — resumen bar ────────────────────────────────────────────────── */
+body.md3-on .ventas-resumen-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--md-sys-spacing-3);
+  padding: var(--md-sys-spacing-4);
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-large);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+body.md3-on .ventas-resumen-bar.hidden { display: none; }
+
+body.md3-on .ventas-resumen-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--md-sys-spacing-2) var(--md-sys-spacing-4);
+  border-right: 1px solid var(--md-sys-color-outline-variant);
+}
+body.md3-on .ventas-resumen-item:last-child { border-right: none; }
+body.md3-on .ventas-resumen-item .ri-label {
+  font: var(--md-sys-typescale-label-small);
+  color: var(--md-sys-color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+body.md3-on .ventas-resumen-item .ri-value {
+  font: var(--md-sys-typescale-title-medium);
+  color: var(--md-sys-color-on-surface);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+body.md3-on .ventas-resumen-item .ri-value.positive { color: var(--md-sys-color-tertiary); }
+
+/* ── Prospección — KPIs strip ────────────────────────────────────────────── */
+body.md3-on .prospeccion-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--md-sys-spacing-3);
+}
+body.md3-on .prospeccion-kpi-card {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-medium);
+  padding: var(--md-sys-spacing-4);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-sys-spacing-1);
+}
+body.md3-on .prospeccion-kpi-card .kpi-label {
+  font: var(--md-sys-typescale-label-medium);
+  color: var(--md-sys-color-on-surface-variant);
+  text-transform: uppercase;
+}
+body.md3-on .prospeccion-kpi-card .kpi-value {
+  font: var(--md-sys-typescale-headline-small);
+  color: var(--md-sys-color-primary);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--md-ref-typeface-brand);
+}
+
+/* ── Prospección — mapa ──────────────────────────────────────────────────── */
+body.md3-on .prospeccion-map-wrap {
+  border-radius: var(--md-sys-shape-corner-large);
+  overflow: hidden;
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+body.md3-on .prospeccion-map {
+  height: 400px;
+  background: var(--md-sys-color-surface-container);
+}
+
+/* ── Bonos — resumen bar ─────────────────────────────────────────────────── */
+body.md3-on .bonos-resumen-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--md-sys-spacing-3);
+  padding: var(--md-sys-spacing-4);
+  background: var(--md-sys-color-tertiary-container);
+  border-radius: var(--md-sys-shape-corner-large);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-tertiary) 30%, transparent);
+  color: var(--md-sys-color-on-tertiary-container);
+  font: var(--md-sys-typescale-body-medium);
+}
+
+/* ── Filter date wrap ────────────────────────────────────────────────────── */
+body.md3-on .filter-date-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+@media (max-width: 768px) {
+  body.md3-on .prospeccion-map { height: 280px; }
+  body.md3-on .david-comisiones-head { flex-direction: column; }
+}

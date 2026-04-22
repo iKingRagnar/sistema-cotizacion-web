@@ -1,0 +1,141 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   MÓDULOS CATÁLOGOS — Clientes · Refacciones · Máquinas · Almacén
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Panel base para todos los módulos catálogo ─────────────────────────── */
+body.md3-on #panel-clientes,
+body.md3-on #panel-refacciones,
+body.md3-on #panel-maquinas,
+body.md3-on #panel-almacen {
+  display: none;
+  background: var(--md-sys-color-surface);
+}
+body.md3-on #panel-clientes.active,
+body.md3-on #panel-refacciones.active,
+body.md3-on #panel-maquinas.active,
+body.md3-on #panel-almacen.active {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-sys-spacing-4);
+  padding: 0;
+}
+
+/* ── Stock alert bar (refacciones / garantías) ───────────────────────────── */
+body.md3-on .stock-alert-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--md-sys-spacing-2);
+  padding: var(--md-sys-spacing-3) var(--md-sys-spacing-4);
+  background: color-mix(in srgb, var(--md-sys-color-warning) 12%, var(--md-sys-color-surface));
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-warning) 40%, transparent);
+  border-radius: var(--md-sys-shape-corner-medium);
+  font: var(--md-sys-typescale-body-medium);
+  color: var(--md-sys-color-on-surface);
+}
+body.md3-on .stock-alert-bar.hidden { display: none; }
+
+/* ── Delete zone card ────────────────────────────────────────────────────── */
+body.md3-on .module-delete-zone {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-large);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  padding: var(--md-sys-spacing-5) !important;
+  margin-top: var(--md-sys-spacing-4) !important;
+}
+body.md3-on .module-delete-zone h3 {
+  font: var(--md-sys-typescale-title-small);
+  color: var(--md-sys-color-on-surface);
+  margin: 0 0 var(--md-sys-spacing-2) !important;
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-2);
+}
+body.md3-on .module-delete-zone .hint {
+  font: var(--md-sys-typescale-body-small);
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0 0 var(--md-sys-spacing-3) !important;
+}
+body.md3-on .module-delete-zone .form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--md-sys-spacing-3);
+  align-items: flex-end;
+}
+
+/* ── Máquinas — tarjetas grid ────────────────────────────────────────────── */
+body.md3-on .maquinas-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--md-sys-spacing-4);
+}
+body.md3-on .maquinas-cards-grid.hidden { display: none; }
+
+body.md3-on .maquina-card {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-large);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  padding: var(--md-sys-spacing-4);
+  transition: box-shadow var(--md-sys-motion-duration-short3), transform var(--md-sys-motion-duration-short3);
+  cursor: pointer;
+}
+body.md3-on .maquina-card:hover {
+  box-shadow: var(--md-sys-elevation-level2);
+  transform: translateY(-2px);
+}
+body.md3-on .maquina-card .maquina-card-title {
+  font: var(--md-sys-typescale-title-medium);
+  color: var(--md-sys-color-on-surface);
+  margin: 0 0 var(--md-sys-spacing-1);
+}
+body.md3-on .maquina-card .maquina-card-sub {
+  font: var(--md-sys-typescale-body-small);
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0 0 var(--md-sys-spacing-3);
+}
+body.md3-on .maquina-card .maquina-card-actions {
+  display: flex;
+  gap: var(--md-sys-spacing-2);
+  flex-wrap: wrap;
+}
+
+/* ── Almacén — hint intro ────────────────────────────────────────────────── */
+body.md3-on #panel-almacen .hint {
+  font: var(--md-sys-typescale-body-medium);
+  color: var(--md-sys-color-on-surface-variant);
+  padding: var(--md-sys-spacing-3) var(--md-sys-spacing-4);
+  background: var(--md-sys-color-surface-container-lowest);
+  border-radius: var(--md-sys-shape-corner-medium);
+  border-left: 3px solid var(--md-sys-color-primary);
+  margin: 0;
+}
+
+/* ── Almacén — status badges ─────────────────────────────────────────────── */
+body.md3-on .almacen-estado-ok {
+  color: var(--md-sys-color-tertiary);
+  font-weight: 500;
+}
+body.md3-on .almacen-estado-pendiente {
+  color: var(--md-sys-color-warning);
+  font-weight: 500;
+}
+body.md3-on .almacen-cotizacion-activa {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  padding: 2px 10px;
+  border-radius: var(--md-sys-shape-corner-full);
+  font: var(--md-sys-typescale-label-medium);
+}
+
+/* ── Refacciones — table scroll shell ────────────────────────────────────── */
+body.md3-on .ref-table-shell { overflow: hidden; }
+body.md3-on .ref-table-scroll-x { overflow-x: auto; }
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  body.md3-on .maquinas-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
