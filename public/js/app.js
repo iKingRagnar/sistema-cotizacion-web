@@ -4253,14 +4253,28 @@
         const id = Number(btn.dataset.id);
         if (!id) return;
         const actual = btn.dataset.tc || '';
-        const raw = window.prompt('Nuevo tipo de cambio (MXN por USD):', actual || '17.00');
-        if (raw == null) return;
-        const next = Number(String(raw).replace(',', '.').trim());
-        if (!Number.isFinite(next) || next <= 0) {
-          showToast('Tipo de cambio inválido. Usa un número mayor a 0.', 'error');
-          return;
-        }
-        await updateCotizacionTipoCambioInline(id, next);
+        openPromptModal(
+          {
+            title: 'Editar tipo de cambio',
+            message: 'MXN por 1 USD (referencia Banxico):',
+            label: 'Nuevo tipo de cambio',
+            defaultValue: actual || '17.00',
+            placeholder: '18.3056',
+            inputType: 'number',
+            required: true,
+            confirmLabel: 'Actualizar T.C.',
+            confirmIcon: 'fa-exchange-alt',
+            validator: (v) => {
+              const n = Number(String(v).replace(',', '.'));
+              return (!Number.isFinite(n) || n <= 0) ? 'Usa un número mayor a 0.' : null;
+            },
+          },
+          async (raw) => {
+            const next = Number(String(raw).replace(',', '.').trim());
+            if (!Number.isFinite(next) || next <= 0) { showToast('Tipo de cambio inválido.', 'error'); return; }
+            await updateCotizacionTipoCambioInline(id, next);
+          }
+        );
       });
     });
     updateTableFooter('tabla-cotizaciones', list.length, cotizacionesCache.length, () => clearTableFiltersAndRefresh('tabla-cotizaciones', null, applyCotizacionesFiltersAndRender), arguments[2]);
@@ -4472,14 +4486,19 @@
             .toUpperCase()
             .replace(/[^a-z0-9]+/gi, '-')
             .replace(/^-|-$/g, '');
-        openConfirmModal(
-          'Se borrarán todas las filas del módulo «' + mod + '». No hay deshacer. ¿Continuar?',
-          function () {
-            const c = window.prompt('Para confirmar, escribe exactamente: ' + tag);
-            if (c !== tag) {
-              if (c != null && String(c).trim() !== '') showToast('Confirmación incorrecta.', 'error');
-              return;
-            }
+        openPromptModal(
+          {
+            title: 'Vaciar módulo «' + mod + '»',
+            message: 'Se eliminarán todas las filas de forma irreversible. Escribe exactamente: ' + tag,
+            label: 'Frase de confirmación',
+            placeholder: tag,
+            required: true,
+            confirmLabel: 'Vaciar tabla',
+            confirmIcon: 'fa-database',
+            confirmClass: 'btn danger',
+            validator: (v) => v !== tag ? 'Escribe exactamente: ' + tag : null,
+          },
+          function (c) {
             fetchJson(API + '/admin/vaciar-modulo', {
               method: 'POST',
               body: JSON.stringify({ modulo: mod, confirm: c }),
@@ -9430,34 +9449,51 @@
           const id = t.dataset.id;
           const row = categoriasAdminTree && toArray(categoriasAdminTree.categorias).find((c) => String(c.id) === String(id));
           const cur = row ? row.nombre : '';
-          const n = window.prompt('Nuevo nombre de categoría:', cur);
-          if (n == null) return;
-          const nombre = String(n).trim();
-          if (!nombre) return;
-          try {
-            await fetchJson(API + '/admin/categorias-catalogo/categorias/' + id, {
-              method: 'PUT',
-              body: JSON.stringify({ nombre: nombre, orden: row && row.orden != null ? row.orden : 0 }),
-            });
-            showToast('Categoría actualizada.', 'success');
-            await loadCategoriasAdminPanel();
-            if (typeof loadRefacciones === 'function') loadRefacciones();
-          } catch (e) {
-            showToast(parseApiError(e) || 'No se pudo actualizar.', 'error');
-          }
+          openPromptModal(
+            {
+              title: 'Editar categoría',
+              label: 'Nombre',
+              defaultValue: cur,
+              placeholder: 'Ej. Fresadora',
+              required: true,
+              confirmLabel: 'Guardar',
+              confirmIcon: 'fa-save',
+              validator: (v) => !v.trim() ? 'El nombre no puede estar vacío.' : null,
+            },
+            async (n) => {
+              const nombre = String(n).trim();
+              if (!nombre) return;
+              try {
+                await fetchJson(API + '/admin/categorias-catalogo/categorias/' + id, {
+                  method: 'PUT',
+                  body: JSON.stringify({ nombre: nombre, orden: row && row.orden != null ? row.orden : 0 }),
+                });
+                showToast('Categoría actualizada.', 'success');
+                await loadCategoriasAdminPanel();
+                if (typeof loadRefacciones === 'function') loadRefacciones();
+              } catch (e) {
+                showToast(parseApiError(e) || 'No se pudo actualizar.', 'error');
+              }
+            }
+          );
           return;
         }
         if (t.classList.contains('cat-admin-del-cat')) {
           const id = t.dataset.id;
-          if (!window.confirm('¿Eliminar esta categoría? Se eliminarán también sus subcategorías.')) return;
-          try {
-            await fetchJson(API + '/admin/categorias-catalogo/categorias/' + id, { method: 'DELETE' });
-            showToast('Categoría eliminada.', 'success');
-            await loadCategoriasAdminPanel();
-            if (typeof loadRefacciones === 'function') loadRefacciones();
-          } catch (e) {
-            showToast(parseApiError(e) || 'No se pudo eliminar.', 'error');
-          }
+          openConfirmModal(
+            '¿Eliminar esta categoría? Se eliminarán también sus subcategorías.',
+            async () => {
+              try {
+                await fetchJson(API + '/admin/categorias-catalogo/categorias/' + id, { method: 'DELETE' });
+                showToast('Categoría eliminada.', 'success');
+                await loadCategoriasAdminPanel();
+                if (typeof loadRefacciones === 'function') loadRefacciones();
+              } catch (e) {
+                showToast(parseApiError(e) || 'No se pudo eliminar.', 'error');
+              }
+            },
+            { confirmLabel: 'Eliminar categoría', confirmIcon: 'fa-trash', confirmClass: 'btn danger' }
+          );
           return;
         }
         if (t.classList.contains('cat-admin-edit-sub')) {
@@ -9466,38 +9502,55 @@
           const cat = categoriasAdminTree && toArray(categoriasAdminTree.categorias).find((c) => String(c.id) === String(catId));
           const sub = cat && toArray(cat.subcategorias).find((s) => String(s.id) === String(id));
           const cur = sub ? sub.nombre : '';
-          const n = window.prompt('Nuevo nombre de subcategoría:', cur);
-          if (n == null) return;
-          const nombre = String(n).trim();
-          if (!nombre) return;
-          try {
-            await fetchJson(API + '/admin/categorias-catalogo/subcategorias/' + id, {
-              method: 'PUT',
-              body: JSON.stringify({
-                nombre: nombre,
-                orden: sub && sub.orden != null ? sub.orden : 0,
-                categoria_id: Number(catId),
-              }),
-            });
-            showToast('Subcategoría actualizada.', 'success');
-            await loadCategoriasAdminPanel();
-            if (typeof loadRefacciones === 'function') loadRefacciones();
-          } catch (e) {
-            showToast(parseApiError(e) || 'No se pudo actualizar.', 'error');
-          }
+          openPromptModal(
+            {
+              title: 'Editar subcategoría',
+              label: 'Nombre',
+              defaultValue: cur,
+              placeholder: 'Ej. Husillo',
+              required: true,
+              confirmLabel: 'Guardar',
+              confirmIcon: 'fa-save',
+              validator: (v) => !v.trim() ? 'El nombre no puede estar vacío.' : null,
+            },
+            async (n) => {
+              const nombre = String(n).trim();
+              if (!nombre) return;
+              try {
+                await fetchJson(API + '/admin/categorias-catalogo/subcategorias/' + id, {
+                  method: 'PUT',
+                  body: JSON.stringify({
+                    nombre: nombre,
+                    orden: sub && sub.orden != null ? sub.orden : 0,
+                    categoria_id: Number(catId),
+                  }),
+                });
+                showToast('Subcategoría actualizada.', 'success');
+                await loadCategoriasAdminPanel();
+                if (typeof loadRefacciones === 'function') loadRefacciones();
+              } catch (e) {
+                showToast(parseApiError(e) || 'No se pudo actualizar.', 'error');
+              }
+            }
+          );
           return;
         }
         if (t.classList.contains('cat-admin-del-sub')) {
           const id = t.dataset.id;
-          if (!window.confirm('¿Eliminar esta subcategoría?')) return;
-          try {
-            await fetchJson(API + '/admin/categorias-catalogo/subcategorias/' + id, { method: 'DELETE' });
-            showToast('Subcategoría eliminada.', 'success');
-            await loadCategoriasAdminPanel();
-            if (typeof loadRefacciones === 'function') loadRefacciones();
-          } catch (e) {
-            showToast(parseApiError(e) || 'No se pudo eliminar.', 'error');
-          }
+          openConfirmModal(
+            '¿Eliminar esta subcategoría?',
+            async () => {
+              try {
+                await fetchJson(API + '/admin/categorias-catalogo/subcategorias/' + id, { method: 'DELETE' });
+                showToast('Subcategoría eliminada.', 'success');
+                await loadCategoriasAdminPanel();
+                if (typeof loadRefacciones === 'function') loadRefacciones();
+              } catch (e) {
+                showToast(parseApiError(e) || 'No se pudo eliminar.', 'error');
+              }
+            },
+            { confirmLabel: 'Eliminar subcategoría', confirmIcon: 'fa-trash', confirmClass: 'btn danger' }
+          );
         }
       });
     }
@@ -10523,22 +10576,30 @@
     } catch (_) {
       throw new Error('El archivo no es un JSON válido.');
     }
-    const ok = window.confirm('Esto reemplazará TODOS los datos actuales por los del respaldo. ¿Deseas continuar?');
-    if (!ok) return;
-    await fetchJson(API + '/backup/import', {
-      method: 'POST',
-      body: JSON.stringify({ backup: parsed }),
-    });
-    await loadSeedStatus();
-    await loadStorageHealth();
-    await loadDashboard();
-    await loadClientes({ force: true });
-    await loadRefacciones();
-    await loadMaquinas({ force: true });
-    if (canAccessCotizaciones()) await loadCotizaciones({ force: true });
-    await loadBitacoras({ force: true });
-    fillClientesSelect();
-    showToast('Respaldo restaurado correctamente.', 'success');
+    openConfirmModal(
+      'Esto reemplazará todos los datos actuales por los del respaldo. No hay deshacer.',
+      async () => {
+        try {
+          await fetchJson(API + '/backup/import', {
+            method: 'POST',
+            body: JSON.stringify({ backup: parsed }),
+          });
+          await loadSeedStatus();
+          await loadStorageHealth();
+          await loadDashboard();
+          await loadClientes({ force: true });
+          await loadRefacciones();
+          await loadMaquinas({ force: true });
+          if (canAccessCotizaciones()) await loadCotizaciones({ force: true });
+          await loadBitacoras({ force: true });
+          fillClientesSelect();
+          showToast('Respaldo restaurado correctamente.', 'success');
+        } catch (e) {
+          showToast(parseApiError(e) || 'No se pudo restaurar el respaldo.', 'error');
+        }
+      },
+      { confirmLabel: 'Restaurar respaldo', confirmIcon: 'fa-upload', confirmClass: 'btn danger' }
+    );
   }
 
   function formatBytes(n) {
@@ -10570,32 +10631,48 @@
   async function restoreBackupByName(name) {
     const res = await fetchJson(API + '/backup/file?name=' + encodeURIComponent(name));
     if (!res || !res.backup) throw new Error('No se pudo cargar el respaldo seleccionado.');
-    const ok = window.confirm('Se restaurará el backup ' + name + ' y se reemplazarán todos los datos actuales. ¿Continuar?');
-    if (!ok) return;
-    await fetchJson(API + '/backup/import', {
-      method: 'POST',
-      body: JSON.stringify({ backup: res.backup }),
-    });
-    await loadSeedStatus();
-    await loadStorageHealth();
-    await loadDashboard();
-    await loadClientes({ force: true });
-    await loadRefacciones();
-    await loadMaquinas({ force: true });
-    if (canAccessCotizaciones()) await loadCotizaciones({ force: true });
-    await loadBitacoras({ force: true });
-    fillClientesSelect();
-    showToast('Backup restaurado desde lista automática.', 'success');
+    openConfirmModal(
+      'Se restaurará el backup «' + name + '» y se reemplazarán todos los datos actuales. No hay deshacer.',
+      async () => {
+        try {
+          await fetchJson(API + '/backup/import', {
+            method: 'POST',
+            body: JSON.stringify({ backup: res.backup }),
+          });
+          await loadSeedStatus();
+          await loadStorageHealth();
+          await loadDashboard();
+          await loadClientes({ force: true });
+          await loadRefacciones();
+          await loadMaquinas({ force: true });
+          if (canAccessCotizaciones()) await loadCotizaciones({ force: true });
+          await loadBitacoras({ force: true });
+          fillClientesSelect();
+          showToast('Backup restaurado desde lista automática.', 'success');
+        } catch (e) {
+          showToast(parseApiError(e) || 'No se pudo restaurar el backup.', 'error');
+        }
+      },
+      { confirmLabel: 'Restaurar backup', confirmIcon: 'fa-upload', confirmClass: 'btn danger' }
+    );
   }
 
   async function deleteBackupByName(name) {
-    const ok = window.confirm('¿Eliminar este backup del servidor?\n' + name);
-    if (!ok) return;
-    await fetchJson(API + '/backup/file', {
-      method: 'DELETE',
-      body: JSON.stringify({ name }),
-    });
-    showToast('Backup eliminado: ' + name, 'success');
+    openConfirmModal(
+      '¿Eliminar el backup «' + name + '» del servidor?',
+      async () => {
+        try {
+          await fetchJson(API + '/backup/file', {
+            method: 'DELETE',
+            body: JSON.stringify({ name }),
+          });
+          showToast('Backup eliminado: ' + name, 'success');
+        } catch (e) {
+          showToast(parseApiError(e) || 'No se pudo eliminar el backup.', 'error');
+        }
+      },
+      { confirmLabel: 'Eliminar backup', confirmIcon: 'fa-trash', confirmClass: 'btn danger' }
+    );
   }
 
   async function createBackupNow() {
@@ -13500,47 +13577,47 @@
 
   const btnWipeAllSystem = qs('#btn-wipe-all-system');
   if (btnWipeAllSystem) {
-    btnWipeAllSystem.addEventListener('click', async () => {
-      const ok1 = window.confirm(
-        '¿Borrar casi todos los datos del sistema?\n\n' +
-          'Se eliminan clientes, refacciones, máquinas, cotizaciones, usuarios de la app y el resto, ' +
-          'pero NO se borra Prospección (prospectos).\n\n' +
-          'NO HAY VUELTA ATRÁS para lo que sí se borra. Si hay autenticación, solo un administrador puede continuar.'
+    btnWipeAllSystem.addEventListener('click', () => {
+      openPromptModal(
+        {
+          title: 'Borrar todos los datos del sistema',
+          message: 'Se eliminan clientes, refacciones, maquinas, cotizaciones y demas. NO se borra Prospeccion. NO HAY VUELTA ATRAS. Escribe exactamente: BORRAR-TODO-EL-SISTEMA',
+          label: 'Frase de confirmacion',
+          placeholder: 'BORRAR-TODO-EL-SISTEMA',
+          required: true,
+          confirmLabel: 'Borrar todo',
+          confirmIcon: 'fa-skull-crossbones',
+          confirmClass: 'btn danger',
+          validator: (v) => v.trim() !== 'BORRAR-TODO-EL-SISTEMA' ? 'Escribe exactamente: BORRAR-TODO-EL-SISTEMA' : null,
+        },
+        async () => {
+          btnWipeAllSystem.disabled = true;
+          try {
+            const data = await fetchJson(API + '/wipe-all-data', {
+              method: 'POST',
+              body: JSON.stringify({ confirm: 'BORRAR-TODO-EL-SISTEMA' }),
+            });
+            const d = data.deleted || {};
+            const pr = data.seed_status && data.seed_status.prospectos;
+            showToast(
+              'Sistema vaciado. Filas eliminadas: ' +
+                (d.deleted_total != null ? d.deleted_total : '—') +
+                (pr != null ? ' · Prospeccion: ' + pr + ' registro(s) conservados.' : ''),
+              'success'
+            );
+            await refreshAfterFullWipe();
+          } catch (e) {
+            let msg = parseApiError(e);
+            try {
+              const o = JSON.parse(e.message);
+              if (o && o.hint) msg = msg + '\n' + o.hint;
+            } catch (_) {}
+            showToast(msg, 'error');
+          } finally {
+            btnWipeAllSystem.disabled = false;
+          }
+        }
       );
-      if (!ok1) return;
-      const phrase = window.prompt(
-        'Para confirmar, escribe exactamente (mayúsculas y guiones):\nBORRAR-TODO-EL-SISTEMA'
-      );
-      if (phrase == null) return;
-      if (String(phrase).trim() !== 'BORRAR-TODO-EL-SISTEMA') {
-        showToast('Frase de confirmación incorrecta.', 'error');
-        return;
-      }
-      btnWipeAllSystem.disabled = true;
-      try {
-        const data = await fetchJson(API + '/wipe-all-data', {
-          method: 'POST',
-          body: JSON.stringify({ confirm: 'BORRAR-TODO-EL-SISTEMA' }),
-        });
-        const d = data.deleted || {};
-        const pr = data.seed_status && data.seed_status.prospectos;
-        showToast(
-          'Sistema vaciado. Filas eliminadas: ' +
-            (d.deleted_total != null ? d.deleted_total : '—') +
-            (pr != null ? ' · Prospección: ' + pr + ' registro(s) conservados.' : ''),
-          'success'
-        );
-        await refreshAfterFullWipe();
-      } catch (e) {
-        let msg = parseApiError(e);
-        try {
-          const o = JSON.parse(e.message);
-          if (o && o.hint) msg = msg + '\n' + o.hint;
-        } catch (_) {}
-        showToast(msg, 'error');
-      } finally {
-        btnWipeAllSystem.disabled = false;
-      }
     });
   }
 
