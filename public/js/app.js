@@ -12353,14 +12353,14 @@
   /** Apariencia: `dark` = industrial (luna), `light` = velos claros sobre el mismo fondo (sol). */
   const VALID_THEMES = ['light', 'dark'];
   function normalizeTheme(t) {
-    return VALID_THEMES.indexOf(t) >= 0 ? t : 'dark';
+    return VALID_THEMES.indexOf(t) >= 0 ? t : 'light';
   }
   function getTheme() {
     try {
       const raw = localStorage.getItem(THEME_STORAGE_KEY);
       if (raw === 'light' || raw === 'dark') return raw;
     } catch (_) {}
-    return 'dark';
+    return 'light'; /* MD3: claro por defecto */
   }
   function applyModalThemeToBox(box) {
     if (!box) return;
@@ -12408,7 +12408,7 @@
   function syncThemeColorMeta() {
     const m = qs('#meta-theme-color');
     if (!m) return;
-    m.setAttribute('content', getTheme() === 'light' ? '#f8fafc' : '#0f172a');
+    m.setAttribute('content', getTheme() === 'light' ? '#1A73E8' : '#0F172A');
   }
   function initTheme() {
     setTheme(getTheme());
@@ -13439,7 +13439,4 @@
     }
     await refreshSessionUser();
     updateAuditTabVisibility();
-    finishBoot();
-  }
-  boot();
-})();
+    fin
