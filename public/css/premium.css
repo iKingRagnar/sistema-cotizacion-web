@@ -1,0 +1,916 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PREMIUM OVERRIDE — Universal Machine Tools · Sistema de Gestión
+   Nivel Salesforce / SAP / Material You 2026 — máxima calidad visual
+   Cargado al FINAL del <head> → gana todos los conflictos de especificidad
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────────────────
+   1. TOKENS PREMIUM
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Paleta premium — azul zafiro + esmeralda */
+  --prem-navy:      #0c1120;
+  --prem-navy-mid:  #131c2e;
+  --prem-navy-soft: #1a263d;
+  --prem-blue:      #2563eb;
+  --prem-blue-deep: #1e40af;
+  --prem-teal:      #0d9488;
+  --prem-cyan:      #0ea5e9;
+  --prem-slate:     #64748b;
+  --prem-surface:   #f0f4fb;
+  --prem-border:    #e2e8f0;
+
+  /* Gradientes */
+  --grad-header:  linear-gradient(135deg, #1e40af 0%, #2563eb 55%, #3b82f6 100%);
+  --grad-sidebar: linear-gradient(180deg, #0c1120 0%, #131c2e 55%, #1a263d 100%);
+  --grad-active:  linear-gradient(135deg, rgba(37,99,235,.90) 0%, rgba(13,148,136,.80) 100%);
+  --grad-primary: linear-gradient(135deg, #2563eb 0%, #0d9488 100%);
+  --grad-success: linear-gradient(135deg, #065f46 0%, #059669 100%);
+  --grad-danger:  linear-gradient(135deg, #991b1b 0%, #ef4444 100%);
+
+  /* Sombras premium */
+  --shadow-card:  0 2px 8px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+  --shadow-md:    0 4px 20px rgba(15,23,42,.09), 0 2px 6px rgba(15,23,42,.05);
+  --shadow-lg:    0 10px 40px rgba(15,23,42,.12), 0 4px 12px rgba(15,23,42,.06);
+  --shadow-blue:  0 4px 18px rgba(37,99,235,.32);
+  --shadow-btn:   0 2px 8px rgba(37,99,235,.35);
+
+  /* Radios premium */
+  --radius-table: 14px;
+  --radius-card:  16px;
+  --radius-btn:   9999px;
+  --radius-badge: 6px;
+
+  /* Motion */
+  --ease-spring: cubic-bezier(0.34,1.56,0.64,1);
+  --ease-smooth: cubic-bezier(0.05,0.7,0.1,1);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   2. APP BACKGROUND
+   ───────────────────────────────────────────────────────────────────────── */
+body.md3-on {
+  background: var(--prem-surface) !important;
+}
+body.md3-on .app-main {
+  background: var(--prem-surface);
+}
+body.md3-on .content {
+  background: transparent;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   3. SIDEBAR — ULTRA-DARK PREMIUM
+   ───────────────────────────────────────────────────────────────────────── */
+body.md3-on .sidebar-nav {
+  background: var(--grad-sidebar) !important;
+  border-right: none !important;
+  box-shadow: 4px 0 32px rgba(0,0,0,.28), inset -1px 0 0 rgba(255,255,255,.04) !important;
+  flex: 0 0 clamp(256px,22vw,280px) !important;
+  width: clamp(256px,22vw,280px) !important;
+}
+
+body.md3-on .sidebar-nav-toolbar {
+  background: rgba(0,0,0,.22) !important;
+  border-bottom: 1px solid rgba(255,255,255,.06) !important;
+  padding: 14px !important;
+}
+
+body.md3-on .sidebar-nav-title {
+  color: rgba(148,163,184,.75) !important;
+  font-size: .6rem !important;
+  letter-spacing: .18em !important;
+}
+
+body.md3-on .btn-sidebar-rail-toggle {
+  background: rgba(255,255,255,.06) !important;
+  border-color: rgba(255,255,255,.1) !important;
+  color: rgba(203,213,225,.8) !important;
+}
+body.md3-on .btn-sidebar-rail-toggle:hover {
+  background: rgba(255,255,255,.12) !important;
+  border-color: rgba(255,255,255,.18) !important;
+  color: #e2e8f0 !important;
+}
+
+/* ── Nav items ─────────────────────────────────────────────────────────── */
+body.md3-on .tabs.tabs--rail {
+  padding: 8px 10px 24px !important;
+  gap: 2px !important;
+  overflow-y: auto !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(255,255,255,.08) transparent !important;
+}
+
+body.md3-on .tabs.tabs--rail .tab {
+  color: rgba(203,213,225,.68) !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 9px 13px !important;
+  font-size: .82rem !important;
+  font-weight: 500 !important;
+  position: relative;
+  transition: all .18s ease !important;
+  box-shadow: none !important;
+  gap: 9px !important;
+}
+
+body.md3-on .tabs.tabs--rail .tab i {
+  color: rgba(148,163,184,.75) !important;
+  transition: color .18s ease !important;
+  width: 18px;
+  text-align: center;
+}
+
+body.md3-on .tabs.tabs--rail .tab:hover {
+  background: rgba(255,255,255,.07) !important;
+  color: #e2e8f0 !important;
+}
+body.md3-on .tabs.tabs--rail .tab:hover i {
+  color: #93c5fd !important;
+}
+
+body.md3-on .tabs.tabs--rail .tab.active {
+  background: var(--grad-active) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 16px rgba(37,99,235,.30), inset 0 1px 0 rgba(255,255,255,.15) !important;
+}
+body.md3-on .tabs.tabs--rail .tab.active i {
+  color: rgba(255,255,255,.9) !important;
+}
+body.md3-on .tabs.tabs--rail .tab.active::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  transform: translateY(-50%);
+  width: 3px; height: 56%;
+  background: #93c5fd;
+  border-radius: 0 3px 3px 0;
+  box-shadow: 0 0 8px #60a5fa;
+}
+
+/* ── Badge de notificaciones en nav ────────────────────────────────────── */
+body.md3-on .tab-badge {
+  background: #ef4444 !important;
+  color: #fff !important;
+  font-weight: 800 !important;
+  box-shadow: 0 2px 6px rgba(239,68,68,.5) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   4. PANEL ANIMATION — entra suave
+   ───────────────────────────────────────────────────────────────────────── */
+@keyframes panelEnter {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+body.md3-on .panel.active {
+  animation: panelEnter .32s var(--ease-smooth) both !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   5. SECTION HEADER — BILLBOARD PREMIUM
+   ───────────────────────────────────────────────────────────────────────── */
+body.md3-on .section-header {
+  background: var(--grad-header) !important;
+  color: #fff !important;
+  padding: 18px 24px !important;
+  border-radius: var(--radius-card) !important;
+  margin-bottom: 18px !important;
+  box-shadow: var(--shadow-blue) !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Brillo sutil en el header */
+body.md3-on .section-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: rgba(255,255,255,.22);
+}
+
+body.md3-on .section-header h2 {
+  color: #fff !important;
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+body.md3-on .section-header h2 i,
+body.md3-on .section-header h2 .fa,
+body.md3-on .section-header h2 .fas {
+  background: rgba(255,255,255,.16) !important;
+  backdrop-filter: blur(8px) !important;
+  width: 34px !important; height: 34px !important;
+  border-radius: 10px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: .95rem !important;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.25) !important;
+}
+
+/* section-header variants (algunos paneles son esmeralda) */
+body.md3-on #panel-incidentes .section-header,
+body.md3-on #panel-garantias .section-header,
+body.md3-on #panel-reportes .section-header {
+  background: linear-gradient(135deg, #065f46 0%, #059669 55%, #10b981 100%) !important;
+  box-shadow: 0 4px 18px rgba(5,150,105,.32) !important;
+}
+
+body.md3-on #panel-revision-maquinas .section-header,
+body.md3-on #panel-mantenimiento-garantia .section-header {
+  background: linear-gradient(135deg, #7c2d12 0%, #c2410c 55%, #ea580c 100%) !important;
+  box-shadow: 0 4px 18px rgba(194,65,12,.32) !important;
+}
+
+body.md3-on #panel-prospeccion .section-header,
+body.md3-on #panel-bonos .section-header {
+  background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 55%, #8b5cf6 100%) !important;
+  box-shadow: 0 4px 18px rgba(124,58,237,.32) !important;
+}
+
+body.md3-on #panel-auditoria .section-header {
+  background: linear-gradient(135deg, #1e3a5f 0%, #1e40af 55%, #2563eb 100%) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   6. TOOLBAR — barra de acciones premium
+   ───────────────────────────────────────────────────────────────────────── */
+body.md3-on .toolbar {
+  background: #fff !important;
+  border-bottom: 1px solid var(--prem-border) !important;
+  padding: 12px 18px !important;
+  gap: 10px !important;
+  flex-wrap: wrap;
+  align-items: center;
+  border-radius: 0 !important;
+  box-shadow: 0 1px 3px rgba(15,23,42,.04) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   7. TABLA — REDESIGN COMPLETO
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Contenedor */
+body.md3-on .table-wrap,
+body.md3-on .md-table-wrap {
+  background: #fff !important;
+  border-radius: var(--radius-table) !important;
+  border: none !important;
+  box-shadow: var(--shadow-md) !important;
+  overflow: hidden !important;
+}
+
+/* Header de columnas */
+body.md3-on table.data-table thead,
+body.md3-on .table-wrap > table thead {
+  background: var(--grad-header) !important;
+}
+
+body.md3-on table.data-table thead th,
+body.md3-on .table-wrap > table thead th {
+  background: transparent !important;
+  color: rgba(255,255,255,.96) !important;
+  font-size: .7rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .07em !important;
+  text-transform: uppercase !important;
+  padding: 14px 16px !important;
+  border-bottom: none !important;
+  white-space: nowrap !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 2 !important;
+}
+
+/* Línea brillante bajo encabezado */
+body.md3-on table.data-table thead tr:first-child th:after {
+  display: none;
+}
+body.md3-on table.data-table thead::after {
+  content: '';
+  display: block;
+  height: 1px;
+  background: rgba(255,255,255,.1);
+}
+
+/* Fila de filtros (dentro de thead) */
+body.md3-on table.data-table thead .filter-row td,
+body.md3-on .table-wrap > table thead .filter-row td {
+  background: rgba(30,64,175,.88) !important;
+  padding: 6px 8px !important;
+  border-bottom: 1px solid rgba(255,255,255,.08) !important;
+}
+
+body.md3-on table.data-table thead .filter-row input,
+body.md3-on table.data-table thead .filter-row select,
+body.md3-on table.data-table thead .filter-row textarea {
+  background: rgba(255,255,255,.11) !important;
+  border: 1px solid rgba(255,255,255,.16) !important;
+  color: rgba(255,255,255,.95) !important;
+  border-radius: 6px !important;
+  font-size: .75rem !important;
+  height: 28px !important;
+  padding: 0 8px !important;
+  transition: background .15s ease, border-color .15s ease !important;
+}
+body.md3-on table.data-table thead .filter-row input::placeholder {
+  color: rgba(255,255,255,.38) !important;
+}
+body.md3-on table.data-table thead .filter-row input:focus,
+body.md3-on table.data-table thead .filter-row select:focus {
+  background: rgba(255,255,255,.18) !important;
+  border-color: rgba(255,255,255,.35) !important;
+  outline: none !important;
+}
+body.md3-on table.data-table thead .filter-row select option {
+  background: #1e3a8a !important;
+  color: #fff !important;
+}
+
+/* ── Filas ────────────────────────────────────────────────────────────── */
+@keyframes premiumRowIn {
+  from { opacity: 0; transform: translateX(-4px); }
+  to   { opacity: 1; transform: translateX(0);    }
+}
+
+body.md3-on table.data-table tbody tr,
+body.md3-on .table-wrap > table tbody tr {
+  transition: background .12s ease, box-shadow .12s ease !important;
+  animation: premiumRowIn .25s ease both !important;
+}
+
+/* Stagger en las primeras 20 filas */
+body.md3-on table.data-table tbody tr:nth-child(1)  { animation-delay:   0ms !important; }
+body.md3-on table.data-table tbody tr:nth-child(2)  { animation-delay:  20ms !important; }
+body.md3-on table.data-table tbody tr:nth-child(3)  { animation-delay:  40ms !important; }
+body.md3-on table.data-table tbody tr:nth-child(4)  { animation-delay:  55ms !important; }
+body.md3-on table.data-table tbody tr:nth-child(5)  { animation-delay:  70ms !important; }
+body.md3-on table.data-table tbody tr:nth-child(6)  { animation-delay:  85ms !important; }
+body.md3-on table.data-table tbody tr:nth-child(7)  { animation-delay: 100ms !important; }
+body.md3-on table.data-table tbody tr:nth-child(8)  { animation-delay: 112ms !important; }
+body.md3-on table.data-table tbody tr:nth-child(9)  { animation-delay: 124ms !important; }
+body.md3-on table.data-table tbody tr:nth-child(10) { animation-delay: 136ms !important; }
+body.md3-on table.data-table tbody tr:nth-child(n+11) { animation-delay: 145ms !important; }
+
+body.md3-on table.data-table tbody tr:nth-child(odd) {
+  background: #fff !important;
+}
+body.md3-on table.data-table tbody tr:nth-child(even) {
+  background: #f8faff !important;
+}
+body.md3-on table.data-table tbody tr:hover,
+body.md3-on .table-wrap > table tbody tr:hover {
+  background: #eff6ff !important;
+  box-shadow: inset 3px 0 0 var(--prem-blue) !important;
+}
+
+body.md3-on table.data-table tbody td,
+body.md3-on .table-wrap > table tbody td {
+  padding: 10px 16px !important;
+  font-size: .835rem !important;
+  color: #1e293b !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  vertical-align: middle !important;
+}
+
+body.md3-on table.data-table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+/* ── Acciones en fila ─────────────────────────────────────────────────── */
+body.md3-on table.data-table td.th-actions {
+  white-space: nowrap !important;
+  text-align: right !important;
+  padding: 8px 12px !important;
+}
+
+body.md3-on table.data-table td.th-actions .btn,
+body.md3-on table.data-table td.th-actions button {
+  height: 30px !important;
+  padding: 0 10px !important;
+  font-size: .72rem !important;
+  border-radius: 7px !important;
+  min-width: 0 !important;
+  gap: 5px !important;
+}
+
+/* ── Empty state ─────────────────────────────────────────────────────── */
+body.md3-on table.data-table tbody tr.empty-row td,
+body.md3-on table.data-table tbody tr td[colspan] {
+  text-align: center !important;
+  padding: 48px 24px !important;
+  color: var(--prem-slate) !important;
+  font-size: .9rem !important;
+}
+
+/* ── Table footer ─────────────────────────────────────────────────────── */
+body.md3-on .table-footer {
+  background: #f8faff !important;
+  border-top: 1px solid #e8f0fe !important;
+  padding: 10px 18px !important;
+  font-size: .78rem !important;
+  color: var(--prem-slate) !important;
+  font-weight: 500 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   8. BUTTONS — GRADIENTE + ELEVACIÓN
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Filled (primary) */
+body.md3-on .btn:not(.outline):not(.outlined):not(.text):not(.tonal):not(.danger):not(.success):not(.warning):not(.elevated):not(.small):not([class*="sidebar"]) {
+  background: var(--grad-primary) !important;
+  color: #fff !important;
+  box-shadow: var(--shadow-btn) !important;
+  font-weight: 600 !important;
+  letter-spacing: .02em !important;
+  transition: all .2s var(--ease-spring) !important;
+}
+body.md3-on .btn:not(.outline):not(.outlined):not(.text):not(.tonal):not(.danger):not(.success):not(.warning):not(.elevated):hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 22px rgba(37,99,235,.42) !important;
+}
+body.md3-on .btn:not(.outline):not(.outlined):not(.text):not(.tonal):not(.danger):not(.success):not(.warning):not(.elevated):active {
+  transform: translateY(0) scale(.98) !important;
+  box-shadow: var(--shadow-btn) !important;
+}
+
+/* Outlined */
+body.md3-on .btn.outline,
+body.md3-on .btn.outlined {
+  border: 1.5px solid var(--prem-blue) !important;
+  color: var(--prem-blue) !important;
+  background: transparent !important;
+  font-weight: 600 !important;
+  transition: all .18s ease !important;
+}
+body.md3-on .btn.outline:hover,
+body.md3-on .btn.outlined:hover {
+  background: rgba(37,99,235,.07) !important;
+}
+
+/* Danger */
+body.md3-on .btn.danger:not(.outline):not(.outlined) {
+  background: var(--grad-danger) !important;
+  box-shadow: 0 2px 8px rgba(239,68,68,.35) !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  transition: all .2s var(--ease-spring) !important;
+}
+body.md3-on .btn.danger:not(.outline):not(.outlined):hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 5px 16px rgba(239,68,68,.42) !important;
+}
+
+/* Success */
+body.md3-on .btn.success {
+  background: var(--grad-success) !important;
+  box-shadow: 0 2px 8px rgba(5,150,105,.35) !important;
+  font-weight: 600 !important;
+  transition: all .2s var(--ease-spring) !important;
+}
+body.md3-on .btn.success:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 5px 16px rgba(5,150,105,.42) !important;
+}
+
+/* Small buttons */
+body.md3-on .btn.small {
+  height: 30px !important;
+  padding: 0 12px !important;
+  font-size: .75rem !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  letter-spacing: .01em !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   9. CARDS — PREMIUM ELEVATED
+   ───────────────────────────────────────────────────────────────────────── */
+body.md3-on .card {
+  background: #fff !important;
+  border-radius: var(--radius-card) !important;
+  border: 1px solid rgba(226,232,240,.7) !important;
+  box-shadow: var(--shadow-card) !important;
+  transition: box-shadow .2s ease, transform .2s ease !important;
+}
+body.md3-on .card:hover {
+  box-shadow: var(--shadow-md) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   10. FORMULARIOS — PREMIUM INPUTS
+   ───────────────────────────────────────────────────────────────────────── */
+body.md3-on .form-group input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+body.md3-on .form-group select,
+body.md3-on .form-group textarea {
+  border-radius: 10px !important;
+  border: 1.5px solid #e2e8f0 !important;
+  background: #fff !important;
+  font-size: .875rem !important;
+  padding: 9px 14px !important;
+  height: auto !important;
+  min-height: 40px !important;
+  color: #1e293b !important;
+  transition: border-color .15s ease, box-shadow .15s ease !important;
+  box-shadow: 0 1px 2px rgba(15,23,42,.04) !important;
+}
+body.md3-on .form-group input:focus,
+body.md3-on .form-group select:focus,
+body.md3-on .form-group textarea:focus {
+  border-color: var(--prem-blue) !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.15) !important;
+  outline: none !important;
+  background: #fff !important;
+}
+body.md3-on .form-group label {
+  font-size: .75rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .04em !important;
+  text-transform: uppercase !important;
+  color: var(--prem-slate) !important;
+  margin-bottom: 5px !important;
+  display: block !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   11. DASHBOARD — CARDS PREMIUM
+   ───────────────────────────────────────────────────────────────────────── */
+body.md3-on .dashboard-card {
+  background: #fff !important;
+  border-radius: var(--radius-card) !important;
+  border: none !important;
+  box-shadow: var(--shadow-card) !important;
+  padding: 20px 22px !important;
+  transition: all .22s var(--ease-spring) !important;
+  position: relative;
+  overflow: hidden;
+}
+body.md3-on .dashboard-card:hover {
+  box-shadow: var(--shadow-lg) !important;
+  transform: translateY(-3px) !important;
+}
+body.md3-on .dashboard-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--grad-primary);
+  opacity: 0;
+  transition: opacity .22s ease;
+}
+body.md3-on .dashboard-card:hover::before { opacity: 1; }
+
+body.md3-on .dashboard-card-title {
+  font-size: .88rem !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+  letter-spacing: -.01em !important;
+}
+
+body.md3-on .dashboard-card-icon {
+  background: linear-gradient(135deg, rgba(37,99,235,.12), rgba(13,148,136,.1)) !important;
+  border-radius: 12px !important;
+  width: 44px !important; height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: var(--prem-blue) !important;
+}
+
+body.md3-on .dashboard-card-action {
+  background: var(--grad-primary) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-size: .75rem !important;
+  font-weight: 700 !important;
+  padding: 7px 14px !important;
+  cursor: pointer !important;
+  transition: all .18s ease !important;
+  box-shadow: 0 2px 8px rgba(37,99,235,.3) !important;
+}
+body.md3-on .dashboard-card-action:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 14px rgba(37,99,235,.4) !important;
+}
+
+body.md3-on .dash-value {
+  font-size: 1.35rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -.02em !important;
+}
+body.md3-on .dash-value-positive { color: #059669 !important; }
+body.md3-on .dash-value-negative { color: #ef4444 !important; }
+body.md3-on .dash-value-neutral  { color: var(--prem-blue) !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   12. STATUS BADGES — PREMIUM PILLS
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Clase genérica badge */
+body.md3-on .badge,
+body.md3-on [class*="badge-"] {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 3px 10px !important;
+  border-radius: var(--radius-badge) !important;
+  font-size: .7rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .04em !important;
+  text-transform: uppercase !important;
+}
+
+/* Status text via data attribute (cotizaciones, incidentes, reportes) */
+body.md3-on td:has([data-estatus]),
+body.md3-on [data-estatus] {
+  font-weight: 600 !important;
+}
+
+/* Colores por texto de estatus */
+body.md3-on .badge-success,
+body.md3-on .badge.success { background: #d1fae5 !important; color: #065f46 !important; border: 1px solid #6ee7b7 !important; }
+body.md3-on .badge-error,
+body.md3-on .badge-danger,
+body.md3-on .badge.danger  { background: #fee2e2 !important; color: #991b1b !important; border: 1px solid #fca5a5 !important; }
+body.md3-on .badge-warning,
+body.md3-on .badge.warning { background: #fef3c7 !important; color: #92400e !important; border: 1px solid #fcd34d !important; }
+body.md3-on .badge-info,
+body.md3-on .badge.info    { background: #dbeafe !important; color: #1e40af !important; border: 1px solid #93c5fd !important; }
+body.md3-on .badge-neutral,
+body.md3-on .badge.neutral { background: #f1f5f9 !important; color: #475569 !important; border: 1px solid #cbd5e1 !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   13. SEARCH INPUT GLOBAL
+   ───────────────────────────────────────────────────────────────────────── */
+body.md3-on input[type="search"],
+body.md3-on input[type="text"].search,
+body.md3-on .search-input {
+  border-radius: 10px !important;
+  border: 1.5px solid #e2e8f0 !important;
+  background: #fff !important;
+  padding: 8px 14px 8px 38px !important;
+  font-size: .84rem !important;
+  height: 40px !important;
+  transition: all .15s ease !important;
+  color: #1e293b !important;
+  box-shadow: 0 1px 3px rgba(15,23,42,.05) !important;
+}
+body.md3-on input[type="search"]:focus,
+body.md3-on input[type="text"].search:focus {
+  border-color: var(--prem-blue) !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.14) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   14. TOASTS — más bonitos
+   ───────────────────────────────────────────────────────────────────────── */
+body.md3-on .toast,
+body.md3-on #toast-container .toast {
+  border-radius: 12px !important;
+  box-shadow: 0 8px 30px rgba(15,23,42,.16), 0 2px 8px rgba(15,23,42,.1) !important;
+  font-size: .86rem !important;
+  font-weight: 600 !important;
+  padding: 12px 18px !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255,255,255,.15) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   15. MODAL — premium
+   ───────────────────────────────────────────────────────────────────────── */
+@keyframes modalEnter {
+  from { opacity: 0; transform: scale(.94) translateY(-12px); }
+  to   { opacity: 1; transform: scale(1)  translateY(0); }
+}
+
+body.md3-on .modal-dialog,
+body.md3-on .modal-content,
+body.md3-on .md-modal-panel {
+  border-radius: 20px !important;
+  border: none !important;
+  box-shadow: 0 24px 72px rgba(15,23,42,.22), 0 8px 24px rgba(15,23,42,.12) !important;
+  animation: modalEnter .28s var(--ease-smooth) both !important;
+}
+
+body.md3-on .modal-header,
+body.md3-on .md-modal-header {
+  background: var(--grad-header) !important;
+  color: #fff !important;
+  border-radius: 20px 20px 0 0 !important;
+  padding: 18px 22px !important;
+}
+body.md3-on .modal-header h2,
+body.md3-on .modal-header h3,
+body.md3-on .md-modal-header h2,
+body.md3-on .md-modal-header h3 {
+  color: #fff !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   16. CHIPS — status indicators
+   ───────────────────────────────────────────────────────────────────────── */
+body.md3-on .chip {
+  border-radius: 9999px !important;
+  padding: 3px 11px !important;
+  font-size: .72rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .03em !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   17. ESTATUS PILLSCOLOR por texto de celda (cotizaciones / incidentes)
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Usamos una clase inyectada por app.js en los spans de estatus */
+body.md3-on .estatus-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+body.md3-on .estatus-pill::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: .65;
+}
+body.md3-on .estatus-abierta,
+body.md3-on .estatus-abierto,
+body.md3-on .estatus-pendiente { background: #dbeafe; color: #1e40af; }
+body.md3-on .estatus-cerrado,
+body.md3-on .estatus-finalizado,
+body.md3-on .estatus-aplicada,
+body.md3-on .estatus-venta { background: #d1fae5; color: #065f46; }
+body.md3-on .estatus-cancelada,
+body.md3-on .estatus-rechazada,
+body.md3-on .estatus-error { background: #fee2e2; color: #991b1b; }
+body.md3-on .estatus-revision,
+body.md3-on .estatus-en-proceso,
+body.md3-on .estatus-cotizacion { background: #fef3c7; color: #92400e; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   18. HEADER DE LA APP — barra superior
+   ───────────────────────────────────────────────────────────────────────── */
+body.md3-on .app-header,
+body.md3-on header.app-header {
+  background: #fff !important;
+  border-bottom: 1px solid var(--prem-border) !important;
+  box-shadow: 0 1px 8px rgba(15,23,42,.06) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   19. ALERT / HINT BLOCKS
+   ───────────────────────────────────────────────────────────────────────── */
+body.md3-on .hint {
+  background: #eff6ff !important;
+  color: #1e40af !important;
+  border-left: 3px solid var(--prem-blue) !important;
+  border-radius: 0 8px 8px 0 !important;
+  font-size: .82rem !important;
+  padding: 10px 14px !important;
+  font-weight: 500 !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   20. SCROLLBAR PREMIUM
+   ───────────────────────────────────────────────────────────────────────── */
+body.md3-on ::-webkit-scrollbar { width: 6px; height: 6px; }
+body.md3-on ::-webkit-scrollbar-track { background: transparent; }
+body.md3-on ::-webkit-scrollbar-thumb {
+  background: rgba(37,99,235,.2);
+  border-radius: 9999px;
+}
+body.md3-on ::-webkit-scrollbar-thumb:hover {
+  background: rgba(37,99,235,.4);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   21. SIDEBAR DARK — scrollbar invisible
+   ───────────────────────────────────────────────────────────────────────── */
+body.md3-on .tabs.tabs--rail::-webkit-scrollbar { width: 3px; }
+body.md3-on .tabs.tabs--rail::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.12);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   22. PANEL CONTAINERS (el wrapper de cada sección)
+   ───────────────────────────────────────────────────────────────────────── */
+body.md3-on .panel.active {
+  padding: 20px !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   23. ADMIN CARDS — hub de módulos
+   ───────────────────────────────────────────────────────────────────────── */
+body.md3-on .admin-hub-card {
+  background: #fff !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(226,232,240,.8) !important;
+  box-shadow: var(--shadow-card) !important;
+  padding: 18px !important;
+  transition: all .2s var(--ease-spring) !important;
+  cursor: pointer;
+}
+body.md3-on .admin-hub-card:hover {
+  box-shadow: var(--shadow-lg) !important;
+  transform: translateY(-3px) !important;
+  border-color: rgba(37,99,235,.3) !important;
+}
+body.md3-on .admin-hub-card-title {
+  font-size: .9rem !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+}
+body.md3-on .admin-hub-card-desc {
+  font-size: .78rem !important;
+  color: #64748b !important;
+  margin-top: 4px !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   24. STOCK ALERT BAR — rojo premium
+   ───────────────────────────────────────────────────────────────────────── */
+body.md3-on .stock-alert-bar {
+  background: linear-gradient(135deg, #7f1d1d, #991b1b) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 16px rgba(153,27,27,.3) !important;
+  border: none !important;
+  color: #fef2f2 !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   25. PAGINATION — premium
+   ───────────────────────────────────────────────────────────────────────── */
+body.md3-on .pagination-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  padding: 12px 0;
+}
+body.md3-on .pagination-wrap .btn {
+  width: 32px !important; height: 32px !important;
+  padding: 0 !important;
+  min-width: 0 !important;
+  border-radius: 8px !important;
+  font-size: .78rem !important;
+  font-weight: 700 !important;
+}
+body.md3-on .pagination-wrap .btn.active,
+body.md3-on .pagination-wrap .btn[aria-current="page"] {
+  background: var(--grad-primary) !important;
+  box-shadow: var(--shadow-btn) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   26. DARK MODE — adapt premium tokens
+   ───────────────────────────────────────────────────────────────────────── */
+body.md3-on.md3-dark .table-wrap,
+body.md3-on.md3-dark .md-table-wrap {
+  box-shadow: 0 4px 24px rgba(0,0,0,.4), 0 1px 4px rgba(0,0,0,.3) !important;
+}
+body.md3-on.md3-dark table.data-table tbody tr:nth-child(odd) { background: #1e293b !important; }
+body.md3-on.md3-dark table.data-table tbody tr:nth-child(even) { background: #162032 !important; }
+body.md3-on.md3-dark table.data-table tbody tr:hover { background: #1e3a5f !important; }
+body.md3-on.md3-dark table.data-table tbody td { color: #e2e8f0 !important; border-bottom-color: rgba(255,255,255,.05) !important; }
+body.md3-on.md3-dark .card { background: #1e293b !important; border-color: rgba(255,255,255,.07) !important; }
+body.md3-on.md3-dark .toolbar { background: #1a263d !important; border-bottom-color: rgba(255,255,255,.06) !important; }
+body.md3-on.md3-dark .hint { background: rgba(37,99,235,.12) !important; color: #93c5fd !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   27. REDUCED MOTION
+   ───────────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  body.md3-on .panel.active { animation: none !important; }
+  body.md3-on table.data-table tbody tr { animation: none !important; }
+  body.md3-on .dashboard-card:hover { transform: none !important; }
+  body.md3-on .btn:hover { transform: none !important; }
+}
