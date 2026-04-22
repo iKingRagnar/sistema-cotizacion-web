@@ -263,6 +263,7 @@ app.post('/api/app-users', async (req, res) => {
       [u]
     );
     res.status(201).json(row);
+    enviarCorreoBienvenida(row).catch(() => {});
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -2424,6 +2425,9 @@ app.post('/api/cotizaciones', async (req, res) => {
        ORDER BY co.id DESC LIMIT 1`
     );
     res.status(201).json(r);
+    db.getOne('SELECT * FROM clientes WHERE id=?', [cliente_id])
+      .then((cli) => enviarCorreoCotizacionCreada(r, cli))
+      .catch(() => {});
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -5025,6 +5029,65 @@ function createMailTransport() {
     host, port, secure: port === 465,
     auth: pass ? { user, pass } : undefined,
   });
+}
+
+/** Wrapper seguro: envía correo sin tirar excepción al llamador. */
+async function safeSendMail(t, opts) {
+  if (!t) return { ok: false, reason: 'no_transport' };
+  try {
+    await t.sendMail(opts);
+    return { ok: true };
+  } catch (e) {
+    console.error('[safeSendMail]', e.message);
+    return { ok: false, reason: e.message };
+  }
+}
+
+/** Correo de bienvenida al crear un usuario (notifica a admins) */
+async function enviarCorreoBienvenida(usuario) {
+  const t = createMailTransport();
+  const from = (process.env.SMTP_FROM || process.env.SMTP_USER || '').trim();
+  if (!t || !from) return;
+  const admins = getAdminNotifyEmails();
+  if (!admins.length) return;
+  const subject = `Nuevo usuario: ${usuario.username} (${usuario.role})`;
+  const html = buildEmailHtml({
+    title: 'Nuevo usuario registrado',
+    subtitle: `Sistema — ${new Date().toLocaleDateString('es-MX')}`,
+    rows: [
+      ['Usuario', usuario.username],
+      ['Nombre', usuario.display_name || '—'],
+      ['Rol', usuario.role],
+    ],
+    accentColor: '#1A73E8',
+  });
+  const text = `Nuevo usuario: ${usuario.username} | Rol: ${usuario.role} | Nombre: ${usuario.display_name || '—'}`;
+  await safeSendMail(t, { from, to: admins.join(', '), subject, text, html });
+}
+
+/** Notificación interna al crear una cotización nueva */
+async function enviarCorreoCotizacionCreada(cot, cliente) {
+  const t = createMailTransport();
+  const from = (process.env.SMTP_FROM || process.env.SMTP_USER || '').trim();
+  if (!t || !from) return;
+  const admins = getAdminNotifyEmails();
+  if (!admins.length) return;
+  const clienteNombre = cliente ? (cliente.nombre || '—') : '—';
+  const subject = `Cotización creada: ${cot.folio} — ${clienteNombre}`;
+  const html = buildEmailHtml({
+    title: `Nueva cotización: ${cot.folio}`,
+    subtitle: `${clienteNombre} · ${new Date().toLocaleDateString('es-MX')}`,
+    rows: [
+      ['Folio', cot.folio],
+      ['Cliente', clienteNombre],
+      ['Tipo', cot.tipo || '—'],
+      ['Total', `${cot.total} ${cot.moneda || 'USD'}`],
+      ['Estado', cot.estado || 'borrador'],
+    ],
+    accentColor: '#1A73E8',
+  });
+  const text = `Nueva cotización ${cot.folio} para ${clienteNombre}. Total: ${cot.total} ${cot.moneda || 'USD'}.`;
+  await safeSendMail(t, { from, to: admins.join(', '), subject, text, html });
 }
 
 /** Genera HTML profesional para correos del sistema */
