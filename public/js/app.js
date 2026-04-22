@@ -13439,4 +13439,7 @@
     }
     await refreshSessionUser();
     updateAuditTabVisibility();
-    fin
+    finishBoot();
+  }
+  boot();
+})();
