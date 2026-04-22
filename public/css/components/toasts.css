@@ -1,0 +1,155 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   MD3 SNACKBARS / TOASTS — bottom-left, auto-dismiss, accessible
+   ════════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .toast-container {
+  position: fixed;
+  bottom: var(--md-sys-spacing-6);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--md-sys-z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-sys-spacing-2);
+  align-items: center;
+  pointer-events: none;
+  width: min(568px, calc(100vw - 48px));
+}
+
+@media (min-width: 1024px) {
+  body.md3-on .toast-container {
+    left: var(--md-sys-spacing-6);
+    transform: none;
+    align-items: flex-start;
+  }
+}
+
+body.md3-on .toast,
+body.md3-on .md-snackbar {
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-3);
+  min-height: 48px;
+  padding: var(--md-sys-spacing-3) var(--md-sys-spacing-4);
+  background: var(--md-sys-color-inverse-surface);
+  color: var(--md-sys-color-inverse-on-surface);
+  border-radius: var(--md-sys-shape-corner-small);
+  box-shadow: var(--md-sys-elevation-level3);
+  font: var(--md-sys-typescale-body-medium);
+  max-width: 100%;
+  pointer-events: auto;
+  animation: md3-slide-up var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-emphasized-decelerate) both;
+}
+
+body.md3-on .toast.toast-out,
+body.md3-on .toast--exit,
+body.md3-on .md-snackbar.exit {
+  animation: md3-toast-out var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-emphasized-accelerate) forwards;
+}
+
+@keyframes md3-toast-out {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(8px); }
+}
+
+body.md3-on .toast .toast-icon,
+body.md3-on .md-snackbar .icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: var(--md-sys-color-inverse-primary);
+}
+
+body.md3-on .toast .toast-msg,
+body.md3-on .md-snackbar .message {
+  flex: 1;
+  line-height: 1.5;
+}
+
+body.md3-on .toast .toast-action,
+body.md3-on .md-snackbar .action {
+  flex: none;
+  background: transparent;
+  color: var(--md-sys-color-inverse-primary);
+  border: none;
+  border-radius: var(--md-sys-shape-corner-small);
+  padding: var(--md-sys-spacing-2) var(--md-sys-spacing-3);
+  font: var(--md-sys-typescale-label-large);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+body.md3-on .toast .toast-action::before,
+body.md3-on .md-snackbar .action::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity var(--md-sys-motion-duration-short2);
+}
+body.md3-on .toast .toast-action:hover::before,
+body.md3-on .md-snackbar .action:hover::before { opacity: var(--md-sys-state-hover-opacity); }
+
+body.md3-on .toast .toast-close,
+body.md3-on .md-snackbar .close-btn {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  color: var(--md-sys-color-inverse-on-surface);
+  border: none;
+  border-radius: var(--md-sys-shape-corner-full);
+  cursor: pointer;
+  opacity: 0.7;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: opacity var(--md-sys-motion-duration-short2);
+}
+body.md3-on .toast .toast-close:hover,
+body.md3-on .md-snackbar .close-btn:hover { opacity: 1; }
+
+/* ── Variantes por tipo ─────────────────────────────────────────────── */
+body.md3-on .toast.toast-success,
+body.md3-on .toast.success,
+body.md3-on .md-snackbar.success {
+  background: var(--md-sys-color-tertiary);
+  color: var(--md-sys-color-on-tertiary);
+}
+body.md3-on .toast.toast-success .toast-icon,
+body.md3-on .toast.success .toast-icon,
+body.md3-on .md-snackbar.success .icon { color: var(--md-sys-color-on-tertiary); }
+
+body.md3-on .toast.toast-error,
+body.md3-on .toast.error,
+body.md3-on .md-snackbar.error {
+  background: var(--md-sys-color-error);
+  color: var(--md-sys-color-on-error);
+}
+body.md3-on .toast.toast-error .toast-icon,
+body.md3-on .toast.error .toast-icon,
+body.md3-on .md-snackbar.error .icon { color: var(--md-sys-color-on-error); }
+
+body.md3-on .toast.toast-warning,
+body.md3-on .toast.warning,
+body.md3-on .md-snackbar.warning {
+  background: var(--md-sys-color-warning);
+  color: var(--md-sys-color-on-warning);
+}
+body.md3-on .toast.toast-warning .toast-icon,
+body.md3-on .toast.warning .toast-icon,
+body.md3-on .md-snackbar.warning .icon { color: var(--md-sys-color-on-warning); }
+
+body.md3-on .toast.toast-info,
+body.md3-on .toast.info,
+body.md3-on .md-snackbar.info {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+body.md3-on .toast.toast-info .toast-icon,
+body.md3-on .toast.info .toast-icon,
+body.md3-on .md-snackbar.info .icon { color: var(--md-sys-color-on-primary); }

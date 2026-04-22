@@ -11,18 +11,35 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <!-- Font Awesome (iconos — se mantiene) -->
+  <!-- Material Symbols (Rounded) para todo el rediseño MD3 -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-25..200&display=swap" rel="stylesheet">
+  <!-- Font Awesome (iconos legacy — se mantiene para compat) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
-  <!-- CSS Tokens MD3 (base) -->
+  <!-- CSS heredados (primero — los sobreescribe el nuevo sistema MD3) -->
   <link rel="stylesheet" href="css/design-tokens.css?v=4-md3">
-  <!-- CSS heredados (funcionalidad JS depende de clases; se sobreescriben por material.css) -->
   <link rel="stylesheet" href="css/design-system.css?v=3-apex-base">
   <link rel="stylesheet" href="css/style.css?v=87-bonos-resumen-bar-themes">
   <link rel="stylesheet" href="css/layout-rail.css?v=11-hide-sidebar-global-strip">
   <link rel="stylesheet" href="css/header-profile.css?v=9-profile-menu-casi-solido">
   <link rel="stylesheet" href="css/theme-industrial.css?v=24-prospeccion-map-voyager">
-  <!-- ★ Material Design 3 — Hoja maestra (última = mayor prioridad) -->
   <link rel="stylesheet" href="css/material.css?v=1-md3">
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       ★ MD3 DESIGN SYSTEM — Rediseño 2026-04 (última = mayor prioridad)
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <link rel="stylesheet" href="css/tokens.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/base.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/components/buttons.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/components/cards.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/components/forms.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/components/tables.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/components/modals.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/components/toasts.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/components/states.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/components/badges.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/components/chips.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/layout/app-shell.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/modules/dashboard.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/modules/usuarios.css?v=1-md3-2026">
   <link rel="manifest" href="manifest.json">
   <!-- MD3 migration: fuerza tema claro en primera visita post-rediseño -->
   <script>
@@ -34,7 +51,7 @@
     })();
   </script>
 </head>
-<body class="theme-industrial appearance-light">
+<body class="theme-industrial appearance-light md3-on">
   <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
   <div id="offline-banner" class="offline-banner hidden" role="alert" aria-live="polite">Sin conexión. Algunas funciones pueden no estar disponibles.</div>
   <div id="login-overlay" class="login-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="login-title">
@@ -1479,6 +1496,6 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=142-restore-truncated-files" defer></script>
+  <script src="js/app.js?v=143-md3-redesign-usuarios-dashboards" defer></script>
 </body>
 </html>

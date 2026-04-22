@@ -1,0 +1,194 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   MD3 TABLES — Data table responsive con header sticky, hover row, zebra
+   ════════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .table-wrap,
+body.md3-on .md-table-wrap {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-medium);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  overflow: hidden;
+  position: relative;
+}
+
+body.md3-on .table-wrap.scrollable,
+body.md3-on .md-table-wrap.scrollable {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+body.md3-on table.data-table,
+body.md3-on .md-table,
+body.md3-on .table-wrap > table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font: var(--md-sys-typescale-body-medium);
+  color: var(--md-sys-color-on-surface);
+  background: transparent;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────── */
+body.md3-on table.data-table thead,
+body.md3-on .md-table thead,
+body.md3-on .table-wrap > table thead {
+  background: var(--md-sys-color-surface-container);
+}
+
+body.md3-on table.data-table thead th,
+body.md3-on .md-table thead th,
+body.md3-on .table-wrap > table thead th {
+  padding: var(--md-sys-spacing-4) var(--md-sys-spacing-4);
+  text-align: left;
+  font: var(--md-sys-typescale-label-large);
+  color: var(--md-sys-color-on-surface);
+  letter-spacing: 0.1px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+body.md3-on table.data-table thead th.sortable,
+body.md3-on .md-table thead th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+body.md3-on table.data-table thead th.sortable:hover,
+body.md3-on .md-table thead th.sortable:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 6%, var(--md-sys-color-surface-container));
+}
+body.md3-on table.data-table thead th.sortable::after,
+body.md3-on .md-table thead th.sortable::after {
+  content: '⇅';
+  margin-left: 6px;
+  opacity: 0.4;
+  font-size: 0.85em;
+}
+body.md3-on table.data-table thead th.sorted-asc::after { content: '↑'; opacity: 1; }
+body.md3-on table.data-table thead th.sorted-desc::after { content: '↓'; opacity: 1; }
+
+/* ── Body ───────────────────────────────────────────────────────────── */
+body.md3-on table.data-table tbody td,
+body.md3-on .md-table tbody td,
+body.md3-on .table-wrap > table tbody td {
+  padding: var(--md-sys-spacing-3) var(--md-sys-spacing-4);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  vertical-align: middle;
+  color: var(--md-sys-color-on-surface);
+}
+
+body.md3-on table.data-table tbody tr:last-child td,
+body.md3-on .md-table tbody tr:last-child td,
+body.md3-on .table-wrap > table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+body.md3-on table.data-table tbody tr,
+body.md3-on .md-table tbody tr,
+body.md3-on .table-wrap > table tbody tr {
+  transition: background var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+}
+
+body.md3-on table.data-table tbody tr:hover,
+body.md3-on .md-table tbody tr:hover,
+body.md3-on .table-wrap > table tbody tr:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 4%, transparent);
+}
+
+body.md3-on table.data-table.zebra tbody tr:nth-child(even),
+body.md3-on .md-table.zebra tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 2%, transparent);
+}
+body.md3-on table.data-table.zebra tbody tr:nth-child(even):hover,
+body.md3-on .md-table.zebra tbody tr:nth-child(even):hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 6%, transparent);
+}
+
+body.md3-on table.data-table tbody tr.selected,
+body.md3-on .md-table tbody tr.selected {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+/* ── Row actions cell ───────────────────────────────────────────────── */
+body.md3-on table.data-table .th-actions,
+body.md3-on table.data-table td.actions,
+body.md3-on .md-table .actions {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+
+body.md3-on td.actions .btn,
+body.md3-on td.actions .btn-icon {
+  margin-left: var(--md-sys-spacing-1);
+}
+
+/* ── Empty / loading states embebidos ───────────────────────────────── */
+body.md3-on table.data-table tbody tr.empty-row td,
+body.md3-on table.data-table tbody tr.no-data td,
+body.md3-on .md-table tbody tr.empty-row td {
+  text-align: center;
+  padding: var(--md-sys-spacing-12) var(--md-sys-spacing-4);
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-medium);
+}
+
+/* ── Filter row above table ─────────────────────────────────────────── */
+body.md3-on .filter-row,
+body.md3-on .table-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--md-sys-spacing-2);
+  padding: var(--md-sys-spacing-3) var(--md-sys-spacing-4);
+  background: var(--md-sys-color-surface);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+body.md3-on .filter-row > .search,
+body.md3-on .filter-row > input[type="search"],
+body.md3-on .filter-row > input[type="text"] {
+  flex: 1 1 240px;
+  min-width: 0;
+  max-width: 320px;
+  height: 40px;
+  min-height: 40px;
+}
+
+/* ── Table footer (paginación / resumen) ────────────────────────────── */
+body.md3-on .table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--md-sys-spacing-4);
+  padding: var(--md-sys-spacing-3) var(--md-sys-spacing-4);
+  background: var(--md-sys-color-surface);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  font: var(--md-sys-typescale-body-small);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ── Numeric / monetary alignment ───────────────────────────────────── */
+body.md3-on table.data-table td.num,
+body.md3-on table.data-table th.num,
+body.md3-on table.data-table td.money,
+body.md3-on table.data-table th.money {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--md-ref-typeface-mono);
+}
+
+/* ── Compact density ────────────────────────────────────────────────── */
+body.md3-on table.data-table.compact tbody td,
+body.md3-on .md-table.compact tbody td {
+  padding: var(--md-sys-spacing-2) var(--md-sys-spacing-3);
+  font: var(--md-sys-typescale-body-small);
+}
+body.md3-on table.data-table.compact thead th,
+body.md3-on .md-table.compact thead th {
+  padding: var(--md-sys-spacing-2) var(--md-sys-spacing-3);
+  font: var(--md-sys-typescale-label-medium);
+}

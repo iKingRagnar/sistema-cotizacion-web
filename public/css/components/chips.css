@@ -1,0 +1,126 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   MD3 CHIPS — Assist, Filter, Input, Suggestion
+   ════════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .chip,
+body.md3-on .md-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-2);
+  height: 32px;
+  padding: 0 var(--md-sys-spacing-3);
+
+  background: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface-variant);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-small);
+
+  font: var(--md-sys-typescale-label-large);
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+  transition:
+    background var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-standard),
+    border-color var(--md-sys-motion-duration-short3);
+}
+
+body.md3-on .chip::before,
+body.md3-on .md-chip::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity var(--md-sys-motion-duration-short3);
+  pointer-events: none;
+}
+
+body.md3-on .chip:hover::before,
+body.md3-on .md-chip:hover::before { opacity: var(--md-sys-state-hover-opacity); }
+body.md3-on .chip:focus-visible::before,
+body.md3-on .md-chip:focus-visible::before { opacity: var(--md-sys-state-focus-opacity); }
+body.md3-on .chip:active::before,
+body.md3-on .md-chip:active::before { opacity: var(--md-sys-state-pressed-opacity); }
+
+body.md3-on .chip .material-symbols-rounded,
+body.md3-on .md-chip .material-symbols-rounded,
+body.md3-on .chip i.fas,
+body.md3-on .md-chip i.fas { font-size: 18px; line-height: 1; }
+
+/* ── Selected / checked ─────────────────────────────────────────────── */
+body.md3-on .chip.selected,
+body.md3-on .chip.active,
+body.md3-on .md-chip.selected {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  border-color: var(--md-sys-color-secondary-container);
+}
+
+/* ── Filter chip (con leading check cuando selected) ────────────────── */
+body.md3-on .chip.filter.selected::before { opacity: 0; }
+body.md3-on .chip.filter.selected::after {
+  content: '';
+  margin-right: var(--md-sys-spacing-1);
+  width: 18px; height: 18px;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18' fill='currentColor'><path d='M14 5l-7.5 8L3 9.5' stroke='currentColor' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") center / contain no-repeat;
+}
+
+/* ── Close / remove action en chip ──────────────────────────────────── */
+body.md3-on .chip .chip-remove,
+body.md3-on .md-chip .chip-remove {
+  flex: none;
+  width: 20px; height: 20px;
+  margin-right: -4px;
+  background: transparent;
+  color: currentColor;
+  border: none;
+  border-radius: var(--md-sys-shape-corner-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.7;
+  font-size: 16px;
+}
+body.md3-on .chip .chip-remove:hover,
+body.md3-on .md-chip .chip-remove:hover { opacity: 1; background: color-mix(in srgb, currentColor 12%, transparent); }
+
+/* ── Disabled ───────────────────────────────────────────────────────── */
+body.md3-on .chip[disabled],
+body.md3-on .chip:disabled,
+body.md3-on .md-chip:disabled {
+  opacity: 0.38;
+  pointer-events: none;
+}
+
+/* ── Chip group ─────────────────────────────────────────────────────── */
+body.md3-on .chip-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--md-sys-spacing-2);
+  align-items: center;
+}
+
+/* ── Category pill (refacciones) ────────────────────────────────────── */
+body.md3-on .ref-cat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-1);
+  padding: 3px 10px;
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface-variant);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-small);
+  font: var(--md-sys-typescale-label-small);
+}
+
+body.md3-on .ref-cat-pill.ref-cat-pill--line {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+body.md3-on .ref-cat-pill.ref-cat-pill--part {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}

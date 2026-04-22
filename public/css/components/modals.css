@@ -1,0 +1,177 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   MD3 DIALOGS / MODALS — scrim + contenedor con motion emphasized
+   ════════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .modal,
+body.md3-on .md-dialog,
+body.md3-on .modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--md-sys-z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--md-sys-spacing-4);
+  background: var(--md-sys-color-scrim);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: md3-fade-in var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-standard-decelerate) both;
+  opacity: 1;
+}
+
+body.md3-on .modal.hidden,
+body.md3-on .md-dialog.hidden,
+body.md3-on .modal-overlay.hidden { display: none; }
+
+body.md3-on .modal-box,
+body.md3-on .md-dialog-surface,
+body.md3-on .modal-content {
+  position: relative;
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  border-radius: var(--md-sys-shape-corner-extra-large);
+  box-shadow: var(--md-sys-elevation-level3);
+  padding: var(--md-sys-spacing-6);
+  max-width: min(560px, 96vw);
+  width: 100%;
+  max-height: min(85vh, 720px);
+  overflow-y: auto;
+  animation: md3-scale-in var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized-decelerate) both;
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+body.md3-on .modal-box.large,
+body.md3-on .md-dialog-surface.large { max-width: min(900px, 96vw); }
+body.md3-on .modal-box.xlarge,
+body.md3-on .md-dialog-surface.xlarge { max-width: min(1200px, 96vw); }
+body.md3-on .modal-box.small,
+body.md3-on .md-dialog-surface.small { max-width: min(400px, 96vw); }
+
+/* ── Modal header ───────────────────────────────────────────────────── */
+body.md3-on .modal-header,
+body.md3-on .md-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--md-sys-spacing-4);
+  margin-bottom: var(--md-sys-spacing-5);
+  padding-bottom: var(--md-sys-spacing-4);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+body.md3-on .modal-header h2,
+body.md3-on .modal-header h3,
+body.md3-on .modal-title,
+body.md3-on .md-dialog-title {
+  font: var(--md-sys-typescale-headline-small);
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+  flex: 1;
+  letter-spacing: 0;
+}
+
+body.md3-on .modal-header .subtitle,
+body.md3-on .md-dialog-subtitle {
+  font: var(--md-sys-typescale-body-medium);
+  color: var(--md-sys-color-on-surface-variant);
+  margin-top: var(--md-sys-spacing-1);
+}
+
+body.md3-on .modal-close,
+body.md3-on .md-dialog-close {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  border: none;
+  border-radius: var(--md-sys-shape-corner-full);
+  cursor: pointer;
+  transition: background var(--md-sys-motion-duration-short2);
+  position: relative;
+  overflow: hidden;
+}
+body.md3-on .modal-close::before,
+body.md3-on .md-dialog-close::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity var(--md-sys-motion-duration-short2);
+}
+body.md3-on .modal-close:hover::before { opacity: var(--md-sys-state-hover-opacity); }
+body.md3-on .modal-close:focus-visible::before { opacity: var(--md-sys-state-focus-opacity); }
+body.md3-on .modal-close:active::before { opacity: var(--md-sys-state-pressed-opacity); }
+
+/* ── Modal body ─────────────────────────────────────────────────────── */
+body.md3-on .modal-body,
+body.md3-on .md-dialog-body {
+  font: var(--md-sys-typescale-body-medium);
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.6;
+}
+
+body.md3-on .modal-body .form-group:last-child,
+body.md3-on .modal-body .md-field:last-child { margin-bottom: 0; }
+
+/* ── Modal footer / actions ─────────────────────────────────────────── */
+body.md3-on .modal-footer,
+body.md3-on .modal-actions,
+body.md3-on .md-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--md-sys-spacing-2);
+  margin-top: var(--md-sys-spacing-6);
+  padding-top: var(--md-sys-spacing-4);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+body.md3-on .modal-footer.center { justify-content: center; }
+body.md3-on .modal-footer.between { justify-content: space-between; }
+
+/* ── Modal stacked (segundo nivel) ──────────────────────────────────── */
+body.md3-on .modal.modal-stack,
+body.md3-on #modal-stack {
+  z-index: calc(var(--md-sys-z-modal) + 10);
+  background: color-mix(in srgb, var(--md-sys-color-scrim) 80%, transparent);
+}
+body.md3-on .modal.modal-stack .modal-box,
+body.md3-on #modal-stack .modal-box {
+  box-shadow: var(--md-sys-elevation-level4);
+}
+
+/* ── Confirm dialog variants ────────────────────────────────────────── */
+body.md3-on .modal-box.confirm-danger .modal-title,
+body.md3-on .modal-box.danger .modal-title {
+  color: var(--md-sys-color-error);
+}
+
+body.md3-on .modal-box.confirm-danger .confirm-icon,
+body.md3-on .modal-box.danger .confirm-icon {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+  border-radius: var(--md-sys-shape-corner-full);
+  margin-bottom: var(--md-sys-spacing-4);
+  font-size: 24px;
+}
+
+body.md3-on .modal-box.success .confirm-icon {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+/* ── Prompt modal (input embedded) ──────────────────────────────────── */
+body.md3-on .modal-box .prompt-input,
+body.md3-on .modal-box .md-prompt-field {
+  margin-top: var(--md-sys-spacing-4);
+  margin-bottom: var(--md-sys-spacing-2);
+}

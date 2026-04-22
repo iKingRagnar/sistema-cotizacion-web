@@ -1,0 +1,109 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   MD3 CARDS — Filled, Outlined, Elevated
+   ════════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .card,
+body.md3-on .md-card {
+  background: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface);
+  border-radius: var(--md-sys-shape-corner-medium);
+  padding: var(--md-sys-spacing-6);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  transition:
+    box-shadow var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-standard),
+    background var(--md-sys-motion-duration-short3),
+    transform var(--md-sys-motion-duration-short3);
+}
+
+body.md3-on .card.elevated,
+body.md3-on .card-elevated {
+  background: var(--md-sys-color-surface-container-low);
+  box-shadow: var(--md-sys-elevation-level1);
+  border: none;
+}
+body.md3-on .card.elevated:hover { box-shadow: var(--md-sys-elevation-level2); }
+
+body.md3-on .card.outlined,
+body.md3-on .card-outlined {
+  background: var(--md-sys-color-surface);
+  box-shadow: none;
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+body.md3-on .card.filled,
+body.md3-on .card-filled {
+  background: var(--md-sys-color-surface-container-highest);
+  box-shadow: none;
+  border: none;
+}
+
+body.md3-on .card.interactive {
+  cursor: pointer;
+}
+body.md3-on .card.interactive:hover {
+  box-shadow: var(--md-sys-elevation-level2);
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 4%, var(--md-sys-color-surface-container-low));
+}
+
+/* ── Card sub-elementos ─────────────────────────────────────────────── */
+body.md3-on .card-header,
+body.md3-on .md-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--md-sys-spacing-4);
+  margin-bottom: var(--md-sys-spacing-4);
+  padding-bottom: var(--md-sys-spacing-3);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+body.md3-on .card-header h2,
+body.md3-on .card-header h3,
+body.md3-on .card-header h4,
+body.md3-on .md-card-header > .title {
+  font: var(--md-sys-typescale-title-large);
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+body.md3-on .card-header .subtitle,
+body.md3-on .md-card-header > .subtitle {
+  font: var(--md-sys-typescale-body-medium);
+  color: var(--md-sys-color-on-surface-variant);
+  margin-top: var(--md-sys-spacing-1);
+}
+
+body.md3-on .card-content,
+body.md3-on .md-card-content {
+  font: var(--md-sys-typescale-body-medium);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+body.md3-on .card-actions,
+body.md3-on .md-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--md-sys-spacing-2);
+  margin-top: var(--md-sys-spacing-6);
+  padding-top: var(--md-sys-spacing-3);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+/* ── Card con badge / icono lateral ─────────────────────────────────── */
+body.md3-on .card-with-icon {
+  position: relative;
+  padding-left: var(--md-sys-spacing-12);
+}
+body.md3-on .card-with-icon > .card-icon {
+  position: absolute;
+  top: var(--md-sys-spacing-6);
+  left: var(--md-sys-spacing-4);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}

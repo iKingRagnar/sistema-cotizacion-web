@@ -1,0 +1,320 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   MÓDULO DASHBOARDS — Dashboard ejecutivo rediseñado MD3
+   Score tiles (4 KPI ejecutivos) + KPI strip + Module cards + Stats + Forecast
+   ════════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on #panel-dashboards {
+  display: none;
+  background: var(--md-sys-color-surface);
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none;
+  box-shadow: none;
+}
+body.md3-on #panel-dashboards.active {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-sys-spacing-6);
+}
+
+/* ── Header dashboard ───────────────────────────────────────────────── */
+body.md3-on #panel-dashboards .dashboard-header {
+  background: linear-gradient(135deg,
+    var(--md-sys-color-primary-container) 0%,
+    color-mix(in srgb, var(--md-sys-color-primary-container) 70%, var(--md-sys-color-surface)) 100%);
+  border-radius: var(--md-sys-shape-corner-large);
+  padding: var(--md-sys-spacing-8) var(--md-sys-spacing-6);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--md-sys-spacing-4);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+body.md3-on #panel-dashboards .dashboard-header::after {
+  content: '';
+  position: absolute;
+  right: -40px;
+  top: -40px;
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+body.md3-on #panel-dashboards .dashboard-title {
+  font: var(--md-sys-typescale-display-small);
+  color: var(--md-sys-color-on-primary-container);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-3);
+  letter-spacing: -1px;
+}
+body.md3-on #panel-dashboards .dashboard-title i,
+body.md3-on #panel-dashboards .dashboard-title .material-symbols-rounded {
+  font-size: 40px;
+  color: var(--md-sys-color-primary);
+}
+
+body.md3-on #panel-dashboards .dashboard-subtitle {
+  font: var(--md-sys-typescale-body-large);
+  color: var(--md-sys-color-on-primary-container);
+  opacity: 0.85;
+  margin-top: var(--md-sys-spacing-2);
+}
+body.md3-on #panel-dashboards .dashboard-subtitle strong {
+  color: var(--md-sys-color-on-primary-container);
+  font-weight: 600;
+}
+
+body.md3-on #panel-dashboards .dashboard-header > .actions,
+body.md3-on #panel-dashboards .dashboard-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-2);
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Executive scorecards (4 tiles grandes) ─────────────────────────── */
+body.md3-on #panel-dashboards .dashboard-exec-scorecards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--md-sys-spacing-4);
+}
+
+body.md3-on #panel-dashboards .dashboard-score-tile {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-large);
+  padding: var(--md-sys-spacing-5) var(--md-sys-spacing-5);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow var(--md-sys-motion-duration-short3), transform var(--md-sys-motion-duration-short3);
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+}
+body.md3-on #panel-dashboards .dashboard-score-tile::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--tile-accent, var(--md-sys-color-primary));
+}
+body.md3-on #panel-dashboards .dashboard-score-tile:hover {
+  box-shadow: var(--md-sys-elevation-level2);
+  transform: translateY(-2px);
+}
+
+/* 4 acentos por tile */
+body.md3-on #panel-dashboards .dashboard-score-tile.revenue  { --tile-accent: var(--md-sys-color-tertiary); }
+body.md3-on #panel-dashboards .dashboard-score-tile.pipeline { --tile-accent: var(--md-sys-color-primary); }
+body.md3-on #panel-dashboards .dashboard-score-tile.risk     { --tile-accent: var(--md-sys-color-warning); }
+body.md3-on #panel-dashboards .dashboard-score-tile.ops      { --tile-accent: #8E44AD; }
+
+body.md3-on #panel-dashboards .dashboard-score-tile .score-label,
+body.md3-on #panel-dashboards .dashboard-score-tile > .label {
+  font: var(--md-sys-typescale-label-large);
+  color: var(--md-sys-color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-2);
+}
+
+body.md3-on #panel-dashboards .dashboard-score-tile .score-value,
+body.md3-on #panel-dashboards .dashboard-score-tile > .value {
+  font: var(--md-sys-typescale-display-medium);
+  color: var(--md-sys-color-on-surface);
+  letter-spacing: -1.5px;
+  line-height: 1;
+  font-family: var(--md-ref-typeface-brand);
+  font-weight: 500;
+}
+
+body.md3-on #panel-dashboards .dashboard-score-tile .score-delta,
+body.md3-on #panel-dashboards .dashboard-score-tile > .delta {
+  font: var(--md-sys-typescale-body-small);
+  color: var(--md-sys-color-on-surface-variant);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-1);
+}
+
+body.md3-on #panel-dashboards .dashboard-score-tile .score-delta.positive { color: var(--md-sys-color-tertiary); }
+body.md3-on #panel-dashboards .dashboard-score-tile .score-delta.negative { color: var(--md-sys-color-error); }
+
+/* ── KPI Strip (horizontal) ─────────────────────────────────────────── */
+body.md3-on #panel-dashboards .dashboard-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--md-sys-spacing-3);
+  padding: var(--md-sys-spacing-4);
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-large);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+body.md3-on #panel-dashboards .dashboard-kpi-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-sys-spacing-1);
+  padding: var(--md-sys-spacing-3);
+  border-right: 1px solid var(--md-sys-color-outline-variant);
+}
+body.md3-on #panel-dashboards .dashboard-kpi-item:last-child { border-right: none; }
+
+body.md3-on #panel-dashboards .dashboard-kpi-item .kpi-label,
+body.md3-on #panel-dashboards .dashboard-kpi-item > .label {
+  font: var(--md-sys-typescale-label-medium);
+  color: var(--md-sys-color-on-surface-variant);
+  text-transform: uppercase;
+}
+
+body.md3-on #panel-dashboards .dashboard-kpi-item .kpi-value,
+body.md3-on #panel-dashboards .dashboard-kpi-item > .value {
+  font: var(--md-sys-typescale-title-large);
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-ref-typeface-brand);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Module cards grid ──────────────────────────────────────────────── */
+body.md3-on #panel-dashboards .dashboard-grid,
+body.md3-on #panel-dashboards .dashboard-modules {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--md-sys-spacing-4);
+}
+
+body.md3-on #panel-dashboards .dashboard-card {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-large);
+  padding: var(--md-sys-spacing-5);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  transition: box-shadow var(--md-sys-motion-duration-short3), transform var(--md-sys-motion-duration-short3), border-color var(--md-sys-motion-duration-short3);
+  cursor: pointer;
+}
+body.md3-on #panel-dashboards .dashboard-card:hover {
+  box-shadow: var(--md-sys-elevation-level2);
+  border-color: var(--md-sys-color-primary);
+  transform: translateY(-2px);
+}
+
+body.md3-on #panel-dashboards .dashboard-card .dashboard-card-title {
+  font: var(--md-sys-typescale-title-medium);
+  color: var(--md-sys-color-on-surface);
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-2);
+  margin: 0 0 var(--md-sys-spacing-3);
+}
+
+body.md3-on #panel-dashboards .dashboard-card .dashboard-card-subtitle {
+  font: var(--md-sys-typescale-body-small);
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0 0 var(--md-sys-spacing-4);
+}
+
+body.md3-on #panel-dashboards .dashboard-card .dashboard-card-value {
+  font: var(--md-sys-typescale-headline-medium);
+  color: var(--md-sys-color-primary);
+  font-family: var(--md-ref-typeface-brand);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+}
+
+body.md3-on #panel-dashboards .dashboard-card .dashboard-card-action {
+  margin-top: var(--md-sys-spacing-4);
+  padding-top: var(--md-sys-spacing-3);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--md-sys-color-primary);
+  font: var(--md-sys-typescale-label-large);
+}
+
+/* ── Stats row (Week vs Month vs Year) ──────────────────────────────── */
+body.md3-on #panel-dashboards .dashboard-stats,
+body.md3-on #panel-dashboards .stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--md-sys-spacing-3);
+}
+
+body.md3-on #panel-dashboards .dashboard-stat-card {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-medium);
+  padding: var(--md-sys-spacing-4);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+body.md3-on #panel-dashboards .dashboard-stat-card .stat-label {
+  font: var(--md-sys-typescale-label-medium);
+  color: var(--md-sys-color-on-surface-variant);
+  text-transform: uppercase;
+  margin-bottom: var(--md-sys-spacing-1);
+}
+body.md3-on #panel-dashboards .dashboard-stat-card .stat-value {
+  font: var(--md-sys-typescale-headline-small);
+  color: var(--md-sys-color-on-surface);
+  font-variant-numeric: tabular-nums;
+  font-family: var(--md-ref-typeface-brand);
+}
+
+/* ── Forecast cards ─────────────────────────────────────────────────── */
+body.md3-on #panel-dashboards .dashboard-forecast-card {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border-radius: var(--md-sys-shape-corner-medium);
+  padding: var(--md-sys-spacing-4);
+  border: none;
+}
+
+/* ── Charts section ─────────────────────────────────────────────────── */
+body.md3-on #panel-dashboards .dashboard-charts,
+body.md3-on #panel-dashboards .dashboard-chart-wrap {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-large);
+  padding: var(--md-sys-spacing-5);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+body.md3-on #panel-dashboards .dashboard-chart-wrap + .dashboard-chart-wrap {
+  margin-top: var(--md-sys-spacing-4);
+}
+
+/* ── Loading placeholder within dashboard ───────────────────────────── */
+body.md3-on #panel-dashboards .dashboard-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--md-sys-spacing-3);
+  padding: var(--md-sys-spacing-8);
+  color: var(--md-sys-color-on-surface-variant);
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-medium);
+}
+
+body.md3-on #panel-dashboards .dashboard-loading.hidden { display: none; }
+
+/* ── Responsive ─────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  body.md3-on #panel-dashboards .dashboard-title { font-size: 28px; }
+  body.md3-on #panel-dashboards .dashboard-score-tile { min-height: 130px; }
+  body.md3-on #panel-dashboards .dashboard-score-tile .score-value { font-size: 32px; }
+  body.md3-on #panel-dashboards .dashboard-kpi-item { border-right: none; border-bottom: 1px solid var(--md-sys-color-outline-variant); }
+  body.md3-on #panel-dashboards .dashboard-kpi-item:last-child { border-bottom: none; }
+}

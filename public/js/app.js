@@ -1924,6 +1924,97 @@
     btnClose.onclick = close;
   }
 
+  /**
+   * openPromptModal — reemplazo MD3 de window.prompt().
+   * @param {Object} options  — { title, message, label, defaultValue, placeholder, inputType, required, confirmLabel, confirmIcon, confirmClass, validator, selectOptions }
+   *   - selectOptions: array de { value, label } para renderizar un <select> en vez de <input>
+   *   - validator: function(value) => string|null (mensaje de error o null si OK)
+   * @param {Function} onSubmit — callback(value) si acepta. No se llama si cancela.
+   */
+  function openPromptModal(options, onSubmit) {
+    const opts = options && typeof options === 'object' ? options : {};
+    const title = opts.title || 'Ingresa un valor';
+    const message = opts.message || '';
+    const label = opts.label || 'Valor';
+    const defaultValue = opts.defaultValue != null ? String(opts.defaultValue) : '';
+    const placeholder = opts.placeholder || '';
+    const inputType = opts.inputType || 'text';
+    const required = opts.required !== false;
+    const confirmLabel = opts.confirmLabel || 'Aceptar';
+    const confirmIcon = opts.confirmIcon || 'fa-check';
+    const confirmClass = opts.confirmClass || 'btn primary';
+    const validator = typeof opts.validator === 'function' ? opts.validator : null;
+    const selectOptions = Array.isArray(opts.selectOptions) ? opts.selectOptions : null;
+
+    let inputHtml;
+    if (selectOptions) {
+      inputHtml = '<select id="md-prompt-input" autofocus>' +
+        selectOptions.map(o => {
+          const v = String(o.value);
+          const l = String(o.label != null ? o.label : o.value);
+          const sel = v === defaultValue ? ' selected' : '';
+          return '<option value="' + escapeHtml(v) + '"' + sel + '>' + escapeHtml(l) + '</option>';
+        }).join('') +
+        '</select>';
+    } else if (inputType === 'textarea') {
+      inputHtml = '<textarea id="md-prompt-input" placeholder="' + escapeHtml(placeholder) + '" rows="3" autofocus>' + escapeHtml(defaultValue) + '</textarea>';
+    } else {
+      inputHtml = '<input id="md-prompt-input" type="' + escapeHtml(inputType) + '" value="' + escapeHtml(defaultValue) + '" placeholder="' + escapeHtml(placeholder) + '" autocomplete="off" autofocus />';
+    }
+
+    const bodyHtml =
+      (message ? '<p class="helper-text" style="margin-bottom:12px">' + escapeHtml(message) + '</p>' : '') +
+      '<div class="form-group prompt-input">' +
+      '<label for="md-prompt-input">' + escapeHtml(label) + '</label>' +
+      inputHtml +
+      '<small class="field-error md-prompt-error hidden" aria-live="polite"></small>' +
+      '</div>' +
+      '<div class="modal-actions" style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--md-sys-color-outline-variant,#E8EAED)">' +
+      '<button type="button" id="md-prompt-cancel" class="btn text">Cancelar</button>' +
+      '<button type="button" id="md-prompt-ok" class="' + escapeHtml(confirmClass) + '"><i class="fas ' + escapeHtml(confirmIcon) + '"></i> ' + escapeHtml(confirmLabel) + '</button>' +
+      '</div>';
+
+    const close = openModal(title, bodyHtml);
+    setTimeout(function () {
+      const input = qs('#md-prompt-input');
+      const errorEl = qs('.md-prompt-error');
+      const okBtn = qs('#md-prompt-ok');
+      const cancelBtn = qs('#md-prompt-cancel');
+      function showError(msg) {
+        if (errorEl) { errorEl.textContent = msg; errorEl.classList.remove('hidden'); }
+        if (input) input.setAttribute('aria-invalid', 'true');
+      }
+      function hideError() {
+        if (errorEl) { errorEl.textContent = ''; errorEl.classList.add('hidden'); }
+        if (input) input.removeAttribute('aria-invalid');
+      }
+      function submit() {
+        const val = input ? String(input.value != null ? input.value : '').trim() : '';
+        if (required && !val) return showError('Este campo es obligatorio');
+        if (validator) {
+          const err = validator(val);
+          if (err) return showError(err);
+        }
+        close();
+        if (typeof onSubmit === 'function') onSubmit(val);
+      }
+      if (okBtn) okBtn.onclick = submit;
+      if (cancelBtn) cancelBtn.onclick = close;
+      if (input) {
+        input.addEventListener('input', hideError);
+        if (input.tagName !== 'SELECT' && typeof input.select === 'function') {
+          try { input.focus(); input.select(); } catch (_) {}
+        } else {
+          try { input.focus(); } catch (_) {}
+        }
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' && input.tagName !== 'TEXTAREA') { e.preventDefault(); submit(); }
+        });
+      }
+    }, 60);
+    return close;
+  }
+
   const IVA_PORCENTAJE = 0.16;
 
   function clearInvalidMarks() {
@@ -9516,48 +9607,68 @@
           const span = td && td.querySelector('.usuarios-nombre-cell .usuarios-display-label');
           let cur = span ? String(span.textContent || '').trim() : '';
           if (cur === '—') cur = '';
-          const n = window.prompt('Nombre completo (menú de perfil y listados):', cur);
-          if (n == null) return;
-          const display_name = String(n).trim();
-          if (!display_name) {
-            showToast('El nombre no puede quedar vacío.', 'error');
-            return;
-          }
-          editBtn.disabled = true;
-          try {
-            await fetchJson(API + '/app-users/' + id, {
-              method: 'PATCH',
-              body: JSON.stringify({ display_name: display_name }),
-            });
-            showToast('Nombre actualizado.', 'success');
-            const me = getSessionUser();
-            if (me && Number(me.id) === id) {
-              await refreshSessionUser();
-              syncSessionHeader();
+          openPromptModal(
+            {
+              title: 'Editar nombre del usuario',
+              message: 'Se mostrará en el menú de perfil y en los listados.',
+              label: 'Nombre completo',
+              defaultValue: cur,
+              placeholder: 'Ej. María López García',
+              confirmLabel: 'Guardar',
+              confirmIcon: 'fa-save',
+              confirmClass: 'btn primary',
+              required: true,
+              validator: function (v) {
+                if (v.length < 2) return 'El nombre debe tener al menos 2 caracteres.';
+                if (v.length > 120) return 'Máximo 120 caracteres.';
+                return null;
+              },
+            },
+            async function (display_name) {
+              editBtn.disabled = true;
+              try {
+                await fetchJson(API + '/app-users/' + id, {
+                  method: 'PATCH',
+                  body: JSON.stringify({ display_name: display_name }),
+                });
+                showToast('Nombre actualizado.', 'success');
+                const me = getSessionUser();
+                if (me && Number(me.id) === id) {
+                  await refreshSessionUser();
+                  syncSessionHeader();
+                }
+                await loadAppUsers();
+              } catch (e) {
+                showToast(parseApiError(e) || 'No se pudo actualizar el nombre.', 'error');
+                loadAppUsers();
+              } finally {
+                editBtn.disabled = false;
+              }
             }
-            await loadAppUsers();
-          } catch (e) {
-            showToast(parseApiError(e) || 'No se pudo actualizar el nombre.', 'error');
-            loadAppUsers();
-          } finally {
-            editBtn.disabled = false;
-          }
+          );
           return;
         }
         const btn = ev.target && ev.target.closest && ev.target.closest('button.usuarios-delete-btn');
         if (!btn || btn.disabled) return;
         const id = parseInt(btn.dataset.userId, 10);
         if (!Number.isFinite(id)) return;
-        if (!window.confirm('¿Eliminar esta cuenta del sistema? No se puede deshacer. Quedará registrado en el historial.')) return;
-        btn.disabled = true;
-        try {
-          await fetchJson(API + '/app-users/' + id, { method: 'DELETE' });
-          showToast('Usuario eliminado.', 'success');
-          await loadAppUsers();
-        } catch (e) {
-          showToast(parseApiError(e) || 'No se pudo eliminar.', 'error');
-          loadAppUsers();
-        }
+        openConfirmModal(
+          '¿Eliminar esta cuenta del sistema? No se puede deshacer. Quedará registrado en el historial.',
+          async function () {
+            btn.disabled = true;
+            try {
+              await fetchJson(API + '/app-users/' + id, { method: 'DELETE' });
+              showToast('Usuario eliminado.', 'success');
+              await loadAppUsers();
+            } catch (e) {
+              showToast(parseApiError(e) || 'No se pudo eliminar.', 'error');
+              loadAppUsers();
+            } finally {
+              btn.disabled = false;
+            }
+          },
+          { confirmLabel: 'Eliminar cuenta', confirmIcon: 'fa-user-slash', confirmClass: 'btn danger' }
+        );
       });
     }
     const tbodyDel = qs('#tabla-usuarios-eliminados-body');
@@ -9677,6 +9788,115 @@
         loadReportSchedules();
       });
     }
+
+    /** Modal único MD3 para editar programación de reportes (reemplaza 5 window.prompt encadenados) */
+    function openReportScheduleEditModal(id, row) {
+      const cur = row || {};
+      const curTo = Array.isArray(cur.to) ? cur.to.join(', ') : (cur.to || '');
+      const curCc = Array.isArray(cur.cc) ? cur.cc.join(', ') : (cur.cc || '');
+      const curRunAt = String(cur.runAt || '09:00');
+      const curFreq = String(cur.frequency || 'daily');
+      const curWeekday = cur.weekday == null ? 1 : Number(cur.weekday);
+      const bodyHtml =
+        '<form id="sched-edit-form" class="md-prompt-body" autocomplete="off">' +
+          '<div class="form-row">' +
+            '<div class="form-group">' +
+              '<label for="sched-runAt"><i class="fas fa-clock"></i> Hora (HH:MM)</label>' +
+              '<input type="time" id="sched-runAt" value="' + escapeHtml(curRunAt) + '" required>' +
+              '<small class="helper-text">Hora local del servidor en formato 24h.</small>' +
+            '</div>' +
+            '<div class="form-group">' +
+              '<label for="sched-freq"><i class="fas fa-calendar-alt"></i> Frecuencia</label>' +
+              '<select id="sched-freq" required>' +
+                '<option value="daily"' + (curFreq === 'daily' ? ' selected' : '') + '>Diaria</option>' +
+                '<option value="weekly"' + (curFreq === 'weekly' ? ' selected' : '') + '>Semanal</option>' +
+              '</select>' +
+            '</div>' +
+          '</div>' +
+          '<div class="form-group" id="sched-weekday-wrap"' + (curFreq === 'weekly' ? '' : ' style="display:none"') + '>' +
+            '<label for="sched-weekday"><i class="fas fa-calendar-day"></i> Día de la semana</label>' +
+            '<select id="sched-weekday">' +
+              '<option value="0"' + (curWeekday === 0 ? ' selected' : '') + '>Domingo</option>' +
+              '<option value="1"' + (curWeekday === 1 ? ' selected' : '') + '>Lunes</option>' +
+              '<option value="2"' + (curWeekday === 2 ? ' selected' : '') + '>Martes</option>' +
+              '<option value="3"' + (curWeekday === 3 ? ' selected' : '') + '>Miércoles</option>' +
+              '<option value="4"' + (curWeekday === 4 ? ' selected' : '') + '>Jueves</option>' +
+              '<option value="5"' + (curWeekday === 5 ? ' selected' : '') + '>Viernes</option>' +
+              '<option value="6"' + (curWeekday === 6 ? ' selected' : '') + '>Sábado</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label for="sched-to"><i class="fas fa-envelope"></i> Destinatarios principales (TO)</label>' +
+            '<textarea id="sched-to" rows="2" placeholder="correo1@dominio.com, correo2@dominio.com">' + escapeHtml(curTo) + '</textarea>' +
+            '<small class="helper-text">Separados por coma o punto y coma.</small>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label for="sched-cc"><i class="fas fa-envelope-open"></i> Destinatarios en copia (CC)</label>' +
+            '<textarea id="sched-cc" rows="2" placeholder="copia@dominio.com">' + escapeHtml(curCc) + '</textarea>' +
+          '</div>' +
+          '<small class="field-error md-prompt-error hidden" id="sched-edit-error" aria-live="polite"></small>' +
+          '<div class="modal-actions" style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--md-sys-color-outline-variant,#E8EAED)">' +
+            '<button type="button" id="sched-edit-cancel" class="btn text">Cancelar</button>' +
+            '<button type="submit" id="sched-edit-save" class="btn primary"><i class="fas fa-save"></i> Guardar cambios</button>' +
+          '</div>' +
+        '</form>';
+      const close = openModal('Editar programación de reporte', bodyHtml);
+      setTimeout(function () {
+        const form = qs('#sched-edit-form');
+        const freq = qs('#sched-freq');
+        const wdayWrap = qs('#sched-weekday-wrap');
+        const errorEl = qs('#sched-edit-error');
+        const cancelBtn = qs('#sched-edit-cancel');
+        if (freq && wdayWrap) {
+          freq.addEventListener('change', function () {
+            wdayWrap.style.display = freq.value === 'weekly' ? '' : 'none';
+          });
+        }
+        if (cancelBtn) cancelBtn.onclick = close;
+        if (form) {
+          form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const runAt = String(qs('#sched-runAt').value || '').trim();
+            const frequency = String(freq.value || '').trim();
+            const weekday = frequency === 'weekly' ? Number(qs('#sched-weekday').value) : null;
+            const to = String(qs('#sched-to').value || '').trim();
+            const cc = String(qs('#sched-cc').value || '').trim();
+            if (!runAt || !/^\d{1,2}:\d{2}$/.test(runAt)) {
+              errorEl.textContent = 'Hora inválida. Usa formato HH:MM.';
+              errorEl.classList.remove('hidden');
+              return;
+            }
+            if (frequency !== 'daily' && frequency !== 'weekly') {
+              errorEl.textContent = 'Frecuencia debe ser diaria o semanal.';
+              errorEl.classList.remove('hidden');
+              return;
+            }
+            const saveBtn = qs('#sched-edit-save');
+            if (saveBtn) saveBtn.disabled = true;
+            try {
+              await fetchJson(API + '/admin/report-schedules/' + encodeURIComponent(id), {
+                method: 'PATCH',
+                body: JSON.stringify({
+                  runAt: runAt,
+                  frequency: frequency,
+                  weekday: weekday,
+                  to: parseEmailsInput(to),
+                  cc: parseEmailsInput(cc),
+                }),
+              });
+              showToast('Programación actualizada.', 'success');
+              close();
+              loadReportSchedules();
+            } catch (err) {
+              errorEl.textContent = parseApiError(err) || 'No se pudo editar programación.';
+              errorEl.classList.remove('hidden');
+            } finally {
+              if (saveBtn) saveBtn.disabled = false;
+            }
+          });
+        }
+      }, 60);
+    }
     const tbodySched = qs('#tabla-report-schedules-body');
     if (tbodySched && !tbodySched._schedDeleg) {
       tbodySched._schedDeleg = true;
@@ -9696,54 +9916,32 @@
           loadReportSchedules();
         }
       });
-      tbodySched.addEventListener('click', async function (ev) {
+      tbodySched.addEventListener('click', function (ev) {
         const editBtn = ev.target && ev.target.closest && ev.target.closest('button.usuarios-sched-edit');
         if (editBtn) {
           const id = String(editBtn.dataset.schedId || '').trim();
           const row = reportSchedulesCache.find((x) => String(x.id) === id);
           if (!row) return;
-          const runAt = window.prompt('Hora HH:MM', String(row.runAt || '09:00'));
-          if (runAt == null) return;
-          const freq = window.prompt('Frecuencia: daily o weekly', String(row.frequency || 'daily'));
-          if (freq == null) return;
-          const weekday = freq === 'weekly'
-            ? window.prompt('Día semanal (0=Dom..6=Sab)', String(row.weekday == null ? 1 : row.weekday))
-            : String(row.weekday == null ? '' : row.weekday);
-          if (weekday == null) return;
-          const to = window.prompt('Destinatarios TO (coma o ;)', Array.isArray(row.to) ? row.to.join(', ') : '');
-          if (to == null) return;
-          const cc = window.prompt('Destinatarios CC (coma o ;)', Array.isArray(row.cc) ? row.cc.join(', ') : '');
-          if (cc == null) return;
-          try {
-            await fetchJson(API + '/admin/report-schedules/' + encodeURIComponent(id), {
-              method: 'PATCH',
-              body: JSON.stringify({
-                runAt: String(runAt).trim(),
-                frequency: String(freq).trim(),
-                weekday: String(freq).trim() === 'weekly' ? Number(weekday) : null,
-                to: parseEmailsInput(to),
-                cc: parseEmailsInput(cc),
-              }),
-            });
-            showToast('Programación editada.', 'success');
-            loadReportSchedules();
-          } catch (e) {
-            showToast(parseApiError(e) || 'No se pudo editar programación.', 'error');
-          }
+          openReportScheduleEditModal(id, row);
           return;
         }
         const delBtn = ev.target && ev.target.closest && ev.target.closest('button.usuarios-sched-delete');
         if (!delBtn) return;
         const id = String(delBtn.dataset.schedId || '').trim();
         if (!id) return;
-        if (!window.confirm('¿Eliminar esta programación automática?')) return;
-        try {
-          await fetchJson(API + '/admin/report-schedules/' + encodeURIComponent(id), { method: 'DELETE' });
-          showToast('Programación eliminada.', 'success');
-          loadReportSchedules();
-        } catch (e) {
-          showToast(parseApiError(e) || 'No se pudo eliminar programación.', 'error');
-        }
+        openConfirmModal(
+          '¿Eliminar esta programación automática? Los reportes dejarán de enviarse por correo.',
+          async function () {
+            try {
+              await fetchJson(API + '/admin/report-schedules/' + encodeURIComponent(id), { method: 'DELETE' });
+              showToast('Programación eliminada.', 'success');
+              loadReportSchedules();
+            } catch (e) {
+              showToast(parseApiError(e) || 'No se pudo eliminar programación.', 'error');
+            }
+          },
+          { confirmLabel: 'Eliminar programación', confirmIcon: 'fa-trash', confirmClass: 'btn danger' }
+        );
       });
     }
   }
