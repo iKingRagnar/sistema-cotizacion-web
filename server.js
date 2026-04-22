@@ -2924,6 +2924,7 @@ app.post('/api/incidentes', async (req, res) => {
     );
     const r = await db.getOne('SELECT i.*, c.nombre as cliente_nombre, m.nombre as maquina_nombre FROM incidentes i JOIN clientes c ON c.id = i.cliente_id LEFT JOIN maquinas m ON m.id = i.maquina_id ORDER BY i.id DESC LIMIT 1');
     res.status(201).json(r);
+    if (r) enviarCorreoIncidente(r, 'nuevo').catch(() => {});
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -2931,6 +2932,8 @@ app.post('/api/incidentes', async (req, res) => {
 
 app.put('/api/incidentes/:id', async (req, res) => {
   try {
+    const existing = await db.getOne('SELECT * FROM incidentes WHERE id=?', [req.params.id]);
+    if (!existing) return res.status(404).json({ error: 'No encontrado' });
     const { cliente_id, maquina_id, descripcion, prioridad, fecha_reporte, fecha_cerrado, fecha_vencimiento, tecnico_responsable, estatus } = req.body || {};
     const est = estatus || 'abierto';
     let fCerr = fecha_cerrado;
@@ -2943,6 +2946,9 @@ app.put('/api/incidentes/:id', async (req, res) => {
     );
     const r = await db.getOne('SELECT i.*, c.nombre as cliente_nombre, m.nombre as maquina_nombre FROM incidentes i JOIN clientes c ON c.id = i.cliente_id LEFT JOIN maquinas m ON m.id = i.maquina_id WHERE i.id = ?', [req.params.id]);
     res.json(r || {});
+    if (r && est === 'cerrado' && existing.estatus !== 'cerrado') {
+      enviarCorreoIncidente(r, 'cerrado').catch(() => {});
+    }
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -5092,6 +5098,34 @@ async function enviarCorreoCotizacionCreada(cot, cliente) {
     accentColor: '#1A73E8',
   });
   const text = `Nueva cotización ${cot.folio} para ${clienteNombre}. Total: ${cot.total} ${cot.moneda || 'USD'}.`;
+  await safeSendMail(t, { from, to: admins.join(', '), subject, text, html });
+}
+
+async function enviarCorreoIncidente(incidente, accion) {
+  const t = createMailTransport();
+  const from = (process.env.SMTP_FROM || process.env.SMTP_USER || '').trim();
+  if (!t || !from) return;
+  const admins = getAdminNotifyEmails();
+  if (!admins.length) return;
+  const esCerrado = accion === 'cerrado';
+  const subject = esCerrado
+    ? `✅ Incidente cerrado: ${incidente.folio} — ${incidente.cliente_nombre || '—'}`
+    : `🚨 Nuevo incidente: ${incidente.folio} — Prioridad ${incidente.prioridad || 'media'}`;
+  const html = buildEmailHtml({
+    title: esCerrado ? 'Incidente cerrado' : 'Nuevo incidente registrado',
+    subtitle: `Sistema — ${new Date().toLocaleDateString('es-MX')}`,
+    rows: [
+      { label: 'Folio', value: incidente.folio || '—' },
+      { label: 'Cliente', value: incidente.cliente_nombre || '—' },
+      { label: 'Máquina', value: incidente.maquina_nombre || '—' },
+      { label: 'Prioridad', value: incidente.prioridad || 'media', bold: true },
+      { label: 'Técnico', value: incidente.tecnico_responsable || '—' },
+      { label: 'Estatus', value: incidente.estatus || '—', bold: true },
+      { label: 'Descripción', value: (incidente.descripcion || '—').slice(0, 200) },
+    ],
+    accentColor: esCerrado ? '#16a34a' : '#dc2626',
+  });
+  const text = `${subject}\nCliente: ${incidente.cliente_nombre || '—'}\nPrioridad: ${incidente.prioridad || 'media'}\nTécnico: ${incidente.tecnico_responsable || '—'}`;
   await safeSendMail(t, { from, to: admins.join(', '), subject, text, html });
 }
 
