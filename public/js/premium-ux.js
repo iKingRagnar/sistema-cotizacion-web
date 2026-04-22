@@ -1375,6 +1375,296 @@
     if (main && !main.id) main.id = 'main-content';
   }
 
+  /* ═══════════════════════════════════════════════════════════
+     19. CONFETTI — celebración inline (sin dependencias)
+     window.premConfetti({ duration: 2500, colors: [...], particles: 80 })
+     ═══════════════════════════════════════════════════════════ */
+  function initConfettiHelper() {
+    window.premConfetti = function (opts = {}) {
+      const duration = opts.duration ?? 2200;
+      const particles = opts.particles ?? 90;
+      const colors = opts.colors ?? ['#2563eb', '#0d9488', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981'];
+      const canvas = document.createElement('canvas');
+      canvas.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:10000';
+      canvas.width = innerWidth;
+      canvas.height = innerHeight;
+      document.body.appendChild(canvas);
+      const ctx = canvas.getContext('2d');
+
+      const P = Array.from({ length: particles }, () => ({
+        x: innerWidth / 2 + (Math.random() - 0.5) * 180,
+        y: innerHeight * 0.35 + (Math.random() - 0.5) * 40,
+        vx: (Math.random() - 0.5) * 12,
+        vy: Math.random() * -14 - 4,
+        g: 0.35,
+        s: Math.random() * 6 + 3,
+        r: Math.random() * Math.PI * 2,
+        vr: (Math.random() - 0.5) * 0.3,
+        c: colors[Math.floor(Math.random() * colors.length)],
+        shape: Math.random() < 0.4 ? 'rect' : 'circle',
+        alpha: 1,
+      }));
+
+      const t0 = performance.now();
+      function frame(now) {
+        const elapsed = now - t0;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (const p of P) {
+          p.vy += p.g;
+          p.x += p.vx;
+          p.y += p.vy;
+          p.r += p.vr;
+          p.alpha = Math.max(0, 1 - elapsed / duration);
+          ctx.save();
+          ctx.globalAlpha = p.alpha;
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.r);
+          ctx.fillStyle = p.c;
+          if (p.shape === 'rect') ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * 0.6);
+          else { ctx.beginPath(); ctx.arc(0, 0, p.s / 2, 0, Math.PI * 2); ctx.fill(); }
+          ctx.restore();
+        }
+        if (elapsed < duration) requestAnimationFrame(frame);
+        else canvas.remove();
+      }
+      requestAnimationFrame(frame);
+    };
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     20. DASHBOARD VALUE PULSE — pulso visual cuando cambia .dash-value
+     ═══════════════════════════════════════════════════════════ */
+  function initDashboardPulse() {
+    const tracked = new WeakMap();
+    function watch(el) {
+      if (tracked.has(el)) return;
+      tracked.set(el, el.textContent);
+      const mo = new MutationObserver(() => {
+        const prev = tracked.get(el);
+        const now = el.textContent;
+        if (prev !== now && now.trim()) {
+          el.classList.remove('prem-value-pulse');
+          void el.offsetWidth;
+          el.classList.add('prem-value-pulse');
+          tracked.set(el, now);
+        }
+      });
+      mo.observe(el, { childList: true, characterData: true, subtree: true });
+    }
+    function scan() {
+      document.querySelectorAll('.dash-value, .dashboard-card-value').forEach(watch);
+    }
+    scan();
+    const outer = new MutationObserver(scan);
+    outer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     21. AVATAR EN HEADER — círculo con inicial del usuario
+     Intenta leer window.currentUser o /api/auth/me. Inyecta avatar
+     redondo con inicial y color por hash del username.
+     ═══════════════════════════════════════════════════════════ */
+  function initUserAvatar() {
+    async function load() {
+      try {
+        let name = window.currentUser?.display_name || window.currentUser?.username;
+        if (!name) {
+          const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
+          if (res.ok) {
+            const d = await res.json();
+            name = d.display_name || d.username || d.user?.username;
+          }
+        }
+        if (!name) return;
+        inject(name);
+      } catch { /* silencioso */ }
+    }
+    function colorFromString(s) {
+      let h = 0;
+      for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) & 0xffffffff;
+      const hue = Math.abs(h) % 360;
+      return `hsl(${hue}, 55%, 46%)`;
+    }
+    function inject(name) {
+      if (document.querySelector('.prem-user-avatar')) return;
+      const initial = (name.trim()[0] || 'U').toUpperCase();
+      const avatar = document.createElement('div');
+      avatar.className = 'prem-user-avatar';
+      avatar.setAttribute('data-prem-tooltip', name);
+      avatar.setAttribute('data-prem-tooltip-pos', 'bottom');
+      avatar.style.background = `linear-gradient(135deg, ${colorFromString(name)}, ${colorFromString(name + 'x')})`;
+      avatar.textContent = initial;
+
+      const header = document.querySelector('header.header, header.app-header, .app-header, .header');
+      if (!header) return;
+      header.appendChild(avatar);
+    }
+    load();
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     22. PRINT-PREVIEW BUTTON — botón "Imprimir tabla" en cada tabla
+     ═══════════════════════════════════════════════════════════ */
+  function initPrintButtons() {
+    function attach(wrap) {
+      if (wrap._printBtn) return;
+      if (!wrap.querySelector('table.data-table')) return;
+      wrap._printBtn = true;
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'prem-print-btn';
+      btn.setAttribute('data-prem-tooltip', 'Imprimir / PDF de esta tabla');
+      btn.innerHTML = '<i class="fas fa-print"></i>';
+
+      btn.addEventListener('click', () => {
+        document.body.classList.add('prem-printing-table');
+        wrap.classList.add('prem-print-target');
+        window.print();
+        setTimeout(() => {
+          document.body.classList.remove('prem-printing-table');
+          wrap.classList.remove('prem-print-target');
+        }, 600);
+      });
+
+      // Insertar en la barra de vistas si existe, si no, flotante arriba-derecha del wrap
+      const viewsBar = wrap.previousElementSibling?.classList?.contains('prem-views-bar') ? wrap.previousElementSibling : null;
+      if (viewsBar) {
+        viewsBar.insertBefore(btn, viewsBar.firstChild);
+      } else {
+        btn.classList.add('prem-print-btn--floating');
+        wrap.style.position = 'relative';
+        wrap.appendChild(btn);
+      }
+    }
+    document.querySelectorAll('.table-wrap, .md-table-wrap').forEach(attach);
+    const mo = new MutationObserver(muts => {
+      for (const m of muts) for (const n of m.addedNodes) {
+        if (n.nodeType !== 1) continue;
+        if (n.matches?.('.table-wrap, .md-table-wrap')) attach(n);
+        n.querySelectorAll?.('.table-wrap, .md-table-wrap').forEach(attach);
+      }
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     23. SWIPE-TO-ACTION en mobile (filas de tabla)
+     Swipe left sobre una fila → muestra botones de acción.
+     Tap afuera → cierra.
+     ═══════════════════════════════════════════════════════════ */
+  function initSwipeActions() {
+    if (!('ontouchstart' in window)) return;
+    let activeRow = null;
+
+    document.addEventListener('touchstart', (e) => {
+      const tr = e.target.closest('table.data-table tbody tr');
+      if (!tr || tr.classList.contains('prem-skel-row') || tr.classList.contains('empty-row')) return;
+      tr._touchStartX = e.touches[0].clientX;
+      tr._touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+      const tr = e.target.closest('table.data-table tbody tr');
+      if (!tr || tr._touchStartX == null) return;
+      const dx = e.touches[0].clientX - tr._touchStartX;
+      const dy = Math.abs(e.touches[0].clientY - tr._touchStartY);
+      if (dy > 15) return; // scroll vertical
+      if (dx < -40) {
+        if (activeRow && activeRow !== tr) activeRow.classList.remove('prem-row-swiped');
+        tr.classList.add('prem-row-swiped');
+        activeRow = tr;
+      } else if (dx > 20) {
+        tr.classList.remove('prem-row-swiped');
+        if (activeRow === tr) activeRow = null;
+      }
+    }, { passive: true });
+
+    document.addEventListener('touchend', () => {
+      document.querySelectorAll('table.data-table tbody tr').forEach(tr => {
+        tr._touchStartX = null;
+      });
+    }, { passive: true });
+
+    document.addEventListener('click', (e) => {
+      if (!activeRow) return;
+      if (!e.target.closest('table.data-table tbody tr.prem-row-swiped')) {
+        activeRow.classList.remove('prem-row-swiped');
+        activeRow = null;
+      }
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     24. AUTO-ATTACH ATTACHMENTS a modales con entity detectable
+     Detecta modales que app.js abre con data-entity-id / data-entity-type
+     o con un campo oculto "cotizacion_id" / "incidente_id" / etc.
+     ═══════════════════════════════════════════════════════════ */
+  function initAutoAttachments() {
+    const ENTITY_FIELD_MAP = {
+      'cotizacion_id': 'cotizacion',
+      'incidente_id': 'incidente',
+      'cliente_id': 'cliente',
+      'maquina_id': 'maquina',
+      'reporte_id': 'reporte',
+      'garantia_id': 'garantia',
+      'mantenimiento_id': 'mantenimiento',
+      'refaccion_id': 'refaccion',
+    };
+
+    function tryInject(modal) {
+      if (modal._attachAttempted) return;
+      modal._attachAttempted = true;
+
+      // 1. Si el modal tiene data-entity-type y data-entity-id directamente
+      let type = modal.dataset.entityType;
+      let id = modal.dataset.entityId;
+
+      // 2. Buscar en hidden inputs por id conocido
+      if (!type || !id) {
+        for (const [field, t] of Object.entries(ENTITY_FIELD_MAP)) {
+          const inp = modal.querySelector(`input[name="${field}"], input#${field}, [data-${field}]`);
+          if (inp) {
+            const v = inp.value || inp.dataset[field];
+            if (v && Number(v) > 0) { type = t; id = v; break; }
+          }
+        }
+      }
+
+      // 3. Buscar en attribute "data-cotizacion-id" o similar
+      if (!type || !id) {
+        for (const [field, t] of Object.entries(ENTITY_FIELD_MAP)) {
+          const dataKey = field.replace('_id', '-id');
+          const attr = modal.querySelector(`[data-${dataKey}]`);
+          if (attr) {
+            const v = attr.getAttribute(`data-${dataKey}`);
+            if (v && Number(v) > 0) { type = t; id = v; break; }
+          }
+        }
+      }
+
+      if (!type || !id || Number(id) <= 0) return;
+      if (modal.querySelector('[data-prem-attach]')) return;
+
+      const zone = document.createElement('div');
+      zone.setAttribute('data-prem-attach', '');
+      zone.dataset.entityType = type;
+      zone.dataset.entityId = String(id);
+
+      // Insertar al final del modal body si existe, si no al final del modal
+      const body = modal.querySelector('.modal-body, .md-modal-body, form');
+      (body || modal).appendChild(zone);
+    }
+
+    function scan() {
+      document.querySelectorAll('.modal-dialog.active, .md-modal-panel.active, .modal.show, [role="dialog"]:not([aria-hidden="true"])')
+        .forEach(tryInject);
+    }
+    scan();
+    const mo = new MutationObserver(() => { scan(); });
+    mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'aria-hidden'] });
+  }
+
   /* ─── Bootstrap ─────────────────────────────────────────── */
   function boot() {
     initSkipLink();
@@ -1394,6 +1684,12 @@
     initPremiumTooltips();
     initAriaLabels();
     initRowClickHighlight();
+    initConfettiHelper();
+    initDashboardPulse();
+    initUserAvatar();
+    initPrintButtons();
+    initSwipeActions();
+    initAutoAttachments();
   }
 
   if (document.readyState === 'loading') {

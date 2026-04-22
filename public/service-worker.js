@@ -6,7 +6,7 @@
  *  - POST/PUT/DELETE:   network-only
  *  - Imágenes:          cache-first con fallback transparent
  */
-const VERSION = 'cotizacion-pro-v49';
+const VERSION = 'cotizacion-pro-v50';
 const CACHE_STATIC = VERSION + '-static';
 const CACHE_RUNTIME = VERSION + '-runtime';
 const CACHE_API = VERSION + '-api';

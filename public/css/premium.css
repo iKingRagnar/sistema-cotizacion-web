@@ -3388,3 +3388,195 @@ body.md3-on .prem-draggable-card:hover::after {
   top: 0;
   outline: none;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   72. DASHBOARD VALUE PULSE
+   ═══════════════════════════════════════════════════════════════════════════ */
+@keyframes premValuePulse {
+  0%   { transform: scale(1); filter: brightness(1); }
+  30%  { transform: scale(1.08); filter: brightness(1.25); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+body.md3-on .prem-value-pulse {
+  animation: premValuePulse .5s cubic-bezier(.34,1.56,.64,1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   73. USER AVATAR EN HEADER
+   ═══════════════════════════════════════════════════════════════════════════ */
+.prem-user-avatar {
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  font-size: .95rem;
+  letter-spacing: -.02em;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(15,23,42,.18), inset 0 1px 0 rgba(255,255,255,.25), 0 0 0 2px rgba(255,255,255,.18);
+  transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease;
+  user-select: none;
+  z-index: 5;
+}
+.prem-user-avatar:hover {
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 4px 16px rgba(15,23,42,.24), inset 0 1px 0 rgba(255,255,255,.35), 0 0 0 3px rgba(255,255,255,.3);
+}
+
+body.md3-on header.header,
+body.md3-on .header {
+  position: relative;
+  padding-right: 70px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   74. PRINT BUTTON EN CADA TABLA
+   ═══════════════════════════════════════════════════════════════════════════ */
+.prem-print-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  color: #475569;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s ease;
+  font-size: .85rem;
+}
+.prem-print-btn:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e40af;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37,99,235,.18);
+}
+.prem-print-btn--floating {
+  position: absolute;
+  top: -46px;
+  right: 0;
+  z-index: 2;
+}
+
+/* Print SÓLO la tabla objetivo */
+@media print {
+  body.prem-printing-table *:not(.prem-print-target):not(.prem-print-target *):not(html):not(body) {
+    display: none !important;
+  }
+  body.prem-printing-table .prem-print-target {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   75. SWIPE-TO-ACTION en filas mobile
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  body.md3-on table.data-table tbody tr {
+    position: relative;
+    transition: transform .25s cubic-bezier(.4,0,.2,1) !important;
+  }
+  body.md3-on table.data-table tbody tr.prem-row-swiped {
+    transform: translateX(-96px);
+  }
+  body.md3-on table.data-table tbody tr.prem-row-swiped::after {
+    content: '';
+    position: absolute;
+    top: 0; right: -96px;
+    bottom: 0;
+    width: 96px;
+    background: linear-gradient(90deg, #ef4444, #dc2626);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  body.md3-on table.data-table tbody tr.prem-row-swiped::before {
+    content: '\f1f8'; /* fa-trash */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    top: 50%;
+    right: -50px;
+    transform: translateY(-50%);
+    color: #fff;
+    font-size: 1.1rem;
+    z-index: 1;
+    pointer-events: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   76. BOTTOM NAVIGATION en mobile (además del drawer)
+   Cuatro accesos rápidos fijos abajo en pantallas muy pequeñas.
+   Se construye via CSS sobre tabs existentes (simula bottom nav).
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  body.md3-on .app-main {
+    padding-bottom: 70px !important;
+  }
+  /* Cuatro tabs principales clonadas por posición */
+  body.md3-on .prem-mobile-bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    background: #fff;
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -4px 16px rgba(15,23,42,.1);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 950;
+    backdrop-filter: blur(10px);
+    background: rgba(255,255,255,.94);
+  }
+  body.md3-on .prem-mobile-bottom-nav .prem-bn-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 8px 4px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    font-size: .62rem;
+    font-weight: 600;
+    transition: color .15s ease;
+  }
+  body.md3-on .prem-mobile-bottom-nav .prem-bn-item i {
+    font-size: 1.05rem;
+  }
+  body.md3-on .prem-mobile-bottom-nav .prem-bn-item.active {
+    color: #2563eb;
+  }
+  body.md3-on .prem-mobile-bottom-nav .prem-bn-item:hover {
+    color: #1e40af;
+  }
+}
+@media (min-width: 641px) {
+  .prem-mobile-bottom-nav { display: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   77. MODAL ATTACHMENTS AUTO-INJECTED zone spacing
+   ═══════════════════════════════════════════════════════════════════════════ */
+.modal-body [data-prem-attach],
+.md-modal-body [data-prem-attach],
+form > [data-prem-attach] {
+  margin-top: 18px;
+}
