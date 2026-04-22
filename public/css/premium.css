@@ -365,72 +365,13 @@ body.md3-on table.data-table thead::after {
   background: rgba(255,255,255,.1);
 }
 
-/* Fila de filtros — display:flex saca la fila del layout de columnas de la tabla
-   sin mover el DOM, así app.js sigue encontrando los inputs con querySelectorAll */
+/* Filtros: el filter-row original SE OCULTA SIEMPRE en la tabla.
+   Los clones viven en .prem-ext-filter-bar arriba del table-wrap (premium-ux.js).
+   Mantenemos el filter-row en el DOM (no lo removemos) para que app.js
+   siga encontrando los inputs con tbl.querySelectorAll('.filter-row .filter-input'). */
 body.md3-on table.data-table thead .filter-row,
 body.md3-on .table-wrap > table thead .filter-row {
-  display: flex !important;
-  flex-wrap: nowrap !important;
-  align-items: center !important;
-  gap: 6px !important;
-  padding: 8px 14px !important;
-  background: #f0f6ff !important;
-  border-top: 2px solid #e2e8f0 !important;
-  overflow-x: auto !important;
-}
-
-body.md3-on table.data-table thead .filter-row td,
-body.md3-on .table-wrap > table thead .filter-row td {
-  display: flex !important;
-  flex: 1 1 90px !important;
-  min-width: 60px !important;
-  max-width: 210px !important;
-  padding: 0 !important;
-  background: transparent !important;
-  border: none !important;
-  height: auto !important;
-  overflow: hidden !important;
-}
-
-body.md3-on table.data-table thead .filter-row td.th-actions,
-body.md3-on .table-wrap > table thead .filter-row td.th-actions {
-  flex: 0 0 auto !important;
-  max-width: none !important;
-}
-
-body.md3-on table.data-table thead .filter-row input,
-body.md3-on table.data-table thead .filter-row select,
-body.md3-on table.data-table thead .filter-row textarea,
-body.md3-on .table-wrap > table thead .filter-row input,
-body.md3-on .table-wrap > table thead .filter-row select {
-  background: #fff !important;
-  border: 1.5px solid #bfdbfe !important;
-  color: #1e293b !important;
-  border-radius: 7px !important;
-  font-size: .75rem !important;
-  height: 28px !important;
-  padding: 0 8px !important;
-  min-width: 0 !important;
-  width: 100% !important;
-  transition: border-color .15s ease, box-shadow .15s ease !important;
-}
-
-body.md3-on table.data-table thead .filter-row input::placeholder,
-body.md3-on table.data-table thead .filter-row select::placeholder {
-  color: #94a3b8 !important;
-}
-
-body.md3-on table.data-table thead .filter-row input:focus,
-body.md3-on table.data-table thead .filter-row select:focus {
-  border-color: #2563eb !important;
-  box-shadow: 0 0 0 2px rgba(37,99,235,.14) !important;
-  outline: none !important;
-  background: #fff !important;
-}
-
-body.md3-on table.data-table thead .filter-row select option {
-  background: #fff !important;
-  color: #1e293b !important;
+  display: none !important;
 }
 
 /* ── Filas ────────────────────────────────────────────────────────────── */
@@ -2167,3 +2108,257 @@ body.md3-on .prem-draggable-card:not(.prem-card-dragging)::after {
   pointer-events: none;
 }
 body.md3-on .prem-draggable-card:hover::after { opacity: 1; }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   45. PREM EXTERNAL FILTER BAR — filtros FUERA de la tabla
+   El filter-row original queda hidden; los clones viven aquí, encima del
+   table-wrap. Diseño: card blanca, etiqueta + chip de inputs.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.prem-ext-filter-bar {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 3px rgba(15,23,42,.05);
+}
+
+.prem-ext-filter-head {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.prem-ext-filter-head > i {
+  color: #2563eb; font-size: .9rem;
+}
+.prem-ext-filter-head > span {
+  font-size: .76rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  flex: 1;
+}
+
+.prem-ext-filter-clear {
+  background: #f8faff;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  padding: 4px 10px;
+  border-radius: 7px;
+  font-size: .72rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 5px;
+  transition: all .12s ease;
+}
+.prem-ext-filter-clear:hover {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+.prem-ext-filter-clear i { font-size: .7rem; }
+
+.prem-ext-filter-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.prem-ext-filter-field {
+  display: flex; flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.prem-ext-filter-field-label {
+  font-size: .66rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 0;
+  padding-left: 2px;
+}
+
+/* Inputs/selects clonados — fondo blanco, TEXTO OSCURO #1e293b. Alta especificidad */
+.prem-ext-filter-bar input.prem-ext-clone,
+.prem-ext-filter-bar select.prem-ext-clone,
+.prem-ext-filter-bar textarea.prem-ext-clone,
+body.md3-on .prem-ext-filter-bar input,
+body.md3-on .prem-ext-filter-bar select,
+body.md3-on .prem-ext-filter-bar textarea {
+  background: #fff !important;
+  border: 1.5px solid #e2e8f0 !important;
+  color: #1e293b !important;
+  border-radius: 7px !important;
+  font-size: .8rem !important;
+  height: 32px !important;
+  padding: 0 9px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  outline: none !important;
+  transition: border-color .12s ease, box-shadow .12s ease !important;
+  font-family: inherit !important;
+}
+
+.prem-ext-filter-bar input::placeholder,
+.prem-ext-filter-bar select::placeholder,
+body.md3-on .prem-ext-filter-bar input::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+.prem-ext-filter-bar input:focus,
+.prem-ext-filter-bar select:focus,
+body.md3-on .prem-ext-filter-bar input:focus,
+body.md3-on .prem-ext-filter-bar select:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 2px rgba(37,99,235,.14) !important;
+  background: #fff !important;
+}
+
+.prem-ext-filter-bar select option {
+  background: #fff !important;
+  color: #1e293b !important;
+}
+
+/* date filter wrapper — alinear select + input */
+.prem-ext-filter-field input[type="date"] { font-family: inherit; }
+
+@media (max-width: 768px) {
+  .prem-ext-filter-fields {
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  }
+  .prem-ext-filter-bar input,
+  .prem-ext-filter-bar select { font-size: .76rem !important; height: 30px !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   46. CONTRAST HARDENING UNIVERSAL — corrige cualquier residuo
+   "fondo blanco → texto oscuro" y "fondo oscuro → texto blanco"
+   Reglas defensivas con alta especificidad.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* TODO input/select/textarea sin clase específica → fondo blanco + texto oscuro */
+body.md3-on input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+body.md3-on select,
+body.md3-on textarea {
+  color: #1e293b !important;
+}
+body.md3-on input::placeholder,
+body.md3-on textarea::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+/* Sidebar nav: fondo blanco → texto medio-oscuro */
+body.md3-on .sidebar-nav .tab:not(.active),
+body.md3-on .tabs.tabs--rail .tab:not(.active) {
+  color: #475569 !important;
+  background: transparent !important;
+}
+body.md3-on .sidebar-nav .tab:not(.active) i,
+body.md3-on .tabs.tabs--rail .tab:not(.active) i {
+  color: #64748b !important;
+}
+body.md3-on .sidebar-nav .tab:not(.active):hover,
+body.md3-on .tabs.tabs--rail .tab:not(.active):hover {
+  background: #eff6ff !important;
+  color: #1e3a8a !important;
+}
+body.md3-on .sidebar-nav .tab:not(.active):hover i,
+body.md3-on .tabs.tabs--rail .tab:not(.active):hover i {
+  color: #2563eb !important;
+}
+body.md3-on .sidebar-nav .tab.active,
+body.md3-on .tabs.tabs--rail .tab.active {
+  color: #fff !important;
+}
+body.md3-on .sidebar-nav .tab.active i,
+body.md3-on .tabs.tabs--rail .tab.active i {
+  color: rgba(255,255,255,.95) !important;
+}
+
+/* Section header (gradiente azul) → todo blanco excepto badges */
+body.md3-on .section-header,
+body.md3-on .section-header > h1, body.md3-on .section-header > h2,
+body.md3-on .section-header > h3, body.md3-on .section-header > h4,
+body.md3-on .section-header > p, body.md3-on .section-header > span,
+body.md3-on .section-header > div:not(.toolbar):not(.dashboard-header-right) {
+  color: #fff !important;
+}
+
+/* Tabla: thead (gradiente) → texto blanco; tbody (blanco/alt) → texto oscuro */
+body.md3-on table.data-table thead th,
+body.md3-on table.data-table thead th * {
+  color: #fff !important;
+}
+body.md3-on table.data-table thead th .badge,
+body.md3-on table.data-table thead th .badge * {
+  color: inherit !important;  /* badges mantienen su propio color */
+}
+body.md3-on table.data-table tbody td {
+  color: #1e293b !important;
+}
+body.md3-on table.data-table tbody td a:not(.btn) {
+  color: #2563eb !important;
+}
+body.md3-on table.data-table tbody td a:not(.btn):hover {
+  color: #1e40af !important;
+  text-decoration: underline;
+}
+
+/* Modal (header gradiente, body blanco) */
+body.md3-on .modal-header, body.md3-on .md-modal-header,
+body.md3-on .modal-header *, body.md3-on .md-modal-header * {
+  color: #fff !important;
+}
+body.md3-on .modal-body, body.md3-on .md-modal-body,
+body.md3-on .modal-content > .modal-body {
+  color: #1e293b !important;
+}
+
+/* Empty state cards (fondo blanco/dashed) → texto oscuro */
+body.md3-on .empty-card, body.md3-on .empty-card * {
+  color: inherit !important;
+}
+body.md3-on .empty-card h3 { color: #374151 !important; }
+body.md3-on .empty-card p { color: #64748b !important; }
+
+/* Hint blocks (fondo azul claro) → texto azul oscuro */
+body.md3-on .hint, body.md3-on .hint * {
+  color: #1e40af !important;
+}
+body.md3-on .hint a { color: #1d4ed8 !important; text-decoration: underline; }
+
+/* Cualquier card con fondo blanco → contenido oscuro por defecto */
+body.md3-on .card { color: #1e293b; }
+body.md3-on .card h1, body.md3-on .card h2, body.md3-on .card h3,
+body.md3-on .card h4, body.md3-on .card p, body.md3-on .card span:not(.badge):not([class*="status-"]) {
+  color: inherit;
+}
+
+/* Form labels en superficie clara */
+body.md3-on .form-group label,
+body.md3-on form label {
+  color: #475569 !important;
+}
+
+/* Toolbar (fondo blanco) → texto oscuro */
+body.md3-on .toolbar:not(.section-header > .toolbar) {
+  color: #1e293b;
+}
+body.md3-on .toolbar .toolbar-checkbox:not(.section-header *),
+body.md3-on .toolbar .toolbar-label:not(.section-header *) {
+  color: #475569 !important;
+}
+
+/* Botones que NO tienen background propio (p.ej. .btn.text) */
+body.md3-on .btn.text,
+body.md3-on button.text {
+  color: #2563eb !important;
+}

@@ -456,6 +456,23 @@ async function runMigrations() {
       created_at TEXT DEFAULT (datetime('now','localtime'))
     )`,
     `CREATE INDEX IF NOT EXISTS idx_attachments_entity ON attachments(entity_type, entity_id)`,
+    /* Webhooks salientes a Slack/Discord/Teams/genérico */
+    `CREATE TABLE IF NOT EXISTS webhooks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre TEXT NOT NULL,
+      url TEXT NOT NULL,
+      tipo TEXT NOT NULL DEFAULT 'generic',
+      eventos TEXT NOT NULL DEFAULT '[]',
+      activo INTEGER DEFAULT 1,
+      ultimo_envio TEXT,
+      ultimo_status INTEGER,
+      ultimo_error TEXT,
+      creado_en TEXT DEFAULT (datetime('now','localtime'))
+    )`,
+    /* Audit log enriquecido: diff JSON para cambios trazables */
+    `ALTER TABLE audit_log ADD COLUMN entity_type TEXT`,
+    `ALTER TABLE audit_log ADD COLUMN entity_id INTEGER`,
+    `ALTER TABLE audit_log ADD COLUMN diff_json TEXT`,
   ];
   for (const sql of migrations) {
     try {

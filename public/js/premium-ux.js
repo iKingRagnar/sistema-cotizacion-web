@@ -1028,8 +1028,129 @@
     wait.observe(document.body, { childList: true, subtree: true });
   }
 
+  /* ═══════════════════════════════════════════════════════════
+     11. EXTERNAL FILTER BARS — saca los filtros FUERA de la tabla
+     Clona inputs, sincroniza valores bidireccionalmente, oculta el
+     filter-row original. app.js sigue encontrando los originales con
+     tbl.querySelectorAll('.filter-row .filter-input').
+     ═══════════════════════════════════════════════════════════ */
+  function initExternalFilters() {
+    function attach(table) {
+      if (table._extFiltersDone) return;
+      const filterRow = table.querySelector('thead .filter-row');
+      if (!filterRow) return;
+      const wrap = table.closest('.table-wrap, .md-table-wrap');
+      if (!wrap) return;
+      table._extFiltersDone = true;
+
+      const bar = document.createElement('div');
+      bar.className = 'prem-ext-filter-bar';
+      bar.innerHTML = `
+        <div class="prem-ext-filter-head">
+          <i class="fas fa-filter"></i>
+          <span>Filtros</span>
+          <button type="button" class="prem-ext-filter-clear" title="Limpiar todos los filtros">
+            <i class="fas fa-eraser"></i> Limpiar
+          </button>
+        </div>
+        <div class="prem-ext-filter-fields"></div>
+      `;
+      const fieldsWrap = bar.querySelector('.prem-ext-filter-fields');
+      const ths = [...table.querySelectorAll('thead tr:first-child th')];
+      const tds = [...filterRow.querySelectorAll('td')];
+
+      // Pares (orig, clone) para sincronización bidireccional
+      const pairs = [];
+
+      tds.forEach((td, idx) => {
+        if (td.classList.contains('th-actions')) return;
+        const inputs = [...td.querySelectorAll('input, select, textarea')];
+        if (!inputs.length) return;
+
+        const th = ths[idx];
+        const colLabel = th ? (th.textContent || '').trim() : '';
+
+        const field = document.createElement('div');
+        field.className = 'prem-ext-filter-field';
+        if (colLabel) {
+          const lbl = document.createElement('label');
+          lbl.className = 'prem-ext-filter-field-label';
+          lbl.textContent = colLabel;
+          field.appendChild(lbl);
+        }
+
+        inputs.forEach(orig => {
+          const clone = orig.cloneNode(true);
+          clone.removeAttribute('id');
+          clone.classList.add('prem-ext-clone');
+
+          clone.addEventListener('input', () => {
+            if (orig.value !== clone.value) {
+              orig.value = clone.value;
+              orig.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+          });
+          clone.addEventListener('change', () => {
+            if (orig.value !== clone.value) {
+              orig.value = clone.value;
+              orig.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+          });
+          // Enter en el clone dispara keydown sobre el original (app.js lo escucha)
+          clone.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              orig.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            }
+          });
+
+          pairs.push({ orig, clone });
+          field.appendChild(clone);
+        });
+
+        fieldsWrap.appendChild(field);
+      });
+
+      // Botón limpiar — vacía clones + originales + dispara eventos
+      bar.querySelector('.prem-ext-filter-clear').addEventListener('click', () => {
+        pairs.forEach(({ orig, clone }) => {
+          clone.value = '';
+          orig.value = '';
+          orig.dispatchEvent(new Event('input', { bubbles: true }));
+          orig.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+      });
+
+      // Esconder filter-row original (sigue en DOM para app.js)
+      filterRow.classList.add('prem-filter-row-hidden');
+
+      // Insertar barra antes del table-wrap
+      wrap.insertAdjacentElement('beforebegin', bar);
+
+      // Sync original → clone (cuando app.js limpia filtros sin disparar evento)
+      const syncInterval = setInterval(() => {
+        if (!table.isConnected) { clearInterval(syncInterval); return; }
+        for (const { orig, clone } of pairs) {
+          if (document.activeElement === clone) continue;
+          if (clone.value !== orig.value) clone.value = orig.value;
+        }
+      }, 800);
+    }
+
+    document.querySelectorAll('table.data-table').forEach(attach);
+    const mo = new MutationObserver(muts => {
+      for (const m of muts) for (const n of m.addedNodes) {
+        if (n.nodeType !== 1) continue;
+        if (n.matches?.('table.data-table')) attach(n);
+        n.querySelectorAll?.('table.data-table').forEach(attach);
+      }
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+  }
+
   /* ─── Bootstrap ─────────────────────────────────────────── */
   function boot() {
+    initExternalFilters();   // PRIMERO: saca filtros antes de medir layout
     initCommandK();
     initShortcutsCheatSheet();
     initSkeletonLoaders();

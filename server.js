@@ -37,6 +37,21 @@ function getAdminNotifyEmails() {
   return list;
 }
 
+/* Compresión gzip/brotli — el cliente recibe el formato más eficiente que soporte.
+   Skip para EventStream y respuestas <1KB para evitar overhead. */
+try {
+  const compression = require('compression');
+  app.use(compression({
+    threshold: 1024,
+    filter: (req, res) => {
+      if (req.headers['x-no-compression']) return false;
+      const ct = res.getHeader('Content-Type') || '';
+      if (String(ct).includes('text/event-stream')) return false;
+      return compression.filter(req, res);
+    },
+  }));
+} catch (_) { /* compression opcional */ }
+
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
@@ -603,6 +618,189 @@ app.get('/api/search', async (req, res) => {
     } catch (_) { /* tabla puede no existir aún */ }
   }
   res.json({ q, results: out });
+});
+
+/* ════════════════════════════════════════════════════════════════════════
+   WEBHOOKS — notificaciones salientes a Slack/Discord/Teams/genérico
+   Eventos disponibles (string en webhooks.eventos JSON):
+     'incidente.creado' | 'incidente.cerrado'
+     'cotizacion.creada' | 'cotizacion.aprobada'
+     'reporte.creado' | 'reporte.finalizado'
+     'stock.critico'
+   ════════════════════════════════════════════════════════════════════════ */
+
+const WEBHOOK_TYPES = new Set(['slack', 'discord', 'teams', 'generic']);
+const WEBHOOK_EVENTS = new Set([
+  'incidente.creado', 'incidente.cerrado',
+  'cotizacion.creada', 'cotizacion.aprobada',
+  'reporte.creado', 'reporte.finalizado',
+  'stock.critico',
+]);
+
+/** Construye el payload según el tipo (cada plataforma tiene su esquema). */
+function buildWebhookPayload(tipo, evento, data) {
+  const titulo = (data.titulo || evento).slice(0, 200);
+  const cuerpo = (data.cuerpo || JSON.stringify(data)).slice(0, 1500);
+  const color = data.color || '#2563eb';
+
+  if (tipo === 'slack') {
+    return { text: titulo, blocks: [
+      { type: 'header', text: { type: 'plain_text', text: titulo } },
+      { type: 'section', text: { type: 'mrkdwn', text: cuerpo } },
+      { type: 'context', elements: [{ type: 'mrkdwn', text: `_evento_: \`${evento}\`` }] },
+    ]};
+  }
+  if (tipo === 'discord') {
+    return { embeds: [{
+      title: titulo,
+      description: cuerpo,
+      color: parseInt(color.replace('#', ''), 16),
+      footer: { text: evento },
+      timestamp: new Date().toISOString(),
+    }]};
+  }
+  if (tipo === 'teams') {
+    return {
+      '@type': 'MessageCard',
+      '@context': 'https://schema.org/extensions',
+      themeColor: color.replace('#', ''),
+      summary: titulo,
+      title: titulo,
+      text: cuerpo,
+    };
+  }
+  return { evento, titulo, cuerpo, data, ts: new Date().toISOString() };
+}
+
+/** Envía evento a todos los webhooks activos suscritos a ese evento. Fire-and-forget. */
+async function dispatchWebhook(evento, data) {
+  if (!WEBHOOK_EVENTS.has(evento)) return;
+  let hooks = [];
+  try {
+    hooks = await db.getAll('SELECT id, url, tipo, eventos FROM webhooks WHERE activo = 1');
+  } catch (_) { return; }
+  for (const h of hooks) {
+    let evts = [];
+    try { evts = JSON.parse(h.eventos || '[]'); } catch {}
+    if (!Array.isArray(evts) || !evts.includes(evento)) continue;
+    const payload = buildWebhookPayload(h.tipo, evento, data);
+    fetch(h.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }).then(async (r) => {
+      try {
+        await db.runQuery('UPDATE webhooks SET ultimo_envio=?, ultimo_status=?, ultimo_error=NULL WHERE id=?',
+          [new Date().toISOString(), r.status, h.id]);
+      } catch (_) {}
+    }).catch(async (e) => {
+      try {
+        await db.runQuery('UPDATE webhooks SET ultimo_envio=?, ultimo_status=NULL, ultimo_error=? WHERE id=?',
+          [new Date().toISOString(), String(e.message).slice(0, 300), h.id]);
+      } catch (_) {}
+    });
+  }
+}
+// Exponer para que otros endpoints lo usen
+global.dispatchWebhook = dispatchWebhook;
+
+app.get('/api/webhooks', async (req, res) => {
+  try {
+    const rows = await db.getAll('SELECT id, nombre, url, tipo, eventos, activo, ultimo_envio, ultimo_status, ultimo_error, creado_en FROM webhooks ORDER BY id DESC');
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.post('/api/webhooks', async (req, res) => {
+  try {
+    const { nombre, url, tipo, eventos, activo } = req.body || {};
+    if (!nombre || !url) return res.status(400).json({ error: 'nombre y url requeridos' });
+    const t = WEBHOOK_TYPES.has(String(tipo)) ? String(tipo) : 'generic';
+    const evtsArr = Array.isArray(eventos) ? eventos.filter(e => WEBHOOK_EVENTS.has(e)) : [];
+    const r = await db.runQuery(
+      'INSERT INTO webhooks (nombre, url, tipo, eventos, activo) VALUES (?,?,?,?,?)',
+      [String(nombre).slice(0, 100), String(url).slice(0, 500), t, JSON.stringify(evtsArr), activo ? 1 : 0]
+    );
+    res.status(201).json({ id: r?.lastInsertRowid || null });
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.put('/api/webhooks/:id', async (req, res) => {
+  try {
+    const { nombre, url, tipo, eventos, activo } = req.body || {};
+    const t = WEBHOOK_TYPES.has(String(tipo)) ? String(tipo) : 'generic';
+    const evtsArr = Array.isArray(eventos) ? eventos.filter(e => WEBHOOK_EVENTS.has(e)) : [];
+    await db.runQuery(
+      'UPDATE webhooks SET nombre=?, url=?, tipo=?, eventos=?, activo=? WHERE id=?',
+      [String(nombre || '').slice(0, 100), String(url || '').slice(0, 500), t, JSON.stringify(evtsArr), activo ? 1 : 0, req.params.id]
+    );
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.delete('/api/webhooks/:id', async (req, res) => {
+  try {
+    await db.runQuery('DELETE FROM webhooks WHERE id=?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+/** Endpoint para probar un webhook con un evento de prueba. */
+app.post('/api/webhooks/:id/test', async (req, res) => {
+  try {
+    const h = await db.getOne('SELECT * FROM webhooks WHERE id=?', [req.params.id]);
+    if (!h) return res.status(404).json({ error: 'Webhook no existe' });
+    const payload = buildWebhookPayload(h.tipo, 'test', {
+      titulo: '🧪 Prueba de webhook',
+      cuerpo: `Webhook "${h.nombre}" funcionando correctamente desde Sistema Cotización.`,
+      color: '#10b981',
+    });
+    const r = await fetch(h.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    await db.runQuery('UPDATE webhooks SET ultimo_envio=?, ultimo_status=?, ultimo_error=? WHERE id=?',
+      [new Date().toISOString(), r.status, r.ok ? null : `HTTP ${r.status}`, h.id]);
+    res.json({ ok: r.ok, status: r.status });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+/* ════════════════════════════════════════════════════════════════════════
+   AUDIT LOG ENRIQUECIDO — helpers de diff y consulta por entidad
+   ════════════════════════════════════════════════════════════════════════ */
+
+/** Calcula diff entre objeto antes/después: sólo campos que cambiaron. */
+function objectDiff(before, after) {
+  const out = {};
+  const keys = new Set([...Object.keys(before || {}), ...Object.keys(after || {})]);
+  for (const k of keys) {
+    const a = before ? before[k] : undefined;
+    const b = after ? after[k] : undefined;
+    if (a === b) continue;
+    if (a == null && b == null) continue;
+    if (typeof a === 'number' && typeof b === 'number' && Math.abs(a - b) < 0.0001) continue;
+    if (typeof a === 'string' && typeof b === 'string' && a === b) continue;
+    out[k] = { from: a ?? null, to: b ?? null };
+  }
+  return Object.keys(out).length ? out : null;
+}
+global.objectDiff = objectDiff;
+
+/** Consulta el historial de cambios de una entidad específica. */
+app.get('/api/audit/:entity_type/:entity_id', async (req, res) => {
+  try {
+    const rows = await db.getAll(
+      `SELECT id, username, action, method, path, detail, diff_json, ip, creado_en
+       FROM audit_log
+       WHERE entity_type=? AND entity_id=?
+       ORDER BY id DESC LIMIT 100`,
+      [req.params.entity_type, req.params.entity_id]
+    );
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
 
 /* En Vercel los estáticos salen por CDN desde public/; express.static no aplica allí. */
