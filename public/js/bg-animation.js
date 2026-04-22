@@ -239,7 +239,7 @@
 
   /* ─── Bootstrap ─────────────────────────────────────────── */
   function boot() {
-    initSidebarParticles();
+    // initSidebarParticles() — desactivado: sidebar es light, partículas son para fondo oscuro
     initParallaxGradient();
     initTableSpotlight();
   }

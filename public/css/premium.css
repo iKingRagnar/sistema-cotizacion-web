@@ -60,37 +60,37 @@ body.md3-on .content {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   3. SIDEBAR — ULTRA-DARK PREMIUM
+   3. SIDEBAR — LIGHT PREMIUM (solo tema claro, sin oscuro)
    ───────────────────────────────────────────────────────────────────────── */
 body.md3-on .sidebar-nav {
-  background: var(--grad-sidebar) !important;
-  border-right: none !important;
-  box-shadow: 4px 0 32px rgba(0,0,0,.28), inset -1px 0 0 rgba(255,255,255,.04) !important;
-  flex: 0 0 clamp(256px,22vw,280px) !important;
-  width: clamp(256px,22vw,280px) !important;
+  background: #fff !important;
+  border-right: 1px solid #e2e8f0 !important;
+  box-shadow: 2px 0 16px rgba(15,23,42,.07) !important;
+  flex: 0 0 clamp(240px,22vw,270px) !important;
+  width: clamp(240px,22vw,270px) !important;
 }
 
 body.md3-on .sidebar-nav-toolbar {
-  background: rgba(0,0,0,.22) !important;
-  border-bottom: 1px solid rgba(255,255,255,.06) !important;
-  padding: 14px !important;
+  background: #f8faff !important;
+  border-bottom: 1px solid #e8f0fe !important;
+  padding: 12px 14px !important;
 }
 
 body.md3-on .sidebar-nav-title {
-  color: rgba(148,163,184,.75) !important;
+  color: #94a3b8 !important;
   font-size: .6rem !important;
   letter-spacing: .18em !important;
 }
 
 body.md3-on .btn-sidebar-rail-toggle {
-  background: rgba(255,255,255,.06) !important;
-  border-color: rgba(255,255,255,.1) !important;
-  color: rgba(203,213,225,.8) !important;
+  background: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+  color: #475569 !important;
 }
 body.md3-on .btn-sidebar-rail-toggle:hover {
-  background: rgba(255,255,255,.12) !important;
-  border-color: rgba(255,255,255,.18) !important;
-  color: #e2e8f0 !important;
+  background: #e8f0fe !important;
+  border-color: #bfdbfe !important;
+  color: #1e40af !important;
 }
 
 /* ── Nav items ─────────────────────────────────────────────────────────── */
@@ -99,11 +99,11 @@ body.md3-on .tabs.tabs--rail {
   gap: 2px !important;
   overflow-y: auto !important;
   scrollbar-width: thin !important;
-  scrollbar-color: rgba(255,255,255,.08) transparent !important;
+  scrollbar-color: #e2e8f0 transparent !important;
 }
 
 body.md3-on .tabs.tabs--rail .tab {
-  color: rgba(203,213,225,.68) !important;
+  color: #4b5563 !important;
   background: transparent !important;
   border: none !important;
   border-radius: 10px !important;
@@ -117,28 +117,28 @@ body.md3-on .tabs.tabs--rail .tab {
 }
 
 body.md3-on .tabs.tabs--rail .tab i {
-  color: rgba(148,163,184,.75) !important;
+  color: #6b7280 !important;
   transition: color .18s ease !important;
   width: 18px;
   text-align: center;
 }
 
 body.md3-on .tabs.tabs--rail .tab:hover {
-  background: rgba(255,255,255,.07) !important;
-  color: #e2e8f0 !important;
+  background: #eff6ff !important;
+  color: #1e40af !important;
 }
 body.md3-on .tabs.tabs--rail .tab:hover i {
-  color: #93c5fd !important;
+  color: #2563eb !important;
 }
 
 body.md3-on .tabs.tabs--rail .tab.active {
   background: var(--grad-active) !important;
   color: #fff !important;
   font-weight: 700 !important;
-  box-shadow: 0 4px 16px rgba(37,99,235,.30), inset 0 1px 0 rgba(255,255,255,.15) !important;
+  box-shadow: 0 4px 16px rgba(37,99,235,.24), inset 0 1px 0 rgba(255,255,255,.15) !important;
 }
 body.md3-on .tabs.tabs--rail .tab.active i {
-  color: rgba(255,255,255,.9) !important;
+  color: rgba(255,255,255,.92) !important;
 }
 body.md3-on .tabs.tabs--rail .tab.active::after {
   content: '';
@@ -146,9 +146,8 @@ body.md3-on .tabs.tabs--rail .tab.active::after {
   left: 0; top: 50%;
   transform: translateY(-50%);
   width: 3px; height: 56%;
-  background: #93c5fd;
+  background: #2563eb;
   border-radius: 0 3px 3px 0;
-  box-shadow: 0 0 8px #60a5fa;
 }
 
 /* ── Badge de notificaciones en nav ────────────────────────────────────── */
@@ -156,7 +155,7 @@ body.md3-on .tab-badge {
   background: #ef4444 !important;
   color: #fff !important;
   font-weight: 800 !important;
-  box-shadow: 0 2px 6px rgba(239,68,68,.5) !important;
+  box-shadow: 0 2px 6px rgba(239,68,68,.4) !important;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -258,6 +257,65 @@ body.md3-on .toolbar {
   align-items: center;
   border-radius: 0 !important;
   box-shadow: 0 1px 3px rgba(15,23,42,.04) !important;
+}
+
+/* Toolbar DENTRO de section-header (panel Cotizaciones y otros):
+   el fondo del section-header es un gradiente azul, por lo que la
+   toolbar necesita separarse visualmente con fondo blanco y radio. */
+body.md3-on .section-header > .toolbar,
+body.md3-on .section-header .toolbar {
+  background: rgba(255,255,255,.15) !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(8px) !important;
+  margin-left: auto !important;
+  padding: 8px 12px !important;
+  flex-shrink: 0;
+}
+
+/* Botones outline dentro de section-header → borde y texto blancos */
+body.md3-on .section-header .btn.outline,
+body.md3-on .section-header .btn.outlined {
+  border-color: rgba(255,255,255,.55) !important;
+  color: #fff !important;
+  background: rgba(255,255,255,.1) !important;
+}
+body.md3-on .section-header .btn.outline:hover,
+body.md3-on .section-header .btn.outlined:hover {
+  background: rgba(255,255,255,.22) !important;
+  border-color: rgba(255,255,255,.8) !important;
+}
+
+/* Inputs/selects dentro de section-header */
+body.md3-on .section-header input[type="search"],
+body.md3-on .section-header input[type="text"],
+body.md3-on .section-header select {
+  background: rgba(255,255,255,.18) !important;
+  border: 1px solid rgba(255,255,255,.3) !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+}
+body.md3-on .section-header input::placeholder {
+  color: rgba(255,255,255,.55) !important;
+}
+body.md3-on .section-header input:focus,
+body.md3-on .section-header select:focus {
+  background: rgba(255,255,255,.28) !important;
+  border-color: rgba(255,255,255,.55) !important;
+  outline: none !important;
+}
+
+/* Checkbox labels dentro de section-header */
+body.md3-on .section-header .toolbar-checkbox,
+body.md3-on .section-header label {
+  color: rgba(255,255,255,.9) !important;
+}
+
+/* Dropdown de sucursales dentro de section-header */
+body.md3-on .section-header .toolbar-label,
+body.md3-on .section-header .toolbar-label * {
+  color: rgba(255,255,255,.9) !important;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -847,11 +905,12 @@ body.md3-on ::-webkit-scrollbar-thumb:hover {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   21. SIDEBAR DARK — scrollbar invisible
+   21. SIDEBAR — scrollbar light
    ───────────────────────────────────────────────────────────────────────── */
 body.md3-on .tabs.tabs--rail::-webkit-scrollbar { width: 3px; }
 body.md3-on .tabs.tabs--rail::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,.12);
+  background: #cbd5e1;
+  border-radius: 9999px;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -925,19 +984,17 @@ body.md3-on .pagination-wrap .btn[aria-current="page"] {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   26. DARK MODE — adapt premium tokens
+   26. DARK MODE — desactivado (solo diseño light)
    ───────────────────────────────────────────────────────────────────────── */
-body.md3-on.md3-dark .table-wrap,
-body.md3-on.md3-dark .md-table-wrap {
-  box-shadow: 0 4px 24px rgba(0,0,0,.4), 0 1px 4px rgba(0,0,0,.3) !important;
-}
-body.md3-on.md3-dark table.data-table tbody tr:nth-child(odd) { background: #1e293b !important; }
-body.md3-on.md3-dark table.data-table tbody tr:nth-child(even) { background: #162032 !important; }
-body.md3-on.md3-dark table.data-table tbody tr:hover { background: #1e3a5f !important; }
-body.md3-on.md3-dark table.data-table tbody td { color: #e2e8f0 !important; border-bottom-color: rgba(255,255,255,.05) !important; }
-body.md3-on.md3-dark .card { background: #1e293b !important; border-color: rgba(255,255,255,.07) !important; }
-body.md3-on.md3-dark .toolbar { background: #1a263d !important; border-bottom-color: rgba(255,255,255,.06) !important; }
-body.md3-on.md3-dark .hint { background: rgba(37,99,235,.12) !important; color: #93c5fd !important; }
+/* El sistema usa exclusivamente tema claro. Si md3-dark llega a aplicarse
+   lo neutralizamos para que no modifique colores de texto/fondo. */
+body.md3-on.md3-dark table.data-table tbody tr:nth-child(odd)  { background: #fff !important; }
+body.md3-on.md3-dark table.data-table tbody tr:nth-child(even) { background: #f8faff !important; }
+body.md3-on.md3-dark table.data-table tbody td                 { color: #1e293b !important; }
+body.md3-on.md3-dark .card                                     { background: #fff !important; }
+body.md3-on.md3-dark .toolbar                                  { background: #fff !important; }
+body.md3-on.md3-dark .hint                                     { background: #eff6ff !important; color: #1e40af !important; }
+body.md3-on.md3-dark .sidebar-nav                              { background: #fff !important; }
 
 /* ─────────────────────────────────────────────────────────────────────────
    27. REDUCED MOTION
@@ -1022,28 +1079,16 @@ body.md3-on .stock-alert-bar * {
   color: #fef2f2 !important;
 }
 
-/* Sidebar — mejorar legibilidad de items inactivos */
-body.md3-on .tabs.tabs--rail .tab {
-  color: rgba(226,232,240,.78) !important;
-}
-body.md3-on .tabs.tabs--rail .tab i {
-  color: rgba(186,200,218,.82) !important;
-}
-body.md3-on .tabs.tabs--rail .tab:hover {
-  color: #f1f5f9 !important;
-}
-body.md3-on .tabs.tabs--rail .tab:hover i {
-  color: #bfdbfe !important;
-}
+/* Sidebar — nav items (light background, dark text ya definidos en sección 3) */
 
 /* Sidebar nav title label */
 body.md3-on .sidebar-nav-title {
-  color: rgba(186,200,218,.72) !important;
+  color: #94a3b8 !important;
 }
 
 /* Botones en sidebar */
 body.md3-on .btn-sidebar-rail-toggle {
-  color: rgba(226,232,240,.88) !important;
+  color: #475569 !important;
 }
 
 /* Body text en superficie clara — nunca invisible */
