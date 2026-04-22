@@ -3919,7 +3919,7 @@
       const data = await fetchJson(`${API}/maquinas`);
       maquinasCache = data;
       applyMaquinasFiltersAndRender();
-    } catch (e) { renderMaquinas([]); console.error(e); }
+    } catch (e) { renderMaquinas([]); showToast(parseApiError(e) || 'No se pudo cargar el catálogo de máquinas.', 'error'); }
     finally { hideLoading(); }
   }
 
@@ -10953,7 +10953,7 @@
       const data = await fetchJson(API + '/ventas');
       ventasCache = Array.isArray(data) ? data : [];
       renderVentas(ventasCache);
-    } catch (e) { console.error(e); }
+    } catch (e) { showToast(parseApiError(e) || 'No se pudo cargar el historial de ventas.', 'error'); }
     finally {
       hideLoading();
       refreshDavidComisionesCotPanel();
@@ -11433,7 +11433,7 @@
       revisionMaquinasCache = Array.isArray(data) ? data : [];
       renderRevisionMaquinasCatalog();
       renderRevisionMaquinas(revisionMaquinasCache);
-    } catch (e) { console.error(e); }
+    } catch (e) { showToast(parseApiError(e) || 'No se pudo cargar las revisiones de máquinas.', 'error'); }
     finally {
       hideLoading();
       try {
@@ -11670,7 +11670,7 @@
         updateNota('#nota-bono-40k', 'bono_40k', v => Number(v).toLocaleString('es-MX'));
         updateNota('#nota-bono-dia', 'bono_dia', v => Number(v).toLocaleString('es-MX'));
       }
-    } catch (e) { console.error(e); }
+    } catch (e) { showToast(parseApiError(e) || 'No se pudo cargar las tarifas.', 'error'); }
   }
 
   const btnSaveTarifas = qs('#btn-save-tarifas');
@@ -11842,7 +11842,7 @@
       const data = await fetchJson(API + '/tecnicos');
       tecnicosCache = toArray(data);
       renderTecnicos(tecnicosCache);
-    } catch (e) { console.error(e); }
+    } catch (e) { showToast(parseApiError(e) || 'No se pudo cargar el personal.', 'error'); }
   }
 
   async function previewTecnico(t) {
