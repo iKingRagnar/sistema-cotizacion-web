@@ -1303,4 +1303,453 @@ body.theme-industrial .form-row {
   body.theme-industrial.appearance-light .login-form-panel { padding: 24px 20px !important; }
   body.theme-industrial.appearance-light .section-header { flex-direction: column !important; align-items: flex-start !important; }
   body.theme-industrial .toolbar { width: 100% !important; }
-  body.theme-industrial.appearance
+  body.theme-industrial.appearance-light .dashboard-grid { grid-template-columns: 1fr 1fr !important; }
+}
+
+@media (max-width: 480px) {
+  body.theme-industrial .header-inner { padding: 0 12px !important; }
+  body.theme-industrial.appearance-light .dashboard-grid { grid-template-columns: 1fr !important; }
+  body.theme-industrial.appearance-light .login-roles-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   22. DASHBOARD — OVERRIDE DARK THEME FOR LIGHT MODE (MD3 Premium)
+   All rules use body.theme-industrial.appearance-light + #panel-dashboards
+   to win over style.css's #panel-dashboards.panel-dashboard (specificity 1,1,0)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Panel background — kill dark navy */
+body.theme-industrial.appearance-light #panel-dashboards,
+body.theme-industrial.appearance-light #panel-dashboards.panel-dashboard {
+  background: #F8F9FA !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Dashboard title + subtitle */
+body.theme-industrial.appearance-light .dashboard-title {
+  color: #202124 !important;
+  text-shadow: none !important;
+  letter-spacing: -0.01em !important;
+  font-weight: 600 !important;
+}
+body.theme-industrial.appearance-light .dashboard-title i { color: #1A73E8 !important; }
+body.theme-industrial.appearance-light .dashboard-subtitle { color: #5F6368 !important; }
+body.theme-industrial.appearance-light .dashboard-subtitle strong { color: #1A73E8 !important; font-weight: 600 !important; }
+
+/* ── Score tiles (executive KPI) ── */
+body.theme-industrial.appearance-light .dashboard-score-tile {
+  background: #FFFFFF !important;
+  border: 1px solid #DADCE0 !important;
+  box-shadow: 0 1px 3px rgba(60,64,67,.12), 0 1px 2px rgba(60,64,67,.08) !important;
+  animation: none !important;
+}
+body.theme-industrial.appearance-light .dashboard-score-tile:hover {
+  box-shadow: 0 4px 12px rgba(60,64,67,.18), 0 2px 4px rgba(60,64,67,.10) !important;
+  border-color: #1A73E8 !important;
+  transform: translateY(-2px) !important;
+}
+body.theme-industrial.appearance-light .dashboard-score-eyebrow {
+  color: #80868B !important;
+  font-size: 0.6875rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.10em !important;
+}
+body.theme-industrial.appearance-light .dashboard-score-label { color: #5F6368 !important; }
+body.theme-industrial.appearance-light .dashboard-score-value {
+  color: #202124 !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+}
+body.theme-industrial.appearance-light .dashboard-score-meta { color: #80868B !important; }
+body.theme-industrial.appearance-light .dashboard-score-meta i { color: #1A73E8 !important; opacity: 1 !important; }
+
+/* Score tile left-bar accent colors (keep vivid) */
+body.theme-industrial.appearance-light .dashboard-score-tile--revenue::before {
+  background: linear-gradient(180deg, #34A853 0%, #137333 100%) !important;
+}
+body.theme-industrial.appearance-light .dashboard-score-tile--pipeline::before {
+  background: linear-gradient(180deg, #1A73E8 0%, #1557B0 100%) !important;
+}
+body.theme-industrial.appearance-light .dashboard-score-tile--risk::before {
+  background: linear-gradient(180deg, #E37400 0%, #B06000 100%) !important;
+}
+body.theme-industrial.appearance-light .dashboard-score-tile--ops::before {
+  background: linear-gradient(180deg, #9334E6 0%, #6E28D9 100%) !important;
+}
+
+/* ── KPI strip ── */
+body.theme-industrial.appearance-light .dashboard-kpi-strip {
+  background: #FFFFFF !important;
+  border: 1px solid #DADCE0 !important;
+  box-shadow: 0 1px 2px rgba(60,64,67,.08) !important;
+  border-radius: 10px !important;
+}
+body.theme-industrial.appearance-light .dashboard-kpi-item { color: #5F6368 !important; }
+body.theme-industrial.appearance-light .dashboard-kpi-item i { color: #1A73E8 !important; }
+body.theme-industrial.appearance-light .dashboard-kpi-item strong { color: #202124 !important; }
+body.theme-industrial.appearance-light .dashboard-kpi-item[data-crossfilter-entity]:hover {
+  background: rgba(26,115,232,.06) !important;
+  border-radius: 6px !important;
+}
+
+/* ── Module summary cards ── */
+body.theme-industrial.appearance-light .dashboard-card {
+  background: #FFFFFF !important;
+  border: 1px solid #DADCE0 !important;
+  box-shadow: 0 1px 3px rgba(60,64,67,.12), 0 1px 2px rgba(60,64,67,.08) !important;
+  animation: none !important;
+}
+body.theme-industrial.appearance-light .dashboard-card:hover {
+  border-color: #1A73E8 !important;
+  box-shadow: 0 4px 12px rgba(26,115,232,.14), 0 2px 4px rgba(60,64,67,.08) !important;
+  transform: translateY(-2px) !important;
+}
+body.theme-industrial.appearance-light .dashboard-card-header {
+  border-bottom: 1px solid #F1F3F4 !important;
+}
+body.theme-industrial.appearance-light .dashboard-card-title {
+  color: #202124 !important;
+  font-weight: 600 !important;
+}
+body.theme-industrial.appearance-light .dashboard-card-subtitle {
+  color: #80868B !important;
+  font-size: 0.6875rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+body.theme-industrial.appearance-light .dashboard-metric dt { color: #5F6368 !important; }
+body.theme-industrial.appearance-light .dashboard-metric dd,
+body.theme-industrial.appearance-light .dash-value-neutral { color: #202124 !important; }
+body.theme-industrial.appearance-light .dash-value-positive { color: #137333 !important; }
+body.theme-industrial.appearance-light .dash-value-alert { color: #B06000 !important; }
+body.theme-industrial.appearance-light .dashboard-card-action {
+  color: #1A73E8 !important;
+  font-weight: 600 !important;
+}
+body.theme-industrial.appearance-light .dashboard-card-action:hover {
+  color: #1557B0 !important;
+}
+body.theme-industrial.appearance-light .dashboard-card-progress {
+  border-top: 1px solid #F1F3F4 !important;
+}
+body.theme-industrial.appearance-light .dashboard-progress-label { color: #80868B !important; }
+
+/* ── Advanced section (comparativo + pronósticos) ── */
+body.theme-industrial.appearance-light .dashboard-advanced {
+  border-top: 1px solid #DADCE0 !important;
+  margin-top: 20px !important;
+  padding-top: 20px !important;
+}
+body.theme-industrial.appearance-light .dashboard-section-title {
+  color: #202124 !important;
+  font-weight: 600 !important;
+}
+body.theme-industrial.appearance-light .dashboard-section-title i {
+  color: #1A73E8 !important;
+  opacity: 1 !important;
+}
+body.theme-industrial.appearance-light .dashboard-hint { color: #5F6368 !important; }
+body.theme-industrial.appearance-light .dashboard-forecast-legend {
+  background: #E8F0FE !important;
+  border-left-color: #1A73E8 !important;
+  color: #1967D2 !important;
+  border-radius: 6px !important;
+}
+
+/* Stat cards (comparativo vs período anterior) */
+body.theme-industrial.appearance-light .dashboard-stat-card {
+  background: #FFFFFF !important;
+  border: 1px solid #DADCE0 !important;
+  box-shadow: 0 1px 3px rgba(60,64,67,.10) !important;
+  border-radius: 12px !important;
+}
+body.theme-industrial.appearance-light .dashboard-stat-card h4,
+body.theme-industrial.appearance-light .dashboard-stat-card-title-cf {
+  color: #5F6368 !important;
+  font-weight: 600 !important;
+}
+body.theme-industrial.appearance-light .dashboard-stat-card .stat-row {
+  border-bottom-color: #F1F3F4 !important;
+  color: #202124 !important;
+}
+body.theme-industrial.appearance-light .dashboard-stat-card .stat-row.stat-row-crossfilter:hover {
+  background: #F8F9FA !important;
+  border-radius: 4px !important;
+}
+body.theme-industrial.appearance-light .dashboard-stat-card .stat-label { color: #5F6368 !important; }
+body.theme-industrial.appearance-light .dashboard-stat-card .stat-value { color: #202124 !important; }
+body.theme-industrial.appearance-light .dashboard-stat-card .stat-diff.positive { color: #137333 !important; }
+body.theme-industrial.appearance-light .dashboard-stat-card .stat-diff.negative { color: #C5221F !important; }
+body.theme-industrial.appearance-light .dashboard-stat-card .stat-diff.neutral { color: #80868B !important; }
+
+/* Forecast cards (pronósticos) */
+body.theme-industrial.appearance-light .dashboard-forecast-card {
+  background: #E8F0FE !important;
+  border: 1px solid #D3E3FD !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+body.theme-industrial.appearance-light .dashboard-forecast-card h4 {
+  color: #1967D2 !important;
+  font-weight: 600 !important;
+}
+body.theme-industrial.appearance-light .dashboard-forecast-card .stat-label { color: #1967D2 !important; }
+body.theme-industrial.appearance-light .dashboard-forecast-card .stat-value { color: #202124 !important; }
+body.theme-industrial.appearance-light .dashboard-forecast-card .stat-row {
+  border-bottom: 1px solid rgba(26,115,232,.12) !important;
+}
+
+/* Charts section */
+body.theme-industrial.appearance-light .dashboard-charts {
+  border-top: 1px solid #DADCE0 !important;
+  margin-top: 20px !important;
+  padding-top: 20px !important;
+}
+body.theme-industrial.appearance-light .dashboard-chart-wrap {
+  background: #F8F9FA !important;
+  border: 1px solid #DADCE0 !important;
+  border-radius: 12px !important;
+}
+body.theme-industrial.appearance-light .dashboard-chart-caption { color: #5F6368 !important; }
+
+/* Dashboard error */
+body.theme-industrial.appearance-light .dashboard-error {
+  background: #FCE8E6 !important;
+  border-color: #F5C6C4 !important;
+  color: #C5221F !important;
+  border-radius: 12px !important;
+}
+
+/* Crossfilter dimming — light version */
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-surface.dashboard-crossfilter-entity-active .dashboard-card:not(.is-crossfilter-match),
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-surface.dashboard-crossfilter-entity-active .dashboard-score-tile:not(.is-crossfilter-match),
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-surface.dashboard-crossfilter-entity-active .dashboard-kpi-item:not(.is-crossfilter-match) {
+  opacity: 0.35 !important;
+}
+body.theme-industrial.appearance-light #panel-dashboards .dashboard-surface.dashboard-crossfilter-period-active .dashboard-stat-card:not(.is-crossfilter-match) {
+  opacity: 0.35 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   23. ALL PANELS — ENSURE LIGHT BACKGROUNDS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Reset dark background from any panel */
+body.theme-industrial.appearance-light .panel {
+  background: transparent !important;
+  color: #202124 !important;
+}
+body.theme-industrial.appearance-light .panel.active {
+  background: transparent !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   24. TOASTS / SNACKBARS
+   ═══════════════════════════════════════════════════════════════════════════ */
+body.theme-industrial .toast-container {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  z-index: 9000 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  pointer-events: none !important;
+}
+body.theme-industrial.appearance-light .toast {
+  background: #202124 !important;
+  color: #FFFFFF !important;
+  border-radius: 8px !important;
+  padding: 12px 16px !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  box-shadow: 0 6px 10px rgba(60,64,67,.28), 0 2px 4px rgba(60,64,67,.18) !important;
+  pointer-events: all !important;
+  max-width: 340px !important;
+}
+body.theme-industrial.appearance-light .toast.success { background: #137333 !important; }
+body.theme-industrial.appearance-light .toast.error   { background: #C5221F !important; }
+body.theme-industrial.appearance-light .toast.warning { background: #B06000 !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   25. MODALS / DIALOGS
+   ═══════════════════════════════════════════════════════════════════════════ */
+body.theme-industrial.appearance-light .modal-backdrop,
+body.theme-industrial.appearance-light .modal-overlay {
+  background: rgba(0,0,0,.50) !important;
+  backdrop-filter: blur(2px) !important;
+}
+body.theme-industrial.appearance-light .modal,
+body.theme-industrial.appearance-light .dialog-card,
+body.theme-industrial.appearance-light .modal-card {
+  background: #FFFFFF !important;
+  border: 1px solid #DADCE0 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 24px 38px rgba(60,64,67,.24), 0 9px 12px rgba(60,64,67,.18) !important;
+  color: #202124 !important;
+}
+body.theme-industrial.appearance-light .modal-title,
+body.theme-industrial.appearance-light .dialog-title {
+  color: #202124 !important;
+  font-weight: 600 !important;
+}
+body.theme-industrial.appearance-light .modal-close {
+  color: #5F6368 !important;
+  background: none !important;
+  border: none !important;
+  cursor: pointer !important;
+}
+body.theme-industrial.appearance-light .modal-close:hover {
+  background: #F1F3F4 !important;
+  border-radius: 9999px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   26. MISC UI FIXES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* AI widget — hide or make subtle in light mode */
+body.theme-industrial.appearance-light .ai-widget-wrap {
+  z-index: 50 !important;
+}
+
+/* Sidebar rail toggle active state */
+body.theme-industrial.appearance-light #btn-sidebar-rail-toggle[aria-expanded="false"] {
+  background: #E8F0FE !important;
+  border-color: #1A73E8 !important;
+  color: #1A73E8 !important;
+}
+
+/* Section header icon color for each panel */
+body.theme-industrial.appearance-light #panel-clientes .section-header h2 i { background: #1A73E8 !important; }
+body.theme-industrial.appearance-light #panel-refacciones .section-header h2 i { background: #0D9488 !important; }
+body.theme-industrial.appearance-light #panel-maquinas .section-header h2 i { background: #3B82F6 !important; }
+body.theme-industrial.appearance-light #panel-cotizaciones .section-header h2 i { background: #059669 !important; }
+body.theme-industrial.appearance-light #panel-bitacoras .section-header h2 i { background: #7C3AED !important; }
+body.theme-industrial.appearance-light #panel-almacen .section-header h2 i { background: #D97706 !important; }
+body.theme-industrial.appearance-light #panel-reportes .section-header h2 i { background: #DC2626 !important; }
+body.theme-industrial.appearance-light #panel-garantias .section-header h2 i { background: #0891B2 !important; }
+
+/* Scrollbar in sidebar */
+body.theme-industrial.appearance-light .sidebar-nav::-webkit-scrollbar-track { background: #FFFFFF !important; }
+body.theme-industrial.appearance-light .sidebar-nav::-webkit-scrollbar-thumb { background: #DADCE0 !important; }
+
+/* Ensure app-main doesn't have dark background from old CSS */
+body.theme-industrial.appearance-light .app-main { background: #F8F9FA !important; }
+body.theme-industrial.appearance-light .content { background: transparent !important; }
+
+/* checkbox styling */
+body.theme-industrial.appearance-light input[type="checkbox"] {
+  accent-color: #1A73E8 !important;
+  width: 16px !important;
+  height: 16px !important;
+  cursor: pointer !important;
+}
+
+/* toolbar-checkbox */
+body.theme-industrial.appearance-light .toolbar-checkbox {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 0.875rem !important;
+  color: #3C4043 !important;
+  cursor: pointer !important;
+}
+
+/* Table action buttons */
+body.theme-industrial.appearance-light .btn-action {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 8px !important;
+  border: 1px solid transparent !important;
+  background: none !important;
+  cursor: pointer !important;
+  font-size: 0.8125rem !important;
+  transition: background 120ms, border-color 120ms !important;
+}
+body.theme-industrial.appearance-light .btn-action.edit { color: #1A73E8 !important; }
+body.theme-industrial.appearance-light .btn-action.edit:hover {
+  background: #E8F0FE !important;
+  border-color: #D3E3FD !important;
+}
+body.theme-industrial.appearance-light .btn-action.delete { color: #D93025 !important; }
+body.theme-industrial.appearance-light .btn-action.delete:hover {
+  background: #FCE8E6 !important;
+  border-color: #F5C6C4 !important;
+}
+body.theme-industrial.appearance-light .btn-action.view { color: #059669 !important; }
+body.theme-industrial.appearance-light .btn-action.view:hover {
+  background: #E6F4EA !important;
+  border-color: #C9EBD3 !important;
+}
+
+/* Tag / status chips */
+body.theme-industrial.appearance-light .status-chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 2px 10px !important;
+  border-radius: 9999px !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+}
+body.theme-industrial.appearance-light .status-chip.success {
+  background: #E6F4EA !important;
+  color: #137333 !important;
+}
+body.theme-industrial.appearance-light .status-chip.warning {
+  background: #FEF7E0 !important;
+  color: #B06000 !important;
+}
+body.theme-industrial.appearance-light .status-chip.error {
+  background: #FCE8E6 !important;
+  color: #C5221F !important;
+}
+body.theme-industrial.appearance-light .status-chip.info {
+  background: #E8F0FE !important;
+  color: #1967D2 !important;
+}
+body.theme-industrial.appearance-light .status-chip.neutral {
+  background: #F1F3F4 !important;
+  color: #5F6368 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   27. DARK MODE — Keep dark theme working for non-light users
+   ═══════════════════════════════════════════════════════════════════════════ */
+body.theme-industrial:not(.appearance-light) .sidebar-nav {
+  background: #1F2937 !important;
+  border-right: 1px solid rgba(255,255,255,.08) !important;
+}
+body.theme-industrial:not(.appearance-light) .tab {
+  color: #94A3B8 !important;
+}
+body.theme-industrial:not(.appearance-light) .tab:hover {
+  background: rgba(255,255,255,.08) !important;
+  color: #E2E8F0 !important;
+}
+body.theme-industrial:not(.appearance-light) .tab.active {
+  background: rgba(26,115,232,.20) !important;
+  color: #93C5FD !important;
+}
+body.theme-industrial:not(.appearance-light) .header {
+  background: #111827 !important;
+  border-bottom: 1px solid rgba(255,255,255,.08) !important;
+}
+body.theme-industrial:not(.appearance-light) .header-brand-service { color: #E2E8F0 !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GLOBAL HIDDEN OVERRIDE — must be LAST in file
+   Wins ALL specificity battles via cascade position.
+   ═══════════════════════════════════════════════════════════════════════════ */
+body.theme-industrial .hidden,
+body.theme-industrial.appearance-light .hidden,
+body.theme-industrial:not(.appearance-light) .hidden {
+  display: none !important;
+}

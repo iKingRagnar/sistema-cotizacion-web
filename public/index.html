@@ -1469,4 +1469,16 @@
 
   <footer class="app-footer" role="contentinfo">
     <p>Sistema de Cotización y Gestión · <span class="footer-version">v4</span> · Uso profesional · Cotizaciones, incidentes y bitácora en un solo lugar
-      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ct
+      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 65 · JS 124</strong></span></p>
+    <p class="footer-tip"><kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> atajos de sección · <kbd>Esc</kbd> cierra modales</p>
+  </footer>
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+  <div id="global-loading" class="global-loading hidden" aria-hidden="true">
+    <div class="loading-spinner"></div>
+    <span class="loading-text">Cargando…</span>
+  </div>
+  <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
+  <script src="js/config.js?v=2"></script>
+  <script src="js/app.js?v=142-restore-truncated-files" defer></script>
+</body>
+</html>
