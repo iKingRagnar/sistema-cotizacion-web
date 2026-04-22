@@ -1234,58 +1234,77 @@
   }
 
   /* ═══════════════════════════════════════════════════════════
-     15. ARIA AUTO-LABELS — botones de acción de tabla sin label
+     15. ARIA AUTO-LABELS + COLOR CLASS por icono detectado
+     Mapea icono → label en español + clase prem-action-X que pinta
+     el botón con el color semántico (view azul, edit teal, delete rojo)
      ═══════════════════════════════════════════════════════════ */
   function initAriaLabels() {
-    const ICON_LABELS = {
-      'fa-edit':       'Editar',
-      'fa-pen':        'Editar',
-      'fa-pencil':     'Editar',
-      'fa-trash':      'Eliminar',
-      'fa-trash-alt':  'Eliminar',
-      'fa-times':      'Cerrar',
-      'fa-eye':        'Ver detalles',
-      'fa-eye-slash':  'Ocultar',
-      'fa-print':      'Imprimir',
-      'fa-download':   'Descargar',
-      'fa-upload':     'Subir',
-      'fa-copy':       'Copiar',
-      'fa-clone':      'Duplicar',
-      'fa-envelope':   'Enviar correo',
-      'fa-file-pdf':   'Descargar PDF',
-      'fa-file-csv':   'Exportar CSV',
-      'fa-file-excel': 'Exportar Excel',
-      'fa-plus':       'Agregar',
-      'fa-check':      'Confirmar',
-      'fa-sync':       'Actualizar',
-      'fa-sync-alt':   'Actualizar',
-      'fa-undo':       'Deshacer',
-      'fa-redo':       'Rehacer',
-      'fa-search':     'Buscar',
-      'fa-filter':     'Filtrar',
-      'fa-cog':        'Configurar',
-      'fa-link':       'Vincular',
-      'fa-unlink':     'Desvincular',
-    };
-    function label(btn) {
-      if (btn.getAttribute('aria-label') || (btn.textContent || '').trim().length > 1) return;
+    /* [iconClass, label, actionClass]  */
+    const ICON_MAP = [
+      ['fa-eye',          'Ver detalles',   'view'],
+      ['fa-eye-slash',    'Ocultar',         'view'],
+      ['fa-edit',         'Editar',          'edit'],
+      ['fa-pen',          'Editar',          'edit'],
+      ['fa-pen-to-square','Editar',          'edit'],
+      ['fa-pencil',       'Editar',          'edit'],
+      ['fa-pencil-alt',   'Editar',          'edit'],
+      ['fa-trash',        'Eliminar',        'delete'],
+      ['fa-trash-alt',    'Eliminar',        'delete'],
+      ['fa-trash-can',    'Eliminar',        'delete'],
+      ['fa-times',        'Cerrar',          'delete'],
+      ['fa-xmark',        'Cerrar',          'delete'],
+      ['fa-ban',          'Cancelar',        'delete'],
+      ['fa-clone',        'Duplicar',        'duplicate'],
+      ['fa-copy',         'Copiar',          'duplicate'],
+      ['fa-files',        'Duplicar',        'duplicate'],
+      ['fa-print',        'Imprimir',        'print'],
+      ['fa-file-pdf',     'PDF',             'pdf'],
+      ['fa-file-csv',     'Exportar CSV',    'pdf'],
+      ['fa-file-excel',   'Exportar Excel',  'pdf'],
+      ['fa-download',     'Descargar',       'pdf'],
+      ['fa-envelope',     'Enviar correo',   'mail'],
+      ['fa-paper-plane',  'Enviar',          'mail'],
+      ['fa-check',        'Confirmar',       'check'],
+      ['fa-check-circle', 'Confirmar',       'check'],
+      ['fa-link',         'Vincular',        'link'],
+      ['fa-unlink',       'Desvincular',     'link'],
+      ['fa-share',        'Compartir',       'link'],
+      ['fa-history',      'Historial',       'view'],
+      ['fa-clock-rotate-left', 'Historial',  'view'],
+      ['fa-info-circle',  'Información',     'view'],
+      ['fa-cog',          'Configurar',      'edit'],
+      ['fa-gear',         'Configurar',      'edit'],
+      ['fa-plus',         'Agregar',         'check'],
+      ['fa-undo',         'Deshacer',        'duplicate'],
+      ['fa-sync',         'Actualizar',      'view'],
+      ['fa-sync-alt',     'Actualizar',      'view'],
+    ];
+    function processBtn(btn) {
+      if (btn._premLabeled) return;
       const i = btn.querySelector('i');
       if (!i) return;
-      for (const cls of i.classList) {
-        if (ICON_LABELS[cls]) {
-          btn.setAttribute('aria-label', ICON_LABELS[cls]);
-          if (!btn.getAttribute('data-prem-tooltip') && !btn.getAttribute('title')) {
-            btn.setAttribute('data-prem-tooltip', ICON_LABELS[cls]);
+      for (const [iconCls, label, action] of ICON_MAP) {
+        if (i.classList.contains(iconCls)) {
+          if (!btn.getAttribute('aria-label') && (btn.textContent || '').trim().length <= 1) {
+            btn.setAttribute('aria-label', label);
           }
+          if (!btn.getAttribute('data-prem-tooltip') && !btn.getAttribute('title')) {
+            btn.setAttribute('data-prem-tooltip', label);
+          }
+          // Aplicar clase de color semántico (sólo si está en una th-actions)
+          if (btn.closest('td.th-actions, .th-actions') && !btn.classList.contains('outline')) {
+            btn.classList.add('prem-action-' + action);
+          }
+          btn._premLabeled = true;
           return;
         }
       }
     }
     function scan(root) {
       (root.querySelectorAll
-        ? root.querySelectorAll('table.data-table td.th-actions button, table.data-table td.th-actions .btn')
+        ? root.querySelectorAll('table.data-table td.th-actions button, table.data-table td.th-actions .btn, .th-actions button, .th-actions .btn')
         : []
-      ).forEach(label);
+      ).forEach(processBtn);
     }
     scan(document);
     const mo = new MutationObserver(muts => {
