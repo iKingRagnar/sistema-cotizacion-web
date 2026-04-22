@@ -4875,6 +4875,7 @@ app.post('/api/reportes', async (req, res) => {
       }
     }
     res.status(201).json(r);
+    if (r) enviarCorreoReporte(r, 'nuevo').catch(() => {});
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
 
@@ -4914,6 +4915,9 @@ app.put('/api/reportes/:id', async (req, res) => {
       }
     }
     res.json(r || {});
+    if (r && isFinalizado && !Number(existing.finalizado)) {
+      enviarCorreoReporte(r, 'finalizado').catch(() => {});
+    }
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
 
@@ -5088,6 +5092,34 @@ async function enviarCorreoCotizacionCreada(cot, cliente) {
     accentColor: '#1A73E8',
   });
   const text = `Nueva cotización ${cot.folio} para ${clienteNombre}. Total: ${cot.total} ${cot.moneda || 'USD'}.`;
+  await safeSendMail(t, { from, to: admins.join(', '), subject, text, html });
+}
+
+async function enviarCorreoReporte(reporte, accion) {
+  const t = createMailTransport();
+  const from = (process.env.SMTP_FROM || process.env.SMTP_USER || '').trim();
+  if (!t || !from) return;
+  const admins = getAdminNotifyEmails();
+  if (!admins.length) return;
+  const esFinalizado = accion === 'finalizado';
+  const subject = esFinalizado
+    ? `✅ Reporte finalizado: ${reporte.folio} — ${reporte.tipo_reporte || 'servicio'}`
+    : `📋 Nuevo reporte: ${reporte.folio} — ${reporte.tipo_reporte || 'servicio'}`;
+  const html = buildEmailHtml({
+    title: esFinalizado ? 'Reporte de servicio finalizado' : 'Nuevo reporte de servicio',
+    subtitle: `Sistema — ${new Date().toLocaleDateString('es-MX')}`,
+    rows: [
+      { label: 'Folio', value: reporte.folio || '—' },
+      { label: 'Tipo', value: reporte.tipo_reporte || '—' },
+      { label: 'Cliente', value: reporte.cliente_nombre || reporte.razon_social || '—' },
+      { label: 'Máquina', value: reporte.numero_maquina || '—' },
+      { label: 'Técnico', value: reporte.tecnico || '—' },
+      { label: 'Estatus', value: reporte.estatus || '—', bold: true },
+      { label: 'Descripción', value: (reporte.descripcion || '—').slice(0, 200) },
+    ],
+    accentColor: esFinalizado ? '#16a34a' : '#0d9488',
+  });
+  const text = `${subject}\nCliente: ${reporte.cliente_nombre || reporte.razon_social || '—'}\nTécnico: ${reporte.tecnico || '—'}\nEstatus: ${reporte.estatus || '—'}`;
   await safeSendMail(t, { from, to: admins.join(', '), subject, text, html });
 }
 
