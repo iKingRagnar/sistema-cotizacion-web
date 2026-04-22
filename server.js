@@ -10,6 +10,7 @@ const fs = require('fs');
 const db = require('./db');
 const mammoth = require('mammoth');
 const pdfParse = require('pdf-parse');
+const PDFDocument = require('pdfkit');
 const XLSX = require('xlsx');
 
 const app = express();
@@ -5152,56 +5153,50 @@ function splitEmailList(raw) {
   return arr.map((x) => String(x || '').trim()).filter(Boolean);
 }
 
-function escapePdfText(str) {
-  return String(str || '')
-    .replace(/\\/g, '\\\\')
-    .replace(/\(/g, '\\(')
-    .replace(/\)/g, '\\)')
-    .replace(/\r/g, ' ')
-    .replace(/\n/g, ' ');
-}
-
 function createSimplePdfBuffer(title, headers, rows) {
-  const safeHeaders = (headers || []).map((h) => String(h || '').trim());
-  const lines = [];
-  lines.push(title || 'Reporte');
-  lines.push(`Fecha: ${new Date().toLocaleString('es-MX')}`);
-  lines.push('------------------------------------------------------------');
-  if (safeHeaders.length) lines.push(safeHeaders.join(' | '));
-  for (const r of rows || []) {
-    lines.push((Array.isArray(r) ? r : [r]).map((v) => String(v == null ? '' : v)).join(' | '));
-  }
-  const clipped = lines.slice(0, 260);
-  const content = [
-    'BT',
-    '/F1 10 Tf',
-    '36 806 Td',
-    '14 TL',
-    ...clipped.map((ln, idx) => `${idx === 0 ? '' : 'T* '}((${escapePdfText(ln).slice(0, 160)})) Tj`),
-    'ET',
-  ].join('\n');
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ margin: 36, size: 'LETTER' });
+    const chunks = [];
+    doc.on('data', (c) => chunks.push(c));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
 
-  const objects = [];
-  objects.push('1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj');
-  objects.push('2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj');
-  objects.push('3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj');
-  objects.push(`4 0 obj << /Length ${Buffer.byteLength(content, 'utf8')} >> stream\n${content}\nendstream endobj`);
-  objects.push('5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj');
+    const safeStr = (v) => String(v == null ? '' : v);
+    const cols = Math.max(1, (headers || []).length);
+    const colW = Math.floor((doc.page.width - 72) / cols);
 
-  let pdf = '%PDF-1.4\n';
-  const offsets = [0];
-  for (const obj of objects) {
-    offsets.push(Buffer.byteLength(pdf, 'utf8'));
-    pdf += obj + '\n';
-  }
-  const xrefPos = Buffer.byteLength(pdf, 'utf8');
-  pdf += `xref\n0 ${objects.length + 1}\n`;
-  pdf += '0000000000 65535 f \n';
-  for (let i = 1; i <= objects.length; i++) {
-    pdf += `${String(offsets[i]).padStart(10, '0')} 00000 n \n`;
-  }
-  pdf += `trailer << /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefPos}\n%%EOF`;
-  return Buffer.from(pdf, 'utf8');
+    doc.fontSize(16).font('Helvetica-Bold').text(title || 'Reporte', { align: 'center' });
+    doc.fontSize(9).font('Helvetica').text(`Fecha: ${new Date().toLocaleString('es-MX')}`, { align: 'center' });
+    doc.moveDown(0.5);
+
+    if (headers && headers.length) {
+      doc.font('Helvetica-Bold').fontSize(8);
+      let x = doc.page.margins.left;
+      const y = doc.y;
+      doc.rect(x, y, doc.page.width - 72, 14).fill('#e2e8f0');
+      doc.fillColor('#1e293b');
+      headers.forEach((h, i) => {
+        doc.text(safeStr(h).slice(0, 40), x + i * colW + 3, y + 3, { width: colW - 6, lineBreak: false });
+      });
+      doc.moveDown(1.1);
+    }
+
+    doc.font('Helvetica').fontSize(7).fillColor('#0f172a');
+    (rows || []).forEach((row, ri) => {
+      const cells = Array.isArray(row) ? row : [row];
+      const x = doc.page.margins.left;
+      const y = doc.y;
+      if (ri % 2 === 1) doc.rect(x, y, doc.page.width - 72, 12).fill('#f8fafc');
+      doc.fillColor('#0f172a');
+      cells.forEach((v, i) => {
+        doc.text(safeStr(v).slice(0, 60), x + i * colW + 3, y + 2, { width: colW - 6, lineBreak: false });
+      });
+      doc.moveDown(0.85);
+      if (doc.y > doc.page.height - 60) doc.addPage();
+    });
+
+    doc.end();
+  });
 }
 
 const REPORT_SCHEDULES_KEY = 'report_email_schedules_v1';
@@ -5332,7 +5327,7 @@ async function sendReportEmail(payload, actorUser) {
   if (attachPdf) {
     attachments.push({
       filename: `${moduleName}-reporte-${new Date().toISOString().slice(0, 10)}.pdf`,
-      content: createSimplePdfBuffer(title, tableHeader, rowsLimited),
+      content: await createSimplePdfBuffer(title, tableHeader, rowsLimited),
       contentType: 'application/pdf',
     });
   }
