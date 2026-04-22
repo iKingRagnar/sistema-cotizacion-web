@@ -434,6 +434,177 @@ app.get('/api/audit', async (req, res) => {
   }
 });
 
+/* ════════════════════════════════════════════════════════════════════════
+   ATTACHMENTS — archivos adjuntos genéricos (incidente/cotización/etc.)
+   Almacenamiento como base64 data URL en DB (sobrevive a reinicios FS).
+   ════════════════════════════════════════════════════════════════════════ */
+
+const ATTACH_ALLOWED_ENTITIES = new Set([
+  'incidente', 'cotizacion', 'cliente', 'maquina', 'reporte',
+  'garantia', 'mantenimiento', 'refaccion', 'bitacora'
+]);
+const ATTACH_MAX_BYTES = 8 * 1024 * 1024;
+
+function parseDataUrl(dataUrl) {
+  const m = String(dataUrl || '').match(/^data:([^;]+);base64,(.+)$/);
+  if (!m) return null;
+  const mime = m[1];
+  const b64  = m[2];
+  const sizeBytes = Math.floor((b64.length * 3) / 4);
+  return { mime, b64, sizeBytes };
+}
+
+app.post('/api/attachments', async (req, res) => {
+  try {
+    const { entity_type, entity_id, filename, data_url } = req.body || {};
+    if (!entity_type || !ATTACH_ALLOWED_ENTITIES.has(String(entity_type))) {
+      return res.status(400).json({ error: 'entity_type inválido' });
+    }
+    const eid = parseInt(entity_id, 10);
+    if (!Number.isFinite(eid) || eid <= 0) return res.status(400).json({ error: 'entity_id inválido' });
+    if (!filename || !filename.trim()) return res.status(400).json({ error: 'filename requerido' });
+    const parsed = parseDataUrl(data_url);
+    if (!parsed) return res.status(400).json({ error: 'data_url debe ser base64 (data:mime;base64,...)' });
+    if (parsed.sizeBytes > ATTACH_MAX_BYTES) {
+      return res.status(413).json({ error: `Archivo excede ${Math.floor(ATTACH_MAX_BYTES / 1024 / 1024)} MB` });
+    }
+    const r = await db.runQuery(
+      `INSERT INTO attachments (entity_type, entity_id, filename, mime_type, size_bytes, data_url, uploaded_by, uploaded_by_name)
+       VALUES (?,?,?,?,?,?,?,?)`,
+      [
+        String(entity_type), eid,
+        String(filename).slice(0, 200),
+        parsed.mime,
+        parsed.sizeBytes,
+        data_url,
+        req.authUser?.id || null,
+        req.authUser?.username || null,
+      ]
+    );
+    res.status(201).json({
+      id: r?.lastInsertRowid || r?.lastID || null,
+      filename, mime_type: parsed.mime, size_bytes: parsed.sizeBytes,
+    });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.get('/api/attachments', async (req, res) => {
+  try {
+    const entity_type = String(req.query.entity_type || '');
+    const entity_id   = parseInt(req.query.entity_id, 10);
+    if (!entity_type || !ATTACH_ALLOWED_ENTITIES.has(entity_type)) return res.status(400).json({ error: 'entity_type inválido' });
+    if (!Number.isFinite(entity_id) || entity_id <= 0) return res.status(400).json({ error: 'entity_id inválido' });
+    const rows = await db.getAll(
+      `SELECT id, entity_type, entity_id, filename, mime_type, size_bytes, uploaded_by, uploaded_by_name, created_at
+       FROM attachments WHERE entity_type=? AND entity_id=? ORDER BY id DESC`,
+      [entity_type, entity_id]
+    );
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.get('/api/attachments/:id/download', async (req, res) => {
+  try {
+    const row = await db.getOne('SELECT filename, mime_type, data_url FROM attachments WHERE id=?', [req.params.id]);
+    if (!row) return res.status(404).end();
+    const parsed = parseDataUrl(row.data_url);
+    if (!parsed) return res.status(500).end();
+    const buf = Buffer.from(parsed.b64, 'base64');
+    res.setHeader('Content-Type', row.mime_type || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(row.filename)}"`);
+    res.setHeader('Content-Length', buf.length);
+    res.end(buf);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+app.delete('/api/attachments/:id', async (req, res) => {
+  try {
+    await db.runQuery('DELETE FROM attachments WHERE id=?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+/* ════════════════════════════════════════════════════════════════════════
+   GLOBAL SEARCH — /api/search?q=…
+   Busca en clientes, refacciones, máquinas, cotizaciones, incidentes.
+   ════════════════════════════════════════════════════════════════════════ */
+
+app.get('/api/search', async (req, res) => {
+  const q = String(req.query.q || '').trim();
+  if (q.length < 2) return res.json({ q, results: [] });
+  const like = `%${q.replace(/[%_]/g, '\\$&')}%`;
+  const PER = 5;
+
+  const queries = [
+    {
+      type: 'cliente', tab: 'clientes', icon: 'fas fa-user',
+      sql: `SELECT id, codigo, nombre, rfc, ciudad FROM clientes
+            WHERE nombre LIKE ? OR codigo LIKE ? OR rfc LIKE ? OR email LIKE ? OR contacto LIKE ?
+            ORDER BY id DESC LIMIT ?`,
+      params: [like, like, like, like, like, PER],
+      map: (r) => ({ title: r.nombre, subtitle: [r.codigo, r.rfc, r.ciudad].filter(Boolean).join(' · ') })
+    },
+    {
+      type: 'refaccion', tab: 'refacciones', icon: 'fas fa-cog',
+      sql: `SELECT id, codigo, descripcion, categoria, stock FROM refacciones
+            WHERE codigo LIKE ? OR descripcion LIKE ? OR categoria LIKE ? OR subcategoria LIKE ?
+            ORDER BY id DESC LIMIT ?`,
+      params: [like, like, like, like, PER],
+      map: (r) => ({ title: `${r.codigo} · ${r.descripcion}`, subtitle: [r.categoria, `Stock: ${r.stock}`].filter(Boolean).join(' · ') })
+    },
+    {
+      type: 'maquina', tab: 'maquinas', icon: 'fas fa-cogs',
+      sql: `SELECT id, codigo, nombre, modelo, numero_serie FROM maquinas
+            WHERE nombre LIKE ? OR codigo LIKE ? OR modelo LIKE ? OR numero_serie LIKE ?
+            ORDER BY id DESC LIMIT ?`,
+      params: [like, like, like, like, PER],
+      map: (r) => ({ title: r.nombre, subtitle: [r.codigo, r.modelo, r.numero_serie].filter(Boolean).join(' · ') })
+    },
+    {
+      type: 'cotizacion', tab: 'cotizaciones', icon: 'fas fa-file-invoice-dollar',
+      sql: `SELECT c.id, c.folio, c.tipo, c.total, c.moneda, c.estado, cl.nombre AS cliente
+            FROM cotizaciones c LEFT JOIN clientes cl ON cl.id = c.cliente_id
+            WHERE c.folio LIKE ? OR c.notas LIKE ? OR cl.nombre LIKE ?
+            ORDER BY c.id DESC LIMIT ?`,
+      params: [like, like, like, PER],
+      map: (r) => ({ title: `${r.folio || '#' + r.id} · ${r.cliente || ''}`, subtitle: `${r.tipo} · ${r.total} ${r.moneda} · ${r.estado}` })
+    },
+    {
+      type: 'incidente', tab: 'incidentes', icon: 'fas fa-exclamation-triangle',
+      sql: `SELECT i.id, i.folio, i.descripcion, i.estatus, i.prioridad, cl.nombre AS cliente
+            FROM incidentes i LEFT JOIN clientes cl ON cl.id = i.cliente_id
+            WHERE i.folio LIKE ? OR i.descripcion LIKE ? OR cl.nombre LIKE ?
+            ORDER BY i.id DESC LIMIT ?`,
+      params: [like, like, like, PER],
+      map: (r) => ({ title: `${r.folio || '#' + r.id} · ${r.cliente || ''}`, subtitle: `${(r.descripcion || '').slice(0, 80)} · ${r.estatus} · ${r.prioridad || ''}` })
+    },
+  ];
+
+  const out = [];
+  for (const Q of queries) {
+    try {
+      const rows = await db.getAll(Q.sql, Q.params);
+      for (const r of (rows || [])) {
+        const m = Q.map(r);
+        out.push({
+          type: Q.type, tab: Q.tab, icon: Q.icon, id: r.id,
+          title: m.title || `#${r.id}`,
+          subtitle: m.subtitle || '',
+        });
+      }
+    } catch (_) { /* tabla puede no existir aún */ }
+  }
+  res.json({ q, results: out });
+});
+
 /* En Vercel los estáticos salen por CDN desde public/; express.static no aplica allí. */
 if (!process.env.VERCEL) {
   app.use(express.static(path.join(__dirname, 'public')));

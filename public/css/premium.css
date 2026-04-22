@@ -1996,3 +1996,174 @@ body.md3-on table.data-table thead th.prem-th-dropzone::before {
   border-radius: 2px;
   z-index: 10;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   43. ATTACHMENTS — widget de archivos adjuntos
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.prem-attach-zone {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px;
+  margin: 12px 0;
+}
+
+.prem-attach-head {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.prem-attach-head > i {
+  color: #2563eb; font-size: 1rem;
+}
+.prem-attach-head > span {
+  font-weight: 700; font-size: .88rem; color: #1e293b;
+  flex: 1;
+}
+.prem-attach-add {
+  background: linear-gradient(135deg, #2563eb, #0d9488);
+  color: #fff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: .76rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.prem-attach-add:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37,99,235,.32);
+}
+
+.prem-attach-drop {
+  border: 2px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 18px 16px;
+  text-align: center;
+  color: #64748b;
+  font-size: .82rem;
+  background: #f8faff;
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px;
+  transition: all .15s ease;
+  cursor: pointer;
+}
+.prem-attach-drop > i {
+  color: #2563eb; font-size: 1.4rem;
+}
+.prem-attach-drop.drag-over {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1e40af;
+}
+
+.prem-attach-list {
+  margin-top: 10px;
+  display: flex; flex-direction: column;
+  gap: 6px;
+}
+
+.prem-attach-loading,
+.prem-attach-empty {
+  text-align: center;
+  padding: 14px;
+  color: #94a3b8;
+  font-size: .82rem;
+  font-style: italic;
+}
+
+.prem-attach-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  background: #fff;
+  transition: all .12s ease;
+}
+.prem-attach-item:hover {
+  border-color: #bfdbfe;
+  background: #f8faff;
+  box-shadow: 0 2px 6px rgba(15,23,42,.04);
+}
+.prem-attach-item > i:first-child {
+  width: 38px; height: 38px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(37,99,235,.1), rgba(13,148,136,.08));
+  color: #2563eb;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.prem-attach-meta {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column;
+  gap: 2px;
+}
+.prem-attach-name {
+  color: #1e293b;
+  font-weight: 600;
+  font-size: .82rem;
+  text-decoration: none;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.prem-attach-name:hover { color: #2563eb; text-decoration: underline; }
+.prem-attach-info {
+  font-size: .7rem;
+  color: #94a3b8;
+}
+
+.prem-attach-del {
+  background: transparent;
+  border: 1px solid #fecaca;
+  color: #ef4444;
+  cursor: pointer;
+  width: 30px; height: 30px;
+  border-radius: 7px;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: all .12s ease;
+  flex-shrink: 0;
+}
+.prem-attach-del:hover {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   44. DASHBOARD WIDGET REORDER
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .prem-draggable-card {
+  cursor: grab;
+  transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+}
+body.md3-on .prem-draggable-card:active { cursor: grabbing; }
+
+body.md3-on .prem-card-dragging {
+  opacity: .42 !important;
+  transform: scale(.96) !important;
+}
+body.md3-on .prem-card-dropzone {
+  outline: 2px dashed #fbbf24 !important;
+  outline-offset: 2px;
+  background: rgba(251,191,36,.04) !important;
+}
+
+/* Hint visual de "drag me" en hover */
+body.md3-on .prem-draggable-card:not(.prem-card-dragging)::after {
+  content: '\\f0b2'; /* fa-arrows-alt */
+  font-family: 'Font Awesome 5 Free', 'Font Awesome 6 Free';
+  font-weight: 900;
+  position: absolute;
+  top: 8px; right: 8px;
+  color: #cbd5e1;
+  font-size: .7rem;
+  opacity: 0;
+  transition: opacity .15s ease;
+  pointer-events: none;
+}
+body.md3-on .prem-draggable-card:hover::after { opacity: 1; }

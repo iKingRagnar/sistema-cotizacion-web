@@ -56,12 +56,15 @@
       modal.classList.remove('open');
     }
 
-    function refresh() {
+    let searchAbort = null;
+    let searchDebounce = null;
+
+    async function refresh() {
       const q = input.value.toLowerCase().trim();
       const items = [];
       const seen = new Set();
 
-      // 1. Módulos (tabs del sidebar)
+      // 1. Módulos (tabs del sidebar) — siempre síncrono
       document.querySelectorAll('.tabs.tabs--rail .tab').forEach(tab => {
         if (tab.classList.contains('hidden')) return;
         const text = (tab.textContent || '').trim();
@@ -79,35 +82,54 @@
         }
       });
 
-      // 2. Registros de tablas visibles (si hay query ≥2 chars)
-      if (q && q.length >= 2) {
-        document.querySelectorAll('.panel.active table.data-table tbody tr').forEach((tr, idx) => {
-          if (idx > 80) return;
-          const text = (tr.textContent || '').toLowerCase();
-          if (text.includes(q)) {
-            const cells = tr.querySelectorAll('td');
-            if (!cells.length) return;
-            const first  = (cells[0]?.textContent || '').trim();
-            const second = (cells[1]?.textContent || '').trim();
-            const third  = (cells[2]?.textContent || '').trim();
-            const title = [first, second].filter(Boolean).join(' · ').slice(0, 100) || 'Registro';
-            items.push({
-              icon: 'fas fa-file-alt',
-              title,
-              subtitle: third ? third.slice(0, 60) : 'Registro en tabla',
-              action: () => {
-                tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                tr.classList.add('prem-cmdk-highlight');
-                setTimeout(() => tr.classList.remove('prem-cmdk-highlight'), 2400);
-              }
-            });
-          }
-        });
-      }
-
       currentResults = items.slice(0, 30);
       selectedIdx = 0;
       render();
+
+      // 2. Server-side search (debounced) — sólo si hay query ≥2 chars
+      if (!q || q.length < 2) return;
+
+      if (searchDebounce) clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(async () => {
+        if (searchAbort) searchAbort.abort();
+        searchAbort = new AbortController();
+        try {
+          const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, {
+            signal: searchAbort.signal,
+            credentials: 'same-origin',
+          });
+          if (!res.ok) return;
+          const data = await res.json();
+          if (input.value.toLowerCase().trim() !== q) return; // query cambió
+          for (const r of (data.results || [])) {
+            items.push({
+              icon: r.icon || 'fas fa-file-alt',
+              title: r.title,
+              subtitle: r.subtitle,
+              action: () => {
+                // Click en tab del módulo destino (si existe)
+                const tab = document.querySelector(`.tabs.tabs--rail .tab[data-tab="${r.tab}"]`);
+                if (tab) {
+                  tab.click();
+                  // Highlight registro en tabla destino
+                  setTimeout(() => {
+                    const row = document.querySelector(`#tabla-${r.tab} tbody tr[data-id="${r.id}"]`)
+                            || [...document.querySelectorAll(`#tabla-${r.tab} tbody tr td:first-child`)]
+                                .find(td => td.textContent.trim() === String(r.id))?.parentElement;
+                    if (row) {
+                      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      row.classList.add('prem-cmdk-highlight');
+                      setTimeout(() => row.classList.remove('prem-cmdk-highlight'), 2400);
+                    }
+                  }, 350);
+                }
+              }
+            });
+          }
+          currentResults = items.slice(0, 30);
+          render();
+        } catch (e) { /* abort or network */ }
+      }, 180);
     }
 
     function render() {
@@ -754,6 +776,258 @@
     mo.observe(document.body, { childList: true, subtree: true });
   }
 
+  /* ═══════════════════════════════════════════════════════════
+     9. ATTACHMENTS — UI genérico para subir/listar archivos.
+     Activación: agrega un div con data-prem-attach al modal:
+        <div data-prem-attach data-entity-type="incidente" data-entity-id="123"></div>
+     premium-ux.js detecta el div y monta el widget completo.
+     ═══════════════════════════════════════════════════════════ */
+  function initAttachments() {
+    function attach(zone) {
+      if (zone._attachInit) return;
+      const entityType = zone.dataset.entityType;
+      const entityId = parseInt(zone.dataset.entityId, 10);
+      if (!entityType || !Number.isFinite(entityId) || entityId <= 0) return;
+      zone._attachInit = true;
+
+      zone.classList.add('prem-attach-zone');
+      zone.innerHTML = `
+        <div class="prem-attach-head">
+          <i class="fas fa-paperclip"></i>
+          <span>Archivos adjuntos</span>
+          <button type="button" class="prem-attach-add" title="Agregar archivo">
+            <i class="fas fa-plus"></i> Subir
+          </button>
+        </div>
+        <div class="prem-attach-drop">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <span>Arrastra archivos aquí o usa <strong>Subir</strong> (máx 8 MB)</span>
+        </div>
+        <input type="file" class="prem-attach-input" multiple style="display:none">
+        <div class="prem-attach-list"></div>
+      `;
+      const fileInput = zone.querySelector('.prem-attach-input');
+      const list      = zone.querySelector('.prem-attach-list');
+      const drop      = zone.querySelector('.prem-attach-drop');
+
+      async function refresh() {
+        list.innerHTML = '<div class="prem-attach-loading">Cargando…</div>';
+        try {
+          const res = await fetch(`/api/attachments?entity_type=${encodeURIComponent(entityType)}&entity_id=${entityId}`, { credentials: 'same-origin' });
+          const data = await res.json();
+          if (!Array.isArray(data) || !data.length) {
+            list.innerHTML = '<div class="prem-attach-empty">Sin archivos adjuntos</div>';
+            return;
+          }
+          list.innerHTML = data.map(f => `
+            <div class="prem-attach-item" data-id="${f.id}">
+              <i class="fas ${iconFor(f.mime_type, f.filename)}"></i>
+              <div class="prem-attach-meta">
+                <a href="/api/attachments/${f.id}/download" target="_blank" rel="noopener" class="prem-attach-name">${escapeText(f.filename)}</a>
+                <span class="prem-attach-info">${formatBytes(f.size_bytes)} · ${escapeText(f.uploaded_by_name || 'Sistema')} · ${formatDate(f.created_at)}</span>
+              </div>
+              <button type="button" class="prem-attach-del" title="Eliminar"><i class="fas fa-trash"></i></button>
+            </div>
+          `).join('');
+
+          list.querySelectorAll('.prem-attach-del').forEach(b => b.addEventListener('click', async (e) => {
+            const id = e.currentTarget.closest('.prem-attach-item').dataset.id;
+            if (!confirm('¿Eliminar este archivo adjunto?')) return;
+            try {
+              await fetch(`/api/attachments/${id}`, { method: 'DELETE', credentials: 'same-origin' });
+              if (window.premToast) window.premToast('Archivo eliminado', { type: 'success' });
+              refresh();
+            } catch (err) {
+              if (window.premToast) window.premToast('Error al eliminar', { type: 'error' });
+            }
+          }));
+        } catch (e) {
+          list.innerHTML = '<div class="prem-attach-empty">Error al cargar adjuntos</div>';
+        }
+      }
+
+      async function uploadFile(file) {
+        if (file.size > 8 * 1024 * 1024) {
+          if (window.premToast) window.premToast(`"${file.name}" excede 8 MB`, { type: 'error' });
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = async () => {
+          try {
+            const res = await fetch('/api/attachments', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'same-origin',
+              body: JSON.stringify({
+                entity_type: entityType,
+                entity_id: entityId,
+                filename: file.name,
+                data_url: reader.result,
+              }),
+            });
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              throw new Error(err.error || 'Error al subir');
+            }
+            if (window.premToast) window.premToast(`"${file.name}" subido`, { type: 'success' });
+            refresh();
+          } catch (e) {
+            if (window.premToast) window.premToast(e.message || 'Error al subir', { type: 'error' });
+          }
+        };
+        reader.onerror = () => { if (window.premToast) window.premToast('Error al leer archivo', { type: 'error' }); };
+        reader.readAsDataURL(file);
+      }
+
+      zone.querySelector('.prem-attach-add').addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', () => {
+        for (const f of fileInput.files) uploadFile(f);
+        fileInput.value = '';
+      });
+
+      // Drag & drop
+      drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('drag-over'); });
+      drop.addEventListener('dragleave', () => drop.classList.remove('drag-over'));
+      drop.addEventListener('drop', (e) => {
+        e.preventDefault();
+        drop.classList.remove('drag-over');
+        for (const f of e.dataTransfer.files) uploadFile(f);
+      });
+
+      refresh();
+
+      function iconFor(mime, name) {
+        const m = (mime || '').toLowerCase();
+        const ext = (name || '').split('.').pop().toLowerCase();
+        if (m.startsWith('image/')) return 'fa-image';
+        if (m === 'application/pdf' || ext === 'pdf') return 'fa-file-pdf';
+        if (['xls', 'xlsx', 'csv'].includes(ext) || m.includes('spreadsheet')) return 'fa-file-excel';
+        if (['doc', 'docx'].includes(ext) || m.includes('word')) return 'fa-file-word';
+        if (['zip', 'rar', '7z'].includes(ext)) return 'fa-file-archive';
+        if (m.startsWith('video/')) return 'fa-file-video';
+        if (m.startsWith('audio/')) return 'fa-file-audio';
+        return 'fa-file';
+      }
+      function formatBytes(b) {
+        if (!b || b < 1024) return (b || 0) + ' B';
+        if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+        return (b / 1024 / 1024).toFixed(2) + ' MB';
+      }
+      function formatDate(s) {
+        if (!s) return '';
+        try { return new Date(s.replace(' ', 'T')).toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); }
+        catch { return s; }
+      }
+      function escapeText(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+    }
+
+    document.querySelectorAll('[data-prem-attach]').forEach(attach);
+    const mo = new MutationObserver(muts => {
+      for (const m of muts) for (const n of m.addedNodes) {
+        if (n.nodeType !== 1) continue;
+        if (n.matches?.('[data-prem-attach]')) attach(n);
+        n.querySelectorAll?.('[data-prem-attach]').forEach(attach);
+      }
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     10. DASHBOARD WIDGET REORDER — drag para reordenar cards
+     Persiste por título (textContent del .dashboard-card-title)
+     en localStorage.
+     ═══════════════════════════════════════════════════════════ */
+  function initDashboardReorder() {
+    const STORAGE_KEY = LS_PREFIX + 'dashboard-order';
+
+    function getKey(card) {
+      const t = card.querySelector('.dashboard-card-title');
+      return (t?.textContent || card.id || '').trim();
+    }
+    function readOrder() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+      catch { return []; }
+    }
+    function writeOrder(order) {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(order)); } catch {}
+    }
+
+    function applyOrder(grid) {
+      const order = readOrder();
+      if (!order.length) return;
+      const cards = [...grid.querySelectorAll('.dashboard-card')];
+      const byKey = new Map(cards.map(c => [getKey(c), c]));
+      // Para cada key en el orden guardado, mover la card al final del grid en orden
+      const moved = new Set();
+      for (const key of order) {
+        const c = byKey.get(key);
+        if (c) { grid.appendChild(c); moved.add(key); }
+      }
+      // Resto al final
+      for (const c of cards) {
+        if (!moved.has(getKey(c))) grid.appendChild(c);
+      }
+    }
+
+    function attach(grid) {
+      if (grid._reorderInit) return;
+      grid._reorderInit = true;
+
+      function setupCards() {
+        grid.querySelectorAll('.dashboard-card').forEach(card => {
+          if (card._dragInit) return;
+          card._dragInit = true;
+          card.draggable = true;
+          card.classList.add('prem-draggable-card');
+
+          card.addEventListener('dragstart', (e) => {
+            card.classList.add('prem-card-dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            try { e.dataTransfer.setData('text/plain', getKey(card)); } catch (_) {}
+          });
+          card.addEventListener('dragend', () => {
+            card.classList.remove('prem-card-dragging');
+            grid.querySelectorAll('.prem-card-dropzone').forEach(c => c.classList.remove('prem-card-dropzone'));
+            const order = [...grid.querySelectorAll('.dashboard-card')].map(getKey);
+            writeOrder(order);
+          });
+        });
+      }
+
+      grid.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const dragging = grid.querySelector('.prem-card-dragging');
+        if (!dragging) return;
+        const target = e.target.closest('.dashboard-card');
+        if (!target || target === dragging) return;
+        grid.querySelectorAll('.prem-card-dropzone').forEach(c => c.classList.remove('prem-card-dropzone'));
+        target.classList.add('prem-card-dropzone');
+        const rect = target.getBoundingClientRect();
+        const after = (e.clientY - rect.top) > rect.height / 2;
+        if (after) target.after(dragging); else target.before(dragging);
+      });
+
+      setupCards();
+      applyOrder(grid);
+
+      // Re-aplicar cuando se agreguen cards dinámicamente
+      const inner = new MutationObserver(() => { setupCards(); applyOrder(grid); });
+      inner.observe(grid, { childList: true });
+    }
+
+    function init() {
+      const grid = document.getElementById('dashboard-grid');
+      if (grid) attach(grid);
+    }
+    init();
+    // Si el grid se construye más tarde
+    const wait = new MutationObserver(() => {
+      const g = document.getElementById('dashboard-grid');
+      if (g && !g._reorderInit) attach(g);
+    });
+    wait.observe(document.body, { childList: true, subtree: true });
+  }
+
   /* ─── Bootstrap ─────────────────────────────────────────── */
   function boot() {
     initCommandK();
@@ -764,6 +1038,8 @@
     initToastHelper();
     initDashboardSparklines();
     initColumnReorder();
+    initAttachments();
+    initDashboardReorder();
   }
 
   if (document.readyState === 'loading') {

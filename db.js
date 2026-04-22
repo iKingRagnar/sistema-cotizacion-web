@@ -440,6 +440,22 @@ async function runMigrations() {
       eliminado_por_user_id INTEGER,
       eliminado_por_username TEXT
     )`,
+    /* Attachments genéricos: cualquier registro puede tener archivos adjuntos.
+       Almacenamiento como base64 data URL (consistente con constancia_url y
+       sobrevive a reinicios del servidor en plataformas con FS efímero). */
+    `CREATE TABLE IF NOT EXISTS attachments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      entity_type TEXT NOT NULL,
+      entity_id INTEGER NOT NULL,
+      filename TEXT NOT NULL,
+      mime_type TEXT,
+      size_bytes INTEGER DEFAULT 0,
+      data_url TEXT NOT NULL,
+      uploaded_by INTEGER,
+      uploaded_by_name TEXT,
+      created_at TEXT DEFAULT (datetime('now','localtime'))
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_attachments_entity ON attachments(entity_type, entity_id)`,
   ];
   for (const sql of migrations) {
     try {
