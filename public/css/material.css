@@ -959,6 +959,12 @@ body.theme-industrial.appearance-light .notifications-date {
 body.theme-industrial .notifications-list { overflow-y: auto !important; flex: 1 !important; }
 
 /* ─── 18. LOGIN ─────────────────────────────────────────────────────────── */
+/* CRITICAL: hide takes priority over display:flex when .hidden class is present */
+body.theme-industrial .login-overlay.hidden,
+body.theme-industrial.appearance-light .login-overlay.hidden {
+  display: none !important;
+}
+
 body.theme-industrial.appearance-light .login-overlay {
   position: fixed !important;
   inset: 0 !important;
@@ -1296,7 +1302,4 @@ body.theme-industrial .form-row {
 }
 
 @media (max-width: 480px) {
-  body.theme-industrial .header-inner { padding: 0 12px !important; }
-  body.theme-industrial.appearance-light .dashboard-grid { grid-template-columns: 1fr !important; }
-  body.theme-industrial.appearance-light .login-roles-grid { grid-template-columns: 1fr !important; }
-}
+  body.theme-industrial .header-inner { padding: 0 
