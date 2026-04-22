@@ -805,6 +805,11 @@ body.theme-industrial.appearance-light .dashboard-grid {
   margin-bottom: 20px !important;
 }
 
+/* CRITICAL: .hidden must override display:flex for loading spinner */
+body.theme-industrial .dashboard-loading.hidden {
+  display: none !important;
+}
+
 body.theme-industrial .dashboard-loading {
   display: flex !important;
   align-items: center !important;
@@ -1298,8 +1303,4 @@ body.theme-industrial .form-row {
   body.theme-industrial.appearance-light .login-form-panel { padding: 24px 20px !important; }
   body.theme-industrial.appearance-light .section-header { flex-direction: column !important; align-items: flex-start !important; }
   body.theme-industrial .toolbar { width: 100% !important; }
-  body.theme-industrial.appearance-light .dashboard-grid { grid-template-columns: 1fr 1fr !important; }
-}
-
-@media (max-width: 480px) {
-  body.theme-industrial .header-inner { padding: 0 
+  body.theme-industrial.appearance
