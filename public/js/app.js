@@ -10182,7 +10182,13 @@
     if (n == null || isNaN(n)) return '—';
     return '$' + Number(n).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
+  let _loadDashboardInFlight = false;
   async function loadDashboard() {
+    if (_loadDashboardInFlight) return;
+    _loadDashboardInFlight = true;
+    try { return await _loadDashboardInner(); } finally { _loadDashboardInFlight = false; }
+  }
+  async function _loadDashboardInner() {
     const grid = qs('#dashboard-grid');
     if (!grid) return;
     let loading = qs('#dashboard-loading');

@@ -2643,5 +2643,52 @@ body .dashboard-card:hover::before {
 }
 
 /* ============================================================================
- * FIN — premium-pro.css v6 (dashboard KPI strip premium)
+ * §24 — Action button icons: forzar color heredado (fix invisibilidad)
+ * Bug raíz: premium.css §"Botones gradiente" pone i { color: white }
+ * cuando el bg pasa a pastel (premium.css §7249+) los iconos quedan invisibles.
+ * Aquí re-anclamos al color del botón (dark teal/red/violet).
+ * ============================================================================ */
+body.md3-on table.data-table td.th-actions .prem-action-edit i,
+body table.data-table td.th-actions .prem-action-edit i,
+body.md3-on table.data-table td.th-actions .btn.success.prem-action-edit i,
+body table.data-table td.th-actions .btn.success.prem-action-edit i,
+body.md3-on .row-actions .prem-action-edit i,
+body .row-actions .prem-action-edit i {
+  color: #047857 !important;
+  opacity: 1 !important;
+}
+body.md3-on table.data-table td.th-actions .prem-action-delete i,
+body table.data-table td.th-actions .prem-action-delete i,
+body.md3-on table.data-table td.th-actions .btn.danger.prem-action-delete i,
+body table.data-table td.th-actions .btn.danger.prem-action-delete i,
+body.md3-on .row-actions .prem-action-delete i,
+body .row-actions .prem-action-delete i {
+  color: #b91c1c !important;
+  opacity: 1 !important;
+}
+body.md3-on table.data-table td.th-actions .prem-action-view i,
+body table.data-table td.th-actions .prem-action-view i,
+body.md3-on .row-actions .prem-action-view i,
+body .row-actions .prem-action-view i {
+  color: #1d4ed8 !important;
+  opacity: 1 !important;
+}
+body.md3-on table.data-table td.th-actions .prem-action-duplicate i,
+body table.data-table td.th-actions .prem-action-duplicate i,
+body.md3-on table.data-table td.th-actions .prem-action-print i,
+body table.data-table td.th-actions .prem-action-print i,
+body.md3-on .row-actions .prem-action-duplicate i,
+body .row-actions .prem-action-duplicate i {
+  color: #6d28d9 !important;
+  opacity: 1 !important;
+}
+/* Fallback: cualquier btn premium (action) hereda color del button */
+body.md3-on table.data-table td.th-actions .btn[class*="prem-action-"] i,
+body table.data-table td.th-actions .btn[class*="prem-action-"] i {
+  color: inherit !important;
+  opacity: 1 !important;
+}
+
+/* ============================================================================
+ * FIN — premium-pro.css v8 (action btn icons visibility fix)
  * ============================================================================ */
