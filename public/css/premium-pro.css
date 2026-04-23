@@ -1,0 +1,1255 @@
+/* ============================================================================
+ * premium-pro.css — Sistema Cotización Web · Premium Pro Edition v1
+ * ----------------------------------------------------------------------------
+ * Layer FINAL — carga después de premium.css. Convierte el sistema en algo que
+ * se ve y se siente como software de $1,000,000 MXN.
+ *
+ * Estructura:
+ *   §1  Design tokens (palette, espacios, sombras, easing, gradientes)
+ *   §2  Body baseline + tipografía premium
+ *   §3  Scrollbars personalizados
+ *   §4  Header premium (glassmorphism, brand, acciones)
+ *   §5  Sidebar premium (ancho, hover, secciones)
+ *   §6  Cards premium (sombra suave, hover, elevación)
+ *   §7  Buttons premium (primario, secundario, ghost, danger, sizes)
+ *   §8  Forms premium (inputs, selects, textareas, focus rings)
+ *   §9  Modals premium (header, body scroll, footer sticky)
+ *   §10 Tables premium (hover, zebra, sticky, row actions)
+ *   §11 Badges & status pills
+ *   §12 Empty states + loading skeletons
+ *   §13 Dashboard KPI cards
+ *   §14 Toasts / notifications
+ *   §15 Pagination
+ *   §16 Misc utilities + micro-animations
+ *   §17 Bug fixes específicos
+ * ============================================================================ */
+
+
+/* ============================================================================
+ * §1 — DESIGN TOKENS (Premium Palette)
+ * ============================================================================ */
+:root,
+body.md3-on,
+body {
+  /* Brand — gradiente azul-índigo refinado */
+  --pp-brand-50:  #eef4ff;
+  --pp-brand-100: #dbe7fe;
+  --pp-brand-200: #bfd2fc;
+  --pp-brand-300: #93b4f9;
+  --pp-brand-400: #608bf3;
+  --pp-brand-500: #3b6bea;
+  --pp-brand-600: #2754d8;
+  --pp-brand-700: #1e42b6;
+  --pp-brand-800: #1d3992;
+  --pp-brand-900: #1d3473;
+
+  /* Accent — esmeralda elegante */
+  --pp-acc-50:  #ecfdf5;
+  --pp-acc-100: #d1fae5;
+  --pp-acc-500: #10b981;
+  --pp-acc-600: #059669;
+  --pp-acc-700: #047857;
+
+  /* Warm warning — ámbar dorado */
+  --pp-warn-50:  #fffbeb;
+  --pp-warn-100: #fef3c7;
+  --pp-warn-500: #f59e0b;
+  --pp-warn-600: #d97706;
+  --pp-warn-700: #b45309;
+
+  /* Danger — coral vivo */
+  --pp-dan-50:  #fef2f2;
+  --pp-dan-100: #fee2e2;
+  --pp-dan-500: #ef4444;
+  --pp-dan-600: #dc2626;
+  --pp-dan-700: #b91c1c;
+
+  /* Info — celeste */
+  --pp-info-50:  #eff6ff;
+  --pp-info-500: #3b82f6;
+  --pp-info-600: #2563eb;
+
+  /* Neutral — slate sofisticado */
+  --pp-n0:  #ffffff;
+  --pp-n50: #f8fafc;
+  --pp-n100:#f1f5f9;
+  --pp-n150:#e8eef5;
+  --pp-n200:#e2e8f0;
+  --pp-n300:#cbd5e1;
+  --pp-n400:#94a3b8;
+  --pp-n500:#64748b;
+  --pp-n600:#475569;
+  --pp-n700:#334155;
+  --pp-n800:#1e293b;
+  --pp-n900:#0f172a;
+  --pp-n950:#020617;
+
+  /* Surfaces */
+  --pp-bg-app:        #f6f8fc;
+  --pp-bg-app-strong: #eef2f8;
+  --pp-bg-card:       #ffffff;
+  --pp-bg-elevated:   #ffffff;
+  --pp-bg-subtle:     #f8fafc;
+
+  /* Borders */
+  --pp-bd:        #e2e8f0;
+  --pp-bd-strong: #cbd5e1;
+  --pp-bd-soft:   #eef2f7;
+
+  /* Shadows — premium soft layering */
+  --pp-sh-xs:  0 1px 2px 0 rgba(15, 23, 42, .04);
+  --pp-sh-sm:  0 2px 4px -1px rgba(15, 23, 42, .06), 0 1px 2px 0 rgba(15, 23, 42, .04);
+  --pp-sh-md:  0 8px 16px -4px rgba(15, 23, 42, .08), 0 4px 8px -2px rgba(15, 23, 42, .04);
+  --pp-sh-lg:  0 16px 32px -8px rgba(15, 23, 42, .10), 0 8px 16px -4px rgba(15, 23, 42, .06);
+  --pp-sh-xl:  0 24px 48px -12px rgba(15, 23, 42, .14), 0 12px 24px -6px rgba(15, 23, 42, .08);
+  --pp-sh-2xl: 0 32px 64px -16px rgba(15, 23, 42, .20), 0 16px 32px -8px rgba(15, 23, 42, .10);
+
+  /* Glass / overlays */
+  --pp-glass-bg:     rgba(255, 255, 255, .75);
+  --pp-glass-bd:     rgba(255, 255, 255, .55);
+  --pp-glass-shadow: 0 12px 32px -8px rgba(15, 23, 42, .14);
+  --pp-overlay:      rgba(15, 23, 42, .55);
+
+  /* Focus ring */
+  --pp-ring:        0 0 0 3px rgba(59, 107, 234, .22);
+  --pp-ring-danger: 0 0 0 3px rgba(239, 68, 68, .22);
+  --pp-ring-acc:    0 0 0 3px rgba(16, 185, 129, .22);
+
+  /* Gradients */
+  --pp-grad-brand:  linear-gradient(135deg, #3b6bea 0%, #2754d8 60%, #1e42b6 100%);
+  --pp-grad-brand2: linear-gradient(135deg, #608bf3 0%, #3b6bea 50%, #2754d8 100%);
+  --pp-grad-acc:    linear-gradient(135deg, #10b981 0%, #059669 100%);
+  --pp-grad-warn:   linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  --pp-grad-dan:    linear-gradient(135deg, #f87171 0%, #ef4444 60%, #dc2626 100%);
+  --pp-grad-night:  linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  --pp-grad-canvas: linear-gradient(180deg, #f6f8fc 0%, #eef2f8 100%);
+
+  /* Easing */
+  --pp-ease-out:  cubic-bezier(.22, 1, .36, 1);
+  --pp-ease-in:   cubic-bezier(.55, 0, .68, .53);
+  --pp-ease-io:   cubic-bezier(.65, 0, .35, 1);
+  --pp-spring:    cubic-bezier(.34, 1.56, .64, 1);
+
+  /* Radii */
+  --pp-r-xs: 6px;
+  --pp-r-sm: 8px;
+  --pp-r-md: 12px;
+  --pp-r-lg: 16px;
+  --pp-r-xl: 20px;
+  --pp-r-2xl:24px;
+  --pp-r-pill: 9999px;
+}
+
+/* ============================================================================
+ * §2 — BODY BASELINE + TIPOGRAFÍA
+ * ============================================================================ */
+body.md3-on,
+body {
+  background: var(--pp-grad-canvas) !important;
+  color: var(--pp-n800) !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif !important;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01';
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* H1-H6 jerarquía */
+body.md3-on h1, body.md3-on h2, body.md3-on h3,
+body h1, body h2, body h3 {
+  letter-spacing: -.02em !important;
+  color: var(--pp-n900) !important;
+}
+body.md3-on h1, body h1 { font-weight: 800 !important; line-height: 1.15 !important; }
+body.md3-on h2, body h2 { font-weight: 700 !important; line-height: 1.2 !important; }
+body.md3-on h3, body h3 { font-weight: 700 !important; line-height: 1.25 !important; }
+
+/* Selección de texto */
+::selection { background: rgba(59, 107, 234, .22); color: var(--pp-n900); }
+
+
+/* ============================================================================
+ * §3 — SCROLLBARS PERSONALIZADOS
+ * ============================================================================ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--pp-n300) transparent;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: var(--pp-n300);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background .2s var(--pp-ease-out);
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--pp-n400); background-clip: padding-box; border: 2px solid transparent; }
+
+
+/* ============================================================================
+ * §4 — HEADER PREMIUM (glass, brand, acciones)
+ * ============================================================================ */
+body.md3-on header.header,
+body header.header {
+  background: rgba(255, 255, 255, .82) !important;
+  backdrop-filter: saturate(1.4) blur(14px) !important;
+  -webkit-backdrop-filter: saturate(1.4) blur(14px) !important;
+  border-bottom: 1px solid var(--pp-bd) !important;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, .02), 0 4px 12px -4px rgba(15, 23, 42, .04) !important;
+  height: 60px !important;
+  padding: 0 20px !important;
+}
+
+/* Brand logo */
+body.md3-on header.header .brand,
+body header.header .brand,
+body.md3-on header.header .header-brand,
+body header.header .header-brand {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+body.md3-on header.header .brand img,
+body header.header .brand img,
+body.md3-on header.header .header-brand img,
+body header.header .header-brand img {
+  height: 28px !important;
+  filter: drop-shadow(0 2px 4px rgba(15, 23, 42, .08));
+}
+body.md3-on header.header .brand-title,
+body header.header .brand-title,
+body.md3-on header.header h1.app-title,
+body header.header h1.app-title {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  letter-spacing: -.01em !important;
+  color: var(--pp-n800) !important;
+  margin: 0 !important;
+  background: linear-gradient(135deg, var(--pp-n800) 0%, var(--pp-brand-700) 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+/* Header action chips (theme, notif, language, profile, logout) */
+body.md3-on header.header .btn-icon,
+body header.header .btn-icon,
+body.md3-on header.header .btn-theme-toggle,
+body.md3-on header.header .btn-notifications,
+body.md3-on header.header .btn-language {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--pp-bd) !important;
+  background: var(--pp-bg-card) !important;
+  color: var(--pp-n600) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 16px !important;
+  cursor: pointer !important;
+  transition: all .18s var(--pp-ease-out) !important;
+  box-shadow: var(--pp-sh-xs) !important;
+}
+body.md3-on header.header .btn-icon:hover,
+body header.header .btn-icon:hover {
+  background: var(--pp-brand-50) !important;
+  color: var(--pp-brand-600) !important;
+  border-color: var(--pp-brand-200) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: var(--pp-sh-sm) !important;
+}
+
+/* Quick logout pill */
+body.md3-on header.header #btn-header-quick-logout,
+body header.header #btn-header-quick-logout {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  height: 40px !important;
+  padding: 0 16px !important;
+  border-radius: 12px !important;
+  background: var(--pp-bg-card) !important;
+  color: var(--pp-dan-700) !important;
+  border: 1px solid var(--pp-dan-100) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all .18s var(--pp-ease-out) !important;
+  box-shadow: var(--pp-sh-xs) !important;
+  white-space: nowrap !important;
+}
+body.md3-on header.header #btn-header-quick-logout:hover,
+body header.header #btn-header-quick-logout:hover {
+  background: var(--pp-grad-dan) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 8px 16px -4px rgba(220, 38, 38, .35) !important;
+}
+
+/* Profile pill — refinada */
+body.md3-on header.header .btn-header-profile,
+body header.header .btn-header-profile {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  height: 40px !important;
+  padding: 0 14px 0 6px !important;
+  border-radius: 999px !important;
+  background: var(--pp-grad-brand) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, .15) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all .2s var(--pp-ease-out) !important;
+  box-shadow: 0 8px 16px -6px rgba(39, 84, 216, .45), inset 0 1px 0 rgba(255, 255, 255, .25) !important;
+  letter-spacing: .005em !important;
+}
+body.md3-on header.header .btn-header-profile:hover,
+body header.header .btn-header-profile:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 12px 24px -8px rgba(39, 84, 216, .55), inset 0 1px 0 rgba(255, 255, 255, .35) !important;
+  filter: brightness(1.04) !important;
+}
+body.md3-on header.header .btn-header-profile::before,
+body header.header .btn-header-profile::before {
+  content: '' !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, .22) !important;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='9' r='3.5'/><path d='M6 20v-1a6 6 0 0112 0v1'/></svg>") !important;
+  background-size: 18px !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  flex-shrink: 0 !important;
+  border: 1px solid rgba(255, 255, 255, .35) !important;
+}
+
+
+/* ============================================================================
+ * §5 — SIDEBAR PREMIUM
+ * ============================================================================ */
+body.md3-on aside.sidebar,
+body aside.sidebar,
+body.md3-on .sidebar,
+body .sidebar {
+  background: var(--pp-bg-card) !important;
+  border-right: 1px solid var(--pp-bd) !important;
+  box-shadow: 1px 0 0 rgba(15, 23, 42, .02), 8px 0 24px -16px rgba(15, 23, 42, .06) !important;
+  padding: 12px 8px !important;
+}
+
+/* Nav items */
+body.md3-on aside.sidebar button,
+body aside.sidebar button,
+body.md3-on .sidebar .nav-item,
+body .sidebar .nav-item,
+body.md3-on aside.sidebar .nav-button,
+body aside.sidebar .nav-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 44px !important;
+  height: 44px !important;
+  margin: 4px auto !important;
+  border-radius: 12px !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  color: var(--pp-n500) !important;
+  font-size: 18px !important;
+  cursor: pointer !important;
+  transition: all .18s var(--pp-ease-out) !important;
+  position: relative !important;
+}
+body.md3-on aside.sidebar button:hover,
+body aside.sidebar button:hover {
+  background: var(--pp-brand-50) !important;
+  color: var(--pp-brand-600) !important;
+  border-color: var(--pp-brand-100) !important;
+  transform: scale(1.04) !important;
+}
+body.md3-on aside.sidebar button.active,
+body aside.sidebar button.active,
+body.md3-on aside.sidebar button[aria-current="page"],
+body aside.sidebar button[aria-current="page"],
+body.md3-on aside.sidebar button.is-active,
+body aside.sidebar button.is-active {
+  background: var(--pp-grad-brand) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 8px 16px -6px rgba(39, 84, 216, .50), inset 0 1px 0 rgba(255, 255, 255, .25) !important;
+}
+body.md3-on aside.sidebar button.active::after,
+body aside.sidebar button.active::after {
+  content: '' !important;
+  position: absolute !important;
+  left: -10px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 4px !important;
+  height: 24px !important;
+  background: var(--pp-brand-600) !important;
+  border-radius: 0 4px 4px 0 !important;
+}
+
+
+/* ============================================================================
+ * §6 — CARDS PREMIUM
+ * ============================================================================ */
+body.md3-on .card,
+body .card,
+body.md3-on .panel-card,
+body .panel-card,
+body.md3-on .module-card,
+body .module-card {
+  background: var(--pp-bg-card) !important;
+  border: 1px solid var(--pp-bd) !important;
+  border-radius: var(--pp-r-lg) !important;
+  box-shadow: var(--pp-sh-sm) !important;
+  transition: box-shadow .25s var(--pp-ease-out), transform .25s var(--pp-ease-out) !important;
+}
+body.md3-on .card:hover,
+body .card:hover {
+  box-shadow: var(--pp-sh-md) !important;
+}
+
+/* Section headers (titles) — barra con acento gradiente lateral */
+body.md3-on .panel-card > h2:first-child,
+body .panel-card > h2:first-child,
+body.md3-on .panel-card > .panel-title,
+body .panel-card > .panel-title,
+body.md3-on .panel > h2:first-child,
+body .panel > h2:first-child {
+  position: relative !important;
+  padding: 18px 24px !important;
+  margin: 0 !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: var(--pp-n800) !important;
+  border-bottom: 1px solid var(--pp-bd-soft) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  letter-spacing: -.005em !important;
+}
+
+
+/* ============================================================================
+ * §7 — BUTTONS PREMIUM (variantes refinadas)
+ * ============================================================================ */
+/* Base reset común para todos los .btn */
+body.md3-on .btn,
+body .btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  height: 40px !important;
+  padding: 0 18px !important;
+  border-radius: 10px !important;
+  border: 1px solid transparent !important;
+  font-family: inherit !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: .005em !important;
+  cursor: pointer !important;
+  transition: all .18s var(--pp-ease-out) !important;
+  white-space: nowrap !important;
+  user-select: none !important;
+  position: relative !important;
+  overflow: hidden !important;
+  box-shadow: var(--pp-sh-xs) !important;
+}
+body.md3-on .btn:disabled,
+body .btn:disabled {
+  opacity: .5 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+}
+
+/* Primary */
+body.md3-on .btn-primary,
+body .btn-primary,
+body.md3-on .btn.primary,
+body .btn.primary {
+  background: var(--pp-grad-brand) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 8px 16px -6px rgba(39, 84, 216, .35), inset 0 1px 0 rgba(255, 255, 255, .2) !important;
+}
+body.md3-on .btn-primary:hover,
+body .btn-primary:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 12px 24px -8px rgba(39, 84, 216, .50), inset 0 1px 0 rgba(255, 255, 255, .3) !important;
+  filter: brightness(1.05) !important;
+}
+
+/* Success / Accent */
+body.md3-on .btn-success,
+body .btn-success,
+body.md3-on .btn-accent,
+body .btn-accent {
+  background: var(--pp-grad-acc) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 8px 16px -6px rgba(5, 150, 105, .35), inset 0 1px 0 rgba(255, 255, 255, .2) !important;
+}
+body.md3-on .btn-success:hover,
+body .btn-success:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 12px 24px -8px rgba(5, 150, 105, .50) !important;
+  filter: brightness(1.05) !important;
+}
+
+/* Danger */
+body.md3-on .btn-danger,
+body .btn-danger,
+body.md3-on .btn.danger,
+body .btn.danger {
+  background: var(--pp-grad-dan) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 8px 16px -6px rgba(220, 38, 38, .35), inset 0 1px 0 rgba(255, 255, 255, .2) !important;
+}
+body.md3-on .btn-danger:hover,
+body .btn-danger:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 12px 24px -8px rgba(220, 38, 38, .50) !important;
+  filter: brightness(1.05) !important;
+}
+
+/* Secondary / outlined */
+body.md3-on .btn-secondary,
+body .btn-secondary,
+body.md3-on .btn.secondary,
+body .btn.secondary,
+body.md3-on .btn-outline,
+body .btn-outline {
+  background: var(--pp-bg-card) !important;
+  color: var(--pp-n700) !important;
+  border-color: var(--pp-bd) !important;
+}
+body.md3-on .btn-secondary:hover,
+body .btn-secondary:hover,
+body.md3-on .btn-outline:hover,
+body .btn-outline:hover {
+  background: var(--pp-brand-50) !important;
+  color: var(--pp-brand-700) !important;
+  border-color: var(--pp-brand-200) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: var(--pp-sh-sm) !important;
+}
+
+/* Ghost */
+body.md3-on .btn-ghost,
+body .btn-ghost {
+  background: transparent !important;
+  color: var(--pp-n600) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+body.md3-on .btn-ghost:hover,
+body .btn-ghost:hover {
+  background: var(--pp-n100) !important;
+  color: var(--pp-n800) !important;
+}
+
+/* Sizes */
+body.md3-on .btn-sm, body .btn-sm { height: 32px !important; padding: 0 12px !important; font-size: 12px !important; border-radius: 8px !important; }
+body.md3-on .btn-lg, body .btn-lg { height: 48px !important; padding: 0 22px !important; font-size: 14px !important; border-radius: 12px !important; }
+
+
+/* ============================================================================
+ * §8 — FORMS PREMIUM (inputs, selects, textareas)
+ * ============================================================================ */
+/* Inputs base */
+body.md3-on input[type="text"],
+body input[type="text"],
+body.md3-on input[type="number"],
+body input[type="number"],
+body.md3-on input[type="email"],
+body input[type="email"],
+body.md3-on input[type="password"],
+body input[type="password"],
+body.md3-on input[type="search"],
+body input[type="search"],
+body.md3-on input[type="tel"],
+body input[type="tel"],
+body.md3-on input[type="url"],
+body input[type="url"],
+body.md3-on input[type="date"],
+body input[type="date"],
+body.md3-on input[type="datetime-local"],
+body input[type="datetime-local"],
+body.md3-on input[type="time"],
+body input[type="time"],
+body.md3-on textarea,
+body textarea,
+body.md3-on select,
+body select {
+  width: 100% !important;
+  height: 42px !important;
+  padding: 0 14px !important;
+  background: var(--pp-bg-card) !important;
+  color: var(--pp-n800) !important;
+  border: 1.5px solid var(--pp-bd) !important;
+  border-radius: 10px !important;
+  font-family: inherit !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  transition: border-color .15s var(--pp-ease-out), box-shadow .15s var(--pp-ease-out), background .15s var(--pp-ease-out) !important;
+  box-shadow: var(--pp-sh-xs) !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+
+body.md3-on textarea,
+body textarea {
+  height: auto !important;
+  min-height: 96px !important;
+  padding: 12px 14px !important;
+  resize: vertical !important;
+}
+
+/* Select — flecha custom (CRUCIAL: arregla el bug del select vacío que se ve negro) */
+body.md3-on select,
+body select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  background-size: 16px !important;
+  padding-right: 40px !important;
+  cursor: pointer !important;
+}
+
+/* Hover */
+body.md3-on input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([disabled]):hover,
+body input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([disabled]):hover,
+body.md3-on textarea:not([disabled]):hover,
+body textarea:not([disabled]):hover,
+body.md3-on select:not([disabled]):hover,
+body select:not([disabled]):hover {
+  border-color: var(--pp-bd-strong) !important;
+}
+
+/* Focus */
+body.md3-on input:not([type="checkbox"]):not([type="radio"]):focus,
+body input:not([type="checkbox"]):not([type="radio"]):focus,
+body.md3-on textarea:focus,
+body textarea:focus,
+body.md3-on select:focus,
+body select:focus {
+  outline: 0 !important;
+  border-color: var(--pp-brand-500) !important;
+  box-shadow: var(--pp-ring) !important;
+  background: #fff !important;
+}
+
+/* Placeholder */
+body.md3-on input::placeholder,
+body input::placeholder,
+body.md3-on textarea::placeholder,
+body textarea::placeholder {
+  color: var(--pp-n400) !important;
+  opacity: 1 !important;
+}
+
+/* Readonly inputs */
+body.md3-on input.input-readonly,
+body input.input-readonly,
+body.md3-on input[readonly],
+body input[readonly] {
+  background: var(--pp-bg-subtle) !important;
+  color: var(--pp-n600) !important;
+  cursor: default !important;
+}
+
+/* Labels */
+body.md3-on .form-group label,
+body .form-group label,
+body.md3-on label.form-label,
+body label.form-label {
+  display: block !important;
+  margin: 0 0 6px 0 !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .06em !important;
+  color: var(--pp-n600) !important;
+}
+
+/* Form group spacing */
+body.md3-on .form-group,
+body .form-group {
+  margin-bottom: 16px !important;
+}
+
+/* Checkbox/radio refinement */
+body.md3-on input[type="checkbox"],
+body input[type="checkbox"],
+body.md3-on input[type="radio"],
+body input[type="radio"] {
+  width: 18px !important;
+  height: 18px !important;
+  accent-color: var(--pp-brand-600) !important;
+  cursor: pointer !important;
+}
+
+
+/* ============================================================================
+ * §9 — MODALS PREMIUM (header, body, footer)
+ * ============================================================================ */
+body.md3-on .modal,
+body .modal,
+body.md3-on .modal-overlay,
+body .modal-overlay {
+  background: var(--pp-overlay) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+}
+
+body.md3-on .modal-content,
+body .modal-content,
+body.md3-on .modal-dialog,
+body .modal-dialog,
+body.md3-on .prem-modal,
+body .prem-modal {
+  background: var(--pp-bg-card) !important;
+  border-radius: var(--pp-r-xl) !important;
+  border: 1px solid var(--pp-bd) !important;
+  box-shadow: var(--pp-sh-2xl) !important;
+  overflow: hidden !important;
+  max-width: min(960px, calc(100vw - 32px)) !important;
+  max-height: calc(100vh - 48px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  animation: pp-modal-in .28s var(--pp-ease-out) !important;
+}
+@keyframes pp-modal-in {
+  from { opacity: 0; transform: translateY(12px) scale(.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Modal header — gradiente refinado */
+body.md3-on .modal-header,
+body .modal-header,
+body.md3-on .modal-content > .modal-header,
+body .modal-content > .modal-header {
+  background: var(--pp-grad-brand) !important;
+  color: #fff !important;
+  padding: 18px 24px !important;
+  border-bottom: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+}
+body.md3-on .modal-header h2,
+body .modal-header h2,
+body.md3-on .modal-header h3,
+body .modal-header h3,
+body.md3-on .modal-header .modal-title,
+body .modal-header .modal-title {
+  color: #fff !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  margin: 0 !important;
+  letter-spacing: -.005em !important;
+}
+body.md3-on .modal-header .btn-close,
+body .modal-header .btn-close,
+body.md3-on .modal-header .modal-close,
+body .modal-header .modal-close {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, .14) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, .2) !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 14px !important;
+  transition: all .15s var(--pp-ease-out) !important;
+}
+body.md3-on .modal-header .btn-close:hover,
+body .modal-header .btn-close:hover {
+  background: rgba(255, 255, 255, .26) !important;
+  transform: rotate(90deg) !important;
+}
+
+/* Modal body */
+body.md3-on .modal-body,
+body .modal-body {
+  padding: 24px !important;
+  overflow-y: auto !important;
+  flex: 1 1 auto !important;
+  background: var(--pp-bg-subtle) !important;
+}
+
+/* Modal footer (sticky) */
+body.md3-on .modal-footer,
+body .modal-footer {
+  padding: 16px 24px !important;
+  background: var(--pp-bg-card) !important;
+  border-top: 1px solid var(--pp-bd) !important;
+  display: flex !important;
+  gap: 10px !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  flex-shrink: 0 !important;
+}
+
+/* Step header inside modal */
+body.md3-on .modal-body .step-card,
+body .modal-body .step-card,
+body.md3-on .modal-body .form-step,
+body .modal-body .form-step {
+  background: var(--pp-bg-card) !important;
+  border: 1px solid var(--pp-bd) !important;
+  border-radius: var(--pp-r-md) !important;
+  padding: 20px !important;
+  margin-bottom: 16px !important;
+  box-shadow: var(--pp-sh-xs) !important;
+}
+
+
+/* ============================================================================
+ * §10 — TABLES PREMIUM (refinement adicional sobre §92 de premium.css)
+ * ============================================================================ */
+body.md3-on table.data-table,
+body table.data-table {
+  background: var(--pp-bg-card) !important;
+  border-radius: var(--pp-r-md) !important;
+  overflow: hidden !important;
+  box-shadow: var(--pp-sh-sm) !important;
+  border: 1px solid var(--pp-bd) !important;
+}
+
+body.md3-on table.data-table thead th,
+body table.data-table thead th {
+  background: var(--pp-bg-subtle) !important;
+  color: var(--pp-n600) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .06em !important;
+  padding: 12px 14px !important;
+  border-bottom: 1px solid var(--pp-bd) !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 2 !important;
+}
+
+body.md3-on table.data-table tbody tr,
+body table.data-table tbody tr {
+  transition: background .12s var(--pp-ease-out) !important;
+}
+body.md3-on table.data-table tbody tr:hover,
+body table.data-table tbody tr:hover {
+  background: var(--pp-brand-50) !important;
+}
+body.md3-on table.data-table tbody tr:nth-child(even),
+body table.data-table tbody tr:nth-child(even) {
+  background: rgba(248, 250, 252, .55) !important;
+}
+body.md3-on table.data-table tbody tr:nth-child(even):hover,
+body table.data-table tbody tr:nth-child(even):hover {
+  background: var(--pp-brand-50) !important;
+}
+
+body.md3-on table.data-table tbody td,
+body table.data-table tbody td {
+  padding: 12px 14px !important;
+  font-size: 13px !important;
+  color: var(--pp-n700) !important;
+  border-bottom: 1px solid var(--pp-bd-soft) !important;
+  vertical-align: middle !important;
+}
+
+
+/* ============================================================================
+ * §11 — BADGES & STATUS PILLS
+ * ============================================================================ */
+body.md3-on .badge,
+body .badge,
+body.md3-on .pill,
+body .pill,
+body.md3-on .status-pill,
+body .status-pill,
+body.md3-on .chip-status,
+body .chip-status {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 4px 10px !important;
+  height: 24px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: .02em !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  border: 1px solid transparent !important;
+}
+
+/* Variants */
+body.md3-on .badge.badge-primary, body .badge.badge-primary,
+body.md3-on .badge-info, body .badge-info {
+  background: var(--pp-info-50) !important;
+  color: var(--pp-info-600) !important;
+  border-color: rgba(37, 99, 235, .15) !important;
+}
+body.md3-on .badge-success, body .badge-success,
+body.md3-on .pill.success, body .pill.success {
+  background: var(--pp-acc-50) !important;
+  color: var(--pp-acc-700) !important;
+  border-color: rgba(5, 150, 105, .18) !important;
+}
+body.md3-on .badge-warning, body .badge-warning,
+body.md3-on .pill.warning, body .pill.warning {
+  background: var(--pp-warn-50) !important;
+  color: var(--pp-warn-700) !important;
+  border-color: rgba(180, 83, 9, .18) !important;
+}
+body.md3-on .badge-danger, body .badge-danger,
+body.md3-on .pill.danger, body .pill.danger {
+  background: var(--pp-dan-50) !important;
+  color: var(--pp-dan-700) !important;
+  border-color: rgba(185, 28, 28, .18) !important;
+}
+body.md3-on .badge-neutral, body .badge-neutral {
+  background: var(--pp-n100) !important;
+  color: var(--pp-n700) !important;
+  border-color: var(--pp-bd) !important;
+}
+
+
+/* ============================================================================
+ * §12 — EMPTY STATES + LOADING SKELETONS
+ * ============================================================================ */
+body.md3-on .empty-state,
+body .empty-state,
+body.md3-on .empty,
+body .empty {
+  text-align: center !important;
+  padding: 64px 24px !important;
+}
+
+body.md3-on .empty-state .empty-icon,
+body .empty-state .empty-icon,
+body.md3-on .empty-state .icon,
+body .empty-state .icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 88px !important;
+  height: 88px !important;
+  border-radius: 50% !important;
+  background: var(--pp-grad-brand) !important;
+  color: #fff !important;
+  font-size: 36px !important;
+  margin: 0 auto 20px !important;
+  box-shadow: 0 12px 24px -8px rgba(39, 84, 216, .35), inset 0 -4px 8px rgba(15, 23, 42, .15) !important;
+  animation: pp-float 3s var(--pp-ease-io) infinite !important;
+}
+@keyframes pp-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+body.md3-on .empty-state h3,
+body .empty-state h3,
+body.md3-on .empty-state .empty-title,
+body .empty-state .empty-title {
+  margin: 0 0 8px !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: var(--pp-n800) !important;
+  letter-spacing: -.01em !important;
+}
+body.md3-on .empty-state p,
+body .empty-state p,
+body.md3-on .empty-state .empty-msg,
+body .empty-state .empty-msg {
+  margin: 0 0 24px !important;
+  color: var(--pp-n500) !important;
+  font-size: 13.5px !important;
+  max-width: 440px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Loading skeleton */
+body.md3-on .skeleton,
+body .skeleton {
+  background: linear-gradient(90deg, var(--pp-n100) 0%, var(--pp-n150) 50%, var(--pp-n100) 100%) !important;
+  background-size: 200% 100% !important;
+  animation: pp-shimmer 1.4s linear infinite !important;
+  border-radius: 8px !important;
+}
+@keyframes pp-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+
+/* ============================================================================
+ * §13 — DASHBOARD KPI CARDS
+ * ============================================================================ */
+body.md3-on .kpi-card,
+body .kpi-card,
+body.md3-on .stat-card,
+body .stat-card,
+body.md3-on .metric-card,
+body .metric-card {
+  background: var(--pp-bg-card) !important;
+  border: 1px solid var(--pp-bd) !important;
+  border-radius: var(--pp-r-lg) !important;
+  padding: 20px !important;
+  box-shadow: var(--pp-sh-sm) !important;
+  transition: all .25s var(--pp-ease-out) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+body.md3-on .kpi-card::before,
+body .kpi-card::before,
+body.md3-on .stat-card::before,
+body .stat-card::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 4px !important;
+  background: var(--pp-grad-brand) !important;
+}
+body.md3-on .kpi-card:hover,
+body .kpi-card:hover,
+body.md3-on .stat-card:hover,
+body .stat-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: var(--pp-sh-lg) !important;
+}
+
+body.md3-on .kpi-card .kpi-label,
+body .kpi-card .kpi-label {
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+  color: var(--pp-n500) !important;
+}
+body.md3-on .kpi-card .kpi-value,
+body .kpi-card .kpi-value {
+  font-size: 30px !important;
+  font-weight: 800 !important;
+  color: var(--pp-n900) !important;
+  letter-spacing: -.025em !important;
+  margin-top: 6px !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+
+/* ============================================================================
+ * §14 — TOASTS / NOTIFICATIONS
+ * ============================================================================ */
+body.md3-on .toast,
+body .toast,
+body.md3-on .notification,
+body .notification {
+  background: var(--pp-bg-card) !important;
+  border: 1px solid var(--pp-bd) !important;
+  border-radius: var(--pp-r-md) !important;
+  padding: 14px 16px !important;
+  box-shadow: var(--pp-sh-lg) !important;
+  font-size: 13.5px !important;
+  color: var(--pp-n800) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  animation: pp-toast-in .3s var(--pp-spring) !important;
+  border-left: 4px solid var(--pp-brand-500) !important;
+}
+@keyframes pp-toast-in {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+body.md3-on .toast.success, body .toast.success { border-left-color: var(--pp-acc-500) !important; }
+body.md3-on .toast.warning, body .toast.warning { border-left-color: var(--pp-warn-500) !important; }
+body.md3-on .toast.error,   body .toast.error,
+body.md3-on .toast.danger,  body .toast.danger   { border-left-color: var(--pp-dan-500) !important; }
+
+
+/* ============================================================================
+ * §15 — PAGINATION
+ * ============================================================================ */
+body.md3-on .pagination,
+body .pagination {
+  display: inline-flex !important;
+  gap: 4px !important;
+  padding: 4px !important;
+  background: var(--pp-bg-card) !important;
+  border: 1px solid var(--pp-bd) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--pp-sh-xs) !important;
+}
+body.md3-on .pagination button,
+body .pagination button,
+body.md3-on .pagination .page-item,
+body .pagination .page-item {
+  min-width: 32px !important;
+  height: 32px !important;
+  padding: 0 10px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--pp-n600) !important;
+  border-radius: 8px !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all .15s var(--pp-ease-out) !important;
+}
+body.md3-on .pagination button:hover,
+body .pagination button:hover {
+  background: var(--pp-brand-50) !important;
+  color: var(--pp-brand-700) !important;
+}
+body.md3-on .pagination button.active,
+body .pagination button.active,
+body.md3-on .pagination .page-item.active,
+body .pagination .page-item.active {
+  background: var(--pp-grad-brand) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 8px -2px rgba(39, 84, 216, .35) !important;
+}
+
+
+/* ============================================================================
+ * §16 — UTILITIES + MICRO-ANIMATIONS
+ * ============================================================================ */
+@keyframes pp-fade-in    { from{opacity:0} to{opacity:1} }
+@keyframes pp-slide-up   { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+@keyframes pp-pulse-soft { 0%,100%{opacity:1} 50%{opacity:.55} }
+
+.pp-fade-in    { animation: pp-fade-in .35s var(--pp-ease-out) both !important; }
+.pp-slide-up   { animation: pp-slide-up .35s var(--pp-ease-out) both !important; }
+.pp-pulse-soft { animation: pp-pulse-soft 1.4s var(--pp-ease-io) infinite !important; }
+
+/* Divider elegante */
+body.md3-on hr,
+body hr {
+  border: 0 !important;
+  height: 1px !important;
+  background: linear-gradient(90deg, transparent 0%, var(--pp-bd) 20%, var(--pp-bd) 80%, transparent 100%) !important;
+  margin: 16px 0 !important;
+}
+
+/* Code / kbd */
+body.md3-on code, body code,
+body.md3-on kbd, body kbd {
+  font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace !important;
+  font-size: .85em !important;
+  background: var(--pp-n100) !important;
+  border: 1px solid var(--pp-bd) !important;
+  padding: 2px 6px !important;
+  border-radius: 6px !important;
+  color: var(--pp-brand-700) !important;
+}
+
+
+/* ============================================================================
+ * §17 — BUG FIXES ESPECÍFICOS
+ * ============================================================================ */
+
+/* Bug: select vacío se ve como una barra negra al hacer focus
+ * Fix: forzar min-height + background blanco visible incluso cuando hay 0 options */
+body.md3-on select:not([multiple]),
+body select:not([multiple]) {
+  min-height: 42px !important;
+  background-color: var(--pp-bg-card) !important;
+}
+/* Caso especial: select con 0 opciones → mostrar placeholder visual claro */
+body.md3-on select:empty,
+body select:empty {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ef4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='8' x2='12' y2='12'/><line x1='12' y1='16' x2='12.01' y2='16'/></svg>") !important;
+  border-color: var(--pp-warn-500) !important;
+  background-color: var(--pp-warn-50) !important;
+}
+
+/* Bug: el input de fecha (date) muestra el icono de calendario muy pegado */
+body.md3-on input[type="date"]::-webkit-calendar-picker-indicator,
+body input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer !important;
+  opacity: .55 !important;
+  filter: invert(45%) sepia(30%) saturate(900%) hue-rotate(200deg) !important;
+  transition: opacity .15s !important;
+}
+body.md3-on input[type="date"]::-webkit-calendar-picker-indicator:hover,
+body input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1 !important;
+}
+
+/* Notes / info boxes (los recuadros azules de tipo de cambio) */
+body.md3-on .info-note,
+body .info-note,
+body.md3-on .alert-info,
+body .alert-info,
+body.md3-on .modal-body .info,
+body .modal-body .info {
+  background: linear-gradient(135deg, var(--pp-info-50) 0%, var(--pp-brand-50) 100%) !important;
+  border: 1px solid var(--pp-brand-200) !important;
+  border-left: 4px solid var(--pp-brand-500) !important;
+  border-radius: var(--pp-r-sm) !important;
+  padding: 12px 16px !important;
+  font-size: 12.5px !important;
+  line-height: 1.55 !important;
+  color: var(--pp-n700) !important;
+  margin: 8px 0 !important;
+}
+
+/* Eliminar cualquier borde/línea roja o negra residual debajo de inputs */
+body.md3-on .form-group::after,
+body .form-group::after,
+body.md3-on .form-field::after,
+body .form-field::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Sticky positioning para el botón "Eliminar cotización" feo: ocultarlo si no es admin */
+/* (manejo CSS solamente — el panel sigue accesible vía botón explícito) */
+
+/* ============================================================================
+ * §18 — STEP NUMBERS (los círculos azules tipo "1" en formularios multi-paso)
+ * ============================================================================ */
+body.md3-on .step-number,
+body .step-number,
+body.md3-on .modal-body .step-num,
+body .modal-body .step-num {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  background: var(--pp-grad-brand) !important;
+  color: #fff !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 8px -2px rgba(39, 84, 216, .35), inset 0 1px 0 rgba(255, 255, 255, .3) !important;
+  flex-shrink: 0 !important;
+}
+
+/* ============================================================================
+ * FIN — premium-pro.css
+ * ============================================================================ */
