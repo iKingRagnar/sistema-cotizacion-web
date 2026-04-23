@@ -7332,3 +7332,137 @@ body .section-header {
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03) !important;
 }
 
+/* ─── 92.5 row-actions-inline (refacciones, etc.) — forzar HORIZONTAL ──── */
+body.md3-on table.data-table .row-actions-inline,
+body table.data-table .row-actions-inline,
+body.md3-on .row-actions-inline,
+body .row-actions-inline {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 4px !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+}
+
+body.md3-on table.data-table .row-actions-inline > button,
+body table.data-table .row-actions-inline > button,
+body.md3-on table.data-table .row-actions-inline > .btn,
+body table.data-table .row-actions-inline > .btn {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  width: 32px !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 8px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0 !important;
+  border: 1px solid transparent !important;
+  cursor: pointer !important;
+  transition: background .12s, transform .12s, box-shadow .12s !important;
+}
+body.md3-on table.data-table .row-actions-inline > button i,
+body table.data-table .row-actions-inline > button i,
+body.md3-on table.data-table .row-actions-inline > .btn i,
+body table.data-table .row-actions-inline > .btn i {
+  font-size: 13px !important;
+  margin: 0 !important;
+}
+
+/* La celda contenedora — auto-width, no 95px fijo */
+body.md3-on table.data-table td.th-actions.ref-td-actions,
+body table.data-table td.th-actions.ref-td-actions,
+body.md3-on table.data-table td.ref-td-actions,
+body table.data-table td.ref-td-actions {
+  width: auto !important;
+  min-width: 180px !important;
+  white-space: nowrap !important;
+  text-align: right !important;
+  padding: 8px 12px !important;
+}
+
+/* Variantes semánticas para botones específicos por nombre */
+body.md3-on table.data-table .row-actions-inline .btn-preview-ref,
+body table.data-table .row-actions-inline .btn-preview-ref,
+body.md3-on table.data-table .row-actions-inline [class*="btn-preview"],
+body table.data-table .row-actions-inline [class*="btn-preview"] {
+  background: #eff6ff !important;
+  color: #1A73E8 !important;
+  border-color: rgba(26, 115, 232, 0.2) !important;
+}
+body.md3-on table.data-table .row-actions-inline .btn-preview-ref:hover,
+body table.data-table .row-actions-inline .btn-preview-ref:hover {
+  background: #dbeafe !important;
+  transform: translateY(-1px) !important;
+}
+
+body.md3-on table.data-table .row-actions-inline .btn-edit-ref,
+body table.data-table .row-actions-inline .btn-edit-ref,
+body.md3-on table.data-table .row-actions-inline [class*="btn-edit"],
+body table.data-table .row-actions-inline [class*="btn-edit"] {
+  background: #ecfdf5 !important;
+  color: #047857 !important;
+  border-color: rgba(5, 150, 105, 0.2) !important;
+}
+body.md3-on table.data-table .row-actions-inline .btn-edit-ref:hover,
+body table.data-table .row-actions-inline .btn-edit-ref:hover {
+  background: #d1fae5 !important;
+  transform: translateY(-1px) !important;
+}
+
+body.md3-on table.data-table .row-actions-inline .btn-delete-ref,
+body table.data-table .row-actions-inline .btn-delete-ref,
+body.md3-on table.data-table .row-actions-inline [class*="btn-delete"],
+body table.data-table .row-actions-inline [class*="btn-delete"] {
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+  border-color: rgba(185, 28, 28, 0.2) !important;
+}
+body.md3-on table.data-table .row-actions-inline .btn-delete-ref:hover,
+body table.data-table .row-actions-inline .btn-delete-ref:hover {
+  background: #fee2e2 !important;
+  transform: translateY(-1px) !important;
+}
+
+body.md3-on table.data-table .row-actions-inline .btn-stock-ref,
+body table.data-table .row-actions-inline .btn-stock-ref,
+body.md3-on table.data-table .row-actions-inline [class*="btn-stock"],
+body table.data-table .row-actions-inline [class*="btn-stock"] {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  border-color: rgba(146, 64, 14, 0.2) !important;
+}
+body.md3-on table.data-table .row-actions-inline .btn-stock-ref:hover,
+body table.data-table .row-actions-inline .btn-stock-ref:hover {
+  background: #fde68a !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Eliminar las líneas verticales feas entre columnas (legacy) */
+body.md3-on table.data-table tbody td,
+body table.data-table tbody td,
+body.md3-on table.data-table thead th,
+body table.data-table thead th {
+  border-left: 0 !important;
+  border-right: 0 !important;
+}
+
+/* Densidad — clases en body */
+body.density-compact table.data-table tbody td,
+body.density-compact table.data-table thead th {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+  font-size: 12px !important;
+}
+body.density-spacious table.data-table tbody td,
+body.density-spacious table.data-table thead th {
+  padding-top: 16px !important;
+  padding-bottom: 16px !important;
+}
+
