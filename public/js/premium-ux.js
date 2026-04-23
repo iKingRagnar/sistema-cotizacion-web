@@ -12,6 +12,55 @@
   const isEditing = (el) => el && el.matches && el.matches('input, textarea, select, [contenteditable="true"]');
 
   /* ═══════════════════════════════════════════════════════════
+     SHARED IDLE WORK QUEUE — UN solo MutationObserver para todos
+     los scans periódicos. Evita tener 17 observers compitiendo.
+     Cada init() registra una función con premOnDomChange(fn) y se
+     llama throttled a ~6 FPS (167ms) usando requestIdleCallback
+     o requestAnimationFrame.
+     ═══════════════════════════════════════════════════════════ */
+  const idleCallbacks = [];
+  let idleScheduled = false;
+  let lastRunAt = 0;
+  const MIN_INTERVAL = 250;
+
+  function runIdleQueue() {
+    idleScheduled = false;
+    lastRunAt = performance.now();
+    for (const fn of idleCallbacks) {
+      try { fn(); } catch (e) { /* swallow */ }
+    }
+  }
+
+  function scheduleIdleWork() {
+    if (idleScheduled) return;
+    const sinceLast = performance.now() - lastRunAt;
+    const delay = Math.max(0, MIN_INTERVAL - sinceLast);
+    idleScheduled = true;
+    if ('requestIdleCallback' in window) {
+      setTimeout(() => requestIdleCallback(runIdleQueue, { timeout: 500 }), delay);
+    } else {
+      setTimeout(runIdleQueue, delay);
+    }
+  }
+
+  window.premOnDomChange = function (fn) {
+    if (typeof fn === 'function') idleCallbacks.push(fn);
+  };
+  window.premScheduleIdleWork = scheduleIdleWork;
+
+  // UN único MutationObserver global
+  if (typeof MutationObserver !== 'undefined') {
+    const globalMo = new MutationObserver(() => scheduleIdleWork());
+    if (document.body) {
+      globalMo.observe(document.body, { childList: true, subtree: true });
+    } else {
+      document.addEventListener('DOMContentLoaded', () => {
+        globalMo.observe(document.body, { childList: true, subtree: true });
+      });
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════
      1. CMD+K — búsqueda global
      ═══════════════════════════════════════════════════════════ */
   function initCommandK() {
@@ -2395,12 +2444,10 @@
      ═══════════════════════════════════════════════════════════ */
   function initOnboardingTour() {
     const KEY = LS_PREFIX + 'onboarding-done';
-    if (localStorage.getItem(KEY)) {
-      // Expone manual para que el usuario pueda re-disparar
-      window.premOnboarding = startTour;
-      return;
-    }
+    // Siempre exponer la función manual
     window.premOnboarding = startTour;
+    // No auto-disparar para evitar bloquear el boot
+    return;
 
     function startTour() {
       const STEPS = [
@@ -2535,21 +2582,31 @@
       window.addEventListener('resize', render);
     }
 
-    // Inicia tour cuando todo esté cargado (delay para que app.js termine)
-    setTimeout(() => {
-      // Solo si el body está visible (no estamos en login)
-      if (document.querySelector('.sidebar-nav') && !document.querySelector('.login-screen.active, #login-screen:not(.hidden)')) {
-        startTour();
+    // Inicia tour SOLO cuando la app esté idle (no compite con primer render)
+    function tryStart() {
+      if (document.querySelector('.login-screen.active, #login-screen:not(.hidden), .login-overlay:not(.hidden)')) return;
+      if (!document.querySelector('.sidebar-nav')) return;
+      if (document.querySelector('.global-loading:not(.hidden)')) {
+        setTimeout(tryStart, 1500);
+        return;
       }
-    }, 1500);
+      startTour();
+    }
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => setTimeout(tryStart, 2500), { timeout: 5000 });
+    } else {
+      setTimeout(tryStart, 3000);
+    }
   }
 
   /* ═══════════════════════════════════════════════════════════
-     38. ANIMATED COUNTERS — números cuentan desde 0 al aparecer
+     38. ANIMATED COUNTERS — versión SAFE (sin MutationObserver
+     que cause infinite loop). Sólo anima EN viewport, una vez.
      ═══════════════════════════════════════════════════════════ */
   function initAnimatedCounters() {
+    if (!('IntersectionObserver' in window)) return;
+
     function parseNumber(str) {
-      // Extrae número (con decimales y signos $%) del texto
       const m = String(str || '').match(/-?\d[\d,.]*/);
       if (!m) return null;
       const n = parseFloat(m[0].replace(/,/g, ''));
@@ -2568,65 +2625,45 @@
       });
       return template.replace(orig, formatted);
     }
-    function animate(el, finalText) {
-      const finalVal = parseNumber(finalText);
-      if (finalVal === null) { el.textContent = finalText; return; }
-      const duration = 800;
-      const start = performance.now();
-      const startVal = parseNumber(el.textContent) || 0;
-      function step(now) {
-        const t = Math.min(1, (now - start) / duration);
-        // Ease out cubic
-        const eased = 1 - Math.pow(1 - t, 3);
-        const cur = startVal + (finalVal - startVal) * eased;
-        el.textContent = formatLike(finalText, cur);
-        if (t < 1) requestAnimationFrame(step);
-      }
-      requestAnimationFrame(step);
-    }
 
-    function watch(el) {
-      if (el._counterWatched) return;
-      el._counterWatched = true;
-      let lastText = el.textContent;
-      // Anima inicial cuando entra viewport
-      if ('IntersectionObserver' in window) {
-        const io = new IntersectionObserver((entries) => {
-          for (const e of entries) {
-            if (e.isIntersecting) {
-              const finalText = el.textContent;
-              if (parseNumber(finalText) !== null) {
-                el._suppress = true;
-                el.textContent = '0';
-                el._suppress = false;
-                animate(el, finalText);
-              }
-              io.unobserve(el);
-            }
-          }
-        }, { threshold: 0.3 });
-        io.observe(el);
-      }
-      // Anima en cambios posteriores
-      const mo = new MutationObserver(() => {
-        if (el._suppress) return;
-        const cur = el.textContent;
-        if (cur !== lastText && parseNumber(cur) !== null) {
-          el._suppress = true;
-          el.textContent = lastText;
-          el._suppress = false;
-          animate(el, cur);
-          lastText = cur;
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        const el = e.target;
+        io.unobserve(el);
+        if (el._counterAnimated) continue;
+        el._counterAnimated = true;
+        const finalText = el.textContent;
+        const finalVal = parseNumber(finalText);
+        if (finalVal === null || finalVal === 0) continue;
+        const duration = 700;
+        const start = performance.now();
+        function step(now) {
+          const t = Math.min(1, (now - start) / duration);
+          const eased = 1 - Math.pow(1 - t, 3);
+          const cur = finalVal * eased;
+          el.textContent = formatLike(finalText, cur);
+          if (t < 1) requestAnimationFrame(step);
+          else el.textContent = finalText; // restaurar exacto
         }
-      });
-      mo.observe(el, { childList: true, characterData: true, subtree: true });
-    }
+        requestAnimationFrame(step);
+      }
+    }, { threshold: 0.3 });
 
-    function scan() {
-      document.querySelectorAll('.dash-value, .dashboard-card-value, [data-prem-counter]').forEach(watch);
+    let scanScheduled = false;
+    function scheduleScan() {
+      if (scanScheduled) return;
+      scanScheduled = true;
+      requestAnimationFrame(() => {
+        scanScheduled = false;
+        document.querySelectorAll('.dash-value, .dashboard-card-value').forEach(el => {
+          if (!el._counterRegistered) { el._counterRegistered = true; io.observe(el); }
+        });
+      });
     }
-    scan();
-    new MutationObserver(scan).observe(document.body, { childList: true, subtree: true });
+    scheduleScan();
+    // Re-scan cuando aparezcan nuevas cards (throttled via rAF)
+    if (window.premScheduleIdleWork) window.premScheduleIdleWork(scheduleScan);
   }
 
   /* ═══════════════════════════════════════════════════════════
@@ -2763,10 +2800,10 @@
     initLoadingButtons();
     initScrollReveal();
     initBadgePulse();
-    initOnboardingTour();
+    // initOnboardingTour();  // DESHABILITADO en auto-boot - usar window.premOnboarding() manual
     initAnimatedCounters();
     initQuickFilterChips();
-    initSidebarStats();
+    // initSidebarStats();    // DESHABILITADO temporal — hace 2 fetch al boot que pueden colgar
   }
 
   if (document.readyState === 'loading') {
