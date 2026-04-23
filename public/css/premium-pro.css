@@ -1251,5 +1251,572 @@ body .modal-body .step-num {
 }
 
 /* ============================================================================
- * FIN — premium-pro.css
+ * §19 — FIXES CONSOLIDADOS (Audit v2 — 3 agentes paralelos, 2026-04-23)
+ * ============================================================================ */
+
+/* §19.1 — Header z-index sobre modales — fix para overlay
+ * Reportado por Agente 3: header.z-index:40 puede solaparse con modales */
+body.md3-on header.header,
+body header.header {
+  z-index: 50 !important;
+  position: sticky !important;
+  top: 0 !important;
+}
+
+/* §19.2 — Modal por encima de todo */
+body.md3-on .modal-overlay,
+body .modal-overlay,
+body.md3-on .modal,
+body .modal {
+  z-index: 1000 !important;
+}
+
+/* §19.3 — Modal MÁS ANCHO (el screenshot mostraba modal cortado)
+ * Antes: max-width 960px → ahora flexible según tamaño */
+body.md3-on .modal-content,
+body .modal-content,
+body.md3-on .modal-dialog,
+body .modal-dialog,
+body.md3-on .modal-box,
+body .modal-box,
+body.md3-on .prem-modal,
+body .prem-modal {
+  width: min(1080px, calc(100vw - 32px)) !important;
+  max-width: min(1080px, calc(100vw - 32px)) !important;
+}
+/* Modal compacto para confirms */
+body.md3-on .modal-box.modal-box--sm,
+body .modal-box.modal-box--sm,
+body.md3-on .modal-content--sm,
+body .modal-content--sm {
+  width: min(480px, calc(100vw - 32px)) !important;
+  max-width: min(480px, calc(100vw - 32px)) !important;
+}
+
+/* §19.4 — CHECKBOX/RADIO premium (el screenshot mostraba checkbox enorme rectangular)
+ * Reportado por usuario: "ADJUNTAR PDF" se veía como cuadrado azul gigante */
+body.md3-on input[type="checkbox"],
+body input[type="checkbox"] {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  max-width: 18px !important;
+  max-height: 18px !important;
+  flex-shrink: 0 !important;
+  border-radius: 5px !important;
+  margin: 0 !important;
+  vertical-align: middle !important;
+}
+body.md3-on input[type="radio"],
+body input[type="radio"] {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  max-width: 18px !important;
+  max-height: 18px !important;
+  flex-shrink: 0 !important;
+  border-radius: 50% !important;
+  margin: 0 !important;
+}
+
+/* Wrap checkbox + label en línea */
+body.md3-on label.check-label,
+body label.check-label,
+body.md3-on .form-check,
+body .form-check,
+body.md3-on .checkbox-row,
+body .checkbox-row {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  cursor: pointer !important;
+  font-size: 13px !important;
+  color: var(--pp-n700) !important;
+  user-select: none !important;
+  padding: 8px 0 !important;
+  width: auto !important;
+}
+
+/* §19.5 — SIDEBAR ACTIVE STATE más visible
+ * Reportado por Agente 3: solo box-shadow no es suficiente */
+body.md3-on aside.sidebar .tab,
+body aside.sidebar .tab,
+body.md3-on aside .tab,
+body aside .tab {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 44px !important;
+  height: 44px !important;
+  margin: 4px auto !important;
+  border-radius: 12px !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  color: var(--pp-n500) !important;
+  cursor: pointer !important;
+  transition: all .18s var(--pp-ease-out) !important;
+}
+body.md3-on aside.sidebar .tab:hover,
+body aside.sidebar .tab:hover,
+body.md3-on aside .tab:hover,
+body aside .tab:hover {
+  background: var(--pp-brand-50) !important;
+  color: var(--pp-brand-600) !important;
+  border-color: var(--pp-brand-100) !important;
+  transform: scale(1.04) !important;
+}
+body.md3-on aside.sidebar .tab.active,
+body aside.sidebar .tab.active,
+body.md3-on aside .tab.active,
+body aside .tab.active {
+  background: var(--pp-grad-brand) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 6px 14px -4px rgba(39, 84, 216, .55), inset 0 1px 0 rgba(255, 255, 255, .25) !important;
+}
+body.md3-on aside.sidebar .tab.active::before,
+body aside.sidebar .tab.active::before,
+body.md3-on aside .tab.active::before,
+body aside .tab.active::before {
+  content: '' !important;
+  position: absolute !important;
+  left: -10px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 4px !important;
+  height: 24px !important;
+  background: var(--pp-brand-600) !important;
+  border-radius: 0 4px 4px 0 !important;
+}
+
+/* §19.6 — TOOLTIPS CSS-ONLY para sidebar collapsed
+ * Reportado por Agente 3 — usa data-tooltip attribute */
+body.md3-on aside.sidebar [title]:hover::after,
+body aside.sidebar [title]:hover::after,
+body.md3-on aside .tab[title]:hover::after,
+body aside .tab[title]:hover::after {
+  content: attr(title) !important;
+  position: absolute !important;
+  left: calc(100% + 12px) !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  background: var(--pp-n900) !important;
+  color: #fff !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+  box-shadow: var(--pp-sh-md) !important;
+  z-index: 1500 !important;
+  pointer-events: none !important;
+  animation: pp-fade-in .2s var(--pp-ease-out) both !important;
+}
+body.md3-on aside.sidebar [title]:hover::before,
+body aside.sidebar [title]:hover::before,
+body.md3-on aside .tab[title]:hover::before,
+body aside .tab[title]:hover::before {
+  content: '' !important;
+  position: absolute !important;
+  left: calc(100% + 6px) !important;
+  top: 50% !important;
+  transform: translateY(-50%) rotate(45deg) !important;
+  width: 8px !important;
+  height: 8px !important;
+  background: var(--pp-n900) !important;
+  z-index: 1501 !important;
+  pointer-events: none !important;
+}
+
+/* §19.7 — Empty state inline en celda <td colspan>
+ * Reportado por Agente 1: clientes/refacciones usan <td colspan="N" class="empty"> */
+body.md3-on table.data-table td.empty,
+body table.data-table td.empty,
+body.md3-on table.data-table td.empty-cell,
+body table.data-table td.empty-cell,
+body.md3-on table.data-table tr.empty-row td,
+body table.data-table tr.empty-row td {
+  text-align: center !important;
+  padding: 64px 24px !important;
+  color: var(--pp-n400) !important;
+  font-size: 14px !important;
+  font-style: normal !important;
+  background: var(--pp-bg-subtle) !important;
+  border: 0 !important;
+}
+body.md3-on table.data-table td.empty::before,
+body table.data-table td.empty::before {
+  content: '\f570' !important;
+  font-family: 'Font Awesome 6 Free' !important;
+  font-weight: 900 !important;
+  display: block !important;
+  font-size: 36px !important;
+  margin-bottom: 12px !important;
+  color: var(--pp-n300) !important;
+}
+
+/* §19.8 — Min-width en columna de acciones — evita botones rotos
+ * Reportado por Agente 1 */
+body.md3-on table.data-table th.th-actions,
+body table.data-table th.th-actions,
+body.md3-on table.data-table td.td-actions,
+body table.data-table td.td-actions,
+body.md3-on table.data-table th:last-child,
+body table.data-table th:last-child {
+  min-width: 140px !important;
+  white-space: nowrap !important;
+}
+
+/* §19.9 — Filter row premium (los recuadros de filtros que aparecen como tarjetas)
+ * Refactor visual de la sección "FILTROS" en cotizaciones */
+body.md3-on .filter-row,
+body .filter-row,
+body.md3-on .filters-bar,
+body .filters-bar,
+body.md3-on .filters,
+body .filters {
+  background: var(--pp-bg-card) !important;
+  border: 1px solid var(--pp-bd) !important;
+  border-radius: var(--pp-r-md) !important;
+  padding: 16px !important;
+  margin-bottom: 16px !important;
+  box-shadow: var(--pp-sh-xs) !important;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
+  gap: 12px !important;
+  align-items: end !important;
+}
+body.md3-on .filter-row > *,
+body .filter-row > *,
+body.md3-on .filters > *,
+body .filters > * {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+body.md3-on .filter-row label,
+body .filter-row label,
+body.md3-on .filters label,
+body .filters label {
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .07em !important;
+  color: var(--pp-n500) !important;
+  margin: 0 !important;
+}
+body.md3-on .filter-input,
+body .filter-input,
+body.md3-on .filter-row input,
+body .filter-row input,
+body.md3-on .filter-row select,
+body .filter-row select {
+  height: 36px !important;
+  font-size: 12.5px !important;
+  padding: 0 12px !important;
+  border-radius: 8px !important;
+  border: 1.5px solid var(--pp-bd) !important;
+  background: var(--pp-bg-subtle) !important;
+}
+
+/* §19.10 — Toolbar (top-right donde van botones primarios) */
+body.md3-on .toolbar,
+body .toolbar,
+body.md3-on .panel-toolbar,
+body .panel-toolbar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+  padding: 12px 16px !important;
+  background: var(--pp-bg-card) !important;
+  border-bottom: 1px solid var(--pp-bd-soft) !important;
+}
+body.md3-on .toolbar .btn,
+body .toolbar .btn {
+  height: 36px !important;
+  font-size: 12.5px !important;
+  padding: 0 14px !important;
+}
+
+/* §19.11 — KPI dashboard score tiles (jerarquía mayor que cards normales)
+ * Reportado por Agente 3: dashboard tiles iguales que cards secundarias */
+body.md3-on .dashboard-score-tile,
+body .dashboard-score-tile,
+body.md3-on .kpi-hero,
+body .kpi-hero {
+  background: linear-gradient(135deg, #fff 0%, #f6f8fc 100%) !important;
+  border: 1px solid var(--pp-brand-100) !important;
+  border-radius: var(--pp-r-xl) !important;
+  padding: 24px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 12px -4px rgba(39, 84, 216, .12), 0 2px 4px -1px rgba(15, 23, 42, .06) !important;
+  min-height: 140px !important;
+}
+body.md3-on .dashboard-score-tile::before,
+body .dashboard-score-tile::before,
+body.md3-on .kpi-hero::before,
+body .kpi-hero::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 4px !important;
+  background: var(--pp-grad-brand) !important;
+  border-radius: var(--pp-r-xl) var(--pp-r-xl) 0 0 !important;
+}
+
+/* §19.12 — Tablet media query (768px - 1024px)
+ * Reportado por Agente 3 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  body.md3-on .filter-row,
+  body .filter-row {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+    padding: 12px !important;
+  }
+  body.md3-on .modal-content,
+  body .modal-content {
+    width: calc(100vw - 32px) !important;
+    max-width: calc(100vw - 32px) !important;
+  }
+  body.md3-on table.data-table {
+    font-size: 12px !important;
+  }
+  body.md3-on table.data-table th,
+  body table.data-table th,
+  body.md3-on table.data-table td,
+  body table.data-table td {
+    padding: 10px 8px !important;
+  }
+}
+
+/* §19.13 — Loading dot/spinner premium */
+body.md3-on .loading-dots,
+body .loading-dots {
+  display: inline-flex !important;
+  gap: 4px !important;
+  align-items: center !important;
+}
+body.md3-on .loading-dots span,
+body .loading-dots span {
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  background: var(--pp-brand-500) !important;
+  animation: pp-bounce-dot 1.4s var(--pp-ease-io) infinite both !important;
+}
+body.md3-on .loading-dots span:nth-child(1) { animation-delay: -.32s !important; }
+body.md3-on .loading-dots span:nth-child(2) { animation-delay: -.16s !important; }
+body.md3-on .loading-dots span:nth-child(3) { animation-delay: 0s !important; }
+@keyframes pp-bounce-dot {
+  0%, 80%, 100% { transform: scale(0); opacity: .3; }
+  40%           { transform: scale(1); opacity: 1; }
+}
+
+/* §19.14 — Form actions (botones submit/cancel al pie de modal/form) */
+body.md3-on .form-actions,
+body .form-actions,
+body.md3-on .form-buttons,
+body .form-buttons {
+  display: flex !important;
+  gap: 10px !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  padding-top: 16px !important;
+  margin-top: 16px !important;
+  border-top: 1px solid var(--pp-bd-soft) !important;
+  flex-wrap: wrap !important;
+}
+
+/* §19.15 — Confirm modal (más sutil que el azul brand) */
+body.md3-on #confirm-modal .modal-header,
+body #confirm-modal .modal-header,
+body.md3-on .modal--confirm .modal-header,
+body .modal--confirm .modal-header {
+  background: var(--pp-bg-card) !important;
+  color: var(--pp-n800) !important;
+  border-bottom: 1px solid var(--pp-bd) !important;
+}
+body.md3-on #confirm-modal .modal-header h2,
+body #confirm-modal .modal-header h2,
+body.md3-on #confirm-modal .modal-header h3,
+body #confirm-modal .modal-header h3 {
+  color: var(--pp-n800) !important;
+}
+body.md3-on #confirm-modal .modal-header .btn-close,
+body #confirm-modal .modal-header .btn-close {
+  background: var(--pp-n100) !important;
+  color: var(--pp-n600) !important;
+  border-color: var(--pp-bd) !important;
+}
+
+/* §19.16 — Dark theme overrides para sidebar/header
+ * Reportado por Agente 3 */
+body.md3-on.theme-dark aside.sidebar,
+body.theme-dark aside.sidebar,
+body.md3-on[data-theme="dark"] aside.sidebar,
+body[data-theme="dark"] aside.sidebar {
+  background: #0f172a !important;
+  border-right-color: rgba(255, 255, 255, .08) !important;
+}
+body.md3-on.theme-dark aside.sidebar .tab,
+body.theme-dark aside.sidebar .tab {
+  color: rgba(255, 255, 255, .65) !important;
+}
+body.md3-on.theme-dark aside.sidebar .tab:hover,
+body.theme-dark aside.sidebar .tab:hover {
+  background: rgba(96, 139, 243, .12) !important;
+  color: #fff !important;
+  border-color: rgba(96, 139, 243, .25) !important;
+}
+
+/* §19.17 — Lista en sidebar collapsed: ocultar etiquetas, mostrar solo iconos */
+body.md3-on aside.sidebar .tab .label,
+body aside.sidebar .tab .label,
+body.md3-on aside.sidebar .tab .tab-label,
+body aside.sidebar .tab .tab-label {
+  display: none !important;
+}
+
+/* §19.18 — Inputs file premium */
+body.md3-on input[type="file"],
+body input[type="file"] {
+  padding: 8px !important;
+  background: var(--pp-bg-subtle) !important;
+  border: 2px dashed var(--pp-bd-strong) !important;
+  border-radius: var(--pp-r-md) !important;
+  cursor: pointer !important;
+  transition: all .18s var(--pp-ease-out) !important;
+}
+body.md3-on input[type="file"]:hover,
+body input[type="file"]:hover {
+  background: var(--pp-brand-50) !important;
+  border-color: var(--pp-brand-300) !important;
+}
+
+/* §19.19 — Inline help text bajo inputs */
+body.md3-on .form-help,
+body .form-help,
+body.md3-on .form-hint,
+body .form-hint,
+body.md3-on .input-hint,
+body .input-hint {
+  font-size: 11.5px !important;
+  color: var(--pp-n500) !important;
+  margin-top: 4px !important;
+  line-height: 1.4 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+/* §19.20 — Required marker */
+body.md3-on label .required,
+body label .required,
+body.md3-on label.required::after,
+body label.required::after {
+  color: var(--pp-dan-500) !important;
+  font-weight: 700 !important;
+  margin-left: 2px !important;
+}
+
+/* §19.21 — Tabs (pestañas en paneles de configuración) */
+body.md3-on .tabs-bar,
+body .tabs-bar,
+body.md3-on .tab-list,
+body .tab-list,
+body.md3-on [role="tablist"],
+body [role="tablist"] {
+  display: flex !important;
+  gap: 4px !important;
+  padding: 4px !important;
+  background: var(--pp-n100) !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--pp-bd) !important;
+  width: max-content !important;
+}
+body.md3-on .tabs-bar button,
+body .tabs-bar button,
+body.md3-on [role="tab"],
+body [role="tab"] {
+  padding: 8px 16px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--pp-n600) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  border-radius: 9px !important;
+  transition: all .15s var(--pp-ease-out) !important;
+}
+body.md3-on .tabs-bar button:hover,
+body .tabs-bar button:hover {
+  color: var(--pp-n800) !important;
+}
+body.md3-on .tabs-bar button.active,
+body .tabs-bar button.active,
+body.md3-on [role="tab"][aria-selected="true"],
+body [role="tab"][aria-selected="true"] {
+  background: var(--pp-bg-card) !important;
+  color: var(--pp-brand-700) !important;
+  box-shadow: var(--pp-sh-sm) !important;
+}
+
+/* §19.22 — Datalist arrow (autocomplete) */
+body.md3-on input[list],
+body input[list] {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  padding-right: 36px !important;
+}
+
+/* §19.23 — Better summary box (los recuadros con estadísticas tipo "TOTAL: $X") */
+body.md3-on .summary-box,
+body .summary-box,
+body.md3-on .resumen-bar,
+body .resumen-bar,
+body.md3-on .totals-box,
+body .totals-box {
+  background: var(--pp-grad-night) !important;
+  color: #fff !important;
+  padding: 20px 24px !important;
+  border-radius: var(--pp-r-lg) !important;
+  display: flex !important;
+  gap: 24px !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  box-shadow: 0 12px 24px -8px rgba(15, 23, 42, .35) !important;
+}
+body.md3-on .summary-box .label,
+body .summary-box .label {
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+  color: rgba(255, 255, 255, .65) !important;
+  font-weight: 600 !important;
+}
+body.md3-on .summary-box .value,
+body .summary-box .value {
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  font-variant-numeric: tabular-nums !important;
+  letter-spacing: -.02em !important;
+}
+
+/* §19.24 — TextArea con scroll personalizado */
+body.md3-on textarea,
+body textarea {
+  scrollbar-width: thin !important;
+  scrollbar-color: var(--pp-n300) transparent !important;
+}
+
+/* ============================================================================
+ * FIN — premium-pro.css v2 (post-audit)
  * ============================================================================ */

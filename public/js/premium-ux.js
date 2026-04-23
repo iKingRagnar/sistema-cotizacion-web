@@ -2817,7 +2817,73 @@
     // initOnboardingTour();  // DESHABILITADO en auto-boot - usar window.premOnboarding() manual
     initAnimatedCounters();
     initQuickFilterChips();
+    initEmptySelectFix();
+    initLabelForFix();
     // initSidebarStats();    // DESHABILITADO temporal — hace 2 fetch al boot que pueden colgar
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     initEmptySelectFix — arregla el bug de "select vacío barra negra"
+     Inserta <option disabled selected>— Sin opciones —</option>
+     en cualquier <select> que esté vacío en el DOM.
+     ═══════════════════════════════════════════════════════════ */
+  function initEmptySelectFix() {
+    function fillEmptySelects(root) {
+      const selects = (root || document).querySelectorAll('select:not([data-prem-fixed])');
+      selects.forEach((sel) => {
+        try {
+          if (sel.options && sel.options.length === 0) {
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.disabled = true;
+            opt.selected = true;
+            opt.textContent = '— Cargando opciones… —';
+            opt.setAttribute('data-prem-placeholder', '1');
+            sel.appendChild(opt);
+            sel.setAttribute('data-prem-fixed', '1');
+          } else {
+            sel.setAttribute('data-prem-fixed', '1');
+          }
+        } catch (e) { /* swallow */ }
+      });
+      // Una vez que el select tiene opciones reales, quitar placeholder
+      const fixed = (root || document).querySelectorAll('select[data-prem-fixed="1"]');
+      fixed.forEach((sel) => {
+        const ph = sel.querySelector('option[data-prem-placeholder="1"]');
+        if (ph && sel.options.length > 1) {
+          ph.remove();
+        }
+      });
+    }
+    fillEmptySelects(document);
+    if (typeof premOnDomChange === 'function') {
+      premOnDomChange(() => fillEmptySelects(document));
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     initLabelForFix — agregar for="" attribute a labels sueltos
+     que estén junto a un input/select/textarea con id.
+     Mejora a11y y permite click-to-focus.
+     ═══════════════════════════════════════════════════════════ */
+  function initLabelForFix() {
+    function fixLabels(root) {
+      const groups = (root || document).querySelectorAll('.form-group:not([data-prem-labeled])');
+      groups.forEach((g) => {
+        try {
+          const label = g.querySelector('label:not([for])');
+          const ctrl = g.querySelector('input[id], select[id], textarea[id]');
+          if (label && ctrl && ctrl.id) {
+            label.setAttribute('for', ctrl.id);
+          }
+          g.setAttribute('data-prem-labeled', '1');
+        } catch (e) { /* swallow */ }
+      });
+    }
+    fixLabels(document);
+    if (typeof premOnDomChange === 'function') {
+      premOnDomChange(() => fixLabels(document));
+    }
   }
 
   if (document.readyState === 'loading') {
