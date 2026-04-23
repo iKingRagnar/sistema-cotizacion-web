@@ -6633,11 +6633,17 @@ body.md3-on .md-modal-footer {
 
 /* ═══════════════════════════════════════════════════════════════════════════
    132. EVITAR SCROLL HORIZONTAL EN TODA LA APP
+   Fix 2026-04-23: acotado a móvil (≤640px). En desktop este override global
+   recortaba dropdowns/menús absolutos que sobresalían del body (botones
+   "invisibles"). Los contenedores internos (.app-main, .panel, .table-wrap)
+   siguen con sus propios overflow controls más abajo.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-html, body, body.md3-on {
-  overflow-x: hidden !important;
-  max-width: 100vw !important;
+@media (max-width: 640px) {
+  html, body, body.md3-on {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+  }
 }
 
 body.md3-on .app-main,

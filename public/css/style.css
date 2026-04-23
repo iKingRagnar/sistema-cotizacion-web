@@ -1057,7 +1057,7 @@ body.dark-theme #tabla-bitacoras th.th-actions {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   box-shadow: var(--shadow-xl);
-  z-index: 2147483000;
+  z-index: 14900;
 }
 .notifications-panel.hidden { display: none !important; }
 .notifications-header {
@@ -5980,7 +5980,7 @@ body.dark-theme .modal-box:not(.pdf-preview-modal) .form-group textarea,
 .ref-img-lightbox {
   position: fixed;
   inset: 0;
-  z-index: 2147483001;
+  z-index: 19500;
   display: flex;
   align-items: center;
   justify-content: center;

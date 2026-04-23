@@ -131,7 +131,8 @@ function isPublicPath(url) {
     p.startsWith('/api/config') ||
     p.startsWith('/api/auth/login') ||
     p.startsWith('/api/ping') ||
-    p.startsWith('/api/tipo-cambio-banxico')
+    p.startsWith('/api/tipo-cambio-banxico') ||
+    p.startsWith('/api/tipo-cambio')
   );
 }
 
