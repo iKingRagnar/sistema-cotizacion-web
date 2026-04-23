@@ -1470,14 +1470,18 @@ body table.data-table th:last-child {
   white-space: nowrap !important;
 }
 
-/* §19.9 — Filter row premium (los recuadros de filtros que aparecen como tarjetas)
- * Refactor visual de la sección "FILTROS" en cotizaciones */
-body.md3-on .filter-row,
-body .filter-row,
-body.md3-on .filters-bar,
-body .filters-bar,
-body.md3-on .filters,
-body .filters {
+/* §19.9 — Filter row premium
+ * IMPORTANTE: el HTML usa DOS estructuras distintas:
+ *   1) <div class="filters-bar"> (cards externas) → grid
+ *   2) <tr class="filter-row"> dentro de tabla → mantener layout de tabla
+ * Solo aplicamos grid a divs externos, NO a tr.
+ */
+body.md3-on div.filter-row,
+body div.filter-row,
+body.md3-on div.filters-bar,
+body div.filters-bar,
+body.md3-on .filters:not(tr),
+body .filters:not(tr) {
   background: var(--pp-bg-card) !important;
   border: 1px solid var(--pp-bd) !important;
   border-radius: var(--pp-r-md) !important;
@@ -1489,18 +1493,18 @@ body .filters {
   gap: 12px !important;
   align-items: end !important;
 }
-body.md3-on .filter-row > *,
-body .filter-row > *,
-body.md3-on .filters > *,
-body .filters > * {
+body.md3-on div.filter-row > *,
+body div.filter-row > *,
+body.md3-on div.filters-bar > *,
+body div.filters-bar > * {
   display: flex !important;
   flex-direction: column !important;
   gap: 4px !important;
 }
-body.md3-on .filter-row label,
-body .filter-row label,
-body.md3-on .filters label,
-body .filters label {
+body.md3-on div.filter-row label,
+body div.filter-row label,
+body.md3-on div.filters-bar label,
+body div.filters-bar label {
   font-size: 10.5px !important;
   font-weight: 700 !important;
   text-transform: uppercase !important;
@@ -1508,18 +1512,27 @@ body .filters label {
   color: var(--pp-n500) !important;
   margin: 0 !important;
 }
+
+/* Filter inputs (en cualquier contexto: tabla o div) */
 body.md3-on .filter-input,
-body .filter-input,
-body.md3-on .filter-row input,
-body .filter-row input,
-body.md3-on .filter-row select,
-body .filter-row select {
-  height: 36px !important;
-  font-size: 12.5px !important;
-  padding: 0 12px !important;
+body .filter-input {
+  height: 32px !important;
+  font-size: 12px !important;
+  padding: 0 10px !important;
   border-radius: 8px !important;
   border: 1.5px solid var(--pp-bd) !important;
   background: var(--pp-bg-subtle) !important;
+}
+
+/* Cuando .filter-row es un <tr> dentro de tabla: mantener TR + estilo header sutil */
+body.md3-on table.data-table tr.filter-row,
+body table.data-table tr.filter-row {
+  background: var(--pp-bg-subtle) !important;
+}
+body.md3-on table.data-table tr.filter-row td,
+body table.data-table tr.filter-row td {
+  padding: 6px 8px !important;
+  border-bottom: 1px solid var(--pp-bd) !important;
 }
 
 /* §19.10 — Toolbar (top-right donde van botones primarios) */
@@ -1973,5 +1986,209 @@ body header.header .servicio-title {
 }
 
 /* ============================================================================
- * FIN — premium-pro.css v3 (post-deploy refinements)
+ * §21 — MODULE DELETE ZONE (la zona roja "Eliminar cotización") + section header
+ * ============================================================================ */
+
+/* §21.1 — La caja roja peligrosa de "Eliminar cotización" debería ser COLLAPSIBLE
+ * pero al menos hacerla menos prominente y con visual de zona peligrosa */
+body.md3-on .module-delete-zone,
+body .module-delete-zone {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%) !important;
+  border: 1px solid var(--pp-dan-100) !important;
+  border-left: 4px solid var(--pp-dan-500) !important;
+  border-radius: var(--pp-r-md) !important;
+  padding: 16px 20px !important;
+  margin-top: 24px !important;
+  box-shadow: 0 2px 8px -2px rgba(220, 38, 38, .08) !important;
+}
+body.md3-on .module-delete-zone h3,
+body .module-delete-zone h3 {
+  color: var(--pp-dan-700) !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  margin: 0 0 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+body.md3-on .module-delete-zone .hint,
+body .module-delete-zone .hint {
+  color: var(--pp-n600) !important;
+  font-size: 12.5px !important;
+  margin: 0 0 12px !important;
+}
+body.md3-on .module-delete-zone .form-row,
+body .module-delete-zone .form-row {
+  align-items: end !important;
+}
+
+/* §21.2 — Section header (los headers de cada panel con icono + título + toolbar) */
+body.md3-on .section-header,
+body .section-header,
+body.md3-on .panel-header,
+body .panel-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  padding: 16px 20px !important;
+  background: var(--pp-bg-card) !important;
+  border-bottom: 1px solid var(--pp-bd-soft) !important;
+  border-radius: var(--pp-r-md) var(--pp-r-md) 0 0 !important;
+  flex-wrap: wrap !important;
+}
+body.md3-on .section-header h2,
+body .section-header h2 {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: var(--pp-n800) !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  letter-spacing: -.01em !important;
+}
+body.md3-on .section-header h2 i,
+body .section-header h2 i {
+  width: 32px !important;
+  height: 32px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: var(--pp-grad-brand) !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  box-shadow: 0 4px 8px -2px rgba(39, 84, 216, .35) !important;
+}
+body.md3-on .section-header .toolbar,
+body .section-header .toolbar {
+  display: flex !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+}
+
+/* §21.3 — Toolbar checkbox label (con texto inline) */
+body.md3-on .toolbar-checkbox,
+body .toolbar-checkbox {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  color: var(--pp-n700) !important;
+  cursor: pointer !important;
+  padding: 0 12px !important;
+  height: 36px !important;
+  background: var(--pp-bg-subtle) !important;
+  border: 1px solid var(--pp-bd) !important;
+  border-radius: 9px !important;
+  transition: all .15s var(--pp-ease-out) !important;
+  user-select: none !important;
+}
+body.md3-on .toolbar-checkbox:hover,
+body .toolbar-checkbox:hover {
+  background: var(--pp-brand-50) !important;
+  border-color: var(--pp-brand-200) !important;
+  color: var(--pp-brand-700) !important;
+}
+
+/* §21.4 — Empty card (la caja "No hay cotizaciones" con icon + button) */
+body.md3-on .empty-card,
+body .empty-card {
+  background: var(--pp-bg-card) !important;
+  border: 2px dashed var(--pp-bd-strong) !important;
+  border-radius: var(--pp-r-lg) !important;
+  padding: 48px 24px !important;
+  text-align: center !important;
+  margin: 16px 0 !important;
+}
+body.md3-on .empty-card .empty-icon,
+body .empty-card .empty-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 80px !important;
+  height: 80px !important;
+  border-radius: 50% !important;
+  background: var(--pp-grad-brand) !important;
+  color: #fff !important;
+  font-size: 32px !important;
+  margin: 0 auto 16px !important;
+  box-shadow: 0 12px 24px -8px rgba(39, 84, 216, .35) !important;
+  animation: pp-float 3s var(--pp-ease-io) infinite !important;
+}
+body.md3-on .empty-card h3,
+body .empty-card h3 {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: var(--pp-n800) !important;
+  margin: 0 0 8px !important;
+}
+body.md3-on .empty-card p,
+body .empty-card p {
+  color: var(--pp-n500) !important;
+  font-size: 13.5px !important;
+  margin: 0 0 20px !important;
+  max-width: 420px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+body.md3-on .empty-card .btn,
+body .empty-card .btn {
+  display: inline-flex !important;
+}
+
+/* §21.5 — David Cantú comissions card */
+body.md3-on .david-comisiones-card,
+body .david-comisiones-card {
+  background: var(--pp-bg-card) !important;
+  border: 1px solid var(--pp-bd) !important;
+  border-radius: var(--pp-r-md) !important;
+  padding: 0 !important;
+  margin: 16px 0 !important;
+  box-shadow: var(--pp-sh-sm) !important;
+  overflow: hidden !important;
+}
+body.md3-on .david-comisiones-head,
+body .david-comisiones-head {
+  background: var(--pp-grad-acc) !important;
+  color: #fff !important;
+  padding: 16px 20px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 12px !important;
+  flex-wrap: wrap !important;
+}
+body.md3-on .david-comisiones-head h3,
+body .david-comisiones-head h3 {
+  color: #fff !important;
+  font-size: 15px !important;
+  margin: 0 !important;
+}
+body.md3-on .david-comisiones-sub,
+body .david-comisiones-sub {
+  color: rgba(255, 255, 255, .92) !important;
+  font-size: 12px !important;
+  margin: 4px 0 0 !important;
+}
+body.md3-on .david-comisiones-mail-btn,
+body .david-comisiones-mail-btn {
+  background: rgba(255, 255, 255, .18) !important;
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, .3) !important;
+}
+body.md3-on .david-comisiones-mail-btn:hover,
+body .david-comisiones-mail-btn:hover {
+  background: rgba(255, 255, 255, .28) !important;
+  border-color: rgba(255, 255, 255, .5) !important;
+}
+
+/* ============================================================================
+ * FIN — premium-pro.css v4 (filter-row fix + section header + delete zone)
  * ============================================================================ */
