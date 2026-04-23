@@ -1349,11 +1349,25 @@
         }
       }
     }
+    function processInput(el) {
+      if (el._premLabeled) return;
+      if (el.type === 'hidden' || el.type === 'submit' || el.type === 'button') { el._premLabeled = true; return; }
+      if (el.getAttribute('aria-label') || el.getAttribute('aria-labelledby')) { el._premLabeled = true; return; }
+      if (el.id) {
+        const lbl = document.querySelector('label[for="' + el.id + '"]');
+        if (lbl && (lbl.textContent || '').trim()) { el._premLabeled = true; return; }
+      }
+      if (el.closest && el.closest('label')) { el._premLabeled = true; return; }
+      const fromAttr = (el.getAttribute('placeholder') || el.getAttribute('title') || el.getAttribute('data-prem-tooltip') || '').trim();
+      if (fromAttr) {
+        el.setAttribute('aria-label', fromAttr);
+        el._premLabeled = true;
+      }
+    }
     function scan(root) {
-      (root.querySelectorAll
-        ? root.querySelectorAll('table.data-table td.th-actions button, table.data-table td.th-actions .btn, .th-actions button, .th-actions .btn')
-        : []
-      ).forEach(processBtn);
+      if (!root.querySelectorAll) return;
+      root.querySelectorAll('table.data-table td.th-actions button, table.data-table td.th-actions .btn, .th-actions button, .th-actions .btn').forEach(processBtn);
+      root.querySelectorAll('input, select, textarea').forEach(processInput);
     }
     scan(document);
     const mo = new MutationObserver(muts => {
