@@ -5800,3 +5800,272 @@ body.md3-on input[type="file"]::-webkit-file-upload-button:hover {
     grid-template-columns: repeat(3, auto);
   }
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   103. ONBOARDING TOUR — overlay + spotlight + popover
+   ═══════════════════════════════════════════════════════════════════════════ */
+.prem-tour-overlay {
+  position: fixed; inset: 0;
+  z-index: 1500;
+  pointer-events: auto;
+  opacity: 0;
+  transition: opacity .3s ease;
+  background: rgba(15,23,42,.72);
+}
+.prem-tour-overlay.open { opacity: 1; }
+.prem-tour-overlay.closing { opacity: 0; }
+
+.prem-tour-spotlight {
+  position: absolute;
+  border-radius: 14px;
+  display: none;
+  box-shadow:
+    0 0 0 9999px rgba(15,23,42,.72),
+    0 0 0 4px rgba(255,255,255,.5),
+    0 0 32px rgba(255,255,255,.4);
+  transition: all .35s cubic-bezier(.4,0,.2,1);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.prem-tour-popover {
+  position: absolute;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(15,23,42,.4);
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  padding: 22px;
+  z-index: 3;
+  transition: top .35s cubic-bezier(.4,0,.2,1), left .35s cubic-bezier(.4,0,.2,1);
+  animation: premScaleIn .3s cubic-bezier(.34,1.56,.64,1);
+}
+
+.prem-tour-progress {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.prem-tour-progress span {
+  flex: 1;
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 9999px;
+  transition: background .3s ease;
+}
+.prem-tour-progress span.done { background: #94a3b8; }
+.prem-tour-progress span.active {
+  background: var(--ds-grad, linear-gradient(135deg,#1e3a8a,#2563eb));
+  background-size: 100% 100%;
+}
+
+.prem-tour-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 8px;
+  letter-spacing: -.01em;
+}
+.prem-tour-body {
+  font-size: .88rem;
+  color: #475569;
+  line-height: 1.55;
+  margin-bottom: 18px;
+}
+.prem-tour-body strong { color: #0f172a; font-weight: 700; }
+
+.prem-tour-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.prem-tour-skip {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: .8rem;
+  cursor: pointer;
+  padding: 6px 10px;
+  font-weight: 600;
+}
+.prem-tour-skip:hover { color: #475569; }
+.prem-tour-nav { display: flex; gap: 6px; }
+.prem-tour-prev,
+.prem-tour-next {
+  padding: 8px 16px;
+  border-radius: 9px;
+  border: none;
+  font-weight: 600;
+  font-size: .82rem;
+  cursor: pointer;
+  transition: all .15s cubic-bezier(.34,1.56,.64,1);
+}
+.prem-tour-prev {
+  background: #f1f5f9;
+  color: #475569;
+}
+.prem-tour-prev:hover { background: #e2e8f0; }
+.prem-tour-next {
+  background: var(--ds-grad, linear-gradient(135deg,#1e3a8a,#2563eb));
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(37,99,235,.32);
+}
+.prem-tour-next:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(37,99,235,.42);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   104. ANIMATED COUNTERS — visual hint sutil mientras anima
+   ═══════════════════════════════════════════════════════════════════════════ */
+body.md3-on .dash-value,
+body.md3-on .dashboard-card-value {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' on;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   105. QUICK FILTER CHIPS — cursor pointer en badges dentro tabla
+   ═══════════════════════════════════════════════════════════════════════════ */
+body.md3-on table.data-table tbody td .badge,
+body.md3-on table.data-table tbody td .estatus-pill,
+body.md3-on table.data-table tbody td .status-pill,
+body.md3-on table.data-table tbody td .semaforo,
+body.md3-on table.data-table tbody td [class*="badge-mant-"],
+body.md3-on table.data-table tbody td [class*="badge-bono-"],
+body.md3-on table.data-table tbody td [class*="pvc-badge-"] {
+  cursor: pointer;
+  transition: transform .15s cubic-bezier(.34,1.56,.64,1), box-shadow .15s ease;
+}
+body.md3-on table.data-table tbody td .badge:hover,
+body.md3-on table.data-table tbody td .estatus-pill:hover,
+body.md3-on table.data-table tbody td .status-pill:hover,
+body.md3-on table.data-table tbody td .semaforo:hover {
+  transform: translateY(-1px) scale(1.04);
+  box-shadow: 0 4px 12px rgba(15,23,42,.16);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   106. SIDEBAR STATS WIDGET
+   ═══════════════════════════════════════════════════════════════════════════ */
+.prem-sidebar-stats {
+  margin: 16px 10px;
+  padding: 12px;
+  background: linear-gradient(135deg, rgba(37,99,235,.06), rgba(13,148,136,.04));
+  border: 1px solid rgba(37,99,235,.12);
+  border-radius: 12px;
+  display: block;
+}
+.prem-stats-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--ds-text-2, #475569);
+  margin-bottom: 10px;
+}
+.prem-stats-head i {
+  color: var(--ds-primary-2, #2563eb);
+  font-size: .7rem;
+}
+.prem-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.prem-stat {
+  background: #fff;
+  border: 1px solid var(--ds-border, #e2e8f0);
+  border-radius: 9px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: all .15s ease;
+  text-align: center;
+}
+.prem-stat:hover {
+  border-color: var(--ds-primary-2, #2563eb);
+  background: #eff6ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(37,99,235,.12);
+}
+.prem-stat-num {
+  display: block;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--ds-primary-2, #2563eb);
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+.prem-stat-lbl {
+  display: block;
+  font-size: .62rem;
+  font-weight: 600;
+  color: var(--ds-text-2, #475569);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-top: 2px;
+}
+
+/* Sidebar collapsed hide stats widget */
+body.sidebar-rail-collapsed.md3-on .prem-sidebar-stats {
+  display: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   107. SECTION DIVIDERS sutiles entre bloques
+   ═══════════════════════════════════════════════════════════════════════════ */
+body.md3-on .panel.active > h3:not(:first-child),
+body.md3-on .panel.active > .section-header + h3 {
+  position: relative;
+  padding-top: 24px;
+  margin-top: 24px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ds-text, #0f172a);
+}
+body.md3-on .panel.active > h3:not(:first-child)::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--ds-border, #e2e8f0) 20%, var(--ds-border, #e2e8f0) 80%, transparent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   108. PANEL transition más suave
+   ═══════════════════════════════════════════════════════════════════════════ */
+body.md3-on .panel.active {
+  animation: dsPanelInSmooth .35s cubic-bezier(.16,.78,.27,1) both !important;
+}
+@keyframes dsPanelInSmooth {
+  from { opacity: 0; transform: translateY(12px); filter: blur(2px); }
+  to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   109. VALUE COUNT-UP visual — pulso al cambiar
+   ═══════════════════════════════════════════════════════════════════════════ */
+body.md3-on .prem-value-pulse {
+  position: relative;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   110. RESPONSIVE FAB STACK — los 2 FABs no se montan
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  .prem-tour-popover {
+    width: calc(100vw - 24px);
+    padding: 18px;
+  }
+  .prem-tour-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .prem-tour-nav { justify-content: space-between; }
+}

@@ -2390,6 +2390,342 @@
     new MutationObserver(scan).observe(document.body, { childList: true, subtree: true });
   }
 
+  /* ═══════════════════════════════════════════════════════════
+     37. ONBOARDING TOUR — guía de 6 pasos para usuarios nuevos
+     ═══════════════════════════════════════════════════════════ */
+  function initOnboardingTour() {
+    const KEY = LS_PREFIX + 'onboarding-done';
+    if (localStorage.getItem(KEY)) {
+      // Expone manual para que el usuario pueda re-disparar
+      window.premOnboarding = startTour;
+      return;
+    }
+    window.premOnboarding = startTour;
+
+    function startTour() {
+      const STEPS = [
+        {
+          target: '.app-header, header.header, .header',
+          title: '👋 Bienvenido al Sistema',
+          body: 'Esta es tu plataforma de gestión. En unos pasos te muestro lo esencial.',
+          pos: 'bottom',
+        },
+        {
+          target: '.sidebar-nav, nav.sidebar-nav',
+          title: '📋 Navegación lateral',
+          body: 'Todos los módulos están aquí. Click para entrar. Puedes minimizar el sidebar con el botón ☰.',
+          pos: 'right',
+        },
+        {
+          target: 'table.data-table, .table-wrap',
+          title: '🔍 Tablas y filtros',
+          body: 'Click en cualquier columna para ordenar. Usa los filtros arriba de la tabla. Shift+Click selecciona múltiples filas.',
+          pos: 'top',
+        },
+        {
+          target: '.prem-theme-fab',
+          title: '🎨 Personaliza tu tema',
+          body: 'Cambia el color principal del sistema entre 5 presets. Tu elección queda guardada.',
+          pos: 'left',
+        },
+        {
+          target: '.prem-density-fab',
+          title: '📏 Ajusta la densidad',
+          body: 'Compacto, regular o espacioso. Cambia cómo se ven las tablas según tu pantalla.',
+          pos: 'left',
+        },
+        {
+          title: '⌨️ Atajos útiles',
+          body: '<strong>Ctrl+K</strong> búsqueda global · <strong>?</strong> ver todos los atajos · <strong>Esc</strong> cerrar modales · <strong>h</strong> ver historial de fila.',
+          center: true,
+        },
+      ];
+
+      let step = 0;
+      const overlay = document.createElement('div');
+      overlay.className = 'prem-tour-overlay';
+      overlay.innerHTML = `
+        <div class="prem-tour-spotlight"></div>
+        <div class="prem-tour-popover">
+          <div class="prem-tour-progress"></div>
+          <h3 class="prem-tour-title"></h3>
+          <div class="prem-tour-body"></div>
+          <div class="prem-tour-actions">
+            <button class="prem-tour-skip" type="button">Saltar</button>
+            <div class="prem-tour-nav">
+              <button class="prem-tour-prev" type="button">← Atrás</button>
+              <button class="prem-tour-next" type="button">Siguiente →</button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+
+      const spotlight = overlay.querySelector('.prem-tour-spotlight');
+      const popover = overlay.querySelector('.prem-tour-popover');
+      const titleEl = overlay.querySelector('.prem-tour-title');
+      const bodyEl  = overlay.querySelector('.prem-tour-body');
+      const progressEl = overlay.querySelector('.prem-tour-progress');
+      const prevBtn = overlay.querySelector('.prem-tour-prev');
+      const nextBtn = overlay.querySelector('.prem-tour-next');
+      const skipBtn = overlay.querySelector('.prem-tour-skip');
+
+      function render() {
+        const s = STEPS[step];
+        titleEl.textContent = s.title;
+        bodyEl.innerHTML = s.body;
+        progressEl.innerHTML = STEPS.map((_, i) =>
+          `<span class="${i === step ? 'active' : ''}${i < step ? ' done' : ''}"></span>`
+        ).join('');
+        prevBtn.style.visibility = step === 0 ? 'hidden' : 'visible';
+        nextBtn.textContent = step === STEPS.length - 1 ? '✓ Listo' : 'Siguiente →';
+
+        const target = s.target ? document.querySelector(s.target) : null;
+        if (target && !s.center) {
+          const rect = target.getBoundingClientRect();
+          // Spotlight sobre el target
+          spotlight.style.cssText = `
+            top: ${rect.top - 8}px;
+            left: ${rect.left - 8}px;
+            width: ${rect.width + 16}px;
+            height: ${rect.height + 16}px;
+            display: block;
+          `;
+          // Posicionar popover según pos
+          const pop = popover.getBoundingClientRect();
+          const popW = 360, popH = pop.height || 200;
+          let top, left;
+          if (s.pos === 'right') {
+            top = Math.max(20, Math.min(rect.top, innerHeight - popH - 20));
+            left = Math.min(rect.right + 16, innerWidth - popW - 20);
+          } else if (s.pos === 'left') {
+            top = Math.max(20, Math.min(rect.top, innerHeight - popH - 20));
+            left = Math.max(20, rect.left - popW - 16);
+          } else if (s.pos === 'top') {
+            top = Math.max(20, rect.top - popH - 16);
+            left = Math.max(20, Math.min(rect.left + rect.width / 2 - popW / 2, innerWidth - popW - 20));
+          } else { // bottom default
+            top = Math.min(rect.bottom + 16, innerHeight - popH - 20);
+            left = Math.max(20, Math.min(rect.left + rect.width / 2 - popW / 2, innerWidth - popW - 20));
+          }
+          popover.style.cssText = `top: ${top}px; left: ${left}px; transform: none;`;
+        } else {
+          // Centrado sin spotlight
+          spotlight.style.display = 'none';
+          popover.style.cssText = 'top: 50%; left: 50%; transform: translate(-50%, -50%);';
+        }
+      }
+
+      function done() {
+        try { localStorage.setItem(KEY, '1'); } catch {}
+        overlay.classList.add('closing');
+        setTimeout(() => overlay.remove(), 300);
+        if (window.premToast) window.premToast('¡Listo! Disfruta el sistema.', { type: 'success', confetti: true });
+      }
+
+      prevBtn.addEventListener('click', () => { if (step > 0) { step--; render(); } });
+      nextBtn.addEventListener('click', () => {
+        if (step < STEPS.length - 1) { step++; render(); }
+        else done();
+      });
+      skipBtn.addEventListener('click', done);
+
+      render();
+      setTimeout(() => overlay.classList.add('open'), 30);
+      window.addEventListener('resize', render);
+    }
+
+    // Inicia tour cuando todo esté cargado (delay para que app.js termine)
+    setTimeout(() => {
+      // Solo si el body está visible (no estamos en login)
+      if (document.querySelector('.sidebar-nav') && !document.querySelector('.login-screen.active, #login-screen:not(.hidden)')) {
+        startTour();
+      }
+    }, 1500);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     38. ANIMATED COUNTERS — números cuentan desde 0 al aparecer
+     ═══════════════════════════════════════════════════════════ */
+  function initAnimatedCounters() {
+    function parseNumber(str) {
+      // Extrae número (con decimales y signos $%) del texto
+      const m = String(str || '').match(/-?\d[\d,.]*/);
+      if (!m) return null;
+      const n = parseFloat(m[0].replace(/,/g, ''));
+      return isNaN(n) ? null : n;
+    }
+    function formatLike(template, value) {
+      const m = String(template || '').match(/-?\d[\d,.]*/);
+      if (!m) return value.toString();
+      const orig = m[0];
+      const hasComma = orig.includes(',');
+      const decimals = (orig.split('.')[1] || '').length;
+      const formatted = value.toLocaleString('es-MX', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+        useGrouping: hasComma,
+      });
+      return template.replace(orig, formatted);
+    }
+    function animate(el, finalText) {
+      const finalVal = parseNumber(finalText);
+      if (finalVal === null) { el.textContent = finalText; return; }
+      const duration = 800;
+      const start = performance.now();
+      const startVal = parseNumber(el.textContent) || 0;
+      function step(now) {
+        const t = Math.min(1, (now - start) / duration);
+        // Ease out cubic
+        const eased = 1 - Math.pow(1 - t, 3);
+        const cur = startVal + (finalVal - startVal) * eased;
+        el.textContent = formatLike(finalText, cur);
+        if (t < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    function watch(el) {
+      if (el._counterWatched) return;
+      el._counterWatched = true;
+      let lastText = el.textContent;
+      // Anima inicial cuando entra viewport
+      if ('IntersectionObserver' in window) {
+        const io = new IntersectionObserver((entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) {
+              const finalText = el.textContent;
+              if (parseNumber(finalText) !== null) {
+                el._suppress = true;
+                el.textContent = '0';
+                el._suppress = false;
+                animate(el, finalText);
+              }
+              io.unobserve(el);
+            }
+          }
+        }, { threshold: 0.3 });
+        io.observe(el);
+      }
+      // Anima en cambios posteriores
+      const mo = new MutationObserver(() => {
+        if (el._suppress) return;
+        const cur = el.textContent;
+        if (cur !== lastText && parseNumber(cur) !== null) {
+          el._suppress = true;
+          el.textContent = lastText;
+          el._suppress = false;
+          animate(el, cur);
+          lastText = cur;
+        }
+      });
+      mo.observe(el, { childList: true, characterData: true, subtree: true });
+    }
+
+    function scan() {
+      document.querySelectorAll('.dash-value, .dashboard-card-value, [data-prem-counter]').forEach(watch);
+    }
+    scan();
+    new MutationObserver(scan).observe(document.body, { childList: true, subtree: true });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     39. QUICK FILTER CHIPS — click en badge dentro de tabla filtra
+     ═══════════════════════════════════════════════════════════ */
+  function initQuickFilterChips() {
+    document.addEventListener('click', (e) => {
+      // Detecta click en un badge/pill/semaforo dentro de tbody
+      const badge = e.target.closest(
+        '.badge, .estatus-pill, .status-pill, .semaforo, [class*="badge-mant-"], [class*="badge-bono-"], [class*="pvc-badge-"]'
+      );
+      if (!badge) return;
+      const td = badge.closest('td');
+      const tr = badge.closest('tbody tr');
+      const table = badge.closest('table.data-table');
+      if (!td || !tr || !table) return;
+
+      const colIdx = [...tr.children].indexOf(td);
+      const value = (badge.textContent || '').trim();
+      if (!value) return;
+
+      // Buscar input de filtro en .prem-ext-filter-bar correspondiente
+      const wrap = table.closest('.table-wrap, .md-table-wrap');
+      if (!wrap) return;
+      const filterBar = wrap.previousElementSibling?.classList?.contains('prem-ext-filter-bar')
+        ? wrap.previousElementSibling
+        : wrap.parentElement.querySelector('.prem-ext-filter-bar');
+      if (!filterBar) return;
+
+      const fields = filterBar.querySelectorAll('.prem-ext-filter-field');
+      const targetField = fields[colIdx - countActionsBefore(table, colIdx)];
+      const input = targetField?.querySelector('input, select');
+      if (!input) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      input.value = value;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      if (window.premToast) window.premToast(`Filtrando por "${value}"`, { type: 'info' });
+    });
+
+    function countActionsBefore(table, idx) {
+      // No hay th-actions antes de columnas normales
+      return 0;
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     40. SIDEBAR STATS WIDGET — mini KPIs en bottom del sidebar
+     ═══════════════════════════════════════════════════════════ */
+  function initSidebarStats() {
+    setTimeout(() => {
+      const sidebar = document.querySelector('.sidebar-nav, nav.sidebar-nav');
+      if (!sidebar || sidebar.querySelector('.prem-sidebar-stats')) return;
+
+      const widget = document.createElement('div');
+      widget.className = 'prem-sidebar-stats';
+      widget.innerHTML = `
+        <div class="prem-stats-head">
+          <i class="fas fa-bolt"></i>
+          <span>Resumen rápido</span>
+        </div>
+        <div class="prem-stats-grid">
+          <div class="prem-stat" data-key="incidentes">
+            <span class="prem-stat-num">—</span>
+            <span class="prem-stat-lbl">Incidentes</span>
+          </div>
+          <div class="prem-stat" data-key="cotizaciones">
+            <span class="prem-stat-num">—</span>
+            <span class="prem-stat-lbl">Cotizaciones</span>
+          </div>
+        </div>
+      `;
+      sidebar.appendChild(widget);
+
+      // Carga datos del dashboard / endpoints disponibles
+      Promise.all([
+        fetch('/api/incidentes', { credentials: 'same-origin' }).then(r => r.ok ? r.json() : []).catch(() => []),
+        fetch('/api/cotizaciones', { credentials: 'same-origin' }).then(r => r.ok ? r.json() : []).catch(() => []),
+      ]).then(([inc, cot]) => {
+        const abiertos = (inc || []).filter(i => i.estatus !== 'cerrado' && i.estatus !== 'cancelado').length;
+        const pendientes = (cot || []).filter(c => c.estado === 'pendiente' || c.estado === 'borrador').length;
+        const numA = widget.querySelector('[data-key="incidentes"] .prem-stat-num');
+        const numB = widget.querySelector('[data-key="cotizaciones"] .prem-stat-num');
+        if (numA) numA.textContent = String(abiertos);
+        if (numB) numB.textContent = String(pendientes);
+      }).catch(() => {});
+
+      // Click → ir al módulo
+      widget.querySelector('[data-key="incidentes"]')?.addEventListener('click', () => {
+        document.querySelector('.tab[data-tab="incidentes"], .tab[data-tab="reportes"]')?.click();
+      });
+      widget.querySelector('[data-key="cotizaciones"]')?.addEventListener('click', () => {
+        document.querySelector('.tab[data-tab="cotizaciones"]')?.click();
+      });
+    }, 1200);
+  }
+
   /* ─── Bootstrap ─────────────────────────────────────────── */
   function boot() {
     initSkipLink();
@@ -2427,6 +2763,10 @@
     initLoadingButtons();
     initScrollReveal();
     initBadgePulse();
+    initOnboardingTour();
+    initAnimatedCounters();
+    initQuickFilterChips();
+    initSidebarStats();
   }
 
   if (document.readyState === 'loading') {
