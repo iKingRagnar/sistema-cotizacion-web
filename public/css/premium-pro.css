@@ -2190,5 +2190,231 @@ body .david-comisiones-mail-btn:hover {
 }
 
 /* ============================================================================
- * FIN — premium-pro.css v4 (filter-row fix + section header + delete zone)
+ * §22 — DEFENSIVE OVERRIDES para tablas alternativas + checkbox labels largos
+ * Auditoria paralela detecto:
+ *  - .maq-ficha-table / .cdp-table / .table-simple / .ref-stock-mov-table
+ *    (no usan .data-table, renderizan sin premium styling)
+ *  - Labels largos en checkboxes dentro de modales se cortan
+ *  - Checkboxes en <td> sin wrapper semantico
+ *  - Inline flex styles que rompen alineacion
+ * ============================================================================ */
+
+/* §22.1 Tablas alternativas — heredan look premium sin cambiar JS */
+body.md3-on .maq-ficha-table,
+body.md3-on .cdp-table,
+body.md3-on .table-simple,
+body.md3-on .ref-stock-mov-table,
+body .maq-ficha-table,
+body .cdp-table,
+body .table-simple,
+body .ref-stock-mov-table {
+  width: 100% !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  background: var(--pp-bg-card) !important;
+  border: 1px solid var(--pp-bd) !important;
+  border-radius: var(--pp-r-md) !important;
+  overflow: hidden !important;
+  font-size: 13px !important;
+  color: var(--pp-fg) !important;
+  box-shadow: var(--pp-sh-xs) !important;
+}
+
+body.md3-on .maq-ficha-table thead th,
+body.md3-on .cdp-table thead th,
+body.md3-on .table-simple thead th,
+body.md3-on .ref-stock-mov-table thead th,
+body .maq-ficha-table thead th,
+body .cdp-table thead th,
+body .table-simple thead th,
+body .ref-stock-mov-table thead th {
+  background: var(--pp-bg-subtle) !important;
+  color: var(--pp-fg-muted) !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  letter-spacing: .05em !important;
+  text-transform: uppercase !important;
+  padding: 10px 12px !important;
+  border-bottom: 1px solid var(--pp-bd) !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 2 !important;
+  text-align: left !important;
+}
+
+body.md3-on .maq-ficha-table tbody td,
+body.md3-on .cdp-table tbody td,
+body.md3-on .table-simple tbody td,
+body.md3-on .ref-stock-mov-table tbody td,
+body .maq-ficha-table tbody td,
+body .cdp-table tbody td,
+body .table-simple tbody td,
+body .ref-stock-mov-table tbody td {
+  padding: 10px 12px !important;
+  border-bottom: 1px solid var(--pp-bd-soft) !important;
+  vertical-align: middle !important;
+}
+
+body.md3-on .maq-ficha-table tbody tr:hover td,
+body.md3-on .cdp-table tbody tr:hover td,
+body.md3-on .table-simple tbody tr:hover td,
+body.md3-on .ref-stock-mov-table tbody tr:hover td,
+body .maq-ficha-table tbody tr:hover td,
+body .cdp-table tbody tr:hover td,
+body .table-simple tbody tr:hover td,
+body .ref-stock-mov-table tbody tr:hover td {
+  background: var(--pp-bg-hover) !important;
+}
+
+/* Empty row styling en cualquier tabla */
+body.md3-on tr.empty td,
+body.md3-on tr.empty-row td,
+body tr.empty td,
+body tr.empty-row td {
+  text-align: center !important;
+  color: var(--pp-fg-muted) !important;
+  font-style: italic !important;
+  padding: 32px 12px !important;
+  background: var(--pp-bg-subtle) !important;
+}
+
+/* §22.2 Labels largos en checkboxes — wrap forzado */
+body.md3-on label.gar-recalc-label,
+body .gar-recalc-label,
+body.md3-on .form-group label:has(> input[type="checkbox"]),
+body .form-group label:has(> input[type="checkbox"]) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: flex-start !important;
+  gap: 8px !important;
+  max-width: 100% !important;
+  line-height: 1.4 !important;
+  font-size: 13px !important;
+  color: var(--pp-fg) !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  padding: 6px 0 !important;
+}
+
+body.md3-on .form-group label:has(> input[type="checkbox"]) > input[type="checkbox"],
+body .form-group label:has(> input[type="checkbox"]) > input[type="checkbox"],
+body.md3-on label.gar-recalc-label > input[type="checkbox"],
+body label.gar-recalc-label > input[type="checkbox"] {
+  flex-shrink: 0 !important;
+  margin-top: 2px !important;
+  width: 18px !important;
+  height: 18px !important;
+  accent-color: var(--pp-pri-600) !important;
+  cursor: pointer !important;
+}
+
+/* §22.3 Parrafos de modo demo / dry-run (gar-modal-dry y similares) */
+body.md3-on p.gar-modal-dry,
+body p.gar-modal-dry {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+  border-left: 4px solid var(--pp-warn-500) !important;
+  border-radius: 8px !important;
+  padding: 10px 14px !important;
+  margin: 12px 0 !important;
+  font-size: 13px !important;
+  color: #78350f !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+body.md3-on p.gar-modal-dry input[type="checkbox"],
+body p.gar-modal-dry input[type="checkbox"] {
+  width: 18px !important;
+  height: 18px !important;
+  accent-color: #b45309 !important;
+  margin: 0 !important;
+  flex-shrink: 0 !important;
+}
+
+/* §22.4 Row actions consistency (.row-actions-inline iguala a .row-actions) */
+body.md3-on .row-actions-inline,
+body.md3-on td.th-actions,
+body .row-actions-inline,
+body td.th-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+body.md3-on .row-actions-inline > *,
+body.md3-on td.th-actions > *,
+body .row-actions-inline > *,
+body td.th-actions > * {
+  flex-shrink: 0 !important;
+}
+
+/* §22.5 Checkbox suelto en td (usuarios report schedules) — aumenta hit area */
+body.md3-on td > input[type="checkbox"]:only-child,
+body td > input[type="checkbox"]:only-child {
+  width: 20px !important;
+  height: 20px !important;
+  accent-color: var(--pp-pri-600) !important;
+  cursor: pointer !important;
+  margin: 0 !important;
+}
+
+/* §22.6 Form-group con checkboxes inline (display:flex override-proof) */
+body.md3-on .form-group > label[style*="display:flex"],
+body.md3-on .form-group > label[style*="display: flex"],
+body .form-group > label[style*="display:flex"],
+body .form-group > label[style*="display: flex"] {
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  padding: 6px 0 !important;
+}
+
+/* §22.7 Badges con background inline (override hardcoded #0d9488 + color:#fff) */
+body.md3-on .badge[style*="background"],
+body .badge[style*="background"] {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 3px 10px !important;
+  border-radius: 999px !important;
+  letter-spacing: .02em !important;
+  text-transform: uppercase !important;
+  border: 1px solid rgba(0, 0, 0, .08) !important;
+}
+
+/* §22.8 Preview buttons con width/height fijo 88px — neutralizar en viewports estrechos */
+@media (max-width: 640px) {
+  body.md3-on button[style*="width:88px"],
+  body.md3-on button[style*="width: 88px"],
+  body button[style*="width:88px"],
+  body button[style*="width: 88px"] {
+    width: 72px !important;
+    height: 72px !important;
+  }
+}
+
+/* §22.9 Modal action buttons footer (inline gap/border hardcoded) — unify */
+body.md3-on .modal-box div[style*="justify-content:flex-end"][style*="gap"],
+body .modal-box div[style*="justify-content:flex-end"][style*="gap"] {
+  gap: 12px !important;
+  padding: 16px 0 0 !important;
+  margin-top: 16px !important;
+  border-top: 1px solid var(--pp-bd) !important;
+  flex-wrap: wrap !important;
+}
+
+/* §22.10 Inline bg-alt forzado (#f8fafc hardcoded en app.js) — respetar tema */
+body.md3-on div[style*="background:var(--bg-alt"],
+body.md3-on div[style*="background: var(--bg-alt"],
+body div[style*="background:var(--bg-alt"],
+body div[style*="background: var(--bg-alt"] {
+  background: var(--pp-bg-subtle) !important;
+  border: 1px solid var(--pp-bd-soft) !important;
+}
+
+/* ============================================================================
+ * FIN — premium-pro.css v5 (defensive overrides + table variants + checkbox wrap)
  * ============================================================================ */

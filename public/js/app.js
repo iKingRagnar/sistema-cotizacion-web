@@ -7422,7 +7422,7 @@
       <div class="cotz-modal">
         <section class="cotz-card" aria-labelledby="cotz-h-datos">
           <h4 class="cotz-card-title" id="cotz-h-datos"><span class="cotz-step-num">1</span> Datos generales</h4>
-          <div class="form-group"><label>Cliente *</label><select id="cotz-cliente_id">${clienteOpts}</select></div>
+          <div class="form-group"><label for="cotz-cliente_id">Cliente *</label><select id="cotz-cliente_id"><option value="" disabled ${!cot || !cot.cliente_id ? 'selected' : ''}>— Seleccione un cliente —</option>${clienteOpts}</select></div>
           <div class="form-row">
             <div class="form-group">
               <label>Tipo de cotización</label>

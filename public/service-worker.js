@@ -6,7 +6,7 @@
  *   - APIs auth: bypass total (no cache)
  *   - skipWaiting + clients.claim para PWA standalone (evita race conditions)
  */
-const VERSION = 'cotizacion-pro-v63';
+const VERSION = 'cotizacion-pro-v64';
 const CACHE_RUNTIME = VERSION + '-runtime';
 const NETWORK_TIMEOUT_MS = 4000;
 
