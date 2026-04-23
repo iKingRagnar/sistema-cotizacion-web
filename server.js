@@ -64,8 +64,46 @@ process.on('unhandledRejection', (reason) => {
   console.error('[unhandledRejection]', reason);
 });
 
+/* Helmet — security headers (CSP off para no romper Google Fonts/CDN; resto activo).
+   Defensivo: si helmet falla en cargar, el server sigue arrancando sin headers extra. */
+try {
+  const helmet = require('helmet');
+  if (typeof helmet === 'function') {
+    app.use(helmet({
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false,
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }));
+  }
+} catch (_) { /* helmet opcional */ }
+
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+
+/* Rate limiting — defensa contra brute-force en login y spam en SMTP. */
+let _authLimiter = (req, res, next) => next();
+let _emailLimiter = (req, res, next) => next();
+try {
+  const rateLimit = require('express-rate-limit');
+  if (typeof rateLimit === 'function') {
+    _authLimiter = rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: 30,
+      standardHeaders: true,
+      legacyHeaders: false,
+      message: { error: 'Demasiados intentos de autenticación. Espera 15 minutos.' },
+    });
+    _emailLimiter = rateLimit({
+      windowMs: 60 * 60 * 1000,
+      max: 10,
+      standardHeaders: true,
+      legacyHeaders: false,
+      message: { error: 'Demasiados envíos de correo. Espera una hora.' },
+    });
+  }
+} catch (_) { /* rate-limit opcional */ }
+app.use('/api/auth', _authLimiter);
+app.use('/api/test-email', _emailLimiter);
 
 /** Respuesta HTTP para errores SQLite típicos al guardar refacciones (código único). */
 function refaccionesSqliteErrorResponse(err) {
@@ -815,9 +853,19 @@ app.get('/api/audit/:entity_type/:entity_id', async (req, res) => {
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
 
-/* En Vercel los estáticos salen por CDN desde public/; express.static no aplica allí. */
+/* En Vercel los estáticos salen por CDN desde public/; express.static no aplica allí.
+   Cache-Control agresivo para assets cache-busted (?v=N). HTML siempre fresco. */
 if (!process.env.VERCEL) {
-  app.use(express.static(path.join(__dirname, 'public')));
+  app.use(express.static(path.join(__dirname, 'public'), {
+    maxAge: 0,
+    setHeaders: (res, filePath) => {
+      if (/\.(css|js|woff2?|ttf|eot|png|jpe?g|webp|gif|svg|ico)$/i.test(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      } else if (/\.html$/i.test(filePath)) {
+        res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+      }
+    },
+  }));
 }
 
 /** Normaliza para búsqueda: minúsculas y sin acentos (manómetro === manometro). */
