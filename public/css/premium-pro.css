@@ -2690,5 +2690,464 @@ body table.data-table td.th-actions .btn[class*="prem-action-"] i {
 }
 
 /* ============================================================================
- * FIN — premium-pro.css v8 (action btn icons visibility fix)
+ * §25 — MOTION SYSTEM (premium animations & micro-interactions)
+ * Sistema integral de movimiento: entrance, hover, focus, stagger, shimmer,
+ * ripple, micro-bounce. Tasteful, no jarring. Respeta prefers-reduced-motion.
+ * ============================================================================ */
+
+/* ─── §25.1 KEYFRAMES base ─────────────────────────────────────────────── */
+@keyframes pp-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes pp-slide-up {
+  from { opacity: 0; transform: translate3d(0, 16px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes pp-slide-up-soft {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes pp-slide-down {
+  from { opacity: 0; transform: translate3d(0, -16px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes pp-scale-in {
+  from { opacity: 0; transform: scale3d(.94, .94, 1); }
+  to   { opacity: 1; transform: scale3d(1, 1, 1); }
+}
+@keyframes pp-pop {
+  0%   { transform: scale3d(1, 1, 1); }
+  40%  { transform: scale3d(1.06, 1.06, 1); }
+  100% { transform: scale3d(1, 1, 1); }
+}
+@keyframes pp-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes pp-pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(13, 148, 136, .42); }
+  50%      { box-shadow: 0 0 0 10px rgba(13, 148, 136, 0); }
+}
+@keyframes pp-pulse-soft {
+  0%, 100% { opacity: .96; }
+  50%      { opacity: 1; }
+}
+@keyframes pp-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes pp-wobble {
+  0%, 100% { transform: rotate(0); }
+  20%      { transform: rotate(-8deg); }
+  40%      { transform: rotate(6deg); }
+  60%      { transform: rotate(-4deg); }
+  80%      { transform: rotate(2deg); }
+}
+@keyframes pp-bounce-in {
+  0%   { opacity: 0; transform: scale3d(.6, .6, 1); }
+  60%  { opacity: 1; transform: scale3d(1.08, 1.08, 1); }
+  100% { transform: scale3d(1, 1, 1); }
+}
+@keyframes pp-ripple {
+  0%   { transform: scale(0); opacity: .6; }
+  100% { transform: scale(4); opacity: 0; }
+}
+@keyframes pp-toast-in {
+  0%   { opacity: 0; transform: translate3d(20px, -8px, 0) scale(.96); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes pp-progress-fill {
+  from { width: 0%; }
+}
+@keyframes pp-gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+/* ─── §25.2 PANEL switch entrance ──────────────────────────────────────── */
+body .panel.active {
+  animation: pp-fade-in .35s var(--pp-ease-out) both,
+             pp-slide-up-soft .45s var(--pp-ease-out) both !important;
+}
+
+/* ─── §25.3 KPI cards / dashboard score tiles entrance + hover ─────────── */
+body .dashboard-score-tile,
+body .dashboard-card {
+  animation: pp-slide-up .55s var(--pp-ease-out) both !important;
+  transition: transform .28s var(--pp-ease-out), box-shadow .28s var(--pp-ease-out) !important;
+  will-change: transform;
+}
+body .dashboard-grid > .dashboard-score-tile:nth-child(1) { animation-delay: .04s !important; }
+body .dashboard-grid > .dashboard-score-tile:nth-child(2) { animation-delay: .08s !important; }
+body .dashboard-grid > .dashboard-score-tile:nth-child(3) { animation-delay: .12s !important; }
+body .dashboard-grid > .dashboard-score-tile:nth-child(4) { animation-delay: .16s !important; }
+body .dashboard-grid > .dashboard-card:nth-child(odd)  { animation-delay: .20s !important; }
+body .dashboard-grid > .dashboard-card:nth-child(even) { animation-delay: .24s !important; }
+
+body .dashboard-card:hover {
+  transform: translate3d(0, -3px, 0) !important;
+  box-shadow: var(--pp-sh-lg, 0 12px 28px -6px rgba(15, 23, 42, .14)) !important;
+}
+body .dashboard-score-tile:hover {
+  transform: translate3d(0, -2px, 0) scale(1.01) !important;
+}
+
+/* KPI strip items: fade-up stagger */
+body .dashboard-kpi-strip .dashboard-kpi-item {
+  animation: pp-slide-up-soft .5s var(--pp-ease-out) both !important;
+}
+body .dashboard-kpi-strip .dashboard-kpi-item:nth-child(1) { animation-delay: .05s !important; }
+body .dashboard-kpi-strip .dashboard-kpi-item:nth-child(2) { animation-delay: .10s !important; }
+body .dashboard-kpi-strip .dashboard-kpi-item:nth-child(3) { animation-delay: .15s !important; }
+body .dashboard-kpi-strip .dashboard-kpi-item:nth-child(4) { animation-delay: .20s !important; }
+body .dashboard-kpi-strip .dashboard-kpi-item {
+  transition: background-color .25s var(--pp-ease-out), transform .25s var(--pp-ease-out) !important;
+  border-radius: 8px !important;
+}
+body .dashboard-kpi-strip .dashboard-kpi-item:hover {
+  background-color: rgba(13, 148, 136, .06) !important;
+  transform: translateY(-1px) !important;
+  cursor: pointer !important;
+}
+
+/* ─── §25.4 TABLE rows: cascade entrance + hover lift ──────────────────── */
+body table.data-table tbody tr {
+  animation: pp-slide-up-soft .35s var(--pp-ease-out) both !important;
+  transition: background-color .18s var(--pp-ease-out), transform .18s var(--pp-ease-out) !important;
+}
+body table.data-table tbody tr:nth-child(1)  { animation-delay: .02s !important; }
+body table.data-table tbody tr:nth-child(2)  { animation-delay: .04s !important; }
+body table.data-table tbody tr:nth-child(3)  { animation-delay: .06s !important; }
+body table.data-table tbody tr:nth-child(4)  { animation-delay: .08s !important; }
+body table.data-table tbody tr:nth-child(5)  { animation-delay: .10s !important; }
+body table.data-table tbody tr:nth-child(6)  { animation-delay: .12s !important; }
+body table.data-table tbody tr:nth-child(7)  { animation-delay: .14s !important; }
+body table.data-table tbody tr:nth-child(8)  { animation-delay: .16s !important; }
+body table.data-table tbody tr:nth-child(9)  { animation-delay: .18s !important; }
+body table.data-table tbody tr:nth-child(10) { animation-delay: .20s !important; }
+body table.data-table tbody tr:nth-child(n+11) { animation-delay: .22s !important; }
+
+body table.data-table tbody tr:hover {
+  background-color: rgba(13, 148, 136, .04) !important;
+  transform: translateX(2px) !important;
+}
+
+/* ─── §25.5 BUTTONS micro-interactions (lift + active press) ──────────── */
+body .btn,
+body button.btn,
+body .dashboard-card-action,
+body .tab-actions button {
+  transition: transform .18s var(--pp-ease-out), box-shadow .18s var(--pp-ease-out),
+              background-color .18s var(--pp-ease-out), border-color .18s var(--pp-ease-out) !important;
+  position: relative;
+  overflow: hidden;
+}
+body .btn:hover:not(:disabled),
+body button.btn:hover:not(:disabled),
+body .dashboard-card-action:hover {
+  transform: translateY(-1px) !important;
+}
+body .btn:active:not(:disabled),
+body button.btn:active:not(:disabled) {
+  transform: translateY(0) scale(.98) !important;
+  transition-duration: .08s !important;
+}
+
+/* Action buttons in tables — extra pop */
+body table.data-table td.th-actions .btn:hover {
+  transform: translateY(-2px) scale(1.05) !important;
+}
+
+/* Primary CTAs — gradient shift on hover */
+body .btn.primary,
+body .btn.success,
+body .dashboard-card-action {
+  background-size: 200% 200% !important;
+  animation: pp-gradient-shift 8s ease-in-out infinite;
+}
+body .btn.primary:hover,
+body .btn.success:hover {
+  animation-duration: 2s !important;
+}
+
+/* ─── §25.6 SIDEBAR tabs — slide-in indicator + smooth hover ──────────── */
+body aside.sidebar .tab,
+body aside .tabs.tabs--rail .tab {
+  transition: background-color .22s var(--pp-ease-out), color .22s var(--pp-ease-out),
+              transform .22s var(--pp-ease-out), padding .22s var(--pp-ease-out) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+body aside.sidebar .tab::before,
+body aside .tabs.tabs--rail .tab::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  width: 3px; height: 0;
+  background: var(--pp-grad-brand, linear-gradient(180deg, #14b8a6, #0d9488));
+  border-radius: 0 3px 3px 0;
+  transform: translateY(-50%);
+  transition: height .25s var(--pp-ease-out);
+}
+body aside.sidebar .tab:hover::before,
+body aside .tabs.tabs--rail .tab:hover::before {
+  height: 60%;
+}
+body aside.sidebar .tab.active::before,
+body aside .tabs.tabs--rail .tab.active::before {
+  height: 80%;
+}
+body aside.sidebar .tab:hover:not(.active),
+body aside .tabs.tabs--rail .tab:hover:not(.active) {
+  background-color: rgba(13, 148, 136, .06) !important;
+  transform: translateX(2px) !important;
+}
+
+/* ─── §25.7 MODAL entrance — scale + fade with backdrop blur ──────────── */
+body .modal-overlay:not([hidden]),
+body dialog[open] {
+  animation: pp-fade-in .22s var(--pp-ease-out) both !important;
+  backdrop-filter: blur(4px) saturate(1.2) !important;
+  -webkit-backdrop-filter: blur(4px) saturate(1.2) !important;
+}
+body .modal-box,
+body .modal-overlay > .modal,
+body dialog[open] > * {
+  animation: pp-scale-in .35s var(--pp-ease-out) both !important;
+  transform-origin: center center !important;
+}
+
+/* ─── §25.8 FORM inputs — focus glow + smooth border ──────────────────── */
+body input:not([type="checkbox"]):not([type="radio"]),
+body select,
+body textarea,
+body .form-control {
+  transition: border-color .22s var(--pp-ease-out), box-shadow .22s var(--pp-ease-out),
+              background-color .22s var(--pp-ease-out) !important;
+}
+body input:not([type="checkbox"]):not([type="radio"]):focus,
+body select:focus,
+body textarea:focus,
+body .form-control:focus {
+  box-shadow: 0 0 0 4px rgba(13, 148, 136, .12), 0 0 0 1px rgba(13, 148, 136, .42) !important;
+  border-color: rgba(13, 148, 136, .42) !important;
+  outline: none !important;
+}
+
+/* ─── §25.9 SKELETON shimmer travels left to right ────────────────────── */
+body .prem-skel,
+body .skeleton,
+body .loading-skeleton {
+  background: linear-gradient(90deg,
+    rgba(15, 23, 42, .04) 0%,
+    rgba(15, 23, 42, .08) 50%,
+    rgba(15, 23, 42, .04) 100%) !important;
+  background-size: 200% 100% !important;
+  animation: pp-shimmer 1.6s linear infinite !important;
+  border-radius: 4px !important;
+}
+
+/* ─── §25.10 SPINNER — smooth 360° rotation ───────────────────────────── */
+body .loading-spinner,
+body .spinner,
+body .fa-spinner,
+body .fa-circle-notch,
+body [class*="loading"]:not(.dashboard-loading):not(.btn) i.fas {
+  animation: pp-spin .9s linear infinite !important;
+}
+body .dashboard-loading .loading-spinner {
+  width: 32px !important; height: 32px !important;
+  border: 3px solid rgba(13, 148, 136, .15) !important;
+  border-top-color: rgb(13, 148, 136) !important;
+  border-radius: 50% !important;
+  animation: pp-spin .8s linear infinite !important;
+}
+
+/* ─── §25.11 TOAST / notification — slide in from top-right ───────────── */
+body .toast,
+body .notification-toast,
+body [class*="toast"]:not(.toaster) {
+  animation: pp-toast-in .4s var(--pp-ease-out) both !important;
+}
+
+/* ─── §25.12 BADGES — soft pulse on critical status ───────────────────── */
+body .badge.danger,
+body .badge.error,
+body .badge.critical,
+body [class*="badge"][class*="alert"] {
+  animation: pp-pulse-soft 2.5s ease-in-out infinite !important;
+}
+
+/* Stock-low alert bar — gentle attention pulse */
+body .stock-alert-bar {
+  animation: pp-pulse-soft 3s ease-in-out infinite !important;
+}
+
+/* ─── §25.13 ICONS — wobble on alert icons ────────────────────────────── */
+body .stock-alert-bar i:first-child,
+body .alert i:first-child,
+body .hint.warning i:first-child {
+  display: inline-block;
+  animation: pp-wobble 2s ease-in-out infinite;
+  animation-delay: 1s;
+  transform-origin: center bottom;
+}
+
+/* Refresh button icon — spin on hover */
+body button[title*="ctualizar"] i,
+body button[aria-label*="ctualizar"] i,
+body .btn-dashboard-refresh i {
+  transition: transform .4s var(--pp-ease-out) !important;
+}
+body button[title*="ctualizar"]:hover i,
+body button[aria-label*="ctualizar"]:hover i,
+body .btn-dashboard-refresh:hover i {
+  transform: rotate(180deg) !important;
+}
+
+/* ─── §25.14 DROPDOWN / menu — slide-down ─────────────────────────────── */
+body .dropdown-menu:not([hidden]),
+body .menu:not([hidden]),
+body [role="menu"]:not([hidden]) {
+  animation: pp-slide-down .25s var(--pp-ease-out) both !important;
+  transform-origin: top center;
+}
+
+/* ─── §25.15 PROGRESS bars fill animation ─────────────────────────────── */
+body .dashboard-progress-bar,
+body .progress-bar,
+body [class*="progress"] > [class*="fill"],
+body [class*="progress"] > [class*="bar"] {
+  animation: pp-progress-fill 1.2s var(--pp-ease-out) both !important;
+  position: relative;
+  overflow: hidden;
+}
+body .dashboard-progress-bar::after,
+body .progress-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent);
+  background-size: 200% 100%;
+  animation: pp-shimmer 2s linear infinite;
+}
+
+/* ─── §25.16 LINKS / clickable text — soft underline grow ──────────────── */
+body a:not(.tab):not(.btn):not([role="button"]) {
+  position: relative;
+  transition: color .2s var(--pp-ease-out) !important;
+}
+body a:not(.tab):not(.btn):not([role="button"])::after {
+  content: '';
+  position: absolute;
+  left: 0; bottom: -2px;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform .25s var(--pp-ease-out);
+  opacity: .6;
+}
+body a:not(.tab):not(.btn):not([role="button"]):hover::after {
+  transform: scaleX(1);
+}
+
+/* ─── §25.17 CHIPS / pills hover lift ─────────────────────────────────── */
+body .chip,
+body .pill,
+body .badge:not(.danger):not(.error):not(.critical),
+body [class*="status-badge"] {
+  transition: transform .18s var(--pp-ease-out), box-shadow .18s var(--pp-ease-out) !important;
+}
+body .chip:hover,
+body .pill:hover,
+body .badge:hover {
+  transform: translateY(-1px) !important;
+}
+
+/* ─── §25.18 HEADER user/notif buttons — bounce on click ──────────────── */
+body header.header button,
+body .header button {
+  transition: transform .18s var(--pp-ease-out), background-color .2s var(--pp-ease-out) !important;
+}
+body header.header button:hover,
+body .header button:hover {
+  transform: scale(1.06) !important;
+}
+body header.header button:active,
+body .header button:active {
+  transform: scale(.94) !important;
+  transition-duration: .08s !important;
+}
+
+/* ─── §25.19 PWA install prompt — soft bounce-in ──────────────────────── */
+body .pwa-install-prompt:not([hidden]),
+body [class*="install-prompt"]:not([hidden]) {
+  animation: pp-bounce-in .55s var(--pp-ease-out) both !important;
+}
+
+/* ─── §25.20 EMPTY-STATE icons — gentle float ─────────────────────────── */
+@keyframes pp-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+body .empty-state i,
+body .empty-state svg,
+body [class*="empty"] > i:first-child,
+body td[colspan] i.fa-file,
+body td[colspan] i.fa-inbox {
+  animation: pp-float 3.5s ease-in-out infinite !important;
+}
+
+/* ─── §25.21 SECTION HEADINGS — fade-down on entrance ─────────────────── */
+body .panel.active h2,
+body .panel.active h3.section-title,
+body .panel.active .section-header {
+  animation: pp-slide-down .4s var(--pp-ease-out) both !important;
+}
+
+/* ─── §25.22 TAB CONTENT switch — smooth crossfade ────────────────────── */
+body .tabs__panel.active,
+body [role="tabpanel"]:not([hidden]) {
+  animation: pp-fade-in .3s var(--pp-ease-out) both !important;
+}
+
+/* ─── §25.23 LOGO header — subtle entry pulse on first load ───────────── */
+body header.header img,
+body .header img,
+body header.header h1 {
+  animation: pp-fade-in .8s var(--pp-ease-out) both !important;
+}
+
+/* ─── §25.24 RIPPLE effect on action buttons (CSS-only) ───────────────── */
+body table.data-table td.th-actions .btn::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 6px; height: 6px;
+  background: currentColor;
+  border-radius: 50%;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0);
+  pointer-events: none;
+}
+body table.data-table td.th-actions .btn:active::after {
+  animation: pp-ripple .5s var(--pp-ease-out);
+}
+
+/* ─── §25.25 RESPECT prefers-reduced-motion ───────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  body *,
+  body *::before,
+  body *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================================
+ * FIN — premium-pro.css v9 (motion system completo)
  * ============================================================================ */
