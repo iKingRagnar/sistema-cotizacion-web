@@ -1818,5 +1818,160 @@ body textarea {
 }
 
 /* ============================================================================
- * FIN — premium-pro.css v2 (post-audit)
+ * §20 — FIXES POST-DEPLOY (descubiertos en código real)
+ * ============================================================================ */
+
+/* §20.1 — Close button del modal usa class="close" (no .btn-close) */
+body.md3-on .modal-header .close,
+body .modal-header .close,
+body.md3-on .modal-box .close,
+body .modal-box .close {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, .14) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, .2) !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 18px !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  transition: all .15s var(--pp-ease-out) !important;
+  flex-shrink: 0 !important;
+}
+body.md3-on .modal-header .close:hover,
+body .modal-header .close:hover {
+  background: rgba(255, 255, 255, .28) !important;
+  transform: rotate(90deg) !important;
+}
+
+/* Confirm modal close — fondo claro */
+body.md3-on #confirm-modal .modal-header .close,
+body #confirm-modal .modal-header .close,
+body.md3-on .modal-box.modal-confirm .modal-header .close,
+body .modal-box.modal-confirm .modal-header .close {
+  background: var(--pp-n100) !important;
+  color: var(--pp-n600) !important;
+  border-color: var(--pp-bd) !important;
+}
+body.md3-on #confirm-modal .modal-header .close:hover,
+body #confirm-modal .modal-header .close:hover {
+  background: var(--pp-dan-100) !important;
+  color: var(--pp-dan-700) !important;
+}
+
+/* §20.2 — modal-confirm sin gradient azul */
+body.md3-on .modal-box.modal-confirm,
+body .modal-box.modal-confirm {
+  width: min(480px, calc(100vw - 32px)) !important;
+}
+body.md3-on .modal-box.modal-confirm .modal-header,
+body .modal-box.modal-confirm .modal-header {
+  background: var(--pp-bg-card) !important;
+  color: var(--pp-n800) !important;
+  border-bottom: 1px solid var(--pp-bd) !important;
+}
+body.md3-on .modal-box.modal-confirm .modal-header h3,
+body .modal-box.modal-confirm .modal-header h3 {
+  color: var(--pp-n800) !important;
+}
+
+/* §20.3 — modal-cotizacion (clase agregada dinámicamente) ancho mayor */
+body.md3-on .modal-box.modal-cotizacion,
+body .modal-box.modal-cotizacion {
+  width: min(1200px, calc(100vw - 32px)) !important;
+  max-width: min(1200px, calc(100vw - 32px)) !important;
+}
+
+/* §20.4 — Hero del modal (los step cards numerados con "1 DATOS GENERALES") */
+body.md3-on .modal-body .step-section,
+body .modal-body .step-section,
+body.md3-on .modal-body .form-section,
+body .modal-body .form-section,
+body.md3-on .modal-body section,
+body .modal-body section {
+  background: var(--pp-bg-card) !important;
+  border: 1px solid var(--pp-bd) !important;
+  border-radius: var(--pp-r-md) !important;
+  padding: 20px !important;
+  margin-bottom: 16px !important;
+  box-shadow: var(--pp-sh-xs) !important;
+}
+
+/* §20.5 — Inline link blue */
+body.md3-on a,
+body a {
+  color: var(--pp-brand-600) !important;
+  text-decoration: none !important;
+  transition: color .15s var(--pp-ease-out) !important;
+}
+body.md3-on a:hover,
+body a:hover {
+  color: var(--pp-brand-700) !important;
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+}
+
+/* §20.6 — Botones de header en cotizaciones (CSV, Excel, Enviar reporte, Nueva)
+ * Forzar consistencia: todos mismo height + spacing */
+body.md3-on .panel-card .toolbar .btn,
+body .panel-card .toolbar .btn,
+body.md3-on section[id^="panel-"] .toolbar .btn,
+body section[id^="panel-"] .toolbar .btn {
+  height: 36px !important;
+  border-radius: 9px !important;
+  font-size: 12.5px !important;
+  padding: 0 14px !important;
+  gap: 6px !important;
+}
+
+/* §20.7 — Eliminar bordes negros residuales en inputs (paranoia) */
+body.md3-on input,
+body input,
+body.md3-on select,
+body select,
+body.md3-on textarea,
+body textarea {
+  outline-color: transparent !important;
+}
+
+/* §20.8 — Sidebar collapsed — width fijo */
+body.md3-on aside.sidebar,
+body aside.sidebar {
+  width: 64px !important;
+  min-width: 64px !important;
+  flex-shrink: 0 !important;
+  z-index: 30 !important;
+}
+
+/* §20.9 — Brand "UNIVERSAL" más estilizado */
+body.md3-on header.header img[alt*="UNIVERSAL"],
+body header.header img[alt*="UNIVERSAL"],
+body.md3-on header.header img[src*="universal"],
+body header.header img[src*="universal"] {
+  height: 26px !important;
+  filter: drop-shadow(0 2px 6px rgba(15, 23, 42, .12)) !important;
+}
+
+/* §20.10 — "Servicio Tecnico" subtítulo header */
+body.md3-on header.header .header-title,
+body header.header .header-title,
+body.md3-on header.header .servicio-title,
+body header.header .servicio-title {
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: -.005em !important;
+  color: var(--pp-n800) !important;
+  margin-left: 12px !important;
+  padding-left: 14px !important;
+  border-left: 1px solid var(--pp-bd) !important;
+  line-height: 1.2 !important;
+}
+
+/* ============================================================================
+ * FIN — premium-pro.css v3 (post-deploy refinements)
  * ============================================================================ */
