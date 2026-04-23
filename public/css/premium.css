@@ -6069,3 +6069,624 @@ body.md3-on .prem-value-pulse {
   }
   .prem-tour-nav { justify-content: space-between; }
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+   111. PWA MODE — desactivar animaciones costosas en standalone
+   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+html.prem-pwa body {
+  background: #f8fafc !important;
+  background-attachment: scroll !important;
+}
+/* Sin radial mouse-follow en PWA (background-attachment: fixed crasheaba) */
+html.prem-pwa body::before,
+html.prem-pwa body::after { display: none !important; }
+
+/* Sin backdrop-filter pesado en PWA */
+html.prem-pwa .table-wrap,
+html.prem-pwa .card,
+html.prem-pwa .dashboard-card,
+html.prem-pwa .modal-dialog,
+html.prem-pwa .modal-content,
+html.prem-pwa .prem-cmdk-panel,
+html.prem-pwa .prem-shortcuts-panel {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: #fff !important;
+}
+
+/* Sin animación de header gradient shifting en PWA */
+html.prem-pwa header.header,
+html.prem-pwa .header {
+  animation: none !important;
+}
+
+/* Sin halo dashed rotando en PWA */
+html.prem-pwa .empty-card .empty-icon::after { display: none !important; }
+
+/* Throttle parallax background en PWA */
+html.prem-pwa { --pmx: 50; --pmy: 50; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   112. MESH GRADIENT BACKGROUND (2025 trend) — capa decorativa fija
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on:not(html.prem-pwa body) {
+  position: relative;
+}
+body.md3-on:not(html.prem-pwa body)::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 800px 600px at 10% 0%, rgba(59,130,246,.07), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 90% 20%, rgba(13,148,136,.06), transparent 60%),
+    radial-gradient(ellipse 900px 700px at 50% 100%, rgba(124,58,237,.05), transparent 60%);
+  opacity: .8;
+}
+body.md3-on > * { position: relative; z-index: 1; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   113. NEUMORPHIC DEPTH — multi-shadow elevation (2026 trend)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .dashboard-card,
+body.md3-on .card,
+body.md3-on .admin-hub-card {
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.6) inset,
+    0 -1px 0 rgba(15,23,42,.04) inset,
+    0 1px 2px rgba(15,23,42,.04),
+    0 4px 8px rgba(15,23,42,.04),
+    0 8px 24px rgba(15,23,42,.06) !important;
+  border: 1px solid rgba(226,232,240,.7) !important;
+}
+
+body.md3-on .dashboard-card:hover,
+body.md3-on .card:hover {
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.8) inset,
+    0 -1px 0 rgba(15,23,42,.04) inset,
+    0 4px 8px rgba(37,99,235,.06),
+    0 12px 24px rgba(37,99,235,.10),
+    0 24px 48px rgba(37,99,235,.08) !important;
+  transform: translateY(-3px) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   114. GLOW EFFECTS — accent shadow on hover (2025 trend)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .btn.primary,
+body.md3-on .section-header .btn.primary {
+  position: relative;
+  overflow: visible;
+}
+body.md3-on .btn.primary::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  background: var(--ds-grad, linear-gradient(135deg,#1e3a8a,#2563eb));
+  filter: blur(16px);
+  opacity: 0;
+  transition: opacity .3s ease;
+  z-index: -1;
+}
+body.md3-on .btn.primary:hover::before {
+  opacity: .55;
+}
+
+/* Glow en theme picker FAB */
+.prem-theme-fab,
+.prem-density-fab {
+  position: relative;
+}
+.prem-theme-fab::after,
+.prem-density-fab::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: var(--ds-grad, linear-gradient(135deg,#1e3a8a,#2563eb));
+  filter: blur(20px);
+  opacity: 0;
+  z-index: -1;
+  transition: opacity .3s ease;
+}
+.prem-theme-fab:hover::after,
+.prem-density-fab:hover::after {
+  opacity: .6;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   115. 3D BUTTON PRESS PHYSICS (2025-2026 trend)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .btn,
+body.md3-on button.btn {
+  transform-style: preserve-3d;
+  transition:
+    transform .12s cubic-bezier(.2,1.6,.4,1),
+    box-shadow .15s ease,
+    background .15s ease,
+    color .15s ease,
+    border-color .15s ease,
+    opacity .15s ease !important;
+}
+
+body.md3-on .btn:active:not(:disabled),
+body.md3-on button.btn:active:not(:disabled) {
+  transform: translateY(1px) scale(.97) !important;
+  transition-duration: .04s !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   116. TEXT REVEAL ANIMATION en headers principales
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes premTextReveal {
+  from { opacity: 0; transform: translateY(8px); letter-spacing: -.05em; filter: blur(4px); }
+  to   { opacity: 1; transform: translateY(0); letter-spacing: -.022em; filter: blur(0); }
+}
+
+body.md3-on .panel.active .section-header h2,
+body.md3-on .panel.active .dashboard-title {
+  animation: premTextReveal .55s cubic-bezier(.16,.78,.27,1) both !important;
+}
+
+body.md3-on .panel.active .section-header h2 i {
+  animation: premTextReveal .55s cubic-bezier(.34,1.56,.64,1) .1s both !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   117. ANIMATED UNDERLINES en links (Vercel-style)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on a:not(.btn):not(.tab):not(.prem-views-load):not(.prem-attach-name):not(.prem-cmdk-item *) {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 0 1.5px;
+  transition: background-size .35s cubic-bezier(.4,0,.2,1), color .15s ease !important;
+  text-decoration: none !important;
+  padding-bottom: 2px;
+}
+body.md3-on a:not(.btn):not(.tab):not(.prem-views-load):not(.prem-attach-name):not(.prem-cmdk-item *):hover {
+  background-size: 100% 1.5px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   118. GRADIENT BORDER en cards seleccionadas/destacadas
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .dashboard-card.featured,
+body.md3-on .card.featured,
+body.md3-on .prem-row-selected {
+  position: relative;
+}
+body.md3-on .dashboard-card.featured::before,
+body.md3-on .card.featured::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, #2563eb, #0d9488, #0ea5e9);
+  background-size: 200% 200%;
+  z-index: -1;
+  animation: premGradientBorder 3s ease infinite;
+}
+@keyframes premGradientBorder {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   119. MODERN FORM FOCUS — inputs con halo gradient
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on input:focus:not(.prem-ext-clone),
+body.md3-on select:focus,
+body.md3-on textarea:focus {
+  background: #fff !important;
+  border-color: var(--ds-primary-2, #2563eb) !important;
+  box-shadow:
+    0 0 0 4px rgba(37,99,235,.12),
+    0 0 0 1px rgba(37,99,235,.4),
+    0 4px 16px rgba(37,99,235,.16) !important;
+  transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   120. SMOOTH TYPE WEIGHT TRANSITIONS (Inter variable)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on h1, body.md3-on h2, body.md3-on h3, body.md3-on .dash-value {
+  transition: font-weight .25s ease, letter-spacing .25s ease;
+  font-feature-settings: 'cv11', 'ss01', 'ss03', 'tnum' on, 'liga' on;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   121. AURORA HEADER — animated gradient sutil (2025 trend)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on header.header,
+body.md3-on .header {
+  background:
+    linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%),
+    radial-gradient(circle at 20% 50%, rgba(96,165,250,.18), transparent 50%) !important;
+  background-blend-mode: screen !important;
+  position: relative;
+  overflow: hidden;
+}
+body.md3-on header.header::after,
+body.md3-on .header::after {
+  content: '';
+  position: absolute;
+  top: -50%; left: -10%;
+  right: -10%; bottom: -50%;
+  background:
+    radial-gradient(ellipse 40% 60% at 30% 30%, rgba(59,130,246,.16), transparent 70%),
+    radial-gradient(ellipse 30% 50% at 70% 60%, rgba(13,148,136,.14), transparent 70%);
+  animation: premAurora 12s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes premAurora {
+  from { transform: translate(-2%, -2%) rotate(-1deg); }
+  to   { transform: translate(2%, 2%) rotate(1deg); }
+}
+html.prem-pwa header.header::after { display: none !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   122. SIDEBAR ITEM HOVER — slide-in indicator (Linear-style)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .tabs.tabs--rail .tab:not(.active) {
+  position: relative;
+  overflow: hidden;
+}
+body.md3-on .tabs.tabs--rail .tab:not(.active)::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--ds-primary-2, #2563eb);
+  border-radius: 0 3px 3px 0;
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform .25s cubic-bezier(.34,1.56,.64,1);
+}
+body.md3-on .tabs.tabs--rail .tab:not(.active):hover::before {
+  transform: scaleY(.8);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   123. DASHBOARD CARDS — modern bento grid hint
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .dashboard-grid {
+  gap: 14px !important;
+}
+
+body.md3-on .dashboard-card {
+  border-radius: 16px !important;
+  position: relative;
+  isolation: isolate;
+}
+
+/* Sutil pattern decorativo en dashboard-card icons */
+body.md3-on .dashboard-card-icon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 70% 30%, rgba(255,255,255,.4), transparent 50%);
+  pointer-events: none;
+}
+body.md3-on .dashboard-card-icon { position: relative; overflow: hidden; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   124. MODAL ENTRANCE — spring + scale + backdrop blur progressive
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes premModalSpring {
+  0%   { opacity: 0; transform: scale(.88) translateY(20px); filter: blur(8px); }
+  60%  { opacity: 1; transform: scale(1.02) translateY(-2px); filter: blur(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+}
+
+body.md3-on .modal-dialog,
+body.md3-on .modal-content,
+body.md3-on .md-modal-panel {
+  animation: premModalSpring .45s cubic-bezier(.34,1.56,.64,1) both !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   125. SUBTLE PARALLAX en scroll (cards laggy)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .dashboard-grid > .dashboard-card {
+  will-change: transform;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   126. HIGHLIGHT BAR para active tab (mejor visibilidad)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .tabs.tabs--rail .tab.active {
+  position: relative;
+}
+body.md3-on .tabs.tabs--rail .tab.active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,.16) 50%, transparent 100%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   127. SCROLLBAR aurora (gradient en thumb)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 50%, #cbd5e1 100%) !important;
+  background-clip: content-box !important;
+  border: 3px solid transparent !important;
+  border-radius: 9999px !important;
+}
+body.md3-on ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--ds-primary-2, #2563eb), var(--ds-primary, #1e3a8a)) !important;
+  background-clip: content-box !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   128. SECTION HEADER ICON con shimmer interno (premium feel)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .section-header h2 i {
+  position: relative;
+  overflow: hidden;
+}
+body.md3-on .section-header h2 i::after {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,.4) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: premShimmer 4s ease-in-out infinite;
+}
+@keyframes premShimmer {
+  0%, 80%, 100% { transform: translateX(-100%); }
+  90%           { transform: translateX(100%); }
+}
+html.prem-pwa .section-header h2 i::after { display: none !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   129. ROW HOVER — sutil scale + shadow (skip table.data-table que ya tiene)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .admin-hub-card,
+body.md3-on .empty-card {
+  transition: all .25s cubic-bezier(.34,1.56,.64,1) !important;
+}
+body.md3-on .admin-hub-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.6) inset,
+    0 8px 16px rgba(37,99,235,.10),
+    0 16px 32px rgba(37,99,235,.08) !important;
+  border-color: rgba(37,99,235,.3) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   130. FAB POSITION — ajustar en presencia de bottom-nav mobile
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 640px) {
+  .prem-theme-fab  { bottom: 80px !important; }
+  .prem-density-fab { bottom: 130px !important; }
+  .prem-theme-picker { bottom: 130px !important; right: 14px !important; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   131. 🔥 FIX OVERFLOW MODALES — todo cabe sin scroll horizontal
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on .modal-dialog,
+body.md3-on .modal-content,
+body.md3-on .md-modal-panel {
+  width: 92vw !important;
+  max-width: 720px !important;
+  max-height: calc(100vh - 32px) !important;
+  margin: 16px auto !important;
+  overflow: hidden !important;
+}
+
+body.md3-on .modal-body,
+body.md3-on .md-modal-body {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 18px !important;
+  box-sizing: border-box !important;
+}
+
+/* Forms y form-rows: SIEMPRE caben + columnas se apilan si no caben */
+body.md3-on .modal-body form,
+body.md3-on .md-modal-body form,
+body.md3-on .modal-body .form-row,
+body.md3-on .md-modal-body .form-row {
+  max-width: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+body.md3-on .modal-body .form-row,
+body.md3-on .md-modal-body .form-row,
+body.md3-on .modal-body > div[style*="grid"],
+body.md3-on .md-modal-body > div[style*="grid"] {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)) !important;
+  gap: 12px !important;
+}
+
+/* Cualquier input/select/textarea dentro del modal RESPETA su contenedor */
+body.md3-on .modal-body input,
+body.md3-on .modal-body select,
+body.md3-on .modal-body textarea,
+body.md3-on .md-modal-body input,
+body.md3-on .md-modal-body select,
+body.md3-on .md-modal-body textarea {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+}
+
+/* form-group nunca rebasa el modal */
+body.md3-on .modal-body .form-group,
+body.md3-on .md-modal-body .form-group {
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* Labels truncan con elipsis si son muy largos */
+body.md3-on .modal-body .form-group label,
+body.md3-on .md-modal-body .form-group label,
+body.md3-on .modal-body label,
+body.md3-on .md-modal-body label {
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Tablas dentro de modales: scroll interno SOLO en la tabla, no en el modal */
+body.md3-on .modal-body table,
+body.md3-on .md-modal-body table {
+  display: block !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  white-space: nowrap;
+}
+
+/* Modal header no se rompe en mobile */
+body.md3-on .modal-header,
+body.md3-on .md-modal-header {
+  max-width: 100% !important;
+  flex-wrap: wrap !important;
+  padding: 14px 18px !important;
+}
+body.md3-on .modal-header h2,
+body.md3-on .md-modal-header h2 {
+  font-size: .95rem !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+/* Footer botones se apilan si no caben */
+body.md3-on .modal-footer,
+body.md3-on .md-modal-footer {
+  flex-wrap: wrap !important;
+  padding: 12px 18px !important;
+  gap: 8px !important;
+}
+
+/* Mobile: modal full-screen prácticamente */
+@media (max-width: 640px) {
+  body.md3-on .modal-dialog,
+  body.md3-on .modal-content,
+  body.md3-on .md-modal-panel {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+  }
+  body.md3-on .modal-header,
+  body.md3-on .md-modal-header {
+    border-radius: 0 !important;
+    padding: 12px 14px !important;
+  }
+  body.md3-on .modal-body,
+  body.md3-on .md-modal-body {
+    padding: 14px !important;
+  }
+  body.md3-on .modal-body .form-row,
+  body.md3-on .md-modal-body .form-row {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   132. EVITAR SCROLL HORIZONTAL EN TODA LA APP
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+html, body, body.md3-on {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+}
+
+body.md3-on .app-main,
+body.md3-on .panel,
+body.md3-on .panel.active {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+}
+
+/* Tablas grandes: scroll interno SOLO en .table-wrap */
+body.md3-on .table-wrap,
+body.md3-on .md-table-wrap {
+  overflow-x: auto !important;
+  max-width: 100% !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Cards/dashboards no se desbordan */
+body.md3-on .dashboard-grid,
+body.md3-on .dashboard-charts,
+body.md3-on .dashboard-charts-row,
+body.md3-on .admin-hub-grid {
+  max-width: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+body.md3-on .dashboard-card,
+body.md3-on .card,
+body.md3-on .admin-hub-card {
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Inputs/textareas globales nunca rebasan */
+body.md3-on input,
+body.md3-on select,
+body.md3-on textarea {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Pre/code largos hacen wrap */
+body.md3-on pre,
+body.md3-on code {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
