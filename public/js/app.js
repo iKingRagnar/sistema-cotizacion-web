@@ -1129,6 +1129,7 @@
     const wrap = qs('#header-session');
     const label = qs('#header-session-user');
     const out = qs('#btn-logout');
+    const quickOut = qs('#btn-header-quick-logout');
     const profileWrap = qs('#header-profile-wrap');
     const pname = qs('#header-profile-name');
     const prole = qs('#header-profile-role');
@@ -1137,6 +1138,7 @@
     if (u) {
       wrap.classList.add('hidden');
       if (out) out.classList.add('hidden');
+      if (quickOut) quickOut.classList.remove('hidden');
       if (profileWrap) {
         profileWrap.classList.remove('hidden');
         const roleLabel = getRoleLabel(u.role);
@@ -1152,6 +1154,7 @@
     } else {
       wrap.classList.add('hidden');
       if (out) out.classList.add('hidden');
+      if (quickOut) quickOut.classList.add('hidden');
       if (profileWrap) profileWrap.classList.add('hidden');
       closeHeaderProfileMenu();
     }
@@ -12698,6 +12701,15 @@
       }
       updateAuditTabVisibility();
       syncSessionHeader();
+      location.reload();
+    });
+  }
+  const quickLogoutBtn = qs('#btn-header-quick-logout');
+  if (quickLogoutBtn) {
+    quickLogoutBtn.addEventListener('click', function () {
+      const legacy = qs('#btn-logout');
+      if (legacy) { legacy.click(); return; }
+      clearAuthSession();
       location.reload();
     });
   }

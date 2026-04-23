@@ -6690,3 +6690,182 @@ body.md3-on code {
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   91. 🆔 PROFILE / LOGOUT — header pill prominente + nombre visible
+   El usuario reportó que "no puede hacer logout" porque el avatar SVG era
+   un trazo fino casi invisible en la esquina derecha. Se rediseña como
+   pill sólido con avatar + nombre + caret y se añade botón "Salir" visible.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Pill prominente para el wrap del perfil */
+body .header-profile-wrap,
+body.md3-on .header-profile-wrap {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  position: relative !important;
+}
+
+/* Botón principal del perfil — pill con fondo sólido */
+body .btn-header-profile,
+body.md3-on .btn-header-profile {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: auto !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  padding: 0 14px 0 6px !important;
+  border: 1px solid rgba(26, 115, 232, 0.25) !important;
+  border-radius: 999px !important;
+  background: linear-gradient(135deg, #1A73E8 0%, #1557b0 100%) !important;
+  color: #ffffff !important;
+  cursor: pointer !important;
+  box-shadow: 0 2px 6px rgba(26, 115, 232, 0.25), 0 1px 2px rgba(0,0,0,0.06) !important;
+  transition: transform .15s ease, box-shadow .15s ease, filter .15s ease !important;
+}
+
+body .btn-header-profile::before,
+body.md3-on .btn-header-profile::before {
+  content: '' !important;
+  display: inline-block !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  background: rgba(255,255,255,0.18) !important;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='9' r='3.5'/><path d='M6.5 20v-0.5a5.5 5.5 0 0111 0v0.5'/></svg>") !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: 22px 22px !important;
+  flex: 0 0 auto !important;
+}
+
+/* SVG inline original — lo ocultamos para no duplicar con el ::before */
+body .btn-header-profile > svg,
+body.md3-on .btn-header-profile > svg {
+  display: none !important;
+}
+
+/* Mostrar nombre + caret pseudo-rendered tras el botón */
+body .btn-header-profile::after,
+body.md3-on .btn-header-profile::after {
+  content: attr(aria-describedby-text, '') !important;
+  display: none !important;
+}
+
+/* Hover/focus */
+body .btn-header-profile:hover,
+body.md3-on .btn-header-profile:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.35), 0 2px 4px rgba(0,0,0,0.08) !important;
+  filter: brightness(1.05) !important;
+}
+body .btn-header-profile:focus-visible,
+body.md3-on .btn-header-profile:focus-visible {
+  outline: 3px solid rgba(26, 115, 232, 0.4) !important;
+  outline-offset: 2px !important;
+}
+body .btn-header-profile[aria-expanded="true"],
+body.md3-on .btn-header-profile[aria-expanded="true"] {
+  transform: translateY(0) !important;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.18), 0 2px 6px rgba(26, 115, 232, 0.3) !important;
+}
+
+/* Mostrar el meta del nombre (estaba en .visually-hidden) */
+body .header-profile-wrap .header-profile-meta,
+body.md3-on .header-profile-wrap .header-profile-meta {
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 6px 0 0 !important;
+  overflow: visible !important;
+  clip: auto !important;
+  clip-path: none !important;
+  white-space: normal !important;
+  display: inline-flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  line-height: 1.1 !important;
+  order: 2 !important; /* después del botón visualmente */
+  pointer-events: none !important;
+}
+body .header-profile-wrap .header-profile-name,
+body.md3-on .header-profile-wrap .header-profile-name {
+  display: inline-block !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--md3-on-surface, #1f2937) !important;
+  max-width: 180px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+body .header-profile-wrap .header-profile-role,
+body.md3-on .header-profile-wrap .header-profile-role {
+  display: inline-block !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  color: var(--md3-on-surface-variant, #64748b) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.4px !important;
+}
+
+/* Botón "Salir" prominente visible siempre que hay sesión */
+body .btn-header-quick-logout,
+body.md3-on .btn-header-quick-logout {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  height: 36px !important;
+  padding: 0 14px !important;
+  border: 1px solid #fecaca !important;
+  border-radius: 999px !important;
+  background: #fff5f5 !important;
+  color: #b91c1c !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: background .15s ease, border-color .15s ease, transform .15s ease !important;
+}
+body .btn-header-quick-logout:hover,
+body.md3-on .btn-header-quick-logout:hover {
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  transform: translateY(-1px) !important;
+}
+body .btn-header-quick-logout:focus-visible,
+body.md3-on .btn-header-quick-logout:focus-visible {
+  outline: 3px solid rgba(185, 28, 28, 0.35) !important;
+  outline-offset: 2px !important;
+}
+
+/* Menú desplegable más alineado con el nuevo pill */
+body .header-profile-menu,
+body.md3-on .header-profile-menu {
+  margin-top: 8px !important;
+  border-radius: 14px !important;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16), 0 2px 8px rgba(15, 23, 42, 0.08) !important;
+  border: 1px solid rgba(15, 23, 42, 0.06) !important;
+}
+
+/* Header — mejor jerarquía visual */
+body header.header,
+body.md3-on header.header {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: saturate(160%) blur(8px) !important;
+  -webkit-backdrop-filter: saturate(160%) blur(8px) !important;
+}
+
+/* Título "Servicio Tecnico" con más peso */
+body header.header h1,
+body header.header .app-title,
+body.md3-on header.header h1,
+body.md3-on header.header .app-title {
+  font-weight: 700 !important;
+  letter-spacing: -0.01em !important;
+}
+

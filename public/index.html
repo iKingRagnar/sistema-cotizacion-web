@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400..600,0..1,0&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-25..200&display=swap" rel="stylesheet">
   <!-- Font Awesome (iconos legacy — se mantiene para compat) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
   <!-- CSS heredados (primero — los sobreescribe el nuevo sistema MD3) -->
@@ -46,7 +46,7 @@
   <link rel="stylesheet" href="css/modules/operaciones.css?v=1-md3-2026">
   <link rel="stylesheet" href="css/modules/admin.css?v=1-md3-2026">
   <!-- ★ PREMIUM OVERRIDE — cargado último, gana toda especificidad -->
-  <link rel="stylesheet" href="css/premium.css?v=59-perf-hardening-a11y">
+  <link rel="stylesheet" href="css/premium.css?v=60-profile-pill-logout-visible">
   <link rel="manifest" href="manifest.json">
   <!-- MD3 migration: fuerza tema claro en primera visita post-rediseño -->
   <script>
@@ -233,6 +233,10 @@
         </div>
         <div id="header-session" class="header-session hidden" aria-live="polite"><span class="header-session-label" id="header-session-user"></span></div>
         <button type="button" id="btn-logout" class="btn-icon-header hidden" title="Cerrar sesión" aria-label="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></button>
+        <button type="button" id="btn-header-quick-logout" class="btn-header-quick-logout hidden" title="Cerrar sesión" aria-label="Cerrar sesión">
+          <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+          <span>Salir</span>
+        </button>
         <div id="header-profile-wrap" class="header-profile-wrap hidden" data-profile-wrap>
           <div class="header-profile-meta visually-hidden">
             <span id="header-profile-name" class="header-profile-name"></span>
@@ -1553,7 +1557,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=152-premium-ux" defer></script>
+  <script src="js/app.js?v=153-quick-logout" defer></script>
   <script src="js/bg-animation.js?v=3" defer></script>
   <script src="js/premium-ux.js?v=14-a11y-input-labels" defer></script>
 </body>
