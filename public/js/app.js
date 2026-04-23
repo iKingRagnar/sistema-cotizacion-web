@@ -1095,6 +1095,54 @@
         if (legacy) legacy.click();
       });
     }
+    // Nuevos items del menú expandido
+    const goPanel = function (panelId) {
+      return function () {
+        closeHeaderProfileMenu();
+        if (typeof showPanel === 'function') {
+          try { showPanel(panelId, { skipLoad: false }); } catch (_) {}
+        }
+      };
+    };
+    const wirePanel = function (id, fn) {
+      const el = qs('#' + id);
+      if (el) el.addEventListener('click', fn);
+    };
+    wirePanel('profile-menu-perfil', goPanel('usuarios'));
+    wirePanel('profile-menu-password', function () {
+      closeHeaderProfileMenu();
+      if (typeof openChangePasswordModal === 'function') { try { openChangePasswordModal(); return; } catch (_) {} }
+      if (typeof showPanel === 'function') { try { showPanel('usuarios', { skipLoad: false }); } catch (_) {} }
+    });
+    wirePanel('profile-menu-notif-prefs', function () {
+      closeHeaderProfileMenu();
+      const btn = qs('#btn-notifications');
+      if (btn) btn.click();
+    });
+    wirePanel('profile-menu-tema', function () {
+      closeHeaderProfileMenu();
+      const btn = qs('#btn-theme-toggle');
+      if (btn) btn.click();
+    });
+    wirePanel('profile-menu-densidad', function () {
+      closeHeaderProfileMenu();
+      try {
+        const cur = document.body.classList.contains('density-compact') ? 'compact'
+                  : document.body.classList.contains('density-spacious') ? 'spacious' : 'comfortable';
+        const next = cur === 'comfortable' ? 'compact' : cur === 'compact' ? 'spacious' : 'comfortable';
+        document.body.classList.remove('density-compact', 'density-spacious');
+        if (next === 'compact') document.body.classList.add('density-compact');
+        if (next === 'spacious') document.body.classList.add('density-spacious');
+        try { localStorage.setItem('cotizacion-table-density', next); } catch (_) {}
+        if (typeof showToast === 'function') showToast('Densidad: ' + next, 'info');
+      } catch (_) {}
+    });
+    wirePanel('profile-menu-respaldo', goPanel('demo'));
+    wirePanel('profile-menu-ayuda', function () {
+      closeHeaderProfileMenu();
+      if (typeof startGuidedTour === 'function') { try { startGuidedTour(); return; } catch (_) {} }
+      if (typeof showToast === 'function') showToast('Atajos: Ctrl+K búsqueda · Ctrl+S guardar · Esc cerrar', 'info');
+    });
     document.addEventListener(
       'click',
       function (e) {

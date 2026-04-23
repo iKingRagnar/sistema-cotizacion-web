@@ -46,7 +46,7 @@
   <link rel="stylesheet" href="css/modules/operaciones.css?v=1-md3-2026">
   <link rel="stylesheet" href="css/modules/admin.css?v=1-md3-2026">
   <!-- ★ PREMIUM OVERRIDE — cargado último, gana toda especificidad -->
-  <link rel="stylesheet" href="css/premium.css?v=60-profile-pill-logout-visible">
+  <link rel="stylesheet" href="css/premium.css?v=61-header-profile-table-redesign">
   <link rel="manifest" href="manifest.json">
   <!-- MD3 migration: fuerza tema claro en primera visita post-rediseño -->
   <script>
@@ -253,8 +253,20 @@
               <strong id="profile-menu-display"></strong>
               <div class="header-profile-menu-meta"><span id="profile-menu-fullname"></span></div>
             </div>
-            <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-mas">Más opciones…</button>
-            <button type="button" class="header-profile-menu-item danger" role="menuitem" id="profile-menu-logout">Cerrar sesión</button>
+            <div class="header-profile-menu-section">Mi cuenta</div>
+            <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-perfil"><i class="fas fa-id-card" aria-hidden="true"></i><span>Mi perfil</span></button>
+            <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-password"><i class="fas fa-key" aria-hidden="true"></i><span>Cambiar contraseña</span></button>
+            <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-notif-prefs"><i class="fas fa-bell" aria-hidden="true"></i><span>Notificaciones</span></button>
+            <div class="header-profile-menu-divider"></div>
+            <div class="header-profile-menu-section">Personalización</div>
+            <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-tema"><i class="fas fa-palette" aria-hidden="true"></i><span>Tema y apariencia</span></button>
+            <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-densidad"><i class="fas fa-grip-lines" aria-hidden="true"></i><span>Densidad de tablas</span></button>
+            <div class="header-profile-menu-divider"></div>
+            <div class="header-profile-menu-section">Avanzado</div>
+            <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-mas"><i class="fas fa-sliders-h" aria-hidden="true"></i><span>Más opciones…</span></button>
+            <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-respaldo"><i class="fas fa-database" aria-hidden="true"></i><span>Respaldos</span></button>
+            <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-ayuda"><i class="fas fa-circle-question" aria-hidden="true"></i><span>Ayuda y atajos</span></button>
+            <button type="button" class="header-profile-menu-item danger" role="menuitem" id="profile-menu-logout"><i class="fas fa-sign-out-alt" aria-hidden="true"></i><span>Cerrar sesión</span></button>
           </div>
         </div>
         </div>
@@ -1557,7 +1569,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=153-quick-logout" defer></script>
+  <script src="js/app.js?v=154-profile-menu-expanded" defer></script>
   <script src="js/bg-animation.js?v=3" defer></script>
   <script src="js/premium-ux.js?v=14-a11y-input-labels" defer></script>
 </body>
