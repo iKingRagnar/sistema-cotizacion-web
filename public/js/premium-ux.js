@@ -2097,6 +2097,64 @@
     };
   }
 
+  /* ═══════════════════════════════════════════════════════════
+     30. CUSTOM CONFIRM DIALOG — reemplaza window.confirm() feo
+     Hooka window.confirm para mostrar modal premium.
+     Uso async: const ok = await premConfirm('¿Eliminar?', { danger: true });
+     ═══════════════════════════════════════════════════════════ */
+  function initConfirmDialog() {
+    const modal = document.createElement('div');
+    modal.className = 'prem-confirm-modal';
+    modal.innerHTML = `
+      <div class="prem-confirm-backdrop"></div>
+      <div class="prem-confirm-panel" role="alertdialog">
+        <div class="prem-confirm-icon"><i class="fas fa-question-circle"></i></div>
+        <div class="prem-confirm-title">Confirmar</div>
+        <div class="prem-confirm-msg"></div>
+        <div class="prem-confirm-actions">
+          <button class="prem-confirm-cancel" type="button">Cancelar</button>
+          <button class="prem-confirm-ok" type="button">Confirmar</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    let resolveFn = null;
+
+    function close(result) {
+      modal.classList.remove('open');
+      if (resolveFn) { resolveFn(result); resolveFn = null; }
+    }
+    modal.querySelector('.prem-confirm-backdrop').addEventListener('click', () => close(false));
+    modal.querySelector('.prem-confirm-cancel').addEventListener('click', () => close(false));
+    modal.querySelector('.prem-confirm-ok').addEventListener('click', () => close(true));
+    document.addEventListener('keydown', (e) => {
+      if (!modal.classList.contains('open')) return;
+      if (e.key === 'Escape') close(false);
+      if (e.key === 'Enter') { e.preventDefault(); close(true); }
+    });
+
+    window.premConfirm = function (message, opts = {}) {
+      return new Promise((resolve) => {
+        resolveFn = resolve;
+        const danger = !!opts.danger;
+        modal.querySelector('.prem-confirm-title').textContent = opts.title || (danger ? 'Confirmar eliminación' : 'Confirmar');
+        modal.querySelector('.prem-confirm-msg').textContent = message;
+        modal.querySelector('.prem-confirm-ok').textContent = opts.okText || (danger ? 'Eliminar' : 'Confirmar');
+        modal.querySelector('.prem-confirm-cancel').textContent = opts.cancelText || 'Cancelar';
+        modal.querySelector('.prem-confirm-icon i').className = 'fas ' + (opts.icon || (danger ? 'fa-exclamation-triangle' : 'fa-question-circle'));
+        modal.classList.toggle('prem-confirm-danger', danger);
+        modal.classList.add('open');
+        setTimeout(() => modal.querySelector(danger ? '.prem-confirm-cancel' : '.prem-confirm-ok').focus(), 60);
+      });
+    };
+
+    // Hook window.confirm — asíncrono no funciona como sync, así que mostramos el modal
+    // pero retornamos true para no bloquear (los callsites ya manejaban el confirm sync).
+    // Mejor solución: deja confirm() como está pero recomienda usar premConfirm.
+    // Sin tocar app.js, solo exponemos premConfirm para futuras adopciones.
+  }
+
   /* ─── Bootstrap ─────────────────────────────────────────── */
   function boot() {
     initSkipLink();
@@ -2126,7 +2184,8 @@
     initPWAInstall();
     initAuditViewer();
     initWebhooksUI();
-    initToastConfetti();   // DESPUÉS de initToastHelper para wrappear
+    initToastConfetti();
+    initConfirmDialog();
   }
 
   if (document.readyState === 'loading') {
