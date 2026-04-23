@@ -1341,10 +1341,13 @@ body .checkbox-row {
 
 /* §19.5 — SIDEBAR ACTIVE STATE más visible
  * Reportado por Agente 3: solo box-shadow no es suficiente */
-body.md3-on aside.sidebar .tab,
-body aside.sidebar .tab,
-body.md3-on aside .tab,
-body aside .tab {
+/* Solo aplicar estilo icon-only cuando sidebar esta colapsado
+ * (body.sidebar-rail-collapsed) — cuando esta expandido, deja fluir
+ * los estilos default de layout-rail.css que hacen width:100% */
+body.sidebar-rail-collapsed.md3-on aside.sidebar .tab,
+body.sidebar-rail-collapsed aside.sidebar .tab,
+body.sidebar-rail-collapsed.md3-on aside .tab,
+body.sidebar-rail-collapsed aside .tab {
   position: relative !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -1359,14 +1362,33 @@ body aside .tab {
   cursor: pointer !important;
   transition: all .18s var(--pp-ease-out) !important;
 }
-body.md3-on aside.sidebar .tab:hover,
-body aside.sidebar .tab:hover,
-body.md3-on aside .tab:hover,
-body aside .tab:hover {
+/* Estilo cuando sidebar esta EXPANDIDO: pill full-width con texto visible */
+body.md3-on aside.sidebar .tab:not([hidden]),
+body aside.sidebar .tab:not([hidden]),
+body.md3-on aside .tabs.tabs--rail .tab,
+body aside .tabs.tabs--rail .tab {
+  position: relative !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  color: var(--pp-fg) !important;
+  cursor: pointer !important;
+  transition: background .18s var(--pp-ease-out), color .18s var(--pp-ease-out) !important;
+  font-weight: 600 !important;
+}
+body.sidebar-rail-collapsed.md3-on aside.sidebar .tab:hover,
+body.sidebar-rail-collapsed aside.sidebar .tab:hover,
+body.sidebar-rail-collapsed.md3-on aside .tab:hover,
+body.sidebar-rail-collapsed aside .tab:hover {
   background: var(--pp-brand-50) !important;
   color: var(--pp-brand-600) !important;
   border-color: var(--pp-brand-100) !important;
   transform: scale(1.04) !important;
+}
+body.md3-on aside .tabs.tabs--rail .tab:hover,
+body aside .tabs.tabs--rail .tab:hover {
+  background: var(--pp-brand-50, rgba(59, 107, 234, .08)) !important;
+  color: var(--pp-brand-600, #2754d8) !important;
 }
 body.md3-on aside.sidebar .tab.active,
 body aside.sidebar .tab.active,
@@ -1377,10 +1399,11 @@ body aside .tab.active {
   border-color: transparent !important;
   box-shadow: 0 6px 14px -4px rgba(39, 84, 216, .55), inset 0 1px 0 rgba(255, 255, 255, .25) !important;
 }
-body.md3-on aside.sidebar .tab.active::before,
-body aside.sidebar .tab.active::before,
-body.md3-on aside .tab.active::before,
-body aside .tab.active::before {
+/* Solo mostrar indicador lateral cuando collapsed (rail icon-only) */
+body.sidebar-rail-collapsed.md3-on aside.sidebar .tab.active::before,
+body.sidebar-rail-collapsed aside.sidebar .tab.active::before,
+body.sidebar-rail-collapsed.md3-on aside .tab.active::before,
+body.sidebar-rail-collapsed aside .tab.active::before {
   content: '' !important;
   position: absolute !important;
   left: -10px !important;
@@ -1392,12 +1415,11 @@ body aside .tab.active::before {
   border-radius: 0 4px 4px 0 !important;
 }
 
-/* §19.6 — TOOLTIPS CSS-ONLY para sidebar collapsed
- * Reportado por Agente 3 — usa data-tooltip attribute */
-body.md3-on aside.sidebar [title]:hover::after,
-body aside.sidebar [title]:hover::after,
-body.md3-on aside .tab[title]:hover::after,
-body aside .tab[title]:hover::after {
+/* §19.6 — TOOLTIPS CSS-ONLY solo cuando sidebar esta COLLAPSED (icon-only) */
+body.sidebar-rail-collapsed.md3-on aside.sidebar [title]:hover::after,
+body.sidebar-rail-collapsed aside.sidebar [title]:hover::after,
+body.sidebar-rail-collapsed.md3-on aside .tab[title]:hover::after,
+body.sidebar-rail-collapsed aside .tab[title]:hover::after {
   content: attr(title) !important;
   position: absolute !important;
   left: calc(100% + 12px) !important;
@@ -1415,10 +1437,10 @@ body aside .tab[title]:hover::after {
   pointer-events: none !important;
   animation: pp-fade-in .2s var(--pp-ease-out) both !important;
 }
-body.md3-on aside.sidebar [title]:hover::before,
-body aside.sidebar [title]:hover::before,
-body.md3-on aside .tab[title]:hover::before,
-body aside .tab[title]:hover::before {
+body.sidebar-rail-collapsed.md3-on aside.sidebar [title]:hover::before,
+body.sidebar-rail-collapsed aside.sidebar [title]:hover::before,
+body.sidebar-rail-collapsed.md3-on aside .tab[title]:hover::before,
+body.sidebar-rail-collapsed aside .tab[title]:hover::before {
   content: '' !important;
   position: absolute !important;
   left: calc(100% + 6px) !important;
@@ -1688,11 +1710,11 @@ body.theme-dark aside.sidebar .tab:hover {
   border-color: rgba(96, 139, 243, .25) !important;
 }
 
-/* §19.17 — Lista en sidebar collapsed: ocultar etiquetas, mostrar solo iconos */
-body.md3-on aside.sidebar .tab .label,
-body aside.sidebar .tab .label,
-body.md3-on aside.sidebar .tab .tab-label,
-body aside.sidebar .tab .tab-label {
+/* §19.17 — Solo ocultar etiquetas .label cuando sidebar esta COLLAPSED */
+body.sidebar-rail-collapsed.md3-on aside.sidebar .tab .label,
+body.sidebar-rail-collapsed aside.sidebar .tab .label,
+body.sidebar-rail-collapsed.md3-on aside.sidebar .tab .tab-label,
+body.sidebar-rail-collapsed aside.sidebar .tab .tab-label {
   display: none !important;
 }
 
@@ -2332,16 +2354,28 @@ body p.gar-modal-dry input[type="checkbox"] {
   flex-shrink: 0 !important;
 }
 
-/* §22.4 Row actions consistency (.row-actions-inline iguala a .row-actions) */
+/* §22.4 Row actions consistency (.row-actions-inline iguala a .row-actions)
+ * nowrap + min-width para que 3 botones (32px c/u) queden en linea */
 body.md3-on .row-actions-inline,
 body.md3-on td.th-actions,
 body .row-actions-inline,
 body td.th-actions {
   display: flex !important;
-  flex-wrap: wrap !important;
+  flex-wrap: nowrap !important;
   gap: 6px !important;
   align-items: center !important;
   justify-content: flex-end !important;
+  white-space: nowrap !important;
+  min-width: 120px !important;
+}
+/* Header ACCIONES column min-width match */
+body.md3-on table.data-table th:last-child,
+body table.data-table th:last-child,
+body.md3-on table th.th-actions,
+body table th.th-actions {
+  min-width: 120px !important;
+  white-space: nowrap !important;
+  text-align: right !important;
 }
 
 body.md3-on .row-actions-inline > *,
