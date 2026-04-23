@@ -2155,6 +2155,241 @@
     // Sin tocar app.js, solo exponemos premConfirm para futuras adopciones.
   }
 
+  /* ═══════════════════════════════════════════════════════════
+     31. THEME PICKER — 3 presets (navy / teal / sunset)
+     Botón flotante con palette icon abre selector. Persiste localStorage.
+     ═══════════════════════════════════════════════════════════ */
+  function initThemePicker() {
+    const THEMES = [
+      { id: 'navy',   label: 'Navy',   c1: '#1e3a8a', c2: '#2563eb' },
+      { id: 'teal',   label: 'Teal',   c1: '#0f766e', c2: '#0d9488' },
+      { id: 'sunset', label: 'Sunset', c1: '#c2410c', c2: '#ea580c' },
+      { id: 'royal',  label: 'Royal',  c1: '#6d28d9', c2: '#7c3aed' },
+      { id: 'rose',   label: 'Rose',   c1: '#be123c', c2: '#e11d48' },
+    ];
+    const KEY = LS_PREFIX + 'theme';
+
+    function apply(themeId) {
+      const t = THEMES.find(x => x.id === themeId) || THEMES[0];
+      const root = document.documentElement;
+      root.style.setProperty('--ds-primary', t.c1);
+      root.style.setProperty('--ds-primary-2', t.c2);
+      root.style.setProperty('--ds-grad', `linear-gradient(135deg, ${t.c1} 0%, ${t.c2} 100%)`);
+      try { localStorage.setItem(KEY, themeId); } catch {}
+      document.body.dataset.premTheme = themeId;
+    }
+
+    const saved = (() => { try { return localStorage.getItem(KEY); } catch { return null; } })();
+    if (saved) apply(saved);
+
+    // Botón flotante
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'prem-theme-fab';
+    btn.setAttribute('data-prem-tooltip', 'Cambiar tema');
+    btn.innerHTML = '<i class="fas fa-palette"></i>';
+
+    const picker = document.createElement('div');
+    picker.className = 'prem-theme-picker';
+    picker.innerHTML = THEMES.map(t => `
+      <button class="prem-theme-opt" data-theme="${t.id}" title="${t.label}">
+        <span style="background: linear-gradient(135deg, ${t.c1}, ${t.c2})"></span>
+        <small>${t.label}</small>
+      </button>
+    `).join('');
+
+    document.body.appendChild(btn);
+    document.body.appendChild(picker);
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      picker.classList.toggle('open');
+    });
+    picker.addEventListener('click', (e) => {
+      const opt = e.target.closest('.prem-theme-opt');
+      if (!opt) return;
+      apply(opt.dataset.theme);
+      if (window.premToast) window.premToast(`Tema "${opt.dataset.theme}" aplicado`, { type: 'info' });
+      picker.classList.remove('open');
+    });
+    document.addEventListener('click', (e) => {
+      if (!picker.contains(e.target) && e.target !== btn) picker.classList.remove('open');
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     32. SORTABLE COLUMNS — click en th para ordenar
+     ═══════════════════════════════════════════════════════════ */
+  function initSortableColumns() {
+    function attach(table) {
+      if (table._sortInit) return;
+      table._sortInit = true;
+      const headerRow = table.querySelector('thead tr:first-child');
+      if (!headerRow) return;
+
+      headerRow.querySelectorAll('th').forEach((th, idx) => {
+        if (th.classList.contains('th-actions')) return;
+        if (th.classList.contains('no-sort')) return;
+        th.classList.add('prem-sortable');
+        th.style.cursor = 'pointer';
+        th.dataset.sortIdx = String(idx);
+        th.addEventListener('click', () => sortBy(table, idx, th));
+      });
+    }
+
+    function sortBy(table, colIdx, th) {
+      const cur = th.dataset.sortDir;
+      const dir = cur === 'asc' ? 'desc' : 'asc';
+      // Limpiar dirs de otros th
+      table.querySelectorAll('thead th[data-sort-dir]').forEach(t => {
+        t.removeAttribute('data-sort-dir');
+        t.classList.remove('prem-sort-asc', 'prem-sort-desc');
+      });
+      th.dataset.sortDir = dir;
+      th.classList.add('prem-sort-' + dir);
+
+      const tbody = table.querySelector('tbody');
+      if (!tbody) return;
+      const rows = [...tbody.querySelectorAll('tr')]
+        .filter(r => !r.classList.contains('empty-row') && !r.classList.contains('prem-skel-row') && !r.querySelector('td[colspan]'));
+
+      rows.sort((a, b) => {
+        const aTxt = (a.children[colIdx]?.textContent || '').trim();
+        const bTxt = (b.children[colIdx]?.textContent || '').trim();
+        // Intentar comparación numérica primero
+        const aNum = parseFloat(aTxt.replace(/[^0-9.\-]/g, ''));
+        const bNum = parseFloat(bTxt.replace(/[^0-9.\-]/g, ''));
+        const isNum = !isNaN(aNum) && !isNaN(bNum) && aTxt.replace(/[\s,.\-$%]/g, '').match(/^\d/);
+        let cmp;
+        if (isNum) cmp = aNum - bNum;
+        else cmp = aTxt.localeCompare(bTxt, 'es', { numeric: true, sensitivity: 'base' });
+        return dir === 'asc' ? cmp : -cmp;
+      });
+
+      rows.forEach(r => tbody.appendChild(r));
+    }
+
+    document.querySelectorAll('table.data-table').forEach(attach);
+    const mo = new MutationObserver(muts => {
+      for (const m of muts) for (const n of m.addedNodes) {
+        if (n.nodeType !== 1) continue;
+        if (n.matches?.('table.data-table')) attach(n);
+        n.querySelectorAll?.('table.data-table').forEach(attach);
+      }
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     33. DENSITY TOGGLE — compact / regular / spacious
+     ═══════════════════════════════════════════════════════════ */
+  function initDensityToggle() {
+    const KEY = LS_PREFIX + 'density';
+    const MODES = ['compact', 'regular', 'spacious'];
+    const ICONS = { compact: 'fa-grip-lines', regular: 'fa-bars', spacious: 'fa-bars-staggered' };
+
+    function apply(mode) {
+      MODES.forEach(m => document.body.classList.remove('prem-density-' + m));
+      document.body.classList.add('prem-density-' + mode);
+      try { localStorage.setItem(KEY, mode); } catch {}
+    }
+    const saved = (() => { try { return localStorage.getItem(KEY) || 'regular'; } catch { return 'regular'; } })();
+    apply(saved);
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'prem-density-fab';
+    btn.setAttribute('data-prem-tooltip', 'Densidad de tabla');
+    btn.innerHTML = `<i class="fas ${ICONS[saved]}"></i>`;
+    document.body.appendChild(btn);
+
+    btn.addEventListener('click', () => {
+      const cur = MODES.find(m => document.body.classList.contains('prem-density-' + m)) || 'regular';
+      const next = MODES[(MODES.indexOf(cur) + 1) % MODES.length];
+      apply(next);
+      btn.querySelector('i').className = 'fas ' + ICONS[next];
+      if (window.premToast) window.premToast(`Densidad: ${next}`, { type: 'info' });
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     34. LOADING BUTTON STATE — auto-disable con spinner
+     Cualquier <button class="prem-loading"> muestra spinner.
+     También se aplica a botones de submit forms cuando se hace click.
+     ═══════════════════════════════════════════════════════════ */
+  function initLoadingButtons() {
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-prem-loading-on-click], .btn[data-prem-loading-on-click]');
+      if (!btn) return;
+      btn.classList.add('prem-loading');
+      btn.disabled = true;
+      // Auto-restore después de 6s por seguridad si el código no lo limpia
+      setTimeout(() => {
+        btn.classList.remove('prem-loading');
+        btn.disabled = false;
+      }, 6000);
+    });
+    // Helper global
+    window.premBtnLoading = function (btn, on) {
+      if (!btn) return;
+      if (on) { btn.classList.add('prem-loading'); btn.disabled = true; }
+      else    { btn.classList.remove('prem-loading'); btn.disabled = false; }
+    };
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     35. SCROLL-REVEAL — cards aparecen suavemente al entrar viewport
+     ═══════════════════════════════════════════════════════════ */
+  function initScrollReveal() {
+    if (!('IntersectionObserver' in window)) return;
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) {
+          e.target.classList.add('prem-revealed');
+          io.unobserve(e.target);
+        }
+      }
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+    function watch(el) {
+      if (el._revealWatched) return;
+      el._revealWatched = true;
+      el.classList.add('prem-reveal');
+      io.observe(el);
+    }
+    function scan() {
+      document.querySelectorAll('.dashboard-card, .admin-hub-card, .empty-card, .prem-views-bar, .prem-ext-filter-bar').forEach(watch);
+    }
+    scan();
+    const mo = new MutationObserver(scan);
+    mo.observe(document.body, { childList: true, subtree: true });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     36. NOTIFICATION BADGE PULSE — anima cuando aparece nuevo
+     ═══════════════════════════════════════════════════════════ */
+  function initBadgePulse() {
+    function watch(badge) {
+      if (badge._pulseWatched) return;
+      badge._pulseWatched = true;
+      const mo = new MutationObserver(() => {
+        const n = parseInt((badge.textContent || '0').trim(), 10);
+        if (n > 0) {
+          badge.classList.add('prem-badge-active');
+        } else {
+          badge.classList.remove('prem-badge-active');
+        }
+      });
+      mo.observe(badge, { childList: true, characterData: true, subtree: true });
+      // Init
+      const n = parseInt((badge.textContent || '0').trim(), 10);
+      if (n > 0) badge.classList.add('prem-badge-active');
+    }
+    function scan() { document.querySelectorAll('.tab-badge').forEach(watch); }
+    scan();
+    new MutationObserver(scan).observe(document.body, { childList: true, subtree: true });
+  }
+
   /* ─── Bootstrap ─────────────────────────────────────────── */
   function boot() {
     initSkipLink();
@@ -2186,6 +2421,12 @@
     initWebhooksUI();
     initToastConfetti();
     initConfirmDialog();
+    initThemePicker();
+    initSortableColumns();
+    initDensityToggle();
+    initLoadingButtons();
+    initScrollReveal();
+    initBadgePulse();
   }
 
   if (document.readyState === 'loading') {
