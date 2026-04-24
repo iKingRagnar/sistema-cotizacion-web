@@ -92,6 +92,17 @@ function normalizeRole(role) {
   return String(role || '').trim().toLowerCase();
 }
 
+function parseJsonObject(raw) {
+  if (!raw) return null;
+  try {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    return parsed;
+  } catch (_) {
+    return null;
+  }
+}
+
 function attachUser(req) {
   req.authUser = null;
   const raw = parseBearer(req);
@@ -323,6 +334,8 @@ async function buildUserProfileFromRow(u) {
   }
   const roleNorm = normalizeRole(u.role);
   const canCotizar = computeCanCotizar(roleNorm, tecnicoId, esVendedor);
+  const tabPermissions = parseJsonObject(u.tab_permissions);
+  const columnPermissions = parseJsonObject(u.column_permissions);
   return {
     id: u.id,
     username: u.username,
@@ -331,6 +344,8 @@ async function buildUserProfileFromRow(u) {
     tecnicoId,
     esVendedor,
     canCotizar,
+    tabPermissions,
+    columnPermissions,
   };
 }
 

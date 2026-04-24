@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="css/header-profile.css?v=9-profile-menu-casi-solido">
   <link rel="stylesheet" href="css/theme-industrial.css?v=24-prospeccion-map-voyager">
   <link rel="stylesheet" href="css/nano-fondo.css?v=1-nano-bg-sol-luna">
+  <link rel="stylesheet" href="css/modules/usuarios.css?v=1-usuarios-permisos-granulares">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 </head>
@@ -1105,6 +1106,27 @@
           <button type="button" id="btn-usuarios-create" class="btn primary"><i class="fas fa-user-plus"></i> Crear usuario</button>
         </div>
       </div>
+      <div class="card" style="margin-bottom:1rem;padding:1rem 1.25rem;">
+        <h3 style="margin:0 0 0.5rem 0;font-size:1rem;"><i class="fas fa-user-lock"></i> Permisos por pestaña y columnas</h3>
+        <p class="hint" style="margin:0 0 0.75rem 0;">Selecciona un usuario, marca qué pestañas puede ver y qué columnas puede ver en cada tabla.</p>
+        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;">
+          <div class="form-group" style="min-width:260px;flex:1;">
+            <label for="usuarios-perm-user">Usuario</label>
+            <select id="usuarios-perm-user" class="filter-input"></select>
+          </div>
+          <button type="button" id="btn-usuarios-save-access" class="btn primary"><i class="fas fa-save"></i> Guardar permisos</button>
+        </div>
+        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-start;margin-top:0.75rem;">
+          <div class="card" style="padding:0.75rem;min-width:260px;flex:1;">
+            <h4 style="margin:0 0 0.5rem 0;font-size:0.95rem;">Pestañas visibles</h4>
+            <div id="usuarios-perm-tabs-wrap" style="display:grid;gap:0.4rem;"></div>
+          </div>
+          <div class="card" style="padding:0.75rem;min-width:320px;flex:2;">
+            <h4 style="margin:0 0 0.5rem 0;font-size:0.95rem;">Columnas visibles por tabla</h4>
+            <div id="usuarios-perm-columns-wrap" style="display:grid;gap:0.65rem;"></div>
+          </div>
+        </div>
+      </div>
       <div class="table-wrap">
         <table class="data-table" id="tabla-usuarios">
           <thead>
@@ -1424,6 +1446,6 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=140-prospeccion-map-voyager" defer></script>
+  <script src="js/app.js?v=141-usuarios-permisos-granulares" defer></script>
 </body>
 </html>

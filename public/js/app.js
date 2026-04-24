@@ -723,6 +723,178 @@
   let viajesCache = [];
   let tecnicosCache = [];
   let appUsersDeletedCache = [];
+  let appUsersCache = [];
+  let accessEditorState = { userId: null, tabPermissions: {}, columnPermissions: {} };
+  let columnAccessObserverReady = false;
+
+  const ACCESS_TAB_DEFS = [
+    ['dashboards', 'Dashboards'],
+    ['clientes', 'Clientes'],
+    ['refacciones', 'Refacciones'],
+    ['maquinas', 'Máquinas'],
+    ['almacen', 'Almacén'],
+    ['cotizaciones', 'Cotizaciones'],
+    ['ventas', 'Ventas'],
+    ['prospeccion', 'Prospección'],
+    ['revision-maquinas', 'Revisión Máquinas'],
+    ['tarifas', 'Tarifas'],
+    ['reportes', 'Reportes'],
+    ['garantias', 'Garantías'],
+    ['mantenimiento-garantia', 'Mantenimientos'],
+    ['garantias-sin-cobertura', 'Sin cobertura'],
+    ['bonos', 'Bonos'],
+    ['viajes', 'Viajes'],
+    ['tecnicos', 'Personal'],
+    ['bitacoras', 'Bitácora de horas'],
+    ['auditoria', 'Auditoría'],
+    ['usuarios', 'Usuarios'],
+    ['categorias-catalogo', 'Categorías'],
+    ['demo', 'Cargar demo'],
+    ['acerca', 'Acerca de'],
+  ];
+
+  const ACCESS_TABLE_MAP = {
+    clientes: ['tabla-clientes'],
+    refacciones: ['tabla-refacciones'],
+    maquinas: ['tabla-maquinas'],
+    almacen: ['tabla-almacen'],
+    cotizaciones: ['tabla-cotizaciones'],
+    ventas: ['tabla-ventas'],
+    prospeccion: ['tabla-prospeccion'],
+    'revision-maquinas': ['tabla-revision-maquinas'],
+    tarifas: ['tabla-tarifas-mano-obra', 'tabla-tarifas-traslado'],
+    reportes: ['tabla-reportes'],
+    garantias: ['tabla-garantias'],
+    'mantenimiento-garantia': ['tabla-mantenimientos-garantia'],
+    'garantias-sin-cobertura': ['tabla-garantias-sin'],
+    bonos: ['tabla-bonos'],
+    viajes: ['tabla-viajes'],
+    tecnicos: ['tabla-tecnicos'],
+    bitacoras: ['tabla-bitacoras'],
+    auditoria: ['tabla-auditoria'],
+    usuarios: ['tabla-usuarios'],
+    'categorias-catalogo': ['tabla-categorias-admin'],
+  };
+
+  function normalizeAccessText(v) {
+    return String(v == null ? '' : v)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
+  }
+
+  function parseUserAccessObject(raw) {
+    if (!raw) return {};
+    if (typeof raw === 'object') return raw;
+    try {
+      const p = JSON.parse(String(raw));
+      return p && typeof p === 'object' ? p : {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function getUserTabPermissions() {
+    const u = getSessionUser();
+    return parseUserAccessObject(u && (u.tabPermissions || u.tab_permissions));
+  }
+
+  function getUserColumnPermissions() {
+    const u = getSessionUser();
+    return parseUserAccessObject(u && (u.columnPermissions || u.column_permissions));
+  }
+
+  function canAccessTabByPermission(tabId) {
+    const perms = getUserTabPermissions();
+    if (!perms || typeof perms !== 'object') return true;
+    return perms[tabId] !== false;
+  }
+
+  function applyTabVisibilityByPermissions() {
+    const tabs = qsAll('.tab[data-tab]');
+    tabs.forEach(function (t) {
+      const tabId = t && t.dataset ? t.dataset.tab : '';
+      if (!tabId) return;
+      if (!canAccessTabByPermission(tabId)) t.classList.add('hidden');
+    });
+    const activeTab = document.querySelector('.tab.active');
+    const at = activeTab && activeTab.dataset ? activeTab.dataset.tab : '';
+    if (at && !canAccessTabByPermission(at)) {
+      showPanel('dashboards');
+    }
+  }
+
+  function readTableHeaders(tableId) {
+    const table = qs('#' + tableId);
+    if (!table) return [];
+    const ths = Array.from(table.querySelectorAll('thead tr:first-child th'));
+    return ths
+      .map(function (th, idx) {
+        return {
+          idx: idx + 1,
+          label: String((th.textContent || '').trim()),
+        };
+      })
+      .filter(function (x) {
+        return x.label && !/acciones/i.test(x.label);
+      });
+  }
+
+  function applyColumnVisibilityForTable(tableId, allowedSet) {
+    const table = qs('#' + tableId);
+    if (!table) return;
+    const rows = Array.from(table.querySelectorAll('tr'));
+    rows.forEach(function (tr) {
+      const cells = Array.from(tr.querySelectorAll('th,td'));
+      cells.forEach(function (c) {
+        c.style.display = '';
+      });
+    });
+    if (!allowedSet || !allowedSet.size) return;
+    const headers = readTableHeaders(tableId);
+    const hideIndexes = headers
+      .filter(function (h) {
+        return !allowedSet.has(normalizeAccessText(h.label));
+      })
+      .map(function (h) {
+        return h.idx;
+      });
+    if (!hideIndexes.length) return;
+    rows.forEach(function (tr) {
+      hideIndexes.forEach(function (i) {
+        const cell = tr.querySelector(`th:nth-child(${i}), td:nth-child(${i})`);
+        if (cell) cell.style.display = 'none';
+      });
+    });
+  }
+
+  function applyAllColumnPermissions() {
+    const cfg = getUserColumnPermissions();
+    Object.entries(ACCESS_TABLE_MAP).forEach(function ([tabId, tableIds]) {
+      const raw = cfg && cfg[tabId];
+      const allowed = Array.isArray(raw) ? new Set(raw.map(normalizeAccessText).filter(Boolean)) : null;
+      tableIds.forEach(function (tid) {
+        applyColumnVisibilityForTable(tid, allowed);
+      });
+    });
+  }
+
+  function ensureColumnAccessObserver() {
+    if (columnAccessObserverReady) return;
+    columnAccessObserverReady = true;
+    Object.values(ACCESS_TABLE_MAP)
+      .flat()
+      .forEach(function (tid) {
+        const table = qs('#' + tid);
+        if (!table) return;
+        const obs = new MutationObserver(function () {
+          applyAllColumnPermissions();
+        });
+        obs.observe(table, { childList: true, subtree: true });
+      });
+  }
+
   let lastQuickRefreshAt = 0;
   function prefersReducedMotion() {
     try {
@@ -839,6 +1011,7 @@
     updateCotizacionesTabVisibility();
     updateCommissionsUiVisibility();
     syncAdminHubCardVisibility();
+    applyTabVisibilityByPermissions();
   }
   function syncAdminHubCardVisibility() {
     const u = getSessionUser();
@@ -1214,6 +1387,7 @@
     if (id === 'almacen') loadAlmacen();
     if (id === 'tarifas') loadTarifas();
     if (id === 'tecnicos') loadTecnicos();
+    applyAllColumnPermissions();
   }
 
   qsAll('.tab').forEach(t => {
@@ -8634,6 +8808,7 @@
         fetchJson(API + '/tecnicos').catch(() => []),
       ]);
       const list = toArray(rows);
+      appUsersCache = list;
       const tecList = toArray(tecnicos);
       const me = getSessionUser();
       const activeAdmins = list.filter(function (u) {
@@ -8641,6 +8816,7 @@
       }).length;
       if (!list.length) {
         tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay usuarios registrados.</td></tr>';
+        renderUsuariosAccessEditor([]);
         loadAppDeletedUsers();
         return;
       }
@@ -8686,11 +8862,61 @@
           );
         })
         .join('');
+      renderUsuariosAccessEditor(list);
     } catch (e) {
+      appUsersCache = [];
       tbody.innerHTML =
         '<tr><td colspan="7" class="empty">' + escapeHtml(parseApiError(e) || 'No se pudo cargar usuarios.') + '</td></tr>';
+      renderUsuariosAccessEditor([]);
     }
     loadAppDeletedUsers();
+  }
+
+  function renderUsuariosAccessEditor(users) {
+    const sel = qs('#usuarios-perm-user');
+    const tabsWrap = qs('#usuarios-perm-tabs-wrap');
+    const colsWrap = qs('#usuarios-perm-columns-wrap');
+    if (!sel || !tabsWrap || !colsWrap) return;
+    const list = toArray(users || []);
+    if (!list.length) {
+      sel.innerHTML = '<option value="">Sin usuarios</option>';
+      tabsWrap.innerHTML = '<p class="hint">Sin datos</p>';
+      colsWrap.innerHTML = '<p class="hint">Sin datos</p>';
+      accessEditorState = { userId: null, tabPermissions: {}, columnPermissions: {} };
+      return;
+    }
+    const selectedId = accessEditorState.userId != null ? Number(accessEditorState.userId) : Number(list[0].id);
+    sel.innerHTML = list
+      .map((u) => `<option value="${escapeHtml(String(u.id))}" ${Number(u.id) === selectedId ? 'selected' : ''}>${escapeHtml(u.username)} (${escapeHtml(u.role)})</option>`)
+      .join('');
+    const row = list.find((u) => Number(u.id) === Number(sel.value)) || list[0];
+    accessEditorState.userId = Number(row.id);
+    accessEditorState.tabPermissions = parseUserAccessObject(row.tab_permissions || row.tabPermissions);
+    accessEditorState.columnPermissions = parseUserAccessObject(row.column_permissions || row.columnPermissions);
+
+    tabsWrap.innerHTML = ACCESS_TAB_DEFS.map(([id, label]) => {
+      const checked = accessEditorState.tabPermissions[id] !== false;
+      return `<label style="display:flex;align-items:center;gap:0.45rem;"><input type="checkbox" class="usuarios-perm-tab-check" data-tab-id="${escapeHtml(id)}" ${checked ? 'checked' : ''}> <span>${escapeHtml(label)}</span> <span class="muted">(${escapeHtml(id)})</span></label>`;
+    }).join('');
+
+    colsWrap.innerHTML = Object.entries(ACCESS_TABLE_MAP)
+      .map(([tabId, tableIds]) => {
+        const first = tableIds[0];
+        const headers = readTableHeaders(first);
+        if (!headers.length) return '';
+        const allowed = Array.isArray(accessEditorState.columnPermissions[tabId])
+          ? new Set(accessEditorState.columnPermissions[tabId].map(normalizeAccessText))
+          : null;
+        const checks = headers
+          .map((h) => {
+            const on = !allowed || allowed.has(normalizeAccessText(h.label));
+            return `<label style="display:inline-flex;align-items:center;gap:0.35rem;margin:0 0.55rem 0.4rem 0;"><input type="checkbox" class="usuarios-perm-col-check" data-tab-id="${escapeHtml(tabId)}" data-col-label="${escapeHtml(h.label)}" ${on ? 'checked' : ''}> ${escapeHtml(h.label)}</label>`;
+          })
+          .join('');
+        return `<div class="card" style="padding:0.6rem;"><div style="font-weight:600;margin-bottom:0.35rem;">${escapeHtml(tabId)}</div><div>${checks}</div></div>`;
+      })
+      .filter(Boolean)
+      .join('');
   }
 
   async function loadCategoriasAdminPanel() {
@@ -9085,6 +9311,81 @@
         try {
           localStorage.setItem('usuariosEliminadosNotifyEmail', String(emailNotify.value || '').trim());
         } catch (_) {}
+      });
+    }
+    const permSel = qs('#usuarios-perm-user');
+    if (permSel && !permSel._bound) {
+      permSel._bound = true;
+      permSel.addEventListener('change', function () {
+        accessEditorState.userId = Number(permSel.value);
+        renderUsuariosAccessEditor(appUsersCache);
+      });
+    }
+    const permTabsWrap = qs('#usuarios-perm-tabs-wrap');
+    if (permTabsWrap && !permTabsWrap._bound) {
+      permTabsWrap._bound = true;
+      permTabsWrap.addEventListener('change', function (ev) {
+        const t = ev.target;
+        if (!t || !t.classList || !t.classList.contains('usuarios-perm-tab-check')) return;
+        const tabId = String(t.dataset.tabId || '').trim();
+        if (!tabId) return;
+        accessEditorState.tabPermissions[tabId] = !!t.checked;
+      });
+    }
+    const permColsWrap = qs('#usuarios-perm-columns-wrap');
+    if (permColsWrap && !permColsWrap._bound) {
+      permColsWrap._bound = true;
+      permColsWrap.addEventListener('change', function (ev) {
+        const t = ev.target;
+        if (!t || !t.classList || !t.classList.contains('usuarios-perm-col-check')) return;
+        const tabId = String(t.dataset.tabId || '').trim();
+        const col = String(t.dataset.colLabel || '').trim();
+        if (!tabId || !col) return;
+        const arr = Array.isArray(accessEditorState.columnPermissions[tabId])
+          ? accessEditorState.columnPermissions[tabId].slice()
+          : [];
+        const norm = normalizeAccessText(col);
+        const next = arr.filter((x) => normalizeAccessText(x) !== norm);
+        if (t.checked) next.push(col);
+        const totalCols = readTableHeaders((ACCESS_TABLE_MAP[tabId] || [])[0] || '').length;
+        if (!next.length || next.length >= totalCols) {
+          delete accessEditorState.columnPermissions[tabId];
+        } else {
+          accessEditorState.columnPermissions[tabId] = next;
+        }
+      });
+    }
+    const btnSaveAccess = qs('#btn-usuarios-save-access');
+    if (btnSaveAccess && !btnSaveAccess._bound) {
+      btnSaveAccess._bound = true;
+      btnSaveAccess.addEventListener('click', async function () {
+        const userId = Number(accessEditorState.userId);
+        if (!Number.isFinite(userId)) {
+          showToast('Selecciona un usuario para guardar permisos.', 'warning');
+          return;
+        }
+        btnSaveAccess.disabled = true;
+        try {
+          await fetchJson(API + '/app-users/' + userId, {
+            method: 'PATCH',
+            body: JSON.stringify({
+              tab_permissions: accessEditorState.tabPermissions,
+              column_permissions: accessEditorState.columnPermissions,
+            }),
+          });
+          showToast('Permisos guardados correctamente.', 'success');
+          await loadAppUsers();
+          const me = getSessionUser();
+          if (me && Number(me.id) === userId) {
+            if (typeof refreshSessionUser === 'function') await refreshSessionUser();
+            updateAuditTabVisibility();
+            applyAllColumnPermissions();
+          }
+        } catch (e) {
+          showToast(parseApiError(e) || 'No se pudo guardar permisos.', 'error');
+        } finally {
+          btnSaveAccess.disabled = false;
+        }
       });
     }
   }
@@ -12686,6 +12987,8 @@
     updateAuditTabVisibility();
     updateCotizacionesTabVisibility();
     setupUsuariosPanel();
+    ensureColumnAccessObserver();
+    applyAllColumnPermissions();
     setupModuleDeleteZones();
     setupCategoriasAdminPanel();
     initThemeToggleButton();
