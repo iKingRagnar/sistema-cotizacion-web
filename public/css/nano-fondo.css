@@ -1,61 +1,61 @@
 /* ============================================================
- * NANO-FONDO.CSS  ·  v2 UNIFICADO TOTAL
- * Modo Sol:  TODO blanco glassmorphism + imagen industrial
- * Modo Luna: TODO negro glassmorphism + imagen industrial
+ * NANO-FONDO.CSS  ·  v3 GLASS REAL ELEGANTE
+ * Modo Sol:  TODO blanco vidrio transparente + imagen industrial
+ * Modo Luna: TODO negro vidrio transparente + imagen industrial
  *
- * Estrategia:
- *   1) Body lleva la imagen como background fijo + overlay leve
- *      para que la imagen siempre se aprecie.
- *   2) TODO contenedor grande (header, sidebar, cards, panels,
- *      tablas, modales, inputs) usa fondo SEMI-TRANSPARENTE del
- *      mismo tono (blanco o negro) + backdrop-filter: blur(...)
- *      → efecto "glass" profesional y la imagen se nota detrás.
- *   3) Textos con alto contraste (negro en Sol, claro en Luna).
- *   4) Bordes sutiles para definir componentes.
+ * Cambios v2 -> v3:
+ *   - Opacidades bajadas: 0.72 -> 0.35  (Sol ya no se ve blanco solido)
+ *   - Blur aumentado:     14px -> 20px  (vidrio esmerilado real)
+ *   - Saturate:           140% -> 160%  (colores vivos detras)
+ *   - COBERTURA AÑADIDA: .dashboard-score-tile, .dashboard-exec-scorecards,
+ *     .dashboard-kpi-strip, .dashboard-card, .dashboard-crossfilter-bar,
+ *     .dashboard-surface, .prospeccion-kpi, .section-header.
  *
- * Cargar AL FINAL para ganar cascada.
+ * Carga AL FINAL en index.html (tras theme-industrial) para ganar cascada.
  * ============================================================ */
 
 
 /* ============================================================
- * 1. VARIABLES POR MODO
+ * 1. VARIABLES POR MODO  (opacidades BAJAS -> vidrio real)
  * ============================================================ */
 
 html body.theme-industrial.appearance-light {
-  --nano-overlay: rgba(248, 250, 253, 0.40);
-  --nano-surface: rgba(255, 255, 255, 0.72);
-  --nano-surface-strong: rgba(255, 255, 255, 0.88);
-  --nano-surface-solid: rgba(255, 255, 255, 0.96);
-  --nano-surface-subtle: rgba(255, 255, 255, 0.45);
-  --nano-border: rgba(15, 23, 42, 0.10);
-  --nano-border-strong: rgba(15, 23, 42, 0.18);
-  --nano-text: #0f172a;
-  --nano-text-soft: #1e293b;
-  --nano-text-muted: #475569;
-  --nano-accent: #1a73e8;
-  --nano-blur: blur(14px) saturate(140%);
-  --nano-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+  --nano-overlay:           rgba(248, 250, 253, 0.22);   /* body: imagen muy visible */
+  --nano-surface:           rgba(255, 255, 255, 0.35);   /* cards, paneles, sidebar */
+  --nano-surface-strong:    rgba(255, 255, 255, 0.55);   /* header, thead, tabs activas */
+  --nano-surface-solid:     rgba(255, 255, 255, 0.82);   /* modales, dropdowns */
+  --nano-surface-subtle:    rgba(255, 255, 255, 0.18);   /* hover filas, chart container */
+  --nano-border:            rgba(15, 23, 42, 0.10);
+  --nano-border-strong:     rgba(15, 23, 42, 0.18);
+  --nano-text:              #0b1220;                      /* casi negro */
+  --nano-text-soft:         #1e293b;
+  --nano-text-muted:        #475569;
+  --nano-accent:            #1a73e8;
+  --nano-blur:              blur(20px) saturate(160%);
+  --nano-blur-light:        blur(10px) saturate(140%);
+  --nano-shadow:            0 8px 32px rgba(15, 23, 42, 0.08);
 }
 
 html body.theme-industrial:not(.appearance-light) {
-  --nano-overlay: rgba(5, 8, 15, 0.45);
-  --nano-surface: rgba(12, 18, 28, 0.72);
-  --nano-surface-strong: rgba(8, 12, 20, 0.88);
-  --nano-surface-solid: rgba(6, 9, 16, 0.96);
-  --nano-surface-subtle: rgba(12, 18, 28, 0.45);
-  --nano-border: rgba(255, 255, 255, 0.08);
-  --nano-border-strong: rgba(255, 255, 255, 0.15);
-  --nano-text: #f1f5f9;
-  --nano-text-soft: #e2e8f0;
-  --nano-text-muted: #94a3b8;
-  --nano-accent: #4ea1ff;
-  --nano-blur: blur(14px) saturate(140%);
-  --nano-shadow: 0 8px 32px rgba(0, 0, 0, 0.30);
+  --nano-overlay:           rgba(5, 8, 15, 0.30);
+  --nano-surface:           rgba(10, 14, 22, 0.40);
+  --nano-surface-strong:    rgba(8, 12, 20, 0.60);
+  --nano-surface-solid:     rgba(6, 9, 16, 0.88);
+  --nano-surface-subtle:    rgba(10, 14, 22, 0.22);
+  --nano-border:            rgba(255, 255, 255, 0.08);
+  --nano-border-strong:     rgba(255, 255, 255, 0.16);
+  --nano-text:              #f1f5f9;
+  --nano-text-soft:         #e2e8f0;
+  --nano-text-muted:        #94a3b8;
+  --nano-accent:            #4ea1ff;
+  --nano-blur:              blur(20px) saturate(160%);
+  --nano-blur-light:        blur(10px) saturate(140%);
+  --nano-shadow:            0 8px 32px rgba(0, 0, 0, 0.30);
 }
 
 
 /* ============================================================
- * 2. HTML + BODY: imagen + overlay global
+ * 2. HTML + BODY: imagen de fondo + overlay muy leve
  * ============================================================ */
 
 html {
@@ -90,7 +90,9 @@ html body.theme-industrial .main-content,
 html body.theme-industrial .main-wrap,
 html body.theme-industrial .panel,
 html body.theme-industrial section.panel,
-html body.theme-industrial [id^="panel-"] {
+html body.theme-industrial [id^="panel-"],
+html body.theme-industrial .dashboard-surface,
+html body.theme-industrial .section-header {
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
@@ -106,8 +108,8 @@ html body.theme-industrial header.header,
 html body.theme-industrial .header,
 html body.theme-industrial .top-bar,
 html body.theme-industrial .app-header {
-  background: var(--nano-surface) !important;
-  background-color: var(--nano-surface) !important;
+  background: var(--nano-surface-strong) !important;
+  background-color: var(--nano-surface-strong) !important;
   background-image: none !important;
   backdrop-filter: var(--nano-blur) !important;
   -webkit-backdrop-filter: var(--nano-blur) !important;
@@ -116,12 +118,11 @@ html body.theme-industrial .app-header {
   box-shadow: var(--nano-shadow) !important;
 }
 
-html body.theme-industrial header *,
-html body.theme-industrial .header * {
+html body.theme-industrial header *:not(img):not(i):not(.badge):not(.chip),
+html body.theme-industrial .header *:not(img):not(i):not(.badge):not(.chip) {
   color: inherit !important;
 }
 
-/* Logos / imágenes del header: no tocar los fondos de imagen */
 html body.theme-industrial header img,
 html body.theme-industrial .header img {
   background: transparent !important;
@@ -129,7 +130,7 @@ html body.theme-industrial .header img {
 
 
 /* ============================================================
- * 5. SIDEBAR / NAV
+ * 5. SIDEBAR / NAV / TABS
  * ============================================================ */
 
 html body.theme-industrial .sidebar,
@@ -138,7 +139,8 @@ html body.theme-industrial nav.sidebar,
 html body.theme-industrial .app-sidebar,
 html body.theme-industrial .sidebar-nav,
 html body.theme-industrial .rail-nav,
-html body.theme-industrial .tabs.tabs--rail {
+html body.theme-industrial .tabs.tabs--rail,
+html body.theme-industrial nav.tabs {
   background: var(--nano-surface) !important;
   background-color: var(--nano-surface) !important;
   background-image: none !important;
@@ -149,13 +151,9 @@ html body.theme-industrial .tabs.tabs--rail {
   box-shadow: var(--nano-shadow) !important;
 }
 
-html body.theme-industrial .sidebar *,
-html body.theme-industrial .tabs.tabs--rail * {
-  color: inherit !important;
-}
-
 html body.theme-industrial .tab,
-html body.theme-industrial .tabs .tab {
+html body.theme-industrial .tabs .tab,
+html body.theme-industrial button.tab {
   background: transparent !important;
   color: var(--nano-text-soft) !important;
   border-color: transparent !important;
@@ -174,22 +172,139 @@ html body.theme-industrial .tab.active {
 
 
 /* ============================================================
- * 6. CARDS, KPIS, PANELS INTERNOS
+ * 6. DASHBOARD SCORECARDS (los 4 KPI tiles grandes)
+ *    CLAVE: aquí estaba el bug de v2
+ * ============================================================ */
+
+/* Contenedor de los 4 tiles */
+html body.theme-industrial .dashboard-exec-scorecards {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+/* Cada uno de los 4 tiles (revenue/pipeline/risk/ops) */
+html body.theme-industrial .dashboard-score-tile,
+html body.theme-industrial .dashboard-score-tile--revenue,
+html body.theme-industrial .dashboard-score-tile--pipeline,
+html body.theme-industrial .dashboard-score-tile--risk,
+html body.theme-industrial .dashboard-score-tile--ops {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border: 1px solid var(--nano-border) !important;
+  color: var(--nano-text) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial .dashboard-score-tile:hover {
+  background: var(--nano-surface-strong) !important;
+  border-color: var(--nano-border-strong) !important;
+  transform: none !important; /* cortar transform molesto */
+  box-shadow: var(--nano-shadow) !important;
+}
+
+/* Textos internos del tile */
+html body.theme-industrial .dashboard-score-eyebrow {
+  color: var(--nano-text-muted) !important;
+}
+html body.theme-industrial .dashboard-score-label {
+  color: var(--nano-text-soft) !important;
+}
+html body.theme-industrial .dashboard-score-value {
+  color: var(--nano-text) !important;
+  font-weight: 800 !important;
+}
+html body.theme-industrial .dashboard-score-meta {
+  color: var(--nano-text-muted) !important;
+}
+
+/* La barra lateral de color (::before) se conserva: es la identidad
+   visual verde/azul/naranja/morado que da el toque profesional. */
+
+
+/* ============================================================
+ * 7. DASHBOARD KPI STRIP (la barra de KPIs pequeños bajo los tiles)
+ * ============================================================ */
+
+html body.theme-industrial .dashboard-kpi-strip,
+html body.theme-industrial .dashboard-crossfilter-bar {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border: 1px solid var(--nano-border) !important;
+  color: var(--nano-text) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial .dashboard-kpi-item {
+  color: var(--nano-text-soft) !important;
+  background: transparent !important;
+}
+
+html body.theme-industrial .dashboard-kpi-item strong {
+  color: var(--nano-text) !important;
+}
+
+
+/* ============================================================
+ * 8. DASHBOARD CARDS (las 6 cards: Clientes, Refacciones, etc.)
+ * ============================================================ */
+
+html body.theme-industrial .dashboard-card,
+html body.theme-industrial .dashboard-grid > .dashboard-card {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border: 1px solid var(--nano-border) !important;
+  color: var(--nano-text) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial .dashboard-card:hover {
+  background: var(--nano-surface-strong) !important;
+  transform: none !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial .dashboard-card-header,
+html body.theme-industrial .dashboard-card-title,
+html body.theme-industrial .dashboard-card-subtitle,
+html body.theme-industrial .dashboard-card-metrics,
+html body.theme-industrial .dashboard-metric,
+html body.theme-industrial .dashboard-metric dt,
+html body.theme-industrial .dashboard-metric dd,
+html body.theme-industrial .dashboard-card-action {
+  color: var(--nano-text) !important;
+  background: transparent !important;
+}
+
+html body.theme-industrial .dashboard-card-subtitle,
+html body.theme-industrial .dashboard-metric dt {
+  color: var(--nano-text-muted) !important;
+}
+
+
+/* ============================================================
+ * 9. CARDS GENERICAS, KPIS, PANELES INTERNOS
  * ============================================================ */
 
 html body.theme-industrial .card,
 html body.theme-industrial .kpi-card,
 html body.theme-industrial .kpi-tile,
 html body.theme-industrial .kpi-box,
-html body.theme-industrial .dashboard-card,
 html body.theme-industrial .module-card,
 html body.theme-industrial .admin-hub-panel,
 html body.theme-industrial .admin-hub-card,
-html body.theme-industrial .dashboard-surface,
 html body.theme-industrial .section-card,
 html body.theme-industrial .summary-card,
 html body.theme-industrial .resumen-card,
 html body.theme-industrial .prospeccion-kpi,
+html body.theme-industrial .prospeccion-kpi-card,
 html body.theme-industrial .maq-ficha-card,
 html body.theme-industrial .tarifas-section,
 html body.theme-industrial .form-card {
@@ -210,23 +325,13 @@ html body.theme-industrial .card h4,
 html body.theme-industrial .card h5,
 html body.theme-industrial .card h6,
 html body.theme-industrial .card p,
-html body.theme-industrial .card span,
+html body.theme-industrial .card span:not(.badge):not(.chip),
 html body.theme-industrial .card label,
 html body.theme-industrial .card strong,
-html body.theme-industrial .card div,
-html body.theme-industrial .kpi-card *,
-html body.theme-industrial .dashboard-card *,
-html body.theme-industrial .module-card *,
-html body.theme-industrial .admin-hub-panel *,
-html body.theme-industrial .admin-hub-card *,
-html body.theme-industrial .dashboard-surface *,
-html body.theme-industrial .section-card * {
-  color: inherit !important;
+html body.theme-industrial .card div:not([class*="semaforo"]):not([class*="estatus"]) {
+  color: var(--nano-text) !important;
 }
 
-/* Los valores de KPI a menudo tienen color (verde/rojo/azul).
-   Los dejamos con su tono original si venían colorizados,
-   pero damos un fallback de texto oscuro/claro según modo. */
 html body.theme-industrial .kpi-value,
 html body.theme-industrial .kpi-val,
 html body.theme-industrial .prospeccion-kpi-val,
@@ -237,7 +342,7 @@ html body.theme-industrial .kpi-number {
 
 
 /* ============================================================
- * 7. TABLAS
+ * 10. TABLAS
  * ============================================================ */
 
 html body.theme-industrial .table-wrap {
@@ -247,6 +352,7 @@ html body.theme-industrial .table-wrap {
   border: 1px solid var(--nano-border) !important;
   border-radius: 12px !important;
   overflow: auto;
+  box-shadow: var(--nano-shadow) !important;
 }
 
 html body.theme-industrial table,
@@ -262,6 +368,8 @@ html body.theme-industrial table thead,
 html body.theme-industrial .data-table thead,
 html body.theme-industrial table.data-table thead {
   background: var(--nano-surface-strong) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
 }
 
 html body.theme-industrial table thead th,
@@ -273,14 +381,12 @@ html body.theme-industrial table.data-table thead th {
   font-weight: 600 !important;
 }
 
-html body.theme-industrial table tbody tr,
-html body.theme-industrial .data-table tbody tr {
+html body.theme-industrial table tbody tr {
   background: transparent !important;
   color: var(--nano-text) !important;
 }
 
-html body.theme-industrial table tbody tr:hover,
-html body.theme-industrial .data-table tbody tr:hover {
+html body.theme-industrial table tbody tr:hover {
   background: var(--nano-surface-subtle) !important;
 }
 
@@ -293,7 +399,7 @@ html body.theme-industrial .data-table tbody td {
 
 
 /* ============================================================
- * 8. INPUTS, SELECTS, TEXTAREAS
+ * 11. INPUTS, SELECTS, TEXTAREAS
  * ============================================================ */
 
 html body.theme-industrial input[type="text"],
@@ -314,8 +420,8 @@ html body.theme-industrial .form-input {
   background-color: var(--nano-surface-strong) !important;
   color: var(--nano-text) !important;
   border: 1px solid var(--nano-border-strong) !important;
-  backdrop-filter: blur(6px) !important;
-  -webkit-backdrop-filter: blur(6px) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
 }
 
 html body.theme-industrial input:focus,
@@ -340,28 +446,36 @@ html body.theme-industrial textarea::placeholder {
 
 
 /* ============================================================
- * 9. BUTTONS
+ * 12. BUTTONS
+ *   Secundarios: glass neutro.
+ *   Primary/danger/success conservan su color (son acciones).
  * ============================================================ */
 
-/* Botones secundarios / outline / default = glass neutro */
-html body.theme-industrial .btn:not(.primary):not(.danger):not(.success):not(.warning) {
+html body.theme-industrial .btn:not(.primary):not(.danger):not(.success):not(.warning):not(.btn-dashboard-refresh) {
   background: var(--nano-surface-strong) !important;
   color: var(--nano-text) !important;
   border: 1px solid var(--nano-border-strong) !important;
-  backdrop-filter: blur(6px) !important;
-  -webkit-backdrop-filter: blur(6px) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
 }
 
-html body.theme-industrial .btn:not(.primary):not(.danger):not(.success):not(.warning):hover {
+html body.theme-industrial .btn:not(.primary):not(.danger):not(.success):not(.warning):not(.btn-dashboard-refresh):hover {
   background: var(--nano-surface-solid) !important;
 }
 
-/* Botones de acción conservan color (necesario para que se distingan)
-   pero con un tono coherente. No los rompemos. */
+/* Botones de acción del dashboard header */
+html body.theme-industrial .btn-dashboard-refresh {
+  background: var(--nano-surface-strong) !important;
+  color: var(--nano-text) !important;
+  border: 1px solid var(--nano-border-strong) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+}
 
 
 /* ============================================================
- * 10. MODALES / DIALOGS / DROPDOWNS / MENUS
+ * 13. MODALES / DROPDOWNS / MENUS
+ *   Más opacos (0.82-0.88) para foco visual sin perder imagen.
  * ============================================================ */
 
 html body.theme-industrial .modal,
@@ -371,7 +485,6 @@ html body.theme-industrial .md-prompt,
 html body.theme-industrial .md-prompt-content,
 html body.theme-industrial .header-profile-menu,
 html body.theme-industrial .dropdown-menu,
-html body.theme-industrial .admin-hub-panel,
 html body.theme-industrial .notifications-panel,
 html body.theme-industrial .toast {
   background: var(--nano-surface-solid) !important;
@@ -383,15 +496,14 @@ html body.theme-industrial .toast {
   box-shadow: var(--nano-shadow) !important;
 }
 
-html body.theme-industrial .modal *,
-html body.theme-industrial .md-prompt *,
-html body.theme-industrial .header-profile-menu *,
-html body.theme-industrial .dropdown-menu *,
-html body.theme-industrial .notifications-panel * {
+html body.theme-industrial .modal *:not(img):not(i):not(.badge):not(.chip),
+html body.theme-industrial .md-prompt *:not(img):not(i):not(.badge):not(.chip),
+html body.theme-industrial .header-profile-menu *:not(img):not(i):not(.badge):not(.chip),
+html body.theme-industrial .dropdown-menu *:not(img):not(i):not(.badge):not(.chip),
+html body.theme-industrial .notifications-panel *:not(img):not(i):not(.badge):not(.chip) {
   color: inherit !important;
 }
 
-/* Modal backdrop (fondo difuminado detrás del modal) */
 html body.theme-industrial .modal-backdrop,
 html body.theme-industrial .admin-hub-overlay {
   background: rgba(0, 0, 0, 0.35) !important;
@@ -401,7 +513,7 @@ html body.theme-industrial .admin-hub-overlay {
 
 
 /* ============================================================
- * 11. TEXTO GENÉRICO y tipografía
+ * 14. TIPOGRAFIA GENERICA
  * ============================================================ */
 
 html body.theme-industrial h1,
@@ -409,15 +521,17 @@ html body.theme-industrial h2,
 html body.theme-industrial h3,
 html body.theme-industrial h4,
 html body.theme-industrial h5,
-html body.theme-industrial h6 {
+html body.theme-industrial h6,
+html body.theme-industrial .dashboard-title,
+html body.theme-industrial .dashboard-section-title {
   color: var(--nano-text) !important;
 }
 
 html body.theme-industrial p,
-html body.theme-industrial span:not(.badge):not(.chip):not(.pill),
 html body.theme-industrial li,
 html body.theme-industrial dd,
-html body.theme-industrial dt {
+html body.theme-industrial dt,
+html body.theme-industrial .dashboard-subtitle {
   color: var(--nano-text-soft) !important;
 }
 
@@ -432,7 +546,7 @@ html body.theme-industrial small {
 
 
 /* ============================================================
- * 12. SCROLLBARS (Chromium)
+ * 15. SCROLLBARS
  * ============================================================ */
 
 html body.theme-industrial ::-webkit-scrollbar {
@@ -455,7 +569,7 @@ html body.theme-industrial ::-webkit-scrollbar-thumb:hover {
 
 
 /* ============================================================
- * 13. LOGIN OVERLAY (pantalla de sign-in)
+ * 16. LOGIN OVERLAY
  * ============================================================ */
 
 html body.theme-industrial .login-overlay {
@@ -474,48 +588,23 @@ html body.theme-industrial .login-brand-panel {
   -webkit-backdrop-filter: var(--nano-blur) !important;
 }
 
-html body.theme-industrial .login-card *,
-html body.theme-industrial .login-form-panel *,
-html body.theme-industrial .login-brand-panel * {
+html body.theme-industrial .login-card *:not(img):not(i),
+html body.theme-industrial .login-form-panel *:not(img):not(i),
+html body.theme-industrial .login-brand-panel *:not(img):not(i) {
   color: inherit !important;
 }
 
 
 /* ============================================================
- * 14. BADGES / CHIPS / PILLS
- *   Estos guardan su propio color para estado (rojo/verde/amarillo).
- *   Solo aseguramos que sean legibles sobre fondos glass.
- * ============================================================ */
-
-html body.theme-industrial .badge,
-html body.theme-industrial .chip,
-html body.theme-industrial .pill,
-html body.theme-industrial .semaforo-amarillo,
-html body.theme-industrial .estatus,
-html body.theme-industrial [class*="estatus-"],
-html body.theme-industrial .ref-cat-pill {
-  /* Mantener colores originales — no forzamos */
-}
-
-
-/* ============================================================
- * 15. SHOW/HIDE dashboards charts container
+ * 17. CHART CONTAINERS
  * ============================================================ */
 
 html body.theme-industrial .chart-container,
-html body.theme-industrial canvas.chart {
+html body.theme-industrial .dashboard-chart-wrap,
+html body.theme-industrial .dashboard-charts {
   background: var(--nano-surface-subtle) !important;
-  border-radius: 8px;
+  border-radius: 12px !important;
+  border: 1px solid var(--nano-border) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
 }
-
-
-/* ============================================================
- * NOTAS FINALES
- * ------------------------------------------------------------
- * Si quieres MÁS imagen visible (más transparencia):
- *   --nano-overlay: rgba(...) con 0.25 - 0.35
- *   --nano-surface: rgba(...) con 0.55 - 0.65
- * Si quieres MENOS imagen (más opaco, más concentración):
- *   --nano-overlay: rgba(...) con 0.55 - 0.70
- *   --nano-surface: rgba(...) con 0.80 - 0.92
- * ============================================================ */
