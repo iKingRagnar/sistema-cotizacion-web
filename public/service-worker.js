@@ -1,5 +1,5 @@
 /** Bump al desplegar para limpiar caches viejas (HTML/JS con ?v=). No precargar /js/app.js (la página usa app.js?v=…). */
-const CACHE_NAME = 'cotizacion-pro-v38-modal-login-gaps';
+const CACHE_NAME = 'cotizacion-pro-v39-sticky-footer';
 const STATIC_URLS = ['/', '/index.html', '/css/style.css', '/favicon.svg', '/manifest.json'];
 
 self.addEventListener('install', (e) => {
