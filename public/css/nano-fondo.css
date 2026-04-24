@@ -20,37 +20,37 @@
  * ============================================================ */
 
 html body.theme-industrial.appearance-light {
-  --nano-overlay:           rgba(248, 250, 253, 0.22);   /* body: imagen muy visible */
-  --nano-surface:           rgba(255, 255, 255, 0.35);   /* cards, paneles, sidebar */
-  --nano-surface-strong:    rgba(255, 255, 255, 0.55);   /* header, thead, tabs activas */
-  --nano-surface-solid:     rgba(255, 255, 255, 0.82);   /* modales, dropdowns */
-  --nano-surface-subtle:    rgba(255, 255, 255, 0.18);   /* hover filas, chart container */
-  --nano-border:            rgba(15, 23, 42, 0.10);
-  --nano-border-strong:     rgba(15, 23, 42, 0.18);
-  --nano-text:              #0b1220;                      /* casi negro */
+  --nano-overlay:           rgba(248, 250, 253, 0.50);   /* body: imagen perceptible pero atenuada */
+  --nano-surface:           rgba(255, 255, 255, 0.62);   /* cards, paneles, sidebar, tablas */
+  --nano-surface-strong:    rgba(255, 255, 255, 0.78);   /* header, thead, tabs activas, section-header */
+  --nano-surface-solid:     rgba(255, 255, 255, 0.92);   /* modales, dropdowns */
+  --nano-surface-subtle:    rgba(255, 255, 255, 0.30);   /* hover filas, chart container */
+  --nano-border:            rgba(15, 23, 42, 0.12);
+  --nano-border-strong:     rgba(15, 23, 42, 0.20);
+  --nano-text:              #0b1220;                      /* casi negro - alto contraste */
   --nano-text-soft:         #1e293b;
   --nano-text-muted:        #475569;
   --nano-accent:            #1a73e8;
-  --nano-blur:              blur(20px) saturate(160%);
+  --nano-blur:              blur(18px) saturate(160%);
   --nano-blur-light:        blur(10px) saturate(140%);
-  --nano-shadow:            0 8px 32px rgba(15, 23, 42, 0.08);
+  --nano-shadow:            0 8px 32px rgba(15, 23, 42, 0.10);
 }
 
 html body.theme-industrial:not(.appearance-light) {
-  --nano-overlay:           rgba(5, 8, 15, 0.30);
-  --nano-surface:           rgba(10, 14, 22, 0.40);
-  --nano-surface-strong:    rgba(8, 12, 20, 0.60);
-  --nano-surface-solid:     rgba(6, 9, 16, 0.88);
-  --nano-surface-subtle:    rgba(10, 14, 22, 0.22);
-  --nano-border:            rgba(255, 255, 255, 0.08);
-  --nano-border-strong:     rgba(255, 255, 255, 0.16);
+  --nano-overlay:           rgba(5, 8, 15, 0.55);         /* body: imagen atenuada pero visible */
+  --nano-surface:           rgba(10, 14, 22, 0.62);
+  --nano-surface-strong:    rgba(8, 12, 20, 0.80);
+  --nano-surface-solid:     rgba(6, 9, 16, 0.92);
+  --nano-surface-subtle:    rgba(10, 14, 22, 0.32);
+  --nano-border:            rgba(255, 255, 255, 0.10);
+  --nano-border-strong:     rgba(255, 255, 255, 0.18);
   --nano-text:              #f1f5f9;
   --nano-text-soft:         #e2e8f0;
-  --nano-text-muted:        #94a3b8;
+  --nano-text-muted:        #a0aec0;
   --nano-accent:            #4ea1ff;
-  --nano-blur:              blur(20px) saturate(160%);
+  --nano-blur:              blur(18px) saturate(160%);
   --nano-blur-light:        blur(10px) saturate(140%);
-  --nano-shadow:            0 8px 32px rgba(0, 0, 0, 0.30);
+  --nano-shadow:            0 8px 32px rgba(0, 0, 0, 0.35);
 }
 
 
@@ -91,11 +91,35 @@ html body.theme-industrial .main-wrap,
 html body.theme-industrial .panel,
 html body.theme-industrial section.panel,
 html body.theme-industrial [id^="panel-"],
-html body.theme-industrial .dashboard-surface,
-html body.theme-industrial .section-header {
+html body.theme-industrial .dashboard-surface {
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
+}
+
+/* section-header (el contenedor con el titulo "Catalogo de clientes",
+   "Refacciones", etc.) lleva fondo glass para que el titulo sea legible */
+html body.theme-industrial .section-header,
+html body.theme-industrial .dashboard-header {
+  background: var(--nano-surface-strong) !important;
+  background-color: var(--nano-surface-strong) !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border: 1px solid var(--nano-border) !important;
+  border-radius: 12px !important;
+  padding: 1rem 1.25rem !important;
+  color: var(--nano-text) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial .section-header h2,
+html body.theme-industrial .section-header h3,
+html body.theme-industrial .section-header .title,
+html body.theme-industrial .dashboard-header h2,
+html body.theme-industrial .dashboard-header .dashboard-title {
+  color: var(--nano-text) !important;
+  font-weight: 700 !important;
 }
 
 
