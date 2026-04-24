@@ -74,6 +74,20 @@ html body.theme-industrial {
   color: var(--nano-text) !important;
 }
 
+/* CRITICO: body::before y body::after del CSS original tapan la imagen
+   con un linear-gradient blanco-gris fijo que cubre todo el viewport.
+   Los neutralizamos para que el backdrop-filter de los cards blurree
+   directamente la imagen industrial del body, no un velo blanco. */
+html body.theme-industrial::before,
+html body.theme-industrial::after {
+  background: none !important;
+  background-image: none !important;
+  background-color: transparent !important;
+  opacity: 0 !important;
+  content: none !important;
+  display: none !important;
+}
+
 
 /* ============================================================
  * 3. LAYOUT CONTAINERS: transparentes para dejar ver el fondo
