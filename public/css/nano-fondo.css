@@ -19,37 +19,46 @@
  * 1. VARIABLES POR MODO  (opacidades BAJAS -> vidrio real)
  * ============================================================ */
 
+/* ============================================================
+ * OPACIDADES ESTILO LOGIN (v13):
+ *   Mismo feeling que el login (glass muy translucido, imagen visible).
+ *   overlay body:       ~20-22% (respira la imagen)
+ *   surface (cards):    ~28-32% (casi cristal)
+ *   surface-strong:     ~44-48% (header, thead, section-header)
+ *   surface-solid:      ~82-88% (modales, dropdowns - legibilidad)
+ *   blur:               26px + saturate(185%)  - vidrio esmerilado fino
+ * ============================================================ */
 html body.theme-industrial.appearance-light {
-  --nano-overlay:           rgba(248, 250, 253, 0.35);   /* body: imagen bien visible */
-  --nano-surface:           rgba(255, 255, 255, 0.48);   /* cards, paneles, sidebar, tablas */
-  --nano-surface-strong:    rgba(255, 255, 255, 0.65);   /* header, thead, section-header */
-  --nano-surface-solid:     rgba(255, 255, 255, 0.88);   /* modales, dropdowns */
-  --nano-surface-subtle:    rgba(255, 255, 255, 0.15);
-  --nano-border:            rgba(15, 23, 42, 0.14);
-  --nano-border-strong:     rgba(15, 23, 42, 0.22);
+  --nano-overlay:           rgba(248, 250, 253, 0.20);   /* body: imagen MUY visible */
+  --nano-surface:           rgba(255, 255, 255, 0.30);   /* cards casi cristal */
+  --nano-surface-strong:    rgba(255, 255, 255, 0.46);   /* header / thead - legible */
+  --nano-surface-solid:     rgba(255, 255, 255, 0.85);   /* modales / dropdowns */
+  --nano-surface-subtle:    rgba(255, 255, 255, 0.12);
+  --nano-border:            rgba(15, 23, 42, 0.12);
+  --nano-border-strong:     rgba(15, 23, 42, 0.20);
   --nano-text:              #0b1220;
   --nano-text-soft:         #1e293b;
   --nano-text-muted:        #475569;
   --nano-accent:            #1a73e8;
-  --nano-blur:              blur(22px) saturate(170%);   /* blur fuerte = legible con baja opacidad */
-  --nano-blur-light:        blur(12px) saturate(150%);
+  --nano-blur:              blur(26px) saturate(185%);
+  --nano-blur-light:        blur(14px) saturate(160%);
   --nano-shadow:            0 8px 32px rgba(15, 23, 42, 0.10);
 }
 
 html body.theme-industrial:not(.appearance-light) {
-  --nano-overlay:           rgba(5, 8, 15, 0.30);         /* body: imagen bien visible en Luna */
-  --nano-surface:           rgba(10, 14, 22, 0.48);
-  --nano-surface-strong:    rgba(8, 12, 20, 0.65);
-  --nano-surface-solid:     rgba(6, 9, 16, 0.88);
-  --nano-surface-subtle:    rgba(10, 14, 22, 0.15);
+  --nano-overlay:           rgba(5, 8, 15, 0.22);         /* body: imagen muy visible en Luna */
+  --nano-surface:           rgba(10, 14, 22, 0.32);
+  --nano-surface-strong:    rgba(8, 12, 20, 0.48);
+  --nano-surface-solid:     rgba(6, 9, 16, 0.85);
+  --nano-surface-subtle:    rgba(10, 14, 22, 0.12);
   --nano-border:            rgba(255, 255, 255, 0.10);
   --nano-border-strong:     rgba(255, 255, 255, 0.18);
   --nano-text:              #f1f5f9;
   --nano-text-soft:         #e2e8f0;
   --nano-text-muted:        #a0aec0;
   --nano-accent:            #4ea1ff;
-  --nano-blur:              blur(22px) saturate(170%);
-  --nano-blur-light:        blur(12px) saturate(150%);
+  --nano-blur:              blur(26px) saturate(185%);
+  --nano-blur-light:        blur(14px) saturate(160%);
   --nano-shadow:            0 8px 32px rgba(0, 0, 0, 0.35);
 }
 
@@ -872,4 +881,101 @@ html body.theme-industrial .app-footer kbd {
 html body.theme-industrial .app-footer .footer-version {
   color: var(--nano-text) !important;
   font-weight: 600 !important;
+}
+
+
+/* ============================================================
+ * 20. ELIMINAR RAYAS VERDES / TEAL / DECORATIVAS
+ *
+ *   En style.css hay barras verticales `::before` con gradiente
+ *   verde/teal sobre:
+ *     - .dashboard-score-tile--revenue   (linea 1639: verde esmeralda)
+ *     - .section-header::before           (linea 2033: borde izq.)
+ *     - body.dark-theme .section-header::before  (linea 3598: teal)
+ *     - .stock-alert-bar::before
+ *     - .header::before / .header::after
+ *     - .ai-fab-nudge::after / .ai-fab-tooltip::after
+ *
+ *   Las ocultamos para que nada distraiga sobre el glass translucido.
+ *   IMPORTANTE: solo ::before/::after DECORATIVOS, no los del login.
+ * ============================================================ */
+
+html body.theme-industrial .dashboard-score-tile::before,
+html body.theme-industrial .dashboard-score-tile--revenue::before,
+html body.theme-industrial .dashboard-score-tile--pipeline::before,
+html body.theme-industrial .dashboard-score-tile--risk::before,
+html body.theme-industrial .dashboard-score-tile--ops::before,
+html body.theme-industrial .section-header::before,
+html body.theme-industrial .section-header::after,
+html body.theme-industrial .dashboard-header::before,
+html body.theme-industrial .dashboard-header::after,
+html body.theme-industrial .header::before,
+html body.theme-industrial .header::after,
+html body.theme-industrial .stock-alert-bar::before,
+html body.theme-industrial .stock-alert-bar::after,
+html body.theme-industrial .pvc-header::before,
+html body.theme-industrial .pvc-header::after,
+html body.theme-industrial .ref-pvc-hero::before,
+html body.theme-industrial .ref-pvc-hero::after,
+html body.theme-industrial .ai-fab-nudge::after,
+html body.theme-industrial .ai-fab-tooltip::after,
+html body.theme-industrial.dark-theme .section-header::before,
+html body.theme-industrial.dark-theme .stock-alert-bar::before {
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+  content: none !important;
+  opacity: 0 !important;
+  border: none !important;
+}
+
+
+/* ============================================================
+ * 21. TITULOS DE SECCION CON TEXT-SHADOW SUTIL
+ *
+ *   Como el section-header ahora es glass mas translucido,
+ *   reforzamos titulos con una sombra suave (misma receta que
+ *   el logo UNIVERSAL del login) para que nunca se pierdan
+ *   contra la imagen industrial detras.
+ * ============================================================ */
+
+html body.theme-industrial .section-header h1,
+html body.theme-industrial .section-header h2,
+html body.theme-industrial .section-header h3,
+html body.theme-industrial .section-header .title,
+html body.theme-industrial .dashboard-header h1,
+html body.theme-industrial .dashboard-header h2,
+html body.theme-industrial .dashboard-header .dashboard-title,
+html body.theme-industrial .dashboard-title,
+html body.theme-industrial .dashboard-section-title {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+  font-weight: 700 !important;
+}
+
+/* En modo Luna la sombra es mas pronunciada sobre glass oscuro */
+html body.theme-industrial:not(.appearance-light) .section-header h1,
+html body.theme-industrial:not(.appearance-light) .section-header h2,
+html body.theme-industrial:not(.appearance-light) .section-header h3,
+html body.theme-industrial:not(.appearance-light) .dashboard-header h2,
+html body.theme-industrial:not(.appearance-light) .dashboard-title,
+html body.theme-industrial:not(.appearance-light) .dashboard-section-title {
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.55),
+               0 0 14px rgba(0, 0, 0, 0.30) !important;
+}
+
+
+/* ============================================================
+ * 22. HOVER SIN TRANSFORM - eliminar el "mochazo" al pasar mouse
+ *
+ *   Las tablas y cards tenian transform:translateY(-2px) en hover
+ *   que hacia ver los bordes recortados (botones mochos). Lo cortamos.
+ * ============================================================ */
+
+html body.theme-industrial .card:hover,
+html body.theme-industrial .dashboard-card:hover,
+html body.theme-industrial .kpi-card:hover,
+html body.theme-industrial .module-card:hover,
+html body.theme-industrial .dashboard-score-tile:hover,
+html body.theme-industrial table tbody tr:hover {
+  transform: none !important;
 }
