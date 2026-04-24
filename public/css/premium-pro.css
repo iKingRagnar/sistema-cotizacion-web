@@ -5049,3 +5049,379 @@ html body.theme-industrial.appearance-light #header-profile-menu .header-profile
 /* ══════════════════════════════════════════════════════════════════════════════
    FIN — Fix Maestro v8
    ══════════════════════════════════════════════════════════════════════════════ */
+
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   FIX MAESTRO v9 — LUNA EXHAUSTIVO — 2026-04-24
+   Mision: TODO negro, TODOS los botones plateados, TODOS los textos visibles.
+   Solo afecta modo LUNA (body.theme-industrial:not(.appearance-light)).
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════ §LN1 — Ocultar boton impresora flotante (confunde al usuario) ═══ */
+.prem-print-btn,
+.prem-print-btn--floating {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* ═══════════ §LN2 — Banners .hint: NEGRO, no azul claro ═══════════════════════ */
+html body.theme-industrial:not(.appearance-light) .hint,
+html body.theme-industrial:not(.appearance-light) p.hint,
+html body.theme-industrial:not(.appearance-light) .info-note,
+html body.theme-industrial:not(.appearance-light) .alert-info,
+html body.theme-industrial:not(.appearance-light) .alert.info,
+html body.theme-industrial:not(.appearance-light) .modal-body .info,
+html body.theme-industrial:not(.appearance-light) .module-hint,
+html body.theme-industrial:not(.appearance-light) .tip,
+html body.theme-industrial:not(.appearance-light) .tip-info {
+  background: #1a1a1a !important;
+  background-image: none !important;
+  color: #bdc1c6 !important;
+  -webkit-text-fill-color: #bdc1c6 !important;
+  border: 1px solid #2a2a2a !important;
+  border-left: 3px solid #8ab4f8 !important;
+  border-radius: 8px !important;
+  padding: 10px 14px !important;
+}
+html body.theme-industrial:not(.appearance-light) .hint *,
+html body.theme-industrial:not(.appearance-light) .hint strong,
+html body.theme-industrial:not(.appearance-light) .hint a,
+html body.theme-industrial:not(.appearance-light) .hint code,
+html body.theme-industrial:not(.appearance-light) .info-note *,
+html body.theme-industrial:not(.appearance-light) .alert-info * {
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+  background: transparent !important;
+}
+html body.theme-industrial:not(.appearance-light) .hint strong {
+  color: #f1f3f4 !important;
+  -webkit-text-fill-color: #f1f3f4 !important;
+}
+html body.theme-industrial:not(.appearance-light) .hint a {
+  color: #8ab4f8 !important;
+  -webkit-text-fill-color: #8ab4f8 !important;
+  text-decoration: underline !important;
+}
+html body.theme-industrial:not(.appearance-light) .hint::before {
+  color: #8ab4f8 !important;
+}
+
+/* ═══════════ §LN3 — Badges/pills/semaforos NEUTROS: gris oscuro, no azul claro */
+html body.theme-industrial:not(.appearance-light) .badge.info,
+html body.theme-industrial:not(.appearance-light) .badge-info,
+html body.theme-industrial:not(.appearance-light) .badge-neutral,
+html body.theme-industrial:not(.appearance-light) .badge.neutral,
+html body.theme-industrial:not(.appearance-light) .estatus-abierta,
+html body.theme-industrial:not(.appearance-light) .estatus-abierto,
+html body.theme-industrial:not(.appearance-light) .estatus-pendiente,
+html body.theme-industrial:not(.appearance-light) .badge-mant-pendiente,
+html body.theme-industrial:not(.appearance-light) .status-pill-neutral,
+html body.theme-industrial:not(.appearance-light) .semaforo-gray,
+html body.theme-industrial:not(.appearance-light) .semaforo-gris,
+html body.theme-industrial:not(.appearance-light) .semaforo.semaforo-gris,
+html body.theme-industrial:not(.appearance-light) .semaforo.semaforo-gray {
+  background: rgba(138, 180, 248, 0.12) !important;
+  background-image: none !important;
+  color: #8ab4f8 !important;
+  -webkit-text-fill-color: #8ab4f8 !important;
+  border: 1px solid rgba(138, 180, 248, 0.28) !important;
+}
+html body.theme-industrial:not(.appearance-light) .semaforo.semaforo-verde,
+html body.theme-industrial:not(.appearance-light) .status-pill-ok {
+  background: rgba(52, 168, 83, 0.14) !important;
+  color: #81c995 !important;
+  -webkit-text-fill-color: #81c995 !important;
+  border: 1px solid rgba(52, 168, 83, 0.30) !important;
+}
+html body.theme-industrial:not(.appearance-light) .semaforo.semaforo-amarillo,
+html body.theme-industrial:not(.appearance-light) .semaforo.semaforo-warn,
+html body.theme-industrial:not(.appearance-light) .status-pill-warn {
+  background: rgba(251, 188, 5, 0.14) !important;
+  color: #fdd663 !important;
+  -webkit-text-fill-color: #fdd663 !important;
+  border: 1px solid rgba(251, 188, 5, 0.30) !important;
+}
+html body.theme-industrial:not(.appearance-light) .semaforo.semaforo-rojo,
+html body.theme-industrial:not(.appearance-light) .semaforo.semaforo-bad,
+html body.theme-industrial:not(.appearance-light) .status-pill-bad {
+  background: rgba(234, 67, 53, 0.14) !important;
+  color: #f28b82 !important;
+  -webkit-text-fill-color: #f28b82 !important;
+  border: 1px solid rgba(234, 67, 53, 0.30) !important;
+}
+
+/* ═══════════ §LN4 — Cards catalogo de maquinas (revision-maq-card) ═══════════ */
+html body.theme-industrial:not(.appearance-light) .revision-maq-catalog-wrap {
+  background: #0f0f0f !important;
+  background-image: none !important;
+  border: 1px solid #2a2a2a !important;
+  color: #e8eaed !important;
+}
+html body.theme-industrial:not(.appearance-light) .revision-maq-catalog-heading {
+  color: #f1f3f4 !important;
+  -webkit-text-fill-color: #f1f3f4 !important;
+  background: transparent !important;
+  background-clip: unset !important;
+  -webkit-background-clip: unset !important;
+}
+html body.theme-industrial:not(.appearance-light) .revision-maq-card {
+  background: #1a1a1a !important;
+  background-image: none !important;
+  border: 1px solid #2a2a2a !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 4px 14px rgba(0, 0, 0, 0.45) !important;
+  color: #e8eaed !important;
+  padding: 14px !important;
+  border-radius: 12px !important;
+}
+html body.theme-industrial:not(.appearance-light) .revision-maq-card-title {
+  color: #f1f3f4 !important;
+  -webkit-text-fill-color: #f1f3f4 !important;
+  font-weight: 700 !important;
+  display: block !important;
+  margin-bottom: 4px !important;
+}
+html body.theme-industrial:not(.appearance-light) .revision-maq-card-serie {
+  color: #9aa0a6 !important;
+  -webkit-text-fill-color: #9aa0a6 !important;
+  font-size: .78rem !important;
+  display: block !important;
+  margin-bottom: 8px !important;
+}
+html body.theme-industrial:not(.appearance-light) .revision-maq-card-serie i {
+  color: #9aa0a6 !important;
+}
+html body.theme-industrial:not(.appearance-light) .revision-maq-card-client {
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+  font-size: .88rem !important;
+  margin-bottom: 8px !important;
+}
+html body.theme-industrial:not(.appearance-light) .revision-maq-card-client i {
+  color: #8ab4f8 !important;
+}
+html body.theme-industrial:not(.appearance-light) .revision-maq-card-meta {
+  margin-bottom: 10px !important;
+}
+html body.theme-industrial:not(.appearance-light) .revision-maq-pill {
+  background: rgba(138, 180, 248, 0.14) !important;
+  color: #bdc1c6 !important;
+  -webkit-text-fill-color: #bdc1c6 !important;
+  border: 1px solid rgba(138, 180, 248, 0.26) !important;
+  padding: 3px 10px !important;
+  border-radius: 10px !important;
+  font-size: .72rem !important;
+  display: inline-block !important;
+}
+
+/* Cards maquinas generales (maq-card) */
+html body.theme-industrial:not(.appearance-light) .maq-card {
+  background: #1a1a1a !important;
+  background-image: none !important;
+  border: 1px solid #2a2a2a !important;
+  color: #e8eaed !important;
+}
+html body.theme-industrial:not(.appearance-light) .maq-card-cat,
+html body.theme-industrial:not(.appearance-light) .maq-card-zona,
+html body.theme-industrial:not(.appearance-light) .maq-card-modelo,
+html body.theme-industrial:not(.appearance-light) .maq-card-parte,
+html body.theme-industrial:not(.appearance-light) .maq-card-row {
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+}
+html body.theme-industrial:not(.appearance-light) .maq-card-thumb {
+  background: #0f0f0f !important;
+  border: 1px solid #2a2a2a !important;
+}
+html body.theme-industrial:not(.appearance-light) .maq-card-thumb i {
+  color: #5f6368 !important;
+}
+
+/* ═══════════ §LN5 — TODOS LOS BOTONES: PLATEADO METALICO en LUNA ═════════════ */
+/* Base: todos los .btn (excepto los que tienen .danger, .success, .warn) */
+html body.theme-industrial:not(.appearance-light) .btn,
+html body.theme-industrial:not(.appearance-light) button.btn,
+html body.theme-industrial:not(.appearance-light) .btn.small,
+html body.theme-industrial:not(.appearance-light) .btn.outline,
+html body.theme-industrial:not(.appearance-light) .btn.primary,
+html body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh,
+html body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh.outline {
+  background: linear-gradient(135deg, #3a3d42 0%, #2a2d32 50%, #1f2126 100%) !important;
+  background-image: linear-gradient(135deg, #3a3d42 0%, #2a2d32 50%, #1f2126 100%) !important;
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+  border: 1px solid #4a4d52 !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 2px 6px rgba(0, 0, 0, 0.4) !important;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4) !important;
+  transition: all 0.15s ease !important;
+}
+html body.theme-industrial:not(.appearance-light) .btn:hover,
+html body.theme-industrial:not(.appearance-light) button.btn:hover,
+html body.theme-industrial:not(.appearance-light) .btn.outline:hover,
+html body.theme-industrial:not(.appearance-light) .btn.primary:hover,
+html body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh:hover {
+  background: linear-gradient(135deg, #4a4d52 0%, #35383e 50%, #2a2d32 100%) !important;
+  background-image: linear-gradient(135deg, #4a4d52 0%, #35383e 50%, #2a2d32 100%) !important;
+  border-color: #5f6368 !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  transform: translateY(-1px) !important;
+}
+html body.theme-industrial:not(.appearance-light) .btn i,
+html body.theme-industrial:not(.appearance-light) .btn span,
+html body.theme-industrial:not(.appearance-light) button.btn i,
+html body.theme-industrial:not(.appearance-light) button.btn span {
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+}
+
+/* PRIMARY: plateado MAS brillante (para accion principal) */
+html body.theme-industrial:not(.appearance-light) .btn.primary,
+html body.theme-industrial:not(.appearance-light) button.btn.primary {
+  background: linear-gradient(135deg, #5a5d62 0%, #45484d 50%, #35383e 100%) !important;
+  background-image: linear-gradient(135deg, #5a5d62 0%, #45484d 50%, #35383e 100%) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  border: 1px solid #6a6d72 !important;
+  font-weight: 600 !important;
+}
+html body.theme-industrial:not(.appearance-light) .btn.primary:hover,
+html body.theme-industrial:not(.appearance-light) button.btn.primary:hover {
+  background: linear-gradient(135deg, #6a6d72 0%, #55585d 50%, #45484d 100%) !important;
+  background-image: linear-gradient(135deg, #6a6d72 0%, #55585d 50%, #45484d 100%) !important;
+  border-color: #7a7d82 !important;
+}
+
+/* DANGER: rojo sutil */
+html body.theme-industrial:not(.appearance-light) .btn.danger,
+html body.theme-industrial:not(.appearance-light) button.btn.danger {
+  background: linear-gradient(135deg, #c5221f 0%, #a52a2a 50%, #8b1a1a 100%) !important;
+  background-image: linear-gradient(135deg, #c5221f 0%, #a52a2a 50%, #8b1a1a 100%) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  border: 1px solid #d93025 !important;
+  font-weight: 600 !important;
+}
+html body.theme-industrial:not(.appearance-light) .btn.danger:hover {
+  background: linear-gradient(135deg, #d93025 0%, #b82a2a 50%, #9b1e1e 100%) !important;
+  background-image: linear-gradient(135deg, #d93025 0%, #b82a2a 50%, #9b1e1e 100%) !important;
+}
+
+/* SUCCESS: verde sutil */
+html body.theme-industrial:not(.appearance-light) .btn.success,
+html body.theme-industrial:not(.appearance-light) button.btn.success {
+  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 50%, #124816 100%) !important;
+  background-image: linear-gradient(135deg, #2e7d32 0%, #1b5e20 50%, #124816 100%) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  border: 1px solid #34a853 !important;
+  font-weight: 600 !important;
+}
+html body.theme-industrial:not(.appearance-light) .btn.success:hover {
+  background: linear-gradient(135deg, #34a853 0%, #2e7d32 50%, #1b5e20 100%) !important;
+  background-image: linear-gradient(135deg, #34a853 0%, #2e7d32 50%, #1b5e20 100%) !important;
+}
+
+/* WARN: amarillo sutil */
+html body.theme-industrial:not(.appearance-light) .btn.warn,
+html body.theme-industrial:not(.appearance-light) .btn.warning,
+html body.theme-industrial:not(.appearance-light) button.btn.warn {
+  background: linear-gradient(135deg, #f9ab00 0%, #d18e00 50%, #a77200 100%) !important;
+  background-image: linear-gradient(135deg, #f9ab00 0%, #d18e00 50%, #a77200 100%) !important;
+  color: #1a1a1a !important;
+  -webkit-text-fill-color: #1a1a1a !important;
+  border: 1px solid #fbbc04 !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
+}
+
+/* OUTLINE: plateado translucido */
+html body.theme-industrial:not(.appearance-light) .btn.outline,
+html body.theme-industrial:not(.appearance-light) button.btn.outline {
+  background: rgba(255, 255, 255, 0.04) !important;
+  background-image: none !important;
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+  border: 1px solid #4a4d52 !important;
+  box-shadow: none !important;
+}
+html body.theme-industrial:not(.appearance-light) .btn.outline:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  background-image: none !important;
+  border-color: #6a6d72 !important;
+}
+
+/* ═══════════ §LN6 — Sidebar y tabs ═══════════════════════════════════════════ */
+html body.theme-industrial:not(.appearance-light) .sidebar-nav {
+  background: #0f0f0f !important;
+  background-image: none !important;
+  border-right: 1px solid #2a2a2a !important;
+}
+html body.theme-industrial:not(.appearance-light) .sidebar-nav .tab {
+  color: #bdc1c6 !important;
+  -webkit-text-fill-color: #bdc1c6 !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+}
+html body.theme-industrial:not(.appearance-light) .sidebar-nav .tab:hover {
+  background: #1a1a1a !important;
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+}
+html body.theme-industrial:not(.appearance-light) .sidebar-nav .tab.active {
+  background: linear-gradient(135deg, #2a2d32 0%, #1f2126 100%) !important;
+  background-image: linear-gradient(135deg, #2a2d32 0%, #1f2126 100%) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  border: 1px solid #4a4d52 !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset !important;
+}
+html body.theme-industrial:not(.appearance-light) .sidebar-nav .tab i {
+  color: inherit !important;
+}
+
+/* ═══════════ §LN7 — Panels, cards, toolbars, filters-card NEGROS ═══════════ */
+html body.theme-industrial:not(.appearance-light) .panel,
+html body.theme-industrial:not(.appearance-light) .panel.active,
+html body.theme-industrial:not(.appearance-light) .card,
+html body.theme-industrial:not(.appearance-light) .toolbar,
+html body.theme-industrial:not(.appearance-light) .filters-card,
+html body.theme-industrial:not(.appearance-light) .module-card,
+html body.theme-industrial:not(.appearance-light) .form-card,
+html body.theme-industrial:not(.appearance-light) .info-card,
+html body.theme-industrial:not(.appearance-light) .empty-card,
+html body.theme-industrial:not(.appearance-light) .module-delete-zone,
+html body.theme-industrial:not(.appearance-light) .summary-card {
+  background: #0f0f0f !important;
+  background-image: none !important;
+  border: 1px solid #2a2a2a !important;
+  color: #e8eaed !important;
+}
+html body.theme-industrial:not(.appearance-light) .section-header {
+  background: #1a1a1a !important;
+  background-image: none !important;
+  border-bottom: 1px solid #2a2a2a !important;
+}
+html body.theme-industrial:not(.appearance-light) .section-header h2,
+html body.theme-industrial:not(.appearance-light) .section-header h3 {
+  color: #f1f3f4 !important;
+  -webkit-text-fill-color: #f1f3f4 !important;
+  background: transparent !important;
+  background-clip: unset !important;
+  -webkit-background-clip: unset !important;
+}
+
+/* Labels y textos generales */
+html body.theme-industrial:not(.appearance-light) label,
+html body.theme-industrial:not(.appearance-light) .form-label,
+html body.theme-industrial:not(.appearance-light) .field-label {
+  color: #bdc1c6 !important;
+  -webkit-text-fill-color: #bdc1c6 !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   FIN — Fix Maestro v9 LUNA EXHAUSTIVO
+   ══════════════════════════════════════════════════════════════════════════════ */
