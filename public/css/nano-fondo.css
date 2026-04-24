@@ -632,12 +632,53 @@ html body.theme-industrial ::-webkit-scrollbar-thumb:hover {
 
 
 /* ============================================================
- * 16. LOGIN OVERLAY
- *   El login tiene su PROPIO diseño azul fundido con la imagen.
- *   NO debe ser afectado por modo Sol/Luna.
- *   Por eso aqui NO forzamos ningun estilo — dejamos que el CSS
- *   original de style.css (#login-overlay) gobierne.
+ * 16. LOGIN OVERLAY — fondo nano-machining + overlay azul
+ *
+ *   El login usa la MISMA imagen industrial (nano-machining) pero
+ *   con un overlay azul oscuro profesional que armoniza con la
+ *   identidad corporativa y mantiene legibilidad.
+ *   No depende de modo Sol/Luna — es estilo fijo.
+ *
+ *   Especificidad alta para ganar a style.css #login-overlay.
  * ============================================================ */
+
+html body #login-overlay,
+html body.theme-industrial #login-overlay,
+html body .login-overlay {
+  background-color: #070b14 !important;
+  background-image:
+    linear-gradient(135deg, rgba(8, 15, 30, 0.75) 0%, rgba(12, 22, 44, 0.70) 50%, rgba(15, 28, 55, 0.72) 100%),
+    url('../img/nano-machining-services.webp') !important;
+  background-size: cover, cover !important;
+  background-position: center center, center center !important;
+  background-repeat: no-repeat, no-repeat !important;
+  background-attachment: fixed, fixed !important;
+}
+
+/* Preserva los halos decorativos (radial-gradients) del ::before original */
+html body #login-overlay::before {
+  background-image:
+    radial-gradient(circle at 12% 18%, rgba(45, 212, 191, 0.18) 0%, transparent 46%),
+    radial-gradient(circle at 88% 82%, rgba(129, 140, 248, 0.16) 0%, transparent 44%),
+    radial-gradient(circle at 50% 108%, rgba(56, 189, 248, 0.10) 0%, transparent 52%) !important;
+}
+
+/* Paneles brand y form: glass azul translucido para que se vea la imagen detras */
+html body .login-brand-panel {
+  background: linear-gradient(160deg, rgba(15, 28, 55, 0.35) 0%, rgba(8, 15, 30, 0.55) 100%) !important;
+  backdrop-filter: blur(14px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+html body .login-form-panel {
+  background: rgba(8, 15, 30, 0.30) !important;
+  backdrop-filter: blur(14px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
+}
+
+/* La tarjeta de formulario si se queda opaca blanca para maxima
+   legibilidad y foco al usuario al escribir credenciales. */
 
 
 /* ============================================================
