@@ -1,0 +1,781 @@
+/* ============================================================================
+   LUNA NUCLEAR v10 — Override MAESTRO para modo oscuro (theme-industrial sin appearance-light)
+   Este archivo se carga DESPUES de todos los demas para ganar en cascada.
+   Regla de oro del usuario: TODO negro/gris, botones plateados, solo rojo/verde
+   estan permitidos como acento.
+
+   Estrategia: selectores `html body.theme-industrial:not(.appearance-light)`
+   (especificidad 0,0,3,2) + !important para superar body.md3-on (0,0,2,1).
+   ============================================================================ */
+
+/* --- Guard global: solo aplicamos cuando estamos en LUNA --- */
+html body.theme-industrial:not(.appearance-light) {
+  color-scheme: dark;
+}
+
+/* ============================================================================
+   §N1 — INPUTS / SELECTS / TEXTAREAS SIEMPRE OSCUROS EN LUNA
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="image"]):not([type="submit"]):not([type="reset"]):not([type="button"]),
+html body.theme-industrial:not(.appearance-light) textarea,
+html body.theme-industrial:not(.appearance-light) select,
+html body.theme-industrial:not(.appearance-light) .filter-input,
+html body.theme-industrial:not(.appearance-light) .search,
+html body.theme-industrial:not(.appearance-light) .search--ux,
+html body.theme-industrial:not(.appearance-light) .form-group input,
+html body.theme-industrial:not(.appearance-light) .form-group select,
+html body.theme-industrial:not(.appearance-light) .form-group textarea {
+  background-color: #1a1a1a !important;
+  background-image: none !important;
+  color: #e8eaed !important;
+  border: 1px solid #3a3a3a !important;
+  color-scheme: dark !important;
+  -webkit-text-fill-color: #e8eaed !important;
+}
+
+html body.theme-industrial:not(.appearance-light) input::placeholder,
+html body.theme-industrial:not(.appearance-light) textarea::placeholder {
+  color: #7a7a7a !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #7a7a7a !important;
+}
+
+html body.theme-industrial:not(.appearance-light) input:focus,
+html body.theme-industrial:not(.appearance-light) textarea:focus,
+html body.theme-industrial:not(.appearance-light) select:focus {
+  border-color: #8ab4f8 !important;
+  box-shadow: 0 0 0 3px rgba(138, 180, 248, 0.18) !important;
+  outline: none !important;
+}
+
+html body.theme-industrial:not(.appearance-light) input[type="checkbox"],
+html body.theme-industrial:not(.appearance-light) input[type="radio"] {
+  accent-color: #c0c0c5 !important;
+}
+
+/* select options natives → dark */
+html body.theme-industrial:not(.appearance-light) option {
+  background: #1a1a1a !important;
+  color: #e8eaed !important;
+}
+
+/* ============================================================================
+   §N2 — PANELS / CARDS / TOOLBARS / FILTERS / SECTION-HEADERS = NEGROS
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .panel,
+html body.theme-industrial:not(.appearance-light) .card,
+html body.theme-industrial:not(.appearance-light) .module-card,
+html body.theme-industrial:not(.appearance-light) .form-card,
+html body.theme-industrial:not(.appearance-light) .info-card,
+html body.theme-industrial:not(.appearance-light) .empty-card,
+html body.theme-industrial:not(.appearance-light) .summary-card,
+html body.theme-industrial:not(.appearance-light) .filters-card,
+html body.theme-industrial:not(.appearance-light) .toolbar,
+html body.theme-industrial:not(.appearance-light) .table-wrap,
+html body.theme-industrial:not(.appearance-light) .section-header,
+html body.theme-industrial:not(.appearance-light) .module-delete-zone {
+  background-color: #0f0f0f !important;
+  background-image: none !important;
+  color: #e8eaed !important;
+  border-color: #2a2a2a !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .section-header {
+  background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%) !important;
+  border-color: #2a2a2a !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .section-header h1,
+html body.theme-industrial:not(.appearance-light) .section-header h2,
+html body.theme-industrial:not(.appearance-light) .section-header h3,
+html body.theme-industrial:not(.appearance-light) .section-header .section-sub {
+  color: #e8eaed !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .section-header .section-sub,
+html body.theme-industrial:not(.appearance-light) .section-header p {
+  color: #bdc1c6 !important;
+}
+
+/* Tables */
+html body.theme-industrial:not(.appearance-light) .data-table,
+html body.theme-industrial:not(.appearance-light) table.data-table {
+  background: #0f0f0f !important;
+  color: #e8eaed !important;
+  border-color: #2a2a2a !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .data-table thead th,
+html body.theme-industrial:not(.appearance-light) table.data-table thead th {
+  background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%) !important;
+  color: #e8eaed !important;
+  border-color: #2a2a2a !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .data-table tbody td,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody td {
+  background: transparent !important;
+  color: #e8eaed !important;
+  border-color: #2a2a2a !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .data-table tbody tr:hover td {
+  background: #1a1a1a !important;
+}
+
+/* ============================================================================
+   §N3 — HINT / ALERT / BANNERS info (azul claro → negro con franja azul)
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .hint,
+html body.theme-industrial:not(.appearance-light) p.hint,
+html body.theme-industrial:not(.appearance-light) .info-note,
+html body.theme-industrial:not(.appearance-light) .alert-info,
+html body.theme-industrial:not(.appearance-light) .alert.info,
+html body.theme-industrial:not(.appearance-light) .module-hint,
+html body.theme-industrial:not(.appearance-light) .tip,
+html body.theme-industrial:not(.appearance-light) .tip-info,
+html body.theme-industrial:not(.appearance-light) .prem-info-banner,
+html body.theme-industrial:not(.appearance-light) .revision-maq-catalog-intro {
+  background-color: #151515 !important;
+  background-image: none !important;
+  color: #bdc1c6 !important;
+  border: 1px solid #2a2a2a !important;
+  border-left: 3px solid #8ab4f8 !important;
+  -webkit-text-fill-color: #bdc1c6 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .hint *,
+html body.theme-industrial:not(.appearance-light) p.hint *,
+html body.theme-industrial:not(.appearance-light) .info-note *,
+html body.theme-industrial:not(.appearance-light) .alert-info *,
+html body.theme-industrial:not(.appearance-light) .alert.info * {
+  color: #bdc1c6 !important;
+  -webkit-text-fill-color: #bdc1c6 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .hint strong,
+html body.theme-industrial:not(.appearance-light) p.hint strong {
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+}
+
+/* ============================================================================
+   §N4 — SEMAFOROS / ESTATUS / BADGES pastel → DARK TRANSLUCENT
+   Permitido: verde #81c995 y rojo #f28b82 (user permite verde y rojo)
+   Azul/amarillo → plateado translucido
+   ============================================================================ */
+
+/* VERDE (permitido, mantener sutil) */
+html body.theme-industrial:not(.appearance-light) .semaforo-verde,
+html body.theme-industrial:not(.appearance-light) .semaforo-ok,
+html body.theme-industrial:not(.appearance-light) .semaforo.semaforo-verde,
+html body.theme-industrial:not(.appearance-light) .estatus-finalizado,
+html body.theme-industrial:not(.appearance-light) .estatus-aprobada,
+html body.theme-industrial:not(.appearance-light) .estatus-aplicada,
+html body.theme-industrial:not(.appearance-light) .badge-success,
+html body.theme-industrial:not(.appearance-light) .badge.success,
+html body.theme-industrial:not(.appearance-light) .badge-mant-ok,
+html body.theme-industrial:not(.appearance-light) .status-pill-success,
+html body.theme-industrial:not(.appearance-light) .status-pill-ok {
+  background: rgba(129, 201, 149, 0.16) !important;
+  color: #81c995 !important;
+  border: 1px solid rgba(129, 201, 149, 0.35) !important;
+}
+
+/* ROJO (permitido, mantener sutil) */
+html body.theme-industrial:not(.appearance-light) .semaforo-rojo,
+html body.theme-industrial:not(.appearance-light) .semaforo-bad,
+html body.theme-industrial:not(.appearance-light) .semaforo.semaforo-rojo,
+html body.theme-industrial:not(.appearance-light) .estatus-cancelada,
+html body.theme-industrial:not(.appearance-light) .estatus-rechazado,
+html body.theme-industrial:not(.appearance-light) .badge-danger,
+html body.theme-industrial:not(.appearance-light) .badge.danger,
+html body.theme-industrial:not(.appearance-light) .badge-mant-vencido,
+html body.theme-industrial:not(.appearance-light) .status-pill-danger,
+html body.theme-industrial:not(.appearance-light) .status-pill-rojo {
+  background: rgba(242, 139, 130, 0.14) !important;
+  color: #f28b82 !important;
+  border: 1px solid rgba(242, 139, 130, 0.34) !important;
+}
+
+/* AMARILLO (prohibido pastel → convertir a plateado gris) */
+html body.theme-industrial:not(.appearance-light) .semaforo-amarillo,
+html body.theme-industrial:not(.appearance-light) .semaforo-warn,
+html body.theme-industrial:not(.appearance-light) .semaforo.semaforo-warn,
+html body.theme-industrial:not(.appearance-light) .semaforo.semaforo-amarillo,
+html body.theme-industrial:not(.appearance-light) .badge-warning,
+html body.theme-industrial:not(.appearance-light) .badge.warning,
+html body.theme-industrial:not(.appearance-light) .badge-mant-warn,
+html body.theme-industrial:not(.appearance-light) .badge-mant-pendiente,
+html body.theme-industrial:not(.appearance-light) .pvc-badge--warning,
+html body.theme-industrial:not(.appearance-light) .status-pill-warn,
+html body.theme-industrial:not(.appearance-light) .status-pill-amarillo,
+html body.theme-industrial:not(.appearance-light) .estatus-revision,
+html body.theme-industrial:not(.appearance-light) .estatus-en-proceso,
+html body.theme-industrial:not(.appearance-light) .estatus-cotizacion,
+html body.theme-industrial:not(.appearance-light) .estatus-pendiente,
+html body.theme-industrial:not(.appearance-light) .estatus-borrador,
+html body.theme-industrial:not(.appearance-light) .estado-borrador,
+html body.theme-industrial:not(.appearance-light) .badge-bono-pendiente {
+  background: rgba(192, 192, 197, 0.14) !important;
+  color: #d1d5db !important;
+  border: 1px solid rgba(192, 192, 197, 0.32) !important;
+}
+
+/* AZUL/INFO (prohibido → plateado gris claro) */
+html body.theme-industrial:not(.appearance-light) .semaforo-gray,
+html body.theme-industrial:not(.appearance-light) .semaforo-gris,
+html body.theme-industrial:not(.appearance-light) .estatus-abierta,
+html body.theme-industrial:not(.appearance-light) .estatus-abierto,
+html body.theme-industrial:not(.appearance-light) .badge-info,
+html body.theme-industrial:not(.appearance-light) .badge.info,
+html body.theme-industrial:not(.appearance-light) .badge-neutral,
+html body.theme-industrial:not(.appearance-light) .badge.neutral,
+html body.theme-industrial:not(.appearance-light) .status-pill-neutral,
+html body.theme-industrial:not(.appearance-light) .bitacora-estado-abierto,
+html body.theme-industrial:not(.appearance-light) .estado-activo,
+html body.theme-industrial:not(.appearance-light) .estado-pendiente {
+  background: rgba(189, 193, 198, 0.12) !important;
+  color: #bdc1c6 !important;
+  border: 1px solid rgba(189, 193, 198, 0.28) !important;
+}
+
+/* ============================================================================
+   §N5 — REF-CAT-PILL (columna CATEGORIA blanca en tabla Refacciones)
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .ref-cat-pill,
+html body.theme-industrial:not(.appearance-light) .ref-cat-pill--line,
+html body.theme-industrial:not(.appearance-light) .ref-cat-pill--part {
+  background: rgba(189, 193, 198, 0.10) !important;
+  color: #bdc1c6 !important;
+  border: 1px solid rgba(189, 193, 198, 0.22) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .ref-cat-pill--line {
+  color: #81c995 !important;
+  background: rgba(129, 201, 149, 0.10) !important;
+  border-color: rgba(129, 201, 149, 0.28) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .ref-cat-sep {
+  color: #6a6d72 !important;
+}
+html body.theme-industrial:not(.appearance-light) .ref-cat-empty {
+  color: #6a6d72 !important;
+}
+
+/* ============================================================================
+   §N6 — PROSPECCION KPIs (valores teal → plateado)
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .prospeccion-kpi {
+  background: #0f0f0f !important;
+  border: 1px solid #2a2a2a !important;
+  color: #e8eaed !important;
+}
+html body.theme-industrial:not(.appearance-light) .prospeccion-kpi-lbl {
+  color: #9aa0a6 !important;
+}
+html body.theme-industrial:not(.appearance-light) .prospeccion-kpi-val {
+  color: #e8eaed !important;
+}
+html body.theme-industrial:not(.appearance-light) .prospeccion-map-wrap {
+  background: #0f0f0f !important;
+  border-color: #2a2a2a !important;
+}
+
+/* ============================================================================
+   §N7 — BOTONES: TODOS PLATEADOS (excepto danger rojo / success verde)
+   Especificidad minima para ganar a `body.md3-on .btn.primary` (0,0,2,1):
+   `html body.md3-on.theme-industrial:not(.appearance-light) .btn.primary` = (0,0,4,2)
+   ============================================================================ */
+
+/* BASE: .btn / .btn.outline / .btn.primary / .btn-primary en LUNA */
+html body.md3-on.theme-industrial:not(.appearance-light) .btn,
+html body.md3-on.theme-industrial:not(.appearance-light) button.btn,
+html body.theme-industrial:not(.appearance-light) .btn,
+html body.theme-industrial:not(.appearance-light) button.btn {
+  background: linear-gradient(180deg, #3a3d43 0%, #2a2d32 50%, #1f2126 100%) !important;
+  background-image: linear-gradient(180deg, #3a3d43 0%, #2a2d32 50%, #1f2126 100%) !important;
+  color: #e8eaed !important;
+  border: 1px solid #4a4d52 !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 1px 2px rgba(0, 0, 0, 0.45) !important;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35) !important;
+}
+
+html body.md3-on.theme-industrial:not(.appearance-light) .btn:hover,
+html body.theme-industrial:not(.appearance-light) .btn:hover {
+  background: linear-gradient(180deg, #4a4d52 0%, #35383e 50%, #2a2d32 100%) !important;
+  background-image: linear-gradient(180deg, #4a4d52 0%, #35383e 50%, #2a2d32 100%) !important;
+  border-color: #5a5d62 !important;
+}
+
+/* PRIMARY: plateado mas brillante (es la accion principal, tipo Tesla) */
+html body.md3-on.theme-industrial:not(.appearance-light) .btn.primary,
+html body.md3-on.theme-industrial:not(.appearance-light) button.btn.primary,
+html body.md3-on.theme-industrial:not(.appearance-light) .btn-primary,
+html body.md3-on.theme-industrial:not(.appearance-light) a.btn.primary,
+html body.theme-industrial:not(.appearance-light) .btn.primary,
+html body.theme-industrial:not(.appearance-light) button.btn.primary,
+html body.theme-industrial:not(.appearance-light) .btn-primary,
+html body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh:not(.outline) {
+  background: linear-gradient(180deg, #6a6d72 0%, #55585d 50%, #40434a 100%) !important;
+  background-image: linear-gradient(180deg, #6a6d72 0%, #55585d 50%, #40434a 100%) !important;
+  background-color: #55585d !important;
+  color: #ffffff !important;
+  border: 1px solid #7a7d82 !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.10) inset,
+    0 2px 4px rgba(0, 0, 0, 0.45) !important;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35) !important;
+}
+
+html body.md3-on.theme-industrial:not(.appearance-light) .btn.primary:hover,
+html body.md3-on.theme-industrial:not(.appearance-light) button.btn.primary:hover,
+html body.theme-industrial:not(.appearance-light) .btn.primary:hover,
+html body.theme-industrial:not(.appearance-light) button.btn.primary:hover {
+  background: linear-gradient(180deg, #7a7d82 0%, #65686d 50%, #50535a 100%) !important;
+  background-image: linear-gradient(180deg, #7a7d82 0%, #65686d 50%, #50535a 100%) !important;
+  border-color: #8a8d92 !important;
+  filter: none !important;
+}
+
+/* Quitar overlay azul de ::before en LUNA (premium.css mete glow azul) */
+html body.theme-industrial:not(.appearance-light) .btn.primary::before {
+  display: none !important;
+  content: none !important;
+}
+
+/* Primary en section-header (override explicito, headers sticky) */
+html body.md3-on.theme-industrial:not(.appearance-light) .section-header .btn.primary,
+html body.theme-industrial:not(.appearance-light) .section-header .btn.primary,
+html body.theme-industrial:not(.appearance-light) .section-header .btn[id^="nuevo"],
+html body.theme-industrial:not(.appearance-light) .section-header .btn[id^="nueva"],
+html body.theme-industrial:not(.appearance-light) .section-header .btn[id*="-nuevo"],
+html body.theme-industrial:not(.appearance-light) .section-header .btn[id*="-nueva"] {
+  background: linear-gradient(180deg, #6a6d72 0%, #55585d 50%, #40434a 100%) !important;
+  background-image: linear-gradient(180deg, #6a6d72 0%, #55585d 50%, #40434a 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #7a7d82 !important;
+}
+
+/* PRIMARY por ID (ganan siempre por especificidad de ID = 100) */
+html body.theme-industrial:not(.appearance-light) #nueva-cotizacion,
+html body.theme-industrial:not(.appearance-light) #nuevo-reporte,
+html body.theme-industrial:not(.appearance-light) #nueva-revision-maq,
+html body.theme-industrial:not(.appearance-light) #btn-save-tarifas,
+html body.theme-industrial:not(.appearance-light) #btn-refresh-prospeccion,
+html body.theme-industrial:not(.appearance-light) #nuevo-cliente,
+html body.theme-industrial:not(.appearance-light) #nueva-refaccion,
+html body.theme-industrial:not(.appearance-light) #nuevo-almacen,
+html body.theme-industrial:not(.appearance-light) #nueva-maquina,
+html body.theme-industrial:not(.appearance-light) #nuevo-bono,
+html body.theme-industrial:not(.appearance-light) #nuevo-tecnico,
+html body.theme-industrial:not(.appearance-light) #nueva-tarifa,
+html body.theme-industrial:not(.appearance-light) #nuevo-mantenimiento,
+html body.theme-industrial:not(.appearance-light) #nueva-garantia {
+  background: linear-gradient(180deg, #6a6d72 0%, #55585d 50%, #40434a 100%) !important;
+  background-image: linear-gradient(180deg, #6a6d72 0%, #55585d 50%, #40434a 100%) !important;
+  background-color: #55585d !important;
+  color: #ffffff !important;
+  border: 1px solid #7a7d82 !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.10) inset,
+    0 2px 4px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* DANGER: rojo (permitido) */
+html body.theme-industrial:not(.appearance-light) .btn.danger,
+html body.theme-industrial:not(.appearance-light) button.btn.danger,
+html body.theme-industrial:not(.appearance-light) .btn-danger {
+  background: linear-gradient(180deg, #c5221f 0%, #a50e0e 100%) !important;
+  background-image: linear-gradient(180deg, #c5221f 0%, #a50e0e 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #c5221f !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .btn.danger.outline,
+html body.theme-industrial:not(.appearance-light) .btn.danger.outline:not(:hover) {
+  background: transparent !important;
+  background-image: none !important;
+  color: #f28b82 !important;
+  border: 1px solid rgba(242, 139, 130, 0.5) !important;
+}
+
+/* SUCCESS: verde (permitido) */
+html body.theme-industrial:not(.appearance-light) .btn.success,
+html body.theme-industrial:not(.appearance-light) button.btn.success,
+html body.theme-industrial:not(.appearance-light) .btn-success {
+  background: linear-gradient(180deg, #137333 0%, #0d5a28 100%) !important;
+  background-image: linear-gradient(180deg, #137333 0%, #0d5a28 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #137333 !important;
+}
+
+/* OUTLINE: borde plateado translucido */
+html body.md3-on.theme-industrial:not(.appearance-light) .btn.outline,
+html body.theme-industrial:not(.appearance-light) .btn.outline {
+  background: rgba(255, 255, 255, 0.03) !important;
+  background-image: none !important;
+  color: #e8eaed !important;
+  border: 1px solid #4a4d52 !important;
+  box-shadow: none !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .btn.outline:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: #6a6d72 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .btn i,
+html body.theme-industrial:not(.appearance-light) .btn .fas {
+  color: inherit !important;
+}
+
+/* Botones accion dentro de tabla (.th-actions) - mantener ancho fijo */
+html body.theme-industrial:not(.appearance-light) table.data-table th.th-actions,
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions {
+  min-width: 180px !important;
+  width: 180px !important;
+  padding-right: 18px !important;
+  white-space: nowrap !important;
+}
+
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions > * {
+  flex: 0 0 auto !important;
+}
+
+/* table-wrap con scroll horizontal si hace falta */
+html body.theme-industrial:not(.appearance-light) .table-wrap {
+  overflow-x: auto !important;
+}
+
+/* ============================================================================
+   §N8 — SIDEBAR, TABS, HEADER
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .sidebar,
+html body.theme-industrial:not(.appearance-light) .sidebar-nav,
+html body.theme-industrial:not(.appearance-light) nav.sidebar,
+html body.theme-industrial:not(.appearance-light) aside.sidebar {
+  background: #0f0f0f !important;
+  background-image: none !important;
+  border-color: #2a2a2a !important;
+  color: #e8eaed !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .sidebar .tab,
+html body.theme-industrial:not(.appearance-light) .sidebar-nav .tab,
+html body.theme-industrial:not(.appearance-light) nav .tab {
+  background: transparent !important;
+  color: #9aa0a6 !important;
+  border-color: transparent !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .sidebar .tab:hover,
+html body.theme-industrial:not(.appearance-light) .sidebar-nav .tab:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: #e8eaed !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .sidebar .tab.active,
+html body.theme-industrial:not(.appearance-light) .sidebar-nav .tab.active {
+  background: linear-gradient(180deg, #4a4d52 0%, #35383e 100%) !important;
+  background-image: linear-gradient(180deg, #4a4d52 0%, #35383e 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #5a5d62 !important;
+}
+
+/* Top header (marca Universal Servicio Tecnico) */
+html body.theme-industrial:not(.appearance-light) .app-header,
+html body.theme-industrial:not(.appearance-light) header.app-header,
+html body.theme-industrial:not(.appearance-light) .topbar {
+  background: #0f0f0f !important;
+  border-color: #2a2a2a !important;
+  color: #e8eaed !important;
+}
+
+/* ============================================================================
+   §N9 — DROPDOWNS: Notificaciones + Menu Avatar (solido, alto contraste)
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) #notifications-panel,
+html body.theme-industrial:not(.appearance-light) #notifications-panel *:not(i):not(svg):not(path) {
+  background: #1a1a1a !important;
+  background-image: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #notifications-panel {
+  color: #e8eaed !important;
+  border: 1px solid #3a3a3a !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6) !important;
+  z-index: 16000 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #notifications-panel *,
+html body.theme-industrial:not(.appearance-light) #notifications-panel p,
+html body.theme-industrial:not(.appearance-light) #notifications-panel span,
+html body.theme-industrial:not(.appearance-light) #notifications-panel a,
+html body.theme-industrial:not(.appearance-light) #notifications-panel h1,
+html body.theme-industrial:not(.appearance-light) #notifications-panel h2,
+html body.theme-industrial:not(.appearance-light) #notifications-panel h3,
+html body.theme-industrial:not(.appearance-light) #notifications-panel h4,
+html body.theme-industrial:not(.appearance-light) #notifications-panel li,
+html body.theme-industrial:not(.appearance-light) #notifications-panel label {
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #notifications-panel .muted,
+html body.theme-industrial:not(.appearance-light) #notifications-panel .text-muted,
+html body.theme-industrial:not(.appearance-light) #notifications-panel small,
+html body.theme-industrial:not(.appearance-light) #notifications-panel time {
+  color: #9aa0a6 !important;
+  -webkit-text-fill-color: #9aa0a6 !important;
+}
+
+/* Menu Avatar */
+html body.theme-industrial:not(.appearance-light) #header-profile-menu,
+html body.theme-industrial:not(.appearance-light) .header-profile-menu {
+  background: #1a1a1a !important;
+  background-image: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  color: #e8eaed !important;
+  border: 1px solid #3a3a3a !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6) !important;
+  z-index: 16000 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #header-profile-menu *,
+html body.theme-industrial:not(.appearance-light) .header-profile-menu * {
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+  background-image: none !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #header-profile-menu .muted,
+html body.theme-industrial:not(.appearance-light) #header-profile-menu small {
+  color: #9aa0a6 !important;
+  -webkit-text-fill-color: #9aa0a6 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #header-profile-menu a:hover,
+html body.theme-industrial:not(.appearance-light) #header-profile-menu button:hover,
+html body.theme-industrial:not(.appearance-light) .header-profile-menu a:hover,
+html body.theme-industrial:not(.appearance-light) .header-profile-menu button:hover {
+  background: #2a2a2a !important;
+}
+
+/* ============================================================================
+   §N10 — MODALES: fondo negro en LUNA (inputs ya cubiertos en §N1)
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .modal-box,
+html body.theme-industrial:not(.appearance-light) .modal-content,
+html body.theme-industrial:not(.appearance-light) .modal-box--theme-industrial,
+html body.theme-industrial:not(.appearance-light) .modal {
+  background: #0f0f0f !important;
+  color: #e8eaed !important;
+  border-color: #2a2a2a !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .modal-backdrop {
+  background: rgba(0, 0, 0, 0.75) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .modal-box h1,
+html body.theme-industrial:not(.appearance-light) .modal-box h2,
+html body.theme-industrial:not(.appearance-light) .modal-box h3,
+html body.theme-industrial:not(.appearance-light) .modal-box label,
+html body.theme-industrial:not(.appearance-light) .modal-box p {
+  color: #e8eaed !important;
+}
+
+/* ============================================================================
+   §N11 — FORMAS DE COTIZACION: badges USD/MXN y T.C. editable
+   En las fotos se ven pastillas azules claras con USD / 17.29 / BORRADOR
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) [class*="moneda"],
+html body.theme-industrial:not(.appearance-light) [class*="currency"],
+html body.theme-industrial:not(.appearance-light) [class*="-usd"],
+html body.theme-industrial:not(.appearance-light) [class*="-mxn"],
+html body.theme-industrial:not(.appearance-light) .badge-moneda,
+html body.theme-industrial:not(.appearance-light) .tc-pill,
+html body.theme-industrial:not(.appearance-light) .chip-tc,
+html body.theme-industrial:not(.appearance-light) .chip-moneda {
+  background: rgba(189, 193, 198, 0.12) !important;
+  background-image: none !important;
+  color: #bdc1c6 !important;
+  border: 1px solid rgba(189, 193, 198, 0.28) !important;
+}
+
+/* ============================================================================
+   §N12 — REVISION MAQUINAS: cards catalogo
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .revision-maq-card,
+html body.theme-industrial:not(.appearance-light) .maq-card,
+html body.theme-industrial:not(.appearance-light) .revision-maq-catalog-wrap {
+  background: #0f0f0f !important;
+  background-image: none !important;
+  border: 1px solid #2a2a2a !important;
+  color: #e8eaed !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .revision-maq-card-title,
+html body.theme-industrial:not(.appearance-light) .maq-card-title,
+html body.theme-industrial:not(.appearance-light) .revision-maq-card-title strong {
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .revision-maq-card-serie,
+html body.theme-industrial:not(.appearance-light) .revision-maq-card-client,
+html body.theme-industrial:not(.appearance-light) .maq-card-serie,
+html body.theme-industrial:not(.appearance-light) .maq-card-cat,
+html body.theme-industrial:not(.appearance-light) .maq-card-zona,
+html body.theme-industrial:not(.appearance-light) .maq-card-modelo {
+  color: #bdc1c6 !important;
+  -webkit-text-fill-color: #bdc1c6 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .revision-maq-pill,
+html body.theme-industrial:not(.appearance-light) .maq-card-parte {
+  background: rgba(189, 193, 198, 0.10) !important;
+  color: #bdc1c6 !important;
+  border: 1px solid rgba(189, 193, 198, 0.22) !important;
+}
+
+/* ============================================================================
+   §N13 — TARIFAS: inputs, tabla tarifas mano de obra, sync banner
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) [id*="tarifa"],
+html body.theme-industrial:not(.appearance-light) .tarifa-card,
+html body.theme-industrial:not(.appearance-light) .tarifa-grid,
+html body.theme-industrial:not(.appearance-light) .tarifas-table-wrap,
+html body.theme-industrial:not(.appearance-light) .rates-table,
+html body.theme-industrial:not(.appearance-light) table.rates,
+html body.theme-industrial:not(.appearance-light) table.rates-table {
+  background: #0f0f0f !important;
+  color: #e8eaed !important;
+  border-color: #2a2a2a !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .tipo-cambio-card,
+html body.theme-industrial:not(.appearance-light) [id*="tipo-cambio"],
+html body.theme-industrial:not(.appearance-light) [class*="tipo-cambio"],
+html body.theme-industrial:not(.appearance-light) .banxico-banner {
+  background: #0f0f0f !important;
+  color: #e8eaed !important;
+  border-color: #2a2a2a !important;
+}
+
+/* ============================================================================
+   §N14 — FOOTER y mensajes abajo
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .app-footer,
+html body.theme-industrial:not(.appearance-light) footer,
+html body.theme-industrial:not(.appearance-light) .footer,
+html body.theme-industrial:not(.appearance-light) .site-footer {
+  background: #0f0f0f !important;
+  color: #9aa0a6 !important;
+  border-color: #2a2a2a !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .app-footer *,
+html body.theme-industrial:not(.appearance-light) .site-footer * {
+  color: #9aa0a6 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) kbd {
+  background: #1a1a1a !important;
+  color: #e8eaed !important;
+  border: 1px solid #3a3a3a !important;
+}
+
+/* ============================================================================
+   §N15 — LINKS / EMAIL (dentro tabla, azules teal → cyan suave legible)
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) a:not(.btn):not(.tab):not(.link-btn) {
+  color: #8ab4f8 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) a:not(.btn):hover {
+  color: #aecbfa !important;
+}
+
+/* ============================================================================
+   §N16 — PROGRESS BARS: gradiente azul → plateado
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .progress-bar,
+html body.theme-industrial:not(.appearance-light) .dashboard-progress-bar {
+  background: linear-gradient(90deg, #55585d, #7a7d82) !important;
+  background-image: linear-gradient(90deg, #55585d, #7a7d82) !important;
+}
+
+/* ============================================================================
+   §N17 — FAB IA widget: mantener abajo-derecha
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .ai-widget-wrap,
+html body.theme-industrial:not(.appearance-light) #ai-widget,
+html body.theme-industrial:not(.appearance-light) .ai-fab-wrap {
+  position: fixed !important;
+  right: 24px !important;
+  bottom: 24px !important;
+  z-index: 9900 !important;
+  left: auto !important;
+  top: auto !important;
+}
+
+/* ============================================================================
+   §N18 — OCULTAR FABs duplicados (palette, density, print)
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .prem-theme-fab,
+html body.theme-industrial:not(.appearance-light) .prem-density-fab,
+html body.theme-industrial:not(.appearance-light) .prem-theme-picker,
+html body.theme-industrial:not(.appearance-light) .prem-density-picker,
+html body.theme-industrial:not(.appearance-light) .prem-print-btn,
+html body.theme-industrial:not(.appearance-light) .prem-print-btn--floating {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* ============================================================================
+   §N19 — CODE / KBD / monospace inline
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) code {
+  background: #1a1a1a !important;
+  color: #bdc1c6 !important;
+  border: 1px solid #2a2a2a !important;
+  padding: 1px 6px !important;
+  border-radius: 4px !important;
+}
+
+/* ============================================================================
+   §N20 — MODAL FORM inputs (override especifico del modal industrial)
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .modal-box.modal-box--theme-industrial .form-group input,
+html body.theme-industrial:not(.appearance-light) .modal-box.modal-box--theme-industrial .form-group select,
+html body.theme-industrial:not(.appearance-light) .modal-box.modal-box--theme-industrial .form-group textarea {
+  background: #1a1a1a !important;
+  color: #e8eaed !important;
+  border-color: #3a3a3a !important;
+}
+
+/* ============================================================================
+   §N21 — Colores teal/verde teal que deben ser plateados en LUNA
+   (.ref-td-price strong con #0f766e, etc.)
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) #tabla-refacciones .ref-td-price strong,
+html body.theme-industrial:not(.appearance-light) .ref-td-price strong,
+html body.theme-industrial:not(.appearance-light) .usd-value,
+html body.theme-industrial:not(.appearance-light) .mxn-value {
+  color: #e8eaed !important;
+}
+
+/* Sobrescribir cualquier background claro heredado directamente sobre .card/.panel hijos */
+html body.theme-industrial:not(.appearance-light) .card > .card,
+html body.theme-industrial:not(.appearance-light) .panel > .panel {
+  background: transparent !important;
+  border-color: #2a2a2a !important;
+}
