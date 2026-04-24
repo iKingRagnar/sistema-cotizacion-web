@@ -779,3 +779,177 @@ html body.theme-industrial:not(.appearance-light) .panel > .panel {
   background: transparent !important;
   border-color: #2a2a2a !important;
 }
+
+/* ============================================================================
+   §N22 — BOTONES DE ACCION EN TABLAS (azul vista, verde editar, rojo eliminar)
+   El usuario aprobó el estilo de la pestaña Clientes: halo de color sutil,
+   fondo translucent. Debe aplicar en TODAS las pestañas (Clientes, Refacciones,
+   Maquinas, Cotizaciones, Reportes, Garantias, Mantenimientos, Bonos, etc.)
+
+   Uso DESCENDANT COMBINATOR (espacio, no >) porque en Refacciones los botones
+   estan dentro de <div class="row-actions-inline"> y no son hijos directos.
+
+   Especificidad: html body + :not + 3 clases + [attr] + 2 tipos mas = (0,0,5,4)
+   Esto SUPERA a §N7 base (.btn = 0,0,4,2) y se pinta encima del plateado.
+   ============================================================================ */
+
+/* AZUL — vista/preview (permitido como acento sobre negro) */
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-preview"],
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-view"],
+html body.theme-industrial:not(.appearance-light) .data-table td.th-actions [class*="btn-preview"],
+html body.theme-industrial:not(.appearance-light) .data-table td.th-actions [class*="btn-view"],
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-preview"],
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-view"] {
+  background: rgba(26, 115, 232, 0.14) !important;
+  background-image: none !important;
+  color: #8ab4f8 !important;
+  border: 1px solid rgba(138, 180, 248, 0.40) !important;
+  box-shadow:
+    0 0 0 1px rgba(138, 180, 248, 0.10),
+    0 0 10px rgba(138, 180, 248, 0.14) !important;
+  text-shadow: none !important;
+}
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-preview"]:hover,
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-view"]:hover,
+html body.theme-industrial:not(.appearance-light) .data-table td.th-actions [class*="btn-preview"]:hover,
+html body.theme-industrial:not(.appearance-light) .data-table td.th-actions [class*="btn-view"]:hover,
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-preview"]:hover,
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-view"]:hover {
+  background: rgba(26, 115, 232, 0.25) !important;
+  border-color: rgba(138, 180, 248, 0.70) !important;
+  color: #aecbfa !important;
+}
+
+/* VERDE — editar (permitido) */
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-edit"],
+html body.theme-industrial:not(.appearance-light) .data-table td.th-actions [class*="btn-edit"],
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-edit"] {
+  background: rgba(129, 201, 149, 0.14) !important;
+  background-image: none !important;
+  color: #81c995 !important;
+  border: 1px solid rgba(129, 201, 149, 0.40) !important;
+  box-shadow:
+    0 0 0 1px rgba(129, 201, 149, 0.10),
+    0 0 10px rgba(129, 201, 149, 0.14) !important;
+  text-shadow: none !important;
+}
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-edit"]:hover,
+html body.theme-industrial:not(.appearance-light) .data-table td.th-actions [class*="btn-edit"]:hover,
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-edit"]:hover {
+  background: rgba(129, 201, 149, 0.25) !important;
+  border-color: rgba(129, 201, 149, 0.70) !important;
+  color: #a8dab5 !important;
+}
+
+/* ROJO — eliminar (permitido) */
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-delete"],
+html body.theme-industrial:not(.appearance-light) .data-table td.th-actions [class*="btn-delete"],
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-delete"] {
+  background: rgba(242, 139, 130, 0.14) !important;
+  background-image: none !important;
+  color: #f28b82 !important;
+  border: 1px solid rgba(242, 139, 130, 0.40) !important;
+  box-shadow:
+    0 0 0 1px rgba(242, 139, 130, 0.10),
+    0 0 10px rgba(242, 139, 130, 0.16) !important;
+  text-shadow: none !important;
+}
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-delete"]:hover,
+html body.theme-industrial:not(.appearance-light) .data-table td.th-actions [class*="btn-delete"]:hover,
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-delete"]:hover {
+  background: rgba(242, 139, 130, 0.28) !important;
+  border-color: rgba(242, 139, 130, 0.75) !important;
+  color: #f6a6a0 !important;
+}
+
+/* AMBAR — btn-stock (stock, ajuste inventario). Permitido como acento neutro */
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-stock"],
+html body.theme-industrial:not(.appearance-light) .data-table td.th-actions [class*="btn-stock"],
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-stock"] {
+  background: rgba(253, 214, 99, 0.12) !important;
+  background-image: none !important;
+  color: #fdd663 !important;
+  border: 1px solid rgba(253, 214, 99, 0.38) !important;
+  box-shadow: 0 0 0 1px rgba(253, 214, 99, 0.08) !important;
+  text-shadow: none !important;
+}
+
+/* DOWNLOAD / PDF / otros — color neutral plateado */
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-download"],
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-pdf"],
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-csv"],
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-print"],
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-download"],
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-pdf"] {
+  background: rgba(189, 193, 198, 0.10) !important;
+  background-image: none !important;
+  color: #bdc1c6 !important;
+  border: 1px solid rgba(189, 193, 198, 0.30) !important;
+  box-shadow: 0 0 0 1px rgba(189, 193, 198, 0.08) !important;
+  text-shadow: none !important;
+}
+
+/* APPROVE / FINALIZAR / CONFIRMAR — verde mas intenso */
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-approve"],
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-finalizar"],
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-confirm"],
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-aplicar"],
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-approve"],
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-finalizar"] {
+  background: linear-gradient(180deg, #137333 0%, #0d5a28 100%) !important;
+  background-image: linear-gradient(180deg, #137333 0%, #0d5a28 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #137333 !important;
+  box-shadow: 0 2px 4px rgba(19, 115, 51, 0.35) !important;
+  text-shadow: none !important;
+}
+
+/* Tamaño y forma uniforme de los botones de accion (32x32 sin deformar) */
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions > .btn,
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions .row-actions-inline > .btn,
+html body.theme-industrial:not(.appearance-light) .row-actions-inline > .btn {
+  min-width: 32px !important;
+  height: 32px !important;
+  padding: 0 8px !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .row-actions-inline {
+  display: inline-flex !important;
+  gap: 6px !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+}
+
+/* ============================================================================
+   §N23 — MISMO ESTILO EN MODO SOL (para consistencia visual)
+   El usuario aprobó este estilo en CLIENTES modo LUNA; aseguramos que en SOL
+   tambien se vea coherente (fondo pastel azul/verde/rojo suave).
+   ============================================================================ */
+html body.theme-industrial.appearance-light table.data-table td.th-actions [class*="btn-preview"],
+html body.theme-industrial.appearance-light table.data-table td.th-actions [class*="btn-view"],
+html body.theme-industrial.appearance-light .row-actions-inline [class*="btn-preview"],
+html body.theme-industrial.appearance-light .row-actions-inline [class*="btn-view"] {
+  background: #eff6ff !important;
+  background-image: none !important;
+  color: #1a73e8 !important;
+  border: 1px solid rgba(26, 115, 232, 0.30) !important;
+}
+html body.theme-industrial.appearance-light table.data-table td.th-actions [class*="btn-edit"],
+html body.theme-industrial.appearance-light .row-actions-inline [class*="btn-edit"] {
+  background: #ecfdf5 !important;
+  background-image: none !important;
+  color: #047857 !important;
+  border: 1px solid rgba(5, 150, 105, 0.30) !important;
+}
+html body.theme-industrial.appearance-light table.data-table td.th-actions [class*="btn-delete"],
+html body.theme-industrial.appearance-light .row-actions-inline [class*="btn-delete"] {
+  background: #fef2f2 !important;
+  background-image: none !important;
+  color: #b91c1c !important;
+  border: 1px solid rgba(185, 28, 28, 0.30) !important;
+}
