@@ -3631,3 +3631,395 @@ body.theme-industrial:not(.appearance-light) .sidebar-modules-toggle {
 /* ════════════════════════════════════════════════════════════════════════
    FIN — Fix Maestro v4 (raiz: variables CSS redefinidas)
    ════════════════════════════════════════════════════════════════════════ */
+
+/* ╔══════════════════════════════════════════════════════════════════════════╗
+   ║  FIX MAESTRO v5 EXHAUSTIVO — 2026-04-24                                  ║
+   ║                                                                          ║
+   ║  Auditoria revelo:                                                       ║
+   ║  - 119 background:#fff hardcoded en 7 archivos CSS                       ║
+   ║  - 46 linear-gradient con colores claros                                 ║
+   ║  - Dashboard usa clases especificas: .dashboard-score-tile,              ║
+   ║    .dashboard-kpi-strip, .dashboard-kpi-item, .dashboard-card,           ║
+   ║    .dashboard-surface, .dashboard-header, .dashboard-pronosticos, etc.   ║
+   ║  - Dropdown avatar: .header-profile-menu* (con sufijos -item, -section,  ║
+   ║    -user, -meta, -divider) — NO solo .header-profile-menu                ║
+   ║  - Notificaciones: .notifications-panel + .notifications-header          ║
+   ║                                                                          ║
+   ║  Estrategia: cubrir TODAS las clases reales detectadas en HTML/JS, en    ║
+   ║  ambos modos (SOL y LUNA), con paletas consistentes.                     ║
+   ╚══════════════════════════════════════════════════════════════════════════╝ */
+
+/* ═══════════ §X1 — DASHBOARD COMPLETO (modo LUNA) ═════════════════════════ */
+/* Contenedores principales */
+body.theme-industrial:not(.appearance-light) .dashboard-surface,
+body.theme-industrial:not(.appearance-light) .dashboard-header,
+body.theme-industrial:not(.appearance-light) .dashboard-header-left,
+body.theme-industrial:not(.appearance-light) .dashboard-header-right,
+body.theme-industrial:not(.appearance-light) .dashboard-grid,
+body.theme-industrial:not(.appearance-light) .dashboard-loading,
+body.theme-industrial:not(.appearance-light) .dashboard-charts,
+body.theme-industrial:not(.appearance-light) .dashboard-charts-row,
+body.theme-industrial:not(.appearance-light) .dashboard-chart-wrap,
+body.theme-industrial:not(.appearance-light) .dashboard-advanced,
+body.theme-industrial:not(.appearance-light) .dashboard-comparativo,
+body.theme-industrial:not(.appearance-light) .dashboard-pronosticos,
+body.theme-industrial:not(.appearance-light) .dashboard-crossfilter-bar {
+  background: #1f1f1f !important;
+  background-color: #1f1f1f !important;
+  background-image: none !important;
+  color: #e8eaed !important;
+  border-color: #3c4043 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Score tiles (las 4 cards superiores: INGRESOS COTIZADOS, CAJA/PIPELINE, etc.) */
+body.theme-industrial:not(.appearance-light) .dashboard-score-tile,
+body.theme-industrial:not(.appearance-light) [class*="dashboard-score-tile--"] {
+  background: #1f1f1f !important;
+  background-color: #1f1f1f !important;
+  background-image: none !important;
+  color: #e8eaed !important;
+  border: 1px solid #3c4043 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-score-tile *,
+body.theme-industrial:not(.appearance-light) .dashboard-score-eyebrow,
+body.theme-industrial:not(.appearance-light) .dashboard-score-label,
+body.theme-industrial:not(.appearance-light) .dashboard-score-meta {
+  color: #bdc1c6 !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-score-value {
+  color: #8ab4f8 !important;
+  font-weight: 700 !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-score-tile--risk .dashboard-score-value {
+  color: #f28b82 !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-score-tile--ops .dashboard-score-value {
+  color: #81c995 !important;
+}
+
+/* KPI strip (CLIENTES 30, COTIZACIONES $27,933, etc.) */
+body.theme-industrial:not(.appearance-light) .dashboard-kpi-strip {
+  background: #1a1a1a !important;
+  background-color: #1a1a1a !important;
+  background-image: none !important;
+  border: 1px solid #3c4043 !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-kpi-item {
+  background: transparent !important;
+  color: #e8eaed !important;
+  border-color: #3c4043 !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-kpi-item strong {
+  color: #8ab4f8 !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-kpi-item i {
+  color: #8ab4f8 !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-kpi-item:hover {
+  background: rgba(138, 180, 248, 0.10) !important;
+  color: #8ab4f8 !important;
+}
+
+/* Dashboard cards (CLIENTES, REFACCIONES, MAQUINAS, COTIZACIONES, BITACORA) */
+body.theme-industrial:not(.appearance-light) .dashboard-card {
+  background: #1f1f1f !important;
+  background-color: #1f1f1f !important;
+  background-image: none !important;
+  color: #e8eaed !important;
+  border: 1px solid #3c4043 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-card *:not(button):not(.dashboard-card-action) {
+  color: inherit;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-card-title,
+body.theme-industrial:not(.appearance-light) .dashboard-card-subtitle,
+body.theme-industrial:not(.appearance-light) .dashboard-card-row-label,
+body.theme-industrial:not(.appearance-light) .dashboard-card-eyebrow {
+  color: #bdc1c6 !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-card-row-value {
+  color: #e8eaed !important;
+  font-weight: 600 !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-card-row-value.positive,
+body.theme-industrial:not(.appearance-light) .dashboard-card-row-value[class*="positive"] {
+  color: #81c995 !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-card-row-value.negative,
+body.theme-industrial:not(.appearance-light) .dashboard-card-row-value[class*="negative"] {
+  color: #f28b82 !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-card-icon,
+body.theme-industrial:not(.appearance-light) .dashboard-card-title i,
+body.theme-industrial:not(.appearance-light) .dashboard-card-title .fas {
+  background: rgba(138, 180, 248, 0.16) !important;
+  color: #8ab4f8 !important;
+}
+
+/* Titulos y subtitulos del dashboard */
+body.theme-industrial:not(.appearance-light) .dashboard-title,
+body.theme-industrial:not(.appearance-light) .dashboard-section-title {
+  color: #e8eaed !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-subtitle,
+body.theme-industrial:not(.appearance-light) .dashboard-hint,
+body.theme-industrial:not(.appearance-light) .dashboard-chart-caption,
+body.theme-industrial:not(.appearance-light) .dashboard-crossfilter-text {
+  color: #bdc1c6 !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-title i,
+body.theme-industrial:not(.appearance-light) .dashboard-section-title i {
+  color: #8ab4f8 !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-subtitle strong {
+  color: #8ab4f8 !important;
+}
+
+/* Botones del header del dashboard (Respaldos, Reporte ejecutivo, Imprimir, Actualizar) */
+body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh,
+body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh.outline {
+  background: #2a2a2a !important;
+  color: #e8eaed !important;
+  border: 1px solid #3c4043 !important;
+}
+body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh:hover {
+  background: rgba(138, 180, 248, 0.14) !important;
+  color: #8ab4f8 !important;
+  border-color: #8ab4f8 !important;
+}
+body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh:not(.outline) {
+  background: linear-gradient(135deg, #1a73e8 0%, #4285f4 100%) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+/* "Abrir modulo" buttons en dashboard cards */
+body.theme-industrial:not(.appearance-light) .dashboard-card-action,
+body.theme-industrial:not(.appearance-light) .dashboard-card .btn,
+body.theme-industrial:not(.appearance-light) .dashboard-card a.btn {
+  background: linear-gradient(135deg, #1a73e8 0%, #4285f4 100%) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+/* ═══════════ §X2 — DASHBOARD en MODO SOL (paletas claras consistentes) ═══ */
+body.theme-industrial.appearance-light .dashboard-score-tile,
+body.theme-industrial.appearance-light .dashboard-card,
+body.theme-industrial.appearance-light .dashboard-chart-wrap,
+body.theme-industrial.appearance-light .dashboard-pronosticos,
+body.theme-industrial.appearance-light .dashboard-comparativo {
+  background: #ffffff !important;
+  color: #202124 !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04) !important;
+}
+body.theme-industrial.appearance-light .dashboard-score-eyebrow,
+body.theme-industrial.appearance-light .dashboard-score-label,
+body.theme-industrial.appearance-light .dashboard-score-meta {
+  color: #5f6368 !important;
+}
+body.theme-industrial.appearance-light .dashboard-score-value {
+  color: #1a73e8 !important;
+}
+
+/* ═══════════ §X3 — DROPDOWN AVATAR (clases reales -menu-item, etc.) ══════ */
+/* Modo SOL */
+body.theme-industrial.appearance-light .header-profile-menu {
+  background: #ffffff !important;
+  color: #202124 !important;
+  border: 1px solid #dadce0 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18) !important;
+}
+body.theme-industrial.appearance-light .header-profile-menu-user,
+body.theme-industrial.appearance-light .header-profile-menu-meta {
+  background: transparent !important;
+  color: #202124 !important;
+}
+body.theme-industrial.appearance-light .header-profile-menu-user strong {
+  color: #202124 !important;
+}
+body.theme-industrial.appearance-light .header-profile-menu-meta {
+  color: #5f6368 !important;
+}
+body.theme-industrial.appearance-light .header-profile-menu-section {
+  color: #5f6368 !important;
+  background: transparent !important;
+}
+body.theme-industrial.appearance-light .header-profile-menu-divider {
+  background: #e8eaed !important;
+  border-color: #e8eaed !important;
+}
+body.theme-industrial.appearance-light .header-profile-menu-item {
+  background: transparent !important;
+  color: #202124 !important;
+  border: none !important;
+}
+body.theme-industrial.appearance-light .header-profile-menu-item i,
+body.theme-industrial.appearance-light .header-profile-menu-item span {
+  color: inherit !important;
+}
+body.theme-industrial.appearance-light .header-profile-menu-item:hover {
+  background: #f1f3f4 !important;
+  color: #1a73e8 !important;
+}
+body.theme-industrial.appearance-light .header-profile-menu-item.danger {
+  color: #d93025 !important;
+}
+body.theme-industrial.appearance-light .header-profile-menu-item.danger:hover {
+  background: #fce8e6 !important;
+  color: #b9251a !important;
+}
+
+/* Modo LUNA */
+body.theme-industrial:not(.appearance-light) .header-profile-menu {
+  background: #2a2a2a !important;
+  color: #e8eaed !important;
+  border: 1px solid #3c4043 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7) !important;
+}
+body.theme-industrial:not(.appearance-light) .header-profile-menu-user,
+body.theme-industrial:not(.appearance-light) .header-profile-menu-meta {
+  background: transparent !important;
+  color: #e8eaed !important;
+}
+body.theme-industrial:not(.appearance-light) .header-profile-menu-user strong {
+  color: #e8eaed !important;
+}
+body.theme-industrial:not(.appearance-light) .header-profile-menu-meta {
+  color: #80868b !important;
+}
+body.theme-industrial:not(.appearance-light) .header-profile-menu-section {
+  color: #80868b !important;
+  background: transparent !important;
+}
+body.theme-industrial:not(.appearance-light) .header-profile-menu-divider {
+  background: #3c4043 !important;
+  border-color: #3c4043 !important;
+}
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item {
+  background: transparent !important;
+  color: #e8eaed !important;
+  border: none !important;
+}
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item i,
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item span {
+  color: inherit !important;
+}
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item:hover {
+  background: rgba(138, 180, 248, 0.14) !important;
+  color: #8ab4f8 !important;
+}
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item.danger {
+  color: #f28b82 !important;
+}
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item.danger:hover {
+  background: rgba(242, 139, 130, 0.14) !important;
+  color: #f6aea9 !important;
+}
+
+/* ═══════════ §X4 — PANEL DE NOTIFICACIONES (clases reales) ═══════════════ */
+/* Modo SOL */
+body.theme-industrial.appearance-light .notifications-panel {
+  background: #ffffff !important;
+  color: #202124 !important;
+  border: 1px solid #dadce0 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18) !important;
+}
+body.theme-industrial.appearance-light .notifications-panel *,
+body.theme-industrial.appearance-light .notifications-header,
+body.theme-industrial.appearance-light .notifications-header strong {
+  color: #202124 !important;
+  background: transparent !important;
+}
+body.theme-industrial.appearance-light .notifications-badge {
+  background: #d93025 !important;
+  color: #ffffff !important;
+  border: 2px solid #ffffff !important;
+}
+
+/* Modo LUNA */
+body.theme-industrial:not(.appearance-light) .notifications-panel {
+  background: #2a2a2a !important;
+  color: #e8eaed !important;
+  border: 1px solid #3c4043 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7) !important;
+}
+body.theme-industrial:not(.appearance-light) .notifications-panel *,
+body.theme-industrial:not(.appearance-light) .notifications-header,
+body.theme-industrial:not(.appearance-light) .notifications-header strong {
+  color: #e8eaed !important;
+  background: transparent !important;
+}
+body.theme-industrial:not(.appearance-light) .notifications-badge {
+  background: #f28b82 !important;
+  color: #1f1f1f !important;
+  border: 2px solid #1f1f1f !important;
+}
+
+/* ═══════════ §X5 — NUCLEAR: TODOS los .card / .toolbar / .table-wrap ═════ */
+/* En LUNA forzar todos los contenedores tipo card a #1f1f1f */
+body.theme-industrial:not(.appearance-light) .card,
+body.theme-industrial:not(.appearance-light) .toolbar,
+body.theme-industrial:not(.appearance-light) .md-table-wrap,
+body.theme-industrial:not(.appearance-light) .table-wrap,
+body.theme-industrial:not(.appearance-light) .table-footer,
+body.theme-industrial:not(.appearance-light) .filters-card,
+body.theme-industrial:not(.appearance-light) .data-card,
+body.theme-industrial:not(.appearance-light) .info-card,
+body.theme-industrial:not(.appearance-light) .form-card,
+body.theme-industrial:not(.appearance-light) .module-card,
+body.theme-industrial:not(.appearance-light) .module-delete-zone,
+body.theme-industrial:not(.appearance-light) .empty-card,
+body.theme-industrial:not(.appearance-light) .admin-hub-card,
+body.theme-industrial:not(.appearance-light) .summary-card,
+body.theme-industrial:not(.appearance-light) .stats-card,
+body.theme-industrial:not(.appearance-light) .metric-card,
+body.theme-industrial:not(.appearance-light) .kpi-card {
+  background: #1f1f1f !important;
+  background-color: #1f1f1f !important;
+  background-image: none !important;
+  color: #e8eaed !important;
+  border-color: #3c4043 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Sidebar nav negro consistente */
+body.theme-industrial:not(.appearance-light) .sidebar-nav,
+body.theme-industrial:not(.appearance-light) aside.sidebar-nav,
+body.theme-industrial:not(.appearance-light) .layout-rail,
+body.theme-industrial:not(.appearance-light) nav.sidebar-nav {
+  background: #1a1a1a !important;
+  background-color: #1a1a1a !important;
+  background-image: none !important;
+  border-right: 1px solid #3c4043 !important;
+  color: #e8eaed !important;
+}
+
+/* Tablas siempre oscuras en LUNA */
+body.theme-industrial:not(.appearance-light) table.data-table tbody tr:nth-child(odd),
+body.theme-industrial:not(.appearance-light) table.data-table tbody tr:nth-child(odd) td,
+body.theme-industrial:not(.appearance-light) table.data-table tbody tr:nth-child(odd) td.th-actions {
+  background: #1f1f1f !important;
+}
+body.theme-industrial:not(.appearance-light) table.data-table tbody tr:nth-child(even),
+body.theme-industrial:not(.appearance-light) table.data-table tbody tr:nth-child(even) td {
+  background: #232323 !important;
+}
+body.theme-industrial:not(.appearance-light) table.data-table tbody td {
+  color: #e8eaed !important;
+}
+
+/* color-scheme dark en LUNA para inputs nativos del navegador */
+body.theme-industrial:not(.appearance-light) {
+  color-scheme: dark !important;
+}
+body.theme-industrial.appearance-light {
+  color-scheme: light !important;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   FIN — Fix Maestro v5 EXHAUSTIVO (cubre TODAS las clases reales)
+   ════════════════════════════════════════════════════════════════════════ */
