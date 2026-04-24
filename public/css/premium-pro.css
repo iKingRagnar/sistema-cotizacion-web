@@ -4830,3 +4830,222 @@ body.theme-industrial.appearance-light .notifications-panel .text-muted {
 /* ══════════════════════════════════════════════════════════════════════════════
    FIN — Fix Maestro v7
    ══════════════════════════════════════════════════════════════════════════════ */
+
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   FIX MAESTRO v8 — 2026-04-24
+   PROBLEMAS ATACADOS:
+   1. Botones de accion en tabla (vista/editar/eliminar) CORTADOS por ancho insuficiente
+   2. Panel notificaciones y menu avatar INVISIBLES en modo SOL por backdrop-filter blur
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════ §Y1 — Botones de accion en tabla: ancho y padding suficientes ═══ */
+/* Regla nuclear: cubrir ambas estructuras (row-actions-inline + td.th-actions)
+   con alta especificidad y todas las combinaciones de body class. */
+html body table.data-table th.th-actions,
+html body table.data-table td.th-actions,
+html body.md3-on table.data-table th.th-actions,
+html body.md3-on table.data-table td.th-actions,
+html body.theme-industrial table.data-table th.th-actions,
+html body.theme-industrial table.data-table td.th-actions {
+  min-width: 170px !important;
+  width: 170px !important;
+  padding-left: 12px !important;
+  padding-right: 16px !important;
+  text-align: right !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+}
+
+html body table.data-table td.th-actions,
+html body.md3-on table.data-table td.th-actions,
+html body.theme-industrial table.data-table td.th-actions {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 8px !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+/* Botones dentro: fijos 32x32 y que no se encojan */
+html body table.data-table td.th-actions > button,
+html body table.data-table td.th-actions > a,
+html body.md3-on table.data-table td.th-actions > button,
+html body.theme-industrial table.data-table td.th-actions > button {
+  flex: 0 0 32px !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+}
+
+/* Asegurar que .table-wrap no recorte la columna sticky */
+html body .table-wrap,
+html body.md3-on .table-wrap,
+html body.theme-industrial .table-wrap {
+  overflow-x: auto !important;
+}
+
+/* ═══════════ §Y2 — Panel NOTIFICACIONES: matar backdrop-filter y fijar fondo */
+/* LUNA */
+html body.theme-industrial:not(.appearance-light) .notifications-panel,
+html body.theme-industrial:not(.appearance-light) #notifications-panel {
+  background: #1a1a1a !important;
+  background-color: #1a1a1a !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #2a2a2a !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7) !important;
+  color: #e8eaed !important;
+  z-index: 16000 !important;
+  opacity: 1 !important;
+}
+/* SOL */
+html body.theme-industrial.appearance-light .notifications-panel,
+html body.theme-industrial.appearance-light #notifications-panel {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #dadce0 !important;
+  box-shadow: 0 12px 36px rgba(60, 64, 67, 0.22) !important;
+  color: #202124 !important;
+  z-index: 16000 !important;
+  opacity: 1 !important;
+}
+html body.theme-industrial.appearance-light .notifications-panel *,
+html body.theme-industrial.appearance-light #notifications-panel * {
+  color: #202124 !important;
+  -webkit-text-fill-color: #202124 !important;
+}
+html body.theme-industrial.appearance-light .notifications-panel .notifications-header strong,
+html body.theme-industrial.appearance-light #notifications-panel .notifications-header strong {
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+html body.theme-industrial.appearance-light .notifications-panel select,
+html body.theme-industrial.appearance-light .notifications-panel input[type="date"],
+html body.theme-industrial.appearance-light .notifications-panel input[type="text"],
+html body.theme-industrial.appearance-light #notifications-panel select,
+html body.theme-industrial.appearance-light #notifications-panel input[type="date"] {
+  background: #ffffff !important;
+  color: #202124 !important;
+  -webkit-text-fill-color: #202124 !important;
+  border: 1px solid #dadce0 !important;
+  color-scheme: light !important;
+}
+html body.theme-industrial.appearance-light .notifications-panel .btn,
+html body.theme-industrial.appearance-light .notifications-panel button.btn {
+  background: #ffffff !important;
+  color: #3c4043 !important;
+  -webkit-text-fill-color: #3c4043 !important;
+  border: 1px solid #dadce0 !important;
+}
+html body.theme-industrial.appearance-light .notifications-panel .btn:hover {
+  background: #f1f3f4 !important;
+  border-color: #1a73e8 !important;
+  color: #1a73e8 !important;
+  -webkit-text-fill-color: #1a73e8 !important;
+}
+html body.theme-industrial.appearance-light .notifications-panel .notification-item,
+html body.theme-industrial.appearance-light #notifications-panel .notification-item {
+  background: transparent !important;
+  color: #202124 !important;
+  -webkit-text-fill-color: #202124 !important;
+  border-bottom: 1px solid #f1f3f4 !important;
+  border-left: 4px solid #dadce0 !important;
+}
+html body.theme-industrial.appearance-light .notifications-panel .notification-item .meta,
+html body.theme-industrial.appearance-light #notifications-panel .notification-item .meta {
+  color: #5f6368 !important;
+  -webkit-text-fill-color: #5f6368 !important;
+}
+
+/* ═══════════ §Y3 — Menu AVATAR: matar backdrop-filter y fijar fondo ══════════ */
+/* LUNA */
+html body.theme-industrial:not(.appearance-light) #header-profile-menu,
+html body.theme-industrial:not(.appearance-light) .header-profile-menu {
+  background: #1a1a1a !important;
+  background-color: #1a1a1a !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #2a2a2a !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7) !important;
+  color: #e8eaed !important;
+  z-index: 16000 !important;
+  opacity: 1 !important;
+}
+html body.theme-industrial:not(.appearance-light) #header-profile-menu .header-profile-menu-user,
+html body.theme-industrial:not(.appearance-light) #header-profile-menu .header-profile-menu-user * {
+  background: transparent !important;
+  color: #f1f3f4 !important;
+  -webkit-text-fill-color: #f1f3f4 !important;
+}
+/* SOL */
+html body.theme-industrial.appearance-light #header-profile-menu,
+html body.theme-industrial.appearance-light .header-profile-menu {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #dadce0 !important;
+  box-shadow: 0 12px 36px rgba(60, 64, 67, 0.22) !important;
+  color: #202124 !important;
+  z-index: 16000 !important;
+  opacity: 1 !important;
+}
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-user,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-user strong,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-meta,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-meta span {
+  background: transparent !important;
+  color: #202124 !important;
+  -webkit-text-fill-color: #202124 !important;
+}
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-section {
+  color: #5f6368 !important;
+  -webkit-text-fill-color: #5f6368 !important;
+  background: transparent !important;
+}
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item span,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item i {
+  background: transparent !important;
+  color: #202124 !important;
+  -webkit-text-fill-color: #202124 !important;
+}
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item:hover {
+  background: #f1f3f4 !important;
+  color: #1a73e8 !important;
+}
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item:hover span,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item:hover i {
+  color: #1a73e8 !important;
+  -webkit-text-fill-color: #1a73e8 !important;
+}
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item.danger,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item.danger span,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item.danger i {
+  color: #d93025 !important;
+  -webkit-text-fill-color: #d93025 !important;
+}
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item.danger:hover {
+  background: #fce8e6 !important;
+  color: #b9251a !important;
+}
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-divider {
+  background: #e8eaed !important;
+  border-color: #e8eaed !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   FIN — Fix Maestro v8
+   ══════════════════════════════════════════════════════════════════════════════ */
