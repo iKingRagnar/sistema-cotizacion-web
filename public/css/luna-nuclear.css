@@ -1233,42 +1233,181 @@ html body.theme-industrial:not(.appearance-light) header.header .btn-icon-header
   border-color: transparent !important;
 }
 
-/* AVATAR (monito): hover IDENTICO al estado normal.
-   No tocar background (mantiene gradient azul de premium-pro.css) ni border ni
-   box-shadow. Solo cancelar transform/filter/animation y el ::before/::after
-   que dibujan el monito SVG no se mueven, asi no parpadean. */
-html body header.header .btn-header-profile,
+/* ============================================================================
+   FIX CRITICO: BOTON SALIR (#btn-header-quick-logout) y AVATAR (.btn-header-profile)
+   Usan ID en premium-pro.css con especificidad 100 -> ganan a clases.
+   Aqui usamos los MISMOS selectores con ID para empatar especificidad y como
+   nuestro CSS se carga DESPUES, ganamos por orden.
+
+   Estado :hover IDENTICO al estado normal (background, color, border, box-shadow,
+   filter, transform). transition: none para que ni siquiera anime el cambio. */
+
+/* === BOTON SALIR === */
+html body.md3-on header.header #btn-header-quick-logout,
+html body header.header #btn-header-quick-logout {
+  transition: none !important;
+  -webkit-transition: none !important;
+  animation: none !important;
+  -webkit-animation: none !important;
+}
+
+html body.md3-on header.header #btn-header-quick-logout:hover,
+html body.md3-on header.header #btn-header-quick-logout:focus,
+html body.md3-on header.header #btn-header-quick-logout:focus-visible,
+html body.md3-on header.header #btn-header-quick-logout:active,
+html body header.header #btn-header-quick-logout:hover,
+html body header.header #btn-header-quick-logout:focus,
+html body header.header #btn-header-quick-logout:focus-visible,
+html body header.header #btn-header-quick-logout:active {
+  /* mismo background, color, border, box-shadow, filter que el estado normal */
+  background: var(--pp-grad-dan, linear-gradient(135deg, #c5221f 0%, #a50e0e 100%)) !important;
+  background-image: var(--pp-grad-dan, linear-gradient(135deg, #c5221f 0%, #a50e0e 100%)) !important;
+  background-color: #c5221f !important;
+  color: #ffffff !important;
+  border: 1px solid transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  animation: none !important;
+  -webkit-animation: none !important;
+  transition: none !important;
+  -webkit-transition: none !important;
+  outline: none !important;
+}
+
+/* === AVATAR (monito) ===
+   premium.css:6847 hace transform:translateY(-1px) + filter:brightness(1.05) + box-shadow.
+   premium-pro.css:312 hace lo mismo + box-shadow azul grande.
+   Empatamos especificidad con `body.md3-on header.header .btn-header-profile`. */
+
+html body.md3-on header.header .btn-header-profile,
+html body header.header .btn-header-profile {
+  transition: none !important;
+  -webkit-transition: none !important;
+  animation: none !important;
+  -webkit-animation: none !important;
+}
+
+html body.md3-on header.header .btn-header-profile:hover,
+html body.md3-on header.header .btn-header-profile:focus,
+html body.md3-on header.header .btn-header-profile:focus-visible,
+html body.md3-on header.header .btn-header-profile:active,
 html body header.header .btn-header-profile:hover,
 html body header.header .btn-header-profile:focus,
 html body header.header .btn-header-profile:focus-visible,
 html body header.header .btn-header-profile:active {
-  transform: none !important;
+  /* identico al estado normal: background gradient azul, sin transform/filter/box-shadow */
+  background: var(--pp-grad-brand, linear-gradient(135deg, #2754d8 0%, #1a73e8 100%)) !important;
+  background-image: var(--pp-grad-brand, linear-gradient(135deg, #2754d8 0%, #1a73e8 100%)) !important;
+  background-color: #1a73e8 !important;
+  color: #ffffff !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
   filter: none !important;
+  -webkit-filter: none !important;
+  transform: none !important;
+  -webkit-transform: none !important;
   animation: none !important;
   -webkit-animation: none !important;
   transition: none !important;
+  -webkit-transition: none !important;
+  outline: none !important;
 }
 
-/* No cambiar background ni border en hover del avatar */
-html body header.header .btn-header-profile:hover {
-  background: var(--pp-grad-brand, linear-gradient(135deg, #2754d8 0%, #1a73e8 100%)) !important;
-  background-image: var(--pp-grad-brand, linear-gradient(135deg, #2754d8 0%, #1a73e8 100%)) !important;
-  border-color: inherit !important;
-  box-shadow: inherit !important;
-}
-
-/* Mantener ::before del avatar (monito SVG) IGUAL en hover */
-html body header.header .btn-header-profile:hover::before {
-  background-color: rgba(255, 255, 255, 0.22) !important;
-  opacity: 1 !important;
+/* Avatar pseudo-elementos (monito SVG ::before y caret ::after) — mantener
+   posicion/tamano IDENTICOS en hover. */
+html body.md3-on header.header .btn-header-profile::before,
+html body header.header .btn-header-profile::before,
+html body.md3-on header.header .btn-header-profile:hover::before,
+html body header.header .btn-header-profile:hover::before,
+html body.md3-on header.header .btn-header-profile:focus::before,
+html body header.header .btn-header-profile:focus::before {
   transform: none !important;
-}
-
-/* Botón salir rojo: tampoco animacion, mantener color rojo */
-html body header.header .btn-header-quick-logout:hover {
-  transform: none !important;
-  filter: none !important;
+  -webkit-transform: none !important;
   animation: none !important;
+  filter: none !important;
+  transition: none !important;
+}
+
+html body.md3-on header.header .btn-header-profile::after,
+html body header.header .btn-header-profile::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Caret del avatar SOLO rota cuando el menu esta abierto (aria-expanded="true").
+   Sin transition para que no haya rotacion animada al pasar el mouse. */
+html body.md3-on header.header .btn-header-profile[aria-expanded="true"]::after,
+html body header.header .btn-header-profile[aria-expanded="true"]::after {
+  transform: rotate(180deg) !important;
+  transition: none !important;
+}
+
+/* === ICONOS HEADER (campanita, sol/luna): ya cubierto arriba pero matamos
+   transition explicitamente por si la heredan del padre. === */
+html body.md3-on header.header .btn-icon-header,
+html body header.header .btn-icon-header,
+html body.md3-on header.header #btn-notifications,
+html body header.header #btn-notifications,
+html body.md3-on header.header #btn-theme-toggle,
+html body header.header #btn-theme-toggle {
+  transition: none !important;
+  -webkit-transition: none !important;
+  animation: none !important;
+  -webkit-animation: none !important;
+}
+
+html body.md3-on header.header .btn-icon-header:hover,
+html body.md3-on header.header .btn-icon-header:focus,
+html body.md3-on header.header .btn-icon-header:focus-visible,
+html body.md3-on header.header .btn-icon-header:active,
+html body header.header .btn-icon-header:hover,
+html body header.header .btn-icon-header:focus,
+html body header.header .btn-icon-header:focus-visible,
+html body header.header .btn-icon-header:active,
+html body.md3-on header.header #btn-notifications:hover,
+html body header.header #btn-notifications:hover,
+html body.md3-on header.header #btn-theme-toggle:hover,
+html body header.header #btn-theme-toggle:hover {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  animation: none !important;
+  -webkit-animation: none !important;
+  transition: none !important;
+  -webkit-transition: none !important;
+  outline: none !important;
+}
+
+/* Iconos <i> dentro de los botones header: sin animacion ni cambio de color en hover */
+html body header.header .btn-icon-header > i,
+html body header.header .btn-icon-header:hover > i,
+html body header.header #btn-notifications > i,
+html body header.header #btn-notifications:hover > i,
+html body header.header #btn-theme-toggle > i,
+html body header.header #btn-theme-toggle:hover > i,
+html body header.header #btn-header-quick-logout > i,
+html body header.header #btn-header-quick-logout:hover > i {
+  transform: none !important;
+  -webkit-transform: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  animation: none !important;
+  -webkit-animation: none !important;
+  transition: none !important;
+  -webkit-transition: none !important;
 }
 
 /* TODOS los botones .btn — sin transform, sin filter, sin animation en hover */
