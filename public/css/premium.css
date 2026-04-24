@@ -7609,3 +7609,230 @@ body.dark-theme table.data-table td.th-actions > [class*="btn-stock"] {
   background: rgba(146, 64, 14, 0.22) !important;
   color: #fbbf24 !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FIX MAESTRO 2026-04-24 — Contraste del menu del avatar (header-profile-menu)
+
+   Problema: el dropdown del avatar era ilegible.
+   - Modo SOL (appearance-light): textos invisibles por chocar overrides
+     cruzados de header-profile.css (que da fondo oscuro a TODO theme-industrial)
+     contra material.css (que da fondo blanco solo a appearance-light).
+   - Modo LUNA: textos extremadamente tenues, paleta gris medio sin armonia,
+     muy distinto al dark mode limpio que el usuario esperaba (estilo Chrome).
+
+   Causa raiz: 4 archivos definen el menu con !important en cascada, ademas
+   los <span> hijos heredan inconsistentemente segun cual gana la cascada.
+
+   Fix: bloque al final de premium.css (ultimo cargado = maxima prioridad por
+   orden CSS) con selectores explicitos por modo y atacando button+span+icon.
+
+   Paleta:
+     SOL  -> fondo #ffffff, texto #202124, accent #1a73e8 (Material Light)
+     LUNA -> fondo #1f1f1f, texto #e8eaed, accent #8ab4f8 (Chrome Dark)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────── MODO SOL (appearance-light) ─────────────── */
+body.theme-industrial.appearance-light header.header .header-profile-menu,
+body.theme-industrial.appearance-light .header-profile-menu {
+  background: #ffffff !important;
+  border: 1px solid #dadce0 !important;
+  box-shadow: 0 8px 24px rgba(60, 64, 67, 0.18), 0 4px 8px rgba(60, 64, 67, 0.10) !important;
+  color: #1f2937 !important;
+  padding: 6px 0 !important;
+}
+body.theme-industrial.appearance-light header.header .header-profile-menu-user,
+body.theme-industrial.appearance-light .header-profile-menu-user {
+  background: linear-gradient(135deg, #f8faff 0%, #eef4ff 100%) !important;
+  border-bottom: 1px solid #e8eaed !important;
+  padding: 14px 16px 12px !important;
+}
+body.theme-industrial.appearance-light header.header .header-profile-menu-user strong,
+body.theme-industrial.appearance-light .header-profile-menu-user strong {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  text-shadow: none !important;
+}
+body.theme-industrial.appearance-light header.header .header-profile-menu-meta,
+body.theme-industrial.appearance-light .header-profile-menu-meta {
+  color: #5f6368 !important;
+  font-size: 12px !important;
+}
+body.theme-industrial.appearance-light header.header .header-profile-menu-section,
+body.theme-industrial.appearance-light .header-profile-menu-section {
+  color: #9aa0a6 !important;
+  text-transform: uppercase !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  letter-spacing: 0.6px !important;
+  padding: 8px 14px 4px !important;
+  background: transparent !important;
+}
+body.theme-industrial.appearance-light header.header .header-profile-menu-divider,
+body.theme-industrial.appearance-light .header-profile-menu-divider {
+  background: #e8eaed !important;
+  height: 1px !important;
+  margin: 4px 8px !important;
+  border: none !important;
+}
+body.theme-industrial.appearance-light header.header .header-profile-menu-item,
+body.theme-industrial.appearance-light .header-profile-menu-item {
+  background: transparent !important;
+  color: #202124 !important;
+  font-weight: 500 !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
+  padding: 10px 16px !important;
+}
+body.theme-industrial.appearance-light header.header .header-profile-menu-item span,
+body.theme-industrial.appearance-light .header-profile-menu-item span {
+  color: #202124 !important;
+  opacity: 1 !important;
+}
+body.theme-industrial.appearance-light header.header .header-profile-menu-item i,
+body.theme-industrial.appearance-light .header-profile-menu-item i {
+  color: #5f6368 !important;
+  opacity: 1 !important;
+}
+body.theme-industrial.appearance-light header.header .header-profile-menu-item:hover,
+body.theme-industrial.appearance-light .header-profile-menu-item:hover {
+  background: #e8f0fe !important;
+  color: #1a73e8 !important;
+}
+body.theme-industrial.appearance-light header.header .header-profile-menu-item:hover span,
+body.theme-industrial.appearance-light .header-profile-menu-item:hover span {
+  color: #1a73e8 !important;
+}
+body.theme-industrial.appearance-light header.header .header-profile-menu-item:hover i,
+body.theme-industrial.appearance-light .header-profile-menu-item:hover i {
+  color: #1a73e8 !important;
+}
+body.theme-industrial.appearance-light header.header .header-profile-menu-item.danger,
+body.theme-industrial.appearance-light .header-profile-menu-item.danger {
+  color: #d93025 !important;
+}
+body.theme-industrial.appearance-light header.header .header-profile-menu-item.danger span,
+body.theme-industrial.appearance-light .header-profile-menu-item.danger span {
+  color: #d93025 !important;
+}
+body.theme-industrial.appearance-light header.header .header-profile-menu-item.danger i,
+body.theme-industrial.appearance-light .header-profile-menu-item.danger i {
+  color: #d93025 !important;
+}
+body.theme-industrial.appearance-light header.header .header-profile-menu-item.danger:hover,
+body.theme-industrial.appearance-light .header-profile-menu-item.danger:hover {
+  background: #fce8e6 !important;
+  color: #b71c1c !important;
+}
+body.theme-industrial.appearance-light header.header .header-profile-menu-item.danger:hover span,
+body.theme-industrial.appearance-light .header-profile-menu-item.danger:hover span {
+  color: #b71c1c !important;
+}
+body.theme-industrial.appearance-light header.header .header-profile-menu-item.danger:hover i,
+body.theme-industrial.appearance-light .header-profile-menu-item.danger:hover i {
+  color: #b71c1c !important;
+}
+
+/* ─────────────── MODO LUNA (dark, paleta Chrome) ─────────────── */
+body.theme-industrial:not(.appearance-light) header.header .header-profile-menu,
+body.theme-industrial:not(.appearance-light) .header-profile-menu {
+  background: #1f1f1f !important;
+  border: 1px solid #3c4043 !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+  color: #e8eaed !important;
+  padding: 6px 0 !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .header-profile-menu-user,
+body.theme-industrial:not(.appearance-light) .header-profile-menu-user {
+  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%) !important;
+  border-bottom: 1px solid #3c4043 !important;
+  padding: 14px 16px 12px !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .header-profile-menu-user strong,
+body.theme-industrial:not(.appearance-light) .header-profile-menu-user strong {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  text-shadow: none !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .header-profile-menu-meta,
+body.theme-industrial:not(.appearance-light) .header-profile-menu-meta {
+  color: #9aa0a6 !important;
+  font-size: 12px !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .header-profile-menu-section,
+body.theme-industrial:not(.appearance-light) .header-profile-menu-section {
+  color: #80868b !important;
+  text-transform: uppercase !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  letter-spacing: 0.6px !important;
+  padding: 8px 14px 4px !important;
+  background: transparent !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .header-profile-menu-divider,
+body.theme-industrial:not(.appearance-light) .header-profile-menu-divider {
+  background: #3c4043 !important;
+  height: 1px !important;
+  margin: 4px 8px !important;
+  border: none !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .header-profile-menu-item,
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item {
+  background: transparent !important;
+  color: #e8eaed !important;
+  font-weight: 500 !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
+  padding: 10px 16px !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .header-profile-menu-item span,
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item span {
+  color: #e8eaed !important;
+  opacity: 1 !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .header-profile-menu-item i,
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item i {
+  color: #9aa0a6 !important;
+  opacity: 1 !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .header-profile-menu-item:hover,
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item:hover {
+  background: rgba(138, 180, 248, 0.14) !important;
+  color: #8ab4f8 !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .header-profile-menu-item:hover span,
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item:hover span {
+  color: #8ab4f8 !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .header-profile-menu-item:hover i,
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item:hover i {
+  color: #8ab4f8 !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .header-profile-menu-item.danger,
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item.danger {
+  color: #f28b82 !important;
+  border-top: 1px solid #3c4043 !important;
+  margin-top: 4px !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .header-profile-menu-item.danger span,
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item.danger span {
+  color: #f28b82 !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .header-profile-menu-item.danger i,
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item.danger i {
+  color: #f28b82 !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .header-profile-menu-item.danger:hover,
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item.danger:hover {
+  background: rgba(242, 139, 130, 0.18) !important;
+  color: #ff8a80 !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .header-profile-menu-item.danger:hover span,
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item.danger:hover span {
+  color: #ff8a80 !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .header-profile-menu-item.danger:hover i,
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item.danger:hover i {
+  color: #ff8a80 !important;
+}
