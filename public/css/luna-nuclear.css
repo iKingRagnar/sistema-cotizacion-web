@@ -799,16 +799,30 @@ html body.theme-industrial:not(.appearance-light) .ai-fab-wrap {
 }
 
 /* ============================================================================
-   §N18 — OCULTAR FABs duplicados (palette, density, print)
+   §N18 — OCULTAR FABs duplicados (palette, density, print) SIEMPRE
+   Sin condicion de tema: el usuario los quiere fuera en cualquier modo.
+   El JS premium-ux.js los inyecta dinamicamente al header/body, asi que
+   atacamos por nombre de clase puro y los matamos ademas con:
+   - display:none / visibility:hidden / opacity:0 / pointer-events:none
+   - position:absolute + left:-9999 por si display:none falla por animacion
    ============================================================================ */
-html body.theme-industrial:not(.appearance-light) .prem-theme-fab,
-html body.theme-industrial:not(.appearance-light) .prem-density-fab,
-html body.theme-industrial:not(.appearance-light) .prem-theme-picker,
-html body.theme-industrial:not(.appearance-light) .prem-density-picker,
-html body.theme-industrial:not(.appearance-light) .prem-print-btn,
-html body.theme-industrial:not(.appearance-light) .prem-print-btn--floating {
+html body .prem-theme-fab,
+html body .prem-density-fab,
+html body .prem-theme-picker,
+html body .prem-density-picker,
+html body .prem-print-btn,
+html body .prem-print-btn--floating,
+html body button.prem-theme-fab,
+html body button.prem-density-fab,
+html body button.prem-print-btn {
   display: none !important;
   visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  left: -9999px !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* ============================================================================
@@ -1154,22 +1168,45 @@ html body header.header #btn-logout:hover {
   transition: none !important;
 }
 
-/* CAMPANITA + LUNA/SOL: hover IDENTICO al estado normal (sin rectangulo) */
-html body header.header .btn-icon-header,
-html body header.header .btn-icon-header:hover,
-html body header.header .btn-icon-header:focus,
-html body header.header .btn-icon-header:focus-visible,
-html body header.header .btn-icon-header:active,
-html body header.header #btn-notifications,
-html body header.header #btn-notifications:hover,
-html body header.header #btn-theme-toggle,
-html body header.header #btn-theme-toggle:hover {
+/* CAMPANITA + LUNA/SOL: hover IDENTICO al estado normal (sin rectangulo).
+   IMPORTANTE: selectores SIN `header.header` para cazar todos los wrappers
+   (.header-actions-tail, .header-notifications-wrap, etc) que pueden tener
+   background blanco residual de header-profile.css o material.css. */
+html body .btn-icon-header,
+html body .btn-icon-header:hover,
+html body .btn-icon-header:focus,
+html body .btn-icon-header:focus-visible,
+html body .btn-icon-header:active,
+html body button.btn-icon-header,
+html body button.btn-icon-header:hover,
+html body #btn-notifications,
+html body #btn-notifications:hover,
+html body #btn-theme-toggle,
+html body #btn-theme-toggle:hover,
+html body #btn-logout,
+html body #btn-logout:hover,
+html body .header-notifications-wrap,
+html body .header-notifications-wrap:hover {
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
   border: 1px solid transparent !important;
   box-shadow: none !important;
   outline: none !important;
+  -webkit-box-shadow: none !important;
+}
+
+/* Los iconos dentro del boton (sol, campanita, salir): garantizar que no
+   tengan background propio. Algunos themes pintan el <i> con background. */
+html body .btn-icon-header > i,
+html body .btn-icon-header .fas,
+html body #btn-notifications > i,
+html body #btn-theme-toggle > i {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 /* SOL: iconos siguen visibles en gris oscuro, hover IGUAL */
