@@ -10,3 +10,5 @@ _verify-*.sqlite*
 .claude/
 .vercel
 .env*.local
+.cursor/
+.vscode/
