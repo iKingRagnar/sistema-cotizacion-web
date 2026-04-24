@@ -1,87 +1,521 @@
 /* ============================================================
- * NANO-FONDO.CSS
- * Fondo global con imagen nano-machining-services.webp
- * Overlay Sol (blanco semi-transparente) / Luna (negro semi-transparente).
- * Cargar AL FINAL para ganar cascada.
+ * NANO-FONDO.CSS  ·  v2 UNIFICADO TOTAL
+ * Modo Sol:  TODO blanco glassmorphism + imagen industrial
+ * Modo Luna: TODO negro glassmorphism + imagen industrial
  *
- * Uso:
- *   <body class="theme-industrial">              -> modo Luna (oscuro)
- *   <body class="theme-industrial appearance-light"> -> modo Sol (claro)
+ * Estrategia:
+ *   1) Body lleva la imagen como background fijo + overlay leve
+ *      para que la imagen siempre se aprecie.
+ *   2) TODO contenedor grande (header, sidebar, cards, panels,
+ *      tablas, modales, inputs) usa fondo SEMI-TRANSPARENTE del
+ *      mismo tono (blanco o negro) + backdrop-filter: blur(...)
+ *      → efecto "glass" profesional y la imagen se nota detrás.
+ *   3) Textos con alto contraste (negro en Sol, claro en Luna).
+ *   4) Bordes sutiles para definir componentes.
+ *
+ * Cargar AL FINAL para ganar cascada.
  * ============================================================ */
 
-/* ------------------------------------------------------------
- * 1) Fondo base: imagen + overlay por modo
- *    Overlay se compone como primer layer del background-image
- *    (encima de la imagen, debajo del contenido).
- * ------------------------------------------------------------ */
 
-html body.theme-industrial {
-  background-color: #0b1220 !important;
-  background-image:
-    linear-gradient(rgba(8, 12, 20, 0.78), rgba(8, 12, 20, 0.78)),
-    url('../img/nano-machining-services.webp') !important;
-  background-size: cover !important;
-  background-position: center center !important;
-  background-repeat: no-repeat !important;
-  background-attachment: fixed !important;
-}
+/* ============================================================
+ * 1. VARIABLES POR MODO
+ * ============================================================ */
 
 html body.theme-industrial.appearance-light {
-  background-color: #f5f7fb !important;
-  background-image:
-    linear-gradient(rgba(248, 250, 253, 0.82), rgba(248, 250, 253, 0.82)),
-    url('../img/nano-machining-services.webp') !important;
-  background-size: cover !important;
-  background-position: center center !important;
-  background-repeat: no-repeat !important;
-  background-attachment: fixed !important;
+  --nano-overlay: rgba(248, 250, 253, 0.40);
+  --nano-surface: rgba(255, 255, 255, 0.72);
+  --nano-surface-strong: rgba(255, 255, 255, 0.88);
+  --nano-surface-solid: rgba(255, 255, 255, 0.96);
+  --nano-surface-subtle: rgba(255, 255, 255, 0.45);
+  --nano-border: rgba(15, 23, 42, 0.10);
+  --nano-border-strong: rgba(15, 23, 42, 0.18);
+  --nano-text: #0f172a;
+  --nano-text-soft: #1e293b;
+  --nano-text-muted: #475569;
+  --nano-accent: #1a73e8;
+  --nano-blur: blur(14px) saturate(140%);
+  --nano-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
 }
 
-/* ------------------------------------------------------------
- * 2) Contenedor <main> y secciones vacias no deben tapar el fondo.
- *    Ajuste suave: si tenian background solido, lo volvemos
- *    ligeramente translucido para dejar ver la imagen en los bordes.
- *    (No toca cards/paneles individuales: solo el lienzo grande.)
- * ------------------------------------------------------------ */
-
-html body.theme-industrial #main-content,
-html body.theme-industrial main,
-html body.theme-industrial .app-layout,
-html body.theme-industrial .app-main,
-html body.theme-industrial .content-wrap {
-  background-color: transparent !important;
-  background-image: none !important;
+html body.theme-industrial:not(.appearance-light) {
+  --nano-overlay: rgba(5, 8, 15, 0.45);
+  --nano-surface: rgba(12, 18, 28, 0.72);
+  --nano-surface-strong: rgba(8, 12, 20, 0.88);
+  --nano-surface-solid: rgba(6, 9, 16, 0.96);
+  --nano-surface-subtle: rgba(12, 18, 28, 0.45);
+  --nano-border: rgba(255, 255, 255, 0.08);
+  --nano-border-strong: rgba(255, 255, 255, 0.15);
+  --nano-text: #f1f5f9;
+  --nano-text-soft: #e2e8f0;
+  --nano-text-muted: #94a3b8;
+  --nano-accent: #4ea1ff;
+  --nano-blur: blur(14px) saturate(140%);
+  --nano-shadow: 0 8px 32px rgba(0, 0, 0, 0.30);
 }
 
-/* ------------------------------------------------------------
- * 3) html root: evita que un color detras del body tape la imagen
- *    cuando la vista es mas alta que el viewport.
- * ------------------------------------------------------------ */
+
+/* ============================================================
+ * 2. HTML + BODY: imagen + overlay global
+ * ============================================================ */
 
 html {
   background-color: transparent !important;
 }
 
-/* ------------------------------------------------------------
- * 4) Login overlay: dejamos que la imagen se vea suavemente
- *    detras del panel de login tambien.
- * ------------------------------------------------------------ */
+html body.theme-industrial {
+  background-color: transparent !important;
+  background-image:
+    linear-gradient(var(--nano-overlay), var(--nano-overlay)),
+    url('../img/nano-machining-services.webp') !important;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+  color: var(--nano-text) !important;
+}
 
-html body.theme-industrial .login-overlay {
+
+/* ============================================================
+ * 3. LAYOUT CONTAINERS: transparentes para dejar ver el fondo
+ * ============================================================ */
+
+html body.theme-industrial #main-content,
+html body.theme-industrial main,
+html body.theme-industrial .app,
+html body.theme-industrial .app-layout,
+html body.theme-industrial .app-main,
+html body.theme-industrial .app-content,
+html body.theme-industrial .content-wrap,
+html body.theme-industrial .main-content,
+html body.theme-industrial .main-wrap,
+html body.theme-industrial .panel,
+html body.theme-industrial section.panel,
+html body.theme-industrial [id^="panel-"] {
+  background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
 }
 
-/* ------------------------------------------------------------
- * NOTAS DE DISEÑO:
- * - Opacidad 0.78 (Luna) / 0.82 (Sol): dejan entrever la imagen
- *   sin comprometer la legibilidad de textos sobre cards opacos.
- * - background-attachment: fixed -> la imagen no hace scroll
- *   (efecto parallax sutil, profesional para ambiente industrial).
- * - Si quieres que la imagen se vea MAS, baja la opacidad:
- *     Luna 0.65 - 0.70
- *     Sol  0.72 - 0.76
- * - Si la imagen distrae demasiado, SUBE la opacidad:
- *     Luna 0.85 - 0.92
- *     Sol  0.88 - 0.94
- * ------------------------------------------------------------ */
+
+/* ============================================================
+ * 4. HEADER (barra superior)
+ * ============================================================ */
+
+html body.theme-industrial header,
+html body.theme-industrial header.header,
+html body.theme-industrial .header,
+html body.theme-industrial .top-bar,
+html body.theme-industrial .app-header {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border-bottom: 1px solid var(--nano-border) !important;
+  color: var(--nano-text) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial header *,
+html body.theme-industrial .header * {
+  color: inherit !important;
+}
+
+/* Logos / imágenes del header: no tocar los fondos de imagen */
+html body.theme-industrial header img,
+html body.theme-industrial .header img {
+  background: transparent !important;
+}
+
+
+/* ============================================================
+ * 5. SIDEBAR / NAV
+ * ============================================================ */
+
+html body.theme-industrial .sidebar,
+html body.theme-industrial aside.sidebar,
+html body.theme-industrial nav.sidebar,
+html body.theme-industrial .app-sidebar,
+html body.theme-industrial .sidebar-nav,
+html body.theme-industrial .rail-nav,
+html body.theme-industrial .tabs.tabs--rail {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border-right: 1px solid var(--nano-border) !important;
+  color: var(--nano-text) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial .sidebar *,
+html body.theme-industrial .tabs.tabs--rail * {
+  color: inherit !important;
+}
+
+html body.theme-industrial .tab,
+html body.theme-industrial .tabs .tab {
+  background: transparent !important;
+  color: var(--nano-text-soft) !important;
+  border-color: transparent !important;
+}
+
+html body.theme-industrial .tab:hover {
+  background: var(--nano-surface-subtle) !important;
+  color: var(--nano-text) !important;
+}
+
+html body.theme-industrial .tab.active {
+  background: var(--nano-surface-strong) !important;
+  color: var(--nano-text) !important;
+  border-color: var(--nano-border-strong) !important;
+}
+
+
+/* ============================================================
+ * 6. CARDS, KPIS, PANELS INTERNOS
+ * ============================================================ */
+
+html body.theme-industrial .card,
+html body.theme-industrial .kpi-card,
+html body.theme-industrial .kpi-tile,
+html body.theme-industrial .kpi-box,
+html body.theme-industrial .dashboard-card,
+html body.theme-industrial .module-card,
+html body.theme-industrial .admin-hub-panel,
+html body.theme-industrial .admin-hub-card,
+html body.theme-industrial .dashboard-surface,
+html body.theme-industrial .section-card,
+html body.theme-industrial .summary-card,
+html body.theme-industrial .resumen-card,
+html body.theme-industrial .prospeccion-kpi,
+html body.theme-industrial .maq-ficha-card,
+html body.theme-industrial .tarifas-section,
+html body.theme-industrial .form-card {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border: 1px solid var(--nano-border) !important;
+  color: var(--nano-text) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial .card h1,
+html body.theme-industrial .card h2,
+html body.theme-industrial .card h3,
+html body.theme-industrial .card h4,
+html body.theme-industrial .card h5,
+html body.theme-industrial .card h6,
+html body.theme-industrial .card p,
+html body.theme-industrial .card span,
+html body.theme-industrial .card label,
+html body.theme-industrial .card strong,
+html body.theme-industrial .card div,
+html body.theme-industrial .kpi-card *,
+html body.theme-industrial .dashboard-card *,
+html body.theme-industrial .module-card *,
+html body.theme-industrial .admin-hub-panel *,
+html body.theme-industrial .admin-hub-card *,
+html body.theme-industrial .dashboard-surface *,
+html body.theme-industrial .section-card * {
+  color: inherit !important;
+}
+
+/* Los valores de KPI a menudo tienen color (verde/rojo/azul).
+   Los dejamos con su tono original si venían colorizados,
+   pero damos un fallback de texto oscuro/claro según modo. */
+html body.theme-industrial .kpi-value,
+html body.theme-industrial .kpi-val,
+html body.theme-industrial .prospeccion-kpi-val,
+html body.theme-industrial .kpi-number {
+  color: var(--nano-accent) !important;
+  font-weight: 700 !important;
+}
+
+
+/* ============================================================
+ * 7. TABLAS
+ * ============================================================ */
+
+html body.theme-industrial .table-wrap {
+  background: var(--nano-surface) !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border: 1px solid var(--nano-border) !important;
+  border-radius: 12px !important;
+  overflow: auto;
+}
+
+html body.theme-industrial table,
+html body.theme-industrial .data-table,
+html body.theme-industrial table.data-table {
+  background: transparent !important;
+  color: var(--nano-text) !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+html body.theme-industrial table thead,
+html body.theme-industrial .data-table thead,
+html body.theme-industrial table.data-table thead {
+  background: var(--nano-surface-strong) !important;
+}
+
+html body.theme-industrial table thead th,
+html body.theme-industrial .data-table thead th,
+html body.theme-industrial table.data-table thead th {
+  background: transparent !important;
+  color: var(--nano-text) !important;
+  border-color: var(--nano-border) !important;
+  font-weight: 600 !important;
+}
+
+html body.theme-industrial table tbody tr,
+html body.theme-industrial .data-table tbody tr {
+  background: transparent !important;
+  color: var(--nano-text) !important;
+}
+
+html body.theme-industrial table tbody tr:hover,
+html body.theme-industrial .data-table tbody tr:hover {
+  background: var(--nano-surface-subtle) !important;
+}
+
+html body.theme-industrial table tbody td,
+html body.theme-industrial .data-table tbody td {
+  background: transparent !important;
+  color: var(--nano-text) !important;
+  border-color: var(--nano-border) !important;
+}
+
+
+/* ============================================================
+ * 8. INPUTS, SELECTS, TEXTAREAS
+ * ============================================================ */
+
+html body.theme-industrial input[type="text"],
+html body.theme-industrial input[type="number"],
+html body.theme-industrial input[type="email"],
+html body.theme-industrial input[type="password"],
+html body.theme-industrial input[type="search"],
+html body.theme-industrial input[type="tel"],
+html body.theme-industrial input[type="date"],
+html body.theme-industrial input[type="time"],
+html body.theme-industrial input[type="url"],
+html body.theme-industrial input:not([type]),
+html body.theme-industrial textarea,
+html body.theme-industrial select,
+html body.theme-industrial .filter-input,
+html body.theme-industrial .form-input {
+  background: var(--nano-surface-strong) !important;
+  background-color: var(--nano-surface-strong) !important;
+  color: var(--nano-text) !important;
+  border: 1px solid var(--nano-border-strong) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+}
+
+html body.theme-industrial input:focus,
+html body.theme-industrial textarea:focus,
+html body.theme-industrial select:focus {
+  outline: none !important;
+  border-color: var(--nano-accent) !important;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.18) !important;
+}
+
+html body.theme-industrial label,
+html body.theme-industrial .form-label,
+html body.theme-industrial .form-group > label {
+  color: var(--nano-text) !important;
+}
+
+html body.theme-industrial input::placeholder,
+html body.theme-industrial textarea::placeholder {
+  color: var(--nano-text-muted) !important;
+  opacity: 0.7 !important;
+}
+
+
+/* ============================================================
+ * 9. BUTTONS
+ * ============================================================ */
+
+/* Botones secundarios / outline / default = glass neutro */
+html body.theme-industrial .btn:not(.primary):not(.danger):not(.success):not(.warning) {
+  background: var(--nano-surface-strong) !important;
+  color: var(--nano-text) !important;
+  border: 1px solid var(--nano-border-strong) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+}
+
+html body.theme-industrial .btn:not(.primary):not(.danger):not(.success):not(.warning):hover {
+  background: var(--nano-surface-solid) !important;
+}
+
+/* Botones de acción conservan color (necesario para que se distingan)
+   pero con un tono coherente. No los rompemos. */
+
+
+/* ============================================================
+ * 10. MODALES / DIALOGS / DROPDOWNS / MENUS
+ * ============================================================ */
+
+html body.theme-industrial .modal,
+html body.theme-industrial .modal-content,
+html body.theme-industrial .md-dialog,
+html body.theme-industrial .md-prompt,
+html body.theme-industrial .md-prompt-content,
+html body.theme-industrial .header-profile-menu,
+html body.theme-industrial .dropdown-menu,
+html body.theme-industrial .admin-hub-panel,
+html body.theme-industrial .notifications-panel,
+html body.theme-industrial .toast {
+  background: var(--nano-surface-solid) !important;
+  background-color: var(--nano-surface-solid) !important;
+  color: var(--nano-text) !important;
+  border: 1px solid var(--nano-border-strong) !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial .modal *,
+html body.theme-industrial .md-prompt *,
+html body.theme-industrial .header-profile-menu *,
+html body.theme-industrial .dropdown-menu *,
+html body.theme-industrial .notifications-panel * {
+  color: inherit !important;
+}
+
+/* Modal backdrop (fondo difuminado detrás del modal) */
+html body.theme-industrial .modal-backdrop,
+html body.theme-industrial .admin-hub-overlay {
+  background: rgba(0, 0, 0, 0.35) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+}
+
+
+/* ============================================================
+ * 11. TEXTO GENÉRICO y tipografía
+ * ============================================================ */
+
+html body.theme-industrial h1,
+html body.theme-industrial h2,
+html body.theme-industrial h3,
+html body.theme-industrial h4,
+html body.theme-industrial h5,
+html body.theme-industrial h6 {
+  color: var(--nano-text) !important;
+}
+
+html body.theme-industrial p,
+html body.theme-industrial span:not(.badge):not(.chip):not(.pill),
+html body.theme-industrial li,
+html body.theme-industrial dd,
+html body.theme-industrial dt {
+  color: var(--nano-text-soft) !important;
+}
+
+html body.theme-industrial .hint,
+html body.theme-industrial .muted,
+html body.theme-industrial .text-muted,
+html body.theme-industrial .subtitle,
+html body.theme-industrial .help-text,
+html body.theme-industrial small {
+  color: var(--nano-text-muted) !important;
+}
+
+
+/* ============================================================
+ * 12. SCROLLBARS (Chromium)
+ * ============================================================ */
+
+html body.theme-industrial ::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+html body.theme-industrial ::-webkit-scrollbar-track {
+  background: var(--nano-surface-subtle) !important;
+}
+
+html body.theme-industrial ::-webkit-scrollbar-thumb {
+  background: var(--nano-border-strong) !important;
+  border-radius: 6px;
+}
+
+html body.theme-industrial ::-webkit-scrollbar-thumb:hover {
+  background: var(--nano-text-muted) !important;
+}
+
+
+/* ============================================================
+ * 13. LOGIN OVERLAY (pantalla de sign-in)
+ * ============================================================ */
+
+html body.theme-industrial .login-overlay {
+  background: var(--nano-overlay) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+html body.theme-industrial .login-card,
+html body.theme-industrial .login-form-panel,
+html body.theme-industrial .login-brand-panel {
+  background: var(--nano-surface-solid) !important;
+  color: var(--nano-text) !important;
+  border: 1px solid var(--nano-border) !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+}
+
+html body.theme-industrial .login-card *,
+html body.theme-industrial .login-form-panel *,
+html body.theme-industrial .login-brand-panel * {
+  color: inherit !important;
+}
+
+
+/* ============================================================
+ * 14. BADGES / CHIPS / PILLS
+ *   Estos guardan su propio color para estado (rojo/verde/amarillo).
+ *   Solo aseguramos que sean legibles sobre fondos glass.
+ * ============================================================ */
+
+html body.theme-industrial .badge,
+html body.theme-industrial .chip,
+html body.theme-industrial .pill,
+html body.theme-industrial .semaforo-amarillo,
+html body.theme-industrial .estatus,
+html body.theme-industrial [class*="estatus-"],
+html body.theme-industrial .ref-cat-pill {
+  /* Mantener colores originales — no forzamos */
+}
+
+
+/* ============================================================
+ * 15. SHOW/HIDE dashboards charts container
+ * ============================================================ */
+
+html body.theme-industrial .chart-container,
+html body.theme-industrial canvas.chart {
+  background: var(--nano-surface-subtle) !important;
+  border-radius: 8px;
+}
+
+
+/* ============================================================
+ * NOTAS FINALES
+ * ------------------------------------------------------------
+ * Si quieres MÁS imagen visible (más transparencia):
+ *   --nano-overlay: rgba(...) con 0.25 - 0.35
+ *   --nano-surface: rgba(...) con 0.55 - 0.65
+ * Si quieres MENOS imagen (más opaco, más concentración):
+ *   --nano-overlay: rgba(...) con 0.55 - 0.70
+ *   --nano-surface: rgba(...) con 0.80 - 0.92
+ * ============================================================ */
