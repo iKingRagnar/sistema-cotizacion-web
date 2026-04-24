@@ -1,0 +1,87 @@
+/* ============================================================
+ * NANO-FONDO.CSS
+ * Fondo global con imagen nano-machining-services.webp
+ * Overlay Sol (blanco semi-transparente) / Luna (negro semi-transparente).
+ * Cargar AL FINAL para ganar cascada.
+ *
+ * Uso:
+ *   <body class="theme-industrial">              -> modo Luna (oscuro)
+ *   <body class="theme-industrial appearance-light"> -> modo Sol (claro)
+ * ============================================================ */
+
+/* ------------------------------------------------------------
+ * 1) Fondo base: imagen + overlay por modo
+ *    Overlay se compone como primer layer del background-image
+ *    (encima de la imagen, debajo del contenido).
+ * ------------------------------------------------------------ */
+
+html body.theme-industrial {
+  background-color: #0b1220 !important;
+  background-image:
+    linear-gradient(rgba(8, 12, 20, 0.78), rgba(8, 12, 20, 0.78)),
+    url('../img/nano-machining-services.webp') !important;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+}
+
+html body.theme-industrial.appearance-light {
+  background-color: #f5f7fb !important;
+  background-image:
+    linear-gradient(rgba(248, 250, 253, 0.82), rgba(248, 250, 253, 0.82)),
+    url('../img/nano-machining-services.webp') !important;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+}
+
+/* ------------------------------------------------------------
+ * 2) Contenedor <main> y secciones vacias no deben tapar el fondo.
+ *    Ajuste suave: si tenian background solido, lo volvemos
+ *    ligeramente translucido para dejar ver la imagen en los bordes.
+ *    (No toca cards/paneles individuales: solo el lienzo grande.)
+ * ------------------------------------------------------------ */
+
+html body.theme-industrial #main-content,
+html body.theme-industrial main,
+html body.theme-industrial .app-layout,
+html body.theme-industrial .app-main,
+html body.theme-industrial .content-wrap {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* ------------------------------------------------------------
+ * 3) html root: evita que un color detras del body tape la imagen
+ *    cuando la vista es mas alta que el viewport.
+ * ------------------------------------------------------------ */
+
+html {
+  background-color: transparent !important;
+}
+
+/* ------------------------------------------------------------
+ * 4) Login overlay: dejamos que la imagen se vea suavemente
+ *    detras del panel de login tambien.
+ * ------------------------------------------------------------ */
+
+html body.theme-industrial .login-overlay {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* ------------------------------------------------------------
+ * NOTAS DE DISEÑO:
+ * - Opacidad 0.78 (Luna) / 0.82 (Sol): dejan entrever la imagen
+ *   sin comprometer la legibilidad de textos sobre cards opacos.
+ * - background-attachment: fixed -> la imagen no hace scroll
+ *   (efecto parallax sutil, profesional para ambiente industrial).
+ * - Si quieres que la imagen se vea MAS, baja la opacidad:
+ *     Luna 0.65 - 0.70
+ *     Sol  0.72 - 0.76
+ * - Si la imagen distrae demasiado, SUBE la opacidad:
+ *     Luna 0.85 - 0.92
+ *     Sol  0.88 - 0.94
+ * ------------------------------------------------------------ */
