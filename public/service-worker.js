@@ -1,5 +1,5 @@
 /** Bump al desplegar para limpiar caches viejas (HTML/JS con ?v=). No precargar /js/app.js (la página usa app.js?v=…). */
-const CACHE_NAME = 'cotizacion-pro-v44-login-vivo-legible';
+const CACHE_NAME = 'cotizacion-pro-v45-login-punto-fino';
 const STATIC_URLS = ['/', '/index.html', '/css/style.css', '/favicon.svg', '/manifest.json'];
 
 self.addEventListener('install', (e) => {

@@ -647,7 +647,7 @@ html body.theme-industrial #login-overlay,
 html body .login-overlay {
   background-color: #0a1529 !important;
   background-image:
-    linear-gradient(135deg, rgba(10, 25, 55, 0.28) 0%, rgba(15, 35, 75, 0.25) 50%, rgba(20, 45, 90, 0.30) 100%),
+    linear-gradient(135deg, rgba(10, 25, 55, 0.18) 0%, rgba(15, 35, 75, 0.15) 50%, rgba(20, 45, 90, 0.20) 100%),
     url('../img/nano-machining-services.webp') !important;
   background-size: cover, cover !important;
   background-position: center center, center center !important;
@@ -665,16 +665,16 @@ html body #login-overlay::before {
 
 /* Paneles brand y form: muy translucidos - la imagen industrial se aprecia */
 html body .login-brand-panel {
-  background: linear-gradient(160deg, rgba(30, 60, 110, 0.12) 0%, rgba(15, 30, 60, 0.18) 100%) !important;
-  backdrop-filter: blur(8px) saturate(170%) !important;
-  -webkit-backdrop-filter: blur(8px) saturate(170%) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.10) !important;
+  background: linear-gradient(160deg, rgba(30, 60, 110, 0.06) 0%, rgba(15, 30, 60, 0.10) 100%) !important;
+  backdrop-filter: blur(5px) saturate(175%) !important;
+  -webkit-backdrop-filter: blur(5px) saturate(175%) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 html body .login-form-panel {
-  background: rgba(15, 30, 60, 0.10) !important;
-  backdrop-filter: blur(8px) saturate(170%) !important;
-  -webkit-backdrop-filter: blur(8px) saturate(170%) !important;
+  background: rgba(15, 30, 60, 0.05) !important;
+  backdrop-filter: blur(5px) saturate(175%) !important;
+  -webkit-backdrop-filter: blur(5px) saturate(175%) !important;
 }
 
 /* TEXTOS del brand-panel: BLANCO con sombra fuerte para destacar sobre la imagen
@@ -726,9 +726,9 @@ html body .login-brand-panel .viewer-chip {
 
 /* Tarjeta del formulario: glass azul MAS CLARO y vivo (antes muy oscuro) */
 html body .login-card {
-  background: linear-gradient(160deg, rgba(40, 70, 120, 0.40) 0%, rgba(20, 45, 85, 0.48) 100%) !important;
-  backdrop-filter: blur(24px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  background: linear-gradient(160deg, rgba(45, 80, 135, 0.28) 0%, rgba(22, 50, 95, 0.36) 100%) !important;
+  backdrop-filter: blur(26px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(190%) !important;
   border: 1px solid rgba(255, 255, 255, 0.22) !important;
   box-shadow:
     0 28px 72px rgba(0, 0, 0, 0.45),
