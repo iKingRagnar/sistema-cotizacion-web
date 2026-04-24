@@ -119,8 +119,79 @@ html body.theme-industrial:not(.appearance-light) table.data-table tbody td {
   border-color: #2a2a2a !important;
 }
 
-html body.theme-industrial:not(.appearance-light) .data-table tbody tr:hover td {
-  background: #1a1a1a !important;
+/* Hover de fila DESACTIVADO COMPLETAMENTE — el usuario reporto que al pasar
+   el mouse sobre filas, hay un cambio de color + transform: scale/translateX
+   que se ve como "una sombra siguiendo el mouse". Causas detectadas en el
+   codigo legacy:
+   - premium.css:2884  transform: scale(1.003) en tr:hover
+   - premium-pro.css:2832  transform: translateX(2px) en tr:hover
+   - premium.css:411  box-shadow: inset 3px 0 0 var(--prem-blue) (linea azul)
+   - varios cambios de background a #eff6ff, #2d2d2d, etc.
+   Aqui los matamos TODOS. Filas siempre estaticas, sin highlight, sin movimiento. */
+
+html body.theme-industrial:not(.appearance-light) .data-table tbody tr:hover,
+html body.theme-industrial:not(.appearance-light) .data-table tbody tr:hover td,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:hover,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:hover td,
+html body.theme-industrial:not(.appearance-light) .table-wrap > table tbody tr:hover,
+html body.theme-industrial:not(.appearance-light) .table-wrap > table tbody tr:hover td,
+html body.theme-industrial:not(.appearance-light) .maq-ficha-table tbody tr:hover,
+html body.theme-industrial:not(.appearance-light) .maq-ficha-table tbody tr:hover td,
+html body.theme-industrial:not(.appearance-light) .cdp-table tbody tr:hover,
+html body.theme-industrial:not(.appearance-light) .cdp-table tbody tr:hover td,
+html body.theme-industrial:not(.appearance-light) .table-simple tbody tr:hover,
+html body.theme-industrial:not(.appearance-light) .table-simple tbody tr:hover td,
+html body.theme-industrial:not(.appearance-light) .ref-stock-mov-table tbody tr:hover,
+html body.theme-industrial:not(.appearance-light) .ref-stock-mov-table tbody tr:hover td {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+}
+
+/* Tambien para la celda th-actions especificamente (premium.css:1564) */
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:hover td.th-actions {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+/* Modo SOL: tampoco cambio en hover de filas (mismas reglas, fondo blanco) */
+html body.theme-industrial.appearance-light .data-table tbody tr:hover,
+html body.theme-industrial.appearance-light .data-table tbody tr:hover td,
+html body.theme-industrial.appearance-light table.data-table tbody tr:hover,
+html body.theme-industrial.appearance-light table.data-table tbody tr:hover td,
+html body.theme-industrial.appearance-light .table-wrap > table tbody tr:hover,
+html body.theme-industrial.appearance-light .table-wrap > table tbody tr:hover td {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+}
+
+/* RED FINAL: cualquier tabla por ID legacy (#tabla-cotizaciones, #tabla-incidentes,
+   #tabla-bitacoras, #tabla-refacciones) en cualquier modo. Cubre style.css:559,
+   style.css:652, style.css:853, style.css:2189, style.css:3660, style.css:6487
+   donde se aplican translateX(3px), box-shadow inset y backgrounds que producen
+   el efecto "sombra que sigue al mouse". */
+html body[class*="theme-"] [id^="tabla-"] tbody tr:hover,
+html body[class*="theme-"] [id^="tabla-"] tbody tr:hover td,
+html body[class*="theme-"] table[id^="tabla-"] tbody tr:hover,
+html body[class*="theme-"] table[id^="tabla-"] tbody tr:hover td,
+html body[class*="theme-"] .data-table tbody tr:hover,
+html body[class*="theme-"] .data-table tbody tr:hover td {
+  transform: none !important;
+  -webkit-transform: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
 }
 
 /* ============================================================================
