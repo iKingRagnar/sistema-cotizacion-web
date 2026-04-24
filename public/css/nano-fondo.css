@@ -20,46 +20,48 @@
  * ============================================================ */
 
 /* ============================================================
- * OPACIDADES ESTILO LOGIN (v13):
- *   Mismo feeling que el login (glass muy translucido, imagen visible).
- *   overlay body:       ~20-22% (respira la imagen)
- *   surface (cards):    ~28-32% (casi cristal)
- *   surface-strong:     ~44-48% (header, thead, section-header)
- *   surface-solid:      ~82-88% (modales, dropdowns - legibilidad)
- *   blur:               26px + saturate(185%)  - vidrio esmerilado fino
+ * OPACIDADES UNIFICADAS (v14):
+ *   UN SOLO tono glass para TODA la app (receta login).
+ *   Antes: surface 30% vs surface-strong 46% = se veian 2 "capas".
+ *   Ahora: TODO usa el mismo nivel -> vidrio uniforme.
+ *
+ *   overlay body:       ~16-18% (imagen bien viva)
+ *   surface == strong:  ~32-34% (cards/header/thead/section-header IGUAL)
+ *   surface-solid:      ~85%    (modales/dropdowns - legibilidad)
+ *   blur:               28px + saturate(190%)
  * ============================================================ */
 html body.theme-industrial.appearance-light {
-  --nano-overlay:           rgba(248, 250, 253, 0.20);   /* body: imagen MUY visible */
-  --nano-surface:           rgba(255, 255, 255, 0.30);   /* cards casi cristal */
-  --nano-surface-strong:    rgba(255, 255, 255, 0.46);   /* header / thead - legible */
-  --nano-surface-solid:     rgba(255, 255, 255, 0.85);   /* modales / dropdowns */
-  --nano-surface-subtle:    rgba(255, 255, 255, 0.12);
-  --nano-border:            rgba(15, 23, 42, 0.12);
-  --nano-border-strong:     rgba(15, 23, 42, 0.20);
+  --nano-overlay:           rgba(248, 250, 253, 0.16);
+  --nano-surface:           rgba(255, 255, 255, 0.32);
+  --nano-surface-strong:    rgba(255, 255, 255, 0.32);   /* == surface: MISMO tono */
+  --nano-surface-solid:     rgba(255, 255, 255, 0.85);
+  --nano-surface-subtle:    rgba(255, 255, 255, 0.10);
+  --nano-border:            rgba(15, 23, 42, 0.10);
+  --nano-border-strong:     rgba(15, 23, 42, 0.16);
   --nano-text:              #0b1220;
   --nano-text-soft:         #1e293b;
   --nano-text-muted:        #475569;
   --nano-accent:            #1a73e8;
-  --nano-blur:              blur(26px) saturate(185%);
-  --nano-blur-light:        blur(14px) saturate(160%);
-  --nano-shadow:            0 8px 32px rgba(15, 23, 42, 0.10);
+  --nano-blur:              blur(28px) saturate(190%);
+  --nano-blur-light:        blur(16px) saturate(170%);
+  --nano-shadow:            0 8px 32px rgba(15, 23, 42, 0.08);
 }
 
 html body.theme-industrial:not(.appearance-light) {
-  --nano-overlay:           rgba(5, 8, 15, 0.22);         /* body: imagen muy visible en Luna */
-  --nano-surface:           rgba(10, 14, 22, 0.32);
-  --nano-surface-strong:    rgba(8, 12, 20, 0.48);
+  --nano-overlay:           rgba(5, 8, 15, 0.18);
+  --nano-surface:           rgba(10, 14, 22, 0.34);
+  --nano-surface-strong:    rgba(10, 14, 22, 0.34);      /* == surface: MISMO tono */
   --nano-surface-solid:     rgba(6, 9, 16, 0.85);
-  --nano-surface-subtle:    rgba(10, 14, 22, 0.12);
-  --nano-border:            rgba(255, 255, 255, 0.10);
-  --nano-border-strong:     rgba(255, 255, 255, 0.18);
+  --nano-surface-subtle:    rgba(10, 14, 22, 0.10);
+  --nano-border:            rgba(255, 255, 255, 0.08);
+  --nano-border-strong:     rgba(255, 255, 255, 0.14);
   --nano-text:              #f1f5f9;
   --nano-text-soft:         #e2e8f0;
   --nano-text-muted:        #a0aec0;
   --nano-accent:            #4ea1ff;
-  --nano-blur:              blur(26px) saturate(185%);
-  --nano-blur-light:        blur(14px) saturate(160%);
-  --nano-shadow:            0 8px 32px rgba(0, 0, 0, 0.35);
+  --nano-blur:              blur(28px) saturate(190%);
+  --nano-blur-light:        blur(16px) saturate(170%);
+  --nano-shadow:            0 8px 32px rgba(0, 0, 0, 0.30);
 }
 
 
@@ -978,4 +980,116 @@ html body.theme-industrial .module-card:hover,
 html body.theme-industrial .dashboard-score-tile:hover,
 html body.theme-industrial table tbody tr:hover {
   transform: none !important;
+}
+
+
+/* ============================================================
+ * 23. ELEMENTOS CON COLOR HARDCODED - FORZAR GLASS UNIFICADO
+ *
+ *   Estos vienen con gradientes propios en style.css que rompen
+ *   la estetica uniforme (amarillos, azules solidos, etc.).
+ *   Los normalizamos al mismo glass que el resto.
+ *
+ *   IMPORTANTE: mantenemos el icono/texto con su color original
+ *   (solo cambiamos el fondo/borde para que la barra no parezca
+ *   otra capa).
+ * ============================================================ */
+
+html body.theme-industrial .stock-alert-bar,
+html body.theme-industrial.dark-theme .stock-alert-bar,
+html body.theme-industrial:not(.appearance-light) .stock-alert-bar {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--nano-border) !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  color: var(--nano-text) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial .stock-alert-bar i,
+html body.theme-industrial .stock-alert-bar strong {
+  color: #d97706 !important;  /* icono amarillo/ambar queda como acento semantico */
+}
+
+html body.theme-industrial:not(.appearance-light) .stock-alert-bar i,
+html body.theme-industrial:not(.appearance-light) .stock-alert-bar strong {
+  color: #fbbf24 !important;
+}
+
+/* Inputs de filtro de tabla (antes border solido #cbd5e1) */
+html body.theme-industrial input.filter-input,
+html body.theme-industrial select.filter-input,
+html body.theme-industrial textarea.filter-input {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  color: var(--nano-text) !important;
+  border: 1px solid var(--nano-border) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+}
+
+/* Crossfilter bar: mismo glass uniforme */
+html body.theme-industrial .dashboard-crossfilter-bar {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--nano-border) !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  color: var(--nano-text) !important;
+}
+
+/* thead con el mismo glass que body de tabla (antes era surface-strong) */
+html body.theme-industrial table thead,
+html body.theme-industrial .data-table thead,
+html body.theme-industrial table.data-table thead {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+}
+
+/* Row de filtros debajo del thead (tipica linea 2a en tablas) */
+html body.theme-industrial table thead tr.filter-row,
+html body.theme-industrial .data-table thead tr.filter-row {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+html body.theme-industrial table thead tr.filter-row td,
+html body.theme-industrial .data-table thead tr.filter-row td {
+  background: transparent !important;
+  border-color: var(--nano-border) !important;
+}
+
+
+/* ============================================================
+ * 24. CATCH-ALL: cualquier contenedor con clase generica que
+ * lleve fondo solido/gradiente queda igualado al glass base.
+ *
+ *   Lista de clases comunes que en style.css traen `background:
+ *   #fff` o gradientes propios.
+ * ============================================================ */
+
+html body.theme-industrial .panel-card,
+html body.theme-industrial .data-card,
+html body.theme-industrial .info-card,
+html body.theme-industrial .stat-card,
+html body.theme-industrial .dashboard-stat-card,
+html body.theme-industrial .filters-card,
+html body.theme-industrial .toolbar,
+html body.theme-industrial .section-toolbar,
+html body.theme-industrial .action-bar,
+html body.theme-industrial .data-toolbar,
+html body.theme-industrial .table-toolbar,
+html body.theme-industrial .page-header,
+html body.theme-industrial .content-header {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--nano-border) !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  color: var(--nano-text) !important;
+  box-shadow: var(--nano-shadow) !important;
 }
