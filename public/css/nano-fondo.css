@@ -647,7 +647,7 @@ html body.theme-industrial #login-overlay,
 html body .login-overlay {
   background-color: #0a1529 !important;
   background-image:
-    linear-gradient(135deg, rgba(10, 22, 44, 0.45) 0%, rgba(15, 30, 58, 0.42) 50%, rgba(20, 38, 72, 0.45) 100%),
+    linear-gradient(135deg, rgba(10, 25, 55, 0.28) 0%, rgba(15, 35, 75, 0.25) 50%, rgba(20, 45, 90, 0.30) 100%),
     url('../img/nano-machining-services.webp') !important;
   background-size: cover, cover !important;
   background-position: center center, center center !important;
@@ -655,57 +655,103 @@ html body .login-overlay {
   background-attachment: fixed, fixed !important;
 }
 
-/* Halos decorativos teal/violeta/cyan que dan vida visual */
+/* Halos decorativos teal/violeta/cyan - MAS INTENSOS para dar vida */
 html body #login-overlay::before {
   background-image:
-    radial-gradient(circle at 12% 18%, rgba(45, 212, 191, 0.22) 0%, transparent 46%),
-    radial-gradient(circle at 88% 82%, rgba(129, 140, 248, 0.20) 0%, transparent 44%),
-    radial-gradient(circle at 50% 108%, rgba(56, 189, 248, 0.14) 0%, transparent 52%) !important;
+    radial-gradient(circle at 12% 18%, rgba(45, 212, 191, 0.32) 0%, transparent 48%),
+    radial-gradient(circle at 88% 82%, rgba(129, 140, 248, 0.28) 0%, transparent 46%),
+    radial-gradient(circle at 50% 108%, rgba(56, 189, 248, 0.22) 0%, transparent 54%) !important;
 }
 
-/* Paneles brand y form: glass azul muy translucido - imagen bien visible */
+/* Paneles brand y form: muy translucidos - la imagen industrial se aprecia */
 html body .login-brand-panel {
-  background: linear-gradient(160deg, rgba(20, 38, 72, 0.22) 0%, rgba(10, 22, 44, 0.32) 100%) !important;
-  backdrop-filter: blur(12px) saturate(150%) !important;
-  -webkit-backdrop-filter: blur(12px) saturate(150%) !important;
+  background: linear-gradient(160deg, rgba(30, 60, 110, 0.12) 0%, rgba(15, 30, 60, 0.18) 100%) !important;
+  backdrop-filter: blur(8px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(170%) !important;
   border-right: 1px solid rgba(255, 255, 255, 0.10) !important;
 }
 
 html body .login-form-panel {
-  background: rgba(10, 22, 44, 0.18) !important;
-  backdrop-filter: blur(12px) saturate(150%) !important;
-  -webkit-backdrop-filter: blur(12px) saturate(150%) !important;
+  background: rgba(15, 30, 60, 0.10) !important;
+  backdrop-filter: blur(8px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(170%) !important;
 }
 
-/* Tarjeta del formulario: glass azul translucido armonizado (no blanco) */
+/* TEXTOS del brand-panel: BLANCO con sombra fuerte para destacar sobre la imagen
+   Antes eran oscuros/grises y se perdian contra el azul oscuro. */
+html body .login-brand-panel .login-brand-title,
+html body .login-brand-panel h1,
+html body .login-brand-panel h2 {
+  color: #ffffff !important;
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.75),
+    0 0 24px rgba(0, 0, 0, 0.55),
+    0 1px 2px rgba(0, 0, 0, 0.90) !important;
+  font-weight: 800 !important;
+}
+
+html body .login-brand-panel .login-brand-tagline,
+html body .login-brand-panel .login-brand-subtitle,
+html body .login-brand-panel p {
+  color: #e2e8f0 !important;
+  text-shadow:
+    0 1px 6px rgba(0, 0, 0, 0.75),
+    0 0 18px rgba(0, 0, 0, 0.55) !important;
+}
+
+html body .login-brand-panel .login-feature-item,
+html body .login-brand-panel .login-brand-features * {
+  color: #f8fafc !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7) !important;
+}
+
+html body .login-brand-panel .login-feature-item i {
+  color: #7dd3fc !important;  /* cyan vivo para iconos */
+  text-shadow: 0 0 8px rgba(125, 211, 252, 0.5) !important;
+}
+
+/* Chips Admin/Usuario/Consulta debajo del logo */
+html body .login-brand-panel [class*="role"],
+html body .login-brand-panel [class*="chip"],
+html body .login-brand-panel .admin-chip,
+html body .login-brand-panel .user-chip,
+html body .login-brand-panel .viewer-chip {
+  background: rgba(255, 255, 255, 0.14) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Tarjeta del formulario: glass azul MAS CLARO y vivo (antes muy oscuro) */
 html body .login-card {
-  background: linear-gradient(160deg, rgba(20, 40, 75, 0.55) 0%, rgba(12, 25, 50, 0.65) 100%) !important;
-  backdrop-filter: blur(22px) saturate(160%) !important;
-  -webkit-backdrop-filter: blur(22px) saturate(160%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  background: linear-gradient(160deg, rgba(40, 70, 120, 0.40) 0%, rgba(20, 45, 85, 0.48) 100%) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
   box-shadow:
     0 28px 72px rgba(0, 0, 0, 0.45),
-    0 0 0 1px rgba(255, 255, 255, 0.06) inset !important;
-  color: #f1f5f9 !important;
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset !important;
+  color: #f8fafc !important;
 }
 
-/* Textos del login-card en tono claro para contraste sobre glass azul */
 html body .login-card h1,
 html body .login-card h2,
 html body .login-card h3,
 html body .login-card .login-title,
-html body .login-card .login-subtitle,
 html body .login-card label,
 html body .login-card .form-label,
 html body .login-card p,
 html body .login-card span:not(.badge) {
-  color: #f1f5f9 !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
 }
 
 html body .login-card .login-subtitle,
 html body .login-card .hint,
 html body .login-card small {
-  color: #cbd5e1 !important;
+  color: #e2e8f0 !important;
 }
 
 /* Inputs del login: glass oscuro translucido, texto claro */
