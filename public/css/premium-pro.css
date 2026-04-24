@@ -4023,3 +4023,525 @@ body.theme-industrial.appearance-light {
 /* ════════════════════════════════════════════════════════════════════════
    FIN — Fix Maestro v5 EXHAUSTIVO (cubre TODAS las clases reales)
    ════════════════════════════════════════════════════════════════════════ */
+
+/* ╔══════════════════════════════════════════════════════════════════════════╗
+   ║  FIX MAESTRO v6 — SISTEMA DE DISEÑO EMPRESARIAL DEFINITIVO               ║
+   ║                                                                          ║
+   ║  Requisitos de Guillermo (2026-04-24):                                   ║
+   ║  - LUNA: negro empresarial con elementos PLATEADOS (tipo Tesla/Apple)    ║
+   ║  - SOL: blanco empresarial limpio, textos legibles                       ║
+   ║  - Botones "Nuevo cliente" / acciones primarias en PLATEADO (no azul)    ║
+   ║  - Modales ("Nuevo cliente", confirmaciones) deben respetar el tema      ║
+   ║  - FAB IA y otros botones flotantes NO deben "volar"                     ║
+   ║  - Footer coherente con el tema                                          ║
+   ║  - Dropdown avatar visible en modo SOL (no solo LUNA)                    ║
+   ╚══════════════════════════════════════════════════════════════════════════╝ */
+
+/* ═══════════ §Z1 — MODALES (Nuevo cliente, confirmaciones, stack) ═════════ */
+/* Modo LUNA */
+body.theme-industrial:not(.appearance-light) .modal,
+body.theme-industrial:not(.appearance-light) #modal,
+body.theme-industrial:not(.appearance-light) #modal-stack,
+body.theme-industrial:not(.appearance-light) #confirm-modal {
+  background: rgba(0, 0, 0, 0.80) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+}
+body.theme-industrial:not(.appearance-light) .modal-box,
+body.theme-industrial:not(.appearance-light) .modal-confirm {
+  background: #161616 !important;
+  background-color: #161616 !important;
+  background-image: none !important;
+  color: #e8eaed !important;
+  border: 1px solid #2a2a2a !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(192, 192, 197, 0.08) !important;
+}
+body.theme-industrial:not(.appearance-light) .modal-header {
+  background: linear-gradient(180deg, #1f1f1f 0%, #161616 100%) !important;
+  background-color: #1f1f1f !important;
+  color: #e8eaed !important;
+  border-bottom: 1px solid #2a2a2a !important;
+}
+body.theme-industrial:not(.appearance-light) .modal-header h3,
+body.theme-industrial:not(.appearance-light) .modal-header h2,
+body.theme-industrial:not(.appearance-light) .modal-header strong {
+  color: #e8eaed !important;
+}
+body.theme-industrial:not(.appearance-light) .modal-body {
+  background: #161616 !important;
+  background-color: #161616 !important;
+  color: #e8eaed !important;
+}
+body.theme-industrial:not(.appearance-light) .modal-body * {
+  color: inherit;
+}
+body.theme-industrial:not(.appearance-light) .modal-body label,
+body.theme-industrial:not(.appearance-light) .modal-body .form-label {
+  color: #9aa0a6 !important;
+}
+body.theme-industrial:not(.appearance-light) .modal-body input,
+body.theme-industrial:not(.appearance-light) .modal-body textarea,
+body.theme-industrial:not(.appearance-light) .modal-body select {
+  background: #1f1f1f !important;
+  background-color: #1f1f1f !important;
+  color: #e8eaed !important;
+  border: 1px solid #2a2a2a !important;
+  -webkit-text-fill-color: #e8eaed !important;
+}
+body.theme-industrial:not(.appearance-light) .modal-body input::placeholder,
+body.theme-industrial:not(.appearance-light) .modal-body textarea::placeholder {
+  color: #5f6368 !important;
+}
+body.theme-industrial:not(.appearance-light) .modal .close,
+body.theme-industrial:not(.appearance-light) .modal-header .close {
+  background: rgba(192, 192, 197, 0.12) !important;
+  color: #e8eaed !important;
+  border: 1px solid rgba(192, 192, 197, 0.20) !important;
+}
+body.theme-industrial:not(.appearance-light) .modal .close:hover {
+  background: rgba(242, 139, 130, 0.18) !important;
+  color: #f28b82 !important;
+  border-color: rgba(242, 139, 130, 0.30) !important;
+}
+
+/* Modo SOL */
+body.theme-industrial.appearance-light .modal,
+body.theme-industrial.appearance-light #modal,
+body.theme-industrial.appearance-light #modal-stack,
+body.theme-industrial.appearance-light #confirm-modal {
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+}
+body.theme-industrial.appearance-light .modal-box,
+body.theme-industrial.appearance-light .modal-confirm {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.18), 0 4px 12px rgba(15, 23, 42, 0.08) !important;
+}
+body.theme-industrial.appearance-light .modal-header {
+  background: linear-gradient(180deg, #f9fafb 0%, #ffffff 100%) !important;
+  color: #111827 !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+body.theme-industrial.appearance-light .modal-body {
+  background: #ffffff !important;
+  color: #111827 !important;
+}
+body.theme-industrial.appearance-light .modal-body label {
+  color: #6b7280 !important;
+}
+body.theme-industrial.appearance-light .modal-body input,
+body.theme-industrial.appearance-light .modal-body textarea,
+body.theme-industrial.appearance-light .modal-body select {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+/* ═══════════ §Z2 — BOTONES PRIMARY = PLATEADO METALIZADO EMPRESARIAL ═════ */
+/* LUNA: plateado oscuro metalizado con brillo sutil (tipo Tesla/Apple) */
+body.theme-industrial:not(.appearance-light) .btn.primary,
+body.theme-industrial:not(.appearance-light) button.btn.primary,
+body.theme-industrial:not(.appearance-light) .btn-primary,
+body.theme-industrial:not(.appearance-light) a.btn.primary,
+body.theme-industrial:not(.appearance-light) input[type="submit"].btn.primary,
+body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh:not(.outline) {
+  background: linear-gradient(180deg, #4a4e56 0%, #35383e 50%, #2a2d32 100%) !important;
+  background-color: #3a3d43 !important;
+  color: #f5f5f7 !important;
+  border: 1px solid rgba(192, 192, 197, 0.25) !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.4) inset,
+    0 2px 6px rgba(0, 0, 0, 0.5) !important;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4) !important;
+}
+body.theme-industrial:not(.appearance-light) .btn.primary:hover,
+body.theme-industrial:not(.appearance-light) button.btn.primary:hover,
+body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh:not(.outline):hover {
+  background: linear-gradient(180deg, #5a5e67 0%, #45484e 50%, #35383e 100%) !important;
+  border-color: rgba(192, 192, 197, 0.45) !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.14) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.4) inset,
+    0 4px 12px rgba(0, 0, 0, 0.6) !important;
+  transform: translateY(-1px) !important;
+}
+body.theme-industrial:not(.appearance-light) .btn.primary:active {
+  transform: translateY(0) !important;
+  box-shadow:
+    0 -1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 1px 0 rgba(0, 0, 0, 0.4) inset,
+    0 1px 3px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* SOL: plateado claro metalizado (reflejo blanco tipo Apple) */
+body.theme-industrial.appearance-light .btn.primary,
+body.theme-industrial.appearance-light button.btn.primary,
+body.theme-industrial.appearance-light .btn-primary,
+body.theme-industrial.appearance-light a.btn.primary,
+body.theme-industrial.appearance-light input[type="submit"].btn.primary,
+body.theme-industrial.appearance-light .btn-dashboard-refresh:not(.outline) {
+  background: linear-gradient(180deg, #ffffff 0%, #e8eaed 50%, #d1d5db 100%) !important;
+  background-color: #e5e7eb !important;
+  color: #1f2937 !important;
+  border: 1px solid #c5c9d0 !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.08) inset,
+    0 1px 3px rgba(15, 23, 42, 0.15) !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+  font-weight: 600 !important;
+}
+body.theme-industrial.appearance-light .btn.primary i,
+body.theme-industrial.appearance-light .btn.primary .fas {
+  color: #1f2937 !important;
+}
+body.theme-industrial.appearance-light .btn.primary:hover {
+  background: linear-gradient(180deg, #ffffff 0%, #f1f3f5 50%, #d9dce0 100%) !important;
+  border-color: #9ca3af !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 1) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.10) inset,
+    0 4px 12px rgba(15, 23, 42, 0.18) !important;
+  transform: translateY(-1px) !important;
+}
+body.theme-industrial.appearance-light .btn.primary:active {
+  transform: translateY(0) !important;
+}
+
+/* ═══════════ §Z3 — FAB IA y nudge (widget flotante robot) ═════════════════ */
+/* Fija posición bottom-right estable para que NO vuele */
+.ai-widget-wrap {
+  position: fixed !important;
+  right: 20px !important;
+  bottom: 60px !important;
+  z-index: 9900 !important;
+  pointer-events: auto !important;
+}
+.ai-widget-wrap.collapsed .ai-widget {
+  display: none !important;
+}
+.ai-fab {
+  position: relative !important;
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 50% !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  font-size: 22px !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+.ai-fab:hover {
+  transform: scale(1.06) !important;
+}
+
+/* LUNA: FAB plateado metalizado con icono blanco */
+body.theme-industrial:not(.appearance-light) .ai-fab {
+  background: linear-gradient(135deg, #4a4e56 0%, #35383e 60%, #2a2d32 100%) !important;
+  color: #e8eaed !important;
+  border: 1px solid rgba(192, 192, 197, 0.30) !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.10) inset,
+    0 4px 14px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(192, 192, 197, 0.08) !important;
+}
+body.theme-industrial:not(.appearance-light) .ai-fab i {
+  color: #e8eaed !important;
+}
+body.theme-industrial:not(.appearance-light) .ai-fab-tooltip {
+  background: #161616 !important;
+  color: #e8eaed !important;
+  border: 1px solid #2a2a2a !important;
+}
+
+/* SOL: FAB azul Material (bien visible sobre fondo claro) */
+body.theme-industrial.appearance-light .ai-fab {
+  background: linear-gradient(135deg, #1a73e8 0%, #4285f4 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(26, 115, 232, 0.35) !important;
+  box-shadow: 0 4px 14px rgba(26, 115, 232, 0.35) !important;
+}
+body.theme-industrial.appearance-light .ai-fab i {
+  color: #ffffff !important;
+}
+body.theme-industrial.appearance-light .ai-fab-tooltip {
+  background: #1f2937 !important;
+  color: #ffffff !important;
+  border: 1px solid #374151 !important;
+}
+
+/* Badge del FAB (rojo alert) */
+.ai-unread-badge {
+  position: absolute !important;
+  top: -4px !important;
+  right: -4px !important;
+  background: #ea4335 !important;
+  color: #ffffff !important;
+  border-radius: 50% !important;
+  min-width: 20px !important;
+  height: 20px !important;
+  padding: 0 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  border: 2px solid var(--ds-surface, #ffffff) !important;
+}
+body.theme-industrial:not(.appearance-light) .ai-unread-badge {
+  border-color: #0a0a0a !important;
+}
+
+/* Aviso nudge "¿Te ayudo?" */
+body.theme-industrial:not(.appearance-light) .ai-fab-nudge {
+  background: #161616 !important;
+  color: #e8eaed !important;
+  border: 1px solid #2a2a2a !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7) !important;
+}
+body.theme-industrial.appearance-light .ai-fab-nudge {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18) !important;
+}
+
+/* Widget panel (cuando se expande) */
+body.theme-industrial:not(.appearance-light) .ai-widget,
+body.theme-industrial:not(.appearance-light) .ai-widget-panel {
+  background: #161616 !important;
+  color: #e8eaed !important;
+  border: 1px solid #2a2a2a !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8) !important;
+}
+body.theme-industrial:not(.appearance-light) .ai-chat-header {
+  background: linear-gradient(180deg, #1f1f1f 0%, #161616 100%) !important;
+  color: #e8eaed !important;
+  border-bottom: 1px solid #2a2a2a !important;
+}
+body.theme-industrial.appearance-light .ai-widget,
+body.theme-industrial.appearance-light .ai-widget-panel {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.20) !important;
+}
+
+/* ═══════════ §Z4 — FOOTER (la barra blanca "volando" abajo) ══════════════ */
+.app-footer {
+  padding: 12px 20px !important;
+  text-align: center !important;
+  border-top: 1px solid transparent !important;
+  margin-top: auto !important;
+  font-size: 0.75rem !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+body.theme-industrial:not(.appearance-light) .app-footer {
+  background: #0a0a0a !important;
+  color: #9aa0a6 !important;
+  border-top: 1px solid #2a2a2a !important;
+}
+body.theme-industrial:not(.appearance-light) .app-footer p {
+  color: #9aa0a6 !important;
+}
+body.theme-industrial:not(.appearance-light) .app-footer strong,
+body.theme-industrial:not(.appearance-light) .app-footer .footer-version,
+body.theme-industrial:not(.appearance-light) .app-footer .footer-build-id {
+  color: #bdc1c6 !important;
+}
+body.theme-industrial:not(.appearance-light) .app-footer kbd {
+  background: #1f1f1f !important;
+  color: #e8eaed !important;
+  border: 1px solid #2a2a2a !important;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4) !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  font-size: 0.7rem !important;
+  font-family: 'SFMono-Regular', monospace !important;
+}
+body.theme-industrial.appearance-light .app-footer {
+  background: #f9fafb !important;
+  color: #6b7280 !important;
+  border-top: 1px solid #e5e7eb !important;
+}
+body.theme-industrial.appearance-light .app-footer p {
+  color: #6b7280 !important;
+}
+body.theme-industrial.appearance-light .app-footer kbd {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #d1d5db !important;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04) !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  font-size: 0.7rem !important;
+  font-family: 'SFMono-Regular', monospace !important;
+}
+
+/* ═══════════ §Z5 — COMMAND PALETTE (Ctrl+K) ══════════════════════════════ */
+body.theme-industrial:not(.appearance-light) .command-palette {
+  background: rgba(0, 0, 0, 0.80) !important;
+  backdrop-filter: blur(4px) !important;
+}
+body.theme-industrial:not(.appearance-light) .command-palette-box {
+  background: #161616 !important;
+  color: #e8eaed !important;
+  border: 1px solid #2a2a2a !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8) !important;
+}
+body.theme-industrial:not(.appearance-light) #command-palette-input {
+  background: transparent !important;
+  color: #e8eaed !important;
+  border: none !important;
+}
+body.theme-industrial:not(.appearance-light) #command-palette-results {
+  background: transparent !important;
+  color: #e8eaed !important;
+}
+body.theme-industrial.appearance-light .command-palette-box {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.20) !important;
+}
+
+/* ═══════════ §Z6 — FORM SECTIONS en modales (el card verde de archivo) ═══ */
+body.theme-industrial:not(.appearance-light) .modal-body .card,
+body.theme-industrial:not(.appearance-light) .modal-body .form-section,
+body.theme-industrial:not(.appearance-light) .modal-body .upload-zone,
+body.theme-industrial:not(.appearance-light) .modal-body [class*="card"],
+body.theme-industrial:not(.appearance-light) .modal-body [class*="file-upload"] {
+  background: #1f1f1f !important;
+  background-color: #1f1f1f !important;
+  background-image: none !important;
+  color: #e8eaed !important;
+  border: 1px solid #2a2a2a !important;
+  border-style: dashed !important;
+}
+
+/* ═══════════ §Z7 — BUSCADOR y filtros también en SOL (gris empresarial) ═ */
+body.theme-industrial.appearance-light .filters-card {
+  background: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+}
+body.theme-industrial.appearance-light .toolbar {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+}
+
+/* ═══════════ §Z8 — REFUERZO DROPDOWN AVATAR en SOL (crítico) ═════════════ */
+/* Alta especificidad: html body + prefix + doble clase para pisar TODO */
+html body.theme-industrial.appearance-light #header-profile-menu,
+html body.theme-industrial.appearance-light .header-profile-menu,
+html body.theme-industrial.appearance-light div.header-profile-menu {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18), 0 2px 8px rgba(15, 23, 42, 0.08) !important;
+  z-index: 15000 !important;
+}
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-user,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-user strong,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-meta,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-meta span,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item span,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item i,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-section {
+  color: #111827 !important;
+  background: transparent !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-section {
+  color: #6b7280 !important;
+  -webkit-text-fill-color: #6b7280 !important;
+  font-weight: 700 !important;
+  font-size: 0.7rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  padding: 8px 16px 4px !important;
+}
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-meta,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-meta span {
+  color: #6b7280 !important;
+  -webkit-text-fill-color: #6b7280 !important;
+}
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item:hover,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item:focus {
+  background: #f1f3f4 !important;
+  color: #1a73e8 !important;
+  -webkit-text-fill-color: #1a73e8 !important;
+}
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item:hover i,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item:hover span {
+  color: #1a73e8 !important;
+  -webkit-text-fill-color: #1a73e8 !important;
+}
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item.danger,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item.danger span,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item.danger i {
+  color: #d93025 !important;
+  -webkit-text-fill-color: #d93025 !important;
+}
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item.danger:hover {
+  background: #fce8e6 !important;
+  color: #b9251a !important;
+}
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-divider {
+  background: #e5e7eb !important;
+  border-color: #e5e7eb !important;
+  height: 1px !important;
+}
+
+/* Igual refuerzo para notificaciones en SOL */
+html body.theme-industrial.appearance-light #notifications-panel,
+html body.theme-industrial.appearance-light .notifications-panel {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18) !important;
+  z-index: 15000 !important;
+}
+html body.theme-industrial.appearance-light #notifications-panel *,
+html body.theme-industrial.appearance-light .notifications-panel *,
+html body.theme-industrial.appearance-light .notifications-header strong {
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+
+/* ═══════════ §Z9 — BOTONES .btn-icon-header refuerzo visibilidad SOL ═════ */
+html body.theme-industrial.appearance-light header.header button.btn-icon-header,
+html body.theme-industrial.appearance-light header.header .btn-icon-header,
+html body.theme-industrial.appearance-light header.header #btn-notifications,
+html body.theme-industrial.appearance-light header.header #btn-theme-toggle {
+  color: #5f6368 !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  -webkit-text-fill-color: initial !important;
+}
+html body.theme-industrial.appearance-light header.header button.btn-icon-header i,
+html body.theme-industrial.appearance-light header.header .btn-icon-header i {
+  color: #5f6368 !important;
+  -webkit-text-fill-color: #5f6368 !important;
+}
+html body.theme-industrial.appearance-light header.header button.btn-icon-header:hover {
+  background: #f1f3f4 !important;
+  color: #1a73e8 !important;
+  border-color: #dadce0 !important;
+}
+html body.theme-industrial.appearance-light header.header .btn-icon-header:hover i {
+  color: #1a73e8 !important;
+  -webkit-text-fill-color: #1a73e8 !important;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   FIN — Fix Maestro v6 (Sistema de Diseño Empresarial Plateado)
+   ════════════════════════════════════════════════════════════════════════ */
