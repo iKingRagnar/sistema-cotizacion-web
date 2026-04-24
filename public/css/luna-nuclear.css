@@ -953,3 +953,241 @@ html body.theme-industrial.appearance-light .row-actions-inline [class*="btn-del
   color: #b91c1c !important;
   border: 1px solid rgba(185, 28, 28, 0.30) !important;
 }
+
+/* ============================================================================
+   §N24 — UNIFICAR TODOS LOS BOTONES "GRANDES" AL MISMO PLATEADO OSCURO
+   El usuario tomo como referencia el "+ Nuevo cliente" en pestaña Clientes.
+   TODOS los botones de header/toolbar/dashboard deben verse igual:
+   gradient #3a3d43 -> #1f2126 (gris oscuro tipo Tesla/Apple).
+
+   No afecta:
+   - Botones de acciones en tabla (azul/verde/rojo de §N22)
+   - .btn.danger (rojo)
+   - .btn.success (verde)
+   - .btn-icon-header (iconos del header: campanita, luna/sol, salir)
+   - .btn-header-profile (avatar/monito)
+
+   Sobreescribe §N7 (que tenia .btn.primary mas brillante que .btn base) y
+   tambien las reglas conflictivas en premium-pro.css que pintan
+   .btn-dashboard-refresh:not(.outline) de azul cyan.
+   ============================================================================ */
+html body.md3-on.theme-industrial:not(.appearance-light) .btn:not(.danger):not(.success):not([class*="btn-preview"]):not([class*="btn-view"]):not([class*="btn-edit"]):not([class*="btn-delete"]):not([class*="btn-stock"]):not([class*="btn-approve"]):not([class*="btn-finalizar"]):not([class*="btn-confirm"]):not([class*="btn-aplicar"]),
+html body.md3-on.theme-industrial:not(.appearance-light) button.btn:not(.danger):not(.success):not([class*="btn-preview"]):not([class*="btn-view"]):not([class*="btn-edit"]):not([class*="btn-delete"]),
+html body.md3-on.theme-industrial:not(.appearance-light) .btn.primary,
+html body.md3-on.theme-industrial:not(.appearance-light) .btn-primary,
+html body.md3-on.theme-industrial:not(.appearance-light) .btn-dashboard-refresh,
+html body.md3-on.theme-industrial:not(.appearance-light) .btn-dashboard-refresh.outline,
+html body.md3-on.theme-industrial:not(.appearance-light) .btn-dashboard-refresh:not(.outline),
+html body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh,
+html body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh.outline,
+html body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh:not(.outline) {
+  background: linear-gradient(180deg, #3a3d43 0%, #2a2d32 50%, #1f2126 100%) !important;
+  background-image: linear-gradient(180deg, #3a3d43 0%, #2a2d32 50%, #1f2126 100%) !important;
+  background-color: #2a2d32 !important;
+  color: #e8eaed !important;
+  border: 1px solid #4a4d52 !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 1px 2px rgba(0, 0, 0, 0.45) !important;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Hover unificado: mismo gradient un poco mas claro, SIN transform NI filter */
+html body.md3-on.theme-industrial:not(.appearance-light) .btn:not(.danger):not(.success):not([class*="btn-preview"]):not([class*="btn-view"]):not([class*="btn-edit"]):not([class*="btn-delete"]):hover,
+html body.md3-on.theme-industrial:not(.appearance-light) .btn.primary:hover,
+html body.md3-on.theme-industrial:not(.appearance-light) .btn-dashboard-refresh:hover,
+html body.md3-on.theme-industrial:not(.appearance-light) .btn-dashboard-refresh.outline:hover,
+html body.md3-on.theme-industrial:not(.appearance-light) .btn-dashboard-refresh:not(.outline):hover,
+html body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh:hover {
+  background: linear-gradient(180deg, #4a4d52 0%, #35383e 50%, #2a2d32 100%) !important;
+  background-image: linear-gradient(180deg, #4a4d52 0%, #35383e 50%, #2a2d32 100%) !important;
+  border-color: #5a5d62 !important;
+  color: #ffffff !important;
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+}
+
+/* Modo SOL: TODOS los botones grandes con plateado claro tipo Apple */
+html body.md3-on.theme-industrial.appearance-light .btn:not(.danger):not(.success):not([class*="btn-preview"]):not([class*="btn-view"]):not([class*="btn-edit"]):not([class*="btn-delete"]),
+html body.md3-on.theme-industrial.appearance-light .btn.primary,
+html body.md3-on.theme-industrial.appearance-light .btn-primary,
+html body.md3-on.theme-industrial.appearance-light .btn-dashboard-refresh,
+html body.md3-on.theme-industrial.appearance-light .btn-dashboard-refresh.outline,
+html body.md3-on.theme-industrial.appearance-light .btn-dashboard-refresh:not(.outline) {
+  background: linear-gradient(180deg, #ffffff 0%, #f1f3f4 50%, #e2e6ea 100%) !important;
+  background-image: linear-gradient(180deg, #ffffff 0%, #f1f3f4 50%, #e2e6ea 100%) !important;
+  background-color: #f1f3f4 !important;
+  color: #202124 !important;
+  border: 1px solid #d1d5db !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.65) inset,
+    0 1px 2px rgba(0, 0, 0, 0.10) !important;
+  text-shadow: none !important;
+}
+
+html body.md3-on.theme-industrial.appearance-light .btn:not(.danger):not(.success):not([class*="btn-preview"]):not([class*="btn-view"]):not([class*="btn-edit"]):not([class*="btn-delete"]):hover,
+html body.md3-on.theme-industrial.appearance-light .btn.primary:hover,
+html body.md3-on.theme-industrial.appearance-light .btn-dashboard-refresh:hover,
+html body.md3-on.theme-industrial.appearance-light .btn-dashboard-refresh.outline:hover,
+html body.md3-on.theme-industrial.appearance-light .btn-dashboard-refresh:not(.outline):hover {
+  background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 50%, #d6dbe1 100%) !important;
+  background-image: linear-gradient(180deg, #ffffff 0%, #f8f9fa 50%, #d6dbe1 100%) !important;
+  border-color: #b0b5bb !important;
+  color: #202124 !important;
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+}
+
+/* Quitar overlay azul (::before) en cualquier .btn.primary */
+html body .btn.primary::before,
+html body .btn-primary::before,
+html body .btn-dashboard-refresh::before {
+  display: none !important;
+  content: none !important;
+}
+
+/* ============================================================================
+   §N25 — MATAR ANIMACIONES DE HOVER MOLESTAS EN TODA LA WEB
+   El usuario reporta movimiento al pasar el mouse sobre avatar, campanita,
+   modo luna/sol, y "casi toda la web". Esto es por:
+   - .btn-icon-header:hover { transform: scale(1.05) } (style.css:1135)
+   - .btn-header-profile:hover { transform: translateY(-1px); filter: brightness } (premium.css:6849, premium-pro.css:314)
+   - varios .btn:hover { transform: translateY(-1px) }
+   - .dashboard-card:hover, .tab:hover etc
+
+   Aqui cancelamos transform/filter/animation en :hover para TODA la web.
+   Solo dejamos cambio de color/border (no movimiento, no escala).
+   ============================================================================ */
+
+/* TODOS los elementos del header */
+html body header.header *:hover,
+html body header.header button:hover,
+html body header.header .btn-icon-header:hover,
+html body header.header .btn-header-profile:hover,
+html body header.header .btn-header-quick-logout:hover,
+html body header.header #btn-theme-toggle:hover,
+html body header.header #btn-notifications:hover,
+html body header.header #btn-logout:hover {
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+  -webkit-animation: none !important;
+}
+
+/* Mantener cambios de color/borde solo (visibles pero sin movimiento) */
+html body header.header .btn-icon-header:hover {
+  background: rgba(138, 180, 248, 0.14) !important;
+}
+html body.theme-industrial.appearance-light header.header .btn-icon-header:hover {
+  background: #f1f3f4 !important;
+  color: #1a73e8 !important;
+}
+
+/* Avatar/monito sin transform ni filter en hover */
+html body header.header .btn-header-profile:hover {
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.20) !important;
+}
+
+/* TODOS los botones .btn — sin transform, sin filter, sin animation en hover */
+html body .btn:hover,
+html body button.btn:hover,
+html body .btn-primary:hover,
+html body .btn.primary:hover,
+html body .btn.outline:hover,
+html body .btn.danger:hover,
+html body .btn.success:hover,
+html body .btn.warn:hover,
+html body .btn-dashboard-refresh:hover,
+html body .dashboard-card-action:hover,
+html body .dashboard-card:hover,
+html body .tab:hover,
+html body .sidebar .tab:hover,
+html body .ai-fab:hover,
+html body .ai-widget-wrap:hover,
+html body .modal-box:hover,
+html body .card:hover,
+html body .panel:hover,
+html body table.data-table tr:hover,
+html body .ref-cat-pill:hover,
+html body .row-actions-inline > *:hover {
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+  -webkit-animation: none !important;
+}
+
+/* Especifico para botones con id que arrancan con nuevo/nueva */
+html body button[id^="nuevo"]:hover,
+html body button[id^="nueva"]:hover,
+html body .section-header .btn[id^="nuevo"]:hover,
+html body .section-header .btn[id^="nueva"]:hover,
+html body .section-header .btn.primary:hover {
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+  -webkit-animation: none !important;
+  background-position: 0% 50% !important;
+}
+
+/* Quitar background-position-shift que premium.css usa para "shimmer" en hover */
+html body .btn.primary,
+html body .btn.success,
+html body .dashboard-card-action {
+  background-size: 100% 100% !important;
+  animation: none !important;
+}
+html body .btn.primary:hover,
+html body .btn.success:hover {
+  animation: none !important;
+}
+
+/* Quitar transforms en menu items del dropdown del avatar */
+html body #header-profile-menu *:hover,
+html body .header-profile-menu *:hover,
+html body .header-profile-menu-item:hover {
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+}
+
+/* Notifications panel: items sin transform al hover */
+html body #notifications-panel *:hover,
+html body .notifications-panel *:hover,
+html body .notification-item:hover {
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+}
+
+/* Tarjetas dashboard: sin elevarse en hover */
+html body .dashboard-card:hover,
+html body .dashboard-stat-card:hover,
+html body .dashboard-forecast-card:hover,
+html body .module-card:hover,
+html body .admin-hub-card:hover {
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+}
+
+/* Tabs sidebar sin desplazamiento */
+html body .tab:hover,
+html body button.tab:hover,
+html body .sidebar-nav .tab:hover {
+  transform: none !important;
+  filter: none !important;
+}
+
+/* FAB IA: sin transform en hover */
+html body .ai-fab:hover,
+html body .ai-widget-wrap .ai-fab:hover,
+html body #ai-widget .ai-fab:hover {
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+}
