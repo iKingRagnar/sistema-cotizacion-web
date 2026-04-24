@@ -20,36 +20,36 @@
  * ============================================================ */
 
 html body.theme-industrial.appearance-light {
-  --nano-overlay:           rgba(248, 250, 253, 0.50);   /* body: imagen perceptible pero atenuada */
-  --nano-surface:           rgba(255, 255, 255, 0.62);   /* cards, paneles, sidebar, tablas */
-  --nano-surface-strong:    rgba(255, 255, 255, 0.78);   /* header, thead, tabs activas, section-header */
-  --nano-surface-solid:     rgba(255, 255, 255, 0.92);   /* modales, dropdowns */
-  --nano-surface-subtle:    rgba(255, 255, 255, 0.22);   /* capa base app-main (vidrio real) */
-  --nano-border:            rgba(15, 23, 42, 0.12);
-  --nano-border-strong:     rgba(15, 23, 42, 0.20);
-  --nano-text:              #0b1220;                      /* casi negro - alto contraste */
+  --nano-overlay:           rgba(248, 250, 253, 0.35);   /* body: imagen bien visible */
+  --nano-surface:           rgba(255, 255, 255, 0.48);   /* cards, paneles, sidebar, tablas */
+  --nano-surface-strong:    rgba(255, 255, 255, 0.65);   /* header, thead, section-header */
+  --nano-surface-solid:     rgba(255, 255, 255, 0.88);   /* modales, dropdowns */
+  --nano-surface-subtle:    rgba(255, 255, 255, 0.15);
+  --nano-border:            rgba(15, 23, 42, 0.14);
+  --nano-border-strong:     rgba(15, 23, 42, 0.22);
+  --nano-text:              #0b1220;
   --nano-text-soft:         #1e293b;
   --nano-text-muted:        #475569;
   --nano-accent:            #1a73e8;
-  --nano-blur:              blur(18px) saturate(160%);
-  --nano-blur-light:        blur(10px) saturate(140%);
+  --nano-blur:              blur(22px) saturate(170%);   /* blur fuerte = legible con baja opacidad */
+  --nano-blur-light:        blur(12px) saturate(150%);
   --nano-shadow:            0 8px 32px rgba(15, 23, 42, 0.10);
 }
 
 html body.theme-industrial:not(.appearance-light) {
-  --nano-overlay:           rgba(5, 8, 15, 0.38);         /* body: imagen visible en Luna */
-  --nano-surface:           rgba(10, 14, 22, 0.55);
-  --nano-surface-strong:    rgba(8, 12, 20, 0.72);
+  --nano-overlay:           rgba(5, 8, 15, 0.30);         /* body: imagen bien visible en Luna */
+  --nano-surface:           rgba(10, 14, 22, 0.48);
+  --nano-surface-strong:    rgba(8, 12, 20, 0.65);
   --nano-surface-solid:     rgba(6, 9, 16, 0.88);
-  --nano-surface-subtle:    rgba(10, 14, 22, 0.22);      /* capa base app-main (vidrio real) */
+  --nano-surface-subtle:    rgba(10, 14, 22, 0.15);
   --nano-border:            rgba(255, 255, 255, 0.10);
   --nano-border-strong:     rgba(255, 255, 255, 0.18);
   --nano-text:              #f1f5f9;
   --nano-text-soft:         #e2e8f0;
   --nano-text-muted:        #a0aec0;
   --nano-accent:            #4ea1ff;
-  --nano-blur:              blur(18px) saturate(160%);
-  --nano-blur-light:        blur(10px) saturate(140%);
+  --nano-blur:              blur(22px) saturate(170%);
+  --nano-blur-light:        blur(12px) saturate(150%);
   --nano-shadow:            0 8px 32px rgba(0, 0, 0, 0.35);
 }
 
@@ -79,9 +79,19 @@ html body.theme-industrial {
  * 3. LAYOUT CONTAINERS: transparentes para dejar ver el fondo
  * ============================================================ */
 
-/* Contenedor raiz y paneles = TRANSPARENTE (dejan ver la imagen) */
+/* TODOS los contenedores de layout = TRANSPARENTE.
+   Critico: nada de glass intermedio entre el body (imagen) y los
+   cards internos, porque sino los cards blurean el glass intermedio
+   en vez de la imagen -> se ve blanco solido acumulado. */
 html body.theme-industrial .app,
 html body.theme-industrial .app-layout,
+html body.theme-industrial .app-main,
+html body.theme-industrial .app-content,
+html body.theme-industrial .content-wrap,
+html body.theme-industrial .main-content,
+html body.theme-industrial .main-wrap,
+html body.theme-industrial main,
+html body.theme-industrial #main-content,
 html body.theme-industrial .panel,
 html body.theme-industrial section.panel,
 html body.theme-industrial [id^="panel-"],
@@ -89,23 +99,8 @@ html body.theme-industrial .dashboard-surface {
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
-}
-
-/* .app-main / main / content-wrap = capa glass SUTIL
-   Elimina los "gaps" visibles entre sidebar/header/contenido sin tapar
-   las cards internas ni la imagen (usa surface-subtle ~28-30%). */
-html body.theme-industrial .app-main,
-html body.theme-industrial .app-content,
-html body.theme-industrial .content-wrap,
-html body.theme-industrial .main-content,
-html body.theme-industrial .main-wrap,
-html body.theme-industrial main,
-html body.theme-industrial #main-content {
-  background: var(--nano-surface-subtle) !important;
-  background-color: var(--nano-surface-subtle) !important;
-  background-image: none !important;
-  backdrop-filter: var(--nano-blur-light) !important;
-  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 /* section-header (el contenedor con el titulo "Catalogo de clientes",
