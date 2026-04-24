@@ -7836,3 +7836,278 @@ body.theme-industrial:not(.appearance-light) header.header .header-profile-menu-
 body.theme-industrial:not(.appearance-light) .header-profile-menu-item.danger:hover i {
   color: #ff8a80 !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FIX MAESTRO 2026-04-24 v2 — Iconos del header invisibles en modo SOL
+                                + paleta Chrome dark uniforme en modo LUNA
+
+   Bug 1 (modo SOL): premium.css linea 832-843 fuerza color:rgba(255,255,255,.9)
+   y background:rgba(255,255,255,.1) en TODOS los .header button. Esto era para
+   cuando el header era oscuro azul, pero material.css cambio el header a
+   #FFFFFF en appearance-light. Resultado: campana, sol/luna toggle y monito
+   quedan blancos sobre blanco = INVISIBLES.
+
+   Bug 2 (modo LUNA): el modo dark no estaba armonizado tipo Chrome dark puro.
+   Cards, panels, inputs, tablas, sidebar usaban grises medios sin coherencia.
+
+   Fix: bloque al FINAL del archivo (maxima prioridad por orden CSS) que pisa
+   los selectores problematicos sin tocar otros archivos.
+
+   Paleta:
+     SOL  -> bg #ffffff, texto #5f6368, hover #1a73e8 (Material Light)
+     LUNA -> bg #0d0d0d, surfaces #1f1f1f, inputs #2a2a2a, texto #e8eaed,
+             accent #8ab4f8, bordes #3c4043 (Chrome Dark)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════ MODO SOL: pisar bug del color blanco forzado ═══════════════ */
+
+body.theme-industrial.appearance-light header.header button.btn-icon-header,
+body.theme-industrial.appearance-light header.header .btn-icon-header {
+  color: #5f6368 !important;
+  background: transparent !important;
+  border-color: transparent !important;
+}
+body.theme-industrial.appearance-light header.header .btn-icon-header i {
+  color: #5f6368 !important;
+}
+body.theme-industrial.appearance-light header.header .btn-icon-header:hover {
+  background: rgba(26, 115, 232, 0.10) !important;
+  color: #1a73e8 !important;
+}
+body.theme-industrial.appearance-light header.header .btn-icon-header:hover i {
+  color: #1a73e8 !important;
+}
+
+body.theme-industrial.appearance-light header.header .btn-header-quick-logout {
+  color: #b91c1c !important;
+  background: #fef2f2 !important;
+  border: 1px solid #fecaca !important;
+}
+body.theme-industrial.appearance-light header.header .btn-header-quick-logout i,
+body.theme-industrial.appearance-light header.header .btn-header-quick-logout span {
+  color: #b91c1c !important;
+}
+body.theme-industrial.appearance-light header.header .btn-header-quick-logout:hover {
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+}
+
+body.theme-industrial.appearance-light header.header .header-brand-service,
+body.theme-industrial.appearance-light header.header .header-session-label {
+  color: #1f2937 !important;
+}
+
+body.theme-industrial.appearance-light header.header .btn-header-profile {
+  background: linear-gradient(135deg, #1a73e8 0%, #4285f4 100%) !important;
+  color: #ffffff !important;
+  border: 2px solid #1a73e8 !important;
+}
+body.theme-industrial.appearance-light header.header .btn-header-profile:hover {
+  background: linear-gradient(135deg, #1557b0 0%, #1a73e8 100%) !important;
+  border-color: #1557b0 !important;
+}
+body.theme-industrial.appearance-light header.header .btn-header-profile svg circle,
+body.theme-industrial.appearance-light header.header .btn-header-profile svg path {
+  stroke: #ffffff !important;
+  fill: none !important;
+}
+body.theme-industrial.appearance-light header.header .btn-header-profile i {
+  color: #ffffff !important;
+}
+
+body.theme-industrial.appearance-light .notifications-badge {
+  background: #d93025 !important;
+  color: #ffffff !important;
+  border: 2px solid #ffffff !important;
+}
+
+/* ═══════════════ MODO LUNA: paleta Chrome dark uniforme TOTAL ═══════════════ */
+
+body.theme-industrial:not(.appearance-light) {
+  background: #0d0d0d !important;
+  color: #e8eaed !important;
+}
+body.theme-industrial:not(.appearance-light) .app-frame,
+body.theme-industrial:not(.appearance-light) main,
+body.theme-industrial:not(.appearance-light) .main-content {
+  background: #0d0d0d !important;
+}
+
+body.theme-industrial:not(.appearance-light) header.header {
+  background: #1f1f1f !important;
+  border-bottom: 1px solid #3c4043 !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .header-brand-service,
+body.theme-industrial:not(.appearance-light) header.header .header-session-label {
+  color: #e8eaed !important;
+}
+
+body.theme-industrial:not(.appearance-light) header.header button.btn-icon-header,
+body.theme-industrial:not(.appearance-light) header.header .btn-icon-header {
+  color: #e8eaed !important;
+  background: transparent !important;
+  border-color: transparent !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .btn-icon-header i {
+  color: #e8eaed !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .btn-icon-header:hover {
+  background: rgba(138, 180, 248, 0.14) !important;
+  color: #8ab4f8 !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .btn-icon-header:hover i {
+  color: #8ab4f8 !important;
+}
+
+body.theme-industrial:not(.appearance-light) header.header .btn-header-quick-logout {
+  color: #f28b82 !important;
+  background: rgba(242, 139, 130, 0.10) !important;
+  border: 1px solid rgba(242, 139, 130, 0.30) !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .btn-header-quick-logout i,
+body.theme-industrial:not(.appearance-light) header.header .btn-header-quick-logout span {
+  color: #f28b82 !important;
+}
+body.theme-industrial:not(.appearance-light) header.header .btn-header-quick-logout:hover {
+  background: rgba(242, 139, 130, 0.20) !important;
+  border-color: rgba(242, 139, 130, 0.55) !important;
+}
+
+body.theme-industrial:not(.appearance-light) .sidebar-nav,
+body.theme-industrial:not(.appearance-light) aside.sidebar-nav {
+  background: #1a1a1a !important;
+  border-right: 1px solid #3c4043 !important;
+  color: #e8eaed !important;
+}
+body.theme-industrial:not(.appearance-light) .sidebar-nav button,
+body.theme-industrial:not(.appearance-light) .sidebar-nav .tab-link,
+body.theme-industrial:not(.appearance-light) .sidebar-nav .sidebar-item,
+body.theme-industrial:not(.appearance-light) .sidebar-nav a {
+  color: #e8eaed !important;
+  background: transparent !important;
+}
+body.theme-industrial:not(.appearance-light) .sidebar-nav button:hover,
+body.theme-industrial:not(.appearance-light) .sidebar-nav .tab-link:hover,
+body.theme-industrial:not(.appearance-light) .sidebar-nav .sidebar-item:hover {
+  background: rgba(138, 180, 248, 0.10) !important;
+  color: #8ab4f8 !important;
+}
+body.theme-industrial:not(.appearance-light) .sidebar-nav .tab-link.active,
+body.theme-industrial:not(.appearance-light) .sidebar-nav .sidebar-item.active,
+body.theme-industrial:not(.appearance-light) .sidebar-nav button.active {
+  background: rgba(138, 180, 248, 0.18) !important;
+  color: #8ab4f8 !important;
+}
+body.theme-industrial:not(.appearance-light) .sidebar-nav-title {
+  color: #80868b !important;
+}
+
+body.theme-industrial:not(.appearance-light) .panel,
+body.theme-industrial:not(.appearance-light) section.panel {
+  background: #0d0d0d !important;
+  color: #e8eaed !important;
+}
+
+body.theme-industrial:not(.appearance-light) .card,
+body.theme-industrial:not(.appearance-light) .filters-card,
+body.theme-industrial:not(.appearance-light) .data-card,
+body.theme-industrial:not(.appearance-light) .metric-card,
+body.theme-industrial:not(.appearance-light) .dashboard-card,
+body.theme-industrial:not(.appearance-light) .module-delete-zone,
+body.theme-industrial:not(.appearance-light) .toolbar,
+body.theme-industrial:not(.appearance-light) .stats-card,
+body.theme-industrial:not(.appearance-light) .summary-card {
+  background: #1f1f1f !important;
+  border: 1px solid #3c4043 !important;
+  color: #e8eaed !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+body.theme-industrial:not(.appearance-light) input[type="text"],
+body.theme-industrial:not(.appearance-light) input[type="email"],
+body.theme-industrial:not(.appearance-light) input[type="number"],
+body.theme-industrial:not(.appearance-light) input[type="tel"],
+body.theme-industrial:not(.appearance-light) input[type="password"],
+body.theme-industrial:not(.appearance-light) input[type="date"],
+body.theme-industrial:not(.appearance-light) input[type="datetime-local"],
+body.theme-industrial:not(.appearance-light) input[type="search"],
+body.theme-industrial:not(.appearance-light) input[type="url"],
+body.theme-industrial:not(.appearance-light) input:not([type]),
+body.theme-industrial:not(.appearance-light) select,
+body.theme-industrial:not(.appearance-light) textarea {
+  background: #2a2a2a !important;
+  color: #e8eaed !important;
+  border: 1px solid #3c4043 !important;
+}
+body.theme-industrial:not(.appearance-light) input:focus,
+body.theme-industrial:not(.appearance-light) select:focus,
+body.theme-industrial:not(.appearance-light) textarea:focus {
+  border-color: #8ab4f8 !important;
+  outline: 2px solid rgba(138, 180, 248, 0.30) !important;
+  outline-offset: 0 !important;
+}
+body.theme-industrial:not(.appearance-light) input::placeholder,
+body.theme-industrial:not(.appearance-light) textarea::placeholder {
+  color: #80868b !important;
+  opacity: 1 !important;
+}
+
+body.theme-industrial:not(.appearance-light) .data-table,
+body.theme-industrial:not(.appearance-light) table.data-table {
+  background: #1f1f1f !important;
+  color: #e8eaed !important;
+  border-color: #3c4043 !important;
+}
+body.theme-industrial:not(.appearance-light) .data-table thead th,
+body.theme-industrial:not(.appearance-light) table.data-table thead th {
+  background: #2a2a2a !important;
+  color: #e8eaed !important;
+  border-color: #3c4043 !important;
+}
+body.theme-industrial:not(.appearance-light) .data-table tbody td,
+body.theme-industrial:not(.appearance-light) table.data-table tbody td {
+  background: #1f1f1f !important;
+  color: #e8eaed !important;
+  border-color: #3c4043 !important;
+}
+body.theme-industrial:not(.appearance-light) .data-table tbody tr:nth-child(even) td,
+body.theme-industrial:not(.appearance-light) table.data-table tbody tr:nth-child(even) td {
+  background: #232323 !important;
+}
+body.theme-industrial:not(.appearance-light) .data-table tbody tr:hover td,
+body.theme-industrial:not(.appearance-light) table.data-table tbody tr:hover td {
+  background: #2d2d2d !important;
+}
+
+body.theme-industrial:not(.appearance-light) .section-header h2,
+body.theme-industrial:not(.appearance-light) h1,
+body.theme-industrial:not(.appearance-light) h2,
+body.theme-industrial:not(.appearance-light) h3,
+body.theme-industrial:not(.appearance-light) h4 {
+  color: #e8eaed !important;
+}
+body.theme-industrial:not(.appearance-light) .section-header h2 i {
+  background: rgba(138, 180, 248, 0.18) !important;
+  color: #8ab4f8 !important;
+}
+
+body.theme-industrial:not(.appearance-light) label {
+  color: #bdc1c6 !important;
+}
+body.theme-industrial:not(.appearance-light) p,
+body.theme-industrial:not(.appearance-light) span:not([class*="badge"]):not([class*="chip"]):not([class*="btn"]) {
+  color: inherit;
+}
+
+body.theme-industrial:not(.appearance-light) .btn.outline,
+body.theme-industrial:not(.appearance-light) .btn.outlined {
+  background: #1f1f1f !important;
+  color: #e8eaed !important;
+  border: 1px solid #3c4043 !important;
+}
+body.theme-industrial:not(.appearance-light) .btn.outline:hover,
+body.theme-industrial:not(.appearance-light) .btn.outlined:hover {
+  background: rgba(138, 180, 248, 0.14) !important;
+  border-color: #8ab4f8 !important;
+  color: #8ab4f8 !important;
+}
