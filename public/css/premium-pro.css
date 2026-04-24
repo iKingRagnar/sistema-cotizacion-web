@@ -3151,3 +3151,318 @@ body table.data-table td.th-actions .btn:active::after {
 /* ============================================================================
  * FIN — premium-pro.css v9 (motion system completo)
  * ============================================================================ */
+
+/* ╔══════════════════════════════════════════════════════════════════════════╗
+   ║  FIX MAESTRO FINAL 2026-04-24 v3 — premium-pro.css (último CSS cargado)  ║
+   ║                                                                          ║
+   ║  Problemas reportados por Guillermo (con capturas):                      ║
+   ║  1) "Circulo blanco extraño" en cabecera de cards (.section-header h2 i) ║
+   ║     se ve blanco saturado en LUNA y desentonado en SOL.                  ║
+   ║  2) Botones DELETE en columna ACCIONES se ven como discos rojos enormes  ║
+   ║     y desproporcionados en ambos modos.                                  ║
+   ║  3) Inputs y buscador (search/.filter-input) siguen blancos en LUNA.     ║
+   ║  4) "Cerrar sesion" en dropdown del avatar debe ser visible y legible.   ║
+   ║                                                                          ║
+   ║  Estrategia: este bloque va al final de premium-pro.css que es EL ULTIMO ║
+   ║  CSS cargado en index.html — gana por orden de cascada incluso a igual   ║
+   ║  especificidad. Selectores con [body.theme-industrial...] doble clase    ║
+   ║  para superar especificidad de cualquier override anterior.              ║
+   ╚══════════════════════════════════════════════════════════════════════════╝ */
+
+/* ═══════════ §F1 — ICONO de SECTION HEADER (el "círculo blanco") ═══════════ */
+/* Modo SOL: gradiente azul Material con icono blanco */
+body.theme-industrial.appearance-light .section-header h2 i,
+body.theme-industrial.appearance-light .section-header h2 .fas,
+body.theme-industrial.appearance-light .section-header h2 .far,
+body.theme-industrial.appearance-light .section-header h2 .fa {
+  background: linear-gradient(135deg, #1A73E8 0%, #4285F4 100%) !important;
+  color: #ffffff !important;
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 11px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1rem !important;
+  box-shadow: 0 2px 6px rgba(26, 115, 232, 0.30) !important;
+  border: none !important;
+}
+/* Modo LUNA: fondo gris oscuro translúcido con icono azul claro */
+body.theme-industrial:not(.appearance-light) .section-header h2 i,
+body.theme-industrial:not(.appearance-light) .section-header h2 .fas,
+body.theme-industrial:not(.appearance-light) .section-header h2 .far,
+body.theme-industrial:not(.appearance-light) .section-header h2 .fa {
+  background: rgba(138, 180, 248, 0.16) !important;
+  color: #8ab4f8 !important;
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 11px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1rem !important;
+  box-shadow: none !important;
+  border: 1px solid rgba(138, 180, 248, 0.22) !important;
+}
+
+/* ═══════════ §F2 — BOTONES de ACCION en TABLAS (delete enorme rojo) ═══════ */
+/* Forzar tamaño consistente 32x32 — pisar cualquier regla anterior */
+body.theme-industrial table.data-table td.th-actions > .btn,
+body.theme-industrial table.data-table td.th-actions > button,
+body.theme-industrial table.data-table td.th-actions .row-actions-inline > .btn,
+body.theme-industrial table.data-table td.th-actions .row-actions-inline > button {
+  width: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0 !important;
+  line-height: 1 !important;
+  box-shadow: none !important;
+  border: 1px solid transparent !important;
+  margin: 0 2px !important;
+  flex: 0 0 32px !important;
+}
+body.theme-industrial table.data-table td.th-actions > .btn i,
+body.theme-industrial table.data-table td.th-actions > button i,
+body.theme-industrial table.data-table td.th-actions .row-actions-inline > .btn i,
+body.theme-industrial table.data-table td.th-actions .row-actions-inline > button i {
+  font-size: 13px !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+}
+
+/* SOL: paleta pastel para los 3 botones (preview azul, edit verde, delete rojo) */
+body.theme-industrial.appearance-light table.data-table td.th-actions > .btn.outline,
+body.theme-industrial.appearance-light table.data-table td.th-actions > [class*="btn-preview"],
+body.theme-industrial.appearance-light table.data-table td.th-actions > [class*="btn-view"] {
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+  border-color: rgba(29, 78, 216, 0.20) !important;
+}
+body.theme-industrial.appearance-light table.data-table td.th-actions > .btn.primary,
+body.theme-industrial.appearance-light table.data-table td.th-actions > [class*="btn-edit"] {
+  background: #ecfdf5 !important;
+  color: #047857 !important;
+  border-color: rgba(4, 120, 87, 0.20) !important;
+}
+body.theme-industrial.appearance-light table.data-table td.th-actions > .btn.danger,
+body.theme-industrial.appearance-light table.data-table td.th-actions > [class*="btn-delete"],
+body.theme-industrial.appearance-light table.data-table td.th-actions > [class*="btn-del-"] {
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+  border-color: rgba(185, 28, 28, 0.22) !important;
+}
+body.theme-industrial.appearance-light table.data-table td.th-actions > .btn:hover {
+  filter: brightness(.95) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* LUNA: paleta translúcida sobre fondo oscuro Chrome */
+body.theme-industrial:not(.appearance-light) table.data-table td.th-actions > .btn.outline,
+body.theme-industrial:not(.appearance-light) table.data-table td.th-actions > [class*="btn-preview"],
+body.theme-industrial:not(.appearance-light) table.data-table td.th-actions > [class*="btn-view"] {
+  background: rgba(138, 180, 248, 0.14) !important;
+  color: #8ab4f8 !important;
+  border-color: rgba(138, 180, 248, 0.28) !important;
+}
+body.theme-industrial:not(.appearance-light) table.data-table td.th-actions > .btn.primary,
+body.theme-industrial:not(.appearance-light) table.data-table td.th-actions > [class*="btn-edit"] {
+  background: rgba(129, 201, 149, 0.14) !important;
+  color: #81c995 !important;
+  border-color: rgba(129, 201, 149, 0.28) !important;
+}
+body.theme-industrial:not(.appearance-light) table.data-table td.th-actions > .btn.danger,
+body.theme-industrial:not(.appearance-light) table.data-table td.th-actions > [class*="btn-delete"],
+body.theme-industrial:not(.appearance-light) table.data-table td.th-actions > [class*="btn-del-"] {
+  background: rgba(242, 139, 130, 0.14) !important;
+  color: #f28b82 !important;
+  border-color: rgba(242, 139, 130, 0.30) !important;
+}
+body.theme-industrial:not(.appearance-light) table.data-table td.th-actions > .btn:hover {
+  filter: brightness(1.15) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* ═══════════ §F3 — INPUTS / BUSCADORES en LUNA (siguen blancos) ═════════ */
+body.theme-industrial:not(.appearance-light) input.search,
+body.theme-industrial:not(.appearance-light) input[type="search"],
+body.theme-industrial:not(.appearance-light) input.filter-input,
+body.theme-industrial:not(.appearance-light) .toolbar input,
+body.theme-industrial:not(.appearance-light) .toolbar input[type="search"],
+body.theme-industrial:not(.appearance-light) .toolbar .search,
+body.theme-industrial:not(.appearance-light) .filter-row input,
+body.theme-industrial:not(.appearance-light) .filters-card input {
+  background: #2a2a2a !important;
+  background-color: #2a2a2a !important;
+  color: #e8eaed !important;
+  border: 1px solid #3c4043 !important;
+  -webkit-text-fill-color: #e8eaed !important;
+}
+body.theme-industrial:not(.appearance-light) input.search::placeholder,
+body.theme-industrial:not(.appearance-light) input[type="search"]::placeholder,
+body.theme-industrial:not(.appearance-light) .filter-input::placeholder,
+body.theme-industrial:not(.appearance-light) .toolbar input::placeholder {
+  color: #80868b !important;
+  opacity: 1 !important;
+}
+body.theme-industrial:not(.appearance-light) input.search:focus,
+body.theme-industrial:not(.appearance-light) input[type="search"]:focus,
+body.theme-industrial:not(.appearance-light) .filter-input:focus,
+body.theme-industrial:not(.appearance-light) .toolbar input:focus {
+  border-color: #8ab4f8 !important;
+  outline: 2px solid rgba(138, 180, 248, 0.30) !important;
+  outline-offset: 0 !important;
+}
+
+/* SOL: inputs gris muy suave (Material) — no blanco puro para que se vea el borde */
+body.theme-industrial.appearance-light input.search,
+body.theme-industrial.appearance-light input[type="search"],
+body.theme-industrial.appearance-light input.filter-input,
+body.theme-industrial.appearance-light .toolbar input,
+body.theme-industrial.appearance-light .filter-row input,
+body.theme-industrial.appearance-light .filters-card input {
+  background: #ffffff !important;
+  color: #202124 !important;
+  border: 1px solid #dadce0 !important;
+  -webkit-text-fill-color: #202124 !important;
+}
+body.theme-industrial.appearance-light input.search::placeholder,
+body.theme-industrial.appearance-light input[type="search"]::placeholder,
+body.theme-industrial.appearance-light .filter-input::placeholder {
+  color: #80868b !important;
+  opacity: 1 !important;
+}
+
+/* ═══════════ §F4 — CARD/PANEL backgrounds en LUNA ═════════════════════════ */
+/* Forzar que NO queden tarjetas blancas en luna (panel-clientes y similares) */
+body.theme-industrial:not(.appearance-light) .panel,
+body.theme-industrial:not(.appearance-light) section.panel,
+body.theme-industrial:not(.appearance-light) .panel.active,
+body.theme-industrial:not(.appearance-light) .section-header,
+body.theme-industrial:not(.appearance-light) .table-wrap,
+body.theme-industrial:not(.appearance-light) .toolbar,
+body.theme-industrial:not(.appearance-light) .filters-card,
+body.theme-industrial:not(.appearance-light) .filter-row {
+  background: #1a1a1a !important;
+  color: #e8eaed !important;
+  border-color: #3c4043 !important;
+}
+body.theme-industrial:not(.appearance-light) .panel > *,
+body.theme-industrial:not(.appearance-light) .table-wrap > *:not(table):not(thead):not(tbody):not(tr):not(td):not(th) {
+  background-color: transparent !important;
+}
+
+/* ═══════════ §F5 — DROPDOWN del AVATAR (cerrar sesión visible) ════════════ */
+/* En SOL: fondo blanco, texto oscuro, "Cerrar sesión" rojo legible */
+body.theme-industrial.appearance-light .header-profile-menu {
+  background: #ffffff !important;
+  color: #202124 !important;
+  border: 1px solid #dadce0 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+}
+body.theme-industrial.appearance-light .header-profile-menu *,
+body.theme-industrial.appearance-light .header-profile-menu a,
+body.theme-industrial.appearance-light .header-profile-menu button,
+body.theme-industrial.appearance-light .header-profile-menu .menu-item,
+body.theme-industrial.appearance-light .header-profile-menu .menu-section,
+body.theme-industrial.appearance-light .header-profile-menu li {
+  color: #202124 !important;
+  background: transparent !important;
+}
+body.theme-industrial.appearance-light .header-profile-menu .menu-section-title,
+body.theme-industrial.appearance-light .header-profile-menu small,
+body.theme-industrial.appearance-light .header-profile-menu .hint {
+  color: #5f6368 !important;
+}
+body.theme-industrial.appearance-light .header-profile-menu .menu-item:hover,
+body.theme-industrial.appearance-light .header-profile-menu button:hover,
+body.theme-industrial.appearance-light .header-profile-menu a:hover {
+  background: #f1f3f4 !important;
+  color: #1a73e8 !important;
+}
+body.theme-industrial.appearance-light .header-profile-menu [class*="logout"],
+body.theme-industrial.appearance-light .header-profile-menu [class*="cerrar"],
+body.theme-industrial.appearance-light .header-profile-menu .menu-logout {
+  color: #d93025 !important;
+}
+body.theme-industrial.appearance-light .header-profile-menu [class*="logout"]:hover,
+body.theme-industrial.appearance-light .header-profile-menu [class*="cerrar"]:hover,
+body.theme-industrial.appearance-light .header-profile-menu .menu-logout:hover {
+  background: #fce8e6 !important;
+  color: #b9251a !important;
+}
+
+/* En LUNA: fondo Chrome dark con texto claro */
+body.theme-industrial:not(.appearance-light) .header-profile-menu {
+  background: #2a2a2a !important;
+  color: #e8eaed !important;
+  border: 1px solid #3c4043 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+}
+body.theme-industrial:not(.appearance-light) .header-profile-menu *,
+body.theme-industrial:not(.appearance-light) .header-profile-menu a,
+body.theme-industrial:not(.appearance-light) .header-profile-menu button,
+body.theme-industrial:not(.appearance-light) .header-profile-menu .menu-item,
+body.theme-industrial:not(.appearance-light) .header-profile-menu .menu-section,
+body.theme-industrial:not(.appearance-light) .header-profile-menu li {
+  color: #e8eaed !important;
+  background: transparent !important;
+}
+body.theme-industrial:not(.appearance-light) .header-profile-menu .menu-section-title,
+body.theme-industrial:not(.appearance-light) .header-profile-menu small,
+body.theme-industrial:not(.appearance-light) .header-profile-menu .hint {
+  color: #80868b !important;
+}
+body.theme-industrial:not(.appearance-light) .header-profile-menu .menu-item:hover,
+body.theme-industrial:not(.appearance-light) .header-profile-menu button:hover,
+body.theme-industrial:not(.appearance-light) .header-profile-menu a:hover {
+  background: rgba(138, 180, 248, 0.14) !important;
+  color: #8ab4f8 !important;
+}
+body.theme-industrial:not(.appearance-light) .header-profile-menu [class*="logout"],
+body.theme-industrial:not(.appearance-light) .header-profile-menu [class*="cerrar"],
+body.theme-industrial:not(.appearance-light) .header-profile-menu .menu-logout {
+  color: #f28b82 !important;
+}
+
+/* ═══════════ §F6 — PANEL de NOTIFICACIONES (campanita) ═════════════════ */
+body.theme-industrial.appearance-light .notifications-panel,
+body.theme-industrial.appearance-light .notifications-dropdown {
+  background: #ffffff !important;
+  color: #202124 !important;
+  border: 1px solid #dadce0 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+}
+body.theme-industrial.appearance-light .notifications-panel *,
+body.theme-industrial.appearance-light .notifications-dropdown * {
+  color: #202124 !important;
+}
+body.theme-industrial.appearance-light .notifications-panel .notif-time,
+body.theme-industrial.appearance-light .notifications-panel small {
+  color: #5f6368 !important;
+}
+
+body.theme-industrial:not(.appearance-light) .notifications-panel,
+body.theme-industrial:not(.appearance-light) .notifications-dropdown {
+  background: #2a2a2a !important;
+  color: #e8eaed !important;
+  border: 1px solid #3c4043 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+}
+body.theme-industrial:not(.appearance-light) .notifications-panel *,
+body.theme-industrial:not(.appearance-light) .notifications-dropdown * {
+  color: #e8eaed !important;
+}
+body.theme-industrial:not(.appearance-light) .notifications-panel .notif-time,
+body.theme-industrial:not(.appearance-light) .notifications-panel small {
+  color: #80868b !important;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   FIN — Fix Maestro Final v3
+   ════════════════════════════════════════════════════════════════════════ */
