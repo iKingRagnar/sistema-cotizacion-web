@@ -30,37 +30,46 @@
  *   surface-solid:      ~85%    (modales/dropdowns - legibilidad)
  *   blur:               28px + saturate(190%)
  * ============================================================ */
+/* ============================================================
+ * OPACIDADES v15 - BLANCO VIVO / NEGRO VIVO
+ *   El problema del "blanco gris sucio" era que el glass blureaba
+ *   capas oscuras del theme-industrial detras (#0f172a, #1e293b).
+ *   Solucion:
+ *     1) Subir opacidad del surface a 50%+ (blanco dominante real)
+ *     2) brightness(1.08) en el blur -> blanco brillante, no opaco
+ *     3) Cubrir TODO contenedor intermedio con transparent
+ * ============================================================ */
 html body.theme-industrial.appearance-light {
-  --nano-overlay:           rgba(248, 250, 253, 0.16);
-  --nano-surface:           rgba(255, 255, 255, 0.32);
-  --nano-surface-strong:    rgba(255, 255, 255, 0.32);   /* == surface: MISMO tono */
-  --nano-surface-solid:     rgba(255, 255, 255, 0.85);
-  --nano-surface-subtle:    rgba(255, 255, 255, 0.10);
-  --nano-border:            rgba(15, 23, 42, 0.10);
-  --nano-border-strong:     rgba(15, 23, 42, 0.16);
+  --nano-overlay:           rgba(248, 250, 253, 0.14);
+  --nano-surface:           rgba(255, 255, 255, 0.52);   /* blanco vivo y uniforme */
+  --nano-surface-strong:    rgba(255, 255, 255, 0.52);   /* MISMO tono - un solo color */
+  --nano-surface-solid:     rgba(255, 255, 255, 0.88);
+  --nano-surface-subtle:    rgba(255, 255, 255, 0.18);
+  --nano-border:            rgba(15, 23, 42, 0.08);
+  --nano-border-strong:     rgba(15, 23, 42, 0.14);
   --nano-text:              #0b1220;
   --nano-text-soft:         #1e293b;
   --nano-text-muted:        #475569;
   --nano-accent:            #1a73e8;
-  --nano-blur:              blur(28px) saturate(190%);
-  --nano-blur-light:        blur(16px) saturate(170%);
+  --nano-blur:              blur(30px) saturate(200%) brightness(1.08);
+  --nano-blur-light:        blur(18px) saturate(180%) brightness(1.06);
   --nano-shadow:            0 8px 32px rgba(15, 23, 42, 0.08);
 }
 
 html body.theme-industrial:not(.appearance-light) {
-  --nano-overlay:           rgba(5, 8, 15, 0.18);
-  --nano-surface:           rgba(10, 14, 22, 0.34);
-  --nano-surface-strong:    rgba(10, 14, 22, 0.34);      /* == surface: MISMO tono */
-  --nano-surface-solid:     rgba(6, 9, 16, 0.85);
-  --nano-surface-subtle:    rgba(10, 14, 22, 0.10);
+  --nano-overlay:           rgba(3, 6, 12, 0.22);
+  --nano-surface:           rgba(8, 12, 20, 0.56);       /* negro vivo uniforme */
+  --nano-surface-strong:    rgba(8, 12, 20, 0.56);       /* MISMO tono */
+  --nano-surface-solid:     rgba(4, 7, 14, 0.90);
+  --nano-surface-subtle:    rgba(8, 12, 20, 0.18);
   --nano-border:            rgba(255, 255, 255, 0.08);
   --nano-border-strong:     rgba(255, 255, 255, 0.14);
   --nano-text:              #f1f5f9;
   --nano-text-soft:         #e2e8f0;
   --nano-text-muted:        #a0aec0;
   --nano-accent:            #4ea1ff;
-  --nano-blur:              blur(28px) saturate(190%);
-  --nano-blur-light:        blur(16px) saturate(170%);
+  --nano-blur:              blur(30px) saturate(200%) brightness(0.90);
+  --nano-blur-light:        blur(18px) saturate(180%) brightness(0.92);
   --nano-shadow:            0 8px 32px rgba(0, 0, 0, 0.30);
 }
 
@@ -120,7 +129,27 @@ html body.theme-industrial #main-content,
 html body.theme-industrial .panel,
 html body.theme-industrial section.panel,
 html body.theme-industrial [id^="panel-"],
-html body.theme-industrial .dashboard-surface {
+html body.theme-industrial .dashboard-surface,
+html body.theme-industrial .page,
+html body.theme-industrial .container,
+html body.theme-industrial .wrapper,
+html body.theme-industrial .app-shell,
+html body.theme-industrial .layout,
+html body.theme-industrial .layout-main,
+html body.theme-industrial .content,
+html body.theme-industrial #app,
+html body.theme-industrial #app-root,
+html body.theme-industrial #root,
+html body.theme-industrial #content,
+html body.theme-industrial .tab-content,
+html body.theme-industrial .tab-panel,
+html body.theme-industrial [role="tabpanel"],
+html body.theme-industrial .pane,
+html body.theme-industrial .module-container,
+html body.theme-industrial .view,
+html body.theme-industrial .view-container,
+html body.theme-industrial .screen,
+html body.theme-industrial .screen-body {
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
@@ -1092,4 +1121,122 @@ html body.theme-industrial .content-header {
   -webkit-backdrop-filter: var(--nano-blur) !important;
   color: var(--nano-text) !important;
   box-shadow: var(--nano-shadow) !important;
+}
+
+
+/* ============================================================
+ * 25. MATAR TODO LO VERDE / TEAL / EMERALD HARDCODED
+ *
+ *   style.css usa paleta teal/emerald (#0f766e, #0d9488, #14b8a6,
+ *   #10b981, #059669, #2dd4bf, #34d399) para:
+ *     - Textos de categoria "Refacciones generales" (color teal)
+ *     - Textos "Almacen principal" (color teal)
+ *     - Bordes de td en algunas tablas (rayas verticales verdes)
+ *     - Outlines de focus teal
+ *     - Icons de cards/KPIs con gradientes verdes
+ *     - Badges de estado (mantenimiento realizado, bono pagado)
+ *     - Semaforo verde
+ *
+ *   Estrategia: normalizar TEXTOS verdes a --nano-text (blanco/negro
+ *   segun modo). Mantenemos semaforo-verde y semantic badges que son
+ *   comunicadores de estado (rojo/verde/amarillo) pero suavizados.
+ * ============================================================ */
+
+/* Textos con color teal/emerald directo -> van a color del tema */
+html body.theme-industrial [style*="color: #0f766e"],
+html body.theme-industrial [style*="color: #0d9488"],
+html body.theme-industrial [style*="color: #14b8a6"],
+html body.theme-industrial [style*="color: #10b981"],
+html body.theme-industrial [style*="color: #059669"],
+html body.theme-industrial [style*="color: #2dd4bf"],
+html body.theme-industrial [style*="color: #34d399"] {
+  color: var(--nano-text) !important;
+}
+
+/* Chips/badges de categoria en tablas de refacciones, almacen, etc.
+   No los quitamos del todo (son semanticos) pero los neutralizamos
+   para que no rompan la paleta glass uniforme. */
+html body.theme-industrial .badge-categoria,
+html body.theme-industrial .chip-categoria,
+html body.theme-industrial .cat-chip,
+html body.theme-industrial .categoria-tag,
+html body.theme-industrial td .badge,
+html body.theme-industrial td .chip,
+html body.theme-industrial td .tag {
+  background: var(--nano-surface-subtle) !important;
+  color: var(--nano-text) !important;
+  border: 1px solid var(--nano-border) !important;
+  text-shadow: none !important;
+}
+
+/* Outline/focus teal -> accent del tema */
+html body.theme-industrial *:focus-visible {
+  outline-color: var(--nano-accent) !important;
+}
+
+/* Bordes verticales verdes entre columnas de tabla.
+   En style.css thead/tbody usan border-color propios.
+   Forzamos a --nano-border neutro. */
+html body.theme-industrial table td,
+html body.theme-industrial table th,
+html body.theme-industrial .data-table td,
+html body.theme-industrial .data-table th {
+  border-color: var(--nano-border) !important;
+  border-right-color: var(--nano-border) !important;
+  border-left-color: var(--nano-border) !important;
+  border-top-color: var(--nano-border) !important;
+  border-bottom-color: var(--nano-border) !important;
+}
+
+/* Gradientes teal/emerald de headers AI, botones de cards, etc. */
+html body.theme-industrial .card-ai h2,
+html body.theme-industrial .card-demo h2 i {
+  color: var(--nano-accent) !important;
+}
+
+/* Dashboard card icons - los que tenian fondo verde teal
+   (refacciones, cotizaciones) */
+html body.theme-industrial .dashboard-card[data-dashboard="refacciones"] .dashboard-card-icon,
+html body.theme-industrial .dashboard-card[data-dashboard="cotizaciones"] .dashboard-card-icon {
+  background: var(--nano-surface-subtle) !important;
+  color: var(--nano-accent) !important;
+  border: 1px solid var(--nano-border) !important;
+}
+
+/* Barras/valores positivos que eran verde brillante */
+html body.theme-industrial .dash-value-positive {
+  color: var(--nano-accent) !important;
+}
+
+
+/* ============================================================
+ * 26. NEUTRALIZAR theme-industrial.css - contenedores oscuros
+ *
+ *   theme-industrial.css pone:
+ *     body { bg #0f172a }, containers { bg #1e293b/#334155 }
+ *   que mi nano-fondo cubre al body, pero hay contenedores
+ *   internos que siguen oscuros y mezclan gris al blur.
+ *
+ *   Fuerza: todo descendiente de .theme-industrial que no sea
+ *   card/modal/input que he cubierto explicitamente -> transparente.
+ * ============================================================ */
+
+html body.theme-industrial .industrial-bg,
+html body.theme-industrial .industrial-panel,
+html body.theme-industrial .industrial-surface,
+html body.theme-industrial .surface,
+html body.theme-industrial .surface-dark,
+html body.theme-industrial .bg-dark,
+html body.theme-industrial .bg-slate,
+html body.theme-industrial .dark-panel {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+}
+
+/* Row containers dentro de paneles (divs intermedios que no son cards) */
+html body.theme-industrial section > div:not(.card):not(.modal):not(.dashboard-card):not(.kpi-card):not(.module-card):not(.section-header):not(.dashboard-header):not(.dashboard-score-tile):not(.dashboard-kpi-strip):not(.dashboard-crossfilter-bar):not(.table-wrap):not(.chart-container):not(.stock-alert-bar):not(.filters-card):not(.toolbar) {
+  background-color: transparent !important;
 }
