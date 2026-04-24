@@ -1047,6 +1047,20 @@
     const b = qs('#btn-header-profile');
     if (m) m.classList.add('hidden');
     if (b) b.setAttribute('aria-expanded', 'false');
+    try { window.removeEventListener('scroll', positionHeaderProfileMenu, true); } catch (_) {}
+    try { window.removeEventListener('resize', positionHeaderProfileMenu); } catch (_) {}
+  }
+  // Fix 2026-04-23: el menu ahora es position:fixed (escapa de overflow:hidden
+  // del header). Calculamos top/right a partir del rect del boton trigger.
+  function positionHeaderProfileMenu() {
+    const m = qs('#header-profile-menu');
+    const b = qs('#btn-header-profile');
+    if (!m || !b) return;
+    const r = b.getBoundingClientRect();
+    const gap = 8;
+    m.style.top = (r.bottom + gap) + 'px';
+    m.style.right = Math.max(8, window.innerWidth - r.right) + 'px';
+    m.style.left = 'auto';
   }
   function toggleHeaderProfileMenu() {
     const m = qs('#header-profile-menu');
@@ -1054,8 +1068,11 @@
     if (!m || !b) return;
     const open = m.classList.contains('hidden');
     if (open) {
+      positionHeaderProfileMenu();
       m.classList.remove('hidden');
       b.setAttribute('aria-expanded', 'true');
+      try { window.addEventListener('scroll', positionHeaderProfileMenu, true); } catch (_) {}
+      try { window.addEventListener('resize', positionHeaderProfileMenu); } catch (_) {}
     } else {
       closeHeaderProfileMenu();
     }

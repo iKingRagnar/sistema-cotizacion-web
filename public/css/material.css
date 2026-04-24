@@ -214,16 +214,16 @@ body.theme-industrial.appearance-light .btn-header-profile:hover {
   color: #1A73E8 !important;
 }
 
+/* Fix 2026-04-23: position fixed para escapar de overflow:hidden del header.
+   Top/right se recalculan via JS al abrir (toggleHeaderProfileMenu en app.js). */
 body.theme-industrial.appearance-light .header-profile-menu {
-  position: absolute !important;
-  right: 0 !important;
-  top: calc(100% + 8px) !important;
+  position: fixed !important;
   min-width: 220px !important;
   background: #FFFFFF !important;
   border: 1px solid #DADCE0 !important;
   border-radius: 12px !important;
   box-shadow: 0 6px 10px rgba(60,64,67,.18), 0 2px 4px rgba(60,64,67,.12) !important;
-  z-index: 100 !important;
+  z-index: 15000 !important;
   overflow: hidden !important;
   padding: 8px 0 !important;
 }

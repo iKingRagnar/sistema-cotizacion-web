@@ -7472,3 +7472,140 @@ body.density-spacious table.data-table thead th {
   padding-bottom: 16px !important;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   Fix 2026-04-23: botones de accion en tablas SIN .row-actions-inline wrapper
+   (Clientes, Maquinas, Cotizaciones, Garantias, Bonos, Viajes, Incidentes,
+   Bitacoras, Ventas, Revision, Tecnicos, Mantenimientos, etc.)
+
+   Antes: solo Refacciones envolvia los botones en <div class="row-actions-inline">,
+   por lo que los estilos premium (azul preview, verde edit, rojo claro delete)
+   solo aplicaban ahi. El resto caia al estilo "btn primary/danger" base
+   (cuadrado solido morado/rojo) que se veia "mocho".
+
+   Ahora: los mismos estilos aplican tambien cuando los botones estan
+   directamente como hijos de td.th-actions (sin wrapper).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Layout flex en la celda directamente (mismo comportamiento que .row-actions-inline) */
+body.md3-on table.data-table td.th-actions,
+body table.data-table td.th-actions {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 4px !important;
+}
+
+/* Tamaño consistente (32x32 redondo) para botones sueltos en la celda */
+body.md3-on table.data-table td.th-actions > button,
+body table.data-table td.th-actions > button,
+body.md3-on table.data-table td.th-actions > .btn,
+body table.data-table td.th-actions > .btn {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  width: 32px !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 999px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid transparent !important;
+}
+
+body.md3-on table.data-table td.th-actions > button i,
+body table.data-table td.th-actions > button i,
+body.md3-on table.data-table td.th-actions > .btn i,
+body table.data-table td.th-actions > .btn i {
+  font-size: 13px !important;
+  margin: 0 !important;
+}
+
+/* Variantes semanticas (azul preview, verde edit, rojo claro delete, ambar stock)
+   aplicadas a botones directos en td.th-actions */
+body.md3-on table.data-table td.th-actions > [class*="btn-preview"],
+body table.data-table td.th-actions > [class*="btn-preview"],
+body.md3-on table.data-table td.th-actions > [class*="btn-view"],
+body table.data-table td.th-actions > [class*="btn-view"] {
+  background: #eff6ff !important;
+  color: #1A73E8 !important;
+  border-color: rgba(26, 115, 232, 0.2) !important;
+}
+body.md3-on table.data-table td.th-actions > [class*="btn-preview"]:hover,
+body table.data-table td.th-actions > [class*="btn-preview"]:hover,
+body.md3-on table.data-table td.th-actions > [class*="btn-view"]:hover,
+body table.data-table td.th-actions > [class*="btn-view"]:hover {
+  background: #dbeafe !important;
+  transform: translateY(-1px) !important;
+}
+
+body.md3-on table.data-table td.th-actions > [class*="btn-edit"],
+body table.data-table td.th-actions > [class*="btn-edit"] {
+  background: #ecfdf5 !important;
+  color: #047857 !important;
+  border-color: rgba(5, 150, 105, 0.2) !important;
+}
+body.md3-on table.data-table td.th-actions > [class*="btn-edit"]:hover,
+body table.data-table td.th-actions > [class*="btn-edit"]:hover {
+  background: #d1fae5 !important;
+  transform: translateY(-1px) !important;
+}
+
+body.md3-on table.data-table td.th-actions > [class*="btn-delete"],
+body table.data-table td.th-actions > [class*="btn-delete"] {
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+  border-color: rgba(185, 28, 28, 0.2) !important;
+}
+body.md3-on table.data-table td.th-actions > [class*="btn-delete"]:hover,
+body table.data-table td.th-actions > [class*="btn-delete"]:hover {
+  background: #fee2e2 !important;
+  transform: translateY(-1px) !important;
+}
+
+body.md3-on table.data-table td.th-actions > [class*="btn-stock"],
+body table.data-table td.th-actions > [class*="btn-stock"] {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  border-color: rgba(146, 64, 14, 0.2) !important;
+}
+body.md3-on table.data-table td.th-actions > [class*="btn-stock"]:hover,
+body table.data-table td.th-actions > [class*="btn-stock"]:hover {
+  background: #fde68a !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Botones que no caen en preview/edit/delete/stock (PDF, mantenimiento, etc):
+   estilo neutral acorde, nunca cuadrado solido feo */
+body.md3-on table.data-table td.th-actions > .btn.outline,
+body table.data-table td.th-actions > .btn.outline {
+  background: #f8fafc !important;
+  color: #475569 !important;
+  border-color: rgba(71, 85, 105, 0.2) !important;
+}
+body.md3-on table.data-table td.th-actions > .btn.outline:hover,
+body table.data-table td.th-actions > .btn.outline:hover {
+  background: #e2e8f0 !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Soporte tema oscuro */
+body.dark-theme table.data-table td.th-actions > [class*="btn-preview"],
+body.dark-theme table.data-table td.th-actions > [class*="btn-view"] {
+  background: rgba(26, 115, 232, 0.18) !important;
+  color: #93c5fd !important;
+}
+body.dark-theme table.data-table td.th-actions > [class*="btn-edit"] {
+  background: rgba(5, 150, 105, 0.18) !important;
+  color: #6ee7b7 !important;
+}
+body.dark-theme table.data-table td.th-actions > [class*="btn-delete"] {
+  background: rgba(185, 28, 28, 0.18) !important;
+  color: #fca5a5 !important;
+}
+body.dark-theme table.data-table td.th-actions > [class*="btn-stock"] {
+  background: rgba(146, 64, 14, 0.22) !important;
+  color: #fbbf24 !important;
+}

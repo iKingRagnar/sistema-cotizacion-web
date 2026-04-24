@@ -72,10 +72,15 @@
   display: block;
 }
 
+/* Fix 2026-04-23: position fixed (no absolute) para escapar del
+   overflow:hidden que tiene .header en premium.css. Antes el menu se abria
+   pero quedaba RECORTADO por el header => parecia que "no pasa nada"
+   al hacer click en el avatar. Top/right se calculan via JS al abrir
+   (toggleHeaderProfileMenu en app.js) usando getBoundingClientRect del boton. */
 .header-profile-menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
+  position: fixed;
+  top: 64px; /* fallback; JS recalcula al abrir segun el boton real */
+  right: 16px;
   min-width: 260px;
   max-width: min(320px, 92vw);
   padding: 0.5rem 0;
