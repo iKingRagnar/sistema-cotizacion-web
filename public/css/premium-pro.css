@@ -4216,8 +4216,8 @@ body.theme-industrial.appearance-light .btn.primary:active {
 /* Fija posición bottom-right estable para que NO vuele */
 .ai-widget-wrap {
   position: fixed !important;
-  right: 20px !important;
-  bottom: 60px !important;
+  right: 24px !important;
+  bottom: 24px !important;
   z-index: 9900 !important;
   pointer-events: auto !important;
 }
@@ -4545,3 +4545,288 @@ html body.theme-industrial.appearance-light header.header .btn-icon-header:hover
 /* ════════════════════════════════════════════════════════════════════════
    FIN — Fix Maestro v6 (Sistema de Diseño Empresarial Plateado)
    ════════════════════════════════════════════════════════════════════════ */
+
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   FIX MAESTRO v7 — 2026-04-24
+   1. Ocultar FABs flotantes duplicados (theme-fab + density-fab ya existen en avatar menu)
+   2. Tarjetas de pronósticos + comparativos en modo LUNA → negro/plateado
+   3. Panel de notificaciones → contraste legible SOL + LUNA
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════ §W1 — Ocultar FABs flotantes redundantes (abajo-derecha) ═══════════
+   Estos duplican las opciones "Tema y apariencia" y "Densidad de tablas"
+   que ya están en el menú del avatar. */
+.prem-theme-fab,
+.prem-density-fab,
+.prem-theme-picker,
+.prem-density-picker {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* ═══════════ §W2 — Pronósticos & Comparativos en LUNA (negro puro, sin pasteles) */
+body.theme-industrial:not(.appearance-light) .dashboard-forecast-card,
+body.theme-industrial:not(.appearance-light) .dashboard-stat-card {
+  background: #0f0f0f !important;
+  background-image: none !important;
+  border: 1px solid #2a2a2a !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 4px 14px rgba(0, 0, 0, 0.45) !important;
+  color: #e8eaed !important;
+}
+
+body.theme-industrial:not(.appearance-light) .dashboard-forecast-card h4,
+body.theme-industrial:not(.appearance-light) .dashboard-stat-card h4,
+body.theme-industrial:not(.appearance-light) .dashboard-stat-card-title-cf {
+  color: #c8cacd !important;
+  -webkit-text-fill-color: #c8cacd !important;
+  background: transparent !important;
+  background-clip: unset !important;
+  -webkit-background-clip: unset !important;
+  border-bottom: 1px solid #2a2a2a !important;
+  padding-bottom: 8px !important;
+  margin-bottom: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.2px !important;
+  text-transform: uppercase !important;
+  font-size: .78rem !important;
+}
+
+body.theme-industrial:not(.appearance-light) .dashboard-forecast-card .stat-row,
+body.theme-industrial:not(.appearance-light) .dashboard-stat-card .stat-row {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  padding: 6px 0 !important;
+  color: #e8eaed !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-forecast-card .stat-row:last-child,
+body.theme-industrial:not(.appearance-light) .dashboard-stat-card .stat-row:last-child {
+  border-bottom: 0 !important;
+}
+
+body.theme-industrial:not(.appearance-light) .dashboard-forecast-card .stat-label,
+body.theme-industrial:not(.appearance-light) .dashboard-stat-card .stat-label {
+  color: #9aa0a6 !important;
+  -webkit-text-fill-color: #9aa0a6 !important;
+  font-weight: 500 !important;
+}
+
+body.theme-industrial:not(.appearance-light) .dashboard-forecast-card .stat-value,
+body.theme-industrial:not(.appearance-light) .dashboard-stat-card .stat-value {
+  color: #f1f3f4 !important;
+  -webkit-text-fill-color: #f1f3f4 !important;
+  font-weight: 600 !important;
+}
+
+/* Diff chips (positive/negative/neutral) más sobrios en luna */
+body.theme-industrial:not(.appearance-light) .dashboard-stat-card .stat-diff {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding: 2px 8px !important;
+  border-radius: 10px !important;
+  font-size: .72rem !important;
+  font-weight: 600 !important;
+  margin-left: 6px !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-stat-card .stat-diff.positive {
+  color: #81c995 !important;
+  -webkit-text-fill-color: #81c995 !important;
+  background: rgba(52, 168, 83, 0.12) !important;
+  border-color: rgba(52, 168, 83, 0.28) !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-stat-card .stat-diff.negative {
+  color: #f28b82 !important;
+  -webkit-text-fill-color: #f28b82 !important;
+  background: rgba(234, 67, 53, 0.12) !important;
+  border-color: rgba(234, 67, 53, 0.28) !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-stat-card .stat-diff.neutral {
+  color: #bdc1c6 !important;
+  -webkit-text-fill-color: #bdc1c6 !important;
+}
+
+/* Leyenda "Cada fila: Cotizaciones..." */
+body.theme-industrial:not(.appearance-light) .dashboard-forecast-legend,
+body.theme-industrial:not(.appearance-light) .dashboard-hint {
+  color: #9aa0a6 !important;
+  -webkit-text-fill-color: #9aa0a6 !important;
+  background: transparent !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-forecast-legend strong,
+body.theme-industrial:not(.appearance-light) .dashboard-hint strong {
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+}
+
+/* SOL: tarjetas pronóstico y comparativo con fondo blanco limpio */
+body.theme-industrial.appearance-light .dashboard-forecast-card,
+body.theme-industrial.appearance-light .dashboard-stat-card {
+  background: #ffffff !important;
+  background-image: none !important;
+  border: 1px solid #e8eaed !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  color: #202124 !important;
+}
+body.theme-industrial.appearance-light .dashboard-forecast-card h4,
+body.theme-industrial.appearance-light .dashboard-stat-card h4,
+body.theme-industrial.appearance-light .dashboard-stat-card-title-cf {
+  color: #3c4043 !important;
+  -webkit-text-fill-color: #3c4043 !important;
+  background: transparent !important;
+  background-clip: unset !important;
+  -webkit-background-clip: unset !important;
+  border-bottom: 1px solid #e8eaed !important;
+  padding-bottom: 8px !important;
+  margin-bottom: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.2px !important;
+  text-transform: uppercase !important;
+  font-size: .78rem !important;
+}
+body.theme-industrial.appearance-light .dashboard-forecast-card .stat-label,
+body.theme-industrial.appearance-light .dashboard-stat-card .stat-label {
+  color: #5f6368 !important;
+}
+body.theme-industrial.appearance-light .dashboard-forecast-card .stat-value,
+body.theme-industrial.appearance-light .dashboard-stat-card .stat-value {
+  color: #202124 !important;
+  font-weight: 600 !important;
+}
+
+/* ═══════════ §W3 — Panel de NOTIFICACIONES legible en ambos modos ═══════════ */
+
+/* LUNA: panel negro con texto plateado */
+body.theme-industrial:not(.appearance-light) .notifications-panel {
+  background: #1a1a1a !important;
+  background-image: none !important;
+  border: 1px solid #2a2a2a !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6) !important;
+  color: #e8eaed !important;
+}
+body.theme-industrial:not(.appearance-light) .notifications-header,
+body.theme-industrial:not(.appearance-light) .notifications-header strong {
+  color: #f1f3f4 !important;
+  -webkit-text-fill-color: #f1f3f4 !important;
+  background: transparent !important;
+  border-bottom: 1px solid #2a2a2a !important;
+}
+body.theme-industrial:not(.appearance-light) .notifications-tools label,
+body.theme-industrial:not(.appearance-light) .notifications-panel label {
+  color: #bdc1c6 !important;
+  -webkit-text-fill-color: #bdc1c6 !important;
+}
+body.theme-industrial:not(.appearance-light) .notifications-date,
+body.theme-industrial:not(.appearance-light) #notifications-range-preset,
+body.theme-industrial:not(.appearance-light) #notifications-date-from,
+body.theme-industrial:not(.appearance-light) #notifications-date-to,
+body.theme-industrial:not(.appearance-light) .notifications-panel select,
+body.theme-industrial:not(.appearance-light) .notifications-panel input[type="date"],
+body.theme-industrial:not(.appearance-light) .notifications-panel input[type="text"],
+body.theme-industrial:not(.appearance-light) .notifications-panel input[type="search"] {
+  background: #2a2a2a !important;
+  background-image: none !important;
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+  border: 1px solid #3c4043 !important;
+  color-scheme: dark !important;
+}
+body.theme-industrial:not(.appearance-light) .notifications-panel select option {
+  background: #1a1a1a !important;
+  color: #e8eaed !important;
+}
+body.theme-industrial:not(.appearance-light) .notifications-panel .notif-item,
+body.theme-industrial:not(.appearance-light) .notifications-panel .notification-item,
+body.theme-industrial:not(.appearance-light) .notifications-panel li,
+body.theme-industrial:not(.appearance-light) .notifications-panel .notifications-empty {
+  background: transparent !important;
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+body.theme-industrial:not(.appearance-light) .notifications-panel .notif-item strong,
+body.theme-industrial:not(.appearance-light) .notifications-panel .notification-item strong,
+body.theme-industrial:not(.appearance-light) .notifications-panel .notif-title {
+  color: #f1f3f4 !important;
+  -webkit-text-fill-color: #f1f3f4 !important;
+}
+body.theme-industrial:not(.appearance-light) .notifications-panel .notif-meta,
+body.theme-industrial:not(.appearance-light) .notifications-panel .notif-time,
+body.theme-industrial:not(.appearance-light) .notifications-panel small,
+body.theme-industrial:not(.appearance-light) .notifications-panel .text-muted {
+  color: #9aa0a6 !important;
+  -webkit-text-fill-color: #9aa0a6 !important;
+}
+body.theme-industrial:not(.appearance-light) .notifications-panel button,
+body.theme-industrial:not(.appearance-light) .notifications-panel .btn {
+  background: #2a2a2a !important;
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+  border: 1px solid #3c4043 !important;
+}
+body.theme-industrial:not(.appearance-light) .notifications-panel button:hover,
+body.theme-industrial:not(.appearance-light) .notifications-panel .btn:hover {
+  background: #35383e !important;
+  border-color: #5f6368 !important;
+}
+
+/* SOL: panel blanco con texto oscuro legible */
+body.theme-industrial.appearance-light .notifications-panel {
+  background: #ffffff !important;
+  background-image: none !important;
+  border: 1px solid #e8eaed !important;
+  box-shadow: 0 8px 28px rgba(60, 64, 67, 0.15) !important;
+  color: #202124 !important;
+}
+body.theme-industrial.appearance-light .notifications-header,
+body.theme-industrial.appearance-light .notifications-header strong {
+  color: #202124 !important;
+  -webkit-text-fill-color: #202124 !important;
+  background: transparent !important;
+  border-bottom: 1px solid #e8eaed !important;
+}
+body.theme-industrial.appearance-light .notifications-tools label,
+body.theme-industrial.appearance-light .notifications-panel label {
+  color: #3c4043 !important;
+  -webkit-text-fill-color: #3c4043 !important;
+}
+body.theme-industrial.appearance-light .notifications-date,
+body.theme-industrial.appearance-light #notifications-range-preset,
+body.theme-industrial.appearance-light #notifications-date-from,
+body.theme-industrial.appearance-light #notifications-date-to,
+body.theme-industrial.appearance-light .notifications-panel select,
+body.theme-industrial.appearance-light .notifications-panel input[type="date"],
+body.theme-industrial.appearance-light .notifications-panel input[type="text"],
+body.theme-industrial.appearance-light .notifications-panel input[type="search"] {
+  background: #ffffff !important;
+  color: #202124 !important;
+  -webkit-text-fill-color: #202124 !important;
+  border: 1px solid #dadce0 !important;
+  color-scheme: light !important;
+}
+body.theme-industrial.appearance-light .notifications-panel .notif-item,
+body.theme-industrial.appearance-light .notifications-panel .notification-item,
+body.theme-industrial.appearance-light .notifications-panel li,
+body.theme-industrial.appearance-light .notifications-panel .notifications-empty {
+  background: transparent !important;
+  color: #202124 !important;
+  -webkit-text-fill-color: #202124 !important;
+  border-bottom: 1px solid #e8eaed !important;
+}
+body.theme-industrial.appearance-light .notifications-panel .notif-item strong,
+body.theme-industrial.appearance-light .notifications-panel .notification-item strong,
+body.theme-industrial.appearance-light .notifications-panel .notif-title {
+  color: #202124 !important;
+  -webkit-text-fill-color: #202124 !important;
+}
+body.theme-industrial.appearance-light .notifications-panel .notif-meta,
+body.theme-industrial.appearance-light .notifications-panel .notif-time,
+body.theme-industrial.appearance-light .notifications-panel small,
+body.theme-industrial.appearance-light .notifications-panel .text-muted {
+  color: #5f6368 !important;
+  -webkit-text-fill-color: #5f6368 !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   FIN — Fix Maestro v7
+   ══════════════════════════════════════════════════════════════════════════════ */
