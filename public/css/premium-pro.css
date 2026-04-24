@@ -3466,3 +3466,168 @@ body.theme-industrial:not(.appearance-light) .notifications-panel small {
 /* ════════════════════════════════════════════════════════════════════════
    FIN — Fix Maestro Final v3
    ════════════════════════════════════════════════════════════════════════ */
+
+/* ╔══════════════════════════════════════════════════════════════════════════╗
+   ║  FIX MAESTRO v4 (RAIZ REAL)  — 2026-04-24                                ║
+   ║                                                                          ║
+   ║  Diagnostico: premium.css define --ds-surface:#fff y --ds-text:#0f172a   ║
+   ║  como variables GLOBALES. Todos los section-header, paneles, cards usan  ║
+   ║  var(--ds-surface) con especificidad ID (#panel-clientes ...) que pisa   ║
+   ║  mis reglas de clase. Resultado: en modo LUNA los cards y secciones      ║
+   ║  SIGUEN blancos con texto oscuro porque la variable NUNCA cambia.        ║
+   ║                                                                          ║
+   ║  Estrategia RAIZ: redefinir las variables --ds-* en modo LUNA. Todos     ║
+   ║  los usos de var(--ds-surface/--ds-text/etc) automaticamente heredan     ║
+   ║  la paleta oscura Chrome sin necesidad de override componente-por-       ║
+   ║  componente.                                                             ║
+   ║                                                                          ║
+   ║  + Override con #panel-* para gradientes de color solidos hardcodeados.  ║
+   ╚══════════════════════════════════════════════════════════════════════════╝ */
+
+/* ═══════════ §V1 — REDEFINIR VARIABLES CSS EN MODO LUNA ═══════════════════ */
+/* Esta es la SOLUCION RAIZ: cambia la paleta base del design-system en luna */
+body.theme-industrial:not(.appearance-light),
+html body.theme-industrial:not(.appearance-light) {
+  --ds-surface:      #1f1f1f !important;
+  --ds-surface-2:    #2a2a2a !important;
+  --ds-surface-3:    #232323 !important;
+  --ds-text:         #e8eaed !important;
+  --ds-text-2:       #bdc1c6 !important;
+  --ds-text-3:       #80868b !important;
+  --ds-border:       #3c4043 !important;
+  --ds-border-2:     #5f6368 !important;
+  --ds-shadow:       rgba(0, 0, 0, 0.6) !important;
+  --ds-accent:       #8ab4f8 !important;
+  --ds-accent-2:     #aecbfa !important;
+  --ds-danger:       #f28b82 !important;
+  --ds-success:      #81c995 !important;
+  --ds-warning:      #fdd663 !important;
+  --pp-bg-card:      #1f1f1f !important;
+  --pp-bg-base:      #0d0d0d !important;
+  --pp-bd:           #3c4043 !important;
+  --pp-text:         #e8eaed !important;
+  --pp-text-2:       #bdc1c6 !important;
+  --pp-brand-50:     rgba(138, 180, 248, 0.14) !important;
+  --pp-brand-200:    rgba(138, 180, 248, 0.30) !important;
+  --pp-brand-600:    #8ab4f8 !important;
+  --pp-sh-sm:        0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* En SOL aseguramos los defaults (por si alguien los pisa en otro lado) */
+body.theme-industrial.appearance-light,
+html body.theme-industrial.appearance-light {
+  --ds-surface:      #ffffff !important;
+  --ds-surface-2:    #f8fafc !important;
+  --ds-text:         #0f172a !important;
+  --ds-text-2:       #475569 !important;
+  --ds-text-3:       #94a3b8 !important;
+  --ds-border:       #e2e8f0 !important;
+}
+
+/* ═══════════ §V2 — PANELES con GRADIENTES HARDCODEADOS (#panel-*) ═════════ */
+/* En LUNA aplastar los gradientes de colores vivos a gris Chrome oscuro */
+body.theme-industrial:not(.appearance-light) #panel-clientes .section-header,
+body.theme-industrial:not(.appearance-light) #panel-refacciones .section-header,
+body.theme-industrial:not(.appearance-light) #panel-almacen .section-header,
+body.theme-industrial:not(.appearance-light) #panel-maquinas .section-header,
+body.theme-industrial:not(.appearance-light) #panel-cotizaciones .section-header,
+body.theme-industrial:not(.appearance-light) #panel-ventas .section-header,
+body.theme-industrial:not(.appearance-light) #panel-prospeccion .section-header,
+body.theme-industrial:not(.appearance-light) #panel-bonos .section-header,
+body.theme-industrial:not(.appearance-light) #panel-viajes .section-header,
+body.theme-industrial:not(.appearance-light) #panel-tarifas .section-header,
+body.theme-industrial:not(.appearance-light) #panel-tecnicos .section-header,
+body.theme-industrial:not(.appearance-light) #panel-bitacoras .section-header,
+body.theme-industrial:not(.appearance-light) #panel-auditoria .section-header,
+body.theme-industrial:not(.appearance-light) #panel-usuarios .section-header,
+body.theme-industrial:not(.appearance-light) #panel-reportes .section-header,
+body.theme-industrial:not(.appearance-light) #panel-garantias .section-header,
+body.theme-industrial:not(.appearance-light) #panel-incidentes .section-header,
+body.theme-industrial:not(.appearance-light) #panel-categorias-catalogo .section-header,
+body.theme-industrial:not(.appearance-light) #panel-revision-maquinas .section-header,
+body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .section-header,
+body.theme-industrial:not(.appearance-light) #panel-garantias-sin-cobertura .section-header,
+body.theme-industrial:not(.appearance-light) #panel-mantenimientos .section-header,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .section-header {
+  background: #1f1f1f !important;
+  background-image: none !important;
+  border: 1px solid #3c4043 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+  color: #e8eaed !important;
+}
+body.theme-industrial:not(.appearance-light) [id^="panel-"] .section-header h2,
+body.theme-industrial:not(.appearance-light) [id^="panel-"] .section-header h2 * {
+  color: #e8eaed !important;
+  text-shadow: none !important;
+}
+body.theme-industrial:not(.appearance-light) [id^="panel-"] .section-header h2 i,
+body.theme-industrial:not(.appearance-light) [id^="panel-"] .section-header h2 .fas,
+body.theme-industrial:not(.appearance-light) [id^="panel-"] .section-header h2 .far,
+body.theme-industrial:not(.appearance-light) [id^="panel-"] .section-header h2 .fa {
+  background: rgba(138, 180, 248, 0.16) !important;
+  color: #8ab4f8 !important;
+  border: 1px solid rgba(138, 180, 248, 0.24) !important;
+  box-shadow: none !important;
+}
+
+/* En SOL los gradientes se ven lindos pero necesitamos que los iconos tengan */
+/* fondo BLANCO SÓLIDO (no translúcido) para contrastar con el gradiente */
+body.theme-industrial.appearance-light [id^="panel-"] .section-header h2 i,
+body.theme-industrial.appearance-light [id^="panel-"] .section-header h2 .fas {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* ═══════════ §V3 — LOGO superior del SIDEBAR (circulo blanco arriba) ═════ */
+/* El "circulo blanco" arriba junto a "= MODULOS" es el logo placeholder */
+body.theme-industrial:not(.appearance-light) .header-logo-box,
+body.theme-industrial:not(.appearance-light) .module-logo-placeholder,
+body.theme-industrial:not(.appearance-light) .app-logo,
+body.theme-industrial:not(.appearance-light) .sidebar-logo,
+body.theme-industrial:not(.appearance-light) .logo-universal,
+body.theme-industrial:not(.appearance-light) .sidebar-nav > .logo,
+body.theme-industrial:not(.appearance-light) aside.sidebar-nav > div:first-child {
+  background: #1a1a1a !important;
+  background-color: #1a1a1a !important;
+  color: #e8eaed !important;
+  border-color: #3c4043 !important;
+}
+body.theme-industrial:not(.appearance-light) .header-logo-box img,
+body.theme-industrial:not(.appearance-light) .sidebar-logo img,
+body.theme-industrial:not(.appearance-light) .app-logo img {
+  filter: brightness(1.1) !important;
+}
+
+/* ═══════════ §V4 — BOTONES outline/pequeños tipo "Limpiar" en cards ══════ */
+body.theme-industrial:not(.appearance-light) .btn.outline,
+body.theme-industrial:not(.appearance-light) .btn.outlined,
+body.theme-industrial:not(.appearance-light) button.btn.outline,
+body.theme-industrial:not(.appearance-light) .btn-reset-filters,
+body.theme-industrial:not(.appearance-light) [class*="btn-limpiar"],
+body.theme-industrial:not(.appearance-light) .filters-card .btn,
+body.theme-industrial:not(.appearance-light) .toolbar .btn.outline {
+  background: #2a2a2a !important;
+  color: #e8eaed !important;
+  border: 1px solid #3c4043 !important;
+}
+body.theme-industrial:not(.appearance-light) .btn.outline:hover,
+body.theme-industrial:not(.appearance-light) .btn.outlined:hover {
+  background: rgba(138, 180, 248, 0.14) !important;
+  border-color: #8ab4f8 !important;
+  color: #8ab4f8 !important;
+}
+
+/* ═══════════ §V5 — MÓDULOS dropdown (el circulo con icon arriba sidebar) ═ */
+body.theme-industrial:not(.appearance-light) .modules-dropdown,
+body.theme-industrial:not(.appearance-light) .modulo-selector,
+body.theme-industrial:not(.appearance-light) .sidebar-modules-toggle {
+  background: #1a1a1a !important;
+  color: #e8eaed !important;
+  border-color: #3c4043 !important;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   FIN — Fix Maestro v4 (raiz: variables CSS redefinidas)
+   ════════════════════════════════════════════════════════════════════════ */
