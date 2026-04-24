@@ -37,11 +37,11 @@ html body.theme-industrial.appearance-light {
 }
 
 html body.theme-industrial:not(.appearance-light) {
-  --nano-overlay:           rgba(5, 8, 15, 0.55);         /* body: imagen atenuada pero visible */
-  --nano-surface:           rgba(10, 14, 22, 0.62);
-  --nano-surface-strong:    rgba(8, 12, 20, 0.80);
-  --nano-surface-solid:     rgba(6, 9, 16, 0.92);
-  --nano-surface-subtle:    rgba(10, 14, 22, 0.32);
+  --nano-overlay:           rgba(5, 8, 15, 0.38);         /* body: imagen visible en Luna */
+  --nano-surface:           rgba(10, 14, 22, 0.55);
+  --nano-surface-strong:    rgba(8, 12, 20, 0.72);
+  --nano-surface-solid:     rgba(6, 9, 16, 0.88);
+  --nano-surface-subtle:    rgba(10, 14, 22, 0.28);
   --nano-border:            rgba(255, 255, 255, 0.10);
   --nano-border-strong:     rgba(255, 255, 255, 0.18);
   --nano-text:              #f1f5f9;
@@ -79,15 +79,9 @@ html body.theme-industrial {
  * 3. LAYOUT CONTAINERS: transparentes para dejar ver el fondo
  * ============================================================ */
 
-html body.theme-industrial #main-content,
-html body.theme-industrial main,
+/* Contenedor raiz y paneles = TRANSPARENTE (dejan ver la imagen) */
 html body.theme-industrial .app,
 html body.theme-industrial .app-layout,
-html body.theme-industrial .app-main,
-html body.theme-industrial .app-content,
-html body.theme-industrial .content-wrap,
-html body.theme-industrial .main-content,
-html body.theme-industrial .main-wrap,
 html body.theme-industrial .panel,
 html body.theme-industrial section.panel,
 html body.theme-industrial [id^="panel-"],
@@ -95,6 +89,23 @@ html body.theme-industrial .dashboard-surface {
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
+}
+
+/* .app-main / main / content-wrap = capa glass SUTIL
+   Elimina los "gaps" visibles entre sidebar/header/contenido sin tapar
+   las cards internas ni la imagen (usa surface-subtle ~28-30%). */
+html body.theme-industrial .app-main,
+html body.theme-industrial .app-content,
+html body.theme-industrial .content-wrap,
+html body.theme-industrial .main-content,
+html body.theme-industrial .main-wrap,
+html body.theme-industrial main,
+html body.theme-industrial #main-content {
+  background: var(--nano-surface-subtle) !important;
+  background-color: var(--nano-surface-subtle) !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
 }
 
 /* section-header (el contenedor con el titulo "Catalogo de clientes",
@@ -499,11 +510,29 @@ html body.theme-industrial .btn-dashboard-refresh {
 
 /* ============================================================
  * 13. MODALES / DROPDOWNS / MENUS
- *   Más opacos (0.82-0.88) para foco visual sin perder imagen.
+ *
+ *   IMPORTANTE: .modal es el VELO de fondo (overlay completo),
+ *   .modal-box / .modal-content / .modal-panel es la CAJA.
+ *   - El velo debe quedarse oscuro translucido con blur
+ *     (permite ver la imagen industrial difuminada detras).
+ *   - La caja es glass blanco (Sol) o negro (Luna).
  * ============================================================ */
 
-html body.theme-industrial .modal,
+/* VELO del modal: oscuro translucido con blur (NO blanco!) */
+html body.theme-industrial .modal {
+  background: rgba(5, 8, 15, 0.55) !important;
+  background-color: rgba(5, 8, 15, 0.55) !important;
+  background-image: none !important;
+  backdrop-filter: blur(8px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(120%) !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* CAJA del modal: glass blanco (Sol) / negro (Luna) */
+html body.theme-industrial .modal-box,
 html body.theme-industrial .modal-content,
+html body.theme-industrial .modal-panel,
 html body.theme-industrial .md-dialog,
 html body.theme-industrial .md-prompt,
 html body.theme-industrial .md-prompt-content,
@@ -520,19 +549,20 @@ html body.theme-industrial .toast {
   box-shadow: var(--nano-shadow) !important;
 }
 
-html body.theme-industrial .modal *:not(img):not(i):not(.badge):not(.chip),
-html body.theme-industrial .md-prompt *:not(img):not(i):not(.badge):not(.chip),
-html body.theme-industrial .header-profile-menu *:not(img):not(i):not(.badge):not(.chip),
-html body.theme-industrial .dropdown-menu *:not(img):not(i):not(.badge):not(.chip),
-html body.theme-industrial .notifications-panel *:not(img):not(i):not(.badge):not(.chip) {
+html body.theme-industrial .modal-box *:not(img):not(i):not(.badge):not(.chip):not(button),
+html body.theme-industrial .modal-content *:not(img):not(i):not(.badge):not(.chip):not(button),
+html body.theme-industrial .md-prompt *:not(img):not(i):not(.badge):not(.chip):not(button),
+html body.theme-industrial .header-profile-menu *:not(img):not(i):not(.badge):not(.chip):not(button),
+html body.theme-industrial .dropdown-menu *:not(img):not(i):not(.badge):not(.chip):not(button),
+html body.theme-industrial .notifications-panel *:not(img):not(i):not(.badge):not(.chip):not(button) {
   color: inherit !important;
 }
 
 html body.theme-industrial .modal-backdrop,
 html body.theme-industrial .admin-hub-overlay {
-  background: rgba(0, 0, 0, 0.35) !important;
-  backdrop-filter: blur(4px) !important;
-  -webkit-backdrop-filter: blur(4px) !important;
+  background: rgba(5, 8, 15, 0.55) !important;
+  backdrop-filter: blur(8px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(120%) !important;
 }
 
 
@@ -594,29 +624,11 @@ html body.theme-industrial ::-webkit-scrollbar-thumb:hover {
 
 /* ============================================================
  * 16. LOGIN OVERLAY
+ *   El login tiene su PROPIO diseño azul fundido con la imagen.
+ *   NO debe ser afectado por modo Sol/Luna.
+ *   Por eso aqui NO forzamos ningun estilo — dejamos que el CSS
+ *   original de style.css (#login-overlay) gobierne.
  * ============================================================ */
-
-html body.theme-industrial .login-overlay {
-  background: var(--nano-overlay) !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
-}
-
-html body.theme-industrial .login-card,
-html body.theme-industrial .login-form-panel,
-html body.theme-industrial .login-brand-panel {
-  background: var(--nano-surface-solid) !important;
-  color: var(--nano-text) !important;
-  border: 1px solid var(--nano-border) !important;
-  backdrop-filter: var(--nano-blur) !important;
-  -webkit-backdrop-filter: var(--nano-blur) !important;
-}
-
-html body.theme-industrial .login-card *:not(img):not(i),
-html body.theme-industrial .login-form-panel *:not(img):not(i),
-html body.theme-industrial .login-brand-panel *:not(img):not(i) {
-  color: inherit !important;
-}
 
 
 /* ============================================================
