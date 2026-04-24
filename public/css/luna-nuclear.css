@@ -1061,7 +1061,13 @@ html body .btn-dashboard-refresh::before {
    Solo dejamos cambio de color/border (no movimiento, no escala).
    ============================================================================ */
 
-/* TODOS los elementos del header */
+/* TODOS los elementos del header — ZERO HOVER FX
+   El usuario NO quiere ningun cambio visual al pasar el mouse sobre:
+   - Avatar (monito) - icono interior se borraba
+   - Campanita de notificaciones - cambiaba de fondo
+   - Modo Luna/Sol - aparecia rectangulo blanco/gris feo
+   Hover debe quedar IDENTICO al estado normal (solo cursor: pointer). */
+
 html body header.header *:hover,
 html body header.header button:hover,
 html body header.header .btn-icon-header:hover,
@@ -1074,23 +1080,87 @@ html body header.header #btn-logout:hover {
   filter: none !important;
   animation: none !important;
   -webkit-animation: none !important;
+  transition: none !important;
 }
 
-/* Mantener cambios de color/borde solo (visibles pero sin movimiento) */
-html body header.header .btn-icon-header:hover {
-  background: rgba(138, 180, 248, 0.14) !important;
-}
-html body.theme-industrial.appearance-light header.header .btn-icon-header:hover {
-  background: #f1f3f4 !important;
-  color: #1a73e8 !important;
+/* CAMPANITA + LUNA/SOL: hover IDENTICO al estado normal (sin rectangulo) */
+html body header.header .btn-icon-header,
+html body header.header .btn-icon-header:hover,
+html body header.header .btn-icon-header:focus,
+html body header.header .btn-icon-header:focus-visible,
+html body header.header .btn-icon-header:active,
+html body header.header #btn-notifications,
+html body header.header #btn-notifications:hover,
+html body header.header #btn-theme-toggle,
+html body header.header #btn-theme-toggle:hover {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
-/* Avatar/monito sin transform ni filter en hover */
-html body header.header .btn-header-profile:hover {
+/* SOL: iconos siguen visibles en gris oscuro, hover IGUAL */
+html body.theme-industrial.appearance-light header.header .btn-icon-header,
+html body.theme-industrial.appearance-light header.header .btn-icon-header:hover,
+html body.theme-industrial.appearance-light header.header .btn-icon-header i,
+html body.theme-industrial.appearance-light header.header .btn-icon-header:hover i {
+  color: #5f6368 !important;
+  -webkit-text-fill-color: #5f6368 !important;
+  background: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+}
+
+/* LUNA: iconos siguen visibles en gris claro, hover IGUAL */
+html body.theme-industrial:not(.appearance-light) header.header .btn-icon-header,
+html body.theme-industrial:not(.appearance-light) header.header .btn-icon-header:hover,
+html body.theme-industrial:not(.appearance-light) header.header .btn-icon-header i,
+html body.theme-industrial:not(.appearance-light) header.header .btn-icon-header:hover i {
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+  background: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+}
+
+/* AVATAR (monito): hover IDENTICO al estado normal.
+   No tocar background (mantiene gradient azul de premium-pro.css) ni border ni
+   box-shadow. Solo cancelar transform/filter/animation y el ::before/::after
+   que dibujan el monito SVG no se mueven, asi no parpadean. */
+html body header.header .btn-header-profile,
+html body header.header .btn-header-profile:hover,
+html body header.header .btn-header-profile:focus,
+html body header.header .btn-header-profile:focus-visible,
+html body header.header .btn-header-profile:active {
   transform: none !important;
   filter: none !important;
   animation: none !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.20) !important;
+  -webkit-animation: none !important;
+  transition: none !important;
+}
+
+/* No cambiar background ni border en hover del avatar */
+html body header.header .btn-header-profile:hover {
+  background: var(--pp-grad-brand, linear-gradient(135deg, #2754d8 0%, #1a73e8 100%)) !important;
+  background-image: var(--pp-grad-brand, linear-gradient(135deg, #2754d8 0%, #1a73e8 100%)) !important;
+  border-color: inherit !important;
+  box-shadow: inherit !important;
+}
+
+/* Mantener ::before del avatar (monito SVG) IGUAL en hover */
+html body header.header .btn-header-profile:hover::before {
+  background-color: rgba(255, 255, 255, 0.22) !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* Botón salir rojo: tampoco animacion, mantener color rojo */
+html body header.header .btn-header-quick-logout:hover {
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
 }
 
 /* TODOS los botones .btn — sin transform, sin filter, sin animation en hover */
