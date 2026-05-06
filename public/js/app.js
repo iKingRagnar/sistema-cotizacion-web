@@ -1139,6 +1139,32 @@
         toggleHeaderProfileMenu();
       });
     }
+    function openMyProfileCard() {
+      const u = getSessionUser();
+      if (!u) {
+        if (typeof showToast === 'function') showToast('No hay sesión activa.', 'warning');
+        return;
+      }
+      closeHeaderProfileMenu();
+      openPreviewCard({
+        title: String(u.username || '').trim() || 'Mi cuenta',
+        subtitle: 'Perfil',
+        icon: 'fa-user-circle',
+        color: 'linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%)',
+        badge: getRoleLabel(u.role),
+        badgeClass: 'pvc-badge--info',
+        sections: [
+          {
+            title: 'Cuenta', icon: 'fa-id-card',
+            fields: [
+              { label: 'Usuario', value: u.username || '—', icon: 'fa-user' },
+              { label: 'Nombre', value: u.displayName || u.display_name || '', icon: 'fa-signature', full: true },
+              { label: 'Rol', value: getRoleLabel(u.role), icon: 'fa-shield-alt', badge: true, badgeClass: 'pvc-badge--info' },
+            ],
+          },
+        ],
+      });
+    }
     const mas = qs('#profile-menu-mas');
     if (mas) {
       mas.addEventListener('click', function () {
@@ -1168,7 +1194,7 @@
       const el = qs('#' + id);
       if (el) el.addEventListener('click', fn);
     };
-    wirePanel('profile-menu-perfil', goPanel('usuarios'));
+    wirePanel('profile-menu-perfil', openMyProfileCard);
     wirePanel('profile-menu-password', function () {
       closeHeaderProfileMenu();
       if (typeof openChangePasswordModal === 'function') { try { openChangePasswordModal(); return; } catch (_) {} }
@@ -1192,7 +1218,15 @@
         if (typeof showToast === 'function') showToast('Densidad: ' + next, 'info');
       } catch (_) {}
     });
-    wirePanel('profile-menu-respaldo', goPanel('demo'));
+    wirePanel('profile-menu-respaldo', function () {
+      closeHeaderProfileMenu();
+      const can = typeof canAccessDemoAdminPanel === 'function' ? canAccessDemoAdminPanel() : false;
+      if (!can) {
+        if (typeof showToast === 'function') showToast('Solo el administrador puede ver respaldos.', 'warning');
+        return;
+      }
+      if (typeof showPanel === 'function') { try { showPanel('demo', { skipLoad: false }); } catch (_) {} }
+    });
     wirePanel('profile-menu-ayuda', function () {
       closeHeaderProfileMenu();
       if (typeof startGuidedTour === 'function') { try { startGuidedTour(); return; } catch (_) {} }

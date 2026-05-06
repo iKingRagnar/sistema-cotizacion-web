@@ -373,6 +373,29 @@ html body.theme-industrial.md3-on .preview-card .pvc-field-value {
   -webkit-text-fill-color: #f8fafc !important;
 }
 
+html body.theme-industrial.md3-on .preview-card .pvc-footer,
+html body.theme-industrial.md3-on .preview-card .pvc-close-row {
+  background: transparent !important;
+  background-color: transparent !important;
+  border-top-color: rgba(56, 189, 248, 0.18) !important;
+}
+
+html body.theme-industrial.md3-on .preview-card .pvc-footer .pvc-footer-link-hint,
+html body.theme-industrial.md3-on .preview-card .pvc-footer p,
+html body.theme-industrial.md3-on .preview-card .pvc-footer span {
+  color: #cbd5e1 !important;
+  -webkit-text-fill-color: #cbd5e1 !important;
+}
+
+html body.theme-industrial.md3-on .preview-card .pvc-footer code {
+  background: rgba(30, 41, 59, 0.75) !important;
+  color: #e2e8f0 !important;
+  -webkit-text-fill-color: #e2e8f0 !important;
+  border: 1px solid rgba(56, 189, 248, 0.16) !important;
+  border-radius: 8px !important;
+  padding: 2px 6px !important;
+}
+
 html body.theme-industrial.md3-on table.data-table td.th-actions .prem-action-view,
 html body.theme-industrial.md3-on table.data-table td.th-actions .prem-action-edit,
 html body.theme-industrial.md3-on .prem-action-view,
