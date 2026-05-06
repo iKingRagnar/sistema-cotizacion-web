@@ -51,6 +51,59 @@ const LIST_ROUTES = {
   'categorias-catalogo': '/api/categorias-catalogo',
 };
 
+const THEME_STORAGE_KEY = 'cotizacion-theme';
+
+/** GET /api/:entity/:id cuando existe en servidor (detalle en modal Ver). */
+const DETAIL_ROUTES = {
+  clientes: '/api/clientes',
+  refacciones: '/api/refacciones',
+  maquinas: '/api/maquinas',
+  cotizaciones: '/api/cotizaciones',
+  tecnicos: '/api/tecnicos',
+  bitacoras: '/api/bitacoras',
+  reportes: '/api/reportes',
+  garantias: '/api/garantias',
+};
+
+/** PUT /api/.../:id — cuerpo JSON (modal Editar). */
+const UPDATE_ROUTES = {
+  clientes: '/api/clientes',
+  refacciones: '/api/refacciones',
+  maquinas: '/api/maquinas',
+  cotizaciones: '/api/cotizaciones',
+  tecnicos: '/api/tecnicos',
+  bitacoras: '/api/bitacoras',
+  reportes: '/api/reportes',
+  garantias: '/api/garantias',
+  'revision-maquinas': '/api/revision-maquinas',
+  'mantenimiento-garantia': '/api/mantenimientos-garantia',
+  bonos: '/api/bonos',
+  viajes: '/api/viajes',
+};
+
+const DELETE_ROUTES = {
+  clientes: '/api/clientes',
+  refacciones: '/api/refacciones',
+  maquinas: '/api/maquinas',
+  cotizaciones: '/api/cotizaciones',
+  tecnicos: '/api/tecnicos',
+  bitacoras: '/api/bitacoras',
+  reportes: '/api/reportes',
+  garantias: '/api/garantias',
+  'revision-maquinas': '/api/revision-maquinas',
+  bonos: '/api/bonos',
+  viajes: '/api/viajes',
+};
+
+const APP_USER_ROLES_LIST = ['admin', 'usuario', 'operador', 'consulta', 'invitado'];
+
+/** Pestañas donde tiene sentido elegir columnas visibles (alineado a UI clásica). */
+const PERMISSION_COLUMN_TAB_IDS = TAB_DEFS.map(([id]) => id).filter(
+  (id) => !['dashboards', 'demo', 'acerca'].includes(id)
+);
+
+let tableInteractionRowsRef = [];
+
 let cfgGlobal = null;
 let userGlobal = null;
 let tokenGlobal = null;
@@ -96,6 +149,17 @@ function prettyLabel(key) {
   return String(key || '')
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function parseAccessJson(raw) {
+  if (!raw) return {};
+  if (typeof raw === 'object' && !Array.isArray(raw)) return raw;
+  try {
+    const p = JSON.parse(String(raw));
+    return p && typeof p === 'object' ? p : {};
+  } catch (_) {
+    return {};
+  }
 }
 
 function setToken(t) {
@@ -178,16 +242,174 @@ function applyBranding(cfg) {
   const root = document.documentElement;
   root.style.setProperty('--toolbar-accent', cfg.accentHex || '#2dd4bf');
   if (cfg.primaryHex) root.style.setProperty('--sidebar-tint', cfg.primaryHex);
+  syncThemeMetaTag();
 }
 
-function inferColumns(rows, sampleLimit = 80) {
+function getStoredTheme() {
+  try {
+    const t = localStorage.getItem(THEME_STORAGE_KEY);
+    return t === 'light' || t === 'dark' ? t : 'dark';
+  } catch (_) {
+    return 'dark';
+  }
+}
+
+function syncThemeMetaTag() {
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (!meta) return;
+  const light = document.documentElement.classList.contains('appearance-light');
+  meta.setAttribute('content', light ? '#f1f5f9' : '#0f172a');
+}
+
+function applyStoredTheme() {
+  document.documentElement.classList.toggle('appearance-light', getStoredTheme() === 'light');
+  syncThemeMetaTag();
+}
+
+function toggleStoredTheme() {
+  const next = document.documentElement.classList.contains('appearance-light') ? 'dark' : 'light';
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, next);
+  } catch (_) {}
+  applyStoredTheme();
+  document.querySelectorAll('[data-theme-toggle]').forEach((btn) => updateThemeToggleButton(btn));
+}
+
+function updateThemeToggleButton(btn) {
+  if (!btn) return;
+  const light = document.documentElement.classList.contains('appearance-light');
+  btn.setAttribute('title', light ? 'Pasar a modo oscuro' : 'Pasar a modo claro');
+  btn.setAttribute('aria-label', btn.getAttribute('title'));
+  btn.textContent = light ? '🌙' : '☀️';
+}
+
+function closeModal() {
+  const mr = document.getElementById('modal-root');
+  if (mr) mr.innerHTML = '';
+}
+
+function openModal(html) {
+  const mr = document.getElementById('modal-root');
+  if (!mr) return;
+  mr.innerHTML = html;
+  mr.querySelectorAll('[data-modal-close]').forEach((b) => b.addEventListener('click', closeModal));
+  const bd = mr.querySelector('.modal-backdrop');
+  if (bd) {
+    bd.addEventListener('click', (ev) => {
+      if (ev.target === bd) closeModal();
+    });
+  }
+}
+
+function getRowStableId(row) {
+  if (!row || typeof row !== 'object') return null;
+  const id = row.id;
+  if (id != null && String(id).trim() !== '') return String(id);
+  return null;
+}
+
+async function openDetailModal(tabId, row) {
+  const sid = getRowStableId(row);
+  const base = DETAIL_ROUTES[tabId];
+  let payload = row;
+  if (base && sid) {
+    try {
+      payload = await fetchJson(`${base}/${encodeURIComponent(sid)}`);
+    } catch (e) {
+      toast(e.message || 'No se pudo cargar el detalle; se muestra la fila de la tabla.', 'info');
+      payload = row;
+    }
+  }
+  const json = escapeHtml(JSON.stringify(payload, null, 2));
+  openModal(`
+    <div class="modal-backdrop" role="dialog" aria-modal="true">
+      <div class="modal-dialog wide">
+        <div class="modal-head">
+          <h2>Ver · ${escapeHtml(tabId)}</h2>
+          <button type="button" class="btn btn-ghost btn-icon" data-modal-close aria-label="Cerrar">✕</button>
+        </div>
+        <div class="modal-body"><pre class="code-editor" style="margin:0;white-space:pre-wrap;">${json}</pre></div>
+        <div class="modal-actions"><button type="button" class="btn btn-ghost" data-modal-close>Cerrar</button></div>
+      </div>
+    </div>`);
+}
+
+function openEditModal(tabId, row) {
+  const base = UPDATE_ROUTES[tabId];
+  if (!base) {
+    toast('Esta sección no tiene edición directa por PUT en la nueva interfaz.', 'info');
+    return;
+  }
+  const sid = getRowStableId(row);
+  if (!sid) {
+    toast('La fila no tiene id para guardar.', 'error');
+    return;
+  }
+  const taId = 'modal-edit-json';
+  openModal(`
+    <div class="modal-backdrop" role="dialog" aria-modal="true">
+      <div class="modal-dialog wide">
+        <div class="modal-head">
+          <h2>Editar · ${escapeHtml(tabId)}</h2>
+          <button type="button" class="btn btn-ghost btn-icon" data-modal-close aria-label="Cerrar">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="muted" style="margin-top:0;">Ajusta el JSON y guarda (PUT). Si no estás seguro, usa la interfaz clásica para formularios guiados.</p>
+          <textarea id="${taId}" class="code-editor">${escapeHtml(JSON.stringify(row, null, 2))}</textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-modal-close>Cancelar</button>
+          <button type="button" class="btn btn-primary" id="btn-modal-save-edit">Guardar</button>
+        </div>
+      </div>
+    </div>`);
+  document.getElementById('btn-modal-save-edit')?.addEventListener('click', async () => {
+    const raw = document.getElementById(taId)?.value;
+    let body;
+    try {
+      body = JSON.parse(raw || '{}');
+    } catch (_) {
+      toast('JSON inválido', 'error');
+      return;
+    }
+    try {
+      await fetchJson(`${base}/${encodeURIComponent(sid)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      toast('Cambios guardados', 'ok');
+      closeModal();
+      const vr = document.querySelector('#view-root');
+      if (vr) loadViewInto(vr);
+    } catch (e) {
+      toast(e.message || 'Error al guardar', 'error');
+    }
+  });
+}
+
+async function confirmDeleteRow(tabId, row) {
+  const base = DELETE_ROUTES[tabId];
+  const sid = getRowStableId(row);
+  if (!base || !sid) return;
+  if (!window.confirm(`¿Eliminar el registro ${sid} (${tabId})? Esta acción puede ser irreversible.`)) return;
+  try {
+    await fetchJson(`${base}/${encodeURIComponent(sid)}`, { method: 'DELETE' });
+    toast('Registro eliminado', 'ok');
+    const vr = document.querySelector('#view-root');
+    if (vr) loadViewInto(vr);
+  } catch (e) {
+    toast(e.message || 'No se pudo eliminar', 'error');
+  }
+}
+
+function inferColumns(rows) {
   const keys = new Set();
-  const sample = Array.isArray(rows) ? rows.slice(0, sampleLimit) : [];
-  sample.forEach((row) => {
+  for (const row of Array.isArray(rows) ? rows : []) {
     if (row && typeof row === 'object' && !Array.isArray(row)) {
       Object.keys(row).forEach((k) => keys.add(k));
     }
-  });
+  }
   const ordered = Array.from(keys).sort((a, b) => {
     if (a === 'id') return -1;
     if (b === 'id') return 1;
@@ -224,25 +446,39 @@ function formatCellValue(val) {
   return s.length > 180 ? `${s.slice(0, 177)}…` : s;
 }
 
-function renderDataTable(keys, rows) {
+function renderDataTable(keys, rows, tabId) {
   if (!keys.length) {
     return '<div class="empty-state">Sin columnas inferidas.</div>';
   }
-  const head = keys.map((k) => `<th>${escapeHtml(prettyLabel(k))}</th>`).join('');
+  const showActions = !!tabId;
+  const canEdit = tabId && UPDATE_ROUTES[tabId];
+  const canDel = tabId && DELETE_ROUTES[tabId];
+  const head =
+    keys.map((k) => `<th>${escapeHtml(prettyLabel(k))}</th>`).join('') +
+    (showActions ? '<th class="th-actions">Acciones</th>' : '');
   const body = rows
-    .map((row) => {
+    .map((row, i) => {
       const cells = keys.map((k) => {
         const v = row && Object.prototype.hasOwnProperty.call(row, k) ? row[k] : '';
         return `<td class="cell-long">${escapeHtml(formatCellValue(v))}</td>`;
       });
-      return `<tr>${cells.join('')}</tr>`;
+      const sid = getRowStableId(row);
+      const actions = showActions
+        ? `<td class="td-actions">
+            <button type="button" class="btn btn-small btn-outline act-ver" data-i="${i}">Ver</button>
+            ${canEdit ? `<button type="button" class="btn btn-small btn-outline act-edit" data-i="${i}">Editar</button>` : ''}
+            ${canDel && sid ? `<button type="button" class="btn btn-small btn-danger act-del" data-i="${i}">Eliminar</button>` : ''}
+          </td>`
+        : '';
+      return `<tr>${cells.join('')}${actions}</tr>`;
     })
     .join('');
+  const colCount = keys.length + (showActions ? 1 : 0);
   return `
     <div class="table-wrap">
       <table class="data-table">
         <thead><tr>${head}</tr></thead>
-        <tbody>${body || '<tr><td colspan="' + keys.length + '" class="empty-state">Sin filas</td></tr>'}</tbody>
+        <tbody>${body || `<tr><td colspan="${colCount}" class="empty-state">Sin filas</td></tr>`}</tbody>
       </table>
     </div>`;
 }
@@ -379,14 +615,15 @@ function renderTarifas(obj) {
   return `<div class="table-wrap"><table class="kv-table"><tbody>${rows}</tbody></table></div>`;
 }
 
-function bindTableInteractions(container, keys, allRows) {
+function bindTableInteractions(container, keys, allRows, tabId) {
   const search = container.querySelector('#table-search');
   const btn = container.querySelector('#btn-csv');
+  const mount = container.querySelector('#table-mount');
   const redraw = () => {
     const q = search ? search.value.trim() : '';
     const filtered = filterRowsLocal(allRows, q);
-    const wrap = container.querySelector('#table-mount');
-    if (wrap) wrap.innerHTML = renderDataTable(keys, filtered);
+    tableInteractionRowsRef = filtered;
+    if (mount) mount.innerHTML = renderDataTable(keys, filtered, tabId);
     const hint = container.querySelector('#table-hint');
     if (hint) {
       hint.textContent =
@@ -397,7 +634,577 @@ function bindTableInteractions(container, keys, allRows) {
   };
   if (search) search.addEventListener('input', redraw);
   if (btn) btn.addEventListener('click', () => exportCsv(keys, filterRowsLocal(allRows, search ? search.value.trim() : '')));
+  if (mount && tabId) {
+    mount.addEventListener('click', (ev) => {
+      const t = ev.target;
+      if (!(t instanceof HTMLElement)) return;
+      const btnEl = t.closest('.act-ver, .act-edit, .act-del');
+      if (!btnEl) return;
+      const idx = Number(btnEl.getAttribute('data-i'));
+      const row = tableInteractionRowsRef[idx];
+      if (!row) return;
+      if (btnEl.classList.contains('act-ver')) {
+        openDetailModal(tabId, row);
+      } else if (btnEl.classList.contains('act-edit')) {
+        openEditModal(tabId, row);
+      } else if (btnEl.classList.contains('act-del')) {
+        confirmDeleteRow(tabId, row);
+      }
+    });
+  }
   redraw();
+}
+
+async function buildColumnLabelsByTab() {
+  const out = {};
+  for (const tid of PERMISSION_COLUMN_TAB_IDS) {
+    if (tid === 'tarifas') {
+      out[tid] = ['Clave', 'Valor'];
+      continue;
+    }
+    if (tid === 'almacen') {
+      out[tid] = ['id', 'modelo', 'numero_serie', 'ciudad', 'cliente', 'estado_revision', 'revision_id'].map((k) =>
+        prettyLabel(k)
+      );
+      continue;
+    }
+    const path = LIST_ROUTES[tid];
+    if (!path) {
+      out[tid] = [];
+      continue;
+    }
+    try {
+      const rows = toArray(await fetchJson(path));
+      out[tid] = inferColumns(rows).map((k) => prettyLabel(k));
+    } catch (_) {
+      out[tid] = [];
+    }
+  }
+  return out;
+}
+
+function wireThemeToggle(btn) {
+  if (!btn) return;
+  updateThemeToggleButton(btn);
+  btn.addEventListener('click', () => toggleStoredTheme());
+}
+
+function usuarioRoleSelectHtml(userId, role) {
+  const opts = APP_USER_ROLES_LIST.map(
+    (r) =>
+      `<option value="${escapeHtml(r)}" ${String(role || '') === r ? 'selected' : ''}>${escapeHtml(r)}</option>`
+  ).join('');
+  return `<select class="filter-input u-role" data-user-id="${escapeHtml(String(userId))}" style="min-width:6.5rem;">${opts}</select>`;
+}
+
+function usuarioTecnicoSelectHtml(userId, tecnicoId, tecnicos) {
+  const opts =
+    `<option value="">—</option>` +
+    toArray(tecnicos)
+      .map((t) => {
+        const id = String(t.id);
+        const sel = String(tecnicoId || '') === id ? ' selected' : '';
+        const lab = String(t.nombre_completo || t.nombre || id);
+        return `<option value="${escapeHtml(id)}"${sel}>${escapeHtml(lab)}</option>`;
+      })
+      .join('');
+  return `<select class="filter-input u-tec" data-user-id="${escapeHtml(String(userId))}" style="min-width:12rem;">${opts}</select>`;
+}
+
+function createTecnicoSelectHtml(tecnicos) {
+  return usuarioTecnicoSelectHtml('_', '', tecnicos).replace(
+    'class="filter-input u-tec"',
+    'class="filter-input" id="create-tecnico"'
+  );
+}
+
+function syncPermEditor(root, user) {
+  const tabs = parseAccessJson(user.tab_permissions);
+  const cols = parseAccessJson(user.column_permissions);
+  TAB_DEFS.forEach(([tid]) => {
+    const el = root.querySelector('.perm-tab[data-tab-id="' + tid + '"]');
+    if (!el) return;
+    const has = Object.prototype.hasOwnProperty.call(tabs, tid);
+    el.checked = has ? tabs[tid] !== false : true;
+  });
+  root.querySelectorAll('.perm-col').forEach((box) => {
+    const tabId = box.getAttribute('data-tab-id');
+    const colLab = box.getAttribute('data-col-label');
+    const list = cols && cols[tabId] && Array.isArray(cols[tabId]) ? cols[tabId] : null;
+    if (!list || list.length === 0) {
+      box.checked = true;
+      return;
+    }
+    const allowed = new Set(list.map((x) => normalizeAccessText(x)));
+    box.checked = allowed.has(normalizeAccessText(colLab));
+  });
+}
+
+async function loadUsuariosView(container) {
+  container.innerHTML = '<p class="muted">Cargando administración de usuarios…</p>';
+  let users;
+  let tecnicos;
+  let deletedArr;
+  let schedulesArr;
+  let colLabels;
+  try {
+    [users, tecnicos, deletedArr, schedulesArr, colLabels] = await Promise.all([
+      fetchJson('/api/app-users'),
+      fetchJson('/api/tecnicos').catch(() => []),
+      fetchJson('/api/app-users/deleted').catch(() => []),
+      fetchJson('/api/admin/report-schedules').catch(() => []),
+      buildColumnLabelsByTab(),
+    ]);
+  } catch (e) {
+    container.innerHTML = '<div class="alert-error">' + escapeHtml(e.message || String(e)) + '</div>';
+    return;
+  }
+  users = toArray(users);
+  deletedArr = toArray(deletedArr);
+  schedulesArr = toArray(schedulesArr);
+  const me = userGlobal;
+  const activeAdmins = users.filter((u) => u.role === 'admin' && (u.activo === 1 || u.activo === true)).length;
+
+  const permUserOpts = users
+    .map((u) => '<option value="' + escapeHtml(String(u.id)) + '">' + escapeHtml(u.username) + '</option>')
+    .join('');
+
+  const tabPermChecks = TAB_DEFS.map(
+    ([tid, label]) =>
+      '<label class="perm-tabs-grid"><input type="checkbox" class="perm-tab" data-tab-id="' +
+      escapeHtml(tid) +
+      '" /> <span>' +
+      escapeHtml(label) +
+      ' <span class="muted">(' +
+      escapeHtml(tid) +
+      ')</span></span></label>'
+  ).join('');
+
+  const colBlocks = PERMISSION_COLUMN_TAB_IDS.map((tid) => {
+    const labels = colLabels[tid] || [];
+    const tabMeta = TAB_DEFS.find(([x]) => x === tid);
+    const tabLab = tabMeta ? tabMeta[1] : tid;
+    const checks = labels
+      .map(
+        (lab) =>
+          '<label style="display:inline-flex;margin:4px 10px 4px 0;gap:6px;align-items:center;"><input type="checkbox" class="perm-col" data-tab-id="' +
+          escapeHtml(tid) +
+          '" data-col-label="' +
+          escapeHtml(lab) +
+          '" /> ' +
+          escapeHtml(lab) +
+          '</label>'
+      )
+      .join('');
+    return (
+      '<div class="perm-cols-block"><h5>' +
+      escapeHtml(tabLab) +
+      '</h5><div>' +
+      (checks || '<span class="muted">Sin columnas inferidas para esta pestaña.</span>') +
+      '</div></div>'
+    );
+  }).join('');
+
+  const tbody = users
+    .map((r) => {
+      const id = r.id;
+      const activo = !!(r.activo === 1 || r.activo === true);
+      const isSelf = me && Number(me.id) === Number(id);
+      const rowIsActiveAdmin = r.role === 'admin' && activo;
+      const blockLastAdmin = rowIsActiveAdmin && activeAdmins <= 1;
+      const canDelete = !isSelf && !blockLastAdmin;
+      return (
+        '<tr>' +
+        '<td>' +
+        escapeHtml(String(r.username || '')) +
+        '</td>' +
+        '<td>' +
+        escapeHtml(String(r.display_name || '—')) +
+        '</td>' +
+        '<td>' +
+        usuarioRoleSelectHtml(id, r.role || 'invitado') +
+        '</td>' +
+        '<td>' +
+        usuarioTecnicoSelectHtml(id, r.tecnico_id, tecnicos) +
+        '</td>' +
+        '<td><input type="checkbox" class="u-activo" data-user-id="' +
+        escapeHtml(String(id)) +
+        '"' +
+        (activo ? ' checked' : '') +
+        '/></td>' +
+        '<td class="muted">' +
+        escapeHtml(String(r.creado_en || '—')) +
+        '</td>' +
+        '<td class="td-actions">' +
+        '<button type="button" class="btn btn-small btn-outline u-json" data-user-id="' +
+        escapeHtml(String(id)) +
+        '">Ver</button> ' +
+        '<button type="button" class="btn btn-small btn-outline u-nombre" data-user-id="' +
+        escapeHtml(String(id)) +
+        '">Nombre</button> ' +
+        '<button type="button" class="btn btn-small btn-danger u-del" data-user-id="' +
+        escapeHtml(String(id)) +
+        '"' +
+        (canDelete ? '' : ' disabled') +
+        '>Eliminar</button>' +
+        '</td>' +
+        '</tr>'
+      );
+    })
+    .join('');
+
+  const deletedRows = deletedArr
+    .map(
+      (r, i) =>
+        '<tr><td>' +
+        escapeHtml(String(r.username || '')) +
+        '</td><td>' +
+        escapeHtml(String(r.display_name || '—')) +
+        '</td><td>' +
+        escapeHtml(String(r.role || '—')) +
+        '</td><td class="muted">' +
+        escapeHtml(String(r.eliminado_en || '—')) +
+        '</td><td>' +
+        escapeHtml(String(r.eliminado_por_username || '—')) +
+        '</td><td><button type="button" class="btn btn-small btn-outline del-mail" data-del-idx="' +
+        i +
+        '">Correo</button></td></tr>'
+    )
+    .join('');
+
+  const schedRows = schedulesArr
+    .map((s, i) => {
+      const sid = String(s.id || '');
+      return (
+        '<tr>' +
+        '<td>' +
+        escapeHtml(sid) +
+        '</td>' +
+        '<td>' +
+        escapeHtml(String(s.module || '—')) +
+        '</td>' +
+        '<td>' +
+        escapeHtml(String(s.frequency || '—')) +
+        '</td>' +
+        '<td>' +
+        escapeHtml(String(s.runAt || '—')) +
+        '</td>' +
+        '<td class="cell-long">' +
+        escapeHtml(formatCellValue(Array.isArray(s.to) ? s.to.join(', ') : s.to)) +
+        '</td>' +
+        '<td class="muted">' +
+        escapeHtml(String(s.lastPeriodStamp || '—')) +
+        '</td>' +
+        '<td><input type="checkbox" class="sched-on" data-sched-id="' +
+        escapeHtml(sid) +
+        '"' +
+        (s.enabled ? ' checked' : '') +
+        '/></td>' +
+        '<td class="td-actions">' +
+        '<button type="button" class="btn btn-small btn-outline sched-view" data-sched-idx="' +
+        i +
+        '">Ver</button> ' +
+        '<button type="button" class="btn btn-small btn-danger sched-del" data-sched-id="' +
+        escapeHtml(sid) +
+        '">Eliminar</button>' +
+        '</td>' +
+        '</tr>'
+      );
+    })
+    .join('');
+
+  const createRoleOpts = APP_USER_ROLES_LIST.map((r) => '<option value="' + r + '">' + r + '</option>').join('');
+  const createTecHtml = createTecnicoSelectHtml(tecnicos);
+
+  container.innerHTML =
+    '<div id="usuarios-admin-root">' +
+    '<p class="muted">Administración alineada a la interfaz clásica (mismas rutas <code>/api/app-users</code>, permisos y programaciones).</p>' +
+    '<div class="card" style="margin-bottom:14px;">' +
+    '<h3 style="margin:0 0 10px;font-size:1rem;">Nuevo usuario</h3>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">' +
+    '<div class="field" style="margin:0;min-width:140px;"><label for="create-user">Usuario</label><input id="create-user" autocomplete="off" /></div>' +
+    '<div class="field" style="margin:0;min-width:140px;"><label for="create-pass">Contraseña</label><input id="create-pass" type="password" autocomplete="new-password" /></div>' +
+    '<div class="field" style="margin:0;min-width:140px;"><label for="create-dn">Nombre completo</label><input id="create-dn" autocomplete="name" /></div>' +
+    '<div class="field" style="margin:0;"><label>Rol</label><select id="create-role" class="filter-input">' +
+    createRoleOpts +
+    '</select></div>' +
+    '<div class="field" style="margin:0;"><label>Personal (cotizar)</label>' +
+    createTecHtml +
+    '</div>' +
+    '<button type="button" class="btn btn-primary" id="btn-create-user">Crear</button>' +
+    '</div></div>' +
+    '<div class="card" style="margin-bottom:14px;">' +
+    '<h3 style="margin:0 0 8px;font-size:1rem;">Permisos por usuario</h3>' +
+    '<p class="muted" style="margin:0 0 10px;">Pestañas visibles y columnas permitidas por tabla.</p>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:10px;">' +
+    '<div class="field" style="margin:0;min-width:220px;"><label for="perm-user-sel">Usuario</label>' +
+    '<select id="perm-user-sel" class="filter-input">' +
+    permUserOpts +
+    '</select></div>' +
+    '<button type="button" class="btn btn-ghost" id="btn-perm-save">Guardar permisos</button>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">' +
+    '<div><h4 style="margin:0 0 8px;font-size:0.9rem;">Pestañas visibles</h4><div class="perm-grid">' +
+    tabPermChecks +
+    '</div></div>' +
+    '<div style="max-height:280px;overflow:auto;"><h4 style="margin:0 0 8px;font-size:0.9rem;">Columnas por tabla</h4>' +
+    colBlocks +
+    '</div></div></div>' +
+    '<div class="table-wrap" style="margin-bottom:14px;"><table class="data-table"><thead><tr>' +
+    '<th>Usuario</th><th>Nombre</th><th>Rol</th><th>Personal (cotizar)</th><th>Activo</th><th>Alta</th><th class="th-actions">Acciones</th>' +
+    '</tr></thead><tbody>' +
+    (tbody || '<tr><td colspan="7" class="empty-state">Sin usuarios</td></tr>') +
+    '</tbody></table></div>' +
+    '<div class="card" style="margin-bottom:14px;">' +
+    '<h3 style="margin:0 0 8px;font-size:1rem;">Usuarios eliminados</h3>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:10px;">' +
+    '<div class="field" style="margin:0;min-width:220px;"><label for="del-notify-email">Correo destino (opcional)</label>' +
+    '<input type="email" id="del-notify-email" class="filter-input" placeholder="rrhh@empresa.com" autocomplete="email" /></div>' +
+    '</div>' +
+    '<div class="table-wrap"><table class="data-table"><thead><tr>' +
+    '<th>Usuario</th><th>Nombre</th><th>Rol</th><th>Eliminado</th><th>Eliminado por</th><th>Correo</th>' +
+    '</tr></thead><tbody>' +
+    (deletedRows || '<tr><td colspan="6" class="empty-state">Sin registros</td></tr>') +
+    '</tbody></table></div></div>' +
+    '<div class="card">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">' +
+    '<h3 style="margin:0;font-size:1rem;">Programaciones automáticas de reportes</h3>' +
+    '<button type="button" class="btn btn-ghost" id="btn-sched-refresh">Actualizar vista</button></div>' +
+    '<p class="muted" style="margin:0 0 10px;">Editar activación / eliminar; detalle en JSON.</p>' +
+    '<div class="table-wrap"><table class="data-table"><thead><tr>' +
+    '<th>ID</th><th>Módulo</th><th>Frecuencia</th><th>Hora</th><th>Destinatarios</th><th>Último envío</th><th>Activo</th><th class="th-actions">Acciones</th>' +
+    '</tr></thead><tbody>' +
+    (schedRows || '<tr><td colspan="8" class="empty-state">Sin programaciones</td></tr>') +
+    '</tbody></table></div></div>' +
+    '</div>';
+
+  const root = container.querySelector('#usuarios-admin-root');
+  if (!root) return;
+  root._schedules = schedulesArr;
+  root._deleted = deletedArr;
+
+  function selectedUser() {
+    const sel = root.querySelector('#perm-user-sel');
+    const id = sel ? Number(sel.value) : NaN;
+    return users.find((u) => Number(u.id) === id) || users[0];
+  }
+
+  function refreshPermUi() {
+    const u = selectedUser();
+    if (!u) return;
+    syncPermEditor(root, u);
+  }
+
+  root.querySelector('#perm-user-sel')?.addEventListener('change', refreshPermUi);
+  refreshPermUi();
+
+  root.querySelector('#btn-create-user')?.addEventListener('click', async () => {
+    const username = root.querySelector('#create-user')?.value.trim().toLowerCase();
+    const password = root.querySelector('#create-pass')?.value || '';
+    const display_name = root.querySelector('#create-dn')?.value.trim() || username;
+    const role = root.querySelector('#create-role')?.value || 'invitado';
+    const tecnicoSel = root.querySelector('#create-tecnico');
+    const tecnico_id = tecnicoSel && tecnicoSel.value ? tecnicoSel.value : undefined;
+    try {
+      await fetchJson('/api/app-users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, role, display_name, tecnico_id }),
+      });
+      toast('Usuario creado', 'ok');
+      await loadUsuariosView(container);
+    } catch (e) {
+      toast(e.message || 'Error al crear', 'error');
+    }
+  });
+
+  root.querySelector('#btn-perm-save')?.addEventListener('click', async () => {
+    const u = selectedUser();
+    if (!u) {
+      toast('Selecciona un usuario', 'info');
+      return;
+    }
+    const tabPerms = {};
+    TAB_DEFS.forEach(([tid]) => {
+      const el = root.querySelector('.perm-tab[data-tab-id="' + tid + '"]');
+      if (!el) return;
+      tabPerms[tid] = !!el.checked;
+    });
+    const colPerms = {};
+    PERMISSION_COLUMN_TAB_IDS.forEach((tid) => {
+      const boxes = root.querySelectorAll('.perm-col[data-tab-id="' + tid + '"]');
+      const arr = [];
+      boxes.forEach((box) => {
+        if (box.checked) arr.push(box.getAttribute('data-col-label'));
+      });
+      colPerms[tid] = arr;
+    });
+    try {
+      await fetchJson('/api/app-users/' + encodeURIComponent(String(u.id)), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tab_permissions: tabPerms, column_permissions: colPerms }),
+      });
+      toast('Permisos guardados', 'ok');
+      await loadUsuariosView(container);
+    } catch (e) {
+      toast(e.message || 'No se pudo guardar permisos', 'error');
+    }
+  });
+
+  root.addEventListener('change', async (ev) => {
+    const t = ev.target;
+    if (!(t instanceof HTMLElement)) return;
+    if (t.classList.contains('u-role')) {
+      const id = Number(t.getAttribute('data-user-id'));
+      try {
+        await fetchJson('/api/app-users/' + encodeURIComponent(String(id)), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role: t.value }),
+        });
+        toast('Rol actualizado', 'ok');
+      } catch (e) {
+        toast(e.message || 'Error', 'error');
+        await loadUsuariosView(container);
+      }
+    }
+    if (t.classList.contains('u-tec')) {
+      const id = Number(t.getAttribute('data-user-id'));
+      const body = { tecnico_id: t.value === '' ? null : t.value };
+      try {
+        await fetchJson('/api/app-users/' + encodeURIComponent(String(id)), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        toast('Personal vinculado', 'ok');
+      } catch (e) {
+        toast(e.message || 'Error', 'error');
+        await loadUsuariosView(container);
+      }
+    }
+    if (t.classList.contains('u-activo')) {
+      const id = Number(t.getAttribute('data-user-id'));
+      try {
+        await fetchJson('/api/app-users/' + encodeURIComponent(String(id)), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ activo: t.checked }),
+        });
+        toast('Estado actualizado', 'ok');
+      } catch (e) {
+        toast(e.message || 'Error', 'error');
+        await loadUsuariosView(container);
+      }
+    }
+    if (t.classList.contains('sched-on')) {
+      const sid = t.getAttribute('data-sched-id');
+      if (!sid) return;
+      try {
+        await fetchJson('/api/admin/report-schedules/' + encodeURIComponent(sid), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled: t.checked }),
+        });
+        toast('Programación actualizada', 'ok');
+      } catch (e) {
+        toast(e.message || 'Error', 'error');
+        t.checked = !t.checked;
+      }
+    }
+  });
+
+  root.addEventListener('click', async (ev) => {
+    const t = ev.target;
+    if (!(t instanceof HTMLElement)) return;
+    const btn = t.closest('button');
+    if (!btn) return;
+    if (btn.classList.contains('u-json')) {
+      const id = Number(btn.getAttribute('data-user-id'));
+      const row = users.find((x) => Number(x.id) === id);
+      if (!row) return;
+      openModal(
+        '<div class="modal-backdrop" role="dialog" aria-modal="true"><div class="modal-dialog wide"><div class="modal-head"><h2>Usuario · JSON</h2><button type="button" class="btn btn-ghost btn-icon" data-modal-close>✕</button></div><div class="modal-body"><pre class="code-editor" style="margin:0;white-space:pre-wrap;">' +
+          escapeHtml(JSON.stringify(row, null, 2)) +
+          '</pre></div><div class="modal-actions"><button type="button" class="btn btn-ghost" data-modal-close>Cerrar</button></div></div></div>'
+      );
+    }
+    if (btn.classList.contains('u-nombre')) {
+      const id = Number(btn.getAttribute('data-user-id'));
+      const row = users.find((x) => Number(x.id) === id);
+      if (!row) return;
+      const cur = String(row.display_name || '');
+      const v = window.prompt('Nombre completo para la cuenta', cur);
+      if (v == null) return;
+      try {
+        await fetchJson('/api/app-users/' + encodeURIComponent(String(id)), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ display_name: v.trim() || row.username }),
+        });
+        toast('Nombre actualizado', 'ok');
+        await loadUsuariosView(container);
+      } catch (e) {
+        toast(e.message || 'Error', 'error');
+      }
+    }
+    if (btn.classList.contains('u-del')) {
+      const id = Number(btn.getAttribute('data-user-id'));
+      if (!window.confirm('¿Eliminar usuario ' + id + '?')) return;
+      try {
+        await fetchJson('/api/app-users/' + encodeURIComponent(String(id)), { method: 'DELETE' });
+        toast('Usuario eliminado', 'ok');
+        await loadUsuariosView(container);
+      } catch (e) {
+        toast(e.message || 'Error', 'error');
+      }
+    }
+    if (btn.classList.contains('del-mail')) {
+      const i = Number(btn.getAttribute('data-del-idx'));
+      const o = root._deleted && root._deleted[i];
+      if (!o) return;
+      const email = root.querySelector('#del-notify-email')?.value.trim() || '';
+      const sub = encodeURIComponent('Resumen baja usuario: ' + (o.username || ''));
+      const body = encodeURIComponent(
+        'Usuario: ' +
+          (o.username || '') +
+          '\nNombre: ' +
+          (o.display_name || '') +
+          '\nEliminado: ' +
+          (o.eliminado_en || '') +
+          '\nPor: ' +
+          (o.eliminado_por_username || '') +
+          '\n'
+      );
+      const q = 'subject=' + sub + '&body=' + body;
+      window.location.href = email ? 'mailto:' + email + '?' + q : 'mailto:?' + q;
+    }
+    if (btn.classList.contains('sched-view')) {
+      const i = Number(btn.getAttribute('data-sched-idx'));
+      const o = root._schedules && root._schedules[i];
+      if (!o) return;
+      openModal(
+        '<div class="modal-backdrop" role="dialog" aria-modal="true"><div class="modal-dialog wide"><div class="modal-head"><h2>Programación</h2><button type="button" class="btn btn-ghost btn-icon" data-modal-close>✕</button></div><div class="modal-body"><pre class="code-editor" style="margin:0;white-space:pre-wrap;">' +
+          escapeHtml(JSON.stringify(o, null, 2)) +
+          '</pre></div><div class="modal-actions"><button type="button" class="btn btn-ghost" data-modal-close>Cerrar</button></div></div></div>'
+      );
+    }
+    if (btn.classList.contains('sched-del')) {
+      const sid = btn.getAttribute('data-sched-id');
+      if (!sid || !window.confirm('¿Eliminar programación ' + sid + '?')) return;
+      try {
+        await fetchJson('/api/admin/report-schedules/' + encodeURIComponent(sid), { method: 'DELETE' });
+        toast('Programación eliminada', 'ok');
+        await loadUsuariosView(container);
+      } catch (e) {
+        toast(e.message || 'Error', 'error');
+      }
+    }
+    if (btn.id === 'btn-sched-refresh') {
+      await loadUsuariosView(container);
+    }
+  });
 }
 
 async function loadViewInto(container) {
@@ -434,7 +1241,7 @@ async function loadViewInto(container) {
             </div>
             <div id="table-mount"></div>
           </div>`;
-        bindTableInteractions(container.querySelector('#almacen-table-root'), keys, merged);
+        bindTableInteractions(container.querySelector('#almacen-table-root'), keys, merged, 'almacen');
         break;
       }
       case 'auditoria': {
@@ -451,7 +1258,11 @@ async function loadViewInto(container) {
             </div>
             <div id="table-mount"></div>
           </div>`;
-        bindTableInteractions(container.querySelector('#audit-root'), keys, rows);
+        bindTableInteractions(container.querySelector('#audit-root'), keys, rows, 'auditoria');
+        break;
+      }
+      case 'usuarios': {
+        await loadUsuariosView(container);
         break;
       }
       case 'demo': {
@@ -503,7 +1314,7 @@ async function loadViewInto(container) {
             </div>
             <div id="table-mount"></div>
           </div>`;
-        bindTableInteractions(container.querySelector('#list-root'), keys, rows);
+        bindTableInteractions(container.querySelector('#list-root'), keys, rows, currentTab);
         break;
       }
     }
@@ -562,6 +1373,11 @@ function renderShell(root, cfg, user) {
     )
     .join('');
 
+  const logoSrcRaw =
+    cfg.logoUrl != null && String(cfg.logoUrl).trim()
+      ? String(cfg.logoUrl).trim()
+      : '/fondos/universal-logo.jpg';
+
   root.replaceChildren(
     el(`
       <div class="shell">
@@ -575,6 +1391,18 @@ function renderShell(root, cfg, user) {
           <nav class="nav-scroll" aria-label="Secciones">${navHtml}</nav>
         </aside>
         <div class="shell-main">
+          <div class="shell-brand-row" aria-label="Marca">
+            <div class="shell-brand-row__left">
+              <img class="shell-brand-logo" src="${escapeHtml(logoSrcRaw)}" alt="" loading="lazy" />
+              <div class="shell-brand-text">
+                <p class="shell-brand-title">${escapeHtml(cfg.appName || cfg.shortName || 'Portal')}</p>
+                <p class="shell-brand-powered">Powered by Ing. David Cantú · Universal Servicio Técnico</p>
+              </div>
+            </div>
+            <div class="shell-brand-actions">
+              <button type="button" class="btn btn-ghost btn-icon" data-theme-toggle>☀️</button>
+            </div>
+          </div>
           <header class="toolbar">
             <h1 id="view-title">—</h1>
             <div class="toolbar-actions">
@@ -584,12 +1412,14 @@ function renderShell(root, cfg, user) {
             </div>
           </header>
           <main class="view-root" id="view-root"><div class="muted">Cargando…</div></main>
+          <footer class="shell-footer">Nanoprecisión · mismo backend · interfaz renovada</footer>
         </div>
       </div>
     `)
   );
 
   wireSidebarEvents(root);
+  root.querySelectorAll('[data-theme-toggle]').forEach((b) => wireThemeToggle(b));
   loadViewInto(root.querySelector('#view-root'));
 }
 
@@ -614,7 +1444,10 @@ function renderLogin(root, cfg, err) {
         </div>
         <div class="login-panel">
           <div class="login-card">
-            <h2>${cfg.authRequired ? 'Iniciar sesión' : 'Acceso local'}</h2>
+            <div class="login-card-head">
+              <h2>${cfg.authRequired ? 'Iniciar sesión' : 'Acceso local'}</h2>
+              <button type="button" class="btn btn-ghost btn-icon" data-theme-toggle aria-label="Tema claro u oscuro">☀️</button>
+            </div>
             <p class="subtitle">${escapeHtml(cfg.authRequired ? 'Credenciales corporativas' : 'Sin login obligatorio: cargando perfil de sólo lectura.')}</p>
             ${cfg.authRequired ? msg : ''}
             ${
@@ -632,6 +1465,7 @@ function renderLogin(root, cfg, err) {
             </form>`
                 : `<p class="muted">Entrando como usuario local…</p>`
             }
+            <p class="login-meta muted">Powered by Ing. David Cantú · Universal Servicio Técnico</p>
             <p class="login-meta">
               ¿Necesitas la interfaz anterior? <a href="/legacy-app">Abrir interfaz clásica</a>
               ${cfg.buildTag ? ` · ${escapeHtml(cfg.buildTag)}` : ''}
@@ -641,6 +1475,8 @@ function renderLogin(root, cfg, err) {
       </div>
     `)
   );
+
+  root.querySelectorAll('[data-theme-toggle]').forEach((b) => wireThemeToggle(b));
 
   const form = root.querySelector('#login-form');
   if (form) {
@@ -676,6 +1512,8 @@ function renderLogin(root, cfg, err) {
 async function bootstrap() {
   const root = document.getElementById('app');
   if (!root) return;
+
+  applyStoredTheme();
 
   let cfg;
   try {

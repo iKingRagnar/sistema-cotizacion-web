@@ -168,8 +168,16 @@ a {
   margin: 0 auto;
 }
 
-.login-card h2 {
-  margin: 0 0 0.35rem;
+.login-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 0.35rem;
+}
+
+.login-card-head h2 {
+  margin: 0;
   font-size: 1.35rem;
 }
 
@@ -332,6 +340,7 @@ a {
 .shell-main {
   flex: 1;
   min-width: 0;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
@@ -437,6 +446,21 @@ a {
   color: var(--text);
 }
 
+.filter-input,
+select.filter-input {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.85);
+  color: var(--text);
+  font-size: 0.88rem;
+}
+
+html.appearance-light .filter-input,
+html.appearance-light select.filter-input {
+  background: #fff;
+}
+
 .table-wrap {
   overflow: auto;
   border: 1px solid var(--border);
@@ -539,4 +563,358 @@ table.data-table tr:hover td {
     background: rgba(0, 0, 0, 0.45);
     z-index: 90;
   }
+}
+
+/* --- Marca de agua (reimplementación propia; no copiar nano-fondo.css) --- */
+.app-watermark {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.045;
+  background-image:
+    repeating-linear-gradient(
+      -18deg,
+      transparent,
+      transparent 54px,
+      rgba(45, 212, 191, 0.22) 54px,
+      rgba(45, 212, 191, 0.22) 55px
+    ),
+    repeating-linear-gradient(
+      72deg,
+      transparent,
+      transparent 120px,
+      rgba(148, 163, 184, 0.12) 120px,
+      rgba(148, 163, 184, 0.12) 121px
+    );
+  background-size: 100% 100%;
+}
+
+.app-watermark::after {
+  content: 'Ing. David Cantú · Universal Servicio Técnico · Nanoprecisión';
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  transform: translate(-50%, -50%) rotate(-28deg);
+  font-size: clamp(1.1rem, 3.4vw, 2rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: rgba(226, 232, 240, 0.55);
+}
+
+html.appearance-light .app-watermark {
+  opacity: 0.07;
+}
+
+html.appearance-light .app-watermark::after {
+  color: rgba(15, 23, 42, 0.35);
+}
+
+/* --- Tema claro (cotizacion-theme en localStorage) --- */
+html.appearance-light {
+  --brand-bg: #f1f5f9;
+  --brand-surface: #ffffff;
+  --brand-accent: #0d9488;
+  --brand-accent-dim: rgba(13, 148, 136, 0.25);
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --border: rgba(15, 23, 42, 0.12);
+}
+
+html.appearance-light body {
+  background: var(--brand-bg);
+  color: var(--text);
+}
+
+html.appearance-light .sidebar {
+  background: #fff;
+  box-shadow: 1px 0 0 var(--border);
+}
+
+html.appearance-light .toolbar {
+  background: rgba(255, 255, 255, 0.92);
+}
+
+html.appearance-light .card {
+  background: #fff;
+}
+
+html.appearance-light table.data-table th {
+  background: #f8fafc;
+}
+
+html.appearance-light .table-wrap {
+  background: #fff;
+}
+
+html.appearance-light .table-toolbar input[type='search'],
+html.appearance-light .filter-input,
+html.appearance-light .field input {
+  background: #fff;
+  color: var(--text);
+}
+
+html.appearance-light .toast {
+  background: rgba(255, 255, 255, 0.97);
+  color: var(--text);
+}
+
+html.appearance-light .login-panel {
+  background: linear-gradient(165deg, #f8fafc 0%, #f1f5f9 60%);
+}
+
+html.appearance-light .field input {
+  border-color: var(--border);
+}
+
+/* Elevación sobre marca de agua */
+.shell,
+.login-screen {
+  position: relative;
+  z-index: 1;
+}
+
+/* --- Cabecera marca / créditos --- */
+.shell-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 1.25rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.25);
+}
+
+html.appearance-light .shell-brand-row {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.shell-brand-row__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.shell-brand-logo {
+  height: 40px;
+  width: auto;
+  max-width: 180px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.shell-brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.shell-brand-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.shell-brand-powered {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.shell-brand-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-icon {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 10px;
+}
+
+.shell-footer {
+  padding: 10px 1.25rem 14px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+}
+
+/* --- Botones de tabla --- */
+.btn-small {
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  border-radius: 6px;
+}
+
+.perm-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.82rem;
+  max-height: 240px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.perm-tabs-grid {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.perm-cols-block {
+  margin-bottom: 14px;
+}
+
+.perm-cols-block h5 {
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.btn-outline:hover {
+  background: rgba(45, 212, 191, 0.08);
+}
+
+html.appearance-light .btn-outline:hover {
+  background: rgba(13, 148, 136, 0.1);
+}
+
+.btn-danger {
+  border-color: rgba(248, 113, 113, 0.45);
+  color: #fecaca;
+}
+
+html.appearance-light .btn-danger {
+  color: #b91c1c;
+}
+
+.th-actions {
+  width: 11rem;
+  white-space: nowrap;
+}
+
+.td-actions {
+  white-space: nowrap;
+}
+
+.td-actions .btn-small + .btn-small {
+  margin-left: 4px;
+}
+
+/* --- Modal --- */
+.modal-root:empty {
+  display: none;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  background: rgba(2, 6, 23, 0.58);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+html.appearance-light .modal-backdrop {
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.modal-dialog {
+  width: min(720px, 100%);
+  max-height: min(88vh, 900px);
+  overflow: auto;
+  background: var(--brand-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+  padding: 1rem 1.15rem;
+}
+
+.modal-dialog.wide {
+  width: min(960px, 100%);
+}
+
+.modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.modal-head h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.modal-body textarea.code-editor {
+  width: 100%;
+  min-height: 220px;
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: 0.8rem;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.55);
+  color: var(--text);
+  resize: vertical;
+}
+
+html.appearance-light .modal-body textarea.code-editor {
+  background: #f8fafc;
+}
+
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.perm-grid {
+  display: grid;
+  gap: 6px;
+}
+
+.perm-tabs-grid label,
+.perm-cols-block label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.perm-cols-block {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+
+.perm-cols-block h5 {
+  margin: 0 0 6px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
 }
