@@ -2801,10 +2801,71 @@ body.dark-theme .cotz-inventory-hint i { color: #fbbf24; }
 .cotz-lineas-table-wrap {
   margin-top: 0.35rem;
   border-radius: 12px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid rgba(13, 148, 136, 0.12);
 }
 .cotz-lineas-table-wrap .data-table {
   font-size: 0.88rem;
+  table-layout: fixed;
+  width: 100%;
+  min-width: 780px;
+}
+#tabla-cot-lineas .col-cot-tipo {
+  width: 6.25rem;
+}
+#tabla-cot-lineas .col-cot-codigo {
+  width: 6.75rem;
+}
+#tabla-cot-lineas .col-cot-cant {
+  width: 3.1rem;
+}
+#tabla-cot-lineas .col-cot-pu,
+#tabla-cot-lineas .col-cot-sub {
+  width: 5.4rem;
+}
+#tabla-cot-lineas .col-cot-actions {
+  width: 5.75rem;
+}
+#tabla-cot-lineas td.td-cot-clip {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 0;
+  vertical-align: top;
+  padding-top: 0.55rem;
+}
+#tabla-cot-lineas td.td-cot-desc-multiline {
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.35;
+  max-height: 4.5em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  vertical-align: top;
+  max-width: 0;
+}
+#tabla-cot-lineas td.td-cot-actions-cell {
+  vertical-align: middle;
+  text-align: right;
+  white-space: nowrap;
+  width: 5.75rem;
+}
+#tabla-cot-lineas .cot-line-actions-btns {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  flex-wrap: nowrap;
+}
+#tabla-cot-lineas .cot-line-actions-btns .btn {
+  flex: 0 0 auto;
+}
+body.dark-theme .cotz-lineas-table-wrap {
+  border-color: rgba(34, 211, 238, 0.15);
 }
 .cotz-lineas-table-wrap .data-table thead th {
   background: linear-gradient(180deg, #f0fdfa 0%, #e0f2fe 100%);
@@ -5913,6 +5974,18 @@ body.dark-theme .modal-box:not(.pdf-preview-modal) .form-group textarea,
   z-index: 0;
   filter: blur(0.5px);
 }
+.ref-pvc-pieza-card .ref-pvc-pieza-img-hit {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  cursor: zoom-in;
+  line-height: 0;
+}
 .ref-pvc-pieza-card img {
   position: relative;
   z-index: 1;
@@ -5922,6 +5995,10 @@ body.dark-theme .modal-box:not(.pdf-preview-modal) .form-group textarea,
   max-height: 140px;
   object-fit: cover;
   aspect-ratio: 1;
+}
+.ref-pvc-pieza-card .ref-pvc-pieza-img-hit:focus-visible {
+  outline: 2px solid var(--config-accent, #14b8a6);
+  outline-offset: 2px;
 }
 .ref-pvc-pieza-mini-zoom {
   position: absolute;

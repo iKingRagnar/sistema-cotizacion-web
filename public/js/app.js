@@ -3209,7 +3209,11 @@
           '<span class="ref-pvc-hero-kicker ref-pvc-hero-kicker--accent"><i class="fas fa-puzzle-piece"></i> Pieza</span>' +
           '<div class="ref-pvc-pieza-card">' +
           '<div class="ref-pvc-pieza-ring"></div>' +
+          '<button type="button" class="ref-pvc-pieza-img-hit js-refaccion-open-media" data-media-ref="' +
+          escapeHtml(ref) +
+          '" title="Ver imagen completa">' +
           '<img src="' + escapeHtml(url) + '" alt="Vista pieza" loading="lazy">' +
+          '</button>' +
           '</div>' +
           '<div class="ref-pvc-pieza-actions">' +
           dl +
@@ -3532,7 +3536,7 @@
       const stockBajo = Number(r.stock) <= Number(r.stock_minimo || 1);
       const tr = document.createElement('tr');
       if (stockBajo) tr.classList.add('row-stock-bajo');
-      const imgThumb = r.imagen_url ? `<span class="ref-img-hover-wrap" tabindex="-1"><button type="button" class="btn-codigo-ref link-btn" data-id="${r.id}" title="Ver imagen/manual">${escapeHtml(r.codigo || '')}</button><img class="ref-img-hover-preview" src="${escapeHtml(r.imagen_url)}" alt="preview" loading="lazy"></span>` : `<button type="button" class="btn-codigo-ref link-btn" data-id="${r.id}" title="Ver imagen/manual">${escapeHtml(r.codigo || '')}</button>`;
+      const imgThumb = `<button type="button" class="btn-codigo-ref link-btn" data-id="${r.id}" title="Ver fotos / manual">${escapeHtml(r.codigo || '')}</button>`;
       tr.innerHTML = `
         <td class="ref-td-code">${imgThumb}</td>
         <td class="td-desc-wrap td-text-wrap ref-td-desc">${escapeHtml(r.descripcion || '')}</td>
@@ -3648,6 +3652,98 @@
     refillRefaccionSubcategoriaOptions();
   }
 
+  /**
+   * Une el árbol del módulo Categorías con pares DISTINCT (categoria, subcategoria) ya usados en refacciones.
+   * Así los selects siguen útiles si el GET del catálogo falla (401/red) o mientras no hay filas en tablas catalogo_*.
+   */
+  function mergeCategoriasCatalogWithRefaccionesDistinct(categoriasCatalog, refDistinctRows) {
+    const map = new Map();
+    function ensureCat(nombre, ordenHint) {
+      const raw = String(nombre || '').trim();
+      if (!raw) return null;
+      const k = raw.toLowerCase();
+      const oHint = Number(ordenHint);
+      const orden = Number.isFinite(oHint) ? oHint : 500;
+      if (!map.has(k)) {
+        map.set(k, { nombre: raw, orden: orden, subs: new Map() });
+        return map.get(k);
+      }
+      const node = map.get(k);
+      if (orden < node.orden) node.orden = orden;
+      return node;
+    }
+    toArray(categoriasCatalog).forEach(function (c, idx) {
+      const catName = c && c.nombre != null ? String(c.nombre).trim() : '';
+      if (!catName) return;
+      const ord = c.orden != null ? Number(c.orden) : idx;
+      const node = ensureCat(catName, Number.isFinite(ord) ? ord : idx);
+      toArray(c && c.subcategorias).forEach(function (s, si) {
+        const sn = s && s.nombre != null ? String(s.nombre).trim() : '';
+        if (!sn) return;
+        const so = s.orden != null ? Number(s.orden) : si;
+        node.subs.set(sn.toLowerCase(), { nombre: sn, orden: Number.isFinite(so) ? so : si });
+      });
+    });
+    toArray(refDistinctRows).forEach(function (r) {
+      const catName = r && r.categoria != null ? String(r.categoria).trim() : '';
+      const subName = r && r.subcategoria != null ? String(r.subcategoria).trim() : '';
+      if (!catName) return;
+      const node = ensureCat(catName, 900);
+      if (subName) {
+        const sk = subName.toLowerCase();
+        if (!node.subs.has(sk)) node.subs.set(sk, { nombre: subName, orden: node.subs.size });
+      }
+    });
+    return Array.from(map.values())
+      .sort(function (a, b) {
+        if (a.orden !== b.orden) return a.orden - b.orden;
+        return a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
+      })
+      .map(function (c) {
+        const subcategorias = Array.from(c.subs.values())
+          .sort(function (a, b) {
+            if (a.orden !== b.orden) return a.orden - b.orden;
+            return a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
+          })
+          .map(function (s, i) {
+            return { nombre: s.nombre, orden: i };
+          });
+        return { nombre: c.nombre, orden: c.orden, subcategorias: subcategorias };
+      });
+  }
+
+  /** Árbol para selects (refacciones / máquinas): catálogo + respaldo desde refacciones. */
+  async function fetchCategoriasCatalogoForUi(opts) {
+    const o = opts || {};
+    const toastOnCatalogError = !!o.toastOnCatalogError;
+    let cats = [];
+    let catalogErr = null;
+    try {
+      const tree = await fetchJson(API + '/categorias-catalogo');
+      cats = toArray(tree && tree.categorias);
+    } catch (e) {
+      catalogErr = e;
+      cats = [];
+    }
+    let refRows = [];
+    try {
+      refRows = await fetchJson(API + '/refacciones-categorias');
+    } catch (_e) {
+      refRows = [];
+    }
+    const merged = mergeCategoriasCatalogWithRefaccionesDistinct(cats, refRows);
+    if (toastOnCatalogError && !merged.length) {
+      showToast(
+        catalogErr
+          ? parseApiError(catalogErr) ||
+              'No se pudo cargar categorías (revisa sesión o servidor) y no hay valores de respaldo en refacciones.'
+          : 'No hay categorías para elegir. Un administrador debe dar de alta al menos una en la pestaña «Categorías».',
+        'error'
+      );
+    }
+    return { categorias: merged };
+  }
+
   function setupRefaccionFiltrosCategoriasOnce() {
     const selCat = qs('#filtro-categoria-ref');
     const selSub = qs('#filtro-subcategoria-ref');
@@ -3670,7 +3766,7 @@
     try {
       const [data, tree] = await Promise.all([
         fetchJson(API + '/refacciones'),
-        fetchJson(API + '/categorias-catalogo').catch(() => ({ categorias: [] })),
+        fetchCategoriasCatalogoForUi({ toastOnCatalogError: false }),
       ]);
       refaccionesCache = toArray(data).map(function (r) {
         return Object.assign({}, r, {
@@ -6934,7 +7030,7 @@
   // ----- MODAL REFACCIÓN -----
   async function openModalRefaccion(refaccion) {
     const isNew = !refaccion || !refaccion.id;
-    const tree = await fetchJson(API + '/categorias-catalogo').catch(() => ({ categorias: [] }));
+    const tree = await fetchCategoriasCatalogoForUi({ toastOnCatalogError: true });
     const cats = toArray(tree.categorias);
     const curCat = refaccion && refaccion.categoria ? String(refaccion.categoria).trim() : '';
     const curSub = refaccion && refaccion.subcategoria ? String(refaccion.subcategoria).trim() : '';
@@ -7300,7 +7396,7 @@
     const clientesByNombre = [...toArray(clientes)].sort((a, b) =>
       String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', { sensitivity: 'base' }));
     const defaultClienteId = clientesByNombre[0] && clientesByNombre[0].id != null ? Number(clientesByNombre[0].id) : null;
-    const tree = await fetchJson(API + '/categorias-catalogo').catch(() => ({ categorias: [] }));
+    const tree = await fetchCategoriasCatalogoForUi({ toastOnCatalogError: false });
     const cats = toArray(tree.categorias);
     const curCat = maquina && maquina.categoria ? String(maquina.categoria).trim() : '';
     const curSub = maquina && maquina.subcategoria ? String(maquina.subcategoria).trim() : '';
@@ -7663,14 +7759,14 @@
             <table class="data-table" id="tabla-cot-lineas">
               <thead>
                 <tr>
-                  <th>Tipo</th>
-                  <th>Código</th>
-                  <th>Máquina</th>
-                  <th>Descripción</th>
-                  <th>Cant</th>
-                  <th id="cot-lineas-th-pu">P.u. (MXN)</th>
-                  <th id="cot-lineas-th-sub">Subt. (MXN)</th>
-                  <th class="th-actions"></th>
+                  <th class="col-cot-tipo">Tipo</th>
+                  <th class="col-cot-codigo">Código</th>
+                  <th class="col-cot-maq">Máquina</th>
+                  <th class="col-cot-desc">Descripción</th>
+                  <th class="col-cot-cant num">Cant</th>
+                  <th class="col-cot-pu num" id="cot-lineas-th-pu">P.u. (MXN)</th>
+                  <th class="col-cot-sub num" id="cot-lineas-th-sub">Subt. (MXN)</th>
+                  <th class="col-cot-actions th-actions" aria-label="Acciones"></th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -7914,22 +8010,27 @@
         }
         const tipoLbl = l.tipo_linea === 'equipo' ? 'equipo' : String(l.tipo_linea || '');
         const codigoCell = l.codigo ? escapeHtml(String(l.codigo)) : '—';
-        const maqCell = l.maquina_nombre ? escapeHtml(String(l.maquina_nombre)) : '—';
+        const maqRaw = l.maquina_nombre ? String(l.maquina_nombre) : '';
+        const maqCell = maqRaw ? escapeHtml(maqRaw) : '—';
+        const descRaw = String(desc || '');
+        const descEscaped = escapeHtml(descRaw);
         const puUsd = Number(l.precio_unitario || 0);
         const subtUsd = Number(l.subtotal || 0);
         const puDisp = mon === 'USD' ? (puUsd * tc) : puUsd;
         const subtDisp = mon === 'USD' ? (subtUsd * tc) : subtUsd;
         tr.innerHTML = `
-          <td>${escapeHtml(tipoLbl)}</td>
-          <td class="td-text-wrap">${codigoCell}</td>
-          <td class="td-text-wrap">${maqCell}</td>
-          <td class="td-text-wrap">${escapeHtml(String(desc || ''))}</td>
-          <td class="num">${Number(l.cantidad || 0)}</td>
-          <td class="num">${puDisp.toFixed(2)}</td>
-          <td class="num">${subtDisp.toFixed(2)}</td>
-          <td class="th-actions">
+          <td class="col-cot-tipo td-cot-clip" title="${escapeHtml(tipoLbl)}">${escapeHtml(tipoLbl)}</td>
+          <td class="col-cot-codigo td-cot-clip" title="${l.codigo ? escapeHtml(String(l.codigo)) : ''}">${codigoCell}</td>
+          <td class="col-cot-maq td-cot-clip" title="${maqRaw ? escapeHtml(maqRaw) : ''}">${maqCell}</td>
+          <td class="col-cot-desc td-cot-desc-multiline" title="${descEscaped}">${descEscaped}</td>
+          <td class="col-cot-cant num">${Number(l.cantidad || 0)}</td>
+          <td class="col-cot-pu num">${puDisp.toFixed(2)}</td>
+          <td class="col-cot-sub num">${subtDisp.toFixed(2)}</td>
+          <td class="col-cot-actions td-cot-actions-cell">
+            <div class="cot-line-actions-btns">
             <button type="button" class="btn small outline btn-edit-line" data-id="${l.id}" title="Editar"><i class="fas fa-pen"></i></button>
             <button type="button" class="btn small danger btn-del-line" data-id="${l.id}" title="Eliminar"><i class="fas fa-trash"></i></button>
+            </div>
           </td>
         `;
         tbody.appendChild(tr);
@@ -11772,7 +11873,7 @@
 
   async function openModalRevisionMaquina(rev) {
     await fetchRevisionMaquinasCatalogo();
-    const treeRm = await fetchJson(API + '/categorias-catalogo').catch(() => ({ categorias: [] }));
+    const treeRm = await fetchCategoriasCatalogoForUi({ toastOnCatalogError: false });
     const catNames = toArray(treeRm.categorias).map(c => c.nombre);
     const catalog = revisionMaquinasCatalogoCache.length ? revisionMaquinasCatalogoCache : maquinasCache;
     const isNew = !rev || !rev.id;
