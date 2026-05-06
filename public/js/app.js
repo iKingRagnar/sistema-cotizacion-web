@@ -3431,15 +3431,145 @@
     const dl = pvcDownloadBtnCompactHtml(null, openUrl, 'cliente-constancia');
     const idAttr = c.id != null ? ' data-cliente-id="' + escapeHtml(String(c.id)) + '"' : '';
     if (c.constancia_kind === 'image' && c.constancia_thumb_url) {
-      return `<span class="cliente-const-inline"><button type="button" class="cliente-const-slot js-cliente-const-thumb"${idAttr} title="Ver constancia a pantalla completa">
+      return `<span class="cliente-const-inline"><button type="button" class="cliente-const-slot js-cliente-const-thumb"${idAttr} title="Ver constancia abajo (la página baja sola)">
         <img src="${escapeHtml(c.constancia_thumb_url)}" alt="" class="cliente-const-mini" loading="lazy">
       </button>${dl}</span>`;
     }
     const icon = c.constancia_kind === 'pdf' ? 'fa-file-pdf' : 'fa-file-alt';
     const cls = c.constancia_kind === 'pdf' ? 'cliente-const-slot--pdf' : 'cliente-const-slot--file';
-    return `<span class="cliente-const-inline"><button type="button" class="cliente-const-slot ${cls} js-cliente-const-thumb"${idAttr} title="Abrir constancia (PDF o archivo)">
+    return `<span class="cliente-const-inline"><button type="button" class="cliente-const-slot ${cls} js-cliente-const-thumb"${idAttr} title="Ver constancia abajo (la página baja sola)">
       <i class="fas ${icon}"></i>
     </button>${dl}</span>`;
+  }
+
+  let _clienteConstanciaPanelBlobUrl = null;
+
+  function hideClienteConstanciaViewerZone() {
+    const zone = qs('#cliente-constancia-viewer-zone');
+    const imgEl = qs('#cliente-constancia-viewer-img');
+    const pdfEl = qs('#cliente-constancia-viewer-pdf');
+    const fbEl = qs('#cliente-constancia-viewer-fallback');
+    const statusEl = qs('#cliente-constancia-viewer-status');
+    if (imgEl) {
+      imgEl.classList.add('hidden');
+      try {
+        imgEl.removeAttribute('src');
+      } catch (_) {}
+    }
+    if (pdfEl) {
+      pdfEl.classList.add('hidden');
+      try {
+        pdfEl.removeAttribute('src');
+      } catch (_) {}
+    }
+    if (fbEl) {
+      fbEl.innerHTML = '';
+      fbEl.classList.add('hidden');
+    }
+    if (_clienteConstanciaPanelBlobUrl) {
+      try {
+        URL.revokeObjectURL(_clienteConstanciaPanelBlobUrl);
+      } catch (_) {}
+      _clienteConstanciaPanelBlobUrl = null;
+    }
+    if (statusEl) {
+      statusEl.textContent = '';
+      statusEl.classList.add('hidden');
+    }
+    if (zone) zone.classList.add('hidden');
+  }
+
+  async function showClienteConstanciaInPanelFromThumb(found) {
+    if (!found || !found.has_constancia) return;
+    showPanel('clientes', { skipLoad: true });
+    const zone = qs('#cliente-constancia-viewer-zone');
+    const imgEl = qs('#cliente-constancia-viewer-img');
+    const pdfEl = qs('#cliente-constancia-viewer-pdf');
+    const fbEl = qs('#cliente-constancia-viewer-fallback');
+    const statusEl = qs('#cliente-constancia-viewer-status');
+    const titleEl = qs('#cliente-constancia-viewer-title');
+    if (!zone || !imgEl || !pdfEl || !fbEl) {
+      showToast('Vista de constancia no disponible. Recarga la página (F5).', 'error');
+      return;
+    }
+    hideClienteConstanciaViewerZone();
+    zone.classList.remove('hidden');
+    if (titleEl) {
+      titleEl.innerHTML =
+        '<i class="fas fa-file-invoice"></i> ' + escapeHtml('Constancia · ' + (found.nombre || 'Cliente'));
+    }
+    imgEl.classList.add('hidden');
+    pdfEl.classList.add('hidden');
+    fbEl.classList.add('hidden');
+    if (statusEl) {
+      statusEl.classList.remove('hidden');
+      statusEl.textContent = 'Cargando constancia…';
+    }
+    const url = API + '/clientes/' + encodeURIComponent(found.id) + '/constancia';
+    const headers = {};
+    const tok = getAuthToken();
+    if (tok) headers['Authorization'] = 'Bearer ' + tok;
+    try {
+      const r = await fetch(url, { headers, credentials: 'same-origin' });
+      if (!r.ok) {
+        let msg = 'No se pudo cargar la constancia.';
+        try {
+          const j = await r.json();
+          if (j && j.error) msg = j.error;
+        } catch (_) {}
+        throw new Error(msg);
+      }
+      const ct = String(r.headers.get('content-type') || '');
+      const blob = await r.blob();
+      const objUrl = URL.createObjectURL(blob);
+      _clienteConstanciaPanelBlobUrl = objUrl;
+      const looksImage =
+        /^image\//i.test(ct) ||
+        /^image\//i.test(blob.type) ||
+        (await pvcBlobSniffIsImageBlob(blob));
+      const looksPdf =
+        /^application\/pdf/i.test(ct) ||
+        /^application\/pdf/i.test(blob.type) ||
+        String(found.constancia_kind || '') === 'pdf';
+      if (statusEl) {
+        statusEl.textContent = '';
+        statusEl.classList.add('hidden');
+      }
+      if (looksImage) {
+        imgEl.src = objUrl;
+        imgEl.classList.remove('hidden');
+      } else if (looksPdf) {
+        pdfEl.src = objUrl;
+        pdfEl.classList.remove('hidden');
+      } else {
+        fbEl.innerHTML =
+          '<a class="btn primary" href="' +
+          escapeHtml(objUrl) +
+          '" target="_blank" rel="noopener noreferrer">Abrir archivo</a>';
+        fbEl.classList.remove('hidden');
+      }
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          try {
+            zone.scrollIntoView({
+              behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+              block: 'start',
+              inline: 'nearest',
+            });
+          } catch (_) {
+            try {
+              zone.scrollIntoView();
+            } catch (_2) {}
+          }
+          try {
+            zone.focus({ preventScroll: true });
+          } catch (_3) {}
+        });
+      });
+    } catch (err) {
+      hideClienteConstanciaViewerZone();
+      showToast(String(err && err.message ? err.message : err) || 'No se pudo cargar la constancia.', 'error');
+    }
   }
 
   function previewCliente(c) {
@@ -3530,15 +3660,34 @@
           return;
         }
         if (!found.has_constancia) return;
-        const openUrl = API + '/clientes/' + encodeURIComponent(found.id) + '/constancia';
-        if (pvcOpenApiBinaryUrlInViewer(openUrl)) return;
-        openRefaccionMediaFull(openUrl);
+        void showClienteConstanciaInPanelFromThumb(found);
+      },
+      true
+    );
+  })();
+
+  (function bindClienteConstanciaViewerCloseCapture() {
+    document.addEventListener(
+      'click',
+      function (e) {
+        const t = e && e.target;
+        if (!t || !t.closest) return;
+        const btn = t.closest('#cliente-constancia-viewer-close');
+        if (!btn || btn.disabled) return;
+        if (!document.body.contains(btn)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+          e.stopImmediatePropagation();
+        } catch (_) {}
+        hideClienteConstanciaViewerZone();
       },
       true
     );
   })();
 
   function renderClientes(data) {
+    hideClienteConstanciaViewerZone();
     const tbody = qs('#tabla-clientes tbody');
     tbody.innerHTML = '';
     if (!data || data.length === 0) {

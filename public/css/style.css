@@ -7291,6 +7291,58 @@ body:not(.dark-theme) .cliente-const-slot--pdf {
   border-color: rgba(220, 38, 38, 0.25);
 }
 
+/* Clientes: constancia ampliada al final del panel (clic miniatura → scroll aquí) */
+.cliente-constancia-viewer-zone {
+  scroll-margin-top: 5.5rem;
+  margin-top: 1.25rem;
+  outline: none;
+}
+.cliente-constancia-viewer-card {
+  padding: 1rem 1.25rem 1.25rem;
+}
+.cliente-constancia-viewer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+.cliente-constancia-viewer-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.cliente-constancia-viewer-status {
+  margin: 0 0 0.5rem 0;
+}
+.cliente-constancia-viewer-body {
+  min-height: 4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+#cliente-constancia-viewer-img {
+  max-width: 100%;
+  max-height: min(88vh, 920px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+#cliente-constancia-viewer-pdf {
+  width: 100%;
+  min-height: 72vh;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.35);
+}
+.cliente-constancia-viewer-fallback {
+  padding: 0.5rem 0;
+}
+
 /* Personal: miniaturas INE + licencia en tabla y vista previa */
 .tec-personal-docs-row {
   display: flex;

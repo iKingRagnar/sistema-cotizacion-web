@@ -32,7 +32,7 @@
   <!-- CSS heredados (primero — los sobreescribe el nuevo sistema MD3) -->
   <link rel="stylesheet" href="css/design-tokens.css?v=4-md3">
   <link rel="stylesheet" href="css/design-system.css?v=3-apex-base">
-  <link rel="stylesheet" href="css/style.css?v=93-thumb-solo-lightbox-2026-05-06">
+  <link rel="stylesheet" href="css/style.css?v=94-cliente-constancia-scroll-panel-2026-05-06">
   <link rel="stylesheet" href="css/layout-rail.css?v=11-hide-sidebar-global-strip">
   <link rel="stylesheet" href="css/header-profile.css?v=10-chrome-luna-neutral-admin-hub">
   <link rel="stylesheet" href="css/theme-industrial.css?v=25-chrome-luna-neutral">
@@ -522,6 +522,20 @@
           <strong>Vaciar todo el módulo</strong> (irreversible). Solo administrador.
           <button type="button" class="btn danger outline btn-vaciar-modulo" data-modulo="clientes"><i class="fas fa-database"></i> Vaciar tabla de clientes</button>
         </p>
+      </div>
+      <div id="cliente-constancia-viewer-zone" class="cliente-constancia-viewer-zone hidden" tabindex="-1" aria-label="Vista ampliada de constancia fiscal">
+        <div class="card cliente-constancia-viewer-card">
+          <div class="cliente-constancia-viewer-head">
+            <h3 id="cliente-constancia-viewer-title" class="cliente-constancia-viewer-title"><i class="fas fa-file-invoice"></i> Constancia fiscal</h3>
+            <button type="button" id="cliente-constancia-viewer-close" class="btn small outline" aria-label="Ocultar vista de constancia"><i class="fas fa-times"></i></button>
+          </div>
+          <p id="cliente-constancia-viewer-status" class="hint cliente-constancia-viewer-status hidden"></p>
+          <div id="cliente-constancia-viewer-body" class="cliente-constancia-viewer-body">
+            <img id="cliente-constancia-viewer-img" alt="Constancia fiscal" class="hidden" />
+            <iframe id="cliente-constancia-viewer-pdf" title="Constancia PDF" class="hidden"></iframe>
+            <div id="cliente-constancia-viewer-fallback" class="cliente-constancia-viewer-fallback hidden"></div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1672,7 +1686,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=180-cliente-thumb-solo-imagen-lightbox-2026-05-06"></script>
+  <script src="js/app.js?v=181-cliente-constancia-scroll-panel-2026-05-06"></script>
   <script src="js/bg-animation.js?v=6-no-motion-mobile-only" defer></script>
   <script src="js/premium-ux.js?v=16-no-motion-boot" defer></script>
 </body>
