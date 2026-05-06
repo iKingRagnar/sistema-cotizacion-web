@@ -2217,6 +2217,9 @@
     const capEl = qs('#pvc-lb-caption');
     if (!root || !imgEl || !pdfEl || !fbEl) {
       showToast('Vista previa no disponible. Recarga la página (F5).', 'error');
+      try {
+        hidePvcMediaLightbox();
+      } catch (_) {}
       return;
     }
     if (_pvcLbBlobUrl) {
@@ -2397,7 +2400,14 @@
         });
       }
     }
-    await pvcMediaLightboxRenderCurrentItem();
+    try {
+      await pvcMediaLightboxRenderCurrentItem();
+    } catch (err) {
+      try {
+        hidePvcMediaLightbox();
+      } catch (_) {}
+      showToast(String(err && err.message ? err.message : err) || 'No se pudo mostrar la vista previa.', 'error');
+    }
     try {
       qs('#pvc-lb-close') && qs('#pvc-lb-close').focus({ preventScroll: true });
     } catch (_) {}
@@ -3986,7 +3996,7 @@
   /**
    * Miniatura de constancia en listado o en vista prevía (ojito).
    * @param {object} c Cliente con has_constancia.
-   * @param {{ showVerButton?: boolean }} [opts] showVerButton: true en tarjeta de vista prevía (mini + Ver; descarga va al pie del modal).
+   * @param {{ showVerButton?: boolean }} [opts] showVerButton: true en tarjeta de vista prevía (mini solo lectura + Ver + descarga compacta).
    */
   function clienteConstanciaThumbHtml(c, opts) {
     if (!c || !c.has_constancia) return '';
@@ -3994,24 +4004,25 @@
     const idAttr = c.id != null ? ' data-cliente-id="' + escapeHtml(String(c.id)) + '"' : '';
     const kindAttr =
       c.constancia_kind === 'pdf' ? ' data-const-kind="pdf"' : c.constancia_kind === 'image' ? ' data-const-kind="image"' : '';
-    const lbOpen =
-      c.id != null
-        ? ` data-lb-role="cliente-const"${idAttr}${kindAttr} title="Ver constancia ampliada"`
-        : '';
-    const verLb =
+    const constanciaApiUrl =
+      c.id != null ? API + '/clientes/' + encodeURIComponent(c.id) + '/constancia' : '';
+    const verDlRow =
       showVerButton && c.id != null
-        ? `<button type="button" class="btn small outline js-pvc-media-lightbox" data-lb-role="cliente-const"${idAttr}${kindAttr} title="Ver constancia ampliada"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>`
+        ? `<button type="button" class="btn small outline js-pvc-media-lightbox" data-lb-role="cliente-const"${idAttr}${kindAttr} title="Ver constancia ampliada"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>` +
+          (canDownloadUploadedMedia() && constanciaApiUrl
+            ? pvcDownloadBtnCompactHtml(
+                null,
+                constanciaApiUrl,
+                slugifyDownloadName(c.constancia_nombre || 'constancia'),
+              )
+            : '')
         : '';
     if (c.constancia_kind === 'image' && c.constancia_thumb_url) {
-      return `<span class="cliente-const-inline"><button type="button" class="cliente-const-slot js-pvc-media-lightbox"${lbOpen}>
-        <img src="${escapeHtml(c.constancia_thumb_url)}" alt="" class="cliente-const-mini" loading="lazy">
-      </button>${verLb}</span>`;
+      return `<span class="cliente-const-inline"><span class="cliente-const-slot cliente-const-slot--static" aria-hidden="true"><img src="${escapeHtml(c.constancia_thumb_url)}" alt="" class="cliente-const-mini" loading="lazy"></span>${verDlRow}</span>`;
     }
     const icon = c.constancia_kind === 'pdf' ? 'fa-file-pdf' : 'fa-file-alt';
     const cls = c.constancia_kind === 'pdf' ? 'cliente-const-slot--pdf' : 'cliente-const-slot--file';
-    return `<span class="cliente-const-inline"><button type="button" class="cliente-const-slot ${cls} js-pvc-media-lightbox"${lbOpen}>
-      <i class="fas ${icon}"></i>
-    </button>${verLb}</span>`;
+    return `<span class="cliente-const-inline"><span class="cliente-const-slot ${cls} cliente-const-slot--static" aria-hidden="true"><i class="fas ${icon}"></i></span>${verDlRow}</span>`;
   }
 
   function previewCliente(c) {

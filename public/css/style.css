@@ -7271,6 +7271,12 @@ body.dark-theme #panel-mantenimiento-garantia .mant-gar-hint {
   background: rgba(15, 23, 42, 0.45);
   vertical-align: middle;
 }
+/* Miniatura en tabla / cabecera: solo vista previa, sin abrir lightbox al clic */
+.cliente-const-slot.cliente-const-slot--static {
+  pointer-events: none;
+  cursor: default;
+  user-select: none;
+}
 .cliente-const-slot--pdf {
   color: #f87171;
   font-size: 1.1rem;
