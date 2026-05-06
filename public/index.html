@@ -9,7 +9,9 @@
         var h = (location.hostname || '').toLowerCase().replace(/^\[/, '').replace(/\]$/, '');
         var loopback = h === 'localhost' || h === '127.0.0.1' || h === '::1';
         var lanDev = location.port === '3456' && /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h);
-        if (!loopback && !lanDev) return;
+        // Render (y similares): el SW suele cachear index/CSS viejos → login “fantasma” sin mensaje de error
+        var renderLike = /\.onrender\.com$/i.test(h);
+        if (!loopback && !lanDev && !renderLike) return;
         if (!('serviceWorker' in navigator)) return;
         navigator.serviceWorker.getRegistrations().then(function (regs) {
           return Promise.all((regs || []).map(function (r) { return r.unregister(); }));
@@ -71,7 +73,7 @@
   <link rel="stylesheet" href="css/portal-overlays.css?v=2-portal-last-wins-2026-04-27">
   <link rel="stylesheet" href="css/login-neutral.css?v=7-login-compact-form-post-2026-05-05">
   <!-- Enterprise: UI minimalista corporativa (última capa, gana sobre premium/nano) -->
-  <link rel="stylesheet" href="css/enterprise-ui.css?v=1-2026-05-05">
+  <link rel="stylesheet" href="css/enterprise-ui.css?v=3-render-login-fix">
   <link rel="manifest" href="manifest.json">
   <!-- Tema: no forzar Sol en primera visita — en hosting nuevo sin localStorage,
        Login industrial + foto public/fondos/nano-machining-services.webp (ruta en nano-fondo.css).
@@ -208,6 +210,33 @@
       -webkit-text-fill-color: #f8fafc !important;
       opacity: 1 !important;
       text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9) !important;
+    }
+  </style>
+  <!-- Último bloque en head: gana sobre CSS externos + evita texto de error “invisible” (WebKit / degradados) -->
+  <style id="enterprise-head-last">
+    html.enterprise-ui body.login-open #login-overlay.login-overlay,
+    html.enterprise-ui body.login-open #login-overlay {
+      background-color: #eef1f4 !important;
+      background-image: none !important;
+      background-attachment: scroll !important;
+    }
+    html.enterprise-ui body.login-open #login-overlay #login-error.login-error:not(.hidden),
+    html.enterprise-ui body.login-open #login-overlay #login-error.login-error:not(.hidden) .login-error-msg,
+    html.enterprise-ui body.login-open #login-overlay #login-error.login-error:not(.hidden) #login-error-text {
+      -webkit-background-clip: border-box !important;
+      background-clip: border-box !important;
+      -webkit-text-fill-color: #991b1b !important;
+      color: #991b1b !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      font-size: 0.875rem !important;
+      font-weight: 600 !important;
+      line-height: 1.45 !important;
+      text-shadow: none !important;
+    }
+    html.enterprise-ui body.login-open #login-overlay #login-error.login-error:not(.hidden) > i {
+      -webkit-text-fill-color: #b91c1c !important;
+      color: #b91c1c !important;
     }
   </style>
 </head>
@@ -1684,7 +1713,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=168-login-activo-coalesce-form-post"></script>
+  <script src="js/app.js?v=169-login-error-textcontent-render"></script>
   <script src="js/bg-animation.js?v=6-no-motion-mobile-only" defer></script>
   <script src="js/premium-ux.js?v=16-no-motion-boot" defer></script>
 </body>

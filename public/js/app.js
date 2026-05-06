@@ -1260,6 +1260,20 @@
     return raw || fb;
   }
 
+  /** Muestra mensaje de error de login con texto seguro (evita span vacío por DOM/CSS). */
+  function showLoginError(message) {
+    const err = qs('#login-error');
+    if (!err) return;
+    const msg =
+      String(message == null ? '' : message).trim() ||
+      'Usuario o contraseña incorrectos';
+    err.innerHTML =
+      '<i class="fas fa-exclamation-circle" aria-hidden="true"></i> <span class="login-error-msg" id="login-error-text"></span>';
+    const span = err.querySelector('#login-error-text');
+    if (span) span.textContent = msg;
+    err.classList.remove('hidden');
+  }
+
   function setupLoginForm() {
     const form = qs('#login-form');
     const err = qs('#login-error');
@@ -1298,14 +1312,7 @@
         let data = {};
         try { data = text ? JSON.parse(text) : {}; } catch (_) {}
         if (!r.ok) {
-          if (err) {
-            const msg = formatLoginApiError(data, 'Usuario o contraseña incorrectos');
-            err.innerHTML =
-              '<i class="fas fa-exclamation-circle" aria-hidden="true"></i> <span class="login-error-msg" id="login-error-text">' +
-              escapeHtml(msg) +
-              '</span>';
-            err.classList.remove('hidden');
-          }
+          showLoginError(formatLoginApiError(data, 'Usuario o contraseña incorrectos'));
           return;
         }
         setAuthSession(data.token, data.user);
@@ -1317,19 +1324,12 @@
         if (p) p.value = '';
         finishBoot();
       } catch (e) {
-        if (err) {
-          var netMsg = e && e.message ? String(e.message) : '';
-          var fb =
-            netMsg && /abort|aborted|network|failed to fetch|load failed/i.test(netMsg)
-              ? 'No se pudo conectar con el servidor. Comprueba que la app esté en http(s):// (no abras el HTML desde archivo) y que el servicio Node esté en marcha.'
-              : 'No se pudo conectar. Revisa la red o el servidor.';
-          const msg = formatLoginApiError(null, fb);
-          err.innerHTML =
-            '<i class="fas fa-exclamation-circle" aria-hidden="true"></i> <span class="login-error-msg" id="login-error-text">' +
-            escapeHtml(msg) +
-            '</span>';
-          err.classList.remove('hidden');
-        }
+        var netMsg = e && e.message ? String(e.message) : '';
+        var fb =
+          netMsg && /abort|aborted|network|failed to fetch|load failed/i.test(netMsg)
+            ? 'No se pudo conectar con el servidor. Comprueba que la app esté en http(s):// (no abras el HTML desde archivo) y que el servicio Node esté en marcha.'
+            : 'No se pudo conectar. Revisa la red o el servidor.';
+        showLoginError(formatLoginApiError(null, fb));
       } finally {
         if (submitBtn) submitBtn.disabled = false;
         if (submitText) submitText.classList.remove('hidden');
