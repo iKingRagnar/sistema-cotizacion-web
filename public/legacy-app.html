@@ -21,7 +21,7 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" id="meta-theme-color" content="#1A73E8">
-  <title>Servicio Técnico · Universal · Enterprise</title>
+  <title>Servicio Técnico · Universal</title>
   <meta name="description" content="Servicio técnico Universal: clientes, refacciones, máquinas, cotizaciones, incidentes y bitácora de horas.">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <!-- Fonts — solo Inter (familia única) + Material Symbols con ejes mínimos -->
@@ -62,61 +62,15 @@
   <link rel="stylesheet" href="css/modules/tarifas.css?v=1-md3-2026">
   <link rel="stylesheet" href="css/modules/operaciones.css?v=1-md3-2026">
   <link rel="stylesheet" href="css/modules/admin.css?v=1-md3-2026">
-  <!-- ★ PREMIUM OVERRIDE — cargado último, gana toda especificidad -->
-  <link rel="stylesheet" href="css/premium.css?v=77-profile-svg-no-before-2026-04-27">
-  <link rel="stylesheet" href="css/premium-pro.css?v=22-profile-svg-no-before-2026-04-27">
-  <link rel="stylesheet" href="css/luna-nuclear.css?v=9-chrome-luna-neutral-2026-04-27">
-  <!-- Nano vidrio + foto industrial (debe ir al final de la cascada CSS) -->
-  <link rel="stylesheet" href="css/nano-fondo.css?v=43-login-overlay-login-open-neutral-2026-04-27">
+  <!-- Sin premium.css / luna / nano-fondo: UI corporativa vía enterprise-ui (última capa). -->
   <link rel="stylesheet" href="css/no-motion.css?v=2-profile-svg-backstop-2026-04-27">
   <!-- Portales primero; login-neutral DEBE ir después para mandar en overlay de sesión -->
   <link rel="stylesheet" href="css/portal-overlays.css?v=2-portal-last-wins-2026-04-27">
   <link rel="stylesheet" href="css/login-neutral.css?v=7-login-compact-form-post-2026-05-05">
-  <!-- Enterprise: UI minimalista corporativa (última capa, gana sobre premium/nano) -->
-  <link rel="stylesheet" href="css/enterprise-ui.css?v=3-render-login-fix">
+  <!-- Enterprise: UI minimalista corporativa (última capa) -->
+  <link rel="stylesheet" href="css/enterprise-ui.css?v=4-full-app-restored">
   <link rel="manifest" href="manifest.json">
-  <!-- Tema: no forzar Sol en primera visita — en hosting nuevo sin localStorage,
-       Login industrial + foto public/fondos/nano-machining-services.webp (ruta en nano-fondo.css).
-       Quien prefiera Sol puede usar el interruptor en la app (cotizacion-theme=light). -->
-  <!-- ★ FORCE-RELOAD: SOLO en browser normal, NUNCA en PWA standalone (evita loop crash) -->
-  <script>
-    (function(){
-      try {
-        // Detectar PWA standalone — en ese modo NUNCA forzamos reload
-        var isStandalone = window.matchMedia && (
-          window.matchMedia('(display-mode: standalone)').matches ||
-          window.matchMedia('(display-mode: window-controls-overlay)').matches ||
-          window.matchMedia('(display-mode: minimal-ui)').matches
-        ) || window.navigator.standalone === true;
-        if (isStandalone) return;
-
-        // Dev local (loopback o LAN :3456): no llamar reg.update() — reactiva el SW.
-        var hn = (location.hostname || '').toLowerCase().replace(/^\[/, '').replace(/\]$/, '');
-        var loopback = hn === 'localhost' || hn === '127.0.0.1' || hn === '::1';
-        var lanDev = location.port === '3456' && /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(hn);
-        if (loopback || lanDev) return;
-
-        var EXPECTED_CSS = '76-chrome-luna-neutral-2026-04-27';
-        var KEY = 'prem-fr-' + EXPECTED_CSS;
-        if (sessionStorage.getItem(KEY)) return;
-
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.getRegistrations().then(function(regs){
-            if (!regs || !regs.length) return;
-            Promise.all(regs.map(function(r){ return r.update().catch(function(){}); }))
-              .then(function(){
-                var link = document.querySelector('link[href*="premium.css"]');
-                if (link && link.href.indexOf(EXPECTED_CSS) === -1) {
-                  sessionStorage.setItem(KEY, '1');
-                  location.reload();
-                }
-              })
-              .catch(function(){});
-          }).catch(function(){});
-        }
-      } catch(e) {}
-    })();
-  </script>
+  <!-- Tema claro/oscuro: interruptor en la app (cotizacion-theme=light). -->
   <!-- ★ PWA performance — en standalone, marcar body para CSS skip animaciones pesadas -->
   <script>
     (function(){
@@ -1713,8 +1667,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=169-login-error-textcontent-render"></script>
+  <script src="js/app.js?v=170-full-ui-restored"></script>
   <script src="js/bg-animation.js?v=6-no-motion-mobile-only" defer></script>
-  <script src="js/premium-ux.js?v=16-no-motion-boot" defer></script>
 </body>
 </html>
