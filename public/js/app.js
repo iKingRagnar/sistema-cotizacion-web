@@ -1840,6 +1840,57 @@
     return String(btn.getAttribute('data-url') || '');
   }
 
+  /** PDF por data URL, extensión o tipo en cadena (evita confundir con imagen). */
+  function pvcIsPdfUrl(u) {
+    const s = String(u || '').trim();
+    if (!s) return false;
+    if (s.startsWith('data:application/pdf')) return true;
+    if (/\.pdf(\?|$)/i.test(s)) return true;
+    return false;
+  }
+
+  /**
+   * Imagen mostrable en UI / lightbox: data/blob, extensión conocida, rutas /api/ (binario con Content-Type),
+   * o https con extensión de imagen (evita tratar cualquier URL como imagen).
+   */
+  function pvcIsDisplayableImageUrl(u) {
+    const s = String(u || '').trim();
+    if (!s) return false;
+    if (pvcIsPdfUrl(s)) return false;
+    if (s.startsWith('data:image')) return true;
+    if (s.startsWith('blob:')) return true;
+    if (/\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)(\?|$)/i.test(s)) return true;
+    if (s.startsWith('/api/')) return true;
+    if (/^https?:\/\//i.test(s) && /\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)(\?|$)/i.test(s)) return true;
+    return false;
+  }
+
+  /** Miniatura en tabla: /api/ sin extensión usa icono (evita <img> sin auth en src). */
+  function pvcTablaThumbOpenButton(url, title) {
+    const u = String(url || '').trim();
+    if (!u || !pvcIsDisplayableImageUrl(u)) return '';
+    const ref = registerPvcMediaUrl(u);
+    const t = escapeHtml(title || 'Ver imagen');
+    if (u.startsWith('/api/')) {
+      return (
+        '<button type="button" class="ref-tabla-thumb-api js-refaccion-open-media" data-media-ref="' +
+        escapeHtml(ref) +
+        '" title="' +
+        t +
+        '"><i class="fas fa-image" aria-hidden="true"></i></button>'
+      );
+    }
+    return (
+      '<button type="button" class="ref-tabla-thumb-btn js-refaccion-open-media" data-media-ref="' +
+      escapeHtml(ref) +
+      '" title="' +
+      t +
+      '"><img class="ref-tabla-thumb-img" src="' +
+      escapeHtml(u) +
+      '" alt="" loading="lazy"></button>'
+    );
+  }
+
   function pvcExtFromMime(mime) {
     const m = String(mime || '').toLowerCase();
     if (m.indexOf('pdf') >= 0) return '.pdf';
@@ -3078,18 +3129,10 @@
       requestAnimationFrame(() => wrap.classList.add('ref-img-lightbox--in'));
     }
 
-    const isImg = u.startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(u);
-    if (!isImg) {
+    if (!pvcIsDisplayableImageUrl(u)) {
       try { window.open(u, '_blank', 'noopener,noreferrer'); } catch (_) {}
       return;
     }
-    const prev = document.getElementById('ref-img-lightbox');
-    if (prev) prev.remove();
-    const wrap = document.createElement('div');
-    wrap.id = 'ref-img-lightbox';
-    wrap.className = 'ref-img-lightbox';
-    wrap.setAttribute('role', 'dialog');
-    wrap.setAttribute('aria-modal', 'true');
     openLightboxImgSrc(u);
   }
 
@@ -3179,11 +3222,10 @@
     const imgPart = r.imagen_url ? String(r.imagen_url).trim() : '';
     const imgPieza = r.manual_url ? String(r.manual_url).trim() : '';
     if (!imgPart && !imgPieza) return '';
-    const isImg = (u) => u && (u.startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(u));
-    const isPdf = (u) => u && (u.startsWith('data:application/pdf') || /\.pdf(\?|$)/i.test(u));
+    const isPdf = (u) => u && pvcIsPdfUrl(u);
 
     function blockNumeroParte(url) {
-      if (isImg(url)) {
+      if (pvcIsDisplayableImageUrl(url)) {
         const ref = registerPvcMediaUrl(url);
         return (
           '<div class="ref-pvc-hero-main">' +
@@ -3211,7 +3253,7 @@
     }
 
     function blockPiezaThumb(url, compact) {
-      if (isImg(url)) {
+      if (pvcIsDisplayableImageUrl(url)) {
         const ref = registerPvcMediaUrl(url);
         const dl = pvcMediaDownloadButtonHtml(ref, null, 'refaccion-pieza-mini', 'ref-pvc-pieza-mini-dl');
         return (
@@ -3245,7 +3287,7 @@
     }
 
     function blockPiezaSolo(url) {
-      if (isImg(url)) {
+      if (pvcIsDisplayableImageUrl(url)) {
         const ref = registerPvcMediaUrl(url);
         return (
           '<div class="ref-pvc-hero-main ref-pvc-hero-main--solo">' +
@@ -3286,10 +3328,9 @@
   function previewMediaThumbBlock(url, title) {
     const u = String(url || '');
     if (!u) return '';
-    const isImg = u.startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(u);
     const mediaRef = registerPvcMediaUrl(u);
     const dl = pvcDownloadBtnCompactHtml(mediaRef, null, slugifyDownloadName(title || 'archivo'));
-    if (isImg) {
+    if (pvcIsDisplayableImageUrl(u)) {
       return `<div class="pvc-preview-media">
         <div class="pvc-preview-media-row">
         <button type="button" class="pvc-preview-media-btn js-refaccion-open-media" data-media-ref="${mediaRef}" title="Ver imagen completa">
@@ -3299,7 +3340,7 @@
         </div>
       </div>`;
     }
-    const isPdf = u.startsWith('data:application/pdf') || /\.pdf(\?|$)/i.test(u) || /application\/pdf/i.test(u);
+    const isPdf = pvcIsPdfUrl(u) || /application\/pdf/i.test(u);
     const icon = isPdf ? 'fa-file-pdf' : 'fa-file-alt';
     const cls = isPdf ? 'cliente-const-slot--pdf' : 'cliente-const-slot--file';
     return `<div class="pvc-preview-media">
@@ -3469,6 +3510,7 @@
 
   // ----- REFACCIONES -----
   function previewRefaccion(r) {
+    clearPvcMediaUrlRegistry();
     const stockBajo = Number(r.stock) <= Number(r.stock_minimo || 1);
     const underHeaderHtml = buildRefaccionPreviewUnderHeader(r);
     const hasSeg = !!(refCategoriaLabel(r.categoria) || refCategoriaLabel(r.subcategoria));
@@ -3546,7 +3588,9 @@
       const stockBajo = Number(r.stock) <= Number(r.stock_minimo || 1);
       const tr = document.createElement('tr');
       if (stockBajo) tr.classList.add('row-stock-bajo');
-      const imgThumb = `<button type="button" class="btn-codigo-ref link-btn" data-id="${r.id}" title="Ver fotos / manual">${escapeHtml(r.codigo || '')}</button>`;
+      const thumbUrlRaw = (r.imagen_url && String(r.imagen_url).trim()) || (r.manual_url && String(r.manual_url).trim()) || '';
+      const thumbBtn = thumbUrlRaw && pvcIsDisplayableImageUrl(thumbUrlRaw) ? pvcTablaThumbOpenButton(thumbUrlRaw, 'Ver imagen') : '';
+      const imgThumb = `<span class="ref-code-with-thumb">${thumbBtn}<button type="button" class="btn-codigo-ref link-btn" data-id="${r.id}" title="Ver fotos / manual">${escapeHtml(r.codigo || '')}</button></span>`;
       tr.innerHTML = `
         <td class="ref-td-code">${imgThumb}</td>
         <td class="td-desc-wrap td-text-wrap ref-td-desc">${escapeHtml(r.descripcion || '')}</td>
@@ -3878,14 +3922,14 @@
   }
 
   function openModalMaquinaImagen(m) {
-    const isImage = (url) => url && (String(url).startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(String(url)));
+    clearPvcMediaUrlRegistry();
     let cur = '<p class="hint" style="margin:0">Sin imagen de catálogo. Elige un archivo abajo.</p>';
     if (m.imagen_pieza_url) {
-      if (isImage(m.imagen_pieza_url)) {
+      if (pvcIsDisplayableImageUrl(m.imagen_pieza_url)) {
         const imgRef = registerPvcMediaUrl(m.imagen_pieza_url);
         cur =
           `<div class="ref-foto-preview-wrap">
-             <button type="button" class="js-refaccion-open-media" data-media-ref="${imgRef}" title="Ver imagen completa" style="border:none;background:transparent;padding:0;cursor:zoom-in;">
+             <button type="button" class="js-refaccion-open-media" data-media-ref="${escapeHtml(imgRef)}" title="Ver imagen completa" style="border:none;background:transparent;padding:0;cursor:zoom-in;">
                <img src="${escapeHtml(m.imagen_pieza_url)}" class="ref-foto-thumb" alt="Vista previa" loading="lazy">
              </button>
              ${pvcDownloadBtnCompactHtml(imgRef, null, 'maquina-imagen-modal')}
@@ -3928,48 +3972,75 @@
 
   function previewMaquina(m) {
     clearPvcMediaUrlRegistry();
-    const isImageUrl = (url) =>
-      url && (String(url).startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(String(url)));
-    const piezaUrl = m.imagen_pieza_url || '';
-    const ensUrl = m.imagen_ensamble_url || '';
-    const piezaThumb = piezaUrl ? piezaUrl : '/img/maquinas/placeholder-pieza.svg';
-    const ensThumb = ensUrl && isImageUrl(ensUrl) ? ensUrl : '/img/maquinas/placeholder-ensamble.svg';
+    const piezaUrl = m.imagen_pieza_url ? String(m.imagen_pieza_url).trim() : '';
+    const ensUrl = m.imagen_ensamble_url ? String(m.imagen_ensamble_url).trim() : '';
+    const piezaPdf = piezaUrl && pvcIsPdfUrl(piezaUrl);
+    const piezaImg = piezaUrl && pvcIsDisplayableImageUrl(piezaUrl) && !piezaPdf;
+    const ensPdf = ensUrl && pvcIsPdfUrl(ensUrl);
+    const ensImg = ensUrl && pvcIsDisplayableImageUrl(ensUrl) && !ensPdf;
     const piezaMediaRef = piezaUrl ? registerPvcMediaUrl(piezaUrl) : '';
     const ensMediaRef = ensUrl ? registerPvcMediaUrl(ensUrl) : '';
-    const ensBtnAttrs = ensUrl
-      ? `class="ref-pvc-hero-doc js-refaccion-open-media" data-media-ref="${ensMediaRef}" title="Clic para abrir"`
-      : `class="ref-pvc-hero-doc" title="Sin archivo de especificaciones"`;
-    const ensKicker = ensUrl
-      ? (String(ensUrl).startsWith('data:application/pdf') || /\.pdf(\?|$)/i.test(String(ensUrl)) ? 'PDF' : (isImageUrl(ensUrl) ? 'Imagen' : 'Archivo'))
-      : '—';
+    const ensKicker = ensUrl ? (ensPdf ? 'PDF' : ensImg ? 'Imagen' : 'Archivo') : '—';
+    const piezaLeftBlock = piezaPdf
+      ? `<div class="ref-pvc-hero-doc-row">
+           <button type="button" class="ref-pvc-hero-doc js-refaccion-open-media" data-media-ref="${escapeHtml(piezaMediaRef)}" title="Abrir PDF">
+             <span class="ref-pvc-hero-doc-icon"><i class="fas fa-file-pdf"></i></span>
+             <div>
+               <div class="ref-pvc-hero-doc-title">PDF · imagen de carga</div>
+               <div class="ref-pvc-hero-doc-sub">Clic para abrir o descargar</div>
+             </div>
+             <span class="ref-pvc-hero-doc-arrow"><i class="fas fa-arrow-up-right-from-square"></i></span>
+           </button>
+           ${pvcMediaDownloadButtonHtml(piezaMediaRef, null, 'maquina-imagen-carga', 'ref-pvc-hero-doc-dl')}
+         </div>`
+      : piezaImg
+        ? heroFrameImageHtml(piezaMediaRef, null, piezaUrl, 'Imagen de carga máquina', 'maquina-imagen-carga')
+        : piezaUrl
+          ? `<div class="ref-pvc-hero-doc-row">
+               <button type="button" class="ref-pvc-hero-doc js-refaccion-open-media" data-media-ref="${escapeHtml(piezaMediaRef)}" title="Abrir archivo">
+                 <span class="ref-pvc-hero-doc-icon"><i class="fas fa-file"></i></span>
+                 <div>
+                   <div class="ref-pvc-hero-doc-title">Archivo adjunto</div>
+                   <div class="ref-pvc-hero-doc-sub">Clic para abrir</div>
+                 </div>
+                 <span class="ref-pvc-hero-doc-arrow"><i class="fas fa-arrow-up-right-from-square"></i></span>
+               </button>
+               ${pvcMediaDownloadButtonHtml(piezaMediaRef, null, 'maquina-imagen-carga', 'ref-pvc-hero-doc-dl')}
+             </div>`
+          : '<div class="ref-pvc-hero-frame ref-pvc-hero-frame--empty" title="Sin imagen de carga máquina"><span class="ref-pvc-hero-frame-empty-inner"><i class="fas fa-camera"></i> Sin imagen</span><span class="ref-pvc-hero-frame-empty-hint">Usa <strong>Editar máquina</strong> para subir foto de catálogo.</span></div>';
+    const ensRightBlock = ensImg
+      ? heroFrameImageHtml(ensMediaRef, null, ensUrl, 'Especificaciones', 'maquina-especificaciones')
+      : ensUrl
+        ? `<div class="ref-pvc-hero-doc-row">
+             <button type="button" class="ref-pvc-hero-doc js-refaccion-open-media" data-media-ref="${escapeHtml(ensMediaRef)}" title="Clic para abrir">
+               <span class="ref-pvc-hero-doc-icon"><i class="fas ${ensPdf ? 'fa-file-pdf' : 'fa-file'}"></i></span>
+               <div>
+                 <div class="ref-pvc-hero-doc-title">${ensPdf ? 'Abrir PDF' : 'Abrir archivo'}</div>
+                 <div class="ref-pvc-hero-doc-sub">${ensPdf ? 'Especificaciones (PDF)' : 'Documento (clic para abrir)'}</div>
+               </div>
+               <span class="ref-pvc-hero-doc-arrow"><i class="fas fa-arrow-up-right-from-square"></i></span>
+             </button>
+             ${pvcMediaDownloadButtonHtml(ensMediaRef, null, 'maquina-especificaciones', 'ref-pvc-hero-doc-dl')}
+           </div>`
+        : `<div class="ref-pvc-hero-doc-row">
+             <div class="ref-pvc-hero-doc ref-pvc-hero-doc--empty" role="note">
+               <span class="ref-pvc-hero-doc-icon"><i class="fas fa-cloud-arrow-up"></i></span>
+               <div>
+                 <div class="ref-pvc-hero-doc-title">Sin archivo de especificaciones</div>
+                 <div class="ref-pvc-hero-doc-sub">En <strong>Editar máquina</strong> sube un PDF o imagen; aquí verás la miniatura y los botones Ver / Descargar.</div>
+               </div>
+             </div>
+           </div>`;
     const underHeaderHtml = `
       <div class="ref-pvc-hero">
         <div class="ref-pvc-hero-inner ref-pvc-hero-inner--split">
           <div class="ref-pvc-hero-main">
             <div class="ref-pvc-hero-kicker ref-pvc-hero-kicker--accent"><i class="fas fa-image"></i> Imagen de carga máquina</div>
-            ${
-              piezaUrl
-                ? heroFrameImageHtml(piezaMediaRef, null, piezaThumb, 'Imagen de carga máquina', 'maquina-imagen-carga')
-                : '<div class="ref-pvc-hero-frame ref-pvc-hero-frame--empty" title="Sin imagen de carga máquina"><span class="ref-pvc-hero-frame-empty-inner">Sin imagen</span></div>'
-            }
+            ${piezaLeftBlock}
           </div>
           <div class="ref-pvc-hero-side ref-pvc-hero-side--thumb">
             <div class="ref-pvc-hero-kicker"><i class="fas fa-file-lines"></i> Especificaciones · ${escapeHtml(ensKicker)}</div>
-            ${
-              ensUrl && isImageUrl(ensUrl)
-                ? heroFrameImageHtml(ensMediaRef, null, ensThumb, 'Especificaciones', 'maquina-especificaciones')
-                : `<div class="ref-pvc-hero-doc-row">
-                   <button type="button" ${ensBtnAttrs}>
-                   <span class="ref-pvc-hero-doc-icon"><i class="fas ${ensUrl ? 'fa-file' : 'fa-file-circle-xmark'}"></i></span>
-                   <div>
-                     <div style="font-weight:800;line-height:1.1">${ensUrl ? 'Abrir archivo' : 'Sin archivo'}</div>
-                     <div style="opacity:0.75;font-size:0.82rem;line-height:1.3">${ensUrl ? 'PDF o imagen (clic para abrir)' : 'Sube un PDF o imagen en Editar máquina'}</div>
-                   </div>
-                   <span class="ref-pvc-hero-doc-arrow"><i class="fas fa-arrow-up-right-from-square"></i></span>
-                 </button>
-                 ${ensUrl ? pvcMediaDownloadButtonHtml(ensMediaRef, null, 'maquina-especificaciones', 'ref-pvc-hero-doc-dl') : ''}
-                 </div>`
-            }
+            ${ensRightBlock}
           </div>
         </div>
       </div>
@@ -4154,9 +4225,11 @@
     const _canEdit = canEdit(); const _canDelete = canDelete();
     data.forEach(m => {
       const tr = document.createElement('tr');
-      const idCell = m.imagen_pieza_url
-        ? `<span class="ref-img-hover-wrap" tabindex="-1"><button type="button" class="btn-id-maq link-btn" data-id="${m.id}" title="Subir o ver imagen de catálogo">${m.id}</button><img class="ref-img-hover-preview" src="${escapeHtml(m.imagen_pieza_url)}" alt="" loading="lazy"></span>`
-        : `<button type="button" class="btn-id-maq link-btn" data-id="${m.id}" title="Subir imagen (catálogo)">${m.id}</button>`;
+      const thumbPart =
+        m.imagen_pieza_url && pvcIsDisplayableImageUrl(m.imagen_pieza_url)
+          ? pvcTablaThumbOpenButton(m.imagen_pieza_url, 'Ver imagen en grande')
+          : `<button type="button" class="pvc-tabla-thumb-placeholder" data-id="${m.id}" title="Sin imagen · clic para subir"><i class="fas fa-camera" aria-hidden="true"></i></button>`;
+      const idCell = `<div class="maq-id-thumb-row">${thumbPart}<button type="button" class="btn-id-maq link-btn" data-id="${m.id}" title="Subir o cambiar imagen de catálogo (ID ${m.id})">${m.id}</button></div>`;
       tr.innerHTML = `
         <td>${idCell}</td>
         <td>${escapeHtml(m.categoria || '')}</td>
@@ -4175,6 +4248,13 @@
     animateTableRows('tabla-maquinas');
     tbody.querySelectorAll('.btn-id-maq').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const row = data.find(x => x.id == btn.dataset.id); if (row) openModalMaquinaImagen(row); });
+    });
+    tbody.querySelectorAll('.pvc-tabla-thumb-placeholder').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const row = data.find((x) => String(x.id) === String(btn.dataset.id));
+        if (row) openModalMaquinaImagen(row);
+      });
     });
     tbody.querySelectorAll('.btn-view-maq').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const m = data.find(x => x.id == btn.dataset.id); if (m) previewMaquina(m); });
@@ -7204,12 +7284,55 @@
 
   // Modal para ver imágenes de refacción
   function openModalRefaccionImagen(ref) {
-    const isImage = (url) => url && (url.startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(url));
-    const foto1 = ref.imagen_url ? (isImage(ref.imagen_url) ? `<div style="text-align:center"><p style="font-size:0.8rem;color:#6b7280;margin-bottom:0.4rem">Manual de partes</p><img src="${escapeHtml(ref.imagen_url)}" alt="Foto 1" style="max-width:100%;max-height:320px;border-radius:8px;border:1px solid #e2e8f0"></div>` : `<div><a href="${escapeHtml(ref.imagen_url)}" target="_blank" class="btn outline"><i class="fas fa-external-link-alt"></i> Ver foto 1</a></div>`) : '<p style="color:#6b7280;font-size:0.85rem">Sin foto 1.</p>';
-    const foto2 = ref.manual_url ? (isImage(ref.manual_url) ? `<div style="text-align:center"><p style="font-size:0.8rem;color:#6b7280;margin-bottom:0.4rem">Pieza</p><img src="${escapeHtml(ref.manual_url)}" alt="Foto 2" style="max-width:100%;max-height:320px;border-radius:8px;border:1px solid #e2e8f0"></div>` : `<div><a href="${escapeHtml(ref.manual_url)}" target="_blank" class="btn outline"><i class="fas fa-external-link-alt"></i> Abrir manual / PDF / enlace</a></div>`) : '<p style="color:#6b7280;font-size:0.85rem">Sin pieza o diagrama.</p>';
+    clearPvcMediaUrlRegistry();
+    function slot(url, label, dlSlug) {
+      if (!url || !String(url).trim()) {
+        return '<p class="ref-modal-foto-empty">Sin archivo.</p>';
+      }
+      const u = String(url).trim();
+      if (pvcIsPdfUrl(u)) {
+        const rPdf = registerPvcMediaUrl(u);
+        return (
+          '<div class="ref-modal-foto-wrap"><p class="ref-modal-foto-label">' +
+          escapeHtml(label) +
+          '</p><div class="ref-foto-preview-wrap">' +
+          '<button type="button" class="btn outline js-refaccion-open-media" data-media-ref="' +
+          escapeHtml(rPdf) +
+          '"><i class="fas fa-file-pdf"></i> Abrir PDF</button>' +
+          pvcDownloadBtnCompactHtml(rPdf, null, dlSlug) +
+          '</div></div>'
+        );
+      }
+      if (pvcIsDisplayableImageUrl(u)) {
+        const rImg = registerPvcMediaUrl(u);
+        return (
+          '<div class="ref-modal-foto-wrap"><p class="ref-modal-foto-label">' +
+          escapeHtml(label) +
+          '</p><div class="ref-foto-preview-wrap">' +
+          '<button type="button" class="js-refaccion-open-media ref-modal-foto-zoom" data-media-ref="' +
+          escapeHtml(rImg) +
+          '" title="Ver en grande" style="border:none;background:transparent;padding:0;cursor:zoom-in;">' +
+          '<img src="' +
+          escapeHtml(u) +
+          '" alt="" class="ref-foto-thumb" loading="lazy">' +
+          '</button>' +
+          pvcDownloadBtnCompactHtml(rImg, null, dlSlug) +
+          '</div></div>'
+        );
+      }
+      return (
+        '<div class="ref-modal-foto-wrap"><p class="ref-modal-foto-label">' +
+        escapeHtml(label) +
+        '</p><a href="' +
+        escapeHtml(u) +
+        '" target="_blank" rel="noopener noreferrer" class="btn outline"><i class="fas fa-external-link-alt"></i> Abrir enlace</a></div>'
+      );
+    }
+    const foto1 = slot(ref.imagen_url, 'Manual de partes', 'refaccion-modal-partes');
+    const foto2 = slot(ref.manual_url, 'Pieza / diagrama', 'refaccion-modal-pieza');
     const body = `
       <p style="margin-bottom:0.75rem"><strong>Código:</strong> ${escapeHtml(ref.codigo)} &nbsp; <strong>Nº parte:</strong> ${escapeHtml(ref.numero_parte_manual || '—')}</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">${foto1}${foto2}</div>
+      <div class="ref-modal-foto-grid">${foto1}${foto2}</div>
     `;
     openModal('Refacción: ' + (ref.descripcion || ref.codigo), body);
   }
