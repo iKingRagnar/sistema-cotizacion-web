@@ -1,8 +1,14 @@
-# Sistema Cotización Web — Enterprise UI
+# Sistema Cotización Web — UI nueva (greenfield)
 
-Copia de trabajo basada en `sistema-cotizacion-web-Old y BackUp`: **misma estructura de backend (`server.js`, `auth.js`, `db.js`) y SPA (`public/index.html`, `public/js/app.js`)**. No es un rewrite desde cero: es el mismo código base con **capas de UI** encima (menos riesgo de romper `/api`, más deuda visual heredada).
+El **backend** (`server.js`, `auth.js`, `db.js`) y las rutas **`/api`** son la fuente de verdad de datos y reglas de negocio.
 
-Este fork añade una **capa visual corporativa minimalista** mediante `public/css/enterprise-ui.css`, activada con la clase `enterprise-ui` en el elemento `<html>`.
+La **interfaz en la raíz** (`/`) es una SPA **nueva**, sin reutilizar HTML/CSS/JS de la aplicación anterior:
+
+- `public/index.html` — shell mínimo
+- `public/client/styles/main.css` — estilos desde cero
+- `public/client/js/app.js` — login (`POST /api/auth/login`), configuración (`GET /api/config`), sesión (`GET /api/auth/me`)
+
+La SPA histórica completa queda como **copia de rescate** en `public/legacy-app.html` y se puede abrir en **`/legacy-app`** (misma carpeta `public/` para CSS/JS referenciados con rutas absolutas tipo `/css/...`).
 
 ## Arranque local
 
@@ -12,14 +18,7 @@ cp .env.example .env   # si existe; configurar Turso u opciones locales según t
 npm start
 ```
 
-Abrir la URL que imprima `server.js` (típicamente `http://localhost:3456` o la configurada en el proyecto).
-
-## Cambios respecto al backup
-
-- `package.json`: nombre del paquete npm `sistema-cotizacion-web` (alineado al repo).
-- `public/css/enterprise-ui.css`: tema neutro, menos ornamentación en login y cromo (sidebar/header).
-
-Las rutas `/api` y la lógica de negocio se mantienen alineadas al proyecto original en David Proyecto salvo evoluciones futuras explícitas en este repositorio.
+Abrir la URL que imprima `server.js` (típicamente `http://localhost:3456`).
 
 ## Repositorio
 

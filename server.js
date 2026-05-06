@@ -7271,6 +7271,23 @@ function startProspectosDailyScheduler() {
   }, 120000);
 }
 
+/** Copia de rescate de la SPA anterior (HTML/CSS/JS legacy). La raíz sirve la UI nueva en public/index.html. */
+app.get(['/legacy-app', '/legacy-app/'], (req, res, next) => {
+  const legacyPath = path.join(__dirname, 'public', 'legacy-app.html');
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  if (!fs.existsSync(legacyPath)) {
+    return res
+      .status(404)
+      .type('html')
+      .send(
+        '<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>No encontrado</title></head><body><p>No existe public/legacy-app.html en este despliegue.</p></body></html>'
+      );
+  }
+  res.sendFile(legacyPath, (err) => {
+    if (err) next(err);
+  });
+});
+
 // SPA: rutas no-API → index.html (rutas alternativas para bundle serverless de Vercel)
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return res.status(404).end();
