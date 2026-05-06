@@ -359,6 +359,20 @@ html body.theme-industrial.md3-on .preview-card .preview-card-body {
   color: #e2e8f0 !important;
 }
 
+/* PreviewCard (ojito “ver”): que NUNCA quede texto blanco sobre cajas claras */
+html body.theme-industrial.md3-on .preview-card .pvc-field {
+  background: rgba(30, 41, 59, 0.88) !important;
+  border-color: rgba(56, 189, 248, 0.22) !important;
+}
+html body.theme-industrial.md3-on .preview-card .pvc-field-label {
+  color: #94a3b8 !important;
+  -webkit-text-fill-color: #94a3b8 !important;
+}
+html body.theme-industrial.md3-on .preview-card .pvc-field-value {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+
 html body.theme-industrial.md3-on table.data-table td.th-actions .prem-action-view,
 html body.theme-industrial.md3-on table.data-table td.th-actions .prem-action-edit,
 html body.theme-industrial.md3-on .prem-action-view,
@@ -446,7 +460,7 @@ html body.theme-industrial.md3-on table.data-table td.ref-td-actions .btn:not(.d
   }
 }
 
-.header-brand .header-sidebar-rail-toggle.btn-sidebar-rail-toggle {
+.header-inner .header-sidebar-rail-toggle.btn-sidebar-rail-toggle {
   flex-shrink: 0;
   align-self: center;
   margin-right: 0.35rem;

@@ -34,6 +34,14 @@ html body.login-open #login-overlay::before {
   content: none !important;
 }
 
+/* En login: ocultar UI de app (evita “cuadros” residuales detrás del overlay) */
+html body.login-open header.header,
+html body.login-open .app-frame,
+html body.login-open #app-watermark,
+html body.login-open #offline-banner {
+  display: none !important;
+}
+
 /* Sin halos MD3 encima del vidrio */
 html body.login-open #login-overlay .login-brand-panel::before,
 html body.login-open #login-overlay .login-brand-panel::after {
@@ -268,17 +276,28 @@ html body.login-open #login-overlay .login-field {
   box-sizing: border-box !important;
 }
 html body.login-open #login-overlay .login-pass-wrap {
-  display: flex !important;
-  align-items: stretch !important;
+  position: relative !important;
+  display: block !important; /* el botón ojo no debe “robar” ancho */
   width: 100% !important;
   min-height: 2.75rem !important;
   box-sizing: border-box !important;
 }
 html body.login-open #login-overlay .login-pass-wrap input {
-  flex: 1 1 auto !important;
   width: 100% !important;
   min-width: 0 !important;
   box-sizing: border-box !important;
+  padding-right: 2.75rem !important; /* espacio para el ojo sin encoger el campo */
+}
+html body.login-open #login-overlay .login-eye-btn {
+  position: absolute !important;
+  right: 0.5rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  height: 2.25rem !important;
+  width: 2.25rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 /* Misma altura visual que la fila contraseña + botón ojo */

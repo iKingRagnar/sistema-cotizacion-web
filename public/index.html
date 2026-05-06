@@ -69,8 +69,8 @@
   <link rel="stylesheet" href="css/theme-nano-crystal-single.css?v=2-rail-toggle-contrast-2026-05-05">
   <link rel="stylesheet" href="css/no-motion.css?v=2-profile-svg-backstop-2026-04-27">
   <!-- Portales primero; login-neutral DEBE ir después para mandar en overlay de sesión -->
-  <link rel="stylesheet" href="css/portal-overlays.css?v=5-rail-zero-logout-2026-05-05">
-  <link rel="stylesheet" href="css/login-neutral.css?v=8-login-fields-parity-2026-05-05">
+  <link rel="stylesheet" href="css/portal-overlays.css?v=6-rail-btn-left-2026-05-06">
+  <link rel="stylesheet" href="css/login-neutral.css?v=9-login-pass-width-2026-05-06">
   <link rel="manifest" href="manifest.json">
   <!-- Tema único: nano machining + vidrio azul cristalino (sin modo Sol/Luna). -->
   <!-- ★ FORCE-RELOAD: SOLO en browser normal, NUNCA en PWA standalone (evita loop crash) -->
@@ -290,15 +290,15 @@
   <div id="app-particles-layer" class="app-particles-layer" aria-hidden="true"></div>
   <header class="header">
     <div class="header-inner">
+      <button type="button" id="btn-sidebar-rail-toggle-header" class="btn-sidebar-rail-toggle header-sidebar-rail-toggle hidden" aria-expanded="false" aria-controls="sidebar-rail-tabs" title="Mostrar lista de módulos">
+        <span class="visually-hidden">Mostrar lista de módulos</span>
+        <svg class="sidebar-rail-burger-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+          <rect x="4" y="6.25" width="16" height="2" rx="0.5" fill="currentColor"/>
+          <rect x="4" y="11" width="16" height="2" rx="0.5" fill="currentColor"/>
+          <rect x="4" y="15.75" width="16" height="2" rx="0.5" fill="currentColor"/>
+        </svg>
+      </button>
       <div class="header-brand">
-        <button type="button" id="btn-sidebar-rail-toggle-header" class="btn-sidebar-rail-toggle header-sidebar-rail-toggle hidden" aria-expanded="false" aria-controls="sidebar-rail-tabs" title="Mostrar lista de módulos">
-          <span class="visually-hidden">Mostrar lista de módulos</span>
-          <svg class="sidebar-rail-burger-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
-            <rect x="4" y="6.25" width="16" height="2" rx="0.5" fill="currentColor"/>
-            <rect x="4" y="11" width="16" height="2" rx="0.5" fill="currentColor"/>
-            <rect x="4" y="15.75" width="16" height="2" rx="0.5" fill="currentColor"/>
-          </svg>
-        </button>
         <div class="login-brand-logo header-brand-logo-wrap">
           <img src="fondos/universal-logo.jpg?v=4" alt="Universal" width="120" height="72" class="login-brand-hero-img" id="header-brand-logo" decoding="async">
         </div>
