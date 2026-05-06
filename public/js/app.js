@@ -1862,6 +1862,42 @@
     if (/\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)(\?|$)/i.test(s)) return true;
     if (s.startsWith('/api/')) return true;
     if (/^https?:\/\//i.test(s) && /\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)(\?|$)/i.test(s)) return true;
+    try {
+      if (/^https?:\/\//i.test(s)) {
+        const p = new URL(s, window.location.href);
+        if (p.origin === window.location.origin && p.pathname.startsWith('/api/')) return true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  /** Rutas binarias servidas por la API (relativas o absolutas mismo origen). */
+  function pvcIsApiBinaryResourceUrl(u) {
+    const s = String(u || '').trim();
+    if (!s) return false;
+    if (s.startsWith('/api/')) return true;
+    try {
+      if (/^https?:\/\//i.test(s)) {
+        const p = new URL(s, window.location.href);
+        if (p.origin !== window.location.origin) return false;
+        return p.pathname.startsWith('/api/');
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  /** Si Content-Type no es image/* (p. ej. octet-stream), detectar firma mágica. */
+  async function pvcBlobSniffIsImageBlob(blob) {
+    if (!blob) return false;
+    if (/^image\//i.test(String(blob.type || ''))) return true;
+    try {
+      const ab = await blob.slice(0, 16).arrayBuffer();
+      const b = new Uint8Array(ab);
+      if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return true;
+      if (b.length >= 8 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47 && b[4] === 0x0d && b[5] === 0x0a && b[6] === 0x1a && b[7] === 0x0a) return true;
+      if (b.length >= 6 && b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x38) return true;
+      if (b.length >= 12 && b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46) return true;
+    } catch (_) {}
     return false;
   }
 
@@ -1935,7 +1971,7 @@
       return;
     }
     try {
-      if (u.startsWith('/api/') && serverConfig && serverConfig.authRequired) {
+      if (pvcIsApiBinaryResourceUrl(u) && serverConfig && serverConfig.authRequired) {
         let fetchUrl = u;
         if (/\/clientes\/[^/]+\/constancia/i.test(u) && u.indexOf('download=') < 0) {
           fetchUrl = u + (u.indexOf('?') >= 0 ? '&' : '?') + 'download=1';
@@ -1943,7 +1979,7 @@
         const headers = {};
         const tok = getAuthToken();
         if (tok) headers['Authorization'] = 'Bearer ' + tok;
-        const r = await fetch(fetchUrl, { headers });
+        const r = await fetch(fetchUrl, { headers, credentials: 'same-origin' });
         if (!r.ok) {
           let msg = 'No autorizado. Inicia sesión.';
           try {
@@ -1998,8 +2034,8 @@
    * @returns {boolean} true si esta función se hace cargo (no usar window.open directo sobre la URL).
    */
   function pvcOpenApiBinaryUrlInViewer(url) {
-    const u = String(url || '');
-    if (!u.startsWith('/api/')) return false;
+    const u = String(url || '').trim();
+    if (!pvcIsApiBinaryResourceUrl(u)) return false;
     const headers = {};
     const tok = getAuthToken();
     if (tok) headers['Authorization'] = 'Bearer ' + tok;
@@ -2016,7 +2052,8 @@
         const ct = String(r.headers.get('content-type') || '');
         const blob = await r.blob();
         const objUrl = URL.createObjectURL(blob);
-        if (/^image\//i.test(ct) || /^image\//i.test(blob.type)) {
+        const looksImage = /^image\//i.test(ct) || /^image\//i.test(blob.type) || (await pvcBlobSniffIsImageBlob(blob));
+        if (looksImage) {
           const prev = document.getElementById('ref-img-lightbox');
           if (prev) prev.remove();
           const wrap = document.createElement('div');
@@ -3392,34 +3429,54 @@
     if (!c || !c.has_constancia) return '';
     const openUrl = c.id != null ? (API + '/clientes/' + encodeURIComponent(c.id) + '/constancia') : '';
     const dl = pvcDownloadBtnCompactHtml(null, openUrl, 'cliente-constancia');
+    const idAttr = c.id != null ? ' data-cliente-id="' + escapeHtml(String(c.id)) + '"' : '';
     if (c.constancia_kind === 'image' && c.constancia_thumb_url) {
-      return `<span class="cliente-const-inline"><button type="button" class="cliente-const-slot js-refaccion-open-media" data-url="${escapeHtml(openUrl)}" title="Constancia fiscal (clic para abrir)">
+      return `<span class="cliente-const-inline"><button type="button" class="cliente-const-slot js-cliente-const-thumb"${idAttr} title="Constancia fiscal (clic para ir a la vista grande en el panel)">
         <img src="${escapeHtml(c.constancia_thumb_url)}" alt="" class="cliente-const-mini" loading="lazy">
       </button>${dl}</span>`;
     }
     const icon = c.constancia_kind === 'pdf' ? 'fa-file-pdf' : 'fa-file-alt';
     const cls = c.constancia_kind === 'pdf' ? 'cliente-const-slot--pdf' : 'cliente-const-slot--file';
-    return `<span class="cliente-const-inline"><button type="button" class="cliente-const-slot ${cls} js-refaccion-open-media" data-url="${escapeHtml(openUrl)}" title="Constancia (${c.constancia_kind === 'pdf' ? 'PDF' : 'documento'}) · clic para abrir">
+    return `<span class="cliente-const-inline"><button type="button" class="cliente-const-slot ${cls} js-cliente-const-thumb"${idAttr} title="Constancia (${c.constancia_kind === 'pdf' ? 'PDF' : 'documento'}) · clic para abrir el panel">
       <i class="fas ${icon}"></i>
     </button>${dl}</span>`;
   }
 
-  function previewCliente(c) {
+  function previewCliente(c, opts) {
     clearPvcMediaUrlRegistry();
+    const o = opts && typeof opts === 'object' ? opts : {};
+    const scrollToConstFull = !!o.scrollToConstFull;
     const openUrl = c && c.id != null ? (API + '/clientes/' + encodeURIComponent(c.id) + '/constancia') : '';
     const hasConst = !!(c && c.has_constancia);
     const constKind = (c && c.constancia_kind) ? String(c.constancia_kind) : '';
     const constThumb = (c && c.constancia_thumb_url) ? String(c.constancia_thumb_url) : '';
-    const constRef = constThumb ? registerPvcMediaUrl(constThumb) : '';
     const constKicker = constKind === 'pdf' ? 'PDF' : (constKind === 'image' ? 'Imagen' : (hasConst ? 'Archivo' : '—'));
+    const heroImgSrc = constKind === 'image' && openUrl ? openUrl : constThumb;
+    const constFullBlock =
+      hasConst && constKind === 'image' && openUrl
+        ? `
+        <div id="pvc-cliente-const-full" class="pvc-cliente-const-full" tabindex="-1">
+          <div class="ref-pvc-hero-kicker ref-pvc-hero-kicker--accent"><i class="fas fa-expand"></i> Vista ampliada en este panel</div>
+          <div class="pvc-cliente-const-full-frame">
+            <img src="${escapeHtml(openUrl)}" alt="Constancia fiscal" class="pvc-cliente-const-full-img" loading="lazy" />
+          </div>
+          <p class="pvc-cliente-const-full-hint"><i class="fas fa-magnifying-glass-plus"></i> Usa <strong>Ver</strong> arriba para pantalla completa (lightbox).</p>
+        </div>`
+        : hasConst && openUrl && constKind === 'pdf'
+          ? `
+        <div id="pvc-cliente-const-full" class="pvc-cliente-const-full" tabindex="-1">
+          <div class="ref-pvc-hero-kicker ref-pvc-hero-kicker--accent"><i class="fas fa-file-pdf"></i> Constancia PDF</div>
+          <p class="pvc-cliente-const-full-hint">Abre el PDF con el botón <strong>Abrir constancia</strong> de arriba o descárgalo.</p>
+        </div>`
+          : '';
     const underHeaderHtml = hasConst
       ? `
         <div class="ref-pvc-hero">
           <div class="ref-pvc-hero-inner ref-pvc-hero-inner--single">
             <div class="ref-pvc-hero-main ref-pvc-hero-main--solo">
               <div class="ref-pvc-hero-kicker ref-pvc-hero-kicker--accent"><i class="fas fa-file-invoice"></i> Constancia fiscal · ${escapeHtml(constKicker)}</div>
-              ${constKind === 'image' && constThumb
-                ? heroFrameImageHtml(null, openUrl, constThumb, 'Constancia fiscal', 'cliente-constancia')
+              ${constKind === 'image' && (heroImgSrc || constThumb)
+                ? heroFrameImageHtml(null, openUrl, heroImgSrc || constThumb, 'Constancia fiscal', 'cliente-constancia')
                 : `<div class="ref-pvc-hero-doc-row">
                    <button type="button" class="ref-pvc-hero-doc js-refaccion-open-media" data-url="${escapeHtml(openUrl)}" title="Clic para abrir constancia">
                      <span class="ref-pvc-hero-doc-icon"><i class="fas ${constKind === 'pdf' ? 'fa-file-pdf' : 'fa-file'}"></i></span>
@@ -3434,6 +3491,7 @@
             </div>
           </div>
         </div>
+        ${constFullBlock}
       `
       : '';
     openPreviewCard({
@@ -3468,7 +3526,52 @@
       const btn = qs('#pvc-dl-constancia');
       if (btn) btn.addEventListener('click', () => downloadClienteConstanciaFile(c.id, c.constancia_nombre || 'constancia'));
     }, 0);
+    if (scrollToConstFull) {
+      setTimeout(() => {
+        const el = document.getElementById('pvc-cliente-const-full');
+        if (!el) return;
+        try {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+        } catch (_) {
+          try {
+            el.scrollIntoView();
+          } catch (_2) {}
+        }
+        try {
+          el.focus({ preventScroll: true });
+        } catch (_3) {}
+      }, 160);
+    }
   }
+
+  (function bindClienteConstanciaThumbCapture() {
+    document.addEventListener(
+      'click',
+      function (e) {
+        const t = e && e.target;
+        if (!t || !t.closest) return;
+        const btn = t.closest('.js-cliente-const-thumb');
+        if (!btn || btn.disabled) return;
+        if (!document.body.contains(btn)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+          e.stopImmediatePropagation();
+        } catch (_) {}
+        const id = btn.getAttribute('data-cliente-id');
+        if (id == null || id === '') return;
+        const list = clientesCache && clientesCache.length ? clientesCache : [];
+        const found = list.find((x) => String(x && x.id) === String(id));
+        if (!found) {
+          showToast('No se encontró el cliente en la lista actual. Recarga la tabla (F5).', 'error');
+          return;
+        }
+        previewCliente(found, { scrollToConstFull: true });
+      },
+      true
+    );
+  })();
+
   function renderClientes(data) {
     const tbody = qs('#tabla-clientes tbody');
     tbody.innerHTML = '';
