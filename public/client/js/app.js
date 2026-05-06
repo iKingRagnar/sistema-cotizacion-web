@@ -262,7 +262,9 @@ function syncThemeMetaTag() {
 }
 
 function applyStoredTheme() {
-  document.documentElement.classList.toggle('appearance-light', getStoredTheme() === 'light');
+  const light = getStoredTheme() === 'light';
+  document.documentElement.classList.toggle('appearance-light', light);
+  document.body.classList.toggle('appearance-light', light);
   syncThemeMetaTag();
 }
 
@@ -280,7 +282,14 @@ function updateThemeToggleButton(btn) {
   const light = document.documentElement.classList.contains('appearance-light');
   btn.setAttribute('title', light ? 'Pasar a modo oscuro' : 'Pasar a modo claro');
   btn.setAttribute('aria-label', btn.getAttribute('title'));
-  btn.textContent = light ? '🌙' : '☀️';
+  btn.setAttribute('aria-pressed', light ? 'true' : 'false');
+  const icon = btn.querySelector('i');
+  if (icon) {
+    icon.className = light ? 'fas fa-moon' : 'fas fa-sun';
+    icon.setAttribute('aria-hidden', 'true');
+  } else {
+    btn.textContent = light ? '🌙' : '☀️';
+  }
 }
 
 function closeModal() {
@@ -1357,6 +1366,7 @@ function wireSidebarEvents(root) {
 }
 
 function renderShell(root, cfg, user) {
+  document.body.classList.remove('login-open');
   cfgGlobal = cfg;
   userGlobal = user;
   const tabs = visibleTabs(cfg, user);
@@ -1400,7 +1410,7 @@ function renderShell(root, cfg, user) {
               </div>
             </div>
             <div class="shell-brand-actions">
-              <button type="button" class="btn btn-ghost btn-icon" data-theme-toggle>☀️</button>
+              <button type="button" class="btn btn-ghost btn-icon shell-theme-toggle" data-theme-toggle title="Tema claro u oscuro" aria-label="Cambiar tema claro u oscuro"><i class="fas fa-sun" aria-hidden="true"></i></button>
             </div>
           </div>
           <header class="toolbar">
@@ -1425,65 +1435,137 @@ function renderShell(root, cfg, user) {
 
 function renderLogin(root, cfg, err) {
   cfgGlobal = cfg;
-  const msg =
-    err != null && String(err).trim()
-      ? `<div class="alert-error" role="alert">${escapeHtml(String(err))}</div>`
-      : '';
+  document.body.classList.add('login-open');
+
+  const logoSrcRaw =
+    cfg.logoUrl != null && String(cfg.logoUrl).trim()
+      ? String(cfg.logoUrl).trim()
+      : '/fondos/universal-logo.jpg';
+  const brandTitle = escapeHtml(cfg.shortName || cfg.appName || 'Servicio Técnico');
+  const brandTagline = escapeHtml(
+    cfg.tagline || 'Universal · Operaciones, incidentes, bitácora y catálogos'
+  );
+  const errText = err != null && String(err).trim() ? escapeHtml(String(err)) : '';
+  const errHidden = errText ? '' : ' hidden';
+
+  const authForm = cfg.authRequired
+    ? `
+          <form id="login-form" class="login-form" method="post" action="#" autocomplete="on" novalidate>
+            <div class="form-group login-field">
+              <label for="login-user"><i class="fas fa-user"></i> Usuario</label>
+              <input type="text" id="login-user" name="username" autocomplete="username" required placeholder="Tu nombre de usuario" />
+            </div>
+            <div class="form-group login-field">
+              <label for="login-pass"><i class="fas fa-lock"></i> Contraseña</label>
+              <div class="login-pass-wrap">
+                <input type="password" id="login-pass" name="password" autocomplete="current-password" required placeholder="Tu contraseña" />
+                <button type="button" class="login-eye-btn" id="login-eye-btn" tabindex="-1" aria-label="Mostrar/ocultar contraseña"><i class="fas fa-eye" id="login-eye-icon"></i></button>
+              </div>
+            </div>
+            <p class="login-error${errHidden}" id="login-error" role="alert"><i class="fas fa-exclamation-circle"></i> <span id="login-error-text">${errText}</span></p>
+            <button type="submit" class="login-submit" id="login-submit-btn">
+              <span class="login-submit-text"><i class="fas fa-sign-in-alt"></i> Entrar al sistema</span>
+              <span class="login-submit-loading hidden"><i class="fas fa-spinner fa-spin"></i> Verificando…</span>
+            </button>
+          </form>
+          <div class="login-roles-info">
+            <p class="login-roles-title"><i class="fas fa-info-circle"></i> Niveles de acceso disponibles</p>
+            <div class="login-roles-grid">
+              <div class="login-role-card login-role-admin">
+                <i class="fas fa-crown"></i>
+                <strong>Administrador</strong>
+                <span>CRUD completo + auditoría</span>
+              </div>
+              <div class="login-role-card login-role-usuario">
+                <i class="fas fa-user-plus"></i>
+                <strong>Usuario</strong>
+                <span>Agregar registros + ver</span>
+              </div>
+              <div class="login-role-card login-role-consulta">
+                <i class="fas fa-eye"></i>
+                <strong>Consulta</strong>
+                <span>Solo lectura</span>
+              </div>
+            </div>
+          </div>`
+    : `
+          <p class="login-hint" id="login-hint-local">Sin login obligatorio: cargando perfil…</p>
+          <p class="login-error hidden" id="login-error" role="alert"><i class="fas fa-exclamation-circle"></i> <span id="login-error-text"></span></p>`;
 
   root.replaceChildren(
     el(`
-      <div class="login-screen">
-        <div class="login-hero" role="img" aria-label="Fondo industrial nano machining">
-          <div class="login-hero__grid"></div>
-          <div class="login-hero__overlay"></div>
-          <div class="login-hero__content">
-            <span class="login-kicker">Precision · Field service · Quality</span>
-            <h1 class="login-brand">${escapeHtml(cfg.shortName || cfg.appName || 'Operaciones')}</h1>
-            <p class="login-tagline">${escapeHtml(cfg.tagline || 'Acceso seguro al mismo backend y datos.')}</p>
-          </div>
-        </div>
-        <div class="login-panel">
-          <div class="login-card">
-            <div class="login-card-head">
-              <h2>${cfg.authRequired ? 'Iniciar sesión' : 'Acceso local'}</h2>
-              <button type="button" class="btn btn-ghost btn-icon" data-theme-toggle aria-label="Tema claro u oscuro">☀️</button>
+      <div id="login-overlay" class="login-overlay" role="dialog" aria-modal="true" aria-labelledby="login-title">
+        <span class="header-powered-by login-overlay-powered-by" aria-label="Créditos">powered by Ing. David Cantú</span>
+        <div class="login-split">
+          <div class="login-brand-panel">
+            <div class="login-brand-content">
+              <div class="login-brand-logo" aria-hidden="true">
+                <img src="${escapeHtml(logoSrcRaw)}" alt="" width="120" height="72" class="login-brand-hero-img" decoding="async" />
+              </div>
+              <h1 class="login-brand-title" id="login-brand-name">${brandTitle}</h1>
+              <p class="login-brand-tagline" id="login-brand-tagline">${brandTagline}</p>
+              <div class="login-brand-features">
+                <div class="login-feature-item"><i class="fas fa-shield-alt"></i><span>Acceso seguro por roles</span></div>
+                <div class="login-feature-item"><i class="fas fa-chart-line"></i><span>Dashboards en tiempo real</span></div>
+                <div class="login-feature-item"><i class="fas fa-file-invoice-dollar"></i><span>Cotizaciones y ventas</span></div>
+                <div class="login-feature-item"><i class="fas fa-tools"></i><span>Gestión de incidentes</span></div>
+              </div>
+              <div class="login-brand-badges">
+                <span class="login-badge"><i class="fas fa-crown"></i> Admin</span>
+                <span class="login-badge"><i class="fas fa-user-edit"></i> Usuario</span>
+                <span class="login-badge"><i class="fas fa-eye"></i> Consulta</span>
+              </div>
             </div>
-            <p class="subtitle">${escapeHtml(cfg.authRequired ? 'Credenciales corporativas' : 'Sin login obligatorio: cargando perfil de sólo lectura.')}</p>
-            ${cfg.authRequired ? msg : ''}
-            ${
-              cfg.authRequired
-                ? `<form id="login-form" novalidate>
-              <div class="field">
-                <label for="username">Usuario</label>
-                <input id="username" name="username" autocomplete="username" required />
+            <div class="login-brand-decoration">
+              <div class="login-deco-circle login-deco-c1"></div>
+              <div class="login-deco-circle login-deco-c2"></div>
+              <div class="login-deco-circle login-deco-c3"></div>
+            </div>
+          </div>
+          <div class="login-form-panel">
+            <div class="login-card">
+              <div class="login-card-header">
+                <div class="login-card-icon"><i class="fas fa-lock"></i></div>
+                <h2 id="login-title">${cfg.authRequired ? 'Iniciar sesión' : 'Acceso local'}</h2>
+                <p class="login-hint" id="login-hint">${escapeHtml(cfg.authRequired ? 'Introduce tus credenciales para continuar' : 'Entorno sin credenciales obligatorias.')}</p>
               </div>
-              <div class="field">
-                <label for="password">Contraseña</label>
-                <input id="password" type="password" autocomplete="current-password" required />
-              </div>
-              <button type="submit" class="btn btn-primary">Entrar</button>
-            </form>`
-                : `<p class="muted">Entrando como usuario local…</p>`
-            }
-            <p class="login-meta muted">Powered by Ing. David Cantú · Universal Servicio Técnico</p>
-            <p class="login-meta">
-              ¿Necesitas la interfaz anterior? <a href="/legacy-app">Abrir interfaz clásica</a>
-              ${cfg.buildTag ? ` · ${escapeHtml(cfg.buildTag)}` : ''}
-            </p>
+              ${authForm}
+              <p class="login-classic-footer">
+                ¿Necesitas la interfaz anterior? <a href="/legacy-app">Abrir interfaz clásica</a>${cfg.buildTag ? ` · build:${escapeHtml(cfg.buildTag)}` : ''}
+              </p>
+            </div>
           </div>
         </div>
       </div>
     `)
   );
 
-  root.querySelectorAll('[data-theme-toggle]').forEach((b) => wireThemeToggle(b));
+  const eyeBtn = root.querySelector('#login-eye-btn');
+  const passInput = root.querySelector('#login-pass');
+  const eyeIcon = root.querySelector('#login-eye-icon');
+  if (eyeBtn && passInput && eyeIcon) {
+    eyeBtn.addEventListener('click', () => {
+      const show = passInput.type === 'password';
+      passInput.type = show ? 'text' : 'password';
+      eyeIcon.className = show ? 'fas fa-eye-slash' : 'fas fa-eye';
+    });
+  }
 
   const form = root.querySelector('#login-form');
   if (form) {
     form.addEventListener('submit', async (ev) => {
       ev.preventDefault();
-      const username = root.querySelector('#username').value.trim();
-      const password = root.querySelector('#password').value;
+      const username = root.querySelector('#login-user').value.trim();
+      const password = root.querySelector('#login-pass').value;
+      const submitBtn = root.querySelector('#login-submit-btn');
+      const loadSpan = root.querySelector('.login-submit-loading');
+      const textSpan = root.querySelector('.login-submit-text');
+      const errEl = root.querySelector('#login-error');
+      const errTx = root.querySelector('#login-error-text');
+      if (errEl) errEl.classList.add('hidden');
+      if (submitBtn) submitBtn.disabled = true;
+      if (loadSpan) loadSpan.classList.remove('hidden');
+      if (textSpan) textSpan.classList.add('hidden');
       try {
         const data = await fetchJson('/api/auth/login', {
           method: 'POST',
@@ -1495,16 +1577,23 @@ function renderLogin(root, cfg, err) {
         toast(`Hola, ${userGlobal.displayName || userGlobal.username}`, 'ok');
         renderShell(root, cfg, userGlobal);
       } catch (e) {
-        renderLogin(root, cfg, e.message || 'No se pudo iniciar sesión.');
+        const msg = e.message || 'No se pudo iniciar sesión.';
+        if (errTx) errTx.textContent = msg;
+        if (errEl) errEl.classList.remove('hidden');
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+        if (loadSpan) loadSpan.classList.add('hidden');
+        if (textSpan) textSpan.classList.remove('hidden');
       }
     });
   } else if (!cfg.authRequired) {
     fetchJson('/api/auth/me')
       .then((me) => renderShell(root, cfg, me.user))
       .catch((e) => {
-        root.querySelector('.login-panel').prepend(
-          el(`<div class="alert-error">${escapeHtml(e.message)}</div>`)
-        );
+        const errEl = root.querySelector('#login-error');
+        const errTx = root.querySelector('#login-error-text');
+        if (errTx) errTx.textContent = e.message || String(e);
+        if (errEl) errEl.classList.remove('hidden');
       });
   }
 }
