@@ -31,6 +31,33 @@ const TAB_DEFS = [
   ['acerca', 'Acerca de'],
 ];
 
+/** Iconos FA por pestaña — mismos que legacy-app.html (.tabs--rail). */
+const TAB_ICONS = {
+  dashboards: 'fa-chart-pie',
+  clientes: 'fa-users',
+  refacciones: 'fa-cogs',
+  maquinas: 'fa-industry',
+  almacen: 'fa-warehouse',
+  cotizaciones: 'fa-file-invoice-dollar',
+  ventas: 'fa-check-double',
+  prospeccion: 'fa-map-marked-alt',
+  'revision-maquinas': 'fa-tools',
+  tarifas: 'fa-tags',
+  reportes: 'fa-file-alt',
+  garantias: 'fa-shield-alt',
+  'mantenimiento-garantia': 'fa-calendar-check',
+  'garantias-sin-cobertura': 'fa-ban',
+  bonos: 'fa-award',
+  viajes: 'fa-plane',
+  tecnicos: 'fa-users',
+  bitacoras: 'fa-clock',
+  auditoria: 'fa-clipboard-list',
+  usuarios: 'fa-user-shield',
+  'categorias-catalogo': 'fa-sitemap',
+  demo: 'fa-database',
+  acerca: 'fa-info-circle',
+};
+
 const LIST_ROUTES = {
   clientes: '/api/clientes',
   refacciones: '/api/refacciones',
@@ -473,10 +500,18 @@ function renderDataTable(keys, rows, tabId) {
       });
       const sid = getRowStableId(row);
       const actions = showActions
-        ? `<td class="td-actions">
-            <button type="button" class="btn btn-small btn-outline act-ver" data-i="${i}">Ver</button>
-            ${canEdit ? `<button type="button" class="btn btn-small btn-outline act-edit" data-i="${i}">Editar</button>` : ''}
-            ${canDel && sid ? `<button type="button" class="btn btn-small btn-danger act-del" data-i="${i}">Eliminar</button>` : ''}
+        ? `<td class="td-actions td-actions-inline">
+            <button type="button" class="btn small outline act-ver" data-i="${i}" title="Vista previa" aria-label="Ver"><i class="fas fa-eye" aria-hidden="true"></i></button>
+            ${
+              canEdit
+                ? `<button type="button" class="btn small primary act-edit" data-i="${i}" title="Editar" aria-label="Editar"><i class="fas fa-edit" aria-hidden="true"></i></button>`
+                : ''
+            }
+            ${
+              canDel && sid
+                ? `<button type="button" class="btn small danger act-del" data-i="${i}" title="Eliminar" aria-label="Eliminar"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>`
+                : ''
+            }
           </td>`
         : '';
       return `<tr>${cells.join('')}${actions}</tr>`;
@@ -1245,7 +1280,7 @@ async function loadViewInto(container) {
           <div id="almacen-table-root">
             <div class="table-toolbar">
               <input type="search" id="table-search" placeholder="Buscar en columnas visibles…" />
-              <button type="button" class="btn btn-ghost" id="btn-csv">Exportar CSV</button>
+              <button type="button" class="btn small outline" id="btn-csv">Exportar CSV</button>
               <span id="table-hint" class="muted"></span>
             </div>
             <div id="table-mount"></div>
@@ -1262,7 +1297,7 @@ async function loadViewInto(container) {
           <div id="audit-root">
             <div class="table-toolbar">
               <input type="search" id="table-search" placeholder="Filtrar…" />
-              <button type="button" class="btn btn-ghost" id="btn-csv">Exportar CSV</button>
+              <button type="button" class="btn small outline" id="btn-csv">Exportar CSV</button>
               <span id="table-hint" class="muted"></span>
             </div>
             <div id="table-mount"></div>
@@ -1318,7 +1353,7 @@ async function loadViewInto(container) {
           <div id="list-root">
             <div class="table-toolbar">
               <input type="search" id="table-search" placeholder="Buscar…" />
-              <button type="button" class="btn btn-ghost" id="btn-csv">Exportar CSV</button>
+              <button type="button" class="btn small outline" id="btn-csv">Exportar CSV</button>
               <span id="table-hint" class="muted"></span>
             </div>
             <div id="table-mount"></div>
@@ -1341,7 +1376,15 @@ function wireSidebarEvents(root) {
   const scrim = root.querySelector('#nav-scrim');
   const close = () => document.body.classList.remove('sidebar-open');
   if (toggle) {
-    toggle.addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
+    toggle.addEventListener('click', () => {
+      if (window.matchMedia('(max-width: 900px)').matches) {
+        document.body.classList.toggle('sidebar-open');
+      } else {
+        document.body.classList.toggle('scratch-sidebar-collapsed');
+        const expanded = !document.body.classList.contains('scratch-sidebar-collapsed');
+        toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      }
+    });
   }
   if (scrim) scrim.addEventListener('click', close);
   root.querySelectorAll('.nav-item').forEach((btn) => {
@@ -1362,6 +1405,7 @@ function wireSidebarEvents(root) {
     userGlobal = null;
     renderLogin(document.getElementById('app'), cfgGlobal, null);
     document.body.classList.remove('sidebar-open');
+    document.body.classList.remove('scratch-sidebar-collapsed');
   });
 }
 
@@ -1377,10 +1421,12 @@ function renderShell(root, cfg, user) {
   if (!tabs.some(([id]) => id === currentTab)) currentTab = 'dashboards';
 
   const navHtml = tabs
-    .map(
-      ([id, label]) =>
-        `<button type="button" class="nav-item${id === currentTab ? ' active' : ''}" data-tab="${escapeHtml(id)}">${escapeHtml(label)}</button>`
-    )
+    .map(([id, label]) => {
+      const ic = TAB_ICONS[id] || 'fa-circle';
+      return `<button type="button" class="nav-item rail-tab${id === currentTab ? ' active' : ''}" data-tab="${escapeHtml(
+        id
+      )}"><i class="fas ${ic}" aria-hidden="true"></i><span class="nav-label">${escapeHtml(label)}</span></button>`;
+    })
     .join('');
 
   const logoSrcRaw =
@@ -1388,41 +1434,53 @@ function renderShell(root, cfg, user) {
       ? String(cfg.logoUrl).trim()
       : '/fondos/universal-logo.jpg';
 
+  const appTitle = escapeHtml(cfg.appName || cfg.shortName || 'Servicio Tecnico');
+
   root.replaceChildren(
     el(`
-      <div class="shell">
+      <div class="shell scratch-shell">
         <div class="scrim" id="nav-scrim" aria-hidden="true"></div>
-        <aside class="sidebar">
-          <div class="sidebar-head">
-            <div class="sidebar-brand">${escapeHtml(cfg.shortName || cfg.appName || 'Portal')}</div>
-            <div class="sidebar-sub">Nano machining · operaciones</div>
-            <button type="button" class="btn btn-ghost nav-toggle" id="nav-toggle">Menú</button>
-          </div>
-          <nav class="nav-scroll" aria-label="Secciones">${navHtml}</nav>
-        </aside>
-        <div class="shell-main">
-          <div class="shell-brand-row" aria-label="Marca">
-            <div class="shell-brand-row__left">
-              <img class="shell-brand-logo" src="${escapeHtml(logoSrcRaw)}" alt="" loading="lazy" />
-              <div class="shell-brand-text">
-                <p class="shell-brand-title">${escapeHtml(cfg.appName || cfg.shortName || 'Portal')}</p>
-                <p class="shell-brand-powered">Powered by Ing. David Cantú · Universal Servicio Técnico</p>
+        <header class="scratch-app-header" aria-label="Cabecera principal">
+          <div class="scratch-header-inner">
+            <div class="scratch-header-brand">
+              <div class="scratch-header-logo-wrap header-brand-logo-wrap">
+                <img class="scratch-header-logo login-brand-hero-img" src="${escapeHtml(logoSrcRaw)}" alt="Universal" width="120" height="72" decoding="async" loading="lazy" />
+              </div>
+              <div class="scratch-header-brand-text">
+                <h1 class="scratch-header-service-title">${appTitle}</h1>
               </div>
             </div>
-            <div class="shell-brand-actions">
-              <button type="button" class="btn btn-ghost btn-icon shell-theme-toggle" data-theme-toggle title="Tema claro u oscuro" aria-label="Cambiar tema claro u oscuro"><i class="fas fa-sun" aria-hidden="true"></i></button>
+            <div class="scratch-header-actions">
+              <span class="scratch-powered-by header-powered-by" aria-label="Créditos">powered by Ing. David Cantú</span>
+              <button type="button" class="scratch-btn-icon-header shell-theme-toggle" data-theme-toggle title="Tema claro u oscuro" aria-label="Cambiar tema claro u oscuro" aria-pressed="false"><i class="fas fa-sun" aria-hidden="true"></i></button>
+              <span class="scratch-session-pill">${escapeHtml(display)} · ${escapeHtml(role)}</span>
+              <button type="button" class="btn small outline" id="btn-refresh">Actualizar</button>
+              ${cfg.authRequired ? '<button type="button" class="btn small outline" id="btn-logout">Salir</button>' : ''}
             </div>
           </div>
-          <header class="toolbar">
-            <h1 id="view-title">—</h1>
-            <div class="toolbar-actions">
-              <span class="user-pill">${escapeHtml(display)} · ${escapeHtml(role)}</span>
-              <button type="button" class="btn btn-ghost" id="btn-refresh">Actualizar</button>
-              ${cfg.authRequired ? '<button type="button" class="btn btn-ghost" id="btn-logout">Salir</button>' : ''}
+        </header>
+        <div class="app-frame scratch-app-frame">
+          <aside class="sidebar scratch-sidebar-nav sidebar-nav" aria-label="Navegación de módulos">
+            <div class="scratch-sidebar-toolbar sidebar-nav-toolbar">
+              <button type="button" id="nav-toggle" class="btn-sidebar-rail-toggle scratch-sidebar-toggle" aria-expanded="true" aria-controls="scratch-rail-tabs" title="Mostrar u ocultar lista de módulos">
+                <span class="visually-hidden">Menú módulos</span>
+                <svg class="sidebar-rail-burger-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+                  <rect x="4" y="6.25" width="16" height="2" rx="0.5" fill="currentColor"/>
+                  <rect x="4" y="11" width="16" height="2" rx="0.5" fill="currentColor"/>
+                  <rect x="4" y="15.75" width="16" height="2" rx="0.5" fill="currentColor"/>
+                </svg>
+              </button>
+              <p class="sidebar-nav-title" id="sidebar-rail-heading">Módulos</p>
             </div>
-          </header>
-          <main class="view-root" id="view-root"><div class="muted">Cargando…</div></main>
-          <footer class="shell-footer">Nanoprecisión · mismo backend · interfaz renovada</footer>
+            <nav id="scratch-rail-tabs" class="nav-scroll tabs tabs--rail scratch-rail-tabs" role="navigation" aria-labelledby="sidebar-rail-heading">${navHtml}</nav>
+          </aside>
+          <div class="shell-main scratch-main">
+            <header class="toolbar scratch-view-toolbar">
+              <h1 id="view-title">—</h1>
+            </header>
+            <main class="view-root" id="view-root"><div class="muted">Cargando…</div></main>
+            <footer class="shell-footer">Nanoprecisión · mismo backend · interfaz renovada</footer>
+          </div>
         </div>
       </div>
     `)
@@ -1531,7 +1589,11 @@ function renderLogin(root, cfg, err) {
               </div>
               ${authForm}
               <p class="login-classic-footer">
-                ¿Necesitas la interfaz anterior? <a href="/legacy-app">Abrir interfaz clásica</a>${cfg.buildTag ? ` · build:${escapeHtml(cfg.buildTag)}` : ''}
+                ¿Necesitas la interfaz anterior? <a href="/legacy-app">Abrir interfaz clásica</a>${
+                  cfg.buildTag
+                    ? ` · build:${escapeHtml(String(cfg.buildTag).replace(/^build:\s*/i, ''))}`
+                    : ''
+                }
               </p>
             </div>
           </div>
