@@ -579,8 +579,7 @@ html body.theme-industrial.md3-on table.data-table td.ref-td-actions .btn:not(.d
   }
 }
 
-/* Lightbox de medios (constancia, galerías): debe quedar ENCIMA de #modal en industrial+md3.
-   nano-fondo.css fija #modal en z-index 2147483600; sin esto “Ver” abre el lightbox detrás del ojito. */
-html body.theme-industrial.md3-on .pvc-media-lightbox {
+/* Lightbox de medios: refuerzo (style.css ya sube z-index global; esto cubre cualquier tema con modal alto). */
+html body.md3-on .pvc-media-lightbox {
   z-index: 2147483646 !important;
 }

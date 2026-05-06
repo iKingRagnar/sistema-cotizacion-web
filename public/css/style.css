@@ -7368,11 +7368,11 @@ body.pvc-lb-open {
   overflow: hidden;
 }
 
-/* Lightbox de medios (solo imagen/PDF; por encima de modales ~100 y ref-img-lightbox 20100) */
+/* Lightbox de medios: debe quedar por encima de #modal / nano-fondo (z ~2147483600) en MD3 industrial */
 .pvc-media-lightbox {
   position: fixed;
   inset: 0;
-  z-index: 20150;
+  z-index: 2147483646 !important;
   display: flex;
   align-items: center;
   justify-content: center;

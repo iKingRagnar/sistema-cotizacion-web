@@ -2653,6 +2653,15 @@
             return;
           }
           if (role === 'cliente-const') {
+            const direct = String(lb.getAttribute('data-const-url') || '').trim();
+            const forceFromBtn = lb.getAttribute('data-const-kind') === 'pdf';
+            if (direct) {
+              void openPvcMediaLightboxGallery(
+                [{ url: direct, label: 'Constancia', forcePdf: forceFromBtn }],
+                0,
+              );
+              return;
+            }
             const id = lb.getAttribute('data-cliente-id');
             const list = clientesCache && clientesCache.length ? clientesCache : [];
             const found = list.find((x) => String(x && x.id) === String(id));
@@ -2661,7 +2670,7 @@
               return;
             }
             const url = API + '/clientes/' + encodeURIComponent(found.id) + '/constancia';
-            const forcePdf = String(found.constancia_kind || '') === 'pdf' || lb.getAttribute('data-const-kind') === 'pdf';
+            const forcePdf = String(found.constancia_kind || '') === 'pdf' || forceFromBtn;
             void openPvcMediaLightboxGallery(
               [{ url, label: 'Constancia · ' + (found.nombre || 'Cliente'), forcePdf }],
               0,
@@ -4006,9 +4015,11 @@
       c.constancia_kind === 'pdf' ? ' data-const-kind="pdf"' : c.constancia_kind === 'image' ? ' data-const-kind="image"' : '';
     const constanciaApiUrl =
       c.id != null ? API + '/clientes/' + encodeURIComponent(c.id) + '/constancia' : '';
+    const constUrlAttr =
+      constanciaApiUrl ? ' data-const-url="' + escapeHtml(constanciaApiUrl) + '"' : '';
     const verDlRow =
       showVerButton && c.id != null
-        ? `<button type="button" class="btn small outline js-pvc-media-lightbox" data-lb-role="cliente-const"${idAttr}${kindAttr} title="Ver constancia ampliada"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>` +
+        ? `<button type="button" class="btn small outline js-pvc-media-lightbox" data-lb-role="cliente-const"${idAttr}${kindAttr}${constUrlAttr} title="Ver constancia ampliada"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>` +
           (canDownloadUploadedMedia() && constanciaApiUrl
             ? pvcDownloadBtnCompactHtml(
                 null,
@@ -7607,7 +7618,7 @@
         <div id="m-constancia-existing" class="${hasConst && !isNew ? '' : 'hidden'}">
           <p class="form-hint" style="margin-top:0"><i class="fas fa-paperclip"></i> Constancia en sistema${constanciaNombreEsc ? ': <strong>' + constanciaNombreEsc + '</strong>' : ''}</p>
           <div class="form-row" style="gap:0.5rem;flex-wrap:wrap;margin-top:0.35rem">
-            <button type="button" class="btn small outline js-pvc-media-lightbox" id="m-btn-ver-constancia" data-lb-role="cliente-const" data-cliente-id="${cliente && cliente.id != null ? escapeHtml(String(cliente.id)) : ''}"${cliente && cliente.constancia_kind === 'pdf' ? ' data-const-kind="pdf"' : cliente && cliente.constancia_kind === 'image' ? ' data-const-kind="image"' : ''} title="Ver solo constancia (pantalla completa)"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>
+            <button type="button" class="btn small outline js-pvc-media-lightbox" id="m-btn-ver-constancia" data-lb-role="cliente-const" data-cliente-id="${cliente && cliente.id != null ? escapeHtml(String(cliente.id)) : ''}"${cliente && cliente.id != null ? ' data-const-url="' + escapeHtml(API + '/clientes/' + encodeURIComponent(cliente.id) + '/constancia') + '"' : ''}${cliente && cliente.constancia_kind === 'pdf' ? ' data-const-kind="pdf"' : cliente && cliente.constancia_kind === 'image' ? ' data-const-kind="image"' : ''} title="Ver solo constancia (pantalla completa)"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>
             <button type="button" class="btn small outline" id="m-btn-dl-constancia"><i class="fas fa-download"></i> Descargar</button>
             <button type="button" class="btn small danger outline" id="m-btn-rm-constancia"><i class="fas fa-times"></i> Quitar constancia</button>
           </div>
