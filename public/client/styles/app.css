@@ -35,6 +35,14 @@ body {
   line-height: 1.45;
 }
 
+/* Cadena flex hasta el contenido: sin esto #view-root puede colapsar (altura 0) tras login. */
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
 a {
   color: var(--brand-accent);
 }
@@ -159,7 +167,8 @@ a {
 .shell.scratch-shell {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  flex: 1;
+  min-height: 0;
   position: relative;
   z-index: 1;
 }
@@ -275,9 +284,8 @@ a {
   flex-direction: column;
   position: sticky;
   top: 0;
-  align-self: flex-start;
-  height: 100vh;
-  max-height: 100vh;
+  align-self: stretch;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -524,6 +532,7 @@ html.appearance-light .btn-sidebar-rail-toggle.scratch-sidebar-toggle {
 
 .view-root {
   flex: 1;
+  min-height: 0;
   padding: 1rem 1.25rem 2rem;
   overflow: auto;
 }
