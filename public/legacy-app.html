@@ -34,7 +34,7 @@
   <!-- CSS heredados (primero — los sobreescribe el nuevo sistema MD3) -->
   <link rel="stylesheet" href="css/design-tokens.css?v=4-md3">
   <link rel="stylesheet" href="css/design-system.css?v=3-apex-base">
-  <link rel="stylesheet" href="css/style.css?v=101-pvc-lightbox-z-const-url-2026-05-06">
+  <link rel="stylesheet" href="css/style.css?v=102-dialog-pvc-lightbox-2026-05-06">
   <link rel="stylesheet" href="css/layout-rail.css?v=11-hide-sidebar-global-strip">
   <link rel="stylesheet" href="css/header-profile.css?v=10-chrome-luna-neutral-admin-hub">
   <link rel="stylesheet" href="css/theme-industrial.css?v=25-chrome-luna-neutral">
@@ -65,7 +65,7 @@
   <!-- Sin premium.css / luna / nano-fondo: UI corporativa vía enterprise-ui (última capa). -->
   <link rel="stylesheet" href="css/no-motion.css?v=2-profile-svg-backstop-2026-04-27">
   <!-- Portales primero; login-neutral DEBE ir después para mandar en overlay de sesión -->
-  <link rel="stylesheet" href="css/portal-overlays.css?v=11-pvc-lb-under-modal-stack-2026-05-06">
+  <link rel="stylesheet" href="css/portal-overlays.css?v=12-dialog-lb-open-selector-2026-05-06">
   <link rel="stylesheet" href="css/login-neutral.css?v=9-login-pass-width-2026-05-06">
   <!-- Enterprise: UI minimalista corporativa (última capa) -->
   <link rel="stylesheet" href="css/enterprise-ui.css?v=4-full-app-restored">
@@ -1682,11 +1682,11 @@
 
   <footer class="app-footer" role="contentinfo">
     <p>Sistema de Cotización y Gestión · <span class="footer-version">v4</span> · Uso profesional · Cotizaciones, incidentes y bitácora en un solo lugar
-      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 66 · JS 159</strong></span></p>
+      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 66 · JS 160</strong></span></p>
     <p class="footer-tip"><kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> atajos de sección · <kbd>Esc</kbd> cierra modales</p>
   </footer>
-  <!-- Lightbox de medios: hijo directo de body (evita quedar detrás del #modal por stacking context dentro de main). -->
-  <div id="pvc-media-lightbox" class="pvc-media-lightbox hidden" role="dialog" aria-modal="true" aria-label="Vista previa de imagen o documento">
+  <!-- Lightbox: <dialog> + showModal() = top layer del navegador (por encima de #modal / backdrop-filter). -->
+  <dialog id="pvc-media-lightbox" class="pvc-media-lightbox" aria-label="Vista previa de imagen o documento">
     <div id="pvc-lb-backdrop" class="pvc-lb-backdrop" tabindex="-1"></div>
     <div class="pvc-lb-dialog">
       <div class="pvc-lb-toolbar">
@@ -1704,7 +1704,7 @@
         <div id="pvc-lb-fallback" class="pvc-lb-fallback hidden"></div>
       </div>
     </div>
-  </div>
+  </dialog>
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
   <div id="global-loading" class="global-loading hidden" aria-hidden="true">
     <div class="loading-spinner"></div>
@@ -1712,7 +1712,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=191-pvc-lb-append-body-stack-2026-05-06"></script>
+  <script src="js/app.js?v=192-dialog-showmodal-lightbox-2026-05-06"></script>
   <script src="js/bg-animation.js?v=6-no-motion-mobile-only" defer></script>
 </body>
 </html>

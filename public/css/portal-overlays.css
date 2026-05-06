@@ -596,7 +596,7 @@ html body.theme-industrial.md3-on.pvc-lb-open #modal-stack .modal-box,
 html body.theme-industrial.md3-on.pvc-lb-open #confirm-modal .modal-box {
   z-index: 2147483001 !important;
 }
-html body.theme-industrial.md3-on.pvc-lb-open #pvc-media-lightbox.pvc-media-lightbox:not(.hidden) {
+html body.theme-industrial.md3-on.pvc-lb-open #pvc-media-lightbox.pvc-media-lightbox[open] {
   z-index: 2147483646 !important;
   isolation: isolate;
 }

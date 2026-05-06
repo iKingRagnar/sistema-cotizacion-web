@@ -2142,6 +2142,15 @@
     }
   }
 
+  function pvcMediaLbRootIsDialog(root) {
+    return !!(root && typeof HTMLDialogElement !== 'undefined' && root instanceof HTMLDialogElement);
+  }
+  function pvcMediaLbRootIsOpen(root) {
+    if (!root) return false;
+    if (pvcMediaLbRootIsDialog(root)) return !!root.open;
+    return !root.classList.contains('hidden');
+  }
+
   function hidePvcMediaLightbox() {
     const root = qs('#pvc-media-lightbox');
     const imgEl = qs('#pvc-lb-img');
@@ -2176,7 +2185,15 @@
       statusEl.textContent = '';
       statusEl.classList.add('hidden');
     }
-    if (root) root.classList.add('hidden');
+    if (root) {
+      if (pvcMediaLbRootIsDialog(root)) {
+        try {
+          if (root.open) root.close();
+        } catch (_) {}
+      } else {
+        root.classList.add('hidden');
+      }
+    }
     _pvcLbItems = [];
     _pvcLbIndex = 0;
     if (_pvcLbKeyHandler) {
@@ -2369,7 +2386,18 @@
     } catch (_) {}
     _pvcLbItems = list;
     _pvcLbIndex = Math.max(0, Math.min(Number(startIndex) || 0, list.length - 1));
-    root.classList.remove('hidden');
+    if (pvcMediaLbRootIsDialog(root)) {
+      try {
+        if (root.open) root.close();
+      } catch (_) {}
+      try {
+        root.showModal();
+      } catch (_) {
+        root.classList.remove('hidden');
+      }
+    } else {
+      root.classList.remove('hidden');
+    }
     try {
       document.body.classList.add('pvc-lb-open');
     } catch (_) {}
@@ -2377,7 +2405,7 @@
       _pvcLbKeyHandler = function (ev) {
         if (!ev || ev.key !== 'Escape') return;
         const lb = qs('#pvc-media-lightbox');
-        if (!lb || lb.classList.contains('hidden')) return;
+        if (!lb || !pvcMediaLbRootIsOpen(lb)) return;
         ev.preventDefault();
         hidePvcMediaLightbox();
       };
@@ -2385,6 +2413,15 @@
     }
     if (!_pvcLbUiWired) {
       _pvcLbUiWired = true;
+      const dlgRoot = qs('#pvc-media-lightbox');
+      if (dlgRoot && pvcMediaLbRootIsDialog(dlgRoot)) {
+        dlgRoot.addEventListener('cancel', function (ev) {
+          try {
+            ev.preventDefault();
+          } catch (_) {}
+          hidePvcMediaLightbox();
+        });
+      }
       const close = () => hidePvcMediaLightbox();
       const bd = qs('#pvc-lb-backdrop');
       const x = qs('#pvc-lb-close');
