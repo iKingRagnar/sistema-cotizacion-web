@@ -1049,7 +1049,10 @@ function publicClienteRow(row) {
   if (url && String(url).trim()) {
     o.has_constancia = true;
     const s = String(url);
-    o.constancia_kind = s.startsWith('data:image/') ? 'image' : (s.indexOf('application/pdf') !== -1 ? 'pdf' : 'file');
+    const head = s.trimStart().slice(0, 80).toLowerCase();
+    o.constancia_kind = head.startsWith('data:image/')
+      ? 'image'
+      : (head.includes('application/pdf') ? 'pdf' : 'file');
   } else {
     o.has_constancia = false;
     o.constancia_kind = null;
@@ -1058,13 +1061,27 @@ function publicClienteRow(row) {
   return o;
 }
 
+/**
+ * Decodifica constancia almacenada como data URL (base64).
+ * Tolera `;charset=…;base64,`, `BASE64`, espacios en el payload (p. ej. pegados desde Excel) y MIME en mayúsculas.
+ */
 function parseDataUrlConstancia(dataUrl) {
   if (!dataUrl || typeof dataUrl !== 'string') return null;
-  const m = /^data:([^;]+);base64,([\s\S]+)$/.exec(dataUrl.trim());
-  if (!m) return null;
+  const raw = dataUrl.trim();
+  const lower = raw.toLowerCase();
+  const marker = ';base64,';
+  const idx = lower.indexOf(marker);
+  if (idx < 0 || !lower.startsWith('data:')) return null;
+  const header = raw.slice(5, idx).trim();
+  if (!header) return null;
+  const mime = header.split(';')[0].trim().toLowerCase();
+  if (!mime) return null;
+  const b64 = raw.slice(idx + marker.length).replace(/\s+/g, '');
+  if (!b64) return null;
   try {
-    const mime = m[1].split(';')[0].trim().toLowerCase();
-    return { mime, buffer: Buffer.from(m[2], 'base64') };
+    const buffer = Buffer.from(b64, 'base64');
+    if (!buffer || buffer.length === 0) return null;
+    return { mime, buffer };
   } catch (_) {
     return null;
   }

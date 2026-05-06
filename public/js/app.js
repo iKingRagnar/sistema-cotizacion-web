@@ -2325,6 +2325,16 @@
         !!o.forcePdf;
       clearLoading();
       if (looksImage) {
+        imgEl.onload = () => {
+          imgEl.onload = null;
+          imgEl.onerror = null;
+          clearLoading();
+        };
+        imgEl.onerror = () => {
+          imgEl.onload = null;
+          imgEl.onerror = null;
+          fail(new Error('No se pudo mostrar la imagen (archivo dañado o formato no admitido).'));
+        };
         imgEl.src = objUrl;
         imgEl.classList.remove('hidden');
       } else if (looksPdf) {
