@@ -1,5 +1,5 @@
 {
-  "name": "sistema-cotizacion-web-enterprise",
+  "name": "sistema-cotizacion-web",
   "version": "1.0.0",
   "description": "Sistema de Cotización — fork enterprise minimal (misma API/lógica; UI corporativa)",
   "main": "server.js",
