@@ -2065,6 +2065,37 @@
     return true;
   }
 
+  /** Miniatura en modal editar refacción: bajar a la vista previa grande (no abrir lightbox). */
+  (function bindRefEditScrollPreviewCapture() {
+    document.addEventListener(
+      'click',
+      function (e) {
+        const t = e && e.target;
+        if (!t || !t.closest) return;
+        const btn = t.closest('.js-ref-edit-scroll-preview');
+        if (!btn || btn.disabled) return;
+        if (!document.body.contains(btn)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+          e.stopImmediatePropagation();
+        } catch (_) {}
+        const id = btn.getAttribute('data-scroll-target');
+        if (!id) return;
+        const el = document.getElementById(id);
+        if (!el) return;
+        try {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+        } catch (_) {
+          try {
+            el.scrollIntoView();
+          } catch (_2) {}
+        }
+      },
+      true
+    );
+  })();
+
   /** Fallback ultra-robusto: captura clics de medios en todo el documento. */
   (function bindGlobalMediaOpenCapture() {
     document.addEventListener('click', function (e) {
@@ -7119,6 +7150,7 @@
 
   // ----- MODAL REFACCIÓN -----
   async function openModalRefaccion(refaccion) {
+    clearPvcMediaUrlRegistry();
     const isNew = !refaccion || !refaccion.id;
     const tree = await fetchCategoriasCatalogoForUi({ toastOnCatalogError: true });
     const cats = toArray(tree.categorias);
@@ -7169,26 +7201,39 @@
         <div class="form-group">
           <label>Foto 1: Manual de partes</label>
           <input type="file" id="m-foto1-file" accept="image/*" style="margin-bottom:0.3rem">
-          ${refaccion && refaccion.imagen_url ? `<div class="ref-foto-preview-wrap">
-            <button type="button" class="js-refaccion-open-media" data-media-ref="${foto1Ref}" title="Ver imagen completa" style="border:none;background:transparent;padding:0;cursor:zoom-in;">
-              <img src="${escapeHtml(refaccion.imagen_url)}" class="ref-foto-thumb" alt="Foto 1" loading="lazy">
+          <div class="ref-foto-preview-wrap" id="m-foto1-preview-wrap" style="${refaccion && refaccion.imagen_url ? '' : 'display:none'}">
+            <button type="button" class="js-ref-edit-scroll-preview" id="m-foto1-scroll-btn" data-scroll-target="ref-edit-foto1-full" title="Bajar a la vista previa grande" ${refaccion && refaccion.imagen_url ? '' : 'disabled'} style="border:none;background:transparent;padding:0;cursor:pointer;">
+              <img id="m-foto1-thumb-img" src="${refaccion && refaccion.imagen_url ? escapeHtml(refaccion.imagen_url) : ''}" class="ref-foto-thumb" alt="Miniatura Foto 1" loading="lazy">
             </button>
-            ${pvcDownloadBtnCompactHtml(foto1Ref, null, 'refaccion-foto1')}
+            <button type="button" class="btn small outline js-refaccion-open-media" id="m-foto1-ver" data-media-ref="${foto1Ref ? escapeHtml(foto1Ref) : ''}" ${foto1Ref ? '' : 'disabled'} title="Ver imagen completa"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>
+            ${refaccion && refaccion.imagen_url ? pvcDownloadBtnCompactHtml(foto1Ref, null, 'refaccion-foto1') : ''}
             <button type="button" class="btn small danger" id="m-foto1-clear" style="margin-left:0.5rem"><i class="fas fa-times"></i></button>
-          </div>` : ''}
+          </div>
           <input type="hidden" id="m-imagen" value="${escapeHtml(refaccion && refaccion.imagen_url) || ''}">
         </div>
         <div class="form-group">
           <label>Foto 2: Pieza (diagrama)</label>
           <input type="file" id="m-foto2-file" accept="image/*" style="margin-bottom:0.3rem">
-          ${refaccion && refaccion.manual_url ? `<div class="ref-foto-preview-wrap">
-            <button type="button" class="js-refaccion-open-media" data-media-ref="${foto2Ref}" title="Ver imagen completa" style="border:none;background:transparent;padding:0;cursor:zoom-in;">
-              <img src="${escapeHtml(refaccion.manual_url)}" class="ref-foto-thumb" alt="Foto 2" loading="lazy">
+          <div class="ref-foto-preview-wrap" id="m-foto2-preview-wrap" style="${refaccion && refaccion.manual_url ? '' : 'display:none'}">
+            <button type="button" class="js-ref-edit-scroll-preview" id="m-foto2-scroll-btn" data-scroll-target="ref-edit-foto2-full" title="Bajar a la vista previa grande" ${refaccion && refaccion.manual_url ? '' : 'disabled'} style="border:none;background:transparent;padding:0;cursor:pointer;">
+              <img id="m-foto2-thumb-img" src="${refaccion && refaccion.manual_url ? escapeHtml(refaccion.manual_url) : ''}" class="ref-foto-thumb" alt="Miniatura Foto 2" loading="lazy">
             </button>
-            ${pvcDownloadBtnCompactHtml(foto2Ref, null, 'refaccion-foto2')}
+            <button type="button" class="btn small outline js-refaccion-open-media" id="m-foto2-ver" data-media-ref="${foto2Ref ? escapeHtml(foto2Ref) : ''}" ${foto2Ref ? '' : 'disabled'} title="Ver imagen completa"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>
+            ${refaccion && refaccion.manual_url ? pvcDownloadBtnCompactHtml(foto2Ref, null, 'refaccion-foto2') : ''}
             <button type="button" class="btn small danger" id="m-foto2-clear" style="margin-left:0.5rem"><i class="fas fa-times"></i></button>
-          </div>` : ''}
+          </div>
           <input type="hidden" id="m-manual" value="${escapeHtml(refaccion && refaccion.manual_url) || ''}">
+        </div>
+      </div>
+      <div class="ref-edit-previews-anchor" id="ref-edit-previews-panel">
+        <p class="ref-edit-previews-hint"><i class="fas fa-arrow-down"></i> Vista previa grande (usa la miniatura de arriba para bajar aquí; <strong>Ver</strong> abre la imagen completa).</p>
+        <div id="ref-edit-foto1-full" class="ref-edit-foto-full${refaccion && refaccion.imagen_url ? '' : ' ref-edit-foto-full--hidden'}">
+          <p class="ref-edit-foto-full-label">Foto 1 · Manual de partes</p>
+          <img id="ref-edit-foto1-full-img" alt="Vista previa Foto 1"${refaccion && refaccion.imagen_url ? ' src="' + escapeHtml(refaccion.imagen_url) + '"' : ''} />
+        </div>
+        <div id="ref-edit-foto2-full" class="ref-edit-foto-full${refaccion && refaccion.manual_url ? '' : ' ref-edit-foto-full--hidden'}">
+          <p class="ref-edit-foto-full-label">Foto 2 · Pieza (diagrama)</p>
+          <img id="ref-edit-foto2-full-img" alt="Vista previa Foto 2"${refaccion && refaccion.manual_url ? ' src="' + escapeHtml(refaccion.manual_url) + '"' : ''} />
         </div>
       </div>
       <div class="form-actions">
@@ -7210,11 +7255,105 @@
       else if (curSub && list.some(s => s.nombre === curSub)) selSub.value = curSub;
     }
     if (selCat) selCat.addEventListener('change', refillSubcat);
-    // Clear buttons for existing photos
+    function readFileInputAsDataUrl(fileInput) {
+      return new Promise((res) => {
+        const file = fileInput && fileInput.files && fileInput.files[0];
+        if (!file) {
+          res(null);
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => res(e.target.result);
+        reader.onerror = () => res(null);
+        reader.readAsDataURL(file);
+      });
+    }
+    function syncRefEditSlotFromUrl(slot, url) {
+      const u = url != null && String(url).trim() ? String(url).trim() : '';
+      const is1 = slot === 1;
+      const wrap = qs(is1 ? '#m-foto1-preview-wrap' : '#m-foto2-preview-wrap');
+      const thumb = qs(is1 ? '#m-foto1-thumb-img' : '#m-foto2-thumb-img');
+      const ver = qs(is1 ? '#m-foto1-ver' : '#m-foto2-ver');
+      const scrollBtn = qs(is1 ? '#m-foto1-scroll-btn' : '#m-foto2-scroll-btn');
+      const full = qs(is1 ? '#ref-edit-foto1-full' : '#ref-edit-foto2-full');
+      const fullImg = qs(is1 ? '#ref-edit-foto1-full-img' : '#ref-edit-foto2-full-img');
+      if (!u) {
+        if (fullImg) fullImg.removeAttribute('src');
+        if (full) full.classList.add('ref-edit-foto-full--hidden');
+        if (thumb) thumb.removeAttribute('src');
+        if (ver) {
+          ver.disabled = true;
+          ver.setAttribute('data-media-ref', '');
+        }
+        if (scrollBtn) scrollBtn.disabled = true;
+        if (wrap) {
+          wrap.style.display = 'none';
+          wrap.querySelectorAll('.js-refaccion-download-media').forEach((b) => b.remove());
+        }
+        return '';
+      }
+      const ref = registerPvcMediaUrl(u);
+      if (thumb) thumb.src = u;
+      if (fullImg) fullImg.src = u;
+      if (full) full.classList.remove('ref-edit-foto-full--hidden');
+      if (ver) {
+        ver.disabled = false;
+        ver.setAttribute('data-media-ref', ref);
+      }
+      if (scrollBtn) scrollBtn.disabled = false;
+      if (wrap) wrap.style.display = '';
+      return ref;
+    }
     const foto1ClearBtn = qs('#m-foto1-clear');
     const foto2ClearBtn = qs('#m-foto2-clear');
-    if (foto1ClearBtn) foto1ClearBtn.addEventListener('click', () => { qs('#m-imagen').value = ''; foto1ClearBtn.closest('.ref-foto-preview-wrap').remove(); });
-    if (foto2ClearBtn) foto2ClearBtn.addEventListener('click', () => { qs('#m-manual').value = ''; foto2ClearBtn.closest('.ref-foto-preview-wrap').remove(); });
+    if (foto1ClearBtn) {
+      foto1ClearBtn.addEventListener('click', () => {
+        const fi = qs('#m-foto1-file');
+        if (fi) fi.value = '';
+        if (qs('#m-imagen')) qs('#m-imagen').value = '';
+        syncRefEditSlotFromUrl(1, '');
+      });
+    }
+    if (foto2ClearBtn) {
+      foto2ClearBtn.addEventListener('click', () => {
+        const fi = qs('#m-foto2-file');
+        if (fi) fi.value = '';
+        if (qs('#m-manual')) qs('#m-manual').value = '';
+        syncRefEditSlotFromUrl(2, '');
+      });
+    }
+    const inpFoto1 = qs('#m-foto1-file');
+    const inpFoto2 = qs('#m-foto2-file');
+    if (inpFoto1) {
+      inpFoto1.addEventListener('change', async () => {
+        const dataUrl = await readFileInputAsDataUrl(inpFoto1);
+        if (!dataUrl) return;
+        if (qs('#m-imagen')) qs('#m-imagen').value = dataUrl;
+        const mediaRef = syncRefEditSlotFromUrl(1, dataUrl);
+        const wrap = qs('#m-foto1-preview-wrap');
+        if (wrap && mediaRef && canDownloadUploadedMedia() && !wrap.querySelector('.js-refaccion-download-media') && foto1ClearBtn) {
+          const tmp = document.createElement('div');
+          tmp.innerHTML = pvcDownloadBtnCompactHtml(mediaRef, null, 'refaccion-foto1');
+          const dl = tmp.firstElementChild;
+          if (dl) foto1ClearBtn.parentNode.insertBefore(dl, foto1ClearBtn);
+        }
+      });
+    }
+    if (inpFoto2) {
+      inpFoto2.addEventListener('change', async () => {
+        const dataUrl = await readFileInputAsDataUrl(inpFoto2);
+        if (!dataUrl) return;
+        if (qs('#m-manual')) qs('#m-manual').value = dataUrl;
+        const mediaRef = syncRefEditSlotFromUrl(2, dataUrl);
+        const wrap = qs('#m-foto2-preview-wrap');
+        if (wrap && mediaRef && canDownloadUploadedMedia() && !wrap.querySelector('.js-refaccion-download-media') && foto2ClearBtn) {
+          const tmp = document.createElement('div');
+          tmp.innerHTML = pvcDownloadBtnCompactHtml(mediaRef, null, 'refaccion-foto2');
+          const dl = tmp.firstElementChild;
+          if (dl) foto2ClearBtn.parentNode.insertBefore(dl, foto2ClearBtn);
+        }
+      });
+    }
     qs('#m-save').onclick = async () => {
       clearInvalidMarks();
       const codigo = qs('#m-codigo').value.trim();

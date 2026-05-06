@@ -4700,8 +4700,17 @@ body.dark-theme .tarifas-section-title { color: #f1f5f9; }
 .ref-img-hover-preview { display: none; position: absolute; left: 100%; top: 50%; transform: translateY(-50%); z-index: 200; width: 180px; height: 180px; object-fit: contain; background: #fff; border: 2px solid var(--config-accent, #0d9488); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); pointer-events: none; margin-left: 6px; }
 .ref-img-hover-wrap:hover .ref-img-hover-preview,
 .ref-img-hover-wrap:focus-within .ref-img-hover-preview { display: block; }
-.ref-foto-preview-wrap { display: flex; align-items: center; margin-top: 0.35rem; }
+.ref-foto-preview-wrap { display: flex; align-items: center; margin-top: 0.35rem; flex-wrap: wrap; gap: 0.35rem; }
 .ref-foto-thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border, #e2e8f0); cursor: pointer; }
+.ref-edit-previews-anchor { margin: 1rem 0 0.25rem; padding-top: 0.75rem; border-top: 1px solid var(--border, #e2e8f0); }
+.ref-edit-previews-hint { font-size: 0.82rem; color: var(--text-secondary, #64748b); margin: 0 0 0.65rem; line-height: 1.35; }
+.ref-edit-foto-full { margin-bottom: 1rem; padding: 0.65rem; border: 1px solid var(--border, #e2e8f0); border-radius: 10px; background: #f8fafc; text-align: center; }
+.ref-edit-foto-full--hidden { display: none !important; }
+.ref-edit-foto-full-label { font-size: 0.78rem; font-weight: 600; color: #475569; margin: 0 0 0.4rem; }
+.ref-edit-foto-full img { max-width: 100%; max-height: min(320px, 48vh); height: auto; width: auto; object-fit: contain; border-radius: 6px; vertical-align: middle; }
+body.dark-theme .ref-edit-foto-full { background: #0f172a; border-color: #334155; }
+body.dark-theme .ref-edit-foto-full-label { color: #94a3b8; }
+body.dark-theme .ref-edit-previews-anchor { border-top-color: #334155; }
 body.dark-theme .ref-img-hover-preview { background: #1e293b; border-color: var(--config-accent, #0d9488); }
 
 /* ===== COTIZACIONES: mano de obra fields grid ===== */
@@ -6181,11 +6190,11 @@ body.dark-theme .modal-box:not(.pdf-preview-modal) .form-group textarea,
   gap: 0.35rem;
 }
 
-/* Lightbox imagen refacción */
+/* Lightbox imagen refacción (por encima de modales y overlay login ~20000) */
 .ref-img-lightbox {
   position: fixed;
   inset: 0;
-  z-index: 19500;
+  z-index: 20100;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6198,15 +6207,17 @@ body.dark-theme .modal-box:not(.pdf-preview-modal) .form-group textarea,
 .ref-img-lightbox--in { opacity: 1; }
 .ref-img-lightbox--out { opacity: 0; }
 .ref-img-lightbox-inner {
-  max-width: min(96vw, 1400px);
-  max-height: 92vh;
+  max-width: 96vw;
+  max-height: none;
+  width: auto;
+  height: auto;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .ref-img-lightbox-inner img {
-  max-width: 100%;
-  max-height: 92vh;
+  max-width: 96vw;
+  max-height: min(90vh, 1200px);
   width: auto;
   height: auto;
   object-fit: contain;
