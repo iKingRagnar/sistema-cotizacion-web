@@ -3978,40 +3978,43 @@
     return t.replace(/[^\w.\-\u00C0-\u024f]/g, '_').replace(/_+/g, '_');
   }
 
-  function clienteConstanciaThumbHtml(c) {
+  /**
+   * Miniatura de constancia en listado o en vista prevía (ojito).
+   * @param {object} c Cliente con has_constancia.
+   * @param {{ showVerButton?: boolean }} [opts] showVerButton: true solo en tarjeta de vista prevía (mini + Ver + descarga).
+   */
+  function clienteConstanciaThumbHtml(c, opts) {
     if (!c || !c.has_constancia) return '';
+    const showVerButton = !!(opts && opts.showVerButton);
     const openUrl = c.id != null ? (API + '/clientes/' + encodeURIComponent(c.id) + '/constancia') : '';
     const dl = pvcDownloadBtnCompactHtml(null, openUrl, 'cliente-constancia');
     const idAttr = c.id != null ? ' data-cliente-id="' + escapeHtml(String(c.id)) + '"' : '';
     const kindAttr =
       c.constancia_kind === 'pdf' ? ' data-const-kind="pdf"' : c.constancia_kind === 'image' ? ' data-const-kind="image"' : '';
-    const verLb =
+    const lbOpen =
       c.id != null
-        ? `<button type="button" class="btn small outline js-pvc-media-lightbox" data-lb-role="cliente-const"${idAttr}${kindAttr} title="Ver solo constancia (pantalla completa)"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>`
+        ? ` data-lb-role="cliente-const"${idAttr}${kindAttr} title="Ver constancia ampliada"`
+        : '';
+    const verLb =
+      showVerButton && c.id != null
+        ? `<button type="button" class="btn small outline js-pvc-media-lightbox" data-lb-role="cliente-const"${idAttr}${kindAttr} title="Ver constancia ampliada"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>`
         : '';
     if (c.constancia_kind === 'image' && c.constancia_thumb_url) {
-      return `<span class="cliente-const-inline"><button type="button" class="cliente-const-slot js-cliente-const-thumb"${idAttr} title="Bajar a la vista de constancia en el panel">
+      return `<span class="cliente-const-inline"><button type="button" class="cliente-const-slot js-pvc-media-lightbox"${lbOpen}>
         <img src="${escapeHtml(c.constancia_thumb_url)}" alt="" class="cliente-const-mini" loading="lazy">
       </button>${verLb}${dl}</span>`;
     }
     const icon = c.constancia_kind === 'pdf' ? 'fa-file-pdf' : 'fa-file-alt';
     const cls = c.constancia_kind === 'pdf' ? 'cliente-const-slot--pdf' : 'cliente-const-slot--file';
-    return `<span class="cliente-const-inline"><button type="button" class="cliente-const-slot ${cls} js-cliente-const-thumb"${idAttr} title="Bajar a la vista de constancia en el panel">
+    return `<span class="cliente-const-inline"><button type="button" class="cliente-const-slot ${cls} js-pvc-media-lightbox"${lbOpen}>
       <i class="fas ${icon}"></i>
     </button>${verLb}${dl}</span>`;
   }
 
-  async function showClienteConstanciaInPanelFromThumb(found) {
-    if (!found || !found.has_constancia) return;
-    const url = API + '/clientes/' + encodeURIComponent(found.id) + '/constancia';
-    await openPanelMediaViewerFromUrl('clientes', 'Constancia · ' + (found.nombre || 'Cliente'), url, {
-      forcePdf: String(found.constancia_kind || '') === 'pdf',
-    });
-  }
-
   function previewCliente(c) {
     clearPvcMediaUrlRegistry();
-    const constHdr = c && c.has_constancia ? '<div style="margin-bottom:0.75rem">' + clienteConstanciaThumbHtml(c) + '</div>' : '';
+    const constHdr =
+      c && c.has_constancia ? '<div style="margin-bottom:0.75rem">' + clienteConstanciaThumbHtml(c, { showVerButton: true }) + '</div>' : '';
     openPreviewCard({
       title: c.nombre || 'Cliente',
       subtitle: c.codigo ? 'Código: ' + c.codigo : '',
@@ -4045,35 +4048,6 @@
       if (btn) btn.addEventListener('click', () => downloadClienteConstanciaFile(c.id, c.constancia_nombre || 'constancia'));
     }, 0);
   }
-
-  (function bindClienteConstanciaThumbCapture() {
-    document.addEventListener(
-      'click',
-      function (e) {
-        const t = e && e.target;
-        if (!t || !t.closest) return;
-        const btn = t.closest('.js-cliente-const-thumb');
-        if (!btn || btn.disabled) return;
-        if (!document.body.contains(btn)) return;
-        e.preventDefault();
-        e.stopPropagation();
-        try {
-          e.stopImmediatePropagation();
-        } catch (_) {}
-        const id = btn.getAttribute('data-cliente-id');
-        if (id == null || id === '') return;
-        const list = clientesCache && clientesCache.length ? clientesCache : [];
-        const found = list.find((x) => String(x && x.id) === String(id));
-        if (!found) {
-          showToast('No se encontró el cliente en la lista actual. Recarga la tabla (F5).', 'error');
-          return;
-        }
-        if (!found.has_constancia) return;
-        void showClienteConstanciaInPanelFromThumb(found);
-      },
-      true
-    );
-  })();
 
   (function bindClienteConstanciaViewerCloseCapture() {
     document.addEventListener(

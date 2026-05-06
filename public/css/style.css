@@ -5070,6 +5070,11 @@ body.dark-theme .login-role-card span { color: #64748b; }
   position: relative;
   z-index: 2;
 }
+.preview-card .js-pvc-media-lightbox {
+  pointer-events: auto;
+  position: relative;
+  z-index: 2;
+}
 .pvc-header {
   padding: 1.75rem 2rem;
   display: flex;
@@ -7357,11 +7362,11 @@ body.pvc-lb-open {
   overflow: hidden;
 }
 
-/* Lightbox de medios (solo imagen/PDF, encima del modal de edición) */
+/* Lightbox de medios (solo imagen/PDF; por encima de modales ~100 y ref-img-lightbox 20100) */
 .pvc-media-lightbox {
   position: fixed;
   inset: 0;
-  z-index: 10050;
+  z-index: 20150;
   display: flex;
   align-items: center;
   justify-content: center;
