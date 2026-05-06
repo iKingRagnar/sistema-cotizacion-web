@@ -39,3 +39,14 @@ html body.theme-industrial:not(.appearance-light) {
   visibility: hidden !important;
   pointer-events: none !important;
 }
+
+/* Hamburguesa del rail: visible sobre vidrio industrial */
+html body.theme-industrial.md3-on .btn-sidebar-rail-toggle {
+  color: rgba(248, 250, 252, 0.95) !important;
+  border: 1px solid rgba(56, 189, 248, 0.38) !important;
+  background: rgba(15, 23, 42, 0.55) !important;
+}
+html body.theme-industrial.md3-on .btn-sidebar-rail-toggle:hover {
+  background: rgba(56, 189, 248, 0.14) !important;
+  border-color: rgba(125, 211, 252, 0.55) !important;
+}

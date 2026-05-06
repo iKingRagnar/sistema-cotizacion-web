@@ -112,9 +112,14 @@ body.sidebar-rail-collapsed .sidebar-nav {
   overflow: hidden;
 }
 
-body.sidebar-rail-collapsed .sidebar-nav-title,
-body.sidebar-rail-collapsed .tabs.tabs--rail {
+/* Solo ocultar el título “Módulos”; la lista .tabs debe seguir visible (íconos / tooltips vía premium-material). */
+body.sidebar-rail-collapsed .sidebar-nav-title {
   display: none !important;
+}
+
+body.sidebar-rail-collapsed .tabs.tabs--rail {
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 body.sidebar-rail-collapsed .sidebar-nav-toolbar {

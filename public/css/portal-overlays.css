@@ -247,3 +247,182 @@ html body.theme-industrial:not(.appearance-light) #notifications-panel .btn {
   color: #e8eaed !important;
   border: 1px solid #5f6368 !important;
 }
+
+/* ─── Menú avatar portado a body: SIEMPRE fixed (sin appearance-light no aplicaba material.css) ─── */
+html body.theme-industrial.md3-on #header-profile-menu.header-profile-menu,
+html body.theme-industrial.md3-on #header-profile-menu {
+  position: fixed !important;
+  margin: 0 !important;
+  left: auto !important;
+  min-width: 260px !important;
+  max-width: min(360px, calc(100vw - 16px)) !important;
+  max-height: min(85vh, 560px) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+}
+
+/* Salir duplicado: premium fuerza display:inline-flex — ocultar cuando lleva .hidden */
+html body.theme-industrial.md3-on header.header #btn-header-quick-logout.hidden,
+html body.theme-industrial header.header #btn-header-quick-logout.hidden {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* ═══════════ Modales / vista previa — negro + texto blanco + borde cristalino (único tema oscuro) ═══ */
+html body.theme-industrial.md3-on #modal .modal-box,
+html body.theme-industrial.md3-on #modal-stack .modal-box,
+html body.theme-industrial.md3-on #confirm-modal .modal-box,
+html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial {
+  background: #121418 !important;
+  background-color: #121418 !important;
+  background-image: none !important;
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  border: 1px solid rgba(56, 189, 248, 0.22) !important;
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(56, 189, 248, 0.08) !important;
+}
+
+html body.theme-industrial.md3-on #modal .modal-header,
+html body.theme-industrial.md3-on #modal-stack .modal-header,
+html body.theme-industrial.md3-on #confirm-modal .modal-header,
+html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial .modal-header {
+  border-bottom-color: rgba(56, 189, 248, 0.18) !important;
+}
+
+html body.theme-industrial.md3-on #modal .modal-header h2,
+html body.theme-industrial.md3-on #modal .modal-header h3,
+html body.theme-industrial.md3-on #modal-stack .modal-header h2,
+html body.theme-industrial.md3-on #modal-stack .modal-header h3,
+html body.theme-industrial.md3-on #confirm-modal .modal-header h2,
+html body.theme-industrial.md3-on #confirm-modal .modal-title,
+html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial .modal-title {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+
+html body.theme-industrial.md3-on #modal .modal-body,
+html body.theme-industrial.md3-on #modal-stack .modal-body,
+html body.theme-industrial.md3-on #confirm-modal .modal-body,
+html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial .modal-body {
+  color: #e2e8f0 !important;
+  -webkit-text-fill-color: #e2e8f0 !important;
+}
+
+html body.theme-industrial.md3-on #modal .modal-box label,
+html body.theme-industrial.md3-on #modal-stack .modal-box label,
+html body.theme-industrial.md3-on #confirm-modal .modal-box label,
+html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial label,
+html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial .form-label {
+  color: #94a3b8 !important;
+  -webkit-text-fill-color: #94a3b8 !important;
+}
+
+html body.theme-industrial.md3-on #modal .modal-box input,
+html body.theme-industrial.md3-on #modal .modal-box select,
+html body.theme-industrial.md3-on #modal .modal-box textarea,
+html body.theme-industrial.md3-on #modal-stack .modal-box input,
+html body.theme-industrial.md3-on #modal-stack .modal-box select,
+html body.theme-industrial.md3-on #modal-stack .modal-box textarea,
+html body.theme-industrial.md3-on #confirm-modal .modal-box input,
+html body.theme-industrial.md3-on #confirm-modal .modal-box select,
+html body.theme-industrial.md3-on #confirm-modal .modal-box textarea,
+html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial input,
+html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial select,
+html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial textarea {
+  background: rgba(30, 41, 59, 0.85) !important;
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  border: 1px solid rgba(56, 189, 248, 0.28) !important;
+}
+
+html body.theme-industrial.md3-on #modal .modal-close,
+html body.theme-industrial.md3-on #modal-stack .modal-close,
+html body.theme-industrial.md3-on #confirm-modal .modal-close,
+html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial .close {
+  color: #cbd5e1 !important;
+}
+
+html body.theme-industrial.md3-on .preview-card {
+  background: #121418 !important;
+  background-color: #121418 !important;
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  border: 1px solid rgba(56, 189, 248, 0.22) !important;
+}
+
+html body.theme-industrial.md3-on .preview-card .pvc-body,
+html body.theme-industrial.md3-on .preview-card .preview-card-body {
+  color: #e2e8f0 !important;
+}
+
+html body.theme-industrial.md3-on table.data-table td.th-actions .prem-action-view,
+html body.theme-industrial.md3-on table.data-table td.th-actions .prem-action-edit,
+html body.theme-industrial.md3-on .prem-action-view,
+html body.theme-industrial.md3-on .prem-action-edit,
+html body.theme-industrial.md3-on .row-actions .prem-action-view,
+html body.theme-industrial.md3-on .row-actions .prem-action-edit {
+  background: rgba(30, 41, 59, 0.9) !important;
+  color: #e0f2fe !important;
+  border: 1px solid rgba(56, 189, 248, 0.35) !important;
+}
+
+html body.theme-industrial.md3-on table.data-table td.th-actions .prem-action-view:hover,
+html body.theme-industrial.md3-on table.data-table td.th-actions .prem-action-edit:hover,
+html body.theme-industrial.md3-on .prem-action-view:hover,
+html body.theme-industrial.md3-on .prem-action-edit:hover,
+html body.theme-industrial.md3-on .row-actions .prem-action-view:hover,
+html body.theme-industrial.md3-on .row-actions .prem-action-edit:hover {
+  background: rgba(56, 189, 248, 0.15) !important;
+  border-color: rgba(56, 189, 248, 0.55) !important;
+  color: #f8fafc !important;
+}
+
+/* Avatar: el icono SVG no debe “desaparecer” en hover/focus (contraste estable) */
+html body.theme-industrial.md3-on header.header .btn-header-profile:hover > svg,
+html body.theme-industrial.md3-on header.header .btn-header-profile:focus > svg,
+html body.theme-industrial.md3-on header.header .btn-header-profile:focus-visible > svg,
+html body.theme-industrial.md3-on header.header .btn-header-profile:active > svg,
+html body.theme-industrial.md3-on header.header .btn-header-profile[aria-expanded='true'] > svg {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  color: #ffffff !important;
+}
+
+/* Rail expandido: el texto del módulo (nodo de texto tras el <i>) debe tener tamaño > 0 */
+html body.theme-industrial.md3-on:not(.sidebar-rail-collapsed) .tabs.tabs--rail .tab,
+html body.theme-industrial.md3-on:not(.sidebar-rail-collapsed) .sidebar-nav .tab {
+  font-size: 0.82rem !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* Columna acciones: ver / editar / vista previa — mismo cristal oscuro (sin pisar peligro/borrar) */
+html body.theme-industrial.md3-on table.data-table td.th-actions .btn:not(.danger):not(.btn-danger):not([class*='delete']):not([class*='borrar']),
+html body.theme-industrial.md3-on table.data-table td.ref-td-actions .btn:not(.danger):not(.btn-danger) {
+  background: rgba(30, 41, 59, 0.92) !important;
+  background-image: none !important;
+  color: #e0f2fe !important;
+  -webkit-text-fill-color: #e0f2fe !important;
+  border: 1px solid rgba(56, 189, 248, 0.38) !important;
+  box-shadow: none !important;
+}
+
+html body.theme-industrial.md3-on table.data-table td.th-actions .btn:not(.danger):not(.btn-danger):hover,
+html body.theme-industrial.md3-on table.data-table td.ref-td-actions .btn:not(.danger):not(.btn-danger):hover {
+  background: rgba(56, 189, 248, 0.14) !important;
+  border-color: rgba(125, 211, 252, 0.55) !important;
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+
+html body.theme-industrial.md3-on table.data-table td.th-actions .btn:not(.danger):not(.btn-danger) i,
+html body.theme-industrial.md3-on table.data-table td.ref-td-actions .btn:not(.danger):not(.btn-danger) i {
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+}

@@ -6851,9 +6851,9 @@ body header.header .btn-header-profile > svg {
 
 body.md3-on header.header .btn-header-profile:hover,
 body header.header .btn-header-profile:hover {
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 14px rgba(26, 115, 232, 0.36), 0 2px 4px rgba(0,0,0,0.08) !important;
-  filter: brightness(1.05) !important;
+  transform: none !important;
+  box-shadow: 0 4px 14px rgba(26, 115, 232, 0.36), 0 2px 4px rgba(0, 0, 0, 0.08) !important;
+  filter: none !important;
 }
 body.md3-on header.header .btn-header-profile:focus-visible,
 body header.header .btn-header-profile:focus-visible {
@@ -6865,44 +6865,20 @@ body header.header .btn-header-profile[aria-expanded="true"] {
   box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.18), 0 2px 6px rgba(26, 115, 232, 0.3) !important;
 }
 
-/* Meta del usuario (nombre + role) — visible junto al avatar */
-body.md3-on header.header .header-profile-wrap .header-profile-meta,
-body header.header .header-profile-wrap .header-profile-meta {
-  position: static !important;
-  width: auto !important;
-  height: auto !important;
-  margin: 0 !important;
-  padding: 0 4px 0 0 !important;
-  overflow: visible !important;
-  clip: auto !important;
-  clip-path: none !important;
-  white-space: normal !important;
-  display: inline-flex !important;
-  flex-direction: column !important;
-  align-items: flex-end !important;
-  line-height: 1.15 !important;
-  order: -1 !important;  /* nombre PRIMERO, luego avatar */
-  pointer-events: none !important;
-}
-body.md3-on header.header .header-profile-name,
-body header.header .header-profile-name {
-  display: inline-block !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  color: #0f172a !important;
-  max-width: 180px !important;
+/* Nombre/rol: solo en menú desplegable (header-profile.css .visually-hidden + orden natural botón). */
+body.md3-on header.header .header-profile-wrap .header-profile-meta.visually-hidden,
+body header.header .header-profile-wrap .header-profile-meta.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
   overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  clip: rect(0, 0, 0, 0) !important;
   white-space: nowrap !important;
-}
-body.md3-on header.header .header-profile-role,
-body header.header .header-profile-role {
-  display: inline-block !important;
-  font-size: 10px !important;
-  font-weight: 600 !important;
-  color: #64748b !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.6px !important;
+  border: 0 !important;
+  display: block !important;
+  pointer-events: none !important;
 }
 
 /* BOTÓN SALIR — pill rojo prominente */

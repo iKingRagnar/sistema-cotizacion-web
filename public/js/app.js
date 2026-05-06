@@ -3,6 +3,8 @@
   const AUTH_TOKEN_KEY = 'cotizacion-auth-token';
   const AUTH_USER_KEY = 'cotizacion-auth-user';
   const SIDEBAR_RAIL_COLLAPSED_KEY = 'cotizacion-sidebar-rail-collapsed';
+  /** Una sola vez: vuelve a expandir el rail con etiquetas (usuarios quedaron colapsados por CSS/caché). */
+  const SIDEBAR_RAIL_EXPAND_ONCE_KEY = 'cotizacion-sidebar-rail-expand-once-2026-05-05';
   const SOUND_PREF_KEY = 'cotizacion-sound';
   /** Monto sugerido al crear un bono nuevo (USD); editable antes de guardar. */
   const DEFAULT_BONO_USD = 30;
@@ -972,6 +974,12 @@
     if (show) {
       document.body.classList.add('login-open');
       el.classList.remove('hidden');
+      const errEl = qs('#login-error');
+      if (errEl) {
+        errEl.classList.add('hidden');
+        errEl.innerHTML =
+          '<i class="fas fa-exclamation-circle" aria-hidden="true"></i> <span id="login-error-text"></span>';
+      }
       spawnLoginParticles();
     } else {
       el.classList.add('hidden');
@@ -1078,6 +1086,10 @@
     const open = m.classList.contains('hidden');
     if (open) {
       ensureHeaderProfileMenuPortaledToBody();
+      try {
+        m.style.position = 'fixed';
+        m.style.zIndex = '200100';
+      } catch (_) {}
       positionHeaderProfileMenu();
       m.classList.remove('hidden');
       b.setAttribute('aria-expanded', 'true');
@@ -1108,7 +1120,6 @@
   }
 
   function wireHeaderProfileAndAdminHub() {
-    ensureHeaderProfileMenuPortaledToBody();
     const btnProf = qs('#btn-header-profile');
     const wrap = qs('#header-profile-wrap');
     if (btnProf && wrap) {
@@ -1220,7 +1231,8 @@
     if (u) {
       wrap.classList.add('hidden');
       if (out) out.classList.add('hidden');
-      if (quickOut) quickOut.classList.remove('hidden');
+      /* Cerrar sesión solo desde el menú del avatar (evita duplicar “Salir” en barra). */
+      if (quickOut) quickOut.classList.add('hidden');
       if (profileWrap) {
         profileWrap.classList.remove('hidden');
         const roleLabel = getRoleLabel(u.role);
@@ -1230,8 +1242,8 @@
         if (prole) prole.textContent = roleLabel;
         const pmDisp = qs('#profile-menu-display');
         const pmFull = qs('#profile-menu-fullname');
-        if (pmDisp) pmDisp.textContent = roleLabel;
-        if (pmFull) pmFull.textContent = fullLine;
+        if (pmDisp) pmDisp.textContent = fullLine || uname || 'Usuario';
+        if (pmFull) pmFull.textContent = roleLabel;
       }
     } else {
       wrap.classList.add('hidden');
@@ -1511,6 +1523,12 @@
   (function initSidebarRailToggle() {
     const btn = qs('#btn-sidebar-rail-toggle');
     if (!btn) return;
+    try {
+      if (!localStorage.getItem(SIDEBAR_RAIL_EXPAND_ONCE_KEY)) {
+        localStorage.setItem(SIDEBAR_RAIL_EXPAND_ONCE_KEY, '1');
+        localStorage.removeItem(SIDEBAR_RAIL_COLLAPSED_KEY);
+      }
+    } catch (_) {}
     applySidebarRailCollapsed(isSidebarRailCollapsedStored());
     btn.addEventListener('click', function () {
       applySidebarRailCollapsed(!document.body.classList.contains('sidebar-rail-collapsed'));

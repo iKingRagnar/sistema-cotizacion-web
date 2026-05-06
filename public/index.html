@@ -66,11 +66,11 @@
   <link rel="stylesheet" href="css/luna-nuclear.css?v=9-chrome-luna-neutral-2026-04-27">
   <!-- Nano vidrio + foto industrial (debe ir al final de la cascada CSS) -->
   <link rel="stylesheet" href="css/nano-fondo.css?v=43-login-overlay-login-open-neutral-2026-04-27">
-  <link rel="stylesheet" href="css/theme-nano-crystal-single.css?v=1-single-blue-glass-2026-05-05">
+  <link rel="stylesheet" href="css/theme-nano-crystal-single.css?v=2-rail-toggle-contrast-2026-05-05">
   <link rel="stylesheet" href="css/no-motion.css?v=2-profile-svg-backstop-2026-04-27">
   <!-- Portales primero; login-neutral DEBE ir después para mandar en overlay de sesión -->
-  <link rel="stylesheet" href="css/portal-overlays.css?v=2-portal-last-wins-2026-04-27">
-  <link rel="stylesheet" href="css/login-neutral.css?v=7-login-compact-form-post-2026-05-05">
+  <link rel="stylesheet" href="css/portal-overlays.css?v=4-rail-actions-avatar-2026-05-05">
+  <link rel="stylesheet" href="css/login-neutral.css?v=8-login-fields-parity-2026-05-05">
   <link rel="manifest" href="manifest.json">
   <!-- Tema único: nano machining + vidrio azul cristalino (sin modo Sol/Luna). -->
   <!-- ★ FORCE-RELOAD: SOLO en browser normal, NUNCA en PWA standalone (evita loop crash) -->
@@ -184,6 +184,16 @@
       -webkit-text-fill-color: #f8fafc !important;
       opacity: 1 !important;
       text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9) !important;
+    }
+    html body.login-open #login-overlay #login-error.login-error.hidden {
+      display: none !important;
+      visibility: hidden !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      min-height: 0 !important;
+      border: none !important;
+      background: transparent !important;
+      overflow: hidden !important;
     }
   </style>
 </head>

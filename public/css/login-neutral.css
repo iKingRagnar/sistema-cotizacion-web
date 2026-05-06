@@ -221,8 +221,19 @@ html body.login-open #login-overlay .login-roles-title {
   color: #e2e8f0 !important;
 }
 
-/* Aviso de error: alto contraste + texto siempre visible (gana por #login-error / #login-error-text) */
-html body.login-open #login-overlay #login-error.login-error {
+/* Sin error: no ocupar espacio ni mostrar franja roja (antes .hidden perdía contra display:flex !important) */
+html body.login-open #login-overlay #login-error.login-error.hidden {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  visibility: hidden !important;
+}
+
+/* Aviso de error: solo cuando hay mensaje visible */
+html body.login-open #login-overlay #login-error.login-error:not(.hidden) {
   display: flex !important;
   align-items: flex-start !important;
   gap: 0.5rem !important;
@@ -238,17 +249,43 @@ html body.login-open #login-overlay #login-error.login-error {
   background: rgba(127, 29, 29, 0.92) !important;
   border: 1px solid rgba(248, 113, 113, 0.7) !important;
 }
-html body.login-open #login-overlay #login-error.login-error > i {
+html body.login-open #login-overlay #login-error.login-error:not(.hidden) > i {
   flex-shrink: 0 !important;
   margin-top: 0.1rem !important;
 }
-html body.login-open #login-overlay #login-error-text,
-html body.login-open #login-overlay .login-error-msg {
+html body.login-open #login-overlay #login-error.login-error:not(.hidden) #login-error-text,
+html body.login-open #login-overlay #login-error.login-error:not(.hidden) .login-error-msg {
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45) !important;
   flex: 1 !important;
   min-width: 0 !important;
+}
+
+/* Misma anchura/altura visual usuario vs contraseña (wrapper del ojo incluido) */
+html body.login-open #login-overlay .login-field {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+html body.login-open #login-overlay .login-pass-wrap {
+  display: flex !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  min-height: 2.75rem !important;
+  box-sizing: border-box !important;
+}
+html body.login-open #login-overlay .login-pass-wrap input {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Misma altura visual que la fila contraseña + botón ojo */
+html body.login-open #login-overlay #login-user {
+  width: 100% !important;
+  min-height: 2.75rem !important;
+  box-sizing: border-box !important;
 }
 
 /* Vista compacta — una columna, menos “vidrio doble” y menos ruido (roles/features ocultos). */
