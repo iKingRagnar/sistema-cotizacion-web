@@ -1,0 +1,142 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   MÓDULO TARIFAS — Tarifas y esquemas de cobro
+   ════════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on #panel-tarifas {
+  display: none;
+  background: var(--md-sys-color-surface);
+}
+body.md3-on #panel-tarifas.active {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-sys-spacing-4);
+  padding: 0;
+}
+
+/* ── Contenedor principal ────────────────────────────────────────────────── */
+body.md3-on .tarifas-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-sys-spacing-4);
+}
+
+/* ── Sección individual ──────────────────────────────────────────────────── */
+body.md3-on .tarifas-section {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-large);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  padding: var(--md-sys-spacing-5);
+}
+
+body.md3-on .tarifas-section-title {
+  font: var(--md-sys-typescale-title-medium);
+  color: var(--md-sys-color-on-surface);
+  margin: 0 0 var(--md-sys-spacing-2);
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-2);
+}
+body.md3-on .tarifas-section-title i {
+  color: var(--md-sys-color-primary);
+  font-size: 18px;
+}
+
+body.md3-on .tarifas-hint {
+  font: var(--md-sys-typescale-body-small);
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0 0 var(--md-sys-spacing-4);
+  line-height: 1.6;
+}
+body.md3-on .tarifas-hint strong { color: var(--md-sys-color-on-surface); }
+body.md3-on .tarifas-hint code {
+  font-family: var(--md-ref-typeface-mono);
+  background: var(--md-sys-color-surface-container);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+body.md3-on .tarifas-hint em { font-style: italic; }
+
+/* ── Grid de campos tarifas ──────────────────────────────────────────────── */
+body.md3-on .tarifas-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--md-sys-spacing-4);
+  align-items: end;
+}
+
+/* ── Inputs de tarifas ───────────────────────────────────────────────────── */
+body.md3-on .tarifa-input,
+body.md3-on .tarifa-input-text {
+  width: 100%;
+  min-height: 44px;
+  padding: var(--md-sys-spacing-2) var(--md-sys-spacing-3);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font: var(--md-sys-typescale-body-medium);
+  font-family: var(--md-ref-typeface-mono);
+  font-variant-numeric: tabular-nums;
+  transition: border-color var(--md-sys-motion-duration-short3), box-shadow var(--md-sys-motion-duration-short3);
+  box-sizing: border-box;
+}
+body.md3-on .tarifa-input:focus,
+body.md3-on .tarifa-input-text:focus {
+  outline: none;
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
+}
+body.md3-on .tarifa-input-text {
+  font-family: inherit;
+  font-variant-numeric: normal;
+}
+
+/* ── Sección notas / cálculos (fondo sutil) ──────────────────────────────── */
+body.md3-on .tarifas-nota-calc {
+  background: var(--md-sys-color-surface-container-lowest);
+  border-color: transparent;
+}
+
+body.md3-on .tarifas-notas-list {
+  margin: 0;
+  padding: 0 0 0 var(--md-sys-spacing-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-sys-spacing-3);
+}
+body.md3-on .tarifas-notas-list li {
+  font: var(--md-sys-typescale-body-medium);
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.55;
+}
+body.md3-on .tarifas-notas-list li strong { color: var(--md-sys-color-on-surface); }
+body.md3-on .tarifas-notas-list li code {
+  font-family: var(--md-ref-typeface-mono);
+  background: var(--md-sys-color-surface-container);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+/* ── TC meta text ────────────────────────────────────────────────────────── */
+body.md3-on #tarifas-tc-meta {
+  font: var(--md-sys-typescale-body-small);
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-ref-typeface-mono);
+  margin-top: var(--md-sys-spacing-2) !important;
+}
+
+/* ── Tabla tarifas mano de obra (inputs en celdas) ───────────────────────── */
+body.md3-on #panel-tarifas .data-table .tarifa-input,
+body.md3-on #panel-tarifas .data-table .tarifa-input-text {
+  min-height: 36px;
+  padding: var(--md-sys-spacing-1) var(--md-sys-spacing-2);
+  border-radius: var(--md-sys-shape-corner-extra-small);
+}
+
+@media (max-width: 768px) {
+  body.md3-on .tarifas-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

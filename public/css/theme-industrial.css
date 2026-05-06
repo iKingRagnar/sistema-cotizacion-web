@@ -1,0 +1,224 @@
+/**
+ * Theme Industrial — Rediseñado como thin dark-mode wrapper
+ * El diseño completo (light + dark) está en material.css
+ * Este archivo SOLO aplica overrides para modo oscuro (sin appearance-light)
+ */
+
+/* ─── MODO OSCURO (body.theme-industrial sin .appearance-light) ─────────── */
+body.theme-industrial:not(.appearance-light) {
+  background-color: #202124;
+  color: #E6E1E5;
+}
+
+/* Matar pseudo-elementos de fondo EN AMBOS MODOS */
+body.theme-industrial::before,
+body.theme-industrial::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+  background-image: none !important;
+  animation: none !important;
+}
+
+/* === DARK MODE: Header === */
+body.theme-industrial:not(.appearance-light) .header {
+  background: #303134 !important;
+  border-bottom: 1px solid #3C4043 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4) !important;
+  animation: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+body.theme-industrial:not(.appearance-light) .header::before,
+body.theme-industrial:not(.appearance-light) .header::after { display: none !important; }
+
+body.theme-industrial:not(.appearance-light) .header-brand-service,
+body.theme-industrial:not(.appearance-light) .header-brand-text h1 {
+  color: #E8EAED !important;
+}
+
+body.theme-industrial:not(.appearance-light) .btn-icon-header {
+  color: #BDC1C6 !important;
+}
+body.theme-industrial:not(.appearance-light) .btn-icon-header:hover {
+  background: rgba(138,180,248,0.10) !important;
+  color: #8AB4F8 !important;
+}
+
+/* === DARK MODE: Sidebar === */
+body.theme-industrial:not(.appearance-light) .sidebar-nav {
+  background: #303134 !important;
+  border-right: 1px solid #3C4043 !important;
+}
+body.theme-industrial:not(.appearance-light) .sidebar-nav-toolbar {
+  border-bottom: 1px solid #3C4043 !important;
+}
+body.theme-industrial:not(.appearance-light) .sidebar-nav-title {
+  color: #9AA0A6 !important;
+}
+body.theme-industrial:not(.appearance-light) .btn-sidebar-rail-toggle {
+  background: #3C4043 !important;
+  border-color: #5F6368 !important;
+  color: #BDC1C6 !important;
+}
+body.theme-industrial:not(.appearance-light) .tab {
+  color: #BDC1C6 !important;
+  background: transparent !important;
+}
+body.theme-industrial:not(.appearance-light) .tab:hover {
+  background: rgba(138,180,248,0.08) !important;
+  color: #8AB4F8 !important;
+}
+body.theme-industrial:not(.appearance-light) .tab.active {
+  background: rgba(138,180,248,0.16) !important;
+  color: #8AB4F8 !important;
+  font-weight: 600 !important;
+  animation: none !important;
+  box-shadow: none !important;
+}
+body.theme-industrial:not(.appearance-light) .tab.active i { color: #8AB4F8 !important; }
+body.theme-industrial:not(.appearance-light) .tab.highlight { color: #81C995 !important; }
+
+/* === DARK MODE: Contenido === */
+/* Fondo global = foto nano-machine en body (nano-fondo.css); aquí sin opaco */
+body.theme-industrial:not(.appearance-light) .app-main {
+  background: transparent !important;
+}
+body.theme-industrial:not(.appearance-light) .content {
+  color: #E6E1E5 !important;
+}
+
+/* === DARK MODE: Section Header === */
+body.theme-industrial:not(.appearance-light) .section-header {
+  background: #303134 !important;
+  border-color: #3C4043 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4) !important;
+}
+body.theme-industrial:not(.appearance-light) .section-header::before,
+body.theme-industrial:not(.appearance-light) .section-header::after { display: none !important; }
+body.theme-industrial:not(.appearance-light) .section-header h2 { color: #E8EAED !important; }
+
+/* === DARK MODE: Cards === */
+body.theme-industrial:not(.appearance-light) .card,
+body.theme-industrial:not(.appearance-light) .empty-card {
+  background: #303134 !important;
+  border-color: #3C4043 !important;
+  color: #E6E1E5 !important;
+}
+body.theme-industrial:not(.appearance-light) .card h2,
+body.theme-industrial:not(.appearance-light) .card h3,
+body.theme-industrial:not(.appearance-light) .empty-card h3 { color: #E8EAED !important; }
+
+/* === DARK MODE: Tablas === */
+body.theme-industrial:not(.appearance-light) .table-wrap {
+  background: #303134 !important;
+  border-color: #3C4043 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.5) !important;
+}
+body.theme-industrial:not(.appearance-light) .data-table th {
+  background: #3c4043 !important;
+  color: #9AA0A6 !important;
+  border-bottom-color: #3C4043 !important;
+}
+body.theme-industrial:not(.appearance-light) .data-table td {
+  border-bottom-color: #3C4043 !important;
+  color: #E6E1E5 !important;
+}
+body.theme-industrial:not(.appearance-light) .data-table tbody tr:hover {
+  background: rgba(138,180,248,0.06) !important;
+}
+body.theme-industrial:not(.appearance-light) .filter-row td {
+  background: #3c4043 !important;
+  border-bottom-color: #3C4043 !important;
+}
+body.theme-industrial:not(.appearance-light) .table-footer {
+  background: #303134 !important;
+  border-top-color: #3C4043 !important;
+  color: #9AA0A6 !important;
+}
+
+/* === DARK MODE: Inputs === */
+body.theme-industrial:not(.appearance-light) input,
+body.theme-industrial:not(.appearance-light) textarea,
+body.theme-industrial:not(.appearance-light) select,
+body.theme-industrial:not(.appearance-light) .filter-input,
+body.theme-industrial:not(.appearance-light) .search,
+body.theme-industrial:not(.appearance-light) .notifications-date {
+  background: #3C4043 !important;
+  border-color: #5F6368 !important;
+  color: #E8EAED !important;
+}
+body.theme-industrial:not(.appearance-light) input:focus,
+body.theme-industrial:not(.appearance-light) textarea:focus,
+body.theme-industrial:not(.appearance-light) select:focus {
+  border-color: #8AB4F8 !important;
+  box-shadow: 0 0 0 2px rgba(138,180,248,0.22) !important;
+}
+
+/* === DARK MODE: Botones === */
+body.theme-industrial:not(.appearance-light) .btn.outline {
+  background: transparent !important;
+  color: #8AB4F8 !important;
+  border-color: #5F6368 !important;
+}
+body.theme-industrial:not(.appearance-light) .btn.outline:hover {
+  background: rgba(138,180,248,0.08) !important;
+  border-color: #8AB4F8 !important;
+}
+body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh.outline {
+  background: transparent !important;
+  color: #8AB4F8 !important;
+  border-color: #5F6368 !important;
+}
+body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh.outline:hover {
+  background: rgba(138,180,248,0.08) !important;
+}
+
+/* === DARK MODE: Login === */
+/* Fondo foto + vidrio: nano-fondo.css */
+body.theme-industrial:not(.appearance-light) .login-card-header h2 { color: #E8EAED !important; }
+body.theme-industrial:not(.appearance-light) .login-hint { color: #9AA0A6 !important; }
+body.theme-industrial:not(.appearance-light) .login-roles-info { border-top-color: #3C4043 !important; }
+body.theme-industrial:not(.appearance-light) .login-role-card {
+  border-color: #3C4043 !important;
+  color: #9AA0A6 !important;
+}
+
+/* === DARK MODE: Dashboard === */
+body.theme-industrial:not(.appearance-light) .dashboard-title { color: #E8EAED !important; }
+body.theme-industrial:not(.appearance-light) .dashboard-subtitle { color: #9AA0A6 !important; }
+body.theme-industrial:not(.appearance-light) .dashboard-charts,
+body.theme-industrial:not(.appearance-light) .dashboard-advanced {
+  background: #303134 !important;
+  border-color: #3C4043 !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-chart-wrap {
+  background: #3c4043 !important;
+}
+body.theme-industrial:not(.appearance-light) .dashboard-section-title { color: #E8EAED !important; }
+
+/* === DARK MODE: Notificaciones y Perfil === */
+body.theme-industrial:not(.appearance-light) .notifications-panel,
+body.theme-industrial:not(.appearance-light) .header-profile-menu {
+  background: #303134 !important;
+  border-color: #3C4043 !important;
+}
+body.theme-industrial:not(.appearance-light) .notifications-header {
+  background: #3c4043 !important;
+  border-bottom-color: #3C4043 !important;
+}
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item { color: #E6E1E5 !important; }
+body.theme-industrial:not(.appearance-light) .header-profile-menu-item:hover {
+  background: #3C4043 !important;
+}
+body.theme-industrial:not(.appearance-light) .header-profile-menu-user {
+  border-bottom-color: #3C4043 !important;
+}
+body.theme-industrial:not(.appearance-light) .header-profile-menu-user strong { color: #E8EAED !important; }
+
+/* === DARK MODE: Perfil botón === */
+body.theme-industrial:not(.appearance-light) .btn-header-profile {
+  background: #3C4043 !important;
+  border-color: #5F6368 !important;
+  color: #BDC1C6 !important;
+}

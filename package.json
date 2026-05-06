@@ -1,0 +1,36 @@
+{
+  "name": "sistema-cotizacion-web-enterprise",
+  "version": "1.0.0",
+  "description": "Sistema de Cotización — fork enterprise minimal (misma API/lógica; UI corporativa)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "vercel:env": "node scripts/vercel-env.js",
+    "smoke:vercel": "node scripts/smoke-vercel.cjs https://sistema-cotizacion-web.vercel.app",
+    "bitacora:s11": "node scripts/bitacora-s11-estilos.js",
+    "bitacora:pendientes": "node scripts/bitacora-pestaña-pendientes.js",
+    "auth:reset-admin": "node scripts/reset-admin-password.js"
+  },
+  "engines": {
+    "node": "20.x"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.14.0",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "express-rate-limit": "^8.4.0",
+    "helmet": "^8.1.0",
+    "mammoth": "^1.8.0",
+    "nodemailer": "^6.9.16",
+    "pdf-parse": "^1.1.1",
+    "pdfkit": "^0.18.0",
+    "sqlite3": "^5.1.7",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "exceljs": "^4.4.0"
+  }
+}

@@ -1,0 +1,247 @@
+/**
+ * Enterprise minimal UI — capa final sobre la SPA existente (misma lógica app.js).
+ * Activar con clase `enterprise-ui` en <html>.
+ */
+html.enterprise-ui {
+  --ent-bg-app: #f4f6f8;
+  --ent-bg-surface: #ffffff;
+  --ent-bg-muted: #eef1f4;
+  --ent-border: #e2e6eb;
+  --ent-text: #1a1d21;
+  --ent-text-muted: #5c6570;
+  --ent-accent: #1e40af;
+  --ent-accent-hover: #1d4ed8;
+  --ent-radius: 8px;
+  --ent-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.04);
+  --ent-font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+html.enterprise-ui body {
+  font-family: var(--ent-font) !important;
+  color: var(--ent-text) !important;
+  background: var(--ent-bg-app) !important;
+  background-image: none !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Quita capas decorativas que no aportan en modo corporativo */
+html.enterprise-ui #app-particles-layer,
+html.enterprise-ui #app-watermark {
+  display: none !important;
+}
+
+/* ——— Login ——— */
+html.enterprise-ui body.login-open #login-overlay,
+html.enterprise-ui body.login-open #login-overlay.login-overlay {
+  background: var(--ent-bg-muted) !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html.enterprise-ui body.login-open #login-overlay .login-split {
+  flex-direction: column !important;
+  max-width: min(400px, 94vw) !important;
+  gap: 0 !important;
+  box-shadow: var(--ent-shadow) !important;
+  border-radius: var(--ent-radius) !important;
+  overflow: hidden !important;
+  border: 1px solid var(--ent-border) !important;
+}
+
+html.enterprise-ui body.login-open #login-overlay .login-brand-panel {
+  flex: 0 0 auto !important;
+  max-width: 100% !important;
+  border-right: none !important;
+  border-bottom: 1px solid var(--ent-border) !important;
+  border-radius: 0 !important;
+  background: var(--ent-bg-surface) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  padding: 1.25rem 1.25rem 1rem !important;
+}
+
+html.enterprise-ui body.login-open #login-overlay .login-brand-panel .login-brand-logo,
+html.enterprise-ui body.login-open #login-overlay .login-brand-panel .login-brand-hero-img {
+  display: none !important;
+}
+
+html.enterprise-ui body.login-open #login-overlay .login-brand-panel .login-brand-title {
+  color: var(--ent-text) !important;
+  -webkit-text-fill-color: var(--ent-text) !important;
+  text-shadow: none !important;
+  font-weight: 700 !important;
+  font-size: 1.125rem !important;
+}
+
+html.enterprise-ui body.login-open #login-overlay .login-brand-panel .login-brand-tagline {
+  color: var(--ent-text-muted) !important;
+  -webkit-text-fill-color: var(--ent-text-muted) !important;
+  text-shadow: none !important;
+  font-size: 0.8125rem !important;
+}
+
+html.enterprise-ui body.login-open #login-overlay .login-brand-features,
+html.enterprise-ui body.login-open #login-overlay .login-brand-badges,
+html.enterprise-ui body.login-open #login-overlay .login-brand-decoration {
+  display: none !important;
+}
+
+html.enterprise-ui body.login-open #login-overlay .login-form-panel {
+  flex: 1 1 auto !important;
+  max-width: 100% !important;
+  border-radius: 0 !important;
+  background: var(--ent-bg-surface) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html.enterprise-ui body.login-open #login-overlay .login-card {
+  background: var(--ent-bg-surface) !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  color: var(--ent-text) !important;
+  -webkit-text-fill-color: var(--ent-text) !important;
+}
+
+html.enterprise-ui body.login-open #login-overlay .login-card h2,
+html.enterprise-ui body.login-open #login-overlay .login-card .login-hint,
+html.enterprise-ui body.login-open #login-overlay .login-card label {
+  color: var(--ent-text) !important;
+  -webkit-text-fill-color: var(--ent-text) !important;
+  text-shadow: none !important;
+}
+
+html.enterprise-ui body.login-open #login-overlay .login-card .login-hint {
+  color: var(--ent-text-muted) !important;
+  -webkit-text-fill-color: var(--ent-text-muted) !important;
+}
+
+html.enterprise-ui body.login-open #login-overlay .login-card input[type='text'],
+html.enterprise-ui body.login-open #login-overlay .login-card input[type='password'] {
+  background: var(--ent-bg-surface) !important;
+  border: 1px solid var(--ent-border) !important;
+  color: var(--ent-text) !important;
+  border-radius: 6px !important;
+}
+
+html.enterprise-ui body.login-open #login-overlay .login-card input:focus {
+  border-color: var(--ent-accent) !important;
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.15) !important;
+}
+
+html.enterprise-ui body.login-open #login-overlay .login-roles-info {
+  display: none !important;
+}
+
+html.enterprise-ui body.login-open #login-overlay .login-submit.btn.primary,
+html.enterprise-ui body.login-open #login-overlay #login-submit-btn {
+  background: var(--ent-accent) !important;
+  border: none !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+
+html.enterprise-ui body.login-open #login-overlay .login-submit.btn.primary:hover {
+  background: var(--ent-accent-hover) !important;
+}
+
+html.enterprise-ui body.login-open #login-overlay #login-error.login-error:not(.hidden) {
+  background: #fef2f2 !important;
+  border: 1px solid #fecaca !important;
+  color: #991b1b !important;
+  -webkit-text-fill-color: #991b1b !important;
+}
+
+html.enterprise-ui body.login-open #login-overlay #login-error .login-error-msg,
+html.enterprise-ui body.login-open #login-overlay #login-error #login-error-text {
+  color: #991b1b !important;
+  -webkit-text-fill-color: #991b1b !important;
+}
+
+/* ——— App chrome (post-login) ——— */
+html.enterprise-ui:not(.prem-pwa) body:not(.login-open),
+html.enterprise-ui body:not(.login-open) {
+  background: var(--ent-bg-app) !important;
+  background-image: none !important;
+}
+
+html.enterprise-ui .header {
+  background: var(--ent-bg-surface) !important;
+  border-bottom: 1px solid var(--ent-border) !important;
+  box-shadow: none !important;
+}
+
+html.enterprise-ui .header-inner {
+  border-bottom: none !important;
+}
+
+html.enterprise-ui .header-brand-service,
+html.enterprise-ui #app-title-name {
+  color: var(--ent-text) !important;
+  font-weight: 700 !important;
+}
+
+html.enterprise-ui .sidebar-nav {
+  background: var(--ent-bg-surface) !important;
+  border-right: 1px solid var(--ent-border) !important;
+}
+
+html.enterprise-ui .tab {
+  border-radius: 6px !important;
+}
+
+html.enterprise-ui .tab.active {
+  background: rgba(30, 64, 175, 0.08) !important;
+  color: var(--ent-accent) !important;
+  border: 1px solid transparent !important;
+}
+
+html.enterprise-ui .btn.primary,
+html.enterprise-ui button.primary {
+  background: var(--ent-accent) !important;
+  border-color: var(--ent-accent) !important;
+  color: #fff !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+
+html.enterprise-ui .btn.primary:hover {
+  background: var(--ent-accent-hover) !important;
+}
+
+html.enterprise-ui .btn.outline,
+html.enterprise-ui .btn.small.outline {
+  border-radius: 6px !important;
+  border-color: var(--ent-border) !important;
+}
+
+html.enterprise-ui .content,
+html.enterprise-ui main.content {
+  background: transparent !important;
+}
+
+html.enterprise-ui .panel {
+  background: var(--ent-bg-surface) !important;
+  border: 1px solid var(--ent-border) !important;
+  border-radius: var(--ent-radius) !important;
+  box-shadow: var(--ent-shadow) !important;
+}
+
+html.enterprise-ui table {
+  border-radius: 6px !important;
+}
+
+html.enterprise-ui .notifications-panel,
+html.enterprise-ui .header-profile-menu {
+  border: 1px solid var(--ent-border) !important;
+  border-radius: var(--ent-radius) !important;
+  box-shadow: var(--ent-shadow) !important;
+}
+
+html.enterprise-ui .offline-banner {
+  border-radius: 0 !important;
+}

@@ -1,0 +1,2652 @@
+/* ============================================================
+ * NANO-FONDO.CSS  ·  v3 GLASS REAL ELEGANTE
+ * Modo Sol:  TODO blanco vidrio transparente + imagen industrial
+ * Modo Luna: TODO negro vidrio transparente + imagen industrial
+ *
+ * Cambios v2 -> v3:
+ *   - Opacidades bajadas: 0.72 -> 0.35  (Sol ya no se ve blanco solido)
+ *   - Blur aumentado:     14px -> 20px  (vidrio esmerilado real)
+ *   - Saturate:           140% -> 160%  (colores vivos detras)
+ *   - COBERTURA AÑADIDA: .dashboard-score-tile, .dashboard-exec-scorecards,
+ *     .dashboard-kpi-strip, .dashboard-card, .dashboard-crossfilter-bar,
+ *     .dashboard-surface, .prospeccion-kpi, .section-header.
+ *
+ * Carga AL FINAL en index.html (tras theme-industrial) para ganar cascada.
+ * ============================================================ */
+
+
+/* ============================================================
+ * 1. VARIABLES POR MODO  (opacidades BAJAS -> vidrio real)
+ * ============================================================ */
+
+/* ============================================================
+ * OPACIDADES UNIFICADAS (v14):
+ *   UN SOLO tono glass para TODA la app (receta login).
+ *   Antes: surface 30% vs surface-strong 46% = se veian 2 "capas".
+ *   Ahora: TODO usa el mismo nivel -> vidrio uniforme.
+ *
+ *   overlay body:       ~16-18% (imagen bien viva)
+ *   surface == strong:  ~32-34% (cards/header/thead/section-header IGUAL)
+ *   surface-solid:      ~85%    (modales/dropdowns - legibilidad)
+ *   blur:               28px + saturate(190%)
+ * ============================================================ */
+/* ============================================================
+ * OPACIDADES v15 - BLANCO VIVO / NEGRO VIVO
+ *   El problema del "blanco gris sucio" era que el glass blureaba
+ *   capas oscuras del theme-industrial detras (#0f172a, #1e293b).
+ *   Solucion:
+ *     1) Subir opacidad del surface a 50%+ (blanco dominante real)
+ *     2) brightness(1.08) en el blur -> blanco brillante, no opaco
+ *     3) Cubrir TODO contenedor intermedio con transparent
+ * ============================================================ */
+html body.theme-industrial.appearance-light {
+  /* Sol: foto siempre visible; sin velo sobre el body */
+  --nano-overlay:           transparent;
+  --nano-surface:           rgba(255, 255, 255, 0.22);
+  --nano-surface-strong:    rgba(255, 255, 255, 0.30);
+  --nano-surface-solid:     rgba(255, 255, 255, 0.82);
+  --nano-surface-subtle:    rgba(255, 255, 255, 0.12);
+  --nano-border:            rgba(15, 23, 42, 0.10);
+  --nano-border-strong:     rgba(15, 23, 42, 0.16);
+  --nano-text:              #0b1220;
+  --nano-text-soft:         #1e293b;
+  --nano-text-muted:        #475569;
+  --nano-accent:            #1a73e8;
+  --nano-blur:              blur(20px) saturate(180%) brightness(1.05);
+  --nano-blur-light:        blur(14px) saturate(165%) brightness(1.04);
+  --nano-shadow:            0 8px 28px rgba(15, 23, 42, 0.08);
+}
+
+html body.theme-industrial:not(.appearance-light) {
+  /* Luna v17: vidrio negro neutro (sin pizarra #0f172a ni saturate “azulado”).
+     Misma legibilidad estilo Chrome dark (#e8eaed), blur casi sin matiz. */
+  --nano-overlay:           transparent;
+  --nano-surface:           rgba(0, 0, 0, 0.26);
+  --nano-surface-strong:    rgba(0, 0, 0, 0.38);
+  --nano-surface-solid:     rgba(0, 0, 0, 0.88);
+  /* v18: “subtle” en Luna = negro vidrio (antes blanco 5.5% se veía grisáceo). */
+  --nano-surface-subtle:    rgba(0, 0, 0, 0.24);
+  /* Cebra tabla: NUNCA transparent — si no, el <tr> de premium (#fff / #eff6ff) se filtra. */
+  --nano-table-zebra-odd:   rgba(0, 0, 0, 0.14);
+  --nano-border:            rgba(255, 255, 255, 0.10);
+  --nano-border-strong:     rgba(255, 255, 255, 0.18);
+  --nano-text:              #e8eaed;
+  --nano-text-soft:         #bdc1c6;
+  --nano-text-muted:        #9aa0a6;
+  --nano-accent:            #8ab4f8;
+  --nano-blur:              blur(22px) saturate(106%);
+  --nano-blur-light:        blur(16px) saturate(106%);
+  --nano-shadow:            0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+
+/* ============================================================
+ * 2. HTML + BODY: imagen de fondo + overlay muy leve
+ * ============================================================ */
+
+/* Parallax premium (--pmx/--pmy): el JS escribe en <html style>; !important aquí gana a ese inline sin !important. */
+html:has(body.theme-industrial:not(.appearance-light)) {
+  --pmx: 50 !important;
+  --pmy: 50 !important;
+}
+
+html {
+  background-color: transparent !important;
+}
+
+html body.theme-industrial {
+  /* Imagen única: public/fondos/nano-machining-services.webp (ruta relativa al CSS = sirve en subcarpetas) */
+  --nano-machine-image: url('../fondos/nano-machining-services.webp');
+  background-color: transparent !important;
+  background-image: var(--nano-machine-image) !important;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+  color: var(--nano-text) !important;
+}
+
+/* CRITICO: body::before y body::after del CSS original tapan la imagen
+   con un linear-gradient blanco-gris fijo que cubre todo el viewport.
+   Los neutralizamos para que el backdrop-filter de los cards blurree
+   directamente la imagen industrial del body, no un velo blanco. */
+html body.theme-industrial::before,
+html body.theme-industrial::after {
+  background: none !important;
+  background-image: none !important;
+  background-color: transparent !important;
+  opacity: 0 !important;
+  content: none !important;
+  display: none !important;
+}
+
+/* premium.css: body.md3-on { background: var(--prem-surface) !important } — sin tapar la foto */
+html body.theme-industrial.md3-on {
+  background-color: transparent !important;
+  background-image: var(--nano-machine-image) !important;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+}
+
+/* Luna: refuerzo en body (capas que leen vars heredadas del body). */
+html body.theme-industrial.md3-on:not(.appearance-light) {
+  --pmx: 50 !important;
+  --pmy: 50 !important;
+}
+
+/* ============================================================
+ * §38 premium-pro §F4 — LUNA: gana especificidad a
+ *   body.theme-industrial:not(.appearance-light) … (0,3,2)
+ *   con html body … (0,3,3) para vidrio nano, no #303134 opaco.
+ *   Sin esto el hover global (.table-wrap:hover) + parallax dan el
+ *   efecto “cambia todo al mover el mouse”.
+ * ============================================================ */
+html body.theme-industrial:not(.appearance-light) .panel,
+html body.theme-industrial:not(.appearance-light) .panel:hover,
+html body.theme-industrial:not(.appearance-light) section.panel,
+html body.theme-industrial:not(.appearance-light) section.panel:hover,
+html body.theme-industrial:not(.appearance-light) .panel.active,
+html body.theme-industrial:not(.appearance-light) .panel.active:hover,
+html body.theme-industrial:not(.appearance-light) .section-header,
+html body.theme-industrial:not(.appearance-light) .section-header:hover,
+html body.theme-industrial:not(.appearance-light) .table-wrap,
+html body.theme-industrial:not(.appearance-light) .table-wrap:hover,
+html body.theme-industrial:not(.appearance-light) .md-table-wrap,
+html body.theme-industrial:not(.appearance-light) .md-table-wrap:hover,
+html body.theme-industrial:not(.appearance-light) .toolbar,
+html body.theme-industrial:not(.appearance-light) .toolbar:hover,
+html body.theme-industrial:not(.appearance-light) .filters-card,
+html body.theme-industrial:not(.appearance-light) .filters-card:hover,
+html body.theme-industrial:not(.appearance-light) .filter-row,
+html body.theme-industrial:not(.appearance-light) .filter-row:hover {
+  background: var(--nano-surface) !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  color: var(--nano-text) !important;
+  border-color: var(--nano-border) !important;
+  box-shadow: var(--nano-shadow) !important;
+  transition: none !important;
+  transform: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+
+/* ============================================================
+ * 3. LAYOUT CONTAINERS: transparentes para dejar ver el fondo
+ * ============================================================ */
+
+/* TODOS los contenedores de layout = TRANSPARENTE.
+   Critico: nada de glass intermedio entre el body (imagen) y los
+   cards internos, porque sino los cards blurean el glass intermedio
+   en vez de la imagen -> se ve blanco solido acumulado. */
+html body.theme-industrial .app,
+html body.theme-industrial .app-layout,
+html body.theme-industrial .app-main,
+html body.theme-industrial .app-content,
+html body.theme-industrial .content-wrap,
+html body.theme-industrial .main-content,
+html body.theme-industrial .main-wrap,
+html body.theme-industrial main,
+html body.theme-industrial #main-content,
+html body.theme-industrial .panel,
+html body.theme-industrial section.panel,
+html body.theme-industrial [id^="panel-"],
+html body.theme-industrial .dashboard-surface,
+html body.theme-industrial .page,
+html body.theme-industrial .container,
+html body.theme-industrial .wrapper,
+html body.theme-industrial .app-shell,
+html body.theme-industrial .layout,
+html body.theme-industrial .layout-main,
+html body.theme-industrial .content,
+html body.theme-industrial #app,
+html body.theme-industrial #app-root,
+html body.theme-industrial #root,
+html body.theme-industrial #content,
+html body.theme-industrial .tab-content,
+html body.theme-industrial .tab-panel,
+html body.theme-industrial [role="tabpanel"],
+html body.theme-industrial .pane,
+html body.theme-industrial .module-container,
+html body.theme-industrial .view,
+html body.theme-industrial .view-container,
+html body.theme-industrial .screen,
+html body.theme-industrial .screen-body {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* section-header (el contenedor con el titulo "Catalogo de clientes",
+   "Refacciones", etc.) lleva fondo glass para que el titulo sea legible */
+html body.theme-industrial .section-header,
+html body.theme-industrial .dashboard-header {
+  background: var(--nano-surface-strong) !important;
+  background-color: var(--nano-surface-strong) !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border: 1px solid var(--nano-border) !important;
+  border-radius: 12px !important;
+  padding: 1rem 1.25rem !important;
+  color: var(--nano-text) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial .section-header h2,
+html body.theme-industrial .section-header h3,
+html body.theme-industrial .section-header .title,
+html body.theme-industrial .dashboard-header h2,
+html body.theme-industrial .dashboard-header .dashboard-title {
+  color: var(--nano-text) !important;
+  font-weight: 700 !important;
+}
+
+
+/* ============================================================
+ * 4. HEADER (barra superior)
+ * ============================================================ */
+
+html body.theme-industrial header,
+html body.theme-industrial header.header,
+html body.theme-industrial .header,
+html body.theme-industrial .top-bar,
+html body.theme-industrial .app-header {
+  background: var(--nano-surface-strong) !important;
+  background-color: var(--nano-surface-strong) !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border-bottom: 1px solid var(--nano-border) !important;
+  color: var(--nano-text) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial header *:not(img):not(i):not(.badge):not(.chip),
+html body.theme-industrial .header *:not(img):not(i):not(.badge):not(.chip) {
+  color: inherit !important;
+}
+
+html body.theme-industrial header img,
+html body.theme-industrial .header img {
+  background: transparent !important;
+}
+
+
+/* ============================================================
+ * 5. SIDEBAR / NAV / TABS
+ * ============================================================ */
+
+html body.theme-industrial .sidebar,
+html body.theme-industrial aside.sidebar,
+html body.theme-industrial nav.sidebar,
+html body.theme-industrial .app-sidebar,
+html body.theme-industrial .sidebar-nav,
+html body.theme-industrial .rail-nav,
+html body.theme-industrial .tabs.tabs--rail,
+html body.theme-industrial nav.tabs {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border-right: 1px solid var(--nano-border) !important;
+  color: var(--nano-text) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial .tab,
+html body.theme-industrial .tabs .tab,
+html body.theme-industrial button.tab {
+  background: transparent !important;
+  color: var(--nano-text-soft) !important;
+  border-color: transparent !important;
+}
+
+html body.theme-industrial .tab:hover {
+  background: var(--nano-surface-subtle) !important;
+  color: var(--nano-text) !important;
+}
+
+html body.theme-industrial .tab.active {
+  background: var(--nano-surface-strong) !important;
+  color: var(--nano-text) !important;
+  border-color: var(--nano-border-strong) !important;
+}
+
+
+/* ============================================================
+ * 6. DASHBOARD SCORECARDS (los 4 KPI tiles grandes)
+ *    CLAVE: aquí estaba el bug de v2
+ * ============================================================ */
+
+/* Contenedor de los 4 tiles */
+html body.theme-industrial .dashboard-exec-scorecards {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+/* Cada uno de los 4 tiles (revenue/pipeline/risk/ops) */
+html body.theme-industrial .dashboard-score-tile,
+html body.theme-industrial .dashboard-score-tile--revenue,
+html body.theme-industrial .dashboard-score-tile--pipeline,
+html body.theme-industrial .dashboard-score-tile--risk,
+html body.theme-industrial .dashboard-score-tile--ops {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border: 1px solid var(--nano-border) !important;
+  color: var(--nano-text) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial .dashboard-score-tile:hover {
+  background: var(--nano-surface-strong) !important;
+  border-color: var(--nano-border-strong) !important;
+  transform: none !important; /* cortar transform molesto */
+  box-shadow: var(--nano-shadow) !important;
+}
+
+/* Textos internos del tile */
+html body.theme-industrial .dashboard-score-eyebrow {
+  color: var(--nano-text-muted) !important;
+}
+html body.theme-industrial .dashboard-score-label {
+  color: var(--nano-text-soft) !important;
+}
+html body.theme-industrial .dashboard-score-value {
+  color: var(--nano-text) !important;
+  font-weight: 800 !important;
+}
+html body.theme-industrial .dashboard-score-meta {
+  color: var(--nano-text-muted) !important;
+}
+
+/* La barra lateral de color (::before) se conserva: es la identidad
+   visual verde/azul/naranja/morado que da el toque profesional. */
+
+
+/* ============================================================
+ * 7. DASHBOARD KPI STRIP (la barra de KPIs pequeños bajo los tiles)
+ * ============================================================ */
+
+html body.theme-industrial .dashboard-kpi-strip,
+html body.theme-industrial .dashboard-crossfilter-bar {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border: 1px solid var(--nano-border) !important;
+  color: var(--nano-text) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial .dashboard-kpi-item {
+  color: var(--nano-text-soft) !important;
+  background: transparent !important;
+}
+
+html body.theme-industrial .dashboard-kpi-item strong {
+  color: var(--nano-text) !important;
+}
+
+
+/* ============================================================
+ * 8. DASHBOARD CARDS (las 6 cards: Clientes, Refacciones, etc.)
+ * ============================================================ */
+
+html body.theme-industrial .dashboard-card,
+html body.theme-industrial .dashboard-grid > .dashboard-card {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border: 1px solid var(--nano-border) !important;
+  color: var(--nano-text) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial .dashboard-card:hover {
+  background: var(--nano-surface-strong) !important;
+  transform: none !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial .dashboard-card-header,
+html body.theme-industrial .dashboard-card-title,
+html body.theme-industrial .dashboard-card-subtitle,
+html body.theme-industrial .dashboard-card-metrics,
+html body.theme-industrial .dashboard-metric,
+html body.theme-industrial .dashboard-metric dt,
+html body.theme-industrial .dashboard-metric dd,
+html body.theme-industrial .dashboard-card-action {
+  color: var(--nano-text) !important;
+  background: transparent !important;
+}
+
+html body.theme-industrial .dashboard-card-subtitle,
+html body.theme-industrial .dashboard-metric dt {
+  color: var(--nano-text-muted) !important;
+}
+
+
+/* ============================================================
+ * 9. CARDS GENERICAS, KPIS, PANELES INTERNOS
+ * ============================================================ */
+
+html body.theme-industrial .card,
+html body.theme-industrial .kpi-card,
+html body.theme-industrial .kpi-tile,
+html body.theme-industrial .kpi-box,
+html body.theme-industrial .module-card,
+html body.theme-industrial .admin-hub-panel,
+html body.theme-industrial .admin-hub-card,
+html body.theme-industrial .section-card,
+html body.theme-industrial .summary-card,
+html body.theme-industrial .resumen-card,
+html body.theme-industrial .prospeccion-kpi,
+html body.theme-industrial .prospeccion-kpi-card,
+html body.theme-industrial .maq-ficha-card,
+html body.theme-industrial .tarifas-section,
+html body.theme-industrial .form-card {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border: 1px solid var(--nano-border) !important;
+  color: var(--nano-text) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial .card h1,
+html body.theme-industrial .card h2,
+html body.theme-industrial .card h3,
+html body.theme-industrial .card h4,
+html body.theme-industrial .card h5,
+html body.theme-industrial .card h6,
+html body.theme-industrial .card p,
+html body.theme-industrial .card span:not(.badge):not(.chip),
+html body.theme-industrial .card label,
+html body.theme-industrial .card strong,
+html body.theme-industrial .card div:not([class*="semaforo"]):not([class*="estatus"]) {
+  color: var(--nano-text) !important;
+}
+
+html body.theme-industrial .kpi-value,
+html body.theme-industrial .kpi-val,
+html body.theme-industrial .prospeccion-kpi-val,
+html body.theme-industrial .kpi-number {
+  color: var(--nano-accent) !important;
+  font-weight: 700 !important;
+}
+
+
+/* ============================================================
+ * 10. TABLAS
+ * ============================================================ */
+
+html body.theme-industrial .table-wrap {
+  background: var(--nano-surface) !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border: 1px solid var(--nano-border) !important;
+  border-radius: 12px !important;
+  overflow: auto;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial table,
+html body.theme-industrial .data-table,
+html body.theme-industrial table.data-table {
+  background: transparent !important;
+  color: var(--nano-text) !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+html body.theme-industrial table thead,
+html body.theme-industrial .data-table thead,
+html body.theme-industrial table.data-table thead {
+  background: var(--nano-surface-strong) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+}
+
+html body.theme-industrial table thead th,
+html body.theme-industrial .data-table thead th,
+html body.theme-industrial table.data-table thead th {
+  background: transparent !important;
+  color: var(--nano-text) !important;
+  border-color: var(--nano-border) !important;
+  font-weight: 600 !important;
+}
+
+html body.theme-industrial table tbody tr {
+  background: transparent !important;
+  color: var(--nano-text) !important;
+}
+
+/* Luna: sin cambio de fondo al pasar el mouse en la fila (evita “parche negro”).
+   Sol: ligera pista de hover. */
+html body.theme-industrial.appearance-light table tbody tr:hover {
+  background: var(--nano-surface-subtle) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) table tbody tr:hover {
+  background: transparent !important;
+}
+
+html body.theme-industrial table tbody td,
+html body.theme-industrial .data-table tbody td {
+  background: transparent !important;
+  color: var(--nano-text) !important;
+  border-color: var(--nano-border) !important;
+}
+
+
+/* ============================================================
+ * 11. INPUTS, SELECTS, TEXTAREAS
+ * ============================================================ */
+
+html body.theme-industrial input[type="text"],
+html body.theme-industrial input[type="number"],
+html body.theme-industrial input[type="email"],
+html body.theme-industrial input[type="password"],
+html body.theme-industrial input[type="search"],
+html body.theme-industrial input[type="tel"],
+html body.theme-industrial input[type="date"],
+html body.theme-industrial input[type="time"],
+html body.theme-industrial input[type="url"],
+html body.theme-industrial input:not([type]),
+html body.theme-industrial textarea,
+html body.theme-industrial select,
+html body.theme-industrial .filter-input,
+html body.theme-industrial .form-input {
+  background: var(--nano-surface-strong) !important;
+  background-color: var(--nano-surface-strong) !important;
+  color: var(--nano-text) !important;
+  border: 1px solid var(--nano-border-strong) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+}
+
+html body.theme-industrial input:focus,
+html body.theme-industrial textarea:focus,
+html body.theme-industrial select:focus {
+  outline: none !important;
+  border-color: var(--nano-accent) !important;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.18) !important;
+}
+
+html body.theme-industrial label,
+html body.theme-industrial .form-label,
+html body.theme-industrial .form-group > label {
+  color: var(--nano-text) !important;
+}
+
+html body.theme-industrial input::placeholder,
+html body.theme-industrial textarea::placeholder {
+  color: var(--nano-text-muted) !important;
+  opacity: 0.7 !important;
+}
+
+
+/* ============================================================
+ * 12. BUTTONS
+ *   Secundarios: glass neutro.
+ *   Primary/danger/success conservan su color (son acciones).
+ * ============================================================ */
+
+html body.theme-industrial .btn:not(.primary):not(.danger):not(.success):not(.warning):not(.btn-dashboard-refresh) {
+  background: var(--nano-surface-strong) !important;
+  color: var(--nano-text) !important;
+  border: 1px solid var(--nano-border-strong) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+}
+
+html body.theme-industrial .btn:not(.primary):not(.danger):not(.success):not(.warning):not(.btn-dashboard-refresh):hover {
+  background: var(--nano-surface-solid) !important;
+}
+
+/* Botones de acción del dashboard header */
+html body.theme-industrial .btn-dashboard-refresh {
+  background: var(--nano-surface-strong) !important;
+  color: var(--nano-text) !important;
+  border: 1px solid var(--nano-border-strong) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+}
+
+
+/* ============================================================
+ * 13. MODALES / DROPDOWNS / MENUS
+ *
+ *   IMPORTANTE: .modal es el VELO de fondo (overlay completo),
+ *   .modal-box / .modal-content / .modal-panel es la CAJA.
+ *   - El velo debe quedarse oscuro translucido con blur
+ *     (permite ver la imagen industrial difuminada detras).
+ *   - La caja es glass blanco (Sol) o negro (Luna).
+ * ============================================================ */
+
+/* VELO del modal: oscuro translucido con blur (NO blanco!) */
+html body.theme-industrial .modal {
+  background: rgba(5, 8, 15, 0.55) !important;
+  background-color: rgba(5, 8, 15, 0.55) !important;
+  background-image: none !important;
+  backdrop-filter: blur(8px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(120%) !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* CAJA del modal: glass blanco (Sol) / negro (Luna) */
+html body.theme-industrial .modal-box,
+html body.theme-industrial .modal-content,
+html body.theme-industrial .modal-panel,
+html body.theme-industrial .md-dialog,
+html body.theme-industrial .md-prompt,
+html body.theme-industrial .md-prompt-content,
+/* Dropdowns: solo cuando viven bajo el header. Si están portados a body (#header-profile-menu / panel abierto), NO pisar — ver portal-overlays.css */
+html body.theme-industrial header.header .header-profile-menu,
+html body.theme-industrial .dropdown-menu,
+html body.theme-industrial header.header .notifications-panel,
+html body.theme-industrial .toast {
+  background: var(--nano-surface-solid) !important;
+  background-color: var(--nano-surface-solid) !important;
+  color: var(--nano-text) !important;
+  border: 1px solid var(--nano-border-strong) !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial .modal-box *:not(img):not(i):not(.badge):not(.chip):not(button),
+html body.theme-industrial .modal-content *:not(img):not(i):not(.badge):not(.chip):not(button),
+html body.theme-industrial .md-prompt *:not(img):not(i):not(.badge):not(.chip):not(button),
+html body.theme-industrial header.header .header-profile-menu *:not(img):not(i):not(.badge):not(.chip):not(button),
+html body.theme-industrial .dropdown-menu *:not(img):not(i):not(.badge):not(.chip):not(button),
+html body.theme-industrial header.header .notifications-panel *:not(img):not(i):not(.badge):not(.chip):not(button) {
+  color: inherit !important;
+}
+
+html body.theme-industrial .modal-backdrop,
+html body.theme-industrial .admin-hub-overlay {
+  background: rgba(5, 8, 15, 0.55) !important;
+  backdrop-filter: blur(8px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(120%) !important;
+}
+
+
+/* ============================================================
+ * 14. TIPOGRAFIA GENERICA
+ * ============================================================ */
+
+html body.theme-industrial h1,
+html body.theme-industrial h2,
+html body.theme-industrial h3,
+html body.theme-industrial h4,
+html body.theme-industrial h5,
+html body.theme-industrial h6,
+html body.theme-industrial .dashboard-title,
+html body.theme-industrial .dashboard-section-title {
+  color: var(--nano-text) !important;
+}
+
+html body.theme-industrial p,
+html body.theme-industrial li,
+html body.theme-industrial dd,
+html body.theme-industrial dt,
+html body.theme-industrial .dashboard-subtitle {
+  color: var(--nano-text-soft) !important;
+}
+
+html body.theme-industrial .hint,
+html body.theme-industrial .muted,
+html body.theme-industrial .text-muted,
+html body.theme-industrial .subtitle,
+html body.theme-industrial .help-text,
+html body.theme-industrial small {
+  color: var(--nano-text-muted) !important;
+}
+
+
+/* ============================================================
+ * 15. SCROLLBARS
+ * ============================================================ */
+
+html body.theme-industrial ::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+html body.theme-industrial ::-webkit-scrollbar-track {
+  background: var(--nano-surface-subtle) !important;
+}
+
+html body.theme-industrial ::-webkit-scrollbar-thumb {
+  background: var(--nano-border-strong) !important;
+  border-radius: 6px;
+}
+
+html body.theme-industrial ::-webkit-scrollbar-thumb:hover {
+  background: var(--nano-text-muted) !important;
+}
+
+
+/* ============================================================
+ * 16. LOGIN — misma foto de fondo que el body, Sol / Luna, sin capas extra
+ * ============================================================ */
+
+html body.theme-industrial:not(.appearance-light):not(.login-open) #login-overlay,
+html body.theme-industrial:not(.appearance-light):not(.login-open) .login-overlay#login-overlay,
+html body.theme-industrial.appearance-light:not(.login-open) #login-overlay,
+html body.theme-industrial.appearance-light:not(.login-open) .login-overlay#login-overlay {
+  background-color: transparent !important;
+  background-image: var(--nano-machine-image) !important;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+}
+
+/* Sin halos decorativos encima de la foto (solo cuando el intro no está en modo login-open) */
+html body.theme-industrial:not(.login-open) #login-overlay::before {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+
+/* Paneles brand y form (solo overlay cerrado; con login-open manda login-neutral.css) */
+html body:not(.login-open) .login-brand-panel {
+  background: linear-gradient(160deg, rgba(48, 49, 52, 0.06) 0%, rgba(32, 33, 36, 0.10) 100%) !important;
+  backdrop-filter: blur(5px) saturate(175%) !important;
+  -webkit-backdrop-filter: blur(5px) saturate(175%) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+html body:not(.login-open) .login-form-panel {
+  background: rgba(32, 33, 36, 0.05) !important;
+  backdrop-filter: blur(5px) saturate(175%) !important;
+  -webkit-backdrop-filter: blur(5px) saturate(175%) !important;
+}
+
+/* TEXTOS del brand-panel: BLANCO con sombra fuerte para destacar sobre la imagen
+   Antes eran oscuros/grises y se perdian contra el azul oscuro. */
+html body:not(.login-open) .login-brand-panel .login-brand-title,
+html body:not(.login-open) .login-brand-panel h1,
+html body:not(.login-open) .login-brand-panel h2 {
+  color: #ffffff !important;
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.75),
+    0 0 24px rgba(0, 0, 0, 0.55),
+    0 1px 2px rgba(0, 0, 0, 0.90) !important;
+  font-weight: 800 !important;
+}
+
+html body:not(.login-open) .login-brand-panel .login-brand-tagline,
+html body:not(.login-open) .login-brand-panel .login-brand-subtitle,
+html body:not(.login-open) .login-brand-panel p {
+  color: #e2e8f0 !important;
+  text-shadow:
+    0 1px 6px rgba(0, 0, 0, 0.75),
+    0 0 18px rgba(0, 0, 0, 0.55) !important;
+}
+
+html body:not(.login-open) .login-brand-panel .login-feature-item,
+html body:not(.login-open) .login-brand-panel .login-brand-features * {
+  color: #f8fafc !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7) !important;
+}
+
+html body:not(.login-open) .login-brand-panel .login-feature-item i {
+  color: #7dd3fc !important;  /* cyan vivo para iconos */
+  text-shadow: 0 0 8px rgba(125, 211, 252, 0.5) !important;
+}
+
+/* Chips Admin/Usuario/Consulta debajo del logo */
+html body:not(.login-open) .login-brand-panel [class*="role"],
+html body:not(.login-open) .login-brand-panel [class*="chip"],
+html body:not(.login-open) .login-brand-panel .admin-chip,
+html body:not(.login-open) .login-brand-panel .user-chip,
+html body:not(.login-open) .login-brand-panel .viewer-chip {
+  background: rgba(255, 255, 255, 0.14) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Tarjeta del formulario: glass azul MAS CLARO y vivo (antes muy oscuro) */
+html body:not(.login-open) .login-card {
+  background: linear-gradient(160deg, rgba(48, 49, 52, 0.28) 0%, rgba(32, 33, 36, 0.36) 100%) !important;
+  backdrop-filter: blur(26px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(190%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow:
+    0 28px 72px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset !important;
+  color: #f8fafc !important;
+}
+
+html body:not(.login-open) .login-card h1,
+html body:not(.login-open) .login-card h2,
+html body:not(.login-open) .login-card h3,
+html body:not(.login-open) .login-card .login-title,
+html body:not(.login-open) .login-card label,
+html body:not(.login-open) .login-card .form-label,
+html body:not(.login-open) .login-card p,
+html body:not(.login-open) .login-card span:not(.badge) {
+  color: #ffffff !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+}
+
+html body:not(.login-open) .login-card .login-subtitle,
+html body:not(.login-open) .login-card .hint,
+html body:not(.login-open) .login-card small {
+  color: #e2e8f0 !important;
+}
+
+/* Inputs del login: glass oscuro translucido, texto claro */
+html body:not(.login-open) .login-card input[type="text"],
+html body:not(.login-open) .login-card input[type="password"],
+html body:not(.login-open) .login-card input[type="email"],
+html body:not(.login-open) .login-card input:not([type]),
+html body:not(.login-open) .login-form input[type="text"],
+html body:not(.login-open) .login-form input[type="password"] {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+}
+
+html body:not(.login-open) .login-card input::placeholder,
+html body:not(.login-open) .login-form input::placeholder {
+  color: rgba(203, 213, 225, 0.55) !important;
+}
+
+html body:not(.login-open) .login-card input:focus,
+html body:not(.login-open) .login-form input:focus {
+  border-color: rgba(45, 212, 191, 0.65) !important;
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.18) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Chips de niveles de acceso (Administrador / Usuario / Consulta) armonizados */
+html body:not(.login-open) .login-card .role-chip,
+html body:not(.login-open) .login-card .access-level,
+html body:not(.login-open) .login-card [class*="admin-chip"],
+html body:not(.login-open) .login-card [class*="role-"] {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #f1f5f9 !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+
+/* ============================================================
+ * 17. CHART CONTAINERS
+ * ============================================================ */
+
+html body.theme-industrial .chart-container,
+html body.theme-industrial .dashboard-chart-wrap,
+html body.theme-industrial .dashboard-charts {
+  background: var(--nano-surface-subtle) !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--nano-border) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+}
+
+
+/* ============================================================
+ * 18. LAYOUT STICKY FOOTER — eliminar gap entre contenido y footer
+ *
+ *   Estructura:
+ *     body
+ *       ├── header
+ *       ├── .app-main  (sidebar + main.content)
+ *       └── footer.app-footer
+ *
+ *   Hacemos body flex column y .app-main flex:1 para empujar el
+ *   footer siempre abajo sin dejar huecos con la imagen detras.
+ * ============================================================ */
+
+html,
+html body.theme-industrial {
+  min-height: 100vh !important;
+}
+
+html body.theme-industrial {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* .app-main debe crecer para llenar el espacio libre.
+   Como body es flex column, flex:1 empuja el footer abajo sin gaps. */
+html body.theme-industrial .app-main {
+  flex: 1 1 auto !important;
+}
+
+
+/* ============================================================
+ * 19. FOOTER (app-footer) glass consistente
+ *
+ *   Problema original: margin-top: 2.75rem + gradient transparente
+ *   en top = franja visible con la imagen cruda entre contenido
+ *   y footer. Lo eliminamos y damos fondo glass continuo.
+ * ============================================================ */
+
+html body.theme-industrial footer.app-footer,
+html body.theme-industrial .app-footer {
+  margin-top: 0 !important;
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border-top: 1px solid var(--nano-border) !important;
+  border-radius: 0 !important;
+  color: var(--nano-text) !important;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.06) !important;
+}
+
+html body.theme-industrial footer.app-footer p,
+html body.theme-industrial .app-footer p,
+html body.theme-industrial .app-footer .footer-version,
+html body.theme-industrial .app-footer .footer-tip,
+html body.theme-industrial .app-footer kbd {
+  color: var(--nano-text-soft) !important;
+  background: transparent !important;
+}
+
+html body.theme-industrial .app-footer .footer-version {
+  color: var(--nano-text) !important;
+  font-weight: 600 !important;
+}
+
+
+/* ============================================================
+ * 20. ELIMINAR RAYAS VERDES / TEAL / DECORATIVAS
+ *
+ *   En style.css hay barras verticales `::before` con gradiente
+ *   verde/teal sobre:
+ *     - .dashboard-score-tile--revenue   (linea 1639: verde esmeralda)
+ *     - .section-header::before           (linea 2033: borde izq.)
+ *     - body.dark-theme .section-header::before  (linea 3598: teal)
+ *     - .stock-alert-bar::before
+ *     - .header::before / .header::after
+ *     - .ai-fab-nudge::after / .ai-fab-tooltip::after
+ *
+ *   Las ocultamos para que nada distraiga sobre el glass translucido.
+ *   IMPORTANTE: solo ::before/::after DECORATIVOS, no los del login.
+ * ============================================================ */
+
+html body.theme-industrial .dashboard-score-tile::before,
+html body.theme-industrial .dashboard-score-tile--revenue::before,
+html body.theme-industrial .dashboard-score-tile--pipeline::before,
+html body.theme-industrial .dashboard-score-tile--risk::before,
+html body.theme-industrial .dashboard-score-tile--ops::before,
+html body.theme-industrial .section-header::before,
+html body.theme-industrial .section-header::after,
+html body.theme-industrial .dashboard-header::before,
+html body.theme-industrial .dashboard-header::after,
+html body.theme-industrial .header::before,
+html body.theme-industrial .header::after,
+html body.theme-industrial .stock-alert-bar::before,
+html body.theme-industrial .stock-alert-bar::after,
+html body.theme-industrial .pvc-header::before,
+html body.theme-industrial .pvc-header::after,
+html body.theme-industrial .ref-pvc-hero::before,
+html body.theme-industrial .ref-pvc-hero::after,
+html body.theme-industrial .ai-fab-nudge::after,
+html body.theme-industrial .ai-fab-tooltip::after,
+html body.theme-industrial.dark-theme .section-header::before,
+html body.theme-industrial.dark-theme .stock-alert-bar::before {
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+  content: none !important;
+  opacity: 0 !important;
+  border: none !important;
+}
+
+
+/* ============================================================
+ * 21. TITULOS DE SECCION CON TEXT-SHADOW SUTIL
+ *
+ *   Como el section-header ahora es glass mas translucido,
+ *   reforzamos titulos con una sombra suave (misma receta que
+ *   el logo UNIVERSAL del login) para que nunca se pierdan
+ *   contra la imagen industrial detras.
+ * ============================================================ */
+
+html body.theme-industrial .section-header h1,
+html body.theme-industrial .section-header h2,
+html body.theme-industrial .section-header h3,
+html body.theme-industrial .section-header .title,
+html body.theme-industrial .dashboard-header h1,
+html body.theme-industrial .dashboard-header h2,
+html body.theme-industrial .dashboard-header .dashboard-title,
+html body.theme-industrial .dashboard-title,
+html body.theme-industrial .dashboard-section-title {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+  font-weight: 700 !important;
+}
+
+/* En modo Luna la sombra es mas pronunciada sobre glass oscuro */
+html body.theme-industrial:not(.appearance-light) .section-header h1,
+html body.theme-industrial:not(.appearance-light) .section-header h2,
+html body.theme-industrial:not(.appearance-light) .section-header h3,
+html body.theme-industrial:not(.appearance-light) .dashboard-header h2,
+html body.theme-industrial:not(.appearance-light) .dashboard-title,
+html body.theme-industrial:not(.appearance-light) .dashboard-section-title {
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.55),
+               0 0 14px rgba(0, 0, 0, 0.30) !important;
+}
+
+
+/* ============================================================
+ * 22. HOVER SIN TRANSFORM - eliminar el "mochazo" al pasar mouse
+ *
+ *   Las tablas y cards tenian transform:translateY(-2px) en hover
+ *   que hacia ver los bordes recortados (botones mochos). Lo cortamos.
+ * ============================================================ */
+
+html body.theme-industrial .card:hover,
+html body.theme-industrial .dashboard-card:hover,
+html body.theme-industrial .kpi-card:hover,
+html body.theme-industrial .module-card:hover,
+html body.theme-industrial .dashboard-score-tile:hover,
+html body.theme-industrial.appearance-light table tbody tr:hover {
+  transform: none !important;
+}
+
+html body.theme-industrial:not(.appearance-light) table tbody tr:hover {
+  transform: none !important;
+}
+
+
+/* ============================================================
+ * 23. ELEMENTOS CON COLOR HARDCODED - FORZAR GLASS UNIFICADO
+ *
+ *   Estos vienen con gradientes propios en style.css que rompen
+ *   la estetica uniforme (amarillos, azules solidos, etc.).
+ *   Los normalizamos al mismo glass que el resto.
+ *
+ *   IMPORTANTE: mantenemos el icono/texto con su color original
+ *   (solo cambiamos el fondo/borde para que la barra no parezca
+ *   otra capa).
+ * ============================================================ */
+
+html body.theme-industrial .stock-alert-bar,
+html body.theme-industrial.dark-theme .stock-alert-bar,
+html body.theme-industrial:not(.appearance-light) .stock-alert-bar {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--nano-border) !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  color: var(--nano-text) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial .stock-alert-bar i,
+html body.theme-industrial .stock-alert-bar strong {
+  color: #d97706 !important;  /* icono amarillo/ambar queda como acento semantico */
+}
+
+html body.theme-industrial:not(.appearance-light) .stock-alert-bar i,
+html body.theme-industrial:not(.appearance-light) .stock-alert-bar strong {
+  color: #fbbf24 !important;
+}
+
+/* Inputs de filtro de tabla (antes border solido #cbd5e1) */
+html body.theme-industrial input.filter-input,
+html body.theme-industrial select.filter-input,
+html body.theme-industrial textarea.filter-input {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  color: var(--nano-text) !important;
+  border: 1px solid var(--nano-border) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+}
+
+/* Crossfilter bar: mismo glass uniforme */
+html body.theme-industrial .dashboard-crossfilter-bar {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--nano-border) !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  color: var(--nano-text) !important;
+}
+
+/* thead con el mismo glass que body de tabla (antes era surface-strong) */
+html body.theme-industrial table thead,
+html body.theme-industrial .data-table thead,
+html body.theme-industrial table.data-table thead {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+}
+
+/* Row de filtros debajo del thead (tipica linea 2a en tablas) */
+html body.theme-industrial table thead tr.filter-row,
+html body.theme-industrial .data-table thead tr.filter-row {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+html body.theme-industrial table thead tr.filter-row td,
+html body.theme-industrial .data-table thead tr.filter-row td {
+  background: transparent !important;
+  border-color: var(--nano-border) !important;
+}
+
+
+/* ============================================================
+ * 24. CATCH-ALL: cualquier contenedor con clase generica que
+ * lleve fondo solido/gradiente queda igualado al glass base.
+ *
+ *   Lista de clases comunes que en style.css traen `background:
+ *   #fff` o gradientes propios.
+ * ============================================================ */
+
+html body.theme-industrial .panel-card,
+html body.theme-industrial .data-card,
+html body.theme-industrial .info-card,
+html body.theme-industrial .stat-card,
+html body.theme-industrial .dashboard-stat-card,
+html body.theme-industrial .filters-card,
+html body.theme-industrial .toolbar,
+html body.theme-industrial .section-toolbar,
+html body.theme-industrial .action-bar,
+html body.theme-industrial .data-toolbar,
+html body.theme-industrial .table-toolbar,
+html body.theme-industrial .page-header,
+html body.theme-industrial .content-header {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--nano-border) !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  color: var(--nano-text) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+
+/* ============================================================
+ * 25. MATAR TODO LO VERDE / TEAL / EMERALD HARDCODED
+ *
+ *   style.css usa paleta teal/emerald (#0f766e, #0d9488, #14b8a6,
+ *   #10b981, #059669, #2dd4bf, #34d399) para:
+ *     - Textos de categoria "Refacciones generales" (color teal)
+ *     - Textos "Almacen principal" (color teal)
+ *     - Bordes de td en algunas tablas (rayas verticales verdes)
+ *     - Outlines de focus teal
+ *     - Icons de cards/KPIs con gradientes verdes
+ *     - Badges de estado (mantenimiento realizado, bono pagado)
+ *     - Semaforo verde
+ *
+ *   Estrategia: normalizar TEXTOS verdes a --nano-text (blanco/negro
+ *   segun modo). Mantenemos semaforo-verde y semantic badges que son
+ *   comunicadores de estado (rojo/verde/amarillo) pero suavizados.
+ * ============================================================ */
+
+/* Textos con color teal/emerald directo -> van a color del tema */
+html body.theme-industrial [style*="color: #0f766e"],
+html body.theme-industrial [style*="color: #0d9488"],
+html body.theme-industrial [style*="color: #14b8a6"],
+html body.theme-industrial [style*="color: #10b981"],
+html body.theme-industrial [style*="color: #059669"],
+html body.theme-industrial [style*="color: #2dd4bf"],
+html body.theme-industrial [style*="color: #34d399"] {
+  color: var(--nano-text) !important;
+}
+
+/* Chips/badges de categoria en tablas de refacciones, almacen, etc.
+   No los quitamos del todo (son semanticos) pero los neutralizamos
+   para que no rompan la paleta glass uniforme. */
+html body.theme-industrial .badge-categoria,
+html body.theme-industrial .chip-categoria,
+html body.theme-industrial .cat-chip,
+html body.theme-industrial .categoria-tag,
+html body.theme-industrial td .badge,
+html body.theme-industrial td .chip,
+html body.theme-industrial td .tag {
+  background: var(--nano-surface-subtle) !important;
+  color: var(--nano-text) !important;
+  border: 1px solid var(--nano-border) !important;
+  text-shadow: none !important;
+}
+
+/* Outline/focus teal -> accent del tema */
+html body.theme-industrial *:focus-visible {
+  outline-color: var(--nano-accent) !important;
+}
+
+/* Bordes verticales verdes entre columnas de tabla.
+   En style.css thead/tbody usan border-color propios.
+   Forzamos a --nano-border neutro. */
+html body.theme-industrial table td,
+html body.theme-industrial table th,
+html body.theme-industrial .data-table td,
+html body.theme-industrial .data-table th {
+  border-color: var(--nano-border) !important;
+  border-right-color: var(--nano-border) !important;
+  border-left-color: var(--nano-border) !important;
+  border-top-color: var(--nano-border) !important;
+  border-bottom-color: var(--nano-border) !important;
+}
+
+/* Gradientes teal/emerald de headers AI, botones de cards, etc. */
+html body.theme-industrial .card-ai h2,
+html body.theme-industrial .card-demo h2 i {
+  color: var(--nano-accent) !important;
+}
+
+/* Dashboard card icons - los que tenian fondo verde teal
+   (refacciones, cotizaciones) */
+html body.theme-industrial .dashboard-card[data-dashboard="refacciones"] .dashboard-card-icon,
+html body.theme-industrial .dashboard-card[data-dashboard="cotizaciones"] .dashboard-card-icon {
+  background: var(--nano-surface-subtle) !important;
+  color: var(--nano-accent) !important;
+  border: 1px solid var(--nano-border) !important;
+}
+
+/* Barras/valores positivos que eran verde brillante */
+html body.theme-industrial .dash-value-positive {
+  color: var(--nano-accent) !important;
+}
+
+
+/* ============================================================
+ * 26. NEUTRALIZAR theme-industrial.css - contenedores oscuros
+ *
+ *   theme-industrial.css pone:
+ *     body { bg #0f172a }, containers { bg #1e293b/#334155 }
+ *   que mi nano-fondo cubre al body, pero hay contenedores
+ *   internos que siguen oscuros y mezclan gris al blur.
+ *
+ *   Fuerza: todo descendiente de .theme-industrial que no sea
+ *   card/modal/input que he cubierto explicitamente -> transparente.
+ * ============================================================ */
+
+html body.theme-industrial .industrial-bg,
+html body.theme-industrial .industrial-panel,
+html body.theme-industrial .industrial-surface,
+html body.theme-industrial .surface,
+html body.theme-industrial .surface-dark,
+html body.theme-industrial .bg-dark,
+html body.theme-industrial .bg-slate,
+html body.theme-industrial .dark-panel {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+}
+
+/* Row containers dentro de paneles (divs intermedios que no son cards) */
+html body.theme-industrial section > div:not(.card):not(.modal):not(.dashboard-card):not(.kpi-card):not(.module-card):not(.section-header):not(.dashboard-header):not(.dashboard-score-tile):not(.dashboard-kpi-strip):not(.dashboard-crossfilter-bar):not(.table-wrap):not(.chart-container):not(.stock-alert-bar):not(.filters-card):not(.toolbar) {
+  background-color: transparent !important;
+}
+
+/* ============================================================
+ * 27. LOGIN modo Sol — paneles vidrio blanco (material.css neutralizado)
+ * ============================================================ */
+html body.theme-industrial.appearance-light:not(.login-open) .login-split {
+  background: transparent !important;
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.14) !important;
+}
+
+html body.theme-industrial.appearance-light:not(.login-open) .login-brand-panel {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.48) 0%, rgba(248, 250, 253, 0.30) 100%) !important;
+  border-right: 1px solid rgba(15, 23, 42, 0.09) !important;
+  backdrop-filter: blur(28px) saturate(185%) brightness(1.06) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(185%) brightness(1.06) !important;
+}
+
+html body.theme-industrial.appearance-light:not(.login-open) .login-form-panel {
+  background: rgba(255, 255, 255, 0.26) !important;
+  backdrop-filter: blur(26px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(180%) !important;
+}
+
+html body.theme-industrial.appearance-light:not(.login-open) .login-card {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.58) 0%, rgba(255, 255, 255, 0.40) 100%) !important;
+  border: 1px solid rgba(15, 23, 42, 0.10) !important;
+  box-shadow: 0 20px 52px rgba(15, 23, 42, 0.11) !important;
+  color: var(--nano-text) !important;
+}
+
+html body.theme-industrial.appearance-light:not(.login-open) .login-brand-panel .login-brand-title,
+html body.theme-industrial.appearance-light:not(.login-open) .login-brand-panel h1 {
+  color: #0b1220 !important;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.55) !important;
+}
+
+html body.theme-industrial.appearance-light:not(.login-open) .login-brand-panel .login-brand-tagline,
+html body.theme-industrial.appearance-light:not(.login-open) .login-brand-panel .login-brand-features,
+html body.theme-industrial.appearance-light:not(.login-open) .login-brand-panel .login-brand-features * {
+  color: #1e293b !important;
+  text-shadow: none !important;
+}
+
+/* ============================================================
+ * 28. Marcas de agua — desactivadas en industrial: prioridad = foto limpia
+ * ============================================================ */
+#app-watermark.prem-watermark-field {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+}
+
+html body.theme-industrial #app-watermark.prem-watermark-field {
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+
+body.md3-on > #app-watermark.prem-watermark-field {
+  z-index: 0 !important;
+}
+
+/* Patrón repetido SVG (texto diagonal) */
+#app-watermark.prem-watermark-field {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='320'%3E%3Cdefs%3E%3Cpattern id='wm' width='520' height='200' patternUnits='userSpaceOnUse'%3E%3Ctext x='30' y='36' fill='%23ffffff' fill-opacity='0.065' font-family='system-ui,Segoe UI,sans-serif' font-size='13' font-weight='600' transform='rotate(-24 80 60)'%3EIng. David Cantú · David Orlando Cantú · DEV · Universal Servicio Técnico · %3C/text%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23wm)'/%3E%3C/svg%3E");
+  background-repeat: repeat !important;
+}
+
+html body.theme-industrial.appearance-light #app-watermark.prem-watermark-field {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='320'%3E%3Cdefs%3E%3Cpattern id='wm' width='520' height='200' patternUnits='userSpaceOnUse'%3E%3Ctext x='30' y='36' fill='%230f172a' fill-opacity='0.045' font-family='system-ui,Segoe UI,sans-serif' font-size='13' font-weight='600' transform='rotate(-24 80 60)'%3EIng. David Cantú · David Orlando Cantú · DEV · Universal Servicio Técnico · %3C/text%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23wm)'/%3E%3C/svg%3E");
+}
+
+html.prem-pwa #app-watermark.prem-watermark-field {
+  display: none !important;
+}
+
+
+/* ============================================================
+ * §30 POST-LOGIN — Vidrio sobre foto (Luna + Sol tras autenticar)
+ *
+ *   luna-nuclear.css y premium-pro.css cargan ANTES y fuerzan
+ *   superficies opacas (#202124, #303134, #fff). Este bloque va
+ *   AL FINAL y usa la misma o mayor especificidad (html body +
+ *   :not(.appearance-light) / .appearance-light) para devolver
+ *   --nano-surface* + backdrop-filter como en el login.
+ * ============================================================ */
+
+/* --- 30.1 LUNA: mismos targets que luna-nuclear §N2 (paneles/cards/toolbar) --- */
+html body.theme-industrial:not(.appearance-light) .panel,
+html body.theme-industrial:not(.appearance-light) .card,
+html body.theme-industrial:not(.appearance-light) .module-card,
+html body.theme-industrial:not(.appearance-light) .form-card,
+html body.theme-industrial:not(.appearance-light) .info-card,
+html body.theme-industrial:not(.appearance-light) .empty-card,
+html body.theme-industrial:not(.appearance-light) .summary-card,
+html body.theme-industrial:not(.appearance-light) .filters-card,
+html body.theme-industrial:not(.appearance-light) .toolbar,
+html body.theme-industrial:not(.appearance-light) .table-wrap,
+html body.theme-industrial:not(.appearance-light) .module-delete-zone {
+  background: var(--nano-surface) !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border-color: var(--nano-border) !important;
+  color: var(--nano-text) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .section-header {
+  background: var(--nano-surface-strong) !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border: 1px solid var(--nano-border) !important;
+  color: var(--nano-text) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .section-header h1,
+html body.theme-industrial:not(.appearance-light) .section-header h2,
+html body.theme-industrial:not(.appearance-light) .section-header h3,
+html body.theme-industrial:not(.appearance-light) .section-header .section-sub {
+  color: var(--nano-text) !important;
+}
+
+/* --- 30.2 LUNA: encabezados por #panel-* (premium-pro §V2 usa ID: mismo :is(...) ) --- */
+html body.theme-industrial:not(.appearance-light) :is(#panel-clientes,#panel-refacciones,#panel-almacen,#panel-maquinas,#panel-cotizaciones,#panel-ventas,#panel-prospeccion,#panel-bonos,#panel-viajes,#panel-tarifas,#panel-tecnicos,#panel-bitacoras,#panel-auditoria,#panel-usuarios,#panel-reportes,#panel-garantias,#panel-incidentes,#panel-categorias-catalogo,#panel-revision-maquinas,#panel-mantenimiento-garantia,#panel-garantias-sin-cobertura,#panel-mantenimientos,#panel-dashboards) .section-header,
+html body.theme-industrial.appearance-light :is(#panel-clientes,#panel-refacciones,#panel-almacen,#panel-maquinas,#panel-cotizaciones,#panel-ventas,#panel-prospeccion,#panel-bonos,#panel-viajes,#panel-tarifas,#panel-tecnicos,#panel-bitacoras,#panel-auditoria,#panel-usuarios,#panel-reportes,#panel-garantias,#panel-incidentes,#panel-categorias-catalogo,#panel-revision-maquinas,#panel-mantenimiento-garantia,#panel-garantias-sin-cobertura,#panel-mantenimientos,#panel-dashboards) .section-header {
+  background: var(--nano-surface-strong) !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border: 1px solid var(--nano-border) !important;
+  box-shadow: var(--nano-shadow) !important;
+  color: var(--nano-text) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) [id^="panel-"] .section-header h2,
+html body.theme-industrial:not(.appearance-light) [id^="panel-"] .section-header h2 *:not(i):not(.fa):not(.fas):not(.far),
+html body.theme-industrial.appearance-light [id^="panel-"] .section-header h2,
+html body.theme-industrial.appearance-light [id^="panel-"] .section-header h2 *:not(i):not(.fa):not(.fas):not(.far) {
+  color: var(--nano-text) !important;
+  text-shadow: none !important;
+}
+
+/* --- 30.3 LUNA: tablas (caja opaca en luna-nuclear §N2) --- */
+html body.theme-industrial:not(.appearance-light) .data-table,
+html body.theme-industrial:not(.appearance-light) table.data-table {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: var(--nano-text) !important;
+  border-color: var(--nano-border) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .data-table thead th,
+html body.theme-industrial:not(.appearance-light) table.data-table thead th {
+  background: var(--nano-surface-strong) !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+  color: var(--nano-text) !important;
+  border-color: var(--nano-border) !important;
+}
+
+/* --- 30.4 LUNA: rail + header (luna-nuclear §N8 / §N560) --- */
+html body.theme-industrial:not(.appearance-light) .sidebar,
+html body.theme-industrial:not(.appearance-light) .sidebar-nav,
+html body.theme-industrial:not(.appearance-light) nav.sidebar,
+html body.theme-industrial:not(.appearance-light) aside.sidebar {
+  background: var(--nano-surface) !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border-color: var(--nano-border) !important;
+  color: var(--nano-text) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .sidebar .tab.active,
+html body.theme-industrial:not(.appearance-light) .sidebar-nav .tab.active {
+  background: var(--nano-surface-strong) !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+  color: var(--nano-text) !important;
+  border: 1px solid var(--nano-border-strong) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) header,
+html body.theme-industrial:not(.appearance-light) header.header,
+html body.theme-industrial:not(.appearance-light) .header,
+html body.theme-industrial:not(.appearance-light) .app-header,
+html body.theme-industrial:not(.appearance-light) header.app-header,
+html body.theme-industrial:not(.appearance-light) .topbar {
+  background: var(--nano-surface-strong) !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border-color: var(--nano-border) !important;
+  color: var(--nano-text) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+/* --- 30.5 LUNA: dashboard premium-pro §X1 (#303134 → vidrio) --- */
+html body.theme-industrial:not(.appearance-light) .dashboard-surface,
+html body.theme-industrial:not(.appearance-light) .dashboard-header,
+html body.theme-industrial:not(.appearance-light) .dashboard-header-left,
+html body.theme-industrial:not(.appearance-light) .dashboard-header-right,
+html body.theme-industrial:not(.appearance-light) .dashboard-grid,
+html body.theme-industrial:not(.appearance-light) .dashboard-loading,
+html body.theme-industrial:not(.appearance-light) .dashboard-charts,
+html body.theme-industrial:not(.appearance-light) .dashboard-charts-row,
+html body.theme-industrial:not(.appearance-light) .dashboard-chart-wrap,
+html body.theme-industrial:not(.appearance-light) .dashboard-advanced,
+html body.theme-industrial:not(.appearance-light) .dashboard-comparativo,
+html body.theme-industrial:not(.appearance-light) .dashboard-pronosticos,
+html body.theme-industrial:not(.appearance-light) .dashboard-crossfilter-bar,
+html body.theme-industrial:not(.appearance-light) .dashboard-kpi-strip {
+  background: var(--nano-surface) !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  color: var(--nano-text) !important;
+  border-color: var(--nano-border) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .dashboard-score-tile,
+html body.theme-industrial:not(.appearance-light) [class*="dashboard-score-tile--"],
+html body.theme-industrial:not(.appearance-light) .dashboard-card {
+  background: var(--nano-surface) !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  color: var(--nano-text) !important;
+  border: 1px solid var(--nano-border) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh,
+html body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh.outline {
+  background: var(--nano-surface-strong) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+  color: var(--nano-text) !important;
+  border: 1px solid var(--nano-border-strong) !important;
+}
+
+/* --- 30.6 SOL: premium-pro §X2 (#fff sólido → vidrio claro) --- */
+html body.theme-industrial.appearance-light .dashboard-score-tile,
+html body.theme-industrial.appearance-light .dashboard-card,
+html body.theme-industrial.appearance-light .dashboard-chart-wrap,
+html body.theme-industrial.appearance-light .dashboard-pronosticos,
+html body.theme-industrial.appearance-light .dashboard-comparativo {
+  background: var(--nano-surface) !important;
+  background-color: transparent !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  color: var(--nano-text) !important;
+  border: 1px solid var(--nano-border) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial.appearance-light .dashboard-surface,
+html body.theme-industrial.appearance-light .dashboard-header,
+html body.theme-industrial.appearance-light .dashboard-kpi-strip,
+html body.theme-industrial.appearance-light .dashboard-grid {
+  background: var(--nano-surface) !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  color: var(--nano-text) !important;
+  border-color: var(--nano-border) !important;
+}
+
+/* --- 30.7 Contenedores de módulo MD3 (comercial.css --md-sys-color-surface) --- */
+html body.theme-industrial.md3-on [id^="panel-"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+html body.theme-industrial.md3-on .cotizacion-comisiones-david-wrap,
+html body.theme-industrial.md3-on .david-comisiones-head {
+  background: var(--nano-surface) !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border-color: var(--nano-border) !important;
+}
+
+/* --- 30.8 LUNA: KPI prospección (luna-nuclear §N6) --- */
+html body.theme-industrial:not(.appearance-light) .prospeccion-kpi {
+  background: var(--nano-surface) !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+  border: 1px solid var(--nano-border) !important;
+  color: var(--nano-text) !important;
+}
+
+/* --- 30.9 premium.css: si md3-dark reaparece, no rellenar filas/cards blanco --- */
+html body.theme-industrial.md3-on.md3-dark table.data-table tbody tr:nth-child(odd),
+html body.theme-industrial.md3-on.md3-dark table.data-table tbody tr:nth-child(even),
+html body.theme-industrial.md3-on.md3-dark table.data-table tbody tr {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+html body.theme-industrial.md3-on.md3-dark table.data-table tbody td {
+  color: var(--nano-text) !important;
+}
+
+html body.theme-industrial.md3-on.md3-dark .card,
+html body.theme-industrial.md3-on.md3-dark .toolbar,
+html body.theme-industrial.md3-on.md3-dark .sidebar-nav {
+  background: var(--nano-surface) !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+}
+
+html body.theme-industrial.md3-on.md3-dark .hint {
+  background: var(--nano-surface-subtle) !important;
+  color: var(--nano-text-soft) !important;
+  border: 1px solid var(--nano-border) !important;
+}
+
+/* --- 30.10 LUNA: inputs (sustituye luna-nuclear §N1 sólido por vidrio legible) --- */
+html body.theme-industrial:not(.appearance-light) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="image"]):not([type="submit"]):not([type="reset"]):not([type="button"]),
+html body.theme-industrial:not(.appearance-light) textarea,
+html body.theme-industrial:not(.appearance-light) select,
+html body.theme-industrial:not(.appearance-light) .filter-input,
+html body.theme-industrial:not(.appearance-light) .search,
+html body.theme-industrial:not(.appearance-light) .search--ux,
+html body.theme-industrial:not(.appearance-light) .form-group input,
+html body.theme-industrial:not(.appearance-light) .form-group select,
+html body.theme-industrial:not(.appearance-light) .form-group textarea {
+  background: var(--nano-surface-strong) !important;
+  background-image: none !important;
+  color: var(--nano-text) !important;
+  border: 1px solid var(--nano-border-strong) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-text-fill-color: var(--nano-text) !important;
+  color-scheme: dark !important;
+}
+
+/* --- 30.11 LUNA: chrome premium-pro §V3–V5 (logo / outline / dropdown módulos) --- */
+html body.theme-industrial:not(.appearance-light) .header-logo-box,
+html body.theme-industrial:not(.appearance-light) .module-logo-placeholder,
+html body.theme-industrial:not(.appearance-light) .app-logo,
+html body.theme-industrial:not(.appearance-light) .sidebar-logo,
+html body.theme-industrial:not(.appearance-light) .logo-universal,
+html body.theme-industrial:not(.appearance-light) .modules-dropdown,
+html body.theme-industrial:not(.appearance-light) .modulo-selector,
+html body.theme-industrial:not(.appearance-light) .sidebar-modules-toggle {
+  background: var(--nano-surface-strong) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+  border-color: var(--nano-border) !important;
+  color: var(--nano-text) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .btn.outline,
+html body.theme-industrial:not(.appearance-light) .btn.outlined,
+html body.theme-industrial:not(.appearance-light) button.btn.outline,
+html body.theme-industrial:not(.appearance-light) .btn-reset-filters,
+html body.theme-industrial:not(.appearance-light) [class*="btn-limpiar"],
+html body.theme-industrial:not(.appearance-light) .filters-card .btn,
+html body.theme-industrial:not(.appearance-light) .toolbar .btn.outline {
+  background: var(--nano-surface-strong) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+  color: var(--nano-text) !important;
+  border: 1px solid var(--nano-border-strong) !important;
+}
+
+/* ============================================================
+ * §31 premium.css (~7924+) — Luna “Chrome” sólido GANA a nano §2–10
+ *
+ *   - body { background: #202124 } usa shorthand → BORRA la foto del body.
+ *   - .data-table tbody td { #303134 } tiene (0,3,3) y gana a
+ *     html body.theme-industrial .data-table tbody td (0,2,4).
+ *   Este bloque al final: html body.theme-industrial:not(.appearance-light)
+ *   restaura foto + celdas vidrio (mismo orden que el bloque premium).
+ * ============================================================ */
+
+html body.theme-industrial:not(.appearance-light) {
+  background-color: transparent !important;
+  background-image: var(--nano-machine-image) !important;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+  color: var(--nano-text) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .app-frame,
+html body.theme-industrial:not(.appearance-light) main,
+html body.theme-industrial:not(.appearance-light) .main-content {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* premium-pro §10: fondo carta en tabla; transparente para ver foto vía .table-wrap */
+html body.theme-industrial:not(.appearance-light).md3-on table.data-table,
+html body.theme-industrial:not(.appearance-light) table.data-table {
+  background: transparent !important;
+  background-color: transparent !important;
+  border-color: var(--nano-border) !important;
+  color: var(--nano-text) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .data-table thead th,
+html body.theme-industrial:not(.appearance-light) table.data-table thead th {
+  background: var(--nano-surface-strong) !important;
+  background-image: none !important;
+  color: var(--nano-text) !important;
+  border-color: var(--nano-border) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .data-table tbody td,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody td {
+  background: var(--nano-table-zebra-odd) !important;
+  background-color: var(--nano-table-zebra-odd) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+  color: var(--nano-text) !important;
+  border-color: var(--nano-border) !important;
+  border-bottom-color: var(--nano-border) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .data-table tbody tr:nth-child(even) td,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:nth-child(even) td {
+  background: var(--nano-surface-subtle) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+}
+
+/* Hover Luna: idéntico al reposo (sin #eff6ff ni “transparent” que deje ver el <tr>). */
+html body.theme-industrial:not(.appearance-light) .data-table tbody tr:nth-child(odd):hover td,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:nth-child(odd):hover td {
+  background: var(--nano-table-zebra-odd) !important;
+  background-color: var(--nano-table-zebra-odd) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .data-table tbody tr:nth-child(even):hover td,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:nth-child(even):hover td {
+  background: var(--nano-surface-subtle) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .data-table tbody tr:nth-child(odd) td.th-actions,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:nth-child(odd) td.th-actions {
+  background: var(--nano-table-zebra-odd) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+  box-shadow: -4px 0 12px -4px rgba(0, 0, 0, 0.45) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .data-table tbody tr:nth-child(even) td.th-actions,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:nth-child(even) td.th-actions {
+  background: var(--nano-surface-subtle) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+  box-shadow: -4px 0 12px -4px rgba(0, 0, 0, 0.45) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .data-table tbody tr:nth-child(odd):hover td.th-actions,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:nth-child(odd):hover td.th-actions {
+  background: var(--nano-table-zebra-odd) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+  box-shadow: -4px 0 12px -4px rgba(0, 0, 0, 0.45) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .data-table tbody tr:nth-child(even):hover td.th-actions,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:nth-child(even):hover td.th-actions {
+  background: var(--nano-surface-subtle) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+  box-shadow: -4px 0 12px -4px rgba(0, 0, 0, 0.45) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .data-table tbody td:first-child,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody td:first-child {
+  color: var(--nano-accent) !important;
+}
+
+/* Caja “hint” azul claro de premium §19 → vidrio Luna */
+html body.theme-industrial:not(.appearance-light).md3-on .hint,
+html body.theme-industrial:not(.appearance-light) .hint {
+  background: var(--nano-surface-strong) !important;
+  color: var(--nano-text-soft) !important;
+  border-left: 3px solid var(--nano-accent) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+}
+
+/* ============================================================
+ * §32 Luna — sin micro-animación en filas (premium-pro translateX
+ *   + transition) y rail sin hover teal; todo negro vidrio §31.
+ * ============================================================ */
+
+html body.theme-industrial:not(.appearance-light) .data-table tbody tr,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr,
+html body.theme-industrial:not(.appearance-light) .table-wrap table.data-table tbody tr {
+  transition: none !important;
+  animation: none !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .data-table tbody tr:hover,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:hover,
+html body.theme-industrial:not(.appearance-light) .table-wrap > table tbody tr:hover {
+  transform: none !important;
+  -webkit-transform: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .data-table tbody td,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody td {
+  transition: none !important;
+}
+
+html body.theme-industrial:not(.appearance-light) aside.sidebar .tab:hover:not(.active),
+html body.theme-industrial:not(.appearance-light) aside .tabs.tabs--rail .tab:hover:not(.active) {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  transform: none !important;
+}
+
+html body.theme-industrial:not(.appearance-light) aside.sidebar .tab::before,
+html body.theme-industrial:not(.appearance-light) aside .tabs.tabs--rail .tab::before {
+  background: rgba(255, 255, 255, 0.45) !important;
+}
+
+/* ============================================================
+ * §33 — Fondo en <tr> (premium 402–412, premium-pro 853+): #fff, #f8faff,
+ *   #eff6ff, brand-50. Si las <td> son vidrio, el TR se “filtra” y parece
+ *   animación al hover. Forzar TR siempre transparente; el color va en TD (§31).
+ * ============================================================ */
+html body.theme-industrial:not(.appearance-light).md3-on table.data-table tbody tr,
+html body.theme-industrial:not(.appearance-light).md3-on table.data-table tbody tr:nth-child(odd),
+html body.theme-industrial:not(.appearance-light).md3-on table.data-table tbody tr:nth-child(even),
+html body.theme-industrial:not(.appearance-light).md3-on table.data-table tbody tr:hover,
+html body.theme-industrial:not(.appearance-light).md3-on .table-wrap > table tbody tr,
+html body.theme-industrial:not(.appearance-light).md3-on .table-wrap > table tbody tr:nth-child(odd),
+html body.theme-industrial:not(.appearance-light).md3-on .table-wrap > table tbody tr:nth-child(even),
+html body.theme-industrial:not(.appearance-light).md3-on .table-wrap > table tbody tr:hover,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:nth-child(odd),
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:nth-child(even),
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:hover,
+html body.theme-industrial:not(.appearance-light) .table-wrap > table.data-table tbody tr,
+html body.theme-industrial:not(.appearance-light) .table-wrap > table.data-table tbody tr:nth-child(odd),
+html body.theme-industrial:not(.appearance-light) .table-wrap > table.data-table tbody tr:nth-child(even),
+html body.theme-industrial:not(.appearance-light) .table-wrap > table.data-table tbody tr:hover {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+}
+
+/* ============================================================
+ * §34 — Header: mismo bloque logo que login (login-brand-logo + clip-path).
+ *   Pisa premium-pro header .header-brand img { height: 28px } y material
+ *   .header-logo--brand (ya no se usa en img tras index + applyBranding).
+ * ============================================================ */
+html body.theme-industrial header.header .header-brand .header-brand-logo-wrap.login-brand-logo {
+  margin: 0 0 0 -4px !important;
+  max-width: min(240px, 46vw) !important;
+  width: auto !important;
+  display: block !important;
+  line-height: 0 !important;
+}
+
+html body.theme-industrial header.header .header-brand .login-brand-hero-img,
+html body.theme-industrial.md3-on header.header .header-brand img,
+html body.theme-industrial header.header .header-brand img {
+  height: auto !important;
+  width: auto !important;
+  max-width: min(200px, 44vw) !important;
+  max-height: 44px !important;
+  object-fit: contain !important;
+  object-position: left center !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  clip-path: inset(4px round 16px) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Sol: sombra suave como antes en marca */
+html body.theme-industrial.appearance-light header.header .header-brand .login-brand-hero-img {
+  filter: drop-shadow(0 1px 3px rgba(15, 23, 42, 0.12)) !important;
+}
+
+/* ============================================================
+ * §36 Industrial (Sol + Luna) — UI sin “movimiento” premium.
+ *   Desactiva transiciones/animaciones/transform en controles y tarjetas.
+ *   Los spinners viven en <i class="fa-spin"> (no heredan animation del .btn).
+ * ============================================================ */
+
+html body.theme-industrial .btn,
+html body.theme-industrial button.btn,
+html body.theme-industrial a.btn,
+html body.theme-industrial header.header button,
+html body.theme-industrial .btn-icon-header,
+html body.theme-industrial .btn-header-profile,
+html body.theme-industrial #btn-header-quick-logout,
+html body.theme-industrial .btn-sidebar-rail-toggle,
+html body.theme-industrial .tabs.tabs--rail .tab,
+html body.theme-industrial .sidebar-nav .tab,
+html body.theme-industrial .header-profile-menu-item,
+html body.theme-industrial table.data-table td.th-actions .btn,
+html body.theme-industrial .row-actions-inline .btn,
+html body.theme-industrial .section-header .btn,
+html body.theme-industrial .toolbar .btn,
+html body.theme-industrial .filters-card .btn,
+html body.theme-industrial .modal-header .btn,
+html body.theme-industrial .modal-header .btn-close,
+html body.theme-industrial .notifications-panel .btn,
+html body.theme-industrial .pagination-wrap .btn,
+html body.theme-industrial nav.pagination .btn,
+html body.theme-industrial .btn-dashboard-refresh,
+html body.theme-industrial .admin-hub-card,
+html body.theme-industrial .login-submit,
+html body.theme-industrial .login-eye-btn {
+  transition: none !important;
+  animation: none !important;
+}
+
+html body.theme-industrial .btn:hover,
+html body.theme-industrial .btn:active,
+html body.theme-industrial .btn:focus,
+html body.theme-industrial button.btn:hover,
+html body.theme-industrial button.btn:active,
+html body.theme-industrial a.btn:hover,
+html body.theme-industrial a.btn:active,
+html body.theme-industrial header.header button:hover,
+html body.theme-industrial header.header button:active,
+html body.theme-industrial .btn-icon-header:hover,
+html body.theme-industrial .btn-icon-header:active,
+html body.theme-industrial .btn-header-profile:hover,
+html body.theme-industrial .btn-header-profile:active,
+html body.theme-industrial #btn-header-quick-logout:hover,
+html body.theme-industrial #btn-header-quick-logout:active,
+html body.theme-industrial .btn-sidebar-rail-toggle:hover,
+html body.theme-industrial .btn-sidebar-rail-toggle:active,
+html body.theme-industrial .tabs.tabs--rail .tab:hover,
+html body.theme-industrial .tabs.tabs--rail .tab:active,
+html body.theme-industrial table.data-table td.th-actions .btn:hover,
+html body.theme-industrial table.data-table td.th-actions .btn:active,
+html body.theme-industrial .row-actions-inline .btn:hover,
+html body.theme-industrial .row-actions-inline .btn:active,
+html body.theme-industrial .section-header .btn:hover,
+html body.theme-industrial .section-header .btn:active,
+html body.theme-industrial .toolbar .btn:hover,
+html body.theme-industrial .toolbar .btn:active,
+html body.theme-industrial .filters-card .btn:hover,
+html body.theme-industrial .filters-card .btn:active,
+html body.theme-industrial .modal-header .btn:hover,
+html body.theme-industrial .modal-header .btn:active,
+html body.theme-industrial .modal-header .btn-close:hover,
+html body.theme-industrial .modal-header .btn-close:active,
+html body.theme-industrial .notifications-panel .btn:hover,
+html body.theme-industrial .notifications-panel .btn:active,
+html body.theme-industrial .pagination-wrap .btn:hover,
+html body.theme-industrial .pagination-wrap .btn:active,
+html body.theme-industrial nav.pagination .btn:hover,
+html body.theme-industrial nav.pagination .btn:active,
+html body.theme-industrial .btn-dashboard-refresh:hover,
+html body.theme-industrial .btn-dashboard-refresh:active,
+html body.theme-industrial .admin-hub-card:hover,
+html body.theme-industrial .admin-hub-card:active,
+html body.theme-industrial .login-submit:hover,
+html body.theme-industrial .login-submit:active,
+html body.theme-industrial .login-eye-btn:hover,
+html body.theme-industrial .login-eye-btn:active {
+  transform: none !important;
+  -webkit-transform: none !important;
+}
+
+html body.theme-industrial .app-frame a:hover,
+html body.theme-industrial .app-frame a:active,
+html body.theme-industrial .panel a:hover,
+html body.theme-industrial .panel a:active {
+  transform: none !important;
+}
+
+html body.theme-industrial .dashboard-card,
+html body.theme-industrial .dashboard-score-tile,
+html body.theme-industrial [class*="dashboard-score-tile"],
+html body.theme-industrial .card,
+html body.theme-industrial .metric-card,
+html body.theme-industrial .data-card,
+html body.theme-industrial .stats-card,
+html body.theme-industrial .summary-card {
+  transition: none !important;
+  animation: none !important;
+}
+
+html body.theme-industrial .dashboard-card:hover,
+html body.theme-industrial .dashboard-score-tile:hover,
+html body.theme-industrial [class*="dashboard-score-tile"]:hover,
+html body.theme-industrial .card:hover,
+html body.theme-industrial .metric-card:hover,
+html body.theme-industrial .data-card:hover,
+html body.theme-industrial .stats-card:hover,
+html body.theme-industrial .summary-card:hover {
+  transform: none !important;
+}
+
+html body.theme-industrial table.data-table tbody tr {
+  transition: none !important;
+  animation: none !important;
+}
+
+html body.theme-industrial .toast,
+html body.theme-industrial .prem-toast,
+html body.theme-industrial [class*="toast-"],
+html body.theme-industrial .modal,
+html body.theme-industrial .modal-backdrop,
+html body.theme-industrial .md-modal,
+html body.theme-industrial .md-modal-backdrop,
+html body.theme-industrial .notifications-panel {
+  animation: none !important;
+}
+
+html body.theme-industrial .offline-banner,
+html body.theme-industrial .hint.prem-reveal,
+html body.theme-industrial .section-header {
+  animation: none !important;
+}
+
+html body.theme-industrial #main-content button {
+  transition: none !important;
+  animation: none !important;
+}
+
+html body.theme-industrial #main-content button:hover,
+html body.theme-industrial #main-content button:active {
+  transform: none !important;
+  -webkit-transform: none !important;
+}
+
+/* ============================================================
+ * §37 Industrial — Vidrio y contenedores ESTÁTICOS al hover
+ *
+ *   Problema: style.css .table-wrap:hover y body.dark-theme .table-wrap:hover
+ *   suben box-shadow/borde; premium.css .card:hover añade elevación y sombras
+ *   azuladas → al mover el mouse sobre el área negra parece otro “modo”.
+ *   Aquí forzamos el MISMO aspecto que en reposo (vars --nano-*).
+ *   También se quitan brillos premium (::after en headers, glow en .btn.primary).
+ * ============================================================ */
+
+html body.theme-industrial .table-wrap,
+html body.theme-industrial .table-wrap:hover,
+html body.theme-industrial .md-table-wrap,
+html body.theme-industrial .md-table-wrap:hover {
+  transition: none !important;
+  transform: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+  box-shadow: var(--nano-shadow) !important;
+  border-color: var(--nano-border) !important;
+  background: var(--nano-surface) !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+}
+
+html body.theme-industrial .panel,
+html body.theme-industrial .panel:hover,
+html body.theme-industrial .panel.active,
+html body.theme-industrial .panel.active:hover,
+html body.theme-industrial section.panel,
+html body.theme-industrial section.panel:hover,
+html body.theme-industrial [id^="panel-"].panel,
+html body.theme-industrial [id^="panel-"].panel:hover {
+  transition: none !important;
+  transform: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+html body.theme-industrial .filters-card,
+html body.theme-industrial .filters-card:hover,
+html body.theme-industrial .toolbar,
+html body.theme-industrial .toolbar:hover,
+html body.theme-industrial .empty-card,
+html body.theme-industrial .empty-card:hover,
+html body.theme-industrial .module-card,
+html body.theme-industrial .module-card:hover,
+html body.theme-industrial .info-card,
+html body.theme-industrial .info-card:hover,
+html body.theme-industrial .form-card,
+html body.theme-industrial .form-card:hover {
+  transition: none !important;
+  transform: none !important;
+  filter: none !important;
+  box-shadow: var(--nano-shadow) !important;
+  border-color: var(--nano-border) !important;
+}
+
+html body.theme-industrial .section-header,
+html body.theme-industrial .section-header:hover,
+html body.theme-industrial .dashboard-header,
+html body.theme-industrial .dashboard-header:hover {
+  transition: none !important;
+  transform: none !important;
+  filter: none !important;
+  box-shadow: var(--nano-shadow) !important;
+  border-color: var(--nano-border) !important;
+}
+
+/* Brillo radial premium sobre section-header */
+html body.theme-industrial .section-header::after,
+html body.theme-industrial .dashboard-header::after {
+  display: none !important;
+  content: none !important;
+  opacity: 0 !important;
+}
+
+/* Tarjetas: misma sombra en hover que en reposo (premium §49 / §113) */
+html body.theme-industrial .card,
+html body.theme-industrial .card:hover,
+html body.theme-industrial .dashboard-card,
+html body.theme-industrial .dashboard-card:hover,
+html body.theme-industrial .admin-hub-card,
+html body.theme-industrial .admin-hub-card:hover,
+html body.theme-industrial .metric-card,
+html body.theme-industrial .metric-card:hover,
+html body.theme-industrial .stats-card,
+html body.theme-industrial .stats-card:hover,
+html body.theme-industrial .summary-card,
+html body.theme-industrial .summary-card:hover {
+  transition: none !important;
+  transform: none !important;
+  filter: none !important;
+  box-shadow: var(--nano-shadow) !important;
+  border-color: var(--nano-border) !important;
+}
+
+/* Dashboard: mismo vidrio en hover (nano §6/§8 antes subían a surface-strong) */
+html body.theme-industrial .dashboard-score-tile:hover,
+html body.theme-industrial [class*="dashboard-score-tile"]:hover {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  border-color: var(--nano-border) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial .dashboard-card:hover {
+  background: var(--nano-surface) !important;
+  background-color: var(--nano-surface) !important;
+  border-color: var(--nano-border) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+/* KPI strip ítems (premium-pro hover) */
+html body.theme-industrial #panel-dashboards .dashboard-kpi-item,
+html body.theme-industrial #panel-dashboards .dashboard-kpi-item:hover,
+html body.theme-industrial .dashboard-kpi-item,
+html body.theme-industrial .dashboard-kpi-item:hover {
+  transition: none !important;
+  transform: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+}
+
+/* Resplandor bajo botones primary */
+html body.theme-industrial .btn.primary::before,
+html body.theme-industrial .btn.primary:hover::before,
+html body.theme-industrial .section-header .btn.primary::before,
+html body.theme-industrial .section-header .btn.primary:hover::before {
+  display: none !important;
+  opacity: 0 !important;
+  content: none !important;
+}
+
+/* Iconos rail/sidebar: sin escala ni brillo al hover */
+html body.theme-industrial .tab:hover i,
+html body.theme-industrial .tab:hover .fa,
+html body.theme-industrial .tab:hover .fas,
+html body.theme-industrial .tab:hover .far,
+html body.theme-industrial .tabs--rail .tab:hover i,
+html body.theme-industrial .sidebar .tab:hover i {
+  transform: none !important;
+  filter: none !important;
+  transition: none !important;
+}
+
+/* FAB / widget IA: sin “pop” */
+html body.theme-industrial .ai-fab,
+html body.theme-industrial .ai-fab:hover,
+html body.theme-industrial .ai-widget-wrap,
+html body.theme-industrial .ai-widget-wrap:hover {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+/* ============================================================
+ * §39 Industrial + md3-on — micro-movimiento que aún ganaba premium
+ *
+ *   body.md3-on ... encadena más clases (p. ej. .tabs.tabs--rail)
+ *   y vencía a html body.theme-industrial ... sin .md3-on en body.
+ *   Aquí el ancla es html body.theme-industrial.md3-on (Luna y Sol).
+ *
+ *   Cubre: filas tabla scale(1.003), tabs translateX + iconos,
+ *   .btn.primary translateY, .dashboard-card-action, .fab, empty-icon spin.
+ * ============================================================ */
+
+/* Filas: premium §58 — transform + sombra al hover */
+html body.theme-industrial.md3-on table.data-table tbody tr:hover,
+html body.theme-industrial.md3-on .md-table tbody tr:hover,
+html body.theme-industrial.md3-on .table-wrap > table tbody tr:hover {
+  transform: none !important;
+  -webkit-transform: none !important;
+  box-shadow: none !important;
+  /* No forzar position/z-index en <tr>: en WebKit/Chromium puede romper sticky
+     en td.th-actions y hacer que los botones “no respondan” al clic. */
+}
+
+/* Columna acciones siempre por encima del resto de la fila (clics fiables) */
+html body.theme-industrial.md3-on table.data-table tbody td.th-actions,
+html body.theme-industrial.md3-on .data-table tbody td.th-actions {
+  z-index: 4 !important;
+  position: sticky !important;
+}
+
+html body.theme-industrial.md3-on table.data-table tbody tr,
+html body.theme-industrial.md3-on .md-table tbody tr,
+html body.theme-industrial.md3-on .table-wrap > table tbody tr {
+  animation: none !important;
+}
+
+/* Rail / sidebar: translateX en .active + iconos scale/rotate al hover */
+html body.theme-industrial.md3-on .tabs.tabs--rail .tab,
+html body.theme-industrial.md3-on .tabs.tabs--rail .tab:hover,
+html body.theme-industrial.md3-on .tabs.tabs--rail .tab.active,
+html body.theme-industrial.md3-on .sidebar-nav .tab,
+html body.theme-industrial.md3-on .sidebar-nav .tab:hover,
+html body.theme-industrial.md3-on .sidebar-nav .tab.active {
+  transition: none !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+}
+
+html body.theme-industrial.md3-on .tabs.tabs--rail .tab i,
+html body.theme-industrial.md3-on .tabs.tabs--rail .tab:hover i,
+html body.theme-industrial.md3-on .tabs.tabs--rail .tab.active i,
+html body.theme-industrial.md3-on .sidebar-nav .tab i,
+html body.theme-industrial.md3-on .sidebar-nav .tab:hover i,
+html body.theme-industrial.md3-on .sidebar-nav .tab.active i {
+  transform: none !important;
+  -webkit-transform: none !important;
+  transition: none !important;
+}
+
+/* components/buttons.css — scale(.98) en :active */
+html body.theme-industrial.md3-on .btn:active,
+html body.theme-industrial.md3-on .btn:focus:active {
+  transform: none !important;
+  -webkit-transform: none !important;
+}
+
+/* premium §8 y §57 — translateY en filled / primary */
+html body.theme-industrial.md3-on .btn.primary:hover,
+html body.theme-industrial.md3-on .btn[class~="primary"]:hover,
+html body.theme-industrial.md3-on .btn.danger:not(.outline):not(.outlined):hover,
+html body.theme-industrial.md3-on .btn.success:hover,
+html body.theme-industrial.md3-on .btn:not(.outline):not(.outlined):not(.text):not(.tonal):not(.danger):not(.success):not(.warning):not(.elevated):not(.small):not([class*="sidebar"]):hover {
+  transform: none !important;
+  -webkit-transform: none !important;
+}
+
+html body.theme-industrial.md3-on .dashboard-card-action,
+html body.theme-industrial.md3-on .dashboard-card-action:hover,
+html body.theme-industrial.md3-on .dashboard-card-action:active {
+  transition: none !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+}
+
+html body.theme-industrial.md3-on .fab,
+html body.theme-industrial.md3-on .fab:hover,
+html body.theme-industrial.md3-on .fab:active {
+  transition: none !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+}
+
+/* premium empty-card — anillo dashed animado */
+html body.theme-industrial.md3-on .empty-card .empty-icon::after {
+  animation: none !important;
+}
+
+/* Sol: material.css score tiles / dashboard cards translateY hover */
+html body.theme-industrial.appearance-light.md3-on .dashboard-score-tile:hover,
+html body.theme-industrial.appearance-light.md3-on .dashboard-card:hover {
+  transform: none !important;
+  -webkit-transform: none !important;
+  transition: none !important;
+}
+
+/* Iconos header / pestañas genéricas (style.css) */
+html body.theme-industrial.md3-on .tab:active,
+html body.theme-industrial.md3-on .close:active {
+  transform: none !important;
+  -webkit-transform: none !important;
+}
+
+html body.theme-industrial.md3-on .prem-bulk-actions button,
+html body.theme-industrial.md3-on .prem-bulk-actions button:hover,
+html body.theme-industrial.md3-on .prem-bulk-actions button:active {
+  transition: none !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+}
+
+/* style.css base — .btn.primary:hover translateY, .btn-icon-header scale */
+html body.theme-industrial.md3-on .btn:hover,
+html body.theme-industrial.md3-on .btn.primary:hover,
+html body.theme-industrial.md3-on .btn.primary:active {
+  transform: none !important;
+  -webkit-transform: none !important;
+}
+
+html body.theme-industrial.md3-on .btn-icon-header:hover,
+html body.theme-industrial.md3-on .btn-icon-header:active,
+html body.theme-industrial.md3-on .btn-icon-header.is-active {
+  transform: none !important;
+  -webkit-transform: none !important;
+}
+
+/* Capa ::before MD3 en botones — sin transición de opacidad al pasar el mouse */
+html body.theme-industrial.md3-on .btn::before {
+  transition: none !important;
+}
+
+/* Botones nativos e inputs envío (no pestañas ni fa-spin) */
+html body.theme-industrial.md3-on button:not(.fa-spin):not(.tab):hover,
+html body.theme-industrial.md3-on button:not(.fa-spin):not(.tab):active,
+html body.theme-industrial.md3-on input[type="submit"]:hover,
+html body.theme-industrial.md3-on input[type="submit"]:active,
+html body.theme-industrial.md3-on input[type="button"]:hover,
+html body.theme-industrial.md3-on input[type="button"]:active,
+html body.theme-industrial.md3-on input[type="reset"]:hover,
+html body.theme-industrial.md3-on input[type="reset"]:active {
+  transform: none !important;
+  -webkit-transform: none !important;
+}
+
+html body.theme-industrial.md3-on button:not(.fa-spin):not(.tab),
+html body.theme-industrial.md3-on input[type="submit"],
+html body.theme-industrial.md3-on input[type="button"],
+html body.theme-industrial.md3-on input[type="reset"] {
+  transition: none !important;
+}
+
+/* Premium UI suelto */
+html body.theme-industrial.md3-on .prem-views-btn:hover,
+html body.theme-industrial.md3-on .prem-views-btn:active,
+html body.theme-industrial.md3-on .prem-hamburger:hover,
+html body.theme-industrial.md3-on .prem-shortcuts-close-x:hover,
+html body.theme-industrial.md3-on .prem-toast-close:hover {
+  transform: none !important;
+  -webkit-transform: none !important;
+  transition: none !important;
+}
+
+html body.theme-industrial.md3-on .revision-maq-card:hover {
+  transform: none !important;
+  -webkit-transform: none !important;
+}
+
+html body.theme-industrial.md3-on .chip .chip-remove:hover,
+html body.theme-industrial.md3-on .md-chip .chip-remove:hover {
+  transform: none !important;
+}
+
+/* ============================================================
+ * §40 Industrial — “modo entrega”: sin parpadeo al hover.
+ *   Antes: vars nano (rgba ~14%) vs reposo premium-pro #303134 / #292a2d
+ *   → el hover se veía más “hueco” y parpadeaba. Ahora: MISMO color
+ *   sólido que reposo (premium-pro v5 §4003–4011) + sin backdrop en <td>.
+ *   Sol: #fff / #fafbfc (premium.css zebra/hover legacy).
+ * ============================================================ */
+
+/* Luna — filas impares / hover = #303134 */
+html body.theme-industrial.md3-on:not(.appearance-light) table.data-table tbody tr:nth-child(odd):hover td,
+html body.theme-industrial.md3-on:not(.appearance-light) .data-table tbody tr:nth-child(odd):hover td,
+html body.theme-industrial.md3-on:not(.appearance-light) table.data-table tbody tr:nth-child(odd):hover td.th-actions,
+html body.theme-industrial.md3-on:not(.appearance-light) .data-table tbody tr:nth-child(odd):hover td.th-actions {
+  background: #303134 !important;
+  background-color: #303134 !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Luna — filas pares / hover = #292a2d */
+html body.theme-industrial.md3-on:not(.appearance-light) table.data-table tbody tr:nth-child(even):hover td,
+html body.theme-industrial.md3-on:not(.appearance-light) .data-table tbody tr:nth-child(even):hover td,
+html body.theme-industrial.md3-on:not(.appearance-light) table.data-table tbody tr:nth-child(even):hover td.th-actions,
+html body.theme-industrial.md3-on:not(.appearance-light) .data-table tbody tr:nth-child(even):hover td.th-actions {
+  background: #292a2d !important;
+  background-color: #292a2d !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html body.theme-industrial.md3-on:not(.appearance-light) table.data-table tbody tr:hover td,
+html body.theme-industrial.md3-on:not(.appearance-light) .data-table tbody tr:hover td,
+html body.theme-industrial.md3-on:not(.appearance-light) table.data-table tbody tr:hover td.th-actions,
+html body.theme-industrial.md3-on:not(.appearance-light) .data-table tbody tr:hover td.th-actions {
+  transition: none !important;
+  box-shadow: none !important;
+}
+
+/* Sol — mismo criterio: hover = mismo que reposo (#fff / #fafbfc, sin #eff6ff) */
+html body.theme-industrial.md3-on.appearance-light table.data-table tbody tr:nth-child(odd):hover td,
+html body.theme-industrial.md3-on.appearance-light .data-table tbody tr:nth-child(odd):hover td,
+html body.theme-industrial.md3-on.appearance-light table.data-table tbody tr:nth-child(odd):hover td.th-actions,
+html body.theme-industrial.md3-on.appearance-light .data-table tbody tr:nth-child(odd):hover td.th-actions {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light table.data-table tbody tr:nth-child(even):hover td,
+html body.theme-industrial.md3-on.appearance-light .data-table tbody tr:nth-child(even):hover td,
+html body.theme-industrial.md3-on.appearance-light table.data-table tbody tr:nth-child(even):hover td.th-actions,
+html body.theme-industrial.md3-on.appearance-light .data-table tbody tr:nth-child(even):hover td.th-actions {
+  background: #fafbfc !important;
+  background-color: #fafbfc !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light table.data-table tbody tr:hover td,
+html body.theme-industrial.md3-on.appearance-light .data-table tbody tr:hover td,
+html body.theme-industrial.md3-on.appearance-light table.data-table tbody tr:hover td.th-actions,
+html body.theme-industrial.md3-on.appearance-light .data-table tbody tr:hover td.th-actions {
+  transition: none !important;
+  box-shadow: none !important;
+}
+
+/* Cabecera — anula premium ~6725–6771 y ~6788–6851 */
+html body.theme-industrial.md3-on header.header #btn-theme-toggle,
+html body.theme-industrial.md3-on header.header #btn-theme-toggle:hover,
+html body.theme-industrial.md3-on header.header #btn-theme-toggle:active {
+  transition: none !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+}
+
+html body.theme-industrial.md3-on header.header #btn-notifications,
+html body.theme-industrial.md3-on header.header #btn-notifications:hover,
+html body.theme-industrial.md3-on header.header #btn-notifications:active {
+  transition: none !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+}
+
+html body.theme-industrial.md3-on header.header .btn-header-profile,
+html body.theme-industrial.md3-on header.header .btn-header-profile:hover,
+html body.theme-industrial.md3-on header.header .btn-header-profile:active,
+html body.theme-industrial.md3-on header.header .btn-header-profile[aria-expanded='true'] {
+  transition: none !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  filter: none !important;
+}
+
+html body.theme-industrial.md3-on header.header .btn-header-profile::after {
+  transition: none !important;
+}
+
+html body.theme-industrial.md3-on header.header .btn-header-profile[aria-expanded='true']::after {
+  transform: rotate(180deg) !important;
+}
+
+html body.theme-industrial.md3-on header.header .btn-icon-header,
+html body.theme-industrial.md3-on header.header .btn-icon-header:hover,
+html body.theme-industrial.md3-on header.header .btn-icon-header:active {
+  transition: none !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+}
+
+html body.theme-industrial.md3-on header.header #btn-notifications i,
+html body.theme-industrial.md3-on header.header #btn-theme-toggle i,
+html body.theme-industrial.md3-on header.header .btn-icon-header i {
+  transition: none !important;
+  transform: none !important;
+}
+
+/* Botones “ojo” / vista previa en tablas (style.css scale+translateY).
+ * [class*="btn-preview"] cubre `btn … btn-preview-cliente` (no solo class^=btn-preview-). */
+html body.theme-industrial.md3-on [class*="btn-preview"],
+html body.theme-industrial.md3-on [class*="btn-preview"]:hover,
+html body.theme-industrial.md3-on [class*="btn-preview"]:active {
+  transition: none !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  box-shadow: none !important;
+}
+
+html body.theme-industrial.md3-on .preview-card {
+  animation: none !important;
+}
+
+/* Vista previa / modales: por encima de header-profile .admin-hub-overlay (2147483500) */
+html body.theme-industrial.md3-on #modal,
+html body.theme-industrial.md3-on #modal-stack,
+html body.theme-industrial.md3-on #confirm-modal {
+  z-index: 2147483600 !important;
+}
+
+html body.theme-industrial.md3-on #modal .modal-box,
+html body.theme-industrial.md3-on #modal-stack .modal-box,
+html body.theme-industrial.md3-on #confirm-modal .modal-box {
+  z-index: 2147483601 !important;
+  position: relative !important;
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+  visibility: visible !important;
+}
+
+html body.theme-industrial.md3-on #modal.modal,
+html body.theme-industrial.md3-on #modal-stack.modal {
+  animation: none !important;
+}
+
+
+/* ============================================================
+ * §41 SOL (md3 + appearance-light): material.css fuerza gradiente
+ * azul sólido en .login-brand-panel (mayor especificidad que §16).
+ * Pisamos con vidrio sobre la misma foto industrial que Luna.
+ * ============================================================ */
+
+/* Con overlay de login visible, login-neutral.css + #login-overlay mandan (UI neutra). */
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) .login-brand-panel {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.12) 0%, rgba(32, 33, 36, 0.08) 100%) !important;
+  background-image: none !important;
+  backdrop-filter: blur(8px) saturate(175%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(175%) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.18) !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) .login-brand-panel::before,
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) .login-brand-panel::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) .login-brand-panel .login-brand-title,
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) .login-brand-panel h1,
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) .login-brand-panel h2 {
+  color: #ffffff !important;
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.75),
+    0 0 24px rgba(0, 0, 0, 0.55),
+    0 1px 2px rgba(0, 0, 0, 0.9) !important;
+  font-weight: 800 !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) .login-brand-panel .login-brand-tagline,
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) .login-brand-panel .login-brand-subtitle,
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) .login-brand-panel p {
+  color: #e8f4ff !important;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.65), 0 0 14px rgba(0, 0, 0, 0.4) !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) .login-brand-panel .login-badge,
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) .login-brand-panel .login-brand-badges .login-badge {
+  background: rgba(255, 255, 255, 0.16) !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  color: #ffffff !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* §37 Fix 2026-04-27 — Avatar (monito): quitar ::before duplicado (se perdía en hover con filter/herencia).
+   Usar solo el <svg> del HTML. Menú cuenta por encima del contenido y header sin recortar dropdown. */
+html body.md3-on header.header,
+html body.theme-industrial header.header,
+html body.theme-industrial.md3-on header.header {
+  overflow: visible !important;
+}
+
+html body header.header .btn-header-profile::before {
+  content: none !important;
+  display: none !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: none !important;
+  background-image: none !important;
+  flex: 0 0 0 !important;
+}
+
+html body header.header .btn-header-profile > svg {
+  display: block !important;
+  width: 22px !important;
+  height: 22px !important;
+  flex-shrink: 0 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  color: inherit !important;
+}
+
+#header-profile-menu.header-profile-menu {
+  z-index: 100002 !important;
+}
+

@@ -1,0 +1,11 @@
+Sync local → GitHub (commit nuevo visible).
+
+Ruta local (workspace):
+  Cursor IA / Proyectos / David Proyecto / sistema-cotizacion-web / sistema-cotizacion-web
+
+Remoto:
+  https://github.com/iKingRagnar/sistema-cotizacion-web (rama main)
+
+Marcador escrito: 2026-05-05 10:17 -06:00
+
+Comprueba en el repo la fecha del último commit en main y en Render tras el deploy.

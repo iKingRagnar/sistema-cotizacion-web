@@ -1,0 +1,249 @@
+/**
+ * portal-overlays.css — Cargar AL FINAL (después de nano-fondo).
+ *
+ * Los nodos #header-profile-menu y #notifications-panel se mueven a document.body
+ * (portal). Las reglas que exigen header.header .header-profile-menu dejan de aplicar.
+ * Este archivo fija contraste Sol/Luna solo con #id + clase de tema en body.
+ */
+
+/* ─── Z-index por encima de cabecera, modales típicos y capas nano ─── */
+html body.theme-industrial #header-profile-menu.header-profile-menu:not(.hidden),
+html body.theme-industrial #notifications-panel.notifications-panel:not(.hidden) {
+  z-index: 200100 !important;
+  isolation: isolate !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+/* ═══════════ SOL — panel notificaciones (texto legible, sin depender del portal) ═══ */
+html body.theme-industrial.appearance-light #notifications-panel.notifications-panel,
+html body.theme-industrial.appearance-light #notifications-panel {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html body.theme-industrial.appearance-light #notifications-panel .notifications-header,
+html body.theme-industrial.appearance-light #notifications-panel .notifications-header strong,
+html body.theme-industrial.appearance-light #notifications-panel .notifications-tools,
+html body.theme-industrial.appearance-light #notifications-panel .notifications-list,
+html body.theme-industrial.appearance-light #notifications-panel #notifications-list,
+html body.theme-industrial.appearance-light #notifications-panel .notification-item,
+html body.theme-industrial.appearance-light #notifications-panel .notification-item span,
+html body.theme-industrial.appearance-light #notifications-panel label {
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+html body.theme-industrial.appearance-light #notifications-panel .notification-item .meta {
+  color: #5f6368 !important;
+  -webkit-text-fill-color: #5f6368 !important;
+}
+
+html body.theme-industrial.appearance-light #notifications-panel select,
+html body.theme-industrial.appearance-light #notifications-panel input.notifications-date,
+html body.theme-industrial.appearance-light #notifications-panel input[type="date"] {
+  background: #ffffff !important;
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+  border: 1px solid #dadce0 !important;
+  color-scheme: light !important;
+}
+
+html body.theme-industrial.appearance-light #notifications-panel button.btn,
+html body.theme-industrial.appearance-light #notifications-panel .btn {
+  background: #ffffff !important;
+  color: #3c4043 !important;
+  -webkit-text-fill-color: #3c4043 !important;
+  border: 1px solid #dadce0 !important;
+}
+
+html body.theme-industrial.appearance-light #notifications-panel button.btn:hover,
+html body.theme-industrial.appearance-light #notifications-panel .btn:hover {
+  background: #f1f3f4 !important;
+  border-color: #1a73e8 !important;
+  color: #1a73e8 !important;
+  -webkit-text-fill-color: #1a73e8 !important;
+}
+
+/* ═══════════ LUNA — menú avatar (items, secciones, iconos) ═══ */
+html body.theme-industrial:not(.appearance-light) #header-profile-menu.header-profile-menu,
+html body.theme-industrial:not(.appearance-light) #header-profile-menu {
+  background: #303134 !important;
+  background-color: #303134 !important;
+  background-image: none !important;
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+  border: 1px solid #3c4043 !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #header-profile-menu .header-profile-menu-user,
+html body.theme-industrial:not(.appearance-light) #header-profile-menu .header-profile-menu-user strong,
+html body.theme-industrial:not(.appearance-light) #header-profile-menu .header-profile-menu-meta,
+html body.theme-industrial:not(.appearance-light) #header-profile-menu .header-profile-menu-section,
+html body.theme-industrial:not(.appearance-light) #header-profile-menu .header-profile-menu-item,
+html body.theme-industrial:not(.appearance-light) #header-profile-menu .header-profile-menu-item span,
+html body.theme-industrial:not(.appearance-light) #header-profile-menu .header-profile-menu-item i {
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #header-profile-menu .header-profile-menu-section {
+  color: #9aa0a6 !important;
+  -webkit-text-fill-color: #9aa0a6 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #header-profile-menu .header-profile-menu-meta {
+  color: #9aa0a6 !important;
+  -webkit-text-fill-color: #9aa0a6 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #header-profile-menu .header-profile-menu-item:hover,
+html body.theme-industrial:not(.appearance-light) #header-profile-menu .header-profile-menu-item:focus {
+  background: #3c4043 !important;
+  color: #f1f3f4 !important;
+  -webkit-text-fill-color: #f1f3f4 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #header-profile-menu .header-profile-menu-item:hover span,
+html body.theme-industrial:not(.appearance-light) #header-profile-menu .header-profile-menu-item:hover i {
+  color: #f1f3f4 !important;
+  -webkit-text-fill-color: #f1f3f4 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #header-profile-menu .header-profile-menu-item.danger,
+html body.theme-industrial:not(.appearance-light) #header-profile-menu .header-profile-menu-item.danger span,
+html body.theme-industrial:not(.appearance-light) #header-profile-menu .header-profile-menu-item.danger i {
+  color: #f28b82 !important;
+  -webkit-text-fill-color: #f28b82 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #header-profile-menu .header-profile-menu-item.danger:hover {
+  background: rgba(242, 139, 130, 0.12) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #header-profile-menu .header-profile-menu-divider {
+  background: #3c4043 !important;
+  border-color: #3c4043 !important;
+}
+
+/* ═══════════ SOL — menú avatar (refuerzo si alguna hoja previa falló) ═══ */
+html body.theme-industrial.appearance-light #header-profile-menu.header-profile-menu,
+html body.theme-industrial.appearance-light #header-profile-menu {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #202124 !important;
+  -webkit-text-fill-color: #202124 !important;
+  border: 1px solid #dadce0 !important;
+  box-shadow: 0 12px 36px rgba(60, 64, 67, 0.22) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item span,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item i {
+  color: #202124 !important;
+  -webkit-text-fill-color: #202124 !important;
+}
+
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-user,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-user strong,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-meta,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-section,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-divider {
+  color: #202124 !important;
+  -webkit-text-fill-color: #202124 !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-section {
+  color: #5f6368 !important;
+  -webkit-text-fill-color: #5f6368 !important;
+}
+
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-meta {
+  color: #5f6368 !important;
+  -webkit-text-fill-color: #5f6368 !important;
+}
+
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item:hover,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item:focus {
+  background: #f1f3f4 !important;
+  color: #202124 !important;
+  -webkit-text-fill-color: #202124 !important;
+}
+
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item:hover span,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item:hover i {
+  color: #202124 !important;
+  -webkit-text-fill-color: #202124 !important;
+}
+
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item.danger,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item.danger span,
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-item.danger i {
+  color: #c5221f !important;
+  -webkit-text-fill-color: #c5221f !important;
+}
+
+html body.theme-industrial.appearance-light #header-profile-menu .header-profile-menu-divider {
+  background: #e8eaed !important;
+  border-color: #e8eaed !important;
+}
+
+/* ═══════════ LUNA — notificaciones (refuerzo simétrico) ═══ */
+html body.theme-industrial:not(.appearance-light) #notifications-panel.notifications-panel,
+html body.theme-industrial:not(.appearance-light) #notifications-panel {
+  background: #303134 !important;
+  background-color: #303134 !important;
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+  border: 1px solid #3c4043 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #notifications-panel .notifications-header strong,
+html body.theme-industrial:not(.appearance-light) #notifications-panel .notifications-list,
+html body.theme-industrial:not(.appearance-light) #notifications-panel #notifications-list,
+html body.theme-industrial:not(.appearance-light) #notifications-panel .notification-item {
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #notifications-panel .notification-item .meta {
+  color: #9aa0a6 !important;
+  -webkit-text-fill-color: #9aa0a6 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #notifications-panel select,
+html body.theme-industrial:not(.appearance-light) #notifications-panel input[type="date"] {
+  background: #3c4043 !important;
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+  border: 1px solid #5f6368 !important;
+  color-scheme: dark !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #notifications-panel button.btn,
+html body.theme-industrial:not(.appearance-light) #notifications-panel .btn {
+  background: #3c4043 !important;
+  color: #e8eaed !important;
+  border: 1px solid #5f6368 !important;
+}

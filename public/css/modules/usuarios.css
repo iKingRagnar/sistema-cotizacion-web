@@ -1,0 +1,287 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   MÓDULO USUARIOS — Panel de usuarios y permisos rediseñado MD3
+   Mapa: Nuevo usuario (card) + Permisos por pestaña/columna (card grande) + Lista de usuarios
+   ════════════════════════════════════════════════════════════════════════════ */
+
+body.md3-on #panel-usuarios {
+  display: none;
+  background: var(--md-sys-color-surface);
+}
+body.md3-on #panel-usuarios.active {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--md-sys-spacing-6);
+  padding: 0;
+}
+
+/* ── Tarjeta "introductoria" (solo admin puede crear) ───────────────── */
+body.md3-on #panel-usuarios > h2:first-of-type,
+body.md3-on #panel-usuarios .section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-3);
+  font: var(--md-sys-typescale-headline-medium);
+  color: var(--md-sys-color-on-surface);
+  margin: 0 0 var(--md-sys-spacing-2);
+  letter-spacing: -0.25px;
+}
+body.md3-on #panel-usuarios > h2:first-of-type::before,
+body.md3-on #panel-usuarios .section-title::before {
+  content: '\e7fd'; /* material symbols "group" */
+  font-family: 'Material Symbols Rounded';
+  font-size: 32px;
+  color: var(--md-sys-color-primary);
+  font-variation-settings: 'FILL' 1, 'wght' 500;
+}
+
+body.md3-on #panel-usuarios > p {
+  font: var(--md-sys-typescale-body-medium);
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.6;
+  margin: 0 0 var(--md-sys-spacing-6);
+  padding: var(--md-sys-spacing-4);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border-radius: var(--md-sys-shape-corner-medium);
+  border: none;
+}
+body.md3-on #panel-usuarios > p strong {
+  color: var(--md-sys-color-on-primary-container);
+  font-weight: 600;
+}
+
+/* ── Card "Nuevo usuario" ───────────────────────────────────────────── */
+body.md3-on #panel-usuarios .usuarios-form,
+body.md3-on #panel-usuarios .card-nuevo-usuario,
+body.md3-on #panel-usuarios > section:has(> h3:first-child:nth-last-child(-n+4)) {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-large);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  padding: var(--md-sys-spacing-6);
+  box-shadow: none;
+  transition: box-shadow var(--md-sys-motion-duration-short3);
+}
+body.md3-on #panel-usuarios .usuarios-form:hover { box-shadow: var(--md-sys-elevation-level1); }
+
+body.md3-on #panel-usuarios .usuarios-form h3 {
+  font: var(--md-sys-typescale-title-large);
+  color: var(--md-sys-color-on-surface);
+  margin: 0 0 var(--md-sys-spacing-4);
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-2);
+}
+
+/* ── Form dentro de Nuevo Usuario ───────────────────────────────────── */
+body.md3-on #panel-usuarios .form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--md-sys-spacing-4);
+  margin-bottom: var(--md-sys-spacing-4);
+}
+
+/* ── Card "Permisos por pestaña y columnas" ─────────────────────────── */
+body.md3-on #panel-usuarios .permisos-panel,
+body.md3-on #panel-usuarios .card-permisos {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-large);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  padding: var(--md-sys-spacing-6);
+}
+
+body.md3-on #panel-usuarios .permisos-panel h3 {
+  font: var(--md-sys-typescale-title-large);
+  color: var(--md-sys-color-on-surface);
+  margin: 0 0 var(--md-sys-spacing-4);
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-2);
+}
+
+/* Contenedor de checkboxes agrupados como chip-list */
+body.md3-on #panel-usuarios .permisos-grupo,
+body.md3-on #panel-usuarios .permisos-pestanas,
+body.md3-on #panel-usuarios .permisos-cols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--md-sys-spacing-2);
+  padding: var(--md-sys-spacing-3) 0;
+}
+
+body.md3-on #panel-usuarios .permiso-item,
+body.md3-on #panel-usuarios label.checkbox,
+body.md3-on #panel-usuarios .permisos-panel label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-2);
+  padding: var(--md-sys-spacing-2) var(--md-sys-spacing-3);
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface-variant);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-full);
+  font: var(--md-sys-typescale-label-large);
+  cursor: pointer;
+  transition: background var(--md-sys-motion-duration-short3), border-color var(--md-sys-motion-duration-short3), color var(--md-sys-motion-duration-short3);
+  min-height: 34px;
+  user-select: none;
+}
+
+body.md3-on #panel-usuarios .permiso-item:hover,
+body.md3-on #panel-usuarios label.checkbox:hover,
+body.md3-on #panel-usuarios .permisos-panel label:hover {
+  background: var(--md-sys-color-surface-container-high);
+  border-color: var(--md-sys-color-outline);
+}
+
+body.md3-on #panel-usuarios .permiso-item:has(input:checked),
+body.md3-on #panel-usuarios label.checkbox:has(input:checked),
+body.md3-on #panel-usuarios .permisos-panel label:has(input:checked) {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border-color: var(--md-sys-color-primary-container);
+}
+
+body.md3-on #panel-usuarios .permiso-item input[type="checkbox"],
+body.md3-on #panel-usuarios .permisos-panel input[type="checkbox"] {
+  margin: 0;
+}
+
+/* ── Select de usuario dentro de permisos ───────────────────────────── */
+body.md3-on #panel-usuarios .permisos-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--md-sys-spacing-3);
+  align-items: flex-end;
+  margin-bottom: var(--md-sys-spacing-5);
+  padding-bottom: var(--md-sys-spacing-4);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+body.md3-on #panel-usuarios .permisos-header > .form-group {
+  flex: 1;
+  min-width: 240px;
+  margin-bottom: 0;
+}
+
+body.md3-on #panel-usuarios .permisos-header > .actions,
+body.md3-on #panel-usuarios .permisos-header > .btn {
+  flex-shrink: 0;
+}
+
+/* ── Sub-sección (Pestañas visibles / Columnas por pestaña) ─────────── */
+body.md3-on #panel-usuarios .permisos-seccion {
+  margin-top: var(--md-sys-spacing-5);
+  padding-top: var(--md-sys-spacing-4);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+body.md3-on #panel-usuarios .permisos-seccion h4,
+body.md3-on #panel-usuarios .permisos-seccion > strong {
+  font: var(--md-sys-typescale-title-medium);
+  color: var(--md-sys-color-on-surface);
+  margin: 0 0 var(--md-sys-spacing-3);
+  display: block;
+}
+
+body.md3-on #panel-usuarios .permisos-hint {
+  font: var(--md-sys-typescale-body-small);
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0 0 var(--md-sys-spacing-3);
+}
+
+/* ── Lista de usuarios (tabla) ──────────────────────────────────────── */
+body.md3-on #panel-usuarios .usuarios-lista,
+body.md3-on #panel-usuarios .app-users-table-wrap {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-large);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  overflow: hidden;
+}
+
+body.md3-on #panel-usuarios .app-users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--md-sys-typescale-body-medium);
+}
+
+body.md3-on #panel-usuarios .app-users-table thead {
+  background: var(--md-sys-color-surface-container);
+}
+
+body.md3-on #panel-usuarios .app-users-table th {
+  padding: var(--md-sys-spacing-3) var(--md-sys-spacing-4);
+  text-align: left;
+  font: var(--md-sys-typescale-label-large);
+  color: var(--md-sys-color-on-surface);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+body.md3-on #panel-usuarios .app-users-table td {
+  padding: var(--md-sys-spacing-3) var(--md-sys-spacing-4);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-on-surface);
+}
+
+body.md3-on #panel-usuarios .app-users-table tr:hover td {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 4%, transparent);
+}
+
+/* ── Badge de rol dentro de tabla ───────────────────────────────────── */
+body.md3-on #panel-usuarios .rol-admin {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  padding: 2px 10px;
+  border-radius: var(--md-sys-shape-corner-full);
+  font: var(--md-sys-typescale-label-medium);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-1);
+}
+body.md3-on #panel-usuarios .rol-admin::before { content: '\e32a'; font-family: 'Material Symbols Rounded'; font-size: 14px; font-variation-settings: 'FILL' 1; }
+
+body.md3-on #panel-usuarios .rol-usuario {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+  padding: 2px 10px;
+  border-radius: var(--md-sys-shape-corner-full);
+  font: var(--md-sys-typescale-label-medium);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-1);
+}
+
+body.md3-on #panel-usuarios .rol-consulta {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface-variant);
+  padding: 2px 10px;
+  border-radius: var(--md-sys-shape-corner-full);
+  font: var(--md-sys-typescale-label-medium);
+}
+
+/* ── Schedules (reportes programados) ───────────────────────────────── */
+body.md3-on #panel-usuarios .schedules-block,
+body.md3-on #panel-usuarios .report-schedules {
+  margin-top: var(--md-sys-spacing-6);
+  padding-top: var(--md-sys-spacing-4);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+body.md3-on #panel-usuarios .schedule-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--md-sys-spacing-3);
+  padding: var(--md-sys-spacing-3) var(--md-sys-spacing-4);
+  background: var(--md-sys-color-surface-container);
+  border-radius: var(--md-sys-shape-corner-medium);
+  margin-bottom: var(--md-sys-spacing-2);
+}
+body.md3-on #panel-usuarios .schedule-item .freq {
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+}
+body.md3-on #panel-usuarios .schedule-item .to {
+  font: var(--md-sys-typescale-body-small);
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-ref-typeface-mono);
+}

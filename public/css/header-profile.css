@@ -1,0 +1,442 @@
+/**
+ * Perfil (monito) + menú + panel administración a pantalla completa.
+ */
+
+.header-profile-wrap {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.header-profile-wrap.hidden {
+  display: none !important;
+}
+
+/* Nombre/rol en barra: solo para lectores de pantalla (evita hueco “arriba” junto al título) */
+.header-profile-meta.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.header-profile-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.header-profile-role {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.72);
+  letter-spacing: 0.03em;
+}
+
+.btn-header-profile {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-header-profile:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.btn-header-profile[aria-expanded='true'] {
+  background: rgba(15, 118, 110, 0.35);
+  border-color: rgba(45, 212, 191, 0.55);
+  box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.25);
+}
+
+.btn-header-profile svg {
+  display: block;
+}
+
+/* Fix 2026-04-23: position fixed (no absolute) para escapar del
+   overflow:hidden que tiene .header en premium.css. Antes el menu se abria
+   pero quedaba RECORTADO por el header => parecia que "no pasa nada"
+   al hacer click en el avatar. Top/right se calculan via JS al abrir
+   (toggleHeaderProfileMenu en app.js) usando getBoundingClientRect del boton. */
+.header-profile-menu {
+  position: fixed;
+  top: 64px; /* fallback; JS recalcula al abrir segun el boton real */
+  right: 16px;
+  min-width: 260px;
+  max-width: min(320px, 92vw);
+  padding: 0.5rem 0;
+  border-radius: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  background: #fff;
+  box-shadow: 0 20px 50px rgba(12, 18, 34, 0.18);
+  z-index: 15000;
+}
+
+.header-profile-menu.hidden {
+  display: none !important;
+}
+
+.header-profile-menu-user {
+  padding: 0.65rem 1rem 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.header-profile-menu-user strong {
+  display: block;
+  font-size: 0.95rem;
+  color: #0c1222;
+  font-weight: 700;
+}
+
+.header-profile-menu-meta {
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.header-profile-menu-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1rem;
+  border: none;
+  background: transparent;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #0c1222;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.header-profile-menu-item:hover {
+  background: #f1f5f9;
+}
+
+.header-profile-menu-item.danger {
+  color: #b91c1c;
+}
+
+.header-profile-menu-item.danger:hover {
+  background: #fef2f2;
+}
+
+body.dark-theme .header-profile-menu {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-theme .header-profile-menu-user {
+  border-bottom-color: #334155;
+}
+
+body.dark-theme .header-profile-menu-user strong {
+  color: #f8fafc;
+}
+
+body.dark-theme .header-profile-menu-meta {
+  color: #94a3b8;
+}
+
+body.dark-theme .header-profile-menu-item {
+  color: #e2e8f0;
+}
+
+body.dark-theme .header-profile-menu-item:hover {
+  background: #334155;
+}
+
+body.dark-theme .header-profile-menu-item.danger:hover {
+  background: rgba(127, 29, 29, 0.35);
+}
+
+/* Menú cuenta: casi sólido (prioridad legibilidad sobre cristal) */
+body.theme-industrial .header-profile-menu {
+  background: rgba(15, 23, 42, 0.94) !important;
+  border: 1px solid rgba(148, 163, 184, 0.38);
+  color: #e2e8f0;
+  box-shadow:
+    0 24px 56px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(14px) saturate(118%);
+  backdrop-filter: blur(14px) saturate(118%);
+}
+
+body.theme-industrial .header-profile-menu-user {
+  border-bottom-color: rgba(148, 163, 184, 0.32);
+  background: rgba(2, 6, 23, 0.72);
+}
+
+body.theme-industrial .header-profile-menu-user strong {
+  color: #f8fafc;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+body.theme-industrial .header-profile-menu-meta {
+  color: #94a3b8;
+}
+
+body.theme-industrial .header-profile-menu-item {
+  color: #e2e8f0;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+body.theme-industrial .header-profile-menu-item:hover {
+  background: rgba(51, 65, 85, 0.75);
+}
+
+body.theme-industrial .header-profile-menu-item.danger:hover {
+  background: rgba(220, 38, 38, 0.22);
+}
+
+/* Panel administración */
+.admin-hub-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483500;
+  background: rgba(12, 18, 34, 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding: 1rem;
+  overflow: auto;
+}
+
+.admin-hub-overlay.hidden {
+  display: none !important;
+}
+
+.admin-hub-panel {
+  width: min(960px, 100%);
+  margin: 1rem auto;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 24px 80px rgba(12, 18, 34, 0.2);
+  display: flex;
+  flex-direction: column;
+  min-height: min(88vh, 900px);
+}
+
+.admin-hub-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.admin-hub-header h2 {
+  margin: 0;
+  font-family: var(--font-display, system-ui);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0c1222;
+}
+
+.admin-hub-header .btn-icon-header {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+  color: #0c1222;
+}
+
+.admin-hub-header .btn-icon-header:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
+
+.admin-hub-intro {
+  margin: 0;
+  padding: 0.85rem 1.25rem;
+  font-size: 0.88rem;
+  color: #64748b;
+  line-height: 1.45;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.admin-hub-grid {
+  padding: 1.25rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.85rem;
+  flex: 1;
+  align-content: start;
+}
+
+.admin-hub-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  padding: 1rem 1.05rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.admin-hub-card:hover {
+  border-color: #0f766e;
+  box-shadow: 0 6px 20px rgba(15, 118, 110, 0.12);
+}
+
+.admin-hub-card.hidden {
+  display: none !important;
+}
+
+.admin-hub-card i {
+  font-size: 1.35rem;
+  color: #0f766e;
+}
+
+.admin-hub-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0c1222;
+}
+
+.admin-hub-card-desc {
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+body.dark-theme .admin-hub-panel {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body.dark-theme .admin-hub-header {
+  border-bottom-color: #334155;
+}
+
+body.dark-theme .admin-hub-header h2 {
+  color: #f8fafc;
+}
+
+body.dark-theme .admin-hub-intro {
+  color: #94a3b8;
+  border-bottom-color: #334155;
+}
+
+body.dark-theme .admin-hub-card {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border-color: #334155;
+}
+
+body.dark-theme .admin-hub-card-title {
+  color: #f1f5f9;
+}
+
+body.dark-theme .admin-hub-card-desc {
+  color: #94a3b8;
+}
+
+body.theme-industrial .admin-hub-overlay {
+  background: rgba(2, 6, 23, 0.48);
+  -webkit-backdrop-filter: blur(14px) saturate(118%);
+  backdrop-filter: blur(14px) saturate(118%);
+}
+
+/* Misma legibilidad que notificaciones / menú usuario (cristal medio) */
+body.theme-industrial .admin-hub-panel {
+  background: rgba(15, 23, 42, 0.42);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.4);
+  -webkit-backdrop-filter: blur(22px) saturate(125%);
+  backdrop-filter: blur(22px) saturate(125%);
+}
+
+body.theme-industrial .admin-hub-header {
+  border-bottom-color: rgba(148, 163, 184, 0.22);
+}
+
+body.theme-industrial .admin-hub-header h2 {
+  color: #f8fafc;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+}
+
+body.theme-industrial .admin-hub-header .btn-icon-header {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(148, 163, 184, 0.3);
+  color: #f8fafc;
+}
+
+body.theme-industrial .admin-hub-header .btn-icon-header:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(226, 232, 240, 0.4);
+}
+
+body.theme-industrial .admin-hub-intro {
+  color: #cbd5e1;
+  border-bottom-color: rgba(148, 163, 184, 0.18);
+}
+
+body.theme-industrial .admin-hub-card {
+  background: rgba(15, 23, 42, 0.22);
+  border: 1px solid rgba(148, 163, 184, 0.26);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+  -webkit-backdrop-filter: blur(18px) saturate(122%);
+  backdrop-filter: blur(18px) saturate(122%);
+}
+
+body.theme-industrial .admin-hub-card i {
+  color: #94a3b8;
+}
+
+body.theme-industrial .admin-hub-card:hover {
+  border-color: rgba(45, 212, 191, 0.42);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(45, 212, 191, 0.12);
+  background: rgba(15, 23, 42, 0.32);
+}
+
+body.theme-industrial .admin-hub-card-title {
+  color: #f8fafc;
+}
+
+body.theme-industrial .admin-hub-card-desc {
+  color: #94a3b8;
+}
+
+/* Luna: admin hub sin tinte slate — mismas opacidades, RGB tipo Chrome (#202124) */
+body.theme-industrial:not(.appearance-light) .admin-hub-overlay {
+  background: rgba(32, 33, 36, 0.48);
+}
+body.theme-industrial:not(.appearance-light) .admin-hub-panel {
+  background: rgba(32, 33, 36, 0.42);
+  border: 1px solid rgba(60, 64, 67, 0.28);
+}
+body.theme-industrial:not(.appearance-light) .admin-hub-card {
+  background: rgba(32, 33, 36, 0.22);
+  border: 1px solid rgba(60, 64, 67, 0.26);
+}
+body.theme-industrial:not(.appearance-light) .admin-hub-card:hover {
+  background: rgba(32, 33, 36, 0.32);
+}

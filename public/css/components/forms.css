@@ -1,0 +1,264 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   MD3 FORMS — Inputs, Selects, Textareas, Labels, Helper text
+   Estilo "Filled" por default + variante "Outlined"
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Form group / wrapper ───────────────────────────────────────────── */
+body.md3-on .form-group,
+body.md3-on .md-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-sys-spacing-1);
+  margin-bottom: var(--md-sys-spacing-4);
+  position: relative;
+}
+
+body.md3-on .form-row,
+body.md3-on .md-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--md-sys-spacing-4);
+  align-items: flex-start;
+}
+body.md3-on .form-row > .form-group,
+body.md3-on .form-row > .md-field { flex: 1 1 200px; min-width: 0; }
+
+/* ── Labels ─────────────────────────────────────────────────────────── */
+body.md3-on .form-group > label,
+body.md3-on .md-field > label,
+body.md3-on form label {
+  display: block;
+  font: var(--md-sys-typescale-body-small);
+  color: var(--md-sys-color-on-surface-variant);
+  margin-bottom: var(--md-sys-spacing-1);
+  letter-spacing: 0.4px;
+}
+
+/* ── Input / Select / Textarea (estilo Outlined) ────────────────────── */
+body.md3-on input[type="text"],
+body.md3-on input[type="number"],
+body.md3-on input[type="email"],
+body.md3-on input[type="password"],
+body.md3-on input[type="search"],
+body.md3-on input[type="tel"],
+body.md3-on input[type="url"],
+body.md3-on input[type="date"],
+body.md3-on input[type="datetime-local"],
+body.md3-on input[type="time"],
+body.md3-on input[type="month"],
+body.md3-on select,
+body.md3-on textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 var(--md-sys-spacing-4);
+  font: var(--md-sys-typescale-body-large);
+  color: var(--md-sys-color-on-surface);
+  background: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  outline: none;
+  transition:
+    border-color var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-standard),
+    box-shadow var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-standard),
+    background var(--md-sys-motion-duration-short3);
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+body.md3-on textarea {
+  min-height: 96px;
+  padding: var(--md-sys-spacing-3) var(--md-sys-spacing-4);
+  resize: vertical;
+  font-family: inherit;
+}
+
+body.md3-on select {
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--md-sys-color-on-surface-variant) 50%),
+    linear-gradient(135deg, var(--md-sys-color-on-surface-variant) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 22px,
+    calc(100% - 13px) 22px;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: var(--md-sys-spacing-10);
+  cursor: pointer;
+}
+
+body.md3-on input::placeholder,
+body.md3-on textarea::placeholder {
+  color: var(--md-sys-color-on-surface-variant);
+  opacity: 0.7;
+}
+
+/* ── Hover ──────────────────────────────────────────────────────────── */
+body.md3-on input:hover:not(:focus):not([disabled]):not([readonly]),
+body.md3-on select:hover:not(:focus):not([disabled]),
+body.md3-on textarea:hover:not(:focus):not([disabled]):not([readonly]) {
+  border-color: var(--md-sys-color-on-surface);
+}
+
+/* ── Focus ──────────────────────────────────────────────────────────── */
+body.md3-on input:focus,
+body.md3-on select:focus,
+body.md3-on textarea:focus {
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 1px var(--md-sys-color-primary);
+}
+
+/* ── Error state (si tiene aria-invalid o clase .invalid) ───────────── */
+body.md3-on input[aria-invalid="true"],
+body.md3-on input.invalid,
+body.md3-on select[aria-invalid="true"],
+body.md3-on select.invalid,
+body.md3-on textarea[aria-invalid="true"],
+body.md3-on textarea.invalid {
+  border-color: var(--md-sys-color-error);
+}
+body.md3-on input[aria-invalid="true"]:focus,
+body.md3-on input.invalid:focus,
+body.md3-on textarea.invalid:focus {
+  box-shadow: 0 0 0 1px var(--md-sys-color-error);
+}
+
+/* ── Disabled / readonly ────────────────────────────────────────────── */
+body.md3-on input[disabled],
+body.md3-on select[disabled],
+body.md3-on textarea[disabled],
+body.md3-on input[readonly],
+body.md3-on textarea[readonly] {
+  background: var(--md-sys-color-surface-container);
+  color: color-mix(in srgb, var(--md-sys-color-on-surface) 60%, transparent);
+  border-color: var(--md-sys-color-outline-variant);
+  cursor: not-allowed;
+}
+
+/* ── Helper / supporting text ───────────────────────────────────────── */
+body.md3-on .helper-text,
+body.md3-on .form-hint,
+body.md3-on .field-hint {
+  font: var(--md-sys-typescale-body-small);
+  color: var(--md-sys-color-on-surface-variant);
+  margin-top: var(--md-sys-spacing-1);
+  padding-left: var(--md-sys-spacing-4);
+}
+
+body.md3-on .error-text,
+body.md3-on .field-error {
+  font: var(--md-sys-typescale-body-small);
+  color: var(--md-sys-color-error);
+  margin-top: var(--md-sys-spacing-1);
+  padding-left: var(--md-sys-spacing-4);
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-1);
+}
+
+/* ── Checkbox + Radio ───────────────────────────────────────────────── */
+body.md3-on input[type="checkbox"],
+body.md3-on input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  min-height: auto;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 2px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  vertical-align: middle;
+  transition: border-color var(--md-sys-motion-duration-short2), background var(--md-sys-motion-duration-short2);
+}
+body.md3-on input[type="radio"] { border-radius: var(--md-sys-shape-corner-full); }
+
+body.md3-on input[type="checkbox"]:checked {
+  background: var(--md-sys-color-primary);
+  border-color: var(--md-sys-color-primary);
+}
+body.md3-on input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'><path d='M14 5l-7.5 8L3 9.5' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>") center / 14px no-repeat;
+}
+body.md3-on input[type="radio"]:checked {
+  border-color: var(--md-sys-color-primary);
+}
+body.md3-on input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-primary);
+}
+
+/* Label adyacente a checkbox/radio */
+body.md3-on label.checkbox,
+body.md3-on label.radio,
+body.md3-on .form-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-2);
+  cursor: pointer;
+  font: var(--md-sys-typescale-body-medium);
+  color: var(--md-sys-color-on-surface);
+  user-select: none;
+}
+
+/* ── Switch (toggle) ────────────────────────────────────────────────── */
+body.md3-on .switch {
+  display: inline-block;
+  position: relative;
+  width: 52px;
+  height: 32px;
+  vertical-align: middle;
+}
+body.md3-on .switch input {
+  width: 0;
+  height: 0;
+  opacity: 0;
+  position: absolute;
+}
+body.md3-on .switch .switch-track {
+  position: absolute;
+  inset: 0;
+  background: var(--md-sys-color-surface-container-highest);
+  border: 2px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-full);
+  transition: background var(--md-sys-motion-duration-short3), border-color var(--md-sys-motion-duration-short3);
+  cursor: pointer;
+}
+body.md3-on .switch .switch-thumb {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 16px;
+  height: 16px;
+  background: var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-full);
+  transition: transform var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-standard), background var(--md-sys-motion-duration-short3);
+}
+body.md3-on .switch input:checked ~ .switch-track {
+  background: var(--md-sys-color-primary);
+  border-color: var(--md-sys-color-primary);
+}
+body.md3-on .switch input:checked ~ .switch-thumb {
+  transform: translateX(20px);
+  background: var(--md-sys-color-on-primary);
+}
+
+/* ── Form actions / submit row ──────────────────────────────────────── */
+body.md3-on .form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--md-sys-spacing-2);
+  justify-content: flex-end;
+  margin-top: var(--md-sys-spacing-6);
+  padding-top: var(--md-sys-spacing-4);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+body.md3-on .form-actions.start { justify-content: flex-start; }
+body.md3-on .form-actions.between { justify-content: space-between; }

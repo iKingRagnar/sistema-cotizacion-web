@@ -1,0 +1,15 @@
+node_modules/
+data/
+.env
+*.log
+
+# SQLite temporal del script scripts/verify-implemented.cjs
+_verify-*.sqlite*
+
+# Local Claude / IDE tooling
+.claude/
+.vercel
+.env*.local
+.audit-screenshots/
+.cursor/
+.vscode/

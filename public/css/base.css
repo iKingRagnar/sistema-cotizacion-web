@@ -1,0 +1,131 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   MD3 BASE — modern reset + global typography
+   Aplica a TODA la página cuando body tiene .md3-on
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Reset puntual (no agresivo, coexiste con style.css) ────────────── */
+body.md3-on,
+body.md3-on * {
+  box-sizing: border-box;
+}
+
+body.md3-on {
+  font: var(--md-sys-typescale-body-medium);
+  color: var(--md-sys-color-on-surface);
+  background: var(--md-sys-color-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+body.md3-on h1,
+body.md3-on h2,
+body.md3-on h3,
+body.md3-on h4,
+body.md3-on h5,
+body.md3-on h6 {
+  font-family: var(--md-ref-typeface-brand);
+  color: var(--md-sys-color-on-surface);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+body.md3-on h1 { font: var(--md-sys-typescale-headline-large);  }
+body.md3-on h2 { font: var(--md-sys-typescale-headline-medium); }
+body.md3-on h3 { font: var(--md-sys-typescale-headline-small);  }
+body.md3-on h4 { font: var(--md-sys-typescale-title-large);     }
+body.md3-on h5 { font: var(--md-sys-typescale-title-medium);    }
+body.md3-on h6 { font: var(--md-sys-typescale-title-small);     }
+
+body.md3-on p { color: var(--md-sys-color-on-surface-variant); margin: 0; }
+body.md3-on small { font: var(--md-sys-typescale-body-small); }
+body.md3-on strong, body.md3-on b { font-weight: 500; color: var(--md-sys-color-on-surface); }
+body.md3-on code, body.md3-on kbd, body.md3-on samp { font-family: var(--md-ref-typeface-mono); font-size: 0.92em; }
+
+/* ── Material Symbols — clase utility ───────────────────────────────── */
+body.md3-on .material-symbols-rounded,
+body.md3-on .material-symbols-outlined,
+body.md3-on .material-symbols-sharp {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+  vertical-align: middle;
+  user-select: none;
+}
+body.md3-on .material-symbols-rounded.filled,
+body.md3-on .material-symbols-outlined.filled { font-variation-settings: 'FILL' 1, 'wght' 500; }
+
+/* ── Selección de texto ─────────────────────────────────────────────── */
+body.md3-on ::selection {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 24%, transparent);
+  color: var(--md-sys-color-on-surface);
+}
+
+/* ── Scrollbar (Chrome/Edge/Safari) ─────────────────────────────────── */
+body.md3-on ::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+body.md3-on ::-webkit-scrollbar-track { background: transparent; }
+body.md3-on ::-webkit-scrollbar-thumb {
+  background: var(--md-sys-color-outline-variant);
+  border: 3px solid var(--md-sys-color-surface);
+  border-radius: var(--md-sys-shape-corner-full);
+}
+body.md3-on ::-webkit-scrollbar-thumb:hover { background: var(--md-sys-color-outline); }
+
+/* ── Focus visible accesible ────────────────────────────────────────── */
+body.md3-on :focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+  border-radius: var(--md-sys-shape-corner-extra-small);
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  body.md3-on *,
+  body.md3-on *::before,
+  body.md3-on *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Skip link mejorado ─────────────────────────────────────────────── */
+body.md3-on .skip-link {
+  position: absolute;
+  top: -100%;
+  left: var(--md-sys-spacing-4);
+  z-index: var(--md-sys-z-max);
+  padding: var(--md-sys-spacing-3) var(--md-sys-spacing-6);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border-radius: var(--md-sys-shape-corner-medium);
+  font: var(--md-sys-typescale-label-large);
+  text-decoration: none;
+  transition: top var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-standard);
+}
+body.md3-on .skip-link:focus { top: var(--md-sys-spacing-4); }
+
+/* ── Animaciones globales reutilizables ─────────────────────────────── */
+@keyframes md3-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes md3-slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes md3-scale-in {
+  from { opacity: 0; transform: scale(.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes md3-shimmer {
+  0%   { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}

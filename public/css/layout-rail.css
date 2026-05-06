@@ -1,0 +1,390 @@
+/**
+ * Layout rail — navegación lateral (reemplaza la barra horizontal de pestañas).
+ * Los botones siguen siendo .tab + data-tab (mismo comportamiento en app.js).
+ */
+
+.app-frame {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-height: calc(100dvh - 1px);
+  max-width: 100%;
+}
+
+.sidebar-nav {
+  flex: 0 0 clamp(248px, 26vw, 288px);
+  width: clamp(248px, 26vw, 288px);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #dce3ee;
+  background: linear-gradient(180deg, #ffffff 0%, #f4f6fa 100%);
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  max-height: 100vh;
+  z-index: 9;
+  transition: width 0.22s ease, flex-basis 0.22s ease;
+}
+
+.sidebar-nav-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.75rem 0.65rem 0.35rem;
+  flex-shrink: 0;
+  /* Antes lo daba .sidebar-global-strip; al ocultarlo, una línea suave hasta la lista de módulos */
+  border-bottom: 1px solid #dce3ee;
+}
+
+.btn-sidebar-rail-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid #c9d4e8;
+  background: rgba(255, 255, 255, 0.9);
+  color: #334155;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.btn-sidebar-rail-toggle:hover {
+  background: #fff;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.btn-sidebar-rail-toggle:focus-visible {
+  outline: 2px solid #0d9488;
+  outline-offset: 2px;
+}
+
+.sidebar-rail-burger-icon {
+  display: block;
+}
+
+.sidebar-nav-title {
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #64748b;
+  font-family: var(--font-sans, system-ui);
+}
+
+/*
+ * Strip bajo “Módulos” (sucursales, TC/alertas, estado del sistema): oculto en UI.
+ * Los nodos siguen en el DOM para que la lógica JS (filtro global, TC, badge, estado) no falle.
+ */
+.sidebar-global-strip {
+  display: none !important;
+}
+.sidebar-branch-filter {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.sidebar-header-alerts {
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.sidebar-system-status {
+  font-size: 0.68rem;
+  line-height: 1.3;
+  white-space: normal;
+  word-break: break-word;
+}
+
+/* Rail colapsado: solo el botón; el contenido principal usa el ancho liberado */
+body.sidebar-rail-collapsed .sidebar-nav {
+  flex: 0 0 3.35rem;
+  width: 3.35rem;
+  overflow: hidden;
+}
+
+body.sidebar-rail-collapsed .sidebar-nav-title,
+body.sidebar-rail-collapsed .tabs.tabs--rail {
+  display: none !important;
+}
+
+body.sidebar-rail-collapsed .sidebar-nav-toolbar {
+  justify-content: center;
+  padding: 0.65rem 0.35rem 0.45rem;
+}
+
+@media (max-width: 960px) {
+  body.sidebar-rail-collapsed .sidebar-nav {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  body.sidebar-rail-collapsed .sidebar-nav-toolbar {
+    justify-content: center;
+  }
+}
+
+/* Rail: anula el “tabs” horizontal sticky */
+.tabs.tabs--rail {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0.28rem;
+  padding: 0.35rem 0.65rem 1rem;
+  margin: 0;
+  position: relative;
+  top: auto;
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border-bottom: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.tabs.tabs--rail:hover {
+  box-shadow: none;
+}
+
+.tabs.tabs--rail .tab {
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
+  border-radius: 10px;
+  padding: 0.48rem 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  gap: 0.55rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tabs.tabs--rail .tab i {
+  width: 1.35rem;
+  flex-shrink: 0;
+  text-align: center;
+  opacity: 0.92;
+}
+
+.tabs.tabs--rail .tab.active {
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.22);
+}
+
+.app-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-main .content {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  flex: 1;
+}
+
+.app-main .dashboard-surface {
+  max-width: none;
+}
+
+@media (min-width: 1200px) {
+  .app-main .content {
+    padding-left: 1.75rem;
+    padding-right: 1.75rem;
+  }
+}
+
+/* Móvil / tablet estrecha: rail horizontal deslizable */
+@media (max-width: 960px) {
+  .app-frame {
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .sidebar-nav {
+    flex: 0 0 auto;
+    width: 100%;
+    max-height: none;
+    position: relative;
+    border-right: none;
+    border-bottom: 1px solid #dce3ee;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .sidebar-nav-toolbar {
+    padding: 0.55rem 0.65rem 0.25rem;
+  }
+
+  .sidebar-nav-title {
+    padding: 0;
+  }
+
+  .tabs.tabs--rail {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.5rem 0.65rem 0.65rem;
+    gap: 0.35rem;
+    scrollbar-width: thin;
+  }
+
+  .tabs.tabs--rail .tab {
+    width: auto;
+    flex: 0 0 auto;
+    max-width: min(220px, 70vw);
+  }
+}
+
+/* Tema oscuro */
+body.dark-theme .sidebar-nav {
+  border-right-color: #1e293b;
+  background: linear-gradient(180deg, #0f172a 0%, #0b1220 100%);
+}
+
+body.dark-theme .sidebar-nav-title {
+  color: #94a3b8;
+}
+
+body.dark-theme .sidebar-nav-toolbar {
+  border-bottom-color: #334155;
+}
+
+body.dark-theme .btn-sidebar-rail-toggle {
+  border-color: #334155;
+  background: rgba(15, 23, 42, 0.75);
+  color: #e2e8f0;
+  box-shadow: none;
+}
+
+body.dark-theme .btn-sidebar-rail-toggle:hover {
+  background: #1e293b;
+  border-color: #475569;
+  color: #f8fafc;
+}
+
+body.dark-theme .tabs.tabs--rail {
+  background: transparent;
+}
+
+body.dark-theme .tabs.tabs--rail .tab {
+  border-color: #334155;
+}
+
+@media (max-width: 960px) {
+  body.dark-theme .sidebar-nav {
+    border-bottom-color: #1e293b;
+    background: rgba(15, 23, 42, 0.92);
+  }
+}
+
+/* Industrial (metal plateado): rail acorde al body */
+body.theme-industrial .sidebar-nav {
+  border-right: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(15, 23, 42, 0.18);
+  -webkit-backdrop-filter: blur(22px) saturate(128%);
+  backdrop-filter: blur(22px) saturate(128%);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.04);
+}
+
+body.theme-industrial .sidebar-nav-toolbar {
+  border-bottom-color: rgba(148, 163, 184, 0.22);
+}
+
+body.theme-industrial .sidebar-nav-title {
+  color: #94a3b8;
+}
+
+body.theme-industrial .btn-sidebar-rail-toggle {
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
+  box-shadow: none;
+}
+
+body.theme-industrial .btn-sidebar-rail-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(226, 232, 240, 0.38);
+  color: #f8fafc;
+}
+
+body.theme-industrial .tabs.tabs--rail {
+  background: transparent;
+}
+
+body.theme-industrial .tabs.tabs--rail .tab {
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  color: #e2e8f0;
+  background: transparent;
+  box-shadow: none;
+}
+
+body.theme-industrial .tabs.tabs--rail .tab:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(226, 232, 240, 0.32);
+  color: #f8fafc;
+}
+
+body.theme-industrial .tabs.tabs--rail .tab.active {
+  color: #f0fdfa;
+  font-weight: 700;
+  background: rgba(45, 212, 191, 0.12);
+  border-color: rgba(45, 212, 191, 0.48);
+  box-shadow:
+    0 0 0 1px rgba(45, 212, 191, 0.15),
+    0 4px 18px rgba(0, 0, 0, 0.22);
+}
+
+body.theme-industrial .tabs.tabs--rail .tab.active:hover {
+  color: #f0fdfa;
+  filter: none;
+}
+
+@media (max-width: 960px) {
+  body.theme-industrial .sidebar-nav {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+    background: rgba(15, 23, 42, 0.22);
+    -webkit-backdrop-filter: blur(22px) saturate(128%);
+    backdrop-filter: blur(22px) saturate(128%);
+  }
+}
+
+/* Luna: mismo blur/opacidad que arriba, sin tinte azulado slate (#202124 ≈ Chrome dark). */
+body.theme-industrial:not(.appearance-light) .sidebar-nav {
+  background: rgba(32, 33, 36, 0.18) !important;
+}
+@media (max-width: 960px) {
+  body.theme-industrial:not(.appearance-light) .sidebar-nav {
+    background: rgba(32, 33, 36, 0.22) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-nav {
+    transition-duration: 0.01ms;
+  }
+
+  .tabs.tabs--rail .tab,
+  .tabs.tabs--rail .tab i {
+    transition-duration: 0.01ms;
+  }
+}

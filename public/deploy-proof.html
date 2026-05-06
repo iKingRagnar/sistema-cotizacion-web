@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prueba de despliegue · mismo servidor que tu app</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 52rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; color: #1e293b; }
+    code, pre { background: #f1f5f9; padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.9rem; }
+    pre { padding: 1rem; overflow: auto; white-space: pre-wrap; word-break: break-all; }
+    .warn { background: #fef3c7; border: 1px solid #f59e0b; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+    .ok { background: #dcfce7; border: 1px solid #22c55e; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+    h1 { font-size: 1.35rem; }
+  </style>
+</head>
+<body>
+  <h1>Prueba de despliegue</h1>
+  <p>Si ves esta página en Render, estás en <strong>el mismo sitio</strong> que abres para el login (misma URL base).</p>
+
+  <div class="warn">
+    <strong>No pegues esto en Google.</strong> Debes estar en la <strong>barra de direcciones del navegador</strong> (arriba), después del dominio de tu app en Render.
+    <br><br>
+    Ejemplo: si tu app es <code>https://sistema-cotizacion-web.onrender.com</code>, esta página es:
+    <br><code>https://sistema-cotizacion-web.onrender.com/deploy-proof.html</code>
+    <br>(Tu nombre puede variar; cópialo en Render → tu servicio → arriba, “URL”.)
+  </div>
+
+  <p>Código vivo desde tu servidor (<code>/api/ping</code>):</p>
+  <pre id="ping">Cargando…</pre>
+
+  <p>Texto plano (<code>/__deploy-proof.txt</code>):</p>
+  <pre id="txt">Cargando…</pre>
+
+  <div id="footer-note" class="ok hidden"></div>
+
+  <script>
+    (function () {
+      if (location.protocol === 'file:') {
+        document.body.innerHTML =
+          '<div class="warn"><h1>Estás abriendo el HTML desde el disco (mal)</h1>' +
+          '<p>No hagas doble clic al archivo. Primero enciende el servidor en la carpeta correcta y abre en el navegador:</p>' +
+          '<pre>http://127.0.0.1:3456/deploy-proof.html</pre>' +
+          '<p>Carpeta obligatoria: la que se llama exactamente <strong>sistema-cotizacion-web-Old y BackUp</strong> (donde están <code>server.js</code> e <code>INICIAR_LOCAL.ps1</code>). No uses la carpeta <code>sistema-cotizacion-web</code>.</p>' +
+          '<p>En PowerShell: <code>Set-Location</code> a esa carpeta, luego <code>$env:PORT="3456"; node server.js</code> — o ejecuta <code>INICIAR_LOCAL.ps1</code>.</p></div>';
+        return;
+      }
+
+      var origin = window.location.origin;
+      document.getElementById('footer-note').textContent =
+        'URL actual del archivo: ' + origin + '/deploy-proof.html';
+      document.getElementById('footer-note').classList.remove('hidden');
+
+      fetch(origin + '/api/ping')
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          document.getElementById('ping').textContent = JSON.stringify(j, null, 2);
+        })
+        .catch(function (e) {
+          document.getElementById('ping').textContent = 'Error al llamar /api/ping: ' + String(e.message || e);
+        });
+
+      fetch(origin + '/__deploy-proof.txt')
+        .then(function (r) { return r.text(); })
+        .then(function (t) {
+          document.getElementById('txt').textContent = t || '(vacío)';
+        })
+        .catch(function (e) {
+          document.getElementById('txt').textContent = 'Error: ' + String(e.message || e);
+        });
+    })();
+  </script>
+</body>
+</html>

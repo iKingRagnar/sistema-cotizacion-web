@@ -1,0 +1,8 @@
+# Opcional: al crear el servicio desde el repo, Render puede tomar esta plantilla.
+# Asegúrate de definir en el panel: TURSO_DATABASE_URL y TURSO_AUTH_TOKEN.
+services:
+  - type: web
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health

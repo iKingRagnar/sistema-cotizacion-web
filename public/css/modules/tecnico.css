@@ -1,0 +1,200 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   MÓDULOS TÉCNICO — Revisión Máquinas · Garantías · Mantenimiento ·
+                     Sin Cobertura · Reportes · Personal
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Panel base ──────────────────────────────────────────────────────────── */
+body.md3-on #panel-revision-maquinas,
+body.md3-on #panel-garantias,
+body.md3-on #panel-mantenimiento-garantia,
+body.md3-on #panel-garantias-sin-cobertura,
+body.md3-on #panel-reportes,
+body.md3-on #panel-tecnicos {
+  display: none;
+  background: var(--md-sys-color-surface);
+}
+body.md3-on #panel-revision-maquinas.active,
+body.md3-on #panel-garantias.active,
+body.md3-on #panel-mantenimiento-garantia.active,
+body.md3-on #panel-garantias-sin-cobertura.active,
+body.md3-on #panel-reportes.active,
+body.md3-on #panel-tecnicos.active {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-sys-spacing-4);
+  padding: 0;
+}
+
+/* ── section-sub (subtítulo bajo el h2) ─────────────────────────────────── */
+body.md3-on .section-sub {
+  font: var(--md-sys-typescale-body-medium);
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+  padding: var(--md-sys-spacing-2) 0;
+}
+body.md3-on .section-sub strong { color: var(--md-sys-color-on-surface); }
+body.md3-on .section-sub code {
+  font-family: var(--md-ref-typeface-mono);
+  background: var(--md-sys-color-surface-container);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+/* ── Revisión Máquinas — catálogo de equipos ─────────────────────────────── */
+body.md3-on .revision-maq-catalog-wrap {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-large);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  padding: var(--md-sys-spacing-5);
+}
+body.md3-on .revision-maq-catalog-heading {
+  font: var(--md-sys-typescale-title-medium);
+  color: var(--md-sys-color-on-surface);
+  margin: 0 0 var(--md-sys-spacing-2);
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-2);
+}
+body.md3-on .revision-maq-catalog-intro {
+  font: var(--md-sys-typescale-body-small);
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0 0 var(--md-sys-spacing-4);
+}
+body.md3-on .revision-maq-catalog {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--md-sys-spacing-3);
+}
+
+body.md3-on .rev-maq-eq-card {
+  background: var(--md-sys-color-surface-container);
+  border-radius: var(--md-sys-shape-corner-medium);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  padding: var(--md-sys-spacing-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-sys-spacing-2);
+  transition: box-shadow var(--md-sys-motion-duration-short3);
+}
+body.md3-on .rev-maq-eq-card:hover { box-shadow: var(--md-sys-elevation-level1); }
+body.md3-on .rev-maq-eq-card .eq-nombre {
+  font: var(--md-sys-typescale-label-large);
+  color: var(--md-sys-color-on-surface);
+  font-weight: 500;
+}
+body.md3-on .rev-maq-eq-card .eq-meta {
+  font: var(--md-sys-typescale-body-small);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ── Garantías — alerta bar ─────────────────────────────────────────────── */
+body.md3-on #garantias-alerta-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--md-sys-spacing-2);
+  padding: var(--md-sys-spacing-3) var(--md-sys-spacing-4);
+  background: color-mix(in srgb, var(--md-sys-color-warning) 12%, var(--md-sys-color-surface));
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-warning) 40%, transparent);
+  border-radius: var(--md-sys-shape-corner-medium);
+  font: var(--md-sys-typescale-body-medium);
+}
+body.md3-on #garantias-alerta-bar.hidden { display: none; }
+
+/* ── Mantenimientos — calendario ─────────────────────────────────────────── */
+body.md3-on .mant-gar-cal-wrap {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-large);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  padding: var(--md-sys-spacing-5);
+  overflow-x: auto;
+}
+body.md3-on .mant-gar-hint {
+  font: var(--md-sys-typescale-body-medium);
+  color: var(--md-sys-color-on-surface-variant);
+  padding: var(--md-sys-spacing-3) var(--md-sys-spacing-4);
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-medium);
+  border-left: 3px solid var(--md-sys-color-primary);
+  margin: 0;
+}
+body.md3-on .mant-gar-hint strong { color: var(--md-sys-color-on-surface); }
+
+/* Simular checkbox en toolbar */
+body.md3-on .mant-gar-dry-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-2);
+  font: var(--md-sys-typescale-label-large);
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  padding: var(--md-sys-spacing-2) var(--md-sys-spacing-3);
+  border-radius: var(--md-sys-shape-corner-full);
+  transition: background var(--md-sys-motion-duration-short3);
+}
+body.md3-on .mant-gar-dry-wrap:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+}
+
+/* ── Prioridad badges en tabla mantenimientos ────────────────────────────── */
+body.md3-on .prioridad-alta,
+body.md3-on .prioridad-critica {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+  padding: 2px 10px;
+  border-radius: var(--md-sys-shape-corner-full);
+  font: var(--md-sys-typescale-label-medium);
+}
+body.md3-on .prioridad-media {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: color-mix(in srgb, var(--md-sys-color-warning) 20%, var(--md-sys-color-surface));
+  color: var(--md-sys-color-on-surface);
+  padding: 2px 10px;
+  border-radius: var(--md-sys-shape-corner-full);
+  font: var(--md-sys-typescale-label-medium);
+}
+body.md3-on .prioridad-baja {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface-variant);
+  padding: 2px 10px;
+  border-radius: var(--md-sys-shape-corner-full);
+  font: var(--md-sys-typescale-label-medium);
+}
+
+/* ── Reportes — subtítulo info ───────────────────────────────────────────── */
+body.md3-on #panel-reportes .section-sub {
+  padding: var(--md-sys-spacing-3) var(--md-sys-spacing-4);
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-medium);
+  border-left: 3px solid var(--md-sys-color-secondary);
+}
+
+/* ── Personal — search ux panel ─────────────────────────────────────────── */
+body.md3-on #panel-tecnicos .search--ux {
+  width: 280px;
+  max-width: 100%;
+}
+
+/* ── UX section-header ───────────────────────────────────────────────────── */
+body.md3-on .section-header--ux {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--md-sys-spacing-2);
+}
+body.md3-on .section-header--ux .toolbar {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  body.md3-on .revision-maq-catalog {
+    grid-template-columns: 1fr 1fr;
+  }
+}

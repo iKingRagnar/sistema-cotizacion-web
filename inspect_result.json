@@ -1,0 +1,236 @@
+[
+  {
+    "sheet": "COTIZACION",
+    "header": [
+      "🔧  COTIZACIÓN DE SERVICIO TÉCNICO",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "sample": [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        "FOLIO:",
+        "#NAME?",
+        null,
+        "FECHA:",
+        "2026-03-18 00:00:00",
+        "TIPO:",
+        "Refacciones"
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    "total_rows": 58
+  },
+  {
+    "sheet": "INCIDENTES",
+    "header": [
+      "FOLIO",
+      "FECHA",
+      "CLIENTE",
+      "MÁQUINA",
+      "DESCRIPCIÓN",
+      "PRIORIDAD",
+      "TÉCNICO ASIG.",
+      "ESTATUS",
+      "FECHA CIERRE",
+      "TIEMPO RESOL. (hrs)"
+    ],
+    "sample": [
+      [
+        "INC-2026-0001",
+        "2025-12-14 00:00:00",
+        "HERRAMIENTAS Y EQUIPOS REGIO",
+        "Compresor de Tornillo #1",
+        "Bomba no inicia, posible cavitación",
+        "P4 - Baja",
+        "Carlos Reyes",
+        "Abierto",
+        null,
+        null
+      ],
+      [
+        "INC-2026-0002",
+        "2026-01-23 00:00:00",
+        "ENERGÍA RENOVABLE NORESTE SC",
+        "Bomba Centrífuga #2",
+        "Bomba no inicia, posible cavitación",
+        "P2 - Alta",
+        "Luis García",
+        "Abierto",
+        null,
+        null
+      ],
+      [
+        "INC-2026-0003",
+        "2026-01-10 00:00:00",
+        "SOLUCIONES HIDRÁULICAS NORESTE",
+        "Compresor de Tornillo #2",
+        "Fuga de aceite en sello mecánico",
+        "P3 - Media",
+        "Pedro Sánchez",
+        "Abierto",
+        null,
+        null
+      ],
+      [
+        "INC-2026-0004",
+        "2026-03-03 00:00:00",
+        "TRANSFORMADORES ELÉCTRICOS NL",
+        "Banda Transportadora Principal",
+        "Bomba no inicia, posible cavitación",
+        "P4 - Baja",
+        "Carlos Reyes",
+        "Resuelto",
+        "2026-03-14 00:00:00",
+        "17"
+      ],
+      [
+        "INC-2026-0005",
+        "2026-01-15 00:00:00",
+        "EMPAQUES INDUSTRIALES DEL NORESTE",
+        "Torre de Enfriamiento #1",
+        "Ruido inusual en motor de 10HP",
+        "P3 - Media",
+        "Luis García",
+        "En proceso",
+        null,
+        null
+      ]
+    ],
+    "total_rows": 40
+  },
+  {
+    "sheet": "BITACORAS",
+    "header": [
+      "FOLIO_BITACORA",
+      "FOLIO_INC_REF",
+      "FECHA",
+      "TÉCNICO",
+      "CLIENTE",
+      "MÁQUINA",
+      "ACTIVIDADES REALIZADAS",
+      "REFACCIONES USADAS",
+      "HORAS TRABAJ.",
+      "COSTO REF. ($)",
+      "COSTO MO ($)",
+      "COSTO TOTAL ($)"
+    ],
+    "sample": [
+      [
+        "BIT-2026-0001",
+        "INC-2026-0007",
+        "2026-01-28 00:00:00",
+        "Pedro Sánchez",
+        "VÁLVULAS Y ACCESORIOS DEL NORTE",
+        "Chiller Industrial 40TR",
+        "Cambio de sello mecánico John Crane Tipo 1. Prueba",
+        "Rodamiento FAG 6308-ZZ (x4)",
+        "3.9",
+        "5158.66",
+        "1950",
+        "7108.66"
+      ],
+      [
+        "BIT-2026-0002",
+        "INC-2026-0038",
+        "2026-02-13 00:00:00",
+        "Juan Martínez",
+        "MAQUILADORA GLOBAL SERVICES SC",
+        "Compresor de Tornillo #2",
+        "Cambio de empaque en brida 3\" línea de proceso. Pr",
+        "Correa en V Optibelt XPA-1000 (x2)",
+        "2.4",
+        "3900.36",
+        "1200",
+        "5100.360000000001"
+      ],
+      [
+        "BIT-2026-0003",
+        "INC-2026-0034",
+        "2026-02-18 00:00:00",
+        "Luis García",
+        "SOLUCIONES HIDRÁULICAS NORESTE",
+        "Torre de Enfriamiento #1",
+        "Cambio de empaque en brida 3\" línea de proceso. Pr",
+        "Sello Mecánico John Crane Tipo 1 - 1\" (x2)",
+        "4.6",
+        "923.25",
+        "2300",
+        "3223.25"
+      ],
+      [
+        "BIT-2026-0004",
+        "INC-2026-0017",
+        "2026-03-16 00:00:00",
+        "Juan Martínez",
+        "HERRAMIENTAS Y EQUIPOS REGIO",
+        "Centro de Maquinado Vertical",
+        "Diagnóstico y limpieza de filtros de compresor. Ca",
+        "Motor Hidráulico Parker F11-5 (x3)",
+        "3.2",
+        "853.26",
+        "1600",
+        "2453.26"
+      ],
+      [
+        "BIT-2026-0005",
+        "INC-2026-0015",
+        "2026-01-15 00:00:00",
+        "Juan Martínez",
+        "EMPAQUES INDUSTRIALES DEL NORESTE",
+        "Robot Soldador FANUC",
+        "Ajuste de tensión en bandas de transmisión. Lubric",
+        "Rodamiento Angular NSK 7206BEP (x1)",
+        "11",
+        "2286.92",
+        "5500",
+        "7786.92"
+      ]
+    ],
+    "total_rows": 30
+  }
+]

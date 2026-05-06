@@ -1,0 +1,26 @@
+/**
+ * UI básica: sin animaciones ni transiciones (hover, autoplay, keyframes).
+ * Se aplica con <html class="no-motion">. Cargar al final de la cascada CSS.
+ */
+html.no-motion,
+html.no-motion *,
+html.no-motion *::before,
+html.no-motion *::after {
+  animation: none !important;
+  animation-duration: 0s !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+/* Respaldo final: premium usaba body.md3-on … > svg { display:none } (mayor especificidad que nano-fondo). */
+html.no-motion body.md3-on header.header .btn-header-profile::before,
+html.no-motion body header.header .btn-header-profile::before {
+  content: none !important;
+  display: none !important;
+}
+html.no-motion body.md3-on header.header .btn-header-profile > svg,
+html.no-motion body header.header .btn-header-profile > svg {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}

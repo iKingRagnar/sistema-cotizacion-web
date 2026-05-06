@@ -1,0 +1,1510 @@
+/* ============================================================================
+   LUNA NUCLEAR v10 — Override MAESTRO para modo oscuro (theme-industrial sin appearance-light)
+   Este archivo se carga DESPUES de todos los demas para ganar en cascada.
+   Regla de oro del usuario: TODO negro/gris, botones plateados, solo rojo/verde
+   estan permitidos como acento.
+
+   Estrategia: selectores `html body.theme-industrial:not(.appearance-light)`
+   (especificidad 0,0,3,2) + !important para superar body.md3-on (0,0,2,1).
+   ============================================================================ */
+
+/* --- Guard global: solo aplicamos cuando estamos en LUNA --- */
+html body.theme-industrial:not(.appearance-light) {
+  color-scheme: dark;
+}
+
+/* ============================================================================
+   §N1 — INPUTS / SELECTS / TEXTAREAS SIEMPRE OSCUROS EN LUNA
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="image"]):not([type="submit"]):not([type="reset"]):not([type="button"]),
+html body.theme-industrial:not(.appearance-light) textarea,
+html body.theme-industrial:not(.appearance-light) select,
+html body.theme-industrial:not(.appearance-light) .filter-input,
+html body.theme-industrial:not(.appearance-light) .search,
+html body.theme-industrial:not(.appearance-light) .search--ux,
+html body.theme-industrial:not(.appearance-light) .form-group input,
+html body.theme-industrial:not(.appearance-light) .form-group select,
+html body.theme-industrial:not(.appearance-light) .form-group textarea {
+  background-color: #303134 !important;
+  background-image: none !important;
+  color: #e8eaed !important;
+  border: 1px solid #3c4043 !important;
+  color-scheme: dark !important;
+  -webkit-text-fill-color: #e8eaed !important;
+}
+
+html body.theme-industrial:not(.appearance-light) input::placeholder,
+html body.theme-industrial:not(.appearance-light) textarea::placeholder {
+  color: #7a7a7a !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #7a7a7a !important;
+}
+
+html body.theme-industrial:not(.appearance-light) input:focus,
+html body.theme-industrial:not(.appearance-light) textarea:focus,
+html body.theme-industrial:not(.appearance-light) select:focus {
+  border-color: #8ab4f8 !important;
+  box-shadow: 0 0 0 3px rgba(138, 180, 248, 0.18) !important;
+  outline: none !important;
+}
+
+html body.theme-industrial:not(.appearance-light) input[type="checkbox"],
+html body.theme-industrial:not(.appearance-light) input[type="radio"] {
+  accent-color: #c0c0c5 !important;
+}
+
+/* select options natives → dark */
+html body.theme-industrial:not(.appearance-light) option {
+  background: #303134 !important;
+  color: #e8eaed !important;
+}
+
+/* ============================================================================
+   §N2 — PANELS / CARDS / TOOLBARS / FILTERS / SECTION-HEADERS = NEGROS
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .panel,
+html body.theme-industrial:not(.appearance-light) .card,
+html body.theme-industrial:not(.appearance-light) .module-card,
+html body.theme-industrial:not(.appearance-light) .form-card,
+html body.theme-industrial:not(.appearance-light) .info-card,
+html body.theme-industrial:not(.appearance-light) .empty-card,
+html body.theme-industrial:not(.appearance-light) .summary-card,
+html body.theme-industrial:not(.appearance-light) .filters-card,
+html body.theme-industrial:not(.appearance-light) .toolbar,
+html body.theme-industrial:not(.appearance-light) .table-wrap,
+html body.theme-industrial:not(.appearance-light) .section-header,
+html body.theme-industrial:not(.appearance-light) .module-delete-zone {
+  background-color: #202124 !important;
+  background-image: none !important;
+  color: #e8eaed !important;
+  border-color: #3c4043 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .section-header {
+  background: linear-gradient(180deg, #303134 0%, #202124 100%) !important;
+  border-color: #3c4043 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .section-header h1,
+html body.theme-industrial:not(.appearance-light) .section-header h2,
+html body.theme-industrial:not(.appearance-light) .section-header h3,
+html body.theme-industrial:not(.appearance-light) .section-header .section-sub {
+  color: #e8eaed !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .section-header .section-sub,
+html body.theme-industrial:not(.appearance-light) .section-header p {
+  color: #bdc1c6 !important;
+}
+
+/* Tables */
+html body.theme-industrial:not(.appearance-light) .data-table,
+html body.theme-industrial:not(.appearance-light) table.data-table {
+  background: #202124 !important;
+  color: #e8eaed !important;
+  border-color: #3c4043 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .data-table thead th,
+html body.theme-industrial:not(.appearance-light) table.data-table thead th {
+  background: linear-gradient(180deg, #303134 0%, #202124 100%) !important;
+  color: #e8eaed !important;
+  border-color: #3c4043 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .data-table tbody td,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody td {
+  background: transparent !important;
+  color: #e8eaed !important;
+  border-color: #3c4043 !important;
+}
+
+/* Hover de fila DESACTIVADO COMPLETAMENTE — el usuario reporto que al pasar
+   el mouse sobre filas, hay un cambio de color + transform: scale/translateX
+   que se ve como "una sombra siguiendo el mouse". Causas detectadas en el
+   codigo legacy:
+   - premium.css:2884  transform: scale(1.003) en tr:hover
+   - premium-pro.css:2832  transform: translateX(2px) en tr:hover
+   - premium.css:411  box-shadow: inset 3px 0 0 var(--prem-blue) (linea azul)
+   - varios cambios de background a #eff6ff, #2d2d2d, etc.
+   Aqui los matamos TODOS. Filas siempre estaticas, sin highlight, sin movimiento. */
+
+html body.theme-industrial:not(.appearance-light) .data-table tbody tr:hover,
+html body.theme-industrial:not(.appearance-light) .data-table tbody tr:hover td,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:hover,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:hover td,
+html body.theme-industrial:not(.appearance-light) .table-wrap > table tbody tr:hover,
+html body.theme-industrial:not(.appearance-light) .table-wrap > table tbody tr:hover td,
+html body.theme-industrial:not(.appearance-light) .maq-ficha-table tbody tr:hover,
+html body.theme-industrial:not(.appearance-light) .maq-ficha-table tbody tr:hover td,
+html body.theme-industrial:not(.appearance-light) .cdp-table tbody tr:hover,
+html body.theme-industrial:not(.appearance-light) .cdp-table tbody tr:hover td,
+html body.theme-industrial:not(.appearance-light) .table-simple tbody tr:hover,
+html body.theme-industrial:not(.appearance-light) .table-simple tbody tr:hover td,
+html body.theme-industrial:not(.appearance-light) .ref-stock-mov-table tbody tr:hover,
+html body.theme-industrial:not(.appearance-light) .ref-stock-mov-table tbody tr:hover td {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+}
+
+/* Tambien para la celda th-actions especificamente (premium.css:1564) */
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:hover td.th-actions {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+/* Modo SOL: tampoco cambio en hover de filas (mismas reglas, fondo blanco) */
+html body.theme-industrial.appearance-light .data-table tbody tr:hover,
+html body.theme-industrial.appearance-light .data-table tbody tr:hover td,
+html body.theme-industrial.appearance-light table.data-table tbody tr:hover,
+html body.theme-industrial.appearance-light table.data-table tbody tr:hover td,
+html body.theme-industrial.appearance-light .table-wrap > table tbody tr:hover,
+html body.theme-industrial.appearance-light .table-wrap > table tbody tr:hover td {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+}
+
+/* RED FINAL: cualquier tabla por ID legacy (#tabla-cotizaciones, #tabla-incidentes,
+   #tabla-bitacoras, #tabla-refacciones) en cualquier modo. Cubre style.css:559,
+   style.css:652, style.css:853, style.css:2189, style.css:3660, style.css:6487
+   donde se aplican translateX(3px), box-shadow inset y backgrounds que producen
+   el efecto "sombra que sigue al mouse". */
+html body[class*="theme-"] [id^="tabla-"] tbody tr:hover,
+html body[class*="theme-"] [id^="tabla-"] tbody tr:hover td,
+html body[class*="theme-"] table[id^="tabla-"] tbody tr:hover,
+html body[class*="theme-"] table[id^="tabla-"] tbody tr:hover td,
+html body[class*="theme-"] .data-table tbody tr:hover,
+html body[class*="theme-"] .data-table tbody tr:hover td {
+  transform: none !important;
+  -webkit-transform: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+}
+
+/* ============================================================================
+   §N3 — HINT / ALERT / BANNERS info (azul claro → negro con franja azul)
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .hint,
+html body.theme-industrial:not(.appearance-light) p.hint,
+html body.theme-industrial:not(.appearance-light) .info-note,
+html body.theme-industrial:not(.appearance-light) .alert-info,
+html body.theme-industrial:not(.appearance-light) .alert.info,
+html body.theme-industrial:not(.appearance-light) .module-hint,
+html body.theme-industrial:not(.appearance-light) .tip,
+html body.theme-industrial:not(.appearance-light) .tip-info,
+html body.theme-industrial:not(.appearance-light) .prem-info-banner,
+html body.theme-industrial:not(.appearance-light) .revision-maq-catalog-intro {
+  background-color: #151515 !important;
+  background-image: none !important;
+  color: #bdc1c6 !important;
+  border: 1px solid #3c4043 !important;
+  border-left: 3px solid #8ab4f8 !important;
+  -webkit-text-fill-color: #bdc1c6 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .hint *,
+html body.theme-industrial:not(.appearance-light) p.hint *,
+html body.theme-industrial:not(.appearance-light) .info-note *,
+html body.theme-industrial:not(.appearance-light) .alert-info *,
+html body.theme-industrial:not(.appearance-light) .alert.info * {
+  color: #bdc1c6 !important;
+  -webkit-text-fill-color: #bdc1c6 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .hint strong,
+html body.theme-industrial:not(.appearance-light) p.hint strong {
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+}
+
+/* ============================================================================
+   §N4 — SEMAFOROS / ESTATUS / BADGES pastel → DARK TRANSLUCENT
+   Permitido: verde #81c995 y rojo #f28b82 (user permite verde y rojo)
+   Azul/amarillo → plateado translucido
+   ============================================================================ */
+
+/* VERDE (permitido, mantener sutil) */
+html body.theme-industrial:not(.appearance-light) .semaforo-verde,
+html body.theme-industrial:not(.appearance-light) .semaforo-ok,
+html body.theme-industrial:not(.appearance-light) .semaforo.semaforo-verde,
+html body.theme-industrial:not(.appearance-light) .estatus-finalizado,
+html body.theme-industrial:not(.appearance-light) .estatus-aprobada,
+html body.theme-industrial:not(.appearance-light) .estatus-aplicada,
+html body.theme-industrial:not(.appearance-light) .badge-success,
+html body.theme-industrial:not(.appearance-light) .badge.success,
+html body.theme-industrial:not(.appearance-light) .badge-mant-ok,
+html body.theme-industrial:not(.appearance-light) .status-pill-success,
+html body.theme-industrial:not(.appearance-light) .status-pill-ok {
+  background: rgba(129, 201, 149, 0.16) !important;
+  color: #81c995 !important;
+  border: 1px solid rgba(129, 201, 149, 0.35) !important;
+}
+
+/* ROJO (permitido, mantener sutil) */
+html body.theme-industrial:not(.appearance-light) .semaforo-rojo,
+html body.theme-industrial:not(.appearance-light) .semaforo-bad,
+html body.theme-industrial:not(.appearance-light) .semaforo.semaforo-rojo,
+html body.theme-industrial:not(.appearance-light) .estatus-cancelada,
+html body.theme-industrial:not(.appearance-light) .estatus-rechazado,
+html body.theme-industrial:not(.appearance-light) .badge-danger,
+html body.theme-industrial:not(.appearance-light) .badge.danger,
+html body.theme-industrial:not(.appearance-light) .badge-mant-vencido,
+html body.theme-industrial:not(.appearance-light) .status-pill-danger,
+html body.theme-industrial:not(.appearance-light) .status-pill-rojo {
+  background: rgba(242, 139, 130, 0.14) !important;
+  color: #f28b82 !important;
+  border: 1px solid rgba(242, 139, 130, 0.34) !important;
+}
+
+/* AMARILLO (prohibido pastel → convertir a plateado gris) */
+html body.theme-industrial:not(.appearance-light) .semaforo-amarillo,
+html body.theme-industrial:not(.appearance-light) .semaforo-warn,
+html body.theme-industrial:not(.appearance-light) .semaforo.semaforo-warn,
+html body.theme-industrial:not(.appearance-light) .semaforo.semaforo-amarillo,
+html body.theme-industrial:not(.appearance-light) .badge-warning,
+html body.theme-industrial:not(.appearance-light) .badge.warning,
+html body.theme-industrial:not(.appearance-light) .badge-mant-warn,
+html body.theme-industrial:not(.appearance-light) .badge-mant-pendiente,
+html body.theme-industrial:not(.appearance-light) .pvc-badge--warning,
+html body.theme-industrial:not(.appearance-light) .status-pill-warn,
+html body.theme-industrial:not(.appearance-light) .status-pill-amarillo,
+html body.theme-industrial:not(.appearance-light) .estatus-revision,
+html body.theme-industrial:not(.appearance-light) .estatus-en-proceso,
+html body.theme-industrial:not(.appearance-light) .estatus-cotizacion,
+html body.theme-industrial:not(.appearance-light) .estatus-pendiente,
+html body.theme-industrial:not(.appearance-light) .estatus-borrador,
+html body.theme-industrial:not(.appearance-light) .estado-borrador,
+html body.theme-industrial:not(.appearance-light) .badge-bono-pendiente {
+  background: rgba(192, 192, 197, 0.14) !important;
+  color: #d1d5db !important;
+  border: 1px solid rgba(192, 192, 197, 0.32) !important;
+}
+
+/* AZUL/INFO (prohibido → plateado gris claro) */
+html body.theme-industrial:not(.appearance-light) .semaforo-gray,
+html body.theme-industrial:not(.appearance-light) .semaforo-gris,
+html body.theme-industrial:not(.appearance-light) .estatus-abierta,
+html body.theme-industrial:not(.appearance-light) .estatus-abierto,
+html body.theme-industrial:not(.appearance-light) .badge-info,
+html body.theme-industrial:not(.appearance-light) .badge.info,
+html body.theme-industrial:not(.appearance-light) .badge-neutral,
+html body.theme-industrial:not(.appearance-light) .badge.neutral,
+html body.theme-industrial:not(.appearance-light) .status-pill-neutral,
+html body.theme-industrial:not(.appearance-light) .bitacora-estado-abierto,
+html body.theme-industrial:not(.appearance-light) .estado-activo,
+html body.theme-industrial:not(.appearance-light) .estado-pendiente {
+  background: rgba(189, 193, 198, 0.12) !important;
+  color: #bdc1c6 !important;
+  border: 1px solid rgba(189, 193, 198, 0.28) !important;
+}
+
+/* ============================================================================
+   §N5 — REF-CAT-PILL (columna CATEGORIA blanca en tabla Refacciones)
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .ref-cat-pill,
+html body.theme-industrial:not(.appearance-light) .ref-cat-pill--line,
+html body.theme-industrial:not(.appearance-light) .ref-cat-pill--part {
+  background: rgba(189, 193, 198, 0.10) !important;
+  color: #bdc1c6 !important;
+  border: 1px solid rgba(189, 193, 198, 0.22) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .ref-cat-pill--line {
+  color: #81c995 !important;
+  background: rgba(129, 201, 149, 0.10) !important;
+  border-color: rgba(129, 201, 149, 0.28) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .ref-cat-sep {
+  color: #6a6d72 !important;
+}
+html body.theme-industrial:not(.appearance-light) .ref-cat-empty {
+  color: #6a6d72 !important;
+}
+
+/* ============================================================================
+   §N6 — PROSPECCION KPIs (valores teal → plateado)
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .prospeccion-kpi {
+  background: #202124 !important;
+  border: 1px solid #3c4043 !important;
+  color: #e8eaed !important;
+}
+html body.theme-industrial:not(.appearance-light) .prospeccion-kpi-lbl {
+  color: #9aa0a6 !important;
+}
+html body.theme-industrial:not(.appearance-light) .prospeccion-kpi-val {
+  color: #e8eaed !important;
+}
+html body.theme-industrial:not(.appearance-light) .prospeccion-map-wrap {
+  background: #202124 !important;
+  border-color: #3c4043 !important;
+}
+
+/* ============================================================================
+   §N7 — BOTONES: TODOS PLATEADOS (excepto danger rojo / success verde)
+   Especificidad minima para ganar a `body.md3-on .btn.primary` (0,0,2,1):
+   `html body.md3-on.theme-industrial:not(.appearance-light) .btn.primary` = (0,0,4,2)
+   ============================================================================ */
+
+/* BASE: .btn / .btn.outline / .btn.primary / .btn-primary en LUNA */
+html body.md3-on.theme-industrial:not(.appearance-light) .btn,
+html body.md3-on.theme-industrial:not(.appearance-light) button.btn,
+html body.theme-industrial:not(.appearance-light) .btn,
+html body.theme-industrial:not(.appearance-light) button.btn {
+  background: linear-gradient(180deg, #3a3d43 0%, #2a2d32 50%, #1f2126 100%) !important;
+  background-image: linear-gradient(180deg, #3a3d43 0%, #2a2d32 50%, #1f2126 100%) !important;
+  color: #e8eaed !important;
+  border: 1px solid #4a4d52 !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 1px 2px rgba(0, 0, 0, 0.45) !important;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35) !important;
+}
+
+html body.md3-on.theme-industrial:not(.appearance-light) .btn:hover,
+html body.theme-industrial:not(.appearance-light) .btn:hover {
+  background: linear-gradient(180deg, #4a4d52 0%, #35383e 50%, #2a2d32 100%) !important;
+  background-image: linear-gradient(180deg, #4a4d52 0%, #35383e 50%, #2a2d32 100%) !important;
+  border-color: #5a5d62 !important;
+}
+
+/* PRIMARY: plateado mas brillante (es la accion principal, tipo Tesla) */
+html body.md3-on.theme-industrial:not(.appearance-light) .btn.primary,
+html body.md3-on.theme-industrial:not(.appearance-light) button.btn.primary,
+html body.md3-on.theme-industrial:not(.appearance-light) .btn-primary,
+html body.md3-on.theme-industrial:not(.appearance-light) a.btn.primary,
+html body.theme-industrial:not(.appearance-light) .btn.primary,
+html body.theme-industrial:not(.appearance-light) button.btn.primary,
+html body.theme-industrial:not(.appearance-light) .btn-primary,
+html body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh:not(.outline) {
+  background: linear-gradient(180deg, #6a6d72 0%, #55585d 50%, #40434a 100%) !important;
+  background-image: linear-gradient(180deg, #6a6d72 0%, #55585d 50%, #40434a 100%) !important;
+  background-color: #55585d !important;
+  color: #ffffff !important;
+  border: 1px solid #7a7d82 !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.10) inset,
+    0 2px 4px rgba(0, 0, 0, 0.45) !important;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35) !important;
+}
+
+html body.md3-on.theme-industrial:not(.appearance-light) .btn.primary:hover,
+html body.md3-on.theme-industrial:not(.appearance-light) button.btn.primary:hover,
+html body.theme-industrial:not(.appearance-light) .btn.primary:hover,
+html body.theme-industrial:not(.appearance-light) button.btn.primary:hover {
+  background: linear-gradient(180deg, #7a7d82 0%, #65686d 50%, #50535a 100%) !important;
+  background-image: linear-gradient(180deg, #7a7d82 0%, #65686d 50%, #50535a 100%) !important;
+  border-color: #8a8d92 !important;
+  filter: none !important;
+}
+
+/* Quitar overlay azul de ::before en LUNA (premium.css mete glow azul) */
+html body.theme-industrial:not(.appearance-light) .btn.primary::before {
+  display: none !important;
+  content: none !important;
+}
+
+/* Primary en section-header (override explicito, headers sticky) */
+html body.md3-on.theme-industrial:not(.appearance-light) .section-header .btn.primary,
+html body.theme-industrial:not(.appearance-light) .section-header .btn.primary,
+html body.theme-industrial:not(.appearance-light) .section-header .btn[id^="nuevo"],
+html body.theme-industrial:not(.appearance-light) .section-header .btn[id^="nueva"],
+html body.theme-industrial:not(.appearance-light) .section-header .btn[id*="-nuevo"],
+html body.theme-industrial:not(.appearance-light) .section-header .btn[id*="-nueva"] {
+  background: linear-gradient(180deg, #6a6d72 0%, #55585d 50%, #40434a 100%) !important;
+  background-image: linear-gradient(180deg, #6a6d72 0%, #55585d 50%, #40434a 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #7a7d82 !important;
+}
+
+/* PRIMARY por ID (ganan siempre por especificidad de ID = 100) */
+html body.theme-industrial:not(.appearance-light) #nueva-cotizacion,
+html body.theme-industrial:not(.appearance-light) #nuevo-reporte,
+html body.theme-industrial:not(.appearance-light) #nueva-revision-maq,
+html body.theme-industrial:not(.appearance-light) #btn-save-tarifas,
+html body.theme-industrial:not(.appearance-light) #btn-refresh-prospeccion,
+html body.theme-industrial:not(.appearance-light) #nuevo-cliente,
+html body.theme-industrial:not(.appearance-light) #nueva-refaccion,
+html body.theme-industrial:not(.appearance-light) #nuevo-almacen,
+html body.theme-industrial:not(.appearance-light) #nueva-maquina,
+html body.theme-industrial:not(.appearance-light) #nuevo-bono,
+html body.theme-industrial:not(.appearance-light) #nuevo-tecnico,
+html body.theme-industrial:not(.appearance-light) #nueva-tarifa,
+html body.theme-industrial:not(.appearance-light) #nuevo-mantenimiento,
+html body.theme-industrial:not(.appearance-light) #nueva-garantia {
+  background: linear-gradient(180deg, #6a6d72 0%, #55585d 50%, #40434a 100%) !important;
+  background-image: linear-gradient(180deg, #6a6d72 0%, #55585d 50%, #40434a 100%) !important;
+  background-color: #55585d !important;
+  color: #ffffff !important;
+  border: 1px solid #7a7d82 !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.10) inset,
+    0 2px 4px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* DANGER: rojo (permitido) */
+html body.theme-industrial:not(.appearance-light) .btn.danger,
+html body.theme-industrial:not(.appearance-light) button.btn.danger,
+html body.theme-industrial:not(.appearance-light) .btn-danger {
+  background: linear-gradient(180deg, #c5221f 0%, #a50e0e 100%) !important;
+  background-image: linear-gradient(180deg, #c5221f 0%, #a50e0e 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #c5221f !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .btn.danger.outline,
+html body.theme-industrial:not(.appearance-light) .btn.danger.outline:not(:hover) {
+  background: transparent !important;
+  background-image: none !important;
+  color: #f28b82 !important;
+  border: 1px solid rgba(242, 139, 130, 0.5) !important;
+}
+
+/* SUCCESS: verde (permitido) */
+html body.theme-industrial:not(.appearance-light) .btn.success,
+html body.theme-industrial:not(.appearance-light) button.btn.success,
+html body.theme-industrial:not(.appearance-light) .btn-success {
+  background: linear-gradient(180deg, #137333 0%, #0d5a28 100%) !important;
+  background-image: linear-gradient(180deg, #137333 0%, #0d5a28 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #137333 !important;
+}
+
+/* OUTLINE: borde plateado translucido */
+html body.md3-on.theme-industrial:not(.appearance-light) .btn.outline,
+html body.theme-industrial:not(.appearance-light) .btn.outline {
+  background: rgba(255, 255, 255, 0.03) !important;
+  background-image: none !important;
+  color: #e8eaed !important;
+  border: 1px solid #4a4d52 !important;
+  box-shadow: none !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .btn.outline:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: #6a6d72 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .btn i,
+html body.theme-industrial:not(.appearance-light) .btn .fas {
+  color: inherit !important;
+}
+
+/* Botones accion dentro de tabla (.th-actions) - mantener ancho fijo */
+html body.theme-industrial:not(.appearance-light) table.data-table th.th-actions,
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions {
+  min-width: 180px !important;
+  width: 180px !important;
+  padding-right: 18px !important;
+  white-space: nowrap !important;
+}
+
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions > * {
+  flex: 0 0 auto !important;
+}
+
+/* table-wrap con scroll horizontal si hace falta */
+html body.theme-industrial:not(.appearance-light) .table-wrap {
+  overflow-x: auto !important;
+}
+
+/* ============================================================================
+   §N8 — SIDEBAR, TABS, HEADER
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .sidebar,
+html body.theme-industrial:not(.appearance-light) .sidebar-nav,
+html body.theme-industrial:not(.appearance-light) nav.sidebar,
+html body.theme-industrial:not(.appearance-light) aside.sidebar {
+  background: #202124 !important;
+  background-image: none !important;
+  border-color: #3c4043 !important;
+  color: #e8eaed !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .sidebar .tab,
+html body.theme-industrial:not(.appearance-light) .sidebar-nav .tab,
+html body.theme-industrial:not(.appearance-light) nav .tab {
+  background: transparent !important;
+  color: #9aa0a6 !important;
+  border-color: transparent !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .sidebar .tab:hover,
+html body.theme-industrial:not(.appearance-light) .sidebar-nav .tab:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: #e8eaed !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .sidebar .tab.active,
+html body.theme-industrial:not(.appearance-light) .sidebar-nav .tab.active {
+  background: linear-gradient(180deg, #4a4d52 0%, #35383e 100%) !important;
+  background-image: linear-gradient(180deg, #4a4d52 0%, #35383e 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #5a5d62 !important;
+}
+
+/* Top header (marca Universal Servicio Tecnico) */
+html body.theme-industrial:not(.appearance-light) .app-header,
+html body.theme-industrial:not(.appearance-light) header.app-header,
+html body.theme-industrial:not(.appearance-light) .topbar {
+  background: #202124 !important;
+  border-color: #3c4043 !important;
+  color: #e8eaed !important;
+}
+
+/* ============================================================================
+   §N9 — DROPDOWNS: Notificaciones + Menu Avatar (solido, alto contraste)
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) #notifications-panel,
+html body.theme-industrial:not(.appearance-light) #notifications-panel *:not(i):not(svg):not(path) {
+  background: #303134 !important;
+  background-image: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #notifications-panel {
+  color: #e8eaed !important;
+  border: 1px solid #3c4043 !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6) !important;
+  z-index: 16000 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #notifications-panel *,
+html body.theme-industrial:not(.appearance-light) #notifications-panel p,
+html body.theme-industrial:not(.appearance-light) #notifications-panel span,
+html body.theme-industrial:not(.appearance-light) #notifications-panel a,
+html body.theme-industrial:not(.appearance-light) #notifications-panel h1,
+html body.theme-industrial:not(.appearance-light) #notifications-panel h2,
+html body.theme-industrial:not(.appearance-light) #notifications-panel h3,
+html body.theme-industrial:not(.appearance-light) #notifications-panel h4,
+html body.theme-industrial:not(.appearance-light) #notifications-panel li,
+html body.theme-industrial:not(.appearance-light) #notifications-panel label {
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #notifications-panel .muted,
+html body.theme-industrial:not(.appearance-light) #notifications-panel .text-muted,
+html body.theme-industrial:not(.appearance-light) #notifications-panel small,
+html body.theme-industrial:not(.appearance-light) #notifications-panel time {
+  color: #9aa0a6 !important;
+  -webkit-text-fill-color: #9aa0a6 !important;
+}
+
+/* Menu Avatar */
+html body.theme-industrial:not(.appearance-light) #header-profile-menu,
+html body.theme-industrial:not(.appearance-light) .header-profile-menu {
+  background: #303134 !important;
+  background-image: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  color: #e8eaed !important;
+  border: 1px solid #3c4043 !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6) !important;
+  z-index: 16000 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #header-profile-menu *,
+html body.theme-industrial:not(.appearance-light) .header-profile-menu * {
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+  background-image: none !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #header-profile-menu .muted,
+html body.theme-industrial:not(.appearance-light) #header-profile-menu small {
+  color: #9aa0a6 !important;
+  -webkit-text-fill-color: #9aa0a6 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #header-profile-menu a:hover,
+html body.theme-industrial:not(.appearance-light) #header-profile-menu button:hover,
+html body.theme-industrial:not(.appearance-light) .header-profile-menu a:hover,
+html body.theme-industrial:not(.appearance-light) .header-profile-menu button:hover {
+  background: #3c4043 !important;
+}
+
+/* ============================================================================
+   §N10 — MODALES: fondo negro en LUNA (inputs ya cubiertos en §N1)
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .modal-box,
+html body.theme-industrial:not(.appearance-light) .modal-content,
+html body.theme-industrial:not(.appearance-light) .modal-box--theme-industrial,
+html body.theme-industrial:not(.appearance-light) .modal {
+  background: #202124 !important;
+  color: #e8eaed !important;
+  border-color: #3c4043 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .modal-backdrop {
+  background: rgba(0, 0, 0, 0.75) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .modal-box h1,
+html body.theme-industrial:not(.appearance-light) .modal-box h2,
+html body.theme-industrial:not(.appearance-light) .modal-box h3,
+html body.theme-industrial:not(.appearance-light) .modal-box label,
+html body.theme-industrial:not(.appearance-light) .modal-box p {
+  color: #e8eaed !important;
+}
+
+/* ============================================================================
+   §N11 — FORMAS DE COTIZACION: badges USD/MXN y T.C. editable
+   En las fotos se ven pastillas azules claras con USD / 17.29 / BORRADOR
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) [class*="moneda"],
+html body.theme-industrial:not(.appearance-light) [class*="currency"],
+html body.theme-industrial:not(.appearance-light) [class*="-usd"],
+html body.theme-industrial:not(.appearance-light) [class*="-mxn"],
+html body.theme-industrial:not(.appearance-light) .badge-moneda,
+html body.theme-industrial:not(.appearance-light) .tc-pill,
+html body.theme-industrial:not(.appearance-light) .chip-tc,
+html body.theme-industrial:not(.appearance-light) .chip-moneda {
+  background: rgba(189, 193, 198, 0.12) !important;
+  background-image: none !important;
+  color: #bdc1c6 !important;
+  border: 1px solid rgba(189, 193, 198, 0.28) !important;
+}
+
+/* ============================================================================
+   §N12 — REVISION MAQUINAS: cards catalogo
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .revision-maq-card,
+html body.theme-industrial:not(.appearance-light) .maq-card,
+html body.theme-industrial:not(.appearance-light) .revision-maq-catalog-wrap {
+  background: #202124 !important;
+  background-image: none !important;
+  border: 1px solid #3c4043 !important;
+  color: #e8eaed !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .revision-maq-card-title,
+html body.theme-industrial:not(.appearance-light) .maq-card-title,
+html body.theme-industrial:not(.appearance-light) .revision-maq-card-title strong {
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .revision-maq-card-serie,
+html body.theme-industrial:not(.appearance-light) .revision-maq-card-client,
+html body.theme-industrial:not(.appearance-light) .maq-card-serie,
+html body.theme-industrial:not(.appearance-light) .maq-card-cat,
+html body.theme-industrial:not(.appearance-light) .maq-card-zona,
+html body.theme-industrial:not(.appearance-light) .maq-card-modelo {
+  color: #bdc1c6 !important;
+  -webkit-text-fill-color: #bdc1c6 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .revision-maq-pill,
+html body.theme-industrial:not(.appearance-light) .maq-card-parte {
+  background: rgba(189, 193, 198, 0.10) !important;
+  color: #bdc1c6 !important;
+  border: 1px solid rgba(189, 193, 198, 0.22) !important;
+}
+
+/* ============================================================================
+   §N13 — TARIFAS: inputs, tabla tarifas mano de obra, sync banner
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) [id*="tarifa"],
+html body.theme-industrial:not(.appearance-light) .tarifa-card,
+html body.theme-industrial:not(.appearance-light) .tarifa-grid,
+html body.theme-industrial:not(.appearance-light) .tarifas-table-wrap,
+html body.theme-industrial:not(.appearance-light) .rates-table,
+html body.theme-industrial:not(.appearance-light) table.rates,
+html body.theme-industrial:not(.appearance-light) table.rates-table {
+  background: #202124 !important;
+  color: #e8eaed !important;
+  border-color: #3c4043 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .tipo-cambio-card,
+html body.theme-industrial:not(.appearance-light) [id*="tipo-cambio"],
+html body.theme-industrial:not(.appearance-light) [class*="tipo-cambio"],
+html body.theme-industrial:not(.appearance-light) .banxico-banner {
+  background: #202124 !important;
+  color: #e8eaed !important;
+  border-color: #3c4043 !important;
+}
+
+/* ============================================================================
+   §N14 — FOOTER y mensajes abajo
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .app-footer,
+html body.theme-industrial:not(.appearance-light) footer,
+html body.theme-industrial:not(.appearance-light) .footer,
+html body.theme-industrial:not(.appearance-light) .site-footer {
+  background: #202124 !important;
+  color: #9aa0a6 !important;
+  border-color: #3c4043 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .app-footer *,
+html body.theme-industrial:not(.appearance-light) .site-footer * {
+  color: #9aa0a6 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) kbd {
+  background: #303134 !important;
+  color: #e8eaed !important;
+  border: 1px solid #3c4043 !important;
+}
+
+/* ============================================================================
+   §N15 — LINKS / EMAIL (dentro tabla, azules teal → cyan suave legible)
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) a:not(.btn):not(.tab):not(.link-btn) {
+  color: #8ab4f8 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) a:not(.btn):hover {
+  color: #aecbfa !important;
+}
+
+/* ============================================================================
+   §N16 — PROGRESS BARS: gradiente azul → plateado
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .progress-bar,
+html body.theme-industrial:not(.appearance-light) .dashboard-progress-bar {
+  background: linear-gradient(90deg, #55585d, #7a7d82) !important;
+  background-image: linear-gradient(90deg, #55585d, #7a7d82) !important;
+}
+
+/* ============================================================================
+   §N17 — FAB IA widget: mantener abajo-derecha
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .ai-widget-wrap,
+html body.theme-industrial:not(.appearance-light) #ai-widget,
+html body.theme-industrial:not(.appearance-light) .ai-fab-wrap {
+  position: fixed !important;
+  right: 24px !important;
+  bottom: 24px !important;
+  z-index: 9900 !important;
+  left: auto !important;
+  top: auto !important;
+}
+
+/* ============================================================================
+   §N18 — OCULTAR FABs duplicados (palette, density, print) SIEMPRE
+   Sin condicion de tema: el usuario los quiere fuera en cualquier modo.
+   El JS premium-ux.js los inyecta dinamicamente al header/body, asi que
+   atacamos por nombre de clase puro y los matamos ademas con:
+   - display:none / visibility:hidden / opacity:0 / pointer-events:none
+   - position:absolute + left:-9999 por si display:none falla por animacion
+   ============================================================================ */
+html body .prem-theme-fab,
+html body .prem-density-fab,
+html body .prem-theme-picker,
+html body .prem-density-picker,
+html body .prem-print-btn,
+html body .prem-print-btn--floating,
+html body button.prem-theme-fab,
+html body button.prem-density-fab,
+html body button.prem-print-btn {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  left: -9999px !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* ============================================================================
+   §N19 — CODE / KBD / monospace inline
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) code {
+  background: #303134 !important;
+  color: #bdc1c6 !important;
+  border: 1px solid #3c4043 !important;
+  padding: 1px 6px !important;
+  border-radius: 4px !important;
+}
+
+/* ============================================================================
+   §N20 — MODAL FORM inputs (override especifico del modal industrial)
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) .modal-box.modal-box--theme-industrial .form-group input,
+html body.theme-industrial:not(.appearance-light) .modal-box.modal-box--theme-industrial .form-group select,
+html body.theme-industrial:not(.appearance-light) .modal-box.modal-box--theme-industrial .form-group textarea {
+  background: #303134 !important;
+  color: #e8eaed !important;
+  border-color: #3c4043 !important;
+}
+
+/* ============================================================================
+   §N21 — Colores teal/verde teal que deben ser plateados en LUNA
+   (.ref-td-price strong con #0f766e, etc.)
+   ============================================================================ */
+html body.theme-industrial:not(.appearance-light) #tabla-refacciones .ref-td-price strong,
+html body.theme-industrial:not(.appearance-light) .ref-td-price strong,
+html body.theme-industrial:not(.appearance-light) .usd-value,
+html body.theme-industrial:not(.appearance-light) .mxn-value {
+  color: #e8eaed !important;
+}
+
+/* Sobrescribir cualquier background claro heredado directamente sobre .card/.panel hijos */
+html body.theme-industrial:not(.appearance-light) .card > .card,
+html body.theme-industrial:not(.appearance-light) .panel > .panel {
+  background: transparent !important;
+  border-color: #3c4043 !important;
+}
+
+/* ============================================================================
+   §N22 — BOTONES DE ACCION EN TABLAS (azul vista, verde editar, rojo eliminar)
+   El usuario aprobó el estilo de la pestaña Clientes: halo de color sutil,
+   fondo translucent. Debe aplicar en TODAS las pestañas (Clientes, Refacciones,
+   Maquinas, Cotizaciones, Reportes, Garantias, Mantenimientos, Bonos, etc.)
+
+   Uso DESCENDANT COMBINATOR (espacio, no >) porque en Refacciones los botones
+   estan dentro de <div class="row-actions-inline"> y no son hijos directos.
+
+   Especificidad: html body + :not + 3 clases + [attr] + 2 tipos mas = (0,0,5,4)
+   Esto SUPERA a §N7 base (.btn = 0,0,4,2) y se pinta encima del plateado.
+   ============================================================================ */
+
+/* AZUL — vista/preview (permitido como acento sobre negro) */
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-preview"],
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-view"],
+html body.theme-industrial:not(.appearance-light) .data-table td.th-actions [class*="btn-preview"],
+html body.theme-industrial:not(.appearance-light) .data-table td.th-actions [class*="btn-view"],
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-preview"],
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-view"] {
+  background: rgba(26, 115, 232, 0.14) !important;
+  background-image: none !important;
+  color: #8ab4f8 !important;
+  border: 1px solid rgba(138, 180, 248, 0.40) !important;
+  box-shadow:
+    0 0 0 1px rgba(138, 180, 248, 0.10),
+    0 0 10px rgba(138, 180, 248, 0.14) !important;
+  text-shadow: none !important;
+}
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-preview"]:hover,
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-view"]:hover,
+html body.theme-industrial:not(.appearance-light) .data-table td.th-actions [class*="btn-preview"]:hover,
+html body.theme-industrial:not(.appearance-light) .data-table td.th-actions [class*="btn-view"]:hover,
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-preview"]:hover,
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-view"]:hover {
+  background: rgba(26, 115, 232, 0.25) !important;
+  border-color: rgba(138, 180, 248, 0.70) !important;
+  color: #aecbfa !important;
+}
+
+/* VERDE — editar (permitido) */
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-edit"],
+html body.theme-industrial:not(.appearance-light) .data-table td.th-actions [class*="btn-edit"],
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-edit"] {
+  background: rgba(129, 201, 149, 0.14) !important;
+  background-image: none !important;
+  color: #81c995 !important;
+  border: 1px solid rgba(129, 201, 149, 0.40) !important;
+  box-shadow:
+    0 0 0 1px rgba(129, 201, 149, 0.10),
+    0 0 10px rgba(129, 201, 149, 0.14) !important;
+  text-shadow: none !important;
+}
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-edit"]:hover,
+html body.theme-industrial:not(.appearance-light) .data-table td.th-actions [class*="btn-edit"]:hover,
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-edit"]:hover {
+  background: rgba(129, 201, 149, 0.25) !important;
+  border-color: rgba(129, 201, 149, 0.70) !important;
+  color: #a8dab5 !important;
+}
+
+/* ROJO — eliminar (permitido) */
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-delete"],
+html body.theme-industrial:not(.appearance-light) .data-table td.th-actions [class*="btn-delete"],
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-delete"] {
+  background: rgba(242, 139, 130, 0.14) !important;
+  background-image: none !important;
+  color: #f28b82 !important;
+  border: 1px solid rgba(242, 139, 130, 0.40) !important;
+  box-shadow:
+    0 0 0 1px rgba(242, 139, 130, 0.10),
+    0 0 10px rgba(242, 139, 130, 0.16) !important;
+  text-shadow: none !important;
+}
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-delete"]:hover,
+html body.theme-industrial:not(.appearance-light) .data-table td.th-actions [class*="btn-delete"]:hover,
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-delete"]:hover {
+  background: rgba(242, 139, 130, 0.28) !important;
+  border-color: rgba(242, 139, 130, 0.75) !important;
+  color: #f6a6a0 !important;
+}
+
+/* AMBAR — btn-stock (stock, ajuste inventario). Permitido como acento neutro */
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-stock"],
+html body.theme-industrial:not(.appearance-light) .data-table td.th-actions [class*="btn-stock"],
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-stock"] {
+  background: rgba(253, 214, 99, 0.12) !important;
+  background-image: none !important;
+  color: #fdd663 !important;
+  border: 1px solid rgba(253, 214, 99, 0.38) !important;
+  box-shadow: 0 0 0 1px rgba(253, 214, 99, 0.08) !important;
+  text-shadow: none !important;
+}
+
+/* DOWNLOAD / PDF / otros — color neutral plateado */
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-download"],
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-pdf"],
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-csv"],
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-print"],
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-download"],
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-pdf"] {
+  background: rgba(189, 193, 198, 0.10) !important;
+  background-image: none !important;
+  color: #bdc1c6 !important;
+  border: 1px solid rgba(189, 193, 198, 0.30) !important;
+  box-shadow: 0 0 0 1px rgba(189, 193, 198, 0.08) !important;
+  text-shadow: none !important;
+}
+
+/* APPROVE / FINALIZAR / CONFIRMAR — verde mas intenso */
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-approve"],
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-finalizar"],
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-confirm"],
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions [class*="btn-aplicar"],
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-approve"],
+html body.theme-industrial:not(.appearance-light) .row-actions-inline [class*="btn-finalizar"] {
+  background: linear-gradient(180deg, #137333 0%, #0d5a28 100%) !important;
+  background-image: linear-gradient(180deg, #137333 0%, #0d5a28 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #137333 !important;
+  box-shadow: 0 2px 4px rgba(19, 115, 51, 0.35) !important;
+  text-shadow: none !important;
+}
+
+/* Tamaño y forma uniforme de los botones de accion (32x32 sin deformar) */
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions > .btn,
+html body.theme-industrial:not(.appearance-light) table.data-table td.th-actions .row-actions-inline > .btn,
+html body.theme-industrial:not(.appearance-light) .row-actions-inline > .btn {
+  min-width: 32px !important;
+  height: 32px !important;
+  padding: 0 8px !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+}
+
+html body.theme-industrial:not(.appearance-light) .row-actions-inline {
+  display: inline-flex !important;
+  gap: 6px !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+}
+
+/* ============================================================================
+   §N23 — MISMO ESTILO EN MODO SOL (para consistencia visual)
+   El usuario aprobó este estilo en CLIENTES modo LUNA; aseguramos que en SOL
+   tambien se vea coherente (fondo pastel azul/verde/rojo suave).
+   ============================================================================ */
+html body.theme-industrial.appearance-light table.data-table td.th-actions [class*="btn-preview"],
+html body.theme-industrial.appearance-light table.data-table td.th-actions [class*="btn-view"],
+html body.theme-industrial.appearance-light .row-actions-inline [class*="btn-preview"],
+html body.theme-industrial.appearance-light .row-actions-inline [class*="btn-view"] {
+  background: #eff6ff !important;
+  background-image: none !important;
+  color: #1a73e8 !important;
+  border: 1px solid rgba(26, 115, 232, 0.30) !important;
+}
+html body.theme-industrial.appearance-light table.data-table td.th-actions [class*="btn-edit"],
+html body.theme-industrial.appearance-light .row-actions-inline [class*="btn-edit"] {
+  background: #ecfdf5 !important;
+  background-image: none !important;
+  color: #047857 !important;
+  border: 1px solid rgba(5, 150, 105, 0.30) !important;
+}
+html body.theme-industrial.appearance-light table.data-table td.th-actions [class*="btn-delete"],
+html body.theme-industrial.appearance-light .row-actions-inline [class*="btn-delete"] {
+  background: #fef2f2 !important;
+  background-image: none !important;
+  color: #b91c1c !important;
+  border: 1px solid rgba(185, 28, 28, 0.30) !important;
+}
+
+/* ============================================================================
+   §N24 — UNIFICAR TODOS LOS BOTONES "GRANDES" AL MISMO PLATEADO OSCURO
+   El usuario tomo como referencia el "+ Nuevo cliente" en pestaña Clientes.
+   TODOS los botones de header/toolbar/dashboard deben verse igual:
+   gradient #3a3d43 -> #1f2126 (gris oscuro tipo Tesla/Apple).
+
+   No afecta:
+   - Botones de acciones en tabla (azul/verde/rojo de §N22)
+   - .btn.danger (rojo)
+   - .btn.success (verde)
+   - .btn-icon-header (iconos del header: campanita, luna/sol, salir)
+   - .btn-header-profile (avatar/monito)
+
+   Sobreescribe §N7 (que tenia .btn.primary mas brillante que .btn base) y
+   tambien las reglas conflictivas en premium-pro.css que pintan
+   .btn-dashboard-refresh:not(.outline) de azul cyan.
+   ============================================================================ */
+html body.md3-on.theme-industrial:not(.appearance-light) .btn:not(.danger):not(.success):not([class*="btn-preview"]):not([class*="btn-view"]):not([class*="btn-edit"]):not([class*="btn-delete"]):not([class*="btn-stock"]):not([class*="btn-approve"]):not([class*="btn-finalizar"]):not([class*="btn-confirm"]):not([class*="btn-aplicar"]),
+html body.md3-on.theme-industrial:not(.appearance-light) button.btn:not(.danger):not(.success):not([class*="btn-preview"]):not([class*="btn-view"]):not([class*="btn-edit"]):not([class*="btn-delete"]),
+html body.md3-on.theme-industrial:not(.appearance-light) .btn.primary,
+html body.md3-on.theme-industrial:not(.appearance-light) .btn-primary,
+html body.md3-on.theme-industrial:not(.appearance-light) .btn-dashboard-refresh,
+html body.md3-on.theme-industrial:not(.appearance-light) .btn-dashboard-refresh.outline,
+html body.md3-on.theme-industrial:not(.appearance-light) .btn-dashboard-refresh:not(.outline),
+html body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh,
+html body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh.outline,
+html body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh:not(.outline) {
+  background: linear-gradient(180deg, #3a3d43 0%, #2a2d32 50%, #1f2126 100%) !important;
+  background-image: linear-gradient(180deg, #3a3d43 0%, #2a2d32 50%, #1f2126 100%) !important;
+  background-color: #2a2d32 !important;
+  color: #e8eaed !important;
+  border: 1px solid #4a4d52 !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 1px 2px rgba(0, 0, 0, 0.45) !important;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Hover unificado: mismo gradient un poco mas claro, SIN transform NI filter */
+html body.md3-on.theme-industrial:not(.appearance-light) .btn:not(.danger):not(.success):not([class*="btn-preview"]):not([class*="btn-view"]):not([class*="btn-edit"]):not([class*="btn-delete"]):hover,
+html body.md3-on.theme-industrial:not(.appearance-light) .btn.primary:hover,
+html body.md3-on.theme-industrial:not(.appearance-light) .btn-dashboard-refresh:hover,
+html body.md3-on.theme-industrial:not(.appearance-light) .btn-dashboard-refresh.outline:hover,
+html body.md3-on.theme-industrial:not(.appearance-light) .btn-dashboard-refresh:not(.outline):hover,
+html body.theme-industrial:not(.appearance-light) .btn-dashboard-refresh:hover {
+  background: linear-gradient(180deg, #4a4d52 0%, #35383e 50%, #2a2d32 100%) !important;
+  background-image: linear-gradient(180deg, #4a4d52 0%, #35383e 50%, #2a2d32 100%) !important;
+  border-color: #5a5d62 !important;
+  color: #ffffff !important;
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+}
+
+/* Modo SOL: TODOS los botones grandes con plateado claro tipo Apple */
+html body.md3-on.theme-industrial.appearance-light .btn:not(.danger):not(.success):not([class*="btn-preview"]):not([class*="btn-view"]):not([class*="btn-edit"]):not([class*="btn-delete"]),
+html body.md3-on.theme-industrial.appearance-light .btn.primary,
+html body.md3-on.theme-industrial.appearance-light .btn-primary,
+html body.md3-on.theme-industrial.appearance-light .btn-dashboard-refresh,
+html body.md3-on.theme-industrial.appearance-light .btn-dashboard-refresh.outline,
+html body.md3-on.theme-industrial.appearance-light .btn-dashboard-refresh:not(.outline) {
+  background: linear-gradient(180deg, #ffffff 0%, #f1f3f4 50%, #e2e6ea 100%) !important;
+  background-image: linear-gradient(180deg, #ffffff 0%, #f1f3f4 50%, #e2e6ea 100%) !important;
+  background-color: #f1f3f4 !important;
+  color: #202124 !important;
+  border: 1px solid #d1d5db !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.65) inset,
+    0 1px 2px rgba(0, 0, 0, 0.10) !important;
+  text-shadow: none !important;
+}
+
+html body.md3-on.theme-industrial.appearance-light .btn:not(.danger):not(.success):not([class*="btn-preview"]):not([class*="btn-view"]):not([class*="btn-edit"]):not([class*="btn-delete"]):hover,
+html body.md3-on.theme-industrial.appearance-light .btn.primary:hover,
+html body.md3-on.theme-industrial.appearance-light .btn-dashboard-refresh:hover,
+html body.md3-on.theme-industrial.appearance-light .btn-dashboard-refresh.outline:hover,
+html body.md3-on.theme-industrial.appearance-light .btn-dashboard-refresh:not(.outline):hover {
+  background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 50%, #d6dbe1 100%) !important;
+  background-image: linear-gradient(180deg, #ffffff 0%, #f8f9fa 50%, #d6dbe1 100%) !important;
+  border-color: #b0b5bb !important;
+  color: #202124 !important;
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+}
+
+/* Quitar overlay azul (::before) en cualquier .btn.primary */
+html body .btn.primary::before,
+html body .btn-primary::before,
+html body .btn-dashboard-refresh::before {
+  display: none !important;
+  content: none !important;
+}
+
+/* ============================================================================
+   §N25 — MATAR ANIMACIONES DE HOVER MOLESTAS EN TODA LA WEB
+   El usuario reporta movimiento al pasar el mouse sobre avatar, campanita,
+   modo luna/sol, y "casi toda la web". Esto es por:
+   - .btn-icon-header:hover { transform: scale(1.05) } (style.css:1135)
+   - .btn-header-profile:hover { transform: translateY(-1px); filter: brightness } (premium.css:6849, premium-pro.css:314)
+   - varios .btn:hover { transform: translateY(-1px) }
+   - .dashboard-card:hover, .tab:hover etc
+
+   Aqui cancelamos transform/filter/animation en :hover para TODA la web.
+   Solo dejamos cambio de color/border (no movimiento, no escala).
+   ============================================================================ */
+
+/* TODOS los elementos del header — ZERO HOVER FX
+   El usuario NO quiere ningun cambio visual al pasar el mouse sobre:
+   - Avatar (monito) - icono interior se borraba
+   - Campanita de notificaciones - cambiaba de fondo
+   - Modo Luna/Sol - aparecia rectangulo blanco/gris feo
+   Hover debe quedar IDENTICO al estado normal (solo cursor: pointer). */
+
+html body header.header *:hover,
+html body header.header button:hover,
+html body header.header .btn-icon-header:hover,
+html body header.header .btn-header-profile:hover,
+html body header.header .btn-header-quick-logout:hover,
+html body header.header #btn-theme-toggle:hover,
+html body header.header #btn-notifications:hover,
+html body header.header #btn-logout:hover {
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+  -webkit-animation: none !important;
+  transition: none !important;
+}
+
+/* CAMPANITA + LUNA/SOL: hover IDENTICO al estado normal (sin rectangulo).
+   IMPORTANTE: selectores SIN `header.header` para cazar todos los wrappers
+   (.header-actions-tail, .header-notifications-wrap, etc) que pueden tener
+   background blanco residual de header-profile.css o material.css. */
+html body .btn-icon-header,
+html body .btn-icon-header:hover,
+html body .btn-icon-header:focus,
+html body .btn-icon-header:focus-visible,
+html body .btn-icon-header:active,
+html body button.btn-icon-header,
+html body button.btn-icon-header:hover,
+html body #btn-notifications,
+html body #btn-notifications:hover,
+html body #btn-theme-toggle,
+html body #btn-theme-toggle:hover,
+html body #btn-logout,
+html body #btn-logout:hover,
+html body .header-notifications-wrap,
+html body .header-notifications-wrap:hover {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  -webkit-box-shadow: none !important;
+}
+
+/* Los iconos dentro del boton (sol, campanita, salir): garantizar que no
+   tengan background propio. Algunos themes pintan el <i> con background. */
+html body .btn-icon-header > i,
+html body .btn-icon-header .fas,
+html body #btn-notifications > i,
+html body #btn-theme-toggle > i {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* SOL: iconos siguen visibles en gris oscuro, hover IGUAL */
+html body.theme-industrial.appearance-light header.header .btn-icon-header,
+html body.theme-industrial.appearance-light header.header .btn-icon-header:hover,
+html body.theme-industrial.appearance-light header.header .btn-icon-header i,
+html body.theme-industrial.appearance-light header.header .btn-icon-header:hover i {
+  color: #5f6368 !important;
+  -webkit-text-fill-color: #5f6368 !important;
+  background: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+}
+
+/* LUNA: iconos siguen visibles en gris claro, hover IGUAL */
+html body.theme-industrial:not(.appearance-light) header.header .btn-icon-header,
+html body.theme-industrial:not(.appearance-light) header.header .btn-icon-header:hover,
+html body.theme-industrial:not(.appearance-light) header.header .btn-icon-header i,
+html body.theme-industrial:not(.appearance-light) header.header .btn-icon-header:hover i {
+  color: #e8eaed !important;
+  -webkit-text-fill-color: #e8eaed !important;
+  background: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+}
+
+/* ============================================================================
+   FIX CRITICO: BOTON SALIR (#btn-header-quick-logout) y AVATAR (.btn-header-profile)
+   Usan ID en premium-pro.css con especificidad 100 -> ganan a clases.
+   Aqui usamos los MISMOS selectores con ID para empatar especificidad y como
+   nuestro CSS se carga DESPUES, ganamos por orden.
+
+   Estado :hover IDENTICO al estado normal (background, color, border, box-shadow,
+   filter, transform). transition: none para que ni siquiera anime el cambio. */
+
+/* === BOTON SALIR === */
+html body.md3-on header.header #btn-header-quick-logout,
+html body header.header #btn-header-quick-logout {
+  transition: none !important;
+  -webkit-transition: none !important;
+  animation: none !important;
+  -webkit-animation: none !important;
+}
+
+html body.md3-on header.header #btn-header-quick-logout:hover,
+html body.md3-on header.header #btn-header-quick-logout:focus,
+html body.md3-on header.header #btn-header-quick-logout:focus-visible,
+html body.md3-on header.header #btn-header-quick-logout:active,
+html body header.header #btn-header-quick-logout:hover,
+html body header.header #btn-header-quick-logout:focus,
+html body header.header #btn-header-quick-logout:focus-visible,
+html body header.header #btn-header-quick-logout:active {
+  /* mismo background, color, border, box-shadow, filter que el estado normal */
+  background: var(--pp-grad-dan, linear-gradient(135deg, #c5221f 0%, #a50e0e 100%)) !important;
+  background-image: var(--pp-grad-dan, linear-gradient(135deg, #c5221f 0%, #a50e0e 100%)) !important;
+  background-color: #c5221f !important;
+  color: #ffffff !important;
+  border: 1px solid transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  animation: none !important;
+  -webkit-animation: none !important;
+  transition: none !important;
+  -webkit-transition: none !important;
+  outline: none !important;
+}
+
+/* === AVATAR (monito) ===
+   premium.css:6847 hace transform:translateY(-1px) + filter:brightness(1.05) + box-shadow.
+   premium-pro.css:312 hace lo mismo + box-shadow azul grande.
+   Empatamos especificidad con `body.md3-on header.header .btn-header-profile`. */
+
+html body.md3-on header.header .btn-header-profile,
+html body header.header .btn-header-profile {
+  transition: none !important;
+  -webkit-transition: none !important;
+  animation: none !important;
+  -webkit-animation: none !important;
+}
+
+html body.md3-on header.header .btn-header-profile:hover,
+html body.md3-on header.header .btn-header-profile:focus,
+html body.md3-on header.header .btn-header-profile:focus-visible,
+html body.md3-on header.header .btn-header-profile:active,
+html body header.header .btn-header-profile:hover,
+html body header.header .btn-header-profile:focus,
+html body header.header .btn-header-profile:focus-visible,
+html body header.header .btn-header-profile:active {
+  /* identico al estado normal: background gradient azul, sin transform/filter/box-shadow */
+  background: var(--pp-grad-brand, linear-gradient(135deg, #2754d8 0%, #1a73e8 100%)) !important;
+  background-image: var(--pp-grad-brand, linear-gradient(135deg, #2754d8 0%, #1a73e8 100%)) !important;
+  background-color: #1a73e8 !important;
+  color: #ffffff !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  animation: none !important;
+  -webkit-animation: none !important;
+  transition: none !important;
+  -webkit-transition: none !important;
+  outline: none !important;
+}
+
+/* Avatar pseudo-elementos (monito SVG ::before y caret ::after) — mantener
+   posicion/tamano IDENTICOS en hover. */
+html body.md3-on header.header .btn-header-profile::before,
+html body header.header .btn-header-profile::before,
+html body.md3-on header.header .btn-header-profile:hover::before,
+html body header.header .btn-header-profile:hover::before,
+html body.md3-on header.header .btn-header-profile:focus::before,
+html body header.header .btn-header-profile:focus::before {
+  transform: none !important;
+  -webkit-transform: none !important;
+  animation: none !important;
+  filter: none !important;
+  transition: none !important;
+}
+
+html body.md3-on header.header .btn-header-profile::after,
+html body header.header .btn-header-profile::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Caret del avatar SOLO rota cuando el menu esta abierto (aria-expanded="true").
+   Sin transition para que no haya rotacion animada al pasar el mouse. */
+html body.md3-on header.header .btn-header-profile[aria-expanded="true"]::after,
+html body header.header .btn-header-profile[aria-expanded="true"]::after {
+  transform: rotate(180deg) !important;
+  transition: none !important;
+}
+
+/* === ICONOS HEADER (campanita, sol/luna): ya cubierto arriba pero matamos
+   transition explicitamente por si la heredan del padre. === */
+html body.md3-on header.header .btn-icon-header,
+html body header.header .btn-icon-header,
+html body.md3-on header.header #btn-notifications,
+html body header.header #btn-notifications,
+html body.md3-on header.header #btn-theme-toggle,
+html body header.header #btn-theme-toggle {
+  transition: none !important;
+  -webkit-transition: none !important;
+  animation: none !important;
+  -webkit-animation: none !important;
+}
+
+html body.md3-on header.header .btn-icon-header:hover,
+html body.md3-on header.header .btn-icon-header:focus,
+html body.md3-on header.header .btn-icon-header:focus-visible,
+html body.md3-on header.header .btn-icon-header:active,
+html body header.header .btn-icon-header:hover,
+html body header.header .btn-icon-header:focus,
+html body header.header .btn-icon-header:focus-visible,
+html body header.header .btn-icon-header:active,
+html body.md3-on header.header #btn-notifications:hover,
+html body header.header #btn-notifications:hover,
+html body.md3-on header.header #btn-theme-toggle:hover,
+html body header.header #btn-theme-toggle:hover {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  animation: none !important;
+  -webkit-animation: none !important;
+  transition: none !important;
+  -webkit-transition: none !important;
+  outline: none !important;
+}
+
+/* Iconos <i> dentro de los botones header: sin animacion ni cambio de color en hover */
+html body header.header .btn-icon-header > i,
+html body header.header .btn-icon-header:hover > i,
+html body header.header #btn-notifications > i,
+html body header.header #btn-notifications:hover > i,
+html body header.header #btn-theme-toggle > i,
+html body header.header #btn-theme-toggle:hover > i,
+html body header.header #btn-header-quick-logout > i,
+html body header.header #btn-header-quick-logout:hover > i {
+  transform: none !important;
+  -webkit-transform: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  animation: none !important;
+  -webkit-animation: none !important;
+  transition: none !important;
+  -webkit-transition: none !important;
+}
+
+/* TODOS los botones .btn — sin transform, sin filter, sin animation en hover */
+html body .btn:hover,
+html body button.btn:hover,
+html body .btn-primary:hover,
+html body .btn.primary:hover,
+html body .btn.outline:hover,
+html body .btn.danger:hover,
+html body .btn.success:hover,
+html body .btn.warn:hover,
+html body .btn-dashboard-refresh:hover,
+html body .dashboard-card-action:hover,
+html body .dashboard-card:hover,
+html body .tab:hover,
+html body .sidebar .tab:hover,
+html body .ai-fab:hover,
+html body .ai-widget-wrap:hover,
+html body .modal-box:hover,
+html body .card:hover,
+html body .panel:hover,
+html body table.data-table tr:hover,
+html body .ref-cat-pill:hover,
+html body .row-actions-inline > *:hover {
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+  -webkit-animation: none !important;
+}
+
+/* Especifico para botones con id que arrancan con nuevo/nueva */
+html body button[id^="nuevo"]:hover,
+html body button[id^="nueva"]:hover,
+html body .section-header .btn[id^="nuevo"]:hover,
+html body .section-header .btn[id^="nueva"]:hover,
+html body .section-header .btn.primary:hover {
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+  -webkit-animation: none !important;
+  background-position: 0% 50% !important;
+}
+
+/* Quitar background-position-shift que premium.css usa para "shimmer" en hover */
+html body .btn.primary,
+html body .btn.success,
+html body .dashboard-card-action {
+  background-size: 100% 100% !important;
+  animation: none !important;
+}
+html body .btn.primary:hover,
+html body .btn.success:hover {
+  animation: none !important;
+}
+
+/* Quitar transforms en menu items del dropdown del avatar */
+html body #header-profile-menu *:hover,
+html body .header-profile-menu *:hover,
+html body .header-profile-menu-item:hover {
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+}
+
+/* Notifications panel: items sin transform al hover */
+html body #notifications-panel *:hover,
+html body .notifications-panel *:hover,
+html body .notification-item:hover {
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+}
+
+/* Tarjetas dashboard: sin elevarse en hover */
+html body .dashboard-card:hover,
+html body .dashboard-stat-card:hover,
+html body .dashboard-forecast-card:hover,
+html body .module-card:hover,
+html body .admin-hub-card:hover {
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+}
+
+/* Tabs sidebar sin desplazamiento */
+html body .tab:hover,
+html body button.tab:hover,
+html body .sidebar-nav .tab:hover {
+  transform: none !important;
+  filter: none !important;
+}
+
+/* FAB IA: sin transform en hover */
+html body .ai-fab:hover,
+html body .ai-widget-wrap .ai-fab:hover,
+html body #ai-widget .ai-fab:hover {
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+}
