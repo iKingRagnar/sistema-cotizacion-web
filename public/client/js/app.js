@@ -337,11 +337,277 @@ function openModal(html) {
   }
 }
 
+function closeHeaderProfileMenu() {
+  const m = document.getElementById('header-profile-menu');
+  const b = document.getElementById('btn-header-profile');
+  if (m) m.classList.add('hidden');
+  if (b) b.setAttribute('aria-expanded', 'false');
+  try {
+    window.removeEventListener('scroll', positionHeaderProfileMenu, true);
+  } catch (_) {}
+  try {
+    window.removeEventListener('resize', positionHeaderProfileMenu);
+  } catch (_) {}
+}
+
+function positionHeaderProfileMenu() {
+  const m = document.getElementById('header-profile-menu');
+  const b = document.getElementById('btn-header-profile');
+  if (!m || !b) return;
+  const r = b.getBoundingClientRect();
+  const gap = 8;
+  m.style.top = `${r.bottom + gap}px`;
+  m.style.right = `${Math.max(8, window.innerWidth - r.right)}px`;
+  m.style.left = 'auto';
+}
+
+function ensureHeaderProfileMenuPortaledToBody() {
+  const m = document.getElementById('header-profile-menu');
+  if (!m || m.getAttribute('data-portal-body') === '1') return;
+  try {
+    document.body.appendChild(m);
+    m.setAttribute('data-portal-body', '1');
+  } catch (_) {}
+}
+
+function toggleHeaderProfileMenu() {
+  const m = document.getElementById('header-profile-menu');
+  const b = document.getElementById('btn-header-profile');
+  if (!m || !b) return;
+  const open = m.classList.contains('hidden');
+  if (open) {
+    ensureHeaderProfileMenuPortaledToBody();
+    positionHeaderProfileMenu();
+    m.classList.remove('hidden');
+    b.setAttribute('aria-expanded', 'true');
+    try {
+      window.addEventListener('scroll', positionHeaderProfileMenu, true);
+    } catch (_) {}
+    try {
+      window.addEventListener('resize', positionHeaderProfileMenu);
+    } catch (_) {}
+  } else {
+    closeHeaderProfileMenu();
+  }
+}
+
+/** Sincroniza textos del menú perfil con userGlobal (mismo patrón que sistema-cotizacion-web-Old). */
+function syncHeaderProfileLabels(user) {
+  const display =
+    user && (user.displayName || user.display_name || user.username)
+      ? String(user.displayName || user.display_name || user.username)
+      : 'Usuario';
+  const role = user && user.role != null ? String(user.role) : '—';
+  const pmDisp = document.getElementById('profile-menu-display');
+  const pmFull = document.getElementById('profile-menu-fullname');
+  const hName = document.getElementById('header-profile-name');
+  const hRole = document.getElementById('header-profile-role');
+  if (pmDisp) pmDisp.textContent = display;
+  if (pmFull) pmFull.textContent = `${display} · ${role}`;
+  if (hName) hName.textContent = display;
+  if (hRole) hRole.textContent = role;
+}
+
+let scratchProfileOutsideClickBound = false;
+
+function scratchProfileOutsideClose(ev) {
+  const pm = document.getElementById('header-profile-menu');
+  if (!pm || pm.classList.contains('hidden')) return;
+  const w = document.getElementById('header-profile-wrap');
+  const t = ev.target;
+  if (t instanceof Node) {
+    if (w && w.contains(t)) return;
+    if (pm.contains(t)) return;
+  }
+  closeHeaderProfileMenu();
+}
+
+function wireHeaderProfileScratch(root) {
+  ensureHeaderProfileMenuPortaledToBody();
+  syncHeaderProfileLabels(userGlobal);
+
+  if (!scratchProfileOutsideClickBound) {
+    scratchProfileOutsideClickBound = true;
+    document.addEventListener('click', scratchProfileOutsideClose, true);
+  }
+
+  const btnProf = root.querySelector('#btn-header-profile');
+  const wrap = root.querySelector('#header-profile-wrap');
+  if (btnProf && wrap) {
+    btnProf.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleHeaderProfileMenu();
+    });
+  }
+
+  root.querySelector('#profile-menu-refresh')?.addEventListener('click', () => {
+    closeHeaderProfileMenu();
+    const vr = root.querySelector('#view-root');
+    if (vr) loadViewInto(vr);
+  });
+
+  root.querySelector('#profile-menu-perfil')?.addEventListener('click', () => {
+    closeHeaderProfileMenu();
+    currentTab = 'usuarios';
+    root.querySelectorAll('.nav-item').forEach((b) =>
+      b.classList.toggle('active', (b.getAttribute('data-tab') || '') === 'usuarios')
+    );
+    const vr = root.querySelector('#view-root');
+    if (vr) loadViewInto(vr);
+  });
+
+  root.querySelector('#profile-menu-password')?.addEventListener('click', () => {
+    closeHeaderProfileMenu();
+    toast('Para cambiar contraseña usa la interfaz clásica (/legacy-app) o pide apoyo al administrador.', 'info');
+  });
+
+  root.querySelector('#profile-menu-notif-prefs')?.addEventListener('click', () => {
+    closeHeaderProfileMenu();
+    toast('Centro de notificaciones completo solo en la interfaz clásica.', 'info');
+  });
+
+  root.querySelector('#profile-menu-tema')?.addEventListener('click', () => {
+    closeHeaderProfileMenu();
+    toggleStoredTheme();
+    root.querySelectorAll('[data-theme-toggle]').forEach((btn) => updateThemeToggleButton(btn));
+  });
+
+  root.querySelector('#profile-menu-densidad')?.addEventListener('click', () => {
+    closeHeaderProfileMenu();
+    document.body.classList.toggle('scratch-density-compact');
+    try {
+      localStorage.setItem(
+        'scratch-table-density',
+        document.body.classList.contains('scratch-density-compact') ? 'compact' : 'comfortable'
+      );
+    } catch (_) {}
+    toast(
+      document.body.classList.contains('scratch-density-compact')
+        ? 'Tablas en modo compacto'
+        : 'Tablas en modo cómodo',
+      'info'
+    );
+  });
+
+  root.querySelector('#profile-menu-mas')?.addEventListener('click', () => {
+    closeHeaderProfileMenu();
+    toast('Panel “Más opciones” del sistema clásico no está en esta vista.', 'info');
+  });
+
+  root.querySelector('#profile-menu-respaldo')?.addEventListener('click', () => {
+    closeHeaderProfileMenu();
+    currentTab = 'demo';
+    root.querySelectorAll('.nav-item').forEach((b) =>
+      b.classList.toggle('active', (b.getAttribute('data-tab') || '') === 'demo')
+    );
+    const vr = root.querySelector('#view-root');
+    if (vr) loadViewInto(vr);
+  });
+
+  root.querySelector('#profile-menu-ayuda')?.addEventListener('click', () => {
+    closeHeaderProfileMenu();
+    toast('Atajos: tema desde el ícono sol/luna o menú perfil · Actualizar vista desde el menú.', 'info');
+  });
+
+  root.querySelector('#profile-menu-logout')?.addEventListener('click', () => {
+    closeHeaderProfileMenu();
+    setToken(null);
+    userGlobal = null;
+    renderLogin(document.getElementById('app'), cfgGlobal, null);
+    document.body.classList.remove('sidebar-open');
+    document.body.classList.remove('scratch-sidebar-collapsed');
+  });
+
+  try {
+    const d = localStorage.getItem('scratch-table-density');
+    if (d === 'compact') document.body.classList.add('scratch-density-compact');
+  } catch (_) {}
+}
+
 function getRowStableId(row) {
   if (!row || typeof row !== 'object') return null;
   const id = row.id;
   if (id != null && String(id).trim() !== '') return String(id);
   return null;
+}
+
+function formatDetailPrimitive(v) {
+  if (v == null) return '—';
+  if (typeof v === 'boolean') return v ? 'Sí' : 'No';
+  if (typeof v === 'number') {
+    if (!Number.isFinite(v)) return '—';
+    return escapeHtml(v % 1 === 0 ? String(v) : String(Number(v.toFixed(6))));
+  }
+  if (typeof v === 'string') {
+    const s = v.trim();
+    if (/^\d{4}-\d{2}-\d{2}T\d/.test(s)) {
+      try {
+        const d = new Date(s);
+        if (!Number.isNaN(d.getTime())) return escapeHtml(d.toLocaleString('es-MX'));
+      } catch (_) {}
+    }
+    return escapeHtml(s);
+  }
+  return escapeHtml(String(v));
+}
+
+function renderDetailValueHtml(v, depth) {
+  const d = depth ?? 0;
+  if (d > 6) {
+    try {
+      return `<pre class="detail-json-inline">${escapeHtml(JSON.stringify(v, null, 2))}</pre>`;
+    } catch (_) {
+      return '—';
+    }
+  }
+  if (v == null) return '—';
+  if (Array.isArray(v)) {
+    if (v.length === 0) return '—';
+    const inner = v
+      .map((item) => {
+        if (item != null && typeof item === 'object') {
+          return `<li><div class="detail-nested-block">${renderDetailValueHtml(item, d + 1)}</div></li>`;
+        }
+        return `<li>${formatDetailPrimitive(item)}</li>`;
+      })
+      .join('');
+    return `<ul class="detail-list">${inner}</ul>`;
+  }
+  if (typeof v === 'object') {
+    const keys = Object.keys(v);
+    if (!keys.length) return '—';
+    const rows = keys
+      .sort((a, b) => a.localeCompare(b))
+      .map((k) => {
+        const inner = v[k];
+        const label = escapeHtml(prettyLabel(k));
+        if (inner != null && typeof inner === 'object') {
+          return `<tr><th>${label}</th><td><div class="detail-nested-block">${renderDetailValueHtml(inner, d + 1)}</div></td></tr>`;
+        }
+        return `<tr><th>${label}</th><td>${formatDetailPrimitive(inner)}</td></tr>`;
+      })
+      .join('');
+    return `<table class="detail-kv-table"><tbody>${rows}</tbody></table>`;
+  }
+  return formatDetailPrimitive(v);
+}
+
+function renderDetailViewHtml(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return `<pre class="code-editor">${escapeHtml(JSON.stringify(payload, null, 2))}</pre>`;
+  }
+  const rows = Object.keys(payload)
+    .sort((a, b) => a.localeCompare(b))
+    .map((k) => {
+      const inner = payload[k];
+      const label = escapeHtml(prettyLabel(k));
+      if (inner != null && typeof inner === 'object') {
+        return `<tr><th>${label}</th><td><div class="detail-nested-block">${renderDetailValueHtml(inner, 0)}</div></td></tr>`;
+      }
+      return `<tr><th>${label}</th><td>${formatDetailPrimitive(inner)}</td></tr>`;
+    })
+    .join('');
+  return `<table class="detail-kv-table detail-kv-table-root"><tbody>${rows}</tbody></table>`;
 }
 
 async function openDetailModal(tabId, row) {
@@ -356,15 +622,23 @@ async function openDetailModal(tabId, row) {
       payload = row;
     }
   }
+  const detailHtml = renderDetailViewHtml(payload);
   const json = escapeHtml(JSON.stringify(payload, null, 2));
+  const titleLabel = prettyLabel(tabId);
   openModal(`
     <div class="modal-backdrop" role="dialog" aria-modal="true">
       <div class="modal-dialog wide">
         <div class="modal-head">
-          <h2>Ver · ${escapeHtml(tabId)}</h2>
+          <h2>Ver · ${escapeHtml(titleLabel)}</h2>
           <button type="button" class="btn btn-ghost btn-icon" data-modal-close aria-label="Cerrar">✕</button>
         </div>
-        <div class="modal-body"><pre class="code-editor" style="margin:0;white-space:pre-wrap;">${json}</pre></div>
+        <div class="modal-body detail-modal-body">
+          <div class="detail-readable">${detailHtml}</div>
+          <details class="detail-json-toggle">
+            <summary>JSON técnico (copiar / depurar)</summary>
+            <pre class="code-editor detail-json-pre">${json}</pre>
+          </details>
+        </div>
         <div class="modal-actions"><button type="button" class="btn btn-ghost" data-modal-close>Cerrar</button></div>
       </div>
     </div>`);
@@ -482,6 +756,32 @@ function formatCellValue(val) {
   return s.length > 180 ? `${s.slice(0, 177)}…` : s;
 }
 
+function rawCellTitle(row, k) {
+  if (!row || !Object.prototype.hasOwnProperty.call(row, k)) return '';
+  const v = row[k];
+  if (v == null) return '';
+  if (typeof v === 'object') {
+    try {
+      return JSON.stringify(v);
+    } catch (_) {
+      return '';
+    }
+  }
+  return String(v);
+}
+
+function cellClassForColumnKey(k) {
+  const nk = normalizeAccessText(k);
+  if (nk === 'id' || nk.endsWith(' id')) return 'cell-tight';
+  if (
+    /precio|total|iva|subtotal|tipo|cambio|stock|pct|descuento|folio|numero|serie|codigo|rfc|telefono|moneda|hora|fecha/i.test(
+      nk
+    )
+  )
+    return 'cell-tight';
+  return 'cell-long';
+}
+
 function renderDataTable(keys, rows, tabId) {
   if (!keys.length) {
     return '<div class="empty-state">Sin columnas inferidas.</div>';
@@ -490,18 +790,14 @@ function renderDataTable(keys, rows, tabId) {
   const canEdit = tabId && UPDATE_ROUTES[tabId];
   const canDel = tabId && DELETE_ROUTES[tabId];
   const head =
-    keys.map((k) => `<th>${escapeHtml(prettyLabel(k))}</th>`).join('') +
-    (showActions ? '<th class="th-actions">Acciones</th>' : '');
+    (showActions ? '<th class="th-actions th-actions-sticky-left">Acciones</th>' : '') +
+    keys.map((k) => `<th>${escapeHtml(prettyLabel(k))}</th>`).join('');
   const body = rows
     .map((row, i) => {
-      const cells = keys.map((k) => {
-        const v = row && Object.prototype.hasOwnProperty.call(row, k) ? row[k] : '';
-        return `<td class="cell-long">${escapeHtml(formatCellValue(v))}</td>`;
-      });
       const sid = getRowStableId(row);
       const actions = showActions
-        ? `<td class="td-actions td-actions-inline">
-            <button type="button" class="btn small outline act-ver" data-i="${i}" title="Vista previa" aria-label="Ver"><i class="fas fa-eye" aria-hidden="true"></i></button>
+        ? `<td class="td-actions td-actions-inline td-actions-sticky-left">
+            <button type="button" class="btn small outline act-ver" data-i="${i}" title="Ver detalle" aria-label="Ver"><i class="fas fa-eye" aria-hidden="true"></i></button>
             ${
               canEdit
                 ? `<button type="button" class="btn small primary act-edit" data-i="${i}" title="Editar" aria-label="Editar"><i class="fas fa-edit" aria-hidden="true"></i></button>`
@@ -514,12 +810,18 @@ function renderDataTable(keys, rows, tabId) {
             }
           </td>`
         : '';
-      return `<tr>${cells.join('')}${actions}</tr>`;
+      const cells = keys.map((k) => {
+        const v = row && Object.prototype.hasOwnProperty.call(row, k) ? row[k] : '';
+        const cls = cellClassForColumnKey(k);
+        const title = escapeHtml(rawCellTitle(row, k).slice(0, 900));
+        return `<td class="${cls}" title="${title}">${escapeHtml(formatCellValue(v))}</td>`;
+      });
+      return `<tr>${actions}${cells.join('')}</tr>`;
     })
     .join('');
   const colCount = keys.length + (showActions ? 1 : 0);
   return `
-    <div class="table-wrap">
+    <div class="table-wrap table-wrap-scroll">
       <table class="data-table">
         <thead><tr>${head}</tr></thead>
         <tbody>${body || `<tr><td colspan="${colCount}" class="empty-state">Sin filas</td></tr>`}</tbody>
@@ -1396,17 +1698,6 @@ function wireSidebarEvents(root) {
       loadViewInto(vr).finally(close);
     });
   });
-  root.querySelector('#btn-refresh')?.addEventListener('click', () => {
-    const vr = root.querySelector('#view-root');
-    if (vr) loadViewInto(vr);
-  });
-  root.querySelector('#btn-logout')?.addEventListener('click', () => {
-    setToken(null);
-    userGlobal = null;
-    renderLogin(document.getElementById('app'), cfgGlobal, null);
-    document.body.classList.remove('sidebar-open');
-    document.body.classList.remove('scratch-sidebar-collapsed');
-  });
 }
 
 function renderShell(root, cfg, user) {
@@ -1414,9 +1705,6 @@ function renderShell(root, cfg, user) {
   cfgGlobal = cfg;
   userGlobal = user;
   const tabs = visibleTabs(cfg, user);
-  const display =
-    user.displayName || user.display_name || user.username || 'Usuario';
-  const role = user.role || '—';
 
   if (!tabs.some(([id]) => id === currentTab)) currentTab = 'dashboards';
 
@@ -1436,6 +1724,10 @@ function renderShell(root, cfg, user) {
 
   const appTitle = escapeHtml(cfg.appName || cfg.shortName || 'Servicio Tecnico');
 
+  const logoutMenuItem = cfg.authRequired
+    ? `<button type="button" class="header-profile-menu-item danger" role="menuitem" id="profile-menu-logout"><i class="fas fa-sign-out-alt" aria-hidden="true"></i><span>Cerrar sesión</span></button>`
+    : '';
+
   root.replaceChildren(
     el(`
       <div class="shell scratch-shell">
@@ -1453,9 +1745,39 @@ function renderShell(root, cfg, user) {
             <div class="scratch-header-actions">
               <span class="scratch-powered-by header-powered-by" aria-label="Créditos">powered by Ing. David Cantú</span>
               <button type="button" class="scratch-btn-icon-header shell-theme-toggle" data-theme-toggle title="Tema claro u oscuro" aria-label="Cambiar tema claro u oscuro" aria-pressed="false"><i class="fas fa-sun" aria-hidden="true"></i></button>
-              <span class="scratch-session-pill">${escapeHtml(display)} · ${escapeHtml(role)}</span>
-              <button type="button" class="btn small outline" id="btn-refresh">Actualizar</button>
-              ${cfg.authRequired ? '<button type="button" class="btn small outline" id="btn-logout">Salir</button>' : ''}
+              <div id="header-profile-wrap" class="header-profile-wrap">
+                <div class="header-profile-meta visually-hidden">
+                  <span id="header-profile-name" class="header-profile-name"></span>
+                  <span id="header-profile-role" class="header-profile-role"></span>
+                </div>
+                <button type="button" id="btn-header-profile" class="btn-header-profile" aria-expanded="false" aria-haspopup="true" aria-controls="header-profile-menu" title="Cuenta y sesión" aria-describedby="header-profile-name">
+                  <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+                    <circle cx="12" cy="9" r="3.5" fill="none" stroke="currentColor" stroke-width="1.75"/>
+                    <path d="M6.5 20v-0.5a5.5 5.5 0 0111 0v0.5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+                  </svg>
+                </button>
+                <div id="header-profile-menu" class="header-profile-menu hidden" role="menu" aria-label="Menú de cuenta">
+                  <div class="header-profile-menu-user">
+                    <strong id="profile-menu-display"></strong>
+                    <div class="header-profile-menu-meta"><span id="profile-menu-fullname"></span></div>
+                  </div>
+                  <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-refresh"><i class="fas fa-sync-alt" aria-hidden="true"></i><span>Actualizar vista</span></button>
+                  <div class="header-profile-menu-section">Mi cuenta</div>
+                  <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-perfil"><i class="fas fa-id-card" aria-hidden="true"></i><span>Mi perfil</span></button>
+                  <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-password"><i class="fas fa-key" aria-hidden="true"></i><span>Cambiar contraseña</span></button>
+                  <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-notif-prefs"><i class="fas fa-bell" aria-hidden="true"></i><span>Notificaciones</span></button>
+                  <div class="header-profile-menu-divider"></div>
+                  <div class="header-profile-menu-section">Personalización</div>
+                  <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-tema"><i class="fas fa-palette" aria-hidden="true"></i><span>Tema y apariencia</span></button>
+                  <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-densidad"><i class="fas fa-grip-lines" aria-hidden="true"></i><span>Densidad de tablas</span></button>
+                  <div class="header-profile-menu-divider"></div>
+                  <div class="header-profile-menu-section">Avanzado</div>
+                  <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-mas"><i class="fas fa-sliders-h" aria-hidden="true"></i><span>Más opciones…</span></button>
+                  <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-respaldo"><i class="fas fa-database" aria-hidden="true"></i><span>Respaldos</span></button>
+                  <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-ayuda"><i class="fas fa-circle-question" aria-hidden="true"></i><span>Ayuda y atajos</span></button>
+                  ${logoutMenuItem}
+                </div>
+              </div>
             </div>
           </div>
         </header>
@@ -1487,6 +1809,7 @@ function renderShell(root, cfg, user) {
   );
 
   wireSidebarEvents(root);
+  wireHeaderProfileScratch(root);
   root.querySelectorAll('[data-theme-toggle]').forEach((b) => wireThemeToggle(b));
   loadViewInto(root.querySelector('#view-root'));
 }
@@ -1521,7 +1844,7 @@ function renderLogin(root, cfg, err) {
               </div>
             </div>
             <p class="login-error${errHidden}" id="login-error" role="alert"><i class="fas fa-exclamation-circle"></i> <span id="login-error-text">${errText}</span></p>
-            <button type="submit" class="login-submit" id="login-submit-btn">
+            <button type="submit" class="login-submit btn primary big" id="login-submit-btn">
               <span class="login-submit-text"><i class="fas fa-sign-in-alt"></i> Entrar al sistema</span>
               <span class="login-submit-loading hidden"><i class="fas fa-spinner fa-spin"></i> Verificando…</span>
             </button>
