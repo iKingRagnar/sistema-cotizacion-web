@@ -2350,6 +2350,11 @@
       showToast('Vista previa no disponible. Recarga la página (F5).', 'error');
       return;
     }
+    try {
+      if (root.parentElement && root.parentElement !== document.body) {
+        document.body.appendChild(root);
+      }
+    } catch (_) {}
     _pvcLbItems = list;
     _pvcLbIndex = Math.max(0, Math.min(Number(startIndex) || 0, list.length - 1));
     root.classList.remove('hidden');
@@ -3981,13 +3986,11 @@
   /**
    * Miniatura de constancia en listado o en vista prevía (ojito).
    * @param {object} c Cliente con has_constancia.
-   * @param {{ showVerButton?: boolean }} [opts] showVerButton: true solo en tarjeta de vista prevía (mini + Ver + descarga).
+   * @param {{ showVerButton?: boolean }} [opts] showVerButton: true en tarjeta de vista prevía (mini + Ver; descarga va al pie del modal).
    */
   function clienteConstanciaThumbHtml(c, opts) {
     if (!c || !c.has_constancia) return '';
     const showVerButton = !!(opts && opts.showVerButton);
-    const openUrl = c.id != null ? (API + '/clientes/' + encodeURIComponent(c.id) + '/constancia') : '';
-    const dl = pvcDownloadBtnCompactHtml(null, openUrl, 'cliente-constancia');
     const idAttr = c.id != null ? ' data-cliente-id="' + escapeHtml(String(c.id)) + '"' : '';
     const kindAttr =
       c.constancia_kind === 'pdf' ? ' data-const-kind="pdf"' : c.constancia_kind === 'image' ? ' data-const-kind="image"' : '';
@@ -4002,13 +4005,13 @@
     if (c.constancia_kind === 'image' && c.constancia_thumb_url) {
       return `<span class="cliente-const-inline"><button type="button" class="cliente-const-slot js-pvc-media-lightbox"${lbOpen}>
         <img src="${escapeHtml(c.constancia_thumb_url)}" alt="" class="cliente-const-mini" loading="lazy">
-      </button>${verLb}${dl}</span>`;
+      </button>${verLb}</span>`;
     }
     const icon = c.constancia_kind === 'pdf' ? 'fa-file-pdf' : 'fa-file-alt';
     const cls = c.constancia_kind === 'pdf' ? 'cliente-const-slot--pdf' : 'cliente-const-slot--file';
     return `<span class="cliente-const-inline"><button type="button" class="cliente-const-slot ${cls} js-pvc-media-lightbox"${lbOpen}>
       <i class="fas ${icon}"></i>
-    </button>${verLb}${dl}</span>`;
+    </button>${verLb}</span>`;
   }
 
   function previewCliente(c) {

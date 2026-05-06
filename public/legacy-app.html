@@ -34,7 +34,7 @@
   <!-- CSS heredados (primero — los sobreescribe el nuevo sistema MD3) -->
   <link rel="stylesheet" href="css/design-tokens.css?v=4-md3">
   <link rel="stylesheet" href="css/design-system.css?v=3-apex-base">
-  <link rel="stylesheet" href="css/style.css?v=98-cliente-const-lightbox-z-2026-05-06">
+  <link rel="stylesheet" href="css/style.css?v=99-lightbox-body-root-2026-05-06">
   <link rel="stylesheet" href="css/layout-rail.css?v=11-hide-sidebar-global-strip">
   <link rel="stylesheet" href="css/header-profile.css?v=10-chrome-luna-neutral-admin-hub">
   <link rel="stylesheet" href="css/theme-industrial.css?v=25-chrome-luna-neutral">
@@ -1537,25 +1537,6 @@
       </div>
     </div>
 
-    <div id="pvc-media-lightbox" class="pvc-media-lightbox hidden" role="dialog" aria-modal="true" aria-label="Vista previa de imagen o documento">
-      <div id="pvc-lb-backdrop" class="pvc-lb-backdrop" tabindex="-1"></div>
-      <div class="pvc-lb-dialog">
-        <div class="pvc-lb-toolbar">
-          <span id="pvc-lb-caption" class="pvc-lb-caption"></span>
-          <div class="pvc-lb-toolbar-actions">
-            <button type="button" id="pvc-lb-prev" class="btn small outline pvc-lb-nav hidden" aria-label="Anterior"><i class="fas fa-chevron-left"></i></button>
-            <button type="button" id="pvc-lb-next" class="btn small outline pvc-lb-nav hidden" aria-label="Siguiente"><i class="fas fa-chevron-right"></i></button>
-            <button type="button" id="pvc-lb-close" class="btn small outline" aria-label="Cerrar"><i class="fas fa-times"></i></button>
-          </div>
-        </div>
-        <p id="pvc-lb-status" class="hint pvc-lb-status hidden"></p>
-        <div id="pvc-lb-body" class="pvc-lb-body">
-          <img id="pvc-lb-img" class="pvc-lb-img hidden" alt="" />
-          <iframe id="pvc-lb-pdf" class="pvc-lb-pdf hidden" title="Documento PDF"></iframe>
-          <div id="pvc-lb-fallback" class="pvc-lb-fallback hidden"></div>
-        </div>
-      </div>
-    </div>
   </main>
     </div>
   </div>
@@ -1704,6 +1685,26 @@
       <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 66 · JS 157</strong></span></p>
     <p class="footer-tip"><kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> atajos de sección · <kbd>Esc</kbd> cierra modales</p>
   </footer>
+  <!-- Lightbox de medios: hijo directo de body (evita quedar detrás del #modal por stacking context dentro de main). -->
+  <div id="pvc-media-lightbox" class="pvc-media-lightbox hidden" role="dialog" aria-modal="true" aria-label="Vista previa de imagen o documento">
+    <div id="pvc-lb-backdrop" class="pvc-lb-backdrop" tabindex="-1"></div>
+    <div class="pvc-lb-dialog">
+      <div class="pvc-lb-toolbar">
+        <span id="pvc-lb-caption" class="pvc-lb-caption"></span>
+        <div class="pvc-lb-toolbar-actions">
+          <button type="button" id="pvc-lb-prev" class="btn small outline pvc-lb-nav hidden" aria-label="Anterior"><i class="fas fa-chevron-left"></i></button>
+          <button type="button" id="pvc-lb-next" class="btn small outline pvc-lb-nav hidden" aria-label="Siguiente"><i class="fas fa-chevron-right"></i></button>
+          <button type="button" id="pvc-lb-close" class="btn small outline" aria-label="Cerrar"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+      <p id="pvc-lb-status" class="hint pvc-lb-status hidden"></p>
+      <div id="pvc-lb-body" class="pvc-lb-body">
+        <img id="pvc-lb-img" class="pvc-lb-img hidden" alt="" />
+        <iframe id="pvc-lb-pdf" class="pvc-lb-pdf hidden" title="Documento PDF"></iframe>
+        <div id="pvc-lb-fallback" class="pvc-lb-fallback hidden"></div>
+      </div>
+    </div>
+  </div>
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
   <div id="global-loading" class="global-loading hidden" aria-hidden="true">
     <div class="loading-spinner"></div>
@@ -1711,7 +1712,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=186-cliente-const-tabla-solo-mini-2026-05-06"></script>
+  <script src="js/app.js?v=187-cliente-const-sin-dl-lb-body-2026-05-06"></script>
   <script src="js/bg-animation.js?v=6-no-motion-mobile-only" defer></script>
 </body>
 </html>
