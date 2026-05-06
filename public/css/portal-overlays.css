@@ -426,3 +426,34 @@ html body.theme-industrial.md3-on table.data-table td.ref-td-actions .btn:not(.d
   color: inherit !important;
   -webkit-text-fill-color: inherit !important;
 }
+
+/* ─── Rail colapsado (escritorio): sin franja lateral — aside a ancho 0; menú hamburguesa en header ─── */
+@media (min-width: 961px) {
+  body.sidebar-rail-collapsed.md3-on #app-sidebar-nav.sidebar-nav {
+    width: 0 !important;
+    flex: 0 0 0 !important;
+    flex-basis: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    background: transparent !important;
+  }
+}
+
+.header-brand .header-sidebar-rail-toggle.btn-sidebar-rail-toggle {
+  flex-shrink: 0;
+  align-self: center;
+  margin-right: 0.35rem;
+}
+
+@media (max-width: 960px) {
+  #btn-sidebar-rail-toggle-header.header-sidebar-rail-toggle {
+    display: none !important;
+  }
+}

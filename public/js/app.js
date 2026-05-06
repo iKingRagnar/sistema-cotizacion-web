@@ -285,6 +285,17 @@
   function clearAuthSession() {
     setAuthSession(null, null);
   }
+  /** Misma lógica que #btn-logout: no usar .click() sobre botones ocultos (falla en algunos navegadores). */
+  function performLogout() {
+    clearAuthSession();
+    if (serverConfig.authRequired) {
+      location.reload();
+      return;
+    }
+    updateAuditTabVisibility();
+    syncSessionHeader();
+    location.reload();
+  }
   function getSessionUser() {
     try { return JSON.parse(localStorage.getItem(AUTH_USER_KEY) || 'null'); } catch (_) { return null; }
   }
@@ -1137,10 +1148,11 @@
     }
     const pLogout = qs('#profile-menu-logout');
     if (pLogout) {
-      pLogout.addEventListener('click', function () {
+      pLogout.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
         closeHeaderProfileMenu();
-        const legacy = qs('#btn-logout');
-        if (legacy) legacy.click();
+        performLogout();
       });
     }
     // Nuevos items del menú expandido
@@ -1506,15 +1518,33 @@
     }
   }
 
+  function syncSidebarRailToggleHeaderVisibility() {
+    const btnHead = qs('#btn-sidebar-rail-toggle-header');
+    if (!btnHead) return;
+    const collapsed = document.body.classList.contains('sidebar-rail-collapsed');
+    const wide =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(min-width: 961px)').matches;
+    if (wide && collapsed) btnHead.classList.remove('hidden');
+    else btnHead.classList.add('hidden');
+  }
+
   function applySidebarRailCollapsed(collapsed) {
     document.body.classList.toggle('sidebar-rail-collapsed', collapsed);
+    const toggleTitle = collapsed
+      ? 'Mostrar lista de módulos'
+      : 'Ocultar lista de módulos (más espacio para el contenido)';
     const btn = qs('#btn-sidebar-rail-toggle');
     if (btn) {
       btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-      btn.title = collapsed
-        ? 'Mostrar lista de módulos'
-        : 'Ocultar lista de módulos (más espacio para el contenido)';
+      btn.title = toggleTitle;
     }
+    const btnHead = qs('#btn-sidebar-rail-toggle-header');
+    if (btnHead) {
+      btnHead.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      btnHead.title = toggleTitle;
+    }
+    syncSidebarRailToggleHeaderVisibility();
     try {
       localStorage.setItem(SIDEBAR_RAIL_COLLAPSED_KEY, collapsed ? '1' : '0');
     } catch (_) {}
@@ -1522,17 +1552,21 @@
 
   (function initSidebarRailToggle() {
     const btn = qs('#btn-sidebar-rail-toggle');
-    if (!btn) return;
+    const btnHead = qs('#btn-sidebar-rail-toggle-header');
+    if (!btn && !btnHead) return;
     try {
       if (!localStorage.getItem(SIDEBAR_RAIL_EXPAND_ONCE_KEY)) {
         localStorage.setItem(SIDEBAR_RAIL_EXPAND_ONCE_KEY, '1');
         localStorage.removeItem(SIDEBAR_RAIL_COLLAPSED_KEY);
       }
     } catch (_) {}
-    applySidebarRailCollapsed(isSidebarRailCollapsedStored());
-    btn.addEventListener('click', function () {
+    function toggleRail() {
       applySidebarRailCollapsed(!document.body.classList.contains('sidebar-rail-collapsed'));
-    });
+    }
+    applySidebarRailCollapsed(isSidebarRailCollapsedStored());
+    if (btn) btn.addEventListener('click', toggleRail);
+    if (btnHead) btnHead.addEventListener('click', toggleRail);
+    window.addEventListener('resize', syncSidebarRailToggleHeaderVisibility);
   })();
 
   async function fetchJson(url, opts = {}) {
@@ -12913,25 +12947,11 @@
   }
   const logoutBtn = qs('#btn-logout');
   if (logoutBtn) {
-    logoutBtn.addEventListener('click', function () {
-      clearAuthSession();
-      if (serverConfig.authRequired) {
-        location.reload();
-        return;
-      }
-      updateAuditTabVisibility();
-      syncSessionHeader();
-      location.reload();
-    });
+    logoutBtn.addEventListener('click', performLogout);
   }
   const quickLogoutBtn = qs('#btn-header-quick-logout');
   if (quickLogoutBtn) {
-    quickLogoutBtn.addEventListener('click', function () {
-      const legacy = qs('#btn-logout');
-      if (legacy) { legacy.click(); return; }
-      clearAuthSession();
-      location.reload();
-    });
+    quickLogoutBtn.addEventListener('click', performLogout);
   }
   wireHeaderProfileAndAdminHub();
 
