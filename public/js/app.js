@@ -2363,10 +2363,9 @@
       showToast('Vista previa no disponible. Recarga la página (F5).', 'error');
       return;
     }
+    /* Siempre al final de body: orden de pintado + stacking por encima de #modal (backdrop-filter). */
     try {
-      if (root.parentElement && root.parentElement !== document.body) {
-        document.body.appendChild(root);
-      }
+      document.body.appendChild(root);
     } catch (_) {}
     _pvcLbItems = list;
     _pvcLbIndex = Math.max(0, Math.min(Number(startIndex) || 0, list.length - 1));
