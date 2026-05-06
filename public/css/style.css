@@ -7291,39 +7291,46 @@ body:not(.dark-theme) .cliente-const-slot--pdf {
   border-color: rgba(220, 38, 38, 0.25);
 }
 
-/* Clientes: constancia ampliada al final del panel (clic miniatura → scroll aquí) */
-.cliente-constancia-viewer-zone {
+/* Visor de medios al pie del main (constancia, fotos de catálogo, INE, etc. — clic miniatura / Ver → scroll aquí) */
+.cliente-constancia-viewer-zone,
+.pvc-panel-media-viewer-zone {
   scroll-margin-top: 5.5rem;
   margin-top: 1.25rem;
   outline: none;
 }
-.cliente-constancia-viewer-card {
+.cliente-constancia-viewer-card,
+.pvc-panel-media-viewer-card {
   padding: 1rem 1.25rem 1.25rem;
 }
-.cliente-constancia-viewer-head {
+.cliente-constancia-viewer-head,
+.pvc-panel-media-viewer-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
   margin-bottom: 0.65rem;
 }
-.cliente-constancia-viewer-title {
+.cliente-constancia-viewer-title,
+.pvc-panel-media-viewer-title {
   margin: 0;
   font-size: 1rem;
   font-weight: 700;
   line-height: 1.25;
 }
-.cliente-constancia-viewer-status {
+.cliente-constancia-viewer-status,
+.pvc-panel-media-viewer-status {
   margin: 0 0 0.5rem 0;
 }
-.cliente-constancia-viewer-body {
+.cliente-constancia-viewer-body,
+.pvc-panel-media-viewer-body {
   min-height: 4rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
 }
-#cliente-constancia-viewer-img {
+#cliente-constancia-viewer-img,
+#pvc-panel-media-viewer-img {
   max-width: 100%;
   max-height: min(88vh, 920px);
   width: auto;
@@ -7332,14 +7339,16 @@ body:not(.dark-theme) .cliente-const-slot--pdf {
   border-radius: 10px;
   border: 1px solid rgba(148, 163, 184, 0.35);
 }
-#cliente-constancia-viewer-pdf {
+#cliente-constancia-viewer-pdf,
+#pvc-panel-media-viewer-pdf {
   width: 100%;
   min-height: 72vh;
   border: 0;
   border-radius: 8px;
   background: rgba(15, 23, 42, 0.35);
 }
-.cliente-constancia-viewer-fallback {
+.cliente-constancia-viewer-fallback,
+.pvc-panel-media-viewer-fallback {
   padding: 0.5rem 0;
 }
 

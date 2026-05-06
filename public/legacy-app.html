@@ -34,7 +34,7 @@
   <!-- CSS heredados (primero — los sobreescribe el nuevo sistema MD3) -->
   <link rel="stylesheet" href="css/design-tokens.css?v=4-md3">
   <link rel="stylesheet" href="css/design-system.css?v=3-apex-base">
-  <link rel="stylesheet" href="css/style.css?v=94-cliente-constancia-scroll-panel-2026-05-06">
+  <link rel="stylesheet" href="css/style.css?v=95-pvc-panel-media-viewer-global-2026-05-06">
   <link rel="stylesheet" href="css/layout-rail.css?v=11-hide-sidebar-global-strip">
   <link rel="stylesheet" href="css/header-profile.css?v=10-chrome-luna-neutral-admin-hub">
   <link rel="stylesheet" href="css/theme-industrial.css?v=25-chrome-luna-neutral">
@@ -525,20 +525,6 @@
           <strong>Vaciar todo el módulo</strong> (irreversible). Solo administrador.
           <button type="button" class="btn danger outline btn-vaciar-modulo" data-modulo="clientes"><i class="fas fa-database"></i> Vaciar tabla de clientes</button>
         </p>
-      </div>
-      <div id="cliente-constancia-viewer-zone" class="cliente-constancia-viewer-zone hidden" tabindex="-1" aria-label="Vista ampliada de constancia fiscal">
-        <div class="card cliente-constancia-viewer-card">
-          <div class="cliente-constancia-viewer-head">
-            <h3 id="cliente-constancia-viewer-title" class="cliente-constancia-viewer-title"><i class="fas fa-file-invoice"></i> Constancia fiscal</h3>
-            <button type="button" id="cliente-constancia-viewer-close" class="btn small outline" aria-label="Ocultar vista de constancia"><i class="fas fa-times"></i></button>
-          </div>
-          <p id="cliente-constancia-viewer-status" class="hint cliente-constancia-viewer-status hidden"></p>
-          <div id="cliente-constancia-viewer-body" class="cliente-constancia-viewer-body">
-            <img id="cliente-constancia-viewer-img" alt="Constancia fiscal" class="hidden" />
-            <iframe id="cliente-constancia-viewer-pdf" title="Constancia PDF" class="hidden"></iframe>
-            <div id="cliente-constancia-viewer-fallback" class="cliente-constancia-viewer-fallback hidden"></div>
-          </div>
-        </div>
       </div>
     </section>
 
@@ -1534,6 +1520,22 @@
         <p class="hint">Atajos: <kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> secciones · <kbd>Ctrl</kbd>+<kbd>8</kbd> auditoría (admin) · <kbd>Ctrl</kbd>+<kbd>K</kbd> búsqueda global · <kbd>Esc</kbd> cierra modales.</p>
       </div>
     </section>
+
+    <!-- Vista ampliada de medios (imagen/PDF) al pie: miniatura, Ver u otros controles → scroll aquí; compartida por todas las pestañas -->
+    <div id="pvc-panel-media-viewer-zone" class="pvc-panel-media-viewer-zone cliente-constancia-viewer-zone hidden" tabindex="-1" aria-label="Vista ampliada de imagen o documento">
+      <div class="card pvc-panel-media-viewer-card cliente-constancia-viewer-card">
+        <div class="pvc-panel-media-viewer-head cliente-constancia-viewer-head">
+          <h3 id="pvc-panel-media-viewer-title" class="pvc-panel-media-viewer-title cliente-constancia-viewer-title"><i class="fas fa-file-image"></i> Vista</h3>
+          <button type="button" id="pvc-panel-media-viewer-close" class="btn small outline" aria-label="Ocultar vista ampliada"><i class="fas fa-times"></i></button>
+        </div>
+        <p id="pvc-panel-media-viewer-status" class="hint pvc-panel-media-viewer-status cliente-constancia-viewer-status hidden"></p>
+        <div id="pvc-panel-media-viewer-body" class="pvc-panel-media-viewer-body cliente-constancia-viewer-body">
+          <img id="pvc-panel-media-viewer-img" alt="Vista ampliada" class="hidden" />
+          <iframe id="pvc-panel-media-viewer-pdf" title="Documento PDF" class="hidden"></iframe>
+          <div id="pvc-panel-media-viewer-fallback" class="pvc-panel-media-viewer-fallback cliente-constancia-viewer-fallback hidden"></div>
+        </div>
+      </div>
+    </div>
   </main>
     </div>
   </div>
@@ -1689,7 +1691,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=181-cliente-constancia-scroll-panel-2026-05-06"></script>
+  <script src="js/app.js?v=183-preview-eye-panel-viewer-ref-maq-tec-2026-05-06"></script>
   <script src="js/bg-animation.js?v=6-no-motion-mobile-only" defer></script>
 </body>
 </html>

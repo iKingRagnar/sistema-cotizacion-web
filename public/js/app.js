@@ -1481,6 +1481,7 @@
     }
     qsAll('.panel').forEach(p => p.classList.remove('active'));
     qsAll('.tab').forEach(t => t.classList.remove('active'));
+    if (!skipLoad) hidePanelMediaViewerZone();
     const panel = document.getElementById('panel-' + id);
     const tab = document.querySelector('.tab[data-tab="' + id + '"]');
     if (panel) {
@@ -1901,6 +1902,208 @@
     return false;
   }
 
+  /** Pestaña activa (#main-content .panel.active) para anclar el visor de medios al pie. */
+  function getActivePanelIdForMedia() {
+    const p =
+      document.querySelector('#main-content .panel.active') ||
+      document.querySelector('main .panel.active') ||
+      document.querySelector('.panel.active');
+    if (!p || !p.id) return 'dashboards';
+    const id = String(p.id);
+    return id.startsWith('panel-') ? id.slice(6) : 'dashboards';
+  }
+
+  let _pvcPanelMediaBlobUrl = null;
+
+  function hidePanelMediaViewerZone() {
+    const zone = qs('#pvc-panel-media-viewer-zone');
+    const imgEl = qs('#pvc-panel-media-viewer-img');
+    const pdfEl = qs('#pvc-panel-media-viewer-pdf');
+    const fbEl = qs('#pvc-panel-media-viewer-fallback');
+    const statusEl = qs('#pvc-panel-media-viewer-status');
+    if (imgEl) {
+      imgEl.classList.add('hidden');
+      try {
+        imgEl.removeAttribute('src');
+      } catch (_) {}
+      imgEl.onload = null;
+      imgEl.onerror = null;
+    }
+    if (pdfEl) {
+      pdfEl.classList.add('hidden');
+      try {
+        pdfEl.removeAttribute('src');
+      } catch (_) {}
+    }
+    if (fbEl) {
+      fbEl.innerHTML = '';
+      fbEl.classList.add('hidden');
+    }
+    if (_pvcPanelMediaBlobUrl) {
+      try {
+        URL.revokeObjectURL(_pvcPanelMediaBlobUrl);
+      } catch (_) {}
+      _pvcPanelMediaBlobUrl = null;
+    }
+    if (statusEl) {
+      statusEl.textContent = '';
+      statusEl.classList.add('hidden');
+    }
+    if (zone) zone.classList.add('hidden');
+  }
+
+  /**
+   * Muestra imagen/PDF al pie de la app y hace scroll; usa fetch con sesión para URLs /api/.
+   * @param {string} panelId  id lógico de pestaña (sin prefijo panel-), p. ej. clientes, refacciones
+   * @param {string} titleLine  título en texto plano (se escapa en HTML)
+   * @param {string} url  URL del recurso
+   * @param {{ forcePdf?: boolean }} [opts]  si el servidor devuelve MIME genérico pero el archivo es PDF
+   */
+  async function openPanelMediaViewerFromUrl(panelId, titleLine, url, opts) {
+    const o = opts && typeof opts === 'object' ? opts : {};
+    const u = String(url || '').trim();
+    if (!u) {
+      showToast('No hay archivo para mostrar.', 'error');
+      return;
+    }
+    showPanel(panelId, { skipLoad: true });
+    const zone = qs('#pvc-panel-media-viewer-zone');
+    const imgEl = qs('#pvc-panel-media-viewer-img');
+    const pdfEl = qs('#pvc-panel-media-viewer-pdf');
+    const fbEl = qs('#pvc-panel-media-viewer-fallback');
+    const statusEl = qs('#pvc-panel-media-viewer-status');
+    const titleEl = qs('#pvc-panel-media-viewer-title');
+    if (!zone || !imgEl || !pdfEl || !fbEl) {
+      showToast('Vista de medios no disponible. Recarga la página (F5).', 'error');
+      return;
+    }
+    hidePanelMediaViewerZone();
+    zone.classList.remove('hidden');
+    if (titleEl) {
+      titleEl.innerHTML = '<i class="fas fa-file-image"></i> ' + escapeHtml(String(titleLine || 'Vista'));
+    }
+    imgEl.classList.add('hidden');
+    pdfEl.classList.add('hidden');
+    fbEl.classList.add('hidden');
+    if (statusEl) {
+      statusEl.classList.remove('hidden');
+      statusEl.textContent = 'Cargando…';
+    }
+
+    const scrollToZone = () => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          try {
+            zone.scrollIntoView({
+              behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+              block: 'start',
+              inline: 'nearest',
+            });
+          } catch (_) {
+            try {
+              zone.scrollIntoView();
+            } catch (_2) {}
+          }
+          try {
+            zone.focus({ preventScroll: true });
+          } catch (_3) {}
+        });
+      });
+    };
+
+    const clearLoading = () => {
+      if (statusEl) {
+        statusEl.textContent = '';
+        statusEl.classList.add('hidden');
+      }
+    };
+
+    const fail = (err) => {
+      hidePanelMediaViewerZone();
+      showToast(String(err && err.message ? err.message : err) || 'No se pudo cargar el archivo.', 'error');
+    };
+
+    const useDirectImg =
+      pvcIsDisplayableImageUrl(u) &&
+      !pvcIsPdfUrl(u) &&
+      !pvcIsApiBinaryResourceUrl(u) &&
+      !u.startsWith('blob:') &&
+      !u.startsWith('data:');
+
+    const useDirectPdf =
+      pvcIsPdfUrl(u) && !pvcIsApiBinaryResourceUrl(u) && !u.startsWith('blob:') && !u.startsWith('data:');
+
+    if (useDirectImg) {
+      imgEl.onload = () => {
+        imgEl.onload = null;
+        imgEl.onerror = null;
+        clearLoading();
+        scrollToZone();
+      };
+      imgEl.onerror = () => {
+        imgEl.onload = null;
+        imgEl.onerror = null;
+        fail(new Error('No se pudo mostrar la imagen.'));
+      };
+      imgEl.src = u;
+      imgEl.classList.remove('hidden');
+      return;
+    }
+
+    if (useDirectPdf) {
+      pdfEl.src = u;
+      pdfEl.classList.remove('hidden');
+      clearLoading();
+      scrollToZone();
+      return;
+    }
+
+    const headers = {};
+    const tok = getAuthToken();
+    if (tok) headers['Authorization'] = 'Bearer ' + tok;
+    let fetchUrl = u;
+    try {
+      const r = await fetch(fetchUrl, { headers, credentials: 'same-origin' });
+      if (!r.ok) {
+        let msg = 'No se pudo cargar el archivo.';
+        try {
+          const j = await r.json();
+          if (j && j.error) msg = j.error;
+        } catch (_) {}
+        throw new Error(msg);
+      }
+      const ct = String(r.headers.get('content-type') || '');
+      const blob = await r.blob();
+      const objUrl = URL.createObjectURL(blob);
+      _pvcPanelMediaBlobUrl = objUrl;
+      const looksImage =
+        /^image\//i.test(ct) ||
+        /^image\//i.test(blob.type) ||
+        (await pvcBlobSniffIsImageBlob(blob));
+      const looksPdf =
+        /^application\/pdf/i.test(ct) ||
+        /^application\/pdf/i.test(blob.type) ||
+        !!o.forcePdf;
+      clearLoading();
+      if (looksImage) {
+        imgEl.src = objUrl;
+        imgEl.classList.remove('hidden');
+      } else if (looksPdf) {
+        pdfEl.src = objUrl;
+        pdfEl.classList.remove('hidden');
+      } else {
+        fbEl.innerHTML =
+          '<a class="btn primary" href="' +
+          escapeHtml(objUrl) +
+          '" target="_blank" rel="noopener noreferrer">Abrir archivo</a>';
+        fbEl.classList.remove('hidden');
+      }
+      scrollToZone();
+    } catch (err) {
+      fail(err);
+    }
+  }
+
   /** Miniatura en tabla: /api/ sin extensión usa icono (evita <img> sin auth en src). */
   function pvcTablaThumbOpenButton(url, title) {
     const u = String(url || '').trim();
@@ -2028,80 +2231,6 @@
     }
   }
 
-  /**
-   * Abre binarios bajo /api/ (constancia, fotos, etc.) sin extensión en la URL:
-   * fetch + cookie/sesión + Authorization si hay token → lightbox si es imagen, si no nueva pestaña.
-   * @returns {boolean} true si esta función se hace cargo (no usar window.open directo sobre la URL).
-   */
-  function pvcOpenApiBinaryUrlInViewer(url) {
-    const u = String(url || '').trim();
-    if (!pvcIsApiBinaryResourceUrl(u)) return false;
-    const headers = {};
-    const tok = getAuthToken();
-    if (tok) headers['Authorization'] = 'Bearer ' + tok;
-    fetch(u, { headers, credentials: 'same-origin' })
-      .then(async (r) => {
-        if (!r.ok) {
-          let msg = 'No autorizado. Inicia sesión.';
-          try {
-            const j = await r.json();
-            if (j && j.error) msg = j.error;
-          } catch (_) {}
-          throw new Error(msg);
-        }
-        const ct = String(r.headers.get('content-type') || '');
-        const blob = await r.blob();
-        const objUrl = URL.createObjectURL(blob);
-        const looksImage = /^image\//i.test(ct) || /^image\//i.test(blob.type) || (await pvcBlobSniffIsImageBlob(blob));
-        if (looksImage) {
-          const prev = document.getElementById('ref-img-lightbox');
-          if (prev) prev.remove();
-          const wrap = document.createElement('div');
-          wrap.id = 'ref-img-lightbox';
-          wrap.className = 'ref-img-lightbox';
-          wrap.setAttribute('role', 'dialog');
-          wrap.setAttribute('aria-modal', 'true');
-          const inner = document.createElement('div');
-          inner.className = 'ref-img-lightbox-inner';
-          const imgEl = document.createElement('img');
-          imgEl.alt = '';
-          imgEl.src = objUrl;
-          inner.appendChild(imgEl);
-          const closeBtn = document.createElement('button');
-          closeBtn.type = 'button';
-          closeBtn.className = 'ref-img-lightbox-close';
-          closeBtn.setAttribute('aria-label', 'Cerrar');
-          closeBtn.innerHTML = '<i class="fas fa-times"></i>';
-          wrap.appendChild(closeBtn);
-          wrap.appendChild(inner);
-          document.body.appendChild(wrap);
-          const close = () => {
-            wrap.classList.add('ref-img-lightbox--out');
-            setTimeout(() => {
-              wrap.remove();
-              document.removeEventListener('keydown', onKey);
-              try { URL.revokeObjectURL(objUrl); } catch (_) {}
-            }, 200);
-          };
-          function onKey(ev) {
-            if (ev.key === 'Escape') close();
-          }
-          document.addEventListener('keydown', onKey);
-          wrap.addEventListener('click', (ev) => {
-            if (ev.target === wrap || (ev.target && ev.target.closest('.ref-img-lightbox-close'))) close();
-          });
-          requestAnimationFrame(() => wrap.classList.add('ref-img-lightbox--in'));
-          return;
-        }
-        try { window.open(objUrl, '_blank', 'noopener,noreferrer'); } catch (_) {}
-        setTimeout(() => { try { URL.revokeObjectURL(objUrl); } catch (_) {} }, 60_000);
-      })
-      .catch((err) => {
-        showToast(String(err && err.message ? err.message : err) || 'No se pudo abrir el archivo.', 'error');
-      });
-    return true;
-  }
-
   /** Miniatura en modal editar refacción: bajar a la vista previa grande (no abrir lightbox). */
   (function bindRefEditScrollPreviewCapture() {
     document.addEventListener(
@@ -2150,8 +2279,7 @@
         showToast('No se pudo abrir la imagen/archivo. Recarga la página (F5).', 'error');
         return;
       }
-      if (pvcOpenApiBinaryUrlInViewer(url)) return;
-      openRefaccionMediaFull(url);
+      void openPanelMediaViewerFromUrl(getActivePanelIdForMedia(), 'Vista', url);
     }, true);
   })();
 
@@ -3151,57 +3279,11 @@
     });
   }
 
-  /** Abre imagen a pantalla completa (overlay). PDF u otros: nueva pestaña. */
+  /** Abre medios en el visor al pie de la app (misma UX que constancia en clientes). */
   function openRefaccionMediaFull(url) {
-    const u = String(url || '');
+    const u = String(url || '').trim();
     if (!u) return;
-    if (pvcOpenApiBinaryUrlInViewer(u)) return;
-    function openLightboxImgSrc(src) {
-      const prev = document.getElementById('ref-img-lightbox');
-      if (prev) prev.remove();
-      const wrap = document.createElement('div');
-      wrap.id = 'ref-img-lightbox';
-      wrap.className = 'ref-img-lightbox';
-      wrap.setAttribute('role', 'dialog');
-      wrap.setAttribute('aria-modal', 'true');
-      const inner = document.createElement('div');
-      inner.className = 'ref-img-lightbox-inner';
-      const imgEl = document.createElement('img');
-      imgEl.alt = '';
-      imgEl.src = src;
-      inner.appendChild(imgEl);
-      const closeBtn = document.createElement('button');
-      closeBtn.type = 'button';
-      closeBtn.className = 'ref-img-lightbox-close';
-      closeBtn.setAttribute('aria-label', 'Cerrar');
-      closeBtn.innerHTML = '<i class="fas fa-times"></i>';
-      wrap.appendChild(closeBtn);
-      wrap.appendChild(inner);
-      document.body.appendChild(wrap);
-      const shouldRevoke = String(src || '').startsWith('blob:');
-      const close = () => {
-        wrap.classList.add('ref-img-lightbox--out');
-        setTimeout(() => {
-          wrap.remove();
-          document.removeEventListener('keydown', onKey);
-          if (shouldRevoke) {
-            try { URL.revokeObjectURL(src); } catch (_) {}
-          }
-        }, 200);
-      };
-      function onKey(e) {
-        if (e.key === 'Escape') close();
-      }
-      document.addEventListener('keydown', onKey);
-      wrap.addEventListener('click', (e) => { if (e.target === wrap || (e.target && e.target.closest('.ref-img-lightbox-close'))) close(); });
-      requestAnimationFrame(() => wrap.classList.add('ref-img-lightbox--in'));
-    }
-
-    if (!pvcIsDisplayableImageUrl(u)) {
-      try { window.open(u, '_blank', 'noopener,noreferrer'); } catch (_) {}
-      return;
-    }
-    openLightboxImgSrc(u);
+    void openPanelMediaViewerFromUrl(getActivePanelIdForMedia(), 'Vista', u);
   }
 
   /** Tras innerHTML del modal: addEventListener en cada .js-refaccion-open-media (onclick en HTML no es fiable con innerHTML/CSP). */
@@ -3283,6 +3365,71 @@
       dn +
       ' title="Descargar" aria-label="Descargar"><i class="fas fa-download"></i></button>'
     );
+  }
+
+  /** Primera URL de refacción que el visor de panel puede mostrar (imagen/PDF/API/blob/data). */
+  function pvcFirstRefaccionPreviewMediaUrl(r) {
+    if (!r) return '';
+    const parts = [
+      r.imagen_url && String(r.imagen_url).trim(),
+      r.manual_url && String(r.manual_url).trim(),
+    ].filter(Boolean);
+    for (const u of parts) {
+      if (
+        pvcIsDisplayableImageUrl(u) ||
+        pvcIsPdfUrl(u) ||
+        pvcIsApiBinaryResourceUrl(u) ||
+        u.startsWith('data:') ||
+        u.startsWith('blob:')
+      ) {
+        return u;
+      }
+    }
+    return '';
+  }
+
+  /** Primera URL de máquina (carga o ensamble) para el visor de panel. */
+  function pvcFirstMaquinaPreviewMediaUrl(m) {
+    if (!m) return null;
+    const parts = [
+      m.imagen_pieza_url && String(m.imagen_pieza_url).trim(),
+      m.imagen_ensamble_url && String(m.imagen_ensamble_url).trim(),
+    ].filter(Boolean);
+    for (const u of parts) {
+      if (
+        pvcIsDisplayableImageUrl(u) ||
+        pvcIsPdfUrl(u) ||
+        pvcIsApiBinaryResourceUrl(u) ||
+        u.startsWith('data:') ||
+        u.startsWith('blob:')
+      ) {
+        return { url: u, forcePdf: pvcIsPdfUrl(u) };
+      }
+    }
+    return null;
+  }
+
+  /** INE o licencia (foto o mini) para el visor de panel en vista previa de técnico. */
+  function pvcFirstTecnicoPreviewMediaUrl(full) {
+    if (!full) return null;
+    const parts = [
+      (full.ine_foto_url && String(full.ine_foto_url).trim()) ||
+        (full.ine_thumb_url && String(full.ine_thumb_url).trim()),
+      (full.licencia_foto_url && String(full.licencia_foto_url).trim()) ||
+        (full.licencia_thumb_url && String(full.licencia_thumb_url).trim()),
+    ].filter(Boolean);
+    for (const u of parts) {
+      if (
+        pvcIsDisplayableImageUrl(u) ||
+        pvcIsPdfUrl(u) ||
+        pvcIsApiBinaryResourceUrl(u) ||
+        u.startsWith('data:') ||
+        u.startsWith('blob:')
+      ) {
+        return { url: u, forcePdf: pvcIsPdfUrl(u) };
+      }
+    }
+    return null;
   }
 
   /** Bloque bajo el título: imagen principal (número de parte) + miniatura pieza. */
@@ -3442,173 +3589,26 @@
     </button>${dl}</span>`;
   }
 
-  let _clienteConstanciaPanelBlobUrl = null;
-
-  function hideClienteConstanciaViewerZone() {
-    const zone = qs('#cliente-constancia-viewer-zone');
-    const imgEl = qs('#cliente-constancia-viewer-img');
-    const pdfEl = qs('#cliente-constancia-viewer-pdf');
-    const fbEl = qs('#cliente-constancia-viewer-fallback');
-    const statusEl = qs('#cliente-constancia-viewer-status');
-    if (imgEl) {
-      imgEl.classList.add('hidden');
-      try {
-        imgEl.removeAttribute('src');
-      } catch (_) {}
-    }
-    if (pdfEl) {
-      pdfEl.classList.add('hidden');
-      try {
-        pdfEl.removeAttribute('src');
-      } catch (_) {}
-    }
-    if (fbEl) {
-      fbEl.innerHTML = '';
-      fbEl.classList.add('hidden');
-    }
-    if (_clienteConstanciaPanelBlobUrl) {
-      try {
-        URL.revokeObjectURL(_clienteConstanciaPanelBlobUrl);
-      } catch (_) {}
-      _clienteConstanciaPanelBlobUrl = null;
-    }
-    if (statusEl) {
-      statusEl.textContent = '';
-      statusEl.classList.add('hidden');
-    }
-    if (zone) zone.classList.add('hidden');
-  }
-
   async function showClienteConstanciaInPanelFromThumb(found) {
     if (!found || !found.has_constancia) return;
-    showPanel('clientes', { skipLoad: true });
-    const zone = qs('#cliente-constancia-viewer-zone');
-    const imgEl = qs('#cliente-constancia-viewer-img');
-    const pdfEl = qs('#cliente-constancia-viewer-pdf');
-    const fbEl = qs('#cliente-constancia-viewer-fallback');
-    const statusEl = qs('#cliente-constancia-viewer-status');
-    const titleEl = qs('#cliente-constancia-viewer-title');
-    if (!zone || !imgEl || !pdfEl || !fbEl) {
-      showToast('Vista de constancia no disponible. Recarga la página (F5).', 'error');
-      return;
-    }
-    hideClienteConstanciaViewerZone();
-    zone.classList.remove('hidden');
-    if (titleEl) {
-      titleEl.innerHTML =
-        '<i class="fas fa-file-invoice"></i> ' + escapeHtml('Constancia · ' + (found.nombre || 'Cliente'));
-    }
-    imgEl.classList.add('hidden');
-    pdfEl.classList.add('hidden');
-    fbEl.classList.add('hidden');
-    if (statusEl) {
-      statusEl.classList.remove('hidden');
-      statusEl.textContent = 'Cargando constancia…';
-    }
     const url = API + '/clientes/' + encodeURIComponent(found.id) + '/constancia';
-    const headers = {};
-    const tok = getAuthToken();
-    if (tok) headers['Authorization'] = 'Bearer ' + tok;
-    try {
-      const r = await fetch(url, { headers, credentials: 'same-origin' });
-      if (!r.ok) {
-        let msg = 'No se pudo cargar la constancia.';
-        try {
-          const j = await r.json();
-          if (j && j.error) msg = j.error;
-        } catch (_) {}
-        throw new Error(msg);
-      }
-      const ct = String(r.headers.get('content-type') || '');
-      const blob = await r.blob();
-      const objUrl = URL.createObjectURL(blob);
-      _clienteConstanciaPanelBlobUrl = objUrl;
-      const looksImage =
-        /^image\//i.test(ct) ||
-        /^image\//i.test(blob.type) ||
-        (await pvcBlobSniffIsImageBlob(blob));
-      const looksPdf =
-        /^application\/pdf/i.test(ct) ||
-        /^application\/pdf/i.test(blob.type) ||
-        String(found.constancia_kind || '') === 'pdf';
-      if (statusEl) {
-        statusEl.textContent = '';
-        statusEl.classList.add('hidden');
-      }
-      if (looksImage) {
-        imgEl.src = objUrl;
-        imgEl.classList.remove('hidden');
-      } else if (looksPdf) {
-        pdfEl.src = objUrl;
-        pdfEl.classList.remove('hidden');
-      } else {
-        fbEl.innerHTML =
-          '<a class="btn primary" href="' +
-          escapeHtml(objUrl) +
-          '" target="_blank" rel="noopener noreferrer">Abrir archivo</a>';
-        fbEl.classList.remove('hidden');
-      }
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          try {
-            zone.scrollIntoView({
-              behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-              block: 'start',
-              inline: 'nearest',
-            });
-          } catch (_) {
-            try {
-              zone.scrollIntoView();
-            } catch (_2) {}
-          }
-          try {
-            zone.focus({ preventScroll: true });
-          } catch (_3) {}
-        });
-      });
-    } catch (err) {
-      hideClienteConstanciaViewerZone();
-      showToast(String(err && err.message ? err.message : err) || 'No se pudo cargar la constancia.', 'error');
-    }
+    await openPanelMediaViewerFromUrl('clientes', 'Constancia · ' + (found.nombre || 'Cliente'), url, {
+      forcePdf: String(found.constancia_kind || '') === 'pdf',
+    });
   }
 
   function previewCliente(c) {
+    if (c && c.has_constancia) {
+      void showClienteConstanciaInPanelFromThumb(c);
+      return;
+    }
     clearPvcMediaUrlRegistry();
-    const openUrl = c && c.id != null ? (API + '/clientes/' + encodeURIComponent(c.id) + '/constancia') : '';
-    const hasConst = !!(c && c.has_constancia);
-    const constKind = (c && c.constancia_kind) ? String(c.constancia_kind) : '';
-    const constThumb = (c && c.constancia_thumb_url) ? String(c.constancia_thumb_url) : '';
-    const constKicker = constKind === 'pdf' ? 'PDF' : (constKind === 'image' ? 'Imagen' : (hasConst ? 'Archivo' : '—'));
-    const underHeaderHtml = hasConst
-      ? `
-        <div class="ref-pvc-hero">
-          <div class="ref-pvc-hero-inner ref-pvc-hero-inner--single">
-            <div class="ref-pvc-hero-main ref-pvc-hero-main--solo">
-              <div class="ref-pvc-hero-kicker ref-pvc-hero-kicker--accent"><i class="fas fa-file-invoice"></i> Constancia fiscal · ${escapeHtml(constKicker)}</div>
-              ${constKind === 'image' && constThumb
-                ? heroFrameImageHtml(null, openUrl, constThumb, 'Constancia fiscal', 'cliente-constancia')
-                : `<div class="ref-pvc-hero-doc-row">
-                   <button type="button" class="ref-pvc-hero-doc js-refaccion-open-media" data-url="${escapeHtml(openUrl)}" title="Clic para abrir constancia">
-                     <span class="ref-pvc-hero-doc-icon"><i class="fas ${constKind === 'pdf' ? 'fa-file-pdf' : 'fa-file'}"></i></span>
-                     <div>
-                       <div style="font-weight:800;line-height:1.1">Abrir constancia</div>
-                       <div style="opacity:0.75;font-size:0.82rem;line-height:1.3">${escapeHtml(constKind === 'pdf' ? 'PDF (clic para abrir)' : 'Archivo (clic para abrir)')}</div>
-                     </div>
-                     <span class="ref-pvc-hero-doc-arrow"><i class="fas fa-arrow-up-right-from-square"></i></span>
-                   </button>
-                   ${pvcMediaDownloadButtonHtml(null, openUrl, 'cliente-constancia', 'ref-pvc-hero-doc-dl')}
-                   </div>`}
-            </div>
-          </div>
-        </div>
-      `
-      : '';
     openPreviewCard({
       title: c.nombre || 'Cliente',
       subtitle: c.codigo ? 'Código: ' + c.codigo : '',
       icon: 'fa-user-tie',
       color: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a9e 100%)',
-      underHeaderHtml,
+      underHeaderHtml: '',
       sections: [{
         title: 'Información fiscal', icon: 'fa-file-invoice',
         fields: [
@@ -3672,7 +3672,7 @@
       function (e) {
         const t = e && e.target;
         if (!t || !t.closest) return;
-        const btn = t.closest('#cliente-constancia-viewer-close');
+        const btn = t.closest('#pvc-panel-media-viewer-close');
         if (!btn || btn.disabled) return;
         if (!document.body.contains(btn)) return;
         e.preventDefault();
@@ -3680,14 +3680,14 @@
         try {
           e.stopImmediatePropagation();
         } catch (_) {}
-        hideClienteConstanciaViewerZone();
+        hidePanelMediaViewerZone();
       },
       true
     );
   })();
 
   function renderClientes(data) {
-    hideClienteConstanciaViewerZone();
+    hidePanelMediaViewerZone();
     const tbody = qs('#tabla-clientes tbody');
     tbody.innerHTML = '';
     if (!data || data.length === 0) {
@@ -3760,6 +3760,16 @@
   // ----- REFACCIONES -----
   function previewRefaccion(r) {
     clearPvcMediaUrlRegistry();
+    const mediaUrl = pvcFirstRefaccionPreviewMediaUrl(r);
+    if (mediaUrl) {
+      void openPanelMediaViewerFromUrl(
+        'refacciones',
+        'Refacción · ' + (r.codigo || r.descripcion || 'Vista'),
+        mediaUrl,
+        { forcePdf: pvcIsPdfUrl(mediaUrl) },
+      );
+      return;
+    }
     const stockBajo = Number(r.stock) <= Number(r.stock_minimo || 1);
     const underHeaderHtml = buildRefaccionPreviewUnderHeader(r);
     const hasSeg = !!(refCategoriaLabel(r.categoria) || refCategoriaLabel(r.subcategoria));
@@ -4221,6 +4231,16 @@
 
   function previewMaquina(m) {
     clearPvcMediaUrlRegistry();
+    const firstMedia = pvcFirstMaquinaPreviewMediaUrl(m);
+    if (firstMedia && firstMedia.url) {
+      void openPanelMediaViewerFromUrl(
+        'maquinas',
+        'Máquina · ' + (m.categoria || m.modelo || m.nombre || 'Vista'),
+        firstMedia.url,
+        { forcePdf: !!firstMedia.forcePdf },
+      );
+      return;
+    }
     const piezaUrl = m.imagen_pieza_url ? String(m.imagen_pieza_url).trim() : '';
     const ensUrl = m.imagen_ensamble_url ? String(m.imagen_ensamble_url).trim() : '';
     const piezaPdf = piezaUrl && pvcIsPdfUrl(piezaUrl);
@@ -12719,6 +12739,16 @@
     let full = t;
     if (t && t.id) {
       try { full = await fetchJson(API + '/tecnicos/' + t.id); } catch (_) {}
+    }
+    const docPick = pvcFirstTecnicoPreviewMediaUrl(full);
+    if (docPick && docPick.url) {
+      void openPanelMediaViewerFromUrl(
+        'tecnicos',
+        'Documento · ' + (full.nombre || 'Personal'),
+        docPick.url,
+        { forcePdf: !!docPick.forcePdf },
+      );
+      return;
     }
     const puestoTxt = (full.puesto || full.rol || '').trim() || '—';
     const ineThumb = full.ine_thumb_url || full.ine_foto_url;
