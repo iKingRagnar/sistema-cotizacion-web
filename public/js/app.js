@@ -7337,15 +7337,25 @@
     const cats = toArray(tree.categorias);
     const curCat = maquina && maquina.categoria ? String(maquina.categoria).trim() : '';
     const curSub = maquina && maquina.subcategoria ? String(maquina.subcategoria).trim() : '';
-    const catOpts = '<option value="">-- Seleccionar --</option>' + cats.map(c => `<option value="${escapeHtml(c.nombre)}" ${curCat === c.nombre ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`).join('');
+    const hasCats = cats.length > 0;
+    const catOpts = hasCats
+      ? ('<option value="">-- Seleccionar --</option>' + cats.map(c => `<option value="${escapeHtml(c.nombre)}" ${curCat === c.nombre ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`).join(''))
+      : '<option value="" selected>(Sin categorías) · Abre “Categorías” para cargar el catálogo</option>';
     const catObj = cats.find(c => c.nombre === curCat);
     const subs = catObj && catObj.subcategorias ? catObj.subcategorias : [];
-    const subOpts = '<option value="">— (opcional) —</option>' + subs.map(s => `<option value="${escapeHtml(s.nombre)}" ${curSub === s.nombre ? 'selected' : ''}>${escapeHtml(s.nombre)}</option>`).join('');
+    const subOpts = hasCats
+      ? ('<option value="">— (opcional) —</option>' + subs.map(s => `<option value="${escapeHtml(s.nombre)}" ${curSub === s.nombre ? 'selected' : ''}>${escapeHtml(s.nombre)}</option>`).join(''))
+      : '<option value="" selected>—</option>';
     const body = `
       <div class="cotz-modal">
         <section class="cotz-card" aria-labelledby="maq-sec-machine">
           <h4 class="cotz-card-title" id="maq-sec-machine"><span class="cotz-step-num">1</span> Máquina</h4>
           <p class="form-hint" style="margin-top:0"><i class="fas fa-layer-group"></i> <strong>Nombre de la máquina</strong> (campo categoría), <strong>parte</strong> (subcategoría) y <strong>versión</strong> (modelo) definen el equipo. El catálogo de nombres/partes lo administra el administrador en <strong>Categorías</strong>. En la tabla, clic en el <strong>ID</strong> para cambiar solo la imagen principal.</p>
+          ${hasCats ? '' : `
+            <div class="form-actions" style="justify-content:flex-start;margin:0.15rem 0 0.75rem">
+              <button type="button" class="btn" id="m-open-categorias"><i class="fas fa-sitemap"></i> Abrir Categorías</button>
+            </div>
+          `}
           <div class="form-group"><label>Nombre de la máquina *</label>
             <select id="m-categoria">${catOpts}</select>
           </div>
@@ -7393,6 +7403,22 @@
     openModal(isNew ? 'Nueva máquina' : 'Editar máquina', body);
     const selMaqCat = qs('#m-categoria');
     const selMaqSub = qs('#m-subcategoria');
+    const btnOpenCats = qs('#m-open-categorias');
+    if (btnOpenCats) {
+      btnOpenCats.addEventListener('click', function () {
+        const can = typeof canAccessDemoAdminPanel === 'function' ? canAccessDemoAdminPanel() : false;
+        if (!can) {
+          if (typeof showToast === 'function') showToast('Solo el administrador puede editar “Categorías”.', 'warning');
+          return;
+        }
+        try { if (typeof showPanel === 'function') showPanel('categorias-catalogo', { skipLoad: false }); } catch (_) {}
+        try { qs('#modal')?.classList.add('hidden'); } catch (_) {}
+      });
+    }
+    if (!hasCats) {
+      if (selMaqCat) selMaqCat.disabled = true;
+      if (selMaqSub) selMaqSub.disabled = true;
+    }
     function refillMaqSub() {
       if (!selMaqCat || !selMaqSub) return;
       const name = selMaqCat.value;

@@ -312,6 +312,32 @@ html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial .modal-
   -webkit-text-fill-color: #e2e8f0 !important;
 }
 
+html body.theme-industrial.md3-on #modal .modal-box .form-hint,
+html body.theme-industrial.md3-on #modal-stack .modal-box .form-hint,
+html body.theme-industrial.md3-on #confirm-modal .modal-box .form-hint,
+html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial .form-hint {
+  color: #cbd5e1 !important;
+  -webkit-text-fill-color: #cbd5e1 !important;
+  line-height: 1.35 !important;
+}
+html body.theme-industrial.md3-on #modal .modal-box .form-hint strong,
+html body.theme-industrial.md3-on #modal-stack .modal-box .form-hint strong,
+html body.theme-industrial.md3-on #confirm-modal .modal-box .form-hint strong,
+html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial .form-hint strong {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+html body.theme-industrial.md3-on #modal .modal-box .form-hint code,
+html body.theme-industrial.md3-on #modal-stack .modal-box .form-hint code,
+html body.theme-industrial.md3-on #confirm-modal .modal-box .form-hint code,
+html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial .form-hint code {
+  background: rgba(148, 163, 184, 0.14) !important;
+  color: #e2e8f0 !important;
+  border: 1px solid rgba(148, 163, 184, 0.22) !important;
+  padding: 0.1rem 0.35rem !important;
+  border-radius: 8px !important;
+}
+
 html body.theme-industrial.md3-on #modal .modal-box label,
 html body.theme-industrial.md3-on #modal-stack .modal-box label,
 html body.theme-industrial.md3-on #confirm-modal .modal-box label,
