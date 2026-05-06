@@ -4395,9 +4395,6 @@
         <td><span class="badge badge-moneda">${moneda}</span></td>
         <td>
           <span class="badge badge-moneda" title="Tipo de cambio">${tcFmt ? escapeHtml(tcFmt) : '—'}</span>
-          <button type="button" class="btn tiny outline btn-edit-tc" data-id="${c.id}" data-tc="${tcFmt || ''}" title="Editar tipo de cambio en tabla">
-            <i class="fas fa-pen"></i>
-          </button>
         </td>
         <td>${totalFmt || '—'}</td>
         <td><span class="semaforo ${estadoClass}">${estadoLabel}</span></td>
@@ -4430,36 +4427,6 @@
     // btn-duplicate-cot removido
     tbody.querySelectorAll('.btn-delete-cot').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar esta cotización?', () => deleteCotizacion(btn.dataset.id)); });
-    });
-    tbody.querySelectorAll('.btn-edit-tc').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const id = Number(btn.dataset.id);
-        if (!id) return;
-        const actual = btn.dataset.tc || '';
-        openPromptModal(
-          {
-            title: 'Editar tipo de cambio',
-            message: 'MXN por 1 USD (referencia Banxico):',
-            label: 'Nuevo tipo de cambio',
-            defaultValue: actual || '17.00',
-            placeholder: '18.3056',
-            inputType: 'number',
-            required: true,
-            confirmLabel: 'Actualizar T.C.',
-            confirmIcon: 'fa-exchange-alt',
-            validator: (v) => {
-              const n = Number(String(v).replace(',', '.'));
-              return (!Number.isFinite(n) || n <= 0) ? 'Usa un número mayor a 0.' : null;
-            },
-          },
-          async (raw) => {
-            const next = Number(String(raw).replace(',', '.').trim());
-            if (!Number.isFinite(next) || next <= 0) { showToast('Tipo de cambio inválido.', 'error'); return; }
-            await updateCotizacionTipoCambioInline(id, next);
-          }
-        );
-      });
     });
     updateTableFooter('tabla-cotizaciones', list.length, cotizacionesCache.length, () => clearTableFiltersAndRefresh('tabla-cotizaciones', null, applyCotizacionesFiltersAndRender), arguments[2]);
     animateTableRows('tabla-cotizaciones');

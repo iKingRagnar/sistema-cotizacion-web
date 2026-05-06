@@ -6733,6 +6733,7 @@ body.dark-theme .glass {
   gap: 0.4rem;
   flex-wrap: wrap;
   vertical-align: middle;
+  justify-content: flex-end;
 }
 .rep-final-wrap .btn-adj-firma-rep {
   padding: 0.3rem 0.5rem;
@@ -6745,6 +6746,43 @@ body.dark-theme .glass {
   border-color: rgba(2, 132, 199, 0.55);
   color: #0369a1;
   box-shadow: 0 0 16px rgba(13, 148, 136, 0.22);
+}
+
+/* ---------- Reportes: evitar acciones "amontonadas" (scroll horizontal + columna acciones con ancho mínimo) ---------- */
+#panel-reportes .table-wrap {
+  overflow-x: auto;
+}
+#tabla-reportes {
+  min-width: 1180px;
+}
+#tabla-reportes td.th-actions,
+#tabla-reportes th.th-actions {
+  min-width: 132px;
+}
+
+/* ---------- Cotizaciones: evitar acciones amontonadas ---------- */
+#tabla-cotizaciones td.th-actions,
+#tabla-cotizaciones th.th-actions {
+  min-width: 176px;
+}
+
+/* ---------- Mantenimientos (calendario): fondo sólido en tema industrial (no transparente) ---------- */
+html body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .mant-gar-cal-wrap {
+  background: rgba(2, 6, 23, 0.72);
+  border: 1px solid rgba(56, 189, 248, 0.16);
+  border-radius: 16px;
+  padding: 0.85rem;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+html body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .cal-month-summary {
+  background: rgba(30, 41, 59, 0.7);
+  border-color: rgba(56, 189, 248, 0.14);
+  color: rgba(226, 232, 240, 0.95);
+}
+html body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .cal-header {
+  color: rgba(148, 163, 184, 0.95);
 }
 
 /* ---------- Refacciones: toolbar y filtros más legibles ---------- */

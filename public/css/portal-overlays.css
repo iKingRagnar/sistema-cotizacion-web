@@ -365,6 +365,22 @@ html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial textare
   border: 1px solid rgba(56, 189, 248, 0.28) !important;
 }
 
+/* Cotizaciones (editar): botones y acciones siempre con espacio (sin amontonarse) */
+html body.theme-industrial.md3-on #modal .cotz-modal .form-actions,
+html body.theme-industrial.md3-on #modal-stack .cotz-modal .form-actions,
+html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial .cotz-modal .form-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 0.5rem !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+}
+html body.theme-industrial.md3-on #modal .cotz-modal .form-actions .btn,
+html body.theme-industrial.md3-on #modal-stack .cotz-modal .form-actions .btn,
+html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial .cotz-modal .form-actions .btn {
+  min-width: 140px;
+}
+
 html body.theme-industrial.md3-on #modal .modal-close,
 html body.theme-industrial.md3-on #modal-stack .modal-close,
 html body.theme-industrial.md3-on #confirm-modal .modal-close,
