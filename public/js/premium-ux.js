@@ -2808,7 +2808,7 @@
     initWebhooksUI();
     /* initToastConfetti — off */
     initConfirmDialog();
-    initThemePicker();
+    /* initThemePicker — desactivado: tema único nano cristalino (app.js fuerza dark). */
     initSortableColumns();
     initDensityToggle();
     /* initLoadingButtons — off (spinner / estado animado en botones) */

@@ -1,22 +1,15 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="no-motion">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0f172a">
-  <title>Cargando…</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
+  <!-- Desarrollo local: quitar SW cuanto antes (evita index/CSS viejos por caché del worker). -->
   <script>
     (function () {
       try {
         var h = (location.hostname || '').toLowerCase().replace(/^\[/, '').replace(/\]$/, '');
         var loopback = h === 'localhost' || h === '127.0.0.1' || h === '::1';
-        var renderLike = /\.onrender\.com$/i.test(h);
-        if (!loopback && !renderLike) return;
+        var lanDev = location.port === '3456' && /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h);
+        if (!loopback && !lanDev) return;
         if (!('serviceWorker' in navigator)) return;
         navigator.serviceWorker.getRegistrations().then(function (regs) {
           return Promise.all((regs || []).map(function (r) { return r.unregister(); }));
@@ -24,34 +17,1645 @@
       } catch (e) {}
     })();
   </script>
-  <!-- Paridad visual con sistema-cotizacion-web-Old: perfil, tema industrial, vidrio/fondo login -->
-  <link rel="stylesheet" href="/css/header-profile.css?v=scratch-7">
-  <link rel="stylesheet" href="/css/theme-industrial.css?v=scratch-7">
-  <link rel="stylesheet" href="/css/nano-fondo.css?v=scratch-7">
-  <link rel="stylesheet" href="/css/portal-overlays.css?v=scratch-7">
-  <link rel="stylesheet" href="/css/tokens.css?v=scratch-7">
-  <link rel="stylesheet" href="/css/base.css?v=scratch-7">
-  <link rel="stylesheet" href="/css/components/buttons.css?v=scratch-7">
-  <link rel="stylesheet" href="/client/styles/app.css?v=scratch-7">
-  <link rel="stylesheet" href="/client/styles/login-parity.css?v=scratch-7">
-  <link rel="stylesheet" href="/css/login-neutral.css?v=7-login-compact-form-post-2026-05-05">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" id="meta-theme-color" content="#0c1929">
+  <title>Servicio Técnico · Universal</title>
+  <meta name="description" content="Servicio técnico Universal: clientes, refacciones, máquinas, cotizaciones, incidentes y bitácora de horas.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <!-- Fonts — solo Inter (familia única) + Material Symbols con ejes mínimos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-25..200&display=swap" rel="stylesheet">
+  <!-- Font Awesome (iconos legacy — se mantiene para compat) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
+  <!-- CSS heredados (primero — los sobreescribe el nuevo sistema MD3) -->
+  <link rel="stylesheet" href="css/design-tokens.css?v=4-md3">
+  <link rel="stylesheet" href="css/design-system.css?v=3-apex-base">
+  <link rel="stylesheet" href="css/style.css?v=87-bonos-resumen-bar-themes">
+  <link rel="stylesheet" href="css/layout-rail.css?v=11-hide-sidebar-global-strip">
+  <link rel="stylesheet" href="css/header-profile.css?v=10-chrome-luna-neutral-admin-hub">
+  <link rel="stylesheet" href="css/theme-industrial.css?v=25-chrome-luna-neutral">
+  <link rel="stylesheet" href="css/material.css?v=3-login-open-detach-sol-2026-04-27">
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       ★ MD3 DESIGN SYSTEM — Rediseño 2026-04 (última = mayor prioridad)
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <link rel="stylesheet" href="css/tokens.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/base.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/components/buttons.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/components/cards.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/components/forms.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/components/tables.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/components/modals.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/components/toasts.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/components/states.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/components/badges.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/components/chips.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/layout/app-shell.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/modules/dashboard.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/modules/usuarios.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/modules/catalogos.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/modules/comercial.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/modules/tecnico.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/modules/tarifas.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/modules/operaciones.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/modules/admin.css?v=1-md3-2026">
+  <!-- ★ PREMIUM OVERRIDE — cargado último, gana toda especificidad -->
+  <link rel="stylesheet" href="css/premium.css?v=77-profile-svg-no-before-2026-04-27">
+  <link rel="stylesheet" href="css/premium-pro.css?v=22-profile-svg-no-before-2026-04-27">
+  <link rel="stylesheet" href="css/luna-nuclear.css?v=9-chrome-luna-neutral-2026-04-27">
+  <!-- Nano vidrio + foto industrial (debe ir al final de la cascada CSS) -->
+  <link rel="stylesheet" href="css/nano-fondo.css?v=43-login-overlay-login-open-neutral-2026-04-27">
+  <link rel="stylesheet" href="css/theme-nano-crystal-single.css?v=1-single-blue-glass-2026-05-05">
+  <link rel="stylesheet" href="css/no-motion.css?v=2-profile-svg-backstop-2026-04-27">
+  <!-- Portales primero; login-neutral DEBE ir después para mandar en overlay de sesión -->
+  <link rel="stylesheet" href="css/portal-overlays.css?v=2-portal-last-wins-2026-04-27">
+  <link rel="stylesheet" href="css/login-neutral.css?v=7-login-compact-form-post-2026-05-05">
+  <link rel="manifest" href="manifest.json">
+  <!-- Tema único: nano machining + vidrio azul cristalino (sin modo Sol/Luna). -->
+  <!-- ★ FORCE-RELOAD: SOLO en browser normal, NUNCA en PWA standalone (evita loop crash) -->
+  <script>
+    (function(){
+      try {
+        // Detectar PWA standalone — en ese modo NUNCA forzamos reload
+        var isStandalone = window.matchMedia && (
+          window.matchMedia('(display-mode: standalone)').matches ||
+          window.matchMedia('(display-mode: window-controls-overlay)').matches ||
+          window.matchMedia('(display-mode: minimal-ui)').matches
+        ) || window.navigator.standalone === true;
+        if (isStandalone) return;
+
+        // Dev local (loopback o LAN :3456): no llamar reg.update() — reactiva el SW.
+        var hn = (location.hostname || '').toLowerCase().replace(/^\[/, '').replace(/\]$/, '');
+        var loopback = hn === 'localhost' || hn === '127.0.0.1' || hn === '::1';
+        var lanDev = location.port === '3456' && /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(hn);
+        if (loopback || lanDev) return;
+
+        var EXPECTED_CSS = '76-chrome-luna-neutral-2026-04-27';
+        var KEY = 'prem-fr-' + EXPECTED_CSS;
+        if (sessionStorage.getItem(KEY)) return;
+
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(regs){
+            if (!regs || !regs.length) return;
+            Promise.all(regs.map(function(r){ return r.update().catch(function(){}); }))
+              .then(function(){
+                var link = document.querySelector('link[href*="premium.css"]');
+                if (link && link.href.indexOf(EXPECTED_CSS) === -1) {
+                  sessionStorage.setItem(KEY, '1');
+                  location.reload();
+                }
+              })
+              .catch(function(){});
+          }).catch(function(){});
+        }
+      } catch(e) {}
+    })();
+  </script>
+  <!-- ★ PWA performance — en standalone, marcar body para CSS skip animaciones pesadas -->
+  <script>
+    (function(){
+      try {
+        var isStandalone = window.matchMedia && (
+          window.matchMedia('(display-mode: standalone)').matches ||
+          window.matchMedia('(display-mode: window-controls-overlay)').matches
+        ) || window.navigator.standalone === true;
+        if (isStandalone) {
+          document.documentElement.classList.add('prem-pwa');
+          // Sin parallax mouse en PWA (background fixed con radial costoso)
+          document.documentElement.style.setProperty('--pmx', '50');
+          document.documentElement.style.setProperty('--pmy', '50');
+        }
+      } catch(e) {}
+    })();
+  </script>
+  <!-- Login abierto: layout compacto + aviso error siempre legible (inline = gana caché agresivo / SW) -->
+  <style id="login-critical-inline-overrides">
+    html body.login-open #login-overlay .login-split {
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      width: 100% !important;
+      max-width: min(1120px, 98vw) !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+    html body.login-open #login-overlay .login-form-panel {
+      min-height: 0 !important;
+      height: auto !important;
+      align-self: center !important;
+    }
+    html body.login-open #login-overlay #login-error.login-error:not(.hidden) {
+      display: flex !important;
+      align-items: flex-start !important;
+      gap: 0.5rem !important;
+      padding: 0.65rem 0.85rem !important;
+      margin: 0 0 0.75rem !important;
+      border-radius: 12px !important;
+      font-size: 0.875rem !important;
+      font-weight: 600 !important;
+      line-height: 1.45 !important;
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+      background: rgba(127, 29, 29, 0.95) !important;
+      border: 1px solid rgba(248, 113, 113, 0.75) !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    html body.login-open #login-overlay #login-error.login-error:not(.hidden) > i {
+      flex-shrink: 0 !important;
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+    }
+    html body.login-open #login-overlay #login-error.login-error:not(.hidden) .login-error-msg,
+    html body.login-open #login-overlay #login-error.login-error:not(.hidden) #login-error-text {
+      flex: 1 !important;
+      min-width: 0 !important;
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+      opacity: 1 !important;
+      font-size: inherit !important;
+    }
+    html body.login-open #login-overlay .login-brand-panel .login-feature-item,
+    html body.login-open #login-overlay .login-brand-panel .login-feature-item span {
+      color: #f8fafc !important;
+      -webkit-text-fill-color: #f8fafc !important;
+      opacity: 1 !important;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9) !important;
+    }
+  </style>
 </head>
 <body class="theme-industrial md3-on">
   <script>
     (function () {
       try {
-        var th = localStorage.getItem('cotizacion-theme');
-        if (th === 'light') {
-          document.documentElement.classList.add('appearance-light');
-          document.body.classList.add('appearance-light');
-        }
+        localStorage.setItem('cotizacion-theme', 'dark');
       } catch (e) {}
     })();
   </script>
-  <div id="app-watermark" class="app-watermark" aria-hidden="true"></div>
-  <div id="toast-root" class="toast-root" aria-live="polite"></div>
-  <div id="modal-root" class="modal-root"></div>
-  <div id="app"></div>
-  <script type="module" src="/client/js/app.js?v=scratch-7"></script>
+  <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+  <div id="app-watermark" class="prem-watermark-field" aria-hidden="true"></div>
+  <div id="offline-banner" class="offline-banner hidden" role="alert" aria-live="polite">Sin conexión. Algunas funciones pueden no estar disponibles.</div>
+  <div id="login-overlay" class="login-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="login-title">
+    <span class="header-powered-by login-overlay-powered-by" aria-label="Créditos">powered by Ing. David Cantú</span>
+    <div class="login-split">
+      <!-- Panel izquierdo: branding -->
+      <div class="login-brand-panel">
+        <div class="login-brand-content">
+          <div class="login-brand-logo" aria-hidden="true">
+            <img src="fondos/universal-logo.jpg?v=4" alt="" width="120" height="72" class="login-brand-hero-img" decoding="async">
+          </div>
+          <h1 class="login-brand-title" id="login-brand-name">Servicio Técnico</h1>
+          <p class="login-brand-tagline" id="login-brand-tagline">Universal · Operaciones, incidentes, bitácora y catálogos</p>
+          <div class="login-brand-features">
+            <div class="login-feature-item"><i class="fas fa-shield-alt"></i><span>Acceso seguro por roles</span></div>
+            <div class="login-feature-item"><i class="fas fa-chart-line"></i><span>Dashboards en tiempo real</span></div>
+            <div class="login-feature-item"><i class="fas fa-file-invoice-dollar"></i><span>Cotizaciones y ventas</span></div>
+            <div class="login-feature-item"><i class="fas fa-tools"></i><span>Gestión de incidentes</span></div>
+          </div>
+          <div class="login-brand-badges">
+            <span class="login-badge"><i class="fas fa-crown"></i> Admin</span>
+            <span class="login-badge"><i class="fas fa-user-edit"></i> Usuario</span>
+            <span class="login-badge"><i class="fas fa-eye"></i> Consulta</span>
+          </div>
+        </div>
+        <div class="login-brand-decoration">
+          <div class="login-deco-circle login-deco-c1"></div>
+          <div class="login-deco-circle login-deco-c2"></div>
+          <div class="login-deco-circle login-deco-c3"></div>
+        </div>
+      </div>
+      <!-- Panel derecho: formulario -->
+      <div class="login-form-panel">
+        <div class="login-card">
+          <div class="login-card-header">
+            <div class="login-card-icon"><i class="fas fa-lock"></i></div>
+            <h2 id="login-title">Iniciar sesión</h2>
+            <p class="login-hint" id="login-hint">Introduce tus credenciales para continuar</p>
+          </div>
+          <form id="login-form" class="login-form" method="post" action="#" autocomplete="on" novalidate>
+            <div class="form-group login-field">
+              <label for="login-user"><i class="fas fa-user"></i> Usuario</label>
+              <input type="text" id="login-user" name="username" autocomplete="username" required placeholder="Tu nombre de usuario">
+            </div>
+            <div class="form-group login-field">
+              <label for="login-pass"><i class="fas fa-lock"></i> Contraseña</label>
+              <div class="login-pass-wrap">
+                <input type="password" id="login-pass" name="password" autocomplete="current-password" required placeholder="Tu contraseña">
+                <button type="button" class="login-eye-btn" id="login-eye-btn" tabindex="-1" aria-label="Mostrar/ocultar contraseña"><i class="fas fa-eye" id="login-eye-icon"></i></button>
+              </div>
+            </div>
+            <p class="login-error hidden" id="login-error" role="alert"><i class="fas fa-exclamation-circle"></i> <span id="login-error-text"></span></p>
+            <button type="submit" class="btn primary big login-submit" id="login-submit-btn">
+              <span class="login-submit-text"><i class="fas fa-sign-in-alt"></i> Entrar al sistema</span>
+              <span class="login-submit-loading hidden"><i class="fas fa-spinner fa-spin"></i> Verificando…</span>
+            </button>
+          </form>
+          <div class="login-roles-info">
+            <p class="login-roles-title"><i class="fas fa-info-circle"></i> Niveles de acceso disponibles</p>
+            <div class="login-roles-grid">
+              <div class="login-role-card login-role-admin">
+                <i class="fas fa-crown"></i>
+                <strong>Administrador</strong>
+                <span>CRUD completo + auditoría</span>
+              </div>
+              <div class="login-role-card login-role-usuario">
+                <i class="fas fa-user-plus"></i>
+                <strong>Usuario</strong>
+                <span>Agregar registros + ver</span>
+              </div>
+              <div class="login-role-card login-role-consulta">
+                <i class="fas fa-eye"></i>
+                <strong>Consulta</strong>
+                <span>Solo lectura</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="app-particles-layer" class="app-particles-layer" aria-hidden="true"></div>
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <div class="login-brand-logo header-brand-logo-wrap">
+          <img src="fondos/universal-logo.jpg?v=4" alt="Universal" width="120" height="72" class="login-brand-hero-img" id="header-brand-logo" decoding="async">
+        </div>
+        <div class="header-brand-text">
+          <h1 class="header-brand-service" id="app-title-name">Servicio Tecnico</h1>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="header-actions-tail">
+        <span class="header-powered-by" aria-label="Créditos">powered by Ing. David Cantú</span>
+        <div class="header-notifications-wrap">
+          <button type="button" id="btn-notifications" class="btn-icon-header" title="Centro de notificaciones" aria-label="Centro de notificaciones">
+            <i class="fas fa-bell"></i>
+            <span id="notifications-badge" class="notifications-badge hidden">0</span>
+          </button>
+          <div id="notifications-panel" class="notifications-panel hidden" aria-live="polite">
+            <div class="notifications-header">
+              <strong>Notificaciones</strong>
+              <div class="notifications-tools">
+                <select id="notifications-range-preset" class="notifications-date" title="Rango rápido">
+                  <option value="">Rango</option>
+                  <option value="today">Hoy</option>
+                  <option value="7d">7 días</option>
+                  <option value="30d">30 días</option>
+                  <option value="month">Este mes</option>
+                </select>
+                <input type="date" id="notifications-date-from" class="notifications-date" title="Desde">
+                <input type="date" id="notifications-date-to" class="notifications-date" title="Hasta">
+                <button type="button" id="notifications-export-csv" class="btn small outline">CSV</button>
+                <button type="button" id="notifications-export-pdf" class="btn small outline">PDF</button>
+                <button type="button" id="notifications-clear" class="btn small outline">Limpiar</button>
+              </div>
+            </div>
+            <div id="notifications-list" class="notifications-list"></div>
+          </div>
+        </div>
+        <div id="header-session" class="header-session hidden" aria-live="polite"><span class="header-session-label" id="header-session-user"></span></div>
+        <button type="button" id="btn-logout" class="btn-icon-header hidden" title="Cerrar sesión" aria-label="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></button>
+        <button type="button" id="btn-header-quick-logout" class="btn-header-quick-logout hidden" title="Cerrar sesión" aria-label="Cerrar sesión">
+          <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+          <span>Salir</span>
+        </button>
+        <div id="header-profile-wrap" class="header-profile-wrap hidden" data-profile-wrap>
+          <div class="header-profile-meta visually-hidden">
+            <span id="header-profile-name" class="header-profile-name"></span>
+            <span id="header-profile-role" class="header-profile-role"></span>
+          </div>
+          <button type="button" id="btn-header-profile" class="btn-header-profile" aria-expanded="false" aria-haspopup="true" aria-controls="header-profile-menu" title="Cuenta y sesión" aria-describedby="header-profile-name">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+              <circle cx="12" cy="9" r="3.5" fill="none" stroke="currentColor" stroke-width="1.75"/>
+              <path d="M6.5 20v-0.5a5.5 5.5 0 0111 0v0.5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <div id="header-profile-menu" class="header-profile-menu hidden" role="menu" aria-label="Menú de cuenta">
+            <div class="header-profile-menu-user">
+              <strong id="profile-menu-display"></strong>
+              <div class="header-profile-menu-meta"><span id="profile-menu-fullname"></span></div>
+            </div>
+            <div class="header-profile-menu-section">Mi cuenta</div>
+            <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-perfil"><i class="fas fa-id-card" aria-hidden="true"></i><span>Mi perfil</span></button>
+            <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-password"><i class="fas fa-key" aria-hidden="true"></i><span>Cambiar contraseña</span></button>
+            <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-notif-prefs"><i class="fas fa-bell" aria-hidden="true"></i><span>Notificaciones</span></button>
+            <div class="header-profile-menu-divider"></div>
+            <div class="header-profile-menu-section">Personalización</div>
+            <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-densidad"><i class="fas fa-grip-lines" aria-hidden="true"></i><span>Densidad de tablas</span></button>
+            <div class="header-profile-menu-divider"></div>
+            <div class="header-profile-menu-section">Avanzado</div>
+            <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-mas"><i class="fas fa-sliders-h" aria-hidden="true"></i><span>Más opciones…</span></button>
+            <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-respaldo"><i class="fas fa-database" aria-hidden="true"></i><span>Respaldos</span></button>
+            <button type="button" class="header-profile-menu-item" role="menuitem" id="profile-menu-ayuda"><i class="fas fa-circle-question" aria-hidden="true"></i><span>Ayuda y atajos</span></button>
+            <button type="button" class="header-profile-menu-item danger" role="menuitem" id="profile-menu-logout"><i class="fas fa-sign-out-alt" aria-hidden="true"></i><span>Cerrar sesión</span></button>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="app-frame">
+    <aside class="sidebar-nav" id="app-sidebar-nav" aria-label="Navegación de módulos">
+      <div class="sidebar-nav-toolbar">
+        <button type="button" id="btn-sidebar-rail-toggle" class="btn-sidebar-rail-toggle" aria-expanded="true" aria-controls="sidebar-rail-tabs" title="Ocultar lista de módulos (más espacio para el contenido)">
+          <span class="visually-hidden">Mostrar u ocultar lista de módulos</span>
+          <svg class="sidebar-rail-burger-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+            <rect x="4" y="6.25" width="16" height="2" rx="0.5" fill="currentColor"/>
+            <rect x="4" y="11" width="16" height="2" rx="0.5" fill="currentColor"/>
+            <rect x="4" y="15.75" width="16" height="2" rx="0.5" fill="currentColor"/>
+          </svg>
+        </button>
+        <p class="sidebar-nav-title" id="sidebar-rail-heading">Módulos</p>
+      </div>
+      <div class="sidebar-global-strip" aria-label="Filtro global, alertas y estado del sistema">
+        <select id="global-branch-filter" class="header-branch-filter sidebar-branch-filter" title="Sucursales — filtro global">
+          <option value="">Todas las sucursales</option>
+        </select>
+        <div id="header-alerts" class="header-alerts sidebar-header-alerts" aria-live="polite">
+          <span id="header-slot-tc" class="header-slot-tc"></span>
+          <span id="header-slot-urgent" class="header-slot-urgent"></span>
+          <span id="header-slot-alertas" class="header-slot-alertas"></span>
+        </div>
+        <div id="header-system-status" class="header-system-status sidebar-system-status" aria-live="polite">Estado: iniciando…</div>
+      </div>
+      <nav id="sidebar-rail-tabs" class="tabs tabs--rail" role="navigation" aria-labelledby="sidebar-rail-heading">
+    <button type="button" data-tab="dashboards" class="tab active" title="Resumen general (Ctrl+0)"><i class="fas fa-chart-pie"></i> Dashboards</button>
+    <button type="button" data-tab="clientes" class="tab" title="Clientes (Ctrl+1)"><i class="fas fa-users"></i> Clientes</button>
+    <button type="button" data-tab="refacciones" class="tab" title="Refacciones (Ctrl+2)"><i class="fas fa-cogs"></i> Refacciones</button>
+    <button type="button" data-tab="maquinas" class="tab" title="Máquinas (Ctrl+3)"><i class="fas fa-industry"></i> Máquinas</button>
+    <button type="button" data-tab="almacen" class="tab" title="Inventario físico y bloqueo por cotización"><i class="fas fa-warehouse"></i> Almacén</button>
+    <button type="button" data-tab="cotizaciones" class="tab" id="tab-cotizaciones" title="Cotizaciones (Ctrl+4)"><i class="fas fa-file-invoice-dollar"></i> Cotizaciones</button>
+    <button type="button" data-tab="ventas" class="tab" title="Histórico de ventas aprobadas"><i class="fas fa-check-double"></i> Ventas</button>
+    <button type="button" data-tab="prospeccion" class="tab" id="tab-prospeccion" title="Mapa y pipeline de prospectos (COVIA)"><i class="fas fa-map-marked-alt"></i> Prospección</button>
+    <button type="button" data-tab="revision-maquinas" class="tab" title="Revisión y preparación de máquinas"><i class="fas fa-tools"></i> Revisión Máquinas</button>
+    <button type="button" data-tab="tarifas" class="tab" id="tab-tarifas" title="Tarifas y esquemas de cobro"><i class="fas fa-tags"></i> Tarifas</button>
+    <button type="button" data-tab="reportes" class="tab" title="Reportes de servicio y venta"><i class="fas fa-file-alt"></i> Reportes</button>
+    <button type="button" data-tab="garantias" class="tab" title="Alta y edición de garantías"><i class="fas fa-shield-alt"></i> Garantías</button>
+    <button type="button" data-tab="mantenimiento-garantia" class="tab" title="Calendario y alertas de mantenimiento"><i class="fas fa-calendar-check"></i> Mantenimientos</button>
+    <button type="button" data-tab="garantias-sin-cobertura" class="tab" title="Garantías dadas de baja"><i class="fas fa-ban"></i> Sin cobertura</button>
+    <button type="button" data-tab="bonos" class="tab comm-admin-only" title="Bonos y liquidación (solo administrador)"><i class="fas fa-award"></i> Bonos</button>
+    <button type="button" data-tab="viajes" class="tab comm-admin-only" title="Viajes, viáticos y liquidación mensual (misma visibilidad que Bonos)"><i class="fas fa-plane"></i> Viajes</button>
+    <button type="button" data-tab="tecnicos" class="tab" id="tab-tecnicos" title="Personal: puestos, vendedores y comisiones"><i class="fas fa-users"></i> Personal</button>
+    <button type="button" data-tab="bitacoras" class="tab" title="Bitácora (Ctrl+6)"><i class="fas fa-clock"></i> Bitácora de horas</button>
+    <button type="button" data-tab="auditoria" class="tab hidden" id="tab-auditoria" title="Auditoría (Ctrl+8, solo admin)"><i class="fas fa-clipboard-list"></i> Auditoría</button>
+    <button type="button" data-tab="usuarios" class="tab hidden" id="tab-usuarios" title="Cuentas y permisos (solo admin)"><i class="fas fa-user-shield"></i> Usuarios</button>
+    <button type="button" data-tab="categorias-catalogo" class="tab hidden" id="tab-categorias-catalogo" title="Categorías y subcategorías (solo admin)"><i class="fas fa-sitemap"></i> Categorías</button>
+    <button type="button" data-tab="demo" class="tab highlight hidden" id="tab-demo" title="Cargar datos de ejemplo (solo administrador)"><i class="fas fa-database"></i> Cargar demo</button>
+    <button type="button" data-tab="acerca" class="tab" title="Acerca de (Ctrl+7)"><i class="fas fa-info-circle"></i> Acerca de</button>
+      </nav>
+    </aside>
+    <div class="app-main">
+  <main class="content" id="main-content">
+    <!-- DASHBOARDS -->
+    <section id="panel-dashboards" class="panel panel-dashboard active" aria-label="Resumen por segmento">
+      <div class="dashboard-surface">
+        <div class="dashboard-header">
+          <div class="dashboard-header-left">
+            <h2 class="dashboard-title"><i class="fas fa-chart-pie"></i> Resumen general</h2>
+            <p class="dashboard-subtitle">Métricas clave por área · Clic en gráficos, scorecards o filas del comparativo para <strong>cruzar filtros</strong> (estilo Power BI) · <span id="dashboard-last-update">Actualizado al cargar</span> · Se actualizan cada 12 h</p>
+          </div>
+          <div class="dashboard-header-right">
+            <button type="button" id="dashboard-go-backups" class="btn-dashboard-refresh outline" title="Ir al módulo de respaldos"><i class="fas fa-shield-halved"></i> Respaldos</button>
+            <button type="button" id="dashboard-go-executive-pdf" class="btn-dashboard-refresh outline" title="Reporte ejecutivo en PDF"><i class="fas fa-file-pdf"></i> Reporte ejecutivo</button>
+            <button type="button" id="btn-print-pdf" class="btn-dashboard-refresh outline" title="Imprimir o guardar como PDF"><i class="fas fa-print"></i> Imprimir / PDF</button>
+            <button type="button" id="dashboard-refresh" class="btn-dashboard-refresh" title="Actualizar datos"><i class="fas fa-sync-alt"></i> Actualizar</button>
+          </div>
+        </div>
+        <div id="dashboard-crossfilter-bar" class="dashboard-crossfilter-bar hidden" role="status" aria-live="polite">
+          <span id="dashboard-crossfilter-text" class="dashboard-crossfilter-text"></span>
+          <button type="button" id="dashboard-crossfilter-clear" class="btn small outline dashboard-crossfilter-clear">Quitar filtros</button>
+        </div>
+        <div id="dashboard-grid" class="dashboard-grid" aria-live="polite">
+          <div class="dashboard-loading hidden" id="dashboard-loading"><div class="loading-spinner"></div><span>Cargando indicadores…</span></div>
+        </div>
+        <div id="dashboard-charts" class="dashboard-charts" aria-live="polite" style="display:none;">
+          <h3 class="dashboard-section-title"><i class="fas fa-chart-pie"></i> Resumen visual</h3>
+          <div class="dashboard-charts-row">
+            <div class="dashboard-chart-wrap">
+              <p class="dashboard-chart-caption">Distribución (cantidad)</p>
+              <canvas id="chart-donut" role="img" aria-label="Gráfico de anillo: cotizaciones y bitácoras"></canvas>
+            </div>
+            <div class="dashboard-chart-wrap">
+              <p class="dashboard-chart-caption">Cotizaciones por período (actual vs anterior)</p>
+              <canvas id="chart-bars" role="img" aria-label="Gráfico de barras comparativo por semana, mes y año"></canvas>
+            </div>
+          </div>
+        </div>
+        <div id="dashboard-advanced" class="dashboard-advanced" aria-live="polite" style="display:none;">
+          <h3 class="dashboard-section-title"><i class="fas fa-chart-line"></i> Comparativo vs período anterior</h3>
+          <div id="dashboard-comparativo" class="dashboard-comparativo"></div>
+          <h3 class="dashboard-section-title"><i class="fas fa-calendar-plus"></i> Pronósticos (cantidades y montos)</h3>
+          <p class="dashboard-hint">Estimación para la siguiente semana, mes y año con base en el promedio de periodos recientes.</p>
+          <div id="dashboard-pronosticos" class="dashboard-pronosticos"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLIENTES -->
+    <section id="panel-clientes" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-users"></i> Catálogo de clientes</h2>
+        <div class="toolbar">
+          <input type="search" id="buscar-clientes" placeholder="Buscar por nombre, código o RFC..." class="search">
+          <button type="button" id="export-clientes" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
+          <button type="button" id="export-excel-clientes" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
+          <button type="button" id="nuevo-cliente" class="btn primary"><i class="fas fa-plus"></i> Nuevo cliente</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table filterable-table" id="tabla-clientes" data-cache="clientesCache">
+          <thead>
+            <tr>
+              <th>Id</th><th>Código</th><th>Nombre</th><th>RFC</th><th>Contacto</th><th>Teléfono</th><th>Correo electrónico</th><th>Ciudad</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+            <tr class="filter-row">
+              <td><input type="text" class="filter-input" data-key="id" data-type="number" placeholder="ej. &gt;10"></td>
+              <td><input type="text" class="filter-input" data-key="codigo" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="nombre" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="rfc" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="contacto" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="telefono" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="email" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="ciudad" data-type="text" placeholder="Filtrar…"></td>
+              <td class="th-actions"></td>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-footer" id="footer-tabla-clientes" aria-live="polite"></div>
+      </div>
+      <div class="card module-delete-zone" style="margin-top:1rem;padding:1rem 1.25rem;">
+        <h3 style="margin:0 0 0.5rem 0;font-size:1rem;"><i class="fas fa-trash-alt"></i> Eliminar cliente</h3>
+        <p class="hint" style="margin:0 0 0.75rem 0;">Indica el <strong>ID</strong> numérico (columna Id en la tabla). Solo administrador si hay inicio de sesión.</p>
+        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;">
+          <div class="form-group" style="min-width:140px;">
+            <label for="delete-cliente-id">ID</label>
+            <input type="text" id="delete-cliente-id" class="filter-input" inputmode="numeric" placeholder="ej. 12" autocomplete="off">
+          </div>
+          <button type="button" id="btn-delete-cliente-zona" class="btn danger"><i class="fas fa-trash"></i> Eliminar</button>
+        </div>
+        <p class="hint" style="margin:0.75rem 0 0 0;padding-top:0.75rem;border-top:1px solid rgba(0,0,0,.08);">
+          <strong>Vaciar todo el módulo</strong> (irreversible). Solo administrador.
+          <button type="button" class="btn danger outline btn-vaciar-modulo" data-modulo="clientes"><i class="fas fa-database"></i> Vaciar tabla de clientes</button>
+        </p>
+      </div>
+    </section>
+
+    <!-- REFACCIONES -->
+    <section id="panel-refacciones" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-cogs"></i> Catálogo de refacciones</h2>
+        <div class="toolbar">
+          <select id="filtro-categoria-ref" title="Filtrar por categoría">
+            <option value="">Todas las categorías</option>
+          </select>
+          <select id="filtro-subcategoria-ref" title="Filtrar por subcategoría">
+            <option value="">Todas las subcategorías</option>
+          </select>
+          <input type="search" id="buscar-refacciones" placeholder="Buscar por código o descripción..." class="search">
+          <button type="button" id="export-refacciones" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
+          <button type="button" id="export-excel-refacciones" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
+          <button type="button" class="btn outline" id="btn-import-refacciones-trigger" title="Importar catálogo desde XLSX (2026 REFACCIONES)">
+            <i class="fas fa-file-import"></i> Importar XLSX
+          </button>
+          <input type="file" id="import-refacciones-file" accept=".xlsx,.xls" class="hidden" tabindex="-1" aria-hidden="true">
+          <button type="button" id="nueva-refaccion" class="btn primary"><i class="fas fa-plus"></i> Nueva refacción</button>
+        </div>
+      </div>
+      <div id="ref-stock-alert-bar" class="stock-alert-bar hidden" aria-live="polite"></div>
+      <div class="table-wrap ref-table-shell">
+        <div class="ref-table-scroll-x">
+          <table class="data-table data-table--fluid filterable-table" id="tabla-refacciones" data-cache="refaccionesCache">
+            <thead>
+              <tr>
+                <th>Código</th><th>Descripción</th><th>Categoría</th><th>Zona</th><th>Bloque</th><th>Stock</th><th>Mín.</th><th>Precio USD</th><th>Unidad</th>
+                <th class="th-actions">Acciones</th>
+              </tr>
+              <tr class="filter-row">
+                <td><input type="text" class="filter-input" data-key="codigo" data-type="text" placeholder="Filtrar…"></td>
+                <td><input type="text" class="filter-input" data-key="descripcion" data-type="text" placeholder="Filtrar…"></td>
+                <td><input type="text" class="filter-input" data-key="categoria" data-type="text" placeholder="Filtrar…"></td>
+                <td><input type="text" class="filter-input" data-key="zona" data-type="text" placeholder="Estante, Rack…"></td>
+                <td><input type="text" class="filter-input" data-key="bloque" data-type="text" placeholder="Filtrar…"></td>
+                <td><input type="text" class="filter-input" data-key="stock" data-type="number" placeholder="&gt;0"></td>
+                <td><input type="text" class="filter-input" data-key="stock_minimo" data-type="number" placeholder="Filtrar…"></td>
+                <td><input type="text" class="filter-input" data-key="precio_usd" data-type="number" placeholder="&gt;10"></td>
+                <td><input type="text" class="filter-input" data-key="unidad" data-type="text" placeholder="Filtrar…"></td>
+                <td class="th-actions"></td>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="table-footer" id="footer-tabla-refacciones" aria-live="polite"></div>
+      </div>
+      <div class="card module-delete-zone" style="margin-top:1rem;padding:1rem 1.25rem;">
+        <h3 style="margin:0 0 0.5rem 0;font-size:1rem;"><i class="fas fa-trash-alt"></i> Eliminar refacción</h3>
+        <p class="hint" style="margin:0 0 0.75rem 0;">Escribe el <strong>ID</strong> numérico o el <strong>código</strong> exacto. Solo administrador si hay inicio de sesión.</p>
+        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;">
+          <div class="form-group" style="min-width:200px;flex:1;">
+            <label for="delete-refaccion-id">ID o código</label>
+            <input type="text" id="delete-refaccion-id" class="filter-input" placeholder="ID o código" autocomplete="off">
+          </div>
+          <button type="button" id="btn-delete-refaccion-zona" class="btn danger"><i class="fas fa-trash"></i> Eliminar</button>
+        </div>
+        <p class="hint" style="margin:0.75rem 0 0 0;padding-top:0.75rem;border-top:1px solid rgba(0,0,0,.08);">
+          <strong>Vaciar todo el módulo</strong> (irreversible). Solo administrador.
+          <button type="button" class="btn danger outline btn-vaciar-modulo" data-modulo="refacciones"><i class="fas fa-database"></i> Vaciar tabla de refacciones</button>
+        </p>
+      </div>
+    </section>
+
+    <!-- MÁQUINAS -->
+    <section id="panel-maquinas" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-industry"></i> Catálogo de máquinas</h2>
+        <div class="toolbar">
+          <button type="button" id="toggle-view-maquinas" class="btn outline" title="Cambiar vista tabla/tarjetas"><i class="fas fa-th-large"></i> Vista tarjetas</button>
+          <button type="button" id="export-maquinas" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
+          <button type="button" id="export-excel-maquinas" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
+          <button type="button" id="nueva-maquina" class="btn primary"><i class="fas fa-plus"></i> Nueva máquina</button>
+        </div>
+      </div>
+      <!-- Vista tabla -->
+      <div class="table-wrap" id="maquinas-tabla-wrap">
+        <table class="data-table filterable-table" id="tabla-maquinas" data-cache="maquinasCache">
+          <thead>
+            <tr>
+              <th>Id</th><th>Nombre máquina</th><th>Parte</th><th>Versión</th><th>Ficha técnica</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+            <tr class="filter-row">
+              <td><input type="text" class="filter-input" data-key="id" data-type="number" placeholder="ej. &gt;1"></td>
+              <td><input type="text" class="filter-input" data-key="categoria" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="subcategoria" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="modelo" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="ficha_tecnica" data-type="text" placeholder="Filtrar…"></td>
+              <td class="th-actions"></td>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-footer" id="footer-tabla-maquinas" aria-live="polite"></div>
+      </div>
+      <!-- Vista tarjetas -->
+      <div id="maquinas-cards-wrap" class="maquinas-cards-grid hidden"></div>
+      <div class="card module-delete-zone" style="margin-top:1rem;padding:1rem 1.25rem;">
+        <h3 style="margin:0 0 0.5rem 0;font-size:1rem;"><i class="fas fa-trash-alt"></i> Eliminar máquina (catálogo)</h3>
+        <p class="hint" style="margin:0 0 0.75rem 0;">Indica el <strong>ID</strong> numérico de la fila en la tabla. Solo administrador si hay inicio de sesión.</p>
+        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;">
+          <div class="form-group" style="min-width:140px;">
+            <label for="delete-maquina-id">ID</label>
+            <input type="text" id="delete-maquina-id" class="filter-input" inputmode="numeric" placeholder="ej. 5" autocomplete="off">
+          </div>
+          <button type="button" id="btn-delete-maquina-zona" class="btn danger"><i class="fas fa-trash"></i> Eliminar</button>
+        </div>
+        <p class="hint" style="margin:0.75rem 0 0 0;padding-top:0.75rem;border-top:1px solid rgba(0,0,0,.08);">
+          <strong>Vaciar todo el módulo</strong> (irreversible). Solo administrador.
+          <button type="button" class="btn danger outline btn-vaciar-modulo" data-modulo="maquinas"><i class="fas fa-database"></i> Vaciar tabla de máquinas</button>
+        </p>
+      </div>
+    </section>
+
+    <!-- ALMACÉN -->
+    <section id="panel-almacen" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-warehouse"></i> Almacén</h2>
+        <div class="toolbar">
+          <input type="search" id="buscar-almacen" class="search" placeholder="Buscar modelo, serie, cliente…" aria-label="Buscar en almacén">
+          <label class="toolbar-label" style="display:flex;align-items:center;gap:0.35rem;margin:0">
+            <span class="visually-hidden">Sucursal</span>
+            <select id="filtro-sucursal-almacen" title="Filtrar por sucursal (ciudad del cliente)" aria-label="Filtrar por sucursal">
+              <option value="">Todas las sucursales</option>
+            </select>
+          </label>
+          <button type="button" id="btn-refresh-almacen" class="btn outline" title="Recargar datos"><i class="fas fa-sync-alt"></i> Actualizar</button>
+        </div>
+      </div>
+      <p class="hint">Listado del catálogo de <strong>Máquinas</strong>: modelo, sucursal (ciudad del cliente o ubicación), número de serie, estado según <strong>Revisión Máquinas</strong> y si el equipo ya está en una <strong>cotización pendiente</strong> (no se puede volver a cotizar hasta cancelar o concluir esa cotización).</p>
+      <div class="table-wrap">
+        <table class="data-table" id="tabla-almacen">
+          <thead>
+            <tr>
+              <th>Modelo</th>
+              <th>Sucursal</th>
+              <th>N.º de serie</th>
+              <th>Estado</th>
+              <th>Cotización activa</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- COTIZACIONES -->
+    <section id="panel-cotizaciones" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-file-invoice-dollar"></i> Cotizaciones</h2>
+        <div class="toolbar">
+          <label class="toolbar-checkbox" title="Mostrar cotizaciones ya aplicadas o convertidas en venta">
+            <input type="checkbox" id="cot-incluir-aplicadas"> Incluir aplicadas
+          </label>
+          <button type="button" id="export-cotizaciones" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
+          <button type="button" id="export-excel-cotizaciones" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
+          <button type="button" id="email-cotizaciones" class="btn outline" title="Enviar por correo el reporte de la tabla visible"><i class="fas fa-envelope"></i> Enviar reporte</button>
+          <button type="button" id="nueva-cotizacion" class="btn primary"><i class="fas fa-plus"></i> Nueva cotización</button>
+        </div>
+      </div>
+      <div id="cotizaciones-comisiones-david-wrap" class="comm-admin-only cotizacion-comisiones-david-wrap hidden" aria-live="polite">
+        <div class="david-comisiones-card">
+          <div class="david-comisiones-head">
+            <div class="david-comisiones-head-text">
+              <h3><i class="fas fa-hand-holding-usd"></i> Comisiones David Cantú</h3>
+              <p class="david-comisiones-sub">Sobre ventas ya aprobadas: <strong>15%</strong> cuando el cliente es David Cantú en refacciones, y <strong>15%</strong> cuando David vende equipo/máquina. Importes en moneda de la cotización.</p>
+            </div>
+            <button type="button" id="btn-email-david-comisiones" class="btn outline david-comisiones-mail-btn" title="Abre tu correo con el resumen (elige el destinatario)">
+              <i class="fas fa-envelope"></i> Enviar resumen por correo
+            </button>
+          </div>
+          <div id="cotizaciones-comisiones-david-body" class="david-comisiones-body"></div>
+          <div id="cotizaciones-comisiones-david-total" class="david-comisiones-total" hidden></div>
+        </div>
+      </div>
+      <div id="cotizaciones-empty" class="empty-card hidden">
+        <div class="empty-icon"><i class="fas fa-file-invoice"></i></div>
+        <h3>No hay cotizaciones</h3>
+        <p>Crea tu primera cotización de refacciones o mano de obra.</p>
+        <button type="button" class="btn primary big btn-empty-cot"><i class="fas fa-plus"></i> Agregar cotización</button>
+      </div>
+      <div id="cotizaciones-list" class="table-wrap">
+        <table class="data-table data-table--fluid filterable-table" id="tabla-cotizaciones" data-cache="cotizacionesCache">
+          <thead>
+            <tr>
+              <th>Folio</th><th>Cliente</th><th>Tipo</th><th>Fecha</th><th>Moneda</th><th>T.C.</th><th>Total</th><th>Estado</th><th>Vigencia</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+            <tr class="filter-row">
+              <td><input type="text" class="filter-input" data-key="folio" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="cliente_nombre" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="tipo" data-type="text" placeholder="refacciones|mano_obra"></td>
+              <td class="filter-date-wrap"><select class="filter-date-select" data-key="fecha"><option value="">Todas</option><option value="hoy">Hoy</option><option value="esta_semana">Esta semana</option><option value="este_mes">Este mes</option><option value="mes_pasado">Mes pasado</option><option value="este_año">Este año</option><option value="personalizado">Escribir fecha</option></select><input type="date" class="filter-input filter-date-input" data-key="fecha" title="O escribe aquí"></td>
+              <td><input type="text" class="filter-input" data-key="moneda" data-type="text" placeholder="MXN|USD"></td>
+              <td><input type="text" class="filter-input" data-key="tipo_cambio" data-type="number" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="total" data-type="number" placeholder="&gt;1000, &lt;5000"></td>
+              <td><input type="text" class="filter-input" data-key="estado" data-type="text" placeholder="borrador|aplicada"></td>
+              <td><span data-key="vigencia_estado" class="filter-input" style="display:inline-block;min-height:1px;padding:0;border:none;width:100%" aria-hidden="true"></span></td>
+              <td class="th-actions"></td>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-footer" id="footer-tabla-cotizaciones" aria-live="polite"></div>
+      </div>
+      <div class="card module-delete-zone" style="margin-top:1rem;padding:1rem 1.25rem;">
+        <h3 style="margin:0 0 0.5rem 0;font-size:1rem;"><i class="fas fa-trash-alt"></i> Eliminar cotización</h3>
+        <p class="hint" style="margin:0 0 0.75rem 0;">Escribe el <strong>ID</strong> numérico o el <strong>folio</strong> exacto. Se eliminan también las líneas. Solo administrador si hay inicio de sesión.</p>
+        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;">
+          <div class="form-group" style="min-width:200px;flex:1;">
+            <label for="delete-cotizacion-id">ID o folio</label>
+            <input type="text" id="delete-cotizacion-id" class="filter-input" placeholder="ID o folio" autocomplete="off">
+          </div>
+          <button type="button" id="btn-delete-cotizacion-zona" class="btn danger"><i class="fas fa-trash"></i> Eliminar</button>
+        </div>
+        <p class="hint" style="margin:0.75rem 0 0 0;padding-top:0.75rem;border-top:1px solid rgba(0,0,0,.08);">
+          <strong>Vaciar todo el módulo</strong> (irreversible). Solo administrador.
+          <button type="button" class="btn danger outline btn-vaciar-modulo" data-modulo="cotizaciones"><i class="fas fa-database"></i> Vaciar tabla de cotizaciones</button>
+        </p>
+      </div>
+    </section>
+
+    <!-- VENTAS (histórico cotizaciones aprobadas) -->
+    <section id="panel-ventas" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-check-double"></i> Historial de ventas</h2>
+        <div class="toolbar">
+          <select id="filtro-tipo-venta" title="Filtrar por tipo">
+            <option value="">Todos los tipos</option>
+            <option value="refacciones">Refacciones</option>
+            <option value="servicio">Servicio / Mano de obra</option>
+            <option value="maquina">Máquina</option>
+          </select>
+          <input type="month" id="filtro-mes-venta" title="Filtrar por mes">
+          <button type="button" id="export-ventas" class="btn outline"><i class="fas fa-file-csv"></i> CSV</button>
+          <button type="button" id="email-ventas" class="btn outline" title="Enviar por correo el reporte de la tabla visible"><i class="fas fa-envelope"></i> Enviar reporte</button>
+          <button type="button" id="btn-reporte-mensual-ventas" class="btn outline comm-admin-only" title="Reporte mensual con comisiones (solo administrador)"><i class="fas fa-chart-bar"></i> Reporte mensual</button>
+        </div>
+      </div>
+      <div id="ventas-resumen-bar" class="ventas-resumen-bar hidden"></div>
+      <div class="table-wrap">
+        <table class="data-table" id="tabla-ventas">
+          <thead>
+            <tr>
+              <th>Folio</th><th>Fecha aprobación</th><th>Cliente</th><th>Tipo</th><th>Total MXN</th><th>Total USD</th><th>Vendedor</th><th class="comm-admin-only">Comisión</th><th class="th-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-footer" id="footer-tabla-ventas" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- PROSPECCIÓN (mapa + pipeline COVIA) -->
+    <section id="panel-prospeccion" class="panel panel-ux">
+      <div class="section-header section-header--ux">
+        <h2><i class="fas fa-map-marked-alt"></i> Prospección</h2>
+        <p class="section-sub">Pipeline comercial: prospectos con ubicación, score y potencial (API <code>/api/prospectos</code>).</p>
+        <div class="toolbar">
+          <input type="search" id="filtro-prospeccion" class="search search--ux" placeholder="Buscar empresa, zona, estado, industria…" autocomplete="off">
+          <button type="button" id="btn-prospeccion-refresh" class="btn primary"><i class="fas fa-sync-alt"></i> Actualizar</button>
+          <button type="button" id="export-prospeccion-csv" class="btn outline"><i class="fas fa-file-csv"></i> CSV</button>
+        </div>
+      </div>
+      <div id="prospeccion-kpis" class="prospeccion-kpis" aria-live="polite"></div>
+      <div class="prospeccion-map-wrap">
+        <div id="map-prospeccion" class="prospeccion-map" role="region" aria-label="Mapa de prospectos"></div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="tabla-prospeccion">
+          <thead>
+            <tr>
+              <th>Empresa</th><th>Zona</th><th>Estado</th><th>Industria</th><th>Interés</th>
+              <th>Potencial USD</th><th>Score IA</th><th>Último contacto</th><th>Notas</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-footer" id="footer-tabla-prospeccion" aria-live="polite"></div>
+      </div>
+      <div class="card module-delete-zone" style="margin-top:1rem;padding:1rem 1.25rem;">
+        <h3 style="margin:0 0 0.5rem 0;font-size:1rem;"><i class="fas fa-trash-alt"></i> Vaciar prospectos</h3>
+        <p class="hint" style="margin:0 0 0.75rem 0;">Elimina <strong>todos</strong> los registros de la tabla de prospección. Solo administrador.</p>
+        <button type="button" class="btn danger outline btn-vaciar-modulo" data-modulo="prospectos"><i class="fas fa-database"></i> Vaciar tabla de prospectos</button>
+      </div>
+    </section>
+
+    <!-- REVISIÓN DE MÁQUINAS -->
+    <section id="panel-revision-maquinas" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-tools"></i> Revisión de máquinas</h2>
+        <div class="toolbar">
+          <select id="filtro-entregado-rev" title="Filtrar por entrega">
+            <option value="">Todos</option>
+            <option value="Si">Entregadas</option>
+            <option value="No">Pendiente entrega</option>
+          </select>
+          <select id="filtro-prueba-rev" title="Filtrar por prueba">
+            <option value="">Todos</option>
+            <option value="En Proceso">En Proceso</option>
+            <option value="Finalizada">Finalizada</option>
+          </select>
+          <button type="button" id="nueva-revision-maq" class="btn primary"><i class="fas fa-plus"></i> Nueva revisión</button>
+        </div>
+      </div>
+      <div id="revision-maq-catalog-wrap" class="revision-maq-catalog-wrap">
+        <h3 class="revision-maq-catalog-heading"><i class="fas fa-th-large"></i> Catálogo de equipos</h3>
+        <p class="hint revision-maq-catalog-intro">Todas las máquinas registradas. Usa <strong>Nueva revisión</strong> o el botón en cada tarjeta.</p>
+        <div id="revision-maq-catalog" class="revision-maq-catalog" role="list"></div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table filterable-table" id="tabla-revision-maquinas">
+          <thead>
+            <tr>
+              <th>Id</th><th>Nombre máquina</th><th>Versión</th><th>Nº Serie</th><th>Entregado</th><th>Prueba</th><th>Comentarios</th><th class="th-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-footer" id="footer-tabla-revision-maquinas" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- TARIFAS -->
+    <section id="panel-tarifas" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-tags"></i> Tarifas y esquemas de cobro</h2>
+        <div class="toolbar">
+          <button type="button" id="btn-save-tarifas" class="btn primary"><i class="fas fa-save"></i> Guardar cambios</button>
+        </div>
+      </div>
+      <div class="tarifas-container">
+        <div class="tarifas-section" id="tarifas-section-tc">
+          <h3 class="tarifas-section-title"><i class="fas fa-exchange-alt"></i> Tipo de cambio (referencia cotizaciones)</h3>
+          <p class="tarifas-hint">Mismo origen que el modal de <strong>Cotizaciones</strong> (FIX Banxico con token en servidor, o respaldos Fixer / ExchangeRate / Frankfurter). Se guarda en tarifas como <code>tipo_cambio_banxico</code> (MXN por 1 USD, cuatro decimales).</p>
+          <div class="tarifas-form-grid" style="align-items:flex-end">
+            <div class="form-group" style="min-width:12rem">
+              <label for="tarifa-tipo-cambio-banxico">MXN por 1 USD</label>
+              <input type="number" id="tarifa-tipo-cambio-banxico" class="tarifa-input" data-key="tipo_cambio_banxico" min="0" step="0.0001" placeholder="18.3056" title="Cuatro decimales; alinear con Banxico desde el botón o al guardar tras editar">
+            </div>
+            <div class="form-group">
+              <button type="button" id="btn-tarifas-sync-tc-banxico" class="btn outline small" title="Consulta de nuevo la referencia en el servidor y rellena el campo (también actualiza el badge del encabezado)"><i class="fas fa-sync-alt"></i> Sincronizar desde servidor</button>
+            </div>
+          </div>
+          <p class="hint" id="tarifas-tc-meta" style="margin-top:0.35rem;font-size:0.8rem;color:var(--muted,#64748b)"></p>
+        </div>
+        <div class="tarifas-section">
+          <h3 class="tarifas-section-title"><i class="fas fa-clock"></i> Tarifas de mano de obra por hora</h3>
+          <p class="tarifas-hint">Define el costo por hora según el tipo de técnico. Se usa para calcular cotizaciones de mano de obra. <strong>Importante:</strong> el bloque superior es el <em>tipo de cambio</em> (pesos por 1 USD, misma referencia Banxico que en cotizaciones). La columna <em>Tarifa hora (USD)</em> no es el T.C.: son <strong>dólares por hora de trabajo</strong> (precio en USD). No se actualizan solas cuando cambia el T.C.; si quieres alinearlas con el T.C. actual, usa el botón de conversión MXN ÷ T.C.</p>
+          <table class="data-table" id="tabla-tarifas-mano-obra">
+            <thead><tr><th>Tipo de técnico</th><th>Tarifa hora (MXN)</th><th>Tarifa hora (USD, 4 dec.)</th><th>Notas</th></tr></thead>
+            <tbody>
+              <tr><td>Técnico mecánico</td><td><input type="number" class="tarifa-input" data-key="mecanico_mxn" min="0" step="50" placeholder="0"></td><td><input type="text" class="tarifa-input tarifa-usd-4dec" data-key="mecanico_usd" inputmode="decimal" autocomplete="off" placeholder="25.0000" title="Cuatro decimales (misma precisión que tipo de cambio en cotizaciones)"></td><td><input type="text" class="tarifa-input-text" data-key="mecanico_nota" placeholder="Notas…"></td></tr>
+              <tr><td>Técnico electrónico</td><td><input type="number" class="tarifa-input" data-key="electronico_mxn" min="0" step="50"></td><td><input type="text" class="tarifa-input tarifa-usd-4dec" data-key="electronico_usd" inputmode="decimal" autocomplete="off" placeholder="30.0000" title="Cuatro decimales"></td><td><input type="text" class="tarifa-input-text" data-key="electronico_nota"></td></tr>
+              <tr><td>Técnico CNC / Programación</td><td><input type="number" class="tarifa-input" data-key="cnc_mxn" min="0" step="50"></td><td><input type="text" class="tarifa-input tarifa-usd-4dec" data-key="cnc_usd" inputmode="decimal" autocomplete="off" placeholder="38.0000" title="Cuatro decimales"></td><td><input type="text" class="tarifa-input-text" data-key="cnc_nota"></td></tr>
+              <tr><td>Ayudante</td><td><input type="number" class="tarifa-input" data-key="ayudante_mxn" min="0" step="50"></td><td><input type="text" class="tarifa-input tarifa-usd-4dec" data-key="ayudante_usd" inputmode="decimal" autocomplete="off" placeholder="15.0000" title="Cuatro decimales"></td><td><input type="text" class="tarifa-input-text" data-key="ayudante_nota"></td></tr>
+            </tbody>
+          </table>
+          <div class="toolbar" style="margin-top:0.65rem;flex-wrap:wrap;gap:0.35rem">
+            <button type="button" id="btn-tarifas-mo-usd-desde-mxn-tc" class="btn small outline" title="Toma el T.C. del campo «MXN por 1 USD» arriba y rellena cada tarifa USD/h como (tarifa MXN/h) ÷ T.C."><i class="fas fa-calculator"></i> Rellenar USD/h con MXN ÷ T.C.</button>
+          </div>
+        </div>
+        <div class="tarifas-section">
+          <h3 class="tarifas-section-title"><i class="fas fa-road"></i> Tarifas de traslado / viáticos</h3>
+          <p class="tarifas-hint">Costo de traslado y viáticos según zona (clasificación A, B, C). Máximo 2 personas por viaje.</p>
+          <table class="data-table" id="tabla-tarifas-traslado">
+            <thead><tr><th>Zona</th><th>Ciudades ejemplo</th><th>Viático/día (MXN)</th><th>Hrs traslado aprox.</th><th>Costo km (MXN)</th></tr></thead>
+            <tbody>
+              <tr><td><strong>A – Local</strong></td><td><input type="text" class="tarifa-input-text" data-key="zona_a_ciudades" placeholder="Monterrey, área metro…"></td><td><input type="number" class="tarifa-input" data-key="zona_a_viatico" min="0" step="100"></td><td><input type="number" class="tarifa-input" data-key="zona_a_hrs" min="0" step="0.5"></td><td><input type="number" class="tarifa-input" data-key="zona_a_km" min="0" step="1"></td></tr>
+              <tr><td><strong>B – Regional</strong></td><td><input type="text" class="tarifa-input-text" data-key="zona_b_ciudades" placeholder="Guanajuato, Querétaro…"></td><td><input type="number" class="tarifa-input" data-key="zona_b_viatico" min="0" step="100"></td><td><input type="number" class="tarifa-input" data-key="zona_b_hrs" min="0" step="0.5"></td><td><input type="number" class="tarifa-input" data-key="zona_b_km" min="0" step="1"></td></tr>
+              <tr><td><strong>C – Nacional</strong></td><td><input type="text" class="tarifa-input-text" data-key="zona_c_ciudades" placeholder="CDMX, Guadalajara…"></td><td><input type="number" class="tarifa-input" data-key="zona_c_viatico" min="0" step="100"></td><td><input type="number" class="tarifa-input" data-key="zona_c_hrs" min="0" step="0.5"></td><td><input type="number" class="tarifa-input" data-key="zona_c_km" min="0" step="1"></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tarifas-section">
+          <h3 class="tarifas-section-title"><i class="fas fa-table"></i> AGENDA SERVICIO — hoja TARIFAS (mano de obra en cotización)</h3>
+          <p class="tarifas-hint">Mismos números que la pestaña <strong>TARIFAS</strong> del Excel <em>AGENDA SERVICIO</em>: traslado en carro, mecánico 1–3 personas, electrónico 1–2, viáticos 1–2 personas. La cotización «Mano de obra» usa estas claves (servidor y vista previa); las tarifas MXN/USD de la tabla de arriba son referencia aparte.</p>
+          <div class="tarifas-form-grid">
+            <div class="form-group"><label>Traslado carro (MXN/h)</label><input type="number" class="tarifa-input" data-key="mo_agenda_traslado_carro_mxn_hr" min="0" step="50" placeholder="2000"></div>
+            <div class="form-group"><label>Mecánico (MXN/h)</label><input type="number" class="tarifa-input" data-key="mo_agenda_mecanico_mxn_hr" min="0" step="50" placeholder="1000"></div>
+            <div class="form-group"><label>Mec. 2 pers. — recargo (MXN)</label><input type="number" class="tarifa-input" data-key="mo_agenda_mecanico_2pers_extra_mxn" min="0" step="50" placeholder="400" title="Total trabajo ≈ h×tarifa mecánico + este monto (como fila MECANICO 2 PERSONAS del Excel)"></div>
+            <div class="form-group"><label>Mec. 3 pers. — recargo (MXN)</label><input type="number" class="tarifa-input" data-key="mo_agenda_mecanico_3pers_extra_mxn" min="0" step="50" placeholder="900"></div>
+            <div class="form-group"><label>Electrónico (MXN/h)</label><input type="number" class="tarifa-input" data-key="mo_agenda_electronico_mxn_hr" min="0" step="50" placeholder="1500"></div>
+            <div class="form-group"><label>Electr. con ayudante — multiplicador</label><input type="number" class="tarifa-input" data-key="mo_agenda_electronico_2pers_mult" min="0" step="0.05" placeholder="1.4"></div>
+            <div class="form-group"><label>Viático 1 pers. (MXN/día)</label><input type="number" class="tarifa-input" data-key="mo_agenda_viatico1_por_dia_mxn" min="0" step="100" placeholder="1800"></div>
+            <div class="form-group"><label>Viático 1 pers. — fijo (MXN)</label><input type="number" class="tarifa-input" data-key="mo_agenda_viatico1_fijo_mxn" min="0" step="100" placeholder="1200"></div>
+            <div class="form-group"><label>Viático 2 pers. (MXN/día)</label><input type="number" class="tarifa-input" data-key="mo_agenda_viatico2_por_dia_mxn" min="0" step="100" placeholder="3600"></div>
+            <div class="form-group"><label>Viático 2 pers. — fijo (MXN)</label><input type="number" class="tarifa-input" data-key="mo_agenda_viatico2_fijo_mxn" min="0" step="100" placeholder="1900"></div>
+          </div>
+        </div>
+        <div class="tarifas-section comm-admin-only">
+          <h3 class="tarifas-section-title"><i class="fas fa-percentage"></i> Reglas de comisiones</h3>
+          <div class="tarifas-form-grid">
+            <div class="form-group"><label>Comisión refacciones (%)</label><input type="number" id="tarifa-comision-ref" class="tarifa-input" min="0" max="100" step="0.5" value="15"></div>
+            <div class="form-group"><label>Comisión servicios (%)</label><input type="number" id="tarifa-comision-svc" class="tarifa-input" min="0" max="100" step="0.5" value="15"></div>
+            <div class="form-group"><label>Comisión máquinas – David Cantú (%)</label><input type="number" id="tarifa-comision-maq-david" class="tarifa-input" min="0" max="100" step="0.5" value="10"></div>
+            <div class="form-group"><label>Bono por cada $20,000 facturados (MXN)</label><input type="number" id="tarifa-bono-20k" class="tarifa-input" min="0" step="100" value="1000"></div>
+            <div class="form-group"><label>Bono extra si supera $40,000 (MXN)</label><input type="number" id="tarifa-bono-40k" class="tarifa-input" min="0" step="100" value="2000"></div>
+            <div class="form-group"><label>Bono por día fuera de ciudad (MXN/persona)</label><input type="number" id="tarifa-bono-dia" class="tarifa-input" min="0" step="100" value="500"></div>
+          </div>
+        </div>
+        <div class="tarifas-section tarifas-nota-calc">
+          <h3 class="tarifas-section-title"><i class="fas fa-info-circle"></i> Cómo se calculan las tarifas</h3>
+          <ul class="tarifas-notas-list">
+            <li>Cotización de <strong>mano de obra</strong>: misma lógica en MXN que la hoja <strong>TARIFAS</strong> de <em>AGENDA SERVICIO</em> (traslado en carro h×2000; mecánico h×1000 + recargos 2/3 personas; electrónico h×1500 o ×1,4 con ayudante; viáticos 1 o 2 personas por días), luego conversión a USD con el T.C. Los valores editables están en <strong>AGENDA SERVICIO — hoja TARIFAS</strong> arriba (claves <code>mo_agenda_*</code>).</li>
+            <li class="comm-admin-only">Cotización de <strong>refacciones</strong>: precio USD × tipo de cambio Banxico (o manual). Comisión del <span id="nota-comision-ref">15</span>% sobre total.</li>
+            <li class="comm-admin-only">Cotización de <strong>máquina</strong>: precio USD × tipo de cambio. Si vendedor = David Cantú: comisión del <span id="nota-comision-maq">15</span>% (resumen en <strong>Cotizaciones → Comisiones David Cantú</strong>).</li>
+            <li class="comm-admin-only"><strong>Bono por facturación</strong>: $<span id="nota-bono-20k">1,000</span> por cada $20,000 facturados. Si supera $40,000: bono máximo $<span id="nota-bono-40k">2,000</span>.</li>
+            <li class="comm-admin-only"><strong>Bono por viaje</strong>: $<span id="nota-bono-dia">500</span>/día/persona si es fuera de ciudad.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- REPORTES -->
+    <section id="panel-reportes" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-file-alt"></i> Reportes de servicio</h2>
+        <div class="toolbar">
+          <select id="filtro-tipo-reporte">
+            <option value="">Todos los tipos</option>
+            <option value="servicio">Servicio (fallas / campo)</option>
+            <option value="venta">Venta (instalación, capacitación, garantía)</option>
+            <option value="garantia">Legado: tipo «Garantía»</option>
+            <option value="instalacion">Legado: tipo «Instalación»</option>
+          </select>
+          <select id="filtro-subtipo-reporte">
+            <option value="">Todos los subtipos</option>
+            <option value="falla_electrica">Falla eléctrica</option>
+            <option value="falla_mecanica">Falla mecánica</option>
+            <option value="falla_electronica">Falla electrónica</option>
+            <option value="instalacion">Instalación</option>
+            <option value="capacitacion">Capacitación</option>
+            <option value="garantia">Garantía</option>
+            <option value="otro">Otro / Otra</option>
+          </select>
+          <input type="search" id="buscar-reportes" placeholder="Buscar…" class="search" style="width:160px">
+          <button type="button" id="export-reportes" class="btn outline"><i class="fas fa-file-csv"></i> CSV</button>
+          <button type="button" id="nuevo-reporte" class="btn primary"><i class="fas fa-plus"></i> Nuevo reporte</button>
+        </div>
+      </div>
+      <p class="section-sub"><i class="fas fa-info-circle"></i> Tipo principal: <strong>Servicio</strong> (subtipos de falla) o <strong>Venta</strong> (instalación, capacitación, garantía como subtipo). Los folios nuevos usan prefijo REP-S (servicio) o REP-V (venta). Reportes viejos con tipo «Garantía» o «Instalación» siguen visibles con los filtros de legado.</p>
+      <div class="table-wrap">
+        <table class="data-table filterable-table" id="tabla-reportes">
+          <thead>
+            <tr>
+              <th>Folio</th><th>Razón Social</th><th>Máquina</th><th>Nº Serie</th><th>Tipo</th><th>Subtipo</th><th>Técnico</th><th>Fecha Reporte</th>
+              <th class="admin-only-col" title="Solo visible para administrador">Fecha Programada <i class="fas fa-lock" style="font-size:0.7em;opacity:.6"></i></th>
+              <th>Estatus</th><th>Finalizado</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+            <tr class="filter-row">
+              <td><input type="text" class="filter-input" data-key="folio" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="razon_social" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="maquina_nombre" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="numero_maquina" data-type="text" placeholder="Nº serie…"></td>
+              <td>
+                <select class="filter-input" data-key="tipo_reporte" data-type="text" id="tabla-reportes-filter-tipo">
+                  <option value="">Todos</option>
+                  <option value="servicio">Servicio</option>
+                  <option value="venta">Venta</option>
+                  <option value="garantia">Legado: Garantía</option>
+                  <option value="instalacion">Legado: Instalación</option>
+                </select>
+              </td>
+              <td>
+                <select class="filter-input" data-key="subtipo" data-type="text" id="tabla-reportes-filter-subtipo">
+                  <option value="">Todos</option>
+                  <option value="falla_electrica">Falla eléctrica</option>
+                  <option value="falla_mecanica">Falla mecánica</option>
+                  <option value="falla_electronica">Falla electrónica</option>
+                  <option value="instalacion">Instalación</option>
+                  <option value="capacitacion">Capacitación</option>
+                  <option value="garantia">Garantía</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </td>
+              <td><input type="text" class="filter-input" data-key="tecnico" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="fecha" data-type="text" placeholder="aaaa-mm-dd"></td>
+              <td class="admin-only-col"></td>
+              <td><input type="text" class="filter-input" data-key="estatus" data-type="text" placeholder="abierto…"></td>
+              <td></td>
+              <td class="th-actions"></td>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-footer" id="footer-tabla-reportes" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- GARANTÍAS -->
+    <section id="panel-garantias" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-shield-alt"></i> Garantías y Mantenimientos</h2>
+        <div class="toolbar">
+          <button type="button" id="btn-garantias-alertas" class="btn outline"><i class="fas fa-bell"></i> Ver alertas</button>
+          <button type="button" id="export-garantias" class="btn outline"><i class="fas fa-file-csv"></i> CSV</button>
+          <button type="button" id="nueva-garantia" class="btn primary"><i class="fas fa-plus"></i> Nueva garantía</button>
+        </div>
+      </div>
+      <div id="garantias-alerta-bar" class="stock-alert-bar hidden" aria-live="polite"></div>
+      <div class="table-wrap">
+        <table class="data-table filterable-table" id="tabla-garantias">
+          <thead>
+            <tr>
+              <th>Razón Social</th><th>Modelo</th><th>N° Serie</th><th>F. Entrega</th><th>Mantenimientos</th><th>Activa</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+            <tr class="filter-row">
+              <td><input type="text" class="filter-input" data-key="razon_social" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="modelo_maquina" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="numero_serie" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="fecha_entrega" data-type="text" placeholder="aaaa-mm-dd"></td>
+              <td></td>
+              <td><input type="text" class="filter-input" data-key="activa" data-type="text" placeholder="1|0"></td>
+              <td class="th-actions"></td>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-footer" id="footer-tabla-garantias" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- MANTENIMIENTOS POR GARANTÍA (operativo) -->
+    <section id="panel-mantenimiento-garantia" class="panel panel-ux">
+      <div class="section-header section-header--ux">
+        <h2><i class="fas fa-calendar-check"></i> Mantenimientos por garantía</h2>
+        <div class="toolbar">
+          <label class="toolbar-label-inline">Mes</label>
+          <input type="month" id="mant-gar-month" title="Mes del calendario">
+          <button type="button" id="btn-mant-gar-hoy" class="btn outline" title="Ir al mes actual"><i class="fas fa-calendar-day"></i> Hoy</button>
+          <label class="mant-gar-dry-wrap" title="No envía correo ni modifica la base; solo muestra qué se procesaría">
+            <input type="checkbox" id="mant-gar-dry-run"> Simular (demo)
+          </label>
+          <button type="button" id="btn-mant-gar-procesar-alertas" class="btn outline" title="Con Simular: solo prueba. Sin marcar: correo (SMTP) y marcar alertas"><i class="fas fa-envelope"></i> Procesar alertas</button>
+          <button type="button" id="btn-mant-gar-refresh" class="btn primary"><i class="fas fa-sync-alt"></i> Actualizar</button>
+        </div>
+      </div>
+      <p class="mant-gar-hint">Prioridad: <strong>vencidos</strong> sin confirmar, luego <strong>próximos 30 días</strong>, luego el resto. Las fechas del 1.er y 2.o mantenimiento dependen del <strong>tipo de máquina</strong> (CNC, industrial, etc.).</p>
+      <div id="mant-gar-cal-wrap" class="mant-gar-cal-wrap" aria-label="Calendario de mantenimientos"></div>
+      <div class="table-wrap" style="margin-top:1.25rem">
+        <table class="data-table filterable-table" id="tabla-mantenimientos-garantia">
+          <thead>
+            <tr>
+              <th>Prioridad</th><th>Razón social</th><th>Modelo</th><th>Serie</th><th>Fecha prog.</th><th>Estado</th><th>Pagado</th><th>Alertas</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+            <tr class="filter-row">
+              <td></td>
+              <td><input type="text" class="filter-input" data-key="razon_social" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="modelo_maquina" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="numero_serie" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="fecha_programada" data-type="text" placeholder="aaaa-mm-dd"></td>
+              <td><input type="text" class="filter-input" data-key="_estado_ui" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="pagado" data-type="number" placeholder="&gt;0"></td>
+              <td></td>
+              <td class="th-actions"></td>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-footer" id="footer-tabla-mantenimientos-garantia" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- GARANTÍAS SIN COBERTURA -->
+    <section id="panel-garantias-sin-cobertura" class="panel panel-ux">
+      <div class="section-header section-header--ux">
+        <h2><i class="fas fa-ban"></i> Garantías sin cobertura</h2>
+        <p class="section-sub">Registros con <strong>Activa = No</strong> (garantía finalizada o fuera de vigencia).</p>
+        <div class="toolbar">
+          <button type="button" id="export-garantias-sin" class="btn outline"><i class="fas fa-file-csv"></i> CSV</button>
+          <button type="button" id="btn-mant-gar-refresh-sin" class="btn primary"><i class="fas fa-sync-alt"></i> Actualizar</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table filterable-table" id="tabla-garantias-sin">
+          <thead>
+            <tr>
+              <th>Razón Social</th><th>Modelo</th><th>N° Serie</th><th>F. Entrega</th><th>Mantenimientos</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+            <tr class="filter-row">
+              <td><input type="text" class="filter-input" data-key="razon_social" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="modelo_maquina" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="numero_serie" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="fecha_entrega" data-type="text" placeholder="aaaa-mm-dd"></td>
+              <td></td>
+              <td class="th-actions"></td>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-footer" id="footer-tabla-garantias-sin" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- BONOS -->
+    <section id="panel-bonos" class="panel panel-ux comm-admin-only">
+      <div class="section-header section-header--ux">
+        <h2><i class="fas fa-award"></i> Bonos de capacitación</h2>
+        <div class="toolbar">
+          <select id="filtro-mes-bonos" title="Mes de liquidación">
+            <option value="">Todos los meses</option>
+          </select>
+          <button type="button" id="btn-bonos-imprimir" class="btn outline"><i class="fas fa-print"></i> Imprimir mes</button>
+          <button type="button" id="export-bonos" class="btn outline"><i class="fas fa-file-csv"></i> CSV</button>
+          <button type="button" id="email-bonos" class="btn outline" title="Enviar por correo el reporte de la tabla visible"><i class="fas fa-envelope"></i> Enviar reporte</button>
+          <button type="button" id="nuevo-bono" class="btn primary"><i class="fas fa-plus"></i> Nuevo bono</button>
+        </div>
+      </div>
+      <div id="bonos-resumen-bar" class="bonos-resumen-bar" aria-live="polite"></div>
+      <div class="table-wrap">
+        <table class="data-table filterable-table" id="tabla-bonos">
+          <thead>
+            <tr>
+              <th>Técnico</th><th>Reporte</th><th>Tipo capacitación</th><th>Monto bono</th><th>Fecha</th><th>Pagado</th><th>Notas</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+            <tr class="filter-row">
+              <td><input type="text" class="filter-input" data-key="tecnico" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="reporte_folio" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="tipo_capacitacion" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="monto_bono" data-type="number" placeholder="&gt;500"></td>
+              <td><input type="text" class="filter-input" data-key="fecha" data-type="text" placeholder="aaaa-mm-dd"></td>
+              <td><input type="text" class="filter-input" data-key="pagado" data-type="text" placeholder="0|1"></td>
+              <td><input type="text" class="filter-input" data-key="notas" data-type="text" placeholder="Filtrar…"></td>
+              <td class="th-actions"></td>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-footer" id="footer-tabla-bonos" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- VIAJES (viáticos + liquidación mensual con bonos) -->
+    <section id="panel-viajes" class="panel panel-ux comm-admin-only">
+      <div class="section-header section-header--ux">
+        <h2><i class="fas fa-plane"></i> Viajes y viáticos</h2>
+        <div class="toolbar">
+          <input type="month" id="filtro-mes-viajes" title="Mes para liquidación (viajes por fecha de inicio + bonos por fecha)" aria-label="Mes para liquidación">
+          <button type="button" id="btn-viajes-liquidacion" class="btn outline"><i class="fas fa-file-invoice-dollar"></i> Liquidación mensual</button>
+          <button type="button" id="nuevo-viaje" class="btn primary"><i class="fas fa-plus"></i> Nuevo viaje</button>
+        </div>
+      </div>
+      <p class="hint" style="margin:0 0 0.75rem 1rem;font-size:0.875rem">Viáticos: <strong>$1,000 MXN por día</strong> (calculado al guardar). El mes de <strong>fecha inicio</strong> define en qué mes cae el viaje para la liquidación.</p>
+      <div class="table-wrap">
+        <table class="data-table" id="tabla-viajes">
+          <thead>
+            <tr>
+              <th>Técnico</th><th>Cliente / Empresa</th><th>Inicio</th><th>Fin</th><th>Días</th><th>Viáticos</th><th>Descripción</th><th>Mes liq.</th><th>Liquidado</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <p style="margin:0.75rem 1rem;font-size:0.9rem" aria-live="polite">Total viáticos (lista actual): <strong id="viajes-total-viaticos">$0.00</strong></p>
+      </div>
+    </section>
+
+    <!-- PERSONAL (antes técnicos) -->
+    <section id="panel-tecnicos" class="panel panel-ux">
+      <div class="section-header section-header--ux">
+        <h2><i class="fas fa-users"></i> Personal</h2>
+        <div class="toolbar">
+          <input type="search" id="buscar-tecnicos" placeholder="Buscar por nombre, puesto, habilidad…" class="search search--ux">
+          <button type="button" id="btn-new-tecnico" class="btn primary"><i class="fas fa-plus"></i> Nueva persona</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="tabla-tecnicos">
+          <thead>
+            <tr>
+              <th>Nombre</th><th>Puesto</th><th>Depto.</th><th>Ventas</th><th>Habilidades</th><th>INE / Lic.</th><th>Disponibilidad</th><th>Activo</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- BITÁCORA DE HORAS -->
+    <section id="panel-bitacoras" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-clock"></i> Bitácora de horas</h2>
+        <div class="toolbar">
+          <button type="button" id="export-bitacoras" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
+          <button type="button" id="export-excel-bitacoras" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
+          <button type="button" id="nueva-bitacora" class="btn primary"><i class="fas fa-plus"></i> Nueva bitácora</button>
+        </div>
+      </div>
+      <div id="bitacoras-empty" class="empty-card hidden">
+        <div class="empty-icon"><i class="fas fa-hourglass-half"></i></div>
+        <h3>No hay registros en la bitácora</h3>
+        <p>Registra horas por incidente o cotización; al finalizar un reporte de servicio también se genera un registro enlazado.</p>
+        <button type="button" class="btn primary big btn-empty-bit"><i class="fas fa-plus"></i> Agregar registro</button>
+      </div>
+      <div id="bitacoras-list" class="table-wrap">
+        <table class="data-table data-table--fluid filterable-table" id="tabla-bitacoras" data-cache="bitacorasCache">
+          <thead>
+            <tr>
+              <th>Fecha</th><th>Incidente</th><th>Cotización</th><th>Reporte</th><th>Técnico</th><th>Actividades</th>
+              <th class="col-no-ibeam">Horas</th><th class="col-no-ibeam">Materiales</th><th class="col-no-ibeam">Estado</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+            <tr class="filter-row">
+              <td class="filter-date-wrap"><select class="filter-date-select" data-key="fecha"><option value="">Todas</option><option value="hoy">Hoy</option><option value="esta_semana">Esta semana</option><option value="este_mes">Este mes</option><option value="mes_pasado">Mes pasado</option><option value="este_año">Este año</option><option value="personalizado">Escribir fecha</option></select><input type="date" class="filter-input filter-date-input" data-key="fecha" title="O escribe aquí"></td>
+              <td><input type="text" class="filter-input" data-key="incidente_folio" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="cotizacion_folio" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="reporte_folio" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="tecnico" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="actividades" data-type="text" placeholder="Filtrar…"></td>
+              <td class="col-no-ibeam"><input type="text" class="filter-input" data-key="tiempo_horas" data-type="number" placeholder="&gt;2, &lt;8"></td>
+              <td class="col-no-ibeam"><input type="text" class="filter-input" data-key="materiales_usados" data-type="text" placeholder="Filtrar…"></td>
+              <td class="col-no-ibeam"><span data-key="estado_registro" class="filter-input" style="display:inline-block;min-height:1px;padding:0;border:none;width:100%" aria-hidden="true"></span></td>
+              <td class="th-actions"></td>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-footer" id="footer-tabla-bitacoras" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- AUDITORÍA (solo admin con AUTH_ENABLED) -->
+    <section id="panel-auditoria" class="panel" aria-label="Registro de auditoría">
+      <div class="section-header">
+        <h2><i class="fas fa-clipboard-list"></i> Auditoría</h2>
+        <p class="audit-meta" id="audit-meta"></p>
+      </div>
+      <p class="hint audit-intro">Registro de operaciones que modifican datos (POST, PUT, DELETE). Solo admin. Si la tabla sale vacía, suele ser porque no hay cambios registrados aún o porque en el servidor está desactivada la autenticación o la escritura en auditoría (ver mensaje bajo la tabla).</p>
+      <div class="table-wrap">
+        <table class="data-table" id="tabla-auditoria">
+          <thead>
+            <tr>
+              <th>Fecha / hora</th>
+              <th>Usuario</th>
+              <th>Rol</th>
+              <th>Método</th>
+              <th>Ruta</th>
+              <th>Acción</th>
+              <th>Detalle (recortado)</th>
+            </tr>
+          </thead>
+          <tbody id="audit-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- USUARIOS DEL SISTEMA (solo admin con login) -->
+    <section id="panel-usuarios" class="panel" aria-label="Usuarios y permisos">
+      <div class="section-header">
+        <h2><i class="fas fa-user-shield"></i> Usuarios y permisos</h2>
+        <p class="hint">Solo el administrador puede crear cuentas y asignar roles. <strong>Nombre completo</strong> es el que verá cada usuario bajo su rol en el menú del perfil (monito). Puede <strong>eliminar usuarios</strong> (no a ti mismo ni al único admin activo); cada baja queda registrada abajo. <strong>Invitado / Consulta</strong> = solo ver. <strong>Usuario / Operador</strong> = cotizaciones y reportes (sin editar catálogos maestros).</p>
+      </div>
+      <div class="card" style="margin-bottom:1rem;padding:1rem 1.25rem;">
+        <h3 style="margin:0 0 0.75rem 0;font-size:1rem;">Nuevo usuario</h3>
+        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;">
+          <div class="form-group" style="min-width:140px;">
+            <label for="usuarios-new-username">Usuario</label>
+            <input type="text" id="usuarios-new-username" autocomplete="off" placeholder="minúsculas" class="filter-input">
+          </div>
+          <div class="form-group" style="min-width:140px;">
+            <label for="usuarios-new-password">Contraseña</label>
+            <input type="password" id="usuarios-new-password" autocomplete="new-password" class="filter-input">
+          </div>
+          <div class="form-group" style="min-width:160px;">
+            <label for="usuarios-new-display">Nombre completo</label>
+            <input type="text" id="usuarios-new-display" autocomplete="name" placeholder="Ej. David Orlando Cantú" class="filter-input">
+          </div>
+          <div class="form-group" style="min-width:180px;">
+            <label for="usuarios-new-role">Rol</label>
+            <select id="usuarios-new-role" class="filter-input">
+              <option value="invitado">Invitado (solo ver)</option>
+              <option value="consulta">Consulta (solo ver)</option>
+              <option value="usuario">Usuario (cotizar / reportes)</option>
+              <option value="operador">Operador (cotizar / reportes)</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </div>
+          <button type="button" id="btn-usuarios-create" class="btn primary"><i class="fas fa-user-plus"></i> Crear usuario</button>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:1rem;padding:1rem 1.25rem;">
+        <h3 style="margin:0 0 0.5rem 0;font-size:1rem;"><i class="fas fa-user-lock"></i> Permisos por pestaña y columnas</h3>
+        <p class="hint" style="margin:0 0 0.75rem 0;">Selecciona un usuario, marca qué pestañas puede ver y qué columnas puede ver en cada tabla.</p>
+        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;">
+          <div class="form-group" style="min-width:260px;flex:1;">
+            <label for="usuarios-perm-user">Usuario</label>
+            <select id="usuarios-perm-user" class="filter-input"></select>
+          </div>
+          <button type="button" id="btn-usuarios-save-access" class="btn primary"><i class="fas fa-save"></i> Guardar permisos</button>
+        </div>
+        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-start;margin-top:0.75rem;">
+          <div class="card" style="padding:0.75rem;min-width:260px;flex:1;">
+            <h4 style="margin:0 0 0.5rem 0;font-size:0.95rem;">Pestañas visibles</h4>
+            <div id="usuarios-perm-tabs-wrap" style="display:grid;gap:0.4rem;"></div>
+          </div>
+          <div class="card" style="padding:0.75rem;min-width:320px;flex:2;">
+            <h4 style="margin:0 0 0.5rem 0;font-size:0.95rem;">Columnas visibles por tabla</h4>
+            <div id="usuarios-perm-columns-wrap" style="display:grid;gap:0.65rem;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="tabla-usuarios">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Nombre</th>
+              <th>Rol</th>
+              <th>Personal (cotizar)</th>
+              <th>Activo</th>
+              <th>Alta</th>
+              <th style="width:7rem;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-usuarios-body"></tbody>
+        </table>
+      </div>
+      <div class="card" style="margin-top:1rem;padding:1rem 1.25rem;">
+        <div class="section-header" style="margin-bottom:0.75rem;">
+          <h3 style="margin:0;font-size:1rem;"><i class="fas fa-archive"></i> Registro de usuarios eliminados</h3>
+        </div>
+        <p class="hint" style="margin:0 0 0.75rem 0;">Historial de cuentas dadas de baja. Usa <strong>Correo</strong> para abrir tu cliente de correo con el texto listo (configura el destinatario opcional).</p>
+        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;margin-bottom:0.75rem;">
+          <div class="form-group" style="min-width:220px;flex:1;">
+            <label for="usuarios-notify-email">Correo destino (opcional)</label>
+            <input type="email" id="usuarios-notify-email" class="filter-input" placeholder="ej. rrhh@empresa.com" autocomplete="email" title="Se guarda en este navegador">
+          </div>
+          <button type="button" id="btn-usuarios-email-resumen" class="btn outline"><i class="fas fa-envelope"></i> Enviar resumen por correo</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="tabla-usuarios-eliminados">
+            <thead>
+              <tr>
+                <th>Usuario</th>
+                <th>Nombre</th>
+                <th>Rol</th>
+                <th>Eliminado</th>
+                <th>Eliminado por</th>
+                <th style="width:8rem;">Correo</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-usuarios-eliminados-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="margin-top:1rem;padding:1rem 1.25rem;">
+        <div class="section-header" style="margin-bottom:0.75rem;">
+          <h3 style="margin:0;font-size:1rem;"><i class="fas fa-calendar-alt"></i> Programaciones automáticas de reportes</h3>
+          <button type="button" id="btn-report-schedules-refresh" class="btn outline small"><i class="fas fa-sync-alt"></i> Actualizar</button>
+        </div>
+        <p class="hint" style="margin:0 0 0.75rem 0;">Admin puede editar o eliminar programaciones creadas desde los botones de envío en Cotizaciones, Ventas y Bonos.</p>
+        <div class="table-wrap">
+          <table class="data-table" id="tabla-report-schedules">
+            <thead>
+              <tr>
+                <th>ID</th><th>Módulo</th><th>Frecuencia</th><th>Hora</th><th>Destinatarios</th><th>Último envío</th><th>Activo</th><th style="width:10rem;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-report-schedules-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- CATEGORÍAS / SUBCATEGORÍAS (solo admin con login) -->
+    <section id="panel-categorias-catalogo" class="panel" aria-label="Categorías y subcategorías">
+      <div class="section-header">
+        <h2><i class="fas fa-sitemap"></i> Categorías y subcategorías</h2>
+        <p class="hint">Solo el <strong>administrador</strong> puede crear, editar o eliminar. Refacciones y máquinas usan estas listas en los formularios y filtros.</p>
+      </div>
+      <div class="card" style="margin-bottom:1rem;padding:1rem 1.25rem;">
+        <h3 style="margin:0 0 0.75rem 0;font-size:1rem;">Nueva categoría</h3>
+        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;">
+          <div class="form-group" style="min-width:200px;flex:1;">
+            <label for="cat-admin-new-nombre">Nombre</label>
+            <input type="text" id="cat-admin-new-nombre" maxlength="120" placeholder="Ej. Fresadora" class="filter-input">
+          </div>
+          <button type="button" id="cat-admin-add-categoria" class="btn primary"><i class="fas fa-plus"></i> Agregar categoría</button>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:1rem;padding:1rem 1.25rem;">
+        <h3 style="margin:0 0 0.75rem 0;font-size:1rem;">Nueva subcategoría</h3>
+        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;">
+          <div class="form-group" style="min-width:180px;">
+            <label for="cat-admin-sub-padre">Categoría padre</label>
+            <select id="cat-admin-sub-padre" class="filter-input"></select>
+          </div>
+          <div class="form-group" style="min-width:200px;flex:1;">
+            <label for="cat-admin-new-sub">Nombre</label>
+            <input type="text" id="cat-admin-new-sub" maxlength="120" placeholder="Ej. Husillo" class="filter-input">
+          </div>
+          <button type="button" id="cat-admin-add-sub" class="btn primary"><i class="fas fa-plus"></i> Agregar subcategoría</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="tabla-categorias-admin">
+          <thead>
+            <tr>
+              <th>Categoría</th>
+              <th>Subcategorías</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-categorias-admin-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- DEMO -->
+    <section id="panel-demo" class="panel">
+      <div class="card card-demo">
+        <h2><i class="fas fa-database"></i> Cargar datos demo</h2>
+        <p class="demo-version-banner" style="margin:0 0 0.75rem 0;padding:0.55rem 0.7rem;border-radius:8px;border:1px solid #0d9488;background:rgba(13,148,136,0.14);font-size:0.88rem;line-height:1.45;">
+          <strong>Qué deberías ver con la versión nueva:</strong> botón gris <strong>«Asegurar equipos por cliente»</strong>; más abajo (antes de respaldos) un recuadro <strong>«Datos demo: contador y borrado selectivo»</strong> con botón rojo <strong>«Borrar solo registros demo»</strong>. Si no aparece, no estás en el último despliegue: en Render ejecuta un deploy desde <code>main</code> y en el navegador recarga forzada (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>).
+        </p>
+        <p>Importa desde <strong>SistemaGestion_Demo.xlsm</strong> (exportado a <code>seed-demo.json</code>): clientes, refacciones, máquinas, <strong>incidentes</strong>, <strong>bitácoras</strong> y cotizaciones de ejemplo.</p>
+        <p class="hint"><strong>Datos reales:</strong> el demo completo <strong>no borra nada</strong> y solo se ejecuta si la base está vacía (sin clientes). Con clientes ya cargados, usa el botón verde de abajo o «Asegurar equipos por cliente».</p>
+        <p class="hint">El demo y el botón verde también rellenan <strong>personal</strong> (~20, incl. David Cantu como jefe de área), <strong>mantenimientos</strong> en el calendario del mes, <strong>garantías sin cobertura</strong> y <strong>bonos</strong> de ejemplo (hasta ~30 c/u donde aplica).</p>
+        <p class="hint">Al cargar el demo completo, el servidor asegura al menos <strong>un equipo demo</strong> por cada cliente que no traía máquinas en el JSON. Si ya tienes clientes creados a mano y en cotizaciones ves la caja de máquinas vacía, usa el botón de abajo para insertar <strong>2 equipos de presentación</strong> por cliente (sin borrar datos).</p>
+        <p class="status" id="seed-status">Consultando estado…</p>
+        <p class="hint" id="seed-last-update" aria-live="polite"></p>
+        <p class="hint status-pill-wrap">
+          <span id="storage-health-pill" class="status-pill status-pill-neutral">Persistencia: verificando…</span>
+          <span id="storage-health-detail" class="status-pill-detail"></span>
+        </p>
+        <p class="hint">Si han procesado más registros en otro lugar, actualiza manualmente (recarga la página o vuelve a esta pestaña). Los datos se actualizan solos cada 12 horas.</p>
+        <button type="button" id="btn-seed-demo" class="btn primary big">Cargar todo el demo (solo si no hay clientes)</button>
+        <p class="hint" style="margin-top:0.5rem;">Si ya tienes clientes cargados y solo quieres agregar incidentes, bitácoras y cotizaciones de ejemplo:</p>
+        <button type="button" id="btn-seed-extra" class="btn big" style="background:#0d9488;color:#fff;margin-top:0.5rem;">Cargar solo incidentes, bitácoras y cotizaciones demo</button>
+        <p class="hint" style="margin-top:0.75rem;">Si faltan equipos en el selector de cotizaciones (misma info que en Autopartes):</p>
+        <button type="button" id="btn-ensure-demo-maquinas" class="btn big outline" style="margin-top:0.35rem;"><i class="fas fa-cogs"></i> Asegurar equipos por cliente (2 por cliente, demo)</button>
+        <div id="demo-dummy-panel" class="card" style="margin-top:1rem;padding:0.95rem 1.05rem;border:2px solid #b91c1c;border-radius:12px;background:linear-gradient(180deg,#fef2f2 0%,#fff7ed 100%);box-shadow:0 4px 14px rgba(185,28,28,0.12);">
+          <h3 style="margin:0 0 0.5rem 0;font-size:1.08rem;color:#7f1d1d;"><i class="fas fa-skull-crossbones"></i> Peligro: vaciar todo el sistema</h3>
+          <p class="hint" style="margin:0 0 0.5rem 0;">Elimina <strong>casi todo</strong> (clientes, refacciones, máquinas, cotizaciones, incidentes, bitácoras, reportes, garantías, usuarios de la app, auditoría, etc.). <strong>No toca Prospección</strong> (tabla <code>prospectos</code>). Después se vuelven a crear catálogos por defecto, técnicos base, tarifas, y el usuario administrador inicial.</p>
+          <p class="hint" style="margin:0 0 0.65rem 0;font-weight:600;color:#991b1b;">Irreversible. Exporta un respaldo JSON arriba antes de continuar.</p>
+          <div class="toolbar" style="flex-wrap:wrap;gap:0.5rem;">
+            <button type="button" id="btn-wipe-all-system" class="btn small" style="background:#7f1d1d;color:#fff;border:none;font-weight:700;"><i class="fas fa-trash-alt"></i> Borrar todos los datos del sistema</button>
+          </div>
+          <p class="hint" style="margin:0.55rem 0 0 0;font-size:0.8rem;">Confirmación obligatoria; con login activo solo <strong>admin</strong>. Escribe: <kbd>BORRAR-TODO-EL-SISTEMA</kbd></p>
+        </div>
+        <hr style="margin:1rem 0;border:none;border-top:1px solid #e2e8f0;">
+        <p class="hint">Respaldo completo de datos (recomendado; incluye <strong>prospectos</strong> para poder restaurar el pipeline):</p>
+        <div class="toolbar">
+          <button type="button" id="btn-backup-export" class="btn outline"><i class="fas fa-download"></i> Exportar respaldo JSON</button>
+          <button type="button" id="btn-backup-import" class="btn outline"><i class="fas fa-upload"></i> Restaurar respaldo JSON</button>
+          <input type="file" id="backup-import-file" class="hidden" accept=".json,application/json">
+        </div>
+        <div class="backup-files-card">
+          <div class="backup-files-head">
+            <strong>Backups automáticos detectados</strong>
+            <div class="backup-files-tools">
+              <button type="button" id="btn-backup-create-now" class="btn small outline"><i class="fas fa-plus"></i> Crear ahora</button>
+              <button type="button" id="btn-backup-files-refresh" class="btn small outline"><i class="fas fa-rotate"></i> Actualizar lista</button>
+            </div>
+          </div>
+          <p id="backup-files-policy" class="hint" style="margin:0 0 0.5rem 0;"></p>
+          <div id="backup-files-list" class="backup-files-list"></div>
+        </div>
+        <p class="hint">Luego verás todo en Cotizaciones, Incidentes y Bitácora.</p>
+      </div>
+    </section>
+
+    <!-- ACERCA DE -->
+    <section id="panel-acerca" class="panel">
+      <div class="card card-acerca">
+        <h2><i class="fas fa-info-circle"></i> Acerca de</h2>
+        <p><strong id="acerca-app-name">Sistema de Cotización y Gestión</strong> · Versión <span class="footer-version">v4</span></p>
+        <p id="acerca-app-desc">Plataforma profesional para cotizaciones, clientes, refacciones, máquinas, incidentes y bitácora de horas. Todo en un solo lugar.</p>
+        <ul class="acerca-features">
+          <li><i class="fas fa-check"></i> Catálogos (clientes, refacciones, máquinas)</li>
+          <li><i class="fas fa-check"></i> Cotizaciones y seguimiento</li>
+          <li><i class="fas fa-check"></i> Incidentes con SLA y fecha de vencimiento</li>
+          <li><i class="fas fa-check"></i> Bitácora de horas</li>
+          <li><i class="fas fa-check"></i> Dashboard con pronósticos y comparativos</li>
+          <li><i class="fas fa-check"></i> Exportación CSV/Excel y PDF</li>
+          <li><i class="fas fa-check"></i> Asistente con IA y reconocimiento de voz</li>
+          <li><i class="fas fa-shield-alt"></i> Autenticación opcional por entorno (roles admin / operador / consulta) y auditoría de cambios</li>
+          <li><i class="fas fa-palette"></i> Marca blanca: nombre, colores y logo vía <code>public/js/config.js</code> y variables de entorno (ver <code>CONFIG_BRANDING.md</code>)</li>
+        </ul>
+        <p class="hint">Atajos: <kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> secciones · <kbd>Ctrl</kbd>+<kbd>8</kbd> auditoría (admin) · <kbd>Ctrl</kbd>+<kbd>K</kbd> búsqueda global · <kbd>Esc</kbd> cierra modales.</p>
+      </div>
+    </section>
+  </main>
+    </div>
+  </div>
+
+  <div id="admin-hub-overlay" class="admin-hub-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="admin-hub-title">
+    <div class="admin-hub-panel" id="admin-hub-panel">
+      <div class="admin-hub-header">
+        <h2 id="admin-hub-title">Panel de administración</h2>
+        <button type="button" class="btn-icon-header" id="admin-hub-close" aria-label="Cerrar panel de administración"><i class="fas fa-times"></i></button>
+      </div>
+      <p class="admin-hub-intro">Accesos rápidos a las mismas funciones que ya tienes en <strong>Módulos</strong>; aquí van reunidas para trabajar más ordenado.</p>
+      <div class="admin-hub-grid" id="admin-hub-grid">
+        <button type="button" class="admin-hub-card hidden" id="admin-hub-card-usuarios" data-hub-tab="usuarios">
+          <i class="fas fa-user-shield" aria-hidden="true"></i>
+          <span class="admin-hub-card-title">Usuarios</span>
+          <span class="admin-hub-card-desc">Crear cuentas, roles y permisos.</span>
+        </button>
+        <button type="button" class="admin-hub-card hidden" id="admin-hub-card-auditoria" data-hub-tab="auditoria">
+          <i class="fas fa-clipboard-list" aria-hidden="true"></i>
+          <span class="admin-hub-card-title">Auditoría</span>
+          <span class="admin-hub-card-desc">Historial de cambios en el sistema.</span>
+        </button>
+        <button type="button" class="admin-hub-card hidden" id="admin-hub-card-categorias" data-hub-tab="categorias-catalogo">
+          <i class="fas fa-sitemap" aria-hidden="true"></i>
+          <span class="admin-hub-card-title">Categorías</span>
+          <span class="admin-hub-card-desc">Catálogo y subcategorías administrables.</span>
+        </button>
+        <button type="button" class="admin-hub-card hidden" id="admin-hub-card-bonos" data-hub-tab="bonos">
+          <i class="fas fa-award" aria-hidden="true"></i>
+          <span class="admin-hub-card-title">Bonos</span>
+          <span class="admin-hub-card-desc">Liquidación y comisiones de capacitación.</span>
+        </button>
+        <button type="button" class="admin-hub-card hidden" id="admin-hub-card-viajes" data-hub-tab="viajes">
+          <i class="fas fa-plane" aria-hidden="true"></i>
+          <span class="admin-hub-card-title">Viajes</span>
+          <span class="admin-hub-card-desc">Viáticos y liquidación mensual.</span>
+        </button>
+        <button type="button" class="admin-hub-card hidden" id="admin-hub-card-prospeccion" data-hub-tab="prospeccion">
+          <i class="fas fa-map-marked-alt" aria-hidden="true"></i>
+          <span class="admin-hub-card-title">Prospección</span>
+          <span class="admin-hub-card-desc">Mapa y pipeline de prospectos.</span>
+        </button>
+        <button type="button" class="admin-hub-card hidden" id="admin-hub-card-tarifas" data-hub-tab="tarifas">
+          <i class="fas fa-tags" aria-hidden="true"></i>
+          <span class="admin-hub-card-title">Tarifas</span>
+          <span class="admin-hub-card-desc">Mano de obra, traslados y esquemas.</span>
+        </button>
+        <button type="button" class="admin-hub-card hidden" id="admin-hub-card-tecnicos" data-hub-tab="tecnicos">
+          <i class="fas fa-users" aria-hidden="true"></i>
+          <span class="admin-hub-card-title">Personal</span>
+          <span class="admin-hub-card-desc">Puestos, vendedores y comisiones.</span>
+        </button>
+        <button type="button" class="admin-hub-card hidden" id="admin-hub-card-demo" data-hub-tab="demo">
+          <i class="fas fa-database" aria-hidden="true"></i>
+          <span class="admin-hub-card-title">Cargar demo y respaldos</span>
+          <span class="admin-hub-card-desc">Datos de ejemplo, exportar/importar, persistencia.</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="ai-widget-wrap" class="ai-widget-wrap collapsed" aria-label="Agente de Soporte - Asistente con IA">
+    <div id="ai-fab-nudge" class="ai-fab-nudge hidden" role="status" aria-live="polite" aria-atomic="true">
+      <button type="button" class="ai-fab-nudge-close" id="ai-fab-nudge-close" aria-label="Cerrar aviso" title="Cerrar">×</button>
+      <p class="ai-fab-nudge-text"><strong>¿Te ayudo?</strong> Toca el robot para abrir el asistente: cotizaciones, incidentes y más.</p>
+    </div>
+    <div id="ai-fab" class="ai-fab" title="Abrir Agente de Soporte">
+      <i class="fas fa-robot"></i>
+      <span class="ai-fab-tooltip">¿Te puedo ayudar?</span>
+      <span id="ai-unread-badge" class="ai-unread-badge hidden">0</span>
+    </div>
+    <div id="ai-widget" class="ai-widget ai-widget-panel">
+      <div class="ai-chat-header ai-widget-drag">
+        <div class="ai-avatar"><i class="fas fa-robot"></i></div>
+        <div>
+          <h2>Agente de Soporte</h2>
+          <span class="ai-status">En línea · Arrastra para mover</span>
+        </div>
+        <button type="button" id="ai-minimize" class="ai-btn-minimize" aria-label="Minimizar"><i class="fas fa-chevron-down"></i></button>
+      </div>
+      <div class="ai-chat">
+        <div class="ai-chat-messages" id="ai-messages"></div>
+        <div class="ai-chat-suggestions" id="ai-suggestions">
+          <span class="ai-suggestions-label">Preguntas rápidas:</span>
+          <button type="button" class="ai-chip" data-msg="¿Cuántas cotizaciones hay de hoy?">Cotizaciones de hoy</button>
+          <button type="button" class="ai-chip" data-msg="¿Cuántos incidentes tengo de hoy?">Incidentes de hoy</button>
+          <button type="button" class="ai-chip" data-msg="Dame un resumen de clientes y cotizaciones">Resumen general</button>
+          <button type="button" class="ai-chip" data-msg="¿Qué incidentes están abiertos?">Incidentes abiertos</button>
+        </div>
+        <div class="ai-chat-form">
+          <input type="file" id="ai-file-input" class="hidden" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" aria-hidden="true">
+          <div class="ai-chat-form-tools" role="toolbar" aria-label="Adjuntar y voz">
+            <button type="button" id="ai-attach" class="ai-btn-attach" aria-label="Adjuntar archivo"><i class="fas fa-paperclip"></i></button>
+            <button type="button" id="ai-voice" class="ai-btn-attach" aria-label="Hablar (voz)" title="Hablar con el asistente"><i class="fas fa-microphone"></i></button>
+          </div>
+          <input type="text" id="ai-input" placeholder="Escribe o habla tu mensaje…" maxlength="500" autocomplete="off">
+          <button type="button" id="ai-send" class="btn primary ai-chat-send" aria-label="Enviar mensaje al asistente"><i class="fas fa-paper-plane" aria-hidden="true"></i><span class="ai-send-label">Enviar</span></button>
+        </div>
+        <p class="ai-voice-hint" id="ai-voice-hint">Pulsa el micrófono y habla; lo que digas se enviará al asistente y se subirá al apartado que corresponda.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-title"></h3>
+        <button type="button" class="close" aria-label="Cerrar">&times;</button>
+      </div>
+      <div id="modal-body" class="modal-body"></div>
+    </div>
+  </div>
+  <div id="modal-stack" class="modal modal-stack hidden" role="dialog" aria-modal="true" aria-labelledby="modal-stack-title">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-stack-title"></h3>
+        <button type="button" class="close" id="modal-stack-close" aria-label="Cerrar">&times;</button>
+      </div>
+      <div id="modal-stack-body" class="modal-body"></div>
+    </div>
+  </div>
+  <div id="confirm-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div class="modal-box modal-confirm">
+      <div class="modal-header">
+        <h3 id="confirm-title">Confirmar</h3>
+        <button type="button" class="close" id="confirm-close" aria-label="Cerrar">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-message"></p>
+        <div class="form-actions" style="margin-top:1rem;">
+          <button type="button" id="confirm-btn-ok" class="btn danger"><i class="fas fa-trash"></i> Eliminar</button>
+          <button type="button" id="confirm-btn-cancel" class="btn">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="command-palette" class="command-palette hidden" role="dialog" aria-label="Búsqueda rápida">
+    <div class="command-palette-box">
+      <input type="text" id="command-palette-input" placeholder="Buscar sección, cliente, folio… (Esc para cerrar)" autocomplete="off">
+      <div id="command-palette-results"></div>
+    </div>
+  </div>
+
+  <footer class="app-footer" role="contentinfo">
+    <p>Sistema de Cotización y Gestión · <span class="footer-version">v4</span> · Uso profesional · Cotizaciones, incidentes y bitácora en un solo lugar
+      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 66 · JS 157</strong></span></p>
+    <p class="footer-tip"><kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> atajos de sección · <kbd>Esc</kbd> cierra modales</p>
+  </footer>
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+  <div id="global-loading" class="global-loading hidden" aria-hidden="true">
+    <div class="loading-spinner"></div>
+    <span class="loading-text">Cargando…</span>
+  </div>
+  <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
+  <script src="js/config.js?v=2"></script>
+  <script src="js/app.js?v=168-login-activo-coalesce-form-post"></script>
+  <script src="js/bg-animation.js?v=6-no-motion-mobile-only" defer></script>
+  <script src="js/premium-ux.js?v=16-no-motion-boot" defer></script>
 </body>
 </html>

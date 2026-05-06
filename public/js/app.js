@@ -1156,11 +1156,6 @@
       const btn = qs('#btn-notifications');
       if (btn) btn.click();
     });
-    wirePanel('profile-menu-tema', function () {
-      closeHeaderProfileMenu();
-      const btn = qs('#btn-theme-toggle');
-      if (btn) btn.click();
-    });
     wirePanel('profile-menu-densidad', function () {
       closeHeaderProfileMenu();
       try {
@@ -1338,26 +1333,9 @@
     });
   }
   let syncThemeToggleButtonUi = function () {};
+  /** Botón sol/luna eliminado: tema único nano cristalino (forzar oscuro). */
   function initThemeToggleButton() {
-    const btn = qs('#btn-theme-toggle');
-    if (!btn || btn._bound) return;
-    btn._bound = true;
-    function refresh() {
-      const isLight = document.body.classList.contains('appearance-light');
-      btn.setAttribute('aria-pressed', isLight ? 'true' : 'false');
-      btn.title = isLight ? 'Tema oscuro (luna)' : 'Tema claro (sol)';
-      btn.setAttribute('aria-label', isLight ? 'Cambiar a tema oscuro' : 'Cambiar a tema claro');
-      const i = btn.querySelector('i');
-      if (i) {
-        i.className = 'fas ' + (isLight ? 'fa-moon' : 'fa-sun');
-      }
-    }
-    syncThemeToggleButtonUi = refresh;
-    refresh();
-    btn.addEventListener('click', function () {
-      const next = document.body.classList.contains('appearance-light') ? 'dark' : 'light';
-      setTheme(next);
-    });
+    syncThemeToggleButtonUi = function () {};
   }
   /** Título de la pestaña del navegador según la sección activa */
   function updateDocumentTitle(panelId) {
@@ -12847,17 +12825,20 @@
   }
 
   const THEME_STORAGE_KEY = 'cotizacion-theme';
-  /** Apariencia: `dark` = industrial (luna), `light` = velos claros sobre el mismo fondo (sol). */
-  const VALID_THEMES = ['light', 'dark'];
-  function normalizeTheme(t) {
-    return VALID_THEMES.indexOf(t) >= 0 ? t : 'light';
-  }
+  /** Apariencia fija: solo industrial + nano (sin modo Sol/Luna). */
   function getTheme() {
+    return 'dark';
+  }
+  function clearPremiumPaletteOverrides() {
+    const root = document.documentElement;
+    ['--ds-primary', '--ds-primary-2', '--ds-grad'].forEach(function (p) {
+      try {
+        root.style.removeProperty(p);
+      } catch (_) {}
+    });
     try {
-      const raw = localStorage.getItem(THEME_STORAGE_KEY);
-      if (raw === 'light' || raw === 'dark') return raw;
+      if (document.body && document.body.dataset) delete document.body.dataset.premTheme;
     } catch (_) {}
-    return 'dark'; /* Luna por defecto = login industrial + nano-fondo (paridad local vs Render en primera visita) */
   }
   function applyModalThemeToBox(box) {
     if (!box) return;
@@ -12873,14 +12854,12 @@
       }
     );
   }
-  function setTheme(mode) {
-    mode = normalizeTheme(mode);
+  function setTheme(_mode) {
     try {
-      localStorage.setItem(THEME_STORAGE_KEY, mode);
+      localStorage.setItem(THEME_STORAGE_KEY, 'dark');
     } catch (_) {}
     document.body.classList.remove('appearance-light', 'dark-theme', 'dark-high-contrast');
     document.body.classList.add('theme-industrial');
-    if (mode === 'light') document.body.classList.add('appearance-light');
     syncOpenModalsTheme();
     syncThemeColorMeta();
     try { syncThemeToggleButtonUi(); } catch (_) {}
@@ -12905,10 +12884,14 @@
   function syncThemeColorMeta() {
     const m = qs('#meta-theme-color');
     if (!m) return;
-    m.setAttribute('content', getTheme() === 'light' ? '#1A73E8' : '#0F172A');
+    m.setAttribute('content', '#0c1929');
   }
   function initTheme() {
-    setTheme(getTheme());
+    clearPremiumPaletteOverrides();
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, 'dark');
+    } catch (_) {}
+    setTheme('dark');
   }
   const logoutBtn = qs('#btn-logout');
   if (logoutBtn) {
@@ -12993,7 +12976,7 @@
         <p class="onboarding-lead">Así sacas provecho al sistema desde el primer minuto:</p>
         <ul class="onboarding-list">
           <li><i class="fas fa-keyboard"></i> <span>Atajos <kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> por sección, <kbd>Ctrl</kbd>+<kbd>7</kbd> Acerca de, <kbd>Ctrl</kbd>+<kbd>8</kbd> Auditoría (admin con login), <kbd>Ctrl</kbd>+<kbd>K</kbd> búsqueda global.</span></li>
-          <li><i class="fas fa-moon"></i> <span>Tema claro u oscuro con el botón junto a los atajos.</span></li>
+          <li><i class="fas fa-droplet"></i> <span>Tema visual fijo: nano machining con vidrio azul cristalino (sin modo día/noche).</span></li>
           <li><i class="fas fa-robot"></i> <span>Agente de soporte (robot abajo a la derecha): preguntas sobre cotizaciones, incidentes y más.</span></li>
         </ul>
         <p class="hint" style="margin-top:1rem;">Vuelve a ver atajos con <kbd>?</kbd> o <kbd>Ctrl</kbd>+<kbd>/</kbd>.</p>

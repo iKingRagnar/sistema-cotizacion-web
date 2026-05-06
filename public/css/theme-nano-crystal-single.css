@@ -1,0 +1,41 @@
+/* =======================================================================
+   TEMA ÚNICO — Nano machining + vidrio azul cristalino (sin Sol/Luna)
+   Carga al FINAL de la cascada (antes de portal/login-neutral si se desea
+   que el login también herede el mismo matiz).
+   Solo modo oscuro; armoniza bordes y acentos con la foto industrial.
+   ======================================================================= */
+
+html {
+  color-scheme: dark;
+}
+
+/* Vidrio nano: leve tinte azul hielo en superficies + acento cyan brillante */
+html body.theme-industrial:not(.appearance-light),
+html body.theme-industrial {
+  --nano-accent: #38bdf8;
+  --nano-border: rgba(56, 189, 248, 0.14);
+  --nano-border-strong: rgba(125, 211, 252, 0.28);
+  --nano-surface: rgba(15, 23, 42, 0.42);
+  --nano-surface-strong: rgba(15, 30, 55, 0.52);
+  --nano-surface-solid: rgba(12, 24, 48, 0.92);
+  --nano-surface-subtle: rgba(15, 23, 42, 0.36);
+  --nano-blur: blur(22px) saturate(155%) brightness(1.02);
+  --nano-blur-light: blur(16px) saturate(145%) brightness(1.02);
+  --nano-shadow: 0 12px 40px rgba(2, 12, 27, 0.45), 0 0 0 1px rgba(56, 189, 248, 0.06);
+}
+
+/* Primarios MD3 / botones: misma familia azul cristalino */
+html body.theme-industrial:not(.appearance-light) {
+  --md-sys-color-primary: #38bdf8;
+  --md-sys-color-on-primary: #0c1220;
+  --md-sys-color-primary-container: rgba(56, 189, 248, 0.18);
+  --md-sys-color-on-primary-container: #e0f2fe;
+}
+
+/* Ocultar FAB de paleta legacy (premium-ux) si existiera en DOM */
+.prem-theme-fab,
+.prem-theme-picker {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
