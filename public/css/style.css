@@ -7352,6 +7352,110 @@ body:not(.dark-theme) .cliente-const-slot--pdf {
   padding: 0.5rem 0;
 }
 
+/* Evita scroll del fondo mientras el lightbox está abierto */
+body.pvc-lb-open {
+  overflow: hidden;
+}
+
+/* Lightbox de medios (solo imagen/PDF, encima del modal de edición) */
+.pvc-media-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  box-sizing: border-box;
+}
+.pvc-media-lightbox.hidden {
+  display: none !important;
+}
+.pvc-lb-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.72);
+  cursor: pointer;
+}
+.pvc-lb-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(96vw, 1100px);
+  max-height: min(94vh, 900px);
+  display: flex;
+  flex-direction: column;
+  background: var(--card-bg, #fff);
+  color: var(--text-primary, #0f172a);
+  border-radius: 12px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  overflow: hidden;
+}
+body.dark-theme .pvc-lb-dialog {
+  background: var(--card-bg, #1e293b);
+  color: var(--text-primary, #f1f5f9);
+  border-color: rgba(148, 163, 184, 0.25);
+}
+.pvc-lb-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+  flex-shrink: 0;
+}
+.pvc-lb-caption {
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+.pvc-lb-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+.pvc-lb-status {
+  margin: 0;
+  padding: 0.35rem 0.75rem 0;
+}
+.pvc-lb-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 0.75rem 0.85rem;
+  overflow: auto;
+}
+#pvc-lb-img.pvc-lb-img {
+  max-width: 100%;
+  max-height: min(78vh, 760px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+}
+#pvc-lb-pdf.pvc-lb-pdf {
+  width: 100%;
+  min-height: 62vh;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.2);
+}
+body.dark-theme #pvc-lb-pdf.pvc-lb-pdf {
+  background: rgba(0, 0, 0, 0.35);
+}
+.pvc-lb-fallback {
+  padding: 0.5rem 0;
+}
+
 /* Personal: miniaturas INE + licencia en tabla y vista previa */
 .tec-personal-docs-row {
   display: flex;

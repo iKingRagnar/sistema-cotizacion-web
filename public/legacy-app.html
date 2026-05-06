@@ -34,7 +34,7 @@
   <!-- CSS heredados (primero — los sobreescribe el nuevo sistema MD3) -->
   <link rel="stylesheet" href="css/design-tokens.css?v=4-md3">
   <link rel="stylesheet" href="css/design-system.css?v=3-apex-base">
-  <link rel="stylesheet" href="css/style.css?v=95-pvc-panel-media-viewer-global-2026-05-06">
+  <link rel="stylesheet" href="css/style.css?v=97-pvc-lb-body-scroll-2026-05-06">
   <link rel="stylesheet" href="css/layout-rail.css?v=11-hide-sidebar-global-strip">
   <link rel="stylesheet" href="css/header-profile.css?v=10-chrome-luna-neutral-admin-hub">
   <link rel="stylesheet" href="css/theme-industrial.css?v=25-chrome-luna-neutral">
@@ -1536,6 +1536,26 @@
         </div>
       </div>
     </div>
+
+    <div id="pvc-media-lightbox" class="pvc-media-lightbox hidden" role="dialog" aria-modal="true" aria-label="Vista previa de imagen o documento">
+      <div id="pvc-lb-backdrop" class="pvc-lb-backdrop" tabindex="-1"></div>
+      <div class="pvc-lb-dialog">
+        <div class="pvc-lb-toolbar">
+          <span id="pvc-lb-caption" class="pvc-lb-caption"></span>
+          <div class="pvc-lb-toolbar-actions">
+            <button type="button" id="pvc-lb-prev" class="btn small outline pvc-lb-nav hidden" aria-label="Anterior"><i class="fas fa-chevron-left"></i></button>
+            <button type="button" id="pvc-lb-next" class="btn small outline pvc-lb-nav hidden" aria-label="Siguiente"><i class="fas fa-chevron-right"></i></button>
+            <button type="button" id="pvc-lb-close" class="btn small outline" aria-label="Cerrar"><i class="fas fa-times"></i></button>
+          </div>
+        </div>
+        <p id="pvc-lb-status" class="hint pvc-lb-status hidden"></p>
+        <div id="pvc-lb-body" class="pvc-lb-body">
+          <img id="pvc-lb-img" class="pvc-lb-img hidden" alt="" />
+          <iframe id="pvc-lb-pdf" class="pvc-lb-pdf hidden" title="Documento PDF"></iframe>
+          <div id="pvc-lb-fallback" class="pvc-lb-fallback hidden"></div>
+        </div>
+      </div>
+    </div>
   </main>
     </div>
   </div>
@@ -1691,7 +1711,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=183-preview-eye-panel-viewer-ref-maq-tec-2026-05-06"></script>
+  <script src="js/app.js?v=185-lightbox-ver-refaccion-cliente-2026-05-06"></script>
   <script src="js/bg-animation.js?v=6-no-motion-mobile-only" defer></script>
 </body>
 </html>

@@ -2104,6 +2104,348 @@
     }
   }
 
+  /** --- Lightbox solo medios (galería; encima de modales) --- */
+  let _pvcLbBlobUrl = null;
+  let _pvcLbItems = [];
+  let _pvcLbIndex = 0;
+  let _pvcLbKeyHandler = null;
+  let _pvcLbUiWired = false;
+
+  function pvcLbEncodeGallery(items) {
+    const a = (items || []).map((it) => ({
+      u: String(it.url || '').trim(),
+      l: String(it.label || ''),
+      p: it.forcePdf ? 1 : 0,
+    })).filter((x) => x.u);
+    try {
+      return encodeURIComponent(JSON.stringify(a));
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function pvcLbDecodeGallery(gAttr) {
+    if (!gAttr) return [];
+    try {
+      const raw = decodeURIComponent(String(gAttr));
+      const arr = JSON.parse(raw);
+      if (!Array.isArray(arr)) return [];
+      return arr
+        .map((x) => ({
+          url: String(x && x.u != null ? x.u : '').trim(),
+          label: String(x && x.l != null ? x.l : ''),
+          forcePdf: !!(x && x.p),
+        }))
+        .filter((it) => it.url);
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function hidePvcMediaLightbox() {
+    const root = qs('#pvc-media-lightbox');
+    const imgEl = qs('#pvc-lb-img');
+    const pdfEl = qs('#pvc-lb-pdf');
+    const fbEl = qs('#pvc-lb-fallback');
+    const statusEl = qs('#pvc-lb-status');
+    if (imgEl) {
+      imgEl.classList.add('hidden');
+      try {
+        imgEl.removeAttribute('src');
+      } catch (_) {}
+      imgEl.onload = null;
+      imgEl.onerror = null;
+    }
+    if (pdfEl) {
+      pdfEl.classList.add('hidden');
+      try {
+        pdfEl.removeAttribute('src');
+      } catch (_) {}
+    }
+    if (fbEl) {
+      fbEl.innerHTML = '';
+      fbEl.classList.add('hidden');
+    }
+    if (_pvcLbBlobUrl) {
+      try {
+        URL.revokeObjectURL(_pvcLbBlobUrl);
+      } catch (_) {}
+      _pvcLbBlobUrl = null;
+    }
+    if (statusEl) {
+      statusEl.textContent = '';
+      statusEl.classList.add('hidden');
+    }
+    if (root) root.classList.add('hidden');
+    _pvcLbItems = [];
+    _pvcLbIndex = 0;
+    if (_pvcLbKeyHandler) {
+      try {
+        document.removeEventListener('keydown', _pvcLbKeyHandler, true);
+      } catch (_) {}
+      _pvcLbKeyHandler = null;
+    }
+    try {
+      document.body.classList.remove('pvc-lb-open');
+    } catch (_) {}
+  }
+
+  function pvcLbUpdateNavUi() {
+    const prev = qs('#pvc-lb-prev');
+    const next = qs('#pvc-lb-next');
+    const n = _pvcLbItems.length;
+    const show = n > 1;
+    if (prev) {
+      prev.classList.toggle('hidden', !show);
+      prev.disabled = !show || _pvcLbIndex <= 0;
+    }
+    if (next) {
+      next.classList.toggle('hidden', !show);
+      next.disabled = !show || _pvcLbIndex >= n - 1;
+    }
+  }
+
+  async function pvcMediaLightboxRenderCurrentItem() {
+    const item = _pvcLbItems[_pvcLbIndex];
+    const u = item && String(item.url || '').trim();
+    const o = { forcePdf: !!(item && item.forcePdf) };
+    const root = qs('#pvc-media-lightbox');
+    const imgEl = qs('#pvc-lb-img');
+    const pdfEl = qs('#pvc-lb-pdf');
+    const fbEl = qs('#pvc-lb-fallback');
+    const statusEl = qs('#pvc-lb-status');
+    const capEl = qs('#pvc-lb-caption');
+    if (!root || !imgEl || !pdfEl || !fbEl) {
+      showToast('Vista previa no disponible. Recarga la página (F5).', 'error');
+      return;
+    }
+    if (_pvcLbBlobUrl) {
+      try {
+        URL.revokeObjectURL(_pvcLbBlobUrl);
+      } catch (_) {}
+      _pvcLbBlobUrl = null;
+    }
+    imgEl.classList.add('hidden');
+    pdfEl.classList.add('hidden');
+    fbEl.classList.add('hidden');
+    fbEl.innerHTML = '';
+    try {
+      imgEl.removeAttribute('src');
+    } catch (_) {}
+    try {
+      pdfEl.removeAttribute('src');
+    } catch (_) {}
+    if (statusEl) {
+      statusEl.classList.remove('hidden');
+      statusEl.textContent = 'Cargando…';
+    }
+    if (capEl) {
+      const lab = item && item.label ? String(item.label) : '';
+      const idx = _pvcLbItems.length > 1 ? ' (' + (_pvcLbIndex + 1) + '/' + _pvcLbItems.length + ')' : '';
+      capEl.textContent = (lab || 'Vista') + idx;
+    }
+    pvcLbUpdateNavUi();
+
+    const clearLoading = () => {
+      if (statusEl) {
+        statusEl.textContent = '';
+        statusEl.classList.add('hidden');
+      }
+    };
+    const fail = (err) => {
+      hidePvcMediaLightbox();
+      showToast(String(err && err.message ? err.message : err) || 'No se pudo cargar el archivo.', 'error');
+    };
+
+    if (!u) {
+      fail(new Error('Sin URL.'));
+      return;
+    }
+
+    const useDirectImg =
+      pvcIsDisplayableImageUrl(u) &&
+      !pvcIsPdfUrl(u) &&
+      !pvcIsApiBinaryResourceUrl(u) &&
+      !u.startsWith('blob:') &&
+      !u.startsWith('data:');
+
+    const useDirectPdf =
+      pvcIsPdfUrl(u) && !pvcIsApiBinaryResourceUrl(u) && !u.startsWith('blob:') && !u.startsWith('data:');
+
+    if (useDirectImg) {
+      imgEl.onload = () => {
+        imgEl.onload = null;
+        imgEl.onerror = null;
+        clearLoading();
+      };
+      imgEl.onerror = () => {
+        imgEl.onload = null;
+        imgEl.onerror = null;
+        fail(new Error('No se pudo mostrar la imagen.'));
+      };
+      imgEl.src = u;
+      imgEl.classList.remove('hidden');
+      return;
+    }
+
+    if (useDirectPdf) {
+      pdfEl.src = u;
+      pdfEl.classList.remove('hidden');
+      clearLoading();
+      return;
+    }
+
+    const headers = {};
+    const tok = getAuthToken();
+    if (tok) headers['Authorization'] = 'Bearer ' + tok;
+    try {
+      const r = await fetch(u, { headers, credentials: 'same-origin' });
+      if (!r.ok) {
+        let msg = 'No se pudo cargar el archivo.';
+        try {
+          const j = await r.json();
+          if (j && j.error) msg = j.error;
+        } catch (_) {}
+        throw new Error(msg);
+      }
+      const ct = String(r.headers.get('content-type') || '');
+      const blob = await r.blob();
+      const objUrl = URL.createObjectURL(blob);
+      _pvcLbBlobUrl = objUrl;
+      const looksImage =
+        /^image\//i.test(ct) ||
+        /^image\//i.test(blob.type) ||
+        (await pvcBlobSniffIsImageBlob(blob));
+      const looksPdf =
+        /^application\/pdf/i.test(ct) ||
+        /^application\/pdf/i.test(blob.type) ||
+        !!o.forcePdf;
+      clearLoading();
+      if (looksImage) {
+        imgEl.src = objUrl;
+        imgEl.classList.remove('hidden');
+      } else if (looksPdf) {
+        pdfEl.src = objUrl;
+        pdfEl.classList.remove('hidden');
+      } else {
+        fbEl.innerHTML =
+          '<a class="btn primary" href="' +
+          escapeHtml(objUrl) +
+          '" target="_blank" rel="noopener noreferrer">Abrir archivo</a>';
+        fbEl.classList.remove('hidden');
+      }
+    } catch (err) {
+      fail(err);
+    }
+  }
+
+  async function openPvcMediaLightboxGallery(items, startIndex) {
+    const list = (items || []).filter((it) => it && String(it.url || '').trim());
+    if (!list.length) {
+      showToast('No hay archivo para mostrar.', 'error');
+      return;
+    }
+    const root = qs('#pvc-media-lightbox');
+    if (!root) {
+      showToast('Vista previa no disponible. Recarga la página (F5).', 'error');
+      return;
+    }
+    _pvcLbItems = list;
+    _pvcLbIndex = Math.max(0, Math.min(Number(startIndex) || 0, list.length - 1));
+    root.classList.remove('hidden');
+    try {
+      document.body.classList.add('pvc-lb-open');
+    } catch (_) {}
+    if (!_pvcLbKeyHandler) {
+      _pvcLbKeyHandler = function (ev) {
+        if (!ev || ev.key !== 'Escape') return;
+        const lb = qs('#pvc-media-lightbox');
+        if (!lb || lb.classList.contains('hidden')) return;
+        ev.preventDefault();
+        hidePvcMediaLightbox();
+      };
+      document.addEventListener('keydown', _pvcLbKeyHandler, true);
+    }
+    if (!_pvcLbUiWired) {
+      _pvcLbUiWired = true;
+      const close = () => hidePvcMediaLightbox();
+      const bd = qs('#pvc-lb-backdrop');
+      const x = qs('#pvc-lb-close');
+      const prev = qs('#pvc-lb-prev');
+      const next = qs('#pvc-lb-next');
+      if (bd) bd.addEventListener('click', close);
+      if (x) x.addEventListener('click', close);
+      if (prev) {
+        prev.addEventListener('click', () => {
+          if (_pvcLbIndex > 0) {
+            _pvcLbIndex--;
+            void pvcMediaLightboxRenderCurrentItem();
+          }
+        });
+      }
+      if (next) {
+        next.addEventListener('click', () => {
+          if (_pvcLbIndex < _pvcLbItems.length - 1) {
+            _pvcLbIndex++;
+            void pvcMediaLightboxRenderCurrentItem();
+          }
+        });
+      }
+    }
+    await pvcMediaLightboxRenderCurrentItem();
+    try {
+      qs('#pvc-lb-close') && qs('#pvc-lb-close').focus({ preventScroll: true });
+    } catch (_) {}
+  }
+
+  function pvcLbPushIfMedia(out, url, label) {
+    const u = String(url || '').trim();
+    if (!u) return;
+    if (
+      pvcIsDisplayableImageUrl(u) ||
+      pvcIsPdfUrl(u) ||
+      pvcIsApiBinaryResourceUrl(u) ||
+      u.startsWith('data:') ||
+      u.startsWith('blob:')
+    ) {
+      out.push({ url: u, label: label || '', forcePdf: pvcIsPdfUrl(u) });
+    }
+  }
+
+  function pvcLbItemsRefaccionEditModal(startIdx) {
+    const out = [];
+    const u1 = qs('#m-imagen') && String(qs('#m-imagen').value || '').trim();
+    const u2 = qs('#m-manual') && String(qs('#m-manual').value || '').trim();
+    pvcLbPushIfMedia(out, u1, 'Foto 1 · Manual de partes');
+    pvcLbPushIfMedia(out, u2, 'Foto 2 · Pieza (diagrama)');
+    if (!out.length) return null;
+    return { items: out, start: Math.max(0, Math.min(Number(startIdx) || 0, out.length - 1)) };
+  }
+
+  function pvcLbItemsTecnicoEditModal(startIdx) {
+    const out = [];
+    const ineEx = qs('#m-tec-ine-existing');
+    const licEx = qs('#m-tec-lic-existing');
+    const ineNew = qs('#m-tec-ine-new');
+    const licNew = qs('#m-tec-lic-new');
+    let ineU = '';
+    if (ineNew && !ineNew.classList.contains('hidden') && ineNew.src) ineU = String(ineNew.src || '').trim();
+    else if (ineEx && !ineEx.classList.contains('hidden')) {
+      const im = qs('#m-tec-ine-img');
+      if (im && im.src) ineU = String(im.src || '').trim();
+    }
+    let licU = '';
+    if (licNew && !licNew.classList.contains('hidden') && licNew.src) licU = String(licNew.src || '').trim();
+    else if (licEx && !licEx.classList.contains('hidden')) {
+      const im = qs('#m-tec-lic-img');
+      if (im && im.src) licU = String(im.src || '').trim();
+    }
+    pvcLbPushIfMedia(out, ineU, 'INE');
+    pvcLbPushIfMedia(out, licU, 'Licencia de conducir');
+    if (!out.length) return null;
+    return { items: out, start: Math.max(0, Math.min(Number(startIdx) || 0, out.length - 1)) };
+  }
+
   /** Miniatura en tabla: /api/ sin extensión usa icono (evita <img> sin auth en src). */
   function pvcTablaThumbOpenButton(url, title) {
     const u = String(url || '').trim();
@@ -2262,25 +2604,86 @@
     );
   })();
 
-  /** Fallback ultra-robusto: captura clics de medios en todo el documento. */
+  /** Fallback ultra-robusto: lightbox (Ver / galería) vs visor al pie (miniaturas de tabla, etc.). */
   (function bindGlobalMediaOpenCapture() {
-    document.addEventListener('click', function (e) {
-      const t = e && e.target;
-      if (!t || !t.closest) return;
-      const btn = t.closest('.js-refaccion-open-media');
-      if (!btn || btn.disabled) return;
-      // Evita interferir con navegación normal fuera de la UI del sistema
-      if (!document.body.contains(btn)) return;
-      e.preventDefault();
-      e.stopPropagation();
-      try { e.stopImmediatePropagation(); } catch (_) {}
-      const url = pvcMediaUrlFromBtn(btn);
-      if (!url) {
-        showToast('No se pudo abrir la imagen/archivo. Recarga la página (F5).', 'error');
-        return;
-      }
-      void openPanelMediaViewerFromUrl(getActivePanelIdForMedia(), 'Vista', url);
-    }, true);
+    document.addEventListener(
+      'click',
+      function (e) {
+        const t = e && e.target;
+        if (!t || !t.closest) return;
+        const lb = t.closest('.js-pvc-media-lightbox');
+        if (lb && !lb.disabled && document.body.contains(lb)) {
+          e.preventDefault();
+          e.stopPropagation();
+          try {
+            e.stopImmediatePropagation();
+          } catch (_) {}
+          const role = String(lb.getAttribute('data-lb-role') || '').trim();
+          if (role === 'refaccion-edit') {
+            const pack = pvcLbItemsRefaccionEditModal(lb.getAttribute('data-lb-i'));
+            if (!pack) {
+              showToast('No hay fotos para mostrar todavía.', 'error');
+              return;
+            }
+            void openPvcMediaLightboxGallery(pack.items, pack.start);
+            return;
+          }
+          if (role === 'tecnico-edit') {
+            const pack = pvcLbItemsTecnicoEditModal(lb.getAttribute('data-lb-i'));
+            if (!pack) {
+              showToast('No hay INE ni licencia para mostrar.', 'error');
+              return;
+            }
+            void openPvcMediaLightboxGallery(pack.items, pack.start);
+            return;
+          }
+          if (role === 'cliente-const') {
+            const id = lb.getAttribute('data-cliente-id');
+            const list = clientesCache && clientesCache.length ? clientesCache : [];
+            const found = list.find((x) => String(x && x.id) === String(id));
+            if (!found || !found.has_constancia) {
+              showToast('No hay constancia en sistema para este cliente.', 'error');
+              return;
+            }
+            const url = API + '/clientes/' + encodeURIComponent(found.id) + '/constancia';
+            const forcePdf = String(found.constancia_kind || '') === 'pdf' || lb.getAttribute('data-const-kind') === 'pdf';
+            void openPvcMediaLightboxGallery(
+              [{ url, label: 'Constancia · ' + (found.nombre || 'Cliente'), forcePdf }],
+              0,
+            );
+            return;
+          }
+          const g = lb.getAttribute('data-lb-g');
+          let items = pvcLbDecodeGallery(g);
+          if (!items.length) {
+            const url = pvcMediaUrlFromBtn(lb);
+            if (!url) {
+              showToast('No se pudo abrir la imagen/archivo. Recarga la página (F5).', 'error');
+              return;
+            }
+            items = [{ url, label: String(lb.getAttribute('title') || 'Vista'), forcePdf: lb.getAttribute('data-lb-force-pdf') === '1' }];
+          }
+          const start = parseInt(String(lb.getAttribute('data-lb-i') || '0'), 10) || 0;
+          void openPvcMediaLightboxGallery(items, start);
+          return;
+        }
+        const btn = t.closest('.js-refaccion-open-media');
+        if (!btn || btn.disabled) return;
+        if (!document.body.contains(btn)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+          e.stopImmediatePropagation();
+        } catch (_) {}
+        const url = pvcMediaUrlFromBtn(btn);
+        if (!url) {
+          showToast('No se pudo abrir la imagen/archivo. Recarga la página (F5).', 'error');
+          return;
+        }
+        void openPanelMediaViewerFromUrl(getActivePanelIdForMedia(), 'Vista', url);
+      },
+      true
+    );
   })();
 
   (function bindGlobalMediaDownloadCapture() {
@@ -3286,26 +3689,8 @@
     void openPanelMediaViewerFromUrl(getActivePanelIdForMedia(), 'Vista', u);
   }
 
-  /** Tras innerHTML del modal: addEventListener en cada .js-refaccion-open-media (onclick en HTML no es fiable con innerHTML/CSP). */
-  function wireModalMediaOpenButtons(root) {
-    if (!root) return;
-    root.querySelectorAll('.js-refaccion-open-media').forEach((btn) => {
-      btn.addEventListener(
-        'click',
-        (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          const url = pvcMediaUrlFromBtn(btn);
-          if (!url) {
-            showToast('No se pudo abrir la imagen. Recarga la página (F5).', 'error');
-            return;
-          }
-          openRefaccionMediaFull(url);
-        },
-        true
-      );
-    });
-  }
+  /** Obsoleto: la apertura de medios va por captura en documento (lightbox vs panel). */
+  function wireModalMediaOpenButtons(_root) {}
 
   function pvcMediaDownloadButtonHtml(mediaRef, dataUrl, downloadName, extraClass) {
     if (!canDownloadUploadedMedia()) return '';
@@ -3323,33 +3708,39 @@
       ' title="Descargar"><i class="fas fa-download"></i> Descargar</button>'
     );
   }
-  function heroCtaRowHtml(mediaRef, dataUrl, downloadName) {
-    const openAttr = mediaRef
-      ? 'data-media-ref="' + escapeHtml(mediaRef) + '"'
-      : 'data-url="' + escapeHtml(dataUrl) + '"';
+  function heroCtaRowHtml(mediaRef, dataUrl, downloadName, lbG, lbIndex) {
     const dl = pvcMediaDownloadButtonHtml(mediaRef, dataUrl, downloadName);
+    const hasG = !!(lbG && String(lbG).trim());
+    const openCore = hasG
+      ? 'data-lb-g="' + lbG + '" data-lb-i="' + String(Number(lbIndex) || 0) + '"'
+      : mediaRef
+        ? 'data-media-ref="' + escapeHtml(mediaRef) + '"'
+        : 'data-url="' + escapeHtml(dataUrl) + '"';
     return (
       '<div class="ref-pvc-hero-cta-row">' +
-      '<button type="button" class="ref-pvc-hero-cta-btn js-refaccion-open-media" ' +
-      openAttr +
-      ' title="Ver completo"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>' +
+      '<button type="button" class="ref-pvc-hero-cta-btn js-pvc-media-lightbox" ' +
+      openCore +
+      ' title="Ver solo imagen / documento (galería si hay varias)"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>' +
       dl +
       '</div>'
     );
   }
-  function heroFrameImageHtml(mediaRef, dataUrl, imgSrc, alt, downloadName) {
-    const openAttr = mediaRef
-      ? 'data-media-ref="' + escapeHtml(mediaRef) + '"'
-      : 'data-url="' + escapeHtml(dataUrl) + '"';
+  function heroFrameImageHtml(mediaRef, dataUrl, imgSrc, alt, downloadName, lbG, lbIndex) {
+    const hasG = !!(lbG && String(lbG).trim());
+    const openCore = hasG
+      ? 'data-lb-g="' + lbG + '" data-lb-i="' + String(Number(lbIndex) || 0) + '"'
+      : mediaRef
+        ? 'data-media-ref="' + escapeHtml(mediaRef) + '"'
+        : 'data-url="' + escapeHtml(dataUrl) + '"';
     return (
       '<div class="ref-pvc-hero-frame">' +
-      '<button type="button" class="ref-pvc-hero-frame-hit js-refaccion-open-media" ' +
-      openAttr +
-      ' title="Ver imagen completa">' +
+      '<button type="button" class="ref-pvc-hero-frame-hit js-pvc-media-lightbox" ' +
+      openCore +
+      ' title="Ver solo imagen / documento">' +
       '<img src="' + escapeHtml(imgSrc) + '" alt="' + escapeHtml(alt || '') + '" loading="lazy">' +
       '<span class="ref-pvc-hero-shine"></span>' +
       '</button>' +
-      heroCtaRowHtml(mediaRef, dataUrl, downloadName) +
+      heroCtaRowHtml(mediaRef, dataUrl, downloadName, lbG, lbIndex) +
       '</div>'
     );
   }
@@ -3438,6 +3829,11 @@
     const imgPieza = r.manual_url ? String(r.manual_url).trim() : '';
     if (!imgPart && !imgPieza) return '';
     const isPdf = (u) => u && pvcIsPdfUrl(u);
+    const lbItems = [];
+    pvcLbPushIfMedia(lbItems, imgPart, 'Foto 1 · Número de parte');
+    pvcLbPushIfMedia(lbItems, imgPieza, 'Foto 2 · Pieza (diagrama)');
+    const lbG = lbItems.length ? pvcLbEncodeGallery(lbItems) : '';
+    const piezaLbIndex = imgPart && lbItems.length > 1 ? 1 : 0;
 
     function blockNumeroParte(url) {
       if (pvcIsDisplayableImageUrl(url)) {
@@ -3445,7 +3841,7 @@
         return (
           '<div class="ref-pvc-hero-main">' +
           '<span class="ref-pvc-hero-kicker"><i class="fas fa-barcode"></i> Número de parte</span>' +
-          heroFrameImageHtml(ref, null, url, 'Número de parte', 'refaccion-numero-parte') +
+          heroFrameImageHtml(ref, null, url, 'Número de parte', 'refaccion-numero-parte', lbG, 0) +
           '</div>'
         );
       }
@@ -3471,22 +3867,23 @@
       if (pvcIsDisplayableImageUrl(url)) {
         const ref = registerPvcMediaUrl(url);
         const dl = pvcMediaDownloadButtonHtml(ref, null, 'refaccion-pieza-mini', 'ref-pvc-pieza-mini-dl');
+        const gAttr = lbG ? 'data-lb-g="' + escapeHtml(lbG) + '" data-lb-i="' + String(piezaLbIndex) + '"' : 'data-media-ref="' + escapeHtml(ref) + '"';
         return (
           '<aside class="ref-pvc-hero-side' + (compact ? ' ref-pvc-hero-side--thumb' : '') + '">' +
           '<span class="ref-pvc-hero-kicker ref-pvc-hero-kicker--accent"><i class="fas fa-puzzle-piece"></i> Pieza</span>' +
           '<div class="ref-pvc-pieza-card">' +
           '<div class="ref-pvc-pieza-ring"></div>' +
-          '<button type="button" class="ref-pvc-pieza-img-hit js-refaccion-open-media" data-media-ref="' +
-          escapeHtml(ref) +
-          '" title="Ver imagen completa">' +
+          '<button type="button" class="ref-pvc-pieza-img-hit js-pvc-media-lightbox" ' +
+          gAttr +
+          ' title="Ver solo imagen (galería si hay varias)">' +
           '<img src="' + escapeHtml(url) + '" alt="Vista pieza" loading="lazy">' +
           '</button>' +
           '</div>' +
           '<div class="ref-pvc-pieza-actions">' +
           dl +
-          '<button type="button" class="ref-pvc-pieza-mini-zoom js-refaccion-open-media" data-media-ref="' +
-          escapeHtml(ref) +
-          '" title="Ver imagen completa">' +
+          '<button type="button" class="ref-pvc-pieza-mini-zoom js-pvc-media-lightbox" ' +
+          gAttr +
+          ' title="Ver solo imagen (galería si hay varias)">' +
           '<i class="fas fa-search-plus"></i></button>' +
           '</div>' +
           '</aside>'
@@ -3507,7 +3904,7 @@
         return (
           '<div class="ref-pvc-hero-main ref-pvc-hero-main--solo">' +
           '<span class="ref-pvc-hero-kicker"><i class="fas fa-puzzle-piece"></i> Pieza</span>' +
-          heroFrameImageHtml(ref, null, url, 'Pieza', 'refaccion-pieza') +
+          heroFrameImageHtml(ref, null, url, 'Pieza', 'refaccion-pieza', lbG, 0) +
           '</div>'
         );
       }
@@ -3545,10 +3942,16 @@
     if (!u) return '';
     const mediaRef = registerPvcMediaUrl(u);
     const dl = pvcDownloadBtnCompactHtml(mediaRef, null, slugifyDownloadName(title || 'archivo'));
+    const oneLb = [];
+    pvcLbPushIfMedia(oneLb, u, title || 'Vista');
+    const lbGOne = oneLb.length ? pvcLbEncodeGallery(oneLb) : '';
+    const lbOpen = lbGOne
+      ? `class="pvc-preview-media-btn js-pvc-media-lightbox" data-lb-g="${lbGOne}" data-lb-i="0" title="Ver solo archivo (pantalla completa)"`
+      : `class="pvc-preview-media-btn js-refaccion-open-media" data-media-ref="${mediaRef}" title="Ver imagen"`;
     if (pvcIsDisplayableImageUrl(u)) {
       return `<div class="pvc-preview-media">
         <div class="pvc-preview-media-row">
-        <button type="button" class="pvc-preview-media-btn js-refaccion-open-media" data-media-ref="${mediaRef}" title="Ver imagen completa">
+        <button type="button" ${lbOpen}>
           <img src="${escapeHtml(u)}" class="ref-foto-thumb" alt="${escapeHtml(title || '')}" style="max-height:140px;max-width:100%;object-fit:contain;border-radius:8px;border:1px solid var(--border-color,#e5e7eb);">
         </button>
         ${dl}
@@ -3558,9 +3961,12 @@
     const isPdf = pvcIsPdfUrl(u) || /application\/pdf/i.test(u);
     const icon = isPdf ? 'fa-file-pdf' : 'fa-file-alt';
     const cls = isPdf ? 'cliente-const-slot--pdf' : 'cliente-const-slot--file';
+    const lbOpen2 = lbGOne
+      ? `class="cliente-const-slot ${cls} js-pvc-media-lightbox" data-lb-g="${lbGOne}" data-lb-i="0" style="width:88px;height:88px;display:inline-flex;align-items:center;justify-content:center;" title="Ver solo archivo (pantalla completa)"`
+      : `class="cliente-const-slot ${cls} js-refaccion-open-media" data-media-ref="${mediaRef}" style="width:88px;height:88px;display:inline-flex;align-items:center;justify-content:center;" title="${escapeHtml((title || 'Archivo') + ' · clic para abrir')}"`;
     return `<div class="pvc-preview-media">
       <div class="pvc-preview-media-row">
-      <button type="button" class="cliente-const-slot ${cls} js-refaccion-open-media" data-media-ref="${mediaRef}" style="width:88px;height:88px;display:inline-flex;align-items:center;justify-content:center;" title="${escapeHtml((title || 'Archivo') + ' · clic para abrir')}">
+      <button type="button" ${lbOpen2}>
         <i class="fas ${icon} fa-2x"></i>
       </button>
       ${dl}
@@ -3577,16 +3983,22 @@
     const openUrl = c.id != null ? (API + '/clientes/' + encodeURIComponent(c.id) + '/constancia') : '';
     const dl = pvcDownloadBtnCompactHtml(null, openUrl, 'cliente-constancia');
     const idAttr = c.id != null ? ' data-cliente-id="' + escapeHtml(String(c.id)) + '"' : '';
+    const kindAttr =
+      c.constancia_kind === 'pdf' ? ' data-const-kind="pdf"' : c.constancia_kind === 'image' ? ' data-const-kind="image"' : '';
+    const verLb =
+      c.id != null
+        ? `<button type="button" class="btn small outline js-pvc-media-lightbox" data-lb-role="cliente-const"${idAttr}${kindAttr} title="Ver solo constancia (pantalla completa)"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>`
+        : '';
     if (c.constancia_kind === 'image' && c.constancia_thumb_url) {
-      return `<span class="cliente-const-inline"><button type="button" class="cliente-const-slot js-cliente-const-thumb"${idAttr} title="Ver constancia abajo (la página baja sola)">
+      return `<span class="cliente-const-inline"><button type="button" class="cliente-const-slot js-cliente-const-thumb"${idAttr} title="Bajar a la vista de constancia en el panel">
         <img src="${escapeHtml(c.constancia_thumb_url)}" alt="" class="cliente-const-mini" loading="lazy">
-      </button>${dl}</span>`;
+      </button>${verLb}${dl}</span>`;
     }
     const icon = c.constancia_kind === 'pdf' ? 'fa-file-pdf' : 'fa-file-alt';
     const cls = c.constancia_kind === 'pdf' ? 'cliente-const-slot--pdf' : 'cliente-const-slot--file';
-    return `<span class="cliente-const-inline"><button type="button" class="cliente-const-slot ${cls} js-cliente-const-thumb"${idAttr} title="Ver constancia abajo (la página baja sola)">
+    return `<span class="cliente-const-inline"><button type="button" class="cliente-const-slot ${cls} js-cliente-const-thumb"${idAttr} title="Bajar a la vista de constancia en el panel">
       <i class="fas ${icon}"></i>
-    </button>${dl}</span>`;
+    </button>${verLb}${dl}</span>`;
   }
 
   async function showClienteConstanciaInPanelFromThumb(found) {
@@ -3598,17 +4010,14 @@
   }
 
   function previewCliente(c) {
-    if (c && c.has_constancia) {
-      void showClienteConstanciaInPanelFromThumb(c);
-      return;
-    }
     clearPvcMediaUrlRegistry();
+    const constHdr = c && c.has_constancia ? '<div style="margin-bottom:0.75rem">' + clienteConstanciaThumbHtml(c) + '</div>' : '';
     openPreviewCard({
       title: c.nombre || 'Cliente',
       subtitle: c.codigo ? 'Código: ' + c.codigo : '',
       icon: 'fa-user-tie',
       color: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a9e 100%)',
-      underHeaderHtml: '',
+      underHeaderHtml: constHdr,
       sections: [{
         title: 'Información fiscal', icon: 'fa-file-invoice',
         fields: [
@@ -3760,16 +4169,6 @@
   // ----- REFACCIONES -----
   function previewRefaccion(r) {
     clearPvcMediaUrlRegistry();
-    const mediaUrl = pvcFirstRefaccionPreviewMediaUrl(r);
-    if (mediaUrl) {
-      void openPanelMediaViewerFromUrl(
-        'refacciones',
-        'Refacción · ' + (r.codigo || r.descripcion || 'Vista'),
-        mediaUrl,
-        { forcePdf: pvcIsPdfUrl(mediaUrl) },
-      );
-      return;
-    }
     const stockBajo = Number(r.stock) <= Number(r.stock_minimo || 1);
     const underHeaderHtml = buildRefaccionPreviewUnderHeader(r);
     const hasSeg = !!(refCategoriaLabel(r.categoria) || refCategoriaLabel(r.subcategoria));
@@ -4186,9 +4585,13 @@
     if (m.imagen_pieza_url) {
       if (pvcIsDisplayableImageUrl(m.imagen_pieza_url)) {
         const imgRef = registerPvcMediaUrl(m.imagen_pieza_url);
+        const lbOne = [];
+        pvcLbPushIfMedia(lbOne, m.imagen_pieza_url, 'Imagen de máquina');
+        const lbG1 = lbOne.length ? pvcLbEncodeGallery(lbOne) : '';
+        const lbAttr = lbG1 ? ` class="js-pvc-media-lightbox" data-lb-g="${lbG1}" data-lb-i="0" title="Ver solo imagen (pantalla completa)"` : ` class="js-refaccion-open-media" data-media-ref="${escapeHtml(imgRef)}" title="Ver imagen"`;
         cur =
           `<div class="ref-foto-preview-wrap">
-             <button type="button" class="js-refaccion-open-media" data-media-ref="${escapeHtml(imgRef)}" title="Ver imagen completa" style="border:none;background:transparent;padding:0;cursor:zoom-in;">
+             <button type="button"${lbAttr} style="border:none;background:transparent;padding:0;cursor:zoom-in;">
                <img src="${escapeHtml(m.imagen_pieza_url)}" class="ref-foto-thumb" alt="Vista previa" loading="lazy">
              </button>
              ${pvcDownloadBtnCompactHtml(imgRef, null, 'maquina-imagen-modal')}
@@ -4231,16 +4634,6 @@
 
   function previewMaquina(m) {
     clearPvcMediaUrlRegistry();
-    const firstMedia = pvcFirstMaquinaPreviewMediaUrl(m);
-    if (firstMedia && firstMedia.url) {
-      void openPanelMediaViewerFromUrl(
-        'maquinas',
-        'Máquina · ' + (m.categoria || m.modelo || m.nombre || 'Vista'),
-        firstMedia.url,
-        { forcePdf: !!firstMedia.forcePdf },
-      );
-      return;
-    }
     const piezaUrl = m.imagen_pieza_url ? String(m.imagen_pieza_url).trim() : '';
     const ensUrl = m.imagen_ensamble_url ? String(m.imagen_ensamble_url).trim() : '';
     const piezaPdf = piezaUrl && pvcIsPdfUrl(piezaUrl);
@@ -4249,10 +4642,27 @@
     const ensImg = ensUrl && pvcIsDisplayableImageUrl(ensUrl) && !ensPdf;
     const piezaMediaRef = piezaUrl ? registerPvcMediaUrl(piezaUrl) : '';
     const ensMediaRef = ensUrl ? registerPvcMediaUrl(ensUrl) : '';
+    const lbItemsMaq = [];
+    pvcLbPushIfMedia(lbItemsMaq, piezaUrl, 'Imagen de carga máquina');
+    pvcLbPushIfMedia(lbItemsMaq, ensUrl, 'Especificaciones');
+    const lbGMaq = lbItemsMaq.length ? pvcLbEncodeGallery(lbItemsMaq) : '';
+    function maqLbIndexForUrl(u) {
+      const s = String(u || '').trim();
+      if (!s || !lbGMaq) return 0;
+      const i = lbItemsMaq.findIndex((it) => String(it.url || '').trim() === s);
+      return i >= 0 ? i : 0;
+    }
+    const idxPiezaLb = maqLbIndexForUrl(piezaUrl);
+    const idxEnsLb = maqLbIndexForUrl(ensUrl);
+    function maqSingleLbG(u, label) {
+      const one = [];
+      pvcLbPushIfMedia(one, u, label);
+      return one.length ? pvcLbEncodeGallery(one) : '';
+    }
     const ensKicker = ensUrl ? (ensPdf ? 'PDF' : ensImg ? 'Imagen' : 'Archivo') : '—';
     const piezaLeftBlock = piezaPdf
       ? `<div class="ref-pvc-hero-doc-row">
-           <button type="button" class="ref-pvc-hero-doc js-refaccion-open-media" data-media-ref="${escapeHtml(piezaMediaRef)}" title="Abrir PDF">
+           <button type="button" class="ref-pvc-hero-doc js-pvc-media-lightbox" data-lb-g="${maqSingleLbG(piezaUrl, 'PDF · imagen de carga')}" data-lb-i="0" title="Ver solo documento (pantalla completa)">
              <span class="ref-pvc-hero-doc-icon"><i class="fas fa-file-pdf"></i></span>
              <div>
                <div class="ref-pvc-hero-doc-title">PDF · imagen de carga</div>
@@ -4263,10 +4673,10 @@
            ${pvcMediaDownloadButtonHtml(piezaMediaRef, null, 'maquina-imagen-carga', 'ref-pvc-hero-doc-dl')}
          </div>`
       : piezaImg
-        ? heroFrameImageHtml(piezaMediaRef, null, piezaUrl, 'Imagen de carga máquina', 'maquina-imagen-carga')
+        ? heroFrameImageHtml(piezaMediaRef, null, piezaUrl, 'Imagen de carga máquina', 'maquina-imagen-carga', lbGMaq, idxPiezaLb)
         : piezaUrl
           ? `<div class="ref-pvc-hero-doc-row">
-               <button type="button" class="ref-pvc-hero-doc js-refaccion-open-media" data-media-ref="${escapeHtml(piezaMediaRef)}" title="Abrir archivo">
+               <button type="button" class="ref-pvc-hero-doc js-pvc-media-lightbox" data-lb-g="${maqSingleLbG(piezaUrl, 'Archivo adjunto')}" data-lb-i="0" title="Ver solo archivo (pantalla completa)">
                  <span class="ref-pvc-hero-doc-icon"><i class="fas fa-file"></i></span>
                  <div>
                    <div class="ref-pvc-hero-doc-title">Archivo adjunto</div>
@@ -4278,10 +4688,10 @@
              </div>`
           : '<div class="ref-pvc-hero-frame ref-pvc-hero-frame--empty" title="Sin imagen de carga máquina"><span class="ref-pvc-hero-frame-empty-inner"><i class="fas fa-camera"></i> Sin imagen</span><span class="ref-pvc-hero-frame-empty-hint">Usa <strong>Editar máquina</strong> para subir foto de catálogo.</span></div>';
     const ensRightBlock = ensImg
-      ? heroFrameImageHtml(ensMediaRef, null, ensUrl, 'Especificaciones', 'maquina-especificaciones')
+      ? heroFrameImageHtml(ensMediaRef, null, ensUrl, 'Especificaciones', 'maquina-especificaciones', lbGMaq, idxEnsLb)
       : ensUrl
         ? `<div class="ref-pvc-hero-doc-row">
-             <button type="button" class="ref-pvc-hero-doc js-refaccion-open-media" data-media-ref="${escapeHtml(ensMediaRef)}" title="Clic para abrir">
+             <button type="button" class="ref-pvc-hero-doc js-pvc-media-lightbox" data-lb-g="${maqSingleLbG(ensUrl, ensPdf ? 'Especificaciones (PDF)' : 'Especificaciones')}" data-lb-i="0" title="Ver solo documento (pantalla completa)">
                <span class="ref-pvc-hero-doc-icon"><i class="fas ${ensPdf ? 'fa-file-pdf' : 'fa-file'}"></i></span>
                <div>
                  <div class="ref-pvc-hero-doc-title">${ensPdf ? 'Abrir PDF' : 'Abrir archivo'}</div>
@@ -7209,6 +7619,7 @@
         <div id="m-constancia-existing" class="${hasConst && !isNew ? '' : 'hidden'}">
           <p class="form-hint" style="margin-top:0"><i class="fas fa-paperclip"></i> Constancia en sistema${constanciaNombreEsc ? ': <strong>' + constanciaNombreEsc + '</strong>' : ''}</p>
           <div class="form-row" style="gap:0.5rem;flex-wrap:wrap;margin-top:0.35rem">
+            <button type="button" class="btn small outline js-pvc-media-lightbox" id="m-btn-ver-constancia" data-lb-role="cliente-const" data-cliente-id="${cliente && cliente.id != null ? escapeHtml(String(cliente.id)) : ''}"${cliente && cliente.constancia_kind === 'pdf' ? ' data-const-kind="pdf"' : cliente && cliente.constancia_kind === 'image' ? ' data-const-kind="image"' : ''} title="Ver solo constancia (pantalla completa)"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>
             <button type="button" class="btn small outline" id="m-btn-dl-constancia"><i class="fas fa-download"></i> Descargar</button>
             <button type="button" class="btn small danger outline" id="m-btn-rm-constancia"><i class="fas fa-times"></i> Quitar constancia</button>
           </div>
@@ -7443,7 +7854,7 @@
             <button type="button" class="js-ref-edit-scroll-preview" id="m-foto1-scroll-btn" data-scroll-target="ref-edit-foto1-full" title="Bajar a la vista previa grande" ${refaccion && refaccion.imagen_url ? '' : 'disabled'} style="border:none;background:transparent;padding:0;cursor:pointer;">
               <img id="m-foto1-thumb-img" src="${refaccion && refaccion.imagen_url ? escapeHtml(refaccion.imagen_url) : ''}" class="ref-foto-thumb" alt="Miniatura Foto 1" loading="lazy">
             </button>
-            <button type="button" class="btn small outline js-refaccion-open-media" id="m-foto1-ver" data-media-ref="${foto1Ref ? escapeHtml(foto1Ref) : ''}" ${foto1Ref ? '' : 'disabled'} title="Ver imagen completa"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>
+            <button type="button" class="btn small outline js-pvc-media-lightbox" id="m-foto1-ver" data-lb-role="refaccion-edit" data-lb-i="0" ${foto1Ref ? '' : 'disabled'} title="Ver solo imágenes (pantalla completa; si hay dos fotos, navega entre ellas)"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>
             ${refaccion && refaccion.imagen_url ? pvcDownloadBtnCompactHtml(foto1Ref, null, 'refaccion-foto1') : ''}
             <button type="button" class="btn small danger" id="m-foto1-clear" style="margin-left:0.5rem"><i class="fas fa-times"></i></button>
           </div>
@@ -7456,7 +7867,7 @@
             <button type="button" class="js-ref-edit-scroll-preview" id="m-foto2-scroll-btn" data-scroll-target="ref-edit-foto2-full" title="Bajar a la vista previa grande" ${refaccion && refaccion.manual_url ? '' : 'disabled'} style="border:none;background:transparent;padding:0;cursor:pointer;">
               <img id="m-foto2-thumb-img" src="${refaccion && refaccion.manual_url ? escapeHtml(refaccion.manual_url) : ''}" class="ref-foto-thumb" alt="Miniatura Foto 2" loading="lazy">
             </button>
-            <button type="button" class="btn small outline js-refaccion-open-media" id="m-foto2-ver" data-media-ref="${foto2Ref ? escapeHtml(foto2Ref) : ''}" ${foto2Ref ? '' : 'disabled'} title="Ver imagen completa"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>
+            <button type="button" class="btn small outline js-pvc-media-lightbox" id="m-foto2-ver" data-lb-role="refaccion-edit" data-lb-i="1" ${foto2Ref ? '' : 'disabled'} title="Ver solo imágenes (pantalla completa; si hay dos fotos, navega entre ellas)"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>
             ${refaccion && refaccion.manual_url ? pvcDownloadBtnCompactHtml(foto2Ref, null, 'refaccion-foto2') : ''}
             <button type="button" class="btn small danger" id="m-foto2-clear" style="margin-left:0.5rem"><i class="fas fa-times"></i></button>
           </div>
@@ -7464,7 +7875,7 @@
         </div>
       </div>
       <div class="ref-edit-previews-anchor" id="ref-edit-previews-panel">
-        <p class="ref-edit-previews-hint"><i class="fas fa-arrow-down"></i> Vista previa grande (usa la miniatura de arriba para bajar aquí; <strong>Ver</strong> abre la imagen completa).</p>
+        <p class="ref-edit-previews-hint"><i class="fas fa-arrow-down"></i> Vista previa grande: usa la <strong>miniatura</strong> de arriba para bajar aquí. El botón <strong>Ver</strong> abre solo las imágenes en pantalla completa (con flechas si hay dos fotos), sin depender de este recuadro.</p>
         <div id="ref-edit-foto1-full" class="ref-edit-foto-full${refaccion && refaccion.imagen_url ? '' : ' ref-edit-foto-full--hidden'}">
           <p class="ref-edit-foto-full-label">Foto 1 · Manual de partes</p>
           <img id="ref-edit-foto1-full-img" alt="Vista previa Foto 1"${refaccion && refaccion.imagen_url ? ' src="' + escapeHtml(refaccion.imagen_url) + '"' : ''} />
@@ -7521,7 +7932,9 @@
         if (thumb) thumb.removeAttribute('src');
         if (ver) {
           ver.disabled = true;
-          ver.setAttribute('data-media-ref', '');
+          ver.removeAttribute('data-media-ref');
+          ver.removeAttribute('data-lb-role');
+          ver.removeAttribute('data-lb-i');
         }
         if (scrollBtn) scrollBtn.disabled = true;
         if (wrap) {
@@ -7536,7 +7949,11 @@
       if (full) full.classList.remove('ref-edit-foto-full--hidden');
       if (ver) {
         ver.disabled = false;
-        ver.setAttribute('data-media-ref', ref);
+        ver.className = 'btn small outline js-pvc-media-lightbox';
+        ver.setAttribute('data-lb-role', 'refaccion-edit');
+        ver.setAttribute('data-lb-i', is1 ? '0' : '1');
+        ver.removeAttribute('data-media-ref');
+        ver.title = 'Ver solo imágenes (pantalla completa; si hay dos fotos, navega entre ellas)';
       }
       if (scrollBtn) scrollBtn.disabled = false;
       if (wrap) wrap.style.display = '';
@@ -12740,16 +13157,6 @@
     if (t && t.id) {
       try { full = await fetchJson(API + '/tecnicos/' + t.id); } catch (_) {}
     }
-    const docPick = pvcFirstTecnicoPreviewMediaUrl(full);
-    if (docPick && docPick.url) {
-      void openPanelMediaViewerFromUrl(
-        'tecnicos',
-        'Documento · ' + (full.nombre || 'Personal'),
-        docPick.url,
-        { forcePdf: !!docPick.forcePdf },
-      );
-      return;
-    }
     const puestoTxt = (full.puesto || full.rol || '').trim() || '—';
     const ineThumb = full.ine_thumb_url || full.ine_foto_url;
     const licThumb = full.licencia_thumb_url || full.licencia_foto_url;
@@ -12757,11 +13164,21 @@
     const licOpen = full.licencia_foto_url || full.licencia_thumb_url;
     let underHeaderHtml = '';
     if (ineThumb || licThumb) {
+      const tecLb = [];
+      pvcLbPushIfMedia(tecLb, ineOpen, 'INE');
+      pvcLbPushIfMedia(tecLb, licOpen, 'Licencia de conducir');
+      const tecG = tecLb.length ? pvcLbEncodeGallery(tecLb) : '';
+      const idxIne = tecLb.length && ineOpen ? tecLb.findIndex((it) => String(it.url || '').trim() === String(ineOpen).trim()) : 0;
+      const idxLic = tecLb.length && licOpen ? tecLb.findIndex((it) => String(it.url || '').trim() === String(licOpen).trim()) : 0;
+      const ineLb = tecG ? ' class="tec-pvc-doc-thumb js-pvc-media-lightbox" data-lb-g="' + tecG + '" data-lb-i="' + String(idxIne >= 0 ? idxIne : 0) + '" title="Ver solo documentos (galería INE / licencia)"' : ' class="tec-pvc-doc-thumb js-refaccion-open-media" data-url="' + escapeHtml(ineOpen) + '" title="Ver INE"';
+      const licLb = tecG ? ' class="tec-pvc-doc-thumb js-pvc-media-lightbox" data-lb-g="' + tecG + '" data-lb-i="' + String(idxLic >= 0 ? idxLic : 0) + '" title="Ver solo documentos (galería INE / licencia)"' : ' class="tec-pvc-doc-thumb js-refaccion-open-media" data-url="' + escapeHtml(licOpen) + '" title="Ver licencia"';
       const parts = [];
       if (ineThumb) {
         parts.push(
           '<div class="tec-pvc-doc"><span class="tec-pvc-doc-label">INE</span><div class="tec-pvc-doc-thumb-row">' +
-          '<button type="button" class="tec-pvc-doc-thumb js-refaccion-open-media" data-url="' + escapeHtml(ineOpen) + '" title="Ver INE">' +
+          '<button type="button"' +
+          ineLb +
+          '>' +
           '<img src="' + escapeHtml(ineThumb) + '" alt="INE" loading="lazy"></button>' +
           pvcDownloadBtnCompactHtml(null, ineOpen, 'tecnico-ine') +
           '</div></div>'
@@ -12770,7 +13187,9 @@
       if (licThumb) {
         parts.push(
           '<div class="tec-pvc-doc"><span class="tec-pvc-doc-label">Licencia</span><div class="tec-pvc-doc-thumb-row">' +
-          '<button type="button" class="tec-pvc-doc-thumb js-refaccion-open-media" data-url="' + escapeHtml(licOpen) + '" title="Ver licencia">' +
+          '<button type="button"' +
+          licLb +
+          '>' +
           '<img src="' + escapeHtml(licThumb) + '" alt="Licencia" loading="lazy"></button>' +
           pvcDownloadBtnCompactHtml(null, licOpen, 'tecnico-licencia') +
           '</div></div>'
