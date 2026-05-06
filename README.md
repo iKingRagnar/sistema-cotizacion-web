@@ -1,11 +1,8 @@
 # Sistema Cotización Web — UI corporativa + app completa
 
-- **Backend y datos:** sin cambios en la fuente de verdad (`server.js`, `auth.js`, `db.js`, rutas `/api`).
-- **Interfaz en `/`:** la SPA histórica completa (`public/js/app.js` + marcado HTML de `public/index.html`) con cotizaciones, clientes, catálogos, etc., igual que en el backup **salvo** que aquí **no** se cargan las hojas `premium.css`, `premium-pro.css`, `luna-nuclear.css`, `nano-fondo.css` ni `premium-ux.js`; el acabado sobrio lo marca **`css/enterprise-ui.css`** al final de la cascada.
-
-Durante un paso anterior existía un **shell vacío** en `public/client/` (solo login + texto placeholder): **ya no es la entrada del sitio**; sigue en el repo por si quieres reaprovechar trozos, pero **`/` vuelve a ser la aplicación real.**
-
-La ruta **`/legacy-app`** sirve el mismo `legacy-app.html` (mantener sincronizado con `index.html` si cambias uno).
+- **Backend y datos:** fuente de verdad sin cambios (`server.js`, `auth.js`, `db.js`, rutas `/api`).
+- **Interfaz en `/`:** cliente **nuevo** (`public/index.html` mínimo + `public/client/styles/app.css` + `public/client/js/app.js`): mismo orden de secciones y mismos datos por API que la SPA histórica, sin copiar su HTML/CSS/JS ni capas premium. Es una vista **de lectura y tablas genéricas** (dashboard vía `/api/dashboard-stats`, listas vía endpoints GET existentes).
+- **Interfaz clásica (cotización completa, formularios, demo masivo):** ruta **`/legacy-app`** → archivo `public/legacy-app.html` (mantener sincronizado si cambias el HTML masivo del proyecto anterior).
 
 ## Arranque local
 
@@ -14,6 +11,10 @@ npm install
 cp .env.example .env   # si existe
 npm start
 ```
+
+### Portada industrial / nano
+
+Opcional: coloca `public/fondos/nano-machining-services.webp` para la foto del hero; si no existe, el fondo sigue siendo el degradado industrial definido en `app.css`.
 
 ## Repositorio
 
