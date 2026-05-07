@@ -19,7 +19,9 @@ html body.login-open #login-overlay.login-overlay--exec-layout {
 
 /*
  * Sin velos ni rejilla a pantalla completa (premium-login): solo foto nano + dos tarjetas.
- * Sin barra de desplazamiento del overlay (login-neutral usa overflow:auto): viewport fijo 100dvh.
+ * Sin barra de desplazamiento del overlay (login-neutral usa overflow:auto).
+ * No forzar height:100dvh aquí: .login-overlay ya es position:fixed + inset:0; sumar 100dvh
+ * puede dejar 1px de hueco y una “raya” de color al fondo del viewport.
  */
 html body.login-open #login-overlay.login-overlay--exec-layout,
 html body.login-open #login-overlay.login-overlay.login-overlay--exec-layout {
@@ -40,23 +42,20 @@ html body.login-open #login-overlay.login-overlay.login-overlay--exec-layout {
   justify-content: center !important;
   box-sizing: border-box !important;
   min-height: 0 !important;
-  max-height: 100dvh !important;
-  height: 100dvh !important;
+  height: auto !important;
+  max-height: none !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
   overflow: hidden !important;
   overscroll-behavior: none !important;
   padding: max(0.5rem, env(safe-area-inset-top, 0px)) max(0.75rem, env(safe-area-inset-right, 0px)) max(0.5rem, env(safe-area-inset-bottom, 0px)) max(0.75rem, env(safe-area-inset-left, 0px)) !important;
 }
 
-/* Evita scrollbar en <html> por desborde mínimo durante login ejecutivo */
+/* Solo cortar scroll del documento; sin max-height en html/body (evita franja inferior). */
 html:has(body.login-open #login-overlay.login-overlay--exec-layout:not(.hidden)) {
   overflow: hidden;
-  height: 100%;
-  max-height: 100dvh;
-}
-
-html:has(body.login-open #login-overlay.login-overlay--exec-layout:not(.hidden)) body {
-  overflow: hidden !important;
-  max-height: 100dvh;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout::after {
@@ -72,9 +71,18 @@ html body.login-open #login-overlay.login-overlay--exec-layout::before {
   content: none !important;
 }
 
-/* universal-art: textura en body que a veces se percibe como marco detrás del overlay */
+/* universal-art: quitar capa fija del body en login (opacity:0 aún puede “filtrar” 1px / raya). */
 html body.md3-on.login-open::before {
+  display: none !important;
+  content: none !important;
   opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* premium-login-aurora: brillo ::after del panel izquierdo puede leerse como raya en el borde inferior */
+html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-panel::after {
+  display: none !important;
+  content: none !important;
 }
 
 /* Shell = Parker .shell (dos columnas + hueco entre paneles; sin “caja única” del split aurora) */
@@ -205,8 +213,11 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-logo
   box-shadow: none !important;
 }
 
-html body.login-open #login-overlay.login-overlay--exec-layout .login-overlay-powered-by {
-  font-style: italic !important;
+/* Carga al final del CSS: gana a ui-legibility (cursiva manuscrita, no solo italic). */
+html body.theme-industrial.login-open #login-overlay.login-overlay--exec-layout .header-powered-by.login-overlay-powered-by {
+  font-family: "Segoe Script", "Brush Script MT", "Snell Roundhand", "Apple Chancery", cursive !important;
+  font-style: normal !important;
+  font-weight: 500 !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-logo-shell .login-brand-logo--hero {
