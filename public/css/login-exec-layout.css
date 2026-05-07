@@ -17,6 +17,9 @@ html body.login-open #login-overlay.login-overlay--exec-layout {
   --sk-text-muted: rgba(226, 232, 240, 0.9);
   --sk-radius: 18px;
   --sk-blur: 18px;
+  /* Punto de contacto herramienta ↔ pieza (fondo cover centrado). Ajustar si cambia la foto. */
+  --sk-weld-x: 50.5%;
+  --sk-weld-y: 43%;
 }
 
 /*
@@ -114,6 +117,128 @@ html body.login-open #login-overlay.login-overlay.login-overlay--exec-layout::be
     transparent 100%
   ) !important;
   animation: login-exec-portada-diagonal 20s ease-in-out infinite alternate !important;
+}
+
+/*
+ * Chispas / arco tipo soldadura en el punto de contacto (nano). z-index 1, debajo del split.
+ * mix-blend-mode: screen — se integra con la foto sin tapar UI.
+ */
+@keyframes login-weld-bloom {
+  from {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(0.88);
+  }
+  to {
+    opacity: 0.95;
+    transform: translate(-50%, -50%) scale(1.06);
+  }
+}
+
+@keyframes login-weld-rays {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+    opacity: 0.55;
+  }
+}
+
+@keyframes login-weld-flicker {
+  0%,
+  100% {
+    opacity: 0.82;
+    filter: brightness(1.05);
+  }
+  40% {
+    opacity: 1;
+    filter: brightness(1.45);
+  }
+  70% {
+    opacity: 0.68;
+    filter: brightness(0.95);
+  }
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout .login-weld-sparks {
+  position: absolute !important;
+  left: var(--sk-weld-x) !important;
+  top: var(--sk-weld-y) !important;
+  z-index: 1 !important;
+  width: 3px !important;
+  height: 3px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 50% !important;
+  pointer-events: none !important;
+  transform: translate(-50%, -50%) !important;
+  mix-blend-mode: screen !important;
+  background: radial-gradient(circle, #ffffff 0%, rgba(200, 240, 255, 0.85) 42%, transparent 72%) !important;
+  box-shadow:
+    16px -20px 0 0 rgba(255, 255, 255, 0.72),
+    -14px -18px 0 0 rgba(255, 220, 180, 0.58),
+    22px 10px 0 -1px rgba(255, 255, 255, 0.45),
+    -20px 12px 0 -1px rgba(180, 230, 255, 0.5),
+    8px -30px 0 0 rgba(255, 255, 255, 0.55),
+    -10px 26px 0 0 rgba(255, 200, 120, 0.48),
+    28px -6px 0 -1px rgba(240, 250, 255, 0.4),
+    -24px -8px 0 -1px rgba(255, 255, 255, 0.38) !important;
+  animation: login-weld-flicker 0.14s ease-in-out infinite !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout .login-weld-sparks::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 44px !important;
+  height: 44px !important;
+  margin: 0 !important;
+  transform: translate(-50%, -50%) !important;
+  border-radius: 50% !important;
+  pointer-events: none !important;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.45) 0%,
+    rgba(120, 200, 255, 0.22) 38%,
+    transparent 68%
+  ) !important;
+  mix-blend-mode: screen !important;
+  animation: login-weld-bloom 0.16s ease-in-out infinite alternate !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout .login-weld-sparks::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 100px !important;
+  height: 100px !important;
+  margin: 0 !important;
+  transform: translate(-50%, -50%) !important;
+  pointer-events: none !important;
+  opacity: 0.65 !important;
+  mix-blend-mode: screen !important;
+  filter: blur(0.4px) !important;
+  background:
+    linear-gradient(95deg, transparent 49.3%, rgba(255, 255, 255, 0.9) 49.85%, rgba(255, 255, 255, 0.9) 50.15%, transparent 50.7%),
+    linear-gradient(148deg, transparent 49.4%, rgba(255, 230, 200, 0.65) 50%, transparent 50.6%),
+    linear-gradient(32deg, transparent 49.5%, rgba(200, 235, 255, 0.6) 50%, transparent 50.5%),
+    linear-gradient(-18deg, transparent 49.6%, rgba(255, 255, 255, 0.55) 50%, transparent 50.4%),
+    linear-gradient(-112deg, transparent 49.5%, rgba(255, 210, 150, 0.5) 50%, transparent 50.5%) !important;
+  background-size: 100% 100% !important;
+  animation: login-weld-rays 3.2s linear infinite !important;
+}
+
+@media (max-width: 900px) {
+  html body.login-open #login-overlay.login-overlay--exec-layout {
+    --sk-weld-y: 46%;
+  }
 }
 
 /* universal-art: quitar capa fija del body en login (opacity:0 aún puede “filtrar” 1px / raya). */
@@ -680,6 +805,19 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-role-card 
 
   html body.login-open #login-overlay.login-overlay--exec-layout .login-split::before {
     animation: none !important;
+  }
+
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-weld-sparks,
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-weld-sparks::before,
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-weld-sparks::after {
+    animation: none !important;
+    opacity: 0.35 !important;
+    filter: none !important;
+  }
+
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-weld-sparks::before,
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-weld-sparks::after {
+    transform: translate(-50%, -50%) scale(0.85) !important;
   }
 }
 
