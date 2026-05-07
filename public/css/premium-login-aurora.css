@@ -302,12 +302,18 @@ html body.login-open #login-overlay .login-submit.btn.primary:hover {
   filter: brightness(1.08) saturate(1.05) !important;
 }
 
+/* Barrido visible aun con html.no-motion (solo este pseudo; el resto sigue sin animar). */
+html.no-motion body.login-open #login-overlay .login-split::before {
+  animation: login-metal-sheen 11s ease-in-out infinite !important;
+}
+
 html body.login-open #login-overlay .login-brand-badges .login-badge {
   border-color: rgba(94, 234, 212, 0.42) !important;
   box-shadow: 0 0 18px rgba(45, 212, 191, 0.12) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html.no-motion body.login-open #login-overlay .login-split::before,
   html body.login-open #login-overlay .login-split::before {
     animation: none !important;
     opacity: 0 !important;
