@@ -74,49 +74,11 @@ html body.login-open #login-overlay.login-overlay--exec-layout::after {
   pointer-events: none !important;
 }
 
-/*
- * Brillo en diagonal (esquina sup. izq. → inf. der.) sobre la foto; z-index 1, bajo el split (2).
- * Sin pointer-events; respeta prefers-reduced-motion abajo.
- */
-@keyframes login-exec-portada-diagonal {
-  0% {
-    transform: translate(-14%, -20%) rotate(38deg) scale(1.02);
-    opacity: 0.5;
-  }
-  50% {
-    transform: translate(6%, 8%) rotate(38deg) scale(1.06);
-    opacity: 0.88;
-  }
-  100% {
-    transform: translate(22%, 26%) rotate(38deg) scale(1.02);
-    opacity: 0.55;
-  }
-}
-
+/* Sin barrido diagonal en portada (::before libre para futuro; antes animaba TL→BR). */
 html body.login-open #login-overlay.login-overlay--exec-layout::before,
 html body.login-open #login-overlay.login-overlay.login-overlay--exec-layout::before {
-  display: block !important;
-  content: "" !important;
-  position: absolute !important;
-  left: -55% !important;
-  top: -55% !important;
-  width: 210% !important;
-  height: 210% !important;
-  z-index: 1 !important;
-  pointer-events: none !important;
-  visibility: visible !important;
-  background: linear-gradient(
-    128deg,
-    transparent 0%,
-    transparent 38%,
-    rgba(45, 212, 191, 0.09) 45%,
-    rgba(255, 255, 255, 0.16) 49.5%,
-    rgba(94, 234, 212, 0.14) 50.2%,
-    rgba(255, 255, 255, 0.1) 52%,
-    transparent 60%,
-    transparent 100%
-  ) !important;
-  animation: login-exec-portada-diagonal 20s ease-in-out infinite alternate !important;
+  display: none !important;
+  content: none !important;
 }
 
 /*
@@ -797,13 +759,6 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-role-card 
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html body.login-open #login-overlay.login-overlay--exec-layout::before,
-  html body.login-open #login-overlay.login-overlay.login-overlay--exec-layout::before {
-    animation: none !important;
-    transform: translate(0, 0) rotate(38deg) scale(1) !important;
-    opacity: 0.32 !important;
-  }
-
   html body.login-open #login-overlay.login-overlay--exec-layout .login-split::before {
     animation: none !important;
   }
