@@ -1,0 +1,148 @@
+/**
+ * ui-legibility-final.css — debe cargarse AL FINAL (después de premium-pro, nano, login-neutral).
+ * Contraste Luna/industrial: nombres en Personal, thead de tablas en modales, Reportes/Cotizaciones
+ * (botones), bloque de carga en editar cliente, tarifas.
+ */
+/* Personal: primera columna (nombre en <strong>) — fuerza texto claro sobre filas oscuras */
+html body.theme-industrial:not(.appearance-light) #tabla-tecnicos.data-table tbody td:first-child,
+html body.theme-industrial:not(.appearance-light) #tabla-tecnicos.data-table tbody td:first-child strong,
+html body.dark-theme #tabla-tecnicos.data-table tbody td:first-child,
+html body.dark-theme #tabla-tecnicos.data-table tbody td:first-child strong {
+  color: #f1f5f9 !important;
+  -webkit-text-fill-color: #f1f5f9 !important;
+}
+
+/* Modales: tablas simples (mantenimientos, garantías, sin cobertura) — gana a premium-pro thead claro */
+html body.theme-industrial:not(.appearance-light) #modal .modal-box .table-simple,
+html body.dark-theme #modal .modal-box .table-simple,
+html body.theme-industrial:not(.appearance-light) #modal-stack .modal-box .table-simple,
+html body.dark-theme #modal-stack .modal-box .table-simple,
+html body.theme-industrial:not(.appearance-light) #confirm-modal .modal-box .table-simple,
+html body.dark-theme #confirm-modal .modal-box .table-simple {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: auto !important;
+}
+html body.theme-industrial:not(.appearance-light) #modal .modal-box .table-simple thead th,
+html body.theme-industrial:not(.appearance-light) #modal-stack .modal-box .table-simple thead th,
+html body.theme-industrial:not(.appearance-light) #confirm-modal .modal-box .table-simple thead th,
+html body.dark-theme #modal .modal-box .table-simple thead th,
+html body.dark-theme #modal-stack .modal-box .table-simple thead th,
+html body.dark-theme #confirm-modal .modal-box .table-simple thead th,
+html body.theme-industrial:not(.appearance-light) .modal-box.modal-box--theme-industrial .table-simple thead th,
+html body.dark-theme .modal-box.modal-box--theme-industrial .table-simple thead th {
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important;
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  border-color: rgba(51, 65, 85, 0.95) !important;
+}
+html body.theme-industrial:not(.appearance-light) #modal .modal-box .table-simple tbody td,
+html body.theme-industrial:not(.appearance-light) #modal-stack .modal-box .table-simple tbody td,
+html body.theme-industrial:not(.appearance-light) #confirm-modal .modal-box .table-simple tbody td,
+html body.dark-theme #modal .modal-box .table-simple tbody td,
+html body.dark-theme #modal-stack .modal-box .table-simple tbody td,
+html body.dark-theme #confirm-modal .modal-box .table-simple tbody td,
+html body.theme-industrial:not(.appearance-light) .modal-box.modal-box--theme-industrial .table-simple tbody td,
+html body.dark-theme .modal-box.modal-box--theme-industrial .table-simple tbody td {
+  color: #e2e8f0 !important;
+  -webkit-text-fill-color: #e2e8f0 !important;
+}
+
+/* Clientes — editar: caja “constancia” clara con texto forzado a oscuro por tema; unificamos a superficie oscura */
+html body.theme-industrial:not(.appearance-light) #modal .modal-box .client-upload-area,
+html body.dark-theme #modal .modal-box .client-upload-area,
+html body.theme-industrial:not(.appearance-light) #modal-stack .modal-box .client-upload-area,
+html body.dark-theme #modal-stack .modal-box .client-upload-area {
+  background: rgba(15, 23, 42, 0.92) !important;
+  border-color: rgba(45, 212, 191, 0.35) !important;
+  border-style: solid !important;
+}
+html body.theme-industrial:not(.appearance-light) #modal .modal-box .client-upload-area .upload-label,
+html body.theme-industrial:not(.appearance-light) #modal .modal-box .client-upload-area .upload-hint,
+html body.dark-theme #modal .modal-box .client-upload-area .upload-label,
+html body.dark-theme #modal .modal-box .client-upload-area .upload-hint,
+html body.theme-industrial:not(.appearance-light) #modal-stack .modal-box .client-upload-area .upload-label,
+html body.theme-industrial:not(.appearance-light) #modal-stack .modal-box .client-upload-area .upload-hint,
+html body.dark-theme #modal-stack .modal-box .client-upload-area .upload-label,
+html body.dark-theme #modal-stack .modal-box .client-upload-area .upload-hint {
+  color: #e2e8f0 !important;
+  -webkit-text-fill-color: #e2e8f0 !important;
+}
+
+/* Reportes: botones finalizar + adjunto en fila; acciones alineadas con aire */
+html body.theme-industrial:not(.appearance-light) #tabla-reportes td .rep-final-wrap,
+html body.dark-theme #tabla-reportes td .rep-final-wrap {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  min-width: 0;
+}
+html body.theme-industrial:not(.appearance-light) #tabla-reportes td .rep-final-wrap > .btn,
+html body.dark-theme #tabla-reportes td .rep-final-wrap > .btn {
+  width: auto !important;
+  max-width: none !important;
+  flex: 0 1 auto !important;
+}
+html body.theme-industrial:not(.appearance-light) #tabla-reportes td.th-actions .rep-actions-row,
+html body.dark-theme #tabla-reportes td.th-actions .rep-actions-row {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 0.45rem !important;
+  width: 100%;
+  min-height: 2.25rem;
+}
+html body.theme-industrial:not(.appearance-light) #tabla-reportes td.th-actions .rep-actions-row > .btn,
+html body.dark-theme #tabla-reportes td.th-actions .rep-actions-row > .btn {
+  margin: 0 !important;
+}
+
+/* Cotizaciones: vigencia con ancho estable; acciones en fila con separación */
+html body.theme-industrial:not(.appearance-light) #tabla-cotizaciones td.cot-cell-vigencia,
+html body.dark-theme #tabla-cotizaciones td.cot-cell-vigencia {
+  min-width: 10rem !important;
+  padding-right: 0.85rem !important;
+  vertical-align: middle !important;
+}
+html body.theme-industrial:not(.appearance-light) #tabla-cotizaciones td.cot-cell-vigencia .cot-vigencia-inner,
+html body.dark-theme #tabla-cotizaciones td.cot-cell-vigencia .cot-vigencia-inner {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  flex-wrap: wrap !important;
+  max-width: 100%;
+}
+html body.theme-industrial:not(.appearance-light) #tabla-cotizaciones td.th-actions .cot-actions-row,
+html body.dark-theme #tabla-cotizaciones td.th-actions .cot-actions-row {
+  display: inline-flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 0.4rem !important;
+  width: 100%;
+}
+html body.theme-industrial:not(.appearance-light) #tabla-cotizaciones td.th-actions .cot-actions-row > .btn,
+html body.dark-theme #tabla-cotizaciones td.th-actions .cot-actions-row > .btn {
+  margin: 0 !important;
+}
+
+/* Tarifas: etiquetas / hints coherentes en panel oscuro */
+html body.theme-industrial:not(.appearance-light) #panel-tarifas .tarifas-section-title,
+html body.dark-theme #panel-tarifas .tarifas-section-title {
+  color: #f1f5f9 !important;
+}
+html body.theme-industrial:not(.appearance-light) #panel-tarifas .tarifas-form-grid label,
+html body.dark-theme #panel-tarifas .tarifas-form-grid label {
+  color: #cbd5e1 !important;
+}
+html body.theme-industrial:not(.appearance-light) #panel-tarifas .tarifas-hint,
+html body.dark-theme #panel-tarifas .tarifas-hint,
+html body.theme-industrial:not(.appearance-light) #panel-tarifas .tarifas-notas-list label,
+html body.dark-theme #panel-tarifas .tarifas-notas-list label {
+  color: #94a3b8 !important;
+}

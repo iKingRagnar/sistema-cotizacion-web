@@ -5330,14 +5330,14 @@
         </td>
         <td>${totalFmt || '—'}</td>
         <td><span class="semaforo ${estadoClass}">${estadoLabel}</span></td>
-        <td class="sla-cell"><span class="semaforo semaforo-${vig.color}" title="${escapeHtml(vig.label)}"><i class="fas ${vig.icon}"></i> ${escapeHtml(vig.label)}</span></td>
-        <td class="th-actions">
+        <td class="sla-cell cot-cell-vigencia"><span class="cot-vigencia-inner"><span class="semaforo semaforo-${vig.color}" title="${escapeHtml(vig.label)}"><i class="fas ${vig.icon}"></i> ${escapeHtml(vig.label)}</span></span></td>
+        <td class="th-actions"><span class="cot-actions-row">
           <button type="button" class="btn small outline btn-preview-cot" data-id="${c.id}" title="Vista previa"><i class="fas fa-eye"></i></button>
           <button type="button" class="btn small outline btn-pdf-cot" data-id="${c.id}" title="Descargar / Imprimir PDF para cliente"><i class="fas fa-file-pdf"></i></button>
           ${c.estado !== 'aplicada' && c.estado !== 'venta' ? `<button type="button" class="btn small success btn-aplicar-cot" data-id="${c.id}" title="Aprobar como venta"><i class="fas fa-check"></i></button>` : ''}
           ${_canEdit ? `<button type="button" class="btn small primary btn-edit-cot" data-id="${c.id}" title="Editar"><i class="fas fa-edit"></i></button>` : ''}
           ${_canDelete ? `<button type="button" class="btn small danger btn-delete-cot" data-id="${c.id}" title="Eliminar"><i class="fas fa-trash"></i></button>` : ''}
-        </td>
+        </span></td>
       `;
       tbody.appendChild(tr);
     });
@@ -5740,11 +5740,11 @@
             <button type="button" class="btn tiny outline btn-adj-firma-rep" data-id="${r.id}" title="Finalizar y adjuntar PDF o imagen firmada (opcional)"><i class="fas fa-paperclip"></i></button>
           </span>`}
         </td>
-        <td class="th-actions">
+        <td class="th-actions"><span class="rep-actions-row">
           <button type="button" class="btn small outline btn-preview-rep" data-id="${r.id}" title="Vista previa"><i class="fas fa-eye"></i></button>
           ${isAdmin ? `<button type="button" class="btn small primary btn-edit-rep" data-id="${r.id}"><i class="fas fa-edit"></i></button>` : (canEdit() ? `<button type="button" class="btn small primary btn-edit-rep" data-id="${r.id}"><i class="fas fa-edit"></i></button>` : '')}
           ${isAdmin ? `<button type="button" class="btn small danger btn-del-rep" data-id="${r.id}"><i class="fas fa-trash"></i></button>` : ''}
-        </td>
+        </span></td>
       `;
       tbody.appendChild(tr);
     });
