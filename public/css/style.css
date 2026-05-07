@@ -2791,6 +2791,18 @@ body.dark-theme .cotz-inventory-hint {
   color: #fde68a;
 }
 body.dark-theme .cotz-inventory-hint i { color: #fbbf24; }
+body.theme-industrial:not(.appearance-light) .cotz-inventory-hint {
+  background: linear-gradient(135deg, rgba(30, 27, 15, 0.92) 0%, rgba(15, 23, 42, 0.92) 100%);
+  border-color: rgba(245, 158, 11, 0.45);
+  color: #fde68a;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+}
+body.theme-industrial:not(.appearance-light) .cotz-inventory-hint strong {
+  color: #fef3c7;
+}
+body.theme-industrial:not(.appearance-light) .cotz-inventory-hint i {
+  color: #fbbf24;
+}
 .cotz-toolbar-lineas {
   margin-top: 0.65rem;
   display: flex;
@@ -7994,4 +8006,191 @@ body.dark-theme .sidebar-nav {
 
 body.dark-theme .data-table tbody tr:hover {
   background: rgba(30, 64, 96, 0.44) !important;
+}
+
+/* ===== Legibilidad industrial / oscuro (reportes, calendario, cotizaciones, demo, auditoría) 2026-05-06 ===== */
+.modal-box.modal-box--theme-industrial .table-simple th,
+.modal-box.modal-box--theme-industrial .table-simple td {
+  border-color: #334155;
+  color: #e2e8f0;
+}
+.modal-box.modal-box--theme-industrial .table-simple thead th {
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+  color: #f8fafc !important;
+  font-weight: 600;
+}
+
+#tabla-reportes td .rep-final-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  min-width: 0;
+}
+#tabla-reportes td .rep-final-wrap > .btn {
+  width: 100%;
+  max-width: 10.5rem;
+  justify-content: center;
+}
+
+html body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .cal-day {
+  background: rgba(30, 41, 59, 0.94) !important;
+  border-color: rgba(51, 65, 85, 0.95) !important;
+}
+html body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .cal-day.cal-today {
+  background: #0f172a !important;
+  border-color: #2dd4bf !important;
+  box-shadow: inset 0 0 0 2px rgba(45, 212, 191, 0.35);
+}
+html body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .cal-day.cal-today .cal-day-num {
+  color: #f0fdfa !important;
+  font-weight: 800;
+}
+html body.theme-industrial:not(.appearance-light) #panel-mantenimiento-garantia .cal-grid {
+  background: rgba(15, 23, 42, 0.55);
+  padding: 0.45rem;
+  border-radius: 12px;
+}
+
+body.dark-theme #tabla-bitacoras .sla-cell .semaforo-green,
+body.dark-theme #tabla-cotizaciones .sla-cell .semaforo-green {
+  background: #064e3b;
+  color: #ecfdf5;
+  border: 1px solid #34d399;
+}
+body.dark-theme #tabla-bitacoras .sla-cell .semaforo-green i,
+body.dark-theme #tabla-cotizaciones .sla-cell .semaforo-green i {
+  color: #6ee7b7;
+}
+body.dark-theme #tabla-bitacoras .sla-cell .semaforo-yellow,
+body.dark-theme #tabla-cotizaciones .sla-cell .semaforo-yellow {
+  background: #713f12;
+  color: #fffbeb;
+  border: 1px solid #fbbf24;
+}
+body.dark-theme #tabla-bitacoras .sla-cell .semaforo-yellow i,
+body.dark-theme #tabla-cotizaciones .sla-cell .semaforo-yellow i {
+  color: #fde68a;
+}
+body.dark-theme #tabla-bitacoras .sla-cell .semaforo-red,
+body.dark-theme #tabla-cotizaciones .sla-cell .semaforo-red {
+  background: #7f1d1d;
+  color: #fef2f2;
+  border: 1px solid #f87171;
+}
+
+body.dark-theme #tabla-bitacoras td.th-actions,
+body.dark-theme #tabla-cotizaciones td.th-actions {
+  background: rgba(15, 23, 42, 0.92) !important;
+  vertical-align: middle;
+  text-align: right;
+  padding: 0.45rem 0.35rem !important;
+  min-width: 10.5rem;
+}
+body.dark-theme #tabla-bitacoras td.th-actions .btn.small,
+body.dark-theme #tabla-cotizaciones td.th-actions .btn.small {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: rgba(148, 163, 184, 0.45);
+  color: #e2e8f0;
+  margin: 0.2rem 0.12rem;
+  vertical-align: middle;
+}
+
+.audit-detail-wrap {
+  max-width: 28rem;
+}
+.audit-detail-summary {
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #38bdf8;
+  list-style: none;
+}
+.audit-detail-summary::-webkit-details-marker {
+  display: none;
+}
+.audit-detail-pre {
+  max-height: 280px;
+  overflow: auto;
+  margin: 0.35rem 0 0;
+  padding: 0.5rem 0.55rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.audit-detail-empty {
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+body.dark-theme #panel-demo .demo-version-banner,
+body.theme-industrial:not(.appearance-light) #panel-demo .demo-version-banner {
+  background: rgba(15, 23, 42, 0.92) !important;
+  border-color: rgba(45, 212, 191, 0.45) !important;
+  color: #e2e8f0 !important;
+}
+body.dark-theme #panel-demo .demo-version-banner code,
+body.theme-industrial:not(.appearance-light) #panel-demo .demo-version-banner code {
+  background: #0f172a;
+  color: #7dd3fc;
+  border: 1px solid #334155;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+body.dark-theme #panel-demo #demo-dummy-panel,
+body.theme-industrial:not(.appearance-light) #panel-demo #demo-dummy-panel {
+  background: linear-gradient(180deg, rgba(69, 10, 10, 0.96) 0%, rgba(30, 27, 15, 0.98) 100%) !important;
+  border-color: rgba(248, 113, 113, 0.55) !important;
+}
+body.dark-theme #panel-demo #demo-dummy-panel h3,
+body.theme-industrial:not(.appearance-light) #panel-demo #demo-dummy-panel h3 {
+  color: #fecaca !important;
+}
+body.dark-theme #panel-demo #demo-dummy-panel .hint,
+body.theme-industrial:not(.appearance-light) #panel-demo #demo-dummy-panel .hint {
+  color: #fecaca !important;
+  opacity: 0.95;
+}
+body.dark-theme #panel-demo .demo-wipe-phrase,
+body.theme-industrial:not(.appearance-light) #panel-demo .demo-wipe-phrase {
+  background: #0f172a;
+  color: #fbbf24;
+  border: 1px solid #b45309;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  font-weight: 700;
+}
+body.dark-theme #panel-demo .backup-files-card,
+body.theme-industrial:not(.appearance-light) #panel-demo .backup-files-card {
+  background: rgba(15, 23, 42, 0.9) !important;
+  border-color: rgba(148, 163, 184, 0.35) !important;
+}
+body.dark-theme #panel-demo .backup-files-head strong,
+body.theme-industrial:not(.appearance-light) #panel-demo .backup-files-head strong {
+  color: #f1f5f9;
+}
+body.dark-theme #panel-demo .backup-files-list,
+body.theme-industrial:not(.appearance-light) #panel-demo .backup-files-list {
+  background: #0f172a !important;
+  border-color: #334155 !important;
+}
+body.dark-theme #panel-demo .backup-file-name,
+body.theme-industrial:not(.appearance-light) #panel-demo .backup-file-name {
+  color: #cbd5e1;
+}
+body.dark-theme #panel-demo .backup-file-meta,
+body.theme-industrial:not(.appearance-light) #panel-demo .backup-file-meta {
+  color: #94a3b8;
+}
+
+#pvc-lb-download.pvc-lb-download,
+#pvc-lb-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
 }

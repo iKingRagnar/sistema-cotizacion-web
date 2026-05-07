@@ -2185,6 +2185,15 @@
       statusEl.textContent = '';
       statusEl.classList.add('hidden');
     }
+    const dlBtnHide = qs('#pvc-lb-download');
+    if (dlBtnHide) {
+      dlBtnHide.classList.add('hidden');
+      try {
+        dlBtnHide.removeAttribute('data-url');
+        dlBtnHide.removeAttribute('data-media-ref');
+        dlBtnHide.removeAttribute('data-download-name');
+      } catch (_) {}
+    }
     if (root) {
       if (pvcMediaLbRootIsDialog(root)) {
         try {
@@ -2263,6 +2272,15 @@
       const lab = item && item.label ? String(item.label) : '';
       const idx = _pvcLbItems.length > 1 ? ' (' + (_pvcLbIndex + 1) + '/' + _pvcLbItems.length + ')' : '';
       capEl.textContent = (lab || 'Vista') + idx;
+    }
+    const dlBtn = qs('#pvc-lb-download');
+    if (dlBtn) {
+      const baseName = (item && item.label ? String(item.label) : 'archivo').replace(/\s*·.*$/, '').trim() || 'archivo';
+      const slug = slugifyDownloadName(baseName) || 'archivo';
+      dlBtn.setAttribute('data-url', u);
+      dlBtn.removeAttribute('data-media-ref');
+      dlBtn.setAttribute('data-download-name', slug);
+      dlBtn.classList.toggle('hidden', !canDownloadUploadedMedia());
     }
     pvcLbUpdateNavUi();
 
@@ -10190,6 +10208,28 @@
     } catch (e) { showToast(parseApiError(e) || 'No se pudo cargar el registro.', 'error'); }
   }
 
+  /** Detalle de auditoría: legible (JSON formateado en acordeón), sin recorte tipo “consola”. */
+  function formatAuditDetailCellHtml(raw) {
+    const s = String(raw || '').trim();
+    if (!s) return '<span class="audit-detail-empty">—</span>';
+    let parsed = null;
+    try {
+      parsed = JSON.parse(s);
+    } catch (_) {}
+    const body =
+      parsed !== null && typeof parsed === 'object'
+        ? escapeHtml(JSON.stringify(parsed, null, 2))
+        : escapeHtml(s);
+    return (
+      '<details class="audit-detail-wrap">' +
+      '<summary class="audit-detail-summary">Ver datos del cambio</summary>' +
+      '<pre class="audit-detail-pre" tabindex="0">' +
+      body +
+      '</pre>' +
+      '</details>'
+    );
+  }
+
   async function loadAuditLog() {
     const tbody = qs('#audit-table-body');
     const meta = qs('#audit-meta');
@@ -10214,7 +10254,6 @@
       }
       tbody.innerHTML = rows
         .map(function (r) {
-          const d = (r.detail || '').slice(0, 160);
           return (
             '<tr><td>' +
             escapeHtml(r.creado_en) +
@@ -10229,8 +10268,7 @@
             '</td><td class="audit-action">' +
             escapeHtml(r.action) +
             '</td><td class="audit-detail">' +
-            escapeHtml(d) +
-            (d.length >= 160 ? '…' : '') +
+            formatAuditDetailCellHtml(r.detail) +
             '</td></tr>'
           );
         })
@@ -13187,7 +13225,6 @@
           (ineAttrs
             ? '<button type="button" class="btn small outline js-pvc-media-lightbox" ' + ineAttrs + ' title="Ver INE ampliado"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>'
             : '') +
-          pvcDownloadBtnCompactHtml(null, ineOpen, 'tecnico-ine') +
           '</div></div>'
         );
       }
@@ -13201,7 +13238,6 @@
           (licAttrs
             ? '<button type="button" class="btn small outline js-pvc-media-lightbox" ' + licAttrs + ' title="Ver licencia ampliada"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>'
             : '') +
-          pvcDownloadBtnCompactHtml(null, licOpen, 'tecnico-licencia') +
           '</div></div>'
         );
       }
@@ -13257,10 +13293,10 @@
       const ineOpenU = t.ine_foto_url || t.ine_thumb_url;
       const licOpenU = t.licencia_foto_url || t.licencia_thumb_url;
       const ineMini = t.ine_thumb_url
-        ? `<span class="tec-doc-slot-wrap cliente-const-inline" style="align-items:flex-end;gap:0.35rem;flex-wrap:wrap"><span class="tec-doc-slot cliente-const-slot cliente-const-slot--static" title="INE"><img src="${escapeHtml(t.ine_thumb_url)}" alt="" loading="lazy"></span>${pvcDownloadBtnCompactHtml(null, ineOpenU, 'tecnico-ine')}</span>`
+        ? `<span class="tec-doc-slot-wrap cliente-const-inline" style="align-items:center;gap:0.35rem;flex-wrap:wrap"><span class="tec-doc-slot cliente-const-slot cliente-const-slot--static" title="INE"><img src="${escapeHtml(t.ine_thumb_url)}" alt="" loading="lazy"></span></span>`
         : '<span class="tec-doc-slot" title="Sin INE">—</span>';
       const licMini = t.licencia_thumb_url
-        ? `<span class="tec-doc-slot-wrap cliente-const-inline" style="align-items:flex-end;gap:0.35rem;flex-wrap:wrap"><span class="tec-doc-slot cliente-const-slot cliente-const-slot--static" title="Licencia"><img src="${escapeHtml(t.licencia_thumb_url)}" alt="" loading="lazy"></span>${pvcDownloadBtnCompactHtml(null, licOpenU, 'tecnico-licencia')}</span>`
+        ? `<span class="tec-doc-slot-wrap cliente-const-inline" style="align-items:center;gap:0.35rem;flex-wrap:wrap"><span class="tec-doc-slot cliente-const-slot cliente-const-slot--static" title="Licencia"><img src="${escapeHtml(t.licencia_thumb_url)}" alt="" loading="lazy"></span></span>`
         : '<span class="tec-doc-slot" title="Sin licencia">—</span>';
       tr.innerHTML = `
         <td><strong>${escapeHtml(t.nombre || '')}</strong></td>
@@ -13358,7 +13394,6 @@
                 <img id="m-tec-ine-img" class="tec-upload-preview" src="${escapeHtml(inePrevSrc)}" alt="INE" loading="lazy">
               </span>
               ${ineVerExisting}
-              ${pvcDownloadBtnCompactHtml(inePrevRef, null, 'tecnico-ine')}
             </div>
             <button type="button" class="btn small danger outline" id="m-tec-ine-rm" style="margin-top:0.35rem"><i class="fas fa-times"></i> Quitar INE</button>
           </div>
@@ -13379,7 +13414,6 @@
                 <img id="m-tec-lic-img" class="tec-upload-preview" src="${escapeHtml(licPrevSrc)}" alt="Licencia" loading="lazy">
               </span>
               ${licVerExisting}
-              ${pvcDownloadBtnCompactHtml(licPrevRef, null, 'tecnico-licencia')}
             </div>
             <button type="button" class="btn small danger outline" id="m-tec-lic-rm" style="margin-top:0.35rem"><i class="fas fa-times"></i> Quitar licencia</button>
           </div>
@@ -14046,8 +14080,8 @@
     try {
       localStorage.setItem(THEME_STORAGE_KEY, 'dark');
     } catch (_) {}
-    document.body.classList.remove('appearance-light', 'dark-theme', 'dark-high-contrast');
-    document.body.classList.add('theme-industrial');
+    document.body.classList.remove('appearance-light', 'dark-high-contrast');
+    document.body.classList.add('theme-industrial', 'dark-theme');
     syncOpenModalsTheme();
     syncThemeColorMeta();
     try { syncThemeToggleButtonUi(); } catch (_) {}

@@ -32,7 +32,7 @@
   <!-- CSS heredados (primero — los sobreescribe el nuevo sistema MD3) -->
   <link rel="stylesheet" href="css/design-tokens.css?v=4-md3">
   <link rel="stylesheet" href="css/design-system.css?v=3-apex-base">
-  <link rel="stylesheet" href="css/style.css?v=104-pagination-arrows-ref-thumb-2026-05-06">
+  <link rel="stylesheet" href="css/style.css?v=105-ui-contrast-audit-demo-2026-05-06">
   <link rel="stylesheet" href="css/layout-rail.css?v=11-hide-sidebar-global-strip">
   <link rel="stylesheet" href="css/header-profile.css?v=10-chrome-luna-neutral-admin-hub">
   <link rel="stylesheet" href="css/theme-industrial.css?v=25-chrome-luna-neutral">
@@ -197,7 +197,7 @@
     }
   </style>
 </head>
-<body class="theme-industrial md3-on">
+<body class="theme-industrial dark-theme md3-on">
   <script>
     (function () {
       try {
@@ -1273,7 +1273,7 @@
               <th>Método</th>
               <th>Ruta</th>
               <th>Acción</th>
-              <th>Detalle (recortado)</th>
+              <th>Detalle del cambio</th>
             </tr>
           </thead>
           <tbody id="audit-table-body"></tbody>
@@ -1318,6 +1318,10 @@
       <div class="card" style="margin-bottom:1rem;padding:1rem 1.25rem;">
         <h3 style="margin:0 0 0.5rem 0;font-size:1rem;"><i class="fas fa-user-lock"></i> Permisos por pestaña y columnas</h3>
         <p class="hint" style="margin:0 0 0.75rem 0;">Selecciona un usuario, marca qué pestañas puede ver y qué columnas puede ver en cada tabla.</p>
+        <div class="card" style="padding:0.75rem;margin-bottom:0.85rem;">
+          <h4 style="margin:0 0 0.5rem 0;font-size:0.95rem;">Pestañas visibles</h4>
+          <div id="usuarios-perm-tabs-wrap" style="display:grid;gap:0.4rem;"></div>
+        </div>
         <div class="form-row" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;">
           <div class="form-group" style="min-width:260px;flex:1;">
             <label for="usuarios-perm-user">Usuario</label>
@@ -1325,15 +1329,9 @@
           </div>
           <button type="button" id="btn-usuarios-save-access" class="btn primary"><i class="fas fa-save"></i> Guardar permisos</button>
         </div>
-        <div class="form-row" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-start;margin-top:0.75rem;">
-          <div class="card" style="padding:0.75rem;min-width:260px;flex:1;">
-            <h4 style="margin:0 0 0.5rem 0;font-size:0.95rem;">Pestañas visibles</h4>
-            <div id="usuarios-perm-tabs-wrap" style="display:grid;gap:0.4rem;"></div>
-          </div>
-          <div class="card" style="padding:0.75rem;min-width:320px;flex:2;">
-            <h4 style="margin:0 0 0.5rem 0;font-size:0.95rem;">Columnas visibles por tabla</h4>
-            <div id="usuarios-perm-columns-wrap" style="display:grid;gap:0.65rem;"></div>
-          </div>
+        <div class="card" style="padding:0.75rem;margin-top:0.85rem;">
+          <h4 style="margin:0 0 0.5rem 0;font-size:0.95rem;">Columnas visibles por tabla</h4>
+          <div id="usuarios-perm-columns-wrap" style="display:grid;gap:0.65rem;"></div>
         </div>
       </div>
       <div class="table-wrap">
@@ -1448,7 +1446,7 @@
       <div class="card card-demo">
         <h2><i class="fas fa-database"></i> Cargar datos demo</h2>
         <p class="demo-version-banner" style="margin:0 0 0.75rem 0;padding:0.55rem 0.7rem;border-radius:8px;border:1px solid #0d9488;background:rgba(13,148,136,0.14);font-size:0.88rem;line-height:1.45;">
-          <strong>Qué deberías ver con la versión nueva:</strong> botón gris <strong>«Asegurar equipos por cliente»</strong>; más abajo (antes de respaldos) un recuadro <strong>«Datos demo: contador y borrado selectivo»</strong> con botón rojo <strong>«Borrar solo registros demo»</strong>. Si no aparece, no estás en el último despliegue: en Render ejecuta un deploy desde <code>main</code> y en el navegador recarga forzada (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>).
+          <strong>Qué deberías ver con la versión nueva:</strong> botón gris <strong>«Asegurar equipos por cliente»</strong>; más abajo (antes de respaldos) un recuadro <strong>«Datos demo: contador y borrado selectivo»</strong> con botón rojo <strong>«Borrar solo registros demo»</strong>. Si no aparece, no estás en el último despliegue: en Render ejecuta un deploy desde <code>main</code> y en el navegador usa recarga forzada (Ctrl+Mayús+R en Windows) o vacía la caché del sitio.
         </p>
         <p>Importa desde <strong>SistemaGestion_Demo.xlsm</strong> (exportado a <code>seed-demo.json</code>): clientes, refacciones, máquinas, <strong>incidentes</strong>, <strong>bitácoras</strong> y cotizaciones de ejemplo.</p>
         <p class="hint"><strong>Datos reales:</strong> el demo completo <strong>no borra nada</strong> y solo se ejecuta si la base está vacía (sin clientes). Con clientes ya cargados, usa el botón verde de abajo o «Asegurar equipos por cliente».</p>
@@ -1473,7 +1471,7 @@
           <div class="toolbar" style="flex-wrap:wrap;gap:0.5rem;">
             <button type="button" id="btn-wipe-all-system" class="btn small" style="background:#7f1d1d;color:#fff;border:none;font-weight:700;"><i class="fas fa-trash-alt"></i> Borrar todos los datos del sistema</button>
           </div>
-          <p class="hint" style="margin:0.55rem 0 0 0;font-size:0.8rem;">Confirmación obligatoria; con login activo solo <strong>admin</strong>. Escribe: <kbd>BORRAR-TODO-EL-SISTEMA</kbd></p>
+          <p class="hint" style="margin:0.55rem 0 0 0;font-size:0.8rem;">Confirmación obligatoria; con login activo solo <strong>admin</strong>. Escribe exactamente: <code class="demo-wipe-phrase">BORRAR-TODO-EL-SISTEMA</code></p>
         </div>
         <hr style="margin:1rem 0;border:none;border-top:1px solid #e2e8f0;">
         <p class="hint">Respaldo completo de datos (recomendado; incluye <strong>prospectos</strong> para poder restaurar el pipeline):</p>
@@ -1510,7 +1508,7 @@
           <li><i class="fas fa-check"></i> Bitácora de horas</li>
           <li><i class="fas fa-check"></i> Dashboard con pronósticos y comparativos</li>
           <li><i class="fas fa-check"></i> Exportación CSV/Excel y PDF</li>
-          <li><i class="fas fa-check"></i> Asistente con IA y reconocimiento de voz</li>
+          <li><i class="fas fa-check"></i> Atajos de teclado y búsqueda rápida de secciones</li>
           <li><i class="fas fa-shield-alt"></i> Autenticación opcional por entorno (roles admin / operador / consulta) y auditoría de cambios</li>
           <li><i class="fas fa-palette"></i> Marca blanca: nombre, colores y logo vía <code>public/js/config.js</code> y variables de entorno (ver <code>CONFIG_BRANDING.md</code>)</li>
         </ul>
@@ -1595,48 +1593,6 @@
     </div>
   </div>
 
-  <div id="ai-widget-wrap" class="ai-widget-wrap collapsed" aria-label="Agente de Soporte - Asistente con IA">
-    <div id="ai-fab-nudge" class="ai-fab-nudge hidden" role="status" aria-live="polite" aria-atomic="true">
-      <button type="button" class="ai-fab-nudge-close" id="ai-fab-nudge-close" aria-label="Cerrar aviso" title="Cerrar">×</button>
-      <p class="ai-fab-nudge-text"><strong>¿Te ayudo?</strong> Toca el robot para abrir el asistente: cotizaciones, incidentes y más.</p>
-    </div>
-    <div id="ai-fab" class="ai-fab" title="Abrir Agente de Soporte">
-      <i class="fas fa-robot"></i>
-      <span class="ai-fab-tooltip">¿Te puedo ayudar?</span>
-      <span id="ai-unread-badge" class="ai-unread-badge hidden">0</span>
-    </div>
-    <div id="ai-widget" class="ai-widget ai-widget-panel">
-      <div class="ai-chat-header ai-widget-drag">
-        <div class="ai-avatar"><i class="fas fa-robot"></i></div>
-        <div>
-          <h2>Agente de Soporte</h2>
-          <span class="ai-status">En línea · Arrastra para mover</span>
-        </div>
-        <button type="button" id="ai-minimize" class="ai-btn-minimize" aria-label="Minimizar"><i class="fas fa-chevron-down"></i></button>
-      </div>
-      <div class="ai-chat">
-        <div class="ai-chat-messages" id="ai-messages"></div>
-        <div class="ai-chat-suggestions" id="ai-suggestions">
-          <span class="ai-suggestions-label">Preguntas rápidas:</span>
-          <button type="button" class="ai-chip" data-msg="¿Cuántas cotizaciones hay de hoy?">Cotizaciones de hoy</button>
-          <button type="button" class="ai-chip" data-msg="¿Cuántos incidentes tengo de hoy?">Incidentes de hoy</button>
-          <button type="button" class="ai-chip" data-msg="Dame un resumen de clientes y cotizaciones">Resumen general</button>
-          <button type="button" class="ai-chip" data-msg="¿Qué incidentes están abiertos?">Incidentes abiertos</button>
-        </div>
-        <div class="ai-chat-form">
-          <input type="file" id="ai-file-input" class="hidden" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" aria-hidden="true">
-          <div class="ai-chat-form-tools" role="toolbar" aria-label="Adjuntar y voz">
-            <button type="button" id="ai-attach" class="ai-btn-attach" aria-label="Adjuntar archivo"><i class="fas fa-paperclip"></i></button>
-            <button type="button" id="ai-voice" class="ai-btn-attach" aria-label="Hablar (voz)" title="Hablar con el asistente"><i class="fas fa-microphone"></i></button>
-          </div>
-          <input type="text" id="ai-input" placeholder="Escribe o habla tu mensaje…" maxlength="500" autocomplete="off">
-          <button type="button" id="ai-send" class="btn primary ai-chat-send" aria-label="Enviar mensaje al asistente"><i class="fas fa-paper-plane" aria-hidden="true"></i><span class="ai-send-label">Enviar</span></button>
-        </div>
-        <p class="ai-voice-hint" id="ai-voice-hint">Pulsa el micrófono y habla; lo que digas se enviará al asistente y se subirá al apartado que corresponda.</p>
-      </div>
-    </div>
-  </div>
-
   <div id="modal" class="modal hidden">
     <div class="modal-box">
       <div class="modal-header">
@@ -1677,11 +1633,6 @@
     </div>
   </div>
 
-  <footer class="app-footer" role="contentinfo">
-    <p>Sistema de Cotización y Gestión · <span class="footer-version">v4</span> · Uso profesional · Cotizaciones, incidentes y bitácora en un solo lugar
-      <span class="footer-build-id" title="Si este código no coincide tras actualizar, fuerza recarga: Ctrl+Shift+R o revisa que sirvas esta carpeta y no una copia vieja"> · <strong>UI 66 · JS 160</strong></span></p>
-    <p class="footer-tip"><kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> atajos de sección · <kbd>Esc</kbd> cierra modales</p>
-  </footer>
   <!-- Lightbox: <dialog> + showModal() = top layer del navegador (por encima de #modal / backdrop-filter). -->
   <dialog id="pvc-media-lightbox" class="pvc-media-lightbox" aria-label="Vista previa de imagen o documento">
     <div id="pvc-lb-backdrop" class="pvc-lb-backdrop" tabindex="-1"></div>
@@ -1691,6 +1642,7 @@
         <div class="pvc-lb-toolbar-actions">
           <button type="button" id="pvc-lb-prev" class="btn small outline pvc-lb-nav hidden" aria-label="Anterior"><i class="fas fa-chevron-left"></i></button>
           <button type="button" id="pvc-lb-next" class="btn small outline pvc-lb-nav hidden" aria-label="Siguiente"><i class="fas fa-chevron-right"></i></button>
+          <button type="button" id="pvc-lb-download" class="btn small outline js-refaccion-download-media hidden" title="Descargar" aria-label="Descargar"><i class="fas fa-download"></i></button>
           <button type="button" id="pvc-lb-close" class="btn small outline" aria-label="Cerrar"><i class="fas fa-times"></i></button>
         </div>
       </div>
@@ -1709,7 +1661,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=194-remove-ref-img-modal-dead-code-2026-05-06"></script>
+  <script src="js/app.js?v=195-ui-readability-no-ai-footer-2026-05-06"></script>
   <script src="js/bg-animation.js?v=6-no-motion-mobile-only" defer></script>
   <script src="js/premium-ux.js?v=16-no-motion-boot" defer></script>
 </body>
