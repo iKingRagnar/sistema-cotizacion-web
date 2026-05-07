@@ -17,9 +17,9 @@ html body.login-open #login-overlay.login-overlay--exec-layout {
   --sk-text-muted: rgba(226, 232, 240, 0.9);
   --sk-radius: 18px;
   --sk-blur: 18px;
-  /* Punto de contacto punta herramienta ↔ pieza (en la foto suele ir centro-derecha, no en el hueco entre tarjetas). */
-  --sk-weld-x: 62%;
-  --sk-weld-y: 46%;
+  /* Punta herramienta ↔ pieza — calibrado con marca usuario (~52% / ~55% en viewport). */
+  --sk-weld-x: 52%;
+  --sk-weld-y: 55%;
 }
 
 /*
@@ -199,9 +199,8 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-weld-spark
 
 @media (max-width: 900px) {
   html body.login-open #login-overlay.login-overlay--exec-layout {
-    /* Columna: encuadre distinto; punta suele verse un poco más centrada */
-    --sk-weld-x: 56%;
-    --sk-weld-y: 48%;
+    --sk-weld-x: 51%;
+    --sk-weld-y: 54%;
   }
 }
 
