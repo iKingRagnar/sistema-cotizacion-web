@@ -71,7 +71,7 @@
   <!-- Portales primero; login-neutral DEBE ir después para mandar en overlay de sesión -->
   <link rel="stylesheet" href="css/portal-overlays.css?v=12-dialog-lb-open-selector-2026-05-06">
   <link rel="stylesheet" href="css/login-neutral.css?v=9-login-pass-width-2026-05-06">
-  <link rel="stylesheet" href="css/ui-legibility-final.css?v=1-contrast-modals-reportes-cot-2026-05-06">
+  <link rel="stylesheet" href="css/ui-legibility-final.css?v=2-reportes-merge-poweredby-login-logo-2026-05-06">
   <link rel="manifest" href="manifest.json">
   <!-- Tema único: nano machining + vidrio azul cristalino (sin modo Sol/Luna). -->
   <!-- ★ FORCE-RELOAD: SOLO en browser normal, NUNCA en PWA standalone (evita loop crash) -->
@@ -210,12 +210,12 @@
   <div id="app-watermark" class="prem-watermark-field" aria-hidden="true"></div>
   <div id="offline-banner" class="offline-banner hidden" role="alert" aria-live="polite">Sin conexión. Algunas funciones pueden no estar disponibles.</div>
   <div id="login-overlay" class="login-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="login-title">
-    <span class="header-powered-by login-overlay-powered-by" aria-label="Créditos">powered by Ing. David Cantú</span>
+    <span class="header-powered-by login-overlay-powered-by" aria-label="Créditos">powered by Ing. David Cantu</span>
     <div class="login-split">
       <!-- Panel izquierdo: branding -->
       <div class="login-brand-panel">
         <div class="login-brand-content">
-          <div class="login-brand-logo" aria-hidden="true">
+          <div class="login-brand-logo login-brand-logo--compact-show" aria-hidden="true">
             <img src="fondos/universal-logo.jpg?v=4" alt="" width="120" height="72" class="login-brand-hero-img" decoding="async">
           </div>
           <h1 class="login-brand-title" id="login-brand-name">Servicio Técnico</h1>
@@ -307,9 +307,9 @@
           <h1 class="header-brand-service" id="app-title-name">Servicio Tecnico</h1>
         </div>
       </div>
+      <span class="header-powered-by header-powered-by--nav-slot" aria-label="Créditos">powered by Ing. David Cantu</span>
       <div class="header-actions">
         <div class="header-actions-tail">
-        <span class="header-powered-by" aria-label="Créditos">powered by Ing. David Cantú</span>
         <div class="header-notifications-wrap">
           <button type="button" id="btn-notifications" class="btn-icon-header" title="Centro de notificaciones" aria-label="Centro de notificaciones">
             <i class="fas fa-bell"></i>
@@ -977,8 +977,8 @@
             <tr>
               <th>Folio</th><th>Razón Social</th><th>Máquina</th><th>Nº Serie</th><th>Tipo</th><th>Subtipo</th><th>Técnico</th><th>Fecha Reporte</th>
               <th class="admin-only-col" title="Solo visible para administrador">Fecha Programada <i class="fas fa-lock" style="font-size:0.7em;opacity:.6"></i></th>
-              <th>Estatus</th><th>Finalizado</th>
-              <th class="th-actions">Acciones</th>
+              <th>Estatus</th>
+              <th class="th-actions rep-th-final-acciones">Finalizado · Acciones</th>
             </tr>
             <tr class="filter-row">
               <td><input type="text" class="filter-input" data-key="folio" data-type="text" placeholder="Filtrar…"></td>
@@ -1010,7 +1010,6 @@
               <td><input type="text" class="filter-input" data-key="fecha" data-type="text" placeholder="aaaa-mm-dd"></td>
               <td class="admin-only-col"></td>
               <td><input type="text" class="filter-input" data-key="estatus" data-type="text" placeholder="abierto…"></td>
-              <td></td>
               <td class="th-actions"></td>
             </tr>
           </thead>
@@ -1662,7 +1661,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=196-cot-reportes-actions-wrap-2026-05-06"></script>
+  <script src="js/app.js?v=197-reportes-col-merge-poweredby-2026-05-06"></script>
   <script src="js/bg-animation.js?v=6-no-motion-mobile-only" defer></script>
   <script src="js/premium-ux.js?v=16-no-motion-boot" defer></script>
 </body>

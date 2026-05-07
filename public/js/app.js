@@ -5694,7 +5694,7 @@
     adminCols.forEach(el => { el.style.display = isAdmin ? '' : 'none'; });
 
     if (!data || data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 11}" class="empty">No hay reportes. Agrega uno nuevo.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="${isAdmin ? 11 : 10}" class="empty">No hay reportes. Agrega uno nuevo.</td></tr>`;
       updateTableFooter('tabla-reportes', 0, reportesCache.length, () => clearTableFiltersAndRefresh('tabla-reportes', null, applyReportesFiltersAndRender));
       return;
     }
@@ -5732,19 +5732,23 @@
         <td>${escapeHtml((r.fecha || '').toString().slice(0, 10))}</td>
         ${fpCell}
         <td><span class="semaforo semaforo-${r.estatus === 'en_proceso' ? 'warn' : r.estatus === 'cerrado' ? 'ok' : 'gray'}">${estLabel}</span></td>
-        <td>
+        <td class="th-actions rep-combined-actions-cell">
+          <div class="rep-combined-stack">
+            <div class="rep-combined-final">
           ${finalizado
             ? `<span class="badge badge-ok"><i class="fas fa-check-circle"></i> Finalizado</span>`
             : `<span class="rep-final-wrap">
             <button type="button" class="btn tiny success btn-finalizar-rep" data-id="${r.id}" title="Marcar como finalizado"><i class="fas fa-check"></i> Finalizar</button>
             <button type="button" class="btn tiny outline btn-adj-firma-rep" data-id="${r.id}" title="Finalizar y adjuntar PDF o imagen firmada (opcional)"><i class="fas fa-paperclip"></i></button>
           </span>`}
-        </td>
-        <td class="th-actions"><span class="rep-actions-row">
+            </div>
+            <div class="rep-combined-icons"><span class="rep-actions-row">
           <button type="button" class="btn small outline btn-preview-rep" data-id="${r.id}" title="Vista previa"><i class="fas fa-eye"></i></button>
           ${isAdmin ? `<button type="button" class="btn small primary btn-edit-rep" data-id="${r.id}"><i class="fas fa-edit"></i></button>` : (canEdit() ? `<button type="button" class="btn small primary btn-edit-rep" data-id="${r.id}"><i class="fas fa-edit"></i></button>` : '')}
           ${isAdmin ? `<button type="button" class="btn small danger btn-del-rep" data-id="${r.id}"><i class="fas fa-trash"></i></button>` : ''}
-        </span></td>
+            </span></div>
+          </div>
+        </td>
       `;
       tbody.appendChild(tr);
     });
