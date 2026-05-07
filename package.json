@@ -1,7 +1,7 @@
 {
   "name": "sistema-cotizacion-web",
   "version": "1.0.0",
-  "description": "Sistema de Cotización — fork enterprise minimal (misma API/lógica; UI corporativa)",
+  "description": "Sistema de Cotización Universal — proyecto unificado (base funcional sistema-cotizacion-web backup + mejoras mapa tipo MapaSuminregio: clusters Leaflet)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

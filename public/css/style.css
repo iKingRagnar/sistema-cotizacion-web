@@ -4637,6 +4637,20 @@ body.dark-theme .david-comisiones-empty {
 body.dark-theme .prospeccion-map-wrap { background: #0f172a; border-color: #334155; }
 body.dark-theme .prospeccion-kpi { background: #1e293b; border-color: #334155; }
 .leaflet-container { font-family: inherit; }
+/* Prospección: clusters MarkerCluster legibles en tema Universal (teal) */
+#map-prospeccion .marker-cluster-small,
+#map-prospeccion .marker-cluster-medium,
+#map-prospeccion .marker-cluster-large {
+  background-clip: padding-box;
+}
+#map-prospeccion .marker-cluster-small div,
+#map-prospeccion .marker-cluster-medium div,
+#map-prospeccion .marker-cluster-large div {
+  background: rgba(15, 118, 110, 0.95);
+  color: #ecfdf5;
+  font-weight: 700;
+  border: 2px solid rgba(20, 184, 166, 0.65);
+}
 
 .cal-day--click { cursor: pointer; transition: background 0.15s ease, box-shadow 0.15s ease; }
 .cal-day--click:hover { background: rgba(13, 148, 136, 0.09); box-shadow: inset 0 0 0 1px rgba(13, 148, 136, 0.35); }

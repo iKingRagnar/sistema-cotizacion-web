@@ -12360,6 +12360,7 @@
   // ----- PROSPECCIÓN (mapa + tabla, /api/prospectos) -----
   let prospectosCache = [];
   let leafletLoadPromise = null;
+  let markerClusterLoadPromise = null;
   let prospeccionMap = null;
   let prospeccionMarkersLayer = null;
 
@@ -12382,6 +12383,50 @@
       document.body.appendChild(s);
     });
     return leafletLoadPromise;
+  }
+
+  /** Agrupación de marcadores (patrón Mapa Suminregio / Leaflet MarkerCluster); si falla el CDN, solo capa puntual. */
+  function ensureMarkerCluster() {
+    if (typeof window.L !== 'undefined' && typeof window.L.markerClusterGroup === 'function') return Promise.resolve();
+    return ensureLeaflet().then(function () {
+      if (typeof L.markerClusterGroup === 'function') return Promise.resolve();
+      if (markerClusterLoadPromise) return markerClusterLoadPromise;
+      markerClusterLoadPromise = new Promise(function (resolve, reject) {
+        const ver = 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/';
+        ['MarkerCluster.css', 'MarkerCluster.Default.css'].forEach(function (fn) {
+          const href = ver + fn;
+          if (!document.querySelector('link[href="' + href + '"]')) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = href;
+            document.head.appendChild(link);
+          }
+        });
+        const s = document.createElement('script');
+        s.src = ver + 'leaflet.markercluster.js';
+        s.async = true;
+        s.onload = function () { resolve(); };
+        s.onerror = function () {
+          markerClusterLoadPromise = null;
+          reject(new Error('markercluster-load'));
+        };
+        document.body.appendChild(s);
+      });
+      return markerClusterLoadPromise;
+    });
+  }
+
+  function makeProspeccionMarkersLayer(map) {
+    const Lglob = window.L;
+    if (Lglob && typeof Lglob.markerClusterGroup === 'function') {
+      return Lglob.markerClusterGroup({
+        maxClusterRadius: 56,
+        disableClusteringAtZoom: 16,
+        spiderfyOnEveryZoom: false,
+        showCoverageOnHover: false,
+      }).addTo(map);
+    }
+    return Lglob.layerGroup().addTo(map);
   }
 
   function setupProspeccionUi() {
@@ -12490,7 +12535,7 @@
           }
         : { attribution: '&copy; OpenStreetMap', maxZoom: 19 };
       L.tileLayer(tileUrl, tileOpts).addTo(prospeccionMap);
-      prospeccionMarkersLayer = L.layerGroup().addTo(prospeccionMap);
+      prospeccionMarkersLayer = makeProspeccionMarkersLayer(prospeccionMap);
     }
     prospeccionMarkersLayer.clearLayers();
     valid.forEach(function (r) {
@@ -12530,6 +12575,9 @@
     showLoading();
     try {
       await ensureLeaflet();
+      try {
+        await ensureMarkerCluster();
+      } catch (_) { /* agrupación opcional si CDN bloqueado */ }
       const data = await fetchJson(API + '/prospectos');
       prospectosCache = toArray(data);
       renderProspeccionFromCache();
