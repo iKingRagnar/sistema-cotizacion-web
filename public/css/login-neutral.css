@@ -42,45 +42,40 @@ html body.login-open #offline-banner {
   display: none !important;
 }
 
-/* Sin halos MD3 encima del vidrio */
-html body.login-open #login-overlay .login-brand-panel::before,
-html body.login-open #login-overlay .login-brand-panel::after {
-  display: none !important;
-  content: none !important;
-  background: none !important;
-}
+/* Halos del panel marca: los define premium-login-aurora.css (hero strip + profundidad). */
 
-/* Contenedor: fila centrada en altura (evita columna derecha a altura completa “vacía”) */
+/* Contenedor: split premium (detalle en premium-login-aurora.css) */
 html body.login-open #login-overlay .login-split {
   display: flex !important;
   flex-direction: row !important;
-  flex-wrap: wrap !important;
-  align-items: center !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
   justify-content: center !important;
-  gap: clamp(0.75rem, 2.5vw, 1.75rem) !important;
+  gap: 0 !important;
   background: transparent !important;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45) !important;
+  box-shadow: none !important;
   width: 100% !important;
-  max-width: min(1120px, 98vw) !important;
-  min-height: 0 !important;
+  max-width: min(1220px, 98vw) !important;
+  min-height: min(720px, 92dvh) !important;
   height: auto !important;
   max-height: none !important;
   margin: 0 auto !important;
-  overflow: visible !important;
+  overflow: hidden !important;
   box-sizing: border-box !important;
+  border-radius: 28px !important;
 }
 
-/* Panel marca: vidrio oscuro translúcido */
+/* Panel marca: base vidrio (capas premium en premium-login-aurora.css) */
 html body.login-open #login-overlay .login-brand-panel {
-  flex: 1 1 360px !important;
-  max-width: min(560px, 100%) !important;
-  min-width: 0 !important;
-  align-self: center !important;
-  border-radius: 16px !important;
-  background: linear-gradient(160deg, rgba(15, 23, 42, 0.42) 0%, rgba(15, 23, 42, 0.28) 100%) !important;
-  backdrop-filter: blur(18px) saturate(165%) !important;
-  -webkit-backdrop-filter: blur(18px) saturate(165%) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
+  flex: 1 1 48% !important;
+  max-width: none !important;
+  min-width: min(320px, 100%) !important;
+  align-self: stretch !important;
+  border-radius: 0 !important;
+  background: linear-gradient(165deg, rgba(15, 23, 42, 0.55) 0%, rgba(2, 6, 23, 0.42) 100%) !important;
+  backdrop-filter: blur(20px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(170%) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.14) !important;
 }
 
 html body.login-open #login-overlay .login-brand-panel .login-brand-title,
@@ -134,16 +129,16 @@ html body.login-open #login-overlay .login-brand-panel .login-brand-hero-img {
   border: 1px solid rgba(255, 255, 255, 0.18) !important;
 }
 
-/* Panel formulario: vidrio más ligero (altura al contenido, no 100vh) */
+/* Panel formulario */
 html body.login-open #login-overlay .login-form-panel {
-  flex: 1 1 380px !important;
-  max-width: min(520px, 100%) !important;
-  min-width: 0 !important;
-  align-self: center !important;
-  border-radius: 16px !important;
-  background: rgba(15, 23, 42, 0.22) !important;
-  backdrop-filter: blur(14px) saturate(155%) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(155%) !important;
+  flex: 1 1 44% !important;
+  max-width: none !important;
+  min-width: min(300px, 100%) !important;
+  align-self: stretch !important;
+  border-radius: 0 !important;
+  background: rgba(2, 6, 23, 0.38) !important;
+  backdrop-filter: blur(18px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(160%) !important;
 }
 
 /* Tarjeta: vidrio (no blanco opaco) */
@@ -307,51 +302,36 @@ html body.login-open #login-overlay #login-user {
   box-sizing: border-box !important;
 }
 
-/* Vista compacta — una columna, menos “vidrio doble” y menos ruido (roles/features ocultos). */
-html body.login-open #login-overlay .login-split {
-  flex-direction: column !important;
-  max-width: min(440px, 96vw) !important;
-  gap: 0 !important;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5) !important;
-}
-html body.login-open #login-overlay .login-brand-panel {
-  flex: 0 0 auto !important;
-  max-width: 100% !important;
-  border-right: none !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14) !important;
-  border-radius: 16px 16px 0 0 !important;
-  backdrop-filter: blur(12px) saturate(140%) !important;
-  -webkit-backdrop-filter: blur(12px) saturate(140%) !important;
-  padding: 0.85rem 1rem 1rem !important;
-}
-html body.login-open #login-overlay .login-brand-panel .login-brand-logo,
-html body.login-open #login-overlay .login-brand-panel .login-brand-hero-img {
-  display: none !important;
-}
-html body.login-open #login-overlay .login-brand-panel .login-brand-title {
-  font-size: clamp(1.1rem, 4vw, 1.35rem) !important;
-  margin: 0 0 0.25rem !important;
-}
-html body.login-open #login-overlay .login-brand-panel .login-brand-tagline {
-  margin: 0 !important;
-  font-size: 0.8rem !important;
-  opacity: 0.95 !important;
-}
-html body.login-open #login-overlay .login-brand-features,
-html body.login-open #login-overlay .login-brand-badges,
-html body.login-open #login-overlay .login-brand-decoration,
-html body.login-open #login-overlay .login-roles-info {
-  display: none !important;
-}
-html body.login-open #login-overlay .login-form-panel {
-  flex: 0 0 auto !important;
-  max-width: 100% !important;
-  border-radius: 0 0 16px 16px !important;
-  backdrop-filter: blur(10px) saturate(130%) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(130%) !important;
-}
-html body.login-open #login-overlay .login-card {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  box-shadow: none !important;
+/* Móvil muy estrecho: apilar y condensar (sin perder identidad) */
+@media (max-width: 720px) {
+  html body.login-open #login-overlay .login-split {
+    flex-direction: column !important;
+    flex-wrap: wrap !important;
+    max-width: min(440px, 96vw) !important;
+    min-height: 0 !important;
+    border-radius: 20px !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55) !important;
+  }
+  html body.login-open #login-overlay .login-brand-panel {
+    flex: 0 0 auto !important;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+    padding: 1.25rem 1.25rem 1rem !important;
+  }
+  html body.login-open #login-overlay .login-brand-panel .login-brand-logo .login-brand-hero-img {
+    max-height: 64px !important;
+  }
+  html body.login-open #login-overlay .login-brand-features {
+    display: none !important;
+  }
+  html body.login-open #login-overlay .login-brand-badges {
+    margin-top: 0.75rem !important;
+  }
+  html body.login-open #login-overlay .login-form-panel {
+    flex: 0 0 auto !important;
+    padding: 1rem !important;
+  }
+  html body.login-open #login-overlay .login-roles-info {
+    display: none !important;
+  }
 }

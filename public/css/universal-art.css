@@ -107,3 +107,51 @@ body.md3-on textarea {
   box-shadow: inset 0 -1px 0 rgba(255,255,255,0.04);
 }
 
+/* ── Post-login “workspace” (no login-open): marco tipo consola premium ─────── */
+body.md3-on:not(.login-open) .header {
+  border-bottom: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 55%, transparent);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.14);
+}
+
+body.md3-on:not(.login-open) .app-frame {
+  position: relative;
+  isolation: isolate;
+}
+
+body.md3-on:not(.login-open) .app-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 55% 42% at 12% 0%, rgba(45, 212, 191, 0.06) 0%, transparent 58%),
+    radial-gradient(ellipse 48% 38% at 92% 8%, rgba(56, 189, 248, 0.05) 0%, transparent 55%);
+}
+
+body.md3-on:not(.login-open) .sidebar-nav,
+body.md3-on:not(.login-open) .tabs.tabs--rail {
+  box-shadow:
+    inset -1px 0 0 color-mix(in srgb, var(--md-sys-color-outline-variant) 65%, transparent),
+    8px 0 32px rgba(0, 0, 0, 0.12);
+}
+
+body.md3-on:not(.login-open) main.content#main-content {
+  position: relative;
+  z-index: 1;
+  border-radius: var(--md-sys-shape-corner-large, 16px) var(--md-sys-shape-corner-large, 16px) 0 0;
+  margin-inline: max(0px, calc(var(--md-sys-spacing-4, 16px) - 4px));
+  padding-block-start: var(--md-sys-spacing-4, 16px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 -12px 40px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 900px) {
+  body.md3-on:not(.login-open) main.content#main-content {
+    margin-inline: 0;
+    border-radius: 0;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+}
+
