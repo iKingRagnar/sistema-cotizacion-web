@@ -42,13 +42,13 @@ html body.login-open #login-overlay.login-overlay.login-overlay--exec-layout {
   align-items: center !important;
   justify-content: center !important;
   box-sizing: border-box !important;
-  /* Ligerísimo desborde: oculta subpíxeles / costura arriba (misma idea que abajo). */
-  top: -4px !important;
-  right: -2px !important;
-  bottom: -2px !important;
-  left: -2px !important;
-  min-height: calc(100vh + 8px) !important;
-  min-height: calc(100dvh + 8px) !important;
+  /* Desborde fuerte arriba: empuja la capa por encima del borde del viewport (costura / compositing). */
+  top: -56px !important;
+  right: -4px !important;
+  bottom: -8px !important;
+  left: -4px !important;
+  min-height: calc(100vh + 72px) !important;
+  min-height: calc(100dvh + 72px) !important;
   height: auto !important;
   max-height: none !important;
   overflow: hidden !important;
