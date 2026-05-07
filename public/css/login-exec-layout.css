@@ -100,16 +100,22 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-split {
   max-width: 1240px !important;
   flex: 1 1 auto !important;
   min-height: 0 !important;
-  max-height: min(100%, calc(100dvh - 1.75rem)) !important;
+  /* Sin % respecto al padre (overlay height:auto): evita costura / corte raro en algunos navegadores */
+  max-height: calc(100dvh - 1.75rem) !important;
   height: auto !important;
   background: transparent !important;
+  background-image: none !important;
   border: none !important;
+  border-width: 0 !important;
+  outline: none !important;
   box-shadow: none !important;
+  filter: none !important;
   border-radius: 0 !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   overflow: visible !important;
   isolation: auto !important;
+  clip-path: none !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-split::before {
@@ -237,6 +243,8 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-logo
   max-height: 56px !important;
   object-fit: contain !important;
   filter: none !important;
+  /* JPG con fondo blanco: funde el blanco con el panel oscuro (ideal: PNG transparente). */
+  mix-blend-mode: multiply !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-eyebrow--exec-layout {
@@ -620,4 +628,46 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-role-card 
   html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-logo-shell .login-brand-hero-img {
     max-height: 56px !important;
   }
+
+  /* login-neutral + premium añaden caja al split bajo 720px; exec = solo dos tarjetas. */
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-split,
+  html body.theme-industrial.login-open #login-overlay.login-overlay--exec-layout .login-split,
+  html body.login-open #login-overlay.login-overlay.login-overlay--exec-layout .login-split {
+    flex-direction: column !important;
+    max-width: min(440px, 96vw) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+    background-image: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    outline: none !important;
+    filter: none !important;
+  }
+}
+
+/*
+ * Última palabra en cascada: premium-login-aurora pinta .login-split como “caja única”
+ * (borde + gradiente + sombra + sheen). Con exec solo deben leerse las dos tarjetas.
+ */
+html body.theme-industrial.login-open #login-overlay.login-overlay--exec-layout .login-split,
+html body.login-open #login-overlay.login-overlay.login-overlay--exec-layout .login-split {
+  background: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  border-width: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout .login-split::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }

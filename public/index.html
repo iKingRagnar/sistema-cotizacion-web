@@ -81,7 +81,7 @@
   <!-- KPI ejecutivos claros (después de nano / universal-art para ganar especificidad) -->
   <link rel="stylesheet" href="css/dashboard-exec-kpi-cards.css?v=1-exec-kpi-light-2026-05-07">
   <!-- Login ejecutivo: al final de la cascada (créditos tipográficos + sin artefactos bajo 100dvh) -->
-  <link rel="stylesheet" href="css/login-exec-layout.css?v=6-portada-no-bottom-line">
+  <link rel="stylesheet" href="css/login-exec-layout.css?v=7-split-no-outer-box-logo-multiply">
   <link rel="manifest" href="manifest.json">
   <!-- Tema único: nano machining + vidrio azul cristalino (sin modo Sol/Luna). -->
   <!-- ★ FORCE-RELOAD: SOLO en browser normal, NUNCA en PWA standalone (evita loop crash) -->
@@ -146,12 +146,19 @@
     html body.login-open #login-overlay.login-overlay--exec-layout .login-split {
       height: auto !important;
       min-height: 0 !important;
-      max-height: min(100%, calc(100dvh - 2rem)) !important;
+      max-height: calc(100dvh - 2rem) !important;
       width: 100% !important;
       max-width: 1240px !important;
       margin-left: auto !important;
       margin-right: auto !important;
       align-items: center !important;
+      background: transparent !important;
+      background-image: none !important;
+      border: none !important;
+      box-shadow: none !important;
+      outline: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
     }
     html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel {
       min-height: 0 !important;
