@@ -1,0 +1,402 @@
+/**
+ * login-exec-gold.css — Login estilo panel ejecutivo (oro sobre negro, dos tarjetas).
+ * Solo aplica con #login-overlay.login-overlay--exec-gold (carga después de premium-login-aurora).
+ */
+html body.login-open {
+  --login-exec-gold: #e8c547;
+  --login-exec-gold-bright: #f5d14a;
+  --login-exec-gold-border: rgba(212, 175, 55, 0.55);
+  --login-exec-card-bg: rgba(8, 8, 10, 0.94);
+}
+
+/* Fondo: sin foto industrial — viñeta oscura */
+html body.login-open #login-overlay.login-overlay--exec-gold,
+html body.login-open #login-overlay.login-overlay.login-overlay--exec-gold {
+  background-color: #020203 !important;
+  background-image:
+    radial-gradient(ellipse 130% 75% at 50% -5%, rgba(32, 32, 38, 0.92) 0%, transparent 52%),
+    radial-gradient(ellipse 85% 55% at 50% 108%, rgba(0, 0, 0, 0.75) 0%, #000000 72%) !important;
+  background-size: auto !important;
+  background-position: center !important;
+  background-attachment: scroll !important;
+  background-repeat: no-repeat !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold::after {
+  opacity: 0.06 !important;
+  background-size: 48px 48px !important;
+}
+
+/* Contenedor: sin vidrio único; separación entre tarjetas */
+html body.login-open #login-overlay.login-overlay--exec-gold .login-split {
+  position: relative !important;
+  z-index: 2 !important;
+  gap: clamp(1rem, 2.2vw, 1.45rem) !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+  isolation: auto !important;
+  min-height: min(700px, 91dvh) !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-split::before {
+  display: none !important;
+  animation: none !important;
+  opacity: 0 !important;
+}
+
+/* Tarjetas independientes */
+html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-panel,
+html body.login-open #login-overlay.login-overlay--exec-gold .login-form-panel {
+  border-radius: 20px !important;
+  border: 1px solid var(--login-exec-gold-border) !important;
+  background: var(--login-exec-card-bg) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-sizing: border-box !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-panel {
+  border-right: 1px solid var(--login-exec-gold-border) !important;
+  justify-content: flex-start !important;
+  padding: clamp(1.35rem, 3vw, 2rem) !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-panel::before,
+html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-panel::after {
+  display: none !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-decoration {
+  display: none !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-content--exec-gold,
+html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-panel .login-brand-content--exec {
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: none !important;
+}
+
+/* Cabecera: logo en pastilla blanca + eyebrow derecha */
+html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-headrow {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
+  width: 100% !important;
+  margin: 0 0 1.2rem 0 !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-logo-shell {
+  flex: 0 0 auto !important;
+  background: #ffffff !important;
+  border-radius: 14px !important;
+  padding: 10px 14px !important;
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.45) !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-logo-shell .login-brand-logo--hero {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-logo-shell .login-brand-hero-img {
+  display: block !important;
+  max-height: clamp(68px, 11vh, 96px) !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+  filter: none !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-eyebrow--exec-gold {
+  flex: 1 1 auto !important;
+  margin: 0 !important;
+  padding: 0.4rem 0 0 0 !important;
+  font-family: "JetBrains Mono", ui-monospace, monospace !important;
+  font-size: 0.56rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.32em !important;
+  text-transform: uppercase !important;
+  text-align: right !important;
+  line-height: 1.35 !important;
+  color: #8a8a8e !important;
+  -webkit-text-fill-color: #8a8a8e !important;
+  text-shadow: none !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-panel .login-brand-title {
+  font-family: "Michroma", "Syne", system-ui, sans-serif !important;
+  font-size: clamp(1.35rem, 2.8vw, 2rem) !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.06em !important;
+  line-height: 1.15 !important;
+  color: #fafafa !important;
+  -webkit-text-fill-color: #fafafa !important;
+  text-shadow: none !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-panel .login-brand-desc,
+html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-panel .login-brand-tagline.login-brand-desc {
+  font-family: "JetBrains Mono", ui-monospace, monospace !important;
+  font-size: 0.78rem !important;
+  font-weight: 500 !important;
+  line-height: 1.65 !important;
+  letter-spacing: 0.03em !important;
+  max-width: 44ch !important;
+  color: #e4e4e7 !important;
+  -webkit-text-fill-color: #e4e4e7 !important;
+  margin-top: 0.5rem !important;
+  text-shadow: none !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-features {
+  margin-top: 1.25rem !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-features .login-feature-item {
+  border-radius: 10px !important;
+  padding: 0.42rem 0.5rem 0.42rem 0 !important;
+  margin-left: 0 !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-features .login-feature-item i {
+  color: var(--login-exec-gold) !important;
+  filter: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  width: 1.35rem !important;
+  height: auto !important;
+  min-height: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1rem !important;
+  flex-shrink: 0 !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-features .login-feature-item:hover {
+  background: rgba(232, 197, 71, 0.06) !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-features .login-feature-item span {
+  color: #f4f4f5 !important;
+  -webkit-text-fill-color: #f4f4f5 !important;
+  font-weight: 500 !important;
+  text-shadow: none !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-badges {
+  margin-top: 1.5rem !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-badges .login-badge {
+  background: rgba(12, 12, 14, 0.95) !important;
+  border: 1px solid var(--login-exec-gold-border) !important;
+  color: #fafafa !important;
+  -webkit-text-fill-color: #fafafa !important;
+  text-transform: uppercase !important;
+  font-size: 0.58rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.14em !important;
+  padding: 0.35rem 0.65rem !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-badges .login-badge i {
+  color: var(--login-exec-gold) !important;
+}
+
+/* Panel formulario */
+html body.login-open #login-overlay.login-overlay--exec-gold .login-form-panel {
+  align-items: center !important;
+  justify-content: center !important;
+  padding: clamp(1.35rem, 3vw, 2rem) !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-card {
+  width: 100% !important;
+  max-width: 420px !important;
+  margin: 0 auto !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-card-header .login-card-icon {
+  background: transparent !important;
+  border: 1px solid var(--login-exec-gold-border) !important;
+  color: var(--login-exec-gold) !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-card-header h2 {
+  font-family: "Michroma", "Syne", system-ui, sans-serif !important;
+  font-size: 1.25rem !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.08em !important;
+  color: #fafafa !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-card .login-hint {
+  font-family: "JetBrains Mono", ui-monospace, monospace !important;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.04em !important;
+  color: #d4d4d8 !important;
+  -webkit-text-fill-color: #d4d4d8 !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-card label {
+  color: #f4f4f5 !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-card label i {
+  color: var(--login-exec-gold) !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-card input[type="text"],
+html body.login-open #login-overlay.login-overlay--exec-gold .login-card input[type="password"],
+html body.login-open #login-overlay.login-overlay--exec-gold .login-form input[type="text"],
+html body.login-open #login-overlay.login-overlay--exec-gold .login-form input[type="password"] {
+  background: #e8eaef !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  border-radius: 12px !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-card input::placeholder,
+html body.login-open #login-overlay.login-overlay--exec-gold .login-form input::placeholder {
+  color: rgba(15, 23, 42, 0.38) !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-card input:focus,
+html body.login-open #login-overlay.login-overlay--exec-gold .login-form input:focus {
+  border-color: rgba(232, 197, 71, 0.85) !important;
+  box-shadow: 0 0 0 3px rgba(232, 197, 71, 0.18) !important;
+  background: #f1f3f7 !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-eye-btn {
+  color: #475569 !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-submit.btn.primary {
+  background: linear-gradient(180deg, var(--login-exec-gold-bright) 0%, #d4a827 100%) !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  border: 1px solid rgba(255, 230, 140, 0.55) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.06em !important;
+  border-radius: 14px !important;
+  box-shadow:
+    0 0 32px rgba(232, 197, 71, 0.28),
+    0 14px 32px rgba(0, 0, 0, 0.42) !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-submit.btn.primary:hover {
+  filter: brightness(1.06) !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-submit.btn.primary i {
+  color: #0f172a !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-roles-info {
+  border-top: 1px solid rgba(232, 197, 71, 0.15) !important;
+  margin-top: 1.25rem !important;
+  padding-top: 1rem !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-roles-title {
+  font-family: "JetBrains Mono", ui-monospace, monospace !important;
+  font-size: 0.56rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.22em !important;
+  text-transform: uppercase !important;
+  color: #71717a !important;
+  -webkit-text-fill-color: #71717a !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-roles-title i {
+  color: var(--login-exec-gold) !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-role-card {
+  background: rgba(16, 16, 18, 0.95) !important;
+  border: 1px solid rgba(232, 197, 71, 0.22) !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-role-card i {
+  color: var(--login-exec-gold) !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-role-card strong {
+  color: #fafafa !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-role-card span {
+  color: #a1a1aa !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-gold .login-overlay-powered-by {
+  color: rgba(212, 175, 55, 0.55) !important;
+  text-shadow: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body.login-open #login-overlay.login-overlay--exec-gold .login-split::before {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 720px) {
+  html body.login-open #login-overlay.login-overlay--exec-gold .login-split {
+    flex-direction: column !important;
+    max-width: min(460px, 96vw) !important;
+    min-height: 0 !important;
+    gap: 1rem !important;
+  }
+
+  html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-panel {
+    flex: 0 0 auto !important;
+    border-right: 1px solid var(--login-exec-gold-border) !important;
+    border-bottom: none !important;
+  }
+
+  /* Mantener lista de beneficios y niveles (login-neutral las oculta en móvil) */
+  html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-features {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.25rem !important;
+  }
+
+  html body.login-open #login-overlay.login-overlay--exec-gold .login-roles-info {
+    display: block !important;
+  }
+
+  html body.login-open #login-overlay.login-overlay--exec-gold .login-brand-headrow {
+    flex-wrap: wrap !important;
+  }
+
+  html body.login-open #login-overlay.login-overlay--exec-gold .login-eyebrow--exec-gold {
+    width: 100% !important;
+    text-align: left !important;
+    padding-top: 0.65rem !important;
+  }
+}
