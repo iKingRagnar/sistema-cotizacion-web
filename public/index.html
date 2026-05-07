@@ -76,6 +76,7 @@
   <link rel="stylesheet" href="css/ui-legibility-final.css?v=2-reportes-merge-poweredby-login-logo-2026-05-06">
   <!-- ★ UNIVERSAL ART SKIN — inspirado en MapaSuminregio (solo estética) -->
   <link rel="stylesheet" href="css/universal-art.css?v=2-shell-after-login-2026-05-07">
+  <link rel="stylesheet" href="css/universal-map-shell.css?v=1-map-shell-tokens-fix-2026-05-07">
   <link rel="manifest" href="manifest.json">
   <!-- Tema único: nano machining + vidrio azul cristalino (sin modo Sol/Luna). -->
   <!-- ★ FORCE-RELOAD: SOLO en browser normal, NUNCA en PWA standalone (evita loop crash) -->
@@ -202,7 +203,7 @@
     }
   </style>
 </head>
-<body class="theme-industrial dark-theme md3-on">
+<body class="theme-industrial dark-theme md3-on universal-map-shell">
   <script>
     (function () {
       try {
@@ -309,7 +310,9 @@
           <img src="fondos/universal-logo.jpg?v=4" alt="Universal" width="120" height="72" class="login-brand-hero-img" id="header-brand-logo" decoding="async">
         </div>
         <div class="header-brand-text">
+          <p class="header-brand-eyebrow" aria-hidden="true">Universal · cotización</p>
           <h1 class="header-brand-service" id="app-title-name">Servicio Tecnico</h1>
+          <p class="header-brand-tagline">Experiencia alineada a IA Suprema · espacio de trabajo seguro</p>
         </div>
       </div>
       <span class="header-powered-by header-powered-by--nav-slot" aria-label="Créditos">powered by Ing. David Cantu</span>
@@ -395,6 +398,7 @@
           </svg>
         </button>
         <p class="sidebar-nav-title" id="sidebar-rail-heading">Módulos</p>
+        <span class="sidebar-shell-chip" title="Marca cognitiva del workspace">IA Suprema</span>
       </div>
       <div class="sidebar-global-strip" aria-label="Filtro global, alertas y estado del sistema">
         <select id="global-branch-filter" class="header-branch-filter sidebar-branch-filter" title="Sucursales — filtro global">
