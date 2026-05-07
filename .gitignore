@@ -13,3 +13,24 @@ _verify-*.sqlite*
 .audit-screenshots/
 .cursor/
 .vscode/
+
+# Next.js / tooling artifacts accidentally left from old experiment
+.next/
+next-env.d.ts
+next.config.js
+tailwind.config.ts
+postcss.config.js
+tsconfig*.json
+tsconfig.tsbuildinfo
+vitest.config.ts
+vitest.setup.ts
+sentry.client.config.ts
+src/
+prisma/
+.npmrc
+.railwayignore
+railway.json
+railway.cron.json
+nixpacks.toml
+public/sw.js
+public/brand/

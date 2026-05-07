@@ -12739,7 +12739,7 @@
 
     var heatOpt = qs('.prospeccion-toolbar-heat-opt');
     if (heatOpt) heatOpt.style.opacity = mode === 'markers' ? '0.42' : '1';
-    if (heatOpt) heatOpt.style.pointerEvents = mode === 'markers' ? 'none' : '';
+    if (heatOpt) heatOpt.style.pointerEvents = mode === 'markers' ? 'none' : 'auto';
 
     if (valid.length) {
       const bounds = L.latLngBounds(valid.map(function (r) { return [Number(r.lat), Number(r.lng)]; }));

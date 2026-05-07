@@ -1,0 +1,109 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   UNIVERSAL ART SKIN — inspirado en MapaSuminregio (premium editorial)
+   Objetivo: elevar lo artístico SIN cambiar lógica ni marca Universal.
+   Se carga al final de la cascada para sobreescribir detalles visuales.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* Base ambience: textura + luces sutiles (no invade modales) */
+body.md3-on {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body.md3-on::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 72% 52% at 70% -10%, rgba(45, 212, 191, 0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 80% at 0% 100%, rgba(250, 204, 21, 0.06) 0%, transparent 52%),
+    radial-gradient(ellipse 50% 60% at 10% 0%, rgba(56, 189, 248, 0.04) 0%, transparent 55%);
+}
+
+/* Asegurar stacking correcto de la app sobre la textura */
+body.md3-on .header,
+body.md3-on .app-frame,
+body.md3-on #login-overlay,
+body.md3-on .toast-container,
+body.md3-on .modal-overlay {
+  position: relative;
+  z-index: 1;
+}
+
+/* Header: más “premium”, sin romper tokens */
+body.md3-on .header {
+  backdrop-filter: blur(10px);
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--md-sys-color-surface) 92%, transparent) 0%,
+      color-mix(in srgb, var(--md-sys-color-surface) 86%, transparent) 100%);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+}
+
+body.md3-on .header-powered-by {
+  opacity: 0.9;
+}
+
+/* Sidebar rail: profundidad + borde más fino */
+body.md3-on .sidebar-nav,
+body.md3-on .tabs.tabs--rail {
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--md-sys-color-surface-container-low) 94%, transparent) 0%,
+      color-mix(in srgb, var(--md-sys-color-surface-container-low) 82%, transparent) 100%);
+  box-shadow: inset -1px 0 0 color-mix(in srgb, var(--md-sys-color-outline-variant) 75%, transparent);
+}
+
+/* Tabs: activo con “glow” más editorial (sin cambiar el color base) */
+body.md3-on .tab.active {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--md-sys-color-secondary-container) 92%, transparent) 0%,
+    color-mix(in srgb, var(--md-sys-color-secondary-container) 72%, transparent) 100%
+  );
+  box-shadow:
+    0 10px 26px rgba(0,0,0,0.18),
+    0 0 0 1px rgba(45, 212, 191, 0.18);
+}
+
+/* Section headers: línea más suave + separación elegante */
+body.md3-on .section-header,
+body.md3-on .panel-section-header {
+  border-bottom-color: color-mix(in srgb, var(--md-sys-color-outline-variant) 70%, transparent);
+}
+
+/* Cards y superficies */
+body.md3-on .card,
+body.md3-on .module,
+body.md3-on .data-table,
+body.md3-on .table-wrap,
+body.md3-on .prospeccion-map-chrome {
+  box-shadow:
+    0 14px 40px rgba(0,0,0,0.18),
+    0 0 0 1px color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
+}
+
+/* Botones: micro-gradiente discreto (solo filled) */
+body.md3-on .btn:not(.outline):not(.text):not(.elevated) {
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--md-sys-color-primary) 92%, #ffffff 8%) 0%,
+      var(--md-sys-color-primary) 55%,
+      color-mix(in srgb, var(--md-sys-color-primary) 86%, #000000 14%) 100%);
+}
+
+/* Inputs: “glass” suave */
+body.md3-on input,
+body.md3-on select,
+body.md3-on textarea {
+  box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+}
+
+/* Map toolbar (Prospección): reforzar contraste premium */
+.prospeccion-map-toolbar {
+  box-shadow: inset 0 -1px 0 rgba(255,255,255,0.04);
+}
+
