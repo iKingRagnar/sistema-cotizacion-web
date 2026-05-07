@@ -2487,16 +2487,18 @@
     const out = [];
     const ineEx = qs('#m-tec-ine-existing');
     const licEx = qs('#m-tec-lic-existing');
+    const ineNewRow = qs('#m-tec-ine-new-row');
     const ineNew = qs('#m-tec-ine-new');
+    const licNewRow = qs('#m-tec-lic-new-row');
     const licNew = qs('#m-tec-lic-new');
     let ineU = '';
-    if (ineNew && !ineNew.classList.contains('hidden') && ineNew.src) ineU = String(ineNew.src || '').trim();
+    if (ineNewRow && !ineNewRow.classList.contains('hidden') && ineNew && ineNew.src) ineU = String(ineNew.src || '').trim();
     else if (ineEx && !ineEx.classList.contains('hidden')) {
       const im = qs('#m-tec-ine-img');
       if (im && im.src) ineU = String(im.src || '').trim();
     }
     let licU = '';
-    if (licNew && !licNew.classList.contains('hidden') && licNew.src) licU = String(licNew.src || '').trim();
+    if (licNewRow && !licNewRow.classList.contains('hidden') && licNew && licNew.src) licU = String(licNew.src || '').trim();
     else if (licEx && !licEx.classList.contains('hidden')) {
       const im = qs('#m-tec-lic-img');
       if (im && im.src) licU = String(im.src || '').trim();
@@ -2507,29 +2509,48 @@
     return { items: out, start: Math.max(0, Math.min(Number(startIdx) || 0, out.length - 1)) };
   }
 
-  /** Miniatura en tabla: /api/ sin extensión usa icono (evita <img> sin auth en src). */
+  /** Miniatura en tabla: solo lectura + botón Ver (misma lógica que constancia en Clientes; no abre visor al pie al pulsar la mini). */
   function pvcTablaThumbOpenButton(url, title) {
     const u = String(url || '').trim();
     if (!u || !pvcIsDisplayableImageUrl(u)) return '';
     const ref = registerPvcMediaUrl(u);
-    const t = escapeHtml(title || 'Ver imagen');
+    const oneLb = [];
+    pvcLbPushIfMedia(oneLb, u, title || 'Imagen');
+    const lbG = oneLb.length ? pvcLbEncodeGallery(oneLb) : '';
+    const verCore = lbG
+      ? ' class="btn small outline js-pvc-media-lightbox ref-tabla-thumb-ver" data-lb-g="' +
+        escapeHtml(lbG) +
+        '" data-lb-i="0"'
+      : ' class="btn small outline js-pvc-media-lightbox ref-tabla-thumb-ver" data-media-ref="' +
+        escapeHtml(ref) +
+        '"';
+    const t = escapeHtml(title || 'Ver ampliado');
     if (u.startsWith('/api/')) {
       return (
-        '<button type="button" class="ref-tabla-thumb-api js-refaccion-open-media" data-media-ref="' +
-        escapeHtml(ref) +
-        '" title="' +
+        '<span class="cliente-const-inline ref-tabla-thumb-wrap">' +
+        '<span class="cliente-const-slot cliente-const-slot--static ref-tabla-thumb-static" aria-hidden="true">' +
+        '<i class="fas fa-image" aria-hidden="true"></i></span>' +
+        '<button type="button"' +
+        verCore +
+        ' title="' +
         t +
-        '"><i class="fas fa-image" aria-hidden="true"></i></button>'
+        '"><i class="fas fa-magnifying-glass-plus" aria-hidden="true"></i></button>' +
+        '</span>'
       );
     }
     return (
-      '<button type="button" class="ref-tabla-thumb-btn js-refaccion-open-media" data-media-ref="' +
-      escapeHtml(ref) +
-      '" title="' +
-      t +
-      '"><img class="ref-tabla-thumb-img" src="' +
+      '<span class="cliente-const-inline ref-tabla-thumb-wrap">' +
+      '<span class="cliente-const-slot cliente-const-slot--static ref-tabla-thumb-static" aria-hidden="true">' +
+      '<img class="ref-tabla-thumb-img" src="' +
       escapeHtml(u) +
-      '" alt="" loading="lazy"></button>'
+      '" alt="" loading="lazy">' +
+      '</span>' +
+      '<button type="button"' +
+      verCore +
+      ' title="' +
+      t +
+      '"><i class="fas fa-magnifying-glass-plus" aria-hidden="true"></i></button>' +
+      '</span>'
     );
   }
 
@@ -2665,7 +2686,7 @@
     );
   })();
 
-  /** Fallback ultra-robusto: lightbox (Ver / galería) vs visor al pie (miniaturas de tabla, etc.). */
+  /** Lightbox (Ver / galería). Miniaturas en tabla son estáticas; solo el botón Ver abre el visor. */
   (function bindGlobalMediaOpenCapture() {
     document.addEventListener(
       'click',
@@ -3752,7 +3773,7 @@
     });
   }
 
-  /** Abre medios en el visor al pie de la app (misma UX que constancia en clientes). */
+  /** Abre medios en el visor al pie (legacy; preferir lightbox desde UI). */
   function openRefaccionMediaFull(url) {
     const u = String(url || '').trim();
     if (!u) return;
@@ -3796,20 +3817,16 @@
     );
   }
   function heroFrameImageHtml(mediaRef, dataUrl, imgSrc, alt, downloadName, lbG, lbIndex) {
-    const hasG = !!(lbG && String(lbG).trim());
-    const openCore = hasG
-      ? 'data-lb-g="' + lbG + '" data-lb-i="' + String(Number(lbIndex) || 0) + '"'
-      : mediaRef
-        ? 'data-media-ref="' + escapeHtml(mediaRef) + '"'
-        : 'data-url="' + escapeHtml(dataUrl) + '"';
     return (
       '<div class="ref-pvc-hero-frame">' +
-      '<button type="button" class="ref-pvc-hero-frame-hit js-pvc-media-lightbox" ' +
-      openCore +
-      ' title="Ver solo imagen / documento">' +
-      '<img src="' + escapeHtml(imgSrc) + '" alt="' + escapeHtml(alt || '') + '" loading="lazy">' +
+      '<div class="ref-pvc-hero-frame-view ref-pvc-hero-frame-view--static" aria-hidden="false">' +
+      '<img src="' +
+      escapeHtml(imgSrc) +
+      '" alt="' +
+      escapeHtml(alt || '') +
+      '" loading="lazy">' +
       '<span class="ref-pvc-hero-shine"></span>' +
-      '</button>' +
+      '</div>' +
       heroCtaRowHtml(mediaRef, dataUrl, downloadName, lbG, lbIndex) +
       '</div>'
     );
@@ -3943,18 +3960,18 @@
           '<span class="ref-pvc-hero-kicker ref-pvc-hero-kicker--accent"><i class="fas fa-puzzle-piece"></i> Pieza</span>' +
           '<div class="ref-pvc-pieza-card">' +
           '<div class="ref-pvc-pieza-ring"></div>' +
-          '<button type="button" class="ref-pvc-pieza-img-hit js-pvc-media-lightbox" ' +
-          gAttr +
-          ' title="Ver solo imagen (galería si hay varias)">' +
-          '<img src="' + escapeHtml(url) + '" alt="Vista pieza" loading="lazy">' +
-          '</button>' +
+          '<div class="ref-pvc-pieza-img-static">' +
+          '<img src="' +
+          escapeHtml(url) +
+          '" alt="Vista pieza" loading="lazy">' +
+          '</div>' +
           '</div>' +
           '<div class="ref-pvc-pieza-actions">' +
           dl +
           '<button type="button" class="ref-pvc-pieza-mini-zoom js-pvc-media-lightbox" ' +
           gAttr +
-          ' title="Ver solo imagen (galería si hay varias)">' +
-          '<i class="fas fa-search-plus"></i></button>' +
+          ' title="Ver ampliado (galería si hay varias)">' +
+          '<i class="fas fa-magnifying-glass-plus"></i></button>' +
           '</div>' +
           '</aside>'
         );
@@ -4006,7 +4023,7 @@
     return '<div class="ref-pvc-hero"><div class="ref-pvc-hero-inner ' + layoutClass + '">' + mainHtml + sideHtml + '</div></div>';
   }
 
-  /** Miniatura o icono (PDF/otro) para vistas previas de refacciones/máquinas. */
+  /** Miniatura o icono (PDF/otro): solo lectura + Ver (misma UX que Clientes / constancia). */
   function previewMediaThumbBlock(url, title) {
     const u = String(url || '');
     if (!u) return '';
@@ -4015,33 +4032,26 @@
     const oneLb = [];
     pvcLbPushIfMedia(oneLb, u, title || 'Vista');
     const lbGOne = oneLb.length ? pvcLbEncodeGallery(oneLb) : '';
-    const lbOpen = lbGOne
-      ? `class="pvc-preview-media-btn js-pvc-media-lightbox" data-lb-g="${lbGOne}" data-lb-i="0" title="Ver solo archivo (pantalla completa)"`
-      : `class="pvc-preview-media-btn js-refaccion-open-media" data-media-ref="${mediaRef}" title="Ver imagen"`;
+    const pdfAttr = pvcIsPdfUrl(u) || /application\/pdf/i.test(u) ? ' data-lb-force-pdf="1"' : '';
+    const verBtn = lbGOne
+      ? `<button type="button" class="btn small outline js-pvc-media-lightbox"${pdfAttr} data-lb-g="${escapeHtml(lbGOne)}" data-lb-i="0" title="Ver ampliado"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>`
+      : `<button type="button" class="btn small outline js-pvc-media-lightbox"${pdfAttr} data-media-ref="${escapeHtml(mediaRef)}" title="Ver ampliado"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>`;
     if (pvcIsDisplayableImageUrl(u)) {
-      return `<div class="pvc-preview-media">
-        <div class="pvc-preview-media-row">
-        <button type="button" ${lbOpen}>
-          <img src="${escapeHtml(u)}" class="ref-foto-thumb" alt="${escapeHtml(title || '')}" style="max-height:140px;max-width:100%;object-fit:contain;border-radius:8px;border:1px solid var(--border-color,#e5e7eb);">
-        </button>
-        ${dl}
-        </div>
-      </div>`;
+      return (
+        `<div class="pvc-preview-media"><div class="pvc-preview-media-row cliente-const-inline">` +
+        `<span class="cliente-const-slot cliente-const-slot--static pvc-preview-thumb-static" aria-hidden="true">` +
+        `<img src="${escapeHtml(u)}" class="ref-foto-thumb" alt="${escapeHtml(title || '')}" loading="lazy" style="max-height:140px;max-width:100%;object-fit:contain;border-radius:8px;border:1px solid var(--border-color,#e5e7eb);">` +
+        `</span>${verBtn}${dl}</div></div>`
+      );
     }
     const isPdf = pvcIsPdfUrl(u) || /application\/pdf/i.test(u);
     const icon = isPdf ? 'fa-file-pdf' : 'fa-file-alt';
     const cls = isPdf ? 'cliente-const-slot--pdf' : 'cliente-const-slot--file';
-    const lbOpen2 = lbGOne
-      ? `class="cliente-const-slot ${cls} js-pvc-media-lightbox" data-lb-g="${lbGOne}" data-lb-i="0" style="width:88px;height:88px;display:inline-flex;align-items:center;justify-content:center;" title="Ver solo archivo (pantalla completa)"`
-      : `class="cliente-const-slot ${cls} js-refaccion-open-media" data-media-ref="${mediaRef}" style="width:88px;height:88px;display:inline-flex;align-items:center;justify-content:center;" title="${escapeHtml((title || 'Archivo') + ' · clic para abrir')}"`;
-    return `<div class="pvc-preview-media">
-      <div class="pvc-preview-media-row">
-      <button type="button" ${lbOpen2}>
-        <i class="fas ${icon} fa-2x"></i>
-      </button>
-      ${dl}
-      </div>
-    </div>`;
+    return (
+      `<div class="pvc-preview-media"><div class="pvc-preview-media-row cliente-const-inline">` +
+      `<span class="cliente-const-slot ${cls} cliente-const-slot--static pvc-preview-thumb-static" aria-hidden="true">` +
+      `<i class="fas ${icon} fa-2x"></i></span>${verBtn}${dl}</div></div>`
+    );
   }
   function slugifyDownloadName(s) {
     const t = String(s || 'archivo').trim() || 'archivo';
@@ -4633,13 +4643,19 @@
         const lbOne = [];
         pvcLbPushIfMedia(lbOne, m.imagen_pieza_url, 'Imagen de máquina');
         const lbG1 = lbOne.length ? pvcLbEncodeGallery(lbOne) : '';
-        const lbAttr = lbG1 ? ` class="js-pvc-media-lightbox" data-lb-g="${lbG1}" data-lb-i="0" title="Ver solo imagen (pantalla completa)"` : ` class="js-refaccion-open-media" data-media-ref="${escapeHtml(imgRef)}" title="Ver imagen"`;
+        const verBtn =
+          lbG1
+            ? `<button type="button" class="btn small outline js-pvc-media-lightbox" data-lb-g="${escapeHtml(lbG1)}" data-lb-i="0" title="Ver ampliado"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>`
+            : `<button type="button" class="btn small outline js-pvc-media-lightbox" data-media-ref="${escapeHtml(imgRef)}" title="Ver ampliado"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>`;
         cur =
           `<div class="ref-foto-preview-wrap">
-             <button type="button"${lbAttr} style="border:none;background:transparent;padding:0;cursor:zoom-in;">
-               <img src="${escapeHtml(m.imagen_pieza_url)}" class="ref-foto-thumb" alt="Vista previa" loading="lazy">
-             </button>
-             ${pvcDownloadBtnCompactHtml(imgRef, null, 'maquina-imagen-modal')}
+             <div class="cliente-const-inline" style="align-items:flex-start;gap:0.5rem;flex-wrap:wrap;">
+               <span class="cliente-const-slot cliente-const-slot--static">
+                 <img src="${escapeHtml(m.imagen_pieza_url)}" class="ref-foto-thumb" alt="Vista previa" loading="lazy">
+               </span>
+               ${verBtn}
+               ${pvcDownloadBtnCompactHtml(imgRef, null, 'maquina-imagen-modal')}
+             </div>
            </div>`;
       } else {
         cur = `<p><a href="${escapeHtml(m.imagen_pieza_url)}" target="_blank" rel="noopener noreferrer" class="btn outline"><i class="fas fa-external-link-alt"></i> Ver imagen actual</a></p>`;
@@ -4705,46 +4721,55 @@
       return one.length ? pvcLbEncodeGallery(one) : '';
     }
     const ensKicker = ensUrl ? (ensPdf ? 'PDF' : ensImg ? 'Imagen' : 'Archivo') : '—';
+    const piezaPdfG = maqSingleLbG(piezaUrl, 'PDF · imagen de carga');
+    const piezaFileG = maqSingleLbG(piezaUrl, 'Archivo adjunto');
+    const ensDocG = maqSingleLbG(ensUrl, ensPdf ? 'Especificaciones (PDF)' : 'Especificaciones');
     const piezaLeftBlock = piezaPdf
-      ? `<div class="ref-pvc-hero-doc-row">
-           <button type="button" class="ref-pvc-hero-doc js-pvc-media-lightbox" data-lb-g="${maqSingleLbG(piezaUrl, 'PDF · imagen de carga')}" data-lb-i="0" title="Ver solo documento (pantalla completa)">
+      ? `<div class="ref-pvc-hero-doc-row ref-pvc-hero-doc-row--with-cta">
+           <div class="ref-pvc-hero-doc ref-pvc-hero-doc--static" aria-hidden="true">
              <span class="ref-pvc-hero-doc-icon"><i class="fas fa-file-pdf"></i></span>
              <div>
                <div class="ref-pvc-hero-doc-title">PDF · imagen de carga</div>
-               <div class="ref-pvc-hero-doc-sub">Clic para abrir o descargar</div>
+               <div class="ref-pvc-hero-doc-sub">Usa <strong>Ver</strong> para pantalla completa</div>
              </div>
-             <span class="ref-pvc-hero-doc-arrow"><i class="fas fa-arrow-up-right-from-square"></i></span>
-           </button>
-           ${pvcMediaDownloadButtonHtml(piezaMediaRef, null, 'maquina-imagen-carga', 'ref-pvc-hero-doc-dl')}
+           </div>
+           <div class="ref-pvc-hero-doc-cta-row">
+             <button type="button" class="btn small outline js-pvc-media-lightbox" data-lb-force-pdf="1" data-lb-g="${escapeHtml(piezaPdfG)}" data-lb-i="0" title="Ver PDF ampliado"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>
+             ${pvcMediaDownloadButtonHtml(piezaMediaRef, null, 'maquina-imagen-carga', 'ref-pvc-hero-doc-dl')}
+           </div>
          </div>`
       : piezaImg
         ? heroFrameImageHtml(piezaMediaRef, null, piezaUrl, 'Imagen de carga máquina', 'maquina-imagen-carga', lbGMaq, idxPiezaLb)
         : piezaUrl
-          ? `<div class="ref-pvc-hero-doc-row">
-               <button type="button" class="ref-pvc-hero-doc js-pvc-media-lightbox" data-lb-g="${maqSingleLbG(piezaUrl, 'Archivo adjunto')}" data-lb-i="0" title="Ver solo archivo (pantalla completa)">
+          ? `<div class="ref-pvc-hero-doc-row ref-pvc-hero-doc-row--with-cta">
+               <div class="ref-pvc-hero-doc ref-pvc-hero-doc--static" aria-hidden="true">
                  <span class="ref-pvc-hero-doc-icon"><i class="fas fa-file"></i></span>
                  <div>
                    <div class="ref-pvc-hero-doc-title">Archivo adjunto</div>
-                   <div class="ref-pvc-hero-doc-sub">Clic para abrir</div>
+                   <div class="ref-pvc-hero-doc-sub">Usa <strong>Ver</strong> para abrir en visor</div>
                  </div>
-                 <span class="ref-pvc-hero-doc-arrow"><i class="fas fa-arrow-up-right-from-square"></i></span>
-               </button>
-               ${pvcMediaDownloadButtonHtml(piezaMediaRef, null, 'maquina-imagen-carga', 'ref-pvc-hero-doc-dl')}
+               </div>
+               <div class="ref-pvc-hero-doc-cta-row">
+                 <button type="button" class="btn small outline js-pvc-media-lightbox" data-lb-g="${escapeHtml(piezaFileG)}" data-lb-i="0" title="Ver ampliado"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>
+                 ${pvcMediaDownloadButtonHtml(piezaMediaRef, null, 'maquina-imagen-carga', 'ref-pvc-hero-doc-dl')}
+               </div>
              </div>`
           : '<div class="ref-pvc-hero-frame ref-pvc-hero-frame--empty" title="Sin imagen de carga máquina"><span class="ref-pvc-hero-frame-empty-inner"><i class="fas fa-camera"></i> Sin imagen</span><span class="ref-pvc-hero-frame-empty-hint">Usa <strong>Editar máquina</strong> para subir foto de catálogo.</span></div>';
     const ensRightBlock = ensImg
       ? heroFrameImageHtml(ensMediaRef, null, ensUrl, 'Especificaciones', 'maquina-especificaciones', lbGMaq, idxEnsLb)
       : ensUrl
-        ? `<div class="ref-pvc-hero-doc-row">
-             <button type="button" class="ref-pvc-hero-doc js-pvc-media-lightbox" data-lb-g="${maqSingleLbG(ensUrl, ensPdf ? 'Especificaciones (PDF)' : 'Especificaciones')}" data-lb-i="0" title="Ver solo documento (pantalla completa)">
+        ? `<div class="ref-pvc-hero-doc-row ref-pvc-hero-doc-row--with-cta">
+             <div class="ref-pvc-hero-doc ref-pvc-hero-doc--static" aria-hidden="true">
                <span class="ref-pvc-hero-doc-icon"><i class="fas ${ensPdf ? 'fa-file-pdf' : 'fa-file'}"></i></span>
                <div>
-                 <div class="ref-pvc-hero-doc-title">${ensPdf ? 'Abrir PDF' : 'Abrir archivo'}</div>
-                 <div class="ref-pvc-hero-doc-sub">${ensPdf ? 'Especificaciones (PDF)' : 'Documento (clic para abrir)'}</div>
+                 <div class="ref-pvc-hero-doc-title">${ensPdf ? 'PDF de especificaciones' : 'Archivo de especificaciones'}</div>
+                 <div class="ref-pvc-hero-doc-sub">Usa <strong>Ver</strong> para pantalla completa</div>
                </div>
-               <span class="ref-pvc-hero-doc-arrow"><i class="fas fa-arrow-up-right-from-square"></i></span>
-             </button>
-             ${pvcMediaDownloadButtonHtml(ensMediaRef, null, 'maquina-especificaciones', 'ref-pvc-hero-doc-dl')}
+             </div>
+             <div class="ref-pvc-hero-doc-cta-row">
+               <button type="button" class="btn small outline js-pvc-media-lightbox"${ensPdf ? ' data-lb-force-pdf="1"' : ''} data-lb-g="${escapeHtml(ensDocG)}" data-lb-i="0" title="Ver ampliado"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>
+               ${pvcMediaDownloadButtonHtml(ensMediaRef, null, 'maquina-especificaciones', 'ref-pvc-hero-doc-dl')}
+             </div>
            </div>`
         : `<div class="ref-pvc-hero-doc-row">
              <div class="ref-pvc-hero-doc ref-pvc-hero-doc--empty" role="note">
@@ -8131,30 +8156,42 @@
       const u = String(url).trim();
       if (pvcIsPdfUrl(u)) {
         const rPdf = registerPvcMediaUrl(u);
+        const onePdf = [];
+        pvcLbPushIfMedia(onePdf, u, label);
+        const gPdf = onePdf.length ? pvcLbEncodeGallery(onePdf) : '';
+        const verPdf =
+          '<button type="button" class="btn small outline js-pvc-media-lightbox" data-lb-force-pdf="1" data-lb-g="' +
+          escapeHtml(gPdf) +
+          '" data-lb-i="0" title="Ver PDF"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>';
         return (
           '<div class="ref-modal-foto-wrap"><p class="ref-modal-foto-label">' +
           escapeHtml(label) +
-          '</p><div class="ref-foto-preview-wrap">' +
-          '<button type="button" class="btn outline js-refaccion-open-media" data-media-ref="' +
-          escapeHtml(rPdf) +
-          '"><i class="fas fa-file-pdf"></i> Abrir PDF</button>' +
+          '</p><div class="ref-foto-preview-wrap cliente-const-inline" style="flex-wrap:wrap;gap:0.5rem;align-items:flex-end">' +
+          '<span class="cliente-const-slot cliente-const-slot--pdf cliente-const-slot--static" aria-hidden="true"><i class="fas fa-file-pdf fa-2x"></i></span>' +
+          verPdf +
           pvcDownloadBtnCompactHtml(rPdf, null, dlSlug) +
           '</div></div>'
         );
       }
       if (pvcIsDisplayableImageUrl(u)) {
         const rImg = registerPvcMediaUrl(u);
+        const oneImg = [];
+        pvcLbPushIfMedia(oneImg, u, label);
+        const gImg = oneImg.length ? pvcLbEncodeGallery(oneImg) : '';
+        const verImg =
+          '<button type="button" class="btn small outline js-pvc-media-lightbox" data-lb-g="' +
+          escapeHtml(gImg) +
+          '" data-lb-i="0" title="Ver ampliado"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>';
         return (
           '<div class="ref-modal-foto-wrap"><p class="ref-modal-foto-label">' +
           escapeHtml(label) +
-          '</p><div class="ref-foto-preview-wrap">' +
-          '<button type="button" class="js-refaccion-open-media ref-modal-foto-zoom" data-media-ref="' +
-          escapeHtml(rImg) +
-          '" title="Ver en grande" style="border:none;background:transparent;padding:0;cursor:zoom-in;">' +
+          '</p><div class="ref-foto-preview-wrap cliente-const-inline" style="flex-wrap:wrap;gap:0.5rem;align-items:flex-end">' +
+          '<span class="cliente-const-slot cliente-const-slot--static">' +
           '<img src="' +
           escapeHtml(u) +
           '" alt="" class="ref-foto-thumb" loading="lazy">' +
-          '</button>' +
+          '</span>' +
+          verImg +
           pvcDownloadBtnCompactHtml(rImg, null, dlSlug) +
           '</div></div>'
         );
@@ -13198,6 +13235,7 @@
   }
 
   async function previewTecnico(t) {
+    clearPvcMediaUrlRegistry();
     let full = t;
     if (t && t.id) {
       try { full = await fetchJson(API + '/tecnicos/' + t.id); } catch (_) {}
@@ -13215,27 +13253,42 @@
       const tecG = tecLb.length ? pvcLbEncodeGallery(tecLb) : '';
       const idxIne = tecLb.length && ineOpen ? tecLb.findIndex((it) => String(it.url || '').trim() === String(ineOpen).trim()) : 0;
       const idxLic = tecLb.length && licOpen ? tecLb.findIndex((it) => String(it.url || '').trim() === String(licOpen).trim()) : 0;
-      const ineLb = tecG ? ' class="tec-pvc-doc-thumb js-pvc-media-lightbox" data-lb-g="' + tecG + '" data-lb-i="' + String(idxIne >= 0 ? idxIne : 0) + '" title="Ver solo documentos (galería INE / licencia)"' : ' class="tec-pvc-doc-thumb js-refaccion-open-media" data-url="' + escapeHtml(ineOpen) + '" title="Ver INE"';
-      const licLb = tecG ? ' class="tec-pvc-doc-thumb js-pvc-media-lightbox" data-lb-g="' + tecG + '" data-lb-i="' + String(idxLic >= 0 ? idxLic : 0) + '" title="Ver solo documentos (galería INE / licencia)"' : ' class="tec-pvc-doc-thumb js-refaccion-open-media" data-url="' + escapeHtml(licOpen) + '" title="Ver licencia"';
+      function tecPreviewVerAttrs(openUrl, idxInGallery) {
+        if (tecG) {
+          return 'data-lb-g="' + escapeHtml(tecG) + '" data-lb-i="' + String(idxInGallery >= 0 ? idxInGallery : 0) + '"';
+        }
+        const one = [];
+        pvcLbPushIfMedia(one, openUrl, 'Documento');
+        const g1 = one.length ? pvcLbEncodeGallery(one) : '';
+        if (g1) return 'data-lb-g="' + escapeHtml(g1) + '" data-lb-i="0"';
+        const ref = openUrl ? registerPvcMediaUrl(String(openUrl).trim()) : '';
+        return ref ? 'data-media-ref="' + escapeHtml(ref) + '"' : '';
+      }
       const parts = [];
       if (ineThumb) {
+        const ineAttrs = tecPreviewVerAttrs(ineOpen, idxIne);
         parts.push(
-          '<div class="tec-pvc-doc"><span class="tec-pvc-doc-label">INE</span><div class="tec-pvc-doc-thumb-row">' +
-          '<button type="button"' +
-          ineLb +
-          '>' +
-          '<img src="' + escapeHtml(ineThumb) + '" alt="INE" loading="lazy"></button>' +
+          '<div class="tec-pvc-doc"><span class="tec-pvc-doc-label">INE</span><div class="tec-pvc-doc-thumb-row cliente-const-inline" style="align-items:flex-end;gap:0.5rem;flex-wrap:wrap">' +
+          '<span class="cliente-const-slot cliente-const-slot--static tec-pvc-doc-thumb-static" aria-hidden="true">' +
+          '<img src="' + escapeHtml(ineThumb) + '" alt="INE" class="tec-pvc-doc-thumb-img" loading="lazy">' +
+          '</span>' +
+          (ineAttrs
+            ? '<button type="button" class="btn small outline js-pvc-media-lightbox" ' + ineAttrs + ' title="Ver INE ampliado"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>'
+            : '') +
           pvcDownloadBtnCompactHtml(null, ineOpen, 'tecnico-ine') +
           '</div></div>'
         );
       }
       if (licThumb) {
+        const licAttrs = tecPreviewVerAttrs(licOpen, idxLic);
         parts.push(
-          '<div class="tec-pvc-doc"><span class="tec-pvc-doc-label">Licencia</span><div class="tec-pvc-doc-thumb-row">' +
-          '<button type="button"' +
-          licLb +
-          '>' +
-          '<img src="' + escapeHtml(licThumb) + '" alt="Licencia" loading="lazy"></button>' +
+          '<div class="tec-pvc-doc"><span class="tec-pvc-doc-label">Licencia</span><div class="tec-pvc-doc-thumb-row cliente-const-inline" style="align-items:flex-end;gap:0.5rem;flex-wrap:wrap">' +
+          '<span class="cliente-const-slot cliente-const-slot--static tec-pvc-doc-thumb-static" aria-hidden="true">' +
+          '<img src="' + escapeHtml(licThumb) + '" alt="Licencia" class="tec-pvc-doc-thumb-img" loading="lazy">' +
+          '</span>' +
+          (licAttrs
+            ? '<button type="button" class="btn small outline js-pvc-media-lightbox" ' + licAttrs + ' title="Ver licencia ampliada"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>'
+            : '') +
           pvcDownloadBtnCompactHtml(null, licOpen, 'tecnico-licencia') +
           '</div></div>'
         );
@@ -13291,11 +13344,17 @@
       const puestoCell = (t.puesto || t.rol || '').trim() || '—';
       const ineOpenU = t.ine_foto_url || t.ine_thumb_url;
       const licOpenU = t.licencia_foto_url || t.licencia_thumb_url;
+      const rowLb = [];
+      pvcLbPushIfMedia(rowLb, ineOpenU, 'INE');
+      pvcLbPushIfMedia(rowLb, licOpenU, 'Licencia');
+      const rowG = rowLb.length ? pvcLbEncodeGallery(rowLb) : '';
+      const rowIdxIne = rowLb.length && ineOpenU ? rowLb.findIndex((it) => String(it.url || '').trim() === String(ineOpenU).trim()) : 0;
+      const rowIdxLic = rowLb.length && licOpenU ? rowLb.findIndex((it) => String(it.url || '').trim() === String(licOpenU).trim()) : 0;
       const ineMini = t.ine_thumb_url
-        ? `<span class="tec-doc-slot-wrap"><button type="button" class="tec-doc-slot js-refaccion-open-media" data-url="${escapeHtml(t.ine_thumb_url)}" title="INE (clic para abrir)"><img src="${escapeHtml(t.ine_thumb_url)}" alt="" loading="lazy"></button>${pvcDownloadBtnCompactHtml(null, ineOpenU, 'tecnico-ine')}</span>`
+        ? `<span class="tec-doc-slot-wrap cliente-const-inline" style="align-items:flex-end;gap:0.35rem;flex-wrap:wrap"><span class="tec-doc-slot cliente-const-slot cliente-const-slot--static" title="INE"><img src="${escapeHtml(t.ine_thumb_url)}" alt="" loading="lazy"></span>${rowG ? `<button type="button" class="btn small outline js-pvc-media-lightbox" data-lb-g="${escapeHtml(rowG)}" data-lb-i="${rowIdxIne >= 0 ? rowIdxIne : 0}" title="Ver INE"><i class="fas fa-magnifying-glass-plus"></i></button>` : ''}${pvcDownloadBtnCompactHtml(null, ineOpenU, 'tecnico-ine')}</span>`
         : '<span class="tec-doc-slot" title="Sin INE">—</span>';
       const licMini = t.licencia_thumb_url
-        ? `<span class="tec-doc-slot-wrap"><button type="button" class="tec-doc-slot js-refaccion-open-media" data-url="${escapeHtml(t.licencia_thumb_url)}" title="Licencia (clic para abrir)"><img src="${escapeHtml(t.licencia_thumb_url)}" alt="" loading="lazy"></button>${pvcDownloadBtnCompactHtml(null, licOpenU, 'tecnico-licencia')}</span>`
+        ? `<span class="tec-doc-slot-wrap cliente-const-inline" style="align-items:flex-end;gap:0.35rem;flex-wrap:wrap"><span class="tec-doc-slot cliente-const-slot cliente-const-slot--static" title="Licencia"><img src="${escapeHtml(t.licencia_thumb_url)}" alt="" loading="lazy"></span>${rowG ? `<button type="button" class="btn small outline js-pvc-media-lightbox" data-lb-g="${escapeHtml(rowG)}" data-lb-i="${rowIdxLic >= 0 ? rowIdxLic : 0}" title="Ver licencia"><i class="fas fa-magnifying-glass-plus"></i></button>` : ''}${pvcDownloadBtnCompactHtml(null, licOpenU, 'tecnico-licencia')}</span>`
         : '<span class="tec-doc-slot" title="Sin licencia">—</span>';
       tr.innerHTML = `
         <td><strong>${escapeHtml(t.nombre || '')}</strong></td>
@@ -13333,6 +13392,7 @@
   }
 
   async function openModalTecnico(tec) {
+    clearPvcMediaUrlRegistry();
     const isNew = !tec || !tec.id;
     let full = tec;
     if (tec && tec.id) {
@@ -13350,6 +13410,24 @@
     const licPrevSrc = (full && (full.licencia_thumb_url || full.licencia_foto_url)) || '';
     const inePrevRef = inePrevSrc ? registerPvcMediaUrl(inePrevSrc) : '';
     const licPrevRef = licPrevSrc ? registerPvcMediaUrl(licPrevSrc) : '';
+    const tecEditLb = [];
+    pvcLbPushIfMedia(tecEditLb, inePrevSrc, 'INE');
+    pvcLbPushIfMedia(tecEditLb, licPrevSrc, 'Licencia');
+    const tecEditG = tecEditLb.length ? pvcLbEncodeGallery(tecEditLb) : '';
+    const tecEditIdxIne = tecEditLb.length && inePrevSrc ? tecEditLb.findIndex((it) => String(it.url || '').trim() === String(inePrevSrc).trim()) : 0;
+    const tecEditIdxLic = tecEditLb.length && licPrevSrc ? tecEditLb.findIndex((it) => String(it.url || '').trim() === String(licPrevSrc).trim()) : 0;
+    const ineVerExisting =
+      hasIne && !isNew && tecEditG
+        ? `<button type="button" class="btn small outline js-pvc-media-lightbox" data-lb-g="${escapeHtml(tecEditG)}" data-lb-i="${tecEditIdxIne >= 0 ? tecEditIdxIne : 0}" title="Ver INE ampliado"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>`
+        : hasIne && !isNew && inePrevRef
+          ? `<button type="button" class="btn small outline js-pvc-media-lightbox" data-media-ref="${escapeHtml(inePrevRef)}" title="Ver INE ampliado"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>`
+          : '';
+    const licVerExisting =
+      hasLic && !isNew && tecEditG
+        ? `<button type="button" class="btn small outline js-pvc-media-lightbox" data-lb-g="${escapeHtml(tecEditG)}" data-lb-i="${tecEditIdxLic >= 0 ? tecEditIdxLic : 0}" title="Ver licencia ampliada"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>`
+        : hasLic && !isNew && licPrevRef
+          ? `<button type="button" class="btn small outline js-pvc-media-lightbox" data-media-ref="${escapeHtml(licPrevRef)}" title="Ver licencia ampliada"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>`
+          : '';
     const body = `
       <div class="form-group"><label>Nombre *</label>
         <input type="text" id="m-tec-nombre" maxlength="100" value="${escapeHtml(full && full.nombre || '')}" placeholder="Ej. Juan Pérez" required>
@@ -13369,26 +13447,42 @@
           <input type="file" id="m-tec-ine" accept="image/*">
           <div id="m-tec-ine-existing" class="${hasIne && !isNew ? '' : 'hidden'}">
             <p class="form-hint" style="margin-top:0.35rem"><i class="fas fa-image"></i> INE en sistema</p>
-            <button type="button" class="js-refaccion-open-media" data-media-ref="${inePrevRef}" title="Ver INE" style="border:none;background:transparent;padding:0;cursor:zoom-in;">
-              <img id="m-tec-ine-img" class="tec-upload-preview" src="${escapeHtml(inePrevSrc)}" alt="INE" loading="lazy">
-            </button>
-            ${pvcDownloadBtnCompactHtml(inePrevRef, null, 'tecnico-ine')}
+            <div class="cliente-const-inline" style="align-items:flex-end;gap:0.5rem;flex-wrap:wrap;margin-top:0.35rem">
+              <span class="cliente-const-slot cliente-const-slot--static" aria-hidden="true">
+                <img id="m-tec-ine-img" class="tec-upload-preview" src="${escapeHtml(inePrevSrc)}" alt="INE" loading="lazy">
+              </span>
+              ${ineVerExisting}
+              ${pvcDownloadBtnCompactHtml(inePrevRef, null, 'tecnico-ine')}
+            </div>
             <button type="button" class="btn small danger outline" id="m-tec-ine-rm" style="margin-top:0.35rem"><i class="fas fa-times"></i> Quitar INE</button>
           </div>
-          <img id="m-tec-ine-new" class="tec-upload-preview hidden js-refaccion-open-media" alt="Vista previa INE">
+          <div id="m-tec-ine-new-row" class="cliente-const-inline hidden" style="align-items:flex-end;gap:0.5rem;flex-wrap:wrap;margin-top:0.35rem">
+            <span class="cliente-const-slot cliente-const-slot--static" aria-hidden="true">
+              <img id="m-tec-ine-new" class="tec-upload-preview" alt="Vista previa INE">
+            </span>
+            <button type="button" id="m-tec-ine-new-ver" class="btn small outline js-pvc-media-lightbox hidden" title="Ver INE ampliado"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>
+          </div>
         </div>
         <div class="form-group tec-upload-box">
           <label><i class="fas fa-car"></i> Licencia de conducir</label>
           <input type="file" id="m-tec-lic" accept="image/*">
           <div id="m-tec-lic-existing" class="${hasLic && !isNew ? '' : 'hidden'}">
             <p class="form-hint" style="margin-top:0.35rem"><i class="fas fa-image"></i> Licencia en sistema</p>
-            <button type="button" class="js-refaccion-open-media" data-media-ref="${licPrevRef}" title="Ver licencia" style="border:none;background:transparent;padding:0;cursor:zoom-in;">
-              <img id="m-tec-lic-img" class="tec-upload-preview" src="${escapeHtml(licPrevSrc)}" alt="Licencia" loading="lazy">
-            </button>
-            ${pvcDownloadBtnCompactHtml(licPrevRef, null, 'tecnico-licencia')}
+            <div class="cliente-const-inline" style="align-items:flex-end;gap:0.5rem;flex-wrap:wrap;margin-top:0.35rem">
+              <span class="cliente-const-slot cliente-const-slot--static" aria-hidden="true">
+                <img id="m-tec-lic-img" class="tec-upload-preview" src="${escapeHtml(licPrevSrc)}" alt="Licencia" loading="lazy">
+              </span>
+              ${licVerExisting}
+              ${pvcDownloadBtnCompactHtml(licPrevRef, null, 'tecnico-licencia')}
+            </div>
             <button type="button" class="btn small danger outline" id="m-tec-lic-rm" style="margin-top:0.35rem"><i class="fas fa-times"></i> Quitar licencia</button>
           </div>
-          <img id="m-tec-lic-new" class="tec-upload-preview hidden js-refaccion-open-media" alt="Vista previa licencia">
+          <div id="m-tec-lic-new-row" class="cliente-const-inline hidden" style="align-items:flex-end;gap:0.5rem;flex-wrap:wrap;margin-top:0.35rem">
+            <span class="cliente-const-slot cliente-const-slot--static" aria-hidden="true">
+              <img id="m-tec-lic-new" class="tec-upload-preview" alt="Vista previa licencia">
+            </span>
+            <button type="button" id="m-tec-lic-new-ver" class="btn small outline js-pvc-media-lightbox hidden" title="Ver licencia ampliada"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>
+          </div>
         </div>
       </div>
       <div class="form-row">
@@ -13432,6 +13526,10 @@
     const licInput = qs('#m-tec-lic');
     const ineNewEl = qs('#m-tec-ine-new');
     const licNewEl = qs('#m-tec-lic-new');
+    const ineNewRow = qs('#m-tec-ine-new-row');
+    const licNewRow = qs('#m-tec-lic-new-row');
+    const ineNewVer = qs('#m-tec-ine-new-ver');
+    const licNewVer = qs('#m-tec-lic-new-ver');
     const ineEx = qs('#m-tec-ine-existing');
     const licEx = qs('#m-tec-lic-existing');
 
@@ -13440,7 +13538,14 @@
       pendingIneFull = null;
       pendingIneThumb = null;
       if (ineInput) ineInput.value = '';
-      if (ineNewEl) { ineNewEl.classList.add('hidden'); ineNewEl.removeAttribute('src'); }
+      if (ineNewEl) { ineNewEl.removeAttribute('src'); }
+      if (ineNewRow) ineNewRow.classList.add('hidden');
+      if (ineNewVer) {
+        ineNewVer.classList.add('hidden');
+        ineNewVer.removeAttribute('data-media-ref');
+        ineNewVer.removeAttribute('data-lb-g');
+        ineNewVer.removeAttribute('data-lb-i');
+      }
       if (ineEx) ineEx.classList.add('hidden');
     });
     qs('#m-tec-lic-rm')?.addEventListener('click', () => {
@@ -13448,7 +13553,14 @@
       pendingLicFull = null;
       pendingLicThumb = null;
       if (licInput) licInput.value = '';
-      if (licNewEl) { licNewEl.classList.add('hidden'); licNewEl.removeAttribute('src'); }
+      if (licNewEl) { licNewEl.removeAttribute('src'); }
+      if (licNewRow) licNewRow.classList.add('hidden');
+      if (licNewVer) {
+        licNewVer.classList.add('hidden');
+        licNewVer.removeAttribute('data-media-ref');
+        licNewVer.removeAttribute('data-lb-g');
+        licNewVer.removeAttribute('data-lb-i');
+      }
       if (licEx) licEx.classList.add('hidden');
     });
 
@@ -13466,9 +13578,12 @@
         if (ineEx) ineEx.classList.add('hidden');
         if (ineNewEl) {
           ineNewEl.src = dataUrl;
-          ineNewEl.setAttribute('data-media-ref', registerPvcMediaUrl(dataUrl));
-          ineNewEl.classList.remove('hidden');
         }
+        if (ineNewVer) {
+          ineNewVer.setAttribute('data-media-ref', registerPvcMediaUrl(dataUrl));
+          ineNewVer.classList.remove('hidden');
+        }
+        if (ineNewRow) ineNewRow.classList.remove('hidden');
       } catch (_) {
         showToast('No se pudo leer la imagen de INE.', 'error');
       }
@@ -13488,9 +13603,12 @@
         if (licEx) licEx.classList.add('hidden');
         if (licNewEl) {
           licNewEl.src = dataUrl;
-          licNewEl.setAttribute('data-media-ref', registerPvcMediaUrl(dataUrl));
-          licNewEl.classList.remove('hidden');
         }
+        if (licNewVer) {
+          licNewVer.setAttribute('data-media-ref', registerPvcMediaUrl(dataUrl));
+          licNewVer.classList.remove('hidden');
+        }
+        if (licNewRow) licNewRow.classList.remove('hidden');
       } catch (_) {
         showToast('No se pudo leer la imagen de licencia.', 'error');
       }

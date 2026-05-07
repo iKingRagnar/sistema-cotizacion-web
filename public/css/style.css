@@ -6029,6 +6029,25 @@ body.dark-theme .modal-box:not(.pdf-preview-modal) .form-group textarea,
 .ref-pvc-hero-doc-row .ref-pvc-hero-doc-dl {
   align-self: flex-end;
 }
+.ref-pvc-hero-doc-row--with-cta .ref-pvc-hero-doc-dl {
+  align-self: flex-start;
+}
+.ref-pvc-hero-doc--static {
+  cursor: default;
+  pointer-events: none;
+  user-select: none;
+}
+.ref-pvc-hero-doc--static:hover {
+  transform: none;
+  border-color: var(--border, #e2e8f0);
+  box-shadow: none;
+}
+.ref-pvc-hero-doc-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
 .ref-pvc-pieza-actions {
   position: absolute;
   bottom: 0.45rem;
@@ -7556,6 +7575,18 @@ body.dark-theme .tec-pvc-docs {
   line-height: 0;
 }
 .tec-pvc-doc button.tec-pvc-doc-thumb img {
+  display: block;
+  width: 96px;
+  height: 64px;
+  object-fit: cover;
+}
+.tec-pvc-doc-thumb-static {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  line-height: 0;
+}
+.tec-pvc-doc-thumb-static .tec-pvc-doc-thumb-img {
   display: block;
   width: 96px;
   height: 64px;
