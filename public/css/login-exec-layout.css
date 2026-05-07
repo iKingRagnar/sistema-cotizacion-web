@@ -17,9 +17,9 @@ html body.login-open #login-overlay.login-overlay--exec-layout {
   --sk-text-muted: rgba(226, 232, 240, 0.9);
   --sk-radius: 18px;
   --sk-blur: 18px;
-  /* Punto de contacto herramienta ↔ pieza (fondo cover centrado). Ajustar si cambia la foto. */
-  --sk-weld-x: 50.5%;
-  --sk-weld-y: 43%;
+  /* Punto de contacto aguja ↔ cubo (entre tarjetas). Cover puede variar: retocar si cambia imagen/viewport. */
+  --sk-weld-x: 50%;
+  --sk-weld-y: 50%;
 }
 
 /*
@@ -237,7 +237,8 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-weld-spark
 
 @media (max-width: 900px) {
   html body.login-open #login-overlay.login-overlay--exec-layout {
-    --sk-weld-y: 46%;
+    /* En columna el encuadre del fondo suele bajar el foco un poco */
+    --sk-weld-y: 52%;
   }
 }
 
