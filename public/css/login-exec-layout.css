@@ -17,8 +17,8 @@ html body.login-open #login-overlay.login-overlay--exec-layout {
   --sk-text-muted: rgba(226, 232, 240, 0.9);
   --sk-radius: 18px;
   --sk-blur: 18px;
-  /* Punta herramienta ↔ pieza — viewport; X fino hacia la izquierda para coincidir con la punta. */
-  --sk-weld-x: 51.25%;
+  /* Punta herramienta ↔ pieza — viewport; X fino para coincidir con la punta / contacto. */
+  --sk-weld-x: 51.65%;
   --sk-weld-y: 55%;
 }
 
@@ -205,7 +205,7 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-weld-spark
 
 @media (max-width: 900px) {
   html body.login-open #login-overlay.login-overlay--exec-layout {
-    --sk-weld-x: 50.35%;
+    --sk-weld-x: 50.75%;
     --sk-weld-y: 54%;
   }
 }
