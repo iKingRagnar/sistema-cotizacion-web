@@ -38,7 +38,7 @@
   <link rel="stylesheet" href="css/layout-rail.css?v=11-hide-sidebar-global-strip">
   <link rel="stylesheet" href="css/header-profile.css?v=10-chrome-luna-neutral-admin-hub">
   <link rel="stylesheet" href="css/theme-industrial.css?v=25-chrome-luna-neutral">
-  <link rel="stylesheet" href="css/material.css?v=3-login-open-detach-sol-2026-04-27">
+  <link rel="stylesheet" href="css/material.css?v=4-poweredby-login-overlay-exception">
   <!-- ═══════════════════════════════════════════════════════════════════════
        ★ MD3 DESIGN SYSTEM — Rediseño 2026-04 (última = mayor prioridad)
        ═══════════════════════════════════════════════════════════════════════ -->
@@ -81,7 +81,7 @@
   <!-- KPI ejecutivos claros (después de nano / universal-art para ganar especificidad) -->
   <link rel="stylesheet" href="css/dashboard-exec-kpi-cards.css?v=1-exec-kpi-light-2026-05-07">
   <!-- Login ejecutivo: al final de la cascada (créditos tipográficos + sin artefactos bajo 100dvh) -->
-  <link rel="stylesheet" href="css/login-exec-layout.css?v=11-poweredby-corner-exec">
+  <link rel="stylesheet" href="css/login-exec-layout.css?v=12-poweredby-fixed-viewport">
   <link rel="manifest" href="manifest.json">
   <!-- Tema único: nano machining + vidrio azul cristalino (sin modo Sol/Luna). -->
   <!-- ★ FORCE-RELOAD: SOLO en browser normal, NUNCA en PWA standalone (evita loop crash) -->
@@ -154,15 +154,21 @@
       min-height: calc(100dvh + 72px) !important;
       border: none !important;
     }
-    /* Crédito: con bleed superior el top absoluto queda clippeado; esquina inferior derecha (cerca del login). */
-    html body.login-open #login-overlay.login-overlay--exec-layout .header-powered-by.login-overlay-powered-by {
+    /* Crédito: fixed al viewport + z > overlay (material ocultaba .header-powered-by sin esta capa). */
+    html body.login-open #login-overlay.login-overlay--exec-layout:not(.hidden) .header-powered-by.login-overlay-powered-by {
+      position: fixed !important;
       top: auto !important;
-      bottom: max(0.55rem, env(safe-area-inset-bottom, 0px) + 0.35rem) !important;
+      bottom: max(0.6rem, env(safe-area-inset-bottom, 0px) + 0.35rem) !important;
       left: auto !important;
       right: max(0.75rem, env(safe-area-inset-right, 0px) + 0.35rem, calc((100vw - 1240px) / 2 + 0.65rem)) !important;
       transform: none !important;
       text-align: right !important;
-      z-index: 8 !important;
+      display: inline-block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      color: rgba(248, 250, 252, 0.96) !important;
+      -webkit-text-fill-color: rgba(248, 250, 252, 0.96) !important;
+      z-index: 20050 !important;
       max-width: min(340px, calc(100vw - 1.25rem)) !important;
       margin: 0 !important;
       pointer-events: none !important;

@@ -145,7 +145,11 @@ body.theme-industrial .header-actions-tail {
   gap: 4px !important;
 }
 
+/* Ocultar crédito en chrome industrial salvo overlay de login (el span vive en #login-overlay, no en .header). */
 body.theme-industrial .header-powered-by { display: none !important; }
+body.theme-industrial.login-open #login-overlay.login-overlay--exec-layout:not(.hidden) .header-powered-by.login-overlay-powered-by {
+  display: inline-block !important;
+}
 
 /* Botones icono del header */
 body.theme-industrial.appearance-light .btn-icon-header {

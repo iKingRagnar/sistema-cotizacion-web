@@ -223,21 +223,29 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-logo
 }
 
 /* Carga al final del CSS: gana a ui-legibility (cursiva manuscrita, no solo italic).
- * El overlay usa top negativo (bleed); el crédito no puede ir arriba o queda fuera del viewport.
- * Esquina inferior derecha, alineada al margen del shell 1240px cuando hay espacio (cerca del login). */
-html body.theme-industrial.login-open #login-overlay.login-overlay--exec-layout .header-powered-by.login-overlay-powered-by {
+ * material.css ocultaba todo .header-powered-by; aquí display + fixed al viewport (z por encima del overlay).
+ * Esquina inferior derecha; en viewport ancho alinea con margen del shell 1240px (zona del login). */
+html body.theme-industrial.login-open #login-overlay.login-overlay--exec-layout:not(.hidden) .header-powered-by.login-overlay-powered-by {
   font-family: "Segoe Script", "Brush Script MT", "Snell Roundhand", "Apple Chancery", cursive !important;
   font-style: normal !important;
   font-weight: 500 !important;
-  position: absolute !important;
+  font-size: clamp(0.78rem, 2vw, 0.92rem) !important;
+  position: fixed !important;
   top: auto !important;
-  bottom: max(0.55rem, env(safe-area-inset-bottom, 0px) + 0.35rem) !important;
+  bottom: max(0.6rem, env(safe-area-inset-bottom, 0px) + 0.35rem) !important;
   left: auto !important;
   right: max(0.75rem, env(safe-area-inset-right, 0px) + 0.35rem, calc((100vw - 1240px) / 2 + 0.65rem)) !important;
   transform: none !important;
   margin: 0 !important;
+  padding: 0.15rem 0.35rem !important;
   text-align: right !important;
-  z-index: 8 !important;
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: rgba(248, 250, 252, 0.96) !important;
+  -webkit-text-fill-color: rgba(248, 250, 252, 0.96) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 0, 0, 0.5) !important;
+  z-index: 20050 !important;
   max-width: min(340px, calc(100vw - 1.25rem)) !important;
   pointer-events: none !important;
 }
