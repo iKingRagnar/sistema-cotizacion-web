@@ -495,12 +495,12 @@
     // Login panel branding
     const lbName = qs('#login-brand-name');
     const lbTagline = qs('#login-brand-tagline');
-    const execGoldLogin =
+    const execLayoutLogin =
       typeof document !== 'undefined' &&
       document.getElementById('login-overlay') &&
-      document.getElementById('login-overlay').classList.contains('login-overlay--exec-gold');
-    if (lbName && !execGoldLogin) lbName.textContent = c.appName || short;
-    if (lbTagline && !execGoldLogin) lbTagline.textContent = c.tagline || '';
+      document.getElementById('login-overlay').classList.contains('login-overlay--exec-layout');
+    if (lbName && !execLayoutLogin) lbName.textContent = c.appName || short;
+    if (lbTagline && !execLayoutLogin) lbTagline.textContent = c.tagline || '';
     updateDocumentTitleFromActiveTab();
     normalizePoweredByCredits();
     const logo = qs('#header-brand-logo');
