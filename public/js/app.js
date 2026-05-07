@@ -11550,48 +11550,130 @@
         .filter(b => (b.fecha || '').slice(0, 7) === thisMonthStart.slice(0, 7))
         .reduce((s, b) => s + (Number(b.tiempo_horas) || 0), 0);
 
+      const dsPronMes = dashboardStats && dashboardStats.pronosticos && dashboardStats.pronosticos.proximo_mes ? dashboardStats.pronosticos.proximo_mes : null;
+      const dsMesAnt = dashboardStats && dashboardStats.periodos && dashboardStats.periodos.mes_anterior ? dashboardStats.periodos.mes_anterior : null;
+      const mesAntMonto = Number(dsMesAnt && dsMesAnt.cotizaciones && dsMesAnt.cotizaciones.monto) || 0;
+      const pronMesMonto = Number(dsPronMes && dsPronMes.cotizaciones_monto) || 0;
+      const mesAntHoras = Number(dsMesAnt && dsMesAnt.bitacoras && dsMesAnt.bitacoras.horas) || 0;
+      const pronMesHoras = Number(dsPronMes && dsPronMes.bitacoras_horas) || 0;
+      const metaMesCot = Math.max(pronMesMonto, mesAntMonto * 0.85, cotMontoMes > 0 ? cotMontoMes * 1.05 : 0, 1);
+      const pctMesVsMeta = Math.round((cotMontoMes / metaMesCot) * 100);
+      let revKind = 'warn';
+      let revBadge = 'EN SEGUIMIENTO';
+      if (pctMesVsMeta >= 95) {
+        revKind = 'ok';
+        revBadge = 'CUMPLIDO';
+      } else if (pctMesVsMeta < 40 || (cotEsteMes === 0 && cotizacionesCtx.length > 0)) {
+        revKind = 'crit';
+        revBadge = 'CRÍTICO';
+      }
+      const pctMesEnPipeline = cotTotal > 0 ? Math.round((cotMontoMes / cotTotal) * 100) : 0;
+      let pipeKind = 'warn';
+      let pipeBadge = 'EN SEGUIMIENTO';
+      if (cotTotal > 0 && cotMontoMes <= 0 && cotizacionesCtx.length > 0) {
+        pipeKind = 'crit';
+        pipeBadge = 'CRÍTICO';
+      } else if (pctMesEnPipeline >= 10 || cotEsteMes >= 6) {
+        pipeKind = 'ok';
+        pipeBadge = 'SALUDABLE';
+      }
+      const pipeBar = Math.min(100, Math.max(6, pctMesEnPipeline * 6));
+      const metaHorasMes = Math.max(pronMesHoras, mesAntHoras * 0.9, 80);
+      const pctHorasMeta = metaHorasMes > 0 ? Math.round((bitHorasMes / metaHorasMes) * 100) : 0;
+      let bitKind = 'warn';
+      let bitBadge = 'EN SEGUIMIENTO';
+      if (pctHorasMeta >= 85) {
+        bitKind = 'ok';
+        bitBadge = 'SALUDABLE';
+      } else if ((pctHorasMeta < 35 && bitEsteMes > 0) || (bitEsteMes === 0 && bitacorasCtx.length > 0)) {
+        bitKind = 'crit';
+        bitBadge = 'CRÍTICO';
+      }
+      const bitBar = Math.min(100, Math.max(5, pctHorasMeta));
+      const refBar = Math.min(100, refacciones.length === 0 ? 14 : 26 + Math.min(74, Math.floor(refacciones.length / 12)));
+
+      const execKpiBadge = (kind, label) => {
+        const k = kind === 'crit' ? 'crit' : kind === 'ok' ? 'ok' : kind === 'warn' ? 'warn' : 'neutral';
+        return `<span class="dashboard-score-badge dashboard-score-badge--${k}"><span class="dashboard-score-badge-dot" aria-hidden="true"></span>${escapeHtml(label)}</span>`;
+      };
+      const execKpiFoot = (barPct, kind, footText) => {
+        const pct = Math.max(0, Math.min(100, Math.round(Number(barPct) || 0)));
+        const k = kind === 'crit' ? 'crit' : kind === 'ok' ? 'ok' : kind === 'warn' ? 'warn' : 'neutral';
+        return `<footer class="dashboard-score-foot"><div class="dashboard-score-bar dashboard-score-bar--${k}" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div><span class="dashboard-score-foot-text dashboard-score-foot-text--${k}">${escapeHtml(footText)}</span></footer>`;
+      };
+
       const execEl = document.createElement('div');
       execEl.className = 'dashboard-exec-scorecards';
       execEl.setAttribute('aria-label', 'Scorecard ejecutivo');
       execEl.innerHTML = showCot
         ? `
-        <article class="dashboard-score-tile dashboard-score-tile--revenue" data-crossfilter-entity="cotizaciones" title="Clic: filtrar vista por cotizaciones (como Power BI)">
-          <span class="dashboard-score-eyebrow">Ingresos cotizados</span>
+        <article class="dashboard-score-tile dashboard-score-tile--exec dashboard-score-tile--revenue dashboard-score-tile--status-${revKind}" data-crossfilter-entity="cotizaciones" title="Clic: filtrar vista por cotizaciones (como Power BI)">
+          <div class="dashboard-score-top-accent dashboard-score-top-accent--revenue" aria-hidden="true"></div>
+          <header class="dashboard-score-head">
+            <span class="dashboard-score-cat">Ventas · mes</span>
+            ${execKpiBadge(revKind, revBadge)}
+          </header>
           <span class="dashboard-score-label">Monto del mes</span>
           <strong class="dashboard-score-value">${escapeHtml(formatMoney(cotMontoMes))}</strong>
-          <span class="dashboard-score-meta"><i class="fas fa-file-invoice"></i> ${escapeHtml(String(cotEsteMes))} cotiz. emitidas · mes</span>
+          <span class="dashboard-score-meta"><i class="fas fa-bullseye"></i> Meta período: ${escapeHtml(formatMoney(metaMesCot))} · ${escapeHtml(String(cotEsteMes))} cotiz. este mes</span>
+          ${execKpiFoot(Math.min(100, pctMesVsMeta), revKind, pctMesVsMeta + '% respecto a meta')}
         </article>
-        <article class="dashboard-score-tile dashboard-score-tile--pipeline" data-crossfilter-entity="cotizaciones" title="Clic: filtrar vista por cotizaciones">
-          <span class="dashboard-score-eyebrow">Cartera / pipeline</span>
+        <article class="dashboard-score-tile dashboard-score-tile--exec dashboard-score-tile--pipeline dashboard-score-tile--status-${pipeKind}" data-crossfilter-entity="cotizaciones" title="Clic: filtrar vista por cotizaciones">
+          <div class="dashboard-score-top-accent dashboard-score-top-accent--pipeline" aria-hidden="true"></div>
+          <header class="dashboard-score-head">
+            <span class="dashboard-score-cat">Cartera · total</span>
+            ${execKpiBadge(pipeKind, pipeBadge)}
+          </header>
           <span class="dashboard-score-label">Valor total cotizaciones</span>
           <strong class="dashboard-score-value">${escapeHtml(formatMoney(cotTotal))}</strong>
-          <span class="dashboard-score-meta"><i class="fas fa-layer-group"></i> ${escapeHtml(String(cotizacionesCtx.length))} documentos en sistema</span>
+          <span class="dashboard-score-meta"><i class="fas fa-layer-group"></i> ${escapeHtml(String(cotizacionesCtx.length))} documentos · mes en curso</span>
+          ${execKpiFoot(pipeBar, pipeKind, pctMesEnPipeline + '% del pipeline facturado este mes')}
         </article>
-        <article class="dashboard-score-tile dashboard-score-tile--risk" data-crossfilter-entity="refacciones" title="Clic: filtrar vista por refacciones">
-          <span class="dashboard-score-eyebrow">Catálogo</span>
+        <article class="dashboard-score-tile dashboard-score-tile--exec dashboard-score-tile--risk dashboard-score-tile--status-ok" data-crossfilter-entity="refacciones" title="Clic: filtrar vista por refacciones">
+          <div class="dashboard-score-top-accent dashboard-score-top-accent--risk" aria-hidden="true"></div>
+          <header class="dashboard-score-head">
+            <span class="dashboard-score-cat">Catálogo</span>
+            ${execKpiBadge('ok', 'ACTIVA')}
+          </header>
           <span class="dashboard-score-label">Refacciones en sistema</span>
           <strong class="dashboard-score-value">${escapeHtml(String(refacciones.length))}</strong>
-          <span class="dashboard-score-meta"><i class="fas fa-cogs"></i> Partidas en catálogo</span>
+          <span class="dashboard-score-meta"><i class="fas fa-cogs"></i> ${escapeHtml(String(marcas))} marcas · cobertura inventario</span>
+          ${execKpiFoot(refBar, 'ok', 'Catálogo consolidado')}
         </article>
-        <article class="dashboard-score-tile dashboard-score-tile--ops" data-crossfilter-entity="bitacoras" title="Clic: filtrar vista por bitácora">
-          <span class="dashboard-score-eyebrow">Productividad</span>
+        <article class="dashboard-score-tile dashboard-score-tile--exec dashboard-score-tile--ops dashboard-score-tile--status-${bitKind}" data-crossfilter-entity="bitacoras" title="Clic: filtrar vista por bitácora">
+          <div class="dashboard-score-top-accent dashboard-score-top-accent--ops" aria-hidden="true"></div>
+          <header class="dashboard-score-head">
+            <span class="dashboard-score-cat">Operaciones · mes</span>
+            ${execKpiBadge(bitKind, bitBadge)}
+          </header>
           <span class="dashboard-score-label">Horas registradas · mes</span>
           <strong class="dashboard-score-value">${escapeHtml(bitHorasMes.toFixed(1))} h</strong>
-          <span class="dashboard-score-meta"><i class="fas fa-hard-hat"></i> ${escapeHtml(String(bitEsteMes))} registros · ${escapeHtml(String(tecnicos))} técnicos</span>
+          <span class="dashboard-score-meta"><i class="fas fa-hard-hat"></i> ${escapeHtml(String(bitEsteMes))} registros · ${escapeHtml(String(tecnicos))} técnicos · ref. ${escapeHtml(metaHorasMes.toFixed(0))} h</span>
+          ${execKpiFoot(bitBar, bitKind, pctHorasMeta + '% vs referencia de período')}
         </article>
       `
         : `
-        <article class="dashboard-score-tile dashboard-score-tile--risk" data-crossfilter-entity="refacciones" title="Clic: filtrar vista por refacciones">
-          <span class="dashboard-score-eyebrow">Catálogo</span>
+        <article class="dashboard-score-tile dashboard-score-tile--exec dashboard-score-tile--risk dashboard-score-tile--status-ok" data-crossfilter-entity="refacciones" title="Clic: filtrar vista por refacciones">
+          <div class="dashboard-score-top-accent dashboard-score-top-accent--risk" aria-hidden="true"></div>
+          <header class="dashboard-score-head">
+            <span class="dashboard-score-cat">Catálogo</span>
+            ${execKpiBadge('ok', 'ACTIVA')}
+          </header>
           <span class="dashboard-score-label">Refacciones en sistema</span>
           <strong class="dashboard-score-value">${escapeHtml(String(refacciones.length))}</strong>
-          <span class="dashboard-score-meta"><i class="fas fa-cogs"></i> Partidas en catálogo</span>
+          <span class="dashboard-score-meta"><i class="fas fa-cogs"></i> ${escapeHtml(String(marcas))} marcas · cobertura inventario</span>
+          ${execKpiFoot(refBar, 'ok', 'Catálogo consolidado')}
         </article>
-        <article class="dashboard-score-tile dashboard-score-tile--ops" data-crossfilter-entity="bitacoras" title="Clic: filtrar vista por bitácora">
-          <span class="dashboard-score-eyebrow">Productividad</span>
+        <article class="dashboard-score-tile dashboard-score-tile--exec dashboard-score-tile--ops dashboard-score-tile--status-${bitKind}" data-crossfilter-entity="bitacoras" title="Clic: filtrar vista por bitácora">
+          <div class="dashboard-score-top-accent dashboard-score-top-accent--ops" aria-hidden="true"></div>
+          <header class="dashboard-score-head">
+            <span class="dashboard-score-cat">Operaciones · mes</span>
+            ${execKpiBadge(bitKind, bitBadge)}
+          </header>
           <span class="dashboard-score-label">Horas registradas · mes</span>
           <strong class="dashboard-score-value">${escapeHtml(bitHorasMes.toFixed(1))} h</strong>
-          <span class="dashboard-score-meta"><i class="fas fa-hard-hat"></i> ${escapeHtml(String(bitEsteMes))} registros · ${escapeHtml(String(tecnicos))} técnicos</span>
+          <span class="dashboard-score-meta"><i class="fas fa-hard-hat"></i> ${escapeHtml(String(bitEsteMes))} registros · ${escapeHtml(String(tecnicos))} técnicos · ref. ${escapeHtml(metaHorasMes.toFixed(0))} h</span>
+          ${execKpiFoot(bitBar, bitKind, pctHorasMeta + '% vs referencia de período')}
         </article>
       `;
       grid.appendChild(execEl);

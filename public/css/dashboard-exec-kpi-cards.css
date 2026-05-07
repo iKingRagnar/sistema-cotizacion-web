@@ -1,0 +1,258 @@
+/**
+ * KPI ejecutivos (fila dashboard-exec-scorecards): tarjetas claras tipo tablero ejecutivo.
+ * Carga al final: debe ganar a nano-fondo / premium-pro en tema industrial.
+ */
+
+#panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 8.5rem;
+  padding: 1rem 1.15rem 1rem !important;
+  padding-top: 1.05rem !important;
+  border-radius: 14px !important;
+  background: linear-gradient(165deg, #fafbfc 0%, #f4f6f8 48%, #eef1f4 100%) !important;
+  background-color: #f5f7fa !important;
+  background-image: none !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  box-shadow:
+    0 4px 18px rgba(15, 23, 42, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.88) inset !important;
+  color: #0f172a !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  overflow: hidden !important;
+}
+
+#panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec:hover {
+  transform: none !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  box-shadow:
+    0 8px 28px rgba(15, 23, 42, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.95) inset !important;
+}
+
+/* Brillo suave esquina superior (nano oculta ::before en score tiles) */
+#panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(ellipse 115% 85% at 10% -8%, rgba(251, 191, 36, 0.13), transparent 55%);
+}
+
+#panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Franja superior de color (DOM; confiable con nano-fondo) */
+.dashboard-score-top-accent {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  border-radius: 14px 14px 0 0;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.dashboard-score-top-accent--revenue {
+  background: linear-gradient(90deg, #2dd4bf, #059669);
+}
+.dashboard-score-top-accent--pipeline {
+  background: linear-gradient(90deg, #38bdf8, #2563eb);
+}
+.dashboard-score-top-accent--risk {
+  background: linear-gradient(90deg, #fb923c, #ea580c);
+}
+.dashboard-score-top-accent--ops {
+  background: linear-gradient(90deg, #a78bfa, #6d28d9);
+}
+
+/* Cabecera categoría + badge */
+.dashboard-score-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+}
+
+.dashboard-score-cat {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #94a3b8 !important;
+  line-height: 1.3;
+  padding-top: 0.12rem;
+}
+
+.dashboard-score-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  line-height: 1;
+}
+
+.dashboard-score-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: currentColor;
+}
+
+.dashboard-score-badge--crit {
+  background: rgba(239, 68, 68, 0.14);
+  color: #b91c1c !important;
+}
+.dashboard-score-badge--ok {
+  background: rgba(34, 197, 94, 0.14);
+  color: #15803d !important;
+}
+.dashboard-score-badge--warn {
+  background: rgba(245, 158, 11, 0.16);
+  color: #b45309 !important;
+}
+.dashboard-score-badge--neutral {
+  background: rgba(100, 116, 139, 0.14);
+  color: #475569 !important;
+}
+
+/* Tipografía cuerpo */
+#panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile--exec .dashboard-score-label {
+  color: #475569 !important;
+  font-weight: 600 !important;
+  font-size: 0.8rem !important;
+  margin-bottom: 0.2rem !important;
+}
+
+#panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile--exec .dashboard-score-value {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+  font-size: clamp(1.35rem, 2.5vw, 1.78rem) !important;
+  margin-bottom: 0.45rem !important;
+}
+
+#panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile--exec .dashboard-score-meta {
+  color: #64748b !important;
+  font-size: 0.76rem !important;
+}
+
+#panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile--exec .dashboard-score-meta i {
+  color: #64748b !important;
+  opacity: 0.85;
+}
+
+/* Pie: barra + texto estado */
+.dashboard-score-foot {
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.dashboard-score-bar {
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+
+.dashboard-score-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.45s ease;
+  min-width: 0;
+}
+
+.dashboard-score-bar--crit > span {
+  background: linear-gradient(90deg, #f87171, #dc2626);
+}
+.dashboard-score-bar--ok > span {
+  background: linear-gradient(90deg, #4ade80, #16a34a);
+}
+.dashboard-score-bar--warn > span {
+  background: linear-gradient(90deg, #fbbf24, #d97706);
+}
+.dashboard-score-bar--neutral > span {
+  background: linear-gradient(90deg, #94a3b8, #64748b);
+}
+
+.dashboard-score-foot-text {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.dashboard-score-foot-text--crit {
+  color: #dc2626 !important;
+}
+.dashboard-score-foot-text--ok {
+  color: #16a34a !important;
+}
+.dashboard-score-foot-text--warn {
+  color: #d97706 !important;
+}
+.dashboard-score-foot-text--neutral {
+  color: #64748b !important;
+}
+
+/* Sobrescribir premium-pro que pinta todos los hijos del tile en modo Luna */
+html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec,
+html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec[class*='dashboard-score-tile--'] {
+  background: linear-gradient(165deg, #fafbfc 0%, #f4f6f8 48%, #eef1f4 100%) !important;
+  background-color: #f5f7fa !important;
+  color: #0f172a !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-cat,
+html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-label,
+html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-meta {
+  color: #64748b !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-value {
+  color: #0f172a !important;
+}
+
+/* Badges y pie: ganar a premium-pro `.dashboard-score-tile * { color }` */
+html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-badge--crit {
+  color: #b91c1c !important;
+}
+html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-badge--ok {
+  color: #15803d !important;
+}
+html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-badge--warn {
+  color: #b45309 !important;
+}
+html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-badge--neutral {
+  color: #475569 !important;
+}
+
+html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-foot-text--crit {
+  color: #dc2626 !important;
+}
+html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-foot-text--ok {
+  color: #16a34a !important;
+}
+html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-foot-text--warn {
+  color: #d97706 !important;
+}
+html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-foot-text--neutral {
+  color: #64748b !important;
+}
