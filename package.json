@@ -4,6 +4,7 @@
   "description": "Sistema de Cotización Universal — proyecto unificado (base funcional sistema-cotizacion-web backup + mejoras mapa tipo MapaSuminregio: clusters Leaflet)",
   "main": "server.js",
   "scripts": {
+    "build": "node -e \"require('fs').accessSync('server.js'); console.log('[build] Express: sin compilación; listo para npm start.');\"",
     "start": "node server.js",
     "dev": "node server.js",
     "vercel:env": "node scripts/vercel-env.js",

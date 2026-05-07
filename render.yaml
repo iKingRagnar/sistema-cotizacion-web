@@ -1,8 +1,9 @@
-# Opcional: al crear el servicio desde el repo, Render puede tomar esta plantilla.
-# Asegúrate de definir en el panel: TURSO_DATABASE_URL y TURSO_AUTH_TOKEN.
+# Web Node (Express + public estático). NO es Next: el build solo valida server.js.
+# En el panel Render: Build = npm ci && npm run build (o deja el default si coincide).
+# Variables: TURSO_DATABASE_URL y TURSO_AUTH_TOKEN.
 services:
   - type: web
     runtime: node
-    buildCommand: npm install
+    buildCommand: npm ci && npm run build
     startCommand: npm start
     healthCheckPath: /health
