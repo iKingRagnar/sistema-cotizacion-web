@@ -18,20 +18,17 @@ html body.login-open #login-overlay.login-overlay--exec-layout {
 }
 
 /*
- * Sin velos ni rejilla a pantalla completa (premium-login): solo foto nano + dos tarjetas.
- * Sin barra de desplazamiento del overlay (login-neutral usa overflow:auto).
- * No forzar height:100dvh aquí: .login-overlay ya es position:fixed + inset:0; sumar 100dvh
- * puede dejar 1px de hueco y una “raya” de color al fondo del viewport.
+ * Foto nano a pantalla completa + dos tarjetas (sin velo premium / sin rejilla ::after).
+ * min-height 100dvh: evita la “franja” arriba/abajo cuando el overlay quedaba más bajo que el viewport.
  */
 html body.login-open #login-overlay.login-overlay--exec-layout,
 html body.login-open #login-overlay.login-overlay.login-overlay--exec-layout {
-  background-color: transparent !important;
+  background-color: #020617 !important;
   background-image:
     var(--nano-machine-image, none),
     url("../fondos/nano-machining-services.webp") !important;
   background-size: cover, cover !important;
   background-position: center center, center center !important;
-  /* scroll evita subpíxeles / 100vh+1px que reabren scrollbar con fixed en algunos navegadores */
   background-attachment: scroll, scroll !important;
   background-repeat: no-repeat, no-repeat !important;
   box-shadow: none !important;
@@ -41,7 +38,8 @@ html body.login-open #login-overlay.login-overlay.login-overlay--exec-layout {
   align-items: center !important;
   justify-content: center !important;
   box-sizing: border-box !important;
-  min-height: 0 !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
   height: auto !important;
   max-height: none !important;
   top: 0 !important;
@@ -98,10 +96,10 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-split {
   margin: 0 auto !important;
   width: 100% !important;
   max-width: 1240px !important;
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  /* Sin % respecto al padre (overlay height:auto): evita costura / corte raro en algunos navegadores */
-  max-height: calc(100dvh - 1.75rem) !important;
+  flex: 0 1 auto !important;
+  /* Esqueleto Parker / suminregio: altura cómoda del shell, sin tope que encoja las tarjetas */
+  min-height: min(720px, 92dvh) !important;
+  max-height: none !important;
   height: auto !important;
   background: transparent !important;
   background-image: none !important;
@@ -243,8 +241,6 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-logo
   max-height: 56px !important;
   object-fit: contain !important;
   filter: none !important;
-  /* JPG con fondo blanco: funde el blanco con el panel oscuro (ideal: PNG transparente). */
-  mix-blend-mode: multiply !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-eyebrow--exec-layout {

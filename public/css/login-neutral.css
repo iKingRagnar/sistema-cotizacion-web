@@ -4,9 +4,9 @@
  * material.css ya no aplica sus variantes MD3 de login cuando login-open está activo.
  */
 
-/* Fondo = misma imagen que el tema industrial, velo uniforme suave (no cambia con tema app) */
-html body.login-open #login-overlay,
-html body.login-open #login-overlay.login-overlay {
+/* Fondo = misma imagen que el tema industrial, velo uniforme suave (exec layout: sin velo aquí, solo login-exec). */
+html body.login-open #login-overlay:not(.login-overlay--exec-layout),
+html body.login-open #login-overlay.login-overlay:not(.login-overlay--exec-layout) {
   /* Gana sobre el bloque “LOGIN REDESIGN” de style.css (align-items: stretch, padding: 0). */
   display: flex !important;
   align-items: center !important;
@@ -29,7 +29,7 @@ html body.login-open #login-overlay.login-overlay {
   -webkit-backdrop-filter: none !important;
 }
 
-html body.login-open #login-overlay::before {
+html body.login-open #login-overlay:not(.login-overlay--exec-layout)::before {
   display: none !important;
   content: none !important;
 }
@@ -44,8 +44,8 @@ html body.login-open #offline-banner {
 
 /* Halos del panel marca: los define premium-login-aurora.css (hero strip + profundidad). */
 
-/* Contenedor: split premium (detalle en premium-login-aurora.css) */
-html body.login-open #login-overlay .login-split {
+/* Contenedor: split premium (detalle en premium-login-aurora.css); exec = login-exec-layout.css */
+html body.login-open #login-overlay:not(.login-overlay--exec-layout) .login-split {
   display: flex !important;
   flex-direction: row !important;
   flex-wrap: nowrap !important;
@@ -305,7 +305,7 @@ html body.login-open #login-overlay #login-user {
 
 /* Móvil muy estrecho: apilar y condensar (sin perder identidad) */
 @media (max-width: 720px) {
-  html body.login-open #login-overlay .login-split {
+  html body.login-open #login-overlay:not(.login-overlay--exec-layout) .login-split {
     flex-direction: column !important;
     flex-wrap: wrap !important;
     max-width: min(440px, 96vw) !important;

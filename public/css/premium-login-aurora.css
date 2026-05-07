@@ -9,9 +9,9 @@ html body.login-open {
   --login-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", "Segoe UI Mono", monospace;
 }
 
-/* Capas sobre nano: auroras más vivas */
-html body.login-open #login-overlay,
-html body.login-open #login-overlay.login-overlay {
+/* Capas sobre nano: auroras más vivas (no aplica a login-overlay--exec-layout: ahí manda login-exec, foto llena). */
+html body.login-open #login-overlay:not(.login-overlay--exec-layout),
+html body.login-open #login-overlay.login-overlay:not(.login-overlay--exec-layout) {
   background-image:
     linear-gradient(180deg, transparent 0%, rgba(2, 6, 23, 0.38) 72%, rgba(2, 6, 23, 0.82) 100%),
     radial-gradient(ellipse 95% 70% at 70% -14%, rgba(45, 212, 191, 0.26) 0%, transparent 55%),
@@ -22,7 +22,7 @@ html body.login-open #login-overlay.login-overlay {
     url("../fondos/nano-machining-services.webp") !important;
 }
 
-html body.login-open #login-overlay::after {
+html body.login-open #login-overlay:not(.login-overlay--exec-layout)::after {
   display: block !important;
   content: "" !important;
   position: fixed !important;
