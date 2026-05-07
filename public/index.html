@@ -74,7 +74,7 @@
   <link rel="stylesheet" href="css/portal-overlays.css?v=12-dialog-lb-open-selector-2026-05-06">
   <link rel="stylesheet" href="css/login-neutral.css?v=11-login-logo-exec-2026-05-07">
   <link rel="stylesheet" href="css/premium-login-aurora.css?v=3-metal-no-motion-exception-2026-05-07">
-  <link rel="stylesheet" href="css/login-exec-layout.css?v=1-exec-split-layout-theme-2026-05-07">
+  <link rel="stylesheet" href="css/login-exec-layout.css?v=2-parker-grid-universal-teal-2026-05-07">
   <link rel="stylesheet" href="css/ui-legibility-final.css?v=2-reportes-merge-poweredby-login-logo-2026-05-06">
   <!-- ★ UNIVERSAL ART SKIN — inspirado en MapaSuminregio (solo estética) -->
   <link rel="stylesheet" href="css/universal-art.css?v=2-shell-after-login-2026-05-07">
@@ -141,18 +141,18 @@
   </script>
   <!-- Login abierto: layout compacto + aviso error siempre legible (inline = gana caché agresivo / SW) -->
   <style id="login-critical-inline-overrides">
-    html body.login-open #login-overlay .login-split {
+    /* Parker shell (grid 1240): solo con overlay ejecutivo */
+    html body.login-open #login-overlay.login-overlay--exec-layout .login-split {
       height: auto !important;
       min-height: 0 !important;
       max-height: none !important;
       width: 100% !important;
-      max-width: min(1220px, 98vw) !important;
+      max-width: 1240px !important;
       margin-left: auto !important;
       margin-right: auto !important;
       align-items: center !important;
-      justify-content: center !important;
     }
-    html body.login-open #login-overlay .login-form-panel {
+    html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel {
       min-height: 0 !important;
       height: auto !important;
       align-self: center !important;
@@ -230,9 +230,9 @@
                 <img src="fondos/universal-logo.jpg?v=4" alt="Universal" width="200" height="120" class="login-brand-hero-img" decoding="async">
               </div>
             </div>
-            <p class="login-eyebrow login-eyebrow--exec-layout" id="login-eyebrow">Universal · Cotización</p>
+            <p class="login-eyebrow login-eyebrow--exec-layout" id="login-eyebrow">Industrial — BI</p>
           </div>
-          <h1 class="login-brand-title" id="login-brand-name">Servicio Técnico</h1>
+          <h1 class="login-brand-title" id="login-brand-name">Panel ejecutivo Universal</h1>
           <p class="login-brand-tagline login-brand-desc" id="login-brand-tagline">Universal · Operaciones, incidentes, bitácora y catálogos</p>
           <div class="login-brand-features">
             <div class="login-feature-item"><i class="fas fa-shield-alt"></i><span>Acceso seguro por roles</span></div>
@@ -258,11 +258,12 @@
           <div class="login-card-header">
             <div class="login-card-icon"><i class="fas fa-lock"></i></div>
             <h2 id="login-title">Iniciar sesión</h2>
-            <p class="login-hint" id="login-hint">Introduce las credenciales de tu cuenta para continuar al panel.</p>
+            <p class="login-hint" id="login-hint">Introduce las credenciales de tu cuenta para continuar.</p>
           </div>
           <form id="login-form" class="login-form" method="post" action="#" autocomplete="on" novalidate>
             <div class="form-group login-field">
               <label for="login-user"><i class="fas fa-user"></i> Usuario</label>
+              <span class="login-field-hint" id="login-user-field-hint">Usuario o correo según configuración del servidor.</span>
               <input type="text" id="login-user" name="username" autocomplete="username" required placeholder="Tu nombre de usuario">
             </div>
             <div class="form-group login-field">

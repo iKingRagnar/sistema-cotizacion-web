@@ -1,60 +1,107 @@
 /**
- * login-exec-layout.css — Misma estructura que el mock de referencia (dos tarjetas,
- * izquierda info + derecha formulario, logo en pastilla, eyebrow en fila superior),
- * pero colores alineados al tema actual (vidrio + teal / aurora sobre foto industrial).
- * Solo con #login-overlay.login-overlay--exec-layout (después de premium-login-aurora).
+ * login-exec-layout.css — Esqueleto geométrico = Parker public/login.html (.shell + glass-panel--info/auth).
+ * Mismos anchos (grid 1240), gap, blur 22px, radius 18px, auth max-width 440px + justify-self end/start.
+ * Piel = tema Universal (teal / vidrio); sin amarillo Parker. No sustituye el fondo nano (premium-login-aurora).
+ * Selector: #login-overlay.login-overlay--exec-layout (carga después de premium-login-aurora).
  */
-html body.login-open {
-  --login-exec-accent: #5eead4;
-  --login-exec-accent-glow: rgba(45, 212, 191, 0.55);
-  --login-exec-border: rgba(94, 234, 212, 0.38);
+html body.login-open #login-overlay.login-overlay--exec-layout {
+  --sk-accent: #5eead4;
+  --sk-accent-mid: #2dd4bf;
+  --sk-accent-soft: rgba(45, 212, 191, 0.35);
+  --sk-border: rgba(94, 234, 212, 0.28);
+  --sk-highlight: rgba(255, 255, 255, 0.08);
+  --sk-glass: rgba(15, 23, 42, 0.48);
+  --sk-glass-strong: rgba(15, 23, 42, 0.62);
+  --sk-text-muted: rgba(148, 163, 184, 0.88);
+  --sk-radius: 18px;
+  --sk-blur: 22px;
 }
 
-/* Sin tocar el fondo del overlay: sigue login-neutral + premium-login-aurora (foto + velos). */
-
-/* Contenedor: dos columnas separadas; sin la “caja única” del split aurora */
+/* Shell = Parker .shell (dos columnas + hueco entre paneles; sin “caja única” del split aurora) */
 html body.login-open #login-overlay.login-overlay--exec-layout .login-split {
   position: relative !important;
   z-index: 2 !important;
-  gap: clamp(1rem, 2.2vw, 1.45rem) !important;
+  display: grid !important;
+  grid-template-columns: minmax(300px, 1fr) minmax(300px, 1fr) !important;
+  gap: clamp(1rem, 3vw, 2rem) !important;
+  align-items: center !important;
+  align-content: center !important;
+  padding: 0 !important;
+  margin: 0 auto !important;
+  width: 100% !important;
+  max-width: 1240px !important;
+  min-height: 0 !important;
+  height: auto !important;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
+  border-radius: 0 !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  border-radius: 0 !important;
   overflow: visible !important;
   isolation: auto !important;
-  min-height: min(700px, 91dvh) !important;
 }
 
-/* Sin barrido metálico sobre el wrapper (las tarjetas ya llevan el estilo premium). */
 html body.login-open #login-overlay.login-overlay--exec-layout .login-split::before {
   display: none !important;
   animation: none !important;
   opacity: 0 !important;
+  content: none !important;
 }
 
-/* Tarjetas gemelas con el mismo lenguaje visual que login-neutral / aurora */
-html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-panel,
-html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel {
-  border-radius: 20px !important;
-  border: 1px solid var(--login-exec-border) !important;
-  box-sizing: border-box !important;
-  box-shadow:
-    0 0 0 1px rgba(45, 212, 191, 0.12),
-    0 28px 72px rgba(0, 0, 0, 0.45),
-    0 0 48px rgba(45, 212, 191, 0.06) !important;
+@media (max-width: 900px) {
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-split {
+    grid-template-columns: 1fr !important;
+    align-items: stretch !important;
+    gap: clamp(1rem, 3vw, 2rem) !important;
+  }
+
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-panel {
+    order: 1 !important;
+  }
+
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel {
+    order: 2 !important;
+    max-width: none !important;
+    width: 100% !important;
+    justify-self: stretch !important;
+  }
 }
 
+@media (min-width: 901px) {
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-panel {
+    justify-self: start !important;
+  }
+
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel {
+    justify-self: end !important;
+  }
+}
+
+/* glass-panel--info */
 html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-panel {
-  flex: 1 1 48% !important;
+  flex: none !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
   justify-content: flex-start !important;
-  padding: clamp(1.35rem, 3vw, 2rem) !important;
-  background: linear-gradient(165deg, rgba(15, 23, 42, 0.58) 0%, rgba(2, 6, 23, 0.46) 100%) !important;
-  backdrop-filter: blur(20px) saturate(170%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(170%) !important;
-  border-right: 1px solid var(--login-exec-border) !important;
+  align-self: stretch !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  padding: clamp(1.5rem, 3vw, 2.25rem) !important;
+  border-radius: var(--sk-radius) !important;
+  border: 1px solid var(--sk-border) !important;
+  background:
+    linear-gradient(145deg, var(--sk-highlight), transparent 40%),
+    var(--sk-glass) !important;
+  backdrop-filter: blur(var(--sk-blur)) saturate(1.15) !important;
+  -webkit-backdrop-filter: blur(var(--sk-blur)) saturate(1.15) !important;
+  box-shadow:
+    0 4px 40px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 0 1px rgba(45, 212, 191, 0.06) !important;
+  border-right: 1px solid var(--sk-border) !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-panel::before {
@@ -67,29 +114,33 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-deco
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-content--exec-layout,
 html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-panel .login-brand-content--exec {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.25rem !important;
   padding: 0 !important;
   margin: 0 !important;
   max-width: none !important;
 }
 
-/* Cabecera: logo en pastilla blanca + eyebrow (estructura mock) */
 html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-headrow {
   display: flex !important;
   flex-direction: row !important;
-  flex-wrap: nowrap !important;
-  align-items: flex-start !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
   justify-content: space-between !important;
   gap: 1rem !important;
   width: 100% !important;
-  margin: 0 0 1.2rem 0 !important;
+  margin: 0 !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-logo-shell {
-  flex: 0 0 auto !important;
-  background: #ffffff !important;
-  border-radius: 14px !important;
-  padding: 10px 14px !important;
-  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.38) !important;
+  flex-shrink: 0 !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  border-radius: 12px !important;
+  padding: 0.45rem 0.65rem !important;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(45, 212, 191, 0.2) !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-logo-shell .login-brand-logo--hero {
@@ -103,9 +154,10 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-logo
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-logo-shell .login-brand-hero-img {
   display: block !important;
-  max-height: clamp(68px, 11vh, 96px) !important;
   width: auto !important;
   height: auto !important;
+  max-width: 220px !important;
+  max-height: 56px !important;
   object-fit: contain !important;
   filter: none !important;
 }
@@ -113,164 +165,356 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-logo
 html body.login-open #login-overlay.login-overlay--exec-layout .login-eyebrow--exec-layout {
   flex: 1 1 auto !important;
   margin: 0 !important;
-  padding: 0.4rem 0 0 0 !important;
-  font-family: var(--login-display, "Syne", "Inter", system-ui, sans-serif) !important;
+  padding: 0 !important;
+  font-family: var(--login-mono, "JetBrains Mono", ui-monospace, monospace) !important;
   font-size: 0.62rem !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.34em !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.2em !important;
   text-transform: uppercase !important;
   text-align: right !important;
   line-height: 1.35 !important;
-  color: #ccfbf1 !important;
-  -webkit-text-fill-color: #ccfbf1 !important;
-  text-shadow:
-    0 0 28px var(--login-exec-accent-glow),
-    0 1px 8px rgba(0, 0, 0, 0.65) !important;
+  color: var(--sk-text-muted) !important;
+  -webkit-text-fill-color: var(--sk-text-muted) !important;
+  text-shadow: none !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-panel .login-brand-title {
   font-family: var(--login-display, "Syne", "Inter", system-ui, sans-serif) !important;
-  font-size: clamp(1.75rem, 3.5vw, 2.55rem) !important;
+  font-size: clamp(1.55rem, 3.2vw, 2.15rem) !important;
   font-weight: 800 !important;
   letter-spacing: -0.03em !important;
-  line-height: 1.08 !important;
-  color: #f8fafc !important;
-  -webkit-text-fill-color: #f8fafc !important;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55) !important;
+  line-height: 1.1 !important;
+  color: rgba(248, 250, 252, 0.96) !important;
+  -webkit-text-fill-color: rgba(248, 250, 252, 0.96) !important;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35) !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-panel .login-brand-desc,
 html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-panel .login-brand-tagline.login-brand-desc {
+  margin-top: 0 !important;
   font-family: var(--login-mono, "JetBrains Mono", ui-monospace, monospace) !important;
-  font-size: 0.82rem !important;
+  font-size: 0.9rem !important;
   font-weight: 500 !important;
   line-height: 1.65 !important;
-  letter-spacing: 0.02em !important;
-  max-width: 44ch !important;
-  color: #e2e8f0 !important;
-  -webkit-text-fill-color: #e2e8f0 !important;
-  margin-top: 0.35rem !important;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45) !important;
+  max-width: 38em !important;
+  letter-spacing: normal !important;
+  color: rgba(226, 232, 240, 0.9) !important;
+  -webkit-text-fill-color: rgba(226, 232, 240, 0.9) !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-features {
-  margin-top: 1.25rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.85rem !important;
+  margin-top: 0 !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-features .login-feature-item {
-  border-radius: 12px !important;
-  padding: 0.38rem 0.55rem 0.38rem 0 !important;
-  margin-left: -0.35rem !important;
-}
-
-html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-features .login-feature-item i {
-  color: var(--login-exec-accent) !important;
-  filter: drop-shadow(0 0 10px rgba(45, 212, 191, 0.65)) !important;
-  background: transparent !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 0.7rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
   border-radius: 0 !important;
-  width: 1.35rem !important;
-  height: auto !important;
-  min-height: 0 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-size: 1rem !important;
-  flex-shrink: 0 !important;
-}
-
-html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-features .login-feature-item:hover {
-  background: rgba(45, 212, 191, 0.08) !important;
-}
-
-html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-features .login-feature-item span {
-  color: #f1f5f9 !important;
-  -webkit-text-fill-color: #f1f5f9 !important;
+  background: transparent !important;
+  font-size: 0.86rem !important;
   font-weight: 500 !important;
 }
 
+html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-features .login-feature-item i {
+  flex-shrink: 0 !important;
+  width: 20px !important;
+  text-align: center !important;
+  margin-top: 2px !important;
+  font-size: 1rem !important;
+  line-height: 1 !important;
+  color: var(--sk-accent-mid) !important;
+  filter: drop-shadow(0 0 10px var(--sk-accent-soft)) !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  min-height: 0 !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-features .login-feature-item span {
+  color: rgba(226, 232, 240, 0.92) !important;
+  -webkit-text-fill-color: rgba(226, 232, 240, 0.92) !important;
+}
+
 html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-badges {
-  margin-top: 1.5rem !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 0.45rem !important;
+  margin-top: 0 !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-badges .login-badge {
-  background: rgba(15, 23, 42, 0.55) !important;
-  border: 1px solid rgba(94, 234, 212, 0.42) !important;
-  color: #ecfeff !important;
-  -webkit-text-fill-color: #ecfeff !important;
+  font-family: var(--login-mono, "JetBrains Mono", ui-monospace, monospace) !important;
+  font-size: 0.62rem !important;
+  font-weight: 600 !important;
   text-transform: uppercase !important;
-  font-size: 0.58rem !important;
-  font-weight: 700 !important;
   letter-spacing: 0.12em !important;
-  padding: 0.35rem 0.65rem !important;
+  padding: 0.45rem 0.8rem !important;
   border-radius: 999px !important;
-  box-shadow: 0 0 18px rgba(45, 212, 191, 0.12) !important;
+  border: 1px solid rgba(94, 234, 212, 0.45) !important;
+  background: rgba(0, 0, 0, 0.28) !important;
+  color: rgba(226, 232, 240, 0.92) !important;
+  -webkit-text-fill-color: rgba(226, 232, 240, 0.92) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  box-shadow: none !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-badges .login-badge i {
-  color: var(--login-exec-accent) !important;
+  color: var(--sk-accent) !important;
 }
 
-/* Panel formulario + tarjeta: mismos tokens que premium-login / neutral */
+/* glass-panel--auth */
 html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel {
-  flex: 1 1 44% !important;
-  align-items: center !important;
+  flex: none !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
   justify-content: center !important;
-  padding: clamp(1.35rem, 3vw, 2rem) !important;
-  background: rgba(2, 6, 23, 0.42) !important;
-  backdrop-filter: blur(18px) saturate(165%) !important;
-  -webkit-backdrop-filter: blur(18px) saturate(165%) !important;
+  align-items: stretch !important;
+  align-self: center !important;
+  width: 100% !important;
+  max-width: 440px !important;
+  min-width: 0 !important;
+  padding: clamp(1.35rem, 2.8vw, 2rem) !important;
+  margin: 0 !important;
+  border-radius: var(--sk-radius) !important;
+  border: 1px solid var(--sk-border) !important;
+  background:
+    linear-gradient(155deg, var(--sk-highlight), transparent 35%),
+    var(--sk-glass-strong) !important;
+  backdrop-filter: blur(var(--sk-blur)) saturate(1.15) !important;
+  -webkit-backdrop-filter: blur(var(--sk-blur)) saturate(1.15) !important;
+  box-shadow:
+    0 4px 40px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 0 1px rgba(45, 212, 191, 0.07) !important;
 }
 
+/* Una sola capa de vidrio (el panel); la tarjeta interior es solo flujo */
 html body.login-open #login-overlay.login-overlay--exec-layout .login-card {
   width: 100% !important;
-  max-width: 420px !important;
-  margin: 0 auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout .login-card-header {
+  text-align: center !important;
+  margin-bottom: 1.35rem !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-card-header .login-card-icon {
-  border-radius: 14px !important;
-  border: 1px solid rgba(94, 234, 212, 0.45) !important;
-  box-shadow:
-    0 0 22px rgba(45, 212, 191, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
-  background: rgba(45, 212, 191, 0.18) !important;
-  color: var(--login-exec-accent) !important;
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  min-height: 48px !important;
+  margin: 0 auto 0.85rem !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1.15rem !important;
+  border: 1px solid rgba(94, 234, 212, 0.5) !important;
+  background: rgba(45, 212, 191, 0.2) !important;
+  color: var(--sk-accent) !important;
+  box-shadow: 0 0 28px rgba(45, 212, 191, 0.22) !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-card-header h2 {
   font-family: var(--login-display, "Syne", "Inter", system-ui, sans-serif) !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.06em !important;
   font-size: 1.35rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-card .login-hint {
-  font-family: var(--login-mono, "JetBrains Mono", ui-monospace, monospace) !important;
-  font-size: 0.72rem !important;
-  letter-spacing: 0.04em !important;
+  margin-top: 0.4rem !important;
+  font-size: 0.8rem !important;
+  line-height: 1.55 !important;
+  color: var(--sk-text-muted) !important;
 }
 
-html body.login-open #login-overlay.login-overlay--exec-layout .login-card label i {
-  color: var(--login-exec-accent) !important;
+html body.login-open #login-overlay.login-overlay--exec-layout .login-form label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  font-size: 0.76rem !important;
+  font-weight: 600 !important;
+  margin-bottom: 0.35rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  color: rgba(226, 232, 240, 0.88) !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout .login-form label i {
+  color: var(--sk-accent) !important;
+  filter: drop-shadow(0 0 8px var(--sk-accent-soft)) !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout .login-field-hint {
+  display: block !important;
+  font-weight: 400 !important;
+  font-size: 0.68rem !important;
+  font-family: var(--login-mono, "JetBrains Mono", ui-monospace, monospace) !important;
+  color: var(--sk-text-muted) !important;
+  margin: -0.1rem 0 0.5rem !important;
+  line-height: 1.45 !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout .login-field {
+  margin-bottom: 0.95rem !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout #login-user,
+html body.login-open #login-overlay.login-overlay--exec-layout #login-pass {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 0.74rem 0.88rem !important;
+  font-size: 0.9rem !important;
+  font-family: var(--login-mono, "JetBrains Mono", ui-monospace, monospace) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  color: #0f172a !important;
+  transition: border-color 0.15s, box-shadow 0.15s !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout #login-pass {
+  padding-right: 3rem !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout #login-user::placeholder,
+html body.login-open #login-overlay.login-overlay--exec-layout #login-pass::placeholder {
+  color: #64748b !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout #login-user:focus,
+html body.login-open #login-overlay.login-overlay--exec-layout #login-pass:focus {
+  outline: none !important;
+  border-color: rgba(45, 212, 191, 0.85) !important;
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.28) !important;
+  background: #ffffff !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout .login-eye-btn {
+  position: absolute !important;
+  right: 6px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  border: none !important;
+  background: transparent !important;
+  padding: 0.35rem 0.5rem !important;
+  cursor: pointer !important;
+  color: #64748b !important;
+  border-radius: 8px !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout .login-eye-btn:hover {
+  color: #0f172a !important;
+  background: rgba(15, 23, 42, 0.06) !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout .login-submit.btn.primary {
+  width: 100% !important;
+  margin-top: 0.35rem !important;
+  padding: 0.88rem 1rem !important;
+  font-size: 0.92rem !important;
+  border-radius: 12px !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-roles-info {
-  border-top-color: rgba(255, 255, 255, 0.18) !important;
-  margin-top: 1.25rem !important;
-  padding-top: 1rem !important;
+  margin-top: 1.35rem !important;
+  padding-top: 1.15rem !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout .login-roles-title {
+  font-size: 0.65rem !important;
+  font-weight: 700 !important;
+  font-family: var(--login-mono, "JetBrains Mono", ui-monospace, monospace) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.14em !important;
+  color: var(--sk-text-muted) !important;
+  text-align: center !important;
+  margin-bottom: 0.75rem !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-roles-title i {
-  color: var(--login-exec-accent) !important;
+  color: var(--sk-accent) !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout .login-roles-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 0.5rem !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-role-card {
-  background: rgba(15, 23, 42, 0.55) !important;
-  border: 1px solid rgba(94, 234, 212, 0.28) !important;
+  padding: 0.55rem 0.4rem !important;
+  border-radius: 12px !important;
+  background: rgba(0, 0, 0, 0.22) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  font-size: 0.62rem !important;
+  font-family: var(--login-mono, "JetBrains Mono", ui-monospace, monospace) !important;
+  color: var(--sk-text-muted) !important;
+  text-align: center !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-role-card i {
-  color: var(--login-exec-accent) !important;
+  width: 22px !important;
+  height: 22px !important;
+  margin: 0 auto 0.35rem !important;
+  display: block !important;
+  font-size: 1rem !important;
+  line-height: 22px !important;
+  color: var(--sk-accent) !important;
+  opacity: 0.95 !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout .login-role-card strong {
+  display: block !important;
+  font-size: 0.66rem !important;
+  font-family: var(--login-display, "Syne", "Inter", system-ui, sans-serif) !important;
+  font-weight: 700 !important;
+  color: rgba(226, 232, 240, 0.88) !important;
+  margin-bottom: 0.2rem !important;
+}
+
+@media (max-width: 400px) {
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-roles-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 900px) {
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-eyebrow--exec-layout {
+    width: 100% !important;
+    text-align: left !important;
+    padding-top: 0.35rem !important;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-panel {
+    background: rgba(15, 23, 42, 0.92) !important;
+  }
+
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel {
+    background: rgba(15, 23, 42, 0.94) !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -279,37 +523,24 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-role-card 
   }
 }
 
+/* login-neutral.css oculta lista + roles bajo 720px; aquí se restaura el esqueleto Parker completo */
 @media (max-width: 720px) {
-  html body.login-open #login-overlay.login-overlay--exec-layout .login-split {
-    flex-direction: column !important;
-    max-width: min(460px, 96vw) !important;
-    min-height: 0 !important;
-    gap: 1rem !important;
-  }
-
-  html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-panel {
-    flex: 0 0 auto !important;
-    border-right: 1px solid var(--login-exec-border) !important;
-    border-bottom: none !important;
-  }
-
   html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-features {
     display: flex !important;
     flex-direction: column !important;
-    gap: 0.25rem !important;
+    gap: 0.85rem !important;
   }
 
   html body.login-open #login-overlay.login-overlay--exec-layout .login-roles-info {
     display: block !important;
   }
 
-  html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-headrow {
-    flex-wrap: wrap !important;
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-panel {
+    border-bottom: none !important;
+    border-right: none !important;
   }
 
-  html body.login-open #login-overlay.login-overlay--exec-layout .login-eyebrow--exec-layout {
-    width: 100% !important;
-    text-align: left !important;
-    padding-top: 0.65rem !important;
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-logo-shell .login-brand-hero-img {
+    max-height: 56px !important;
   }
 }
