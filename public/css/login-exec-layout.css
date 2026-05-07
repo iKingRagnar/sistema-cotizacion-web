@@ -398,7 +398,7 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-logo
   box-shadow: none !important;
 }
 
-html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-logo-shell .login-brand-hero-img {
+html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-panel .login-brand-logo-shell .login-brand-logo.login-brand-logo--compact-show .login-brand-hero-img {
   display: block !important;
   width: auto !important;
   height: auto !important;
@@ -406,6 +406,10 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-logo
   max-height: 56px !important;
   object-fit: contain !important;
   filter: none !important;
+  /* JPEG universal-logo: flecos blancos en esquinas → recorte fino (misma idea que header §34 nano-fondo). */
+  border-radius: 0 !important;
+  clip-path: inset(2px 3px round 1px) !important;
+  -webkit-clip-path: inset(2px 3px round 1px) !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-eyebrow--exec-layout {
@@ -804,7 +808,7 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-role-card 
     border-right: none !important;
   }
 
-  html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-logo-shell .login-brand-hero-img {
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-panel .login-brand-logo-shell .login-brand-logo.login-brand-logo--compact-show .login-brand-hero-img {
     max-height: 56px !important;
   }
 
