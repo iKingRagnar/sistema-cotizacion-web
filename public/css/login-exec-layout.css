@@ -51,6 +51,12 @@ html body.login-open #login-overlay.login-overlay.login-overlay--exec-layout {
 html:has(body.login-open #login-overlay.login-overlay--exec-layout:not(.hidden)) {
   overflow: hidden;
   height: 100%;
+  max-height: 100dvh;
+}
+
+html:has(body.login-open #login-overlay.login-overlay--exec-layout:not(.hidden)) body {
+  overflow: hidden !important;
+  max-height: 100dvh;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout::after {
@@ -189,14 +195,18 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-head
   margin: 0 !important;
 }
 
+/* Logo sin “pastilla” blanca: solo la imagen sobre el vidrio del panel */
 html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-logo-shell {
   flex-shrink: 0 !important;
-  background: rgba(255, 255, 255, 0.94) !important;
-  border-radius: 12px !important;
-  padding: 0.45rem 0.65rem !important;
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.28),
-    0 0 0 1px rgba(45, 212, 191, 0.2) !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout .login-overlay-powered-by {
+  font-style: italic !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-logo-shell .login-brand-logo--hero {

@@ -23,10 +23,11 @@ body.md3-on::before {
     radial-gradient(ellipse 50% 60% at 10% 0%, rgba(56, 189, 248, 0.04) 0%, transparent 55%);
 }
 
-/* Asegurar stacking correcto de la app sobre la textura */
+/* Asegurar stacking correcto de la app sobre la textura.
+ * No tocar #login-overlay: debe conservar position:fixed de style.css (si va relative,
+ * el overlay entra al flujo del documento y reaparece scrollbar vertical en el login). */
 body.md3-on .header,
 body.md3-on .app-frame,
-body.md3-on #login-overlay,
 body.md3-on .toast-container,
 body.md3-on .modal-overlay {
   position: relative;
