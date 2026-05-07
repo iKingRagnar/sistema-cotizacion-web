@@ -12363,6 +12363,9 @@
   let markerClusterLoadPromise = null;
   let prospeccionMap = null;
   let prospeccionMarkersLayer = null;
+  let prospeccionHeatLayer = null;
+  let leafletHeatLoadPromise = null;
+  let prospeccionFsChangeBound = false;
 
   function ensureLeaflet() {
     if (typeof window !== 'undefined' && window.L && typeof window.L.map === 'function') return Promise.resolve();
@@ -12429,7 +12432,172 @@
     return Lglob.layerGroup().addTo(map);
   }
 
+  /** Mapa de calor (leaflet.heat), mismo enfoque que MapaSuminregio pero gradiente teal/ámbar Universal. */
+  function ensureLeafletHeat() {
+    if (typeof window.L !== 'undefined' && typeof window.L.heatLayer === 'function') return Promise.resolve();
+    return ensureLeaflet().then(function () {
+      if (typeof L.heatLayer === 'function') return Promise.resolve();
+      if (leafletHeatLoadPromise) return leafletHeatLoadPromise;
+      leafletHeatLoadPromise = new Promise(function (resolve, reject) {
+        const s = document.createElement('script');
+        s.src = 'https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js';
+        s.async = true;
+        s.onload = function () { resolve(); };
+        s.onerror = function () {
+          leafletHeatLoadPromise = null;
+          reject(new Error('leaflet-heat-load'));
+        };
+        document.body.appendChild(s);
+      });
+      return leafletHeatLoadPromise;
+    });
+  }
+
+  function getProspeccionViewMode() {
+    try {
+      const active = document.querySelector('.prospeccion-seg.is-active[data-prosp-mode]');
+      const m = active && active.getAttribute('data-prosp-mode');
+      if (m === 'heatmap' || m === 'both' || m === 'markers') return m;
+      const sav = localStorage.getItem('prospeccion-view-mode');
+      return sav === 'heatmap' || sav === 'both' ? sav : 'markers';
+    } catch (_) {}
+    return 'markers';
+  }
+
+  function getProspeccionHeatWeight() {
+    const sel = qs('#prospeccion-heat-weight');
+    if (sel && sel.value === 'score') return 'score';
+    return 'potential';
+  }
+
+  function removeProspeccionHeatLayer(map) {
+    try {
+      if (prospeccionHeatLayer && map && map.hasLayer && map.hasLayer(prospeccionHeatLayer)) map.removeLayer(prospeccionHeatLayer);
+    } catch (_) {}
+    prospeccionHeatLayer = null;
+  }
+
+  function addProspeccionHeatLayer(valid, map) {
+    const Lglob = window.L;
+    removeProspeccionHeatLayer(map);
+    if (!Lglob || typeof Lglob.heatLayer !== 'function' || !valid.length || !map) return;
+    const weight = getProspeccionHeatWeight();
+    let max = 1;
+    valid.forEach(function (r) {
+      var v = weight === 'score' ? (Number(r.score_ia) || 0) : (Number(r.potencial_usd) || 0);
+      if (v > max) max = v;
+    });
+    if (max <= 0) max = 1;
+    var points = valid.map(function (r) {
+      var lat = Number(r.lat); var lng = Number(r.lng);
+      var raw = weight === 'score' ? (Number(r.score_ia) || 0) : (Number(r.potencial_usd) || 0);
+      var intensity = Math.max(0.08, Math.min(1, raw / max));
+      return [lat, lng, intensity];
+    });
+    try {
+      prospeccionHeatLayer = Lglob.heatLayer(points, {
+        radius: 32,
+        blur: 24,
+        maxZoom: 12,
+        max: 1,
+        gradient: {
+          0.0: 'rgba(6, 78, 59, 0)',
+          0.25: 'rgba(13, 148, 136, 0.45)',
+          0.55: 'rgba(20, 184, 166, 0.68)',
+          0.8: 'rgba(250, 204, 21, 0.78)',
+          1.0: 'rgba(253, 224, 71, 0.92)',
+        },
+      });
+      prospeccionHeatLayer.addTo(map);
+    } catch (e) { prospeccionHeatLayer = null; }
+  }
+
   function setupProspeccionUi() {
+    const segWrap = qs('.prospeccion-segment');
+    if (segWrap && !segWrap._prospeccionSegBound) {
+      segWrap._prospeccionSegBound = true;
+      var savMode = 'markers';
+      try { savMode = localStorage.getItem('prospeccion-view-mode') || 'markers'; } catch (_) {}
+      if (savMode !== 'heatmap' && savMode !== 'both' && savMode !== 'markers') savMode = 'markers';
+      segWrap.querySelectorAll('[data-prosp-mode]').forEach(function (b) {
+        b.classList.toggle('is-active', b.getAttribute('data-prosp-mode') === savMode);
+      });
+      segWrap.querySelectorAll('[data-prosp-mode]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          segWrap.querySelectorAll('[data-prosp-mode]').forEach(function (x) { x.classList.remove('is-active'); });
+          b.classList.add('is-active');
+          try {
+            localStorage.setItem('prospeccion-view-mode', b.getAttribute('data-prosp-mode') || 'markers');
+          } catch (_) {}
+          renderProspeccionFromCache();
+        });
+      });
+    }
+    const hw = qs('#prospeccion-heat-weight');
+    if (hw && !hw._prospeccionHeatSelBound) {
+      hw._prospeccionHeatSelBound = true;
+      try {
+        var sw = localStorage.getItem('prospeccion-heat-weight');
+        if (sw === 'score' || sw === 'potential') hw.value = sw;
+      } catch (_) {}
+      hw.addEventListener('change', function () {
+        try {
+          localStorage.setItem('prospeccion-heat-weight', hw.value);
+        } catch (_) {}
+        renderProspeccionFromCache();
+      });
+    }
+    const btnLoc = qs('#btn-prospeccion-locate');
+    if (btnLoc && !btnLoc._prospeccionLocateBound) {
+      btnLoc._prospeccionLocateBound = true;
+      btnLoc.addEventListener('click', function () {
+        if (!prospeccionMap) {
+          showToast('Primero cargar el panel de prospección.', 'error');
+          return;
+        }
+        if (!navigator.geolocation) {
+          showToast('Tu navegador no expone ubicación.', 'error');
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          function (pos) {
+            prospeccionMap.flyTo([pos.coords.latitude, pos.coords.longitude], Math.max(prospeccionMap.getZoom(), 12), {
+              animate: true,
+              duration: 0.85,
+            });
+            showToast('Mapa centrado en tu ubicación.', 'success');
+          },
+          function () {
+            showToast('Permiso de ubicación denegado o no disponible.', 'error');
+          },
+          { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+        );
+      });
+    }
+    const btnFs = qs('#btn-prospeccion-fullscreen');
+    const chrome = qs('#prospeccion-map-chrome');
+    if (btnFs && chrome && !btnFs._prospeccionFsBound) {
+      btnFs._prospeccionFsBound = true;
+      btnFs.addEventListener('click', function () {
+        try {
+          if (!document.fullscreenElement) chrome.requestFullscreen && chrome.requestFullscreen();
+          else document.exitFullscreen && document.exitFullscreen();
+        } catch (e) {
+          showToast('Pantalla completa no disponible.', 'error');
+        }
+      });
+    }
+    if (!prospeccionFsChangeBound) {
+      prospeccionFsChangeBound = true;
+      document.addEventListener('fullscreenchange', function () {
+        setTimeout(function () {
+          try {
+            if (prospeccionMap) prospeccionMap.invalidateSize();
+          } catch (_) {}
+        }, 180);
+      });
+    }
+
     const f = qs('#filtro-prospeccion');
     if (f && !f._prospeccionBound) {
       f._prospeccionBound = true;
@@ -12476,10 +12644,10 @@
     const pot = rows.reduce(function (s, r) { return s + (Number(r.potencial_usd) || 0); }, 0);
     const scoreAvg = total ? rows.reduce(function (s, r) { return s + (Number(r.score_ia) || 0); }, 0) / total : 0;
     el.innerHTML = `
-      <div class="prospeccion-kpi"><div class="prospeccion-kpi-lbl">Prospectos (filtrados)</div><div class="prospeccion-kpi-val">${total}</div></div>
-      <div class="prospeccion-kpi"><div class="prospeccion-kpi-lbl">Con coordenadas</div><div class="prospeccion-kpi-val">${conGeo}</div></div>
-      <div class="prospeccion-kpi"><div class="prospeccion-kpi-lbl">Potencial USD (suma)</div><div class="prospeccion-kpi-val">${fmtProspectoUsd(pot)}</div></div>
-      <div class="prospeccion-kpi"><div class="prospeccion-kpi-lbl">Score IA (prom.)</div><div class="prospeccion-kpi-val">${scoreAvg.toFixed(0)}</div></div>`;
+      <div class="prospeccion-kpi"><span class="prospeccion-kpi-i" aria-hidden="true"><i class="fas fa-users"></i></span><div class="prospeccion-kpi-lbl">Prospectos (filtrados)</div><div class="prospeccion-kpi-val">${total}</div></div>
+      <div class="prospeccion-kpi"><span class="prospeccion-kpi-i" aria-hidden="true"><i class="fas fa-globe-americas"></i></span><div class="prospeccion-kpi-lbl">Con coordenadas</div><div class="prospeccion-kpi-val">${conGeo}</div></div>
+      <div class="prospeccion-kpi"><span class="prospeccion-kpi-i" aria-hidden="true"><i class="fas fa-coins"></i></span><div class="prospeccion-kpi-lbl">Potencial USD (suma)</div><div class="prospeccion-kpi-val">${fmtProspectoUsd(pot)}</div></div>
+      <div class="prospeccion-kpi"><span class="prospeccion-kpi-i" aria-hidden="true"><i class="fas fa-brain"></i></span><div class="prospeccion-kpi-lbl">Score IA (prom.)</div><div class="prospeccion-kpi-val">${scoreAvg.toFixed(0)}</div></div>`;
   }
 
   function renderProspeccionTable(rows) {
@@ -12537,22 +12705,42 @@
       L.tileLayer(tileUrl, tileOpts).addTo(prospeccionMap);
       prospeccionMarkersLayer = makeProspeccionMarkersLayer(prospeccionMap);
     }
+    removeProspeccionHeatLayer(prospeccionMap);
     prospeccionMarkersLayer.clearLayers();
-    valid.forEach(function (r) {
-      const lat = Number(r.lat); const lng = Number(r.lng);
-      const rad = 8 + Math.min(8, (Number(r.score_ia) || 50) / 12);
-      const m = L.circleMarker([lat, lng], {
-        radius: rad,
-        color: '#0d9488',
-        weight: 2,
-        fillColor: '#14b8a6',
-        fillOpacity: 0.55,
+    var mode = getProspeccionViewMode();
+
+    var showMarks = mode === 'markers' || mode === 'both';
+    var showHeat = mode === 'heatmap' || mode === 'both';
+
+    /* Calor primero cuando hay ambos, para que quede bajo marcadores/cluster. */
+    if (showHeat && typeof L.heatLayer === 'function') {
+      addProspeccionHeatLayer(valid, prospeccionMap);
+    }
+    if (showMarks) {
+      valid.forEach(function (r) {
+        const lat = Number(r.lat); const lng = Number(r.lng);
+        const rad = 8 + Math.min(8, (Number(r.score_ia) || 50) / 12);
+        const m = L.circleMarker([lat, lng], {
+          radius: rad,
+          color: '#0d9488',
+          weight: 2,
+          fillColor: '#14b8a6',
+          fillOpacity: mode === 'both' ? 0.82 : 0.55,
+        });
+        m.bindPopup('<strong>' + escapeHtml(r.empresa || '') + '</strong><br>' +
+          (r.zona ? escapeHtml(r.zona) + '<br>' : '') +
+          'Potencial USD: ' + fmtProspectoUsd(r.potencial_usd) + '<br>Score: ' + Math.round(Number(r.score_ia) || 0));
+        prospeccionMarkersLayer.addLayer(m);
       });
-      m.bindPopup('<strong>' + escapeHtml(r.empresa || '') + '</strong><br>' +
-        (r.zona ? escapeHtml(r.zona) + '<br>' : '') +
-        'Potencial USD: ' + fmtProspectoUsd(r.potencial_usd) + '<br>Score: ' + Math.round(Number(r.score_ia) || 0));
-      prospeccionMarkersLayer.addLayer(m);
-    });
+      try {
+        if (mode === 'both' && typeof prospeccionMarkersLayer.bringToFront === 'function') prospeccionMarkersLayer.bringToFront();
+      } catch (_) {}
+    }
+
+    var heatOpt = qs('.prospeccion-toolbar-heat-opt');
+    if (heatOpt) heatOpt.style.opacity = mode === 'markers' ? '0.42' : '1';
+    if (heatOpt) heatOpt.style.pointerEvents = mode === 'markers' ? 'none' : '';
+
     if (valid.length) {
       const bounds = L.latLngBounds(valid.map(function (r) { return [Number(r.lat), Number(r.lng)]; }));
       prospeccionMap.fitBounds(bounds.pad(0.15));
@@ -12578,6 +12766,9 @@
       try {
         await ensureMarkerCluster();
       } catch (_) { /* agrupación opcional si CDN bloqueado */ }
+      try {
+        await ensureLeafletHeat();
+      } catch (_) { /* mapa térmico opcional */ }
       const data = await fetchJson(API + '/prospectos');
       prospectosCache = toArray(data);
       renderProspeccionFromCache();
@@ -14145,6 +14336,7 @@
     /* Prospección: al cambiar tema, destruir Leaflet para que se regenere con estilos/controles acordes */
     try {
       if (prospeccionMap && typeof prospeccionMap.remove === 'function') {
+        prospeccionHeatLayer = null;
         prospeccionMap.remove();
         prospeccionMap = null;
         prospeccionMarkersLayer = null;
