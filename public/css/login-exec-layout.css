@@ -7,14 +7,15 @@
 html body.login-open #login-overlay.login-overlay--exec-layout {
   --sk-accent: #5eead4;
   --sk-accent-mid: #2dd4bf;
-  --sk-accent-soft: rgba(45, 212, 191, 0.35);
-  --sk-border: rgba(94, 234, 212, 0.28);
-  --sk-highlight: rgba(255, 255, 255, 0.08);
-  --sk-glass: rgba(15, 23, 42, 0.48);
-  --sk-glass-strong: rgba(15, 23, 42, 0.62);
-  --sk-text-muted: rgba(148, 163, 184, 0.88);
+  --sk-accent-soft: rgba(45, 212, 191, 0.42);
+  --sk-border: rgba(94, 234, 212, 0.34);
+  --sk-highlight: rgba(255, 255, 255, 0.16);
+  /* Vidrio más claro / vivo (más luz del fondo nano) */
+  --sk-glass: rgba(30, 41, 59, 0.34);
+  --sk-glass-strong: rgba(30, 41, 59, 0.42);
+  --sk-text-muted: rgba(203, 213, 225, 0.92);
   --sk-radius: 18px;
-  --sk-blur: 22px;
+  --sk-blur: 20px;
 }
 
 /*
@@ -26,7 +27,7 @@ html body.login-open #login-overlay.login-overlay.login-overlay--exec-layout {
   /* style.css .login-overlay trae backdrop-filter: blur(12px) — deja a veces una línea fina en el borde; aquí no hace falta. */
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  background-color: #020617 !important;
+  background-color: rgba(2, 6, 23, 0.55) !important;
   background-image:
     var(--nano-machine-image, none),
     url("../fondos/nano-machining-services.webp") !important;
@@ -69,9 +70,49 @@ html body.login-open #login-overlay.login-overlay--exec-layout::after {
   pointer-events: none !important;
 }
 
-html body.login-open #login-overlay.login-overlay--exec-layout::before {
-  display: none !important;
-  content: none !important;
+/*
+ * Brillo en diagonal (esquina sup. izq. → inf. der.) sobre la foto; z-index 1, bajo el split (2).
+ * Sin pointer-events; respeta prefers-reduced-motion abajo.
+ */
+@keyframes login-exec-portada-diagonal {
+  0% {
+    transform: translate(-14%, -20%) rotate(38deg) scale(1.02);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate(6%, 8%) rotate(38deg) scale(1.06);
+    opacity: 0.88;
+  }
+  100% {
+    transform: translate(22%, 26%) rotate(38deg) scale(1.02);
+    opacity: 0.55;
+  }
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout::before,
+html body.login-open #login-overlay.login-overlay.login-overlay--exec-layout::before {
+  display: block !important;
+  content: "" !important;
+  position: absolute !important;
+  left: -55% !important;
+  top: -55% !important;
+  width: 210% !important;
+  height: 210% !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+  visibility: visible !important;
+  background: linear-gradient(
+    128deg,
+    transparent 0%,
+    transparent 38%,
+    rgba(45, 212, 191, 0.09) 45%,
+    rgba(255, 255, 255, 0.16) 49.5%,
+    rgba(94, 234, 212, 0.14) 50.2%,
+    rgba(255, 255, 255, 0.1) 52%,
+    transparent 60%,
+    transparent 100%
+  ) !important;
+  animation: login-exec-portada-diagonal 20s ease-in-out infinite alternate !important;
 }
 
 /* universal-art: quitar capa fija del body en login (opacity:0 aún puede “filtrar” 1px / raya). */
@@ -177,9 +218,9 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-pane
   backdrop-filter: blur(var(--sk-blur)) saturate(1.15) !important;
   -webkit-backdrop-filter: blur(var(--sk-blur)) saturate(1.15) !important;
   box-shadow:
-    0 4px 40px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 0 0 1px rgba(45, 212, 191, 0.06) !important;
+    0 8px 48px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 1px rgba(45, 212, 191, 0.1) !important;
   border-right: 1px solid var(--sk-border) !important;
 }
 
@@ -363,7 +404,7 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-badg
   padding: 0.45rem 0.8rem !important;
   border-radius: 999px !important;
   border: 1px solid rgba(94, 234, 212, 0.45) !important;
-  background: rgba(0, 0, 0, 0.28) !important;
+  background: rgba(15, 23, 42, 0.22) !important;
   color: rgba(226, 232, 240, 0.92) !important;
   -webkit-text-fill-color: rgba(226, 232, 240, 0.92) !important;
   backdrop-filter: blur(8px) !important;
@@ -397,9 +438,9 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel
   backdrop-filter: blur(var(--sk-blur)) saturate(1.15) !important;
   -webkit-backdrop-filter: blur(var(--sk-blur)) saturate(1.15) !important;
   box-shadow:
-    0 4px 40px rgba(0, 0, 0, 0.38),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 0 0 1px rgba(45, 212, 191, 0.07) !important;
+    0 8px 48px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 1px rgba(45, 212, 191, 0.11) !important;
 }
 
 /* Una sola capa de vidrio (el panel); la tarjeta interior es solo flujo */
@@ -433,7 +474,7 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-card-heade
   justify-content: center !important;
   font-size: 1.15rem !important;
   border: 1px solid rgba(94, 234, 212, 0.5) !important;
-  background: rgba(45, 212, 191, 0.2) !important;
+  background: rgba(45, 212, 191, 0.28) !important;
   color: var(--sk-accent) !important;
   box-shadow: 0 0 28px rgba(45, 212, 191, 0.22) !important;
 }
@@ -543,7 +584,7 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-submit.btn
 html body.login-open #login-overlay.login-overlay--exec-layout .login-roles-info {
   margin-top: 1.35rem !important;
   padding-top: 1.15rem !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.14) !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-roles-title {
@@ -570,8 +611,8 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-roles-grid
 html body.login-open #login-overlay.login-overlay--exec-layout .login-role-card {
   padding: 0.55rem 0.4rem !important;
   border-radius: 12px !important;
-  background: rgba(0, 0, 0, 0.22) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(15, 23, 42, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
   font-size: 0.62rem !important;
   font-family: var(--login-mono, "JetBrains Mono", ui-monospace, monospace) !important;
   color: var(--sk-text-muted) !important;
@@ -616,15 +657,22 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-role-card 
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-panel {
-    background: rgba(15, 23, 42, 0.92) !important;
+    background: rgba(30, 41, 59, 0.88) !important;
   }
 
   html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel {
-    background: rgba(15, 23, 42, 0.94) !important;
+    background: rgba(30, 41, 59, 0.9) !important;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html body.login-open #login-overlay.login-overlay--exec-layout::before,
+  html body.login-open #login-overlay.login-overlay.login-overlay--exec-layout::before {
+    animation: none !important;
+    transform: translate(0, 0) rotate(38deg) scale(1) !important;
+    opacity: 0.32 !important;
+  }
+
   html body.login-open #login-overlay.login-overlay--exec-layout .login-split::before {
     animation: none !important;
   }
