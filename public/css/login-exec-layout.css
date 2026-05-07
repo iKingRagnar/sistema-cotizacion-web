@@ -19,7 +19,7 @@ html body.login-open #login-overlay.login-overlay--exec-layout {
   --sk-blur: 18px;
   /* Punta herramienta ↔ pieza — viewport; X fino para coincidir con la punta / contacto. */
   --sk-weld-x: 51.65%;
-  --sk-weld-y: 54%;
+  --sk-weld-y: 54.5%;
 }
 
 /*
@@ -206,7 +206,7 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-weld-spark
 @media (max-width: 900px) {
   html body.login-open #login-overlay.login-overlay--exec-layout {
     --sk-weld-x: 50.75%;
-    --sk-weld-y: 53%;
+    --sk-weld-y: 53.5%;
   }
 }
 
