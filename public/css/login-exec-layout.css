@@ -396,6 +396,8 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-logo
   border: none !important;
   border-radius: 0 !important;
   box-shadow: none !important;
+  overflow: hidden !important;
+  line-height: 0 !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-panel .login-brand-logo-shell .login-brand-logo.login-brand-logo--compact-show .login-brand-hero-img {
@@ -406,10 +408,10 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-pane
   max-height: 56px !important;
   object-fit: contain !important;
   filter: none !important;
-  /* JPEG universal-logo: flecos blancos en esquinas → recorte fino (misma idea que header §34 nano-fondo). */
+  /* JPEG: recorte más generoso sin round — evita “puntitas” del clip redondeado fino. */
   border-radius: 0 !important;
-  clip-path: inset(2px 3px round 1px) !important;
-  -webkit-clip-path: inset(2px 3px round 1px) !important;
+  clip-path: inset(4px 6px) !important;
+  -webkit-clip-path: inset(4px 6px) !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-eyebrow--exec-layout {
