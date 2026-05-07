@@ -4149,6 +4149,18 @@ body.dark-theme .skeleton { background: linear-gradient(90deg, #334155 25%, #475
 /* Paginación */
 .pagination-wrap { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem; }
 .pagination-wrap .btn { min-height: 36px; padding: 0.4rem 0.75rem; }
+/* Prev/next solo iconos (evita texto cortado tipo “Anter” / “uiente”) */
+.pagination-wrap .pagination-nav-btn {
+  min-width: 2.35rem;
+  padding: 0.35rem 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.pagination-wrap .pagination-nav-btn i {
+  font-size: 0.875rem;
+  pointer-events: none;
+}
 .pagination-size-select { margin-left: 0.25rem; padding: 0.35rem 0.5rem; border-radius: var(--radius-sm); border: 1px solid #e2e8f0; background: #fff; font-size: 0.875rem; cursor: pointer; }
 body.dark-theme .pagination-size-select { background: #1e293b; border-color: #475569; color: #e2e8f0; }
 .pagination-info { font-size: 0.875rem; color: #64748b; }
@@ -5859,6 +5871,29 @@ body.dark-theme .modal-box:not(.pdf-preview-modal) .form-group textarea,
   align-items: center;
   gap: 0.45rem;
   flex-wrap: wrap;
+}
+.ref-tabla-thumb-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.12);
+  line-height: 0;
+}
+body.dark-theme .ref-tabla-thumb-wrap {
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.28);
+}
+.ref-tabla-thumb-wrap .cliente-const-slot {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+}
+.ref-codigo-text {
+  font-weight: 600;
+  color: inherit;
+  cursor: default;
 }
 .ref-tabla-thumb-btn {
   padding: 0;

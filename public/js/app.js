@@ -2509,32 +2509,15 @@
     return { items: out, start: Math.max(0, Math.min(Number(startIdx) || 0, out.length - 1)) };
   }
 
-  /** Miniatura en tabla: solo lectura + botón Ver (misma lógica que constancia en Clientes; no abre visor al pie al pulsar la mini). */
-  function pvcTablaThumbOpenButton(url, title) {
+  /** Miniatura en tabla: solo lectura (sin lupa; ver ampliado solo desde el ojito de acciones / vista previa). */
+  function pvcTablaThumbOpenButton(url) {
     const u = String(url || '').trim();
     if (!u || !pvcIsDisplayableImageUrl(u)) return '';
-    const ref = registerPvcMediaUrl(u);
-    const oneLb = [];
-    pvcLbPushIfMedia(oneLb, u, title || 'Imagen');
-    const lbG = oneLb.length ? pvcLbEncodeGallery(oneLb) : '';
-    const verCore = lbG
-      ? ' class="btn small outline js-pvc-media-lightbox ref-tabla-thumb-ver" data-lb-g="' +
-        escapeHtml(lbG) +
-        '" data-lb-i="0"'
-      : ' class="btn small outline js-pvc-media-lightbox ref-tabla-thumb-ver" data-media-ref="' +
-        escapeHtml(ref) +
-        '"';
-    const t = escapeHtml(title || 'Ver ampliado');
     if (u.startsWith('/api/')) {
       return (
         '<span class="cliente-const-inline ref-tabla-thumb-wrap">' +
         '<span class="cliente-const-slot cliente-const-slot--static ref-tabla-thumb-static" aria-hidden="true">' +
         '<i class="fas fa-image" aria-hidden="true"></i></span>' +
-        '<button type="button"' +
-        verCore +
-        ' title="' +
-        t +
-        '"><i class="fas fa-magnifying-glass-plus" aria-hidden="true"></i></button>' +
         '</span>'
       );
     }
@@ -2545,11 +2528,6 @@
       escapeHtml(u) +
       '" alt="" loading="lazy">' +
       '</span>' +
-      '<button type="button"' +
-      verCore +
-      ' title="' +
-      t +
-      '"><i class="fas fa-magnifying-glass-plus" aria-hidden="true"></i></button>' +
       '</span>'
     );
   }
@@ -3629,14 +3607,18 @@
       wrap.className = 'pagination-wrap';
       const prev = document.createElement('button');
       prev.type = 'button';
-      prev.className = 'btn outline';
-      prev.innerHTML = '<i class="fas fa-chevron-left"></i> Anterior';
+      prev.className = 'btn outline pagination-nav-btn';
+      prev.innerHTML = '<i class="fas fa-chevron-left" aria-hidden="true"></i>';
+      prev.setAttribute('aria-label', 'Página anterior');
+      prev.setAttribute('title', 'Página anterior');
       prev.disabled = paginationOpts.page === 0;
       if (!prev.disabled && paginationOpts.onPrev) prev.addEventListener('click', paginationOpts.onPrev);
       const next = document.createElement('button');
       next.type = 'button';
-      next.className = 'btn outline';
-      next.innerHTML = 'Siguiente <i class="fas fa-chevron-right"></i>';
+      next.className = 'btn outline pagination-nav-btn';
+      next.innerHTML = '<i class="fas fa-chevron-right" aria-hidden="true"></i>';
+      next.setAttribute('aria-label', 'Página siguiente');
+      next.setAttribute('title', 'Página siguiente');
       const totalPages = Math.ceil(paginationOpts.totalFiltered / (paginationOpts.pageSize || PAGE_SIZE));
       next.disabled = paginationOpts.page >= totalPages - 1;
       if (!next.disabled && paginationOpts.onNext) next.addEventListener('click', paginationOpts.onNext);
@@ -4302,8 +4284,8 @@
       const tr = document.createElement('tr');
       if (stockBajo) tr.classList.add('row-stock-bajo');
       const thumbUrlRaw = (r.imagen_url && String(r.imagen_url).trim()) || (r.manual_url && String(r.manual_url).trim()) || '';
-      const thumbBtn = thumbUrlRaw && pvcIsDisplayableImageUrl(thumbUrlRaw) ? pvcTablaThumbOpenButton(thumbUrlRaw, 'Ver imagen') : '';
-      const imgThumb = `<span class="ref-code-with-thumb">${thumbBtn}<button type="button" class="btn-codigo-ref link-btn" data-id="${r.id}" title="Ver fotos / manual">${escapeHtml(r.codigo || '')}</button></span>`;
+      const thumbBtn = thumbUrlRaw && pvcIsDisplayableImageUrl(thumbUrlRaw) ? pvcTablaThumbOpenButton(thumbUrlRaw) : '';
+      const imgThumb = `<span class="ref-code-with-thumb">${thumbBtn}<span class="ref-codigo-text">${escapeHtml(r.codigo || '')}</span></span>`;
       tr.innerHTML = `
         <td class="ref-td-code">${imgThumb}</td>
         <td class="td-desc-wrap td-text-wrap ref-td-desc">${escapeHtml(r.descripcion || '')}</td>
@@ -4327,9 +4309,6 @@
     });
     updateTableFooter('tabla-refacciones', data.length, refaccionesCache.length, () => clearTableFiltersAndRefresh('tabla-refacciones', '#buscar-refacciones', applyRefaccionesFiltersAndRender), arguments[1]);
     animateTableRows('tabla-refacciones');
-    tbody.querySelectorAll('.btn-codigo-ref').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); const r = data.find(x => x.id == btn.dataset.id); if (r) openModalRefaccionImagen(r); });
-    });
     function closeRefaccionRowMenu(btn) {
       const det = btn && btn.closest && btn.closest('details.ds-row-actions');
       if (det) det.open = false;
@@ -4976,7 +4955,7 @@
       const tr = document.createElement('tr');
       const thumbPart =
         m.imagen_pieza_url && pvcIsDisplayableImageUrl(m.imagen_pieza_url)
-          ? pvcTablaThumbOpenButton(m.imagen_pieza_url, 'Ver imagen en grande')
+          ? pvcTablaThumbOpenButton(m.imagen_pieza_url)
           : `<button type="button" class="pvc-tabla-thumb-placeholder" data-id="${m.id}" title="Sin imagen · clic para subir"><i class="fas fa-camera" aria-hidden="true"></i></button>`;
       const idCell = `<div class="maq-id-thumb-row">${thumbPart}<button type="button" class="btn-id-maq link-btn" data-id="${m.id}" title="Subir o cambiar imagen de catálogo (ID ${m.id})">${m.id}</button></div>`;
       tr.innerHTML = `
@@ -4996,7 +4975,7 @@
     updateTableFooter('tabla-maquinas', data.length, maquinasCache.length, () => clearTableFiltersAndRefresh('tabla-maquinas', null, applyMaquinasFiltersAndRender), arguments[1]);
     animateTableRows('tabla-maquinas');
     tbody.querySelectorAll('.btn-id-maq').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); const row = data.find(x => x.id == btn.dataset.id); if (row) openModalMaquinaImagen(row); });
+      btn.addEventListener('click', e => { e.stopPropagation(); const row = data.find(x => x.id == btn.dataset.id); if (row) previewMaquina(row); });
     });
     tbody.querySelectorAll('.pvc-tabla-thumb-placeholder').forEach(btn => {
       btn.addEventListener('click', e => {
@@ -8144,73 +8123,6 @@
       } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar. Revisa los datos.', 'error'); }
       finally { btn.disabled = false; btn.innerHTML = origText; }
     };
-  }
-
-  // Modal para ver imágenes de refacción
-  function openModalRefaccionImagen(ref) {
-    clearPvcMediaUrlRegistry();
-    function slot(url, label, dlSlug) {
-      if (!url || !String(url).trim()) {
-        return '<p class="ref-modal-foto-empty">Sin archivo.</p>';
-      }
-      const u = String(url).trim();
-      if (pvcIsPdfUrl(u)) {
-        const rPdf = registerPvcMediaUrl(u);
-        const onePdf = [];
-        pvcLbPushIfMedia(onePdf, u, label);
-        const gPdf = onePdf.length ? pvcLbEncodeGallery(onePdf) : '';
-        const verPdf =
-          '<button type="button" class="btn small outline js-pvc-media-lightbox" data-lb-force-pdf="1" data-lb-g="' +
-          escapeHtml(gPdf) +
-          '" data-lb-i="0" title="Ver PDF"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>';
-        return (
-          '<div class="ref-modal-foto-wrap"><p class="ref-modal-foto-label">' +
-          escapeHtml(label) +
-          '</p><div class="ref-foto-preview-wrap cliente-const-inline" style="flex-wrap:wrap;gap:0.5rem;align-items:flex-end">' +
-          '<span class="cliente-const-slot cliente-const-slot--pdf cliente-const-slot--static" aria-hidden="true"><i class="fas fa-file-pdf fa-2x"></i></span>' +
-          verPdf +
-          pvcDownloadBtnCompactHtml(rPdf, null, dlSlug) +
-          '</div></div>'
-        );
-      }
-      if (pvcIsDisplayableImageUrl(u)) {
-        const rImg = registerPvcMediaUrl(u);
-        const oneImg = [];
-        pvcLbPushIfMedia(oneImg, u, label);
-        const gImg = oneImg.length ? pvcLbEncodeGallery(oneImg) : '';
-        const verImg =
-          '<button type="button" class="btn small outline js-pvc-media-lightbox" data-lb-g="' +
-          escapeHtml(gImg) +
-          '" data-lb-i="0" title="Ver ampliado"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>';
-        return (
-          '<div class="ref-modal-foto-wrap"><p class="ref-modal-foto-label">' +
-          escapeHtml(label) +
-          '</p><div class="ref-foto-preview-wrap cliente-const-inline" style="flex-wrap:wrap;gap:0.5rem;align-items:flex-end">' +
-          '<span class="cliente-const-slot cliente-const-slot--static">' +
-          '<img src="' +
-          escapeHtml(u) +
-          '" alt="" class="ref-foto-thumb" loading="lazy">' +
-          '</span>' +
-          verImg +
-          pvcDownloadBtnCompactHtml(rImg, null, dlSlug) +
-          '</div></div>'
-        );
-      }
-      return (
-        '<div class="ref-modal-foto-wrap"><p class="ref-modal-foto-label">' +
-        escapeHtml(label) +
-        '</p><a href="' +
-        escapeHtml(u) +
-        '" target="_blank" rel="noopener noreferrer" class="btn outline"><i class="fas fa-external-link-alt"></i> Abrir enlace</a></div>'
-      );
-    }
-    const foto1 = slot(ref.imagen_url, 'Manual de partes', 'refaccion-modal-partes');
-    const foto2 = slot(ref.manual_url, 'Pieza / diagrama', 'refaccion-modal-pieza');
-    const body = `
-      <p style="margin-bottom:0.75rem"><strong>Código:</strong> ${escapeHtml(ref.codigo)} &nbsp; <strong>Nº parte:</strong> ${escapeHtml(ref.numero_parte_manual || '—')}</p>
-      <div class="ref-modal-foto-grid">${foto1}${foto2}</div>
-    `;
-    openModal('Refacción: ' + (ref.descripcion || ref.codigo), body);
   }
 
   // Modal de inventario: entrada/salida por cantidad o conteo físico (compatible con FIFO en servidor).
@@ -13344,17 +13256,11 @@
       const puestoCell = (t.puesto || t.rol || '').trim() || '—';
       const ineOpenU = t.ine_foto_url || t.ine_thumb_url;
       const licOpenU = t.licencia_foto_url || t.licencia_thumb_url;
-      const rowLb = [];
-      pvcLbPushIfMedia(rowLb, ineOpenU, 'INE');
-      pvcLbPushIfMedia(rowLb, licOpenU, 'Licencia');
-      const rowG = rowLb.length ? pvcLbEncodeGallery(rowLb) : '';
-      const rowIdxIne = rowLb.length && ineOpenU ? rowLb.findIndex((it) => String(it.url || '').trim() === String(ineOpenU).trim()) : 0;
-      const rowIdxLic = rowLb.length && licOpenU ? rowLb.findIndex((it) => String(it.url || '').trim() === String(licOpenU).trim()) : 0;
       const ineMini = t.ine_thumb_url
-        ? `<span class="tec-doc-slot-wrap cliente-const-inline" style="align-items:flex-end;gap:0.35rem;flex-wrap:wrap"><span class="tec-doc-slot cliente-const-slot cliente-const-slot--static" title="INE"><img src="${escapeHtml(t.ine_thumb_url)}" alt="" loading="lazy"></span>${rowG ? `<button type="button" class="btn small outline js-pvc-media-lightbox" data-lb-g="${escapeHtml(rowG)}" data-lb-i="${rowIdxIne >= 0 ? rowIdxIne : 0}" title="Ver INE"><i class="fas fa-magnifying-glass-plus"></i></button>` : ''}${pvcDownloadBtnCompactHtml(null, ineOpenU, 'tecnico-ine')}</span>`
+        ? `<span class="tec-doc-slot-wrap cliente-const-inline" style="align-items:flex-end;gap:0.35rem;flex-wrap:wrap"><span class="tec-doc-slot cliente-const-slot cliente-const-slot--static" title="INE"><img src="${escapeHtml(t.ine_thumb_url)}" alt="" loading="lazy"></span>${pvcDownloadBtnCompactHtml(null, ineOpenU, 'tecnico-ine')}</span>`
         : '<span class="tec-doc-slot" title="Sin INE">—</span>';
       const licMini = t.licencia_thumb_url
-        ? `<span class="tec-doc-slot-wrap cliente-const-inline" style="align-items:flex-end;gap:0.35rem;flex-wrap:wrap"><span class="tec-doc-slot cliente-const-slot cliente-const-slot--static" title="Licencia"><img src="${escapeHtml(t.licencia_thumb_url)}" alt="" loading="lazy"></span>${rowG ? `<button type="button" class="btn small outline js-pvc-media-lightbox" data-lb-g="${escapeHtml(rowG)}" data-lb-i="${rowIdxLic >= 0 ? rowIdxLic : 0}" title="Ver licencia"><i class="fas fa-magnifying-glass-plus"></i></button>` : ''}${pvcDownloadBtnCompactHtml(null, licOpenU, 'tecnico-licencia')}</span>`
+        ? `<span class="tec-doc-slot-wrap cliente-const-inline" style="align-items:flex-end;gap:0.35rem;flex-wrap:wrap"><span class="tec-doc-slot cliente-const-slot cliente-const-slot--static" title="Licencia"><img src="${escapeHtml(t.licencia_thumb_url)}" alt="" loading="lazy"></span>${pvcDownloadBtnCompactHtml(null, licOpenU, 'tecnico-licencia')}</span>`
         : '<span class="tec-doc-slot" title="Sin licencia">—</span>';
       tr.innerHTML = `
         <td><strong>${escapeHtml(t.nombre || '')}</strong></td>
