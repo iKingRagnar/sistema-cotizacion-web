@@ -17,6 +17,41 @@ html body.login-open #login-overlay.login-overlay--exec-layout {
   --sk-blur: 22px;
 }
 
+/*
+ * Sin velos ni rejilla a pantalla completa (premium-login): solo foto nano + dos tarjetas.
+ */
+html body.login-open #login-overlay.login-overlay--exec-layout,
+html body.login-open #login-overlay.login-overlay.login-overlay--exec-layout {
+  background-color: transparent !important;
+  background-image:
+    var(--nano-machine-image, none),
+    url("../fondos/nano-machining-services.webp") !important;
+  background-size: cover, cover !important;
+  background-position: center center, center center !important;
+  background-attachment: fixed, fixed !important;
+  background-repeat: no-repeat, no-repeat !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout::after {
+  display: none !important;
+  content: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+html body.login-open #login-overlay.login-overlay--exec-layout::before {
+  display: none !important;
+  content: none !important;
+}
+
+/* universal-art: textura en body que a veces se percibe como marco detrás del overlay */
+html body.md3-on.login-open::before {
+  opacity: 0 !important;
+}
+
 /* Shell = Parker .shell (dos columnas + hueco entre paneles; sin “caja única” del split aurora) */
 html body.login-open #login-overlay.login-overlay--exec-layout .login-split {
   position: relative !important;
