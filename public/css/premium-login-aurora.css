@@ -1,27 +1,27 @@
 /**
- * premium-login-aurora.css — Intro Universal “cinemática” sobre nano machining.
- * Referencia estructural (banda hero + pastilla de marca + vidrio), sin copiar otro producto.
- * Requiere body.login-open + fuente Syne en index.html.
+ * premium-login-aurora.css — Intro Universal sobre nano machining.
+ * Layout tipo panel ejecutivo (logo grande sin pastilla + código esquina), colores vivos,
+ * barrido metálico ocasional sobre el split. Requiere Syne + JetBrains Mono en index.
  */
 
 html body.login-open {
   --login-display: "Syne", "Inter", system-ui, sans-serif;
+  --login-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", "Segoe UI Mono", monospace;
 }
 
-/* Capas sobre nano: auroras, vignette inferior, lectura cómoda */
+/* Capas sobre nano: auroras más vivas */
 html body.login-open #login-overlay,
 html body.login-open #login-overlay.login-overlay {
   background-image:
-    linear-gradient(180deg, transparent 0%, rgba(2, 6, 23, 0.42) 78%, rgba(2, 6, 23, 0.88) 100%),
-    radial-gradient(ellipse 95% 65% at 72% -18%, rgba(45, 212, 191, 0.16) 0%, transparent 58%),
-    radial-gradient(ellipse 65% 50% at -5% 88%, rgba(56, 189, 248, 0.11) 0%, transparent 52%),
-    radial-gradient(ellipse 45% 40% at 96% 62%, rgba(250, 204, 21, 0.07) 0%, transparent 48%),
-    linear-gradient(152deg, rgba(2, 6, 23, 0.38) 0%, rgba(15, 23, 42, 0.52) 52%, rgba(2, 6, 23, 0.46) 100%),
+    linear-gradient(180deg, transparent 0%, rgba(2, 6, 23, 0.38) 72%, rgba(2, 6, 23, 0.82) 100%),
+    radial-gradient(ellipse 95% 70% at 70% -14%, rgba(45, 212, 191, 0.26) 0%, transparent 55%),
+    radial-gradient(ellipse 72% 58% at -8% 92%, rgba(56, 189, 248, 0.18) 0%, transparent 50%),
+    radial-gradient(ellipse 52% 46% at 98% 58%, rgba(250, 204, 21, 0.11) 0%, transparent 46%),
+    linear-gradient(148deg, rgba(2, 6, 23, 0.32) 0%, rgba(15, 23, 42, 0.48) 52%, rgba(2, 6, 23, 0.4) 100%),
     var(--nano-machine-image, none),
     url("../fondos/nano-machining-services.webp") !important;
 }
 
-/* Micro-grid editorial (muy suave; no compite con la foto) */
 html body.login-open #login-overlay::after {
   display: block !important;
   content: "" !important;
@@ -29,129 +29,219 @@ html body.login-open #login-overlay::after {
   inset: 0 !important;
   pointer-events: none !important;
   z-index: 0 !important;
-  opacity: 0.18 !important;
+  opacity: 0.22 !important;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.038) 1px, transparent 1px) !important;
+    linear-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.048) 1px, transparent 1px) !important;
   background-size: 52px 52px !important;
   mask-image: radial-gradient(ellipse 78% 68% at 50% 44%, black 12%, transparent 70%) !important;
 }
 
 html body.login-open .login-overlay-powered-by {
   z-index: 4 !important;
-  color: rgba(248, 250, 252, 0.82) !important;
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.65) !important;
+  color: rgba(248, 250, 252, 0.88) !important;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.65) !important;
 }
 
+/* Split: borde vivo + brillo metálico que cruza de vez en cuando */
 html body.login-open #login-overlay .login-split {
   position: relative !important;
   z-index: 2 !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  overflow: hidden !important;
+  isolation: isolate !important;
+  border: 1px solid rgba(94, 234, 212, 0.35) !important;
   box-shadow:
-    0 0 0 1px rgba(45, 212, 191, 0.06),
+    0 0 0 1px rgba(45, 212, 191, 0.12),
     0 36px 96px rgba(0, 0, 0, 0.52),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
-  background: linear-gradient(145deg, rgba(15, 23, 42, 0.22) 0%, rgba(2, 6, 23, 0.38) 100%) !important;
-  backdrop-filter: blur(10px) saturate(155%) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(155%) !important;
+    0 0 80px rgba(45, 212, 191, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09) !important;
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.28) 0%, rgba(2, 6, 23, 0.42) 100%) !important;
+  backdrop-filter: blur(12px) saturate(175%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(175%) !important;
 }
 
-/* Banda hero superior (eco de tarjeta con cabecera; contenido Universal) */
+html body.login-open #login-overlay .login-split::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: -60% -40% !important;
+  background: linear-gradient(
+    118deg,
+    transparent 0%,
+    transparent 42%,
+    rgba(255, 255, 255, 0.04) 47%,
+    rgba(255, 255, 255, 0.22) 50%,
+    rgba(204, 251, 241, 0.18) 51.5%,
+    rgba(255, 255, 255, 0.06) 54%,
+    transparent 58%,
+    transparent 100%
+  ) !important;
+  transform: translateX(-38%) rotate(12deg) !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+  opacity: 0 !important;
+  animation: login-metal-sheen 11s ease-in-out infinite !important;
+}
+
+@keyframes login-metal-sheen {
+  0%,
+  72% {
+    opacity: 0;
+    transform: translateX(-48%) rotate(12deg);
+  }
+  74% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+    transform: translateX(52%) rotate(12deg);
+  }
+  94%,
+  100% {
+    opacity: 0;
+    transform: translateX(58%) rotate(12deg);
+  }
+}
+
+html body.login-open #login-overlay .login-brand-panel,
+html body.login-open #login-overlay .login-form-panel {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+/* Panel marca: sin banda hero; contenido empieza limpio (referencia panel ejecutivo) */
 html body.login-open #login-overlay .login-brand-panel {
   justify-content: flex-start !important;
   padding: 0 !important;
 }
 
 html body.login-open #login-overlay .login-brand-panel::before {
-  display: block !important;
-  content: "" !important;
-  position: relative !important;
-  flex-shrink: 0 !important;
-  height: clamp(104px, 19vh, 148px) !important;
-  width: 100% !important;
-  margin: 0 !important;
-  background:
-    radial-gradient(circle at 18% 42%, rgba(45, 212, 191, 0.42) 0%, transparent 58%),
-    radial-gradient(circle at 88% 28%, rgba(250, 204, 21, 0.14) 0%, transparent 46%),
-    linear-gradient(188deg, rgba(15, 118, 110, 0.22) 0%, rgba(2, 6, 23, 0.92) 92%) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  display: none !important;
 }
 
 html body.login-open #login-overlay .login-brand-panel::after {
   display: block !important;
   content: "" !important;
   position: absolute !important;
-  bottom: 12% !important;
-  right: 6% !important;
-  width: min(280px, 55vw) !important;
-  height: min(280px, 55vw) !important;
+  bottom: 8% !important;
+  right: 4% !important;
+  width: min(260px, 50vw) !important;
+  height: min(260px, 50vw) !important;
   border-radius: 50% !important;
-  background: radial-gradient(circle, rgba(45, 212, 191, 0.1) 0%, transparent 65%) !important;
+  background: radial-gradient(circle, rgba(45, 212, 191, 0.16) 0%, transparent 62%) !important;
   pointer-events: none !important;
   z-index: 0 !important;
 }
 
-html body.login-open #login-overlay .login-brand-panel .login-brand-content {
+html body.login-open #login-overlay .login-brand-panel .login-brand-content--exec {
   position: relative !important;
   z-index: 2 !important;
-  padding: 0 clamp(1.35rem, 3vw, 2.35rem) clamp(1.75rem, 4vw, 2.65rem) !important;
-  margin-top: -3rem !important;
-  max-width: 540px !important;
+  padding: clamp(1.5rem, 3.2vw, 2.25rem) clamp(1.15rem, 2.8vw, 1.85rem) clamp(1.65rem, 3.5vw, 2.5rem) clamp(1rem, 2.2vw, 1.45rem) !important;
+  margin-top: 0 !important;
+  max-width: 560px !important;
 }
 
-/* Pastilla luminosa para logo (contraste sobre banda oscura) */
-html body.login-open #login-overlay .login-brand-logo {
-  margin: 0 0 1.1rem 0 !important;
-  padding: 0.45rem 0.7rem !important;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(241, 245, 249, 0.94) 100%) !important;
-  border-radius: 14px !important;
-  border: 1px solid rgba(255, 255, 255, 0.72) !important;
-  box-shadow:
-    0 22px 48px rgba(0, 0, 0, 0.38),
-    0 0 0 1px rgba(15, 23, 42, 0.06) !important;
-  max-width: fit-content !important;
+/* Fila superior: logo grande a la izquierda + código técnico a la derecha */
+html body.login-open #login-overlay .login-brand-toprow {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: flex-end !important;
+  justify-content: space-between !important;
+  gap: 0.75rem 1rem !important;
+  width: 100% !important;
+  margin: 0 0 1.15rem 0 !important;
 }
 
-html body.login-open #login-overlay .login-brand-logo .login-brand-hero-img {
-  max-height: 58px !important;
-  clip-path: inset(3px round 10px) !important;
+html body.login-open #login-overlay .login-brand-code {
+  margin: 0 0 0.2rem 0 !important;
+  padding: 0 !important;
+  font-family: var(--login-mono) !important;
+  font-size: 0.62rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.18em !important;
+  text-transform: uppercase !important;
+  text-align: right !important;
+  line-height: 1.35 !important;
+  color: #5eead4 !important;
+  -webkit-text-fill-color: #5eead4 !important;
+  text-shadow:
+    0 0 22px rgba(45, 212, 191, 0.55),
+    0 1px 8px rgba(0, 0, 0, 0.75) !important;
+  flex: 0 1 auto !important;
+  max-width: min(200px, 42vw) !important;
+}
+
+/* Logo sin caja blanca; más grande y pegado al borde izquierdo del contenido */
+html body.login-open #login-overlay .login-brand-logo--hero {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  max-width: none !important;
+  flex: 0 1 auto !important;
+}
+
+html body.login-open #login-overlay .login-brand-logo--hero .login-brand-hero-img {
+  display: block !important;
+  max-height: clamp(76px, 13vh, 118px) !important;
+  width: auto !important;
+  height: auto !important;
+  clip-path: none !important;
+  object-fit: contain !important;
+  object-position: left center !important;
+  filter: drop-shadow(0 6px 28px rgba(45, 212, 191, 0.35)) drop-shadow(0 2px 12px rgba(0, 0, 0, 0.65)) !important;
 }
 
 .login-eyebrow {
-  margin: 0 0 0.5rem !important;
+  margin: 0 0 0.65rem !important;
   font-family: var(--login-display, inherit) !important;
-  font-size: 0.68rem !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.32em !important;
+  font-size: 0.62rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.34em !important;
   text-transform: uppercase !important;
-  color: #99f6e4 !important;
-  -webkit-text-fill-color: #99f6e4 !important;
-  text-shadow: 0 0 28px rgba(45, 212, 191, 0.45) !important;
+  color: #ccfbf1 !important;
+  -webkit-text-fill-color: #ccfbf1 !important;
+  text-shadow:
+    0 0 32px rgba(45, 212, 191, 0.55),
+    0 1px 10px rgba(0, 0, 0, 0.55) !important;
 }
 
 html body.login-open #login-overlay .login-brand-panel .login-brand-title {
   font-family: var(--login-display, inherit) !important;
-  font-size: clamp(1.75rem, 3.6vw, 2.5rem) !important;
+  font-size: clamp(1.85rem, 3.8vw, 2.65rem) !important;
   font-weight: 800 !important;
   letter-spacing: -0.03em !important;
-  line-height: 1.1 !important;
+  line-height: 1.08 !important;
 }
 
-html body.login-open #login-overlay .login-brand-panel .login-brand-tagline {
-  font-size: 1.02rem !important;
-  line-height: 1.55 !important;
-  max-width: 38ch !important;
+html body.login-open #login-overlay .login-brand-panel .login-brand-desc,
+html body.login-open #login-overlay .login-brand-panel .login-brand-tagline.login-brand-desc {
+  font-family: var(--login-mono) !important;
+  font-size: 0.82rem !important;
+  font-weight: 500 !important;
+  line-height: 1.65 !important;
+  letter-spacing: 0.02em !important;
+  max-width: 42ch !important;
+  color: #e2e8f0 !important;
+  -webkit-text-fill-color: #e2e8f0 !important;
+  margin-top: 0.35rem !important;
 }
 
 html body.login-open #login-overlay .login-brand-features .login-feature-item {
   border-radius: 12px !important;
-  padding: 0.35rem 0.5rem 0.35rem 0 !important;
-  margin-left: -0.35rem !important;
+  padding: 0.38rem 0.55rem 0.38rem 0 !important;
+  margin-left: -0.45rem !important;
   transition: background 0.2s ease, transform 0.2s ease !important;
 }
 
+html body.login-open #login-overlay .login-brand-features .login-feature-item i {
+  color: #2dd4bf !important;
+  filter: drop-shadow(0 0 10px rgba(45, 212, 191, 0.65)) !important;
+}
+
 html body.login-open #login-overlay .login-brand-features .login-feature-item:hover {
-  background: rgba(255, 255, 255, 0.06) !important;
+  background: rgba(45, 212, 191, 0.08) !important;
 }
 
 html body.login-open #login-overlay .login-form-panel {
@@ -163,60 +253,100 @@ html body.login-open #login-overlay .login-form-panel {
 html body.login-open #login-overlay .login-card {
   max-width: 420px !important;
   border-radius: 22px !important;
-  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  border: 1px solid rgba(94, 234, 212, 0.38) !important;
   box-shadow:
-    0 28px 72px rgba(0, 0, 0, 0.42),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+    0 28px 72px rgba(0, 0, 0, 0.48),
+    0 0 48px rgba(45, 212, 191, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+}
+
+html body.login-open #login-overlay .login-card-header .login-card-icon {
+  border-radius: 14px !important;
+  border: 1px solid rgba(94, 234, 212, 0.45) !important;
+  box-shadow:
+    0 0 24px rgba(45, 212, 191, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
 }
 
 html body.login-open #login-overlay .login-card-header h2 {
   font-family: var(--login-display, inherit) !important;
   letter-spacing: 0.06em !important;
   font-weight: 800 !important;
-  font-size: 1.35rem !important;
+  font-size: 1.4rem !important;
+}
+
+html body.login-open #login-overlay .login-card .login-hint {
+  font-family: var(--login-mono) !important;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.04em !important;
+}
+
+html body.login-open #login-overlay .login-roles-title {
+  font-family: var(--login-mono) !important;
+  font-size: 0.62rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.22em !important;
+  text-transform: uppercase !important;
 }
 
 html body.login-open #login-overlay .login-submit.btn.primary {
-  background: linear-gradient(
-    135deg,
-    #14b8a6 0%,
-    #0d9488 48%,
-    #0f766e 100%
-  ) !important;
-  border: 1px solid rgba(153, 246, 228, 0.35) !important;
+  background: linear-gradient(135deg, #2dd4bf 0%, #14b8a6 42%, #0d9488 100%) !important;
+  border: 1px solid rgba(204, 251, 241, 0.45) !important;
   box-shadow:
-    0 14px 32px rgba(13, 148, 136, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+    0 16px 40px rgba(13, 148, 136, 0.45),
+    0 0 32px rgba(45, 212, 191, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
 }
 
 html body.login-open #login-overlay .login-submit.btn.primary:hover {
-  filter: brightness(1.06) !important;
+  filter: brightness(1.08) saturate(1.05) !important;
+}
+
+html body.login-open #login-overlay .login-brand-badges .login-badge {
+  border-color: rgba(94, 234, 212, 0.42) !important;
+  box-shadow: 0 0 18px rgba(45, 212, 191, 0.12) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html body.login-open #login-overlay .login-split::before {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+
   html body.login-open #login-overlay .login-brand-features .login-feature-item {
     transition: none !important;
   }
 }
 
-/* Apilado móvil: banda más baja y menos “salto” del logo */
 @media (max-width: 720px) {
-  html body.login-open #login-overlay .login-brand-panel::before {
-    height: 92px !important;
+  html body.login-open #login-overlay .login-brand-panel .login-brand-content--exec {
+    padding: 1.15rem 1.1rem 1.25rem 0.95rem !important;
   }
-  html body.login-open #login-overlay .login-brand-panel .login-brand-content {
-    margin-top: -2.35rem !important;
-    padding-top: 0.25rem !important;
+
+  html body.login-open #login-overlay .login-brand-toprow {
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
   }
-  html body.login-open #login-overlay .login-brand-logo .login-brand-hero-img {
-    max-height: 52px !important;
+
+  html body.login-open #login-overlay .login-brand-code {
+    text-align: left !important;
+    max-width: none !important;
+    width: 100% !important;
+    margin-top: 0.35rem !important;
+    font-size: 0.58rem !important;
   }
+
+  html body.login-open #login-overlay .login-brand-logo--hero .login-brand-hero-img {
+    max-height: 68px !important;
+  }
+
   html body.login-open #login-overlay .login-split {
-    backdrop-filter: blur(6px) saturate(140%) !important;
-    -webkit-backdrop-filter: blur(6px) saturate(140%) !important;
+    backdrop-filter: blur(8px) saturate(155%) !important;
+    -webkit-backdrop-filter: blur(8px) saturate(155%) !important;
   }
+
   .login-eyebrow {
     letter-spacing: 0.22em !important;
-    font-size: 0.62rem !important;
+    font-size: 0.58rem !important;
   }
 }

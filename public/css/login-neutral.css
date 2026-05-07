@@ -117,16 +117,17 @@ html body.login-open #login-overlay .login-brand-panel .login-feature-item i {
 
 html body.login-open #login-overlay .login-brand-panel .login-badge,
 html body.login-open #login-overlay .login-brand-panel [class*="chip"] {
-  background: rgba(255, 255, 255, 0.12) !important;
-  border: 1px solid rgba(255, 255, 255, 0.22) !important;
-  color: #f8fafc !important;
-  -webkit-text-fill-color: #f8fafc !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45) !important;
+  background: rgba(15, 23, 42, 0.55) !important;
+  border: 1px solid rgba(94, 234, 212, 0.38) !important;
+  color: #ecfeff !important;
+  -webkit-text-fill-color: #ecfeff !important;
+  text-shadow: 0 0 12px rgba(45, 212, 191, 0.2) !important;
 }
 
-html body.login-open #login-overlay .login-brand-panel .login-brand-hero-img {
-  background: rgba(255, 255, 255, 0.12) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+/* Logo hero intro: sin marco tipo “pastilla” */
+html body.login-open #login-overlay .login-brand-panel .login-brand-logo--hero .login-brand-hero-img {
+  background: transparent !important;
+  border: none !important;
 }
 
 /* Panel formulario */
@@ -179,10 +180,10 @@ html body.login-open #login-overlay .login-card input[type="password"],
 html body.login-open #login-overlay .login-card input[type="email"],
 html body.login-open #login-overlay .login-form input[type="text"],
 html body.login-open #login-overlay .login-form input[type="password"] {
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(248, 250, 252, 0.14) !important;
   color: #f8fafc !important;
   -webkit-text-fill-color: #f8fafc !important;
-  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  border: 1px solid rgba(94, 234, 212, 0.32) !important;
 }
 
 html body.login-open #login-overlay .login-card input::placeholder,
@@ -203,8 +204,8 @@ html body.login-open #login-overlay .login-eye-btn {
 }
 
 html body.login-open #login-overlay .login-role-card {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  background: rgba(15, 23, 42, 0.55) !important;
+  border: 1px solid rgba(94, 234, 212, 0.28) !important;
   color: #e2e8f0 !important;
 }
 
@@ -318,7 +319,7 @@ html body.login-open #login-overlay #login-user {
     border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
     padding: 1.25rem 1.25rem 1rem !important;
   }
-  html body.login-open #login-overlay .login-brand-panel .login-brand-logo .login-brand-hero-img {
+  html body.login-open #login-overlay .login-brand-panel .login-brand-logo--hero .login-brand-hero-img {
     max-height: 64px !important;
   }
   html body.login-open #login-overlay .login-brand-features {
