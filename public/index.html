@@ -81,7 +81,7 @@
   <!-- KPI ejecutivos claros (después de nano / universal-art para ganar especificidad) -->
   <link rel="stylesheet" href="css/dashboard-exec-kpi-cards.css?v=1-exec-kpi-light-2026-05-07">
   <!-- Login ejecutivo: al final de la cascada (créditos tipográficos + sin artefactos bajo 100dvh) -->
-  <link rel="stylesheet" href="css/login-exec-layout.css?v=10-overlay-bleed-top-56px">
+  <link rel="stylesheet" href="css/login-exec-layout.css?v=11-poweredby-corner-exec">
   <link rel="manifest" href="manifest.json">
   <!-- Tema único: nano machining + vidrio azul cristalino (sin modo Sol/Luna). -->
   <!-- ★ FORCE-RELOAD: SOLO en browser normal, NUNCA en PWA standalone (evita loop crash) -->
@@ -153,6 +153,19 @@
       min-height: calc(100vh + 72px) !important;
       min-height: calc(100dvh + 72px) !important;
       border: none !important;
+    }
+    /* Crédito: con bleed superior el top absoluto queda clippeado; esquina inferior derecha (cerca del login). */
+    html body.login-open #login-overlay.login-overlay--exec-layout .header-powered-by.login-overlay-powered-by {
+      top: auto !important;
+      bottom: max(0.55rem, env(safe-area-inset-bottom, 0px) + 0.35rem) !important;
+      left: auto !important;
+      right: max(0.75rem, env(safe-area-inset-right, 0px) + 0.35rem, calc((100vw - 1240px) / 2 + 0.65rem)) !important;
+      transform: none !important;
+      text-align: right !important;
+      z-index: 8 !important;
+      max-width: min(340px, calc(100vw - 1.25rem)) !important;
+      margin: 0 !important;
+      pointer-events: none !important;
     }
     /* Parker shell (grid 1240): misma altura visual que suminregio, sin encoger */
     html body.login-open #login-overlay.login-overlay--exec-layout .login-split {
