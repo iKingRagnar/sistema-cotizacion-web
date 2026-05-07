@@ -82,7 +82,8 @@ html body.login-open #login-overlay.login-overlay.login-overlay--exec-layout::be
 }
 
 /*
- * Chispas / arco tipo soldadura en el punto de contacto (nano). z-index 1, debajo del split.
+ * Chispas / arco tipo soldadura en el punto de contacto (nano).
+ * HTML: primer hijo de .login-split; CSS: fixed + % viewport, z-index 0 bajo vidrios (paneles z-index 1).
  * mix-blend-mode: screen — se integra con la foto sin tapar UI.
  */
 @keyframes login-weld-bloom {
@@ -126,11 +127,16 @@ html body.login-open #login-overlay.login-overlay.login-overlay--exec-layout::be
   }
 }
 
+/*
+ * Chispas: position fixed + % viewport — el overlay exec tiene márgenes negativos;
+ * si fuera absolute al #login-overlay, el % se desfasa respecto a lo que ves.
+ * z-index 0 aquí, paneles z-index 1: visible en el hueco del grid, no bajo el vidrio.
+ */
 html body.login-open #login-overlay.login-overlay--exec-layout .login-weld-sparks {
-  position: absolute !important;
+  position: fixed !important;
   left: var(--sk-weld-x) !important;
   top: var(--sk-weld-y) !important;
-  z-index: 1 !important;
+  z-index: 0 !important;
   width: 3px !important;
   height: 3px !important;
   margin: 0 !important;
@@ -289,6 +295,8 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-split::bef
 
 /* glass-panel--info */
 html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-panel {
+  position: relative !important;
+  z-index: 1 !important;
   flex: none !important;
   box-sizing: border-box !important;
   display: flex !important;
@@ -508,6 +516,8 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-badg
 
 /* glass-panel--auth */
 html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel {
+  position: relative !important;
+  z-index: 1 !important;
   flex: none !important;
   box-sizing: border-box !important;
   display: flex !important;
