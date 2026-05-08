@@ -1,0 +1,53 @@
+name: Auto-deploy to Render
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trigger Render deploy
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$DEPLOY_HOOK" ]; then
+            echo "::error::Falta el secreto RENDER_DEPLOY_HOOK_URL."
+            echo "::error::Configurarlo en: https://github.com/iKingRagnar/sistema-cotizacion-web/settings/secrets/actions"
+            echo "::error::Obtener el Deploy Hook desde Render Dashboard → tu servicio → Settings → Deploy Hook"
+            exit 1
+          fi
+          echo "Disparando deploy en Render..."
+          RESPONSE=$(curl -fsSL -X POST "$DEPLOY_HOOK" -w "\n%{http_code}")
+          BODY=$(echo "$RESPONSE" | head -n -1)
+          STATUS=$(echo "$RESPONSE" | tail -n 1)
+          echo "HTTP Status: $STATUS"
+          echo "Response: $BODY"
+          if [ "$STATUS" != "200" ] && [ "$STATUS" != "201" ]; then
+            echo "::error::Deploy hook respondió $STATUS"
+            exit 1
+          fi
+          echo "Deploy disparado exitosamente. Render comenzará el build en segundos."
+
+      - name: Wait + verify deploy
+        run: |
+          echo "Esperando 90s para que Render arranque el build..."
+          sleep 90
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            echo "Intento $i/10 - esperando build..."
+            sleep 30
+            CURRENT_VERSION=$(curl -fsSL https://sistema-cotizacion-web.onrender.com/service-worker.js 2>/dev/null | grep -E "^const VERSION" | head -1 || echo "")
+            EXPECTED_VERSION=$(grep -E "^const VERSION" public/service-worker.js | head -1)
+            echo "  Producción:  $CURRENT_VERSION"
+            echo "  Esperado:    $EXPECTED_VERSION"
+            if [ "$CURRENT_VERSION" = "$EXPECTED_VERSION" ]; then
+              echo "Deploy verificado: producción está en la versión esperada."
+              exit 0
+            fi
+          done
+          echo "::warning::El deploy puede seguir en progreso. Verificar manualmente en Render dashboard."
