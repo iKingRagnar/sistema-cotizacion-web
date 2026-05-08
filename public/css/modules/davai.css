@@ -582,3 +582,21 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
 }
+
+/* --- Reduced motion: stop infinite animations (Firefox slowdown warning fix) --- */
+@media (prefers-reduced-motion: reduce) {
+  .davai-typing__dots span,
+  .davai-orb__ring,
+  .davai-orb__core,
+  .davai-msg,
+  .davai-caret { animation: none !important; }
+  .davai-orb__core { opacity: 0.9; }
+  .davai-caret { opacity: 1; }
+  .davai-quick-btn:hover,
+  .davai-send-btn:hover { transform: none !important; }
+}
+
+/* --- Desktop: sidebar respects layout, doesn't squish messages --- */
+@media (min-width: 769px) {
+  .davai-sidebar { min-width: 200px; max-width: 30%; }
+}
