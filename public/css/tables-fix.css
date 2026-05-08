@@ -1,12 +1,50 @@
 /* ════════════════════════════════════════════════════════════════════════
-   TABLES FIX — Arregla rendering oscuro/desfase de las tablas (v100+)
-   Estrategia: sólo arreglar bg + backdrop-filter pesados.
-   NO forzar colores ni font-weight (algunas tablas tienen badges, pills,
-   icons en la primera columna y el !important rompía el render).
+   TABLES FIX DEFINITIVO — Arregla desfase de columnas thead vs tbody.
+
+   Bug encontrado en producción (debug en vivo, https://sistema-cotizacion-web.onrender.com):
+
+   ─ thead th[0]: left=363  width=150  (sticky)
+   ─ tbody td[0]: left=513  width=246  (static)
+
+   El thead estaba SHIFTED 150px porque:
+   1. `position: sticky` en <th> sacaba el header del flujo de table-layout
+   2. `min-width: 110px` en thead th forzaba ancho artificial
+   3. `tr::before` de premium-upgrade.css absorbía espacio en el row
+
+   FIX: forzar mismo flujo de cálculo de columnas en thead y tbody.
    ════════════════════════════════════════════════════════════════════════ */
 
 /* ────────────────────────────────────────────────
-   1. Quitar backdrop-filter cell-by-cell (muy costoso, oscurece todo)
+   1. RESET position/min-width en thead y tbody — sincronizar columnas
+   ──────────────────────────────────────────────── */
+html body table.data-table thead th,
+html body.md3-on table.data-table thead th,
+html body.theme-industrial table.data-table thead th {
+  position: static !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+html body table.data-table tbody td,
+html body.md3-on table.data-table tbody td,
+html body.theme-industrial table.data-table tbody td {
+  position: static !important;
+  min-width: 0 !important;
+  /* mantenemos max-width default pero sin forzar */
+}
+
+/* ────────────────────────────────────────────────
+   2. Anular el tr::before fantasma de premium-upgrade.css
+   ──────────────────────────────────────────────── */
+html body.theme-industrial table tbody tr::before,
+html body table.data-table tbody tr::before,
+html body table.data-table thead tr::before {
+  display: none !important;
+  content: none !important;
+  width: 0 !important;
+}
+
+/* ────────────────────────────────────────────────
+   3. Quitar backdrop-filter celda-a-celda (costoso + visual oscurecido)
    ──────────────────────────────────────────────── */
 html body table.data-table tbody td,
 html body table.data-table thead th,
@@ -19,7 +57,7 @@ html body.theme-industrial:not(.appearance-light) table.data-table thead th {
 }
 
 /* ────────────────────────────────────────────────
-   2. Bg uniforme para celdas (zebra muy sutil)
+   4. Backgrounds limpios (zebra al <tr>, no al <td>)
    ──────────────────────────────────────────────── */
 html body table.data-table tbody td,
 html body.md3-on table.data-table tbody td,
@@ -27,8 +65,6 @@ html body.theme-industrial:not(.appearance-light) table.data-table tbody td {
   background: transparent !important;
   background-color: transparent !important;
 }
-
-/* Zebra striping ligero, aplicado al <tr> no al <td> */
 html body table.data-table tbody tr:nth-child(even),
 html body.md3-on table.data-table tbody tr:nth-child(even),
 html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:nth-child(even) {
@@ -40,7 +76,7 @@ html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:nth-
   background: transparent;
 }
 
-/* Hover: background al <tr> en vez de a cada td */
+/* Hover row */
 html body table.data-table tbody tr:hover,
 html body.md3-on table.data-table tbody tr:hover,
 html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:hover {
@@ -48,18 +84,18 @@ html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:hove
 }
 
 /* ────────────────────────────────────────────────
-   3. Header: bg consistente, sin ser demasiado oscuro
+   5. Header limpio
    ──────────────────────────────────────────────── */
 html body table.data-table thead th,
 html body.md3-on table.data-table thead th,
 html body.theme-industrial:not(.appearance-light) table.data-table thead th {
-  background: rgba(30,41,59,0.6) !important;
-  background-color: rgba(30,41,59,0.6) !important;
+  background: rgba(30,41,59,0.7) !important;
+  background-color: rgba(30,41,59,0.7) !important;
   color: #cbd5e1 !important;
 }
 
 /* ────────────────────────────────────────────────
-   4. Texto en celdas: color claro (sin sobrescribir colors específicos)
+   6. Texto en celdas claro
    ──────────────────────────────────────────────── */
 html body table.data-table tbody td,
 html body.md3-on table.data-table tbody td {
@@ -68,20 +104,24 @@ html body.md3-on table.data-table tbody td {
 }
 
 /* ────────────────────────────────────────────────
-   5. Action column sticky right — sin gradient negro pesado
+   7. Action column sticky right (sólo aquí mantenemos sticky porque
+   es la última columna y no afecta sincronización con thead)
    ──────────────────────────────────────────────── */
 html body table.data-table .th-actions,
 html body table.data-table td.actions,
 html body.md3-on table.data-table .th-actions,
 html body.md3-on table.data-table td.actions {
-  background: rgba(15,23,42,0.7) !important;
+  position: sticky !important;
+  right: 0 !important;
+  background: rgba(15,23,42,0.85) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   box-shadow: -3px 0 8px -3px rgba(0,0,0,0.3) !important;
+  z-index: 2;
 }
 
 /* ────────────────────────────────────────────────
-   6. Anular .bulk-check residuales (cache viejo)
+   8. Anular .bulk-check residuales (cache viejo)
    ──────────────────────────────────────────────── */
 html body table.data-table .bulk-check-th,
 html body table.data-table .bulk-check-td,
@@ -91,7 +131,7 @@ html body table.data-table td.bulk-check-td {
 }
 
 /* ────────────────────────────────────────────────
-   7. Anular pseudo-element residual de hover en first column
+   9. Anular pseudo-element residual de hover en first column
    ──────────────────────────────────────────────── */
 html body table.data-table tbody tr:hover td:first-of-type::before,
 html body table.data-table tbody tr:hover td:first-child::before,
@@ -102,25 +142,15 @@ html body.md3-on table.data-table tbody tr:hover td:first-child::before {
 }
 
 /* ────────────────────────────────────────────────
-   8. Anular sparkline column residual del cache
+   10. Anular sparkline column residual del cache
    ──────────────────────────────────────────────── */
 html body table.data-table .mega-sparkline,
-html body table.data-table th[data-spark-th],
-html body table.data-table td[data-spark-injected]:not([data-spark-active]) svg.mega-sparkline {
+html body table.data-table th[data-spark-th] {
   display: none !important;
 }
 
 /* ────────────────────────────────────────────────
-   9. Pills/badges en celdas: bg propio respetado, sin ser sobrescrito
-   ──────────────────────────────────────────────── */
-html body table.data-table tbody td .badge,
-html body table.data-table tbody td .pill,
-html body table.data-table tbody td .stock-alert {
-  /* Mantener color y bg que vienen del HTML/JS, no sobrescribir */
-}
-
-/* ────────────────────────────────────────────────
-   10. Mobile responsive
+   11. Mobile responsive
    ──────────────────────────────────────────────── */
 @media (max-width: 600px) {
   html body table.data-table tbody td,
