@@ -875,6 +875,79 @@
     panel.dataset.prsproInjected = '1';
   };
 
+  /* ════════════════════════════════════════════════════════════════
+   * SAFETY NET — emergencia para modales atascados
+   *   - ESC siempre cierra cualquier modal/overlay visible (a prueba de freezes)
+   *   - Click en backdrop (#modal directamente, no en .modal-box) cierra
+   *   - Triple-ESC en <2s = cierre nuclear de TODOS los overlays + restore body
+   * ════════════════════════════════════════════════════════════════ */
+  (function safetyNet() {
+    var escTimes = [];
+    function closeAllVisible() {
+      var sels = [
+        '#modal:not(.hidden)', '#modal-stack:not(.hidden)',
+        '.modal-overlay.is-open', '.modal-overlay:not(.hidden)',
+        '.cmdk.is-open', '.mega-shortcuts-modal.is-open', '.prspro-modal.is-open',
+      ];
+      var closed = 0;
+      sels.forEach(function (sel) {
+        document.querySelectorAll(sel).forEach(function (el) {
+          el.classList.add('hidden');
+          el.classList.remove('is-open');
+          closed++;
+        });
+      });
+      /* Restore body scroll lock si algo lo dejó pegado */
+      document.body.style.removeProperty('overflow');
+      document.documentElement.style.removeProperty('overflow');
+      return closed;
+    }
+    function nuclearClose() {
+      closeAllVisible();
+      /* Eliminar elementos de alto z-index que puedan estar bloqueando */
+      document.querySelectorAll('[style*="z-index: 9999"], [style*="z-index:9999"]').forEach(function (el) {
+        if (el.id !== 'davai-fab' && !el.closest('#davai-fab')) {
+          var z = parseInt((el.style.zIndex || ''), 10);
+          if (z >= 9999) el.style.display = 'none';
+        }
+      });
+      try { if (window.MegaToast) window.MegaToast.show('Modales cerrados (emergencia)', 'warning'); } catch (_) {}
+    }
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      var n = closeAllVisible();
+      var now = Date.now();
+      escTimes.push(now);
+      escTimes = escTimes.filter(function (t) { return now - t < 2000; });
+      if (escTimes.length >= 3) {
+        nuclearClose();
+        escTimes = [];
+      }
+    }, true); /* capture-phase para que corra ANTES de handlers que stoppropagation */
+
+    /* Click en backdrop de #modal cierra (defensivo) */
+    document.addEventListener('click', function (e) {
+      var modal = document.getElementById('modal');
+      if (modal && !modal.classList.contains('hidden') && e.target === modal) {
+        modal.classList.add('hidden');
+      }
+      var stack = document.getElementById('modal-stack');
+      if (stack && !stack.classList.contains('hidden') && e.target === stack) {
+        stack.classList.add('hidden');
+      }
+    });
+
+    /* Atajo ?safe=1 fuerza cierre al cargar (por si la app arranca con modal pegado) */
+    try {
+      if (location.search.indexOf('safe=1') !== -1) {
+        setTimeout(closeAllVisible, 100);
+        setTimeout(closeAllVisible, 1500);
+      }
+    } catch (_) {}
+
+    window.PRSPRO_safetyNet = { closeAllVisible: closeAllVisible, nuclearClose: nuclearClose };
+  })();
+
   /* Boot robusto — el panel puede estar oculto o activo, igual injectamos siempre. */
   function boot() {
     var injected = false;

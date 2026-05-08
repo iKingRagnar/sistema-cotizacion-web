@@ -1,5 +1,6 @@
 /**
- * service-worker.js v56 — PWA-safe + timeout en content + cache-bust v106
+ * service-worker.js v56 — PWA-safe + timeout en content + cache-bust v107
+ *   v107 (2026-05-08): Sidebar Prospección dark + hover tablas premium + ESC safety-net (anti-freeze modales)
  *   v106 (2026-05-08): Prospección Pro — Tabla de Leads visible + boot polling robusto
  *   v105 (2026-05-08): Prospección Pro — KPIs + IA hunter/enrich/pitch/insights/funnel/cluster/compare
  *   v104 (2026-05-08): tables-fix v5 — botones acciones compactos 30px + min-width col 200/230px
@@ -9,7 +10,7 @@
  *   - APIs auth: bypass total (no cache)
  *   - skipWaiting + clients.claim para PWA standalone (evita race conditions)
  */
-const VERSION = 'cotizacion-pro-v106';
+const VERSION = 'cotizacion-pro-v107';
 const CACHE_RUNTIME = VERSION + '-runtime';
 const NETWORK_TIMEOUT_MS = 4000;
 const STATIC_URLS = ['/', '/index.html', '/css/style.css', '/favicon.svg', '/manifest.json'];
