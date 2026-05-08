@@ -1,0 +1,1257 @@
+/* ============================================================
+ * PROSPECCION.CSS  -  Modulo de prospeccion avanzada
+ * Mapa full-bleed + sidebar glass + drawer + KPIs + route planner
+ * Compatible con nano-fondo (Sol/Luna) + theme-industrial
+ * ============================================================ */
+
+/* ---- Variables locales ---- */
+:root {
+  --prs-stage-prospecto:   #3b82f6;
+  --prs-stage-contactado:  #8b5cf6;
+  --prs-stage-calificado:  #0ea5b7;
+  --prs-stage-propuesta:   #e0950f;
+  --prs-stage-negociacion: #6b9c00;
+  --prs-stage-ganado:      #19b855;
+  --prs-stage-perdido:     #e02f37;
+  --prs-sidebar-w:         380px;
+  --prs-drawer-w:          420px;
+  --prs-radius:            14px;
+  --prs-glass-bg:          var(--nano-surface, rgba(255,255,255,0.52));
+  --prs-glass-border:      var(--nano-border, rgba(15,23,42,0.08));
+  --prs-glass-blur:        var(--nano-blur, blur(30px) saturate(200%) brightness(1.08));
+  --prs-text:              var(--nano-text, #0b1220);
+  --prs-text-soft:         var(--nano-text-soft, #1e293b);
+  --prs-text-muted:        var(--nano-text-muted, #475569);
+  --prs-accent:            var(--nano-accent, #1a73e8);
+  --prs-surface-solid:     var(--nano-surface-solid, rgba(255,255,255,0.88));
+}
+
+/* ============================================================
+ * 1. LAYOUT - Full bleed map container
+ * ============================================================ */
+#panel-prospeccion .prospeccion-module {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* KPI strip above map */
+.prospeccion-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.65rem;
+  padding: 0 0 0.75rem;
+}
+
+.prospeccion-kpi-card {
+  background: var(--prs-glass-bg);
+  backdrop-filter: var(--prs-glass-blur);
+  -webkit-backdrop-filter: var(--prs-glass-blur);
+  border: 1px solid var(--prs-glass-border);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.prospeccion-kpi-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+.prospeccion-kpi-card__label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--prs-text-muted);
+  font-weight: 600;
+}
+.prospeccion-kpi-card__value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--prs-text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.prospeccion-kpi-card__value .trend-up {
+  color: #19b855;
+  font-size: 0.7rem;
+}
+.prospeccion-kpi-card__value .trend-down {
+  color: #e02f37;
+  font-size: 0.7rem;
+}
+.prospeccion-kpi-card__sub {
+  font-size: 0.65rem;
+  color: var(--prs-text-muted);
+}
+
+/* Mini horizontal bar chart for stages */
+.prospeccion-kpi-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 0.3rem;
+}
+.prospeccion-kpi-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.6rem;
+}
+.prospeccion-kpi-bar-label {
+  width: 72px;
+  text-align: right;
+  color: var(--prs-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.prospeccion-kpi-bar-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(128,128,128,0.12);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.prospeccion-kpi-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+.prospeccion-kpi-bar-count {
+  width: 24px;
+  text-align: left;
+  font-weight: 700;
+  color: var(--prs-text-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Score bar */
+.prospeccion-score-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(128,128,128,0.15);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 0.2rem;
+}
+.prospeccion-score-bar__fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #3b82f6, #19b855);
+  transition: width 0.5s ease;
+}
+
+/* ============================================================
+ * 2. MAP CONTAINER + overlays
+ * ============================================================ */
+.prospeccion-map-container {
+  position: relative;
+  width: 100%;
+  height: 560px;
+  border-radius: var(--prs-radius);
+  overflow: hidden;
+  border: 1px solid var(--prs-glass-border);
+}
+
+#prospeccion-map-canvas {
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* ============================================================
+ * 3. SIDEBAR (overlays left side of map)
+ * ============================================================ */
+.prospeccion-sidebar {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  bottom: 10px;
+  width: var(--prs-sidebar-w);
+  z-index: 800;
+  display: flex;
+  flex-direction: column;
+  background: var(--prs-glass-bg);
+  backdrop-filter: var(--prs-glass-blur);
+  -webkit-backdrop-filter: var(--prs-glass-blur);
+  border: 1px solid var(--prs-glass-border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.prospeccion-sidebar.collapsed {
+  transform: translateX(calc(-100% - 20px));
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Sidebar toggle button */
+.prospeccion-sidebar-toggle {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+  z-index: 801;
+  width: 28px;
+  height: 56px;
+  background: var(--prs-glass-bg);
+  backdrop-filter: var(--prs-glass-blur);
+  -webkit-backdrop-filter: var(--prs-glass-blur);
+  border: 1px solid var(--prs-glass-border);
+  border-radius: 0 8px 8px 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--prs-text-muted);
+  font-size: 12px;
+  transition: left 0.3s ease, opacity 0.3s ease;
+}
+.prospeccion-sidebar-toggle.shifted {
+  left: calc(var(--prs-sidebar-w) + 20px);
+}
+.prospeccion-sidebar-toggle:hover {
+  color: var(--prs-text);
+}
+
+/* Sidebar header */
+.prospeccion-sidebar__header {
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--prs-glass-border);
+  flex-shrink: 0;
+}
+.prospeccion-sidebar__search {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--prs-glass-border);
+  border-radius: 8px;
+  background: rgba(128,128,128,0.06);
+  color: var(--prs-text);
+  font-size: 0.8rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.prospeccion-sidebar__search:focus {
+  border-color: var(--prs-accent);
+}
+.prospeccion-sidebar__search::placeholder {
+  color: var(--prs-text-muted);
+}
+
+/* Filter pills */
+.prospeccion-filter-section {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--prs-glass-border);
+  flex-shrink: 0;
+}
+.prospeccion-filter-section__title {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--prs-text-muted);
+  font-weight: 700;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.prospeccion-filter-section__clear {
+  font-size: 0.6rem;
+  color: var(--prs-accent);
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+.prospeccion-filter-section__clear:hover {
+  text-decoration: underline;
+}
+.prospeccion-filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.prospeccion-pill {
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(128,128,128,0.2);
+  background: transparent;
+  color: var(--prs-text-muted);
+  transition: all 0.15s;
+  white-space: nowrap;
+  user-select: none;
+}
+.prospeccion-pill:hover {
+  border-color: rgba(128,128,128,0.4);
+  background: rgba(128,128,128,0.08);
+}
+.prospeccion-pill.active {
+  border-color: var(--pill-color, var(--prs-accent));
+  background: color-mix(in srgb, var(--pill-color, var(--prs-accent)) 18%, transparent);
+  color: var(--pill-color, var(--prs-accent));
+}
+
+/* Extra controls row */
+.prospeccion-sidebar__controls {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--prs-glass-border);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.prospeccion-control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.prospeccion-control-row label {
+  font-size: 0.7rem;
+  color: var(--prs-text-soft);
+  font-weight: 500;
+}
+.prospeccion-control-row input[type="range"] {
+  flex: 1;
+  max-width: 120px;
+  accent-color: var(--prs-accent);
+}
+.prospeccion-control-row select {
+  padding: 4px 8px;
+  border: 1px solid var(--prs-glass-border);
+  border-radius: 6px;
+  background: rgba(128,128,128,0.06);
+  color: var(--prs-text);
+  font-size: 0.7rem;
+  outline: none;
+}
+.prospeccion-toggle-switch {
+  position: relative;
+  width: 34px;
+  height: 18px;
+  border-radius: 9px;
+  background: rgba(128,128,128,0.25);
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.prospeccion-toggle-switch.on {
+  background: var(--prs-accent);
+}
+.prospeccion-toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.prospeccion-toggle-switch.on::after {
+  transform: translateX(16px);
+}
+
+/* Sidebar summary */
+.prospeccion-sidebar__summary {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--prs-glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.prospeccion-sidebar__summary-text {
+  font-size: 0.7rem;
+  color: var(--prs-text-muted);
+}
+.prospeccion-sidebar__summary-text strong {
+  color: var(--prs-text);
+  font-weight: 700;
+}
+
+/* Lead list */
+.prospeccion-sidebar__list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+}
+.prospeccion-sidebar__list::-webkit-scrollbar {
+  width: 5px;
+}
+.prospeccion-sidebar__list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.prospeccion-sidebar__list::-webkit-scrollbar-thumb {
+  background: rgba(128,128,128,0.25);
+  border-radius: 3px;
+}
+.prospeccion-lead-card {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(128,128,128,0.08);
+  cursor: pointer;
+  transition: background 0.12s;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.prospeccion-lead-card:hover {
+  background: rgba(128,128,128,0.06);
+}
+.prospeccion-lead-card.active {
+  background: color-mix(in srgb, var(--prs-accent) 10%, transparent);
+}
+.prospeccion-lead-card__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
+}
+.prospeccion-lead-card__body {
+  flex: 1;
+  min-width: 0;
+}
+.prospeccion-lead-card__name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--prs-text);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.prospeccion-lead-card__meta {
+  font-size: 0.65rem;
+  color: var(--prs-text-muted);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.prospeccion-lead-card__row2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+.prospeccion-lead-card__potential {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--prs-accent);
+}
+.prospeccion-lead-card__score {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--prs-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.prospeccion-lead-card__score-bar {
+  width: 40px;
+  height: 4px;
+  background: rgba(128,128,128,0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.prospeccion-lead-card__score-fill {
+  height: 100%;
+  border-radius: 2px;
+}
+
+/* Pagination */
+.prospeccion-sidebar__pagination {
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  border-top: 1px solid var(--prs-glass-border);
+}
+.prospeccion-page-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--prs-glass-border);
+  background: transparent;
+  color: var(--prs-text-muted);
+  font-size: 0.7rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.prospeccion-page-btn:hover {
+  background: rgba(128,128,128,0.08);
+}
+.prospeccion-page-btn.active {
+  background: var(--prs-accent);
+  color: white;
+  border-color: var(--prs-accent);
+}
+.prospeccion-page-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* ============================================================
+ * 4. FLOATING MAP CONTROLS (top-right)
+ * ============================================================ */
+.prospeccion-map-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 800;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.prospeccion-map-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--prs-glass-bg);
+  backdrop-filter: var(--prs-glass-blur);
+  -webkit-backdrop-filter: var(--prs-glass-blur);
+  border: 1px solid var(--prs-glass-border);
+  color: var(--prs-text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.prospeccion-map-btn:hover {
+  color: var(--prs-text);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+.prospeccion-map-btn.active {
+  background: var(--prs-accent);
+  color: white;
+  border-color: var(--prs-accent);
+}
+
+/* View mode toggle group */
+.prospeccion-view-toggle {
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--prs-glass-border);
+  background: var(--prs-glass-bg);
+  backdrop-filter: var(--prs-glass-blur);
+  -webkit-backdrop-filter: var(--prs-glass-blur);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.prospeccion-view-toggle__btn {
+  padding: 6px 10px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--prs-text-muted);
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--prs-glass-border);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.prospeccion-view-toggle__btn:last-child {
+  border-right: none;
+}
+.prospeccion-view-toggle__btn:hover {
+  background: rgba(128,128,128,0.08);
+}
+.prospeccion-view-toggle__btn.active {
+  background: var(--prs-accent);
+  color: white;
+}
+
+/* Legend */
+.prospeccion-legend {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 800;
+  background: var(--prs-glass-bg);
+  backdrop-filter: var(--prs-glass-blur);
+  -webkit-backdrop-filter: var(--prs-glass-blur);
+  border: 1px solid var(--prs-glass-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  max-width: 240px;
+}
+.prospeccion-legend__title {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--prs-text-muted);
+  margin-bottom: 6px;
+}
+.prospeccion-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.65rem;
+  color: var(--prs-text-soft);
+  padding: 2px 0;
+}
+.prospeccion-legend__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+ * 5. DETAIL DRAWER (slides from right)
+ * ============================================================ */
+.prospeccion-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  background: rgba(0,0,0,0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.prospeccion-drawer-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.prospeccion-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--prs-drawer-w);
+  max-width: 95vw;
+  z-index: 1051;
+  background: var(--prs-surface-solid);
+  backdrop-filter: var(--prs-glass-blur);
+  -webkit-backdrop-filter: var(--prs-glass-blur);
+  border-left: 1px solid var(--prs-glass-border);
+  box-shadow: -8px 0 32px rgba(0,0,0,0.15);
+  transform: translateX(100%);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.prospeccion-drawer.open {
+  transform: translateX(0);
+}
+
+.prospeccion-drawer__header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--prs-glass-border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.prospeccion-drawer__close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(128,128,128,0.08);
+  border: 1px solid var(--prs-glass-border);
+  color: var(--prs-text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.prospeccion-drawer__close:hover {
+  background: rgba(128,128,128,0.15);
+  color: var(--prs-text);
+}
+
+.prospeccion-drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  scrollbar-width: thin;
+}
+.prospeccion-drawer__body::-webkit-scrollbar {
+  width: 5px;
+}
+.prospeccion-drawer__body::-webkit-scrollbar-thumb {
+  background: rgba(128,128,128,0.2);
+  border-radius: 3px;
+}
+
+/* Stage badge */
+.prospeccion-stage-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Score gauge */
+.prospeccion-gauge {
+  width: 72px;
+  height: 72px;
+  position: relative;
+}
+.prospeccion-gauge svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.prospeccion-gauge__track {
+  fill: none;
+  stroke: rgba(128,128,128,0.12);
+  stroke-width: 6;
+}
+.prospeccion-gauge__fill {
+  fill: none;
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.6s ease;
+}
+.prospeccion-gauge__label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--prs-text);
+}
+
+/* Detail sections */
+.prospeccion-detail-section {
+  margin-bottom: 16px;
+}
+.prospeccion-detail-section__title {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--prs-text-muted);
+  font-weight: 700;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(128,128,128,0.08);
+}
+.prospeccion-detail-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 0.78rem;
+}
+.prospeccion-detail-row__icon {
+  width: 16px;
+  color: var(--prs-text-muted);
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 0.7rem;
+  margin-top: 1px;
+}
+.prospeccion-detail-row__value {
+  color: var(--prs-text-soft);
+  word-break: break-word;
+}
+
+/* Product tags */
+.prospeccion-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.prospeccion-tag {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--prs-accent) 12%, transparent);
+  color: var(--prs-accent);
+  border: 1px solid color-mix(in srgb, var(--prs-accent) 25%, transparent);
+}
+
+/* Action buttons */
+.prospeccion-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 12px;
+}
+.prospeccion-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 4px;
+  border-radius: 10px;
+  border: 1px solid var(--prs-glass-border);
+  background: rgba(128,128,128,0.04);
+  color: var(--prs-text-soft);
+  font-size: 0.6rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-decoration: none;
+}
+.prospeccion-action-btn i {
+  font-size: 1rem;
+}
+.prospeccion-action-btn:hover {
+  background: rgba(128,128,128,0.1);
+  transform: translateY(-1px);
+}
+.prospeccion-action-btn--whatsapp { color: #25d366; }
+.prospeccion-action-btn--call { color: #3b82f6; }
+.prospeccion-action-btn--email { color: #e0950f; }
+.prospeccion-action-btn--navigate { color: #19b855; }
+
+/* Activity timeline */
+.prospeccion-timeline {
+  position: relative;
+  padding-left: 16px;
+}
+.prospeccion-timeline::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(128,128,128,0.12);
+  border-radius: 1px;
+}
+.prospeccion-timeline-item {
+  position: relative;
+  padding: 6px 0 12px 12px;
+  font-size: 0.72rem;
+}
+.prospeccion-timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -13px;
+  top: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--prs-accent);
+  border: 2px solid var(--prs-surface-solid);
+}
+.prospeccion-timeline-item__date {
+  font-size: 0.6rem;
+  color: var(--prs-text-muted);
+  margin-bottom: 2px;
+}
+.prospeccion-timeline-item__text {
+  color: var(--prs-text-soft);
+}
+
+/* Notes textarea */
+.prospeccion-notes-area {
+  width: 100%;
+  min-height: 60px;
+  border: 1px solid var(--prs-glass-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.75rem;
+  color: var(--prs-text);
+  background: rgba(128,128,128,0.04);
+  resize: vertical;
+  outline: none;
+  font-family: inherit;
+}
+.prospeccion-notes-area:focus {
+  border-color: var(--prs-accent);
+}
+
+/* ============================================================
+ * 6. ROUTE PLANNER MODAL
+ * ============================================================ */
+.prospeccion-route-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1060;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.prospeccion-route-modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.prospeccion-route-modal {
+  width: 90%;
+  max-width: 900px;
+  max-height: 85vh;
+  background: var(--prs-surface-solid);
+  backdrop-filter: var(--prs-glass-blur);
+  -webkit-backdrop-filter: var(--prs-glass-blur);
+  border: 1px solid var(--prs-glass-border);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 16px 64px rgba(0,0,0,0.2);
+  transform: scale(0.95);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.prospeccion-route-modal-overlay.open .prospeccion-route-modal {
+  transform: scale(1);
+}
+.prospeccion-route-modal__header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--prs-glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.prospeccion-route-modal__header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--prs-text);
+}
+.prospeccion-route-modal__body {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  gap: 0;
+}
+.prospeccion-route-modal__list {
+  width: 320px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--prs-glass-border);
+  overflow-y: auto;
+}
+.prospeccion-route-modal__map {
+  flex: 1;
+  min-height: 400px;
+}
+.prospeccion-route-stop {
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(128,128,128,0.08);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.prospeccion-route-stop__number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--prs-accent);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.prospeccion-route-stop__info {
+  flex: 1;
+  min-width: 0;
+}
+.prospeccion-route-stop__name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--prs-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.prospeccion-route-stop__detail {
+  font-size: 0.65rem;
+  color: var(--prs-text-muted);
+}
+.prospeccion-route-stop__remove {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(224, 47, 55, 0.08);
+  border: none;
+  color: #e02f37;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.prospeccion-route-summary {
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--prs-accent) 8%, transparent);
+  border-top: 1px solid var(--prs-glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+.prospeccion-route-stat {
+  text-align: center;
+}
+.prospeccion-route-stat__value {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--prs-accent);
+}
+.prospeccion-route-stat__label {
+  font-size: 0.6rem;
+  color: var(--prs-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ============================================================
+ * 7. MARKER STYLES
+ * ============================================================ */
+.prospeccion-marker-icon {
+  background: none !important;
+  border: none !important;
+}
+.prs-marker {
+  position: relative;
+  cursor: pointer;
+}
+.prs-marker-pulse {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  animation: prs-pulse 2s ease-in-out infinite;
+}
+@keyframes prs-pulse {
+  0%, 100% { transform: scale(0.8); opacity: 0.6; }
+  50% { transform: scale(1.4); opacity: 0; }
+}
+.prs-marker-pin {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+.prs-marker-pin .prs-emoji {
+  line-height: 1;
+}
+.prs-marker-star {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  font-size: 10px;
+  color: #fbbf24;
+  text-shadow: 0 0 4px rgba(251,191,36,0.6);
+  z-index: 2;
+}
+
+/* Cluster icons */
+.prs-cluster-icon {
+  background: none !important;
+  border: none !important;
+}
+
+/* Tooltips */
+.prs-tooltip {
+  background: var(--prs-surface-solid) !important;
+  border: 1px solid var(--prs-glass-border) !important;
+  border-radius: 12px !important;
+  padding: 0 !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important;
+  max-width: 280px;
+}
+.prs-tooltip .leaflet-tooltip-content {
+  margin: 0;
+}
+
+/* ============================================================
+ * 8. TOOLBAR (above module)
+ * ============================================================ */
+.prospeccion-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+.prospeccion-toolbar .btn {
+  font-size: 0.75rem;
+}
+
+/* ============================================================
+ * 9. TABLE (below map, collapsible)
+ * ============================================================ */
+.prospeccion-table-section {
+  margin-top: 0.75rem;
+}
+.prospeccion-table-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--prs-glass-bg);
+  backdrop-filter: var(--prs-glass-blur);
+  -webkit-backdrop-filter: var(--prs-glass-blur);
+  border: 1px solid var(--prs-glass-border);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--prs-text-soft);
+  width: 100%;
+  transition: background 0.15s;
+}
+.prospeccion-table-toggle:hover {
+  background: rgba(128,128,128,0.08);
+}
+.prospeccion-table-toggle i {
+  transition: transform 0.3s;
+}
+.prospeccion-table-toggle.expanded i {
+  transform: rotate(180deg);
+}
+
+/* ============================================================
+ * 10. RESPONSIVE
+ * ============================================================ */
+@media (max-width: 768px) {
+  .prospeccion-kpi-strip {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+  .prospeccion-map-container {
+    height: 450px;
+    border-radius: 10px;
+  }
+  /* Sidebar becomes bottom sheet on mobile */
+  .prospeccion-sidebar {
+    position: absolute;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 45%;
+    border-radius: 16px 16px 0 0;
+    border-bottom: none;
+  }
+  .prospeccion-sidebar.collapsed {
+    transform: translateY(calc(100% + 10px));
+  }
+  .prospeccion-sidebar-toggle {
+    display: none;
+  }
+  .prospeccion-drawer {
+    width: 100%;
+  }
+  .prospeccion-route-modal__body {
+    flex-direction: column;
+  }
+  .prospeccion-route-modal__list {
+    width: 100%;
+    max-height: 200px;
+    border-right: none;
+    border-bottom: 1px solid var(--prs-glass-border);
+  }
+  .prospeccion-legend {
+    bottom: auto;
+    top: 10px;
+    right: 50px;
+    max-width: 180px;
+    font-size: 0.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .prospeccion-kpi-strip {
+    grid-template-columns: 1fr 1fr;
+  }
+  .prospeccion-kpi-card__value {
+    font-size: 1.1rem;
+  }
+  .prospeccion-map-container {
+    height: 380px;
+  }
+  .prospeccion-actions {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ============================================================
+ * 11. IMPORT MODAL
+ * ============================================================ */
+.prospeccion-import-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1070;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+.prospeccion-import-modal.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.prospeccion-import-modal__card {
+  width: 480px;
+  max-width: 95vw;
+  background: var(--prs-surface-solid);
+  border-radius: 16px;
+  border: 1px solid var(--prs-glass-border);
+  padding: 24px;
+  box-shadow: 0 16px 64px rgba(0,0,0,0.2);
+}
+.prospeccion-import-dropzone {
+  border: 2px dashed var(--prs-glass-border);
+  border-radius: 12px;
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--prs-text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.prospeccion-import-dropzone:hover,
+.prospeccion-import-dropzone.dragover {
+  border-color: var(--prs-accent);
+  background: color-mix(in srgb, var(--prs-accent) 5%, transparent);
+}

@@ -95,7 +95,14 @@ body {
   position: relative;
   isolation: isolate;
   overflow-x: hidden;
-  /* Evita cursor “I” y selección accidental en toda la cromática (títulos, toolbars, etc.) */
+}
+/* Allow text selection in data areas, prevent in chrome */
+.data-table td, .data-table th, .card p, .card span, .modal-box p, .modal-box span,
+.activity-feed-list, .dashboard-subtitle, .hint, .notifications-list {
+  user-select: text;
+  -webkit-user-select: text;
+}
+.header, .sidebar-nav, .tab, .btn, .toolbar, nav, .section-header h2 {
   user-select: none;
   -webkit-user-select: none;
 }

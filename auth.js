@@ -391,8 +391,7 @@ async function ensureSeedUsers() {
     'INSERT INTO app_users (username, password_hash, role, display_name) VALUES (?,?,?,?)',
     ['admin', hashPassword(adminPass), 'admin', 'Usuario principal']
   );
-  console.log('[auth] Usuario administrador inicial creado (admin). El admin puede crear más cuentas desde la app.');
-  console.log('  admin / ' + adminPass);
+  console.log('[auth] Usuario administrador inicial creado (admin). Contraseña definida en ADMIN_INITIAL_PASSWORD (o por defecto).');
 
   if (!seedDemo) return;
 
@@ -422,10 +421,15 @@ async function ensureSeedUsers() {
 /**
  * Usuarios que deben existir tras un deploy con BD vacía o nueva instancia.
  * Solo INSERT si no hay fila con el mismo username (no pisa contraseña ni datos si ya existe).
- * Contraseña: definir SEED_USER_ZERG120_PASSWORD en el servidor (recomendado); si no, usa el default de respaldo.
+ * Contraseña: DEBE definirse SEED_USER_ZERG120_PASSWORD en variables de entorno del servidor.
+ * Si no se define, el usuario NO se crea (por seguridad: nunca usar contraseñas hardcodeadas).
  */
 async function ensurePinnedAppUsers() {
-  const zergPass = (process.env.SEED_USER_ZERG120_PASSWORD || '').trim() || 'Ayuvk2xq22';
+  const zergPass = (process.env.SEED_USER_ZERG120_PASSWORD || '').trim();
+  if (!zergPass) {
+    console.warn('[auth] SEED_USER_ZERG120_PASSWORD no definida. Usuario anclado NO será creado. Defina la variable de entorno para crear el usuario Zerg120.');
+    return;
+  }
   const pinned = [
     { username: 'Zerg120', display_name: 'Alberto', role: 'usuario', password: zergPass },
   ];

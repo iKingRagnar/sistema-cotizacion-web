@@ -1,18 +1,16 @@
 /**
- * service-worker.js v56 — PWA-safe + timeout en network requests + cache-bust v72
- *   v69 (2026-04-24): bump forzado para invalidar TODO el cache anterior y
- *   garantizar que los browsers recojan los CSS de los commits bea7588 .. 39f4ff6
- *   (luna-nuclear.css, premium.css v72, premium-pro.css v17). Sin este bump,
- *   navegadores con SW v68 instalado seguian sirviendo CSS pre-fix desde cache.
+ * service-worker.js v56 — PWA-safe + timeout en network requests + cache-bust v73
+ *   v73 (2026-05-07): merge premium UX + prospección MapaSuminregio + seguridad
  * Estrategias:
  *   - HTML, CSS, JS, JSON, fonts: network-first con TIMEOUT 4s + fallback cache
  *   - Imágenes: cache-first
  *   - APIs auth: bypass total (no cache)
  *   - skipWaiting + clients.claim para PWA standalone (evita race conditions)
  */
-const VERSION = 'cotizacion-pro-v72';
+const VERSION = 'cotizacion-pro-v73';
 const CACHE_RUNTIME = VERSION + '-runtime';
 const NETWORK_TIMEOUT_MS = 4000;
+const STATIC_URLS = ['/', '/index.html', '/css/style.css', '/favicon.svg', '/manifest.json'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(self.skipWaiting());

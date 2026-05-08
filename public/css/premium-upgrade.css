@@ -1,0 +1,2448 @@
+/* ============================================================
+ * PREMIUM-UPGRADE.CSS  v1
+ * Premium enhancements loaded AFTER nano-fondo.css.
+ * Adds: animations, micro-interactions, modern card design,
+ *        sidebar improvements, table/form enhancements,
+ *        dashboard upgrades, responsive fixes, print styles,
+ *        and accessibility improvements.
+ *
+ * Uses --nano-* and --ds-* custom properties from the existing system.
+ * Prefix: html body.theme-industrial for specificity parity.
+ * ============================================================ */
+
+
+/* ============================================================
+ * 0. PREMIUM CUSTOM PROPERTIES
+ * ============================================================ */
+
+html body.theme-industrial {
+  /* Animation timing */
+  --pm-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --pm-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --pm-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --pm-duration-fast: 150ms;
+  --pm-duration-normal: 250ms;
+  --pm-duration-slow: 400ms;
+  --pm-duration-slower: 600ms;
+
+  /* Premium accent colors */
+  --pm-accent: var(--nano-accent, #1a73e8);
+  --pm-accent-glow: rgba(26, 115, 232, 0.25);
+  --pm-accent-ring: rgba(26, 115, 232, 0.18);
+
+  /* Gradient borders */
+  --pm-gradient-border: linear-gradient(
+    135deg,
+    rgba(26, 115, 232, 0.4) 0%,
+    rgba(139, 92, 246, 0.3) 25%,
+    rgba(236, 72, 153, 0.2) 50%,
+    rgba(245, 158, 11, 0.3) 75%,
+    rgba(26, 115, 232, 0.4) 100%
+  );
+
+  /* Depth shadows */
+  --pm-shadow-lift: 0 8px 25px -5px rgba(0, 0, 0, 0.1),
+                    0 4px 10px -5px rgba(0, 0, 0, 0.04);
+  --pm-shadow-lift-strong: 0 20px 40px -10px rgba(0, 0, 0, 0.15),
+                           0 8px 16px -8px rgba(0, 0, 0, 0.06);
+  --pm-shadow-glow: 0 0 20px var(--pm-accent-glow);
+
+  /* Status colors */
+  --pm-success: #10b981;
+  --pm-success-bg: rgba(16, 185, 129, 0.12);
+  --pm-error: #ef4444;
+  --pm-error-bg: rgba(239, 68, 68, 0.12);
+  --pm-warning: #f59e0b;
+  --pm-warning-bg: rgba(245, 158, 11, 0.12);
+
+  /* Sidebar pill */
+  --pm-sidebar-pill-width: 3px;
+  --pm-sidebar-pill-color: var(--pm-accent);
+
+  /* Focus ring */
+  --pm-focus-ring: 0 0 0 2px var(--nano-surface, #fff),
+                   0 0 0 4px var(--pm-accent);
+}
+
+/* Dark mode adjustments */
+html body.theme-industrial:not(.appearance-light) {
+  --pm-shadow-lift: 0 8px 25px -5px rgba(0, 0, 0, 0.3),
+                    0 4px 10px -5px rgba(0, 0, 0, 0.15);
+  --pm-shadow-lift-strong: 0 20px 40px -10px rgba(0, 0, 0, 0.4),
+                           0 8px 16px -8px rgba(0, 0, 0, 0.2);
+  --pm-accent-glow: rgba(78, 161, 255, 0.3);
+  --pm-accent-ring: rgba(78, 161, 255, 0.22);
+  --pm-sidebar-pill-color: var(--nano-accent, #4ea1ff);
+}
+
+
+/* ============================================================
+ * 1. PREMIUM ANIMATIONS & KEYFRAMES
+ * ============================================================ */
+
+@keyframes pm-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes pm-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pm-fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pm-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pm-slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pm-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pm-ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+@keyframes pm-skeleton-pulse {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pm-pulse-ring {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+}
+
+@keyframes pm-pulse-alert {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
+@keyframes pm-gradient-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes pm-notification-slide {
+  from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes pm-tooltip-appear {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pm-border-shimmer {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+@keyframes pm-sweep {
+  from { background-position: -100% 0; }
+  to   { background-position: 200% 0; }
+}
+
+@keyframes pm-icon-bounce {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.15); }
+}
+
+@keyframes pm-progress-indeterminate {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+@keyframes pm-spin {
+  to { transform: rotate(360deg); }
+}
+
+
+/* ============================================================
+ * 1b. PANEL / TAB-PANEL PAGE TRANSITIONS
+ * ============================================================ */
+
+html body.theme-industrial [role="tabpanel"],
+html body.theme-industrial .tab-panel,
+html body.theme-industrial .panel {
+  animation: pm-fade-in-up var(--pm-duration-slow) var(--pm-ease-out) both;
+}
+
+/* Skeleton loading placeholder */
+html body.theme-industrial .skeleton,
+html body.theme-industrial [data-skeleton] {
+  background: linear-gradient(
+    90deg,
+    var(--nano-surface-subtle) 25%,
+    var(--nano-surface) 50%,
+    var(--nano-surface-subtle) 75%
+  );
+  background-size: 200% 100%;
+  animation: pm-skeleton-pulse 1.8s var(--pm-ease-in-out) infinite;
+  border-radius: var(--ds-radius-md, 10px);
+  color: transparent !important;
+  pointer-events: none;
+  user-select: none;
+}
+
+
+/* ============================================================
+ * 1c. BUTTON RIPPLE EFFECT
+ * ============================================================ */
+
+html body.theme-industrial .btn {
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--pm-duration-fast) var(--pm-ease-out),
+              box-shadow var(--pm-duration-normal) var(--pm-ease-out),
+              background var(--pm-duration-normal) ease;
+}
+
+html body.theme-industrial .btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--pm-ripple-x, 50%) var(--pm-ripple-y, 50%),
+    rgba(255, 255, 255, 0.3) 0%, transparent 60%);
+  transform: scale(0);
+  opacity: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+html body.theme-industrial .btn:active::after {
+  animation: pm-ripple 0.5s var(--pm-ease-out) forwards;
+}
+
+html body.theme-industrial .btn:active {
+  transform: scale(0.97);
+}
+
+
+/* ============================================================
+ * 2. MODERN CARD DESIGN
+ * ============================================================ */
+
+/* Smooth transitions on all glass cards */
+html body.theme-industrial .card,
+html body.theme-industrial .kpi-card,
+html body.theme-industrial .kpi-tile,
+html body.theme-industrial .module-card,
+html body.theme-industrial .dashboard-card,
+html body.theme-industrial .dashboard-score-tile,
+html body.theme-industrial .admin-hub-panel,
+html body.theme-industrial .admin-hub-card,
+html body.theme-industrial .section-card,
+html body.theme-industrial .summary-card,
+html body.theme-industrial .resumen-card,
+html body.theme-industrial .form-card,
+html body.theme-industrial .prospeccion-kpi,
+html body.theme-industrial .prospeccion-kpi-card {
+  transition: transform var(--pm-duration-normal) var(--pm-ease-out),
+              box-shadow var(--pm-duration-normal) var(--pm-ease-out),
+              border-color var(--pm-duration-normal) ease;
+  will-change: transform;
+}
+
+/* Card hover: subtle lift + enhanced shadow */
+html body.theme-industrial .card:hover,
+html body.theme-industrial .kpi-card:hover,
+html body.theme-industrial .module-card:hover,
+html body.theme-industrial .dashboard-card:hover,
+html body.theme-industrial .admin-hub-card:hover,
+html body.theme-industrial .section-card:hover,
+html body.theme-industrial .summary-card:hover,
+html body.theme-industrial .form-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: var(--pm-shadow-lift) !important;
+}
+
+/* Gradient shimmer border on hover (uses pseudo-element) */
+html body.theme-industrial .card,
+html body.theme-industrial .dashboard-card,
+html body.theme-industrial .dashboard-score-tile,
+html body.theme-industrial .kpi-card,
+html body.theme-industrial .admin-hub-card {
+  position: relative;
+}
+
+html body.theme-industrial .card::before,
+html body.theme-industrial .dashboard-card::before,
+html body.theme-industrial .dashboard-score-tile::before,
+html body.theme-industrial .kpi-card::before,
+html body.theme-industrial .admin-hub-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--pm-gradient-border);
+  background-size: 200% 200%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity var(--pm-duration-normal) ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+html body.theme-industrial .card:hover::before,
+html body.theme-industrial .dashboard-card:hover::before,
+html body.theme-industrial .dashboard-score-tile:hover::before,
+html body.theme-industrial .kpi-card:hover::before,
+html body.theme-industrial .admin-hub-card:hover::before {
+  opacity: 1;
+  animation: pm-border-shimmer 3s linear infinite;
+}
+
+/* 3D perspective tilt on hover (very subtle) */
+html body.theme-industrial .dashboard-score-tile:hover {
+  transform: translateY(-2px) perspective(800px) rotateX(1deg) rotateY(-1deg) !important;
+}
+
+/* Active / selected card state */
+html body.theme-industrial .card.active,
+html body.theme-industrial .card[aria-selected="true"],
+html body.theme-industrial .dashboard-card.active {
+  border-color: var(--pm-accent) !important;
+  box-shadow: var(--pm-shadow-glow), var(--nano-shadow) !important;
+}
+
+
+/* ============================================================
+ * 3. SIDEBAR IMPROVEMENTS
+ * ============================================================ */
+
+/* Smooth tab transitions */
+html body.theme-industrial .tabs.tabs--rail .tab {
+  position: relative;
+  transition: background var(--pm-duration-normal) var(--pm-ease-out),
+              color var(--pm-duration-fast) ease,
+              transform var(--pm-duration-fast) var(--pm-ease-out),
+              box-shadow var(--pm-duration-normal) ease;
+}
+
+/* Glowing left pill indicator on active tab */
+html body.theme-industrial .tabs.tabs--rail .tab.active {
+  position: relative;
+}
+
+html body.theme-industrial .tabs.tabs--rail .tab.active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: var(--pm-sidebar-pill-width);
+  height: 60%;
+  border-radius: 0 4px 4px 0;
+  background: var(--pm-sidebar-pill-color);
+  box-shadow: 0 0 8px var(--pm-accent-glow),
+              0 0 16px var(--pm-accent-glow);
+  transition: height var(--pm-duration-normal) var(--pm-ease-spring);
+  z-index: 2;
+}
+
+/* Hover sweep animation on sidebar tabs */
+html body.theme-industrial .tabs.tabs--rail .tab:not(.active):hover {
+  background: linear-gradient(
+    90deg,
+    var(--nano-surface-subtle) 0%,
+    transparent 100%
+  ) !important;
+}
+
+/* Icon scale animation on active */
+html body.theme-industrial .tabs.tabs--rail .tab.active i {
+  animation: pm-icon-bounce var(--pm-duration-slow) var(--pm-ease-spring);
+}
+
+html body.theme-industrial .tabs.tabs--rail .tab i {
+  transition: transform var(--pm-duration-fast) var(--pm-ease-out);
+}
+
+html body.theme-industrial .tabs.tabs--rail .tab:hover i {
+  transform: scale(1.1);
+}
+
+/* Collapsed sidebar icon tooltips */
+body.sidebar-rail-collapsed .tabs.tabs--rail .tab {
+  position: relative;
+}
+
+body.sidebar-rail-collapsed .tabs.tabs--rail .tab::before {
+  content: attr(data-label);
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%) scale(0.95);
+  background: var(--nano-surface-solid, rgba(15, 23, 42, 0.92));
+  color: var(--nano-text, #f1f5f9);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--pm-duration-fast) ease,
+              transform var(--pm-duration-fast) var(--pm-ease-out);
+  z-index: 999;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+body.sidebar-rail-collapsed .tabs.tabs--rail .tab:hover::before {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+
+/* Module group separators */
+html body.theme-industrial .tabs.tabs--rail .tab-separator,
+html body.theme-industrial .tabs.tabs--rail .tab[data-group-start="true"] {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--nano-border, rgba(255, 255, 255, 0.08));
+}
+
+/* Sidebar toggle button animation */
+html body.theme-industrial .btn-sidebar-rail-toggle {
+  transition: transform var(--pm-duration-normal) var(--pm-ease-spring),
+              background var(--pm-duration-fast) ease;
+}
+
+html body.theme-industrial .btn-sidebar-rail-toggle:hover {
+  transform: scale(1.05);
+}
+
+html body.theme-industrial .btn-sidebar-rail-toggle:active {
+  transform: scale(0.95);
+}
+
+
+/* ============================================================
+ * 4. TABLE ENHANCEMENTS
+ * ============================================================ */
+
+/* Alternating row stripes */
+html body.theme-industrial table tbody tr:nth-child(even) {
+  background: var(--nano-surface-subtle, rgba(255, 255, 255, 0.05)) !important;
+}
+
+html body.theme-industrial table tbody tr:nth-child(odd) {
+  background: transparent !important;
+}
+
+/* Sticky header with stronger blur */
+html body.theme-industrial .table-wrap table thead {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+html body.theme-industrial table thead th {
+  backdrop-filter: blur(24px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
+}
+
+/* Row hover with left accent border slide-in */
+html body.theme-industrial table tbody tr {
+  position: relative;
+  transition: background var(--pm-duration-fast) ease;
+}
+
+html body.theme-industrial table tbody tr::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--pm-accent);
+  border-radius: 0 2px 2px 0;
+  transform: scaleY(0);
+  transition: transform var(--pm-duration-normal) var(--pm-ease-out);
+  z-index: 2;
+}
+
+html body.theme-industrial table tbody tr:hover::before {
+  transform: scaleY(1);
+}
+
+html body.theme-industrial table tbody tr:hover {
+  background: var(--nano-surface-subtle) !important;
+}
+
+/* Selected row highlight */
+html body.theme-industrial table tbody tr.selected,
+html body.theme-industrial table tbody tr[aria-selected="true"] {
+  background: var(--pm-accent-ring) !important;
+  outline: 1px solid var(--pm-accent);
+  outline-offset: -1px;
+}
+
+html body.theme-industrial table tbody tr.selected::before,
+html body.theme-industrial table tbody tr[aria-selected="true"]::before {
+  transform: scaleY(1);
+  background: var(--pm-accent);
+}
+
+/* Sort column indicator */
+html body.theme-industrial table thead th.sorted,
+html body.theme-industrial table thead th[aria-sort] {
+  color: var(--pm-accent) !important;
+  position: relative;
+}
+
+html body.theme-industrial table thead th[aria-sort="ascending"]::after {
+  content: '\f077';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  font-size: 0.65em;
+  margin-left: 6px;
+  color: var(--pm-accent);
+}
+
+html body.theme-industrial table thead th[aria-sort="descending"]::after {
+  content: '\f078';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  font-size: 0.65em;
+  margin-left: 6px;
+  color: var(--pm-accent);
+}
+
+/* Horizontal scroll indicator gradients */
+html body.theme-industrial .table-wrap {
+  position: relative;
+}
+
+html body.theme-industrial .table-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 40px;
+  background: linear-gradient(to left, var(--nano-surface, rgba(255, 255, 255, 0.5)), transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--pm-duration-normal) ease;
+  z-index: 4;
+  border-radius: 0 12px 12px 0;
+}
+
+html body.theme-industrial .table-wrap.has-scroll-right::after,
+html body.theme-industrial .table-wrap:has(table[style*="width"])::after {
+  opacity: 1;
+}
+
+/* Allow text selection in table data cells */
+html body.theme-industrial table tbody td,
+html body.theme-industrial .data-table tbody td {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+
+/* ============================================================
+ * 5. FORM IMPROVEMENTS
+ * ============================================================ */
+
+/* Floating label container */
+html body.theme-industrial .form-group {
+  position: relative;
+}
+
+/* Input focus glow effect */
+html body.theme-industrial input[type="text"]:focus,
+html body.theme-industrial input[type="number"]:focus,
+html body.theme-industrial input[type="email"]:focus,
+html body.theme-industrial input[type="password"]:focus,
+html body.theme-industrial input[type="search"]:focus,
+html body.theme-industrial input[type="tel"]:focus,
+html body.theme-industrial input[type="date"]:focus,
+html body.theme-industrial input[type="url"]:focus,
+html body.theme-industrial input:not([type]):focus,
+html body.theme-industrial textarea:focus,
+html body.theme-industrial select:focus {
+  border-color: var(--pm-accent) !important;
+  box-shadow: 0 0 0 3px var(--pm-accent-ring),
+              0 0 12px var(--pm-accent-glow) !important;
+  transition: border-color var(--pm-duration-fast) ease,
+              box-shadow var(--pm-duration-normal) var(--pm-ease-out);
+}
+
+/* Input transition for smooth focus */
+html body.theme-industrial input,
+html body.theme-industrial textarea,
+html body.theme-industrial select {
+  transition: border-color var(--pm-duration-fast) ease,
+              box-shadow var(--pm-duration-normal) var(--pm-ease-out),
+              background var(--pm-duration-fast) ease;
+}
+
+/* Floating label animation */
+html body.theme-industrial .form-group.floating-label label,
+html body.theme-industrial .form-group.has-floating label {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.875rem;
+  color: var(--nano-text-muted) !important;
+  pointer-events: none;
+  transition: all var(--pm-duration-normal) var(--pm-ease-out);
+  background: transparent;
+  padding: 0 4px;
+  z-index: 2;
+}
+
+html body.theme-industrial .form-group.floating-label input:focus ~ label,
+html body.theme-industrial .form-group.floating-label input:not(:placeholder-shown) ~ label,
+html body.theme-industrial .form-group.has-floating input:focus ~ label,
+html body.theme-industrial .form-group.has-floating input:not(:placeholder-shown) ~ label {
+  top: -2px;
+  transform: translateY(-50%) scale(0.85);
+  color: var(--pm-accent) !important;
+  background: var(--nano-surface, rgba(255, 255, 255, 0.9));
+  border-radius: 4px;
+}
+
+/* Better select dropdown styling */
+html body.theme-industrial select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: calc(100% - 12px) center !important;
+  padding-right: 36px;
+}
+
+/* Custom checkbox styling */
+html body.theme-industrial input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--nano-border-strong) !important;
+  border-radius: 4px;
+  background: var(--nano-surface) !important;
+  cursor: pointer;
+  position: relative;
+  transition: all var(--pm-duration-fast) var(--pm-ease-out);
+  vertical-align: middle;
+}
+
+html body.theme-industrial input[type="checkbox"]:checked {
+  background: var(--pm-accent) !important;
+  border-color: var(--pm-accent) !important;
+}
+
+html body.theme-industrial input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 5px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+html body.theme-industrial input[type="checkbox"]:focus-visible {
+  box-shadow: var(--pm-focus-ring);
+}
+
+/* Custom radio styling */
+html body.theme-industrial input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--nano-border-strong) !important;
+  border-radius: 50%;
+  background: var(--nano-surface) !important;
+  cursor: pointer;
+  position: relative;
+  transition: all var(--pm-duration-fast) var(--pm-ease-out);
+  vertical-align: middle;
+}
+
+html body.theme-industrial input[type="radio"]:checked {
+  border-color: var(--pm-accent) !important;
+}
+
+html body.theme-industrial input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pm-accent);
+}
+
+html body.theme-industrial input[type="radio"]:focus-visible {
+  box-shadow: var(--pm-focus-ring);
+}
+
+/* Validation states */
+html body.theme-industrial .form-group.has-error input,
+html body.theme-industrial .form-group.error input,
+html body.theme-industrial input.is-invalid,
+html body.theme-industrial input:invalid:not(:placeholder-shown):not(:focus) {
+  border-color: var(--pm-error) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
+}
+
+html body.theme-industrial .form-group.has-success input,
+html body.theme-industrial .form-group.success input,
+html body.theme-industrial input.is-valid {
+  border-color: var(--pm-success) !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12) !important;
+}
+
+html body.theme-industrial .form-error,
+html body.theme-industrial .field-error,
+html body.theme-industrial .error-message {
+  color: var(--pm-error) !important;
+  font-size: 0.8rem;
+  margin-top: 4px;
+  animation: pm-fade-in-down var(--pm-duration-normal) var(--pm-ease-out);
+}
+
+html body.theme-industrial .form-success,
+html body.theme-industrial .field-success,
+html body.theme-industrial .success-message {
+  color: var(--pm-success) !important;
+  font-size: 0.8rem;
+  margin-top: 4px;
+  animation: pm-fade-in-down var(--pm-duration-normal) var(--pm-ease-out);
+}
+
+
+/* ============================================================
+ * 6. DASHBOARD KPI CARDS ENHANCEMENTS
+ * ============================================================ */
+
+/* Dashboard score tiles entry animation */
+html body.theme-industrial .dashboard-score-tile {
+  animation: pm-fade-in-up var(--pm-duration-slower) var(--pm-ease-out) both;
+}
+
+html body.theme-industrial .dashboard-score-tile:nth-child(1) { animation-delay: 0ms; }
+html body.theme-industrial .dashboard-score-tile:nth-child(2) { animation-delay: 80ms; }
+html body.theme-industrial .dashboard-score-tile:nth-child(3) { animation-delay: 160ms; }
+html body.theme-industrial .dashboard-score-tile:nth-child(4) { animation-delay: 240ms; }
+
+/* Sparkline container */
+html body.theme-industrial .sparkline-container,
+html body.theme-industrial .kpi-sparkline,
+html body.theme-industrial [data-sparkline] {
+  display: flex;
+  align-items: flex-end;
+  height: 32px;
+  gap: 1px;
+  margin-top: 8px;
+}
+
+html body.theme-industrial .sparkline-bar {
+  flex: 1;
+  background: var(--pm-accent);
+  border-radius: 2px 2px 0 0;
+  opacity: 0.6;
+  min-width: 3px;
+  transition: opacity var(--pm-duration-fast) ease;
+}
+
+html body.theme-industrial .sparkline-bar:last-child {
+  opacity: 1;
+}
+
+/* Trend indicators */
+html body.theme-industrial .trend-up,
+html body.theme-industrial .kpi-trend-up {
+  color: var(--pm-success) !important;
+  font-weight: 600;
+}
+
+html body.theme-industrial .trend-up::before,
+html body.theme-industrial .kpi-trend-up::before {
+  content: '\f062 ';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  font-size: 0.75em;
+  margin-right: 2px;
+}
+
+html body.theme-industrial .trend-down,
+html body.theme-industrial .kpi-trend-down {
+  color: var(--pm-error) !important;
+  font-weight: 600;
+}
+
+html body.theme-industrial .trend-down::before,
+html body.theme-industrial .kpi-trend-down::before {
+  content: '\f063 ';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  font-size: 0.75em;
+  margin-right: 2px;
+}
+
+html body.theme-industrial .trend-neutral,
+html body.theme-industrial .kpi-trend-neutral {
+  color: var(--nano-text-muted) !important;
+}
+
+/* Pulse animation for critical alerts */
+html body.theme-industrial .alert-critical,
+html body.theme-industrial .kpi-alert,
+html body.theme-industrial [data-alert="critical"] {
+  animation: pm-pulse-alert 2s infinite;
+  border-color: var(--pm-error) !important;
+}
+
+/* Progress ring styling */
+html body.theme-industrial .progress-ring {
+  position: relative;
+  width: 48px;
+  height: 48px;
+}
+
+html body.theme-industrial .progress-ring svg {
+  transform: rotate(-90deg);
+}
+
+html body.theme-industrial .progress-ring circle {
+  fill: none;
+  stroke-width: 4;
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--pm-duration-slow) var(--pm-ease-out);
+}
+
+html body.theme-industrial .progress-ring .progress-ring-bg {
+  stroke: var(--nano-border, rgba(255, 255, 255, 0.08));
+}
+
+html body.theme-industrial .progress-ring .progress-ring-fill {
+  stroke: var(--pm-accent);
+}
+
+/* Progress bar styling */
+html body.theme-industrial .progress-bar,
+html body.theme-industrial .pm-progress {
+  height: 6px;
+  background: var(--nano-surface-subtle);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+html body.theme-industrial .progress-bar-fill,
+html body.theme-industrial .pm-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--pm-accent), rgba(139, 92, 246, 0.8));
+  border-radius: 3px;
+  transition: width var(--pm-duration-slow) var(--pm-ease-out);
+}
+
+html body.theme-industrial .progress-bar.indeterminate .progress-bar-fill,
+html body.theme-industrial .pm-progress.indeterminate .pm-progress-fill {
+  width: 30% !important;
+  animation: pm-progress-indeterminate 1.5s var(--pm-ease-in-out) infinite;
+}
+
+/* Better dashboard grid for different screen sizes */
+html body.theme-industrial .dashboard-exec-scorecards {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 1200px) {
+  html body.theme-industrial .dashboard-exec-scorecards {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  html body.theme-industrial .dashboard-exec-scorecards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  html body.theme-industrial .dashboard-exec-scorecards {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dashboard cards grid */
+html body.theme-industrial .dashboard-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 1200px) {
+  html body.theme-industrial .dashboard-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  html body.theme-industrial .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  html body.theme-industrial .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ============================================================
+ * 7. HEADER IMPROVEMENTS
+ * ============================================================ */
+
+/* Subtle gradient animation on header */
+html body.theme-industrial header.header,
+html body.theme-industrial .header {
+  background-size: 200% 200%;
+  transition: box-shadow var(--pm-duration-normal) ease;
+}
+
+/* Notification badge pulse */
+html body.theme-industrial .badge-pulse,
+html body.theme-industrial .notification-badge,
+html body.theme-industrial .header .badge:not(:empty) {
+  position: relative;
+}
+
+html body.theme-industrial .badge-pulse::before,
+html body.theme-industrial .notification-badge::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: inherit;
+  animation: pm-pulse-ring 2s infinite;
+  z-index: -1;
+}
+
+/* Profile menu slide animation */
+html body.theme-industrial .header-profile-menu {
+  animation: pm-fade-in-down var(--pm-duration-normal) var(--pm-ease-out);
+  transform-origin: top right;
+}
+
+/* Notification panel slide-in */
+html body.theme-industrial .notifications-panel {
+  animation: pm-slide-in-right var(--pm-duration-normal) var(--pm-ease-out);
+}
+
+/* Toast / notification slide-in */
+html body.theme-industrial .toast {
+  animation: pm-notification-slide var(--pm-duration-slow) var(--pm-ease-spring);
+}
+
+/* Breadcrumb hint (if added to DOM) */
+html body.theme-industrial .breadcrumb,
+html body.theme-industrial .header-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--nano-text-muted);
+  padding: 0.25rem 0;
+}
+
+html body.theme-industrial .breadcrumb-separator::before {
+  content: '/';
+  margin: 0 0.25rem;
+  opacity: 0.5;
+}
+
+html body.theme-industrial .breadcrumb-current {
+  color: var(--nano-text);
+  font-weight: 600;
+}
+
+/* Tooltip appearance */
+html body.theme-industrial [data-tooltip],
+html body.theme-industrial .tooltip {
+  position: relative;
+}
+
+html body.theme-industrial [data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.95);
+  background: var(--nano-surface-solid);
+  color: var(--nano-text);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--pm-duration-fast) ease,
+              transform var(--pm-duration-fast) var(--pm-ease-out);
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--nano-border);
+}
+
+html body.theme-industrial [data-tooltip]:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+  animation: pm-tooltip-appear var(--pm-duration-normal) var(--pm-ease-out);
+}
+
+
+/* ============================================================
+ * 8. RESPONSIVE FIXES
+ * ============================================================ */
+
+/* Fix user-select: allow text selection in data cells */
+html body.theme-industrial table td,
+html body.theme-industrial .data-table td,
+html body.theme-industrial .table-wrap td {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+/* Also allow selection in card body text */
+html body.theme-industrial .card p,
+html body.theme-industrial .card span,
+html body.theme-industrial .kpi-value,
+html body.theme-industrial .dashboard-score-value,
+html body.theme-industrial .dashboard-metric dd {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* Mobile-first table card layout */
+@media (max-width: 767px) {
+  html body.theme-industrial .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Optional: table as stacked cards on mobile */
+  html body.theme-industrial table.responsive-cards thead {
+    display: none;
+  }
+
+  html body.theme-industrial table.responsive-cards tbody tr {
+    display: block;
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid var(--nano-border);
+    border-radius: var(--ds-radius-md, 10px);
+    background: var(--nano-surface) !important;
+    backdrop-filter: var(--nano-blur);
+    -webkit-backdrop-filter: var(--nano-blur);
+  }
+
+  html body.theme-industrial table.responsive-cards tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.35rem 0;
+    border: none !important;
+    border-bottom: 1px solid var(--nano-border) !important;
+  }
+
+  html body.theme-industrial table.responsive-cards tbody td:last-child {
+    border-bottom: none !important;
+  }
+
+  html body.theme-industrial table.responsive-cards tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--nano-text-muted);
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+  }
+}
+
+/* Touch-friendly button sizes */
+@media (max-width: 767px) {
+  html body.theme-industrial .btn {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  html body.theme-industrial .btn.btn-sm {
+    min-height: 38px;
+    min-width: 38px;
+    padding: 0.4rem 0.8rem;
+  }
+}
+
+/* Better modal sizing on mobile */
+@media (max-width: 767px) {
+  html body.theme-industrial .modal-box,
+  html body.theme-industrial .modal-content,
+  html body.theme-industrial .modal-panel {
+    width: calc(100vw - 2rem) !important;
+    max-width: none !important;
+    margin: 1rem !important;
+    max-height: calc(100dvh - 2rem) !important;
+    overflow-y: auto;
+    border-radius: var(--ds-radius-lg, 12px) !important;
+  }
+}
+
+/* Sidebar as bottom sheet on mobile */
+@media (max-width: 767px) {
+  html body.theme-industrial .sidebar-nav {
+    position: fixed !important;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto !important;
+    max-height: 70dvh;
+    z-index: 100;
+    border-top: 1px solid var(--nano-border);
+    border-right: none !important;
+    border-radius: var(--ds-radius-xl, 16px) var(--ds-radius-xl, 16px) 0 0;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.15);
+    transform: translateY(0);
+    transition: transform var(--pm-duration-normal) var(--pm-ease-out);
+  }
+
+  /* Handle indicator for bottom sheet */
+  html body.theme-industrial .sidebar-nav::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: var(--nano-border-strong);
+    border-radius: 2px;
+    margin: 8px auto 4px;
+  }
+
+  html body.theme-industrial .sidebar-nav .tabs.tabs--rail {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.5rem;
+  }
+
+  html body.theme-industrial .sidebar-nav .tabs.tabs--rail .tab {
+    flex: 0 0 auto;
+    min-width: 80px;
+    text-align: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.72rem;
+  }
+
+  html body.theme-industrial .sidebar-nav .tabs.tabs--rail .tab i {
+    font-size: 1.1rem;
+  }
+}
+
+/* Content padding adjustment on mobile */
+@media (max-width: 767px) {
+  html body.theme-industrial .app-main .content {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    padding-bottom: 5rem; /* space for mobile bottom nav */
+  }
+}
+
+
+/* ============================================================
+ * 9. PRINT STYLES
+ * ============================================================ */
+
+@media print {
+  html body.theme-industrial {
+    background-image: none !important;
+    background-color: #fff !important;
+    color: #000 !important;
+  }
+
+  html body.theme-industrial::before,
+  html body.theme-industrial::after {
+    display: none !important;
+  }
+
+  /* Remove all glass effects for clean print */
+  html body.theme-industrial .card,
+  html body.theme-industrial .kpi-card,
+  html body.theme-industrial .dashboard-card,
+  html body.theme-industrial .dashboard-score-tile,
+  html body.theme-industrial .section-header,
+  html body.theme-industrial .table-wrap,
+  html body.theme-industrial header,
+  html body.theme-industrial .header,
+  html body.theme-industrial .modal-box,
+  html body.theme-industrial .modal-content {
+    background: #fff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    color: #000 !important;
+  }
+
+  /* Hide navigation for print */
+  html body.theme-industrial .sidebar-nav,
+  html body.theme-industrial .tabs.tabs--rail,
+  html body.theme-industrial .header,
+  html body.theme-industrial .btn,
+  html body.theme-industrial .modal,
+  html body.theme-industrial .toast,
+  html body.theme-industrial .notifications-panel {
+    display: none !important;
+  }
+
+  /* Full-width content */
+  html body.theme-industrial .app-frame {
+    display: block !important;
+  }
+
+  html body.theme-industrial .app-main {
+    width: 100% !important;
+  }
+
+  /* Table print formatting */
+  html body.theme-industrial table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto;
+  }
+
+  html body.theme-industrial table thead {
+    background: #f5f5f5 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  html body.theme-industrial table th,
+  html body.theme-industrial table td {
+    background: transparent !important;
+    color: #000 !important;
+    border: 1px solid #ccc !important;
+    padding: 6px 10px !important;
+    font-size: 10pt !important;
+  }
+
+  html body.theme-industrial table tr {
+    page-break-inside: avoid;
+  }
+
+  html body.theme-industrial table tbody tr::before {
+    display: none !important;
+  }
+
+  /* Disable all animations */
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Show links */
+  html body.theme-industrial a[href]::after {
+    content: ' (' attr(href) ')';
+    font-size: 0.8em;
+    color: #666;
+  }
+
+  /* KPIs print as simple blocks */
+  html body.theme-industrial .dashboard-exec-scorecards {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 1rem !important;
+  }
+
+  html body.theme-industrial .dashboard-score-tile {
+    flex: 1 1 200px;
+    border: 1px solid #ddd !important;
+    padding: 0.75rem !important;
+  }
+}
+
+
+/* ============================================================
+ * 10. ACCESSIBILITY
+ * ============================================================ */
+
+/* Better focus-visible rings */
+html body.theme-industrial *:focus-visible {
+  outline: none;
+  box-shadow: var(--pm-focus-ring);
+  border-radius: inherit;
+}
+
+html body.theme-industrial a:focus-visible,
+html body.theme-industrial button:focus-visible,
+html body.theme-industrial .btn:focus-visible,
+html body.theme-industrial .tab:focus-visible,
+html body.theme-industrial input:focus-visible,
+html body.theme-industrial select:focus-visible,
+html body.theme-industrial textarea:focus-visible {
+  outline: 2px solid var(--pm-accent);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+/* Inputs use glow instead of outline to avoid double-ring */
+html body.theme-industrial input:focus-visible,
+html body.theme-industrial select:focus-visible,
+html body.theme-industrial textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--pm-accent-ring),
+              0 0 12px var(--pm-accent-glow);
+}
+
+/* Skip link (already in HTML) */
+html body.theme-industrial .skip-link {
+  position: absolute;
+  top: -100%;
+  left: 1rem;
+  z-index: 10000;
+  padding: 0.75rem 1.5rem;
+  background: var(--pm-accent);
+  color: #fff;
+  border-radius: 0 0 8px 8px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: top var(--pm-duration-fast) ease;
+}
+
+html body.theme-industrial .skip-link:focus {
+  top: 0;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  html body.theme-industrial *,
+  html body.theme-industrial *::before,
+  html body.theme-industrial *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  html body.theme-industrial .card:hover,
+  html body.theme-industrial .dashboard-card:hover,
+  html body.theme-industrial .dashboard-score-tile:hover,
+  html body.theme-industrial .btn:active {
+    transform: none !important;
+  }
+
+  html body.theme-industrial .card::before,
+  html body.theme-industrial .dashboard-card::before,
+  html body.theme-industrial .dashboard-score-tile::before {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  html body.theme-industrial .card,
+  html body.theme-industrial .dashboard-card,
+  html body.theme-industrial .dashboard-score-tile,
+  html body.theme-industrial .kpi-card,
+  html body.theme-industrial .section-header,
+  html body.theme-industrial .table-wrap {
+    border-width: 2px !important;
+    border-color: currentColor !important;
+  }
+
+  html body.theme-industrial .btn {
+    border-width: 2px !important;
+  }
+
+  html body.theme-industrial a:focus-visible,
+  html body.theme-industrial button:focus-visible,
+  html body.theme-industrial .btn:focus-visible,
+  html body.theme-industrial input:focus-visible,
+  html body.theme-industrial select:focus-visible {
+    outline-width: 3px;
+    outline-offset: 2px;
+  }
+
+  html body.theme-industrial table th,
+  html body.theme-industrial table td {
+    border-width: 2px !important;
+  }
+
+  html body.theme-industrial .tabs.tabs--rail .tab.active::after {
+    width: 5px;
+  }
+}
+
+/* Forced colors (Windows High Contrast) */
+@media (forced-colors: active) {
+  html body.theme-industrial .card,
+  html body.theme-industrial .dashboard-card,
+  html body.theme-industrial .dashboard-score-tile,
+  html body.theme-industrial .table-wrap,
+  html body.theme-industrial .section-header {
+    border: 2px solid CanvasText;
+    background: Canvas !important;
+    color: CanvasText !important;
+    forced-color-adjust: auto;
+  }
+
+  html body.theme-industrial .btn {
+    forced-color-adjust: auto;
+  }
+
+  html body.theme-industrial .tabs.tabs--rail .tab.active::after {
+    background: Highlight;
+  }
+
+  html body.theme-industrial table tbody tr:hover {
+    outline: 2px solid Highlight;
+  }
+}
+
+
+/* ============================================================
+ * 11. MODAL IMPROVEMENTS
+ * ============================================================ */
+
+/* Modal entry animation */
+html body.theme-industrial .modal {
+  animation: pm-fade-in var(--pm-duration-normal) var(--pm-ease-out);
+}
+
+html body.theme-industrial .modal-box,
+html body.theme-industrial .modal-content,
+html body.theme-industrial .modal-panel {
+  animation: pm-scale-in var(--pm-duration-slow) var(--pm-ease-spring);
+  transform-origin: center center;
+}
+
+/* Modal close button hover */
+html body.theme-industrial .modal-close,
+html body.theme-industrial .md-prompt-close,
+html body.theme-industrial [data-dismiss="modal"] {
+  transition: transform var(--pm-duration-fast) var(--pm-ease-out),
+              color var(--pm-duration-fast) ease;
+}
+
+html body.theme-industrial .modal-close:hover,
+html body.theme-industrial .md-prompt-close:hover,
+html body.theme-industrial [data-dismiss="modal"]:hover {
+  transform: rotate(90deg);
+  color: var(--pm-error) !important;
+}
+
+
+/* ============================================================
+ * 12. DROPDOWN & MENU ANIMATIONS
+ * ============================================================ */
+
+html body.theme-industrial .dropdown-menu {
+  animation: pm-fade-in-down var(--pm-duration-normal) var(--pm-ease-out);
+  transform-origin: top center;
+}
+
+html body.theme-industrial .dropdown-menu .dropdown-item {
+  transition: background var(--pm-duration-fast) ease,
+              padding-left var(--pm-duration-fast) ease;
+  border-radius: var(--ds-radius-sm, 6px);
+}
+
+html body.theme-industrial .dropdown-menu .dropdown-item:hover {
+  padding-left: calc(0.75rem + 4px);
+  background: var(--nano-surface-subtle) !important;
+}
+
+
+/* ============================================================
+ * 13. LOADING STATES
+ * ============================================================ */
+
+/* Spinner */
+html body.theme-industrial .spinner,
+html body.theme-industrial .loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--nano-border);
+  border-top-color: var(--pm-accent);
+  border-radius: 50%;
+  animation: pm-spin 0.8s linear infinite;
+}
+
+html body.theme-industrial .spinner-lg {
+  width: 40px;
+  height: 40px;
+  border-width: 4px;
+}
+
+/* Loading overlay */
+html body.theme-industrial .loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--nano-surface-subtle);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 10;
+  animation: pm-fade-in var(--pm-duration-fast) ease;
+}
+
+
+/* ============================================================
+ * 14. BADGE & CHIP ENHANCEMENTS
+ * ============================================================ */
+
+html body.theme-industrial .badge,
+html body.theme-industrial .chip {
+  transition: transform var(--pm-duration-fast) var(--pm-ease-out),
+              box-shadow var(--pm-duration-fast) ease;
+}
+
+html body.theme-industrial .badge:hover,
+html body.theme-industrial .chip:hover {
+  transform: scale(1.05);
+}
+
+/* Status badges */
+html body.theme-industrial .badge-success {
+  background: var(--pm-success-bg) !important;
+  color: var(--pm-success) !important;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+html body.theme-industrial .badge-error,
+html body.theme-industrial .badge-danger {
+  background: var(--pm-error-bg) !important;
+  color: var(--pm-error) !important;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+html body.theme-industrial .badge-warning {
+  background: var(--pm-warning-bg) !important;
+  color: var(--pm-warning) !important;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+
+/* ============================================================
+ * 15. SCROLLBAR ENHANCEMENTS
+ * ============================================================ */
+
+/* Smoother scrollbar for content areas */
+html body.theme-industrial .table-wrap::-webkit-scrollbar,
+html body.theme-industrial .sidebar-nav .tabs.tabs--rail::-webkit-scrollbar,
+html body.theme-industrial .modal-box::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+html body.theme-industrial .table-wrap::-webkit-scrollbar-track,
+html body.theme-industrial .sidebar-nav .tabs.tabs--rail::-webkit-scrollbar-track,
+html body.theme-industrial .modal-box::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html body.theme-industrial .table-wrap::-webkit-scrollbar-thumb,
+html body.theme-industrial .sidebar-nav .tabs.tabs--rail::-webkit-scrollbar-thumb,
+html body.theme-industrial .modal-box::-webkit-scrollbar-thumb {
+  background: var(--nano-border-strong);
+  border-radius: 3px;
+}
+
+html body.theme-industrial .table-wrap::-webkit-scrollbar-thumb:hover,
+html body.theme-industrial .sidebar-nav .tabs.tabs--rail::-webkit-scrollbar-thumb:hover,
+html body.theme-industrial .modal-box::-webkit-scrollbar-thumb:hover {
+  background: var(--nano-text-muted);
+}
+
+
+/* ============================================================
+ * 16. EMPTY STATES & PLACEHOLDER
+ * ============================================================ */
+
+html body.theme-industrial .empty-state,
+html body.theme-industrial .no-data,
+html body.theme-industrial .table-empty {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--nano-text-muted);
+  animation: pm-fade-in var(--pm-duration-slow) var(--pm-ease-out);
+}
+
+html body.theme-industrial .empty-state i,
+html body.theme-industrial .no-data i {
+  font-size: 2.5rem;
+  opacity: 0.4;
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+html body.theme-industrial .empty-state p {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+
+/* ============================================================
+ * 17. SEARCH / FILTER INPUT ENHANCEMENTS
+ * ============================================================ */
+
+html body.theme-industrial .filter-input,
+html body.theme-industrial .search-input,
+html body.theme-industrial input[type="search"] {
+  transition: width var(--pm-duration-normal) var(--pm-ease-out),
+              border-color var(--pm-duration-fast) ease,
+              box-shadow var(--pm-duration-normal) var(--pm-ease-out);
+}
+
+html body.theme-industrial .filter-input:focus,
+html body.theme-industrial .search-input:focus,
+html body.theme-industrial input[type="search"]:focus {
+  box-shadow: 0 0 0 3px var(--pm-accent-ring),
+              0 0 12px var(--pm-accent-glow) !important;
+}
+
+
+/* ============================================================
+ * 18. SECTION HEADERS ANIMATION
+ * ============================================================ */
+
+html body.theme-industrial .section-header {
+  animation: pm-fade-in-up var(--pm-duration-slow) var(--pm-ease-out) both;
+}
+
+
+/* ============================================================
+ * 19. STOCK ALERT & NOTIFICATION BADGES
+ * ============================================================ */
+
+html body.theme-industrial .stock-alert,
+html body.theme-industrial .badge-count {
+  font-variant-numeric: tabular-nums;
+}
+
+html body.theme-industrial .stock-alert.critical,
+html body.theme-industrial .stock-alert[data-level="critical"] {
+  animation: pm-pulse-alert 2s infinite;
+}
+
+
+/* ============================================================
+ * 20. UTILITY CLASSES
+ * ============================================================ */
+
+/* Transition helpers */
+html body.theme-industrial .pm-transition {
+  transition: all var(--pm-duration-normal) var(--pm-ease-out);
+}
+
+html body.theme-industrial .pm-transition-fast {
+  transition: all var(--pm-duration-fast) var(--pm-ease-out);
+}
+
+html body.theme-industrial .pm-transition-slow {
+  transition: all var(--pm-duration-slow) var(--pm-ease-out);
+}
+
+/* Animation helpers */
+html body.theme-industrial .pm-animate-fade-in {
+  animation: pm-fade-in var(--pm-duration-normal) var(--pm-ease-out) both;
+}
+
+html body.theme-industrial .pm-animate-fade-in-up {
+  animation: pm-fade-in-up var(--pm-duration-normal) var(--pm-ease-out) both;
+}
+
+html body.theme-industrial .pm-animate-slide-in-right {
+  animation: pm-slide-in-right var(--pm-duration-normal) var(--pm-ease-out) both;
+}
+
+html body.theme-industrial .pm-animate-scale-in {
+  animation: pm-scale-in var(--pm-duration-normal) var(--pm-ease-out) both;
+}
+
+/* Stagger delays for list items */
+html body.theme-industrial .pm-stagger > *:nth-child(1)  { animation-delay: 0ms; }
+html body.theme-industrial .pm-stagger > *:nth-child(2)  { animation-delay: 50ms; }
+html body.theme-industrial .pm-stagger > *:nth-child(3)  { animation-delay: 100ms; }
+html body.theme-industrial .pm-stagger > *:nth-child(4)  { animation-delay: 150ms; }
+html body.theme-industrial .pm-stagger > *:nth-child(5)  { animation-delay: 200ms; }
+html body.theme-industrial .pm-stagger > *:nth-child(6)  { animation-delay: 250ms; }
+html body.theme-industrial .pm-stagger > *:nth-child(7)  { animation-delay: 300ms; }
+html body.theme-industrial .pm-stagger > *:nth-child(8)  { animation-delay: 350ms; }
+html body.theme-industrial .pm-stagger > *:nth-child(9)  { animation-delay: 400ms; }
+html body.theme-industrial .pm-stagger > *:nth-child(10) { animation-delay: 450ms; }
+
+/* Glassmorphism depth layers */
+html body.theme-industrial .pm-glass-1 {
+  background: var(--nano-surface-subtle) !important;
+  backdrop-filter: blur(8px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(150%) !important;
+}
+
+html body.theme-industrial .pm-glass-2 {
+  background: var(--nano-surface) !important;
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
+}
+
+html body.theme-industrial .pm-glass-3 {
+  background: var(--nano-surface-strong) !important;
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+}
+
+/* Visually hidden (accessibility) */
+html body.theme-industrial .sr-only,
+html body.theme-industrial .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+
+/* ============================================================
+ * A. COMMAND PALETTE STYLES
+ * ============================================================ */
+
+/* Overlay */
+html body.theme-industrial .cmd-palette-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 15vh;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: pm-fade-in 0.15s ease both;
+}
+
+html body.theme-industrial.appearance-light .cmd-palette-overlay {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* Glass modal */
+html body.theme-industrial .cmd-palette {
+  width: 560px;
+  max-width: 92vw;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--nano-surface, rgba(30, 30, 46, 0.88));
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--nano-border, rgba(255, 255, 255, 0.1));
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.4),
+              0 0 0 1px rgba(255, 255, 255, 0.05);
+  animation: pm-modal-scale-in 0.25s var(--pm-ease-spring) both;
+}
+
+html body.theme-industrial.appearance-light .cmd-palette {
+  background: var(--nano-surface, rgba(255, 255, 255, 0.82));
+  border-color: var(--nano-border, rgba(0, 0, 0, 0.1));
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.18),
+              0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+/* Search input */
+html body.theme-industrial .cmd-palette-input {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  height: 48px;
+  padding: 0 1.25rem;
+  border: none;
+  border-bottom: 1px solid var(--nano-border, rgba(255, 255, 255, 0.08));
+  background: var(--nano-surface-subtle, rgba(255, 255, 255, 0.04));
+  color: var(--nano-text, #f1f5f9);
+  font-size: 0.95rem;
+  width: 100%;
+  outline: none;
+  font-family: inherit;
+}
+
+html body.theme-industrial .cmd-palette-input::placeholder {
+  color: var(--nano-text-muted, rgba(255, 255, 255, 0.4));
+}
+
+html body.theme-industrial .cmd-palette-input .cmd-search-icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  opacity: 0.45;
+}
+
+/* Scrollable results list */
+html body.theme-industrial .cmd-palette-results {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 0.5rem 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--nano-border, rgba(255, 255, 255, 0.1)) transparent;
+}
+
+html body.theme-industrial .cmd-palette-results::-webkit-scrollbar {
+  width: 4px;
+}
+
+html body.theme-industrial .cmd-palette-results::-webkit-scrollbar-thumb {
+  background: var(--nano-border, rgba(255, 255, 255, 0.12));
+  border-radius: 4px;
+}
+
+/* Result item */
+html body.theme-industrial .cmd-palette-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1.25rem;
+  cursor: pointer;
+  color: var(--nano-text, #e2e8f0);
+  font-size: 0.88rem;
+  transition: background var(--pm-duration-fast) ease,
+              color var(--pm-duration-fast) ease;
+}
+
+html body.theme-industrial .cmd-palette-item:hover {
+  background: var(--nano-surface-subtle, rgba(255, 255, 255, 0.06));
+}
+
+html body.theme-industrial .cmd-palette-item.active {
+  background: var(--pm-accent, #1a73e8);
+  color: #fff;
+}
+
+html body.theme-industrial .cmd-palette-item .cmd-item-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.55;
+  font-size: 1rem;
+}
+
+html body.theme-industrial .cmd-palette-item.active .cmd-item-icon {
+  opacity: 1;
+}
+
+html body.theme-industrial .cmd-palette-item .cmd-item-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Keyboard shortcut badge */
+html body.theme-industrial .cmd-palette-item .cmd-shortcut {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+  font-size: 0.7rem;
+  font-family: inherit;
+  color: var(--nano-text-muted, rgba(255, 255, 255, 0.4));
+}
+
+html body.theme-industrial .cmd-palette-item .cmd-shortcut kbd {
+  display: inline-block;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-family: inherit;
+  line-height: 1;
+  background: var(--nano-surface-subtle, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--nano-border, rgba(255, 255, 255, 0.1));
+  color: var(--nano-text-muted, rgba(255, 255, 255, 0.5));
+}
+
+html body.theme-industrial .cmd-palette-item.active .cmd-shortcut,
+html body.theme-industrial .cmd-palette-item.active .cmd-shortcut kbd {
+  color: rgba(255, 255, 255, 0.75);
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Bottom hint */
+html body.theme-industrial .cmd-palette-hint {
+  padding: 0.55rem 1.25rem;
+  font-size: 0.72rem;
+  color: var(--nano-text-muted, rgba(255, 255, 255, 0.35));
+  border-top: 1px solid var(--nano-border, rgba(255, 255, 255, 0.08));
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+html body.theme-industrial .cmd-palette-hint kbd {
+  display: inline-block;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  font-size: 0.66rem;
+  background: var(--nano-surface-subtle, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--nano-border, rgba(255, 255, 255, 0.1));
+}
+
+/* Exit animation */
+html body.theme-industrial .cmd-palette-overlay.closing {
+  animation: pm-fade-out 0.15s ease both;
+}
+
+html body.theme-industrial .cmd-palette-overlay.closing .cmd-palette {
+  animation: pm-modal-scale-out 0.15s var(--pm-ease-out) both;
+}
+
+@keyframes pm-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+
+/* ============================================================
+ * B. MODAL ENTER/EXIT ANIMATIONS
+ * ============================================================ */
+
+html body.theme-industrial .pm-modal-entering {
+  animation: pm-modal-scale-in 0.3s var(--pm-ease-spring) both;
+}
+
+html body.theme-industrial .pm-modal-leaving {
+  animation: pm-modal-scale-out 0.2s var(--pm-ease-out) both;
+}
+
+@keyframes pm-modal-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes pm-modal-scale-out {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+}
+
+/* Modal overlay fade for any .modal that becomes visible */
+html body.theme-industrial .modal:not(.hidden) {
+  animation: pm-fade-in 0.25s ease both;
+}
+
+
+/* ============================================================
+ * C. TOAST SLIDE ANIMATIONS
+ * ============================================================ */
+
+html body.theme-industrial .pm-toast-enter {
+  animation: pm-toast-slide-in 0.4s var(--pm-ease-spring) both;
+}
+
+html body.theme-industrial .pm-toast-exit {
+  animation: pm-toast-slide-out 0.3s var(--pm-ease-out) both;
+}
+
+@keyframes pm-toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes pm-toast-slide-out {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%) scale(0.8);
+  }
+}
+
+
+/* ============================================================
+ * D. TAB PANEL TRANSITIONS
+ * ============================================================ */
+
+html body.theme-industrial .panel:not(.hidden) {
+  animation: pm-panel-enter 0.35s var(--pm-ease-out) both;
+}
+
+@keyframes pm-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* ============================================================
+ * E. HEADER SCROLL DEPTH
+ * ============================================================ */
+
+html body.theme-industrial .header--scrolled {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12),
+              0 1px 4px rgba(0, 0, 0, 0.08) !important;
+  border-bottom-color: var(--nano-border-strong) !important;
+  transition: box-shadow var(--pm-duration-normal) ease,
+              border-color var(--pm-duration-normal) ease;
+}
+
+html body.theme-industrial:not(.appearance-light) .header--scrolled {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35),
+              0 1px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+
+/* ============================================================
+ * F. ENHANCED EMPTY STATES
+ * ============================================================ */
+
+html body.theme-industrial .empty-state,
+html body.theme-industrial .no-data-message {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: radial-gradient(
+    ellipse at center,
+    var(--nano-surface-subtle) 0%,
+    transparent 70%
+  );
+  border-radius: 12px;
+}
+
+html body.theme-industrial .empty-state-icon {
+  font-size: 3rem;
+  opacity: 0.3;
+  margin-bottom: 1rem;
+  line-height: 1;
+}
+
+html body.theme-industrial .empty-state-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--nano-text, #f1f5f9);
+}
+
+html body.theme-industrial .empty-state-text {
+  color: var(--nano-text-muted, rgba(255, 255, 255, 0.5));
+  margin-top: 0.5rem;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+html body.theme-industrial .empty-state-action {
+  margin-top: 1.25rem;
+}
+
+html body.theme-industrial .empty-state-action .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+
+/* ============================================================
+ * G. STATUS BAR
+ * ============================================================ */
+
+html body.theme-industrial .app-status-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  gap: 1.5rem;
+  font-size: 0.68rem;
+  z-index: 50;
+  background: var(--nano-surface-strong, rgba(15, 20, 30, 0.85));
+  backdrop-filter: var(--nano-blur-light, blur(8px));
+  -webkit-backdrop-filter: var(--nano-blur-light, blur(8px));
+  border-top: 1px solid var(--nano-border, rgba(255, 255, 255, 0.08));
+  color: var(--nano-text-muted, rgba(255, 255, 255, 0.5));
+  letter-spacing: 0.01em;
+}
+
+html body.theme-industrial.appearance-light .app-status-bar {
+  background: var(--nano-surface-strong, rgba(245, 247, 250, 0.9));
+  border-top-color: var(--nano-border, rgba(0, 0, 0, 0.08));
+  color: var(--nano-text-muted, rgba(0, 0, 0, 0.5));
+}
+
+html body.theme-industrial .status-bar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+html body.theme-industrial .status-bar-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+html body.theme-industrial .status-bar-dot--online {
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+}
+
+html body.theme-industrial .status-bar-dot--offline {
+  background: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.35);
+}
+
+html body.theme-industrial .status-bar-dot--warning {
+  background: #f59e0b;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
+}
+
+/* Content area bottom padding to avoid status bar overlap */
+html body.theme-industrial .main-content,
+html body.theme-industrial .content-area,
+html body.theme-industrial .app-content {
+  padding-bottom: 36px;
+}
+
+
+/* ============================================================
+ * H. BUTTON RIPPLE CIRCLE
+ * ============================================================ */
+
+html body.theme-industrial .pm-ripple-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  width: 10px;
+  height: 10px;
+  transform: translate(-50%, -50%) scale(0);
+  animation: pm-ripple-expand 0.5s ease-out forwards;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes pm-ripple-expand {
+  to {
+    transform: translate(-50%, -50%) scale(25);
+    opacity: 0;
+  }
+}
+
+/* Darker ripple for light mode */
+html body.theme-industrial.appearance-light .pm-ripple-circle {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Softer ripple for dark mode */
+html body.theme-industrial:not(.appearance-light) .pm-ripple-circle {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Ensure buttons have overflow hidden and relative positioning for ripple */
+html body.theme-industrial .btn {
+  position: relative;
+  overflow: hidden;
+}
+
+
+/* ============================================================
+ * I. LOGIN PAGE PREMIUM ENHANCEMENTS
+ * ============================================================ */
+
+/* Animated gradient border on login card */
+html body .login-card {
+  position: relative;
+}
+
+html body .login-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.4),
+    rgba(139, 92, 246, 0.3),
+    rgba(236, 72, 153, 0.2),
+    rgba(59, 130, 246, 0.4)
+  );
+  background-size: 300% 300%;
+  animation: pm-gradient-rotate 8s ease infinite;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes pm-gradient-rotate {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+/* Floating decorative circles on login background */
+html body .login-overlay .login-deco-circle {
+  animation: pm-float-circle 12s ease-in-out infinite;
+}
+
+@keyframes pm-float-circle {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.4;
+  }
+  33% {
+    transform: translateY(-20px) scale(1.05);
+    opacity: 0.6;
+  }
+  66% {
+    transform: translateY(10px) scale(0.95);
+    opacity: 0.35;
+  }
+}
+
+html body .login-overlay .login-deco-c2 {
+  animation-delay: -4s;
+}
+
+html body .login-overlay .login-deco-c3 {
+  animation-delay: -8s;
+}
+
+/* Input focus glow on login */
+html body .login-card input:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2),
+              0 0 20px rgba(59, 130, 246, 0.1) !important;
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  transition: box-shadow var(--pm-duration-fast) ease,
+              border-color var(--pm-duration-fast) ease;
+}
+
+/* Submit button gradient animation */
+html body .login-submit {
+  background-size: 200% 100% !important;
+  transition: background-position 0.4s ease,
+              transform 0.15s ease,
+              box-shadow 0.15s ease !important;
+}
+
+html body .login-submit:hover {
+  background-position: right center !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 8px 24px rgba(26, 115, 232, 0.3) !important;
+}
+
+html body .login-submit:active {
+  transform: translateY(0) scale(0.98) !important;
+}
+
+
+/* ============================================================
+ * J. ENHANCED SCROLLBAR FOR SIDEBAR
+ * ============================================================ */
+
+html body.theme-industrial .tabs.tabs--rail::-webkit-scrollbar {
+  width: 4px;
+}
+
+html body.theme-industrial .tabs.tabs--rail::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html body.theme-industrial .tabs.tabs--rail::-webkit-scrollbar-thumb {
+  background: var(--nano-border, rgba(255, 255, 255, 0.1)) !important;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+html body.theme-industrial .tabs.tabs--rail:hover::-webkit-scrollbar-thumb {
+  background: var(--nano-border-strong, rgba(255, 255, 255, 0.2)) !important;
+}
+
+/* Firefox scrollbar */
+html body.theme-industrial .tabs.tabs--rail {
+  scrollbar-width: thin;
+  scrollbar-color: var(--nano-border, rgba(255, 255, 255, 0.1)) transparent;
+}
+
+
+/* ============================================================
+ * K. NOTIFICATION BADGE BOUNCE
+ * ============================================================ */
+
+html body.theme-industrial .notifications-badge:not(.hidden) {
+  animation: pm-badge-bounce 0.5s var(--pm-ease-spring);
+}
+
+@keyframes pm-badge-bounce {
+  0%  { transform: scale(0); }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+
+/* ============================================================
+ * L. TABLE SORTING ARROW ANIMATION
+ * ============================================================ */
+
+html body.theme-industrial th[data-sort] {
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--pm-duration-fast) ease;
+}
+
+html body.theme-industrial th[data-sort]:hover {
+  background: var(--nano-surface-subtle, rgba(255, 255, 255, 0.05)) !important;
+}
+
+html body.theme-industrial th[data-sort]::after {
+  content: '\21D5'; /* ⇕ */
+  margin-left: 0.35rem;
+  font-size: 0.7em;
+  opacity: 0.4;
+  transition: opacity var(--pm-duration-fast) ease,
+              transform 0.2s ease,
+              color var(--pm-duration-fast) ease;
+}
+
+html body.theme-industrial th[data-sort].sort-asc::after {
+  content: '\2191'; /* ↑ */
+  opacity: 0.9;
+  color: var(--pm-accent, #1a73e8);
+}
+
+html body.theme-industrial th[data-sort].sort-desc::after {
+  content: '\2193'; /* ↓ */
+  opacity: 0.9;
+  color: var(--pm-accent, #1a73e8);
+}

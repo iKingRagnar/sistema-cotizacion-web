@@ -12870,25 +12870,9 @@
   }
 
   function exportProspeccionCsv() {
-    const rows = getProspectosFiltered();
-    if (!rows.length) { showToast('No hay filas para exportar.', 'error'); return; }
-    const headers = ['empresa', 'zona', 'lat', 'lng', 'estado', 'industria', 'tipo_interes', 'potencial_usd', 'score_ia', 'ultimo_contacto', 'notas'];
-    const out = [headers.join(',')].concat(rows.map(function (r) {
-      return headers.map(function (h) {
-        let v = r[h];
-        if (v == null) v = '';
-        v = String(v);
-        if (/[",\n]/.test(v)) return '"' + v.replace(/"/g, '""') + '"';
-        return v;
-      }).join(',');
-    })).join('\n');
-    const blob = new Blob([out], { type: 'text/csv;charset=utf-8;' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'prospeccion-' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-') + '.csv';
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+    if (window.ProspeccionMap && typeof window.ProspeccionMap.exportCSV === 'function') {
+      window.ProspeccionMap.exportCSV();
+    }
   }
 
   // ----- ALMACÉN (modelo, sucursal, serie, estado revisión, cotización pendiente) -----
@@ -14419,17 +14403,24 @@
       const pd = qs('#panel-dashboards');
       if (pd && pd.classList.contains('active')) loadDashboard();
     } catch (_) {}
-    /* Prospección: al cambiar tema, destruir Leaflet para que se regenere con estilos/controles acordes */
+    /* Prospección: al cambiar tema, reinicializar el modulo avanzado */
     try {
       if (prospeccionMap && typeof prospeccionMap.remove === 'function') {
         prospeccionHeatLayer = null;
         prospeccionMap.remove();
         prospeccionMap = null;
         prospeccionMarkersLayer = null;
+      } else if (window.ProspeccionMap) {
+        var prsState = window.ProspeccionMap.getState();
+        if (prsState && prsState.map && typeof prsState.map.remove === 'function') {
+          prsState.map.remove();
+          prsState.map = null;
+          prsState.initialized = false;
+        }
       }
       const pp = qs('#panel-prospeccion');
-      if (pp && pp.classList.contains('active') && typeof renderProspeccionFromCache === 'function') {
-        renderProspeccionFromCache();
+      if (pp && pp.classList.contains('active')) {
+        loadProspeccion();
       }
     } catch (_) {}
   }

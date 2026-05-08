@@ -147,7 +147,7 @@ function getAdminNotifyEmails() {
   if (csv) {
     return [...new Set(csv.split(/[,;]/).map((e) => e.trim()).filter(Boolean))];
   }
-  const list = ['dcantu746@gmail.com', 'guillermorc44@gmail.com'];
+  const list = (process.env.ADMIN_DEFAULT_EMAILS || 'dcantu746@gmail.com,guillermorc44@gmail.com').split(',').map(e => e.trim()).filter(Boolean);
   const extra = (process.env.SMTP_ADMIN_EMAIL || '').trim();
   if (extra && !list.some((x) => x.toLowerCase() === extra.toLowerCase())) {
     list.push(extra);
@@ -197,6 +197,18 @@ try {
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+
+/* Security headers — defense-in-depth even without helmet. */
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  next();
+});
 
 /* Rate limiting — defensa contra brute-force en login y spam en SMTP. */
 let _authLimiter = (req, res, next) => next();
@@ -329,7 +341,28 @@ app.get('/api/storage-health', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', _authLimiter, async (req, res) => {
+/* Inline fallback rate limiter (used when express-rate-limit is not installed). */
+const _loginAttempts = new Map();
+function loginRateLimit(req, res, next) {
+  const ip = req.ip || req.connection.remoteAddress || 'unknown';
+  const now = Date.now();
+  const window = 15 * 60 * 1000;
+  const maxAttempts = 10;
+  let entry = _loginAttempts.get(ip);
+  if (!entry || now - entry.start > window) {
+    entry = { count: 0, start: now };
+    _loginAttempts.set(ip, entry);
+  }
+  entry.count++;
+  if (entry.count > maxAttempts) {
+    const retryAfter = Math.ceil((entry.start + window - now) / 1000);
+    res.setHeader('Retry-After', retryAfter);
+    return res.status(429).json({ error: 'Demasiados intentos de login. Intenta de nuevo en ' + Math.ceil(retryAfter / 60) + ' minutos.' });
+  }
+  next();
+}
+
+app.post('/api/auth/login', _authLimiter, loginRateLimit, async (req, res) => {
   try {
     if (!auth.AUTH_ENABLED) {
       return res.status(400).json({ error: 'Autenticación desactivada en el servidor (AUTH_ENABLED=0).' });
