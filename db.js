@@ -493,6 +493,24 @@ async function init() {
       'Vercel requiere TURSO_DATABASE_URL y TURSO_AUTH_TOKEN (Project → Settings → Environment Variables). SQLite en disco no funciona en serverless.'
     );
   }
+  /* Render filesystem es efímero — SQLite local se borra en CADA redeploy.
+     Si el usuario no configuró Turso, advertir loud y claro en logs. */
+  const isRender = !!(process.env.RENDER || process.env.RENDER_SERVICE_NAME);
+  if (isRender && !useTurso) {
+    console.warn('');
+    console.warn('================================================================');
+    console.warn('⚠  ADVERTENCIA CRÍTICA: Render + SQLite local = pérdida de datos');
+    console.warn('   El filesystem de Render es EFÍMERO. Cada deploy borra la DB.');
+    console.warn('   Configura Turso (gratis) para persistencia real:');
+    console.warn('   1. https://turso.tech → Sign Up → Create Database');
+    console.warn('   2. Copia TURSO_DATABASE_URL y TURSO_AUTH_TOKEN');
+    console.warn('   3. Render Dashboard → tu servicio → Environment → Add:');
+    console.warn('      TURSO_DATABASE_URL=libsql://...turso.io');
+    console.warn('      TURSO_AUTH_TOKEN=<token>');
+    console.warn('   4. Manual Deploy → Clear cache & deploy');
+    console.warn('================================================================');
+    console.warn('');
+  }
   if (useTurso) {
     const { createClient } = require('@libsql/client');
     db = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
