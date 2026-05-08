@@ -257,6 +257,18 @@ body.sidebar-rail-collapsed .sidebar-nav-toolbar {
     width: auto;
     flex: 0 0 auto;
     max-width: min(220px, 70vw);
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tabs.tabs--rail::-webkit-scrollbar { height: 2px; }
+  .tabs.tabs--rail::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+}
+
+@media (max-width: 480px) {
+  .tabs.tabs--rail .tab {
+    max-width: min(160px, 60vw);
+    font-size: 0.78rem;
+    padding: 0.5rem 0.65rem;
   }
 }
 

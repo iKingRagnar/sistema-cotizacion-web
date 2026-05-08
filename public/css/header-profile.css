@@ -440,3 +440,19 @@ body.theme-industrial:not(.appearance-light) .admin-hub-card {
 body.theme-industrial:not(.appearance-light) .admin-hub-card:hover {
   background: rgba(32, 33, 36, 0.32);
 }
+
+/* ── Mobile profile menu ────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .header-profile-menu {
+    right: 4px !important;
+    left: 4px !important;
+    min-width: 0;
+    max-width: none;
+    width: calc(100vw - 8px);
+    border-radius: 0 0 12px 12px;
+  }
+  .header-profile-menu-item {
+    min-height: 44px;
+    font-size: 0.88rem;
+  }
+}

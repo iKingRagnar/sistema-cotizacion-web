@@ -1504,6 +1504,7 @@
   }
 
   function showPanel(id, opts) {
+    if (isMobileNav()) closeMobileSidebar();
     const skipLoad = opts && opts.skipLoad === true;
     if (serverConfig.authRequired && !getAuthToken() && id !== 'acerca') {
       showLoginOverlay(true);
@@ -1625,15 +1626,41 @@
     }
   }
 
+  function isMobileNav() {
+    return typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 768px)').matches;
+  }
+
   function syncSidebarRailToggleHeaderVisibility() {
     const btnHead = qs('#btn-sidebar-rail-toggle-header');
     if (!btnHead) return;
+    if (isMobileNav()) {
+      btnHead.classList.remove('hidden');
+      btnHead.title = 'Abrir menú de navegación';
+      return;
+    }
     const collapsed = document.body.classList.contains('sidebar-rail-collapsed');
     const wide =
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(min-width: 961px)').matches;
     if (wide && collapsed) btnHead.classList.remove('hidden');
     else btnHead.classList.add('hidden');
+  }
+
+  function closeMobileSidebar() {
+    document.body.classList.remove('sidebar-open');
+    var overlay = qs('#mobile-sidebar-overlay');
+    if (overlay) overlay.remove();
+  }
+
+  function openMobileSidebar() {
+    document.body.classList.add('sidebar-open');
+    if (!qs('#mobile-sidebar-overlay')) {
+      var overlay = document.createElement('div');
+      overlay.id = 'mobile-sidebar-overlay';
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:98;background:rgba(0,0,0,0.4);-webkit-tap-highlight-color:transparent;';
+      overlay.addEventListener('click', closeMobileSidebar);
+      document.body.appendChild(overlay);
+    }
   }
 
   function applySidebarRailCollapsed(collapsed) {
@@ -1668,12 +1695,20 @@
       }
     } catch (_) {}
     function toggleRail() {
+      if (isMobileNav()) {
+        if (document.body.classList.contains('sidebar-open')) closeMobileSidebar();
+        else openMobileSidebar();
+        return;
+      }
       applySidebarRailCollapsed(!document.body.classList.contains('sidebar-rail-collapsed'));
     }
     applySidebarRailCollapsed(isSidebarRailCollapsedStored());
     if (btn) btn.addEventListener('click', toggleRail);
     if (btnHead) btnHead.addEventListener('click', toggleRail);
-    window.addEventListener('resize', syncSidebarRailToggleHeaderVisibility);
+    window.addEventListener('resize', function () {
+      syncSidebarRailToggleHeaderVisibility();
+      if (!isMobileNav()) closeMobileSidebar();
+    });
   })();
 
   async function fetchJson(url, opts = {}) {

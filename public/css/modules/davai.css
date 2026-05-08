@@ -499,19 +499,58 @@
 
 /* --- Responsive --- */
 @media (max-width: 768px) {
-  .davai-sidebar { display: none; position: fixed; top: 0; left: 0; bottom: 0; z-index: 1000; width: 280px; }
+  .davai-sidebar {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 1000;
+    width: min(280px, calc(100vw - 48px));
+    box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+  }
   .davai-sidebar.open { display: flex; }
+  .davai-sidebar.open ~ .davai-main::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 999;
+  }
   .davai-toggle-sidebar { display: flex; }
-  .davai-container { height: calc(100dvh - 90px); border-radius: 0; }
+  .davai-container {
+    height: calc(100dvh - 90px);
+    height: calc(100vh - 90px);
+    border-radius: 0;
+  }
+  @supports (height: 100dvh) {
+    .davai-container { height: calc(100dvh - 90px); }
+  }
   .davai-quick-actions { grid-template-columns: repeat(2, 1fr); }
-  .davai-msg__bubble { max-width: 90%; }
+  .davai-quick-btn { min-width: 0; min-height: 44px; }
+  .davai-msg__bubble { max-width: 92%; }
+  .davai-msg--user .davai-msg__bubble { max-width: 85%; }
+  .davai-landing__sub { max-width: 90vw; }
+  .davai-header { padding: 0.5rem 0.75rem; }
+  .davai-input-area { padding: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom, 0px)); }
+  .davai-input-btn,
+  .davai-send-btn { width: 44px; height: 44px; }
 }
 @media (max-width: 480px) {
   .davai-quick-actions { grid-template-columns: 1fr; }
   .davai-landing__title { font-size: 1.2rem; }
+  .davai-landing__sub { font-size: 0.82rem; }
   .davai-orb { width: 100px; height: 100px; }
   .davai-orb__core { width: 44px; height: 44px; }
   .davai-orb__letter { font-size: 1.1rem; }
+  .davai-header__title { font-size: 1rem; }
+  .davai-header__badges { display: none; }
+  .davai-textarea { font-size: 16px; }
+  .davai-msg__content { max-width: calc(100% - 36px); }
+  .davai-msg__avatar { width: 28px; height: 28px; font-size: 0.65rem; }
+}
+@media (max-width: 360px) {
+  .davai-container { height: calc(100dvh - 70px); height: calc(100vh - 70px); }
+  @supports (height: 100dvh) { .davai-container { height: calc(100dvh - 70px); } }
+  .davai-quick-btn { padding: 0.6rem; font-size: 0.72rem; }
+  .davai-landing { padding: 1.5rem 0.75rem; }
 }
 
 /* --- Scrollbar --- */

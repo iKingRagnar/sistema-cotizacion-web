@@ -373,7 +373,8 @@
    * ---------------------------------------------------------- */
   function autoResize(textarea) {
     textarea.style.height = 'auto';
-    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    var maxH = window.innerHeight < 700 ? 80 : 120;
+    textarea.style.height = Math.min(textarea.scrollHeight, maxH) + 'px';
   }
 
   /* ----------------------------------------------------------
