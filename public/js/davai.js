@@ -21,7 +21,9 @@
     return d.innerHTML;
   }
 
-  function getToken() { return localStorage.getItem('token') || ''; }
+  function getToken() {
+    return localStorage.getItem('cotizacion-auth-token') || localStorage.getItem('token') || '';
+  }
 
   /* ----------------------------------------------------------
    * Markdown — lightweight renderer (bold, italic, code, headers, lists, links, tables)

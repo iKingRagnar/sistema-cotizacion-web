@@ -112,19 +112,56 @@ body.md3-on .md-table tbody tr.selected {
   color: var(--md-sys-color-on-primary-container);
 }
 
-/* ── Row actions cell ───────────────────────────────────────────────── */
+/* ── Row actions cell — sticky right column with min-width ───────────── */
 body.md3-on table.data-table .th-actions,
 body.md3-on table.data-table td.actions,
 body.md3-on .md-table .actions {
-  width: 1%;
+  width: auto;
+  min-width: 180px;
   white-space: nowrap;
   text-align: right;
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  background: inherit;
+}
+body.md3-on table.data-table thead th.th-actions,
+body.md3-on .md-table thead th.actions {
+  z-index: 3;
+  background: var(--md-sys-color-surface-container, #1e293b);
+}
+body.md3-on table.data-table tbody tr td.actions {
+  background: var(--md-sys-color-surface, #0f172a);
+}
+body.md3-on table.data-table tbody tr:hover td.actions {
+  background: var(--md-sys-color-surface-container-high, #1f2937);
 }
 
 body.md3-on td.actions .btn,
 body.md3-on td.actions .btn-icon {
   margin-left: var(--md-sys-spacing-1);
 }
+
+/* ── Tabla con scroll horizontal cuando hay muchas columnas ──────────── */
+body.md3-on .table-wrap,
+body.md3-on .md-table-wrap {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+body.md3-on .table-wrap table,
+body.md3-on .md-table-wrap table { min-width: max-content; }
+
+/* ── Cells: minimum widths para evitar amontonamiento ────────────────── */
+body.md3-on table.data-table thead th,
+body.md3-on .md-table thead th { min-width: 110px; }
+body.md3-on table.data-table thead th.th-actions,
+body.md3-on .md-table thead th.actions { min-width: 180px; }
+body.md3-on table.data-table thead th.th-folio,
+body.md3-on table.data-table thead th.th-id { min-width: 90px; }
+body.md3-on table.data-table thead th.th-fecha,
+body.md3-on table.data-table thead th.th-date { min-width: 100px; }
 
 /* ── Empty / loading states embebidos ───────────────────────────────── */
 body.md3-on table.data-table tbody tr.empty-row td,
