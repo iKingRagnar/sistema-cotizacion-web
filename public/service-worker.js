@@ -1,13 +1,13 @@
 /**
- * service-worker.js v56 — PWA-safe + timeout en network requests + cache-bust v93
- *   v93 (2026-05-08): mega titanium - AI insights + customer journey + pomodoro + QR + reminders + sales funnel
+ * service-worker.js v56 — PWA-safe + timeout en network requests + cache-bust v94
+ *   v94 (2026-05-08): mega platinum - map clientes + notif center + goals + voice notes + summarizer + polls
  * Estrategias:
  *   - HTML, CSS, JS, JSON, fonts: network-first con TIMEOUT 4s + fallback cache
  *   - Imágenes: cache-first
  *   - APIs auth: bypass total (no cache)
  *   - skipWaiting + clients.claim para PWA standalone (evita race conditions)
  */
-const VERSION = 'cotizacion-pro-v93';
+const VERSION = 'cotizacion-pro-v94';
 const CACHE_RUNTIME = VERSION + '-runtime';
 const NETWORK_TIMEOUT_MS = 4000;
 const STATIC_URLS = ['/', '/index.html', '/css/style.css', '/favicon.svg', '/manifest.json'];
