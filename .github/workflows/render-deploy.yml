@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  # Opt-in a Node.js 24 para callar warning de deprecation de Node 20
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -12,42 +16,48 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Trigger Render deploy
+      - name: Trigger Render deploy (opcional, requiere secret)
         env:
           DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
           if [ -z "$DEPLOY_HOOK" ]; then
-            echo "::error::Falta el secreto RENDER_DEPLOY_HOOK_URL."
-            echo "::error::Configurarlo en: https://github.com/iKingRagnar/sistema-cotizacion-web/settings/secrets/actions"
-            echo "::error::Obtener el Deploy Hook desde Render Dashboard → tu servicio → Settings → Deploy Hook"
-            exit 1
+            echo "::notice::RENDER_DEPLOY_HOOK_URL no configurado — el workflow termina sin acción."
+            echo "::notice::Render ya auto-deploya via su GitHub App, este workflow es solo respaldo."
+            echo "::notice::Para habilitarlo: Render Dashboard → tu servicio → Settings → Deploy Hook → copiar URL"
+            echo "::notice::Luego: GitHub repo → Settings → Secrets → Actions → New: RENDER_DEPLOY_HOOK_URL"
+            exit 0
           fi
-          echo "Disparando deploy en Render..."
+          echo "Disparando deploy en Render via Deploy Hook..."
           RESPONSE=$(curl -fsSL -X POST "$DEPLOY_HOOK" -w "\n%{http_code}")
           BODY=$(echo "$RESPONSE" | head -n -1)
           STATUS=$(echo "$RESPONSE" | tail -n 1)
           echo "HTTP Status: $STATUS"
           echo "Response: $BODY"
           if [ "$STATUS" != "200" ] && [ "$STATUS" != "201" ]; then
-            echo "::error::Deploy hook respondió $STATUS"
-            exit 1
+            echo "::warning::Deploy hook respondió $STATUS"
+            exit 0
           fi
-          echo "Deploy disparado exitosamente. Render comenzará el build en segundos."
+          echo "::notice::Deploy disparado. Render comenzará el build en segundos."
 
-      - name: Wait + verify deploy
+      - name: Verify production version
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
+          if [ -z "$DEPLOY_HOOK" ]; then
+            echo "Skip verificación (sin Deploy Hook configurado)."
+            exit 0
+          fi
           echo "Esperando 90s para que Render arranque el build..."
           sleep 90
+          EXPECTED=$(grep -E "^const VERSION" public/service-worker.js | head -1)
+          echo "Versión esperada en producción: $EXPECTED"
           for i in 1 2 3 4 5 6 7 8 9 10; do
-            echo "Intento $i/10 - esperando build..."
             sleep 30
-            CURRENT_VERSION=$(curl -fsSL https://sistema-cotizacion-web.onrender.com/service-worker.js 2>/dev/null | grep -E "^const VERSION" | head -1 || echo "")
-            EXPECTED_VERSION=$(grep -E "^const VERSION" public/service-worker.js | head -1)
-            echo "  Producción:  $CURRENT_VERSION"
-            echo "  Esperado:    $EXPECTED_VERSION"
-            if [ "$CURRENT_VERSION" = "$EXPECTED_VERSION" ]; then
-              echo "Deploy verificado: producción está en la versión esperada."
+            CURRENT=$(curl -fsSL https://sistema-cotizacion-web.onrender.com/service-worker.js 2>/dev/null | grep -E "^const VERSION" | head -1 || echo "")
+            echo "Intento $i/10 - Producción: $CURRENT"
+            if [ "$CURRENT" = "$EXPECTED" ]; then
+              echo "::notice::Deploy verificado en producción."
               exit 0
             fi
           done
-          echo "::warning::El deploy puede seguir en progreso. Verificar manualmente en Render dashboard."
+          echo "::warning::Tras 5 minutos producción aún no refleja la versión esperada. Verifica Render dashboard."
