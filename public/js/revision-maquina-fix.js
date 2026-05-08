@@ -33,6 +33,29 @@
     );
   }
 
+  /* Force the modal AND modal-box to be fully visible — combate animation atascada */
+  function forceModalVisible(modal) {
+    if (!modal) return;
+    try {
+      modal.style.setProperty('opacity', '1', 'important');
+      modal.style.setProperty('visibility', 'visible', 'important');
+      modal.style.setProperty('animation', 'none', 'important');
+      modal.style.setProperty('transition', 'none', 'important');
+      modal.style.setProperty('display', 'flex', 'important');
+      modal.style.setProperty('pointer-events', 'auto', 'important');
+    } catch (_) {}
+    var box = modal.querySelector('.modal-box, .modal-content, .md-dialog-surface');
+    if (box) {
+      try {
+        box.style.setProperty('opacity', '1', 'important');
+        box.style.setProperty('visibility', 'visible', 'important');
+        box.style.setProperty('animation', 'none', 'important');
+        box.style.setProperty('transform', 'none', 'important');
+        box.style.setProperty('pointer-events', 'auto', 'important');
+      } catch (_) {}
+    }
+  }
+
   /* Watchdog: revisa cada 250ms si el modal apareció. Timeout en 8s. */
   function startWatchdog(label) {
     var start = Date.now();
@@ -44,22 +67,16 @@
 
       if (modal && !modal.classList.contains('hidden')) {
         modalSeen = true;
-        /* Verificar que sea realmente visible (no opacity:0 trap) */
-        var box = modal.querySelector('.modal-box');
-        if (box) {
-          var cs = getComputedStyle(box);
-          if (parseFloat(cs.opacity) < 0.5 || cs.visibility === 'hidden') {
-            /* Forzar visibilidad — esto pasa cuando una animación queda atascada */
-            try {
-              box.style.setProperty('opacity', '1', 'important');
-              box.style.setProperty('visibility', 'visible', 'important');
-              box.style.setProperty('animation', 'none', 'important');
-              box.style.setProperty('transform', 'none', 'important');
-              console.warn('[rev-fix] Modal abierto pero invisible — forzando visibilidad');
-            } catch (_) {}
-          } else {
-            visible = true;
-          }
+        /* Verificar que el MODAL (no solo el box) sea realmente visible */
+        var modalCs = getComputedStyle(modal);
+        var modalInvisible = parseFloat(modalCs.opacity) < 0.5 || modalCs.visibility === 'hidden' || modalCs.display === 'none';
+        var box = modal.querySelector('.modal-box, .modal-content');
+        var boxInvisible = box && (parseFloat(getComputedStyle(box).opacity) < 0.5 || getComputedStyle(box).visibility === 'hidden');
+        if (modalInvisible || boxInvisible) {
+          forceModalVisible(modal);
+          console.warn('[rev-fix] Modal/box invisible — forzando visibilidad', { modalInvisible: modalInvisible, boxInvisible: boxInvisible });
+        } else {
+          visible = true;
         }
       }
 
@@ -89,9 +106,15 @@
     }, 250);
   }
 
-  /* Capture-phase para correr ANTES del handler original */
+  /* Capture-phase para correr ANTES del handler original
+     Cubre: Nueva Revisión Máquina + Calendario Mantenimientos + cualquier botón que abra modal */
   document.addEventListener('click', function (e) {
-    var btn = e.target.closest && e.target.closest('.btn-rev-desde-catalogo, #nueva-revision-maq');
+    var btn = e.target.closest && e.target.closest(
+      '.btn-rev-desde-catalogo, #nueva-revision-maq, ' +
+      '.cal-day--click[data-date], .cal-day[data-date], ' +
+      '.btn-mant-gar, .btn-mant-gar-sin, .btn-mant-dia-edit, ' +
+      '.btn-edit-mant, .btn-new-mant'
+    );
     if (!btn) return;
 
     /* Lock contra doble-click */
@@ -103,9 +126,18 @@
     }
     BUSY_LOCK = Date.now();
 
-    /* Feedback inmediato */
-    var label = btn.id === 'nueva-revision-maq' ? 'nueva revisión' : 'revisión desde catálogo';
-    toast('🔄 Cargando formulario de ' + label + '...', 'info');
+    /* Feedback inmediato según tipo de botón */
+    var label;
+    if (btn.id === 'nueva-revision-maq') label = 'nueva revisión';
+    else if (btn.classList.contains('btn-rev-desde-catalogo')) label = 'revisión desde catálogo';
+    else if (btn.classList.contains('cal-day--click') || btn.classList.contains('cal-day')) {
+      var dt = btn.getAttribute('data-date');
+      label = 'mantenimientos del ' + (dt || 'día');
+    }
+    else if (btn.classList.contains('btn-mant-gar') || btn.classList.contains('btn-mant-gar-sin')) label = 'mantenimientos';
+    else if (btn.classList.contains('btn-mant-dia-edit')) label = 'editor de mantenimiento';
+    else label = 'formulario';
+    toast('🔄 Cargando ' + label + '...', 'info');
 
     /* Visual: cursor wait + button disabled visualmente */
     document.body.style.cursor = 'wait';
@@ -123,41 +155,33 @@
     }, WATCHDOG_MS);
   }, true /* capture phase */);
 
-  /* También detectar si el modal queda invisible tras cualquier click (no solo Nueva Revisión) */
-  var bodyMo;
+  /* También detectar si CUALQUIER modal queda invisible tras un click. Cubre #modal, #modal-stack
+     y cualquier otro contenedor con clase .modal */
   function setupModalWatcher() {
-    var modal = $('#modal');
-    if (!modal) {
-      setTimeout(setupModalWatcher, 1000);
-      return;
-    }
-    /* Observa cuando le quitan la clase 'hidden' al modal */
-    var mo = new MutationObserver(function (muts) {
-      for (var i = 0; i < muts.length; i++) {
-        var m = muts[i];
-        if (m.type === 'attributes' && m.attributeName === 'class') {
-          if (!modal.classList.contains('hidden')) {
-            /* Modal se abre — verificar visibilidad en próximo frame */
-            requestAnimationFrame(function () {
-              var box = modal.querySelector('.modal-box');
-              if (!box) return;
-              var cs = getComputedStyle(box);
-              if (parseFloat(cs.opacity) < 0.1 || cs.visibility === 'hidden' || cs.display === 'none') {
-                try {
-                  box.style.setProperty('opacity', '1', 'important');
-                  box.style.setProperty('visibility', 'visible', 'important');
-                  box.style.setProperty('display', 'block', 'important');
-                  box.style.setProperty('animation', 'none', 'important');
-                  box.style.setProperty('transform', 'none', 'important');
-                  console.warn('[rev-fix] Modal invisible detectado — visibilidad forzada');
-                } catch (_) {}
-              }
-            });
+    var targets = ['#modal', '#modal-stack'];
+    var anyFound = false;
+    targets.forEach(function (sel) {
+      var modal = document.querySelector(sel);
+      if (!modal || modal._revFixWatched) return;
+      modal._revFixWatched = true;
+      anyFound = true;
+      var mo = new MutationObserver(function () {
+        if (modal.classList.contains('hidden')) return;
+        /* Modal se abre — forzar visibilidad TRES veces (por si la animación es lenta) */
+        forceModalVisible(modal);
+        requestAnimationFrame(function () { forceModalVisible(modal); });
+        setTimeout(function () { forceModalVisible(modal); }, 100);
+        setTimeout(function () {
+          var cs = getComputedStyle(modal);
+          if (parseFloat(cs.opacity) < 0.5 || cs.display === 'none') {
+            console.warn('[rev-fix] Modal sigue invisible tras 250ms — segundo intento');
+            forceModalVisible(modal);
           }
-        }
-      }
+        }, 250);
+      });
+      mo.observe(modal, { attributes: true, attributeFilter: ['class', 'style'] });
     });
-    mo.observe(modal, { attributes: true, attributeFilter: ['class'] });
+    if (!anyFound) setTimeout(setupModalWatcher, 1000);
   }
 
   if (document.readyState === 'complete') setTimeout(setupModalWatcher, 800);
