@@ -1,13 +1,13 @@
 /**
- * service-worker.js v56 — PWA-safe + timeout en network requests + cache-bust v80
- *   v80 (2026-05-07): davai SSE fix - Web ReadableStream (Node 20 fetch fix)
+ * service-worker.js v56 — PWA-safe + timeout en network requests + cache-bust v81
+ *   v81 (2026-05-07): rediseño tablas — fix filter-row flex bug + sticky actions + ellipsis
  * Estrategias:
  *   - HTML, CSS, JS, JSON, fonts: network-first con TIMEOUT 4s + fallback cache
  *   - Imágenes: cache-first
  *   - APIs auth: bypass total (no cache)
  *   - skipWaiting + clients.claim para PWA standalone (evita race conditions)
  */
-const VERSION = 'cotizacion-pro-v80';
+const VERSION = 'cotizacion-pro-v81';
 const CACHE_RUNTIME = VERSION + '-runtime';
 const NETWORK_TIMEOUT_MS = 4000;
 const STATIC_URLS = ['/', '/index.html', '/css/style.css', '/favicon.svg', '/manifest.json'];

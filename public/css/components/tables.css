@@ -38,16 +38,21 @@ body.md3-on .table-wrap > table thead {
 body.md3-on table.data-table thead th,
 body.md3-on .md-table thead th,
 body.md3-on .table-wrap > table thead th {
-  padding: var(--md-sys-spacing-4) var(--md-sys-spacing-4);
+  padding: 10px 14px;
   text-align: left;
   font: var(--md-sys-typescale-label-large);
+  font-size: 0.78rem;
+  font-weight: 700;
   color: var(--md-sys-color-on-surface);
-  letter-spacing: 0.1px;
-  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container);
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 2;
   white-space: nowrap;
+  height: 44px;
 }
 
 body.md3-on table.data-table thead th.sortable,
@@ -73,10 +78,28 @@ body.md3-on table.data-table thead th.sorted-desc::after { content: '↓'; opaci
 body.md3-on table.data-table tbody td,
 body.md3-on .md-table tbody td,
 body.md3-on .table-wrap > table tbody td {
-  padding: var(--md-sys-spacing-3) var(--md-sys-spacing-4);
-  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  padding: 10px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
   vertical-align: middle;
   color: var(--md-sys-color-on-surface);
+  font-size: 0.85rem;
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body.md3-on table.data-table tbody td:hover,
+body.md3-on .md-table tbody td:hover {
+  white-space: normal;
+  overflow: visible;
+  position: relative;
+  z-index: 1;
+}
+body.md3-on table.data-table tbody td.no-truncate,
+body.md3-on table.data-table tbody td.td-text-wrap {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 body.md3-on table.data-table tbody tr:last-child td,
@@ -112,29 +135,36 @@ body.md3-on .md-table tbody tr.selected {
   color: var(--md-sys-color-on-primary-container);
 }
 
-/* ── Row actions cell — sticky right column with min-width ───────────── */
+/* ── Row actions cell — sticky right + sombra suave a la izquierda ──── */
 body.md3-on table.data-table .th-actions,
 body.md3-on table.data-table td.actions,
 body.md3-on .md-table .actions {
   width: auto;
-  min-width: 180px;
+  min-width: 130px;
+  max-width: none;
   white-space: nowrap;
   text-align: right;
   position: sticky;
   right: 0;
   z-index: 1;
   background: inherit;
+  overflow: visible;
+  text-overflow: clip;
+  box-shadow: -8px 0 12px -8px rgba(0,0,0,0.35);
 }
 body.md3-on table.data-table thead th.th-actions,
 body.md3-on .md-table thead th.actions {
-  z-index: 3;
+  z-index: 4;
   background: var(--md-sys-color-surface-container, #1e293b);
+  box-shadow: -8px 0 12px -8px rgba(0,0,0,0.45);
 }
-body.md3-on table.data-table tbody tr td.actions {
+body.md3-on table.data-table tbody tr td.actions,
+body.md3-on table.data-table tbody tr td.th-actions {
   background: var(--md-sys-color-surface, #0f172a);
 }
-body.md3-on table.data-table tbody tr:hover td.actions {
-  background: var(--md-sys-color-surface-container-high, #1f2937);
+body.md3-on table.data-table tbody tr:hover td.actions,
+body.md3-on table.data-table tbody tr:hover td.th-actions {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 6%, var(--md-sys-color-surface));
 }
 
 body.md3-on td.actions .btn,
@@ -173,9 +203,45 @@ body.md3-on .md-table tbody tr.empty-row td {
   font: var(--md-sys-typescale-body-medium);
 }
 
-/* ── Filter row above table ─────────────────────────────────────────── */
-body.md3-on .filter-row,
-body.md3-on .table-toolbar {
+/* ── Filter row INSIDE thead (alineado con columnas) ─────────────────── */
+body.md3-on table.data-table thead tr.filter-row,
+body.md3-on .md-table thead tr.filter-row {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 3%, var(--md-sys-color-surface-container));
+}
+body.md3-on table.data-table thead tr.filter-row td,
+body.md3-on .md-table thead tr.filter-row td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  position: sticky;
+  top: 44px; /* Debajo del header principal sticky */
+  background: inherit;
+  z-index: 1;
+}
+body.md3-on table.data-table thead tr.filter-row td .filter-input,
+body.md3-on table.data-table thead tr.filter-row td input.filter-input,
+body.md3-on .md-table thead tr.filter-row td .filter-input,
+body.md3-on .md-table thead tr.filter-row td input.filter-input {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  height: 32px;
+  padding: 4px 8px;
+  font-size: 0.78rem;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 6px;
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+}
+body.md3-on table.data-table thead tr.filter-row td .filter-input:focus,
+body.md3-on .md-table thead tr.filter-row td .filter-input:focus {
+  outline: none;
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent);
+}
+
+/* ── Toolbar / barra de filtros EXTERNA a la tabla ───────────────────── */
+body.md3-on .table-toolbar,
+body.md3-on .filter-bar:not(thead .filter-bar):not(tr) {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -184,10 +250,9 @@ body.md3-on .table-toolbar {
   background: var(--md-sys-color-surface);
   border-bottom: 1px solid var(--md-sys-color-outline-variant);
 }
-
-body.md3-on .filter-row > .search,
-body.md3-on .filter-row > input[type="search"],
-body.md3-on .filter-row > input[type="text"] {
+body.md3-on .table-toolbar > .search,
+body.md3-on .table-toolbar > input[type="search"],
+body.md3-on .table-toolbar > input[type="text"] {
   flex: 1 1 240px;
   min-width: 0;
   max-width: 320px;
@@ -221,11 +286,67 @@ body.md3-on table.data-table th.money {
 /* ── Compact density ────────────────────────────────────────────────── */
 body.md3-on table.data-table.compact tbody td,
 body.md3-on .md-table.compact tbody td {
-  padding: var(--md-sys-spacing-2) var(--md-sys-spacing-3);
-  font: var(--md-sys-typescale-body-small);
+  padding: 6px 10px;
+  font-size: 0.78rem;
 }
 body.md3-on table.data-table.compact thead th,
 body.md3-on .md-table.compact thead th {
-  padding: var(--md-sys-spacing-2) var(--md-sys-spacing-3);
-  font: var(--md-sys-typescale-label-medium);
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  height: 36px;
 }
+
+/* ── Action buttons inside td.actions — más compactos y prolijos ─────── */
+body.md3-on td.actions .btn,
+body.md3-on td.actions .btn-icon,
+body.md3-on td.th-actions .btn,
+body.md3-on td.th-actions .btn-icon {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+  font-size: 0.78rem;
+  border-radius: 6px;
+}
+body.md3-on td.actions .btn.small,
+body.md3-on td.th-actions .btn.small { width: 30px; height: 30px; min-height: 30px; }
+
+/* ── Estados específicos: stock alert, badges dentro de tabla ────────── */
+body.md3-on table.data-table tbody td .badge,
+body.md3-on table.data-table tbody td .stock-alert {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+/* ── Responsive: scroll suave + columna acciones siempre visible ─────── */
+@media (max-width: 768px) {
+  body.md3-on table.data-table thead th,
+  body.md3-on .md-table thead th,
+  body.md3-on .table-wrap > table thead th {
+    padding: 8px 10px;
+    font-size: 0.72rem;
+    height: 38px;
+  }
+  body.md3-on table.data-table tbody td,
+  body.md3-on .md-table tbody td {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+    max-width: 240px;
+  }
+  body.md3-on td.actions .btn,
+  body.md3-on td.actions .btn-icon { width: 34px; height: 34px; } /* touch target */
+  body.md3-on table.data-table .th-actions,
+  body.md3-on table.data-table td.actions { min-width: 110px; }
+}
+
+/* ── Wrap visual del table-wrap: bordes y radio consistente ──────────── */
+body.md3-on .table-wrap { border-radius: 12px; }
+body.md3-on .table-wrap > .table-footer { border-radius: 0 0 12px 12px; }
