@@ -1,5 +1,6 @@
 /**
- * service-worker.js v56 — PWA-safe + timeout en content + cache-bust v110
+ * service-worker.js v56 — PWA-safe + timeout en content + cache-bust v111
+ *   v111 (2026-05-08): Tarifas inputs alineados — overrides para inputs en TD + form-grid en panel Tarifas
  *   v110 (2026-05-08): Revisión Máquina anti-freeze — feedback inmediato + watchdog 8s + force-visible
  *   v109 (2026-05-08): SUPREME LAYER — DavAI + Tables + Forms + Prospección Kanban (4 archivos nuevos)
  *   v108 (2026-05-08): TD transparent en hover (premium.css enmascaraba el gradient con bg muddy)
@@ -13,7 +14,7 @@
  *   - APIs auth: bypass total (no cache)
  *   - skipWaiting + clients.claim para PWA standalone (evita race conditions)
  */
-const VERSION = 'cotizacion-pro-v110';
+const VERSION = 'cotizacion-pro-v111';
 const CACHE_RUNTIME = VERSION + '-runtime';
 const NETWORK_TIMEOUT_MS = 4000;
 const STATIC_URLS = ['/', '/index.html', '/css/style.css', '/favicon.svg', '/manifest.json'];

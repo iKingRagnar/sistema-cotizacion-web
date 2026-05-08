@@ -577,3 +577,174 @@ html body .switch[aria-checked="true"]::after {
   html body .btn,
   html body .toggle-switch::after { transition: none !important; }
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   13. OVERRIDES — Inputs DENTRO de tablas y formularios compactos
+   (los inputs en celdas necesitan ser pequeños, no padding 10px 14px)
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Inputs/selects dentro de TD de cualquier data-table → compactos */
+html body table.data-table tbody td input[type=text],
+html body table.data-table tbody td input[type=number],
+html body table.data-table tbody td input[type=email],
+html body table.data-table tbody td input[type=tel],
+html body table.data-table tbody td input[type=url],
+html body table.data-table tbody td input[type=search],
+html body table.data-table tbody td input[type=date],
+html body table.data-table tbody td input[type=time],
+html body table.data-table tbody td select,
+html body table.data-table tbody td textarea,
+html body .data-table tbody td input,
+html body .data-table tbody td select,
+html body .data-table tbody td textarea {
+  padding: 6px 10px !important;
+  font-size: 0.84rem !important;
+  margin: 0 !important;
+  width: 100% !important;
+  min-height: 32px !important;
+  line-height: 1.3 !important;
+  border-radius: 6px !important;
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+}
+html body table.data-table tbody td input:focus,
+html body table.data-table tbody td select:focus,
+html body table.data-table tbody td textarea:focus,
+html body .data-table tbody td input:focus,
+html body .data-table tbody td select:focus,
+html body .data-table tbody td textarea:focus {
+  border-color: rgba(59,130,246,0.55) !important;
+  background: rgba(59,130,246,0.08) !important;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.18) !important;
+}
+
+/* TD que contiene input → padding reducido (no acumular cell-padding + input-padding) */
+html body table.data-table tbody td:has(input),
+html body table.data-table tbody td:has(select),
+html body table.data-table tbody td:has(textarea),
+html body .data-table tbody td:has(input),
+html body .data-table tbody td:has(select) {
+  padding: 6px 8px !important;
+  vertical-align: middle !important;
+}
+
+/* Específicos para Tarifas (.tarifa-input / .tarifa-input-text / .tarifa-usd-4dec) */
+html body .tarifa-input,
+html body .tarifa-input-text,
+html body .tarifa-usd-4dec,
+html body input.tarifa-input,
+html body input.tarifa-input-text {
+  padding: 7px 11px !important;
+  font-size: 0.86rem !important;
+  min-height: 34px !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-variant-numeric: tabular-nums !important;
+  text-align: left !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+html body .tarifa-input-text {
+  font-family: inherit !important;
+  font-variant-numeric: normal !important;
+}
+
+/* Tarifas form-grid (las form-group fuera de tabla) — alinear bien labels e inputs */
+html body .tarifas-form-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+  gap: 12px 14px !important;
+  margin-bottom: 12px !important;
+}
+html body .tarifas-form-grid .form-group {
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 5px !important;
+}
+html body .tarifas-form-grid .form-group label {
+  margin: 0 !important;
+  font-size: 0.7rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.4px !important;
+  color: #94a3b8 !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+}
+html body .tarifas-form-grid .form-group input,
+html body .tarifas-form-grid .form-group select {
+  padding: 8px 12px !important;
+  font-size: 0.86rem !important;
+  height: 36px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Tarifas section spacing */
+html body .tarifas-section {
+  margin-bottom: 22px !important;
+  padding: 16px 18px !important;
+  background: rgba(15,23,42,0.45) !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  border-radius: 12px !important;
+}
+html body .tarifas-section-title {
+  margin: 0 0 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 1.02rem !important;
+  font-weight: 700 !important;
+  color: #f8fafc !important;
+  font-family: 'Sora', sans-serif !important;
+}
+html body .tarifas-section-title i {
+  color: #60a5fa !important;
+  font-size: 1rem !important;
+}
+html body .tarifas-hint {
+  font-size: 0.82rem !important;
+  color: #94a3b8 !important;
+  line-height: 1.55 !important;
+  margin: 0 0 14px !important;
+}
+html body .tarifas-hint code {
+  background: rgba(0,0,0,0.4) !important;
+  color: #93c5fd !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.78rem !important;
+}
+html body .tarifas-hint strong { color: #cbd5e1 !important; }
+html body .tarifas-hint em { color: #fcd34d !important; font-style: normal !important; }
+
+/* Tarifas tabla — bg ligero del row + alineación de labels */
+html body #tabla-tarifas-mano-obra td:first-child,
+html body #tabla-tarifas-traslado td:first-child {
+  font-weight: 600 !important;
+  color: #93c5fd !important;
+  white-space: nowrap !important;
+  padding: 8px 12px !important;
+  width: 1%;
+}
+html body #tabla-tarifas-mano-obra th,
+html body #tabla-tarifas-traslado th {
+  padding: 10px 12px !important;
+  font-size: 0.72rem !important;
+}
+html body #tabla-tarifas-mano-obra td,
+html body #tabla-tarifas-traslado td {
+  padding: 6px 10px !important;
+  vertical-align: middle !important;
+}
+
+/* Tipo de cambio meta info */
+html body #tarifas-tc-meta {
+  background: rgba(59,130,246,0.06) !important;
+  border: 1px solid rgba(59,130,246,0.18) !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  font-size: 0.8rem !important;
+  color: #cbd5e1 !important;
+  margin-top: 8px !important;
+}
