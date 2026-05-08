@@ -1,5 +1,6 @@
 /**
- * service-worker.js v56 — PWA-safe + timeout en content + cache-bust v104
+ * service-worker.js v56 — PWA-safe + timeout en content + cache-bust v105
+ *   v105 (2026-05-08): Prospección Pro — KPIs + IA hunter/enrich/pitch/insights/funnel/cluster/compare
  *   v104 (2026-05-08): tables-fix v5 — botones acciones compactos 30px + min-width col 200/230px
  * Estrategias:
  *   - HTML, CSS, JS, JSON, fonts: network-first con TIMEOUT 4s + fallback cache
@@ -7,7 +8,7 @@
  *   - APIs auth: bypass total (no cache)
  *   - skipWaiting + clients.claim para PWA standalone (evita race conditions)
  */
-const VERSION = 'cotizacion-pro-v104';
+const VERSION = 'cotizacion-pro-v105';
 const CACHE_RUNTIME = VERSION + '-runtime';
 const NETWORK_TIMEOUT_MS = 4000;
 const STATIC_URLS = ['/', '/index.html', '/css/style.css', '/favicon.svg', '/manifest.json'];
