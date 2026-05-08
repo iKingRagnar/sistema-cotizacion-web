@@ -5227,19 +5227,26 @@ app.post('/api/davai/chat', async (req, res) => {
 
       res.write('data: ' + JSON.stringify({ conversationId: convId }) + '\n\n');
 
-      const reader = anthropicRes.body;
-      const { createInterface } = require('readline');
-      const rl = createInterface({ input: reader, crlfDelay: Infinity });
-      for await (const line of rl) {
-        if (!line.startsWith('data: ')) continue;
-        const raw = line.slice(6);
-        if (raw === '[DONE]') break;
-        try {
-          const ev = JSON.parse(raw);
-          if (ev.type === 'content_block_delta' && ev.delta && ev.delta.text) {
-            res.write('data: ' + JSON.stringify({ text: ev.delta.text }) + '\n\n');
-          }
-        } catch (_) {}
+      /* Node 20+ fetch() devuelve Web ReadableStream, no Node Readable.
+         readline.createInterface() requiere Node stream (.on('data')).
+         Leemos el stream directamente con for await + parseamos SSE manualmente. */
+      const decoder = new TextDecoder();
+      let buffer = '';
+      for await (const chunk of anthropicRes.body) {
+        buffer += decoder.decode(chunk, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const raw = line.slice(6);
+          if (raw === '[DONE]') continue;
+          try {
+            const ev = JSON.parse(raw);
+            if (ev.type === 'content_block_delta' && ev.delta && ev.delta.text) {
+              res.write('data: ' + JSON.stringify({ text: ev.delta.text }) + '\n\n');
+            }
+          } catch (_) {}
+        }
       }
       res.write('data: [DONE]\n\n');
       return res.end();
@@ -5268,17 +5275,23 @@ app.post('/api/davai/chat', async (req, res) => {
 
       res.write('data: ' + JSON.stringify({ conversationId: convId }) + '\n\n');
 
-      const { createInterface } = require('readline');
-      const rl = createInterface({ input: openaiRes.body, crlfDelay: Infinity });
-      for await (const line of rl) {
-        if (!line.startsWith('data: ')) continue;
-        const raw = line.slice(6);
-        if (raw === '[DONE]') break;
-        try {
-          const ev = JSON.parse(raw);
-          const delta = (ev.choices && ev.choices[0] && ev.choices[0].delta && ev.choices[0].delta.content) || '';
-          if (delta) res.write('data: ' + JSON.stringify({ text: delta }) + '\n\n');
-        } catch (_) {}
+      /* Mismo issue Web ReadableStream — leemos directo. */
+      const decoder = new TextDecoder();
+      let buffer = '';
+      for await (const chunk of openaiRes.body) {
+        buffer += decoder.decode(chunk, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const raw = line.slice(6);
+          if (raw === '[DONE]') continue;
+          try {
+            const ev = JSON.parse(raw);
+            const delta = (ev.choices && ev.choices[0] && ev.choices[0].delta && ev.choices[0].delta.content) || '';
+            if (delta) res.write('data: ' + JSON.stringify({ text: delta }) + '\n\n');
+          } catch (_) {}
+        }
       }
       res.write('data: [DONE]\n\n');
       return res.end();
