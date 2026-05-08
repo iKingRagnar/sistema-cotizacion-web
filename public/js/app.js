@@ -11727,6 +11727,99 @@
         btn.addEventListener('click', () => showPanel(btn.dataset.goto));
       });
 
+      // Pipeline Funnel Visualization
+      if (showCot) try {
+        const funnelEl = document.createElement('div');
+        funnelEl.className = 'dashboard-pipeline-funnel';
+        funnelEl.setAttribute('aria-label', 'Pipeline funnel');
+        const funnelStages = [
+          { label: 'Total Leads', value: clientesCtx.length, color: '#3b82f6', width: 100 },
+          { label: 'Con Cotización', value: cotizacionesCtx.length > 0 ? Math.min(clientesCtx.length, cotizacionesCtx.length) : 0, color: '#8b5cf6', width: 75 },
+          { label: 'Este Mes', value: cotEsteMes, color: '#e0950f', width: 50 },
+          { label: 'Facturado', value: cotizacionesCtx.filter(c => c.estado === 'facturada' || c.estado === 'aceptada').length, color: '#19b855', width: 30 },
+        ];
+        funnelEl.innerHTML = `
+          <div class="dashboard-card-header">
+            <span class="dashboard-card-icon"><i class="fas fa-filter"></i></span>
+            <div class="dashboard-card-heading"><h3 class="dashboard-card-title">Pipeline de Conversión</h3><span class="dashboard-card-subtitle">Embudo de ventas</span></div>
+          </div>
+          <div class="dashboard-funnel-bars">
+            ${funnelStages.map(s => `
+              <div class="dashboard-funnel-row">
+                <span class="dashboard-funnel-label">${escapeHtml(s.label)}</span>
+                <div class="dashboard-funnel-bar-track">
+                  <div class="dashboard-funnel-bar" style="width:${s.width}%;background:${s.color};"></div>
+                </div>
+                <span class="dashboard-funnel-val">${s.value}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        grid.appendChild(funnelEl);
+      } catch (_) {}
+
+      // Activity Feed
+      try {
+        const feedEl = document.createElement('div');
+        feedEl.className = 'dashboard-activity-feed';
+        feedEl.setAttribute('aria-label', 'Actividad reciente');
+        const recentItems = [];
+        cotizacionesCtx.slice(-5).reverse().forEach(c => {
+          recentItems.push({ time: c.fecha || '', type: 'cotizacion', text: 'Cotización ' + escapeHtml(c.folio || '#') + ' · ' + formatMoney(c.total || 0), user: escapeHtml(c.vendedor || c.usuario || 'Sistema'), icon: 'fa-file-invoice-dollar', color: '#3b82f6' });
+        });
+        bitacorasCtx.slice(-5).reverse().forEach(b => {
+          recentItems.push({ time: b.fecha || '', type: 'bitacora', text: escapeHtml(b.descripcion || 'Registro de horas') + ' · ' + (Number(b.tiempo_horas) || 0).toFixed(1) + 'h', user: escapeHtml(b.tecnico || 'Técnico'), icon: 'fa-wrench', color: '#e0950f' });
+        });
+        recentItems.sort((a, b) => (b.time || '').localeCompare(a.time || ''));
+        const feedItems = recentItems.slice(0, 8);
+        feedEl.innerHTML = `
+          <div class="dashboard-card-header">
+            <span class="dashboard-card-icon"><i class="fas fa-stream"></i></span>
+            <div class="dashboard-card-heading"><h3 class="dashboard-card-title">Actividad Reciente</h3><span class="dashboard-card-subtitle">Últimos movimientos</span></div>
+          </div>
+          <div class="activity-feed-list">
+            ${feedItems.length ? feedItems.map(item => `
+              <div class="activity-feed-item">
+                <span class="activity-feed-time">${escapeHtml(item.time ? new Intl.DateTimeFormat('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(item.time)) : '--')}</span>
+                <span class="activity-feed-text"><i class="fas ${item.icon}" style="color:${item.color};margin-right:4px;"></i><span class="activity-feed-user">${item.user}</span> — ${item.text}</span>
+              </div>
+            `).join('') : '<div class="activity-feed-empty"><i class="fas fa-inbox" style="font-size:1.5rem;opacity:0.3;margin-bottom:0.5rem;display:block;"></i>Sin actividad reciente</div>'}
+          </div>
+        `;
+        grid.appendChild(feedEl);
+      } catch (_) {}
+
+      // Top Entities Table
+      try {
+        const topEl = document.createElement('div');
+        topEl.className = 'dashboard-top-entities';
+        topEl.setAttribute('aria-label', 'Top entidades');
+        const topClientes = clientesCtx.slice().sort((a, b) => {
+          const maqA = maqPorCliente[a.nombre] || 0;
+          const maqB = maqPorCliente[b.nombre] || 0;
+          return maqB - maqA;
+        }).slice(0, 5);
+        topEl.innerHTML = `
+          <div class="dashboard-card-header">
+            <span class="dashboard-card-icon"><i class="fas fa-trophy"></i></span>
+            <div class="dashboard-card-heading"><h3 class="dashboard-card-title">Top 5 Clientes</h3><span class="dashboard-card-subtitle">Por equipos registrados</span></div>
+          </div>
+          <div class="dashboard-top-table">
+            ${topClientes.map((c, i) => `
+              <div class="dashboard-top-row">
+                <span class="dashboard-top-rank">${i + 1}</span>
+                <div class="dashboard-top-info">
+                  <span class="dashboard-top-name">${escapeHtml(c.nombre || 'Sin nombre')}</span>
+                  <span class="dashboard-top-meta">${escapeHtml(c.ciudad || '')}${c.estado_mx ? ', ' + escapeHtml(c.estado_mx) : ''}</span>
+                </div>
+                <span class="dashboard-top-val">${maqPorCliente[c.nombre] || 0} <small>equipos</small></span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        grid.appendChild(topEl);
+      } catch (_) {}
+
       // Cachés desde el mismo payload; pintar tablas pesadas solo si esa pestaña está activa (evita bloquear el hilo al cargar el dashboard).
       try {
         cotizacionesCache = showCot ? cotizaciones : [];

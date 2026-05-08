@@ -7105,6 +7105,42 @@ app.post('/api/prospectos/import-replace', async (req, res) => {
   }
 });
 
+/** Actualizar un prospecto existente */
+app.put('/api/prospectos/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const b = req.body || {};
+    const allowed = ['empresa','zona','lat','lng','tipo_interes','industria','potencial_usd','ultimo_contacto','score_ia','estado','notas'];
+    const sets = [];
+    const vals = [];
+    for (const col of allowed) {
+      if (Object.prototype.hasOwnProperty.call(b, col)) {
+        sets.push(col + '=?');
+        vals.push(b[col]);
+      }
+    }
+    if (!sets.length) return res.status(400).json({ error: 'Nada que actualizar' });
+    vals.push(id);
+    await db.runQuery('UPDATE prospectos SET ' + sets.join(',') + ' WHERE id=?', vals);
+    const updated = await db.getAll('SELECT * FROM prospectos WHERE id=?', [id]);
+    res.json(updated[0] || { ok: true });
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+/** Crear un prospecto nuevo */
+app.post('/api/prospectos', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const empresa = b.empresa || 'Nuevo Prospecto';
+    const cols = ['empresa','zona','lat','lng','tipo_interes','industria','potencial_usd','ultimo_contacto','score_ia','estado','notas'];
+    const values = cols.map(c => b[c] != null ? b[c] : null);
+    const placeholders = cols.map(() => '?').join(',');
+    await db.runQuery('INSERT INTO prospectos (' + cols.join(',') + ') VALUES (' + placeholders + ')', values);
+    const row = await db.getAll('SELECT * FROM prospectos ORDER BY id DESC LIMIT 1');
+    res.json(row[0] || { ok: true });
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
 /** Mantenimientos de taller (preventivo/correctivo), no confundir con mantenimientos_garantia */
 app.get('/api/mantenimientos-taller', async (req, res) => {
   try {

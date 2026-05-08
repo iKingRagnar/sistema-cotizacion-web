@@ -597,6 +597,28 @@
     return loadNotes()[leadId] || '';
   }
 
+  function findSimilarLeads(lead, max) {
+    max = max || 4;
+    var results = [];
+    for (var i = 0; i < state.allLeads.length; i++) {
+      var o = state.allLeads[i];
+      if (o.id === lead.id) continue;
+      var score = 0;
+      if (o.industria === lead.industria) score += 40;
+      if (o.estado === lead.estado) score += 20;
+      var dist = haversineKm(lead, o);
+      if (dist < 100) score += 25;
+      else if (dist < 300) score += 15;
+      else if (dist < 500) score += 5;
+      var potDiff = Math.abs((o.potencial_usd || 0) - (lead.potencial_usd || 0));
+      if (potDiff < 100000) score += 15;
+      else if (potDiff < 300000) score += 8;
+      if (score >= 30) results.push({ lead: o, score: score, dist: dist });
+    }
+    results.sort(function (a, b) { return b.score - a.score; });
+    return results.slice(0, max);
+  }
+
   /* ----------------------------------------------------------
    * 10b. DETAIL DRAWER — 5 tabs (Info, Activity, Notes, AI, Edit)
    * ---------------------------------------------------------- */
@@ -664,15 +686,44 @@
       segOptions += '<option value="' + sgKeys[sgi] + '"' + (lead.industria === sgKeys[sgi] ? ' selected' : '') + '>' + SEGMENTS[sgKeys[sgi]].emoji + ' ' + SEGMENTS[sgKeys[sgi]].label + '</option>';
     }
 
+    var prob = Math.round(score * 0.85);
+    var daysSinceContact = lead.ultimo_contacto ? Math.round((Date.now() - new Date(lead.ultimo_contacto).getTime()) / 86400000) : 999;
+    var isStale = daysSinceContact > 30;
+
+    var stagePillsHTML = '';
+    var stKeys2 = Object.keys(STAGES);
+    for (var sp = 0; sp < stKeys2.length; sp++) {
+      var sk = stKeys2[sp];
+      var isActive = lead.estado === sk;
+      stagePillsHTML += '<button class="prs-stage-pill' + (isActive ? ' active' : '') + '" data-stage="' + sk + '" style="--pill-color:' + STAGES[sk].color + '">' + STAGES[sk].label + '</button>';
+    }
+
+    var similars = findSimilarLeads(lead);
+    var similarsHTML = '';
+    for (var si2 = 0; si2 < similars.length; si2++) {
+      var sim = similars[si2];
+      var simSeg = SEGMENTS[sim.lead.industria] || { emoji: '\u{1F4CD}', label: '?' };
+      similarsHTML += '<div class="prs-similar-lead" data-id="' + sim.lead.id + '">' +
+        '<div class="prs-similar-lead__emoji">' + simSeg.emoji + '</div>' +
+        '<div class="prs-similar-lead__info">' +
+          '<div class="prs-similar-lead__name">' + esc(sim.lead.empresa) + '</div>' +
+          '<div class="prs-similar-lead__meta">' + esc(sim.lead.zona) + ' · ' + fmtCompactMXN(sim.lead.potencial_usd) + ' · ' + sim.dist + ' km</div>' +
+        '</div>' +
+        '<div class="prs-similar-lead__score">' + (sim.lead.score_ia || 0) + '</div>' +
+      '</div>';
+    }
+
     body.innerHTML =
       '<div class="prs-drawer-hero">' +
         '<div class="prs-drawer-hero__info">' +
           '<div class="prs-drawer-badges">' +
             '<span class="prs-badge" style="--badge-color:' + stage.color + '">' + stage.label + '</span>' +
+            '<span class="prs-badge" style="--badge-color:' + (seg.color || '#64748b') + '">' + seg.emoji + ' ' + esc(seg.label) + '</span>' +
             (score >= 85 ? '<span class="prs-badge prs-badge--hot">★ HOT</span>' : '') +
+            (isStale ? '<span class="prs-badge prs-badge--stale">⚠ Inactivo</span>' : '') +
           '</div>' +
           '<h3 class="prs-drawer-title">' + esc(lead.empresa) + '</h3>' +
-          '<div class="prs-drawer-sub">' + seg.emoji + ' ' + esc(seg.label) + ' · ' + esc(lead.zona || '') + '</div>' +
+          '<div class="prs-drawer-sub"><i class="fas fa-map-marker-alt"></i> ' + esc(lead.zona || '') + '</div>' +
         '</div>' +
         '<div class="prospeccion-gauge">' +
           '<svg viewBox="0 0 68 68"><circle class="prospeccion-gauge__track" cx="34" cy="34" r="30"/><circle class="prospeccion-gauge__fill" cx="34" cy="34" r="30" stroke="' + scoreColor(score) + '" stroke-dasharray="' + circ.toFixed(1) + '" stroke-dashoffset="' + offset.toFixed(1) + '"/></svg>' +
@@ -680,10 +731,13 @@
         '</div>' +
       '</div>' +
 
-      '<div class="prs-drawer-potential">' +
-        '<div class="prs-drawer-potential__label">Potencial Estimado</div>' +
-        '<div class="prs-drawer-potential__value">' + fmtFullMXN(lead.potencial_usd) + '</div>' +
-        '<div class="prs-drawer-potential__sub">USD/anual</div>' +
+      '<div class="prs-stage-change"><div class="prs-stage-change__title"><i class="fas fa-exchange-alt"></i> CAMBIAR ETAPA</div><div class="prs-stage-pills">' + stagePillsHTML + '</div></div>' +
+
+      '<div class="prs-kpi-grid">' +
+        '<div class="prs-kpi-cell"><div class="prs-kpi-cell__label">POTENCIAL ANUAL</div><div class="prs-kpi-cell__val prs-kpi-cell__val--money">' + fmtFullMXN(lead.potencial_usd) + '</div></div>' +
+        '<div class="prs-kpi-cell"><div class="prs-kpi-cell__label">PROBABILIDAD</div><div class="prs-kpi-cell__val">' + prob + '%</div></div>' +
+        '<div class="prs-kpi-cell"><div class="prs-kpi-cell__label">SCORE</div><div class="prs-kpi-cell__val" style="color:' + scoreColor(score) + '">' + score + '/100</div></div>' +
+        '<div class="prs-kpi-cell"><div class="prs-kpi-cell__label">ULTIMO CONTACTO</div><div class="prs-kpi-cell__val' + (isStale ? ' prs-kpi-cell__val--stale' : '') + '">' + fmtRelative(lead.ultimo_contacto) + '</div></div>' +
       '</div>' +
 
       '<div class="prospeccion-actions">' +
@@ -720,6 +774,14 @@
             '<div class="prospeccion-detail-section__title"><i class="fas fa-bullseye"></i> Interes Comercial</div>' +
             '<p style="font-size:0.8rem;color:var(--prs-text-muted);line-height:1.5;margin:0;">' + esc(lead.tipo_interes || 'Sin especificar') + '</p>' +
           '</div>' +
+          '<div class="prospeccion-detail-section">' +
+            '<div class="prospeccion-detail-section__title"><i class="fas fa-map-signs"></i> Ubicacion</div>' +
+            '<div style="display:flex;gap:0.5rem;margin-top:0.5rem;">' +
+              '<a href="' + navLink + '" target="_blank" rel="noopener" class="btn primary small" style="flex:1;text-align:center;"><i class="fas fa-directions"></i> Navegar al cliente</a>' +
+              '<a href="https://maps.google.com/?q=' + (lead.lat || 0) + ',' + (lead.lng || 0) + '" target="_blank" rel="noopener" class="btn outline small" style="flex:1;text-align:center;"><i class="fas fa-map"></i> Google Maps</a>' +
+            '</div>' +
+          '</div>' +
+          (similarsHTML ? '<div class="prospeccion-detail-section"><div class="prospeccion-detail-section__title"><i class="fas fa-link"></i> Leads Similares</div><div class="prs-similar-leads">' + similarsHTML + '</div></div>' : '') +
         '</div>' +
 
         '<div class="prs-drawer-panel" data-panel="activity">' +
@@ -748,24 +810,56 @@
 
         '<div class="prs-drawer-panel" data-panel="ai">' +
           '<div class="prospeccion-detail-section">' +
+            '<div class="prospeccion-detail-section__title"><i class="fas fa-wand-magic-sparkles"></i> Siguiente Accion Sugerida</div>' +
+            '<div class="prs-ai-action-card">' +
+              '<div class="prs-ai-action-card__icon"><i class="fas ' + (score >= 85 ? 'fa-calendar-check' : score >= 60 ? 'fa-envelope-open-text' : 'fa-book-reader') + '"></i></div>' +
+              '<div class="prs-ai-action-card__text">' +
+                (score >= 85 ? 'Agendar visita presencial esta semana. Preparar propuesta personalizada con catalogo del sector ' + esc(seg.label) + '.' :
+                 score >= 60 ? 'Enviar caso de estudio del sector ' + esc(seg.label) + '. Dar seguimiento telefonico en 5 dias habiles.' :
+                 'Nutrir con contenido educativo. Calificar necesidades especificas antes de enviar propuesta formal.') +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="prospeccion-detail-section">' +
             '<div class="prospeccion-detail-section__title"><i class="fas fa-robot"></i> Analisis IA</div>' +
             '<div class="prs-ai-card">' +
               '<div class="prs-ai-score-row">' +
                 '<div class="prs-ai-metric"><span class="prs-ai-metric__val" style="color:' + scoreColor(score) + '">' + score + '</span><span class="prs-ai-metric__lbl">Score General</span></div>' +
                 '<div class="prs-ai-metric"><span class="prs-ai-metric__val">' + (score >= 85 ? 'Alto' : score >= 60 ? 'Medio' : 'Bajo') + '</span><span class="prs-ai-metric__lbl">Prioridad</span></div>' +
-                '<div class="prs-ai-metric"><span class="prs-ai-metric__val">' + Math.round(score * 0.85) + '%</span><span class="prs-ai-metric__lbl">Prob. Cierre</span></div>' +
+                '<div class="prs-ai-metric"><span class="prs-ai-metric__val">' + prob + '%</span><span class="prs-ai-metric__lbl">Prob. Cierre</span></div>' +
               '</div>' +
               '<div class="prs-ai-insight"><i class="fas fa-lightbulb" style="color:#f59e0b;"></i> ' +
-                (score >= 85 ? 'Lead de alta prioridad. Recomendacion: agendar visita presencial esta semana y preparar propuesta personalizada.' :
-                 score >= 60 ? 'Lead con potencial medio. Recomendacion: enviar caso de estudio del sector ' + esc(seg.label) + ' y dar seguimiento en 5 dias.' :
-                 'Lead en fase temprana. Recomendacion: nutrir con contenido educativo y calificar necesidades antes de propuesta formal.') +
+                (score >= 85 ? 'Lead de alta prioridad. El potencial de ' + fmtCompactMXN(lead.potencial_usd) + ' justifica atencion inmediata y visita en sitio.' :
+                 score >= 60 ? 'Oportunidad solida en sector ' + esc(seg.label) + '. Incrementar frecuencia de contacto para avanzar en pipeline.' :
+                 'Lead en fase temprana. Recomendacion: identificar tomadores de decision y calificar presupuesto disponible.') +
               '</div>' +
               '<div class="prs-ai-tags">' +
                 '<span class="prs-ai-tag"><i class="fas fa-industry"></i> ' + esc(seg.label) + '</span>' +
                 '<span class="prs-ai-tag"><i class="fas fa-dollar-sign"></i> ' + fmtCompactMXN(lead.potencial_usd) + '</span>' +
                 '<span class="prs-ai-tag"><i class="fas fa-clock"></i> ' + fmtRelative(lead.ultimo_contacto) + '</span>' +
+                '<span class="prs-ai-tag"><i class="fas fa-map-pin"></i> ' + esc(lead.zona) + '</span>' +
               '</div>' +
             '</div>' +
+          '</div>' +
+          '<div class="prospeccion-detail-section">' +
+            '<div class="prospeccion-detail-section__title"><i class="fas fa-camera"></i> Analisis de Foto</div>' +
+            '<div class="prs-photo-upload">' +
+              '<div class="prs-photo-upload__zone" id="prs-photo-zone">' +
+                '<i class="fas fa-cloud-upload-alt"></i>' +
+                '<span>Sube una foto del equipo o planta</span>' +
+                '<span class="prs-photo-upload__hint">Se analizara para recomendar productos</span>' +
+                '<input type="file" id="prs-photo-input" accept="image/*" style="display:none;">' +
+              '</div>' +
+              '<div class="prs-photo-preview" id="prs-photo-preview" style="display:none;">' +
+                '<img id="prs-photo-img" alt="Preview">' +
+                '<button class="prs-photo-remove" id="prs-photo-remove"><i class="fas fa-times"></i></button>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="prospeccion-detail-section">' +
+            '<div class="prospeccion-detail-section__title"><i class="fas fa-envelope-open-text"></i> Generar Email</div>' +
+            '<button class="btn outline small" id="prs-gen-email" style="width:100%;"><i class="fas fa-magic"></i> Redactar email de seguimiento</button>' +
+            '<div class="prs-email-preview" id="prs-email-preview" style="display:none;"></div>' +
           '</div>' +
         '</div>' +
 
@@ -778,6 +872,7 @@
               '<div class="prs-edit-row"><label>Contacto</label><input type="text" name="contacto" value="' + esc(lead.contacto || '') + '"></div>' +
               '<div class="prs-edit-row"><label>Telefono</label><input type="tel" name="telefono" value="' + esc(lead.telefono || '') + '"></div>' +
               '<div class="prs-edit-row"><label>Email</label><input type="email" name="email" value="' + esc(lead.email || '') + '"></div>' +
+              '<div class="prs-edit-row"><label>Interes</label><input type="text" name="tipo_interes" value="' + esc(lead.tipo_interes || '') + '"></div>' +
               '<div class="prs-edit-row"><label>Etapa</label><select name="estado">' + stageOptions + '</select></div>' +
               '<div class="prs-edit-row"><label>Industria</label><select name="industria">' + segOptions + '</select></div>' +
               '<div class="prs-edit-row"><label>Potencial USD</label><input type="number" name="potencial_usd" value="' + (Number(lead.potencial_usd) || 0) + '" min="0" step="1000"></div>' +
@@ -806,6 +901,105 @@
       });
     });
 
+    // Stage change buttons
+    qsa('.prs-stage-pill', body).forEach(function (pill) {
+      pill.addEventListener('click', function () {
+        var newStage = this.getAttribute('data-stage');
+        if (lead.estado === newStage) return;
+        lead.estado = newStage;
+        iconCache = {};
+        applyFilters();
+        renderAll();
+        if (typeof showToast === 'function') showToast('Etapa cambiada a ' + STAGES[newStage].label, 'ok');
+        openDrawer(leadId);
+        fetch('/api/prospectos/' + lead.id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('token') || '') },
+          body: JSON.stringify({ estado: newStage })
+        }).catch(function () {});
+      });
+    });
+
+    // Similar lead clicks
+    qsa('.prs-similar-lead', body).forEach(function (el) {
+      el.addEventListener('click', function () {
+        var sid = this.getAttribute('data-id');
+        if (sid) openDrawer(sid);
+      });
+    });
+
+    // Photo upload
+    var photoZone = qs('#prs-photo-zone');
+    var photoInput = qs('#prs-photo-input');
+    var photoPreview = qs('#prs-photo-preview');
+    var photoImg = qs('#prs-photo-img');
+    var photoRemove = qs('#prs-photo-remove');
+    if (photoZone && photoInput) {
+      photoZone.addEventListener('click', function () { photoInput.click(); });
+      photoInput.addEventListener('change', function () {
+        var file = this.files && this.files[0];
+        if (!file || !file.type.startsWith('image/')) return;
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+          if (photoImg) photoImg.src = ev.target.result;
+          if (photoZone) photoZone.style.display = 'none';
+          if (photoPreview) photoPreview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      });
+      if (photoRemove) {
+        photoRemove.addEventListener('click', function () {
+          if (photoImg) photoImg.src = '';
+          if (photoInput) photoInput.value = '';
+          if (photoZone) photoZone.style.display = '';
+          if (photoPreview) photoPreview.style.display = 'none';
+        });
+      }
+    }
+
+    // Generate email template
+    var genEmailBtn = qs('#prs-gen-email');
+    var emailPreview = qs('#prs-email-preview');
+    if (genEmailBtn && emailPreview) {
+      genEmailBtn.addEventListener('click', function () {
+        var stageTemplates = {
+          prospecto: 'Me pongo en contacto para presentarle nuestro catalogo de ' + (products[0] || 'productos industriales') + ', ideales para el sector ' + (seg.label || 'industrial') + '.',
+          contactado: 'Dando seguimiento a nuestra conversacion previa, me gustaria agendar una reunion para revisar como podemos apoyar sus operaciones en ' + esc(lead.zona || 'su planta') + '.',
+          calificado: 'Basado en nuestro analisis de sus necesidades, he preparado una propuesta personalizada que incluye ' + products.join(', ') + '.',
+          propuesta: 'Le comparto los detalles finales de nuestra propuesta con un potencial de ' + fmtFullMXN(lead.potencial_usd) + '. Quedo atento a sus comentarios.',
+          negociacion: 'Respecto a los terminos que estamos negociando, me gustaria proponer una reunion esta semana para cerrar los ultimos detalles.',
+          ganado: 'Gracias por su confianza. Nuestro equipo esta listo para iniciar la entrega e instalacion.',
+          perdido: 'Agradezco el tiempo invertido. Quedamos a su disposicion para futuras necesidades.'
+        };
+        var template = stageTemplates[lead.estado] || stageTemplates.prospecto;
+        emailPreview.style.display = 'block';
+        emailPreview.innerHTML = '<div class="prs-email-template">' +
+          '<div class="prs-email-template__header"><strong>Para:</strong> ' + esc(lead.email || 'contacto@empresa.com') + '</div>' +
+          '<div class="prs-email-template__header"><strong>Asunto:</strong> ' + esc(lead.empresa) + ' - Propuesta Comercial</div>' +
+          '<div class="prs-email-template__body">' +
+            '<p>Estimado/a ' + esc(lead.contacto || 'responsable') + ',</p>' +
+            '<p>' + template + '</p>' +
+            '<p>Saludos cordiales.</p>' +
+          '</div>' +
+          '<div class="prs-email-template__actions">' +
+            '<a href="mailto:' + esc(lead.email || '') + '?subject=' + encodeURIComponent(lead.empresa + ' - Propuesta Comercial') + '" class="btn primary small"><i class="fas fa-paper-plane"></i> Enviar</a>' +
+            '<button class="btn outline small prs-copy-email"><i class="fas fa-copy"></i> Copiar</button>' +
+          '</div>' +
+        '</div>';
+        var copyBtn = emailPreview.querySelector('.prs-copy-email');
+        if (copyBtn) {
+          copyBtn.addEventListener('click', function () {
+            var text = emailPreview.querySelector('.prs-email-template__body');
+            if (text && navigator.clipboard) {
+              navigator.clipboard.writeText(text.textContent).then(function () {
+                if (typeof showToast === 'function') showToast('Email copiado', 'ok');
+              });
+            }
+          });
+        }
+      });
+    }
+
     // Notes auto-save
     var notesArea = qs('#prs-notes-area');
     var notesStatus = qs('#prs-notes-status');
@@ -827,15 +1021,26 @@
       editForm.addEventListener('submit', function (e) {
         e.preventDefault();
         var fd = new FormData(editForm);
+        var payload = {};
         fd.forEach(function (val, key) {
-          if (key === 'potencial_usd' || key === 'score_ia' || key === 'lat' || key === 'lng') lead[key] = Number(val) || 0;
-          else lead[key] = val;
+          if (key === 'potencial_usd' || key === 'score_ia' || key === 'lat' || key === 'lng') {
+            lead[key] = Number(val) || 0;
+            payload[key] = lead[key];
+          } else {
+            lead[key] = val;
+            payload[key] = val;
+          }
         });
         iconCache = {};
         applyFilters();
         renderAll();
         if (typeof showToast === 'function') showToast('Lead actualizado', 'ok');
         openDrawer(leadId);
+        fetch('/api/prospectos/' + lead.id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('token') || '') },
+          body: JSON.stringify(payload)
+        }).catch(function () {});
       });
     }
 
@@ -871,7 +1076,8 @@
     var btn = qs('#prs-route-btn');
     if (btn) {
       btn.style.display = state.routeLeadIds.length >= 2 ? 'flex' : 'none';
-      btn.querySelector('span').textContent = state.routeLeadIds.length + ' paradas';
+      var spanEl = btn.querySelector('span');
+      if (spanEl) spanEl.textContent = state.routeLeadIds.length + ' paradas';
     }
   }
 
@@ -1118,6 +1324,30 @@
     renderSidebar();
     renderMapMarkers();
     updateRouteButton();
+    updateCoverageBadge();
+  }
+
+  function updateCoverageBadge() {
+    var badge = qs('#prs-coverage-badge');
+    if (!badge) {
+      var container = qs('#prospeccion-map-chrome');
+      if (!container) return;
+      badge = document.createElement('div');
+      badge.id = 'prs-coverage-badge';
+      badge.className = 'prs-coverage-badge';
+      container.appendChild(badge);
+    }
+    var total = state.filtered.length;
+    var hot = 0;
+    var totalPot = 0;
+    for (var i = 0; i < state.filtered.length; i++) {
+      if ((state.filtered[i].score_ia || 0) >= 85) hot++;
+      totalPot += Number(state.filtered[i].potencial_usd) || 0;
+    }
+    badge.innerHTML = '<span class="prs-coverage-badge__count">' + total + '</span>' +
+      '<span class="prs-coverage-badge__label">prospectos visibles</span>' +
+      '<span style="margin-left:0.5rem;color:#fbbf24;">★ ' + hot + ' HOT</span>' +
+      '<span style="margin-left:0.5rem;color:#4ade80;">' + fmtCompactMXN(totalPot) + '</span>';
   }
 
   /* ----------------------------------------------------------
@@ -1523,11 +1753,13 @@
     }
     tbody.innerHTML = html;
 
-    // Click rows to open drawer
-    tbody.addEventListener('click', function (e) {
-      var tr = e.target.closest('[data-lead-id]');
-      if (tr) openDrawer(tr.getAttribute('data-lead-id'));
-    });
+    if (!tbody._prsClickBound) {
+      tbody._prsClickBound = true;
+      tbody.addEventListener('click', function (e) {
+        var tr = e.target.closest('[data-lead-id]');
+        if (tr) openDrawer(tr.getAttribute('data-lead-id'));
+      });
+    }
 
     var foot = qs('#prs-table-footer');
     if (foot) foot.textContent = rows.length + ' fila(s)';
