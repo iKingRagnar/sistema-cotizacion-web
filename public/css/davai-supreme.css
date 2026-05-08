@@ -1,0 +1,598 @@
+/* ════════════════════════════════════════════════════════════════════════
+   DAVAI SUPREME — Visual overhaul AAA del chat IA
+     • Header con shimmering gradient + status pulse
+     • Mensajes burbuja con tail + slide-up animation
+     • Avatar con breathing effect
+     • Input con glow on focus + suggestions chips
+     • FAB flotante con multi-layer pulse
+     • Code blocks con copy button
+     • Empty state hero
+     • Loading dots animados
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── VARIABLES ─────────────────────────────────────── */
+:root {
+  --davai-primary: #3b82f6;
+  --davai-primary-2: #2563eb;
+  --davai-purple: #8b5cf6;
+  --davai-cyan: #06b6d4;
+  --davai-bg-deep: rgba(2,6,23,0.96);
+  --davai-bg: rgba(15,23,42,0.94);
+  --davai-surface: rgba(30,41,59,0.6);
+  --davai-border: rgba(255,255,255,0.08);
+  --davai-text: #f8fafc;
+  --davai-text-soft: #cbd5e1;
+  --davai-text-muted: #94a3b8;
+  --davai-shadow: 0 24px 64px rgba(0,0,0,0.5);
+}
+
+/* ════════════════════════════════════════════════════
+   1. PANEL CONTAINER (lateral o flotante)
+   ═══════════════════════════════════════════════════ */
+html body .davai-panel,
+html body #davai-panel,
+html body .davai-chat-panel {
+  background: linear-gradient(180deg, var(--davai-bg-deep), var(--davai-bg)) !important;
+  border: 1px solid var(--davai-border) !important;
+  box-shadow: var(--davai-shadow), inset 0 1px 0 rgba(255,255,255,0.04) !important;
+  backdrop-filter: blur(24px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(140%) !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+/* Aurora ambient en bg */
+html body .davai-panel::before,
+html body #davai-panel::before {
+  content: '';
+  position: absolute;
+  inset: -50% -50% auto auto;
+  width: 80%;
+  height: 60%;
+  background: radial-gradient(circle, rgba(59,130,246,0.18), transparent 70%);
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: 0;
+}
+html body .davai-panel > *,
+html body #davai-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ════════════════════════════════════════════════════
+   2. HEADER PREMIUM
+   ═══════════════════════════════════════════════════ */
+html body .davai-header,
+html body .davai-panel__header {
+  background: linear-gradient(135deg,
+    rgba(59,130,246,0.18),
+    rgba(139,92,246,0.10),
+    rgba(6,182,212,0.06)
+  ) !important;
+  border-bottom: 1px solid var(--davai-border) !important;
+  padding: 14px 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+/* Shimmer animado */
+html body .davai-header::after,
+html body .davai-panel__header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.08) 50%, transparent 70%);
+  animation: davai-shimmer 6s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes davai-shimmer {
+  0%, 100% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+}
+
+html body .davai-header h2,
+html body .davai-header h3,
+html body .davai-panel__title {
+  font-family: 'Sora', sans-serif !important;
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  color: var(--davai-text) !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+/* Avatar IA con breathing */
+html body .davai-avatar,
+html body .davai-header__avatar {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, var(--davai-primary), var(--davai-purple)) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #fff !important;
+  font-weight: 800 !important;
+  font-size: 0.95rem !important;
+  position: relative !important;
+  flex-shrink: 0 !important;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.18), 0 4px 14px rgba(59,130,246,0.35);
+  animation: davai-breathe 3s ease-in-out infinite;
+}
+@keyframes davai-breathe {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(59,130,246,0.18), 0 4px 14px rgba(59,130,246,0.35); }
+  50% { box-shadow: 0 0 0 6px rgba(59,130,246,0.28), 0 6px 20px rgba(59,130,246,0.55); }
+}
+
+/* Status dot con pulse */
+html body .davai-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 0 rgba(34,197,94,0.6);
+  animation: davai-pulse-dot 2s ease-out infinite;
+  display: inline-block;
+  margin-right: 6px;
+}
+@keyframes davai-pulse-dot {
+  0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
+  70% { box-shadow: 0 0 0 10px rgba(34,197,94,0); }
+  100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+}
+
+/* ════════════════════════════════════════════════════
+   3. MENSAJES (burbuja premium con tail)
+   ═══════════════════════════════════════════════════ */
+html body .davai-msg,
+html body .davai-message,
+html body .davai-chat-msg {
+  margin-bottom: 14px !important;
+  animation: davai-msg-in 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+  opacity: 0;
+  animation-fill-mode: forwards;
+}
+@keyframes davai-msg-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Mensaje USER (derecha, gradient azul) */
+html body .davai-msg--user,
+html body .davai-message--user,
+html body .davai-msg.user {
+  display: flex !important;
+  justify-content: flex-end !important;
+}
+html body .davai-msg--user .davai-msg__bubble,
+html body .davai-message--user .davai-message__bubble,
+html body .davai-msg.user > div {
+  max-width: 85% !important;
+  background: linear-gradient(135deg, var(--davai-primary), var(--davai-primary-2)) !important;
+  color: #fff !important;
+  padding: 10px 14px !important;
+  border-radius: 18px 18px 4px 18px !important;
+  font-size: 0.92rem !important;
+  line-height: 1.5 !important;
+  box-shadow: 0 4px 14px rgba(59,130,246,0.35) !important;
+  position: relative !important;
+}
+
+/* Mensaje ASSISTANT (izquierda, glass) */
+html body .davai-msg--assistant,
+html body .davai-message--assistant,
+html body .davai-msg.assistant {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+}
+html body .davai-msg--assistant .davai-msg__bubble,
+html body .davai-message--assistant .davai-message__bubble,
+html body .davai-msg.assistant > div {
+  max-width: 85% !important;
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  color: var(--davai-text) !important;
+  padding: 10px 14px !important;
+  border-radius: 18px 18px 18px 4px !important;
+  font-size: 0.92rem !important;
+  line-height: 1.55 !important;
+  backdrop-filter: blur(10px);
+}
+
+/* Markdown inside bubble */
+html body .davai-msg__bubble strong,
+html body .davai-message__bubble strong { color: #fcd34d; font-weight: 700; }
+html body .davai-msg__bubble em,
+html body .davai-message__bubble em { color: var(--davai-cyan); font-style: italic; }
+html body .davai-msg__bubble code,
+html body .davai-message__bubble code {
+  background: rgba(0,0,0,0.4);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.84em;
+  color: #86efac;
+}
+html body .davai-msg__bubble pre,
+html body .davai-message__bubble pre {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin: 8px 0;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  position: relative;
+}
+html body .davai-msg__bubble pre code,
+html body .davai-message__bubble pre code {
+  background: transparent;
+  padding: 0;
+  color: #e2e8f0;
+}
+html body .davai-msg__bubble ul,
+html body .davai-msg__bubble ol,
+html body .davai-message__bubble ul,
+html body .davai-message__bubble ol {
+  padding-left: 18px;
+  margin: 6px 0;
+}
+html body .davai-msg__bubble li,
+html body .davai-message__bubble li {
+  margin-bottom: 4px;
+}
+html body .davai-msg__bubble a,
+html body .davai-message__bubble a {
+  color: #60a5fa;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Avatar mini en mensaje assistant */
+html body .davai-msg__avatar,
+html body .davai-message__avatar {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, var(--davai-primary), var(--davai-purple)) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #fff !important;
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  flex-shrink: 0 !important;
+  box-shadow: 0 2px 8px rgba(59,130,246,0.35);
+}
+
+/* ════════════════════════════════════════════════════
+   4. TYPING INDICATOR (3 dots animados)
+   ═══════════════════════════════════════════════════ */
+html body .davai-typing {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 10px 14px !important;
+  background: rgba(255,255,255,0.04) !important;
+  border-radius: 18px !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+}
+html body .davai-typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--davai-primary);
+  animation: davai-typing-bounce 1.2s ease-in-out infinite;
+}
+html body .davai-typing span:nth-child(2) { animation-delay: 0.2s; background: var(--davai-purple); }
+html body .davai-typing span:nth-child(3) { animation-delay: 0.4s; background: var(--davai-cyan); }
+@keyframes davai-typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* ════════════════════════════════════════════════════
+   5. INPUT AREA (textarea + send button)
+   ═══════════════════════════════════════════════════ */
+html body .davai-input-wrap,
+html body .davai-input-area,
+html body .davai-composer {
+  padding: 14px !important;
+  border-top: 1px solid var(--davai-border) !important;
+  background: linear-gradient(180deg, transparent, rgba(0,0,0,0.2)) !important;
+  position: relative !important;
+}
+
+html body .davai-input,
+html body .davai-textarea,
+html body .davai-composer textarea,
+html body .davai-composer input[type=text] {
+  width: 100% !important;
+  background: rgba(255,255,255,0.05) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  border-radius: 14px !important;
+  padding: 12px 50px 12px 16px !important;
+  color: var(--davai-text) !important;
+  font-family: inherit !important;
+  font-size: 0.92rem !important;
+  line-height: 1.5 !important;
+  resize: none !important;
+  outline: none !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease !important;
+  min-height: 48px !important;
+  max-height: 160px !important;
+}
+html body .davai-input:focus,
+html body .davai-textarea:focus,
+html body .davai-composer textarea:focus,
+html body .davai-composer input[type=text]:focus {
+  border-color: rgba(59,130,246,0.55) !important;
+  background: rgba(59,130,246,0.06) !important;
+  box-shadow: 0 0 0 4px rgba(59,130,246,0.18), 0 4px 18px rgba(59,130,246,0.20) !important;
+}
+html body .davai-input::placeholder,
+html body .davai-textarea::placeholder { color: var(--davai-text-muted) !important; }
+
+/* Send button absolute positioned */
+html body .davai-send,
+html body .davai-btn-send,
+html body .davai-composer button[type=submit] {
+  position: absolute !important;
+  right: 24px !important;
+  bottom: 22px !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  border: none !important;
+  background: linear-gradient(135deg, var(--davai-primary), var(--davai-primary-2)) !important;
+  color: #fff !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.95rem !important;
+  box-shadow: 0 4px 12px rgba(59,130,246,0.4) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+html body .davai-send:hover:not(:disabled),
+html body .davai-btn-send:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.05) !important;
+  box-shadow: 0 6px 18px rgba(59,130,246,0.55) !important;
+}
+html body .davai-send:disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+}
+
+/* ════════════════════════════════════════════════════
+   6. SUGGESTIONS CHIPS (encima del input)
+   ═══════════════════════════════════════════════════ */
+.davai-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 14px 8px;
+  scrollbar-width: thin;
+}
+.davai-chip {
+  padding: 6px 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 999px;
+  color: var(--davai-text-soft);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.davai-chip:hover {
+  background: rgba(59,130,246,0.14);
+  border-color: rgba(59,130,246,0.45);
+  color: #fff;
+  transform: translateY(-1px);
+}
+.davai-chip i {
+  margin-right: 4px;
+  color: var(--davai-primary);
+}
+
+/* ════════════════════════════════════════════════════
+   7. EMPTY STATE (welcome hero)
+   ═══════════════════════════════════════════════════ */
+.davai-empty {
+  text-align: center;
+  padding: 40px 24px;
+  color: var(--davai-text-soft);
+}
+.davai-empty__hero {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--davai-primary), var(--davai-purple), var(--davai-cyan));
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.8rem;
+  box-shadow: 0 12px 40px rgba(59,130,246,0.45), 0 0 0 8px rgba(59,130,246,0.10);
+  animation: davai-empty-float 4s ease-in-out infinite;
+}
+@keyframes davai-empty-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.davai-empty__title {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--davai-text);
+  margin-bottom: 6px;
+}
+.davai-empty__sub {
+  font-size: 0.86rem;
+  color: var(--davai-text-muted);
+  margin-bottom: 18px;
+}
+
+/* ════════════════════════════════════════════════════
+   8. FAB FLOTANTE PREMIUM (multi-layer pulse)
+   ═══════════════════════════════════════════════════ */
+html body #davai-fab,
+html body .davai-fab {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  z-index: 99000 !important;
+  width: 60px !important;
+  height: 60px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, var(--davai-primary), var(--davai-purple)) !important;
+  color: #fff !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1.4rem !important;
+  box-shadow: 0 8px 32px rgba(59,130,246,0.55), 0 4px 14px rgba(139,92,246,0.35) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+html body #davai-fab::before,
+html body .davai-fab::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid rgba(59,130,246,0.4);
+  animation: davai-fab-ring 2.5s ease-out infinite;
+  pointer-events: none;
+}
+html body #davai-fab::after,
+html body .davai-fab::after {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+  border: 2px solid rgba(139,92,246,0.25);
+  animation: davai-fab-ring 2.5s ease-out infinite 0.8s;
+  pointer-events: none;
+}
+@keyframes davai-fab-ring {
+  0% { transform: scale(0.95); opacity: 1; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+html body #davai-fab:hover,
+html body .davai-fab:hover {
+  transform: translateY(-4px) scale(1.05) !important;
+  box-shadow: 0 12px 40px rgba(59,130,246,0.7), 0 6px 20px rgba(139,92,246,0.5) !important;
+}
+
+/* Notification badge en FAB */
+html body #davai-fab .davai-fab__badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #0f172a;
+  box-shadow: 0 2px 8px rgba(239,68,68,0.5);
+}
+
+/* ════════════════════════════════════════════════════
+   9. SCROLLBAR custom dentro del chat
+   ═══════════════════════════════════════════════════ */
+html body .davai-msgs,
+html body .davai-messages,
+html body .davai-chat-body {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(96,165,250,0.4) transparent;
+  padding: 14px !important;
+  overflow-y: auto !important;
+  max-height: calc(100vh - 220px);
+}
+html body .davai-msgs::-webkit-scrollbar,
+html body .davai-messages::-webkit-scrollbar { width: 6px; }
+html body .davai-msgs::-webkit-scrollbar-track,
+html body .davai-messages::-webkit-scrollbar-track { background: transparent; }
+html body .davai-msgs::-webkit-scrollbar-thumb,
+html body .davai-messages::-webkit-scrollbar-thumb {
+  background: rgba(96,165,250,0.3);
+  border-radius: 999px;
+}
+html body .davai-msgs::-webkit-scrollbar-thumb:hover,
+html body .davai-messages::-webkit-scrollbar-thumb:hover {
+  background: rgba(96,165,250,0.6);
+}
+
+/* ════════════════════════════════════════════════════
+   10. HEADER ACTIONS (clear, expand, close)
+   ═══════════════════════════════════════════════════ */
+html body .davai-header__actions {
+  display: flex;
+  gap: 6px;
+}
+html body .davai-header__btn,
+html body .davai-btn-header {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 8px !important;
+  background: rgba(255,255,255,0.05) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  color: var(--davai-text-soft) !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.15s ease !important;
+}
+html body .davai-header__btn:hover,
+html body .davai-btn-header:hover {
+  background: rgba(59,130,246,0.18) !important;
+  border-color: rgba(59,130,246,0.45) !important;
+  color: #fff !important;
+}
+
+/* ════════════════════════════════════════════════════
+   11. RESPONSIVE
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 720px) {
+  html body #davai-fab,
+  html body .davai-fab {
+    width: 52px !important;
+    height: 52px !important;
+    bottom: 16px !important;
+    right: 16px !important;
+    font-size: 1.2rem !important;
+  }
+  html body .davai-msg__bubble,
+  html body .davai-message__bubble {
+    max-width: 92% !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body .davai-header::after,
+  html body .davai-empty__hero,
+  html body .davai-status-dot,
+  html body .davai-avatar,
+  html body #davai-fab::before,
+  html body #davai-fab::after { animation: none !important; }
+  html body .davai-msg { animation: none !important; opacity: 1 !important; }
+}

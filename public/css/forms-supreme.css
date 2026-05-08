@@ -1,0 +1,579 @@
+/* ════════════════════════════════════════════════════════════════════════
+   FORMS SUPREME — Inputs, selects, textareas, file uploads y botones AAA
+     • Inputs glass con glow on focus
+     • Floating labels (auto)
+     • Custom select con flecha
+     • Textareas con autoresize hint
+     • File upload drop zone
+     • Buttons primary/secondary/danger con gradient
+     • Form rows con separadores elegantes
+     • Validation states (error/success/warning)
+     • Required indicator premium
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── VARIABLES ───────────────────────────────────── */
+:root {
+  --form-radius: 10px;
+  --form-bg: rgba(255,255,255,0.04);
+  --form-bg-focus: rgba(59,130,246,0.06);
+  --form-border: rgba(255,255,255,0.10);
+  --form-border-focus: rgba(59,130,246,0.55);
+  --form-border-error: rgba(239,68,68,0.55);
+  --form-border-success: rgba(34,197,94,0.55);
+  --form-text: #f8fafc;
+  --form-text-muted: #94a3b8;
+  --form-label: #cbd5e1;
+  --form-glow: 0 0 0 4px rgba(59,130,246,0.18), 0 4px 18px rgba(59,130,246,0.20);
+  --form-glow-error: 0 0 0 4px rgba(239,68,68,0.18);
+  --form-glow-success: 0 0 0 4px rgba(34,197,94,0.18);
+}
+
+/* ════════════════════════════════════════════════════
+   1. INPUTS, SELECTS, TEXTAREAS — Base glass
+   ═══════════════════════════════════════════════════ */
+html body input[type=text],
+html body input[type=email],
+html body input[type=tel],
+html body input[type=url],
+html body input[type=number],
+html body input[type=password],
+html body input[type=search],
+html body input[type=date],
+html body input[type=datetime-local],
+html body input[type=time],
+html body input[type=month],
+html body select,
+html body textarea {
+  background: var(--form-bg) !important;
+  border: 1px solid var(--form-border) !important;
+  border-radius: var(--form-radius) !important;
+  padding: 10px 14px !important;
+  color: var(--form-text) !important;
+  font-family: inherit !important;
+  font-size: 0.88rem !important;
+  line-height: 1.5 !important;
+  outline: none !important;
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.02) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+html body input[type=text]:hover:not(:disabled),
+html body input[type=email]:hover:not(:disabled),
+html body input[type=tel]:hover:not(:disabled),
+html body input[type=url]:hover:not(:disabled),
+html body input[type=number]:hover:not(:disabled),
+html body input[type=search]:hover:not(:disabled),
+html body select:hover:not(:disabled),
+html body textarea:hover:not(:disabled) {
+  border-color: rgba(255,255,255,0.18) !important;
+  background: rgba(255,255,255,0.06) !important;
+}
+
+html body input[type=text]:focus,
+html body input[type=email]:focus,
+html body input[type=tel]:focus,
+html body input[type=url]:focus,
+html body input[type=number]:focus,
+html body input[type=password]:focus,
+html body input[type=search]:focus,
+html body input[type=date]:focus,
+html body input[type=datetime-local]:focus,
+html body input[type=time]:focus,
+html body select:focus,
+html body textarea:focus {
+  border-color: var(--form-border-focus) !important;
+  background: var(--form-bg-focus) !important;
+  box-shadow: var(--form-glow) !important;
+}
+
+html body input::placeholder,
+html body textarea::placeholder {
+  color: var(--form-text-muted) !important;
+  opacity: 0.85 !important;
+}
+
+html body input:disabled,
+html body select:disabled,
+html body textarea:disabled {
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
+  background: rgba(255,255,255,0.02) !important;
+}
+
+/* Validation states */
+html body input.invalid,
+html body input.is-invalid,
+html body input[aria-invalid="true"],
+html body select.invalid,
+html body select.is-invalid,
+html body textarea.invalid,
+html body textarea.is-invalid {
+  border-color: var(--form-border-error) !important;
+  box-shadow: var(--form-glow-error) !important;
+  background: rgba(239,68,68,0.04) !important;
+}
+html body input.valid,
+html body input.is-valid,
+html body select.valid,
+html body select.is-valid {
+  border-color: var(--form-border-success) !important;
+}
+
+/* ════════════════════════════════════════════════════
+   2. SELECT con custom arrow
+   ═══════════════════════════════════════════════════ */
+html body select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%2360a5fa' d='M5 6L0 1h10z'/></svg>") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+  background-size: 10px 6px !important;
+  padding-right: 36px !important;
+  cursor: pointer !important;
+}
+html body select option {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+/* ════════════════════════════════════════════════════
+   3. TEXTAREA — autoresize feel
+   ═══════════════════════════════════════════════════ */
+html body textarea {
+  resize: vertical !important;
+  min-height: 80px !important;
+  line-height: 1.55 !important;
+}
+
+/* ════════════════════════════════════════════════════
+   4. LABELS premium
+   ═══════════════════════════════════════════════════ */
+html body label,
+html body .form-group label,
+html body .form-label {
+  display: block !important;
+  font-size: 0.74rem !important;
+  font-weight: 600 !important;
+  color: var(--form-label) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  margin-bottom: 6px !important;
+}
+
+/* Required indicator */
+html body label[required]::after,
+html body .form-group.required label::after,
+html body label.required::after {
+  content: ' *';
+  color: #ef4444;
+  font-weight: 700;
+}
+
+/* ════════════════════════════════════════════════════
+   5. FORM GROUPS y ROWS
+   ═══════════════════════════════════════════════════ */
+html body .form-group {
+  margin-bottom: 14px !important;
+}
+html body .form-row {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+  gap: 12px !important;
+  margin-bottom: 14px !important;
+}
+html body .form-row .form-group {
+  margin-bottom: 0 !important;
+}
+
+/* Hint text */
+html body .form-hint,
+html body .form-help,
+html body .help-block,
+html body .form-text {
+  font-size: 0.72rem !important;
+  color: var(--form-text-muted) !important;
+  margin-top: 4px !important;
+  font-style: italic !important;
+}
+
+/* Error message */
+html body .form-error,
+html body .invalid-feedback,
+html body .field-error {
+  font-size: 0.74rem !important;
+  color: #fca5a5 !important;
+  margin-top: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+html body .form-error::before,
+html body .invalid-feedback::before,
+html body .field-error::before {
+  content: '⚠';
+  font-size: 0.85rem;
+}
+
+/* ════════════════════════════════════════════════════
+   6. CHECKBOXES y RADIO premium
+   ═══════════════════════════════════════════════════ */
+html body input[type=checkbox],
+html body input[type=radio] {
+  width: 18px !important;
+  height: 18px !important;
+  accent-color: #60a5fa !important;
+  cursor: pointer !important;
+  margin-right: 6px !important;
+  vertical-align: middle !important;
+}
+
+/* Checkbox/radio with label inline */
+html body .check-row,
+html body .checkbox-group,
+html body .radio-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 12px !important;
+  background: rgba(255,255,255,0.03) !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+html body .check-row:hover,
+html body .checkbox-group:hover {
+  background: rgba(59,130,246,0.06) !important;
+  border-color: rgba(59,130,246,0.25) !important;
+}
+html body .check-row label,
+html body .checkbox-group label {
+  margin: 0 !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  font-size: 0.86rem !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+}
+
+/* ════════════════════════════════════════════════════
+   7. FILE UPLOAD drop zone
+   ═══════════════════════════════════════════════════ */
+html body input[type=file] {
+  display: none !important;
+}
+html body .file-upload,
+html body .upload-zone,
+html body .dropzone {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 24px !important;
+  background: rgba(59,130,246,0.04) !important;
+  border: 2px dashed rgba(59,130,246,0.3) !important;
+  border-radius: var(--form-radius) !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+  text-align: center !important;
+  gap: 8px !important;
+  color: var(--form-text-muted) !important;
+}
+html body .file-upload:hover,
+html body .upload-zone:hover,
+html body .dropzone:hover {
+  border-color: rgba(59,130,246,0.6) !important;
+  background: rgba(59,130,246,0.08) !important;
+  color: var(--form-text) !important;
+}
+html body .file-upload.is-dragover,
+html body .upload-zone.is-dragover,
+html body .dropzone.is-dragover {
+  border-color: #60a5fa !important;
+  background: rgba(59,130,246,0.14) !important;
+  border-style: solid !important;
+  transform: scale(1.01) !important;
+}
+html body .file-upload__icon,
+html body .upload-zone__icon,
+html body .dropzone__icon {
+  font-size: 2.4rem !important;
+  color: #60a5fa !important;
+  margin-bottom: 4px !important;
+}
+html body .file-upload__text,
+html body .upload-zone__text {
+  font-size: 0.92rem !important;
+  font-weight: 600 !important;
+  color: var(--form-text) !important;
+}
+html body .file-upload__hint,
+html body .upload-zone__hint {
+  font-size: 0.74rem !important;
+  color: var(--form-text-muted) !important;
+}
+
+/* ════════════════════════════════════════════════════
+   8. BUTTONS — primary, secondary, outline, danger
+   ═══════════════════════════════════════════════════ */
+html body .btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  padding: 9px 18px !important;
+  border-radius: var(--form-radius) !important;
+  font-family: inherit !important;
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  background: rgba(255,255,255,0.05) !important;
+  color: var(--form-text) !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+html body .btn:hover:not(:disabled) {
+  background: rgba(255,255,255,0.08) !important;
+  border-color: rgba(255,255,255,0.18) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+}
+html body .btn:active:not(:disabled) {
+  transform: translateY(0) !important;
+  box-shadow: none !important;
+}
+html body .btn:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* PRIMARY */
+html body .btn.primary,
+html body .btn-primary {
+  background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(59,130,246,0.35) !important;
+}
+html body .btn.primary:hover:not(:disabled),
+html body .btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+  box-shadow: 0 6px 18px rgba(59,130,246,0.55) !important;
+}
+
+/* SUCCESS */
+html body .btn.success,
+html body .btn-success {
+  background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(34,197,94,0.35) !important;
+}
+html body .btn.success:hover:not(:disabled),
+html body .btn-success:hover:not(:disabled) {
+  background: linear-gradient(135deg, #16a34a, #15803d) !important;
+  box-shadow: 0 6px 18px rgba(34,197,94,0.55) !important;
+}
+
+/* DANGER */
+html body .btn.danger,
+html body .btn-danger,
+html body .btn.delete {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(239,68,68,0.35) !important;
+}
+html body .btn.danger:hover:not(:disabled),
+html body .btn-danger:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626, #b91c1c) !important;
+  box-shadow: 0 6px 18px rgba(239,68,68,0.55) !important;
+}
+
+/* WARNING */
+html body .btn.warning,
+html body .btn-warning {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+}
+
+/* OUTLINE */
+html body .btn.outline,
+html body .btn-outline {
+  background: transparent !important;
+  border: 1px solid rgba(96,165,250,0.5) !important;
+  color: #93c5fd !important;
+}
+html body .btn.outline:hover:not(:disabled),
+html body .btn-outline:hover:not(:disabled) {
+  background: rgba(59,130,246,0.10) !important;
+  border-color: #60a5fa !important;
+  color: #fff !important;
+}
+
+/* GHOST/SUBTLE */
+html body .btn.ghost,
+html body .btn-ghost,
+html body .btn.subtle {
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  color: var(--form-text-muted) !important;
+}
+html body .btn.ghost:hover:not(:disabled) {
+  background: rgba(255,255,255,0.05) !important;
+  color: var(--form-text) !important;
+}
+
+/* RIPPLE effect on click */
+html body .btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.4);
+  transform: translate(-50%, -50%);
+  transition: width 0.4s ease, height 0.4s ease;
+  pointer-events: none;
+}
+html body .btn:active::before {
+  width: 200%;
+  height: 200%;
+  transition: 0s;
+}
+
+/* ════════════════════════════════════════════════════
+   9. FORM ACTIONS bar (botones al fondo del modal)
+   ═══════════════════════════════════════════════════ */
+html body .form-actions {
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  padding-top: 18px !important;
+  margin-top: 18px !important;
+  border-top: 1px solid var(--form-border) !important;
+}
+html body .form-actions.left {
+  justify-content: flex-start !important;
+}
+html body .form-actions.between {
+  justify-content: space-between !important;
+}
+
+/* ════════════════════════════════════════════════════
+   10. RANGE / SLIDER premium
+   ═══════════════════════════════════════════════════ */
+html body input[type=range] {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 100% !important;
+  height: 6px !important;
+  background: rgba(255,255,255,0.08) !important;
+  border-radius: 999px !important;
+  border: none !important;
+  padding: 0 !important;
+  outline: none !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+}
+html body input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(59,130,246,0.5);
+  transition: transform 0.15s ease;
+}
+html body input[type=range]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+html body input[type=range]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid #fff;
+}
+
+/* ════════════════════════════════════════════════════
+   11. TOGGLE SWITCH premium (.toggle-switch / .switch)
+   ═══════════════════════════════════════════════════ */
+html body .toggle-switch,
+html body .switch {
+  position: relative !important;
+  display: inline-block !important;
+  width: 44px !important;
+  height: 24px !important;
+  background: rgba(255,255,255,0.10) !important;
+  border-radius: 999px !important;
+  cursor: pointer !important;
+  transition: background 0.2s ease !important;
+}
+html body .toggle-switch::after,
+html body .switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+html body .toggle-switch.is-on,
+html body .toggle-switch[aria-checked="true"],
+html body .switch.is-on,
+html body .switch[aria-checked="true"] {
+  background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+}
+html body .toggle-switch.is-on::after,
+html body .toggle-switch[aria-checked="true"]::after,
+html body .switch.is-on::after,
+html body .switch[aria-checked="true"]::after {
+  transform: translateX(20px);
+}
+
+/* ════════════════════════════════════════════════════
+   12. RESPONSIVE
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  html body .form-row {
+    grid-template-columns: 1fr !important;
+  }
+  html body .btn {
+    padding: 10px 14px !important;
+    font-size: 0.84rem !important;
+  }
+  html body .form-actions {
+    flex-direction: column-reverse !important;
+  }
+  html body .form-actions .btn {
+    width: 100% !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body input,
+  html body select,
+  html body textarea,
+  html body .btn,
+  html body .toggle-switch::after { transition: none !important; }
+}

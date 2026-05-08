@@ -1,0 +1,369 @@
+/* ════════════════════════════════════════════════════════════════════════
+   TABLES SUPREME — Diseño AAA universal para TODAS las tablas del sistema
+     • Headers con gradient glass + sticky
+     • Filas con zebra suave + gradient hover
+     • Bordes definidos pero elegantes
+     • Sortable indicators premium
+     • Empty states con ilustración
+     • Skeleton refinado
+     • Status badges premium
+     • Action buttons en pills
+     • Numeric columns auto-aligned
+     • Cards-view (responsive móvil)
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── VARIABLES TABLAS ────────────────────────────── */
+:root {
+  --tbl-radius: 14px;
+  --tbl-bg: rgba(15,23,42,0.55);
+  --tbl-bg-deep: rgba(2,6,23,0.65);
+  --tbl-border: rgba(255,255,255,0.06);
+  --tbl-border-strong: rgba(255,255,255,0.10);
+  --tbl-head-bg: linear-gradient(180deg, rgba(30,41,59,0.85), rgba(15,23,42,0.85));
+  --tbl-head-color: #cbd5e1;
+  --tbl-head-accent: #60a5fa;
+  --tbl-row-text: #e2e8f0;
+  --tbl-row-text-strong: #f8fafc;
+  --tbl-zebra: rgba(255,255,255,0.018);
+  --tbl-hover: linear-gradient(90deg, rgba(59,130,246,0.20), rgba(59,130,246,0.04));
+  --tbl-hover-shadow: inset 3px 0 0 #60a5fa, inset 0 0 0 1px rgba(96,165,250,0.18);
+}
+
+/* ════════════════════════════════════════════════════
+   1. WRAPPER (table-wrap → glass container)
+   ═══════════════════════════════════════════════════ */
+html body .table-wrap,
+html body .md-table-wrap,
+html body .data-table-wrap {
+  background: var(--tbl-bg) !important;
+  border: 1px solid var(--tbl-border) !important;
+  border-radius: var(--tbl-radius) !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.04) !important;
+  backdrop-filter: blur(8px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(120%) !important;
+}
+
+/* ════════════════════════════════════════════════════
+   2. TABLE BASE
+   ═══════════════════════════════════════════════════ */
+html body table.data-table,
+html body table.md-table,
+html body .table-wrap > table {
+  width: 100% !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  font-size: 0.86rem !important;
+  font-family: inherit !important;
+}
+
+/* ════════════════════════════════════════════════════
+   3. THEAD PREMIUM
+   ═══════════════════════════════════════════════════ */
+html body table.data-table thead th,
+html body table.md-table thead th,
+html body .table-wrap > table thead th {
+  background: var(--tbl-head-bg) !important;
+  color: var(--tbl-head-color) !important;
+  font-family: 'Sora', sans-serif !important;
+  font-size: 0.74rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.6px !important;
+  padding: 12px 14px !important;
+  text-align: left !important;
+  border-bottom: 1px solid var(--tbl-border-strong) !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 5 !important;
+  white-space: nowrap !important;
+  user-select: none !important;
+  transition: background 0.15s ease, color 0.15s ease !important;
+}
+
+/* Sortable indicator */
+html body table.data-table thead th[data-sort],
+html body table.data-table thead th.sortable {
+  cursor: pointer !important;
+  position: relative !important;
+  padding-right: 26px !important;
+}
+html body table.data-table thead th[data-sort]::after,
+html body table.data-table thead th.sortable::after {
+  content: '⇅';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.35;
+  font-size: 0.78rem;
+  color: var(--tbl-head-accent);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+html body table.data-table thead th[data-sort]:hover::after,
+html body table.data-table thead th.sortable:hover::after {
+  opacity: 1;
+  transform: translateY(-50%) scale(1.2);
+}
+html body table.data-table thead th[aria-sort="ascending"]::after { content: '▲'; opacity: 1; }
+html body table.data-table thead th[aria-sort="descending"]::after { content: '▼'; opacity: 1; }
+
+html body table.data-table thead th:hover,
+html body .table-wrap > table thead th:hover { color: #fff !important; }
+
+/* ════════════════════════════════════════════════════
+   4. TBODY ROWS — zebra + hover gradient definitivo
+   ═══════════════════════════════════════════════════ */
+html body table.data-table tbody tr,
+html body table.md-table tbody tr,
+html body .table-wrap > table tbody tr {
+  transition: background 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease !important;
+}
+html body table.data-table tbody tr:nth-child(odd) { background: transparent; }
+html body table.data-table tbody tr:nth-child(even) { background: var(--tbl-zebra); }
+
+html body table.data-table tbody td,
+html body table.md-table tbody td,
+html body .table-wrap > table tbody td {
+  padding: 11px 14px !important;
+  color: var(--tbl-row-text) !important;
+  border-bottom: 1px solid var(--tbl-border) !important;
+  vertical-align: middle !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html body table.data-table tbody td strong,
+html body table.data-table tbody td b {
+  color: var(--tbl-row-text-strong) !important;
+  font-weight: 600 !important;
+}
+
+/* HOVER definitivo — gradient + inset shadow */
+html body table.data-table tbody tr:hover,
+html body table.md-table tbody tr:hover,
+html body .table-wrap > table tbody tr:hover {
+  background: var(--tbl-hover) !important;
+  box-shadow: var(--tbl-hover-shadow) !important;
+  transform: none !important;
+}
+html body table.data-table tbody tr:hover td,
+html body table.md-table tbody tr:hover td {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: var(--tbl-row-text-strong) !important;
+}
+html body table.data-table tbody tr:hover td strong,
+html body table.md-table tbody tr:hover td strong { color: #fff !important; }
+
+/* Última fila sin border-bottom */
+html body table.data-table tbody tr:last-child td,
+html body table.md-table tbody tr:last-child td { border-bottom: none !important; }
+
+/* ════════════════════════════════════════════════════
+   5. NUMERIC COLUMNS (auto-detect + style)
+   ═══════════════════════════════════════════════════ */
+html body table.data-table td.numeric,
+html body table.data-table td.num,
+html body table.data-table td.money,
+html body table.data-table td.currency,
+html body table.data-table td[data-numeric],
+html body table.data-table th.numeric,
+html body table.data-table th.num,
+html body table.data-table th.money,
+html body table.data-table th.currency {
+  text-align: right !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-variant-numeric: tabular-nums !important;
+  font-weight: 600 !important;
+}
+html body table.data-table td.money,
+html body table.data-table td.currency { color: #86efac !important; }
+
+/* ════════════════════════════════════════════════════
+   6. STATUS BADGES (premium pills)
+   ═══════════════════════════════════════════════════ */
+html body table.data-table .badge,
+html body table.data-table .status-badge,
+html body table.data-table .pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 3px 10px !important;
+  border-radius: 999px !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.3px !important;
+  text-transform: uppercase !important;
+  border: 1px solid currentColor !important;
+  white-space: nowrap !important;
+}
+html body table.data-table .badge--success,
+html body table.data-table .status-badge--success,
+html body table.data-table .pill--success {
+  background: rgba(34,197,94,0.12) !important; color: #86efac !important;
+}
+html body table.data-table .badge--warning,
+html body table.data-table .status-badge--warning,
+html body table.data-table .pill--warning {
+  background: rgba(245,158,11,0.12) !important; color: #fcd34d !important;
+}
+html body table.data-table .badge--danger,
+html body table.data-table .status-badge--danger,
+html body table.data-table .pill--danger {
+  background: rgba(239,68,68,0.12) !important; color: #fca5a5 !important;
+}
+html body table.data-table .badge--info,
+html body table.data-table .status-badge--info,
+html body table.data-table .pill--info {
+  background: rgba(59,130,246,0.12) !important; color: #93c5fd !important;
+}
+
+/* ════════════════════════════════════════════════════
+   7. ACTION BUTTONS (cell .actions)
+   ═══════════════════════════════════════════════════ */
+html body table.data-table td.actions,
+html body table.data-table td.th-actions {
+  text-align: right !important;
+  white-space: nowrap !important;
+  position: sticky !important;
+  right: 0 !important;
+  background: linear-gradient(90deg, transparent, rgba(15,23,42,0.95) 25%) !important;
+  backdrop-filter: none !important;
+  z-index: 2 !important;
+}
+html body table.data-table tbody tr:hover td.actions,
+html body table.data-table tbody tr:hover td.th-actions {
+  background: linear-gradient(90deg, transparent, rgba(15,23,42,0.95) 25%) !important;
+}
+
+html body table.data-table td.actions .btn,
+html body table.data-table td.th-actions .btn,
+html body table.data-table td.actions button:not(.dropdown-toggle),
+html body table.data-table td.th-actions button:not(.dropdown-toggle) {
+  width: 30px !important;
+  height: 30px !important;
+  padding: 0 !important;
+  margin: 0 2px !important;
+  border-radius: 8px !important;
+  font-size: 0.78rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(255,255,255,0.05) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  color: #cbd5e1 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+html body table.data-table td.actions .btn:hover,
+html body table.data-table td.th-actions .btn:hover {
+  background: rgba(59,130,246,0.20) !important;
+  border-color: rgba(59,130,246,0.55) !important;
+  color: #fff !important;
+  transform: translateY(-1px) !important;
+}
+html body table.data-table td.actions .btn.danger:hover,
+html body table.data-table td.th-actions .btn.danger:hover {
+  background: rgba(239,68,68,0.20) !important;
+  border-color: rgba(239,68,68,0.55) !important;
+  color: #fca5a5 !important;
+}
+
+/* ════════════════════════════════════════════════════
+   8. EMPTY STATE (ilustración + mensaje)
+   ═══════════════════════════════════════════════════ */
+html body table.data-table tbody tr.empty-row td,
+html body table.data-table tbody td.empty-cell,
+html body .table-empty-state {
+  text-align: center !important;
+  padding: 50px 20px !important;
+  color: #94a3b8 !important;
+  font-style: italic !important;
+}
+html body table.data-table tbody tr.empty-row td::before,
+html body .table-empty-state::before {
+  content: '📭';
+  display: block;
+  font-size: 2.4rem;
+  margin-bottom: 10px;
+  opacity: 0.6;
+}
+
+/* ════════════════════════════════════════════════════
+   9. SKELETON LOADING (refinado)
+   ═══════════════════════════════════════════════════ */
+html body table.data-table tbody tr.prem-skel-row td,
+html body table.data-table tbody tr.skeleton-row td {
+  padding: 14px !important;
+}
+html body .prem-skel,
+html body .skeleton-cell {
+  display: block;
+  height: 14px;
+  width: 100%;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(96,165,250,0.10) 50%,
+    rgba(255,255,255,0.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: skel-shimmer 1.4s linear infinite;
+  border-radius: 4px;
+}
+@keyframes skel-shimmer {
+  to { background-position: -200% 0; }
+}
+
+/* ════════════════════════════════════════════════════
+   10. CHECKBOX SELECTION (cuando hay row select)
+   ═══════════════════════════════════════════════════ */
+html body table.data-table input[type="checkbox"] {
+  width: 16px !important;
+  height: 16px !important;
+  cursor: pointer !important;
+  accent-color: var(--tbl-head-accent) !important;
+}
+html body table.data-table tbody tr.is-selected,
+html body table.data-table tbody tr.selected {
+  background: rgba(59,130,246,0.10) !important;
+  box-shadow: inset 4px 0 0 #60a5fa !important;
+}
+
+/* ════════════════════════════════════════════════════
+   11. SCROLLBAR custom dentro de table-wrap
+   ═══════════════════════════════════════════════════ */
+html body .table-wrap,
+html body .data-table-wrap {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(96,165,250,0.4) transparent;
+}
+html body .table-wrap::-webkit-scrollbar,
+html body .data-table-wrap::-webkit-scrollbar { height: 8px; width: 8px; }
+html body .table-wrap::-webkit-scrollbar-track,
+html body .data-table-wrap::-webkit-scrollbar-track { background: transparent; }
+html body .table-wrap::-webkit-scrollbar-thumb,
+html body .data-table-wrap::-webkit-scrollbar-thumb {
+  background: rgba(96,165,250,0.3);
+  border-radius: 999px;
+}
+html body .table-wrap::-webkit-scrollbar-thumb:hover,
+html body .data-table-wrap::-webkit-scrollbar-thumb:hover {
+  background: rgba(96,165,250,0.6);
+}
+
+/* ════════════════════════════════════════════════════
+   12. RESPONSIVE — cards view en móvil
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  html body table.data-table thead th { padding: 10px 8px !important; font-size: 0.66rem !important; }
+  html body table.data-table tbody td { padding: 10px 8px !important; font-size: 0.78rem !important; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  html body .prem-skel,
+  html body .skeleton-cell { animation: none !important; }
+  html body table.data-table tbody tr { transition: none !important; }
+}
