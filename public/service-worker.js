@@ -1,5 +1,6 @@
 /**
- * service-worker.js v56 — PWA-safe + timeout en content + cache-bust v108
+ * service-worker.js v56 — PWA-safe + timeout en content + cache-bust v109
+ *   v109 (2026-05-08): SUPREME LAYER — DavAI + Tables + Forms + Prospección Kanban (4 archivos nuevos)
  *   v108 (2026-05-08): TD transparent en hover (premium.css enmascaraba el gradient con bg muddy)
  *   v107 (2026-05-08): Sidebar Prospección dark + hover tablas premium + ESC safety-net (anti-freeze modales)
  *   v106 (2026-05-08): Prospección Pro — Tabla de Leads visible + boot polling robusto
@@ -11,7 +12,7 @@
  *   - APIs auth: bypass total (no cache)
  *   - skipWaiting + clients.claim para PWA standalone (evita race conditions)
  */
-const VERSION = 'cotizacion-pro-v108';
+const VERSION = 'cotizacion-pro-v109';
 const CACHE_RUNTIME = VERSION + '-runtime';
 const NETWORK_TIMEOUT_MS = 4000;
 const STATIC_URLS = ['/', '/index.html', '/css/style.css', '/favicon.svg', '/manifest.json'];
