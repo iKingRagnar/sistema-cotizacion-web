@@ -359,9 +359,7 @@
           <img src="fondos/universal-logo.jpg?v=4" alt="Universal" width="120" height="72" class="login-brand-hero-img" id="header-brand-logo" decoding="async">
         </div>
         <div class="header-brand-text">
-          <p class="header-brand-eyebrow" aria-hidden="true">Universal · cotización</p>
           <h1 class="header-brand-service" id="app-title-name">Servicio Tecnico</h1>
-          <p class="header-brand-tagline">Experiencia alineada a IA Suprema · espacio de trabajo seguro</p>
         </div>
       </div>
       <span class="header-powered-by header-powered-by--nav-slot" aria-label="Créditos">powered by Ing. David Cantu</span>
@@ -447,7 +445,6 @@
           </svg>
         </button>
         <p class="sidebar-nav-title" id="sidebar-rail-heading">Módulos</p>
-        <span class="sidebar-shell-chip" title="Marca cognitiva del workspace">IA Suprema</span>
       </div>
       <div class="sidebar-global-strip" aria-label="Filtro global, alertas y estado del sistema">
         <select id="global-branch-filter" class="header-branch-filter sidebar-branch-filter" title="Sucursales — filtro global">
@@ -840,24 +837,18 @@
       </div>
     </section>
 
-    <!-- PROSPECCIÓN (mapa premium: referencia técnica MapaSuminregio + identidad Universal) -->
-    <section id="panel-prospeccion" class="panel panel-ux prospeccion-panel">
-      <div class="prospeccion-hero" aria-hidden="false">
-        <div class="prospeccion-hero__glow"></div>
-        <div class="prospeccion-hero__inner">
-          <span class="prospeccion-hero__badge"><i class="fas fa-bolt"></i> Inteligencia comercial geográfica</span>
-          <h2 class="prospeccion-hero__title"><i class="fas fa-map-marked-alt"></i> Prospección territorial</h2>
-          <p class="prospeccion-hero__lead">Mismo pipeline y datos que siempre (<code>/api/prospectos</code>): marcadores agrupados, mapa de calor por potencial o score IA, vista combinada — diseñado para tu operación Universal.</p>
-        </div>
-      </div>
-      <div class="section-header section-header--ux prospeccion-header-tools">
-        <div class="toolbar toolbar--wrap">
+    <!-- PROSPECCIÓN (copy/layout alineado a Old/BackUp; controles de mapa/calor conservados para app.js) -->
+    <section id="panel-prospeccion" class="panel panel-ux">
+      <div class="section-header section-header--ux">
+        <h2><i class="fas fa-map-marked-alt"></i> Prospección</h2>
+        <p class="section-sub">Pipeline comercial: prospectos con ubicación, score y potencial (API <code>/api/prospectos</code>).</p>
+        <div class="toolbar">
           <input type="search" id="filtro-prospeccion" class="search search--ux" placeholder="Buscar empresa, zona, estado, industria…" autocomplete="off">
           <button type="button" id="btn-prospeccion-refresh" class="btn primary"><i class="fas fa-sync-alt"></i> Actualizar</button>
           <button type="button" id="export-prospeccion-csv" class="btn outline"><i class="fas fa-file-csv"></i> CSV</button>
         </div>
       </div>
-      <div id="prospeccion-kpis" class="prospeccion-kpis prospeccion-kpis--elevated" aria-live="polite"></div>
+      <div id="prospeccion-kpis" class="prospeccion-kpis" aria-live="polite"></div>
       <div class="prospeccion-map-chrome" id="prospeccion-map-chrome">
         <div class="prospeccion-map-toolbar" role="toolbar" aria-label="Controles del mapa de prospección">
           <span class="prospeccion-map-toolbar-hint"><i class="fas fa-layer-group"></i> Vista</span>
