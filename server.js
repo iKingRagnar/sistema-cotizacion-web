@@ -377,6 +377,27 @@ app.post('/api/auth/login', _authLimiter, loginRateLimit, async (req, res) => {
   }
 });
 
+/** Self-service password change (any authenticated user) */
+app.post('/api/auth/change-password', async (req, res) => {
+  try {
+    if (!auth.AUTH_ENABLED) return res.status(400).json({ error: 'Auth desactivada' });
+    const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+    const payload = auth.verifyToken(token);
+    if (!payload || !payload.sub) return res.status(401).json({ error: 'No autorizado' });
+    const { currentPassword, newPassword } = req.body || {};
+    if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Contraseña actual y nueva requeridas' });
+    if (String(newPassword).length < 8) return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 8 caracteres' });
+    if (!/[A-Z]/.test(newPassword)) return res.status(400).json({ error: 'La contraseña debe incluir al menos una mayúscula' });
+    if (!/[0-9]/.test(newPassword)) return res.status(400).json({ error: 'La contraseña debe incluir al menos un número' });
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword)) return res.status(400).json({ error: 'La contraseña debe incluir al menos un carácter especial' });
+    const user = await db.getOne('SELECT * FROM app_users WHERE id=?', [payload.sub]);
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (!auth.verifyPassword(currentPassword, user.password_hash)) return res.status(403).json({ error: 'Contraseña actual incorrecta' });
+    await db.runQuery('UPDATE app_users SET password_hash=? WHERE id=?', [auth.hashPassword(newPassword), payload.sub]);
+    res.json({ ok: true, message: 'Contraseña actualizada correctamente' });
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
 app.use(auth.createApiMiddleware());
 
 /** Cotizaciones: solo admin, operador, o usuario vinculado a Personal con es_vendedor */
@@ -5066,6 +5087,192 @@ ACCIONES PARA ABRIR FORMULARIOS (cuando el usuario pida crear, agregar, registra
   open_cotizacion data: tipo ("refacciones" o "mano_obra"), cliente_id (número si en la lista de clientes hay coincidencia) o cliente_nombre.
 - Si en este mensaje te doy una lista de "Clientes (id, nombre)", usa el id cuando el usuario mencione ese cliente por nombre (ej. "cotización para Acme" → cliente_id del Acme de la lista).
 - Extrae TODO lo que el usuario diga o escriba; para lo no dicho usa null.`;
+/* ═══════════════════════════════════════════════════════════════════════
+   DavAI — Asistente AI premium (SSE streaming, Anthropic Claude / OpenAI fallback)
+   ═══════════════════════════════════════════════════════════════════════ */
+const DAVAI_SYSTEM = `Eres DavAI, el asistente de inteligencia artificial premium del Sistema de Cotización Industrial.
+Tu personalidad: profesional, conciso, perspicaz. Respondes en español. Usas markdown para formatear.
+
+CONTEXTO DEL SISTEMA:
+- Aplicación: Sistema de Cotización Industrial (ERP ligero)
+- Módulos: Dashboard ejecutivo, Clientes, Cotizaciones (refacciones + mano de obra), Incidentes, Bitácora de horas, Prospección comercial, Reportes, Catálogos
+- Moneda principal: MXN y USD (tipo de cambio Banxico)
+- Usuarios: administradores, operadores, técnicos, vendedores
+
+CAPACIDADES:
+- Análisis de datos de negocio (clientes, cotizaciones, prospectos, incidentes)
+- Recomendaciones estratégicas de ventas y prospección
+- Generación de resúmenes ejecutivos
+- Predicciones y tendencias basadas en datos históricos
+- Asesoría sobre flujos de trabajo del sistema
+
+REGLAS:
+- Siempre basa tus respuestas en los datos del contexto proporcionado cuando estén disponibles
+- Si no tienes datos suficientes, dilo honestamente
+- Formatea números como moneda cuando sean valores monetarios
+- Usa tablas markdown para comparativas
+- Sé directo y accionable en tus recomendaciones`;
+
+app.post('/api/davai/chat', async (req, res) => {
+  try {
+    const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+    const payload = auth.verifyToken(token);
+    if (!payload || !payload.sub) return res.status(401).json({ error: 'No autorizado' });
+
+    const { message, conversationId, context } = req.body || {};
+    const text = (message || '').trim();
+    if (!text) return res.status(400).json({ error: 'Falta el mensaje' });
+
+    let systemContent = DAVAI_SYSTEM;
+    if (context && typeof context === 'object') {
+      systemContent += '\n\nDATOS EN TIEMPO REAL DEL SISTEMA:\n' + JSON.stringify(context, null, 2);
+    }
+
+    try {
+      const stats = {};
+      const [clientes, cotizaciones, incidentes, prospectos] = await Promise.all([
+        db.getAll('SELECT COUNT(*) as n FROM clientes').catch(() => [{ n: 0 }]),
+        db.getAll('SELECT COUNT(*) as n, SUM(total) as sum FROM cotizaciones').catch(() => [{ n: 0, sum: 0 }]),
+        db.getAll("SELECT COUNT(*) as n FROM incidentes WHERE estatus != 'cerrado'").catch(() => [{ n: 0 }]),
+        db.getAll('SELECT COUNT(*) as n FROM prospectos').catch(() => [{ n: 0 }]),
+      ]);
+      stats.clientesTotal = (clientes[0] || {}).n || 0;
+      stats.cotizacionesTotal = (cotizaciones[0] || {}).n || 0;
+      stats.cotizacionesSuma = (cotizaciones[0] || {}).sum || 0;
+      stats.incidentesAbiertos = (incidentes[0] || {}).n || 0;
+      stats.prospectosTotal = (prospectos[0] || {}).n || 0;
+
+      const recientes = await db.getAll(
+        `SELECT co.folio, co.fecha, co.total, co.tipo, c.nombre as cliente
+         FROM cotizaciones co LEFT JOIN clientes c ON c.id = co.cliente_id
+         ORDER BY co.fecha DESC, co.id DESC LIMIT 10`
+      ).catch(() => []);
+      if (recientes.length) stats.cotizacionesRecientes = recientes;
+
+      const topProspectos = await db.getAll(
+        `SELECT empresa, estado, potencial_usd, score_ia FROM prospectos ORDER BY score_ia DESC LIMIT 5`
+      ).catch(() => []);
+      if (topProspectos.length) stats.topProspectos = topProspectos;
+
+      systemContent += '\n\nESTADÍSTICAS ACTUALIZADAS DE LA BASE DE DATOS:\n' + JSON.stringify(stats, null, 2);
+    } catch (_) {}
+
+    const convId = conversationId || ('davai-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8));
+
+    const anthropicKey = (process.env.ANTHROPIC_API_KEY || '').trim();
+    const openaiKey = (process.env.OPENAI_API_KEY || process.env.AI_API_KEY || '').trim();
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+
+    if (anthropicKey) {
+      const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': anthropicKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
+          max_tokens: 2048,
+          system: systemContent,
+          stream: true,
+          messages: [{ role: 'user', content: text }],
+        }),
+      });
+
+      if (!anthropicRes.ok) {
+        const errBody = await anthropicRes.text().catch(() => '');
+        res.write('data: ' + JSON.stringify({ text: 'Error del API de IA: ' + (anthropicRes.status) + ' ' + errBody.slice(0, 200) }) + '\n\n');
+        res.write('data: [DONE]\n\n');
+        return res.end();
+      }
+
+      res.write('data: ' + JSON.stringify({ conversationId: convId }) + '\n\n');
+
+      const reader = anthropicRes.body;
+      const { createInterface } = require('readline');
+      const rl = createInterface({ input: reader, crlfDelay: Infinity });
+      for await (const line of rl) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6);
+        if (raw === '[DONE]') break;
+        try {
+          const ev = JSON.parse(raw);
+          if (ev.type === 'content_block_delta' && ev.delta && ev.delta.text) {
+            res.write('data: ' + JSON.stringify({ text: ev.delta.text }) + '\n\n');
+          }
+        } catch (_) {}
+      }
+      res.write('data: [DONE]\n\n');
+      return res.end();
+
+    } else if (openaiKey) {
+      const openaiRes = await fetch(process.env.OPENAI_API_BASE || 'https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + openaiKey },
+        body: JSON.stringify({
+          model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+          max_tokens: 2048,
+          stream: true,
+          messages: [
+            { role: 'system', content: systemContent },
+            { role: 'user', content: text },
+          ],
+        }),
+      });
+
+      if (!openaiRes.ok) {
+        const errBody = await openaiRes.text().catch(() => '');
+        res.write('data: ' + JSON.stringify({ text: 'Error del API de IA: ' + openaiRes.status + ' ' + errBody.slice(0, 200) }) + '\n\n');
+        res.write('data: [DONE]\n\n');
+        return res.end();
+      }
+
+      res.write('data: ' + JSON.stringify({ conversationId: convId }) + '\n\n');
+
+      const { createInterface } = require('readline');
+      const rl = createInterface({ input: openaiRes.body, crlfDelay: Infinity });
+      for await (const line of rl) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6);
+        if (raw === '[DONE]') break;
+        try {
+          const ev = JSON.parse(raw);
+          const delta = (ev.choices && ev.choices[0] && ev.choices[0].delta && ev.choices[0].delta.content) || '';
+          if (delta) res.write('data: ' + JSON.stringify({ text: delta }) + '\n\n');
+        } catch (_) {}
+      }
+      res.write('data: [DONE]\n\n');
+      return res.end();
+
+    } else {
+      res.write('data: ' + JSON.stringify({ conversationId: convId }) + '\n\n');
+      const fallback = 'Lo siento, el asistente DavAI no está configurado en el servidor. ' +
+        'Para activarlo, configura la variable de entorno **ANTHROPIC_API_KEY** o **OPENAI_API_KEY** en tu servidor. ' +
+        'Contacta al administrador del sistema para más información.';
+      const words = fallback.split(' ');
+      for (let i = 0; i < words.length; i++) {
+        res.write('data: ' + JSON.stringify({ text: (i > 0 ? ' ' : '') + words[i] }) + '\n\n');
+      }
+      res.write('data: [DONE]\n\n');
+      return res.end();
+    }
+  } catch (err) {
+    if (!res.headersSent) {
+      return res.status(500).json({ error: err.message });
+    }
+    try {
+      res.write('data: ' + JSON.stringify({ text: '\n\nError: ' + err.message }) + '\n\n');
+      res.write('data: [DONE]\n\n');
+    } catch (_) {}
+    res.end();
+  }
+});
+
 const AI_WELCOME = `¡Hola! 👋 Soy tu Agente de Soporte.
 
 Puedo ayudarte a consultar **cotizaciones** (por fecha, cliente), **clientes**, **refacciones**, **máquinas**, **incidentes** y **bitácora**. También puedo explicarte cómo usar el sistema.

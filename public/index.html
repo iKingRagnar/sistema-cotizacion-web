@@ -31,9 +31,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;600;700&family=Manrope:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-25..200&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/premium-upgrade.css?v=1-premium">
-  <link rel="stylesheet" href="css/modules/usuarios.css?v=1-usuarios-permisos-granulares">
-  <link rel="stylesheet" href="css/modules/dashboard-enhanced.css?v=3-funnel-top">
-  <link rel="stylesheet" href="css/modules/prospeccion.css?v=2-teardrop-5tab">
+  <link rel="stylesheet" href="css/modules/dashboard-enhanced.css?v=4-darkmode-fix">
+  <link rel="stylesheet" href="css/modules/prospeccion.css?v=3-darkmode-fix">
   <link rel="manifest" href="manifest.json">
   <!-- Font Awesome (iconos legacy — se mantiene para compat) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
@@ -68,6 +67,7 @@
   <link rel="stylesheet" href="css/modules/tarifas.css?v=1-md3-2026">
   <link rel="stylesheet" href="css/modules/operaciones.css?v=1-md3-2026">
   <link rel="stylesheet" href="css/modules/admin.css?v=1-md3-2026">
+  <link rel="stylesheet" href="css/modules/davai.css?v=1-davai-chat-2026-05-07">
   <!-- ★ PREMIUM OVERRIDE — cargado último, gana toda especificidad -->
   <link rel="stylesheet" href="css/premium.css?v=77-profile-svg-no-before-2026-04-27">
   <link rel="stylesheet" href="css/premium-pro.css?v=22-profile-svg-no-before-2026-04-27">
@@ -88,7 +88,6 @@
   <link rel="stylesheet" href="css/dashboard-exec-kpi-cards.css?v=1-exec-kpi-light-2026-05-07">
   <!-- Login ejecutivo: al final de la cascada (créditos tipográficos + sin artefactos bajo 100dvh) -->
   <link rel="stylesheet" href="css/login-exec-layout.css?v=26-weld-nudge-down">
-  <link rel="manifest" href="manifest.json">
   <!-- Tema único: nano machining + vidrio azul cristalino (sin modo Sol/Luna). -->
   <!-- ★ FORCE-RELOAD: SOLO en browser normal, NUNCA en PWA standalone (evita loop crash) -->
   <script>
@@ -488,11 +487,12 @@
     <button type="button" data-tab="usuarios" class="tab hidden" id="tab-usuarios" title="Cuentas y permisos (solo admin)"><i class="fas fa-user-shield"></i> Usuarios</button>
     <button type="button" data-tab="categorias-catalogo" class="tab hidden" id="tab-categorias-catalogo" title="Categorías y subcategorías (solo admin)"><i class="fas fa-sitemap"></i> Categorías</button>
     <button type="button" data-tab="demo" class="tab highlight hidden" id="tab-demo" title="Cargar datos de ejemplo (solo administrador)"><i class="fas fa-database"></i> Cargar demo</button>
+    <button type="button" data-tab="davai" class="tab" id="tab-davai" title="DavAI — Asistente de Inteligencia Artificial"><i class="fas fa-robot"></i> DavAI</button>
     <button type="button" data-tab="acerca" class="tab" title="Acerca de (Ctrl+7)"><i class="fas fa-info-circle"></i> Acerca de</button>
       </nav>
     </aside>
     <div class="app-main">
-  <main class="content" id="main-content" role="main" style="padding-bottom:28px;">
+  <main class="content" id="main-content" role="main">
     <!-- DASHBOARDS -->
     <section id="panel-dashboards" class="panel panel-dashboard active" aria-label="Resumen por segmento">
       <div class="dashboard-surface">
@@ -1944,6 +1944,7 @@
   <script src="js/bg-animation.js?v=6-no-motion-mobile-only" defer></script>
   <script src="js/premium-ux.js?v=16-no-motion-boot" defer></script>
   <script src="js/ux-enhancements.js?v=1-premium-ux" defer></script>
+  <script src="js/davai.js?v=1-davai-chat-2026-05-07" defer></script>
 
   <div class="app-status-bar" id="app-status-bar" aria-hidden="true">
     <div class="status-bar-item">
@@ -1975,6 +1976,134 @@
         <span><kbd>↑↓</kbd> navegar</span>
         <span><kbd>Enter</kbd> abrir</span>
         <span><kbd>Esc</kbd> cerrar</span>
+      </div>
+    </div>
+  </div>
+  <!-- Password Change Modal -->
+  <div id="modal-change-password" class="modal-wrap hidden" aria-modal="true" role="dialog">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box" style="max-width:420px;">
+      <div class="modal-header">
+        <h3><i class="fas fa-lock"></i> Cambiar Contraseña</h3>
+        <button type="button" class="modal-close" id="modal-change-password-close" aria-label="Cerrar">&times;</button>
+      </div>
+      <form id="form-change-password" autocomplete="off">
+        <div class="modal-body" style="display:flex;flex-direction:column;gap:0.85rem;">
+          <div id="change-password-error" class="alert alert-danger" style="display:none;"></div>
+          <div id="change-password-success" class="alert alert-success" style="display:none;"></div>
+          <label class="form-label">
+            <span><i class="fas fa-key"></i> Contraseña actual</span>
+            <input type="password" id="cp-current" required autocomplete="current-password" class="form-input">
+          </label>
+          <label class="form-label">
+            <span><i class="fas fa-shield-alt"></i> Nueva contraseña</span>
+            <input type="password" id="cp-new" required minlength="8" autocomplete="new-password" class="form-input">
+          </label>
+          <label class="form-label">
+            <span><i class="fas fa-check-double"></i> Confirmar nueva contraseña</span>
+            <input type="password" id="cp-confirm" required minlength="8" autocomplete="new-password" class="form-input">
+          </label>
+          <div id="cp-strength" style="font-size:0.78rem;color:var(--text-secondary,#64748b);"></div>
+          <ul style="font-size:0.72rem;color:var(--text-secondary,#64748b);margin:0;padding-left:1.2rem;">
+            <li>Mínimo 8 caracteres</li>
+            <li>Al menos una mayúscula</li>
+            <li>Al menos un número</li>
+            <li>Al menos un carácter especial (!@#$%...)</li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="modal-change-password-cancel">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- DavAI Chat Module -->
+  <div id="panel-davai" class="panel" style="display:none;">
+    <div class="davai-container">
+      <div class="davai-sidebar">
+        <div class="davai-sidebar__header">
+          <div class="davai-logo">
+            <svg viewBox="0 0 40 40" width="36" height="36" fill="none">
+              <defs><linearGradient id="davai-grad" x1="0" y1="0" x2="40" y2="40"><stop offset="0%" stop-color="#3b82f6"/><stop offset="50%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient></defs>
+              <rect rx="10" width="40" height="40" fill="url(#davai-grad)"/>
+              <text x="50%" y="54%" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="18" font-weight="700" font-family="Sora,sans-serif">D</text>
+            </svg>
+            <div class="davai-logo__text">
+              <span class="davai-logo__name">DavAI</span>
+              <span class="davai-logo__sub">Asistente Inteligente</span>
+            </div>
+          </div>
+          <button type="button" class="davai-btn-new" id="davai-new-chat" title="Nueva conversación">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+        <div class="davai-sidebar__conversations" id="davai-conversations"></div>
+        <div class="davai-sidebar__footer">
+          <span class="davai-model-badge"><i class="fas fa-brain"></i> Claude Sonnet</span>
+        </div>
+      </div>
+      <div class="davai-main">
+        <div class="davai-header">
+          <button type="button" class="davai-toggle-sidebar" id="davai-toggle-sidebar" title="Toggle sidebar">
+            <i class="fas fa-bars"></i>
+          </button>
+          <h2 class="davai-header__title">DavAI</h2>
+          <div class="davai-header__badges">
+            <span class="davai-badge davai-badge--blue"><i class="fas fa-chart-line"></i> BI</span>
+            <span class="davai-badge davai-badge--purple"><i class="fas fa-cogs"></i> ERP</span>
+            <span class="davai-badge davai-badge--amber"><i class="fas fa-robot"></i> AI</span>
+          </div>
+        </div>
+        <div class="davai-messages" id="davai-messages">
+          <div class="davai-landing" id="davai-landing">
+            <div class="davai-orb">
+              <div class="davai-orb__ring davai-orb__ring--1"></div>
+              <div class="davai-orb__ring davai-orb__ring--2"></div>
+              <div class="davai-orb__ring davai-orb__ring--3"></div>
+              <div class="davai-orb__core">
+                <span class="davai-orb__letter">D</span>
+              </div>
+            </div>
+            <h2 class="davai-landing__title">Hola, soy <strong>DavAI</strong></h2>
+            <p class="davai-landing__sub">Tu asistente de inteligencia artificial para cotizaciones, prospectos, reportes y más.</p>
+            <div class="davai-quick-actions" id="davai-quick-actions">
+              <button class="davai-quick-btn" data-prompt="Dame un resumen ejecutivo del estado actual del negocio">
+                <i class="fas fa-chart-pie"></i> Resumen ejecutivo
+              </button>
+              <button class="davai-quick-btn" data-prompt="¿Cuáles son los prospectos más calientes y qué acciones recomiendas?">
+                <i class="fas fa-fire"></i> Prospectos HOT
+              </button>
+              <button class="davai-quick-btn" data-prompt="Genera un análisis de las cotizaciones del último mes">
+                <i class="fas fa-file-invoice-dollar"></i> Análisis cotizaciones
+              </button>
+              <button class="davai-quick-btn" data-prompt="¿Qué clientes necesitan seguimiento urgente?">
+                <i class="fas fa-exclamation-triangle"></i> Seguimiento urgente
+              </button>
+              <button class="davai-quick-btn" data-prompt="Sugiere estrategias para mejorar la tasa de conversión">
+                <i class="fas fa-bullseye"></i> Estrategias conversión
+              </button>
+              <button class="davai-quick-btn" data-prompt="Analiza tendencias de ventas y haz predicciones">
+                <i class="fas fa-crystal-ball"></i> Predicciones
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="davai-input-area">
+          <form id="davai-form" class="davai-input-row">
+            <button type="button" class="davai-input-btn" id="davai-attach-btn" title="Adjuntar archivo">
+              <i class="fas fa-paperclip"></i>
+            </button>
+            <textarea id="davai-input" class="davai-textarea" placeholder="Escribe un mensaje a DavAI..." rows="1"></textarea>
+            <button type="submit" class="davai-send-btn" id="davai-send" title="Enviar">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </form>
+          <div class="davai-input-footer">
+            <span>DavAI puede cometer errores. Verifica la información importante.</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>

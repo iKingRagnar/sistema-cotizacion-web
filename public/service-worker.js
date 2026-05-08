@@ -1,13 +1,13 @@
 /**
- * service-worker.js v56 — PWA-safe + timeout en network requests + cache-bust v74
- *   v74 (2026-05-07): world-class dashboard + MapaSuminregio full port
+ * service-worker.js v56 — PWA-safe + timeout en network requests + cache-bust v76
+ *   v76 (2026-05-07): DavAI chat module + password change + security features
  * Estrategias:
  *   - HTML, CSS, JS, JSON, fonts: network-first con TIMEOUT 4s + fallback cache
  *   - Imágenes: cache-first
  *   - APIs auth: bypass total (no cache)
  *   - skipWaiting + clients.claim para PWA standalone (evita race conditions)
  */
-const VERSION = 'cotizacion-pro-v75';
+const VERSION = 'cotizacion-pro-v76';
 const CACHE_RUNTIME = VERSION + '-runtime';
 const NETWORK_TIMEOUT_MS = 4000;
 const STATIC_URLS = ['/', '/index.html', '/css/style.css', '/favicon.svg', '/manifest.json'];

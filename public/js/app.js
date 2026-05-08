@@ -1143,6 +1143,74 @@
         toggleHeaderProfileMenu();
       });
     }
+    function openChangePasswordModal() {
+      const wrap = qs('#modal-change-password');
+      if (!wrap) return;
+      wrap.classList.remove('hidden');
+      const errEl = qs('#change-password-error');
+      const okEl = qs('#change-password-success');
+      const form = qs('#form-change-password');
+      if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+      if (okEl) { okEl.style.display = 'none'; okEl.textContent = ''; }
+      if (form) form.reset();
+
+      const strengthEl = qs('#cp-strength');
+      const newInput = qs('#cp-new');
+      if (newInput && strengthEl) {
+        newInput.oninput = function () {
+          const v = newInput.value;
+          let score = 0;
+          if (v.length >= 8) score++;
+          if (/[A-Z]/.test(v)) score++;
+          if (/[0-9]/.test(v)) score++;
+          if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(v)) score++;
+          const labels = ['', 'Débil', 'Regular', 'Buena', 'Fuerte'];
+          const colors = ['', '#ef4444', '#f59e0b', '#3b82f6', '#22c55e'];
+          strengthEl.textContent = v ? 'Fortaleza: ' + (labels[score] || '') : '';
+          strengthEl.style.color = colors[score] || '';
+        };
+      }
+
+      const closeModal = function () { wrap.classList.add('hidden'); };
+      const closeBtn = qs('#modal-change-password-close');
+      const cancelBtn = qs('#modal-change-password-cancel');
+      if (closeBtn) closeBtn.onclick = closeModal;
+      if (cancelBtn) cancelBtn.onclick = closeModal;
+      wrap.querySelector('.modal-backdrop').onclick = closeModal;
+
+      if (form) {
+        form.onsubmit = async function (e) {
+          e.preventDefault();
+          if (errEl) { errEl.style.display = 'none'; }
+          if (okEl) { okEl.style.display = 'none'; }
+          const cur = qs('#cp-current').value;
+          const np = qs('#cp-new').value;
+          const conf = qs('#cp-confirm').value;
+          if (np !== conf) {
+            if (errEl) { errEl.textContent = 'Las contraseñas no coinciden.'; errEl.style.display = ''; }
+            return;
+          }
+          try {
+            const resp = await fetch(API + '/auth/change-password', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+              body: JSON.stringify({ currentPassword: cur, newPassword: np })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+              if (errEl) { errEl.textContent = data.error || 'Error al cambiar contraseña'; errEl.style.display = ''; }
+              return;
+            }
+            if (okEl) { okEl.textContent = 'Contraseña actualizada correctamente.'; okEl.style.display = ''; }
+            if (typeof showToast === 'function') showToast('Contraseña actualizada', 'success');
+            setTimeout(closeModal, 1800);
+          } catch (err) {
+            if (errEl) { errEl.textContent = 'Error de red: ' + err.message; errEl.style.display = ''; }
+          }
+        };
+      }
+    }
+
     function openMyProfileCard() {
       const u = getSessionUser();
       if (!u) {
