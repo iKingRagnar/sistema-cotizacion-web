@@ -1,13 +1,13 @@
 /**
- * service-worker.js v56 — PWA-safe + timeout en content + cache-bust v99
- *   v99 (2026-05-08): mega-essentials consolidado + cleanup de overlays fantasma del cache
+ * service-worker.js v56 — PWA-safe + timeout en content + cache-bust v100
+ *   v100 (2026-05-08): tables-fix.css — corrige primera columna negra de todas las tablas
  * Estrategias:
  *   - HTML, CSS, JS, JSON, fonts: network-first con TIMEOUT 4s + fallback cache
  *   - Imágenes: cache-first
  *   - APIs auth: bypass total (no cache)
  *   - skipWaiting + clients.claim para PWA standalone (evita race conditions)
  */
-const VERSION = 'cotizacion-pro-v99';
+const VERSION = 'cotizacion-pro-v100';
 const CACHE_RUNTIME = VERSION + '-runtime';
 const NETWORK_TIMEOUT_MS = 4000;
 const STATIC_URLS = ['/', '/index.html', '/css/style.css', '/favicon.svg', '/manifest.json'];
