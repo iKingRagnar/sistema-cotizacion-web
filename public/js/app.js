@@ -1143,6 +1143,74 @@
         toggleHeaderProfileMenu();
       });
     }
+    function openChangePasswordModal() {
+      const wrap = qs('#modal-change-password');
+      if (!wrap) return;
+      wrap.classList.remove('hidden');
+      const errEl = qs('#change-password-error');
+      const okEl = qs('#change-password-success');
+      const form = qs('#form-change-password');
+      if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+      if (okEl) { okEl.style.display = 'none'; okEl.textContent = ''; }
+      if (form) form.reset();
+
+      const strengthEl = qs('#cp-strength');
+      const newInput = qs('#cp-new');
+      if (newInput && strengthEl) {
+        newInput.oninput = function () {
+          const v = newInput.value;
+          let score = 0;
+          if (v.length >= 8) score++;
+          if (/[A-Z]/.test(v)) score++;
+          if (/[0-9]/.test(v)) score++;
+          if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(v)) score++;
+          const labels = ['', 'Débil', 'Regular', 'Buena', 'Fuerte'];
+          const colors = ['', '#ef4444', '#f59e0b', '#3b82f6', '#22c55e'];
+          strengthEl.textContent = v ? 'Fortaleza: ' + (labels[score] || '') : '';
+          strengthEl.style.color = colors[score] || '';
+        };
+      }
+
+      const closeModal = function () { wrap.classList.add('hidden'); };
+      const closeBtn = qs('#modal-change-password-close');
+      const cancelBtn = qs('#modal-change-password-cancel');
+      if (closeBtn) closeBtn.onclick = closeModal;
+      if (cancelBtn) cancelBtn.onclick = closeModal;
+      wrap.querySelector('.modal-backdrop').onclick = closeModal;
+
+      if (form) {
+        form.onsubmit = async function (e) {
+          e.preventDefault();
+          if (errEl) { errEl.style.display = 'none'; }
+          if (okEl) { okEl.style.display = 'none'; }
+          const cur = qs('#cp-current').value;
+          const np = qs('#cp-new').value;
+          const conf = qs('#cp-confirm').value;
+          if (np !== conf) {
+            if (errEl) { errEl.textContent = 'Las contraseñas no coinciden.'; errEl.style.display = ''; }
+            return;
+          }
+          try {
+            const resp = await fetch(API + '/auth/change-password', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+              body: JSON.stringify({ currentPassword: cur, newPassword: np })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+              if (errEl) { errEl.textContent = data.error || 'Error al cambiar contraseña'; errEl.style.display = ''; }
+              return;
+            }
+            if (okEl) { okEl.textContent = 'Contraseña actualizada correctamente.'; okEl.style.display = ''; }
+            if (typeof showToast === 'function') showToast('Contraseña actualizada', 'success');
+            setTimeout(closeModal, 1800);
+          } catch (err) {
+            if (errEl) { errEl.textContent = 'Error de red: ' + err.message; errEl.style.display = ''; }
+          }
+        };
+      }
+    }
+
     function openMyProfileCard() {
       const u = getSessionUser();
       if (!u) {
@@ -1436,6 +1504,7 @@
   }
 
   function showPanel(id, opts) {
+    if (isMobileNav()) closeMobileSidebar();
     const skipLoad = opts && opts.skipLoad === true;
     if (serverConfig.authRequired && !getAuthToken() && id !== 'acerca') {
       showLoginOverlay(true);
@@ -1557,15 +1626,41 @@
     }
   }
 
+  function isMobileNav() {
+    return typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 768px)').matches;
+  }
+
   function syncSidebarRailToggleHeaderVisibility() {
     const btnHead = qs('#btn-sidebar-rail-toggle-header');
     if (!btnHead) return;
+    if (isMobileNav()) {
+      btnHead.classList.remove('hidden');
+      btnHead.title = 'Abrir menú de navegación';
+      return;
+    }
     const collapsed = document.body.classList.contains('sidebar-rail-collapsed');
     const wide =
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(min-width: 961px)').matches;
     if (wide && collapsed) btnHead.classList.remove('hidden');
     else btnHead.classList.add('hidden');
+  }
+
+  function closeMobileSidebar() {
+    document.body.classList.remove('sidebar-open');
+    var overlay = qs('#mobile-sidebar-overlay');
+    if (overlay) overlay.remove();
+  }
+
+  function openMobileSidebar() {
+    document.body.classList.add('sidebar-open');
+    if (!qs('#mobile-sidebar-overlay')) {
+      var overlay = document.createElement('div');
+      overlay.id = 'mobile-sidebar-overlay';
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:98;background:rgba(0,0,0,0.4);-webkit-tap-highlight-color:transparent;';
+      overlay.addEventListener('click', closeMobileSidebar);
+      document.body.appendChild(overlay);
+    }
   }
 
   function applySidebarRailCollapsed(collapsed) {
@@ -1600,12 +1695,20 @@
       }
     } catch (_) {}
     function toggleRail() {
+      if (isMobileNav()) {
+        if (document.body.classList.contains('sidebar-open')) closeMobileSidebar();
+        else openMobileSidebar();
+        return;
+      }
       applySidebarRailCollapsed(!document.body.classList.contains('sidebar-rail-collapsed'));
     }
     applySidebarRailCollapsed(isSidebarRailCollapsedStored());
     if (btn) btn.addEventListener('click', toggleRail);
     if (btnHead) btnHead.addEventListener('click', toggleRail);
-    window.addEventListener('resize', syncSidebarRailToggleHeaderVisibility);
+    window.addEventListener('resize', function () {
+      syncSidebarRailToggleHeaderVisibility();
+      if (!isMobileNav()) closeMobileSidebar();
+    });
   })();
 
   async function fetchJson(url, opts = {}) {
@@ -12860,7 +12963,7 @@
   function renderProspeccionMap(rows) {
     const L = window.L;
     if (!L) return;
-    const el = qs('#map-prospeccion');
+    const el = qs('#prospeccion-map-canvas') || qs('#map-prospeccion');
     if (!el) return;
     const valid = rows.filter(function (r) {
       const lat = Number(r.lat); const lng = Number(r.lng);

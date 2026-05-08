@@ -1174,7 +1174,21 @@
     transform: translateY(calc(100% + 10px));
   }
   .prospeccion-sidebar-toggle {
-    display: none;
+    display: flex;
+    position: absolute;
+    top: -36px;
+    right: 12px;
+    z-index: 5;
+    width: 44px;
+    height: 32px;
+    border-radius: 8px 8px 0 0;
+    background: var(--prs-glass-bg, rgba(15,23,42,0.85));
+    border: 1px solid var(--prs-glass-border, rgba(255,255,255,0.08));
+    border-bottom: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
   }
   .prospeccion-drawer {
     width: 100%;
@@ -1596,7 +1610,7 @@
   background: rgba(255,255,255,0.6);
   border: 1px solid rgba(128,128,128,0.08);
 }
-[data-theme="dark"] .prs-ai-metric,
+body.dark-theme .prs-ai-metric,
 .dark .prs-ai-metric {
   background: rgba(255,255,255,0.04);
 }
@@ -1679,8 +1693,8 @@
   outline: none;
   box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
 }
-[data-theme="dark"] .prs-edit-row input,
-[data-theme="dark"] .prs-edit-row select,
+body.dark-theme .prs-edit-row input,
+body.dark-theme .prs-edit-row select,
 .dark .prs-edit-row input,
 .dark .prs-edit-row select {
   background: rgba(255,255,255,0.05);
@@ -1734,9 +1748,13 @@
   position: fixed;
   inset: 0;
   z-index: 9999;
+  height: 100dvh !important;
   height: 100vh !important;
   border-radius: 0;
   border: none;
+}
+@supports (height: 100dvh) {
+  .prospeccion-map-container.prs-fullscreen-mode { height: 100dvh !important; }
 }
 .prospeccion-map-container.prs-fullscreen-mode .prospeccion-sidebar {
   top: 16px;
@@ -1795,7 +1813,7 @@
   color: #fff;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
-[data-theme="dark"] .prs-stage-change {
+body.dark-theme .prs-stage-change {
   border-color: rgba(255,255,255,0.08);
 }
 
@@ -1832,13 +1850,13 @@
 .prs-kpi-cell__val--stale {
   color: #dc2626;
 }
-[data-theme="dark"] .prs-kpi-cell {
+body.dark-theme .prs-kpi-cell {
   background: rgba(30,40,60,0.5);
 }
-[data-theme="dark"] .prs-kpi-cell__val {
+body.dark-theme .prs-kpi-cell__val {
   color: #e2e8f0;
 }
-[data-theme="dark"] .prs-kpi-cell__val--money {
+body.dark-theme .prs-kpi-cell__val--money {
   color: #4ade80;
 }
 
@@ -1905,12 +1923,12 @@
   min-width: 32px;
   text-align: center;
 }
-[data-theme="dark"] .prs-similar-lead {
+body.dark-theme .prs-similar-lead {
   background: rgba(255,255,255,0.03);
   border-color: rgba(255,255,255,0.06);
 }
-[data-theme="dark"] .prs-similar-lead__name { color: #e2e8f0; }
-[data-theme="dark"] .prs-similar-lead__score {
+body.dark-theme .prs-similar-lead__name { color: #e2e8f0; }
+body.dark-theme .prs-similar-lead__score {
   background: rgba(255,255,255,0.06);
   border-color: rgba(255,255,255,0.08);
   color: #e2e8f0;
@@ -1978,7 +1996,7 @@
   justify-content: center;
   font-size: 0.75rem;
 }
-[data-theme="dark"] .prs-photo-upload__zone {
+body.dark-theme .prs-photo-upload__zone {
   border-color: rgba(59,130,246,0.2);
   background: rgba(59,130,246,0.05);
 }
@@ -2011,11 +2029,11 @@
   line-height: 1.5;
   color: var(--prs-text, #334155);
 }
-[data-theme="dark"] .prs-ai-action-card {
+body.dark-theme .prs-ai-action-card {
   background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(139,92,246,0.08));
   border-color: rgba(59,130,246,0.2);
 }
-[data-theme="dark"] .prs-ai-action-card__text { color: #cbd5e1; }
+body.dark-theme .prs-ai-action-card__text { color: #cbd5e1; }
 
 /* ============================================================
  * 26. EMAIL TEMPLATE
@@ -2047,15 +2065,15 @@
   border-top: 1px solid rgba(0,0,0,0.06);
   background: rgba(0,0,0,0.01);
 }
-[data-theme="dark"] .prs-email-template {
+body.dark-theme .prs-email-template {
   border-color: rgba(255,255,255,0.08);
 }
-[data-theme="dark"] .prs-email-template__header {
+body.dark-theme .prs-email-template__header {
   background: rgba(255,255,255,0.03);
   border-color: rgba(255,255,255,0.06);
 }
-[data-theme="dark"] .prs-email-template__body { color: #cbd5e1; }
-[data-theme="dark"] .prs-email-template__actions {
+body.dark-theme .prs-email-template__body { color: #cbd5e1; }
+body.dark-theme .prs-email-template__actions {
   border-color: rgba(255,255,255,0.06);
   background: rgba(255,255,255,0.02);
 }

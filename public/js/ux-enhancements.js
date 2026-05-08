@@ -553,6 +553,8 @@
    * ============================================================ */
 
   (function initStatusBar() {
+    /* Si la barra estática #app-status-bar ya existe en el HTML, no duplicamos. */
+    if (document.getElementById('app-status-bar') || document.getElementById('pm-status-bar')) return;
     var bar = document.createElement('div');
     bar.id = 'pm-status-bar';
     bar.className = 'pm-status-bar';

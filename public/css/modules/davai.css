@@ -1,0 +1,584 @@
+/* ============================================================
+   DavAI — Asistente AI Chat Module
+   Glass morphism + animated orb + streaming chat
+   ============================================================ */
+
+.davai-container {
+  display: flex;
+  height: calc(100dvh - 110px);
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(15,23,42,0.92);
+  backdrop-filter: blur(30px) saturate(1.3);
+  -webkit-backdrop-filter: blur(30px) saturate(1.3);
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+}
+
+/* --- Sidebar --- */
+.davai-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: rgba(15,23,42,0.6);
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+.davai-sidebar__header {
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.davai-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.davai-logo__text { display: flex; flex-direction: column; }
+.davai-logo__name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #f8fafc;
+  font-family: 'Sora', sans-serif;
+  letter-spacing: 0.02em;
+}
+.davai-logo__sub {
+  font-size: 0.65rem;
+  color: #94a3b8;
+  letter-spacing: 0.04em;
+}
+.davai-btn-new {
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(59,130,246,0.15);
+  color: #60a5fa;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+.davai-btn-new:hover {
+  background: rgba(59,130,246,0.3);
+  border-color: #3b82f6;
+  transform: scale(1.05);
+}
+.davai-sidebar__conversations {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+.davai-conv-item {
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  color: #cbd5e1;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+.davai-conv-item:hover { background: rgba(255,255,255,0.06); }
+.davai-conv-item.active {
+  background: rgba(59,130,246,0.15);
+  color: #93c5fd;
+}
+.davai-sidebar__footer {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.davai-model-badge {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.davai-model-badge i { color: #8b5cf6; }
+
+/* --- Main Area --- */
+.davai-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.davai-header {
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: rgba(15,23,42,0.4);
+}
+.davai-toggle-sidebar {
+  display: none;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.3rem;
+}
+.davai-header__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0;
+  font-family: 'Sora', sans-serif;
+}
+.davai-header__badges {
+  display: flex;
+  gap: 0.35rem;
+  margin-left: auto;
+}
+.davai-badge {
+  font-size: 0.62rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.davai-badge--blue { background: rgba(59,130,246,0.15); color: #60a5fa; }
+.davai-badge--purple { background: rgba(139,92,246,0.15); color: #a78bfa; }
+.davai-badge--amber { background: rgba(245,158,11,0.15); color: #fbbf24; }
+
+/* --- Messages --- */
+.davai-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.25rem;
+  scroll-behavior: smooth;
+}
+.davai-msg {
+  margin-bottom: 1.25rem;
+  display: flex;
+  gap: 0.75rem;
+  animation: davai-msg-in 0.35s ease;
+}
+@keyframes davai-msg-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.davai-msg--user { justify-content: flex-end; }
+.davai-msg--user .davai-msg__bubble {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+  border-radius: 18px 18px 4px 18px;
+  max-width: 70%;
+}
+.davai-msg__avatar {
+  width: 32px; height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.davai-msg--ai .davai-msg__avatar {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #f59e0b);
+  color: #fff;
+}
+.davai-msg--user .davai-msg__avatar {
+  background: rgba(59,130,246,0.2);
+  color: #60a5fa;
+  order: 1;
+}
+.davai-msg__bubble {
+  padding: 0.85rem 1.1rem;
+  border-radius: 18px 18px 18px 4px;
+  max-width: 80%;
+  line-height: 1.55;
+  font-size: 0.88rem;
+}
+.davai-msg--ai .davai-msg__bubble {
+  background: rgba(255,255,255,0.04);
+  color: #e2e8f0;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.davai-msg__bubble p { margin: 0 0 0.5rem; }
+.davai-msg__bubble p:last-child { margin-bottom: 0; }
+.davai-msg__bubble pre {
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  padding: 0.75rem;
+  overflow-x: auto;
+  font-size: 0.8rem;
+  font-family: 'JetBrains Mono', monospace;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.davai-msg__bubble code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+}
+.davai-msg__bubble code:not(pre code) {
+  background: rgba(139,92,246,0.15);
+  color: #c4b5fd;
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+}
+.davai-msg__bubble table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+  font-size: 0.8rem;
+}
+.davai-msg__bubble th,
+.davai-msg__bubble td {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  text-align: left;
+}
+.davai-msg__bubble th {
+  background: rgba(59,130,246,0.1);
+  font-weight: 600;
+  color: #93c5fd;
+}
+.davai-msg__bubble ul, .davai-msg__bubble ol {
+  padding-left: 1.2rem;
+  margin: 0.3rem 0;
+}
+.davai-msg__bubble strong { color: #f8fafc; }
+.davai-msg__bubble h1, .davai-msg__bubble h2, .davai-msg__bubble h3 {
+  color: #f8fafc;
+  margin: 0.8rem 0 0.3rem;
+  font-size: 1rem;
+}
+.davai-msg__bubble h1 { font-size: 1.15rem; }
+.davai-msg__bubble blockquote {
+  border-left: 3px solid #f59e0b;
+  padding: 0.4rem 0.8rem;
+  margin: 0.5rem 0;
+  background: rgba(245,158,11,0.06);
+  border-radius: 0 8px 8px 0;
+  color: #fcd34d;
+}
+.davai-msg__actions {
+  display: flex;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+.davai-msg__action-btn {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.06);
+  color: #64748b;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.davai-msg__action-btn:hover {
+  color: #e2e8f0;
+  border-color: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.04);
+}
+
+/* --- Streaming indicator --- */
+.davai-typing {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  padding: 0.5rem 0;
+}
+.davai-typing__dots {
+  display: flex;
+  gap: 3px;
+}
+.davai-typing__dots span {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #8b5cf6;
+  animation: davai-dot-bounce 1.4s ease-in-out infinite;
+}
+.davai-typing__dots span:nth-child(2) { animation-delay: 0.2s; }
+.davai-typing__dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes davai-dot-bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+/* --- Landing page --- */
+.davai-landing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 2rem;
+  text-align: center;
+}
+.davai-landing__title {
+  color: #f8fafc;
+  font-size: 1.6rem;
+  margin: 1.5rem 0 0.5rem;
+  font-family: 'Sora', sans-serif;
+}
+.davai-landing__title strong {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.davai-landing__sub {
+  color: #94a3b8;
+  font-size: 0.88rem;
+  max-width: 420px;
+  line-height: 1.5;
+}
+
+/* --- Animated Orb --- */
+.davai-orb {
+  position: relative;
+  width: 140px; height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.davai-orb__ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px dashed;
+  animation: davai-spin linear infinite;
+}
+.davai-orb__ring--1 {
+  width: 100%; height: 100%;
+  border-color: rgba(59,130,246,0.3);
+  animation-duration: 12s;
+}
+.davai-orb__ring--2 {
+  width: 80%; height: 80%;
+  border-color: rgba(139,92,246,0.3);
+  animation-duration: 8s;
+  animation-direction: reverse;
+}
+.davai-orb__ring--3 {
+  width: 60%; height: 60%;
+  border-color: rgba(245,158,11,0.3);
+  animation-duration: 15s;
+}
+@keyframes davai-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.davai-orb__core {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #f59e0b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 0 30px rgba(59,130,246,0.3),
+    0 0 60px rgba(139,92,246,0.15);
+  animation: davai-breathe 4s ease-in-out infinite;
+}
+.davai-orb__letter {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+  font-family: 'Sora', sans-serif;
+}
+@keyframes davai-breathe {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(59,130,246,0.3), 0 0 60px rgba(139,92,246,0.15); }
+  50% { transform: scale(1.06); box-shadow: 0 0 40px rgba(59,130,246,0.4), 0 0 80px rgba(139,92,246,0.25); }
+}
+
+/* --- Quick Actions --- */
+.davai-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+  max-width: 600px;
+  width: 100%;
+}
+.davai-quick-btn {
+  padding: 0.75rem 0.6rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.03);
+  color: #cbd5e1;
+  font-size: 0.76rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  text-align: center;
+  transition: all 0.2s ease;
+  line-height: 1.3;
+}
+.davai-quick-btn i {
+  font-size: 1.1rem;
+  color: #60a5fa;
+}
+.davai-quick-btn:hover {
+  background: rgba(59,130,246,0.1);
+  border-color: rgba(59,130,246,0.3);
+  color: #f8fafc;
+  transform: translateY(-2px);
+}
+
+/* --- Input Area --- */
+.davai-input-area {
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  background: rgba(15,23,42,0.4);
+}
+.davai-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 0.4rem 0.5rem;
+  transition: border-color 0.2s ease;
+}
+.davai-input-row:focus-within {
+  border-color: rgba(59,130,246,0.5);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+.davai-textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #f8fafc;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  resize: none;
+  max-height: 120px;
+  padding: 0.35rem 0.2rem;
+  font-family: inherit;
+  outline: none;
+}
+.davai-textarea::placeholder { color: #64748b; }
+.davai-input-btn,
+.davai-send-btn {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+.davai-input-btn {
+  background: transparent;
+  color: #64748b;
+}
+.davai-input-btn:hover { color: #e2e8f0; background: rgba(255,255,255,0.06); }
+.davai-send-btn {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+}
+.davai-send-btn:hover { transform: scale(1.05); box-shadow: 0 2px 12px rgba(59,130,246,0.4); }
+.davai-send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.davai-input-footer {
+  text-align: center;
+  font-size: 0.65rem;
+  color: #475569;
+  margin-top: 0.4rem;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .davai-sidebar {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 1000;
+    width: min(280px, calc(100vw - 48px));
+    box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+  }
+  .davai-sidebar.open { display: flex; }
+  .davai-sidebar.open ~ .davai-main::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 999;
+  }
+  .davai-toggle-sidebar { display: flex; }
+  .davai-container {
+    height: calc(100dvh - 90px);
+    height: calc(100vh - 90px);
+    border-radius: 0;
+  }
+  @supports (height: 100dvh) {
+    .davai-container { height: calc(100dvh - 90px); }
+  }
+  .davai-quick-actions { grid-template-columns: repeat(2, 1fr); }
+  .davai-quick-btn { min-width: 0; min-height: 44px; }
+  .davai-msg__bubble { max-width: 92%; }
+  .davai-msg--user .davai-msg__bubble { max-width: 85%; }
+  .davai-landing__sub { max-width: 90vw; }
+  .davai-header { padding: 0.5rem 0.75rem; }
+  .davai-input-area { padding: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom, 0px)); }
+  .davai-input-btn,
+  .davai-send-btn { width: 44px; height: 44px; }
+}
+@media (max-width: 480px) {
+  .davai-quick-actions { grid-template-columns: 1fr; }
+  .davai-landing__title { font-size: 1.2rem; }
+  .davai-landing__sub { font-size: 0.82rem; }
+  .davai-orb { width: 100px; height: 100px; }
+  .davai-orb__core { width: 44px; height: 44px; }
+  .davai-orb__letter { font-size: 1.1rem; }
+  .davai-header__title { font-size: 1rem; }
+  .davai-header__badges { display: none; }
+  .davai-textarea { font-size: 16px; }
+  .davai-msg__content { max-width: calc(100% - 36px); }
+  .davai-msg__avatar { width: 28px; height: 28px; font-size: 0.65rem; }
+}
+@media (max-width: 360px) {
+  .davai-container { height: calc(100dvh - 70px); height: calc(100vh - 70px); }
+  @supports (height: 100dvh) { .davai-container { height: calc(100dvh - 70px); } }
+  .davai-quick-btn { padding: 0.6rem; font-size: 0.72rem; }
+  .davai-landing { padding: 1.5rem 0.75rem; }
+}
+
+/* --- Scrollbar --- */
+.davai-messages::-webkit-scrollbar,
+.davai-sidebar__conversations::-webkit-scrollbar {
+  width: 4px;
+}
+.davai-messages::-webkit-scrollbar-track,
+.davai-sidebar__conversations::-webkit-scrollbar-track {
+  background: transparent;
+}
+.davai-messages::-webkit-scrollbar-thumb,
+.davai-sidebar__conversations::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+}
+
+/* --- Markdown caret for streaming --- */
+.davai-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: #60a5fa;
+  margin-left: 2px;
+  animation: davai-blink 0.8s step-end infinite;
+  vertical-align: text-bottom;
+}
+@keyframes davai-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}

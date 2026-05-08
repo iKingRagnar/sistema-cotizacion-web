@@ -458,6 +458,7 @@ module.exports = {
   ensurePinnedAppUsers,
   verifyToken,
   hashPassword,
+  verifyPassword,
   normalizeRole,
   READ_ONLY_ROLES,
   STAFF_ROLES,
