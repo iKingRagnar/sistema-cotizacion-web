@@ -1,0 +1,127 @@
+/* ════════════════════════════════════════════════════════════════════════
+   TABLES FIX URGENTE — Soluciona la primera columna oscura/negra de TODAS las tablas
+
+   Causas encontradas:
+   1. nano-fondo.css aplica backdrop-filter + bg negro a cada celda — costoso
+      y rompe el rendering de columnas sticky
+   2. tables-premium.css agregaba sticky/glow lateral en first-of-type
+   3. premium.css forzaba bg blanco con !important conflictivo
+
+   Fix: cargar este CSS al final de la cascada con specificity alta + !important
+   para garantizar que las celdas tengan backgrounds limpios y consistentes.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Reset: todas las celdas con bg uniforme y sin backdrop-filter cell-level */
+html body.md3-on table.data-table tbody td,
+html body table.data-table tbody td,
+html body.theme-industrial:not(.appearance-light) .data-table tbody td,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody td {
+  background: rgba(255,255,255,0.02) !important;
+  background-color: rgba(255,255,255,0.02) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+/* Zebra striping limpio (filas pares ligeramente más claras) */
+html body.md3-on table.data-table tbody tr:nth-child(even) td,
+html body table.data-table tbody tr:nth-child(even) td,
+html body.theme-industrial:not(.appearance-light) .data-table tbody tr:nth-child(even) td,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:nth-child(even) td {
+  background: rgba(255,255,255,0.04) !important;
+  background-color: rgba(255,255,255,0.04) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Hover row — gradient azul sutil, sin oscurecer */
+html body.md3-on table.data-table tbody tr:hover td,
+html body table.data-table tbody tr:hover td,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:hover td {
+  background: rgba(59,130,246,0.10) !important;
+  background-color: rgba(59,130,246,0.10) !important;
+  color: #ffffff !important;
+}
+
+/* PRIMERA COLUMNA: que NO tenga bg distinto (todos iguales) */
+html body.md3-on table.data-table tbody td:first-child,
+html body table.data-table tbody td:first-child,
+html body.theme-industrial:not(.appearance-light) .data-table tbody td:first-child,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody td:first-child {
+  background: rgba(255,255,255,0.02) !important;
+  background-color: rgba(255,255,255,0.02) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  position: static !important; /* anular sticky residual */
+  color: #93c5fd !important;
+  font-weight: 600 !important;
+}
+html body.md3-on table.data-table tbody tr:nth-child(even) td:first-child,
+html body table.data-table tbody tr:nth-child(even) td:first-child {
+  background: rgba(255,255,255,0.04) !important;
+  background-color: rgba(255,255,255,0.04) !important;
+}
+
+/* Último: columna acciones — sin gradient negro pesado */
+html body.md3-on table.data-table tbody td.th-actions,
+html body.md3-on table.data-table tbody td.actions,
+html body table.data-table tbody td.th-actions,
+html body table.data-table tbody td.actions,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody td.th-actions,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody td.actions {
+  background: rgba(15,23,42,0.55) !important;
+  background-color: rgba(15,23,42,0.55) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: -4px 0 8px -4px rgba(0,0,0,0.3) !important;
+}
+html body.md3-on table.data-table tbody tr:nth-child(even) td.th-actions,
+html body.md3-on table.data-table tbody tr:nth-child(even) td.actions {
+  background: rgba(15,23,42,0.65) !important;
+}
+
+/* HEADER: aclarar y limpio, sin bg negro extremo */
+html body.md3-on table.data-table thead th,
+html body table.data-table thead th,
+html body.theme-industrial:not(.appearance-light) table.data-table thead th {
+  background: rgba(30,41,59,0.85) !important;
+  background-color: rgba(30,41,59,0.85) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  color: #cbd5e1 !important;
+}
+
+/* Texto base de las celdas: claro y legible */
+html body.md3-on table.data-table tbody td:not(.th-actions):not(.actions),
+html body table.data-table tbody td:not(.th-actions):not(.actions) {
+  color: #e2e8f0 !important;
+}
+
+/* Anular cualquier border-left::before gradient residual */
+html body.md3-on table.data-table tbody tr:hover td:first-of-type::before,
+html body.md3-on table.data-table tbody tr:hover td:first-child::before {
+  display: none !important;
+  content: none !important;
+}
+
+/* Anular sticky residual de columnas (.bulk-check-td/th que ya no se usa) */
+html body table.data-table .bulk-check-th,
+html body table.data-table .bulk-check-td {
+  display: none !important;
+}
+
+/* Anular sparkline column residual si quedó del cache */
+html body table.data-table tbody td[data-spark-injected],
+html body table.data-table thead th[data-spark-th] {
+  /* Mantener visible solo si el script actual lo creó esta sesión, no de cache vieja */
+}
+
+/* Mobile: ajustes responsive */
+@media (max-width: 600px) {
+  html body table.data-table tbody td,
+  html body table.data-table thead th {
+    padding: 8px 10px !important;
+    font-size: 0.78rem !important;
+  }
+}
