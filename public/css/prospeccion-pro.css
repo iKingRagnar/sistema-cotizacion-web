@@ -590,6 +590,222 @@
   font-size: 0.78rem;
 }
 
+/* ── TABLA PRO (visible por default en bar) ───────── */
+.prspro-table-host {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(255,255,255,0.08);
+}
+.prspro-table-wrap {
+  background: rgba(2,6,23,0.35);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.prspro-table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 14px;
+  background: linear-gradient(90deg, rgba(59,130,246,0.10), transparent);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.prspro-table-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f8fafc;
+  font-family: 'Sora', sans-serif;
+}
+.prspro-table-title i {
+  color: #60a5fa;
+}
+.prspro-table-count {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 600;
+  background: rgba(255,255,255,0.04);
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.prspro-table-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.prspro-table-filters input,
+.prspro-table-filters select {
+  padding: 7px 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: #f8fafc;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-family: inherit;
+  outline: none;
+  min-width: 200px;
+}
+.prspro-table-filters select { min-width: 160px; cursor: pointer; }
+.prspro-table-filters input:focus,
+.prspro-table-filters select:focus {
+  border-color: rgba(59,130,246,0.6);
+}
+.prspro-table-scroll {
+  max-height: 60vh;
+  overflow: auto;
+}
+.prspro-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+.prspro-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 10px 12px;
+  text-align: left;
+  background: rgba(15,23,42,0.95);
+  color: #cbd5e1;
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.prspro-table thead th:hover {
+  color: #60a5fa;
+  background: rgba(59,130,246,0.10);
+}
+.prspro-table thead th i {
+  margin-left: 4px;
+  font-size: 0.7rem;
+  color: #60a5fa;
+}
+.prspro-table__sortdim {
+  opacity: 0.35;
+  color: #64748b !important;
+}
+.prspro-table tbody td {
+  padding: 9px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  color: #e2e8f0;
+  vertical-align: middle;
+}
+.prspro-table tbody tr:hover {
+  background: rgba(59,130,246,0.06);
+}
+.prspro-table tbody tr:nth-child(even) {
+  background: rgba(255,255,255,0.02);
+}
+.prspro-table tbody tr:nth-child(even):hover {
+  background: rgba(59,130,246,0.08);
+}
+.prspro-table tbody td strong {
+  color: #f8fafc;
+  font-weight: 600;
+}
+.prspro-table__sub {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+.prspro-table__num {
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: #86efac;
+  white-space: nowrap;
+}
+.prspro-table__badge {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+  display: inline-block;
+}
+.prspro-table__muted {
+  color: #64748b;
+  font-style: italic;
+}
+.prspro-table tbody td a {
+  color: #60a5fa;
+  font-size: 0.95rem;
+  margin-right: 6px;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.prspro-table tbody td a:hover {
+  color: #93c5fd;
+}
+.prspro-table__actions {
+  text-align: right !important;
+  white-space: nowrap;
+}
+.prspro-table__actions .prspro-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  margin-left: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 0.74rem;
+}
+.prspro-table__empty {
+  text-align: center;
+  padding: 40px 20px !important;
+  color: #94a3b8;
+  font-size: 0.92rem;
+  font-style: italic;
+}
+.prspro-table__empty strong {
+  color: #60a5fa;
+  font-style: normal;
+}
+
+/* Mobile-friendly: stack filters */
+@media (max-width: 720px) {
+  .prspro-table-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .prspro-table-filters {
+    flex-direction: column;
+  }
+  .prspro-table-filters input,
+  .prspro-table-filters select {
+    min-width: 0;
+    width: 100%;
+  }
+  .prspro-table {
+    font-size: 0.78rem;
+  }
+  .prspro-table tbody td {
+    padding: 7px 9px;
+  }
+  /* Hide low-priority columns on mobile */
+  .prspro-table thead th:nth-child(2),
+  .prspro-table tbody td:nth-child(2),
+  .prspro-table thead th:nth-child(7),
+  .prspro-table tbody td:nth-child(7) {
+    display: none;
+  }
+}
+
 /* ── SPINNER (sin dependencia externa) ────────────── */
 .mega-spinner {
   width: 18px; height: 18px;
