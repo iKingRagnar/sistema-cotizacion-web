@@ -1255,3 +1255,500 @@
   border-color: var(--prs-accent);
   background: color-mix(in srgb, var(--prs-accent) 5%, transparent);
 }
+
+/* ============================================================
+ * 12. TEARDROP MARKERS (MapaSuminregio style)
+ * ============================================================ */
+.prospeccion-marker-icon { background: none !important; border: none !important; }
+
+.prs-teardrop-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.prs-teardrop {
+  position: relative;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+.prs-teardrop-wrap:hover .prs-teardrop {
+  transform: rotate(-45deg) scale(1.15);
+}
+.prs-teardrop-emoji {
+  transform: rotate(45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2));
+  line-height: 1;
+}
+.prs-teardrop-star {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  font-size: 10px;
+  color: #fbbf24;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  animation: prs-star-twinkle 2s ease-in-out infinite;
+  z-index: 2;
+}
+@keyframes prs-star-twinkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.8); }
+}
+.prs-teardrop-shadow {
+  width: 60%;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.15);
+  filter: blur(2px);
+  margin-top: -1px;
+}
+.prs-teardrop-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200%;
+  height: 200%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid;
+  opacity: 0;
+  animation: prs-teardrop-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+@keyframes prs-teardrop-ping {
+  0%   { transform: translate(-50%, -50%) scale(0.5); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
+
+/* ============================================================
+ * 13. CLUSTER RING BUBBLES
+ * ============================================================ */
+.prs-cluster-bubble {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(15,23,42,0.85);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35), 0 0 0 2px rgba(255,255,255,0.1);
+  transition: transform 0.2s;
+  cursor: pointer;
+}
+.prs-cluster-bubble:hover {
+  transform: scale(1.1);
+}
+.prs-cluster-ring {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+.prs-cluster-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  z-index: 1;
+}
+.prs-cluster-count {
+  font-size: 13px;
+  font-weight: 900;
+  color: #fff;
+}
+.prs-cluster-value {
+  font-size: 8px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.75);
+  margin-top: 1px;
+}
+
+/* ============================================================
+ * 14. DRAWER TABS (5-tab system)
+ * ============================================================ */
+.prs-drawer-hero {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.prs-drawer-hero__info { flex: 1; min-width: 0; }
+.prs-drawer-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.prs-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: color-mix(in srgb, var(--badge-color, #3b82f6) 12%, transparent);
+  color: var(--badge-color, #3b82f6);
+  border: 1px solid color-mix(in srgb, var(--badge-color, #3b82f6) 30%, transparent);
+}
+.prs-badge--hot {
+  --badge-color: #3b82f6;
+  background: rgba(59,130,246,0.12);
+  color: #3b82f6;
+  border-color: rgba(59,130,246,0.3);
+}
+.prs-drawer-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--prs-text);
+  line-height: 1.25;
+}
+.prs-drawer-sub {
+  font-size: 0.75rem;
+  color: var(--prs-text-muted);
+  margin-top: 4px;
+}
+
+.prs-drawer-potential {
+  background: rgba(59,130,246,0.06);
+  border: 1px solid rgba(59,130,246,0.12);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.prs-drawer-potential__label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--prs-text-muted);
+  font-weight: 700;
+}
+.prs-drawer-potential__value {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--prs-accent);
+  flex: 1;
+}
+.prs-drawer-potential__sub {
+  font-size: 0.7rem;
+  color: var(--prs-text-muted);
+}
+
+.prs-drawer-route-row { margin: 8px 0 12px; }
+
+.prs-drawer-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid rgba(128,128,128,0.1);
+  margin-bottom: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.prs-drawer-tab {
+  flex: 1;
+  padding: 8px 6px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--prs-text-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.prs-drawer-tab:hover { color: var(--prs-text); }
+.prs-drawer-tab.active {
+  color: var(--prs-accent);
+  border-bottom-color: var(--prs-accent);
+}
+.prs-drawer-tab i { font-size: 0.7rem; }
+
+.prs-drawer-panels { padding-top: 12px; }
+.prs-drawer-panel {
+  display: none;
+  animation: prs-panel-fade 0.25s ease;
+}
+.prs-drawer-panel.active { display: block; }
+@keyframes prs-panel-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+ * 15. TIMELINE (Activity tab)
+ * ============================================================ */
+.prs-timeline {
+  position: relative;
+  padding-left: 20px;
+}
+.prs-timeline::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: rgba(128,128,128,0.15);
+  border-radius: 1px;
+}
+.prs-timeline-item {
+  position: relative;
+  padding: 8px 0 8px 12px;
+}
+.prs-timeline-dot {
+  position: absolute;
+  left: -20px;
+  top: 12px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--prs-surface-solid, #fff);
+  z-index: 1;
+}
+.prs-timeline-content { min-width: 0; }
+.prs-timeline-date {
+  font-size: 0.68rem;
+  color: var(--prs-text-muted);
+  margin-bottom: 2px;
+}
+.prs-timeline-text {
+  font-size: 0.78rem;
+  color: var(--prs-text-soft);
+  line-height: 1.4;
+}
+
+/* Visit stats */
+.prs-visit-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.prs-visit-stat {
+  text-align: center;
+  padding: 10px 6px;
+  border-radius: 10px;
+  background: rgba(128,128,128,0.05);
+  border: 1px solid rgba(128,128,128,0.08);
+}
+.prs-visit-stat__val {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--prs-text);
+  line-height: 1.2;
+}
+.prs-visit-stat__lbl {
+  font-size: 0.6rem;
+  color: var(--prs-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+/* ============================================================
+ * 16. NOTES (Notes tab)
+ * ============================================================ */
+.prs-notes-status {
+  font-size: 0.65rem;
+  color: var(--prs-text-muted);
+  text-align: right;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* ============================================================
+ * 17. AI ANALYSIS (AI tab)
+ * ============================================================ */
+.prs-ai-card {
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(59,130,246,0.04) 0%, rgba(139,92,246,0.04) 100%);
+  border: 1px solid rgba(59,130,246,0.1);
+  padding: 16px;
+}
+.prs-ai-score-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.prs-ai-metric {
+  text-align: center;
+  padding: 10px 6px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.6);
+  border: 1px solid rgba(128,128,128,0.08);
+}
+[data-theme="dark"] .prs-ai-metric,
+.dark .prs-ai-metric {
+  background: rgba(255,255,255,0.04);
+}
+.prs-ai-metric__val {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.prs-ai-metric__lbl {
+  display: block;
+  font-size: 0.6rem;
+  color: var(--prs-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 3px;
+}
+.prs-ai-insight {
+  font-size: 0.78rem;
+  color: var(--prs-text-soft);
+  line-height: 1.5;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(245,158,11,0.06);
+  border: 1px solid rgba(245,158,11,0.12);
+  margin-bottom: 12px;
+}
+.prs-ai-insight i { margin-right: 4px; }
+.prs-ai-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.prs-ai-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  background: rgba(128,128,128,0.06);
+  border: 1px solid rgba(128,128,128,0.1);
+  color: var(--prs-text-muted);
+}
+
+/* ============================================================
+ * 18. EDIT FORM (Edit tab)
+ * ============================================================ */
+.prs-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.prs-edit-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.prs-edit-row label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--prs-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.prs-edit-row input,
+.prs-edit-row select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(128,128,128,0.15);
+  background: rgba(255,255,255,0.5);
+  font-size: 0.82rem;
+  color: var(--prs-text);
+  transition: border-color 0.2s;
+}
+.prs-edit-row input:focus,
+.prs-edit-row select:focus {
+  border-color: var(--prs-accent);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+[data-theme="dark"] .prs-edit-row input,
+[data-theme="dark"] .prs-edit-row select,
+.dark .prs-edit-row input,
+.dark .prs-edit-row select {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.1);
+  color: #e2e8f0;
+}
+
+/* ============================================================
+ * 19. MAP CONTROL BUTTONS (My Location, Fullscreen)
+ * ============================================================ */
+.prs-map-ctrl-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--prs-glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--prs-glass-border);
+  color: var(--prs-text-soft);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-top: 6px;
+}
+.prs-map-ctrl-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  background: var(--prs-surface-solid);
+}
+.prs-map-ctrl-btn.locating {
+  color: #3b82f6;
+}
+
+/* My location pulse dot */
+.prs-my-loc-dot {
+  animation: prs-loc-pulse 2s ease-in-out infinite;
+}
+@keyframes prs-loc-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.3); }
+}
+
+/* ============================================================
+ * 20. FULLSCREEN MODE
+ * ============================================================ */
+.prospeccion-map-container.prs-fullscreen-mode {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  height: 100vh !important;
+  border-radius: 0;
+  border: none;
+}
+.prospeccion-map-container.prs-fullscreen-mode .prospeccion-sidebar {
+  top: 16px;
+  left: 16px;
+  bottom: 16px;
+}
+.prospeccion-map-container.prs-fullscreen-mode .prospeccion-map-controls {
+  top: 16px;
+  right: 16px;
+}
+.prospeccion-map-container.prs-fullscreen-mode .prospeccion-legend {
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+}

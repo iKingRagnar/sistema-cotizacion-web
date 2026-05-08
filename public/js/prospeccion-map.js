@@ -180,7 +180,7 @@
   };
 
   /* ----------------------------------------------------------
-   * 4. ICON BUILDERS
+   * 4. ICON BUILDERS — Teardrop pins with emoji (MapaSuminregio style)
    * ---------------------------------------------------------- */
   var iconCache = {};
   function buildLeadIcon(lead) {
@@ -190,24 +190,32 @@
     var stage = STAGES[lead.estado] || STAGES.prospecto;
     var seg = SEGMENTS[lead.industria] || { emoji: '\u{1F4CD}' };
     var score = Number(lead.score_ia) || 0;
-    var size = score >= 85 ? 40 : score >= 60 ? 34 : 28;
+    var pinH = score >= 85 ? 44 : score >= 60 ? 38 : 32;
+    var pinW = Math.round(pinH * 0.78);
     var isHot = score >= 85;
+    var emojiSize = Math.round(pinH * 0.38);
 
-    var html = '<div class="prs-marker" style="width:' + size + 'px;height:' + size + 'px;">';
-    if (isHot) html += '<div class="prs-marker-pulse" style="background:' + stage.color + '55;"></div>';
-    html += '<div class="prs-marker-pin" style="background:linear-gradient(135deg,' + stage.color + ',' + stage.color + 'cc);box-shadow:0 4px 14px rgba(0,0,0,.4),0 0 0 2px ' + stage.color + '66;">';
-    html += '<span class="prs-emoji" style="font-size:' + Math.round(size * 0.46) + 'px;">' + seg.emoji + '</span>';
+    var html = '<div class="prs-teardrop-wrap" style="width:' + pinW + 'px;height:' + (pinH + 6) + 'px;">';
+    if (isHot) html += '<div class="prs-teardrop-pulse" style="border-color:' + stage.color + ';"></div>';
+    html += '<div class="prs-teardrop" style="' +
+      'width:' + pinW + 'px;height:' + pinH + 'px;' +
+      'background:linear-gradient(145deg,' + stage.color + ' 0%,' + stage.color + 'cc 100%);' +
+      'border:2.5px solid rgba(255,255,255,0.9);' +
+      'box-shadow:0 4px 14px rgba(0,0,0,.35), 0 0 0 1px ' + stage.color + '44;' +
+      '">';
+    html += '<span class="prs-teardrop-emoji" style="font-size:' + emojiSize + 'px;">' + seg.emoji + '</span>';
     html += '</div>';
-    if (score >= 90) html += '<div class="prs-marker-star">★</div>';
+    if (score >= 90) html += '<div class="prs-teardrop-star">★</div>';
+    html += '<div class="prs-teardrop-shadow"></div>';
     html += '</div>';
 
     var icon = L.divIcon({
       html: html,
       className: 'prospeccion-marker-icon',
-      iconSize: [size, size],
-      iconAnchor: [size / 2, size],
-      popupAnchor: [0, -size + 4],
-      tooltipAnchor: [0, -size + 8]
+      iconSize: [pinW, pinH + 6],
+      iconAnchor: [pinW / 2, pinH + 6],
+      popupAnchor: [0, -(pinH + 2)],
+      tooltipAnchor: [0, -(pinH - 4)]
     });
     iconCache[key] = icon;
     return icon;
@@ -215,18 +223,36 @@
 
   function buildClusterIcon(cluster) {
     var n = cluster.getChildCount();
-    var size = n > 200 ? 60 : n > 50 ? 50 : n > 10 ? 42 : 36;
+    var size = n > 200 ? 62 : n > 50 ? 52 : n > 10 ? 44 : 38;
     var markers = cluster.getAllChildMarkers();
-    var sumPot = 0;
+    var sumPot = 0, stageCount = {};
     for (var i = 0; i < markers.length; i++) {
-      sumPot += (markers[i]._leadData && markers[i]._leadData.potencial_usd) || 0;
+      var ld = markers[i]._leadData;
+      if (ld) {
+        sumPot += Number(ld.potencial_usd) || 0;
+        stageCount[ld.estado] = (stageCount[ld.estado] || 0) + 1;
+      }
     }
     var label = sumPot > 1e6 ? Math.round(sumPot / 1e6) + 'M' : sumPot > 1e3 ? Math.round(sumPot / 1e3) + 'K' : String(sumPot);
-    var accentCol = 'rgba(59,130,246,0.9)';
-    var html = '<div style="width:' + size + 'px;height:' + size + 'px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle,' + accentCol + ' 0%,rgba(59,130,246,0.5) 100%);color:#fff;font-weight:900;border:2px solid rgba(59,130,246,0.5);box-shadow:0 0 20px rgba(59,130,246,0.5),0 4px 14px rgba(0,0,0,0.4);line-height:1;">';
-    html += '<span style="font-size:' + (size > 50 ? 13 : 11) + 'px;">' + n + '</span>';
-    html += '<span style="font-size:' + (size > 50 ? 9 : 7) + 'px;opacity:0.85;font-weight:700;margin-top:1px;">$' + label + '</span>';
-    html += '</div>';
+
+    var ringSegs = '';
+    var total = n, offset = 0;
+    var stKeys = Object.keys(STAGES);
+    for (var s = 0; s < stKeys.length; s++) {
+      var cnt = stageCount[stKeys[s]] || 0;
+      if (cnt > 0) {
+        var pct = (cnt / total) * 100;
+        ringSegs += '<circle cx="50" cy="50" r="44" fill="none" stroke="' + STAGES[stKeys[s]].color + '" stroke-width="5" stroke-dasharray="' + (pct * 2.76).toFixed(1) + ' 276.5" stroke-dashoffset="-' + (offset * 2.76).toFixed(1) + '" opacity="0.85"/>';
+        offset += pct;
+      }
+    }
+
+    var html = '<div class="prs-cluster-bubble" style="width:' + size + 'px;height:' + size + 'px;">';
+    html += '<svg viewBox="0 0 100 100" class="prs-cluster-ring">' + ringSegs + '</svg>';
+    html += '<div class="prs-cluster-inner">';
+    html += '<span class="prs-cluster-count">' + n + '</span>';
+    html += '<span class="prs-cluster-value">$' + label + '</span>';
+    html += '</div></div>';
     return L.divIcon({ html: html, className: 'prs-cluster-icon', iconSize: [size, size] });
   }
 
@@ -555,7 +581,24 @@
   }
 
   /* ----------------------------------------------------------
-   * 10. DETAIL DRAWER
+   * 10. NOTES PERSISTENCE (localStorage)
+   * ---------------------------------------------------------- */
+  var NOTES_KEY = 'prs_lead_notes';
+  function loadNotes() {
+    try { return JSON.parse(localStorage.getItem(NOTES_KEY)) || {}; } catch (_) { return {}; }
+  }
+  function saveNote(leadId, text) {
+    var notes = loadNotes();
+    if (text && text.trim()) notes[leadId] = text.trim();
+    else delete notes[leadId];
+    try { localStorage.setItem(NOTES_KEY, JSON.stringify(notes)); } catch (_) { /* quota */ }
+  }
+  function getNote(leadId) {
+    return loadNotes()[leadId] || '';
+  }
+
+  /* ----------------------------------------------------------
+   * 10b. DETAIL DRAWER — 5 tabs (Info, Activity, Notes, AI, Edit)
    * ---------------------------------------------------------- */
   function openDrawer(leadId) {
     var lead = null;
@@ -565,7 +608,6 @@
     if (!lead) return;
     state.focusedLeadId = leadId;
 
-    // Fly to marker
     if (state.map && Number.isFinite(Number(lead.lat))) {
       state.map.flyTo([Number(lead.lat), Number(lead.lng)], 12, { duration: 1 });
     }
@@ -579,43 +621,58 @@
     var body = qs('#prs-drawer-body');
     if (!body) return;
 
-    // Products
     var products = lead.productos || [];
     var prodHTML = '';
     for (var p = 0; p < products.length; p++) {
       prodHTML += '<span class="prospeccion-tag">' + esc(products[p]) + '</span>';
     }
 
-    // Activity timeline (generate some demo activities)
-    var activities = [];
-    if (lead.ultimo_contacto) {
-      activities.push({ date: lead.ultimo_contacto, text: 'Ultimo contacto registrado' });
-    }
-    activities.push({ date: '2026-03-15', text: 'Lead importado al sistema' });
-    var timelineHTML = '';
-    for (var t = 0; t < activities.length; t++) {
-      timelineHTML += '<div class="prospeccion-timeline-item">' +
-        '<div class="prospeccion-timeline-item__date">' + fmtDate(activities[t].date) + '</div>' +
-        '<div class="prospeccion-timeline-item__text">' + esc(activities[t].text) + '</div>' +
-      '</div>';
-    }
-
-    // WhatsApp link
     var waLink = lead.telefono ? 'https://wa.me/' + String(lead.telefono).replace(/[^0-9]/g, '') : '#';
     var telLink = lead.telefono ? 'tel:' + lead.telefono : '#';
     var mailLink = lead.email ? 'mailto:' + lead.email : '#';
-    var navLink = (Number.isFinite(Number(lead.lat))) ? 'https://www.google.com/maps/dir/?api=1&destination=' + lead.lat + ',' + lead.lng : '#';
+    var navLink = Number.isFinite(Number(lead.lat)) ? 'https://www.google.com/maps/dir/?api=1&destination=' + lead.lat + ',' + lead.lng : '#';
+
+    var persistedNotes = getNote(lead.id) || lead.notas || '';
+
+    var activities = [];
+    if (lead.ultimo_contacto) activities.push({ date: lead.ultimo_contacto, type: 'contact', text: 'Ultimo contacto registrado', icon: 'fa-phone' });
+    activities.push({ date: '2026-04-01', type: 'email', text: 'Propuesta comercial enviada', icon: 'fa-envelope' });
+    activities.push({ date: '2026-03-15', type: 'system', text: 'Lead importado al sistema', icon: 'fa-download' });
+
+    var timelineHTML = '';
+    var typeColors = { contact: '#3b82f6', email: '#8b5cf6', system: '#94a3b8', visit: '#22c55e', call: '#f59e0b' };
+    for (var t = 0; t < activities.length; t++) {
+      var act = activities[t];
+      var tc = typeColors[act.type] || '#94a3b8';
+      timelineHTML += '<div class="prs-timeline-item">' +
+        '<div class="prs-timeline-dot" style="background:' + tc + ';box-shadow:0 0 0 3px ' + tc + '22;"></div>' +
+        '<div class="prs-timeline-content">' +
+          '<div class="prs-timeline-date">' + fmtDate(act.date) + ' <span style="color:' + tc + ';font-weight:600;">' + fmtRelative(act.date) + '</span></div>' +
+          '<div class="prs-timeline-text"><i class="fas ' + act.icon + '" style="color:' + tc + ';margin-right:4px;font-size:0.7rem;"></i>' + esc(act.text) + '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    var stageOptions = '';
+    var stKeys = Object.keys(STAGES);
+    for (var si = 0; si < stKeys.length; si++) {
+      stageOptions += '<option value="' + stKeys[si] + '"' + (lead.estado === stKeys[si] ? ' selected' : '') + '>' + STAGES[stKeys[si]].label + '</option>';
+    }
+    var segOptions = '';
+    var sgKeys = Object.keys(SEGMENTS);
+    for (var sgi = 0; sgi < sgKeys.length; sgi++) {
+      segOptions += '<option value="' + sgKeys[sgi] + '"' + (lead.industria === sgKeys[sgi] ? ' selected' : '') + '>' + SEGMENTS[sgKeys[sgi]].emoji + ' ' + SEGMENTS[sgKeys[sgi]].label + '</option>';
+    }
 
     body.innerHTML =
-      // Header info
-      '<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px;">' +
-        '<div style="flex:1;min-width:0;">' +
-          '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">' +
-            '<span class="prospeccion-stage-badge" style="background:' + stage.color + '22;color:' + stage.color + ';border:1px solid ' + stage.color + '55;">' + stage.label + '</span>' +
-            (score >= 85 ? '<span class="prospeccion-stage-badge" style="background:rgba(59,130,246,0.12);color:#3b82f6;border:1px solid rgba(59,130,246,0.3);">★ HOT</span>' : '') +
+      '<div class="prs-drawer-hero">' +
+        '<div class="prs-drawer-hero__info">' +
+          '<div class="prs-drawer-badges">' +
+            '<span class="prs-badge" style="--badge-color:' + stage.color + '">' + stage.label + '</span>' +
+            (score >= 85 ? '<span class="prs-badge prs-badge--hot">★ HOT</span>' : '') +
           '</div>' +
-          '<h3 style="margin:0;font-size:1.15rem;font-weight:800;color:var(--prs-text);">' + esc(lead.empresa) + '</h3>' +
-          '<div style="font-size:0.75rem;color:var(--prs-text-muted);margin-top:4px;">' + seg.emoji + ' ' + esc(seg.label) + ' · ' + esc(lead.zona || '') + '</div>' +
+          '<h3 class="prs-drawer-title">' + esc(lead.empresa) + '</h3>' +
+          '<div class="prs-drawer-sub">' + seg.emoji + ' ' + esc(seg.label) + ' · ' + esc(lead.zona || '') + '</div>' +
         '</div>' +
         '<div class="prospeccion-gauge">' +
           '<svg viewBox="0 0 68 68"><circle class="prospeccion-gauge__track" cx="34" cy="34" r="30"/><circle class="prospeccion-gauge__fill" cx="34" cy="34" r="30" stroke="' + scoreColor(score) + '" stroke-dasharray="' + circ.toFixed(1) + '" stroke-dashoffset="' + offset.toFixed(1) + '"/></svg>' +
@@ -623,28 +680,12 @@
         '</div>' +
       '</div>' +
 
-      // Potential
-      '<div class="prospeccion-detail-section">' +
-        '<div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.15);border-radius:10px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;">' +
-          '<div><div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--prs-text-muted);font-weight:700;">Potencial Estimado</div>' +
-          '<div style="font-size:1.3rem;font-weight:800;color:var(--prs-accent);">' + fmtFullMXN(lead.potencial_usd) + '</div></div>' +
-          '<div style="font-size:0.7rem;color:var(--prs-text-muted);">USD/anual</div>' +
-        '</div>' +
+      '<div class="prs-drawer-potential">' +
+        '<div class="prs-drawer-potential__label">Potencial Estimado</div>' +
+        '<div class="prs-drawer-potential__value">' + fmtFullMXN(lead.potencial_usd) + '</div>' +
+        '<div class="prs-drawer-potential__sub">USD/anual</div>' +
       '</div>' +
 
-      // Contact info
-      '<div class="prospeccion-detail-section">' +
-        '<div class="prospeccion-detail-section__title">Contacto</div>' +
-        '<div class="prospeccion-detail-row"><span class="prospeccion-detail-row__icon"><i class="fas fa-user"></i></span><span class="prospeccion-detail-row__value">' + esc(lead.contacto || 'Sin contacto') + '</span></div>' +
-        '<div class="prospeccion-detail-row"><span class="prospeccion-detail-row__icon"><i class="fas fa-phone"></i></span><span class="prospeccion-detail-row__value">' + esc(lead.telefono || '--') + '</span></div>' +
-        '<div class="prospeccion-detail-row"><span class="prospeccion-detail-row__icon"><i class="fas fa-envelope"></i></span><span class="prospeccion-detail-row__value">' + esc(lead.email || '--') + '</span></div>' +
-        '<div class="prospeccion-detail-row"><span class="prospeccion-detail-row__icon"><i class="fas fa-map-marker-alt"></i></span><span class="prospeccion-detail-row__value">' + esc(lead.zona || '') + '</span></div>' +
-      '</div>' +
-
-      // Products
-      (products.length ? '<div class="prospeccion-detail-section"><div class="prospeccion-detail-section__title">Productos de Interes</div><div class="prospeccion-tags">' + prodHTML + '</div></div>' : '') +
-
-      // Action buttons
       '<div class="prospeccion-actions">' +
         '<a href="' + waLink + '" target="_blank" rel="noopener" class="prospeccion-action-btn prospeccion-action-btn--whatsapp"><i class="fab fa-whatsapp"></i>WhatsApp</a>' +
         '<a href="' + telLink + '" class="prospeccion-action-btn prospeccion-action-btn--call"><i class="fas fa-phone"></i>Llamar</a>' +
@@ -652,46 +693,165 @@
         '<a href="' + navLink + '" target="_blank" rel="noopener" class="prospeccion-action-btn prospeccion-action-btn--navigate"><i class="fas fa-route"></i>Navegar</a>' +
       '</div>' +
 
-      // Route button
-      '<div style="margin-top:12px;">' +
+      '<div class="prs-drawer-route-row">' +
         '<button class="btn outline small" style="width:100%;" id="prs-add-to-route" data-id="' + lead.id + '"><i class="fas fa-route"></i> ' + (state.routeLeadIds.indexOf(lead.id) >= 0 ? 'Quitar de Ruta' : 'Agregar a Ruta') + '</button>' +
       '</div>' +
 
-      // Timeline
-      '<div class="prospeccion-detail-section" style="margin-top:16px;">' +
-        '<div class="prospeccion-detail-section__title">Actividad Reciente</div>' +
-        '<div class="prospeccion-timeline">' + timelineHTML + '</div>' +
+      '<div class="prs-drawer-tabs">' +
+        '<button class="prs-drawer-tab active" data-tab="info"><i class="fas fa-info-circle"></i> Info</button>' +
+        '<button class="prs-drawer-tab" data-tab="activity"><i class="fas fa-stream"></i> Actividad</button>' +
+        '<button class="prs-drawer-tab" data-tab="notes"><i class="fas fa-sticky-note"></i> Notas</button>' +
+        '<button class="prs-drawer-tab" data-tab="ai"><i class="fas fa-robot"></i> IA</button>' +
+        '<button class="prs-drawer-tab" data-tab="edit"><i class="fas fa-edit"></i> Editar</button>' +
       '</div>' +
 
-      // Notes
-      '<div class="prospeccion-detail-section">' +
-        '<div class="prospeccion-detail-section__title">Notas</div>' +
-        '<textarea class="prospeccion-notes-area" id="prs-notes-area" placeholder="Agregar notas...">' + esc(lead.notas || '') + '</textarea>' +
+      '<div class="prs-drawer-panels">' +
+        '<div class="prs-drawer-panel active" data-panel="info">' +
+          '<div class="prospeccion-detail-section">' +
+            '<div class="prospeccion-detail-section__title"><i class="fas fa-address-card"></i> Contacto</div>' +
+            '<div class="prospeccion-detail-row"><span class="prospeccion-detail-row__icon"><i class="fas fa-user"></i></span><span class="prospeccion-detail-row__value">' + esc(lead.contacto || 'Sin contacto') + '</span></div>' +
+            '<div class="prospeccion-detail-row"><span class="prospeccion-detail-row__icon"><i class="fas fa-phone"></i></span><span class="prospeccion-detail-row__value">' + esc(lead.telefono || '--') + '</span></div>' +
+            '<div class="prospeccion-detail-row"><span class="prospeccion-detail-row__icon"><i class="fas fa-envelope"></i></span><span class="prospeccion-detail-row__value">' + esc(lead.email || '--') + '</span></div>' +
+            '<div class="prospeccion-detail-row"><span class="prospeccion-detail-row__icon"><i class="fas fa-map-marker-alt"></i></span><span class="prospeccion-detail-row__value">' + esc(lead.zona || '') + '</span></div>' +
+            '<div class="prospeccion-detail-row"><span class="prospeccion-detail-row__icon"><i class="fas fa-crosshairs"></i></span><span class="prospeccion-detail-row__value" style="font-family:monospace;font-size:0.72rem;">' + (lead.lat ? Number(lead.lat).toFixed(4) + ', ' + Number(lead.lng).toFixed(4) : '--') + '</span></div>' +
+          '</div>' +
+          (products.length ? '<div class="prospeccion-detail-section"><div class="prospeccion-detail-section__title"><i class="fas fa-box-open"></i> Productos de Interes</div><div class="prospeccion-tags">' + prodHTML + '</div></div>' : '') +
+          '<div class="prospeccion-detail-section">' +
+            '<div class="prospeccion-detail-section__title"><i class="fas fa-bullseye"></i> Interes Comercial</div>' +
+            '<p style="font-size:0.8rem;color:var(--prs-text-muted);line-height:1.5;margin:0;">' + esc(lead.tipo_interes || 'Sin especificar') + '</p>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="prs-drawer-panel" data-panel="activity">' +
+          '<div class="prospeccion-detail-section">' +
+            '<div class="prospeccion-detail-section__title"><i class="fas fa-stream"></i> Linea de Tiempo</div>' +
+            '<div class="prs-timeline">' + timelineHTML + '</div>' +
+          '</div>' +
+          '<div class="prospeccion-detail-section">' +
+            '<div class="prospeccion-detail-section__title"><i class="fas fa-chart-bar"></i> Estadisticas</div>' +
+            '<div class="prs-visit-stats">' +
+              '<div class="prs-visit-stat"><div class="prs-visit-stat__val">0</div><div class="prs-visit-stat__lbl">Visitas</div></div>' +
+              '<div class="prs-visit-stat"><div class="prs-visit-stat__val">2</div><div class="prs-visit-stat__lbl">Emails</div></div>' +
+              '<div class="prs-visit-stat"><div class="prs-visit-stat__val">1</div><div class="prs-visit-stat__lbl">Llamadas</div></div>' +
+              '<div class="prs-visit-stat"><div class="prs-visit-stat__val">' + fmtRelative(lead.ultimo_contacto) + '</div><div class="prs-visit-stat__lbl">Ultimo</div></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="prs-drawer-panel" data-panel="notes">' +
+          '<div class="prospeccion-detail-section">' +
+            '<div class="prospeccion-detail-section__title"><i class="fas fa-sticky-note"></i> Notas del Prospecto</div>' +
+            '<textarea class="prospeccion-notes-area" id="prs-notes-area" placeholder="Escribe notas aqui... Se guardan automaticamente.">' + esc(persistedNotes) + '</textarea>' +
+            '<div class="prs-notes-status" id="prs-notes-status">Guardado automatico</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="prs-drawer-panel" data-panel="ai">' +
+          '<div class="prospeccion-detail-section">' +
+            '<div class="prospeccion-detail-section__title"><i class="fas fa-robot"></i> Analisis IA</div>' +
+            '<div class="prs-ai-card">' +
+              '<div class="prs-ai-score-row">' +
+                '<div class="prs-ai-metric"><span class="prs-ai-metric__val" style="color:' + scoreColor(score) + '">' + score + '</span><span class="prs-ai-metric__lbl">Score General</span></div>' +
+                '<div class="prs-ai-metric"><span class="prs-ai-metric__val">' + (score >= 85 ? 'Alto' : score >= 60 ? 'Medio' : 'Bajo') + '</span><span class="prs-ai-metric__lbl">Prioridad</span></div>' +
+                '<div class="prs-ai-metric"><span class="prs-ai-metric__val">' + Math.round(score * 0.85) + '%</span><span class="prs-ai-metric__lbl">Prob. Cierre</span></div>' +
+              '</div>' +
+              '<div class="prs-ai-insight"><i class="fas fa-lightbulb" style="color:#f59e0b;"></i> ' +
+                (score >= 85 ? 'Lead de alta prioridad. Recomendacion: agendar visita presencial esta semana y preparar propuesta personalizada.' :
+                 score >= 60 ? 'Lead con potencial medio. Recomendacion: enviar caso de estudio del sector ' + esc(seg.label) + ' y dar seguimiento en 5 dias.' :
+                 'Lead en fase temprana. Recomendacion: nutrir con contenido educativo y calificar necesidades antes de propuesta formal.') +
+              '</div>' +
+              '<div class="prs-ai-tags">' +
+                '<span class="prs-ai-tag"><i class="fas fa-industry"></i> ' + esc(seg.label) + '</span>' +
+                '<span class="prs-ai-tag"><i class="fas fa-dollar-sign"></i> ' + fmtCompactMXN(lead.potencial_usd) + '</span>' +
+                '<span class="prs-ai-tag"><i class="fas fa-clock"></i> ' + fmtRelative(lead.ultimo_contacto) + '</span>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="prs-drawer-panel" data-panel="edit">' +
+          '<div class="prospeccion-detail-section">' +
+            '<div class="prospeccion-detail-section__title"><i class="fas fa-edit"></i> Editar Lead</div>' +
+            '<form id="prs-edit-form" class="prs-edit-form">' +
+              '<div class="prs-edit-row"><label>Empresa</label><input type="text" name="empresa" value="' + esc(lead.empresa || '') + '"></div>' +
+              '<div class="prs-edit-row"><label>Zona</label><input type="text" name="zona" value="' + esc(lead.zona || '') + '"></div>' +
+              '<div class="prs-edit-row"><label>Contacto</label><input type="text" name="contacto" value="' + esc(lead.contacto || '') + '"></div>' +
+              '<div class="prs-edit-row"><label>Telefono</label><input type="tel" name="telefono" value="' + esc(lead.telefono || '') + '"></div>' +
+              '<div class="prs-edit-row"><label>Email</label><input type="email" name="email" value="' + esc(lead.email || '') + '"></div>' +
+              '<div class="prs-edit-row"><label>Etapa</label><select name="estado">' + stageOptions + '</select></div>' +
+              '<div class="prs-edit-row"><label>Industria</label><select name="industria">' + segOptions + '</select></div>' +
+              '<div class="prs-edit-row"><label>Potencial USD</label><input type="number" name="potencial_usd" value="' + (Number(lead.potencial_usd) || 0) + '" min="0" step="1000"></div>' +
+              '<div class="prs-edit-row"><label>Score IA</label><input type="number" name="score_ia" value="' + (Number(lead.score_ia) || 0) + '" min="0" max="100"></div>' +
+              '<div class="prs-edit-row"><label>Latitud</label><input type="number" name="lat" value="' + (Number(lead.lat) || '') + '" step="0.0001"></div>' +
+              '<div class="prs-edit-row"><label>Longitud</label><input type="number" name="lng" value="' + (Number(lead.lng) || '') + '" step="0.0001"></div>' +
+              '<button type="submit" class="btn primary" style="width:100%;margin-top:8px;"><i class="fas fa-save"></i> Guardar Cambios</button>' +
+            '</form>' +
+          '</div>' +
+        '</div>' +
       '</div>';
 
-    // Show drawer
     var overlay = qs('#prs-drawer-overlay');
     var drawer = qs('#prs-drawer');
     if (overlay) overlay.classList.add('open');
     if (drawer) drawer.classList.add('open');
 
-    // Bind add-to-route
+    // Tab switching
+    qsa('.prs-drawer-tab', body).forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        qsa('.prs-drawer-tab', body).forEach(function (t) { t.classList.remove('active'); });
+        qsa('.prs-drawer-panel', body).forEach(function (p) { p.classList.remove('active'); });
+        tab.classList.add('active');
+        var panel = qs('[data-panel="' + tab.getAttribute('data-tab') + '"]', body);
+        if (panel) panel.classList.add('active');
+      });
+    });
+
+    // Notes auto-save
+    var notesArea = qs('#prs-notes-area');
+    var notesStatus = qs('#prs-notes-status');
+    var noteTimer;
+    if (notesArea) {
+      notesArea.addEventListener('input', function () {
+        clearTimeout(noteTimer);
+        if (notesStatus) notesStatus.textContent = 'Guardando...';
+        noteTimer = setTimeout(function () {
+          saveNote(leadId, notesArea.value);
+          if (notesStatus) notesStatus.textContent = 'Guardado ✓';
+        }, 600);
+      });
+    }
+
+    // Edit form
+    var editForm = qs('#prs-edit-form');
+    if (editForm) {
+      editForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var fd = new FormData(editForm);
+        fd.forEach(function (val, key) {
+          if (key === 'potencial_usd' || key === 'score_ia' || key === 'lat' || key === 'lng') lead[key] = Number(val) || 0;
+          else lead[key] = val;
+        });
+        iconCache = {};
+        applyFilters();
+        renderAll();
+        if (typeof showToast === 'function') showToast('Lead actualizado', 'ok');
+        openDrawer(leadId);
+      });
+    }
+
+    // Route button
     var routeBtn = qs('#prs-add-to-route');
     if (routeBtn) {
       routeBtn.addEventListener('click', function () {
         var lid = this.getAttribute('data-id');
         var idx = state.routeLeadIds.indexOf(lid);
-        if (idx >= 0) {
-          state.routeLeadIds.splice(idx, 1);
-        } else {
-          state.routeLeadIds.push(lid);
-        }
+        if (idx >= 0) state.routeLeadIds.splice(idx, 1);
+        else state.routeLeadIds.push(lid);
         this.innerHTML = '<i class="fas fa-route"></i> ' + (state.routeLeadIds.indexOf(lid) >= 0 ? 'Quitar de Ruta' : 'Agregar a Ruta');
         updateRouteButton();
       });
     }
 
-    // Update sidebar active state
     renderSidebarList();
   }
 
@@ -720,6 +880,10 @@
     if (!modal) return;
     modal.classList.add('open');
     renderRouteStops();
+    var routeMapEl = qs('#prs-route-map');
+    if (routeMapEl && routeMapEl._routeMap) {
+      setTimeout(function () { routeMapEl._routeMap.invalidateSize(); }, 300);
+    }
     calculateRoute();
   }
   function closeRoutePlanner() {
@@ -957,7 +1121,7 @@
   }
 
   /* ----------------------------------------------------------
-   * 14. INIT MAP
+   * 14. INIT MAP + Route Modal Map + My Location + Fullscreen
    * ---------------------------------------------------------- */
   function initMap() {
     if (state.map) return;
@@ -969,7 +1133,6 @@
 
     state.map = L.map(el, { scrollWheelZoom: true, zoomControl: false });
 
-    // Theme-aware tiles
     var isIndustrial = document.body && document.body.classList.contains('theme-industrial');
     var tileUrl = isIndustrial
       ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
@@ -981,6 +1144,90 @@
 
     L.control.zoom({ position: 'bottomright' }).addTo(state.map);
     state.map.setView([24.5, -101.5], 5);
+
+    initRouteModalMap(L, tileUrl, tileOpts);
+    addMyLocationButton(L);
+    addFullscreenButton();
+  }
+
+  function initRouteModalMap(L, tileUrl, tileOpts) {
+    var routeMapEl = qs('#prs-route-map');
+    if (!routeMapEl || routeMapEl._routeMap) return;
+    setTimeout(function () {
+      var rm = L.map(routeMapEl, { scrollWheelZoom: true, zoomControl: true });
+      L.tileLayer(tileUrl, tileOpts).addTo(rm);
+      rm.setView([24.5, -101.5], 5);
+      routeMapEl._routeMap = rm;
+      routeMapEl._routePoly = null;
+    }, 300);
+  }
+
+  function addMyLocationButton(L) {
+    var controls = qs('.prospeccion-map-controls');
+    if (!controls || qs('#prs-my-location')) return;
+    var btn = document.createElement('button');
+    btn.id = 'prs-my-location';
+    btn.className = 'prs-map-ctrl-btn';
+    btn.title = 'Mi ubicacion';
+    btn.innerHTML = '<i class="fas fa-crosshairs"></i>';
+    controls.appendChild(btn);
+    var myLocMarker = null;
+    btn.addEventListener('click', function () {
+      btn.classList.add('locating');
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        btn.classList.remove('locating');
+        btn.innerHTML = '<i class="fas fa-crosshairs"></i>';
+        var ll = [pos.coords.latitude, pos.coords.longitude];
+        state.map.flyTo(ll, 13, { duration: 1.2 });
+        if (myLocMarker) state.map.removeLayer(myLocMarker);
+        myLocMarker = L.circleMarker(ll, {
+          radius: 8, fillColor: '#3b82f6', fillOpacity: 1, color: '#fff', weight: 3,
+          className: 'prs-my-loc-dot'
+        }).addTo(state.map);
+        myLocMarker.bindTooltip('Tu ubicacion', { direction: 'top', offset: [0, -10] });
+        var pulse = L.circleMarker(ll, {
+          radius: 20, fillColor: '#3b82f6', fillOpacity: 0.15, color: '#3b82f6', weight: 1, opacity: 0.4
+        }).addTo(state.map);
+        setTimeout(function () { if (pulse) state.map.removeLayer(pulse); }, 3000);
+      }, function () {
+        btn.classList.remove('locating');
+        btn.innerHTML = '<i class="fas fa-crosshairs"></i>';
+        if (typeof showToast === 'function') showToast('No se pudo obtener ubicacion', 'error');
+      }, { enableHighAccuracy: true, timeout: 8000 });
+    });
+  }
+
+  function addFullscreenButton() {
+    var controls = qs('.prospeccion-map-controls');
+    if (!controls || qs('#prs-fullscreen')) return;
+    var btn = document.createElement('button');
+    btn.id = 'prs-fullscreen';
+    btn.className = 'prs-map-ctrl-btn';
+    btn.title = 'Pantalla completa';
+    btn.innerHTML = '<i class="fas fa-expand"></i>';
+    controls.appendChild(btn);
+    btn.addEventListener('click', function () {
+      var container = qs('.prospeccion-map-container');
+      if (!container) return;
+      container.classList.toggle('prs-fullscreen-mode');
+      var isFS = container.classList.contains('prs-fullscreen-mode');
+      btn.innerHTML = isFS ? '<i class="fas fa-compress"></i>' : '<i class="fas fa-expand"></i>';
+      btn.title = isFS ? 'Salir de pantalla completa' : 'Pantalla completa';
+      document.body.style.overflow = isFS ? 'hidden' : '';
+      setTimeout(function () { if (state.map) state.map.invalidateSize(); }, 350);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        var container = qs('.prospeccion-map-container');
+        if (container && container.classList.contains('prs-fullscreen-mode')) {
+          container.classList.remove('prs-fullscreen-mode');
+          btn.innerHTML = '<i class="fas fa-expand"></i>';
+          document.body.style.overflow = '';
+          setTimeout(function () { if (state.map) state.map.invalidateSize(); }, 350);
+        }
+      }
+    });
   }
 
   /* ----------------------------------------------------------
