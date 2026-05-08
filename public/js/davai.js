@@ -151,6 +151,16 @@
     if (!text || !text.trim() || isStreaming) return;
     text = text.trim();
 
+    /* Snapshot del historial ANTES de añadir el nuevo turno —
+       esto es lo que el LLM verá como contexto previo. Última 20 turnos
+       (10 user + 10 assistant) para acotar tokens. */
+    var history = messages
+      .filter(function (m) { return m && m.content && m.content.trim(); })
+      .slice(-20)
+      .map(function (m) {
+        return { role: m.role === 'ai' ? 'assistant' : 'user', content: String(m.content) };
+      });
+
     messages.push({ role: 'user', content: text });
     renderMessages();
 
@@ -178,6 +188,7 @@
         },
         body: JSON.stringify({
           message: text,
+          history: history,
           conversationId: currentConvId,
           context: contextPayload
         }),
@@ -248,6 +259,12 @@
     abortController = null;
     updateSendButton();
     saveConversationLocal();
+
+    /* Auto-focus al input para que el usuario pueda seguir conversando sin click. */
+    var nextInput = qs('#davai-input');
+    if (nextInput && document.activeElement !== nextInput) {
+      try { nextInput.focus(); } catch (_) {}
+    }
   }
 
   function updateSendButton() {
