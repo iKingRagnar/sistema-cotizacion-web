@@ -1,0 +1,417 @@
+/* ════════════════════════════════════════════════════════════════════════
+   MEGA UPGRADE 2026 — Galleta visual premium
+   Mesh gradients, glow effects, animated borders, glassmorphism Apple-tier
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── CSS variables premium (paleta + glows) ────────────────────────── */
+:root {
+  --mega-glow-blue: 0 0 32px rgba(59,130,246,0.4), 0 0 64px rgba(59,130,246,0.2);
+  --mega-glow-purple: 0 0 32px rgba(139,92,246,0.4), 0 0 64px rgba(139,92,246,0.2);
+  --mega-glow-amber: 0 0 28px rgba(245,158,11,0.35), 0 0 56px rgba(245,158,11,0.18);
+  --mega-glow-green: 0 0 28px rgba(34,197,94,0.35);
+  --mega-glow-red: 0 0 28px rgba(239,68,68,0.35);
+
+  --mega-gradient-primary: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #f59e0b 100%);
+  --mega-gradient-cool: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #8b5cf6 100%);
+  --mega-gradient-fire: linear-gradient(135deg, #f59e0b 0%, #ef4444 50%, #ec4899 100%);
+  --mega-gradient-money: linear-gradient(135deg, #22c55e 0%, #10b981 50%, #06b6d4 100%);
+
+  --mega-glass-bg: rgba(15,23,42,0.55);
+  --mega-glass-bg-strong: rgba(15,23,42,0.85);
+  --mega-glass-border: rgba(255,255,255,0.12);
+  --mega-glass-border-glow: rgba(255,255,255,0.25);
+  --mega-glass-shadow: 0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+/* ── Mesh gradient animado para el body — sutil pero premium ──────── */
+body.md3-on::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 20%, rgba(59,130,246,0.12) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 50% at 85% 30%, rgba(139,92,246,0.10) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 60% at 50% 90%, rgba(245,158,11,0.08) 0%, transparent 60%);
+  animation: mega-mesh-flow 20s ease-in-out infinite alternate;
+  opacity: 0.6;
+  mix-blend-mode: screen;
+}
+
+@keyframes mega-mesh-flow {
+  0% { background-position: 0% 0%, 100% 0%, 50% 100%; transform: scale(1); }
+  100% { background-position: 100% 50%, 0% 100%, 0% 0%; transform: scale(1.05); }
+}
+
+/* ── Section header con accent bar gradient ──────────────────────── */
+body.md3-on .panel .section-header {
+  position: relative;
+  padding-left: 1.25rem;
+}
+body.md3-on .panel .section-header::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 1rem;
+  width: 4px;
+  border-radius: 4px;
+  background: var(--mega-gradient-primary);
+  box-shadow: var(--mega-glow-blue);
+}
+body.md3-on .panel .section-header h2 {
+  background: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Cards premium con glow en hover ─────────────────────────────── */
+body.md3-on .card,
+body.md3-on .stat-card,
+body.md3-on .scorecard,
+body.md3-on .kpi-card {
+  background: var(--mega-glass-bg);
+  backdrop-filter: blur(16px) saturate(1.5);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  border: 1px solid var(--mega-glass-border);
+  border-radius: 16px;
+  box-shadow: var(--mega-glass-shadow);
+  transition:
+    transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+    border-color 0.2s ease,
+    box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+body.md3-on .card::before,
+body.md3-on .stat-card::before,
+body.md3-on .scorecard::before,
+body.md3-on .kpi-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(59,130,246,0.4), rgba(139,92,246,0.2), transparent 40%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+body.md3-on .card:hover::before,
+body.md3-on .stat-card:hover::before,
+body.md3-on .scorecard:hover::before,
+body.md3-on .kpi-card:hover::before {
+  opacity: 1;
+}
+
+body.md3-on .card:hover,
+body.md3-on .stat-card:hover,
+body.md3-on .scorecard:hover,
+body.md3-on .kpi-card:hover {
+  transform: translateY(-4px) scale(1.005);
+  border-color: var(--mega-glass-border-glow);
+  box-shadow:
+    0 12px 40px rgba(0,0,0,0.4),
+    0 0 32px rgba(59,130,246,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+/* ── Sidebar tabs con glow indicator ─────────────────────────────── */
+body.md3-on .tabs.tabs--rail .tab {
+  position: relative;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+body.md3-on .tabs.tabs--rail .tab.active {
+  background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.1));
+  border: 1px solid rgba(59,130,246,0.3);
+  box-shadow:
+    0 0 20px rgba(59,130,246,0.25),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+}
+body.md3-on .tabs.tabs--rail .tab.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  border-radius: 0 3px 3px 0;
+  background: var(--mega-gradient-primary);
+  box-shadow: var(--mega-glow-blue);
+}
+
+/* ── Botones premium ─────────────────────────────────────────────── */
+body.md3-on .btn.primary,
+body.md3-on .btn-primary {
+  background: var(--mega-gradient-primary);
+  background-size: 200% 200%;
+  background-position: 0% 0%;
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow:
+    0 4px 12px rgba(59,130,246,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.18);
+  transition:
+    background-position 0.5s ease,
+    transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+body.md3-on .btn.primary::after,
+body.md3-on .btn-primary::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.6s ease;
+}
+body.md3-on .btn.primary:hover::after,
+body.md3-on .btn-primary:hover::after {
+  left: 100%;
+}
+body.md3-on .btn.primary:hover,
+body.md3-on .btn-primary:hover {
+  background-position: 100% 100%;
+  transform: translateY(-1px);
+  box-shadow:
+    0 6px 20px rgba(59,130,246,0.5),
+    0 0 24px rgba(139,92,246,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.25);
+}
+body.md3-on .btn.primary:active,
+body.md3-on .btn-primary:active { transform: translateY(0); }
+
+/* ── KPI numbers con tabular-nums + gradient ─────────────────────── */
+body.md3-on .scorecard__value,
+body.md3-on .stat-value,
+body.md3-on .kpi-value {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+  font-family: 'Sora', 'Inter', sans-serif;
+  font-weight: 800;
+  background: linear-gradient(135deg, #f8fafc 0%, #94a3b8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
+}
+
+body.md3-on .scorecard__value.is-positive,
+body.md3-on .kpi-value.is-positive {
+  background: var(--mega-gradient-money);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+body.md3-on .scorecard__value.is-warning,
+body.md3-on .kpi-value.is-warning {
+  background: var(--mega-gradient-fire);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Skeleton loaders premium (pulso shimmer) ────────────────────── */
+.mega-skeleton {
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.04) 0%,
+    rgba(255,255,255,0.10) 50%,
+    rgba(255,255,255,0.04) 100%);
+  background-size: 200% 100%;
+  animation: mega-shimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+@keyframes mega-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.mega-skeleton--text { height: 1em; margin: 0.3em 0; }
+.mega-skeleton--title { height: 1.5em; margin: 0.5em 0; max-width: 60%; }
+.mega-skeleton--card { height: 120px; }
+.mega-skeleton--row { height: 44px; margin-bottom: 4px; }
+
+/* ── NProgress (barra superior tipo YouTube) override de estilos ──── */
+#nprogress .bar {
+  background: var(--mega-gradient-primary) !important;
+  height: 3px !important;
+  box-shadow: 0 0 12px rgba(59,130,246,0.6);
+}
+#nprogress .peg {
+  box-shadow: 0 0 16px rgba(59,130,246,0.8), 0 0 8px rgba(139,92,246,0.6) !important;
+}
+#nprogress .spinner-icon {
+  border-top-color: #3b82f6 !important;
+  border-left-color: #8b5cf6 !important;
+}
+
+/* ── Tippy.js theme custom ──────────────────────────────────────── */
+.tippy-box[data-theme~='davai'] {
+  background: rgba(15,23,42,0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #f8fafc;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 4px 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.tippy-box[data-theme~='davai'] .tippy-arrow { color: rgba(15,23,42,0.95); }
+
+/* ── Choices.js theme custom (selects mejorados) ───────────────── */
+.choices {
+  margin-bottom: 0 !important;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.choices__inner {
+  background: rgba(15,23,42,0.6) !important;
+  border: 1px solid rgba(255,255,255,0.15) !important;
+  border-radius: 10px !important;
+  color: #f8fafc !important;
+  min-height: 42px !important;
+  font-size: 0.88rem !important;
+  padding: 6px 10px !important;
+  transition: all 0.18s ease;
+}
+.choices.is-focused .choices__inner,
+.choices.is-open .choices__inner {
+  border-color: rgba(59,130,246,0.5) !important;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15) !important;
+}
+.choices__list--dropdown {
+  background: rgba(15,23,42,0.97) !important;
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  border-radius: 10px !important;
+  margin-top: 4px !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+}
+.choices__list--dropdown .choices__item {
+  color: #e2e8f0 !important;
+  font-size: 0.85rem !important;
+  padding: 8px 12px !important;
+}
+.choices__list--dropdown .choices__item--selectable.is-highlighted {
+  background: rgba(59,130,246,0.18) !important;
+  color: #fff !important;
+}
+
+/* ── Page transition al cambiar de tab ───────────────────────────── */
+body.md3-on .panel.active {
+  animation: mega-panel-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes mega-panel-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Headers principales con shimmer sutil ───────────────────────── */
+body.md3-on .header-brand {
+  position: relative;
+}
+body.md3-on .header-brand::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+  background-size: 200% 100%;
+  animation: mega-brand-shimmer 4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes mega-brand-shimmer {
+  0%, 100% { background-position: -200% 0; opacity: 0; }
+  50% { background-position: 200% 0; opacity: 1; }
+}
+
+/* ── Status indicators con pulso ─────────────────────────────────── */
+body.md3-on .status-badge--online,
+body.md3-on .badge--success,
+body.md3-on .badge--cumplido {
+  position: relative;
+  background: rgba(34,197,94,0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34,197,94,0.3);
+}
+body.md3-on .status-badge--online::before {
+  content: '';
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  margin-right: 6px;
+  box-shadow: 0 0 8px rgba(34,197,94,0.7);
+  animation: mega-pulse-dot 2s ease-in-out infinite;
+}
+@keyframes mega-pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.2); }
+}
+
+/* ── Inputs con focus glow ──────────────────────────────────────── */
+body.md3-on input:not([type="checkbox"]):not([type="radio"]):focus,
+body.md3-on textarea:focus,
+body.md3-on select:focus {
+  border-color: rgba(59,130,246,0.5);
+  box-shadow:
+    0 0 0 3px rgba(59,130,246,0.18),
+    0 0 16px rgba(59,130,246,0.12);
+  outline: none;
+}
+
+/* ── Modal premium glassmorphism ────────────────────────────────── */
+body.md3-on .modal-box,
+body.md3-on .md-modal-panel {
+  background: rgba(15,23,42,0.92);
+  backdrop-filter: blur(28px) saturate(1.8);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow:
+    0 24px 64px rgba(0,0,0,0.5),
+    0 0 0 1px rgba(255,255,255,0.05),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+}
+body.md3-on .modal-backdrop {
+  background: rgba(2,6,23,0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ── Counter animation hint (used by JS) ──────────────────────── */
+.mega-counter { display: inline-block; font-variant-numeric: tabular-nums; }
+.mega-counter--counting { color: #60a5fa !important; }
+
+/* ── Reduced motion fallback ────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  body.md3-on::before,
+  body.md3-on .header-brand::after,
+  body.md3-on .status-badge--online::before,
+  .mega-skeleton {
+    animation: none !important;
+  }
+  body.md3-on .panel.active { animation: none !important; }
+  body.md3-on .card:hover,
+  body.md3-on .stat-card:hover,
+  body.md3-on .kpi-card:hover { transform: none !important; }
+  body.md3-on .btn.primary:hover,
+  body.md3-on .btn-primary:hover { transform: none !important; }
+}
+
+/* ── Mobile: simplificar (cuestiones de perf) ──────────────────── */
+@media (max-width: 768px) {
+  body.md3-on::before { display: none; }
+  body.md3-on .panel .section-header { padding-left: 1rem; }
+  body.md3-on .panel .section-header::before { width: 3px; }
+}
