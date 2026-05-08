@@ -90,24 +90,9 @@
   <!-- DavAI Chat — al final para ganar toda la cascada de prioridad sobre overrides premium -->
   <link rel="stylesheet" href="css/modules/davai.css?v=4-davai-markdown-render-2026-05-08">
   <link rel="stylesheet" href="css/modules/davai-fab.css?v=1-davai-fab-2026-05-08">
-  <link rel="stylesheet" href="css/polish-final.css?v=1-polish-final-2026-05-08">
-  <link rel="stylesheet" href="css/mega-upgrade-2026.css?v=1-mega-upgrade-2026-05-08">
   <link rel="stylesheet" href="css/tables-premium.css?v=1-tables-premium-2026-05-08">
-  <link rel="stylesheet" href="css/mega-features.css?v=1-mega-features-2026-05-08">
-  <link rel="stylesheet" href="css/mega-features-plus.css?v=1-mega-features-plus-2026-05-08">
-  <link rel="stylesheet" href="css/mega-features-pro.css?v=1-mega-features-pro-2026-05-08">
-  <link rel="stylesheet" href="css/mega-features-elite.css?v=1-mega-features-elite-2026-05-08">
-  <link rel="stylesheet" href="css/mega-features-x.css?v=1-mega-features-x-2026-05-08">
-  <link rel="stylesheet" href="css/mega-features-omega.css?v=1-mega-features-omega-2026-05-08">
-  <link rel="stylesheet" href="css/mega-features-final.css?v=1-mega-features-final-2026-05-08">
-  <link rel="stylesheet" href="css/mega-features-deluxe.css?v=1-mega-features-deluxe-2026-05-08">
-  <link rel="stylesheet" href="css/mega-features-titanium.css?v=1-mega-features-titanium-2026-05-08">
-  <link rel="stylesheet" href="css/mega-features-platinum.css?v=1-mega-features-platinum-2026-05-08">
-  <link rel="stylesheet" href="css/mega-features-diamond.css?v=1-mega-features-diamond-2026-05-08">
-  <link rel="stylesheet" href="css/mega-features-cosmic.css?v=1-mega-features-cosmic-2026-05-08">
-  <link rel="stylesheet" href="css/mega-killswitch.css?v=1-mega-killswitch-2026-05-08">
-  <!-- KILL SWITCH: SINCRONO en HEAD, antes de todos los demás scripts. Detecta lite mode. -->
-  <script src="js/mega-killswitch.js?v=1-mega-killswitch-2026-05-08"></script>
+  <!-- Mega-features pesados removidos (causaban trabazón). Sólo lo esencial queda. -->
+  <!-- Si necesitas las features extras, configura en localStorage 'mega-extras'='1' -->
   <!-- Tema único: nano machining + vidrio azul cristalino (sin modo Sol/Luna). -->
   <!-- ★ FORCE-RELOAD: SOLO en browser normal, NUNCA en PWA standalone (evita loop crash) -->
   <script>
@@ -1964,53 +1949,11 @@
   <script src="js/bg-animation.js?v=6-no-motion-mobile-only" defer></script>
   <script src="js/premium-ux.js?v=16-no-motion-boot" defer></script>
   <script src="js/ux-enhancements.js?v=1-premium-ux" defer></script>
-  <!-- DavAI siempre se carga (es el feature core) -->
+  <!-- DavAI: chat IA + FAB flotante -->
   <script src="js/davai.js?v=3-davai-fab-2026-05-08" defer></script>
-  <!-- TODOS los demás mega-features se cargan SOLO si no está activo el lite mode.
-       En lite mode, el kill-switch evita que se inyecten al DOM. -->
-  <script>
-    (function () {
-      if (window.__MEGA_LITE__) {
-        console.log('🪶 Lite mode: omitiendo mega-features-* (16 scripts)');
-        return;
-      }
-      var scripts = [
-        'ux-magic.js?v=1-ux-magic-2026-05-08',
-        'mega-features.js?v=1-mega-features-2026-05-08',
-        'mega-features-plus.js?v=1-mega-features-plus-2026-05-08',
-        'mega-features-pro.js?v=1-mega-features-pro-2026-05-08',
-        'mega-features-elite.js?v=1-mega-features-elite-2026-05-08',
-        'mega-features-x.js?v=1-mega-features-x-2026-05-08',
-        'mega-features-omega.js?v=1-mega-features-omega-2026-05-08',
-        'mega-features-final.js?v=1-mega-features-final-2026-05-08',
-        'mega-features-deluxe.js?v=1-mega-features-deluxe-2026-05-08',
-        'mega-features-titanium.js?v=1-mega-features-titanium-2026-05-08',
-        'mega-features-platinum.js?v=1-mega-features-platinum-2026-05-08',
-        'mega-features-diamond.js?v=1-mega-features-diamond-2026-05-08',
-        'mega-features-cosmic.js?v=1-mega-features-cosmic-2026-05-08'
-      ];
-      /* Carga staggered con requestIdleCallback para no bloquear primer paint */
-      var loadOne = function (idx) {
-        if (idx >= scripts.length) return;
-        var s = document.createElement('script');
-        s.src = 'js/' + scripts[idx];
-        s.defer = true;
-        s.onload = s.onerror = function () {
-          /* Siguiente al estar idle */
-          if (window.requestIdleCallback) {
-            window.requestIdleCallback(function () { loadOne(idx + 1); }, { timeout: 500 });
-          } else {
-            setTimeout(function () { loadOne(idx + 1); }, 50);
-          }
-        };
-        document.head.appendChild(s);
-      };
-      /* Espera a que load termine + 1.5s antes de empezar a cargar features */
-      window.addEventListener('load', function () {
-        setTimeout(function () { loadOne(0); }, 1500);
-      });
-    })();
-  </script>
+  <!-- Mega-features pesados removidos (v98 hotfix: la página se trababa).
+       Si quieres reactivarlos para experimentar, ejecuta en consola:
+       localStorage.setItem('mega-extras','1') y recarga. -->
 
   <div class="app-status-bar" id="app-status-bar" aria-hidden="true">
     <div class="status-bar-item">
