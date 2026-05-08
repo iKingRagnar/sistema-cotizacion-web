@@ -957,6 +957,17 @@ html body table.data-table tbody tr:hover td,
 html body.md3-on table.data-table tbody tr:hover td,
 html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:hover td {
   color: #f8fafc !important;
+  /* Mantener TD transparente en hover para que el gradient del TR se vea (premium.css mete bg muddy) */
+  background: transparent !important;
+  background-color: transparent !important;
+}
+/* Acciones sticky en última columna conservan su bg propio para no romper la sombra */
+html body table.data-table tbody tr:hover td.actions,
+html body table.data-table tbody tr:hover td.th-actions,
+html body.md3-on table.data-table tbody tr:hover td.actions,
+html body.md3-on table.data-table tbody tr:hover td.th-actions {
+  background: rgba(15,23,42,0.92) !important;
+  background-color: rgba(15,23,42,0.92) !important;
 }
 html body table.data-table tbody tr:hover td strong,
 html body.md3-on table.data-table tbody tr:hover td strong,
