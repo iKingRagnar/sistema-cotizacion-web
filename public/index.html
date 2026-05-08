@@ -88,7 +88,9 @@
   <!-- Login ejecutivo: al final de la cascada (créditos tipográficos + sin artefactos bajo 100dvh) -->
   <link rel="stylesheet" href="css/login-exec-layout.css?v=26-weld-nudge-down">
   <!-- DavAI Chat — al final para ganar toda la cascada de prioridad sobre overrides premium -->
-  <link rel="stylesheet" href="css/modules/davai.css?v=3-davai-reduced-motion-2026-05-07">
+  <link rel="stylesheet" href="css/modules/davai.css?v=4-davai-markdown-render-2026-05-08">
+  <link rel="stylesheet" href="css/modules/davai-fab.css?v=1-davai-fab-2026-05-08">
+  <link rel="stylesheet" href="css/polish-final.css?v=1-polish-final-2026-05-08">
   <!-- Tema único: nano machining + vidrio azul cristalino (sin modo Sol/Luna). -->
   <!-- ★ FORCE-RELOAD: SOLO en browser normal, NUNCA en PWA standalone (evita loop crash) -->
   <script>
@@ -1945,7 +1947,7 @@
   <script src="js/bg-animation.js?v=6-no-motion-mobile-only" defer></script>
   <script src="js/premium-ux.js?v=16-no-motion-boot" defer></script>
   <script src="js/ux-enhancements.js?v=1-premium-ux" defer></script>
-  <script src="js/davai.js?v=2-davai-multi-turn-2026-05-07" defer></script>
+  <script src="js/davai.js?v=3-davai-fab-2026-05-08" defer></script>
 
   <div class="app-status-bar" id="app-status-bar" aria-hidden="true">
     <div class="status-bar-item">
@@ -2107,6 +2109,58 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- DavAI FAB — Widget flotante omnipresente -->
+  <div class="davai-fab" id="davai-fab" aria-live="polite">
+    <div class="davai-fab__panel" id="davai-fab-panel" role="dialog" aria-label="DavAI Chat">
+      <div class="davai-fab__header">
+        <div class="davai-fab__header-left">
+          <div class="davai-fab__avatar">D</div>
+          <div class="davai-fab__title-block">
+            <span class="davai-fab__title">DavAI</span>
+            <span class="davai-fab__sub">En línea</span>
+          </div>
+        </div>
+        <div class="davai-fab__header-actions">
+          <button type="button" class="davai-fab__icon-btn" id="davai-fab-expand" title="Abrir vista completa">
+            <i class="fas fa-expand"></i>
+          </button>
+          <button type="button" class="davai-fab__icon-btn" id="davai-fab-close" title="Minimizar">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+      <div class="davai-fab__messages" id="davai-fab-messages">
+        <div class="davai-fab__empty" id="davai-fab-empty">
+          <div class="davai-fab__empty-orb">D</div>
+          <h3 class="davai-fab__empty-title">¿En qué puedo ayudarte?</h3>
+          <p class="davai-fab__empty-sub">Pregúntame sobre clientes, cotizaciones, prospectos, o cualquier dato del sistema.</p>
+          <div class="davai-fab__suggestions">
+            <button class="davai-fab__suggestion" data-prompt="Dame el resumen ejecutivo">📊 Resumen ejecutivo</button>
+            <button class="davai-fab__suggestion" data-prompt="¿Cuántos prospectos hot tengo?">🔥 Prospectos calientes</button>
+            <button class="davai-fab__suggestion" data-prompt="¿Cuántos incidentes abiertos hay?">⚠️ Incidentes abiertos</button>
+          </div>
+        </div>
+      </div>
+      <div class="davai-fab__input-area">
+        <form class="davai-fab__form" id="davai-fab-form">
+          <textarea
+            class="davai-fab__textarea"
+            id="davai-fab-input"
+            rows="1"
+            placeholder="Escribe a DavAI..."
+            autocomplete="off"></textarea>
+          <button type="submit" class="davai-fab__send" id="davai-fab-send" title="Enviar">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+    <button type="button" class="davai-fab__button" id="davai-fab-toggle" title="DavAI">
+      <i class="fas fa-robot davai-fab__icon"></i>
+      <span class="davai-fab__badge" aria-hidden="true"></span>
+    </button>
   </div>
 </body>
 </html>

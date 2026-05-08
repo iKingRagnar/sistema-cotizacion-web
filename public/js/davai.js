@@ -464,12 +464,220 @@
   }
 
   /* ----------------------------------------------------------
+   * FAB — Floating widget (omnipresente, en todos los paneles)
+   * ---------------------------------------------------------- */
+  var fabMessages = [];
+  var fabIsStreaming = false;
+  var fabAbort = null;
+
+  function fabRender() {
+    var container = qs('#davai-fab-messages');
+    var empty = qs('#davai-fab-empty');
+    if (!container) return;
+    if (fabMessages.length === 0) {
+      if (empty) empty.style.display = '';
+      container.querySelectorAll('.davai-msg').forEach(function (n) { n.remove(); });
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    var existing = container.querySelectorAll('.davai-msg').length;
+    for (var i = existing; i < fabMessages.length; i++) {
+      var m = fabMessages[i];
+      var div = document.createElement('div');
+      div.className = 'davai-msg davai-msg--' + m.role;
+      var avatar = m.role === 'user' ? '<i class="fas fa-user"></i>' : 'D';
+      div.innerHTML =
+        '<div class="davai-msg__avatar">' + avatar + '</div>' +
+        '<div class="davai-msg__content">' +
+          '<div class="davai-msg__bubble">' + renderMarkdown(m.content) + '</div>' +
+        '</div>';
+      container.appendChild(div);
+    }
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function fabUpdateStreaming(text) {
+    var container = qs('#davai-fab-messages');
+    if (!container) return;
+    var last = container.querySelector('.davai-msg:last-child .davai-msg__bubble');
+    if (last) {
+      last.innerHTML = renderMarkdown(text) + '<span class="davai-caret"></span>';
+      container.scrollTop = container.scrollHeight;
+    }
+  }
+
+  function fabFinalize(text) {
+    var container = qs('#davai-fab-messages');
+    if (!container) return;
+    var last = container.querySelector('.davai-msg:last-child .davai-msg__bubble');
+    if (last) last.innerHTML = renderMarkdown(text);
+  }
+
+  async function fabSend(text) {
+    if (!text || !text.trim() || fabIsStreaming) return;
+    text = text.trim();
+
+    var history = fabMessages
+      .filter(function (m) { return m && m.content && m.content.trim(); })
+      .slice(-20)
+      .map(function (m) {
+        return { role: m.role === 'ai' ? 'assistant' : 'user', content: String(m.content) };
+      });
+
+    fabMessages.push({ role: 'user', content: text });
+    fabRender();
+
+    var input = qs('#davai-fab-input');
+    if (input) { input.value = ''; input.style.height = 'auto'; }
+
+    fabIsStreaming = true;
+    var sendBtn = qs('#davai-fab-send');
+    if (sendBtn) sendBtn.innerHTML = '<i class="fas fa-stop"></i>';
+
+    fabMessages.push({ role: 'ai', content: '' });
+    var aiIdx = fabMessages.length - 1;
+    fabRender();
+
+    try {
+      fabAbort = new AbortController();
+      var ctx = await gatherContext();
+
+      var resp = await fetch(API + '/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + getToken()
+        },
+        body: JSON.stringify({ message: text, history: history, context: ctx }),
+        signal: fabAbort.signal
+      });
+
+      if (!resp.ok) {
+        var errData = await resp.json().catch(function () { return {}; });
+        fabMessages[aiIdx].content = 'Error: ' + (errData.error || resp.statusText);
+        fabFinalize(fabMessages[aiIdx].content);
+      } else {
+        var reader = resp.body.getReader();
+        var dec = new TextDecoder();
+        var full = '';
+        var buf = '';
+        while (true) {
+          var r = await reader.read();
+          if (r.done) break;
+          buf += dec.decode(r.value, { stream: true });
+          var lines = buf.split('\n');
+          buf = lines.pop() || '';
+          for (var i = 0; i < lines.length; i++) {
+            var ln = lines[i];
+            if (ln.startsWith('data: ')) {
+              var d = ln.slice(6);
+              if (d === '[DONE]') break;
+              try {
+                var p = JSON.parse(d);
+                if (p.text) {
+                  full += p.text;
+                  fabMessages[aiIdx].content = full;
+                  fabUpdateStreaming(full);
+                }
+              } catch (_) {}
+            }
+          }
+        }
+        fabMessages[aiIdx].content = full || 'Sin respuesta.';
+        fabFinalize(fabMessages[aiIdx].content);
+      }
+    } catch (err) {
+      fabMessages[aiIdx].content = err.name === 'AbortError'
+        ? '(Cancelado)'
+        : 'Error de conexión: ' + err.message;
+      fabFinalize(fabMessages[aiIdx].content);
+    }
+
+    fabIsStreaming = false;
+    fabAbort = null;
+    if (sendBtn) sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+    var nextInput = qs('#davai-fab-input');
+    if (nextInput) try { nextInput.focus(); } catch (_) {}
+  }
+
+  function fabBindEvents() {
+    var toggle = qs('#davai-fab-toggle');
+    var panel = qs('#davai-fab-panel');
+    var closeBtn = qs('#davai-fab-close');
+    var expandBtn = qs('#davai-fab-expand');
+    var form = qs('#davai-fab-form');
+    var input = qs('#davai-fab-input');
+
+    if (!toggle || !panel) return;
+
+    function openPanel() {
+      panel.classList.add('is-open');
+      setTimeout(function () { if (input) try { input.focus(); } catch (_) {} }, 100);
+    }
+    function closePanel() {
+      panel.classList.remove('is-open');
+      if (fabIsStreaming && fabAbort) fabAbort.abort();
+    }
+    function toggleP() { panel.classList.contains('is-open') ? closePanel() : openPanel(); }
+
+    toggle.addEventListener('click', toggleP);
+    if (closeBtn) closeBtn.addEventListener('click', closePanel);
+    if (expandBtn) expandBtn.addEventListener('click', function () {
+      closePanel();
+      var tabBtn = document.querySelector('[data-tab="davai"]');
+      if (tabBtn) tabBtn.click();
+    });
+
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (fabIsStreaming) {
+          if (fabAbort) fabAbort.abort();
+          return;
+        }
+        fabSend(input ? input.value : '');
+      });
+    }
+    if (input) {
+      input.addEventListener('input', function () {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+      });
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          if (!fabIsStreaming) fabSend(this.value);
+        }
+      });
+    }
+    qsa('.davai-fab__suggestion').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var p = this.getAttribute('data-prompt');
+        if (p) fabSend(p);
+      });
+    });
+
+    /* Cuando el user navega al tab DavAI completo, ocultamos el FAB.
+       Observamos cambios al body con class panel-davai-active. */
+    function syncFabVisibility() {
+      var davaiPanel = qs('#panel-davai');
+      var isActive = davaiPanel && davaiPanel.classList.contains('active');
+      document.body.classList.toggle('panel-davai-active', !!isActive);
+    }
+    syncFabVisibility();
+    var obs = new MutationObserver(syncFabVisibility);
+    var davaiPanel = qs('#panel-davai');
+    if (davaiPanel) obs.observe(davaiPanel, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  /* ----------------------------------------------------------
    * Init
    * ---------------------------------------------------------- */
   function init() {
     bindEvents();
     newConversation();
     updateConversationsList();
+    fabBindEvents();
   }
 
   if (document.readyState === 'loading') {
