@@ -185,12 +185,85 @@ html body table.data-table th[data-spark-th] {
 }
 
 /* ────────────────────────────────────────────────
-   11. Mobile responsive
+   11. ACTION BUTTONS COMPACTOS — evita que se desfasen a 2 filas
+
+   BUG: Cotizaciones tenía 5 botones que no cabían en 180px → la fila
+   crecía a 86-97px y los botones aparecían en 2 líneas.
+   Fix: botones 30×30px circulares + min-width col 200-220px.
+   ──────────────────────────────────────────────── */
+html body table.data-table tbody td.actions .btn,
+html body table.data-table tbody td.th-actions .btn,
+html body table.data-table tbody td.actions button,
+html body table.data-table tbody td.th-actions button {
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  min-height: 30px !important;
+  padding: 0 !important;
+  margin: 0 2px !important;
+  font-size: 0.74rem !important;
+  border-radius: 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+}
+/* Botones tiny aún más compactos (reportes los usa) */
+html body table.data-table tbody td.actions .btn.tiny,
+html body table.data-table tbody td.th-actions .btn.tiny {
+  width: 26px !important;
+  height: 26px !important;
+  font-size: 0.66rem !important;
+}
+/* Min-width de la columna acciones por defecto */
+html body table.data-table .th-actions,
+html body table.data-table td.actions,
+html body table.data-table td.th-actions {
+  min-width: 200px !important;
+  white-space: nowrap !important;
+  text-align: right !important;
+  vertical-align: middle !important;
+}
+/* Cotizaciones (5 buttons) y Reportes (5 buttons) requieren más */
+html body #tabla-cotizaciones .th-actions,
+html body #tabla-cotizaciones td.actions,
+html body #tabla-cotizaciones td.th-actions,
+html body #tabla-reportes .th-actions,
+html body #tabla-reportes td.actions,
+html body #tabla-reportes td.th-actions {
+  min-width: 230px !important;
+}
+/* Padding vertical reducido para alturas parejas */
+html body table.data-table tbody td {
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+  vertical-align: middle !important;
+}
+/* Containers internos sin wrap, gap mínimo */
+html body table.data-table tbody td .row-actions-inline,
+html body table.data-table tbody td .cot-actions-row,
+html body table.data-table tbody td .rep-combined-stack,
+html body table.data-table tbody td .rep-combined-final,
+html body table.data-table tbody td .rep-final-wrap,
+html body table.data-table tbody td span.cot-actions-row {
+  display: inline-flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 2px !important;
+}
+
+/* ────────────────────────────────────────────────
+   12. Mobile responsive
    ──────────────────────────────────────────────── */
 @media (max-width: 600px) {
   html body table.data-table tbody td,
   html body table.data-table thead th {
     padding: 8px 10px !important;
     font-size: 0.78rem !important;
+  }
+  html body table.data-table tbody td.actions .btn,
+  html body table.data-table tbody td.th-actions .btn {
+    width: 32px !important;
+    height: 32px !important;
   }
 }
