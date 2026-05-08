@@ -738,6 +738,29 @@ html body #tabla-tarifas-traslado td {
   vertical-align: middle !important;
 }
 
+/* ════════════════════════════════════════════════════════════════════════
+   ANTI-FREEZE CSS — Modales NUNCA pueden quedar opacity:0 si NO tienen .hidden
+   (Workaround para md3-fade-in animation atascada → modal invisible blocker)
+   ════════════════════════════════════════════════════════════════════════ */
+html body #modal:not(.hidden),
+html body #modal-stack:not(.hidden),
+html body .modal-overlay:not(.hidden):not(.is-closing) {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  display: flex !important;
+}
+html body #modal:not(.hidden) .modal-box,
+html body #modal-stack:not(.hidden) .modal-box,
+html body .modal-overlay:not(.hidden) .modal-content,
+html body #modal:not(.hidden) .md-dialog-surface,
+html body #modal-stack:not(.hidden) .md-dialog-surface {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  pointer-events: auto !important;
+}
+
 /* Tipo de cambio meta info */
 html body #tarifas-tc-meta {
   background: rgba(59,130,246,0.06) !important;
