@@ -1,0 +1,569 @@
+/* ════════════════════════════════════════════════════════════════════════
+   TABLES PREMIUM 2026 — Rediseño total de TODAS las tablas del sistema
+   Cargado al FINAL de la cascada para tener prioridad máxima.
+
+   Aplica a: .data-table, .md-table, .filterable-table, todas dentro de .table-wrap
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── Wrapper de tabla ─────────────────────────────────────────────── */
+body.md3-on .table-wrap,
+body.md3-on .md-table-wrap {
+  background: linear-gradient(180deg,
+    rgba(15,23,42,0.85) 0%,
+    rgba(2,6,23,0.92) 100%);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  box-shadow:
+    0 8px 24px rgba(0,0,0,0.25),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+  isolation: isolate;
+}
+
+body.md3-on .table-wrap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg,
+    rgba(59,130,246,0.25) 0%,
+    rgba(139,92,246,0.15) 35%,
+    rgba(245,158,11,0.10) 70%,
+    transparent 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Indicador de scroll horizontal (gradient fade en lados) */
+body.md3-on .table-wrap::after {
+  content: '';
+  position: sticky;
+  top: 0;
+  right: 0;
+  width: 24px;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(2,6,23,0.5));
+  pointer-events: none;
+  z-index: 2;
+  display: none;
+}
+
+/* ── Tabla base ───────────────────────────────────────────────────── */
+body.md3-on .table-wrap > table,
+body.md3-on table.data-table,
+body.md3-on .md-table {
+  width: 100%;
+  min-width: max-content;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: transparent;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-feature-settings: 'tnum' 1, 'cv02' 1;
+}
+
+/* ── Header — gradient + glow line ─────────────────────────────── */
+body.md3-on table.data-table thead,
+body.md3-on .md-table thead {
+  position: relative;
+}
+
+body.md3-on table.data-table thead th,
+body.md3-on .md-table thead th,
+body.md3-on .table-wrap > table thead th {
+  background: linear-gradient(180deg,
+    rgba(30,41,59,0.85) 0%,
+    rgba(15,23,42,0.92) 100%);
+  color: #cbd5e1;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 14px 16px;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid rgba(59,130,246,0.3);
+  box-shadow: 0 2px 0 0 rgba(59,130,246,0.15);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  height: 48px;
+  vertical-align: middle;
+  user-select: none;
+  transition: background 0.2s ease;
+}
+
+body.md3-on table.data-table thead th:hover,
+body.md3-on .md-table thead th:hover {
+  background: linear-gradient(180deg,
+    rgba(59,130,246,0.15) 0%,
+    rgba(15,23,42,0.92) 100%);
+  color: #f8fafc;
+}
+
+/* Sortable indicators */
+body.md3-on table.data-table thead th.sortable,
+body.md3-on .md-table thead th.sortable {
+  cursor: pointer;
+  padding-right: 28px;
+  position: sticky;
+}
+body.md3-on table.data-table thead th.sortable::after,
+body.md3-on .md-table thead th.sortable::after {
+  content: '⇅';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.4;
+  font-size: 0.85rem;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+body.md3-on table.data-table thead th.sortable:hover::after { opacity: 0.8; }
+body.md3-on table.data-table thead th.sorted-asc::after,
+body.md3-on .md-table thead th.sorted-asc::after {
+  content: '↑';
+  opacity: 1;
+  color: #60a5fa;
+}
+body.md3-on table.data-table thead th.sorted-desc::after,
+body.md3-on .md-table thead th.sorted-desc::after {
+  content: '↓';
+  opacity: 1;
+  color: #60a5fa;
+}
+
+/* ── Filter row dentro del thead — glassmorphism ────────────────── */
+body.md3-on table.data-table thead tr.filter-row,
+body.md3-on .md-table thead tr.filter-row {
+  background: linear-gradient(180deg,
+    rgba(15,23,42,0.6) 0%,
+    rgba(2,6,23,0.4) 100%);
+}
+body.md3-on table.data-table thead tr.filter-row td,
+body.md3-on .md-table thead tr.filter-row td {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  position: sticky;
+  top: 48px;
+  background: inherit;
+  z-index: 4;
+  height: 44px;
+  vertical-align: middle;
+}
+body.md3-on table.data-table thead tr.filter-row td .filter-input,
+body.md3-on table.data-table thead tr.filter-row td input.filter-input,
+body.md3-on .md-table thead tr.filter-row td input.filter-input {
+  width: 100%;
+  height: 30px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-family: inherit;
+  transition: all 0.18s ease;
+}
+body.md3-on table.data-table thead tr.filter-row td .filter-input::placeholder {
+  color: rgba(148,163,184,0.6);
+  font-size: 0.73rem;
+}
+body.md3-on table.data-table thead tr.filter-row td .filter-input:focus,
+body.md3-on .md-table thead tr.filter-row td .filter-input:focus {
+  outline: none;
+  background: rgba(59,130,246,0.08);
+  border-color: rgba(59,130,246,0.5);
+  box-shadow:
+    0 0 0 3px rgba(59,130,246,0.15),
+    0 0 12px rgba(59,130,246,0.2);
+  color: #f8fafc;
+}
+
+/* ── Body cells ──────────────────────────────────────────────────── */
+body.md3-on table.data-table tbody td,
+body.md3-on .md-table tbody td,
+body.md3-on .table-wrap > table tbody td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: transparent;
+  color: #e2e8f0;
+  font-size: 0.86rem;
+  font-weight: 500;
+  line-height: 1.4;
+  vertical-align: middle;
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+body.md3-on table.data-table tbody td.no-truncate,
+body.md3-on table.data-table tbody td.td-text-wrap {
+  white-space: normal;
+  text-overflow: clip;
+}
+
+/* Numerico/dinero columns */
+body.md3-on table.data-table tbody td.num,
+body.md3-on table.data-table tbody td.money,
+body.md3-on table.data-table tbody td.text-right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+  font-family: 'JetBrains Mono', 'Inter', monospace;
+  letter-spacing: -0.01em;
+  color: #f0f9ff;
+  font-weight: 600;
+}
+
+/* Primera columna: peso visual */
+body.md3-on table.data-table tbody td:first-of-type,
+body.md3-on .md-table tbody td:first-of-type {
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+/* Folio/ID/Código columns */
+body.md3-on table.data-table tbody td.folio,
+body.md3-on table.data-table tbody td.id,
+body.md3-on table.data-table tbody td.codigo,
+body.md3-on table.data-table tbody td.numero-serie {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: #93c5fd;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+/* ── Row hover con glow lateral ─────────────────────────────────── */
+body.md3-on table.data-table tbody tr,
+body.md3-on .md-table tbody tr {
+  position: relative;
+  transition: background 0.18s ease;
+}
+
+body.md3-on table.data-table tbody tr:hover td,
+body.md3-on .md-table tbody tr:hover td {
+  background: linear-gradient(90deg,
+    rgba(59,130,246,0.10) 0%,
+    rgba(59,130,246,0.04) 50%,
+    rgba(139,92,246,0.06) 100%);
+  color: #ffffff;
+}
+
+body.md3-on table.data-table tbody tr:hover td:first-of-type::before,
+body.md3-on .md-table tbody tr:hover td:first-of-type::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, #3b82f6, #8b5cf6);
+  box-shadow: 0 0 12px rgba(59,130,246,0.6);
+}
+
+/* Zebra striping sutil */
+body.md3-on table.data-table tbody tr:nth-child(even) td,
+body.md3-on .md-table tbody tr:nth-child(even) td {
+  background: rgba(255,255,255,0.015);
+}
+
+body.md3-on table.data-table tbody tr:nth-child(even):hover td,
+body.md3-on .md-table tbody tr:nth-child(even):hover td {
+  background: linear-gradient(90deg,
+    rgba(59,130,246,0.12) 0%,
+    rgba(59,130,246,0.06) 50%,
+    rgba(139,92,246,0.08) 100%);
+}
+
+/* Última fila: sin border-bottom */
+body.md3-on table.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Selected row */
+body.md3-on table.data-table tbody tr.selected td,
+body.md3-on .md-table tbody tr.selected td {
+  background: linear-gradient(90deg,
+    rgba(59,130,246,0.20) 0%,
+    rgba(59,130,246,0.10) 100%);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* ── Action column — sticky right premium ───────────────────────── */
+body.md3-on table.data-table .th-actions,
+body.md3-on table.data-table td.actions,
+body.md3-on .md-table .actions {
+  position: sticky;
+  right: 0;
+  z-index: 3;
+  text-align: right;
+  white-space: nowrap;
+  min-width: 140px;
+  width: 1%;
+  padding: 10px 14px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(15,23,42,0.6) 12%,
+    rgba(15,23,42,0.95) 100%);
+  box-shadow: -10px 0 24px -8px rgba(0,0,0,0.45);
+  overflow: visible;
+  text-overflow: clip;
+}
+
+body.md3-on table.data-table thead th.th-actions,
+body.md3-on .md-table thead th.actions {
+  background: linear-gradient(90deg,
+    rgba(30,41,59,0.4) 0%,
+    rgba(30,41,59,0.92) 30%,
+    rgba(15,23,42,0.95) 100%);
+  z-index: 6;
+  box-shadow: -10px 0 24px -8px rgba(0,0,0,0.55);
+}
+
+body.md3-on table.data-table tbody tr:hover td.actions,
+body.md3-on table.data-table tbody tr:hover td.th-actions {
+  background: linear-gradient(90deg,
+    rgba(59,130,246,0.05) 0%,
+    rgba(15,23,42,0.85) 30%,
+    rgba(15,23,42,0.98) 100%);
+}
+
+/* Action buttons — circulares premium */
+body.md3-on td.actions .btn,
+body.md3-on td.actions .btn-icon,
+body.md3-on td.actions button,
+body.md3-on td.th-actions .btn,
+body.md3-on td.th-actions button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin: 0 0 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+body.md3-on td.actions .btn:hover,
+body.md3-on td.actions .btn-icon:hover,
+body.md3-on td.actions button:hover,
+body.md3-on td.th-actions .btn:hover {
+  transform: translateY(-2px);
+  background: rgba(59,130,246,0.18);
+  border-color: rgba(59,130,246,0.45);
+  color: #f8fafc;
+  box-shadow:
+    0 4px 12px rgba(59,130,246,0.3),
+    0 0 16px rgba(59,130,246,0.15);
+}
+
+body.md3-on td.actions .btn:active,
+body.md3-on td.th-actions .btn:active {
+  transform: translateY(0);
+}
+
+/* Variantes de botón en tabla */
+body.md3-on td.actions .btn.danger,
+body.md3-on td.actions .btn-delete,
+body.md3-on td.actions .btn[class*="delete"],
+body.md3-on td.actions .btn[class*="elimin"] {
+  color: #fca5a5;
+}
+body.md3-on td.actions .btn.danger:hover,
+body.md3-on td.actions .btn-delete:hover {
+  background: rgba(239,68,68,0.18);
+  border-color: rgba(239,68,68,0.45);
+  color: #fff;
+  box-shadow:
+    0 4px 12px rgba(239,68,68,0.3),
+    0 0 16px rgba(239,68,68,0.18);
+}
+
+body.md3-on td.actions .btn.success,
+body.md3-on td.actions .btn[class*="success"] {
+  color: #86efac;
+}
+body.md3-on td.actions .btn.success:hover {
+  background: rgba(34,197,94,0.18);
+  border-color: rgba(34,197,94,0.45);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(34,197,94,0.3);
+}
+
+body.md3-on td.actions .btn.warning {
+  color: #fcd34d;
+}
+body.md3-on td.actions .btn.warning:hover {
+  background: rgba(245,158,11,0.18);
+  border-color: rgba(245,158,11,0.45);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(245,158,11,0.3);
+}
+
+/* ── Badges dentro de tablas — pill premium ─────────────────────── */
+body.md3-on table.data-table tbody td .badge,
+body.md3-on table.data-table tbody td .stock-alert,
+body.md3-on .md-table tbody td .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border: 1px solid currentColor;
+  background: rgba(255,255,255,0.04);
+}
+body.md3-on table.data-table tbody td .badge.success,
+body.md3-on table.data-table tbody td .badge--success,
+body.md3-on table.data-table tbody td .badge[class*="abierto"],
+body.md3-on table.data-table tbody td .badge[class*="activo"] {
+  color: #4ade80;
+  background: rgba(34,197,94,0.10);
+  border-color: rgba(34,197,94,0.4);
+}
+body.md3-on table.data-table tbody td .badge.danger,
+body.md3-on table.data-table tbody td .badge--danger,
+body.md3-on table.data-table tbody td .badge[class*="cerrado"],
+body.md3-on table.data-table tbody td .badge[class*="critico"] {
+  color: #fca5a5;
+  background: rgba(239,68,68,0.10);
+  border-color: rgba(239,68,68,0.4);
+}
+body.md3-on table.data-table tbody td .badge.warning,
+body.md3-on table.data-table tbody td .badge--warning {
+  color: #fcd34d;
+  background: rgba(245,158,11,0.10);
+  border-color: rgba(245,158,11,0.4);
+}
+body.md3-on table.data-table tbody td .badge.info,
+body.md3-on table.data-table tbody td .badge--info,
+body.md3-on table.data-table tbody td .badge[class*="venta"] {
+  color: #93c5fd;
+  background: rgba(59,130,246,0.10);
+  border-color: rgba(59,130,246,0.4);
+}
+body.md3-on table.data-table tbody td .badge[class*="servicio"] {
+  color: #c4b5fd;
+  background: rgba(139,92,246,0.10);
+  border-color: rgba(139,92,246,0.4);
+}
+
+/* ── Empty state — bonito ────────────────────────────────────────── */
+body.md3-on table.data-table tbody tr.empty-row td,
+body.md3-on table.data-table tbody tr.no-data td,
+body.md3-on .md-table tbody tr.empty-row td,
+body.md3-on table.data-table tbody td.empty {
+  text-align: center !important;
+  padding: 3.5rem 1rem !important;
+  color: #64748b !important;
+  font-size: 0.92rem !important;
+  font-style: italic;
+  background: transparent !important;
+  border-bottom: none !important;
+}
+
+body.md3-on table.data-table tbody tr.empty-row td::before,
+body.md3-on table.data-table tbody td.empty::before {
+  content: '📋';
+  display: block;
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+  opacity: 0.4;
+}
+
+/* ── Footer de tabla ─────────────────────────────────────────────── */
+body.md3-on .table-footer {
+  background: rgba(15,23,42,0.6);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding: 12px 18px;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-radius: 0 0 16px 16px;
+}
+body.md3-on .table-footer strong { color: #f8fafc; font-weight: 700; }
+
+/* ── Responsive: mobile ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  body.md3-on .table-wrap {
+    border-radius: 12px;
+  }
+  body.md3-on table.data-table thead th,
+  body.md3-on .md-table thead th {
+    padding: 10px 12px;
+    font-size: 0.68rem;
+    height: 42px;
+  }
+  body.md3-on table.data-table tbody td,
+  body.md3-on .md-table tbody td {
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    max-width: 220px;
+  }
+  body.md3-on table.data-table thead tr.filter-row td {
+    top: 42px;
+    padding: 6px 10px;
+  }
+  body.md3-on td.actions .btn,
+  body.md3-on td.actions .btn-icon { width: 36px; height: 36px; }
+  body.md3-on table.data-table .th-actions,
+  body.md3-on table.data-table td.actions { min-width: 120px; }
+}
+
+@media (max-width: 480px) {
+  body.md3-on table.data-table thead th { font-size: 0.65rem; padding: 8px 10px; }
+  body.md3-on table.data-table tbody td { font-size: 0.78rem; padding: 8px 10px; }
+}
+
+/* ── Skeleton row (loading state) ──────────────────────────────── */
+body.md3-on table.data-table tbody tr.mega-skeleton-row td {
+  padding: 0 !important;
+  border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+  background: transparent !important;
+}
+body.md3-on table.data-table tbody tr.mega-skeleton-row td > .mega-skeleton {
+  margin: 8px 14px;
+  height: 24px;
+  border-radius: 6px;
+}
+
+/* ── Reduced motion: simplificar ────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  body.md3-on table.data-table tbody tr,
+  body.md3-on table.data-table tbody td,
+  body.md3-on td.actions .btn { transition: none !important; }
+  body.md3-on td.actions .btn:hover { transform: none !important; }
+}
+
+/* ── Prevent: scroll vertical adentro del table-wrap ──────────── */
+body.md3-on .table-wrap {
+  overflow-y: visible;
+  max-height: none;
+}
