@@ -1,13 +1,13 @@
 /**
- * service-worker.js v56 — PWA-safe + timeout en network requests + cache-bust v90
- *   v90 (2026-05-08): mega omega - sync + tour + charts + calendar + AI complete + mentions + tags + excel + import + drag + diff + workflow
+ * service-worker.js v56 — PWA-safe + timeout en network requests + cache-bust v91
+ *   v91 (2026-05-08): mega final - 30 mejoras sorprendentes (smart time + math + img preview + autosave + network + trending + streak + sounds + theme color + lite mode + ...)
  * Estrategias:
  *   - HTML, CSS, JS, JSON, fonts: network-first con TIMEOUT 4s + fallback cache
  *   - Imágenes: cache-first
  *   - APIs auth: bypass total (no cache)
  *   - skipWaiting + clients.claim para PWA standalone (evita race conditions)
  */
-const VERSION = 'cotizacion-pro-v90';
+const VERSION = 'cotizacion-pro-v91';
 const CACHE_RUNTIME = VERSION + '-runtime';
 const NETWORK_TIMEOUT_MS = 4000;
 const STATIC_URLS = ['/', '/index.html', '/css/style.css', '/favicon.svg', '/manifest.json'];
