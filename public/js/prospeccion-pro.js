@@ -603,6 +603,230 @@
   };
 
   /* ════════════════════════════════════════════════════════════════
+   * 10. TABLA PRO — Tabla de leads visible por default con search/sort/acciones
+   * ════════════════════════════════════════════════════════════════ */
+  ProspeccionPro.tableState = { sort: 'score_ia', dir: 'desc', q: '', stage: '' };
+
+  ProspeccionPro.renderTable = function () {
+    var pros = ProspeccionPro.cache.slice();
+    var st = ProspeccionPro.tableState;
+
+    /* Filter */
+    var q = (st.q || '').toLowerCase().trim();
+    if (q) {
+      pros = pros.filter(function (p) {
+        return ['empresa', 'industria', 'ciudad', 'estado', 'notas', 'contacto', 'email', 'telefono'].some(function (k) {
+          return String(p[k] || '').toLowerCase().indexOf(q) !== -1;
+        });
+      });
+    }
+    if (st.stage) pros = pros.filter(function (p) { return (p.estado || '').toLowerCase() === st.stage; });
+
+    /* Sort */
+    pros.sort(function (a, b) {
+      var av = a[st.sort], bv = b[st.sort];
+      if (st.sort === 'score_ia' || st.sort === 'potencial_usd') { av = Number(av) || 0; bv = Number(bv) || 0; }
+      else { av = String(av || '').toLowerCase(); bv = String(bv || '').toLowerCase(); }
+      if (av < bv) return st.dir === 'asc' ? -1 : 1;
+      if (av > bv) return st.dir === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    var stageColors = {
+      prospecto: '#3b82f6', contactado: '#8b5cf6', calificado: '#06b6d4',
+      propuesta: '#f59e0b', negociacion: '#ef4444', ganado: '#22c55e', perdido: '#64748b',
+    };
+
+    var rowsHtml = pros.length === 0 ? (
+      '<tr><td colspan="8" class="prspro-table__empty">Sin resultados. Usa <strong>🎯 Cazar Leads</strong> para crear nuevos prospectos con IA.</td></tr>'
+    ) : pros.map(function (p) {
+      var score = Number(p.score_ia) || 0;
+      var pot = Number(p.potencial_usd) || 0;
+      var stage = (p.estado || 'prospecto').toLowerCase();
+      var color = stageColors[stage] || '#64748b';
+      return '<tr data-id="' + p.id + '">' +
+        '<td><strong>' + escapeHtml(p.empresa || '?') + '</strong>' +
+          (p.contacto ? '<div class="prspro-table__sub">' + escapeHtml(p.contacto) + '</div>' : '') +
+        '</td>' +
+        '<td>' + escapeHtml(p.industria || '—') + '</td>' +
+        '<td>' + escapeHtml(p.ciudad || '—') + '</td>' +
+        '<td><span class="prspro-table__badge" style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + '55">' +
+          escapeHtml(stage) + '</span></td>' +
+        '<td><span class="prspro-score" style="--ks:' + score + '">★ ' + score + '</span></td>' +
+        '<td class="prspro-table__num">$' + pot.toLocaleString('es-MX') + '</td>' +
+        '<td>' +
+          (p.email ? '<a href="mailto:' + escapeHtml(p.email) + '" title="Email"><i class="fas fa-envelope"></i></a> ' : '') +
+          (p.telefono ? '<a href="tel:' + escapeHtml(p.telefono) + '" title="Tel"><i class="fas fa-phone"></i></a>' : '') +
+          (!p.email && !p.telefono ? '<span class="prspro-table__muted">—</span>' : '') +
+        '</td>' +
+        '<td class="prspro-table__actions">' +
+          '<button class="prspro-btn prspro-btn--small" data-row-act="pitch" title="Generar mensaje IA"><i class="fas fa-paper-plane"></i></button>' +
+          '<button class="prspro-btn prspro-btn--small" data-row-act="enrich" title="Enriquecer con IA"><i class="fas fa-magic"></i></button>' +
+          '<button class="prspro-btn prspro-btn--small" data-row-act="del" title="Eliminar"><i class="fas fa-trash"></i></button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+
+    var stages = ['', 'prospecto', 'contactado', 'calificado', 'propuesta', 'negociacion', 'ganado', 'perdido'];
+    var sortIcon = function (k) {
+      if (st.sort !== k) return '<i class="fas fa-sort prspro-table__sortdim"></i>';
+      return '<i class="fas fa-sort-' + (st.dir === 'asc' ? 'up' : 'down') + '"></i>';
+    };
+
+    return '<div class="prspro-table-wrap">' +
+      '<div class="prspro-table-toolbar">' +
+        '<div class="prspro-table-title">' +
+          '<i class="fas fa-table"></i> Tabla de Leads' +
+          '<span class="prspro-table-count">' + pros.length + ' resultado' + (pros.length === 1 ? '' : 's') + '</span>' +
+        '</div>' +
+        '<div class="prspro-table-filters">' +
+          '<input type="search" id="prspro-table-q" placeholder="🔍 Buscar empresa, ciudad, industria..." value="' + escapeHtml(st.q) + '">' +
+          '<select id="prspro-table-stage">' +
+            stages.map(function (s) {
+              return '<option value="' + s + '"' + (st.stage === s ? ' selected' : '') + '>' +
+                (s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Todas las etapas') + '</option>';
+            }).join('') +
+          '</select>' +
+          '<button class="prspro-btn prspro-btn--small" id="prspro-table-csv" title="Exportar visible a CSV">' +
+            '<i class="fas fa-file-csv"></i> CSV</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="prspro-table-scroll">' +
+        '<table class="prspro-table">' +
+          '<thead><tr>' +
+            '<th data-sort="empresa">Empresa ' + sortIcon('empresa') + '</th>' +
+            '<th data-sort="industria">Industria ' + sortIcon('industria') + '</th>' +
+            '<th data-sort="ciudad">Ciudad ' + sortIcon('ciudad') + '</th>' +
+            '<th data-sort="estado">Estado ' + sortIcon('estado') + '</th>' +
+            '<th data-sort="score_ia">Score ' + sortIcon('score_ia') + '</th>' +
+            '<th data-sort="potencial_usd" class="prspro-table__num">Potencial ' + sortIcon('potencial_usd') + '</th>' +
+            '<th>Contacto</th>' +
+            '<th class="prspro-table__actions">Acciones</th>' +
+          '</tr></thead>' +
+          '<tbody>' + rowsHtml + '</tbody>' +
+        '</table>' +
+      '</div>' +
+    '</div>';
+  };
+
+  ProspeccionPro.bindTable = function (root) {
+    /* Search */
+    var q = $('#prspro-table-q', root);
+    if (q) {
+      var debounce;
+      q.addEventListener('input', function () {
+        clearTimeout(debounce);
+        debounce = setTimeout(function () {
+          ProspeccionPro.tableState.q = q.value;
+          ProspeccionPro.refreshTableOnly();
+        }, 150);
+      });
+    }
+    /* Stage filter */
+    var sel = $('#prspro-table-stage', root);
+    if (sel) sel.addEventListener('change', function () {
+      ProspeccionPro.tableState.stage = sel.value;
+      ProspeccionPro.refreshTableOnly();
+    });
+    /* Sort */
+    root.querySelectorAll('th[data-sort]').forEach(function (th) {
+      th.addEventListener('click', function () {
+        var k = th.getAttribute('data-sort');
+        var st = ProspeccionPro.tableState;
+        if (st.sort === k) st.dir = st.dir === 'asc' ? 'desc' : 'asc';
+        else { st.sort = k; st.dir = (k === 'score_ia' || k === 'potencial_usd') ? 'desc' : 'asc'; }
+        ProspeccionPro.refreshTableOnly();
+      });
+    });
+    /* CSV export */
+    var csv = $('#prspro-table-csv', root);
+    if (csv) csv.addEventListener('click', ProspeccionPro.exportTableCSV);
+    /* Row actions */
+    root.querySelectorAll('tbody tr[data-id]').forEach(function (tr) {
+      tr.querySelectorAll('[data-row-act]').forEach(function (b) {
+        b.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var id = tr.getAttribute('data-id');
+          var act = b.getAttribute('data-row-act');
+          var p = ProspeccionPro.cache.find(function (x) { return String(x.id) === String(id); });
+          if (!p) return;
+          if (act === 'del') return ProspeccionPro.deleteOne(p);
+          if (act === 'pitch') return ProspeccionPro.openPitchFor(p);
+          if (act === 'enrich') return ProspeccionPro.enrichOne(p);
+        });
+      });
+    });
+  };
+
+  ProspeccionPro.refreshTableOnly = function () {
+    var tw = $('#prspro-table-host');
+    if (!tw) return;
+    tw.innerHTML = ProspeccionPro.renderTable();
+    ProspeccionPro.bindTable(tw);
+  };
+
+  ProspeccionPro.exportTableCSV = function () {
+    var rows = $$('#prspro-table-host tbody tr[data-id]').map(function (tr) {
+      return Array.from(tr.querySelectorAll('td')).slice(0, 7).map(function (td) {
+        return '"' + (td.textContent || '').replace(/"/g, '""').replace(/\s+/g, ' ').trim() + '"';
+      }).join(',');
+    });
+    var head = '"Empresa","Industria","Ciudad","Estado","Score","Potencial","Contacto"';
+    var blob = new Blob([head + '\n' + rows.join('\n')], { type: 'text/csv;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'prospectos-' + new Date().toISOString().slice(0, 10) + '.csv';
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 200);
+    toast('CSV exportado', 'success');
+  };
+
+  ProspeccionPro.deleteOne = async function (p) {
+    if (!confirm('¿Eliminar a "' + (p.empresa || '?') + '"?')) return;
+    try {
+      await fetchJson('/api/prospectos/' + p.id, { method: 'DELETE' });
+      toast('Prospecto eliminado', 'success');
+      await ProspeccionPro.refresh();
+      ProspeccionPro.update();
+    } catch (e) { toast('No se pudo eliminar: ' + e.message, 'error'); }
+  };
+
+  ProspeccionPro.enrichOne = async function (p) {
+    toast('Enriqueciendo "' + p.empresa + '" con DavAI...', 'info');
+    try {
+      var prompt = 'Para la empresa "' + (p.empresa || '?') + '" responde SOLO JSON sin texto adicional: ' +
+        '{"industria":"sector","ciudad":"ciudad probable mexico","potencial_usd":numero_estimado_anual,"score_ia":0-100,"notas":"breve descripcion"}';
+      var raw = await askDavAI(prompt);
+      var jsonMatch = raw.match(/\{[\s\S]+\}/);
+      if (!jsonMatch) throw new Error('Respuesta sin JSON');
+      var data = JSON.parse(jsonMatch[0]);
+      await fetchJson('/api/prospectos/' + p.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          industria: p.industria || data.industria,
+          ciudad: p.ciudad || data.ciudad,
+          potencial_usd: p.potencial_usd || Number(data.potencial_usd) || 0,
+          score_ia: p.score_ia || Number(data.score_ia) || 50,
+          notas: p.notas || data.notas,
+        }),
+      });
+      toast('✓ ' + p.empresa + ' enriquecido', 'success');
+      await ProspeccionPro.refresh();
+      ProspeccionPro.update();
+    } catch (e) { toast('Falló enriquecimiento: ' + e.message, 'error'); }
+  };
+
+  ProspeccionPro.openPitchFor = function (p) {
+    /* Abrir el pitch modal pre-seleccionando este prospecto */
+    ProspeccionPro.openPitch();
+    setTimeout(function () {
+      var sel = $('#pitch-prospect');
+      if (sel) sel.value = p.id;
+    }, 80);
+  };
+
+  /* ════════════════════════════════════════════════════════════════
    * UI INJECTION
    * ════════════════════════════════════════════════════════════════ */
   ProspeccionPro.update = function () {
@@ -613,7 +837,10 @@
     var bar = document.createElement('section');
     bar.id = 'prspro-bar';
     bar.className = 'prspro-bar';
-    bar.innerHTML = ProspeccionPro.renderKPIs() + ProspeccionPro.renderActions();
+    bar.innerHTML =
+      ProspeccionPro.renderKPIs() +
+      ProspeccionPro.renderActions() +
+      '<div id="prspro-table-host" class="prspro-table-host">' + ProspeccionPro.renderTable() + '</div>';
     /* Insertar después del primer .section-header (donde están "Pipeline comercial...") */
     var header = panel.querySelector('.section-header');
     if (header && header.nextSibling) header.parentNode.insertBefore(bar, header.nextSibling);
@@ -629,38 +856,54 @@
       cluster: ProspeccionPro.openCluster,
       compare: ProspeccionPro.openCompare,
     };
-    bar.querySelectorAll('[data-act]').forEach(function (b) {
+    bar.querySelectorAll('.prspro-actions [data-act]').forEach(function (b) {
       b.addEventListener('click', function () {
         var act = b.getAttribute('data-act');
         if (handlers[act]) handlers[act]();
       });
     });
+
+    /* Bind tabla */
+    ProspeccionPro.bindTable($('#prspro-table-host', bar));
   };
 
   ProspeccionPro.init = async function () {
     var panel = $('#panel-prospeccion');
     if (!panel) return;
-    if (panel.dataset.prsproInjected) return;
-    panel.dataset.prsproInjected = '1';
     await ProspeccionPro.refresh();
     ProspeccionPro.update();
+    panel.dataset.prsproInjected = '1';
   };
 
-  /* Boot diferido */
+  /* Boot robusto — el panel puede estar oculto o activo, igual injectamos siempre. */
   function boot() {
-    var setup = function () {
+    var injected = false;
+    var tryInject = function () {
+      if (injected) return;
       var panel = $('#panel-prospeccion');
-      if (panel && panel.classList.contains('active')) ProspeccionPro.init();
+      if (!panel) return;
+      injected = true;
+      ProspeccionPro.init();
     };
-    setTimeout(setup, 1500);
-    /* Re-inject cuando entra al panel */
+    /* Primer intento rápido */
+    setTimeout(tryInject, 800);
+    /* Polling defensivo cada 500ms hasta 8s */
+    var attempts = 0;
+    var poll = setInterval(function () {
+      attempts++;
+      if (injected || attempts > 16) { clearInterval(poll); return; }
+      if ($('#panel-prospeccion')) tryInject();
+    }, 500);
+    /* Re-inject cuando cambia de tab a prospeccion */
     document.addEventListener('click', function (e) {
-      var tab = e.target.closest && e.target.closest('[data-tab="prospeccion"]');
-      if (tab) setTimeout(setup, 600);
+      var tab = e.target.closest && e.target.closest('[data-tab="prospeccion"], [data-section="prospeccion"], a[href="#prospeccion"]');
+      if (tab) setTimeout(function () {
+        if (!$('#prspro-bar')) ProspeccionPro.init();
+      }, 400);
     });
   }
-  if (document.readyState === 'complete') setTimeout(boot, 800);
-  else window.addEventListener('load', function () { setTimeout(boot, 800); });
+  if (document.readyState === 'complete') setTimeout(boot, 600);
+  else window.addEventListener('load', function () { setTimeout(boot, 600); });
 
   window.ProspeccionPro = ProspeccionPro;
 })();
