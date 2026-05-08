@@ -1,0 +1,87 @@
+/* ════════════════════════════════════════════════════════════════════════
+   MEGA LITE MODE — desactiva animaciones pesadas y oculta UI extras
+   ════════════════════════════════════════════════════════════════════════ */
+
+@keyframes msb-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Cuando está en lite mode: */
+body.mega-lite-mode {
+  /* Desactivar TODAS las animaciones e infinite loops */
+}
+body.mega-lite-mode *,
+body.mega-lite-mode *::before,
+body.mega-lite-mode *::after {
+  animation-duration: 0.001ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.05s !important;
+}
+
+/* Ocultar UI extras pesados (NO el FAB de DavAI ni el cmdk porque son útiles) */
+body.mega-lite-mode #mega-particles-bg,
+body.mega-lite-mode #mega-confetti-canvas,
+body.mega-lite-mode #mega-watermark,
+body.mega-lite-mode #mega-scroll-progress,
+body.mega-lite-mode #mega-session-timer,
+body.mega-lite-mode .mega-xp-btn,
+body.mega-lite-mode .mega-pomo-btn,
+body.mega-lite-mode .mega-voice-btn-header,
+body.mega-lite-mode .mega-reminders-btn,
+body.mega-lite-mode .activity-drawer-btn,
+body.mega-lite-mode .recent-items-btn,
+body.mega-lite-mode .mega-charts-section,
+body.mega-lite-mode .mega-heatmap-section,
+body.mega-lite-mode .mega-funnel-section,
+body.mega-lite-mode .mega-insights-section,
+body.mega-lite-mode .mega-goals-section,
+body.mega-lite-mode .mega-saved-views,
+body.mega-lite-mode .mega-quick-chips,
+body.mega-lite-mode .mega-pwa-banner,
+body.mega-lite-mode .mega-bookmark-star,
+body.mega-lite-mode .mega-trend,
+body.mega-lite-mode .mega-perm-badge,
+body.mega-lite-mode .mega-network-dot,
+body.mega-lite-mode .mega-saved-view-add {
+  display: none !important;
+}
+
+/* Quitar backdrop-filter pesados */
+body.mega-lite-mode .table-wrap,
+body.mega-lite-mode .panel,
+body.mega-lite-mode .modal-box,
+body.mega-lite-mode .davai-fab__panel,
+body.mega-lite-mode .cmdk__panel {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Quitar mesh gradient body */
+body.mega-lite-mode::before {
+  display: none !important;
+}
+
+/* Quitar cards glow */
+body.mega-lite-mode .card,
+body.mega-lite-mode .stat-card,
+body.mega-lite-mode .scorecard,
+body.mega-lite-mode .kpi-card {
+  box-shadow: none !important;
+}
+body.mega-lite-mode .card::before,
+body.mega-lite-mode .stat-card::before,
+body.mega-lite-mode .scorecard::before,
+body.mega-lite-mode .kpi-card::before {
+  display: none !important;
+}
+body.mega-lite-mode .card:hover,
+body.mega-lite-mode .stat-card:hover,
+body.mega-lite-mode .kpi-card:hover {
+  transform: none !important;
+}
+
+/* Cuando la pestaña está en background, pausar TODO */
+body.mega-paused *,
+body.mega-paused *::before,
+body.mega-paused *::after {
+  animation-play-state: paused !important;
+}

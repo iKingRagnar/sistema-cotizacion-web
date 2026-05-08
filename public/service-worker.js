@@ -1,13 +1,13 @@
 /**
- * service-worker.js v56 — PWA-safe + timeout en content + cache-bust v96
- *   v96 (2026-05-08): mega cosmic - otras 40 mejoras (drop file + greeting + year heatmap + konami + cb + vintage + ...)
+ * service-worker.js v56 — PWA-safe + timeout en content + cache-bust v97
+ *   v97 (2026-05-08): URGENT FIX performance - kill switch + lazy load + lite mode (Ctrl+Shift+L)
  * Estrategias:
  *   - HTML, CSS, JS, JSON, fonts: network-first con TIMEOUT 4s + fallback cache
  *   - Imágenes: cache-first
  *   - APIs auth: bypass total (no cache)
  *   - skipWaiting + clients.claim para PWA standalone (evita race conditions)
  */
-const VERSION = 'cotizacion-pro-v96';
+const VERSION = 'cotizacion-pro-v97';
 const CACHE_RUNTIME = VERSION + '-runtime';
 const NETWORK_TIMEOUT_MS = 4000;
 const STATIC_URLS = ['/', '/index.html', '/css/style.css', '/favicon.svg', '/manifest.json'];
