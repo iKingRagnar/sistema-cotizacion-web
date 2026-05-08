@@ -5119,9 +5119,43 @@ app.post('/api/davai/chat', async (req, res) => {
     const payload = auth.verifyToken(token);
     if (!payload || !payload.sub) return res.status(401).json({ error: 'No autorizado' });
 
-    const { message, conversationId, context } = req.body || {};
+    const { message, history, conversationId, context } = req.body || {};
     const text = (message || '').trim();
     if (!text) return res.status(400).json({ error: 'Falta el mensaje' });
+
+    /* Saneamos el historial recibido del frontend.
+       Cada item: { role: 'user'|'assistant', content: string }
+       Filtramos vacíos, normalizamos roles, limitamos tamaño. */
+    const cleanHistory = (Array.isArray(history) ? history : [])
+      .map(m => {
+        if (!m || typeof m !== 'object') return null;
+        const role = (m.role === 'assistant' || m.role === 'ai') ? 'assistant' : 'user';
+        const content = String(m.content == null ? '' : m.content).trim();
+        if (!content) return null;
+        return { role, content: content.slice(0, 8000) };
+      })
+      .filter(Boolean)
+      .slice(-20);
+
+    /* Aseguramos alternancia user/assistant que requieren los APIs.
+       Si hay duplicados consecutivos del mismo rol, fusionamos. */
+    const conversation = [];
+    for (const m of cleanHistory) {
+      const last = conversation[conversation.length - 1];
+      if (last && last.role === m.role) {
+        last.content += '\n\n' + m.content;
+      } else {
+        conversation.push({ role: m.role, content: m.content });
+      }
+    }
+    /* Anthropic requiere que el primer mensaje sea 'user'. Si arranca con assistant, lo dropeamos. */
+    while (conversation.length && conversation[0].role !== 'user') conversation.shift();
+    /* Añadimos el mensaje actual del usuario al final, fusionando si el último era user. */
+    if (conversation.length && conversation[conversation.length - 1].role === 'user') {
+      conversation[conversation.length - 1].content += '\n\n' + text;
+    } else {
+      conversation.push({ role: 'user', content: text });
+    }
 
     let systemContent = DAVAI_SYSTEM;
     if (context && typeof context === 'object') {
@@ -5180,7 +5214,7 @@ app.post('/api/davai/chat', async (req, res) => {
           max_tokens: 2048,
           system: systemContent,
           stream: true,
-          messages: [{ role: 'user', content: text }],
+          messages: conversation,
         }),
       });
 
@@ -5220,7 +5254,7 @@ app.post('/api/davai/chat', async (req, res) => {
           stream: true,
           messages: [
             { role: 'system', content: systemContent },
-            { role: 'user', content: text },
+            ...conversation,
           ],
         }),
       });
@@ -5250,13 +5284,70 @@ app.post('/api/davai/chat', async (req, res) => {
       return res.end();
 
     } else {
+      /* Sin API key configurada → modo fallback con respuestas inteligentes
+         basadas en patrones + datos reales de la BD. No es LLM pero responde
+         consultas básicas para que el chat sea ÚTIL aún sin config. */
       res.write('data: ' + JSON.stringify({ conversationId: convId }) + '\n\n');
-      const fallback = 'Lo siento, el asistente DavAI no está configurado en el servidor. ' +
-        'Para activarlo, configura la variable de entorno **ANTHROPIC_API_KEY** o **OPENAI_API_KEY** en tu servidor. ' +
-        'Contacta al administrador del sistema para más información.';
-      const words = fallback.split(' ');
-      for (let i = 0; i < words.length; i++) {
-        res.write('data: ' + JSON.stringify({ text: (i > 0 ? ' ' : '') + words[i] }) + '\n\n');
+
+      const lower = text.toLowerCase();
+      let reply;
+
+      try {
+        if (/cu[aá]nto.*client|n[uú]mero.*client|total.*client/.test(lower)) {
+          const c = await db.getAll('SELECT COUNT(*) as n FROM clientes');
+          reply = `Tienes **${(c[0] || {}).n || 0} clientes** registrados en el sistema.`;
+        } else if (/cu[aá]nto.*cotizaci|n[uú]mero.*cotizaci|total.*cotizaci/.test(lower)) {
+          const c = await db.getAll('SELECT COUNT(*) as n, SUM(total) as s FROM cotizaciones');
+          const r = c[0] || {};
+          const sum = (r.s || 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
+          reply = `Tienes **${r.n || 0} cotizaciones** por un total de **${sum}**.`;
+        } else if (/incidente|abierto|pendiente/.test(lower)) {
+          const c = await db.getAll("SELECT COUNT(*) as n FROM incidentes WHERE estatus != 'cerrado'");
+          reply = `Hay **${(c[0] || {}).n || 0} incidentes abiertos** actualmente.`;
+        } else if (/prospect|lead/.test(lower)) {
+          const c = await db.getAll('SELECT COUNT(*) as n FROM prospectos');
+          const top = await db.getAll('SELECT empresa, score_ia FROM prospectos ORDER BY score_ia DESC LIMIT 3').catch(() => []);
+          const lista = top.map((p, i) => `${i + 1}. **${p.empresa}** (score ${Math.round(p.score_ia || 0)})`).join('\n');
+          reply = `Tienes **${(c[0] || {}).n || 0} prospectos**.\n\nTop 3 por score IA:\n${lista || '_Sin prospectos con score._'}`;
+        } else if (/refaccion|inventario/.test(lower)) {
+          const c = await db.getAll('SELECT COUNT(*) as n FROM refacciones');
+          reply = `Tienes **${(c[0] || {}).n || 0} refacciones** en el catálogo.`;
+        } else if (/dashboard|resumen|estad[ií]stica|m[eé]trica/.test(lower)) {
+          const [cli, cot, inc, pro] = await Promise.all([
+            db.getAll('SELECT COUNT(*) as n FROM clientes').catch(() => [{ n: 0 }]),
+            db.getAll('SELECT COUNT(*) as n, SUM(total) as s FROM cotizaciones').catch(() => [{ n: 0, s: 0 }]),
+            db.getAll("SELECT COUNT(*) as n FROM incidentes WHERE estatus != 'cerrado'").catch(() => [{ n: 0 }]),
+            db.getAll('SELECT COUNT(*) as n FROM prospectos').catch(() => [{ n: 0 }]),
+          ]);
+          const sum = ((cot[0] || {}).s || 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
+          reply = `**Resumen ejecutivo:**\n\n` +
+            `- **Clientes:** ${(cli[0] || {}).n || 0}\n` +
+            `- **Cotizaciones:** ${(cot[0] || {}).n || 0} (total ${sum})\n` +
+            `- **Incidentes abiertos:** ${(inc[0] || {}).n || 0}\n` +
+            `- **Prospectos:** ${(pro[0] || {}).n || 0}`;
+        } else if (/hola|buen[oa]s|hi|hey/.test(lower)) {
+          reply = `¡Hola! Soy DavAI 🤖\n\nPuedo responder consultas básicas sobre tu sistema (clientes, cotizaciones, incidentes, prospectos, refacciones). ` +
+            `Para conversaciones reales con IA generativa, el administrador necesita configurar **ANTHROPIC_API_KEY** o **OPENAI_API_KEY** en las variables de entorno del servidor.\n\n` +
+            `Prueba preguntarme: _"¿Cuántas cotizaciones tengo?"_ o _"Dame el resumen"_.`;
+        } else {
+          reply = `No tengo configurada una API de IA generativa para responder libremente. ` +
+            `Por ahora puedo ayudarte con consultas estructuradas:\n\n` +
+            `- _"¿Cuántos clientes tengo?"_\n` +
+            `- _"¿Cuántas cotizaciones?"_\n` +
+            `- _"Incidentes abiertos"_\n` +
+            `- _"Top prospectos"_\n` +
+            `- _"Dame el resumen"_\n\n` +
+            `Para chat libre, configura **ANTHROPIC_API_KEY** o **OPENAI_API_KEY** en Render → Environment.`;
+        }
+      } catch (e) {
+        reply = 'Hubo un error consultando la base de datos: ' + (e.message || 'desconocido');
+      }
+
+      /* Stream palabra por palabra para sensación de chat real. */
+      const tokens = reply.split(/(\s+)/);
+      for (let i = 0; i < tokens.length; i++) {
+        res.write('data: ' + JSON.stringify({ text: tokens[i] }) + '\n\n');
+        await new Promise(r => setTimeout(r, 18));
       }
       res.write('data: [DONE]\n\n');
       return res.end();
