@@ -12963,7 +12963,7 @@
   function renderProspeccionMap(rows) {
     const L = window.L;
     if (!L) return;
-    const el = qs('#map-prospeccion');
+    const el = qs('#prospeccion-map-canvas') || qs('#map-prospeccion');
     if (!el) return;
     const valid = rows.filter(function (r) {
       const lat = Number(r.lat); const lng = Number(r.lng);
