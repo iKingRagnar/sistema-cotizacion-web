@@ -1,123 +1,127 @@
 /* ════════════════════════════════════════════════════════════════════════
-   TABLES FIX URGENTE — Soluciona la primera columna oscura/negra de TODAS las tablas
-
-   Causas encontradas:
-   1. nano-fondo.css aplica backdrop-filter + bg negro a cada celda — costoso
-      y rompe el rendering de columnas sticky
-   2. tables-premium.css agregaba sticky/glow lateral en first-of-type
-   3. premium.css forzaba bg blanco con !important conflictivo
-
-   Fix: cargar este CSS al final de la cascada con specificity alta + !important
-   para garantizar que las celdas tengan backgrounds limpios y consistentes.
+   TABLES FIX — Arregla rendering oscuro/desfase de las tablas (v100+)
+   Estrategia: sólo arreglar bg + backdrop-filter pesados.
+   NO forzar colores ni font-weight (algunas tablas tienen badges, pills,
+   icons en la primera columna y el !important rompía el render).
    ════════════════════════════════════════════════════════════════════════ */
 
-/* Reset: todas las celdas con bg uniforme y sin backdrop-filter cell-level */
-html body.md3-on table.data-table tbody td,
+/* ────────────────────────────────────────────────
+   1. Quitar backdrop-filter cell-by-cell (muy costoso, oscurece todo)
+   ──────────────────────────────────────────────── */
 html body table.data-table tbody td,
-html body.theme-industrial:not(.appearance-light) .data-table tbody td,
-html body.theme-industrial:not(.appearance-light) table.data-table tbody td {
-  background: rgba(255,255,255,0.02) !important;
-  background-color: rgba(255,255,255,0.02) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  box-shadow: none !important;
-}
-
-/* Zebra striping limpio (filas pares ligeramente más claras) */
-html body.md3-on table.data-table tbody tr:nth-child(even) td,
-html body table.data-table tbody tr:nth-child(even) td,
-html body.theme-industrial:not(.appearance-light) .data-table tbody tr:nth-child(even) td,
-html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:nth-child(even) td {
-  background: rgba(255,255,255,0.04) !important;
-  background-color: rgba(255,255,255,0.04) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-/* Hover row — gradient azul sutil, sin oscurecer */
-html body.md3-on table.data-table tbody tr:hover td,
-html body table.data-table tbody tr:hover td,
-html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:hover td {
-  background: rgba(59,130,246,0.10) !important;
-  background-color: rgba(59,130,246,0.10) !important;
-  color: #ffffff !important;
-}
-
-/* PRIMERA COLUMNA: que NO tenga bg distinto (todos iguales) */
-html body.md3-on table.data-table tbody td:first-child,
-html body table.data-table tbody td:first-child,
-html body.theme-industrial:not(.appearance-light) .data-table tbody td:first-child,
-html body.theme-industrial:not(.appearance-light) table.data-table tbody td:first-child {
-  background: rgba(255,255,255,0.02) !important;
-  background-color: rgba(255,255,255,0.02) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  box-shadow: none !important;
-  position: static !important; /* anular sticky residual */
-  color: #93c5fd !important;
-  font-weight: 600 !important;
-}
-html body.md3-on table.data-table tbody tr:nth-child(even) td:first-child,
-html body table.data-table tbody tr:nth-child(even) td:first-child {
-  background: rgba(255,255,255,0.04) !important;
-  background-color: rgba(255,255,255,0.04) !important;
-}
-
-/* Último: columna acciones — sin gradient negro pesado */
-html body.md3-on table.data-table tbody td.th-actions,
-html body.md3-on table.data-table tbody td.actions,
-html body table.data-table tbody td.th-actions,
-html body table.data-table tbody td.actions,
-html body.theme-industrial:not(.appearance-light) table.data-table tbody td.th-actions,
-html body.theme-industrial:not(.appearance-light) table.data-table tbody td.actions {
-  background: rgba(15,23,42,0.55) !important;
-  background-color: rgba(15,23,42,0.55) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  box-shadow: -4px 0 8px -4px rgba(0,0,0,0.3) !important;
-}
-html body.md3-on table.data-table tbody tr:nth-child(even) td.th-actions,
-html body.md3-on table.data-table tbody tr:nth-child(even) td.actions {
-  background: rgba(15,23,42,0.65) !important;
-}
-
-/* HEADER: aclarar y limpio, sin bg negro extremo */
-html body.md3-on table.data-table thead th,
 html body table.data-table thead th,
+html body.md3-on table.data-table tbody td,
+html body.md3-on table.data-table thead th,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody td,
 html body.theme-industrial:not(.appearance-light) table.data-table thead th {
-  background: rgba(30,41,59,0.85) !important;
-  background-color: rgba(30,41,59,0.85) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+
+/* ────────────────────────────────────────────────
+   2. Bg uniforme para celdas (zebra muy sutil)
+   ──────────────────────────────────────────────── */
+html body table.data-table tbody td,
+html body.md3-on table.data-table tbody td,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody td {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Zebra striping ligero, aplicado al <tr> no al <td> */
+html body table.data-table tbody tr:nth-child(even),
+html body.md3-on table.data-table tbody tr:nth-child(even),
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:nth-child(even) {
+  background: rgba(255,255,255,0.025);
+}
+html body table.data-table tbody tr:nth-child(odd),
+html body.md3-on table.data-table tbody tr:nth-child(odd),
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:nth-child(odd) {
+  background: transparent;
+}
+
+/* Hover: background al <tr> en vez de a cada td */
+html body table.data-table tbody tr:hover,
+html body.md3-on table.data-table tbody tr:hover,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody tr:hover {
+  background: rgba(59,130,246,0.08) !important;
+}
+
+/* ────────────────────────────────────────────────
+   3. Header: bg consistente, sin ser demasiado oscuro
+   ──────────────────────────────────────────────── */
+html body table.data-table thead th,
+html body.md3-on table.data-table thead th,
+html body.theme-industrial:not(.appearance-light) table.data-table thead th {
+  background: rgba(30,41,59,0.6) !important;
+  background-color: rgba(30,41,59,0.6) !important;
   color: #cbd5e1 !important;
 }
 
-/* Texto base de las celdas: claro y legible */
-html body.md3-on table.data-table tbody td:not(.th-actions):not(.actions),
-html body table.data-table tbody td:not(.th-actions):not(.actions) {
-  color: #e2e8f0 !important;
+/* ────────────────────────────────────────────────
+   4. Texto en celdas: color claro (sin sobrescribir colors específicos)
+   ──────────────────────────────────────────────── */
+html body table.data-table tbody td,
+html body.md3-on table.data-table tbody td {
+  color: #e2e8f0;
+  border-color: rgba(255,255,255,0.06) !important;
 }
 
-/* Anular cualquier border-left::before gradient residual */
+/* ────────────────────────────────────────────────
+   5. Action column sticky right — sin gradient negro pesado
+   ──────────────────────────────────────────────── */
+html body table.data-table .th-actions,
+html body table.data-table td.actions,
+html body.md3-on table.data-table .th-actions,
+html body.md3-on table.data-table td.actions {
+  background: rgba(15,23,42,0.7) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: -3px 0 8px -3px rgba(0,0,0,0.3) !important;
+}
+
+/* ────────────────────────────────────────────────
+   6. Anular .bulk-check residuales (cache viejo)
+   ──────────────────────────────────────────────── */
+html body table.data-table .bulk-check-th,
+html body table.data-table .bulk-check-td,
+html body table.data-table th.bulk-check-th,
+html body table.data-table td.bulk-check-td {
+  display: none !important;
+}
+
+/* ────────────────────────────────────────────────
+   7. Anular pseudo-element residual de hover en first column
+   ──────────────────────────────────────────────── */
+html body table.data-table tbody tr:hover td:first-of-type::before,
+html body table.data-table tbody tr:hover td:first-child::before,
 html body.md3-on table.data-table tbody tr:hover td:first-of-type::before,
 html body.md3-on table.data-table tbody tr:hover td:first-child::before {
   display: none !important;
   content: none !important;
 }
 
-/* Anular sticky residual de columnas (.bulk-check-td/th que ya no se usa) */
-html body table.data-table .bulk-check-th,
-html body table.data-table .bulk-check-td {
+/* ────────────────────────────────────────────────
+   8. Anular sparkline column residual del cache
+   ──────────────────────────────────────────────── */
+html body table.data-table .mega-sparkline,
+html body table.data-table th[data-spark-th],
+html body table.data-table td[data-spark-injected]:not([data-spark-active]) svg.mega-sparkline {
   display: none !important;
 }
 
-/* Anular sparkline column residual si quedó del cache */
-html body table.data-table tbody td[data-spark-injected],
-html body table.data-table thead th[data-spark-th] {
-  /* Mantener visible solo si el script actual lo creó esta sesión, no de cache vieja */
+/* ────────────────────────────────────────────────
+   9. Pills/badges en celdas: bg propio respetado, sin ser sobrescrito
+   ──────────────────────────────────────────────── */
+html body table.data-table tbody td .badge,
+html body table.data-table tbody td .pill,
+html body table.data-table tbody td .stock-alert {
+  /* Mantener color y bg que vienen del HTML/JS, no sobrescribir */
 }
 
-/* Mobile: ajustes responsive */
+/* ────────────────────────────────────────────────
+   10. Mobile responsive
+   ──────────────────────────────────────────────── */
 @media (max-width: 600px) {
   html body table.data-table tbody td,
   html body table.data-table thead th {
