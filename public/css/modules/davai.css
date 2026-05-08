@@ -207,62 +207,164 @@
   color: #e2e8f0;
   border: 1px solid rgba(255,255,255,0.06);
 }
-.davai-msg__bubble p { margin: 0 0 0.5rem; }
-.davai-msg__bubble p:last-child { margin-bottom: 0; }
+/* ════════════════════════════════════════════════════════════════════
+   Markdown rendering DENTRO del bubble — alta especificidad para
+   sobrescribir estilos globales (h1/h2/h3/table/etc) que rompían
+   el render del chat (texto invisible, tablas desordenadas, etc).
+   ════════════════════════════════════════════════════════════════════ */
+body.md3-on .davai-msg__bubble,
+.davai-msg__bubble {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+}
+body.md3-on .davai-msg__bubble p,
+.davai-msg__bubble p {
+  margin: 0 0 0.6rem !important;
+  color: inherit !important;
+  font-size: 0.88rem !important;
+  line-height: 1.55 !important;
+  text-shadow: none !important;
+}
+.davai-msg__bubble p:last-child { margin-bottom: 0 !important; }
+.davai-msg__bubble > *:first-child { margin-top: 0 !important; }
+.davai-msg__bubble > *:last-child { margin-bottom: 0 !important; }
+
+/* Headers — VISIBLES, jerarquía clara, separados */
+body.md3-on .davai-msg__bubble h1,
+body.md3-on .davai-msg__bubble h2,
+body.md3-on .davai-msg__bubble h3,
+body.md3-on .davai-msg__bubble h4,
+.davai-msg__bubble h1,
+.davai-msg__bubble h2,
+.davai-msg__bubble h3,
+.davai-msg__bubble h4 {
+  color: #f8fafc !important;
+  font-weight: 700 !important;
+  margin: 1.1rem 0 0.5rem !important;
+  letter-spacing: -0.01em !important;
+  text-shadow: none !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  background: none !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+.davai-msg__bubble h1 { font-size: 1.25rem !important; line-height: 1.3 !important; }
+.davai-msg__bubble h2 {
+  font-size: 1.08rem !important;
+  line-height: 1.35 !important;
+  border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+  padding-bottom: 0.35rem !important;
+}
+.davai-msg__bubble h3 { font-size: 0.96rem !important; color: #cbd5e1 !important; -webkit-text-fill-color: #cbd5e1 !important; }
+.davai-msg__bubble h4 { font-size: 0.88rem !important; color: #94a3b8 !important; -webkit-text-fill-color: #94a3b8 !important; }
+
+/* Code */
 .davai-msg__bubble pre {
-  background: rgba(0,0,0,0.3);
-  border-radius: 8px;
-  padding: 0.75rem;
-  overflow-x: auto;
-  font-size: 0.8rem;
-  font-family: 'JetBrains Mono', monospace;
-  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(0,0,0,0.35) !important;
+  border-radius: 8px !important;
+  padding: 0.75rem !important;
+  overflow-x: auto !important;
+  font-size: 0.78rem !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  margin: 0.6rem 0 !important;
+  color: #e2e8f0 !important;
 }
 .davai-msg__bubble code {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.82rem;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.82rem !important;
 }
 .davai-msg__bubble code:not(pre code) {
-  background: rgba(139,92,246,0.15);
-  color: #c4b5fd;
-  padding: 0.15rem 0.35rem;
-  border-radius: 4px;
+  background: rgba(139,92,246,0.18) !important;
+  color: #c4b5fd !important;
+  padding: 0.12rem 0.4rem !important;
+  border-radius: 4px !important;
 }
+
+/* Tablas DENTRO del bubble — completamente independientes del sistema global */
+body.md3-on .davai-msg__bubble table,
 .davai-msg__bubble table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 0.5rem 0;
-  font-size: 0.8rem;
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin: 0.7rem 0 !important;
+  font-size: 0.8rem !important;
+  background: rgba(15,23,42,0.5) !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  display: table !important;
+  table-layout: auto !important;
+  min-width: 0 !important;
 }
+body.md3-on .davai-msg__bubble thead { background: rgba(59,130,246,0.15) !important; }
+body.md3-on .davai-msg__bubble th,
+body.md3-on .davai-msg__bubble td,
 .davai-msg__bubble th,
 .davai-msg__bubble td {
-  padding: 0.4rem 0.6rem;
-  border: 1px solid rgba(255,255,255,0.08);
-  text-align: left;
+  padding: 0.5rem 0.7rem !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  text-align: left !important;
+  vertical-align: top !important;
+  position: static !important;
+  background: transparent !important;
+  white-space: normal !important;
+  max-width: none !important;
+  height: auto !important;
+  text-overflow: clip !important;
+  overflow: visible !important;
+  text-transform: none !important;
+  font-size: 0.8rem !important;
+  letter-spacing: 0 !important;
 }
+body.md3-on .davai-msg__bubble th,
 .davai-msg__bubble th {
-  background: rgba(59,130,246,0.1);
-  font-weight: 600;
-  color: #93c5fd;
+  font-weight: 700 !important;
+  color: #93c5fd !important;
+  -webkit-text-fill-color: #93c5fd !important;
+  background: rgba(59,130,246,0.18) !important;
+  text-transform: none !important;
+  border-bottom: 2px solid rgba(59,130,246,0.4) !important;
 }
-.davai-msg__bubble ul, .davai-msg__bubble ol {
-  padding-left: 1.2rem;
-  margin: 0.3rem 0;
+.davai-msg__bubble tbody tr:hover { background: rgba(255,255,255,0.03) !important; }
+
+/* Listas */
+.davai-msg__bubble ul,
+.davai-msg__bubble ol {
+  padding-left: 1.4rem !important;
+  margin: 0.5rem 0 !important;
 }
-.davai-msg__bubble strong { color: #f8fafc; }
-.davai-msg__bubble h1, .davai-msg__bubble h2, .davai-msg__bubble h3 {
-  color: #f8fafc;
-  margin: 0.8rem 0 0.3rem;
-  font-size: 1rem;
+.davai-msg__bubble li {
+  margin: 0.25rem 0 !important;
+  color: inherit !important;
+  line-height: 1.5 !important;
 }
-.davai-msg__bubble h1 { font-size: 1.15rem; }
+.davai-msg__bubble ul li::marker { color: #60a5fa !important; }
+.davai-msg__bubble ol li::marker { color: #f59e0b !important; font-weight: 700 !important; }
+
+/* Inline elements */
+.davai-msg__bubble strong,
+.davai-msg__bubble b {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-weight: 700 !important;
+}
+.davai-msg__bubble em,
+.davai-msg__bubble i { color: #cbd5e1 !important; font-style: italic !important; }
+.davai-msg__bubble a {
+  color: #60a5fa !important;
+  text-decoration: underline !important;
+  text-underline-offset: 2px !important;
+}
+.davai-msg__bubble a:hover { color: #93c5fd !important; }
+.davai-msg__bubble hr {
+  border: none !important;
+  border-top: 1px solid rgba(255,255,255,0.1) !important;
+  margin: 1rem 0 !important;
+}
 .davai-msg__bubble blockquote {
-  border-left: 3px solid #f59e0b;
-  padding: 0.4rem 0.8rem;
-  margin: 0.5rem 0;
-  background: rgba(245,158,11,0.06);
-  border-radius: 0 8px 8px 0;
-  color: #fcd34d;
+  border-left: 3px solid #f59e0b !important;
+  padding: 0.5rem 0.9rem !important;
+  margin: 0.6rem 0 !important;
+  background: rgba(245,158,11,0.07) !important;
+  border-radius: 0 8px 8px 0 !important;
+  color: #fcd34d !important;
 }
 .davai-msg__actions {
   display: flex;
