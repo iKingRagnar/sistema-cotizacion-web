@@ -95,12 +95,47 @@ html body.theme-industrial:not(.appearance-light) table.data-table thead th {
 }
 
 /* ────────────────────────────────────────────────
-   6. Texto en celdas claro
+   6. Texto en celdas claro (incluye strong/b/span heredados)
+
+   BUG encontrado: <strong>1800°F Box</strong> dentro de celdas tenía
+   color #1f1f1f (var --md-sys-color-on-surface valor de tema light) sobre
+   bg #303134. Verificado en vivo en panel Almacén: 30 strong invisibles.
    ──────────────────────────────────────────────── */
 html body table.data-table tbody td,
 html body.md3-on table.data-table tbody td {
   color: #e2e8f0;
   border-color: rgba(255,255,255,0.06) !important;
+}
+/* Forzar color claro a TODOS los elementos heredados dentro de celdas */
+html body table.data-table tbody td strong,
+html body table.data-table tbody td b,
+html body.md3-on table.data-table tbody td strong,
+html body.md3-on table.data-table tbody td b,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody td strong,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody td b {
+  color: #f8fafc !important;
+}
+html body table.data-table tbody td span:not(.badge):not(.pill):not(.stock-alert):not(.mega-tag),
+html body table.data-table tbody td a:not(.btn):not(.btn-icon),
+html body.md3-on table.data-table tbody td span:not(.badge):not(.pill):not(.stock-alert):not(.mega-tag),
+html body.md3-on table.data-table tbody td a:not(.btn):not(.btn-icon) {
+  color: #e2e8f0 !important;
+}
+/* Texto secundario "muted" dentro de celdas: gris claro (no negro) */
+html body table.data-table tbody td .muted,
+html body.md3-on table.data-table tbody td .muted,
+html body.theme-industrial:not(.appearance-light) table.data-table tbody td .muted {
+  color: #94a3b8 !important;
+}
+
+/* También arreglar strong en panels de Tarifas, Cards, etc. (mismo bug) */
+html body.theme-industrial:not(.appearance-light) .panel strong:not(.badge):not(.pill),
+html body.theme-industrial:not(.appearance-light) .panel b:not(.badge),
+html body.theme-industrial:not(.appearance-light) .tarifas-section strong,
+html body.theme-industrial:not(.appearance-light) .card strong,
+html body.theme-industrial:not(.appearance-light) .stat-card strong,
+html body.theme-industrial:not(.appearance-light) .scorecard strong {
+  color: #f8fafc !important;
 }
 
 /* ────────────────────────────────────────────────
