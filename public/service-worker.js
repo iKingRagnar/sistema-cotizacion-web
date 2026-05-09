@@ -1,5 +1,6 @@
 /**
- * service-worker.js v56 — PWA-safe + timeout en content + cache-bust v115
+ * service-worker.js v56 — PWA-safe + timeout en content + cache-bust v116
+ *   v116 (2026-05-08): PERF JS v2 — setProperty(...,'important') para que inline gane sobre CSS !important
  *   v115 (2026-05-08): PERF JS — sweeper inline-style mata 549 backdrop-filter restantes (CSS especificidad pierde)
  *   v114 (2026-05-08): PERF EMERGENCY — kill GLOBAL de backdrop-filter + animations infinitas (audit en vivo: page frozen)
  *   v113 (2026-05-08): PERF — quitado backdrop-filter de tables/davai/sidebar + animations infinitas (era 1.7s freeze)
@@ -18,7 +19,7 @@
  *   - APIs auth: bypass total (no cache)
  *   - skipWaiting + clients.claim para PWA standalone (evita race conditions)
  */
-const VERSION = 'cotizacion-pro-v115';
+const VERSION = 'cotizacion-pro-v116';
 const CACHE_RUNTIME = VERSION + '-runtime';
 const NETWORK_TIMEOUT_MS = 4000;
 const STATIC_URLS = ['/', '/index.html', '/css/style.css', '/favicon.svg', '/manifest.json'];

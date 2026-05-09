@@ -29,20 +29,20 @@
 
   function killHeavyOn(el) {
     if (!el || !el.style) return;
-    /* Backdrop-filter siempre fuera */
-    el.style.backdropFilter = 'none';
-    el.style.webkitBackdropFilter = 'none';
+    /* Backdrop-filter — DEBE ser !important porque CSS rules existentes son !important
+       y el `!important` en CSS gana sobre inline style sin !important. */
+    try {
+      el.style.setProperty('backdrop-filter', 'none', 'important');
+      el.style.setProperty('-webkit-backdrop-filter', 'none', 'important');
+    } catch (_) {}
     /* Animations infinitas: cortar excepto spinners */
     if (!isSpinner(el)) {
-      var iter = el.style.animationIterationCount;
-      if (iter === '' || iter === 'infinite') {
-        try {
-          var cs = getComputedStyle(el);
-          if (cs.animationIterationCount === 'infinite' && cs.animationName !== 'none') {
-            el.style.animationIterationCount = '1';
-          }
-        } catch (_) {}
-      }
+      try {
+        var cs = getComputedStyle(el);
+        if (cs.animationIterationCount === 'infinite' && cs.animationName !== 'none') {
+          el.style.setProperty('animation-iteration-count', '1', 'important');
+        }
+      } catch (_) {}
     }
   }
 
