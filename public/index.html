@@ -153,7 +153,7 @@
   <link rel="stylesheet" href="css/ui-legibility-final.css?v=2-reportes-merge-poweredby-login-logo-2026-05-06">
   <!-- ★ UNIVERSAL ART SKIN — inspirado en MapaSuminregio (solo estética) -->
   <link rel="stylesheet" href="css/universal-art.css?v=3-no-login-overlay-position-override">
-  <link rel="stylesheet" href="css/universal-map-shell.css?v=1-map-shell-tokens-fix-2026-05-07">
+  <link rel="stylesheet" href="css/universal-map-shell.css?v=2-header-pills-400-rail-2026-05-07">
   <!-- KPI ejecutivos claros (después de nano / universal-art para ganar especificidad) -->
   <link rel="stylesheet" href="css/dashboard-exec-kpi-cards.css?v=1-exec-kpi-light-2026-05-07">
   <!-- Login ejecutivo: al final de la cascada (créditos tipográficos + sin artefactos bajo 100dvh) -->
@@ -455,9 +455,23 @@
           <img src="fondos/universal-logo.jpg?v=4" alt="Universal" width="120" height="72" class="login-brand-hero-img" id="header-brand-logo" decoding="async">
         </div>
         <div class="header-brand-text">
+          <p class="header-brand-eyebrow">Inteligencia operativa</p>
           <h1 class="header-brand-service" id="app-title-name">Servicio Tecnico</h1>
+          <p class="header-brand-tagline">Cotización · Servicio · Campo</p>
         </div>
       </div>
+      <nav id="header-map-primary-tabs" class="header-map-primary-tabs" role="navigation" aria-label="Módulos frecuentes (atajos)">
+        <button type="button" data-tab="dashboards" class="tab active" title="Resumen general (Ctrl+0)"><i class="fas fa-chart-pie"></i> Dashboards</button>
+        <button type="button" data-tab="clientes" class="tab" title="Clientes (Ctrl+1)"><i class="fas fa-users"></i> Clientes</button>
+        <button type="button" data-tab="refacciones" class="tab" title="Refacciones (Ctrl+2)"><i class="fas fa-cogs"></i> Refacciones</button>
+        <button type="button" data-tab="maquinas" class="tab" title="Máquinas (Ctrl+3)"><i class="fas fa-industry"></i> Máquinas</button>
+        <button type="button" data-tab="almacen" class="tab" title="Inventario físico y bloqueo por cotización"><i class="fas fa-warehouse"></i> Almacén</button>
+        <button type="button" data-tab="cotizaciones" class="tab" title="Cotizaciones (Ctrl+4)"><i class="fas fa-file-invoice-dollar"></i> Cotizaciones</button>
+        <button type="button" data-tab="ventas" class="tab" title="Histórico de ventas aprobadas"><i class="fas fa-check-double"></i> Ventas</button>
+        <button type="button" data-tab="prospeccion" class="tab" title="Mapa y pipeline de prospectos (COVIA)"><i class="fas fa-map-marked-alt"></i> Prospección</button>
+        <button type="button" data-tab="revision-maquinas" class="tab" title="Revisión y preparación de máquinas"><i class="fas fa-tools"></i> Revisión Máquinas</button>
+        <button type="button" data-tab="tarifas" class="tab" title="Tarifas y esquemas de cobro"><i class="fas fa-tags"></i> Tarifas</button>
+      </nav>
       <span class="header-powered-by header-powered-by--nav-slot" aria-label="Créditos">powered by Ing. David Cantu</span>
       <div class="header-actions">
         <div class="header-actions-tail">

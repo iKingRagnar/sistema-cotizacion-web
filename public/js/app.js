@@ -467,8 +467,10 @@
     } catch (_) {}
   }
   function updateCotizacionesTabVisibility() {
-    const tab = qs('#tab-cotizaciones');
-    if (tab) tab.classList.toggle('hidden', !canAccessCotizaciones());
+    var show = canAccessCotizaciones();
+    qsAll('.tab[data-tab="cotizaciones"]').forEach(function (tab) {
+      tab.classList.toggle('hidden', !show);
+    });
   }
   function updateCommissionsUiVisibility() {
     document.documentElement.classList.toggle('hide-commissions', !canViewCommissions());
@@ -1556,25 +1558,27 @@
     qsAll('.tab').forEach(t => t.classList.remove('active'));
     if (!skipLoad) hidePanelMediaViewerZone();
     const panel = document.getElementById('panel-' + id);
-    const tab = document.querySelector('.tab[data-tab="' + id + '"]');
+    qsAll('.tab[data-tab="' + id + '"]').forEach(function (tab) {
+      tab.classList.add('active');
+    });
     if (panel) {
       // Force animation replay by removing and re-adding the class
       panel.classList.remove('active');
       void panel.offsetWidth; // reflow
       panel.classList.add('active');
     }
-    if (tab) {
-      tab.classList.add('active');
+    const railTab = document.querySelector('#sidebar-rail-tabs .tab[data-tab="' + id + '"]');
+    if (railTab) {
       requestAnimationFrame(() => {
         try {
-          tab.scrollIntoView({
+          railTab.scrollIntoView({
             inline: 'center',
             block: 'nearest',
             behavior: 'auto',
           });
         } catch (_) {
           try {
-            tab.scrollIntoView(false);
+            railTab.scrollIntoView(false);
           } catch (_) {}
         }
       });
