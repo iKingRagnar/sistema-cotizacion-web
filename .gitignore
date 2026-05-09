@@ -34,3 +34,7 @@ railway.cron.json
 nixpacks.toml
 public/sw.js
 public/brand/
+
+# v2/ NUNCA debe ser ignorado por las reglas de arriba — re-incluir TODO
+!v2/
+!v2/**
