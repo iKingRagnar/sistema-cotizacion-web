@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" class="no-motion">
+<html id="root" lang="es" class="no-motion">
 <head>
   <meta charset="UTF-8">
   <!-- Desarrollo local: quitar SW cuanto antes (evita index/CSS viejos por caché del worker). -->
@@ -154,7 +154,7 @@
   <link rel="stylesheet" href="css/davai-supreme.css?v=2-no-blur-no-anim-2026-05-08">
   <link rel="stylesheet" href="css/prospeccion-supreme.css?v=1-supreme-2026-05-08">
   <!-- 🚨 PERF EMERGENCY: kill backdrop-filter + animations infinitas (era 1.7s freeze por click) -->
-  <link rel="stylesheet" href="css/perf-emergency.css?v=3-id-specificity-2026-05-08">
+  <link rel="stylesheet" href="css/perf-emergency.css?v=4-double-id-2026-05-08">
   <!-- 🚨 PERF JS: ahora NO-OP. La lógica vive en perf-emergency.css con body#app * (ID-specificity) -->
   <script src="js/perf-emergency.js?v=3-noop-2026-05-08"></script>
   <!-- Tema único: nano machining + vidrio azul cristalino (sin modo Sol/Luna). -->
