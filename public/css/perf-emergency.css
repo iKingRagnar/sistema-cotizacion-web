@@ -1,104 +1,104 @@
 /* ════════════════════════════════════════════════════════════════════════
-   PERF EMERGENCY v3 — CSS PURO con ID-level specificity para vencer
-   `html body .x { ... !important }` rules de archivos premium legacy.
+   PERF EMERGENCY v4 — DOS IDs (html#root + body#app) para ganar contra
+   selectores legacy con :is(#panel-X, #panel-Y, ...) que daban ID-specificity.
 
-   APPROACH:
-     - body#app *  → specificity (0,1,0,1) = 1 ID + 1 element
-     - html body .x → specificity (0,0,1,2) = 1 class + 2 elements
-     - ID > class siempre, así que body#app * gana sin necesidad de !important
+   Specificity comparison:
+   - Mía:    html#root body#app *   = (0, 2, 0, 2) → 2 IDs + 2 elements
+   - Killer: html body.theme-industrial:not(.appearance-light) :is(#panel-X) ...
+                                    = (0, 1, 2, 2) → 1 ID + 2 classes + 2 elements
+   - Mine wins por b=2 vs b=1 (2 IDs > 1 ID).
 
-   POR QUÉ SE QUITÓ EL JS SWEEPER:
-     - Performance trace en producción mostró perf-emergency.js (sweepAll) causaba
-       372ms de FORCED REFLOW por hacer getComputedStyle + setProperty en loop
-       (layout thrashing clásico).
-     - El JS "fix" era PEOR que el problema original.
-     - CSS puro es declarativo, no causa reflow.
+   POR QUÉ NO USAR JS:
+   - El JS sweeper causaba 372ms de FORCED REFLOW (medido con Chrome DevTools
+     Performance trace en producción).
+   - Layout thrashing por hacer getComputedStyle + setProperty en loop sobre
+     ~5000 elementos.
+   - CSS puro es declarativo, NO causa reflow.
    ════════════════════════════════════════════════════════════════════════ */
 
-/* ── 1. Kill backdrop-filter universal con ID specificity ─────── */
-body#app *,
-body#app *::before,
-body#app *::after {
+/* ── 1. Kill backdrop-filter UNIVERSAL ────────────────────────────── */
+html#root body#app *,
+html#root body#app *::before,
+html#root body#app *::after {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
 
 /* Si quieres glass real solo donde es crítico, usa [data-glass="ok"] */
-body#app [data-glass="ok"],
-body#app [data-glass="ok"]::before,
-body#app [data-glass="ok"]::after {
+html#root body#app [data-glass="ok"],
+html#root body#app [data-glass="ok"]::before,
+html#root body#app [data-glass="ok"]::after {
   backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;
 }
 
-/* ── 2. Kill animations infinitas (excepto spinners funcionales) ── */
-body#app *,
-body#app *::before,
-body#app *::after {
+/* ── 2. Kill animations infinitas (excepto spinners funcionales) ──── */
+html#root body#app *,
+html#root body#app *::before,
+html#root body#app *::after {
   animation-iteration-count: 1 !important;
 }
-/* Spinners SÍ deben girar */
-body#app .mega-spinner,
-body#app .spinner,
-body#app .fa-spin,
-body#app .fa-pulse,
-body#app .loading-spinner,
-body#app .loader,
-body#app [class*="spinner"]:not([class*="spinner__"]) {
+html#root body#app .mega-spinner,
+html#root body#app .spinner,
+html#root body#app .fa-spin,
+html#root body#app .fa-pulse,
+html#root body#app .loading-spinner,
+html#root body#app .loader,
+html#root body#app [class*="spinner"]:not([class*="spinner__"]) {
   animation-iteration-count: infinite !important;
 }
 
-/* ── 3. Eliminar aurora/glow blobs decorativos (filter:blur 40px+) ── */
-body#app .login-aurora-blob,
-body#app .login-bg-glow,
-body#app .login-weld-sparks,
-body#app .premium-aurora,
-body#app .nano-aurora,
-body#app .luna-glow,
-body#app .universal-art-blob {
+/* ── 3. Eliminar aurora/glow blobs decorativos pesados ────────────── */
+html#root body#app .login-aurora-blob,
+html#root body#app .login-bg-glow,
+html#root body#app .login-weld-sparks,
+html#root body#app .premium-aurora,
+html#root body#app .nano-aurora,
+html#root body#app .luna-glow,
+html#root body#app .universal-art-blob {
   display: none !important;
   filter: none !important;
 }
 
-/* ── 4. Inputs JAMÁS con backdrop-filter o filter (cada keystroke = paint) ── */
-body#app input,
-body#app select,
-body#app textarea {
+/* ── 4. Inputs JAMÁS con backdrop-filter o filter pesado ──────────── */
+html#root body#app input,
+html#root body#app select,
+html#root body#app textarea {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   filter: none !important;
 }
 
-/* ── 5. will-change rampant → auto ───────────────────────────── */
-body#app * {
+/* ── 5. will-change rampant → auto ────────────────────────────────── */
+html#root body#app * {
   will-change: auto !important;
 }
 
-/* ── 6. Modal SIEMPRE visible si no .hidden (el guard del v112) ─ */
-body#app #modal:not(.hidden),
-body#app #modal-stack:not(.hidden),
-body#app .modal-overlay:not(.hidden):not(.is-closing) {
+/* ── 6. Modal SIEMPRE visible si no .hidden (anti-freeze guard) ──── */
+html#root body#app #modal:not(.hidden),
+html#root body#app #modal-stack:not(.hidden),
+html#root body#app .modal-overlay:not(.hidden):not(.is-closing) {
   opacity: 1 !important;
   visibility: visible !important;
   pointer-events: auto !important;
   display: flex !important;
 }
-body#app #modal:not(.hidden) .modal-box,
-body#app #modal-stack:not(.hidden) .modal-box,
-body#app .modal-overlay:not(.hidden) .modal-content,
-body#app #modal:not(.hidden) .md-dialog-surface,
-body#app #modal-stack:not(.hidden) .md-dialog-surface {
+html#root body#app #modal:not(.hidden) .modal-box,
+html#root body#app #modal-stack:not(.hidden) .modal-box,
+html#root body#app .modal-overlay:not(.hidden) .modal-content,
+html#root body#app #modal:not(.hidden) .md-dialog-surface,
+html#root body#app #modal-stack:not(.hidden) .md-dialog-surface {
   opacity: 1 !important;
   visibility: visible !important;
   transform: none !important;
   pointer-events: auto !important;
 }
 
-/* ── 7. Reduced motion respect ──────────────────────────────── */
+/* ── 7. Reduced motion respect ────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  body#app *,
-  body#app *::before,
-  body#app *::after {
+  html#root body#app *,
+  html#root body#app *::before,
+  html#root body#app *::after {
     animation-duration: 0.01s !important;
     transition-duration: 0.01s !important;
   }
