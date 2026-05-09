@@ -968,13 +968,16 @@ body.theme-industrial.appearance-light .notifications-date {
 body.theme-industrial .notifications-list { overflow-y: auto !important; flex: 1 !important; }
 
 /* ─── 18. LOGIN ─────────────────────────────────────────────────────────── */
-/* CRITICAL: hide takes priority over display:flex when .hidden class is present */
+/* CRITICAL: .hidden debe ganar al bloque “intro sol” (misma ruta + .hidden = mayor especificidad) */
 body.theme-industrial .login-overlay.hidden,
-body.theme-industrial.appearance-light .login-overlay.hidden {
+body.theme-industrial.appearance-light .login-overlay.hidden,
+body.theme-industrial.appearance-light:not(.login-open) .login-overlay.hidden {
   display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
-body.theme-industrial.appearance-light:not(.login-open) .login-overlay {
+body.theme-industrial.appearance-light:not(.login-open) .login-overlay:not(.hidden) {
   position: fixed !important;
   inset: 0 !important;
   z-index: 9999 !important;
