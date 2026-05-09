@@ -22,6 +22,28 @@ if (JWT_SECRET === 'change-me-in-production-please-use-openssl-rand-hex-32' && N
   process.exit(1);
 }
 
+/* ════════════════════════════════════════════════════════════════
+   AUTO-SEED — crea admin inicial si no existe ningún usuario.
+   Permite arrancar el deploy sin necesidad de SSH/Shell.
+   Configura ADMIN_USER y ADMIN_PASS por env vars.
+   ════════════════════════════════════════════════════════════════ */
+(function autoSeed() {
+  try {
+    const count = db.prepare('SELECT COUNT(*) AS c FROM users').get().c;
+    if (count > 0) return; // ya hay usuarios
+    const adminUser = process.env.ADMIN_USER || 'admin';
+    const adminPass = process.env.ADMIN_PASS || 'admin123';
+    const hash = bcrypt.hashSync(adminPass, 10);
+    db.prepare(`
+      INSERT INTO users (username, password_hash, nombre, role, activo)
+      VALUES (?, ?, 'Administrador', 'admin', 1)
+    `).run(adminUser, hash);
+    console.log(`✅ Admin auto-creado: ${adminUser} / ${adminPass} (cambia el password después).`);
+  } catch (err) {
+    console.error('[auto-seed] Error:', err.message);
+  }
+})();
+
 const app = express();
 app.use(express.json({ limit: '5mb' }));
 app.use(cookieParser());

@@ -1,9 +1,38 @@
-# Web Node (Express + public estático). NO es Next: el build solo valida server.js.
-# En el panel Render: Build = npm ci && npm run build (o deja el default si coincide).
-# Variables: TURSO_DATABASE_URL y TURSO_AUTH_TOKEN.
+# ════════════════════════════════════════════════════════════════
+# Render config — apunta al sistema v3 (carpeta /v3).
+# Render auto-detecta este archivo y aplica los settings sin tocar UI.
+# ════════════════════════════════════════════════════════════════
 services:
   - type: web
+    name: sistema-cotizacion-web
     runtime: node
-    buildCommand: npm ci && npm run build
-    startCommand: npm start
-    healthCheckPath: /health
+    plan: free
+    region: oregon
+    # Build: instala deps de /v3 únicamente
+    buildCommand: cd v3 && npm ci --omit=dev
+    # Start: arranca v3 server (auto-crea DB + seed admin si no existe)
+    startCommand: cd v3 && node server.js
+    healthCheckPath: /api/health
+    # Auto-deploy en cada push a main
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: NODE_ENV
+        value: production
+      # JWT_SECRET se genera automáticamente la primera vez (random seguro)
+      - key: JWT_SECRET
+        generateValue: true
+      # Puerto que Render asigna
+      - key: PORT
+        value: 10000
+      # Credenciales admin iniciales (cambia ADMIN_PASS post-deploy)
+      - key: ADMIN_USER
+        value: admin
+      - key: ADMIN_PASS
+        value: admin123
+      # Para DavAI — déjalo vacío y configúralo en el panel cuando tengas key
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
