@@ -107,6 +107,182 @@ db.exec(`
     orden INTEGER DEFAULT 0
   );
   CREATE INDEX IF NOT EXISTS idx_cotitems_cot ON cotizacion_items(cotizacion_id);
+
+  CREATE TABLE IF NOT EXISTS ventas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cotizacion_id INTEGER REFERENCES cotizaciones(id) ON DELETE SET NULL,
+    folio_factura TEXT,
+    cliente_id INTEGER REFERENCES clientes(id) ON DELETE SET NULL,
+    cliente_nombre TEXT NOT NULL,
+    fecha_venta TEXT NOT NULL DEFAULT CURRENT_DATE,
+    total REAL NOT NULL DEFAULT 0,
+    moneda TEXT DEFAULT 'MXN',
+    pagado INTEGER NOT NULL DEFAULT 0,
+    fecha_pago TEXT,
+    notas TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas(fecha_venta);
+
+  CREATE TABLE IF NOT EXISTS categorias (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT NOT NULL,
+    parent_id INTEGER,
+    tipo TEXT NOT NULL DEFAULT 'refaccion' CHECK (tipo IN ('refaccion','maquina')),
+    orden INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS prospectos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    empresa TEXT NOT NULL,
+    contacto TEXT,
+    email TEXT,
+    telefono TEXT,
+    industria TEXT,
+    ciudad TEXT,
+    estado TEXT NOT NULL DEFAULT 'prospecto'
+      CHECK (estado IN ('prospecto','contactado','calificado','propuesta','negociacion','ganado','perdido')),
+    potencial_usd REAL DEFAULT 0,
+    score_ia INTEGER DEFAULT 50,
+    notas TEXT,
+    ubicacion_lat REAL,
+    ubicacion_lng REAL,
+    ultimo_contacto TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE INDEX IF NOT EXISTS idx_prospectos_estado ON prospectos(estado);
+
+  CREATE TABLE IF NOT EXISTS personal (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT NOT NULL,
+    rol TEXT NOT NULL DEFAULT 'mecanico'
+      CHECK (rol IN ('mecanico','electronico','cnc','ayudante','admin','otro')),
+    email TEXT,
+    telefono TEXT,
+    fecha_ingreso TEXT,
+    tarifa_hora_mxn REAL,
+    activo INTEGER NOT NULL DEFAULT 1,
+    notas TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS garantias (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cliente_id INTEGER REFERENCES clientes(id) ON DELETE SET NULL,
+    razon_social TEXT NOT NULL,
+    maquina_id INTEGER REFERENCES maquinas(id) ON DELETE SET NULL,
+    modelo_maquina TEXT NOT NULL,
+    numero_serie TEXT,
+    fecha_inicio TEXT NOT NULL,
+    fecha_fin TEXT,
+    activa INTEGER NOT NULL DEFAULT 1,
+    notas TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS mantenimientos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    garantia_id INTEGER REFERENCES garantias(id) ON DELETE CASCADE,
+    razon_social TEXT,
+    modelo_maquina TEXT,
+    numero_serie TEXT,
+    numero INTEGER NOT NULL DEFAULT 1,
+    fecha_programada TEXT NOT NULL,
+    fecha_realizado TEXT,
+    realizado_por TEXT,
+    pagado REAL DEFAULT 0,
+    notas TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE INDEX IF NOT EXISTS idx_mant_fecha ON mantenimientos(fecha_programada);
+
+  CREATE TABLE IF NOT EXISTS revision_maquinas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    maquina_id INTEGER REFERENCES maquinas(id) ON DELETE SET NULL,
+    categoria TEXT,
+    modelo TEXT,
+    numero_serie TEXT,
+    entregado TEXT NOT NULL DEFAULT 'No' CHECK (entregado IN ('Si','No')),
+    prueba TEXT NOT NULL DEFAULT 'En Proceso' CHECK (prueba IN ('En Proceso','Finalizada')),
+    comentarios TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS sin_cobertura (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cliente_id INTEGER REFERENCES clientes(id) ON DELETE SET NULL,
+    razon_social TEXT NOT NULL,
+    maquina_modelo TEXT,
+    motivo TEXT,
+    fecha_solicitud TEXT NOT NULL DEFAULT CURRENT_DATE,
+    estado TEXT NOT NULL DEFAULT 'pendiente'
+      CHECK (estado IN ('pendiente','cotizado','aprobado','rechazado')),
+    notas TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS bonos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    personal_id INTEGER REFERENCES personal(id) ON DELETE SET NULL,
+    nombre TEXT NOT NULL,
+    concepto TEXT NOT NULL,
+    monto REAL NOT NULL DEFAULT 0,
+    fecha TEXT NOT NULL DEFAULT CURRENT_DATE,
+    pagado INTEGER NOT NULL DEFAULT 0,
+    notas TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS viajes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    zona TEXT NOT NULL CHECK (zona IN ('A','B','C')),
+    destino TEXT NOT NULL,
+    personas_count INTEGER DEFAULT 1,
+    dias_count INTEGER DEFAULT 1,
+    km REAL,
+    total_viatico REAL DEFAULT 0,
+    total_km REAL DEFAULT 0,
+    total REAL DEFAULT 0,
+    fecha TEXT NOT NULL DEFAULT CURRENT_DATE,
+    notas TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS bitacora_horas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    personal_id INTEGER REFERENCES personal(id) ON DELETE CASCADE,
+    fecha TEXT NOT NULL,
+    hora_inicio TEXT,
+    hora_fin TEXT,
+    horas REAL DEFAULT 0,
+    cliente TEXT,
+    trabajo TEXT,
+    notas TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE INDEX IF NOT EXISTS idx_bit_fecha ON bitacora_horas(fecha);
+
+  CREATE TABLE IF NOT EXISTS tarifas (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    categoria TEXT DEFAULT 'general',
+    notas TEXT,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS audit_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    username TEXT,
+    action TEXT NOT NULL,
+    entity TEXT NOT NULL,
+    entity_id TEXT,
+    details TEXT,
+    timestamp TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_log(entity, entity_id);
+  CREATE INDEX IF NOT EXISTS idx_audit_ts ON audit_log(timestamp);
 `);
 
 module.exports = db;

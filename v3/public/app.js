@@ -180,12 +180,27 @@
   const ROUTES = {
     'login':            { handler: renderLogin, title: 'Iniciar sesión', requiresAuth: false },
     '':                 { handler: renderDashboard, title: 'Dashboard', requiresAuth: true },
-    'dashboard':        { handler: renderDashboard, title: 'Dashboard', requiresAuth: true },
-    'clientes':         { handler: () => renderCrud('clientes'), title: 'Clientes', requiresAuth: true },
-    'refacciones':      { handler: () => renderCrud('refacciones'), title: 'Refacciones', requiresAuth: true },
-    'maquinas':         { handler: () => renderCrud('maquinas'), title: 'Máquinas', requiresAuth: true },
-    'cotizaciones':     { handler: renderCotizaciones, title: 'Cotizaciones', requiresAuth: true },
-    'usuarios':         { handler: renderUsuarios, title: 'Usuarios', requiresAuth: true, requiresAdmin: true },
+    'dashboard':         { handler: renderDashboard, title: 'Dashboard', requiresAuth: true },
+    'clientes':          { handler: () => renderCrud('clientes'), title: 'Clientes', requiresAuth: true },
+    'categorias':        { handler: () => renderCrud('categorias'), title: 'Categorías', requiresAuth: true },
+    'refacciones':       { handler: () => renderCrud('refacciones'), title: 'Refacciones', requiresAuth: true },
+    'maquinas':          { handler: () => renderCrud('maquinas'), title: 'Máquinas', requiresAuth: true },
+    'cotizaciones':      { handler: renderCotizaciones, title: 'Cotizaciones', requiresAuth: true },
+    'ventas':            { handler: () => renderCrud('ventas'), title: 'Ventas', requiresAuth: true },
+    'prospectos':        { handler: () => renderCrud('prospectos'), title: 'Prospectos', requiresAuth: true },
+    'revision-maquinas': { handler: () => renderCrud('revision-maquinas'), title: 'Revisión Máquinas', requiresAuth: true },
+    'garantias':         { handler: () => renderCrud('garantias'), title: 'Garantías', requiresAuth: true },
+    'mantenimientos':    { handler: renderMantenimientos, title: 'Mantenimientos', requiresAuth: true },
+    'sin-cobertura':     { handler: () => renderCrud('sin-cobertura'), title: 'Sin Cobertura', requiresAuth: true },
+    'tarifas':           { handler: renderTarifas, title: 'Tarifas', requiresAuth: true },
+    'personal':          { handler: () => renderCrud('personal'), title: 'Personal', requiresAuth: true },
+    'bonos':             { handler: () => renderCrud('bonos'), title: 'Bonos', requiresAuth: true },
+    'viajes':            { handler: () => renderCrud('viajes'), title: 'Viajes', requiresAuth: true },
+    'bitacora':          { handler: () => renderCrud('bitacora'), title: 'Bitácora horas', requiresAuth: true },
+    'reportes':          { handler: renderReportes, title: 'Reportes', requiresAuth: true },
+    'davai':             { handler: renderDavai, title: 'DavAI', requiresAuth: true },
+    'usuarios':          { handler: renderUsuarios, title: 'Usuarios', requiresAuth: true, requiresAdmin: true },
+    'audit':             { handler: renderAudit, title: 'Auditoría', requiresAuth: true, requiresAdmin: true },
   };
 
   function navigate(route) {
@@ -242,13 +257,40 @@
       { group: 'Catálogos', items: [
         { route: 'clientes', label: 'Clientes', icon: '👥' },
         { route: 'refacciones', label: 'Refacciones', icon: '🔧' },
+        { route: 'categorias', label: 'Categorías', icon: '📂' },
         { route: 'maquinas', label: 'Máquinas', icon: '⚙️' },
       ]},
       { group: 'Operaciones', items: [
         { route: 'cotizaciones', label: 'Cotizaciones', icon: '📄' },
+        { route: 'ventas', label: 'Ventas', icon: '💰' },
+      ]},
+      { group: 'Comercial', items: [
+        { route: 'prospectos', label: 'Prospectos', icon: '🎯' },
+      ]},
+      { group: 'Técnico', items: [
+        { route: 'revision-maquinas', label: 'Revisión Máq.', icon: '🔍' },
+        { route: 'garantias', label: 'Garantías', icon: '🛡' },
+        { route: 'mantenimientos', label: 'Mantenimientos', icon: '📅' },
+        { route: 'sin-cobertura', label: 'Sin Cobertura', icon: '🚫' },
+      ]},
+      { group: 'Configuración', items: [
+        { route: 'tarifas', label: 'Tarifas', icon: '💵' },
+      ]},
+      { group: 'Recursos Humanos', items: [
+        { route: 'personal', label: 'Personal', icon: '👷' },
+        { route: 'bonos', label: 'Bonos', icon: '🎁' },
+        { route: 'viajes', label: 'Viajes', icon: '✈️' },
+        { route: 'bitacora', label: 'Bitácora horas', icon: '⏱' },
+      ]},
+      { group: 'Analytics', items: [
+        { route: 'reportes', label: 'Reportes', icon: '📈' },
+      ]},
+      { group: 'Asistente IA', items: [
+        { route: 'davai', label: 'DavAI', icon: '🤖' },
       ]},
       { group: 'Administración', items: [
         { route: 'usuarios', label: 'Usuarios', icon: '🔐', adminOnly: true },
+        { route: 'audit', label: 'Auditoría', icon: '📋', adminOnly: true },
       ]},
     ];
 
@@ -497,11 +539,253 @@
         { name: 'activo', label: 'Activo', type: 'checkbox', default: true },
       ],
     },
+    ventas: {
+      title: 'Ventas',
+      cols: [
+        { key: 'fecha_venta', label: 'Fecha', render: (r) => fmtDate(r.fecha_venta) },
+        { key: 'folio_factura', label: 'Factura' },
+        { key: 'cliente_nombre', label: 'Cliente', render: (r) => `<strong>${escapeHtml(r.cliente_nombre)}</strong>` },
+        { key: 'total', label: 'Total', class: 'col-num', render: (r) => fmtMoney(r.total, r.moneda) },
+        { key: 'pagado', label: 'Pagado', class: 'col-center', render: (r) => r.pagado ? '<span class="badge badge-success">Sí</span>' : '<span class="badge badge-warning">No</span>' },
+      ],
+      fields: [
+        { name: 'cliente_nombre', label: 'Cliente *', required: true },
+        { name: 'fecha_venta', label: 'Fecha venta', type: 'date' },
+        { name: 'folio_factura', label: 'Folio factura' },
+        { name: 'total', label: 'Total *', type: 'number', step: '0.01', required: true },
+        { name: 'moneda', label: 'Moneda', type: 'select', options: [{value:'MXN',label:'MXN'},{value:'USD',label:'USD'}], default: 'MXN' },
+        { name: 'pagado', label: 'Pagado', type: 'checkbox' },
+        { name: 'fecha_pago', label: 'Fecha pago', type: 'date' },
+        { name: 'cotizacion_id', label: 'ID Cotización', type: 'number' },
+        { name: 'notas', label: 'Notas', type: 'textarea', full: true },
+      ],
+    },
+    categorias: {
+      title: 'Categorías',
+      cols: [
+        { key: 'nombre', label: 'Nombre', render: (r) => `<strong>${escapeHtml(r.nombre)}</strong>` },
+        { key: 'tipo', label: 'Tipo', class: 'col-center' },
+        { key: 'parent_id', label: 'Parent', class: 'col-num' },
+        { key: 'orden', label: 'Orden', class: 'col-num' },
+      ],
+      fields: [
+        { name: 'nombre', label: 'Nombre *', required: true },
+        { name: 'tipo', label: 'Tipo', type: 'select', required: true, options: [
+          { value: 'refaccion', label: 'Refacción' }, { value: 'maquina', label: 'Máquina' },
+        ]},
+        { name: 'parent_id', label: 'ID Padre (opcional)', type: 'number' },
+        { name: 'orden', label: 'Orden', type: 'number' },
+      ],
+    },
+    prospectos: {
+      title: 'Prospectos',
+      cols: [
+        { key: 'empresa', label: 'Empresa', render: (r) => `<strong>${escapeHtml(r.empresa)}</strong>` },
+        { key: 'contacto', label: 'Contacto' },
+        { key: 'industria', label: 'Industria' },
+        { key: 'ciudad', label: 'Ciudad' },
+        { key: 'estado', label: 'Estado', class: 'col-center', render: (r) => {
+          const k = r.estado === 'ganado' ? 'success' : r.estado === 'perdido' ? 'danger' : 'info';
+          return `<span class="badge badge-${k}">${escapeHtml(r.estado)}</span>`;
+        }},
+        { key: 'score_ia', label: 'Score', class: 'col-num', render: (r) => `<strong>${r.score_ia ?? 0}</strong>` },
+        { key: 'potencial_usd', label: 'Potencial', class: 'col-num', render: (r) => fmtMoney(r.potencial_usd, 'USD') },
+      ],
+      fields: [
+        { name: 'empresa', label: 'Empresa *', required: true },
+        { name: 'contacto', label: 'Contacto' },
+        { name: 'email', label: 'Email', type: 'email' },
+        { name: 'telefono', label: 'Teléfono' },
+        { name: 'industria', label: 'Industria' },
+        { name: 'ciudad', label: 'Ciudad' },
+        { name: 'estado', label: 'Estado', type: 'select', options: [
+          { value: 'prospecto', label: 'Prospecto' },
+          { value: 'contactado', label: 'Contactado' },
+          { value: 'calificado', label: 'Calificado' },
+          { value: 'propuesta', label: 'Propuesta' },
+          { value: 'negociacion', label: 'Negociación' },
+          { value: 'ganado', label: 'Ganado' },
+          { value: 'perdido', label: 'Perdido' },
+        ]},
+        { name: 'potencial_usd', label: 'Potencial USD', type: 'number', step: '0.01' },
+        { name: 'score_ia', label: 'Score IA (0-100)', type: 'number' },
+        { name: 'ultimo_contacto', label: 'Último contacto', type: 'date' },
+        { name: 'ubicacion_lat', label: 'Latitud', type: 'number', step: '0.000001' },
+        { name: 'ubicacion_lng', label: 'Longitud', type: 'number', step: '0.000001' },
+        { name: 'notas', label: 'Notas', type: 'textarea', full: true },
+      ],
+    },
+    'revision-maquinas': {
+      title: 'Revisión Máquinas',
+      apiPath: 'revision_maquinas',
+      cols: [
+        { key: 'modelo', label: 'Modelo', render: (r) => `<strong>${escapeHtml(r.modelo || '—')}</strong>` },
+        { key: 'numero_serie', label: 'Serie' },
+        { key: 'categoria', label: 'Categoría' },
+        { key: 'entregado', label: 'Entregado', class: 'col-center', render: (r) => `<span class="badge ${r.entregado === 'Si' ? 'badge-success' : 'badge-warning'}">${r.entregado}</span>` },
+        { key: 'prueba', label: 'Prueba', class: 'col-center', render: (r) => `<span class="badge ${r.prueba === 'Finalizada' ? 'badge-success' : 'badge-info'}">${r.prueba}</span>` },
+      ],
+      fields: [
+        { name: 'maquina_id', label: 'ID Máquina', type: 'number' },
+        { name: 'modelo', label: 'Modelo' },
+        { name: 'numero_serie', label: 'Número de serie' },
+        { name: 'categoria', label: 'Categoría' },
+        { name: 'entregado', label: 'Entregado', type: 'select', options: [{value:'No',label:'No'},{value:'Si',label:'Sí'}] },
+        { name: 'prueba', label: 'Prueba', type: 'select', options: [{value:'En Proceso',label:'En Proceso'},{value:'Finalizada',label:'Finalizada'}] },
+        { name: 'comentarios', label: 'Comentarios', type: 'textarea', full: true },
+      ],
+    },
+    garantias: {
+      title: 'Garantías',
+      cols: [
+        { key: 'razon_social', label: 'Cliente', render: (r) => `<strong>${escapeHtml(r.razon_social)}</strong>` },
+        { key: 'modelo_maquina', label: 'Modelo' },
+        { key: 'numero_serie', label: 'Serie' },
+        { key: 'fecha_inicio', label: 'Inicio', render: (r) => fmtDate(r.fecha_inicio) },
+        { key: 'fecha_fin', label: 'Fin', render: (r) => fmtDate(r.fecha_fin) },
+        { key: 'activa', label: 'Activa', class: 'col-center', render: (r) => r.activa ? '<span class="badge badge-success">Sí</span>' : '<span class="badge badge-danger">No</span>' },
+      ],
+      fields: [
+        { name: 'razon_social', label: 'Cliente *', required: true },
+        { name: 'cliente_id', label: 'ID Cliente', type: 'number' },
+        { name: 'modelo_maquina', label: 'Modelo de máquina *', required: true },
+        { name: 'numero_serie', label: 'Número de serie' },
+        { name: 'maquina_id', label: 'ID Máquina catálogo', type: 'number' },
+        { name: 'fecha_inicio', label: 'Fecha inicio *', type: 'date', required: true },
+        { name: 'fecha_fin', label: 'Fecha fin', type: 'date' },
+        { name: 'activa', label: 'Activa', type: 'checkbox', default: true },
+        { name: 'notas', label: 'Notas', type: 'textarea', full: true },
+      ],
+    },
+    'sin-cobertura': {
+      title: 'Sin Cobertura',
+      apiPath: 'sin_cobertura',
+      cols: [
+        { key: 'razon_social', label: 'Cliente', render: (r) => `<strong>${escapeHtml(r.razon_social)}</strong>` },
+        { key: 'maquina_modelo', label: 'Máquina' },
+        { key: 'motivo', label: 'Motivo' },
+        { key: 'fecha_solicitud', label: 'Fecha', render: (r) => fmtDate(r.fecha_solicitud) },
+        { key: 'estado', label: 'Estado', class: 'col-center', render: (r) => {
+          const k = r.estado === 'aprobado' ? 'success' : r.estado === 'rechazado' ? 'danger' : 'warning';
+          return `<span class="badge badge-${k}">${escapeHtml(r.estado)}</span>`;
+        }},
+      ],
+      fields: [
+        { name: 'razon_social', label: 'Cliente *', required: true },
+        { name: 'cliente_id', label: 'ID Cliente', type: 'number' },
+        { name: 'maquina_modelo', label: 'Modelo máquina' },
+        { name: 'motivo', label: 'Motivo', type: 'textarea' },
+        { name: 'estado', label: 'Estado', type: 'select', options: [
+          { value: 'pendiente', label: 'Pendiente' },
+          { value: 'cotizado', label: 'Cotizado' },
+          { value: 'aprobado', label: 'Aprobado' },
+          { value: 'rechazado', label: 'Rechazado' },
+        ]},
+        { name: 'notas', label: 'Notas', type: 'textarea', full: true },
+      ],
+    },
+    personal: {
+      title: 'Personal',
+      cols: [
+        { key: 'nombre', label: 'Nombre', render: (r) => `<strong>${escapeHtml(r.nombre)}</strong>` },
+        { key: 'rol', label: 'Rol' },
+        { key: 'email', label: 'Email' },
+        { key: 'telefono', label: 'Teléfono' },
+        { key: 'tarifa_hora_mxn', label: 'Tarifa/h', class: 'col-num', render: (r) => fmtMoney(r.tarifa_hora_mxn) },
+        { key: 'activo', label: 'Activo', class: 'col-center', render: (r) => r.activo ? '<span class="badge badge-success">Sí</span>' : '<span class="badge badge-danger">No</span>' },
+      ],
+      fields: [
+        { name: 'nombre', label: 'Nombre *', required: true },
+        { name: 'rol', label: 'Rol', type: 'select', required: true, options: [
+          { value: 'mecanico', label: 'Mecánico' },
+          { value: 'electronico', label: 'Electrónico' },
+          { value: 'cnc', label: 'CNC / Programación' },
+          { value: 'ayudante', label: 'Ayudante' },
+          { value: 'admin', label: 'Admin' },
+          { value: 'otro', label: 'Otro' },
+        ]},
+        { name: 'email', label: 'Email', type: 'email' },
+        { name: 'telefono', label: 'Teléfono' },
+        { name: 'fecha_ingreso', label: 'Fecha ingreso', type: 'date' },
+        { name: 'tarifa_hora_mxn', label: 'Tarifa MXN/hr', type: 'number', step: '0.01' },
+        { name: 'activo', label: 'Activo', type: 'checkbox', default: true },
+        { name: 'notas', label: 'Notas', type: 'textarea', full: true },
+      ],
+    },
+    bonos: {
+      title: 'Bonos',
+      cols: [
+        { key: 'nombre', label: 'Persona', render: (r) => `<strong>${escapeHtml(r.nombre)}</strong>` },
+        { key: 'concepto', label: 'Concepto' },
+        { key: 'monto', label: 'Monto', class: 'col-num', render: (r) => fmtMoney(r.monto) },
+        { key: 'fecha', label: 'Fecha', render: (r) => fmtDate(r.fecha) },
+        { key: 'pagado', label: 'Pagado', class: 'col-center', render: (r) => r.pagado ? '<span class="badge badge-success">Sí</span>' : '<span class="badge badge-warning">No</span>' },
+      ],
+      fields: [
+        { name: 'nombre', label: 'Persona *', required: true },
+        { name: 'personal_id', label: 'ID Personal', type: 'number' },
+        { name: 'concepto', label: 'Concepto *', required: true },
+        { name: 'monto', label: 'Monto MXN *', type: 'number', step: '0.01', required: true },
+        { name: 'fecha', label: 'Fecha', type: 'date' },
+        { name: 'pagado', label: 'Pagado', type: 'checkbox' },
+        { name: 'notas', label: 'Notas', type: 'textarea', full: true },
+      ],
+    },
+    viajes: {
+      title: 'Viajes',
+      cols: [
+        { key: 'destino', label: 'Destino', render: (r) => `<strong>${escapeHtml(r.destino)}</strong>` },
+        { key: 'zona', label: 'Zona', class: 'col-center' },
+        { key: 'personas_count', label: 'Personas', class: 'col-num' },
+        { key: 'dias_count', label: 'Días', class: 'col-num' },
+        { key: 'total', label: 'Total', class: 'col-num', render: (r) => fmtMoney(r.total) },
+        { key: 'fecha', label: 'Fecha', render: (r) => fmtDate(r.fecha) },
+      ],
+      fields: [
+        { name: 'destino', label: 'Destino *', required: true },
+        { name: 'zona', label: 'Zona *', type: 'select', required: true, options: [
+          { value: 'A', label: 'A — Local' },
+          { value: 'B', label: 'B — Regional' },
+          { value: 'C', label: 'C — Nacional' },
+        ]},
+        { name: 'personas_count', label: 'Personas', type: 'number', default: 1 },
+        { name: 'dias_count', label: 'Días', type: 'number', default: 1 },
+        { name: 'km', label: 'Km', type: 'number', step: '0.1' },
+        { name: 'total_viatico', label: 'Total viático', type: 'number', step: '0.01' },
+        { name: 'total_km', label: 'Total km', type: 'number', step: '0.01' },
+        { name: 'total', label: 'Total', type: 'number', step: '0.01' },
+        { name: 'fecha', label: 'Fecha', type: 'date' },
+        { name: 'notas', label: 'Notas', type: 'textarea', full: true },
+      ],
+    },
+    bitacora: {
+      title: 'Bitácora horas',
+      apiPath: 'bitacora_horas',
+      cols: [
+        { key: 'fecha', label: 'Fecha', render: (r) => fmtDate(r.fecha) },
+        { key: 'horas', label: 'Horas', class: 'col-num' },
+        { key: 'hora_inicio', label: 'Inicio' },
+        { key: 'hora_fin', label: 'Fin' },
+        { key: 'cliente', label: 'Cliente' },
+        { key: 'trabajo', label: 'Trabajo' },
+      ],
+      fields: [
+        { name: 'personal_id', label: 'ID Personal *', type: 'number', required: true },
+        { name: 'fecha', label: 'Fecha *', type: 'date', required: true },
+        { name: 'hora_inicio', label: 'Hora inicio (HH:MM)' },
+        { name: 'hora_fin', label: 'Hora fin (HH:MM)' },
+        { name: 'horas', label: 'Total horas', type: 'number', step: '0.25' },
+        { name: 'cliente', label: 'Cliente' },
+        { name: 'trabajo', label: 'Trabajo realizado', type: 'textarea', full: true },
+        { name: 'notas', label: 'Notas', type: 'textarea', full: true },
+      ],
+    },
   };
 
   async function renderCrud(entity) {
     const cfg = CRUD_CONFIGS[entity];
     if (!cfg) return;
+    const apiPath = cfg.apiPath || entity;
     const main = $('#main-content');
 
     let searchQuery = '';
@@ -531,7 +815,7 @@
       const container = $('#table-container');
       container.innerHTML = '<div class="empty"><span class="spinner"></span><p>Cargando...</p></div>';
       try {
-        const url = `/api/${entity}` + (searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : '');
+        const url = `/api/${apiPath}` + (searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : '');
         const rows = await api.get(url);
         renderTable(container, rows);
       } catch (err) {
@@ -579,7 +863,7 @@
           e.stopPropagation();
           const id = btn.dataset.edit;
           try {
-            const row = await api.get(`/api/${entity}/${id}`);
+            const row = await api.get(`/api/${apiPath}/${id}`);
             openForm(row);
           } catch (err) { toast(err.message, 'error'); }
         });
@@ -590,7 +874,7 @@
           const ok = await confirmModal(`¿Eliminar este ${cfg.title.toLowerCase().slice(0, -1)}?`, { danger: true, okText: 'Eliminar' });
           if (!ok) return;
           try {
-            await api.del(`/api/${entity}/${btn.dataset.del}`);
+            await api.del(`/api/${apiPath}/${btn.dataset.del}`);
             toast('Eliminado', 'success');
             load();
           } catch (err) { toast(err.message, 'error'); }
@@ -646,8 +930,8 @@
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner"></span>';
         try {
-          if (isEdit) await api.put(`/api/${entity}/${row.id}`, data);
-          else await api.post(`/api/${entity}`, data);
+          if (isEdit) await api.put(`/api/${apiPath}/${row.id}`, data);
+          else await api.post(`/api/${apiPath}`, data);
           toast(isEdit ? 'Actualizado' : 'Creado', 'success');
           close();
           load();
@@ -1030,6 +1314,375 @@
     }
 
     load();
+  }
+
+  /* ─────────────── MANTENIMIENTOS (calendario) ─────────────── */
+  async function renderMantenimientos() {
+    const main = $('#main-content');
+    const today = new Date();
+    let year = today.getFullYear();
+    let month = today.getMonth();
+    const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const DIAS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+    async function load() {
+      const ym = `${year}-${String(month + 1).padStart(2, '0')}`;
+      main.innerHTML = `
+        <div class="page-header">
+          <div class="flex gap-2 items-center">
+            <button class="btn btn-sm" id="prev-m">← Anterior</button>
+            <h2 style="margin:0;font-size:18px;font-weight:700;min-width:200px;text-align:center">${MESES[month]} ${year}</h2>
+            <button class="btn btn-sm" id="next-m">Siguiente →</button>
+            <button class="btn btn-sm btn-ghost" id="today-m">Hoy</button>
+          </div>
+          <div class="muted text-sm" id="event-count">Cargando...</div>
+        </div>
+        <div id="cal-host" class="empty"><span class="spinner"></span></div>
+      `;
+      $('#prev-m').addEventListener('click', () => { if (--month < 0) { month = 11; year--; } load(); });
+      $('#next-m').addEventListener('click', () => { if (++month > 11) { month = 0; year++; } load(); });
+      $('#today-m').addEventListener('click', () => { year = today.getFullYear(); month = today.getMonth(); load(); });
+
+      let events = [];
+      try { events = await api.get(`/api/mantenimientos-mes/${ym}`); }
+      catch (err) { $('#cal-host').innerHTML = `<div class="text-danger">Error: ${escapeHtml(err.message)}</div>`; return; }
+
+      $('#event-count').textContent = `${events.length} mantenimiento(s)`;
+      const eventsByDay = new Map();
+      events.forEach((e) => {
+        const d = parseInt(e.fecha_programada.slice(8, 10), 10);
+        if (!eventsByDay.has(d)) eventsByDay.set(d, []);
+        eventsByDay.get(d).push(e);
+      });
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const lastDate = new Date(year, month + 1, 0).getDate();
+      const cells = [];
+      for (let i = 0; i < firstDay; i++) cells.push('<div></div>');
+      for (let d = 1; d <= lastDate; d++) {
+        const evs = eventsByDay.get(d) || [];
+        const isToday = d === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+        const dotColor = evs.some((e) => !e.fecha_realizado) ? 'background:var(--warning)' : evs.length ? 'background:var(--success)' : '';
+        cells.push(`
+          <div class="card" data-day="${d}" style="cursor:pointer;min-height:80px;padding:8px;${isToday ? 'border-color:var(--accent);border-width:2px' : ''}">
+            <div class="flex justify-between items-center">
+              <span style="font-weight:700;font-family:monospace;${isToday ? 'color:var(--accent)' : ''}">${d}</span>
+              ${evs.length ? `<span style="${dotColor};color:#fff;font-size:11px;padding:1px 6px;border-radius:999px;">${evs.length}</span>` : ''}
+            </div>
+            ${evs.slice(0, 2).map((e) => `<div style="font-size:10px;color:var(--text-muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(e.razon_social || '?')}</div>`).join('')}
+          </div>
+        `);
+      }
+      $('#cal-host').className = '';
+      $('#cal-host').innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:8px">
+          ${DIAS.map((d) => `<div class="muted text-xs" style="text-align:center;font-weight:700;padding:4px">${d}</div>`).join('')}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px">${cells.join('')}</div>
+      `;
+
+      $$('[data-day]').forEach((cell) => {
+        cell.addEventListener('click', () => {
+          const d = parseInt(cell.dataset.day, 10);
+          const evs = eventsByDay.get(d) || [];
+          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          openModal({
+            title: `Mantenimientos · ${dateStr}`,
+            body: evs.length ? `
+              <div style="display:flex;flex-direction:column;gap:8px">
+                ${evs.map((e) => `
+                  <div class="card">
+                    <div style="font-weight:700">${escapeHtml(e.razon_social || '—')}</div>
+                    <div class="text-sm muted">${escapeHtml(e.modelo_maquina || '')} · ${escapeHtml(e.numero_serie || '')}</div>
+                    <div class="text-xs muted mt-2">
+                      Mant. #${e.numero}
+                      ${e.fecha_realizado ? `· ✓ Realizado ${fmtDate(e.fecha_realizado)}` : '· ⏳ Pendiente'}
+                      ${e.pagado ? `· Pagado ${fmtMoney(e.pagado)}` : ''}
+                    </div>
+                    ${e.notas ? `<div class="text-sm mt-2">${escapeHtml(e.notas)}</div>` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            ` : '<p class="empty">Sin mantenimientos este día.</p>',
+          });
+        });
+      });
+    }
+
+    load();
+  }
+
+  /* ─────────────── TARIFAS (key/value) ─────────────── */
+  async function renderTarifas() {
+    const main = $('#main-content');
+    const DEFAULTS = [
+      { key: 'tipo_cambio_banxico', value: '17', categoria: 'tipo_cambio', notas: 'MXN por 1 USD' },
+      { key: 'mecanico_mxn', value: '450', categoria: 'mano_obra', notas: 'Tarifa hora mecánico (MXN)' },
+      { key: 'mecanico_usd', value: '25', categoria: 'mano_obra', notas: 'Tarifa hora mecánico (USD)' },
+      { key: 'electronico_mxn', value: '520', categoria: 'mano_obra', notas: 'Tarifa hora electrónico (MXN)' },
+      { key: 'electronico_usd', value: '30', categoria: 'mano_obra', notas: 'Tarifa hora electrónico (USD)' },
+      { key: 'cnc_mxn', value: '650', categoria: 'mano_obra', notas: 'Tarifa hora CNC (MXN)' },
+      { key: 'cnc_usd', value: '38', categoria: 'mano_obra', notas: 'Tarifa hora CNC (USD)' },
+      { key: 'ayudante_mxn', value: '280', categoria: 'mano_obra', notas: 'Tarifa hora ayudante (MXN)' },
+      { key: 'ayudante_usd', value: '15', categoria: 'mano_obra', notas: 'Tarifa hora ayudante (USD)' },
+      { key: 'comision_refacciones', value: '15', categoria: 'comisiones', notas: '% sobre refacciones' },
+      { key: 'comision_servicios', value: '15', categoria: 'comisiones', notas: '% sobre servicios' },
+      { key: 'bono_20k', value: '1000', categoria: 'comisiones', notas: 'MXN por cada $20k facturados' },
+    ];
+
+    main.innerHTML = `<div class="empty"><span class="spinner"></span></div>`;
+    let tarifas = [];
+    try { tarifas = await api.get('/api/tarifas'); } catch {}
+    const map = new Map(tarifas.map((t) => [t.key, t]));
+    DEFAULTS.forEach((d) => { if (!map.has(d.key)) map.set(d.key, d); });
+    const items = Array.from(map.values());
+
+    const groups = new Map();
+    items.forEach((t) => {
+      const c = t.categoria || 'general';
+      if (!groups.has(c)) groups.set(c, []);
+      groups.get(c).push(t);
+    });
+
+    main.innerHTML = `
+      <div class="page-header">
+        <p class="muted text-sm" style="margin:0">Configuración de tarifas y parámetros del sistema.</p>
+        <button class="btn btn-primary" id="save-all">Guardar todo</button>
+      </div>
+      ${Array.from(groups.entries()).map(([cat, list]) => `
+        <div class="card" style="margin-bottom:12px">
+          <h3 style="margin:0 0 12px;font-size:14px;text-transform:capitalize">${cat.replace(/_/g, ' ')}</h3>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            ${list.map((t) => `
+              <div style="display:grid;grid-template-columns:200px 1fr 2fr;gap:8px;align-items:center">
+                <div class="text-xs font-mono muted">${t.key}</div>
+                <input type="text" class="input" data-key="${t.key}" data-cat="${cat}" value="${escapeHtml(t.value)}" />
+                <div class="text-xs dim">${escapeHtml(t.notas || '')}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('')}
+    `;
+
+    $('#save-all').addEventListener('click', async () => {
+      const inputs = $$('#main-content input[data-key]');
+      const payload = inputs.map((i) => ({ key: i.dataset.key, value: i.value, categoria: i.dataset.cat }));
+      try {
+        await api.put('/api/tarifas', payload);
+        toast(`✓ ${payload.length} tarifas guardadas`, 'success');
+      } catch (err) { toast(err.message, 'error'); }
+    });
+  }
+
+  /* ─────────────── REPORTES (export CSV) ─────────────── */
+  async function renderReportes() {
+    const main = $('#main-content');
+    const ENTITIES = [
+      { table: 'clientes', label: 'Clientes', icon: '👥' },
+      { table: 'refacciones', label: 'Refacciones', icon: '🔧' },
+      { table: 'maquinas', label: 'Máquinas', icon: '⚙️' },
+      { table: 'cotizaciones', label: 'Cotizaciones', icon: '📄' },
+      { table: 'ventas', label: 'Ventas', icon: '💰' },
+      { table: 'prospectos', label: 'Prospectos', icon: '🎯' },
+      { table: 'personal', label: 'Personal', icon: '👷' },
+      { table: 'garantias', label: 'Garantías', icon: '🛡' },
+      { table: 'mantenimientos', label: 'Mantenimientos', icon: '📅' },
+      { table: 'bonos', label: 'Bonos', icon: '🎁' },
+      { table: 'viajes', label: 'Viajes', icon: '✈️' },
+      { table: 'bitacora_horas', label: 'Bitácora horas', icon: '⏱' },
+      { table: 'sin_cobertura', label: 'Sin Cobertura', icon: '🚫' },
+      { table: 'revision_maquinas', label: 'Revisión Máquinas', icon: '🔍' },
+    ];
+
+    main.innerHTML = `
+      <p class="muted text-sm" style="margin-bottom:16px">Exporta cualquier tabla a CSV para análisis en Excel/Sheets.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+        ${ENTITIES.map((e) => `
+          <button class="card" data-table="${e.table}" style="text-align:left;cursor:pointer;border-color:var(--border)">
+            <div style="font-size:24px;margin-bottom:4px">${e.icon}</div>
+            <div style="font-weight:700">${e.label}</div>
+            <div class="text-xs muted">Click para descargar CSV</div>
+          </button>
+        `).join('')}
+      </div>
+    `;
+
+    $$('[data-table]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const table = btn.dataset.table;
+        btn.disabled = true;
+        try {
+          /* Direct download via auth header workaround: usar <a> con cookie/token */
+          const token = getToken();
+          const resp = await fetch(`/api/export/${table}`, {
+            headers: { 'Authorization': 'Bearer ' + token },
+            credentials: 'include',
+          });
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const blob = await resp.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url; a.download = `${table}.csv`;
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          toast(`✓ ${table}.csv descargado`, 'success');
+        } catch (err) {
+          toast(err.message, 'error');
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  /* ─────────────── AUDIT LOG (admin) ─────────────── */
+  async function renderAudit() {
+    const main = $('#main-content');
+    main.innerHTML = `
+      <p class="muted text-sm" style="margin-bottom:16px">Registro de cambios del sistema. Solo administradores.</p>
+      <div id="audit-table"></div>
+    `;
+    const c = $('#audit-table');
+    c.innerHTML = '<div class="empty"><span class="spinner"></span></div>';
+    try {
+      const rows = await api.get('/api/audit');
+      if (!rows.length) {
+        c.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><p>Sin entradas de auditoría aún.</p></div>';
+        return;
+      }
+      c.innerHTML = `
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead><tr><th>Fecha</th><th>Usuario</th><th class="col-center">Acción</th><th>Entidad</th><th>ID</th><th>Detalles</th></tr></thead>
+            <tbody>
+              ${rows.map((r) => `
+                <tr>
+                  <td class="font-mono text-sm">${fmtDateTime(r.timestamp)}</td>
+                  <td>${escapeHtml(r.username || '—')}</td>
+                  <td class="col-center"><span class="badge ${r.action === 'create' ? 'badge-success' : r.action === 'delete' ? 'badge-danger' : 'badge-info'}">${escapeHtml(r.action)}</span></td>
+                  <td>${escapeHtml(r.entity)}</td>
+                  <td class="font-mono">${escapeHtml(r.entity_id || '—')}</td>
+                  <td><code class="text-xs">${escapeHtml(r.details || '')}</code></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    } catch (err) {
+      c.innerHTML = `<div class="empty text-danger">Error: ${escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  /* ─────────────── DAVAI (chat con SSE streaming) ─────────────── */
+  async function renderDavai() {
+    const main = $('#main-content');
+    const history = [];
+
+    main.innerHTML = `
+      <div class="card" style="display:flex;flex-direction:column;height:calc(100vh - 160px);max-width:900px;margin:0 auto">
+        <div class="flex items-center gap-3" style="padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:12px">
+          <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:grid;place-items:center;color:#fff;font-weight:800">D</div>
+          <div>
+            <div style="font-weight:700">DavAI</div>
+            <div class="text-xs text-success">● Asistente IA</div>
+          </div>
+        </div>
+        <div id="messages" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:0 4px">
+          <div class="empty">
+            <div class="empty-icon">🤖</div>
+            <p style="font-weight:700;margin:0 0 4px">¿En qué te ayudo?</p>
+            <p class="muted text-sm">Pregúntame sobre prospectos, mensajes comerciales, cotizaciones...</p>
+          </div>
+        </div>
+        <form id="chat-form" style="display:flex;gap:8px;padding-top:12px;border-top:1px solid var(--border)">
+          <input id="chat-input" class="input flex-1" placeholder="Escribe tu mensaje..." autocomplete="off" required />
+          <button type="submit" class="btn btn-primary" id="send-btn">Enviar</button>
+        </form>
+      </div>
+    `;
+
+    const messagesEl = $('#messages');
+    const form = $('#chat-form');
+    const input = $('#chat-input');
+    const sendBtn = $('#send-btn');
+
+    function addMessage(role, text = '') {
+      messagesEl.querySelector('.empty')?.remove();
+      const wrap = document.createElement('div');
+      wrap.style.cssText = `display:flex;justify-content:${role === 'user' ? 'flex-end' : 'flex-start'}`;
+      wrap.innerHTML = `
+        <div style="max-width:80%;padding:10px 14px;border-radius:12px;${role === 'user'
+          ? 'background:var(--accent);color:#fff'
+          : 'background:var(--bg-elevated);border:1px solid var(--border)'}">
+          <div class="text-xs" style="opacity:0.7;margin-bottom:4px">${role === 'user' ? 'Tú' : 'DavAI'}</div>
+          <div data-content style="white-space:pre-wrap;font-size:13px">${escapeHtml(text)}</div>
+        </div>
+      `;
+      messagesEl.appendChild(wrap);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      return wrap.querySelector('[data-content]');
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const message = input.value.trim();
+      if (!message) return;
+      addMessage('user', message);
+      history.push({ role: 'user', content: message });
+      input.value = '';
+      sendBtn.disabled = true;
+      sendBtn.innerHTML = '<span class="spinner"></span>';
+      const aiNode = addMessage('assistant', '');
+      let fullText = '';
+      try {
+        const token = getToken();
+        const resp = await fetch('/api/davai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ message, history: history.slice(0, -1) }),
+          credentials: 'include',
+        });
+        if (!resp.ok || !resp.body) {
+          const err = await resp.json().catch(() => ({ error: 'Error' }));
+          aiNode.textContent = '❌ ' + (err.error || `HTTP ${resp.status}`) + (err.detail ? ' · ' + err.detail : '');
+          return;
+        }
+        const reader = resp.body.getReader();
+        const dec = new TextDecoder();
+        let buf = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          const lines = buf.split('\n');
+          buf = lines.pop() || '';
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const raw = line.slice(6).trim();
+            if (raw === '[DONE]') break;
+            try {
+              const p = JSON.parse(raw);
+              if (typeof p.text === 'string') {
+                fullText += p.text;
+                aiNode.textContent = fullText;
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+              }
+              if (p.error) aiNode.textContent = '❌ ' + p.error;
+            } catch {}
+          }
+        }
+        if (fullText) history.push({ role: 'assistant', content: fullText });
+      } catch (err) {
+        aiNode.textContent = '❌ ' + err.message;
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Enviar';
+        input.focus();
+      }
+    });
+    input.focus();
   }
 
   /* ─────────────── BOOT ─────────────── */

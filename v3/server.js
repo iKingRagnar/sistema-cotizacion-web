@@ -242,6 +242,106 @@ makeCrud({
   orderBy: 'modelo', order: 'ASC',
 });
 
+makeCrud({
+  table: 'ventas',
+  fields: ['cotizacion_id', 'folio_factura', 'cliente_id', 'cliente_nombre',
+    'fecha_venta', 'total', 'moneda', 'pagado', 'fecha_pago', 'notas'],
+  searchable: ['cliente_nombre', 'folio_factura'],
+  orderBy: 'fecha_venta', order: 'DESC',
+});
+
+makeCrud({
+  table: 'categorias',
+  fields: ['nombre', 'parent_id', 'tipo', 'orden'],
+  searchable: ['nombre'],
+  orderBy: 'orden', order: 'ASC',
+});
+
+makeCrud({
+  table: 'prospectos',
+  fields: ['empresa', 'contacto', 'email', 'telefono', 'industria', 'ciudad',
+    'estado', 'potencial_usd', 'score_ia', 'notas',
+    'ubicacion_lat', 'ubicacion_lng', 'ultimo_contacto'],
+  searchable: ['empresa', 'contacto', 'industria', 'ciudad'],
+  orderBy: 'score_ia', order: 'DESC',
+});
+
+makeCrud({
+  table: 'personal',
+  fields: ['nombre', 'rol', 'email', 'telefono', 'fecha_ingreso',
+    'tarifa_hora_mxn', 'activo', 'notas'],
+  searchable: ['nombre', 'email'],
+  orderBy: 'nombre', order: 'ASC',
+});
+
+makeCrud({
+  table: 'garantias',
+  fields: ['cliente_id', 'razon_social', 'maquina_id', 'modelo_maquina',
+    'numero_serie', 'fecha_inicio', 'fecha_fin', 'activa', 'notas'],
+  searchable: ['razon_social', 'modelo_maquina', 'numero_serie'],
+  orderBy: 'fecha_inicio', order: 'DESC',
+});
+
+makeCrud({
+  table: 'mantenimientos',
+  fields: ['garantia_id', 'razon_social', 'modelo_maquina', 'numero_serie',
+    'numero', 'fecha_programada', 'fecha_realizado', 'realizado_por',
+    'pagado', 'notas'],
+  searchable: ['razon_social', 'modelo_maquina'],
+  orderBy: 'fecha_programada', order: 'DESC',
+});
+
+makeCrud({
+  table: 'revision_maquinas',
+  fields: ['maquina_id', 'categoria', 'modelo', 'numero_serie',
+    'entregado', 'prueba', 'comentarios'],
+  searchable: ['modelo', 'numero_serie', 'comentarios'],
+  orderBy: 'created_at', order: 'DESC',
+});
+
+makeCrud({
+  table: 'sin_cobertura',
+  fields: ['cliente_id', 'razon_social', 'maquina_modelo', 'motivo',
+    'fecha_solicitud', 'estado', 'notas'],
+  searchable: ['razon_social', 'maquina_modelo', 'motivo'],
+  orderBy: 'fecha_solicitud', order: 'DESC',
+});
+
+makeCrud({
+  table: 'bonos',
+  fields: ['personal_id', 'nombre', 'concepto', 'monto', 'fecha', 'pagado', 'notas'],
+  searchable: ['nombre', 'concepto'],
+  orderBy: 'fecha', order: 'DESC',
+});
+
+makeCrud({
+  table: 'viajes',
+  fields: ['zona', 'destino', 'personas_count', 'dias_count', 'km',
+    'total_viatico', 'total_km', 'total', 'fecha', 'notas'],
+  searchable: ['destino'],
+  orderBy: 'fecha', order: 'DESC',
+});
+
+makeCrud({
+  table: 'bitacora_horas',
+  fields: ['personal_id', 'fecha', 'hora_inicio', 'hora_fin', 'horas',
+    'cliente', 'trabajo', 'notas'],
+  searchable: ['cliente', 'trabajo'],
+  orderBy: 'fecha', order: 'DESC',
+});
+
+/* Mantenimientos del mes (para vista calendario) */
+app.get('/api/mantenimientos-mes/:ym', requireAuth, tryRun((req, res) => {
+  const ym = req.params.ym; // YYYY-MM
+  if (!/^\d{4}-\d{2}$/.test(ym)) return res.status(400).json({ error: 'Formato YYYY-MM' });
+  const rows = db.prepare(`
+    SELECT * FROM mantenimientos
+    WHERE substr(fecha_programada, 1, 7) = ?
+    ORDER BY fecha_programada
+  `).all(ym);
+  res.json(rows);
+}));
+
 /* ════════════════════════════════════════════════════════════════
    COTIZACIONES (custom — con items + cálculo + folio auto)
    ════════════════════════════════════════════════════════════════ */
@@ -446,18 +546,222 @@ app.get('/api/dashboard', requireAuth, tryRun((_req, res) => {
     refacciones: db.prepare('SELECT COUNT(*) AS c FROM refacciones').get().c,
     maquinas: db.prepare('SELECT COUNT(*) AS c FROM maquinas').get().c,
     cotizaciones: db.prepare('SELECT COUNT(*) AS c FROM cotizaciones').get().c,
+    prospectos: db.prepare('SELECT COUNT(*) AS c FROM prospectos').get().c,
+    ventas: db.prepare('SELECT COUNT(*) AS c FROM ventas').get().c,
   };
   const cotPorEstado = db.prepare(`
     SELECT estado, COUNT(*) AS count, COALESCE(SUM(total), 0) AS total
     FROM cotizaciones GROUP BY estado
   `).all();
+  const prospectosPorEstado = db.prepare(`
+    SELECT estado, COUNT(*) AS count, COALESCE(SUM(potencial_usd), 0) AS potencial
+    FROM prospectos GROUP BY estado
+  `).all();
+  const ventasMes = db.prepare(`
+    SELECT COUNT(*) AS count, COALESCE(SUM(total), 0) AS total
+    FROM ventas WHERE fecha_venta >= date('now', '-30 days')
+  `).get();
   const stockBajo = db.prepare(`
     SELECT id, numero_parte, descripcion, stock, stock_minimo
     FROM refacciones WHERE stock < stock_minimo AND activo = 1
     ORDER BY (stock_minimo - stock) DESC LIMIT 10
   `).all();
-  res.json({ counts, cotPorEstado, stockBajo });
+  res.json({ counts, cotPorEstado, prospectosPorEstado, ventasMes, stockBajo });
 }));
+
+/* ════════════════════════════════════════════════════════════════
+   TARIFAS (key/value) — get all + bulk save
+   ════════════════════════════════════════════════════════════════ */
+app.get('/api/tarifas', requireAuth, tryRun((_req, res) => {
+  res.json(db.prepare('SELECT * FROM tarifas ORDER BY categoria, key').all());
+}));
+
+app.put('/api/tarifas', requireAuth, requireAdmin, tryRun((req, res) => {
+  const items = Array.isArray(req.body) ? req.body : [];
+  const upsert = db.prepare(`
+    INSERT INTO tarifas (key, value, categoria, notas, updated_at)
+    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(key) DO UPDATE SET
+      value = excluded.value,
+      categoria = excluded.categoria,
+      notas = excluded.notas,
+      updated_at = CURRENT_TIMESTAMP
+  `);
+  withTransaction(() => {
+    for (const it of items) {
+      if (!it.key) continue;
+      upsert.run(it.key, String(it.value ?? ''), it.categoria || 'general', it.notas || null);
+    }
+  });
+  res.json({ ok: true, count: items.length });
+}));
+
+/* ════════════════════════════════════════════════════════════════
+   AUDIT LOG (admin only, read)
+   ════════════════════════════════════════════════════════════════ */
+app.get('/api/audit', requireAuth, requireAdmin, tryRun((req, res) => {
+  const limit = Math.min(500, parseInt(req.query.limit) || 200);
+  const entity = req.query.entity;
+  let sql = 'SELECT * FROM audit_log';
+  const params = [];
+  if (entity) { sql += ' WHERE entity = ?'; params.push(entity); }
+  sql += ' ORDER BY id DESC LIMIT ?';
+  params.push(limit);
+  res.json(db.prepare(sql).all(...params));
+}));
+
+/* ════════════════════════════════════════════════════════════════
+   REPORTES — export CSV de cualquier tabla
+   ════════════════════════════════════════════════════════════════ */
+const EXPORTABLE_TABLES = ['clientes', 'refacciones', 'maquinas', 'cotizaciones', 'ventas',
+  'prospectos', 'personal', 'garantias', 'mantenimientos', 'bonos', 'viajes', 'bitacora_horas',
+  'sin_cobertura', 'revision_maquinas'];
+
+app.get('/api/export/:table', requireAuth, tryRun((req, res) => {
+  const table = req.params.table;
+  if (!EXPORTABLE_TABLES.includes(table)) return res.status(400).json({ error: 'Tabla no exportable' });
+  const rows = db.prepare(`SELECT * FROM ${table} ORDER BY id DESC LIMIT 5000`).all();
+  if (!rows.length) {
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${table}.csv"`);
+    return res.send('﻿');
+  }
+  const headers = Object.keys(rows[0]);
+  const escape = (v) => {
+    if (v == null) return '';
+    const s = String(v).replace(/"/g, '""');
+    return /[",\n]/.test(s) ? `"${s}"` : s;
+  };
+  const csv = [
+    headers.join(','),
+    ...rows.map((r) => headers.map((h) => escape(r[h])).join(',')),
+  ].join('\n');
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${table}.csv"`);
+  res.send('﻿' + csv);
+}));
+
+/* ════════════════════════════════════════════════════════════════
+   DAVAI — chat con SSE streaming (Anthropic + OpenAI fallback)
+   ════════════════════════════════════════════════════════════════ */
+const SYSTEM_PROMPT = `Eres DavAI, asistente del Sistema de Servicio Técnico Industrial.
+Ayuda al equipo con: prospección B2B en México, generación de mensajes comerciales
+(email/WhatsApp/LinkedIn), análisis de pipeline, cotizaciones. Responde en español,
+conciso y orientado a la acción.`;
+
+app.post('/api/davai/chat', requireAuth, async (req, res) => {
+  try {
+    const { message, history } = req.body || {};
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: 'message requerido' });
+    }
+    const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
+    const OPENAI_KEY = process.env.OPENAI_API_KEY;
+    if (!ANTHROPIC_KEY && !OPENAI_KEY) {
+      return res.status(503).json({
+        error: 'DavAI no configurado',
+        detail: 'Configura ANTHROPIC_API_KEY u OPENAI_API_KEY en variables de entorno.',
+      });
+    }
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders?.();
+    const send = (data) => res.write(`data: ${JSON.stringify(data)}\n\n`);
+
+    const hist = Array.isArray(history) ? history : [];
+
+    if (ANTHROPIC_KEY) {
+      const apiRes = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Api-Key': ANTHROPIC_KEY,
+          'Anthropic-Version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-3-5-sonnet-20241022',
+          max_tokens: 2048,
+          system: SYSTEM_PROMPT,
+          stream: true,
+          messages: [...hist.filter((m) => m.role !== 'system'), { role: 'user', content: message }],
+        }),
+      });
+      if (!apiRes.ok || !apiRes.body) {
+        send({ error: `Anthropic ${apiRes.status}` });
+        res.write('data: [DONE]\n\n');
+        return res.end();
+      }
+      const reader = apiRes.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split('\n');
+        buf = lines.pop() ?? '';
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const raw = line.slice(6).trim();
+          if (raw === '[DONE]') break;
+          try {
+            const p = JSON.parse(raw);
+            if (p.delta?.text) send({ text: p.delta.text });
+          } catch {}
+        }
+      }
+    } else {
+      const apiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          stream: true,
+          messages: [
+            { role: 'system', content: SYSTEM_PROMPT },
+            ...hist,
+            { role: 'user', content: message },
+          ],
+        }),
+      });
+      if (!apiRes.ok || !apiRes.body) {
+        send({ error: `OpenAI ${apiRes.status}` });
+        res.write('data: [DONE]\n\n');
+        return res.end();
+      }
+      const reader = apiRes.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split('\n');
+        buf = lines.pop() ?? '';
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const raw = line.slice(6).trim();
+          if (raw === '[DONE]') break;
+          try {
+            const p = JSON.parse(raw);
+            const t = p.choices?.[0]?.delta?.content;
+            if (t) send({ text: t });
+          } catch {}
+        }
+      }
+    }
+    res.write('data: [DONE]\n\n');
+    res.end();
+  } catch (err) {
+    console.error('[davai]', err);
+    try { res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`); res.end(); } catch {}
+  }
+});
 
 /* ════════════════════════════════════════════════════════════════
    FALLBACK SPA (sirve index.html para cualquier ruta no /api)
