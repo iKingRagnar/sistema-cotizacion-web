@@ -32,28 +32,15 @@
 html body .davai-panel,
 html body #davai-panel,
 html body .davai-chat-panel {
-  background: linear-gradient(180deg, var(--davai-bg-deep), var(--davai-bg)) !important;
+  background: linear-gradient(180deg, rgba(2,6,23,0.98), rgba(15,23,42,0.97)) !important;
   border: 1px solid var(--davai-border) !important;
   box-shadow: var(--davai-shadow), inset 0 1px 0 rgba(255,255,255,0.04) !important;
-  backdrop-filter: blur(24px) saturate(140%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(140%) !important;
+  /* backdrop-filter REMOVIDO — paint blocking. Bg sólido alpha en su lugar */
   border-radius: 18px !important;
   overflow: hidden !important;
   position: relative !important;
 }
-/* Aurora ambient en bg */
-html body .davai-panel::before,
-html body #davai-panel::before {
-  content: '';
-  position: absolute;
-  inset: -50% -50% auto auto;
-  width: 80%;
-  height: 60%;
-  background: radial-gradient(circle, rgba(59,130,246,0.18), transparent 70%);
-  filter: blur(40px);
-  pointer-events: none;
-  z-index: 0;
-}
+/* Aurora ambient REMOVIDO — filter:blur(40px) era costoso. Bg sólido es suficiente. */
 html body .davai-panel > *,
 html body #davai-panel > * {
   position: relative;
@@ -78,20 +65,7 @@ html body .davai-panel__header {
   position: relative !important;
   overflow: hidden !important;
 }
-/* Shimmer animado */
-html body .davai-header::after,
-html body .davai-panel__header::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.08) 50%, transparent 70%);
-  animation: davai-shimmer 6s ease-in-out infinite;
-  pointer-events: none;
-}
-@keyframes davai-shimmer {
-  0%, 100% { transform: translateX(-100%); }
-  50% { transform: translateX(100%); }
-}
+/* Shimmer REMOVIDO — animation infinite causaba repaints constantes en main thread */
 
 html body .davai-header h2,
 html body .davai-header h3,
@@ -106,7 +80,7 @@ html body .davai-panel__title {
   gap: 10px !important;
 }
 
-/* Avatar IA con breathing */
+/* Avatar IA estático (breathing animation removida — disparaba repaints) */
 html body .davai-avatar,
 html body .davai-header__avatar {
   width: 36px !important;
@@ -121,29 +95,18 @@ html body .davai-header__avatar {
   font-size: 0.95rem !important;
   position: relative !important;
   flex-shrink: 0 !important;
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.18), 0 4px 14px rgba(59,130,246,0.35);
-  animation: davai-breathe 3s ease-in-out infinite;
-}
-@keyframes davai-breathe {
-  0%, 100% { box-shadow: 0 0 0 3px rgba(59,130,246,0.18), 0 4px 14px rgba(59,130,246,0.35); }
-  50% { box-shadow: 0 0 0 6px rgba(59,130,246,0.28), 0 6px 20px rgba(59,130,246,0.55); }
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.22), 0 4px 14px rgba(59,130,246,0.4);
 }
 
-/* Status dot con pulse */
+/* Status dot estático (pulse removido) */
 html body .davai-status-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: #22c55e;
-  box-shadow: 0 0 0 0 rgba(34,197,94,0.6);
-  animation: davai-pulse-dot 2s ease-out infinite;
+  box-shadow: 0 0 6px rgba(34,197,94,0.6);
   display: inline-block;
   margin-right: 6px;
-}
-@keyframes davai-pulse-dot {
-  0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
-  70% { box-shadow: 0 0 0 10px rgba(34,197,94,0); }
-  100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
 }
 
 /* ════════════════════════════════════════════════════
@@ -195,14 +158,14 @@ html body .davai-msg--assistant .davai-msg__bubble,
 html body .davai-message--assistant .davai-message__bubble,
 html body .davai-msg.assistant > div {
   max-width: 85% !important;
-  background: rgba(255,255,255,0.04) !important;
+  background: rgba(30,41,59,0.85) !important;
   border: 1px solid rgba(255,255,255,0.08) !important;
   color: var(--davai-text) !important;
   padding: 10px 14px !important;
   border-radius: 18px 18px 18px 4px !important;
   font-size: 0.92rem !important;
   line-height: 1.55 !important;
-  backdrop-filter: blur(10px);
+  /* backdrop-filter REMOVIDO — multiplicaba paint cost por cada mensaje */
 }
 
 /* Markdown inside bubble */
@@ -424,11 +387,7 @@ html body .davai-send:disabled {
   color: #fff;
   font-size: 1.8rem;
   box-shadow: 0 12px 40px rgba(59,130,246,0.45), 0 0 0 8px rgba(59,130,246,0.10);
-  animation: davai-empty-float 4s ease-in-out infinite;
-}
-@keyframes davai-empty-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  /* float animation removed */
 }
 .davai-empty__title {
   font-family: 'Sora', sans-serif;
@@ -466,30 +425,8 @@ html body .davai-fab {
   box-shadow: 0 8px 32px rgba(59,130,246,0.55), 0 4px 14px rgba(139,92,246,0.35) !important;
   transition: transform 0.2s ease, box-shadow 0.2s ease !important;
 }
-html body #davai-fab::before,
-html body .davai-fab::before {
-  content: '';
-  position: absolute;
-  inset: -6px;
-  border-radius: 50%;
-  border: 2px solid rgba(59,130,246,0.4);
-  animation: davai-fab-ring 2.5s ease-out infinite;
-  pointer-events: none;
-}
-html body #davai-fab::after,
-html body .davai-fab::after {
-  content: '';
-  position: absolute;
-  inset: -12px;
-  border-radius: 50%;
-  border: 2px solid rgba(139,92,246,0.25);
-  animation: davai-fab-ring 2.5s ease-out infinite 0.8s;
-  pointer-events: none;
-}
-@keyframes davai-fab-ring {
-  0% { transform: scale(0.95); opacity: 1; }
-  100% { transform: scale(1.4); opacity: 0; }
-}
+/* FAB rings animados REMOVIDOS — animation infinite causaba paint constante.
+   El FAB conserva su gradient + shadow estático. */
 html body #davai-fab:hover,
 html body .davai-fab:hover {
   transform: translateY(-4px) scale(1.05) !important;
