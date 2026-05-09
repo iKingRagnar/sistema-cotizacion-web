@@ -871,9 +871,7 @@
 html body.theme-industrial .prospeccion-sidebar,
 html body.dark-theme .prospeccion-sidebar,
 html body:not(.appearance-light) .prospeccion-sidebar {
-  background: rgba(15,23,42,0.85) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(120%) !important;
-  backdrop-filter: blur(14px) saturate(120%) !important;
+  background: rgba(15,23,42,0.92) !important; /* solid alpha — backdrop-filter removido */
   border: 1px solid rgba(255,255,255,0.10) !important;
   color: #e2e8f0 !important;
 }

@@ -35,13 +35,12 @@
 html body .table-wrap,
 html body .md-table-wrap,
 html body .data-table-wrap {
-  background: var(--tbl-bg) !important;
+  background: rgba(15,23,42,0.78) !important; /* solid alpha en vez de glass blur (era 1.7s freeze) */
   border: 1px solid var(--tbl-border) !important;
   border-radius: var(--tbl-radius) !important;
   overflow: hidden !important;
   box-shadow: 0 4px 18px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.04) !important;
-  backdrop-filter: blur(8px) saturate(120%) !important;
-  -webkit-backdrop-filter: blur(8px) saturate(120%) !important;
+  /* backdrop-filter REMOVIDO — disparaba paint blocking de 1.7s al abrir modales */
 }
 
 /* ════════════════════════════════════════════════════
