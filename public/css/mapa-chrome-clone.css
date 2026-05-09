@@ -30,7 +30,8 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) header.he
   }
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand-logo-wrap.login-brand-logo {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
+  .header-brand-logo-wrap.login-brand-logo:not(.header-brand-logo-wrap--bare) {
   border-radius: 0.5rem !important;
   box-shadow: 0 4px 16px rgba(212, 255, 0, 0.12) !important;
 }
@@ -311,4 +312,122 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav#sideb
 
 html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll .tab i {
   opacity: 0.85;
+}
+
+/* ── Logo marca: sin pastilla blanca (solo la imagen sobre el navbar) ─────── */
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
+  .header-brand .header-brand-logo-wrap.login-brand-logo.header-brand-logo-wrap--bare {
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
+  .header-brand .header-brand-logo-wrap--bare .login-brand-hero-img,
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
+  .header-brand .header-brand-logo-img#header-brand-logo {
+  max-height: 38px !important;
+  width: auto !important;
+  height: auto !important;
+  clip-path: none !important;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55));
+}
+
+/* ── Barra superior: 6 accesos director (espíritu Navbar Mapa) ─────────────── */
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav.mapa-header-owner-nav {
+  display: none;
+  flex: 0 1 auto;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0.2rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-sizing: border-box;
+}
+
+@media (min-width: 901px) {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav.mapa-header-owner-nav {
+    display: flex;
+  }
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-owner-slot-comm {
+  display: contents;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  padding: 0.4rem 0.72rem;
+  margin: 0;
+  border-radius: 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.1;
+  border: none !important;
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+  box-shadow: none !important;
+  white-space: nowrap;
+  min-height: 0;
+  width: auto;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill i {
+  font-size: 0.78rem;
+  opacity: 0.9;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill.active {
+  background: rgba(212, 255, 0, 0.12) !important;
+  color: var(--mapa-ms-accent) !important;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill.active i {
+  color: var(--mapa-ms-accent) !important;
+}
+
+/* Sin permiso de comisiones: sexto acceso = Reportes en lugar de Viajes */
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill--alt {
+  display: none !important;
+}
+
+html.hide-commissions body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill.comm-admin-only {
+  display: none !important;
+}
+
+html.hide-commissions body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill--alt {
+  display: inline-flex !important;
+}
+
+/* ── Créditos “powered by” — cursiva y acento suave ─────────────────────── */
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-powered-by.header-powered-by--nav-slot {
+  text-transform: none !important;
+  opacity: 0.92 !important;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-powered-by--nav-slot .header-powered-by-italic {
+  font-style: italic;
+  font-weight: 500;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: none !important;
+  color: rgba(226, 232, 240, 0.88) !important;
+  -webkit-text-fill-color: rgba(226, 232, 240, 0.88) !important;
+  text-shadow:
+    0 0 18px rgba(45, 212, 191, 0.22),
+    0 1px 0 rgba(0, 0, 0, 0.35);
 }

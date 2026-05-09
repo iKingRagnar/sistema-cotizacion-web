@@ -154,9 +154,9 @@
   <!-- ★ UNIVERSAL ART SKIN — inspirado en MapaSuminregio (solo estética) -->
   <link rel="stylesheet" href="css/universal-art.css?v=3-no-login-overlay-position-override">
   <link rel="stylesheet" href="css/universal-map-shell.css?v=4-appearance-agnostic-shell-2026-05-07">
-  <link rel="stylesheet" href="css/mapa-app-layout.css?v=2-appearance-agnostic-shell-2026-05-07">
+  <link rel="stylesheet" href="css/mapa-app-layout.css?v=3-poweredby-slot-wrap-2026-05-07">
   <link rel="stylesheet" href="css/universal-map-shell-workspace.css?v=1-dark-lienzo-md3-2026-05-07">
-  <link rel="stylesheet" href="css/mapa-chrome-clone.css?v=1-navbar-sidebar-pixel-2026-05-07">
+  <link rel="stylesheet" href="css/mapa-chrome-clone.css?v=2-owner-nav-logo-powered-2026-05-07">
   <!-- KPI ejecutivos claros (después de nano / universal-art para ganar especificidad) -->
   <link rel="stylesheet" href="css/dashboard-exec-kpi-cards.css?v=1-exec-kpi-light-2026-05-07">
   <!-- Login ejecutivo: al final de la cascada (créditos tipográficos + sin artefactos bajo 100dvh) -->
@@ -356,7 +356,7 @@
   <div id="app-watermark" class="prem-watermark-field" aria-hidden="true"></div>
   <div id="offline-banner" class="offline-banner hidden" role="alert" aria-live="polite">Sin conexión. Algunas funciones pueden no estar disponibles.</div>
   <div id="login-overlay" class="login-overlay login-overlay--exec-layout hidden" role="dialog" aria-modal="true" aria-labelledby="login-title">
-    <span class="header-powered-by login-overlay-powered-by" aria-label="Créditos">powered by Ing. David Cantu</span>
+    <span class="header-powered-by login-overlay-powered-by" aria-label="Créditos"><em class="header-powered-by-italic">powered by Ing. David Cantu</em></span>
     <div class="login-split">
       <div class="login-weld-sparks" aria-hidden="true"></div>
       <!-- Panel izquierdo: branding -->
@@ -447,8 +447,8 @@
   <header class="header mapa-app-shell mapa-ms-navbar-root">
     <div class="header-inner">
       <div class="header-brand">
-        <div class="login-brand-logo header-brand-logo-wrap">
-          <img src="fondos/universal-logo.jpg?v=4" alt="Universal" width="120" height="72" class="login-brand-hero-img" id="header-brand-logo" decoding="async">
+        <div class="login-brand-logo header-brand-logo-wrap header-brand-logo-wrap--bare">
+          <img src="fondos/universal-logo.jpg?v=4" alt="Universal" width="120" height="72" class="login-brand-hero-img header-brand-logo-img" id="header-brand-logo" decoding="async">
         </div>
         <div class="header-brand-text">
           <p class="header-brand-eyebrow">Inteligencia operativa</p>
@@ -456,8 +456,19 @@
           <p class="header-brand-tagline">Cotización · Servicio · Campo</p>
         </div>
       </div>
+      <nav id="mapa-header-owner-nav" class="mapa-header-owner-nav" aria-label="Accesos principales (director)">
+        <button type="button" class="tab mapa-owner-pill" data-tab="dashboards" title="Resumen y KPIs (Ctrl+0)"><i class="fas fa-chart-pie" aria-hidden="true"></i><span>Dashboards</span></button>
+        <button type="button" class="tab mapa-owner-pill" id="tab-cotizaciones-header" data-tab="cotizaciones" title="Cotizaciones (Ctrl+4)"><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i><span>Cotizaciones</span></button>
+        <button type="button" class="tab mapa-owner-pill" data-tab="ventas" title="Ventas aprobadas"><i class="fas fa-check-double" aria-hidden="true"></i><span>Ventas</span></button>
+        <button type="button" class="tab mapa-owner-pill" data-tab="clientes" title="Cartera de clientes (Ctrl+1)"><i class="fas fa-users" aria-hidden="true"></i><span>Clientes</span></button>
+        <button type="button" class="tab mapa-owner-pill" id="tab-prospeccion-header" data-tab="prospeccion" title="Mapa y pipeline de prospectos"><i class="fas fa-map-marked-alt" aria-hidden="true"></i><span>Prospección</span></button>
+        <div class="mapa-owner-slot-comm" role="presentation">
+          <button type="button" class="tab mapa-owner-pill comm-admin-only" data-tab="viajes" title="Viajes y viáticos"><i class="fas fa-plane" aria-hidden="true"></i><span>Viajes</span></button>
+          <button type="button" class="tab mapa-owner-pill mapa-owner-pill--alt" data-tab="reportes" title="Reportes de servicio y venta"><i class="fas fa-file-alt" aria-hidden="true"></i><span>Reportes</span></button>
+        </div>
+      </nav>
       <div class="mapa-header-spacer" aria-hidden="true"></div>
-      <span class="header-powered-by header-powered-by--nav-slot" aria-label="Créditos">powered by Ing. David Cantu</span>
+      <span class="header-powered-by header-powered-by--nav-slot" aria-label="Créditos"><em class="header-powered-by-italic">powered by Ing. David Cantu</em></span>
       <div class="header-actions">
         <div class="mapa-header-user-cluster">
         <div class="mapa-ms-live-pill" aria-hidden="true" title="Estado">

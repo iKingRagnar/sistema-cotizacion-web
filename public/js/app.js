@@ -468,8 +468,10 @@
   }
   function updateCotizacionesTabVisibility() {
     var show = canAccessCotizaciones();
-    var t = qs('#tab-cotizaciones');
-    if (t) t.classList.toggle('hidden', !show);
+    ['tab-cotizaciones', 'tab-cotizaciones-header'].forEach(function (id) {
+      var t = qs('#' + id);
+      if (t) t.classList.toggle('hidden', !show);
+    });
   }
   function updateCommissionsUiVisibility() {
     document.documentElement.classList.toggle('hide-commissions', !canViewCommissions());
@@ -1029,7 +1031,7 @@
       if (at === 'usuarios' || at === 'categorias-catalogo') showPanel('dashboards');
     }
     const showAdminModules = canAccessAdminOnlyModules();
-    ['tab-prospeccion', 'tab-tarifas', 'tab-tecnicos'].forEach(function (tid) {
+    ['tab-prospeccion', 'tab-prospeccion-header', 'tab-tarifas', 'tab-tecnicos'].forEach(function (tid) {
       const t = qs('#' + tid);
       if (t) t.classList.toggle('hidden', !showAdminModules);
     });

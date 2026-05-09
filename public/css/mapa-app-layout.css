@@ -66,10 +66,11 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-a
 html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-powered-by--nav-slot {
   flex-shrink: 1;
   min-width: 0;
-  max-width: 10rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: 15rem;
+  overflow: visible;
+  text-align: right;
+  line-height: 1.25;
+  white-space: normal;
 }
 
 /* Contenido bajo barra fija */
