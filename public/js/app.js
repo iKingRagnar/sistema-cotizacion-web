@@ -468,9 +468,8 @@
   }
   function updateCotizacionesTabVisibility() {
     var show = canAccessCotizaciones();
-    qsAll('.tab[data-tab="cotizaciones"]').forEach(function (tab) {
-      tab.classList.toggle('hidden', !show);
-    });
+    var t = qs('#tab-cotizaciones');
+    if (t) t.classList.toggle('hidden', !show);
   }
   function updateCommissionsUiVisibility() {
     document.documentElement.classList.toggle('hide-commissions', !canViewCommissions());

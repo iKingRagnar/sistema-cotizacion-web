@@ -111,7 +111,7 @@
   <link rel="stylesheet" href="css/design-tokens.css?v=4-md3">
   <link rel="stylesheet" href="css/design-system.css?v=3-apex-base">
   <link rel="stylesheet" href="css/style.css?v=107-prospeccion-experience-premium-2026-05-07">
-  <link rel="stylesheet" href="css/layout-rail.css?v=11-hide-sidebar-global-strip">
+  <link rel="stylesheet" href="css/layout-rail.css?v=12-sidebar-strip-map-shell">
   <link rel="stylesheet" href="css/header-profile.css?v=10-chrome-luna-neutral-admin-hub">
   <link rel="stylesheet" href="css/theme-industrial.css?v=25-chrome-luna-neutral">
   <link rel="stylesheet" href="css/material.css?v=4-poweredby-login-overlay-exception">
@@ -153,7 +153,8 @@
   <link rel="stylesheet" href="css/ui-legibility-final.css?v=2-reportes-merge-poweredby-login-logo-2026-05-06">
   <!-- ★ UNIVERSAL ART SKIN — inspirado en MapaSuminregio (solo estética) -->
   <link rel="stylesheet" href="css/universal-art.css?v=3-no-login-overlay-position-override">
-  <link rel="stylesheet" href="css/universal-map-shell.css?v=2-header-pills-400-rail-2026-05-07">
+  <link rel="stylesheet" href="css/universal-map-shell.css?v=3-no-header-duplicate-tabs-2026-05-07">
+  <link rel="stylesheet" href="css/mapa-app-layout.css?v=1-fixed-navbar-rail-2026-05-07">
   <!-- KPI ejecutivos claros (después de nano / universal-art para ganar especificidad) -->
   <link rel="stylesheet" href="css/dashboard-exec-kpi-cards.css?v=1-exec-kpi-light-2026-05-07">
   <!-- Login ejecutivo: al final de la cascada (créditos tipográficos + sin artefactos bajo 100dvh) -->
@@ -440,7 +441,7 @@
     </div>
   </div>
   <div id="app-particles-layer" class="app-particles-layer" aria-hidden="true"></div>
-  <header class="header">
+  <header class="header mapa-app-shell">
     <div class="header-inner">
       <button type="button" id="btn-sidebar-rail-toggle-header" class="btn-sidebar-rail-toggle header-sidebar-rail-toggle hidden" aria-expanded="false" aria-controls="sidebar-rail-tabs" title="Mostrar lista de módulos">
         <span class="visually-hidden">Mostrar lista de módulos</span>
@@ -460,20 +461,10 @@
           <p class="header-brand-tagline">Cotización · Servicio · Campo</p>
         </div>
       </div>
-      <nav id="header-map-primary-tabs" class="header-map-primary-tabs" role="navigation" aria-label="Módulos frecuentes (atajos)">
-        <button type="button" data-tab="dashboards" class="tab active" title="Resumen general (Ctrl+0)"><i class="fas fa-chart-pie"></i> Dashboards</button>
-        <button type="button" data-tab="clientes" class="tab" title="Clientes (Ctrl+1)"><i class="fas fa-users"></i> Clientes</button>
-        <button type="button" data-tab="refacciones" class="tab" title="Refacciones (Ctrl+2)"><i class="fas fa-cogs"></i> Refacciones</button>
-        <button type="button" data-tab="maquinas" class="tab" title="Máquinas (Ctrl+3)"><i class="fas fa-industry"></i> Máquinas</button>
-        <button type="button" data-tab="almacen" class="tab" title="Inventario físico y bloqueo por cotización"><i class="fas fa-warehouse"></i> Almacén</button>
-        <button type="button" data-tab="cotizaciones" class="tab" title="Cotizaciones (Ctrl+4)"><i class="fas fa-file-invoice-dollar"></i> Cotizaciones</button>
-        <button type="button" data-tab="ventas" class="tab" title="Histórico de ventas aprobadas"><i class="fas fa-check-double"></i> Ventas</button>
-        <button type="button" data-tab="prospeccion" class="tab" title="Mapa y pipeline de prospectos (COVIA)"><i class="fas fa-map-marked-alt"></i> Prospección</button>
-        <button type="button" data-tab="revision-maquinas" class="tab" title="Revisión y preparación de máquinas"><i class="fas fa-tools"></i> Revisión Máquinas</button>
-        <button type="button" data-tab="tarifas" class="tab" title="Tarifas y esquemas de cobro"><i class="fas fa-tags"></i> Tarifas</button>
-      </nav>
+      <div class="mapa-header-spacer" aria-hidden="true"></div>
       <span class="header-powered-by header-powered-by--nav-slot" aria-label="Créditos">powered by Ing. David Cantu</span>
       <div class="header-actions">
+        <div class="mapa-header-user-cluster">
         <div class="header-actions-tail">
         <div class="header-notifications-wrap">
           <button type="button" id="btn-notifications" class="btn-icon-header" title="Centro de notificaciones" aria-label="Centro de notificaciones">
@@ -539,14 +530,22 @@
           </div>
         </div>
         </div>
+        </div>
       </div>
     </div>
   </header>
 
-  <div class="app-frame">
-    <aside class="sidebar-nav" id="app-sidebar-nav" aria-label="Navegación de módulos">
-      <div class="sidebar-nav-toolbar">
-        <button type="button" id="btn-sidebar-rail-toggle" class="btn-sidebar-rail-toggle" aria-expanded="true" aria-controls="sidebar-rail-tabs" title="Ocultar lista de módulos (más espacio para el contenido)">
+  <div class="app-frame mapa-app-shell">
+    <aside class="sidebar-nav mapa-app-shell" id="app-sidebar-nav" aria-label="Navegación de módulos">
+      <div class="sidebar-nav-toolbar mapa-rail-header">
+        <div class="mapa-rail-header-main">
+          <div class="mapa-rail-accent" aria-hidden="true"></div>
+          <div class="mapa-rail-titles">
+            <p class="mapa-rail-kicker">Navegación</p>
+            <p class="sidebar-nav-title mapa-rail-title" id="sidebar-rail-heading">Módulos</p>
+          </div>
+        </div>
+        <button type="button" id="btn-sidebar-rail-toggle" class="btn-sidebar-rail-toggle mapa-rail-collapse-btn" aria-expanded="true" aria-controls="sidebar-rail-tabs" title="Ocultar lista de módulos (más espacio para el contenido)">
           <span class="visually-hidden">Mostrar u ocultar lista de módulos</span>
           <svg class="sidebar-rail-burger-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
             <rect x="4" y="6.25" width="16" height="2" rx="0.5" fill="currentColor"/>
@@ -554,7 +553,6 @@
             <rect x="4" y="15.75" width="16" height="2" rx="0.5" fill="currentColor"/>
           </svg>
         </button>
-        <p class="sidebar-nav-title" id="sidebar-rail-heading">Módulos</p>
       </div>
       <div class="sidebar-global-strip" aria-label="Filtro global, alertas y estado del sistema">
         <select id="global-branch-filter" class="header-branch-filter sidebar-branch-filter" title="Sucursales — filtro global">

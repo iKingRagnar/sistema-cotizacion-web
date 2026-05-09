@@ -1,0 +1,221 @@
+/**
+ * mapa-app-layout.css — Estructura tipo MapaSuminregio (post-login).
+ * Cabecera fija 64px, workspace bajo ella, rail ~400px con cabecera de panel + strip + scroll de módulos.
+ * Carga después de universal-map-shell y layout-rail.
+ */
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) header.header.mapa-app-shell {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1100;
+  height: 4rem;
+  min-height: 4rem;
+  max-height: 4rem;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 0 1rem 0 0.85rem;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) header.header.mapa-app-shell .header-inner {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 0;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-header-spacer {
+  flex: 1 1 auto;
+  min-width: 0.35rem;
+}
+
+/* Agrupación derecha (notificaciones, sesión, perfil) — distinta a la fila suelta anterior */
+html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-header-user-cluster {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  padding: 4px 6px 4px 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open)
+  .mapa-header-user-cluster
+  .header-actions-tail {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .header-actions {
+  flex: 0 0 auto;
+  margin-left: 0;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .header-powered-by--nav-slot {
+  flex-shrink: 1;
+  min-width: 0;
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Contenido bajo barra fija */
+html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .app-frame.mapa-app-shell {
+  margin-top: 4rem;
+  min-height: calc(100dvh - 4rem);
+  max-height: calc(100dvh - 4rem);
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .app-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Rail lateral (altura del workspace, columna flex) */
+html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) aside.sidebar-nav.mapa-app-shell {
+  position: relative;
+  top: auto;
+  align-self: stretch;
+  flex: 0 0 min(400px, 92vw);
+  width: min(400px, 92vw);
+  max-height: none;
+  height: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 500;
+  overflow: hidden;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open)
+  .sidebar-nav.mapa-app-shell
+  .sidebar-nav-toolbar.mapa-rail-header {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  flex-wrap: nowrap !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  gap: 0.5rem !important;
+  padding: 1rem 1rem 0.85rem !important;
+  flex-shrink: 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.mapa-rail-header-main {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.55rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.mapa-rail-titles {
+  min-width: 0;
+}
+
+.mapa-rail-accent {
+  width: 4px;
+  height: 1.25rem;
+  margin-top: 0.2rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+  background: linear-gradient(
+    180deg,
+    var(--ums-accent, #14b8a6) 0%,
+    rgba(20, 184, 166, 0.35) 100%
+  );
+}
+
+.mapa-rail-kicker {
+  margin: 0 0 0.18rem;
+  padding: 0;
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(248, 250, 252, 0.42);
+  font-family: "Syne", Inter, system-ui, sans-serif;
+}
+
+.mapa-rail-title.mapa-rail-title {
+  margin: 0;
+  padding: 0;
+  font-family: "Syne", Inter, system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: rgba(248, 250, 252, 0.95);
+  line-height: 1.2;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open)
+  .mapa-rail-collapse-btn.btn-sidebar-rail-toggle {
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+}
+
+/* Strip global visible en el rail (sucursales, alertas, estado) */
+html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open)
+  .sidebar-nav.mapa-app-shell
+  .sidebar-global-strip {
+  display: flex !important;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.55rem 0.85rem 0.65rem;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Rail colapsado: iconos del dock; cabecera textual oculta */
+body.sidebar-rail-collapsed .sidebar-nav.mapa-app-shell .mapa-rail-titles,
+body.sidebar-rail-collapsed .sidebar-nav.mapa-app-shell .mapa-rail-kicker,
+body.sidebar-rail-collapsed .sidebar-nav.mapa-app-shell .mapa-rail-accent {
+  display: none !important;
+}
+
+body.sidebar-rail-collapsed .sidebar-nav.mapa-app-shell .mapa-rail-header.sidebar-nav-toolbar {
+  justify-content: center !important;
+  padding-inline: 0.35rem !important;
+}
+
+body.sidebar-rail-collapsed .sidebar-nav.mapa-app-shell .sidebar-global-strip {
+  display: none !important;
+}
+
+@media (max-width: 960px) {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) aside.sidebar-nav.mapa-app-shell {
+    flex: 0 0 auto;
+    width: 100%;
+    max-height: none;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .app-frame.mapa-app-shell {
+    max-height: none;
+    min-height: calc(100dvh - 4rem);
+  }
+}

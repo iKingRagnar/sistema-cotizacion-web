@@ -85,8 +85,9 @@
  * Strip bajo “Módulos” (sucursales, TC/alertas, estado del sistema): oculto en UI.
  * Los nodos siguen en el DOM para que la lógica JS (filtro global, TC, badge, estado) no falle.
  */
+/* Oculto por defecto; el shell Mapa (mapa-app-layout.css) lo muestra en rail autenticado. */
 .sidebar-global-strip {
-  display: none !important;
+  display: none;
 }
 .sidebar-branch-filter {
   width: 100%;
