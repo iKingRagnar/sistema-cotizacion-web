@@ -86,8 +86,8 @@
   left: 2px;
   transition: left 0.25s ease;
 }
-body.dark-theme .theme-switcher__thumb,
-body.theme-industrial .theme-switcher__thumb { left: 27px; background: linear-gradient(135deg, #1e293b, #334155); }
+/* Solo modo oscuro real; con theme-industrial + appearance-light el sol debe quedar a la izquierda */
+body.dark-theme:not(.appearance-light) .theme-switcher__thumb { left: 27px; background: linear-gradient(135deg, #1e293b, #334155); }
 .theme-switcher__icon-sun, .theme-switcher__icon-moon {
   position: absolute;
   font-size: 0.62rem;
@@ -96,8 +96,8 @@ body.theme-industrial .theme-switcher__thumb { left: 27px; background: linear-gr
 }
 .theme-switcher__icon-sun { left: 7px; opacity: 1; }
 .theme-switcher__icon-moon { right: 7px; opacity: 0.4; }
-body.dark-theme .theme-switcher__icon-sun { opacity: 0.4; }
-body.dark-theme .theme-switcher__icon-moon { opacity: 1; }
+body.dark-theme:not(.appearance-light) .theme-switcher__icon-sun { opacity: 0.4; }
+body.dark-theme:not(.appearance-light) .theme-switcher__icon-moon { opacity: 1; }
 body.no-theme-transition, body.no-theme-transition * { transition: none !important; }
 
 /* ── CMD+K PALETTE ─────────────────────────────────────────────── */

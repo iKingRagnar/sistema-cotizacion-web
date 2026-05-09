@@ -342,12 +342,11 @@
     apply: function (pref, instant) {
       if (instant) document.body.classList.add('no-theme-transition');
       if (pref === 'light') {
-        document.body.classList.remove('dark-theme', 'theme-industrial');
-        document.body.classList.add('theme-light', 'appearance-light');
+        document.body.classList.remove('dark-theme', 'theme-light');
+        document.body.classList.add('theme-industrial', 'appearance-light');
       } else {
         document.body.classList.remove('theme-light', 'appearance-light');
-        document.body.classList.add('dark-theme');
-        /* Si la app usa también theme-industrial para dark, lo respetamos */
+        document.body.classList.add('dark-theme', 'theme-industrial');
       }
       try { localStorage.setItem(THEME.KEY, pref); } catch (_) {}
       if (instant) {
@@ -356,7 +355,7 @@
     },
 
     toggle: function () {
-      var current = document.body.classList.contains('theme-light') ? 'light' : 'dark';
+      var current = document.body.classList.contains('appearance-light') ? 'light' : 'dark';
       THEME.apply(current === 'light' ? 'dark' : 'light', false);
     },
 

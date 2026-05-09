@@ -100,17 +100,18 @@
     apply: function (pref, instant) {
       if (instant) document.body.classList.add('no-theme-transition');
       if (pref === 'light') {
-        document.body.classList.remove('dark-theme', 'theme-industrial');
-        document.body.classList.add('theme-light', 'appearance-light');
+        /* Mantener theme-industrial: el layout Mapa/shell depende de él; solo activar apariencia clara */
+        document.body.classList.remove('dark-theme', 'theme-light');
+        document.body.classList.add('theme-industrial', 'appearance-light');
       } else {
         document.body.classList.remove('theme-light', 'appearance-light');
-        document.body.classList.add('dark-theme');
+        document.body.classList.add('dark-theme', 'theme-industrial');
       }
       try { localStorage.setItem(Theme.KEY, pref); } catch (_) {}
       if (instant) setTimeout(function () { document.body.classList.remove('no-theme-transition'); }, 60);
     },
     toggle: function () {
-      Theme.apply(document.body.classList.contains('theme-light') ? 'dark' : 'light', false);
+      Theme.apply(document.body.classList.contains('appearance-light') ? 'dark' : 'light', false);
     },
     injectButton: function () {
       if ($('.theme-switcher')) return;
