@@ -14862,9 +14862,18 @@
         return Promise.all(regs.map(function (r) { return r.unregister(); }));
       }).catch(function () {});
     } else {
-      navigator.serviceWorker.register('/service-worker.js').then((reg) => {
-        try { reg.update(); } catch (_) {}
-      }).catch(() => {});
+      /* v122: SW DESACTIVADO. Causaba freeze por servir scripts pesados desde cache.
+         En su lugar, registramos el killer SW que se auto-desregistra y limpia caches.
+         Después del primer load, NO hay SW activo — la app funciona como página web normal. */
+      navigator.serviceWorker.getRegistrations().then(function (regs) {
+        if (regs && regs.length) {
+          /* Si hay SW viejo, registrar el killer que lo unregister + nuke caches + reload */
+          navigator.serviceWorker.register('/service-worker.js').then(function (reg) {
+            try { reg.update(); } catch (_) {}
+          }).catch(function () {});
+        }
+        /* Si NO hay SW viejo, NO registramos nada → app funciona sin SW */
+      }).catch(function () {});
     }
   }
 
