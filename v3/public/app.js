@@ -41,6 +41,55 @@
     try { return new Date(d).toLocaleString('es-MX'); } catch { return d; }
   }
 
+  /* ─────────────── Icons (SVG inline, Lucide-style) ───────────────
+     Centralizado: cambiar un icono solo se hace en este objeto.
+     Uso: icon('users', 'icon-lg') => '<svg ...>'
+  */
+  const ICONS = {
+    /* Navigation */
+    dashboard: '<path d="M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z"/>',
+    users:     '<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+    tool:      '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+    folder:    '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
+    cog:       '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+    'file-text': '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>',
+    'dollar':  '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+    target:    '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+    search:    '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+    shield:    '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+    calendar:  '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+    'no-entry': '<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>',
+    'tag':     '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>',
+    'hard-hat':'<path d="M2 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1z"/><path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"/><path d="M4 15v-3a6 6 0 0 1 6-6h0"/><path d="M14 6h0a6 6 0 0 1 6 6v3"/>',
+    gift:      '<polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>',
+    plane:     '<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>',
+    clock:     '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+    chart:     '<line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>',
+    bot:       '<rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><line x1="12" y1="7" x2="12" y2="11"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/>',
+    lock:      '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+    clipboard: '<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>',
+    /* Actions */
+    plus:      '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+    edit:      '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/>',
+    trash:     '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+    save:      '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>',
+    'log-out': '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+    download:  '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+    'check':   '<polyline points="20 6 9 17 4 12"/>',
+    'x':       '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+    'arrow-left': '<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>',
+    'arrow-right': '<line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>',
+    'send':    '<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
+    sparkle:   '<path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8L12 2z"/>',
+    inbox:     '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  };
+
+  function icon(name, cls = '') {
+    const path = ICONS[name];
+    if (!path) return '';
+    return `<svg class="icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${path}</svg>`;
+  }
+
   /* ─────────────── Toast ─────────────── */
   function toast(msg, kind = 'info', duration = 3000) {
     const host = $('#toasts');
@@ -252,45 +301,45 @@
 
     const NAV = [
       { group: 'Principal', items: [
-        { route: 'dashboard', label: 'Dashboard', icon: '📊' },
+        { route: 'dashboard', label: 'Dashboard', iconKey: 'dashboard' },
       ]},
       { group: 'Catálogos', items: [
-        { route: 'clientes', label: 'Clientes', icon: '👥' },
-        { route: 'refacciones', label: 'Refacciones', icon: '🔧' },
-        { route: 'categorias', label: 'Categorías', icon: '📂' },
-        { route: 'maquinas', label: 'Máquinas', icon: '⚙️' },
+        { route: 'clientes', label: 'Clientes', iconKey: 'users' },
+        { route: 'refacciones', label: 'Refacciones', iconKey: 'tool' },
+        { route: 'categorias', label: 'Categorías', iconKey: 'folder' },
+        { route: 'maquinas', label: 'Máquinas', iconKey: 'cog' },
       ]},
       { group: 'Operaciones', items: [
-        { route: 'cotizaciones', label: 'Cotizaciones', icon: '📄' },
-        { route: 'ventas', label: 'Ventas', icon: '💰' },
+        { route: 'cotizaciones', label: 'Cotizaciones', iconKey: 'file-text' },
+        { route: 'ventas', label: 'Ventas', iconKey: 'dollar' },
       ]},
       { group: 'Comercial', items: [
-        { route: 'prospectos', label: 'Prospectos', icon: '🎯' },
+        { route: 'prospectos', label: 'Prospectos', iconKey: 'target' },
       ]},
       { group: 'Técnico', items: [
-        { route: 'revision-maquinas', label: 'Revisión Máq.', icon: '🔍' },
-        { route: 'garantias', label: 'Garantías', icon: '🛡' },
-        { route: 'mantenimientos', label: 'Mantenimientos', icon: '📅' },
-        { route: 'sin-cobertura', label: 'Sin Cobertura', icon: '🚫' },
+        { route: 'revision-maquinas', label: 'Revisión Máq.', iconKey: 'search' },
+        { route: 'garantias', label: 'Garantías', iconKey: 'shield' },
+        { route: 'mantenimientos', label: 'Mantenimientos', iconKey: 'calendar' },
+        { route: 'sin-cobertura', label: 'Sin Cobertura', iconKey: 'no-entry' },
       ]},
       { group: 'Configuración', items: [
-        { route: 'tarifas', label: 'Tarifas', icon: '💵' },
+        { route: 'tarifas', label: 'Tarifas', iconKey: 'tag' },
       ]},
       { group: 'Recursos Humanos', items: [
-        { route: 'personal', label: 'Personal', icon: '👷' },
-        { route: 'bonos', label: 'Bonos', icon: '🎁' },
-        { route: 'viajes', label: 'Viajes', icon: '✈️' },
-        { route: 'bitacora', label: 'Bitácora horas', icon: '⏱' },
+        { route: 'personal', label: 'Personal', iconKey: 'hard-hat' },
+        { route: 'bonos', label: 'Bonos', iconKey: 'gift' },
+        { route: 'viajes', label: 'Viajes', iconKey: 'plane' },
+        { route: 'bitacora', label: 'Bitácora horas', iconKey: 'clock' },
       ]},
       { group: 'Analytics', items: [
-        { route: 'reportes', label: 'Reportes', icon: '📈' },
+        { route: 'reportes', label: 'Reportes', iconKey: 'chart' },
       ]},
       { group: 'Asistente IA', items: [
-        { route: 'davai', label: 'DavAI', icon: '🤖' },
+        { route: 'davai', label: 'DavAI', iconKey: 'bot' },
       ]},
       { group: 'Administración', items: [
-        { route: 'usuarios', label: 'Usuarios', icon: '🔐', adminOnly: true },
-        { route: 'audit', label: 'Auditoría', icon: '📋', adminOnly: true },
+        { route: 'usuarios', label: 'Usuarios', iconKey: 'lock', adminOnly: true },
+        { route: 'audit', label: 'Auditoría', iconKey: 'clipboard', adminOnly: true },
       ]},
     ];
 
@@ -301,7 +350,7 @@
         <div class="nav-group-label">${escapeHtml(g.group)}</div>
         ${items.map((it) => `
           <div class="nav-item" data-route="${it.route}">
-            <span class="nav-item-icon">${it.icon}</span>
+            <span class="nav-item-icon">${icon(it.iconKey)}</span>
             <span>${escapeHtml(it.label)}</span>
           </div>
         `).join('')}
@@ -324,7 +373,7 @@
               <div class="sidebar-user-name">${escapeHtml(state.user?.nombre || state.user?.username || '—')}</div>
               <div class="sidebar-user-role">${escapeHtml(state.user?.role || '')}</div>
             </div>
-            <button class="btn btn-icon btn-ghost" id="logout-btn" title="Salir">⏏</button>
+            <button class="btn btn-icon btn-ghost" id="logout-btn" title="Salir">${icon('log-out')}</button>
           </div>
         </aside>
         <div class="main-area">
@@ -410,57 +459,89 @@
 
     try {
       const data = await api.get('/api/dashboard');
-
       const totalCotMonto = data.cotPorEstado.reduce((s, c) => s + (c.total || 0), 0);
-      const totalCotCount = data.cotPorEstado.reduce((s, c) => s + (c.count || 0), 0);
+
+      const KPIS = [
+        { label: 'Clientes', val: data.counts.clientes, iconKey: 'users', sub: 'Total registrados' },
+        { label: 'Refacciones', val: data.counts.refacciones, iconKey: 'tool', sub: 'En catálogo' },
+        { label: 'Máquinas', val: data.counts.maquinas, iconKey: 'cog', sub: 'Equipos' },
+        { label: 'Cotizaciones', val: data.counts.cotizaciones, iconKey: 'file-text', sub: `${fmtMoney(totalCotMonto)} en pipeline` },
+        { label: 'Prospectos', val: data.counts.prospectos ?? 0, iconKey: 'target', sub: `${data.prospectosPorEstado?.length || 0} en activo` },
+        { label: 'Ventas mes', val: fmtMoney(data.ventasMes?.total ?? 0), iconKey: 'dollar', sub: `${data.ventasMes?.count ?? 0} facturas` },
+      ];
 
       main.innerHTML = `
         <div class="kpi-grid">
-          <div class="kpi-card">
-            <div class="kpi-label">👥 Clientes</div>
-            <div class="kpi-value">${data.counts.clientes}</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">🔧 Refacciones</div>
-            <div class="kpi-value">${data.counts.refacciones}</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">⚙️ Máquinas</div>
-            <div class="kpi-value">${data.counts.maquinas}</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">📄 Cotizaciones</div>
-            <div class="kpi-value">${data.counts.cotizaciones}</div>
-            <div class="kpi-sub">${fmtMoney(totalCotMonto)} en pipeline</div>
-          </div>
+          ${KPIS.map((k) => `
+            <div class="kpi-card">
+              <div class="kpi-card-icon">${icon(k.iconKey, 'icon-xl')}</div>
+              <div class="kpi-label">${escapeHtml(k.label)}</div>
+              <div class="kpi-value">${k.val}</div>
+              <div class="kpi-sub">${escapeHtml(k.sub)}</div>
+            </div>
+          `).join('')}
         </div>
 
-        <div class="card mb-3">
-          <h3 style="margin:0 0 12px;font-size:14px">Cotizaciones por estado</h3>
-          ${data.cotPorEstado.length === 0
-            ? '<div class="muted text-sm">Sin cotizaciones aún.</div>'
-            : data.cotPorEstado.map((c) => `
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px">
+          <div class="card">
+            <h3 style="margin:0 0 12px;font-size:14px;display:flex;align-items:center;gap:6px">
+              ${icon('file-text')} Cotizaciones por estado
+            </h3>
+            ${data.cotPorEstado.length === 0
+              ? '<div class="muted text-sm">Sin cotizaciones aún.</div>'
+              : data.cotPorEstado.map((c) => {
+                  const k = c.estado === 'aprobada' || c.estado === 'facturada' ? 'success'
+                          : c.estado === 'rechazada' ? 'danger' : 'info';
+                  return `
+                    <div class="flex justify-between items-center" style="padding:6px 0;border-bottom:1px solid var(--border)">
+                      <span class="badge badge-${k}" style="text-transform:capitalize">${escapeHtml(c.estado)}</span>
+                      <span class="font-mono text-sm">
+                        <strong>${c.count}</strong> · ${fmtMoney(c.total)}
+                      </span>
+                    </div>
+                  `;
+                }).join('')
+            }
+          </div>
+
+          <div class="card">
+            <h3 style="margin:0 0 12px;font-size:14px;display:flex;align-items:center;gap:6px">
+              ${icon('target')} Prospectos por estado
+            </h3>
+            ${(data.prospectosPorEstado || []).length === 0
+              ? '<div class="muted text-sm">Sin prospectos aún.</div>'
+              : data.prospectosPorEstado.map((p) => {
+                  const k = p.estado === 'ganado' ? 'success' : p.estado === 'perdido' ? 'danger' : 'info';
+                  return `
+                    <div class="flex justify-between items-center" style="padding:6px 0;border-bottom:1px solid var(--border)">
+                      <span class="badge badge-${k}" style="text-transform:capitalize">${escapeHtml(p.estado)}</span>
+                      <span class="font-mono text-sm">
+                        <strong>${p.count}</strong> · ${fmtMoney(p.potencial, 'USD')}
+                      </span>
+                    </div>
+                  `;
+                }).join('')
+            }
+          </div>
+
+          ${data.stockBajo.length ? `
+            <div class="card">
+              <h3 style="margin:0 0 12px;font-size:14px;display:flex;align-items:center;gap:6px;color:#fcd34d">
+                ${icon('tool')} Stock bajo
+              </h3>
+              ${data.stockBajo.map((r) => `
                 <div class="flex justify-between items-center" style="padding:6px 0;border-bottom:1px solid var(--border)">
-                  <span style="text-transform:capitalize">${escapeHtml(c.estado)}</span>
-                  <span class="font-mono text-sm">
-                    <strong>${c.count}</strong> · ${fmtMoney(c.total)}
+                  <span><strong>${escapeHtml(r.numero_parte)}</strong>
+                    <span class="muted text-sm">· ${escapeHtml(r.descripcion)}</span>
+                  </span>
+                  <span class="stock-indicator ${r.stock === 0 ? 'stock-out' : 'stock-low'}">
+                    ${r.stock} / ${r.stock_minimo}
                   </span>
                 </div>
-              `).join('')
-          }
+              `).join('')}
+            </div>
+          ` : ''}
         </div>
-
-        ${data.stockBajo.length ? `
-          <div class="card">
-            <h3 style="margin:0 0 12px;font-size:14px">⚠️ Stock bajo</h3>
-            ${data.stockBajo.map((r) => `
-              <div class="flex justify-between items-center" style="padding:6px 0;border-bottom:1px solid var(--border)">
-                <span><strong>${escapeHtml(r.numero_parte)}</strong> · <span class="muted">${escapeHtml(r.descripcion)}</span></span>
-                <span class="text-sm font-mono text-danger">${r.stock} / ${r.stock_minimo}</span>
-              </div>
-            `).join('')}
-          </div>
-        ` : ''}
       `;
     } catch (err) {
       main.innerHTML = `<div class="empty text-danger">Error: ${escapeHtml(err.message)}</div>`;
@@ -498,7 +579,12 @@
         { key: 'descripcion', label: 'Descripción' },
         { key: 'categoria', label: 'Categoría' },
         { key: 'marca', label: 'Marca' },
-        { key: 'stock', label: 'Stock', class: 'col-num' },
+        { key: 'stock', label: 'Stock', class: 'col-num', render: (r) => {
+          const s = Number(r.stock) || 0;
+          const min = Number(r.stock_minimo) || 0;
+          const cls = s === 0 ? 'stock-out' : s < min ? 'stock-low' : 'stock-ok';
+          return `<span class="stock-indicator ${cls}">${s}</span>`;
+        }},
         { key: 'precio_venta_mxn', label: 'Precio MXN', class: 'col-num', render: (r) => fmtMoney(r.precio_venta_mxn) },
         { key: 'precio_venta_usd', label: 'Precio USD', class: 'col-num', render: (r) => fmtMoney(r.precio_venta_usd, 'USD') },
       ],
@@ -588,7 +674,14 @@
           const k = r.estado === 'ganado' ? 'success' : r.estado === 'perdido' ? 'danger' : 'info';
           return `<span class="badge badge-${k}">${escapeHtml(r.estado)}</span>`;
         }},
-        { key: 'score_ia', label: 'Score', class: 'col-num', render: (r) => `<strong>${r.score_ia ?? 0}</strong>` },
+        { key: 'score_ia', label: 'Score', render: (r) => {
+          const s = Number(r.score_ia) || 0;
+          const lvl = s >= 70 ? 'high' : s >= 40 ? 'mid' : 'low';
+          return `<div style="display:inline-flex;align-items:center;gap:8px;min-width:120px">
+            <strong style="font-family:'JetBrains Mono',monospace;min-width:24px;text-align:right">${s}</strong>
+            <div class="score-bar"><div class="score-bar-fill" data-score-${lvl} style="width:${s}%"></div></div>
+          </div>`;
+        }},
         { key: 'potencial_usd', label: 'Potencial', class: 'col-num', render: (r) => fmtMoney(r.potencial_usd, 'USD') },
       ],
       fields: [
@@ -793,11 +886,15 @@
 
     main.innerHTML = `
       <div class="page-header">
-        <input class="input" id="search-input" type="search" placeholder="Buscar..." style="max-width:320px" />
+        <div class="search-wrap">
+          <span class="search-icon">${icon('search')}</span>
+          <input class="input" id="search-input" type="search" placeholder="Buscar..." />
+        </div>
         <div class="page-actions">
-          <button class="btn btn-primary" id="new-btn">+ Nuevo</button>
+          <button class="btn btn-primary" id="new-btn">${icon('plus')} Nuevo</button>
         </div>
       </div>
+      <div id="quick-stats-host"></div>
       <div id="table-container"></div>
     `;
 
@@ -827,7 +924,7 @@
       if (!rows.length) {
         container.innerHTML = `
           <div class="empty">
-            <div class="empty-icon">📭</div>
+            <div class="empty-icon-svg">${icon("inbox", "icon-3xl")}</div>
             <p>Sin resultados</p>
           </div>
         `;
@@ -843,8 +940,8 @@
           <tr data-id="${r.id}">
             ${cells}
             <td class="text-right">
-              <button class="btn btn-ghost btn-sm" data-edit="${r.id}">✎</button>
-              ${state.user?.role === 'admin' ? `<button class="btn btn-ghost btn-sm text-danger" data-del="${r.id}">🗑</button>` : ''}
+              <button class="btn btn-ghost btn-sm" data-edit="${r.id}" title="Editar">${icon("edit")}</button>
+              ${state.user?.role === 'admin' ? `<button class="btn btn-ghost btn-sm text-danger" data-del="${r.id}" title="Eliminar">${icon("trash")}</button>` : ''}
             </td>
           </tr>
         `;
@@ -954,9 +1051,9 @@
 
     main.innerHTML = `
       <div class="page-header">
-        <input class="input" id="search-input" type="search" placeholder="Buscar folio o cliente..." style="max-width:320px" />
+        <input class="input" id="search-input" type="search" placeholder="Buscar folio o cliente..." />
         <div class="page-actions">
-          <button class="btn btn-primary" id="new-cot-btn">+ Nueva cotización</button>
+          <button class="btn btn-primary" id="new-cot-btn">${icon("plus")} Nueva cotización</button>
         </div>
       </div>
       <div id="cot-table"></div>
@@ -975,7 +1072,7 @@
         const url = '/api/cotizaciones' + (searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : '');
         const rows = await api.get(url);
         if (!rows.length) {
-          container.innerHTML = '<div class="empty"><div class="empty-icon">📄</div><p>Sin cotizaciones aún</p></div>';
+          container.innerHTML = '<div class="empty"><div class="empty-icon-svg">${icon("file-text", "icon-3xl")}</div><p>Sin cotizaciones aún</p></div>';
           return;
         }
         container.innerHTML = `
@@ -1000,8 +1097,8 @@
                     <td class="col-center"><span class="badge ${badgeForEstado(r.estado)}">${escapeHtml(r.estado)}</span></td>
                     <td class="col-num">${fmtMoney(r.total, r.moneda)}</td>
                     <td class="text-right">
-                      <button class="btn btn-ghost btn-sm" data-edit="${r.id}">✎</button>
-                      ${state.user?.role === 'admin' ? `<button class="btn btn-ghost btn-sm text-danger" data-del="${r.id}">🗑</button>` : ''}
+                      <button class="btn btn-ghost btn-sm" data-edit="${r.id}" title="Editar">${icon("edit")}</button>
+                      ${state.user?.role === 'admin' ? `<button class="btn btn-ghost btn-sm text-danger" data-del="${r.id}" title="Eliminar">${icon("trash")}</button>` : ''}
                     </td>
                   </tr>
                 `).join('')}
@@ -1202,7 +1299,7 @@
     main.innerHTML = `
       <div class="page-header">
         <h2 style="margin:0;font-size:14px" class="muted">Solo administradores pueden gestionar usuarios.</h2>
-        <button class="btn btn-primary" id="new-user-btn">+ Nuevo usuario</button>
+        <button class="btn btn-primary" id="new-user-btn">${icon("plus")} Nuevo usuario</button>
       </div>
       <div id="users-table"></div>
     `;
@@ -1229,8 +1326,8 @@
                     <td class="col-center">${r.activo ? '<span class="badge badge-success">Sí</span>' : '<span class="badge badge-danger">No</span>'}</td>
                     <td>${fmtDateTime(r.last_login_at)}</td>
                     <td class="text-right">
-                      <button class="btn btn-ghost btn-sm" data-edit="${r.id}">✎</button>
-                      ${r.id !== state.user.id ? `<button class="btn btn-ghost btn-sm text-danger" data-del="${r.id}">🗑</button>` : ''}
+                      <button class="btn btn-ghost btn-sm" data-edit="${r.id}" title="Editar">${icon("edit")}</button>
+                      ${r.id !== state.user.id ? `<button class="btn btn-ghost btn-sm text-danger" data-del="${r.id}" title="Eliminar">${icon("trash")}</button>` : ''}
                     </td>
                   </tr>
                 `).join('')}
@@ -1548,7 +1645,7 @@
     try {
       const rows = await api.get('/api/audit');
       if (!rows.length) {
-        c.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><p>Sin entradas de auditoría aún.</p></div>';
+        c.innerHTML = '<div class="empty"><div class="empty-icon-svg">${icon("clipboard", "icon-3xl")}</div><p>Sin entradas de auditoría aún.</p></div>';
         return;
       }
       c.innerHTML = `
@@ -1580,25 +1677,40 @@
     const main = $('#main-content');
     const history = [];
 
+    /* Quick prompts contextuales — clickeables */
+    const QUICK_PROMPTS = [
+      { label: 'Mensaje email frío', prompt: 'Redacta un email frío profesional (máx 120 palabras) para presentar nuestros servicios técnicos industriales (mantenimiento, refacciones, asesoría) a un prospecto del sector metalmecánico en Monterrey.' },
+      { label: 'Sugerir 5 prospectos', prompt: 'Sugiere 5 empresas reales del sector metalmecánico en Nuevo León donde podríamos prospectar servicios técnicos. Devuelve nombre + ciudad + razón breve.' },
+      { label: 'WhatsApp seguimiento', prompt: 'Escribe un mensaje de WhatsApp profesional pero casual (máx 60 palabras) para hacer seguimiento a un prospecto al que ya enviamos cotización hace 5 días sin respuesta.' },
+      { label: 'LinkedIn InMail', prompt: 'Redacta un InMail de LinkedIn (máx 100 palabras) para conectar con un Director de Operaciones de una planta industrial.' },
+      { label: 'Análisis de pipeline', prompt: 'Tengo este pipeline: 12 prospectos en calificado ($45k USD), 5 en propuesta ($120k), 2 en negociación ($80k). Dame 3 acciones concretas para cerrar más este mes.' },
+    ];
+
     main.innerHTML = `
       <div class="card" style="display:flex;flex-direction:column;height:calc(100vh - 160px);max-width:900px;margin:0 auto">
         <div class="flex items-center gap-3" style="padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:12px">
-          <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:grid;place-items:center;color:#fff;font-weight:800">D</div>
-          <div>
-            <div style="font-weight:700">DavAI</div>
-            <div class="text-xs text-success">● Asistente IA</div>
+          <div class="avatar" style="width:42px;height:42px;font-size:16px">D</div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:15px">DavAI</div>
+            <div class="text-xs flex items-center gap-2"><span class="status-online"></span><span class="text-success">Asistente IA · listo</span></div>
           </div>
+          <button class="btn btn-ghost btn-sm" id="clear-chat" title="Limpiar chat">${icon('x')}</button>
         </div>
         <div id="messages" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:0 4px">
-          <div class="empty">
-            <div class="empty-icon">🤖</div>
+          <div class="empty" id="empty-state">
+            <div class="empty-icon-svg">${icon('sparkle', 'icon-3xl')}</div>
             <p style="font-weight:700;margin:0 0 4px">¿En qué te ayudo?</p>
-            <p class="muted text-sm">Pregúntame sobre prospectos, mensajes comerciales, cotizaciones...</p>
+            <p class="muted text-sm">Prospección · Mensajes comerciales · Análisis de pipeline · Cotizaciones</p>
+            <div class="davai-suggestions" style="justify-content:center;margin-top:16px;max-width:600px;margin-left:auto;margin-right:auto">
+              ${QUICK_PROMPTS.map((q, i) => `
+                <button type="button" class="davai-chip" data-prompt-idx="${i}">${escapeHtml(q.label)}</button>
+              `).join('')}
+            </div>
           </div>
         </div>
         <form id="chat-form" style="display:flex;gap:8px;padding-top:12px;border-top:1px solid var(--border)">
-          <input id="chat-input" class="input flex-1" placeholder="Escribe tu mensaje..." autocomplete="off" required />
-          <button type="submit" class="btn btn-primary" id="send-btn">Enviar</button>
+          <input id="chat-input" class="input flex-1" placeholder="Escribe tu mensaje a DavAI..." autocomplete="off" required />
+          <button type="submit" class="btn btn-primary" id="send-btn">${icon('send')}</button>
         </form>
       </div>
     `;
@@ -1608,22 +1720,86 @@
     const input = $('#chat-input');
     const sendBtn = $('#send-btn');
 
+    /* Quick prompts: al click, llenar input y enviar */
+    document.querySelectorAll('[data-prompt-idx]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const idx = Number(btn.dataset.promptIdx);
+        const q = QUICK_PROMPTS[idx];
+        if (!q) return;
+        input.value = q.prompt;
+        form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      });
+    });
+
+    /* Limpiar chat */
+    document.getElementById('clear-chat')?.addEventListener('click', () => {
+      history.length = 0;
+      messagesEl.innerHTML = `
+        <div class="empty" id="empty-state">
+          <div class="empty-icon-svg">${icon('sparkle', 'icon-3xl')}</div>
+          <p style="font-weight:700;margin:0 0 4px">¿En qué te ayudo?</p>
+          <p class="muted text-sm">Chat limpiado. Empieza una nueva conversación.</p>
+        </div>
+      `;
+    });
+
+    /* Markdown muy simple → HTML (seguro, escapa primero) */
+    function mdToHtml(text) {
+      let html = escapeHtml(text);
+      /* Code blocks ``` */
+      html = html.replace(/```([\s\S]+?)```/g, '<pre><code>$1</code></pre>');
+      /* Inline code ` ` */
+      html = html.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+      /* Bold **txt** */
+      html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+      /* Italic *txt* */
+      html = html.replace(/(^|\W)\*([^*\n]+)\*(\W|$)/g, '$1<em>$2</em>$3');
+      /* Bullets - item */
+      html = html.replace(/^[-*] (.+)$/gm, '<li>$1</li>');
+      html = html.replace(/(<li>.*<\/li>\n?)+/g, (m) => '<ul>' + m + '</ul>');
+      /* Numbered 1. item */
+      html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+      /* Newlines → <br> */
+      html = html.replace(/\n/g, '<br>');
+      return html;
+    }
+
     function addMessage(role, text = '') {
-      messagesEl.querySelector('.empty')?.remove();
+      messagesEl.querySelector('#empty-state')?.remove();
       const wrap = document.createElement('div');
-      wrap.style.cssText = `display:flex;justify-content:${role === 'user' ? 'flex-end' : 'flex-start'}`;
+      wrap.className = 'davai-message';
+      wrap.style.cssText = `display:flex;justify-content:${role === 'user' ? 'flex-end' : 'flex-start'};gap:8px`;
+      const avatar = role === 'user'
+        ? `<div class="avatar" style="background:var(--accent-2);font-size:11px;width:28px;height:28px">${escapeHtml((state.user?.username || '?')[0].toUpperCase())}</div>`
+        : `<div class="avatar" style="font-size:11px;width:28px;height:28px">D</div>`;
+      const bubble = `
+        <div style="max-width:78%;padding:10px 14px;border-radius:12px;${role === 'user'
+          ? 'background:var(--accent);color:#fff;border-bottom-right-radius:4px'
+          : 'background:var(--bg-elevated);border:1px solid var(--border);border-bottom-left-radius:4px'}">
+          <div class="text-xs" style="opacity:0.7;margin-bottom:4px">${role === 'user' ? (state.user?.nombre || 'Tú') : 'DavAI'}</div>
+          <div data-content class="${role === 'assistant' ? 'davai-md' : ''}" style="font-size:13px;line-height:1.5">${role === 'assistant' ? mdToHtml(text) : escapeHtml(text)}</div>
+        </div>`;
+      wrap.innerHTML = role === 'user' ? bubble + avatar : avatar + bubble;
+      messagesEl.appendChild(wrap);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      return { node: wrap.querySelector('[data-content]'), updateMd: (txt) => { wrap.querySelector('[data-content]').innerHTML = mdToHtml(txt); } };
+    }
+
+    function showTypingDots() {
+      messagesEl.querySelector('#empty-state')?.remove();
+      const wrap = document.createElement('div');
+      wrap.id = 'typing-indicator';
+      wrap.style.cssText = 'display:flex;justify-content:flex-start;gap:8px';
       wrap.innerHTML = `
-        <div style="max-width:80%;padding:10px 14px;border-radius:12px;${role === 'user'
-          ? 'background:var(--accent);color:#fff'
-          : 'background:var(--bg-elevated);border:1px solid var(--border)'}">
-          <div class="text-xs" style="opacity:0.7;margin-bottom:4px">${role === 'user' ? 'Tú' : 'DavAI'}</div>
-          <div data-content style="white-space:pre-wrap;font-size:13px">${escapeHtml(text)}</div>
+        <div class="avatar" style="font-size:11px;width:28px;height:28px">D</div>
+        <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;border-bottom-left-radius:4px">
+          <div class="davai-typing-dots"><span></span><span></span><span></span></div>
         </div>
       `;
       messagesEl.appendChild(wrap);
       messagesEl.scrollTop = messagesEl.scrollHeight;
-      return wrap.querySelector('[data-content]');
     }
+    function removeTyping() { document.getElementById('typing-indicator')?.remove(); }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -1634,7 +1810,8 @@
       input.value = '';
       sendBtn.disabled = true;
       sendBtn.innerHTML = '<span class="spinner"></span>';
-      const aiNode = addMessage('assistant', '');
+      showTypingDots();
+      let aiHandle = null;
       let fullText = '';
       try {
         const token = getToken();
@@ -1645,8 +1822,10 @@
           credentials: 'include',
         });
         if (!resp.ok || !resp.body) {
+          removeTyping();
+          aiHandle = addMessage('assistant', '');
           const err = await resp.json().catch(() => ({ error: 'Error' }));
-          aiNode.textContent = '❌ ' + (err.error || `HTTP ${resp.status}`) + (err.detail ? ' · ' + err.detail : '');
+          aiHandle.node.textContent = '❌ ' + (err.error || `HTTP ${resp.status}`) + (err.detail ? ' · ' + err.detail : '');
           return;
         }
         const reader = resp.body.getReader();
@@ -1665,17 +1844,23 @@
             try {
               const p = JSON.parse(raw);
               if (typeof p.text === 'string') {
+                if (!aiHandle) { removeTyping(); aiHandle = addMessage('assistant', ''); }
                 fullText += p.text;
-                aiNode.textContent = fullText;
+                aiHandle.updateMd(fullText);
                 messagesEl.scrollTop = messagesEl.scrollHeight;
               }
-              if (p.error) aiNode.textContent = '❌ ' + p.error;
+              if (p.error) {
+                if (!aiHandle) { removeTyping(); aiHandle = addMessage('assistant', ''); }
+                aiHandle.node.textContent = '❌ ' + p.error;
+              }
             } catch {}
           }
         }
         if (fullText) history.push({ role: 'assistant', content: fullText });
       } catch (err) {
-        aiNode.textContent = '❌ ' + err.message;
+        removeTyping();
+        if (!aiHandle) aiHandle = addMessage('assistant', '');
+        aiHandle.node.textContent = '❌ ' + err.message;
       } finally {
         sendBtn.disabled = false;
         sendBtn.textContent = 'Enviar';
