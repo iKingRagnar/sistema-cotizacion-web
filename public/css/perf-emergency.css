@@ -1,0 +1,80 @@
+/* ════════════════════════════════════════════════════════════════════════
+   PERF EMERGENCY — Mata TODOS los backdrop-filter, animations infinitas, blurs y
+   filter:blur del proyecto en bloque. Cargada SIEMPRE al final.
+   La cascada de TODO el proyecto tenía ~595 backdrop-filter activos +
+   ~10 animations infinitas → 1.7s de paint por click. Esto lo elimina sin perder look.
+
+   AGGRESSIVE pero seguro: solo afecta visuales, no funcionalidad.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. ELIMINAR TODOS LOS backdrop-filter del proyecto ────────── */
+html body *,
+html body *::before,
+html body *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Si quieres glass real solo donde es crítico, declara con [data-glass="ok"] */
+html body [data-glass="ok"],
+html body [data-glass="ok"]::before,
+html body [data-glass="ok"]::after {
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* ── 2. ELIMINAR filter: blur(...) heavy ────────────────────────── */
+/* filter: blur con valor > 8px es costoso. Limitarlo. */
+/* Nota: no podemos detectar valor con CSS, así que vamos por selectores conocidos */
+html body .login-aurora-blob,
+html body .login-bg-glow,
+html body .premium-aurora,
+html body .nano-aurora,
+html body .luna-glow,
+html body .universal-art-blob {
+  filter: none !important;
+  display: none !important;
+}
+
+/* ── 3. ELIMINAR animations infinitas globalmente ───────────────── */
+/* Las animations 'animation-iteration-count: infinite' causan repaints constantes.
+   Las paramos en el primer ciclo dejando el estado final visible. */
+html body *,
+html body *::before,
+html body *::after {
+  animation-iteration-count: 1 !important;
+}
+
+/* Spinner SÍ debe seguir girando (es funcional). */
+html body .mega-spinner,
+html body .spinner,
+html body .fa-spin,
+html body .fa-pulse,
+html body [class*="spinner"],
+html body .loader {
+  animation-iteration-count: infinite !important;
+}
+
+/* ── 4. REDUCIR will-change rampant ─────────────────────────────── */
+html body * {
+  will-change: auto !important;
+}
+
+/* ── 5. INPUTS: NUNCA backdrop-filter ni filter pesado ─────────── */
+html body input,
+html body select,
+html body textarea {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+}
+
+/* ── 6. Reduced motion respeto ──────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  html body *,
+  html body *::before,
+  html body *::after {
+    animation-duration: 0.01s !important;
+    transition-duration: 0.01s !important;
+  }
+}

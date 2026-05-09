@@ -1,5 +1,6 @@
 /**
- * service-worker.js v56 — PWA-safe + timeout en content + cache-bust v113
+ * service-worker.js v56 — PWA-safe + timeout en content + cache-bust v114
+ *   v114 (2026-05-08): PERF EMERGENCY — kill GLOBAL de backdrop-filter + animations infinitas (audit en vivo: page frozen)
  *   v113 (2026-05-08): PERF — quitado backdrop-filter de tables/davai/sidebar + animations infinitas (era 1.7s freeze)
  *   v112 (2026-05-08): Modal anti-freeze UNIVERSAL — CSS guard + JS observer + handlers calendario mant
  *   v111 (2026-05-08): Tarifas inputs alineados — overrides para inputs en TD + form-grid en panel Tarifas
@@ -16,7 +17,7 @@
  *   - APIs auth: bypass total (no cache)
  *   - skipWaiting + clients.claim para PWA standalone (evita race conditions)
  */
-const VERSION = 'cotizacion-pro-v113';
+const VERSION = 'cotizacion-pro-v114';
 const CACHE_RUNTIME = VERSION + '-runtime';
 const NETWORK_TIMEOUT_MS = 4000;
 const STATIC_URLS = ['/', '/index.html', '/css/style.css', '/favicon.svg', '/manifest.json'];
