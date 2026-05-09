@@ -1,29 +1,32 @@
 /**
- * service-worker.js v56 — PWA-safe + timeout en content + cache-bust v119
+ * service-worker.js v57 — PWA-safe + AGGRESSIVE CACHE NUKE + cache-bust v120
+ *   v120 (2026-05-08): NUKE TOTAL — borra TODOS los caches al activate (no solo de versiones distintas).
+ *                       Forza skipWaiting + clients.claim. Vacía JS/CSS viejos a NO-OP.
+ *                       Confirmado por trace: server v119 está sano (INP 36ms, freeze=0). El problema
+ *                       era cache de SW viejo (v117/v118) sirviendo scripts pesados. Esto lo nuke.
  *   v119 (2026-05-08): ROLLBACK NUCLEAR — desactivados prospeccion-pro/supreme/revision-fix JS + supreme CSS
- *                       Solo perf-emergency.css (CSS puro) + scripts originales del proyecto
  *   v118 (2026-05-08): PERF FINAL — html#root body#app * (DOS IDs) vence :is(#panel-X) de nano-fondo
  *   v117 (2026-05-08): PERF FIX REAL — perf-emergency.js NO-OP (causaba 372ms forced reflow), CSS body#app * lo reemplaza
- *   v116 (2026-05-08): PERF JS v2 — setProperty(...,'important') para que inline gane sobre CSS !important
- *   v115 (2026-05-08): PERF JS — sweeper inline-style mata 549 backdrop-filter restantes (CSS especificidad pierde)
- *   v114 (2026-05-08): PERF EMERGENCY — kill GLOBAL de backdrop-filter + animations infinitas (audit en vivo: page frozen)
- *   v113 (2026-05-08): PERF — quitado backdrop-filter de tables/davai/sidebar + animations infinitas (era 1.7s freeze)
- *   v112 (2026-05-08): Modal anti-freeze UNIVERSAL — CSS guard + JS observer + handlers calendario mant
- *   v111 (2026-05-08): Tarifas inputs alineados — overrides para inputs en TD + form-grid en panel Tarifas
- *   v110 (2026-05-08): Revisión Máquina anti-freeze — feedback inmediato + watchdog 8s + force-visible
- *   v109 (2026-05-08): SUPREME LAYER — DavAI + Tables + Forms + Prospección Kanban (4 archivos nuevos)
- *   v108 (2026-05-08): TD transparent en hover (premium.css enmascaraba el gradient con bg muddy)
- *   v107 (2026-05-08): Sidebar Prospección dark + hover tablas premium + ESC safety-net (anti-freeze modales)
- *   v106 (2026-05-08): Prospección Pro — Tabla de Leads visible + boot polling robusto
- *   v105 (2026-05-08): Prospección Pro — KPIs + IA hunter/enrich/pitch/insights/funnel/cluster/compare
- *   v104 (2026-05-08): tables-fix v5 — botones acciones compactos 30px + min-width col 200/230px
+ *   v116 (2026-05-08): PERF JS v2 — setProperty(...,'important')
+ *   v115 (2026-05-08): PERF JS — sweeper inline-style
+ *   v114 (2026-05-08): PERF EMERGENCY — kill GLOBAL de backdrop-filter
+ *   v113 (2026-05-08): PERF — quitado backdrop-filter de tables/davai/sidebar
+ *   v112 (2026-05-08): Modal anti-freeze UNIVERSAL
+ *   v111 (2026-05-08): Tarifas inputs alineados
+ *   v110 (2026-05-08): Revisión Máquina anti-freeze
+ *   v109 (2026-05-08): SUPREME LAYER
+ *   v108 (2026-05-08): TD transparent en hover
+ *   v107 (2026-05-08): Sidebar Prospección dark + ESC safety-net
+ *   v106 (2026-05-08): Prospección Pro Tabla
+ *   v105 (2026-05-08): Prospección Pro KPIs
+ *   v104 (2026-05-08): tables-fix v5
  * Estrategias:
  *   - HTML, CSS, JS, JSON, fonts: network-first con TIMEOUT 4s + fallback cache
  *   - Imágenes: cache-first
  *   - APIs auth: bypass total (no cache)
  *   - skipWaiting + clients.claim para PWA standalone (evita race conditions)
  */
-const VERSION = 'cotizacion-pro-v119';
+const VERSION = 'cotizacion-pro-v120';
 const CACHE_RUNTIME = VERSION + '-runtime';
 const NETWORK_TIMEOUT_MS = 4000;
 const STATIC_URLS = ['/', '/index.html', '/css/style.css', '/favicon.svg', '/manifest.json'];
@@ -36,9 +39,27 @@ self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys()
       .then((keys) => Promise.all(
-        keys.filter((k) => !k.startsWith(VERSION)).map((k) => caches.delete(k))
+        /* AGRESSIVE NUKE: borra TODOS los caches que no sean del CURRENT VERSION.
+           Esto incluye runtime caches de versiones antiguas Y cualquier basura de
+           experimentos anteriores. Critical para users con cache viejo de v117/v118
+           que sirve scripts pesados (boot polling, MutationObservers, etc). */
+        keys.map((k) => {
+          if (!k.startsWith(VERSION)) {
+            console.log('[SW v120] Nuking old cache:', k);
+            return caches.delete(k);
+          }
+          return Promise.resolve();
+        })
       ))
       .then(() => self.clients.claim())
+      .then(() => {
+        /* Notify all clients to reload (helps PWA standalone get fresh HTML) */
+        return self.clients.matchAll({ type: 'window' }).then((clients) => {
+          clients.forEach((client) => {
+            try { client.postMessage({ type: 'sw-updated', version: 'v120' }); } catch (_) {}
+          });
+        });
+      })
   );
 });
 
@@ -72,8 +93,7 @@ async function cacheFirst(req) {
   }
 }
 
-/** Network-first con TIMEOUT — si la red tarda > 4s, usa cache de inmediato.
- *  Crítico en PWA standalone donde la red puede colgarse silenciosamente. */
+/** Network-first con TIMEOUT — si la red tarda > 4s, usa cache de inmediato. */
 async function networkFirstWithTimeout(req) {
   const cache = await caches.open(CACHE_RUNTIME);
 
@@ -83,7 +103,6 @@ async function networkFirstWithTimeout(req) {
       if (resolved) return;
       const cached = await cache.match(req);
       if (cached) { resolved = true; resolve(cached); }
-      // si no hay cache, espera la red (pero no bloquea forever)
     }, NETWORK_TIMEOUT_MS);
 
     try {
@@ -106,4 +125,7 @@ async function networkFirstWithTimeout(req) {
 
 self.addEventListener('message', (e) => {
   if (e.data === 'skip-waiting' || e.data?.type === 'skip-waiting') self.skipWaiting();
+  if (e.data === 'nuke-caches' || e.data?.type === 'nuke-caches') {
+    caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))));
+  }
 });
