@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reset · Sistema Cotización</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    max-width: 560px;
+    width: 100%;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  }
+  h1 {
+    margin: 0 0 8px;
+    font-size: 1.6rem;
+    background: linear-gradient(135deg, #60a5fa, #8b5cf6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  p {
+    margin: 8px 0;
+    color: #cbd5e1;
+    line-height: 1.6;
+    font-size: 0.95rem;
+  }
+  .status {
+    margin: 20px 0;
+    padding: 16px;
+    background: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    border-radius: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    min-height: 200px;
+    overflow-y: auto;
+    max-height: 400px;
+  }
+  .step { padding: 4px 0; color: #94a3b8; }
+  .step.ok { color: #86efac; }
+  .step.err { color: #fca5a5; }
+  .step.in-progress { color: #fcd34d; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    width: 100%;
+    margin-top: 12px;
+    transition: transform 0.15s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn.ghost {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #cbd5e1;
+  }
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(96, 165, 250, 0.25);
+    border-top-color: #60a5fa;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .check { color: #22c55e; font-weight: bold; }
+  .cross { color: #ef4444; font-weight: bold; }
+  code {
+    background: rgba(0,0,0,0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #93c5fd;
+    font-size: 0.8rem;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🧹 Reset Total del Sistema</h1>
+  <p>Borrando todo el cache, service workers y datos guardados localmente para forzar la versión más reciente del sistema.</p>
+
+  <div class="status" id="status">
+    <div class="step in-progress"><span class="spinner"></span>Iniciando reset...</div>
+  </div>
+
+  <button class="btn" id="goto-app" style="display:none">
+    🚀 Ir al Sistema (limpio)
+  </button>
+  <a href="/" class="btn ghost">← Volver sin reset</a>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var statusEl = document.getElementById('status');
+  var gotoBtn = document.getElementById('goto-app');
+
+  function log(msg, kind) {
+    var div = document.createElement('div');
+    div.className = 'step ' + (kind || '');
+    div.innerHTML = (kind === 'ok' ? '<span class="check">✓</span> ' : kind === 'err' ? '<span class="cross">✗</span> ' : kind === 'in-progress' ? '<span class="spinner"></span>' : '· ') + msg;
+    statusEl.appendChild(div);
+    statusEl.scrollTop = statusEl.scrollHeight;
+  }
+
+  async function nuke() {
+    statusEl.innerHTML = '';
+
+    /* 1. Unregister ALL service workers */
+    log('Buscando service workers...', 'in-progress');
+    try {
+      if ('serviceWorker' in navigator) {
+        var regs = await navigator.serviceWorker.getRegistrations();
+        log('Service workers encontrados: ' + regs.length);
+        for (var i = 0; i < regs.length; i++) {
+          try {
+            await regs[i].unregister();
+            log('Service worker desregistrado: ' + (regs[i].scope || '?'), 'ok');
+          } catch (e) {
+            log('Error desregistrando: ' + e.message, 'err');
+          }
+        }
+      } else {
+        log('Service Worker API no disponible (browser viejo)', 'err');
+      }
+    } catch (e) {
+      log('Error: ' + e.message, 'err');
+    }
+
+    /* 2. Delete ALL caches */
+    log('Borrando caches...', 'in-progress');
+    try {
+      if ('caches' in window) {
+        var keys = await caches.keys();
+        log('Caches encontrados: ' + keys.length);
+        for (var j = 0; j < keys.length; j++) {
+          try {
+            await caches.delete(keys[j]);
+            log('Cache borrado: ' + keys[j], 'ok');
+          } catch (e) {
+            log('Error: ' + e.message, 'err');
+          }
+        }
+      }
+    } catch (e) {
+      log('Error: ' + e.message, 'err');
+    }
+
+    /* 3. Clear localStorage (mantener token de auth) */
+    log('Limpiando localStorage...', 'in-progress');
+    try {
+      var token = localStorage.getItem('cotizacion-auth-token') || localStorage.getItem('token');
+      var keysToDelete = [];
+      for (var k = 0; k < localStorage.length; k++) {
+        var key = localStorage.key(k);
+        if (key && !/auth-token|^token$/.test(key)) {
+          keysToDelete.push(key);
+        }
+      }
+      keysToDelete.forEach(function (key) {
+        try { localStorage.removeItem(key); } catch (_) {}
+      });
+      log('localStorage limpio (' + keysToDelete.length + ' keys borradas, token de sesión preservado)', 'ok');
+    } catch (e) {
+      log('Error: ' + e.message, 'err');
+    }
+
+    /* 4. Clear sessionStorage */
+    log('Limpiando sessionStorage...', 'in-progress');
+    try {
+      sessionStorage.clear();
+      log('sessionStorage limpio', 'ok');
+    } catch (e) {
+      log('Error: ' + e.message, 'err');
+    }
+
+    /* 5. Clear IndexedDB databases */
+    log('Limpiando IndexedDB...', 'in-progress');
+    try {
+      if (indexedDB.databases) {
+        var dbs = await indexedDB.databases();
+        for (var d = 0; d < dbs.length; d++) {
+          try {
+            indexedDB.deleteDatabase(dbs[d].name);
+            log('DB borrada: ' + dbs[d].name, 'ok');
+          } catch (e) {}
+        }
+        if (dbs.length === 0) log('No hay IndexedDB', 'ok');
+      } else {
+        log('IndexedDB.databases no disponible (browser viejo)', 'ok');
+      }
+    } catch (e) {
+      log('Error: ' + e.message, 'err');
+    }
+
+    log('', '');
+    log('═══════════════════════════════════════', '');
+    log('LIMPIEZA COMPLETA. Click el botón para ir al sistema con todo limpio.', 'ok');
+    log('═══════════════════════════════════════', '');
+
+    gotoBtn.style.display = 'inline-flex';
+  }
+
+  gotoBtn.addEventListener('click', function () {
+    /* Force reload bypassing cache */
+    window.location.href = '/?cleared=1&t=' + Date.now();
+  });
+
+  /* Auto-start */
+  nuke();
+})();
+</script>
+</body>
+</html>

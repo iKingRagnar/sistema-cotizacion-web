@@ -1,5 +1,7 @@
 /**
- * service-worker.js v57 — PWA-safe + AGGRESSIVE CACHE NUKE + cache-bust v120
+ * service-worker.js v58 — PWA-safe + AGGRESSIVE CACHE NUKE + /reset.html bypass + cache-bust v121
+ *   v121 (2026-05-08): /reset.html SIEMPRE bypass de SW (network-only) para que el user pueda acceder
+ *                       a la página de cleanup aunque el SW viejo esté congelado.
  *   v120 (2026-05-08): NUKE TOTAL — borra TODOS los caches al activate (no solo de versiones distintas).
  *                       Forza skipWaiting + clients.claim. Vacía JS/CSS viejos a NO-OP.
  *                       Confirmado por trace: server v119 está sano (INP 36ms, freeze=0). El problema
@@ -26,7 +28,7 @@
  *   - APIs auth: bypass total (no cache)
  *   - skipWaiting + clients.claim para PWA standalone (evita race conditions)
  */
-const VERSION = 'cotizacion-pro-v120';
+const VERSION = 'cotizacion-pro-v121';
 const CACHE_RUNTIME = VERSION + '-runtime';
 const NETWORK_TIMEOUT_MS = 4000;
 const STATIC_URLS = ['/', '/index.html', '/css/style.css', '/favicon.svg', '/manifest.json'];
@@ -67,6 +69,8 @@ function classify(url, req) {
   if (req.method !== 'GET') return 'no-cache';
   const p = url.pathname;
   if (p.startsWith('/api/auth/')) return 'no-cache';
+  /* /reset.html SIEMPRE bypass — esta página debe poder acceder aunque el SW esté roto */
+  if (p === '/reset.html' || p === '/reset' || p.startsWith('/reset.html')) return 'no-cache';
   if (/\.(png|jpe?g|webp|gif|svg|ico)$/i.test(p)) return 'cache-first';
   return 'network-first';
 }
