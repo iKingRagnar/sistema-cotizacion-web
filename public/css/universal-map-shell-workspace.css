@@ -1,0 +1,182 @@
+/**
+ * universal-map-shell-workspace.css — Lienzo de datos oscuro con .universal-map-shell.
+ *
+ * Problema resuelto: con "apariencia clara" o tokens MD3 en :root, los paneles (p. ej.
+ * Catálogo clientes) quedaban blancos; theme-industrial solo pintaba oscuro sin .appearance-light.
+ * Aquí se fuerzan tokens MD3 oscuros + superficies tipo industrial para tablas, filtros y tarjetas.
+ */
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) {
+  background-color: #0c0c10;
+  color: #e8e8e4;
+
+  /* Alineado a tokens.css — bloque html[data-theme="dark"] / body.md3-dark */
+  --md-sys-color-primary: #a8c7fa;
+  --md-sys-color-on-primary: #062e6f;
+  --md-sys-color-primary-container: #0842a0;
+  --md-sys-color-on-primary-container: #d2e3fc;
+  --md-sys-color-secondary: #c7c7c7;
+  --md-sys-color-on-secondary: #2e2e2e;
+  --md-sys-color-secondary-container: #424242;
+  --md-sys-color-on-secondary-container: #e1e1e1;
+  --md-sys-color-tertiary: #b3e6bc;
+  --md-sys-color-on-tertiary: #003917;
+  --md-sys-color-tertiary-container: #005321;
+  --md-sys-color-on-tertiary-container: #ceead6;
+  --md-sys-color-error: #f2b8b5;
+  --md-sys-color-on-error: #601410;
+  --md-sys-color-error-container: #8c1d18;
+  --md-sys-color-on-error-container: #f9dedc;
+  --md-sys-color-background: #101014;
+  --md-sys-color-on-background: #e3e3e3;
+  --md-sys-color-surface: #141418;
+  --md-sys-color-on-surface: #ecece8;
+  --md-sys-color-surface-variant: #3a3a42;
+  --md-sys-color-on-surface-variant: #c4c4c8;
+  --md-sys-color-surface-dim: #0a0a0e;
+  --md-sys-color-surface-bright: #2a2a32;
+  --md-sys-color-surface-container-lowest: #060608;
+  --md-sys-color-surface-container-low: #121218;
+  --md-sys-color-surface-container: #1a1a20;
+  --md-sys-color-surface-container-high: #22222a;
+  --md-sys-color-surface-container-highest: #2c2c34;
+  --md-sys-color-outline: #6e6e78;
+  --md-sys-color-outline-variant: #3a3a44;
+  --md-sys-color-inverse-surface: #e3e3e3;
+  --md-sys-color-inverse-on-surface: #303030;
+  --md-sys-color-inverse-primary: #1a73e8;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .content {
+  color: #e2e8f0;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .section-header {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 16px;
+  padding: 0.85rem 1rem;
+  background:
+    linear-gradient(180deg, rgba(51, 65, 85, 0.98) 0%, rgba(30, 41, 59, 0.99) 100%),
+    linear-gradient(125deg, rgba(148, 163, 184, 0.12) 0%, transparent 55%);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .section-header::before {
+  background: linear-gradient(180deg, #94a3b8 0%, #64748b 55%, #475569 100%);
+  box-shadow: 0 0 18px rgba(148, 163, 184, 0.35);
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .section-header h2 {
+  color: #f8fafc;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .section-header h2 i {
+  color: #020617;
+  background: linear-gradient(145deg, #e2e8f0 0%, #94a3b8 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 6px 14px rgba(0, 0, 0, 0.4);
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .table-wrap {
+  background: #1e293b;
+  border-color: #475569;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(148, 163, 184, 0.12);
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .table-wrap:hover {
+  border-color: #94a3b8;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(148, 163, 184, 0.2);
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .data-table th {
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+  color: #f8fafc;
+  border-bottom-color: #475569;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .data-table td {
+  border-bottom-color: #334155;
+  color: #e2e8f0;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .data-table tbody tr:nth-child(even) {
+  background: #0f172a;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .data-table tbody tr:hover {
+  background: rgba(148, 163, 184, 0.08) !important;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.22);
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .filter-row td {
+  background: #020617;
+  border-bottom-color: #334155;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .card,
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .empty-card {
+  background: #1e293b;
+  border-color: #475569;
+  color: #e2e8f0;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .card h2,
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .empty-card h3 {
+  color: #f8fafc;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .btn:not(.primary):not(.danger) {
+  background: #334155;
+  color: #f8fafc;
+  border-color: #475569;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .btn:not(.primary):not(.danger):hover {
+  background: #475569;
+  border-color: #94a3b8;
+  color: #fff;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .btn.primary {
+  background: linear-gradient(145deg, #64748b 0%, #94a3b8 45%, #475569 100%);
+  color: #020617;
+  font-weight: 700;
+  box-shadow:
+    0 2px 14px rgba(148, 163, 184, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .btn.outline {
+  background: transparent;
+  color: #f8fafc;
+  border-color: #94a3b8;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .toolbar {
+  background: rgba(15, 23, 42, 0.92);
+  color: #e2e8f0;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .search,
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) input.filter-input,
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) select.filter-input,
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) textarea.filter-input {
+  background: #020617;
+  border-color: #475569;
+  color: #f8fafc;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) #panel-clientes,
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) #panel-refacciones,
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) #panel-maquinas,
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) #panel-almacen {
+  background: transparent;
+}

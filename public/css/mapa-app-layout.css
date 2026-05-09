@@ -4,7 +4,7 @@
  * Carga después de universal-map-shell y layout-rail.
  */
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) header.header.mapa-app-shell {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) header.header.mapa-app-shell {
   position: fixed;
   top: 0;
   left: 0;
@@ -19,7 +19,7 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   padding: 0 1rem 0 0.85rem;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) header.header.mapa-app-shell .header-inner {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) header.header.mapa-app-shell .header-inner {
   width: 100%;
   max-width: none;
   margin: 0;
@@ -31,13 +31,13 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   min-height: 0;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-header-spacer {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-header-spacer {
   flex: 1 1 auto;
   min-width: 0.35rem;
 }
 
 /* Agrupación derecha (notificaciones, sesión, perfil) — distinta a la fila suelta anterior */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-header-user-cluster {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-header-user-cluster {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -50,7 +50,7 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open)
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   .mapa-header-user-cluster
   .header-actions-tail {
   display: flex;
@@ -58,12 +58,12 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   gap: 0.25rem;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .header-actions {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-actions {
   flex: 0 0 auto;
   margin-left: 0;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .header-powered-by--nav-slot {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-powered-by--nav-slot {
   flex-shrink: 1;
   min-width: 0;
   max-width: 10rem;
@@ -73,7 +73,7 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
 }
 
 /* Contenido bajo barra fija */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .app-frame.mapa-app-shell {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .app-frame.mapa-app-shell {
   margin-top: 4rem;
   min-height: calc(100dvh - 4rem);
   max-height: calc(100dvh - 4rem);
@@ -84,7 +84,7 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   box-sizing: border-box;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .app-main {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .app-main {
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
@@ -94,7 +94,7 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
 }
 
 /* Rail lateral (altura del workspace, columna flex) */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) aside.sidebar-nav.mapa-app-shell {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) aside.sidebar-nav.mapa-app-shell {
   position: relative;
   top: auto;
   align-self: stretch;
@@ -109,7 +109,7 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   overflow: hidden;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open)
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   .sidebar-nav.mapa-app-shell
   .sidebar-nav-toolbar.mapa-rail-header {
   display: flex !important;
@@ -173,14 +173,14 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   line-height: 1.2;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open)
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   .mapa-rail-collapse-btn.btn-sidebar-rail-toggle {
   flex-shrink: 0;
   margin-top: 0.05rem;
 }
 
 /* Strip global visible en el rail (sucursales, alertas, estado) */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open)
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   .sidebar-nav.mapa-app-shell
   .sidebar-global-strip {
   display: flex !important;
@@ -208,13 +208,13 @@ body.sidebar-rail-collapsed .sidebar-nav.mapa-app-shell .sidebar-global-strip {
 }
 
 @media (max-width: 960px) {
-  html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) aside.sidebar-nav.mapa-app-shell {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) aside.sidebar-nav.mapa-app-shell {
     flex: 0 0 auto;
     width: 100%;
     max-height: none;
   }
 
-  html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .app-frame.mapa-app-shell {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .app-frame.mapa-app-shell {
     max-height: none;
     min-height: calc(100dvh - 4rem);
   }
