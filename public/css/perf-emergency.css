@@ -1,79 +1,104 @@
 /* ════════════════════════════════════════════════════════════════════════
-   PERF EMERGENCY — Mata TODOS los backdrop-filter, animations infinitas, blurs y
-   filter:blur del proyecto en bloque. Cargada SIEMPRE al final.
-   La cascada de TODO el proyecto tenía ~595 backdrop-filter activos +
-   ~10 animations infinitas → 1.7s de paint por click. Esto lo elimina sin perder look.
+   PERF EMERGENCY v3 — CSS PURO con ID-level specificity para vencer
+   `html body .x { ... !important }` rules de archivos premium legacy.
 
-   AGGRESSIVE pero seguro: solo afecta visuales, no funcionalidad.
+   APPROACH:
+     - body#app *  → specificity (0,1,0,1) = 1 ID + 1 element
+     - html body .x → specificity (0,0,1,2) = 1 class + 2 elements
+     - ID > class siempre, así que body#app * gana sin necesidad de !important
+
+   POR QUÉ SE QUITÓ EL JS SWEEPER:
+     - Performance trace en producción mostró perf-emergency.js (sweepAll) causaba
+       372ms de FORCED REFLOW por hacer getComputedStyle + setProperty en loop
+       (layout thrashing clásico).
+     - El JS "fix" era PEOR que el problema original.
+     - CSS puro es declarativo, no causa reflow.
    ════════════════════════════════════════════════════════════════════════ */
 
-/* ── 1. ELIMINAR TODOS LOS backdrop-filter del proyecto ────────── */
-html body *,
-html body *::before,
-html body *::after {
+/* ── 1. Kill backdrop-filter universal con ID specificity ─────── */
+body#app *,
+body#app *::before,
+body#app *::after {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
 
-/* Si quieres glass real solo donde es crítico, declara con [data-glass="ok"] */
-html body [data-glass="ok"],
-html body [data-glass="ok"]::before,
-html body [data-glass="ok"]::after {
+/* Si quieres glass real solo donde es crítico, usa [data-glass="ok"] */
+body#app [data-glass="ok"],
+body#app [data-glass="ok"]::before,
+body#app [data-glass="ok"]::after {
   backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;
 }
 
-/* ── 2. ELIMINAR filter: blur(...) heavy ────────────────────────── */
-/* filter: blur con valor > 8px es costoso. Limitarlo. */
-/* Nota: no podemos detectar valor con CSS, así que vamos por selectores conocidos */
-html body .login-aurora-blob,
-html body .login-bg-glow,
-html body .premium-aurora,
-html body .nano-aurora,
-html body .luna-glow,
-html body .universal-art-blob {
-  filter: none !important;
-  display: none !important;
-}
-
-/* ── 3. ELIMINAR animations infinitas globalmente ───────────────── */
-/* Las animations 'animation-iteration-count: infinite' causan repaints constantes.
-   Las paramos en el primer ciclo dejando el estado final visible. */
-html body *,
-html body *::before,
-html body *::after {
+/* ── 2. Kill animations infinitas (excepto spinners funcionales) ── */
+body#app *,
+body#app *::before,
+body#app *::after {
   animation-iteration-count: 1 !important;
 }
-
-/* Spinner SÍ debe seguir girando (es funcional). */
-html body .mega-spinner,
-html body .spinner,
-html body .fa-spin,
-html body .fa-pulse,
-html body [class*="spinner"],
-html body .loader {
+/* Spinners SÍ deben girar */
+body#app .mega-spinner,
+body#app .spinner,
+body#app .fa-spin,
+body#app .fa-pulse,
+body#app .loading-spinner,
+body#app .loader,
+body#app [class*="spinner"]:not([class*="spinner__"]) {
   animation-iteration-count: infinite !important;
 }
 
-/* ── 4. REDUCIR will-change rampant ─────────────────────────────── */
-html body * {
-  will-change: auto !important;
+/* ── 3. Eliminar aurora/glow blobs decorativos (filter:blur 40px+) ── */
+body#app .login-aurora-blob,
+body#app .login-bg-glow,
+body#app .login-weld-sparks,
+body#app .premium-aurora,
+body#app .nano-aurora,
+body#app .luna-glow,
+body#app .universal-art-blob {
+  display: none !important;
+  filter: none !important;
 }
 
-/* ── 5. INPUTS: NUNCA backdrop-filter ni filter pesado ─────────── */
-html body input,
-html body select,
-html body textarea {
+/* ── 4. Inputs JAMÁS con backdrop-filter o filter (cada keystroke = paint) ── */
+body#app input,
+body#app select,
+body#app textarea {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   filter: none !important;
 }
 
-/* ── 6. Reduced motion respeto ──────────────────────────────────── */
+/* ── 5. will-change rampant → auto ───────────────────────────── */
+body#app * {
+  will-change: auto !important;
+}
+
+/* ── 6. Modal SIEMPRE visible si no .hidden (el guard del v112) ─ */
+body#app #modal:not(.hidden),
+body#app #modal-stack:not(.hidden),
+body#app .modal-overlay:not(.hidden):not(.is-closing) {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  display: flex !important;
+}
+body#app #modal:not(.hidden) .modal-box,
+body#app #modal-stack:not(.hidden) .modal-box,
+body#app .modal-overlay:not(.hidden) .modal-content,
+body#app #modal:not(.hidden) .md-dialog-surface,
+body#app #modal-stack:not(.hidden) .md-dialog-surface {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  pointer-events: auto !important;
+}
+
+/* ── 7. Reduced motion respect ──────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  html body *,
-  html body *::before,
-  html body *::after {
+  body#app *,
+  body#app *::before,
+  body#app *::after {
     animation-duration: 0.01s !important;
     transition-duration: 0.01s !important;
   }
