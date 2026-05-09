@@ -1,5 +1,7 @@
 /**
- * service-worker.js v56 — PWA-safe + timeout en content + cache-bust v118
+ * service-worker.js v56 — PWA-safe + timeout en content + cache-bust v119
+ *   v119 (2026-05-08): ROLLBACK NUCLEAR — desactivados prospeccion-pro/supreme/revision-fix JS + supreme CSS
+ *                       Solo perf-emergency.css (CSS puro) + scripts originales del proyecto
  *   v118 (2026-05-08): PERF FINAL — html#root body#app * (DOS IDs) vence :is(#panel-X) de nano-fondo
  *   v117 (2026-05-08): PERF FIX REAL — perf-emergency.js NO-OP (causaba 372ms forced reflow), CSS body#app * lo reemplaza
  *   v116 (2026-05-08): PERF JS v2 — setProperty(...,'important') para que inline gane sobre CSS !important
@@ -21,7 +23,7 @@
  *   - APIs auth: bypass total (no cache)
  *   - skipWaiting + clients.claim para PWA standalone (evita race conditions)
  */
-const VERSION = 'cotizacion-pro-v118';
+const VERSION = 'cotizacion-pro-v119';
 const CACHE_RUNTIME = VERSION + '-runtime';
 const NETWORK_TIMEOUT_MS = 4000;
 const STATIC_URLS = ['/', '/index.html', '/css/style.css', '/favicon.svg', '/manifest.json'];

@@ -148,15 +148,15 @@
   <link rel="stylesheet" href="css/tables-fix.css?v=5-tables-fix-actions-2026-05-08">
   <!-- PROSPECCION PRO: KPIs + IA hunter/enrich/pitch/insights/funnel/cluster/compare. -->
   <link rel="stylesheet" href="css/prospeccion-pro.css?v=5-no-blur-2026-05-08">
-  <!-- ✨ SUPREME LAYER — pulida visual SIN backdrop-filter (era 1.7s paint freeze) -->
-  <link rel="stylesheet" href="css/forms-supreme.css?v=4-no-blur-2026-05-08">
-  <link rel="stylesheet" href="css/tables-supreme.css?v=2-no-blur-2026-05-08">
-  <link rel="stylesheet" href="css/davai-supreme.css?v=2-no-blur-no-anim-2026-05-08">
-  <link rel="stylesheet" href="css/prospeccion-supreme.css?v=1-supreme-2026-05-08">
-  <!-- 🚨 PERF EMERGENCY: kill backdrop-filter + animations infinitas (era 1.7s freeze por click) -->
+  <!-- ❌ Supreme CSS desactivadas v119 (forms/tables/davai/prospeccion-supreme).
+       Mantenían modificadores que podían interferir con layout original.
+   <link rel="stylesheet" href="css/forms-supreme.css?v=4-no-blur-2026-05-08">
+   <link rel="stylesheet" href="css/tables-supreme.css?v=2-no-blur-2026-05-08">
+   <link rel="stylesheet" href="css/davai-supreme.css?v=2-no-blur-no-anim-2026-05-08">
+   <link rel="stylesheet" href="css/prospeccion-supreme.css?v=1-supreme-2026-05-08">
+   -->
+  <!-- 🚨 PERF EMERGENCY: kill backdrop-filter + animations infinitas (era 1.7s freeze por click). PURO CSS, sin JS. -->
   <link rel="stylesheet" href="css/perf-emergency.css?v=4-double-id-2026-05-08">
-  <!-- 🚨 PERF JS: ahora NO-OP. La lógica vive en perf-emergency.css con body#app * (ID-specificity) -->
-  <script src="js/perf-emergency.js?v=3-noop-2026-05-08"></script>
   <!-- Tema único: nano machining + vidrio azul cristalino (sin modo Sol/Luna). -->
   <!-- ★ FORCE-RELOAD: SOLO en browser normal, NUNCA en PWA standalone (evita loop crash) -->
   <script>
@@ -2018,13 +2018,13 @@
   <!-- Mega-Essentials: 10 features VALIOSAS en 1 solo archivo, sin observers globales,
        boot diferido tras window.load + 800ms (no bloquea primer paint). -->
   <script src="js/mega-essentials.js?v=1-mega-essentials-2026-05-08" defer></script>
-  <!-- Prospección Pro: KPIs, IA hunter (DavAI scrapping), enrich, pitch, insights, funnel, cluster, compare.
-       Boot diferido tras window.load + 800ms para no bloquear primer paint. -->
-  <script src="js/prospeccion-pro.js?v=3-safety-net-2026-05-08" defer></script>
-  <!-- ✨ Prospección Supreme: View switcher (Tabla/Kanban/AI Insights) + Kanban drag-drop + 4 insights AI -->
-  <script src="js/prospeccion-supreme.js?v=1-supreme-2026-05-08" defer></script>
-  <!-- 🛡 Revisión Máquina anti-freeze: feedback inmediato + watchdog 8s + force-visible si modal queda transparente -->
-  <script src="js/revision-maquina-fix.js?v=2-modal-universal-2026-05-08" defer></script>
+  <!-- ❌ DESACTIVADOS v119 — causaban freeze por compounding observers/intervals/click-listeners.
+       El CSS guard html#root body#app * en perf-emergency.css garantiza visibilidad sin necesidad de JS.
+       Comentados (no removidos por si quieres reactivarlos selectivamente):
+   <script src="js/prospeccion-pro.js?v=3-safety-net-2026-05-08" defer></script>
+   <script src="js/prospeccion-supreme.js?v=1-supreme-2026-05-08" defer></script>
+   <script src="js/revision-maquina-fix.js?v=2-modal-universal-2026-05-08" defer></script>
+   -->
 
   <div class="app-status-bar" id="app-status-bar" aria-hidden="true">
     <div class="status-bar-item">
