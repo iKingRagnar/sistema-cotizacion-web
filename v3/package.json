@@ -1,0 +1,21 @@
+{
+  "name": "sistema-cotizacion-v3",
+  "version": "3.0.0",
+  "description": "Sistema de Cotizacion Web v3 - desde 0, simple, sin frameworks complicados",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node seed.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "express": "^4.21.1",
+    "cookie-parser": "^1.4.7"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
