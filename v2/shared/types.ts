@@ -1,13 +1,19 @@
 /**
- * Tipos compartidos entre frontend y backend.
  * Re-export de schemas inferidos + tipos de respuestas API.
  */
-export type { Role, LoginInput, UserPublic } from './schemas.js';
+export type * from './schemas.js';
 
 export interface ApiError {
   error: string;
   detail?: string;
   issues?: Array<{ path: string; message: string }>;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
 
 export interface LoginResponse {

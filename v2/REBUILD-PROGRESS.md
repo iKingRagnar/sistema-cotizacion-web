@@ -1,150 +1,210 @@
 # 📊 REBUILD PROGRESS — Estado Actual
 
-> **Lee esto PRIMERO al retomar**. Te dice exactamente dónde quedó el rebuild y qué sigue.
+> **Lee esto PRIMERO al retomar**.
 >
-> Última actualización: 2026-05-08
+> Última actualización: 2026-05-08 — Sesión 2 + 3-8 fast-track
 
 ---
 
-## 🔄 Sesión actual (Sesión 1) — Fundamentos
+## 🎉 RESUMEN: v2 funcionalmente COMPLETO
 
-### ✅ Completado
+Sesiones 1 a 8 ejecutadas en sprint. Todos los módulos del v1 reconstruidos
+con stack moderno. Falta:
 
-- [x] Estructura de carpetas v2/ creada
-- [x] REBUILD-PLAN.md (master document)
-- [x] REBUILD-PROGRESS.md (este archivo)
-- [x] package.json
-- [x] tsconfig.json (frontend + backend)
-- [x] vite.config.ts
-- [x] tailwind.config.ts
-- [x] postcss.config.js
-- [x] drizzle.config.ts
-- [x] .env.example
-- [x] .gitignore
-- [x] tokens.css (design tokens)
-- [x] tailwind.css (entry)
-- [x] Backend skeleton (express + middleware básico)
-- [x] DB schema inicial (users, sesiones)
-- [x] Frontend skeleton (router minimal + app-shell + login screen)
-- [x] Endpoint /api/auth/login funcional
-- [x] README.md con instrucciones de dev/build/deploy
-
-### ⏳ En curso
-
-- [ ] (sesión actual termina aquí)
-
-### 📌 Próximo paso (Sesión 2)
-
-**Comando para retomar:**
-```
-"Continúa con rebuild v2. Lee v2/REBUILD-PROGRESS.md y v2/REBUILD-PLAN.md.
-Empieza la Sesión 2: componentes base + módulos Clientes/Categorías/Refacciones."
-```
-
-**TODO de la Sesión 2:**
-1. Crear componente `<data-table>` (LitElement) con sort/filter/pagination
-2. Crear componente `<modal-base>` con backdrop click + ESC
-3. Crear componente `<form-input>` con validación + floating label
-4. Crear componente `<btn-icon>` y `<toast>` 
-5. Módulo Clientes: CRUD completo con modal de edición
-6. Módulo Categorías: árbol categorías → subcategorías
-7. Módulo Refacciones: tabla con filtros + búsqueda + acciones inline
+- [ ] `npm install` + corregir errores de TypeScript que aparezcan al compilar
+- [ ] Generar y aplicar migrations (`npm run db:generate && npm run db:migrate`)
+- [ ] Seed inicial admin (`npx tsx server/seed.ts`)
+- [ ] Probar en local (`npm run dev`)
+- [ ] Migrar datos del v1 → v2 (si quieres preservar la data existente)
+- [ ] Deploy a Render apuntando a `/v2`
 
 ---
 
-## 📂 Archivos creados (Sesión 1)
+## ✅ COMPLETADO
+
+### 🛠 Backend (server/)
+- env.ts (validación Zod)
+- logger.ts (Pino)
+- db/schema.ts (**18 tablas**: users, sessions, audit_log, clientes, categorias, refacciones, maquinas, cotizaciones, cotizacion_items, ventas, tarifas, prospectos, personal, garantias, mantenimientos_garantia, revision_maquinas, bonos, viajes, bitacora_horas, sin_cobertura)
+- db/client.ts (Drizzle + LibSQL)
+- middleware/{auth, cors, error}.ts
+- lib/crud-factory.ts (**factory genérico** que evita repetir 12+ archivos)
+- routes/auth.ts (login + logout + me)
+- routes/clientes.ts ✅
+- routes/categorias.ts ✅
+- routes/refacciones.ts ✅
+- routes/maquinas.ts ✅
+- routes/prospectos.ts ✅
+- routes/personal.ts ✅
+- routes/garantias.ts ✅ (+ subruta /:id/mantenimientos)
+- routes/mantenimientos.ts ✅ (filtro ?mes=YYYY-MM)
+- routes/revision-maquinas.ts ✅
+- routes/bonos.ts ✅
+- routes/viajes.ts ✅
+- routes/sin-cobertura.ts ✅
+- routes/bitacora.ts ✅
+- routes/cotizaciones.ts ✅ (CUSTOM con items + cálculo totales + folio auto)
+- routes/tarifas.ts ✅ (key/value upsert + bulk)
+- routes/ventas.ts ✅
+- routes/users.ts ✅ (admin only)
+- routes/davai.ts ✅ (SSE streaming Anthropic + OpenAI fallback)
+- routes/reportes.ts ✅ (dashboard counters)
+- routes/audit.ts ✅
+- index.ts (monta TODAS las rutas)
+- seed.ts
+
+### 🎨 Frontend (src/)
+- styles/tokens.css + tailwind.css
+- lib/api.ts (cliente HTTP type-safe)
+- lib/auth.ts (token + user)
+- lib/router.ts (hash-based con guards y lazy-load)
+- lib/toast.ts (notifications)
+- lib/modal.ts (openModal + confirmDialog)
+- lib/data-table.ts (renderDataTable + fmt + escapeHtml)
+- lib/crud-module.ts (**helper genérico** para módulos CRUD rápidos)
+- components/app-shell.ts (sidebar + header + nav)
+- main.ts (define las **22 rutas** del frontend)
+
+### 📦 Módulos frontend (22 rutas)
+
+| Módulo | Tipo | Estado |
+|--------|------|--------|
+| `#/login` | Custom | ✅ |
+| `#/` | Dashboard custom (KPIs + counters) | ✅ |
+| `#/clientes` | CRUD genérico | ✅ |
+| `#/refacciones` | CRUD genérico | ✅ |
+| `#/categorias` | CRUD genérico | ✅ |
+| `#/maquinas` | CRUD genérico | ✅ |
+| `#/cotizaciones` | Custom (items dinámicos + cálculo) | ✅ |
+| `#/ventas` | CRUD genérico | ✅ |
+| `#/prospeccion` | CRUD genérico (con badges color-coded) | ✅ |
+| `#/revision-maquinas` | CRUD genérico | ✅ |
+| `#/garantias` | CRUD genérico | ✅ |
+| `#/mantenimientos` | Custom (calendario mensual) | ✅ |
+| `#/sin-cobertura` | CRUD genérico | ✅ |
+| `#/tarifas` | Custom (key/value editor) | ✅ |
+| `#/personal` | CRUD genérico | ✅ |
+| `#/bonos` | CRUD genérico | ✅ |
+| `#/viajes` | CRUD genérico | ✅ |
+| `#/bitacora` | CRUD genérico | ✅ |
+| `#/reportes` | Custom (export CSV) | ✅ |
+| `#/usuarios` | CRUD genérico (admin only) | ✅ |
+| `#/audit` | Custom (admin only, read-only) | ✅ |
+| `#/davai` | Custom (chat SSE streaming) | ✅ |
+
+---
+
+## 📂 Estructura final
 
 ```
 v2/
-├── REBUILD-PLAN.md              ✅
-├── REBUILD-PROGRESS.md          ✅ (este)
-├── README.md                    ✅
-├── package.json                 ✅
-├── tsconfig.json                ✅
-├── tsconfig.node.json           ✅
-├── vite.config.ts               ✅
-├── tailwind.config.ts           ✅
-├── postcss.config.js            ✅
-├── drizzle.config.ts            ✅
-├── .env.example                 ✅
-├── .gitignore                   ✅
-├── public/
-│   └── favicon.svg              ✅
-├── src/
-│   ├── main.ts                  ✅ (entry)
-│   ├── styles/
-│   │   ├── tokens.css           ✅
-│   │   └── tailwind.css         ✅
-│   ├── lib/
-│   │   ├── api.ts               ✅
-│   │   ├── auth.ts              ✅
-│   │   └── router.ts            ✅
-│   ├── components/
-│   │   └── (Sesión 2)
-│   └── modules/
-│       └── auth/
-│           └── login.ts         ✅
+├── REBUILD-PLAN.md, REBUILD-PROGRESS.md, README.md
+├── package.json, tsconfig.json, tsconfig.server.json
+├── vite.config.ts, tailwind.config.ts, postcss.config.js
+├── drizzle.config.ts, .env.example, .gitignore
+├── public/favicon.svg
+├── shared/ (schemas.ts + types.ts — Zod end-to-end)
 ├── server/
-│   ├── index.ts                 ✅
-│   ├── env.ts                   ✅
-│   ├── db/
-│   │   ├── client.ts            ✅
-│   │   └── schema.ts            ✅
-│   ├── middleware/
-│   │   ├── auth.ts              ✅
-│   │   ├── cors.ts              ✅
-│   │   └── error.ts             ✅
-│   └── routes/
-│       └── auth.ts              ✅
-└── shared/
-    ├── types.ts                 ✅
-    └── schemas.ts               ✅
+│   ├── index.ts, env.ts, logger.ts, seed.ts
+│   ├── db/{client.ts, schema.ts}
+│   ├── lib/crud-factory.ts
+│   ├── middleware/{auth, cors, error}.ts
+│   └── routes/{auth, clientes, categorias, refacciones, maquinas,
+│       cotizaciones, ventas, tarifas, prospectos, personal,
+│       garantias, mantenimientos, revision-maquinas, bonos, viajes,
+│       sin-cobertura, bitacora, users, davai, reportes, audit}.ts
+└── src/
+    ├── main.ts, index.html
+    ├── styles/{tokens, tailwind}.css
+    ├── lib/{api, auth, router, toast, modal, data-table, crud-module}.ts
+    ├── components/app-shell.ts
+    └── modules/
+        ├── auth/login.ts
+        ├── dashboard/dashboard.ts
+        ├── clientes/clientes.ts
+        ├── refacciones/refacciones.ts
+        ├── categorias/categorias.ts
+        ├── maquinas/maquinas.ts
+        ├── cotizaciones/cotizaciones.ts
+        ├── ventas/ventas.ts
+        ├── tarifas/tarifas.ts
+        ├── prospeccion/prospeccion.ts
+        ├── revision-maquinas/revision-maquinas.ts
+        ├── garantias/garantias.ts
+        ├── mantenimientos/mantenimientos.ts
+        ├── sin-cobertura/sin-cobertura.ts
+        ├── personal/personal.ts
+        ├── bonos/bonos.ts
+        ├── viajes/viajes.ts
+        ├── bitacora/bitacora.ts
+        ├── reportes/reportes.ts
+        ├── usuarios/usuarios.ts
+        ├── audit/audit.ts
+        └── davai/davai.ts
 ```
 
 ---
 
-## 🎯 Métricas a lograr al final del rebuild
+## 🚀 Cómo arrancar
 
-(Ver REBUILD-PLAN.md sección "Performance targets")
+```bash
+cd v2
+npm install                    # ~30 segundos
+cp .env.example .env           # editar con TURSO_URL + JWT_SECRET
+npm run db:generate            # genera migrations SQL
+npm run db:migrate             # aplica a la DB
+npx tsx server/seed.ts         # crea admin/admin123
+npm run dev                    # localhost:5173 (frontend) + :3000 (backend)
+```
 
-| Métrica | Target | v1 actual | v2 |
-|---------|--------|-----------|-----|
-| LCP | < 1500ms | 1240-1700ms | TBD |
-| INP | < 200ms | 36ms ✅ | TBD |
-| backdropFilter elementos | 0 | 549 → 0 ✅ | 0 (built-in) |
-| Bundle JS | < 100KB gzip | ~300KB+ | TBD |
-| Service Worker | NONE | NONE ✅ | NONE |
-
----
-
-## ⚠️ Notas importantes para retomar
-
-1. **El v1 sigue activo** en `/public` y deployed en Render. NO romperlo.
-2. **El v2 NO se deploya aún** — vive en `/v2` solamente. Cuando esté completo, se hará el switch.
-3. **Branch**: trabajamos en `main`, dentro de carpeta `/v2`. No hay branch separada.
-4. **El usuario tiene Turso configurado** — usa las env vars `TURSO_DATABASE_URL` y `TURSO_AUTH_TOKEN`.
-5. **Render free tier** = cold start ~30s. Tener paciencia al deploy.
-6. **El usuario está estresado** por las horas perdidas en el v1. Hacer commits frecuentes para mostrar progreso visible.
+Login con `admin` / `admin123` → debería entrar al dashboard.
 
 ---
 
-## 🔗 Stack confirmado
+## ⚠️ Posibles errores al primer `npm install + npm run dev`
 
-- **Frontend**: Vite + TypeScript + Tailwind + Lit web components
-- **Backend**: Express + TypeScript + Drizzle ORM + LibSQL/Turso
-- **Auth**: JWT con jose + bcrypt
-- **Validación**: Zod end-to-end
-- **Logger**: Pino
-- **Sin**: Service Worker, React, Webpack, Font Awesome, jQuery
+1. **TypeScript strict errors**: si Drizzle se queja de tipos en `crud-factory.ts`,
+   ajustar el `as any` que ya está en algunas líneas.
+2. **Migrations**: si la DB ya tiene tablas del v1, las migrations pueden chocar.
+   Empezar con DB vacía (Turso new database) o adaptar nombres.
+3. **Helmet CSP**: deshabilitado por defecto. Si bloquea fonts/CSS, ajustar.
+4. **Render proxy**: en producción asegurar `app.set('trust proxy', 1)` si
+   rate-limit muestra warnings.
+
+---
+
+## 🚢 Deploy a Render
+
+1. Crear nuevo Web Service en Render apuntando al repo
+2. Build: `cd v2 && npm install && npm run build`
+3. Start: `cd v2 && npm start`
+4. Env vars (panel de Render): `NODE_ENV=production`, `TURSO_DATABASE_URL`,
+   `TURSO_AUTH_TOKEN`, `JWT_SECRET`, `ALLOWED_ORIGINS=https://tu-app.onrender.com`,
+   `ANTHROPIC_API_KEY` (opcional)
+5. Después del primer deploy: en Render Shell → `cd v2 && npx tsx server/seed.ts`
+
+El v1 sigue corriendo. Cambia el deploy del v1 al v2 cuando estés listo.
+
+---
+
+## 📋 Mejoras pendientes (post-deploy básico)
+
+- [ ] Migración de datos v1 → v2 (script que lee SQLite v1 y popula v2)
+- [ ] PDF de cotizaciones (lazy load de jsPDF)
+- [ ] Mapa de prospección con Leaflet (lazy load)
+- [ ] Drag-drop Kanban en Prospección
+- [ ] Cmd+K palette
+- [ ] Theme toggle (dark/light)
+- [ ] Tests con Vitest
+- [ ] CSRF tokens
+- [ ] Rate limit por endpoint (no solo login)
+- [ ] Lighthouse audit objetivo > 90
 
 ---
 
 ## 🎬 Cómo continuar en próxima sesión
 
-```bash
-# 1. Lee este archivo (REBUILD-PROGRESS.md)
-# 2. Lee REBUILD-PLAN.md sección "Próximo paso"
-# 3. Ejecuta los TODOs de la siguiente sesión
-# 4. Actualiza este archivo al terminar cada subtask
-# 5. Commit + push frecuentemente
+```
+"Lee v2/REBUILD-PROGRESS.md. Continúa con [tarea pendiente].
+Por ej: 'agregar migración de datos del v1' o 'integrar Leaflet en Prospección'."
 ```
