@@ -1676,11 +1676,6 @@
       btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
       btn.title = toggleTitle;
     }
-    const btnHead = qs('#btn-sidebar-rail-toggle-header');
-    if (btnHead) {
-      btnHead.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-      btnHead.title = toggleTitle;
-    }
     syncSidebarRailToggleHeaderVisibility();
     try {
       localStorage.setItem(SIDEBAR_RAIL_COLLAPSED_KEY, collapsed ? '1' : '0');
@@ -1689,8 +1684,8 @@
 
   (function initSidebarRailToggle() {
     const btn = qs('#btn-sidebar-rail-toggle');
-    const btnHead = qs('#btn-sidebar-rail-toggle-header');
-    if (!btn && !btnHead) return;
+    const btnMobile = qs('#btn-mobile-sidebar-open');
+    if (!btn && !btnMobile) return;
     try {
       if (!localStorage.getItem(SIDEBAR_RAIL_EXPAND_ONCE_KEY)) {
         localStorage.setItem(SIDEBAR_RAIL_EXPAND_ONCE_KEY, '1');
@@ -1707,7 +1702,7 @@
     }
     applySidebarRailCollapsed(isSidebarRailCollapsedStored());
     if (btn) btn.addEventListener('click', toggleRail);
-    if (btnHead) btnHead.addEventListener('click', toggleRail);
+    if (btnMobile) btnMobile.addEventListener('click', toggleRail);
     window.addEventListener('resize', function () {
       syncSidebarRailToggleHeaderVisibility();
       if (!isMobileNav()) closeMobileSidebar();

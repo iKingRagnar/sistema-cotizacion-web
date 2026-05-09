@@ -1,0 +1,141 @@
+/**
+ * mapa-layout-exact.css — Estructura colapsada como MapaSuminregio (MapSidebar).
+ * Carga al FINAL del head. Anula:
+ * - portal-overlays: rail colapsado = aside width 0 + hamburguesa en header
+ * - premium: rail 64px con pestañas solo ícono (aquí: solo franja + expand)
+ *
+ * Standby (body.mapa-layout-standby): oculta stats + strip global hasta que se recable.
+ */
+
+/* Si quedara referencia en DOM, nunca mostrar hamburguesa de rail en header (Mapa no la usa en desktop). */
+#btn-sidebar-rail-toggle-header.header-sidebar-rail-toggle {
+  display: none !important;
+}
+
+/* ─── Standby: info secundaria del rail sin borrar nodos (JS sigue funcionando) ─── */
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).mapa-layout-standby .sidebar-global-strip,
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).mapa-layout-standby .mapa-ms-stat-trio {
+  display: none !important;
+}
+
+/* ─── Escritorio colapsado: franja 3rem, solo botón expandir (como MapSidebar cerrado) ─── */
+@media (min-width: 961px) {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-rail-collapsed
+    #app-sidebar-nav.sidebar-nav.mapa-app-shell {
+    width: 3rem !important;
+    flex: 0 0 3rem !important;
+    flex-basis: 3rem !important;
+    min-width: 3rem !important;
+    max-width: 3rem !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+    box-shadow: none !important;
+    background: linear-gradient(180deg, #0d0d11 0%, #08080b 55%, #0a0a0e 100%) !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Mapa: lista de leads oculta al colapsar; aquí ocultamos pestañas de módulos. */
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-rail-collapsed
+    #app-sidebar-nav.mapa-app-shell .tabs.tabs--rail {
+    display: none !important;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-rail-collapsed
+    #app-sidebar-nav.mapa-app-shell .mapa-rail-titles,
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-rail-collapsed
+    #app-sidebar-nav.mapa-app-shell .mapa-rail-accent,
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-rail-collapsed
+    #app-sidebar-nav.mapa-app-shell .sidebar-global-strip,
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-rail-collapsed
+    #app-sidebar-nav.mapa-app-shell .mapa-ms-stat-trio {
+    display: none !important;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-rail-collapsed
+    #app-sidebar-nav.mapa-app-shell .sidebar-nav-toolbar.mapa-rail-header {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    padding: 0 !important;
+    border-bottom: none !important;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-rail-collapsed
+    #app-sidebar-nav.mapa-app-shell .mapa-rail-header-main {
+    display: none !important;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-rail-collapsed
+    #app-sidebar-nav.mapa-app-shell #btn-sidebar-rail-toggle.mapa-ms-rail-collapse {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-height: 4.5rem !important;
+    height: auto !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    display: grid !important;
+    place-items: center !important;
+    box-shadow: none !important;
+    color: rgba(212, 255, 0, 0.95) !important;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-rail-collapsed
+    #app-sidebar-nav.mapa-app-shell
+    #btn-sidebar-rail-toggle.mapa-ms-rail-collapse:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+  }
+
+  /* Chevron apunta a la derecha = “expandir” (Mapa usa ChevronRight). */
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-rail-collapsed
+    #app-sidebar-nav.mapa-app-shell
+    #btn-sidebar-rail-toggle
+    .mapa-ms-chevron-icon {
+    transform: rotate(180deg);
+  }
+}
+
+/* ─── Móvil: FAB para abrir drawer (Mapa no pone hamburguesa encima del logo) ─── */
+.mapa-mobile-rail-fab {
+  display: none;
+  position: fixed;
+  z-index: 1040;
+  left: max(0.75rem, env(safe-area-inset-left, 0px));
+  bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  width: 3rem;
+  height: 3rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, rgba(20, 20, 26, 0.96) 0%, rgba(12, 12, 16, 0.98) 100%);
+  color: rgba(212, 255, 0, 0.95);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mapa-mobile-rail-fab:hover {
+  border-color: rgba(212, 255, 0, 0.35);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 768px) {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-mobile-rail-fab {
+    display: inline-flex;
+  }
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-open .mapa-mobile-rail-fab {
+  display: none !important;
+}

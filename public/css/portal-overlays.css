@@ -548,36 +548,8 @@ html body.theme-industrial.md3-on table.data-table td.ref-td-actions .btn:not(.d
   -webkit-text-fill-color: inherit !important;
 }
 
-/* ─── Rail colapsado (escritorio): sin franja lateral — aside a ancho 0; menú hamburguesa en header ─── */
-@media (min-width: 961px) {
-  body.sidebar-rail-collapsed.md3-on #app-sidebar-nav.sidebar-nav {
-    width: 0 !important;
-    flex: 0 0 0 !important;
-    flex-basis: 0 !important;
-    min-width: 0 !important;
-    max-width: 0 !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-    overflow: hidden !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
-    background: transparent !important;
-  }
-}
-
-.header-inner .header-sidebar-rail-toggle.btn-sidebar-rail-toggle {
-  flex-shrink: 0;
-  align-self: center;
-  margin-right: 0.35rem;
-}
-
-@media (max-width: 960px) {
-  #btn-sidebar-rail-toggle-header.header-sidebar-rail-toggle {
-    display: none !important;
-  }
-}
+/* Rail colapsado en escritorio: franja 3rem tipo MapaSuminregio (ver mapa-layout-exact.css).
+   El patrón anterior (aside width 0 + hamburguesa en header) ya no aplica. */
 
 /* Lightbox de medios: refuerzo (style.css ya sube z-index global; esto cubre cualquier tema con modal alto). */
 html body.md3-on .pvc-media-lightbox {

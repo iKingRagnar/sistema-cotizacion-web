@@ -180,6 +180,7 @@
    -->
   <!-- 🚨 PERF EMERGENCY: kill backdrop-filter + animations infinitas (era 1.7s freeze por click). PURO CSS, sin JS. -->
   <link rel="stylesheet" href="css/perf-emergency.css?v=4-double-id-2026-05-08">
+  <link rel="stylesheet" href="css/mapa-layout-exact.css?v=1-mapaside-strip-no-header-burger-2026-05-07">
   <!-- Tema único: nano machining + vidrio azul cristalino (sin modo Sol/Luna). -->
   <!-- ★ FORCE-RELOAD: SOLO en browser normal, NUNCA en PWA standalone (evita loop crash) -->
   <script>
@@ -343,7 +344,7 @@
     }
   </style>
 </head>
-<body id="app" class="theme-industrial dark-theme md3-on universal-map-shell">
+<body id="app" class="theme-industrial dark-theme md3-on universal-map-shell mapa-layout-standby">
   <script>
     (function () {
       try {
@@ -445,14 +446,6 @@
   <div id="app-particles-layer" class="app-particles-layer" aria-hidden="true"></div>
   <header class="header mapa-app-shell mapa-ms-navbar-root">
     <div class="header-inner">
-      <button type="button" id="btn-sidebar-rail-toggle-header" class="btn-sidebar-rail-toggle header-sidebar-rail-toggle hidden" aria-expanded="false" aria-controls="sidebar-rail-tabs" title="Mostrar lista de módulos">
-        <span class="visually-hidden">Mostrar lista de módulos</span>
-        <svg class="sidebar-rail-burger-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
-          <rect x="4" y="6.25" width="16" height="2" rx="0.5" fill="currentColor"/>
-          <rect x="4" y="11" width="16" height="2" rx="0.5" fill="currentColor"/>
-          <rect x="4" y="15.75" width="16" height="2" rx="0.5" fill="currentColor"/>
-        </svg>
-      </button>
       <div class="header-brand">
         <div class="login-brand-logo header-brand-logo-wrap">
           <img src="fondos/universal-logo.jpg?v=4" alt="Universal" width="120" height="72" class="login-brand-hero-img" id="header-brand-logo" decoding="async">
@@ -613,6 +606,11 @@
       </nav>
     </aside>
     <div class="app-main">
+      <button type="button" id="btn-mobile-sidebar-open" class="mapa-mobile-rail-fab" aria-label="Abrir menú de módulos" title="Módulos">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+          <path fill="currentColor" d="M4 6h16v2H4V6zm0 5h16v2H4v-2zm0 5h16v2H4v-2z"/>
+        </svg>
+      </button>
   <main class="content" id="main-content" role="main">
     <!-- DASHBOARDS -->
     <section id="panel-dashboards" class="panel panel-dashboard active" aria-label="Resumen por segmento">
