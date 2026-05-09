@@ -17,18 +17,38 @@
       } catch (e) {}
     })();
   </script>
-  <!-- HOTFIX v99: limpia overlays/caches viejos del cache del browser, antes de cualquier render -->
+  <!-- HOTFIX v120: nuke TOTAL de cualquier cache de versiones anteriores (v75-v119) que haya
+       cacheado los scripts pesados que causaban freeze. Sin esto, browsers con SW viejo
+       seguirán cargando prospeccion-pro/supreme/revision-fix con todos sus polling/observers. -->
   <script>
     (function () {
       try {
-        /* Forzar invalidación de caches viejos (SW v75-v97 con mega-features) */
+        /* Nuke ALL caches que NO sean del current version */
         if (window.caches && caches.keys) {
           caches.keys().then(function (keys) {
             keys.forEach(function (k) {
-              if (/cotizacion-pro-v(7[5-9]|8\d|9[0-7])/.test(k)) {
+              /* Cualquier cache que NO sea v120 → nuke. Incluye v75-v119 y cualquier basura. */
+              if (!/cotizacion-pro-v120/.test(k)) {
                 caches.delete(k);
               }
             });
+          }).catch(function () {});
+        }
+        /* Si hay un SW viejo activo (v75-v119), pídele que se actualice y reload una vez */
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistration().then(function (reg) {
+            if (reg) {
+              reg.update();
+              /* Detect controllerchange (nuevo SW activo) y reload UNA SOLA VEZ */
+              var reloaded = false;
+              navigator.serviceWorker.addEventListener('controllerchange', function () {
+                if (reloaded) return;
+                if (sessionStorage.getItem('sw-reloaded-v120') === '1') return;
+                reloaded = true;
+                sessionStorage.setItem('sw-reloaded-v120', '1');
+                location.reload();
+              });
+            }
           }).catch(function () {});
         }
         /* Cuando el DOM ya exista, mata cualquier overlay residual de mega-features
