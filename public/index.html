@@ -154,9 +154,9 @@
   <link rel="stylesheet" href="css/davai-supreme.css?v=2-no-blur-no-anim-2026-05-08">
   <link rel="stylesheet" href="css/prospeccion-supreme.css?v=1-supreme-2026-05-08">
   <!-- 🚨 PERF EMERGENCY: kill backdrop-filter + animations infinitas (era 1.7s freeze por click) -->
-  <link rel="stylesheet" href="css/perf-emergency.css?v=1-perf-2026-05-08">
-  <!-- 🚨 PERF JS: inline-style sweeper con setProperty(...,'important') para vencer CSS !important -->
-  <script src="js/perf-emergency.js?v=2-with-important-2026-05-08"></script>
+  <link rel="stylesheet" href="css/perf-emergency.css?v=3-id-specificity-2026-05-08">
+  <!-- 🚨 PERF JS: ahora NO-OP. La lógica vive en perf-emergency.css con body#app * (ID-specificity) -->
+  <script src="js/perf-emergency.js?v=3-noop-2026-05-08"></script>
   <!-- Tema único: nano machining + vidrio azul cristalino (sin modo Sol/Luna). -->
   <!-- ★ FORCE-RELOAD: SOLO en browser normal, NUNCA en PWA standalone (evita loop crash) -->
   <script>
@@ -320,7 +320,7 @@
     }
   </style>
 </head>
-<body class="theme-industrial dark-theme md3-on universal-map-shell">
+<body id="app" class="theme-industrial dark-theme md3-on universal-map-shell">
   <script>
     (function () {
       try {

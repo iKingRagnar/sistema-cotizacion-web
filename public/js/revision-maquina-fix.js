@@ -155,34 +155,10 @@
     }, WATCHDOG_MS);
   }, true /* capture phase */);
 
-  /* También detectar si CUALQUIER modal queda invisible tras un click. Cubre #modal, #modal-stack
-     y cualquier otro contenedor con clase .modal */
-  function setupModalWatcher() {
-    var targets = ['#modal', '#modal-stack'];
-    var anyFound = false;
-    targets.forEach(function (sel) {
-      var modal = document.querySelector(sel);
-      if (!modal || modal._revFixWatched) return;
-      modal._revFixWatched = true;
-      anyFound = true;
-      var mo = new MutationObserver(function () {
-        if (modal.classList.contains('hidden')) return;
-        /* Modal se abre — forzar visibilidad TRES veces (por si la animación es lenta) */
-        forceModalVisible(modal);
-        requestAnimationFrame(function () { forceModalVisible(modal); });
-        setTimeout(function () { forceModalVisible(modal); }, 100);
-        setTimeout(function () {
-          var cs = getComputedStyle(modal);
-          if (parseFloat(cs.opacity) < 0.5 || cs.display === 'none') {
-            console.warn('[rev-fix] Modal sigue invisible tras 250ms — segundo intento');
-            forceModalVisible(modal);
-          }
-        }, 250);
-      });
-      mo.observe(modal, { attributes: true, attributeFilter: ['class', 'style'] });
-    });
-    if (!anyFound) setTimeout(setupModalWatcher, 1000);
-  }
+  /* MutationObserver removido. El CSS guard en perf-emergency.css
+     (body#app #modal:not(.hidden) { opacity:1 !important ... }) garantiza
+     visibilidad sin necesidad de JS reactivo (que añadía paint cost). */
+  function setupModalWatcher() { /* no-op intencional */ }
 
   if (document.readyState === 'complete') setTimeout(setupModalWatcher, 800);
   else window.addEventListener('load', function () { setTimeout(setupModalWatcher, 800); });
