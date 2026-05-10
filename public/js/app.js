@@ -1717,7 +1717,7 @@
     if (!qs('#mobile-sidebar-overlay')) {
       var overlay = document.createElement('div');
       overlay.id = 'mobile-sidebar-overlay';
-      overlay.style.cssText = 'position:fixed;inset:0;z-index:98;background:rgba(0,0,0,0.4);-webkit-tap-highlight-color:transparent;';
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:1048;background:rgba(0,0,0,0.4);-webkit-tap-highlight-color:transparent;';
       overlay.addEventListener('click', closeMobileSidebar);
       document.body.appendChild(overlay);
     }

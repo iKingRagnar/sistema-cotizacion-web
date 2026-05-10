@@ -1,0 +1,116 @@
+/**
+ * mobile-shell.css — Móvil / táctil (Universal map shell)
+ * - Safe areas (notch / home indicator)
+ * - Rail lateral como drawer encima del contenido (evita rail ~400px en viewport)
+ * - Tablas con scroll horizontal sin celdas clavadas a 120px (style.css @480)
+ * - Touch: manipulation en controles, espacio para FAB módulos
+ * Carga después de mapa-layout-exact.css
+ */
+
+/* Evita zoom de texto al rotar / landscape */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* ---------- ≤768px — layout principal ---------- */
+@media (max-width: 768px) {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) header.header.mapa-app-shell {
+    padding-left: max(0.65rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.65rem, env(safe-area-inset-right, 0px));
+    padding-top: max(0px, env(safe-area-inset-top, 0px));
+  }
+
+  /* Drawer: por encima del workspace, debajo del header fijo (z ~1100 en mapa) */
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) aside.sidebar-nav.mapa-app-shell {
+    position: fixed !important;
+    top: calc(4rem + env(safe-area-inset-top, 0px)) !important;
+    left: -105% !important;
+    right: auto !important;
+    width: min(300px, calc(100vw - 2.5rem)) !important;
+    max-width: 88vw !important;
+    flex: none !important;
+    align-self: stretch !important;
+    height: calc(100dvh - 4rem - env(safe-area-inset-top, 0px)) !important;
+    max-height: calc(100dvh - 4rem - env(safe-area-inset-top, 0px)) !important;
+    min-height: 0 !important;
+    z-index: 1095 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    box-shadow: 8px 0 28px rgba(0, 0, 0, 0.4) !important;
+    border-radius: 0 12px 12px 0 !important;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-open aside.sidebar-nav.mapa-app-shell {
+    left: 0 !important;
+  }
+
+  /* Contenido full bleed; hueco inferior para FAB “Módulos” + safe area */
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .app-main {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .content#main-content {
+    padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+  }
+
+  /* Overlay bajo el rail, sobre el contenido (inline JS usa z-index 98 — ganamos con !important) */
+  #mobile-sidebar-overlay {
+    z-index: 1048 !important;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* Menos delay táctil en controles principales */
+  html body.theme-industrial.md3-on button,
+  html body.theme-industrial.md3-on .btn,
+  html body.theme-industrial.md3-on .tab,
+  html body.theme-industrial.md3-on .btn-icon-header,
+  html body.theme-industrial.md3-on [role="button"] {
+    touch-action: manipulation;
+  }
+
+  /* FAB módulos: respeta safe area inferior */
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-mobile-rail-fab {
+    bottom: max(1rem, env(safe-area-inset-bottom, 0px)) !important;
+    left: max(0.75rem, env(safe-area-inset-left, 0px)) !important;
+    width: 3.25rem !important;
+    height: 3.25rem !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+}
+
+/* ---------- ≤480px — tablas: quita tope 120px de style.css ---------- */
+@media (max-width: 480px) {
+  html body.md3-on .table-wrap table.data-table tbody td {
+    max-width: none !important;
+  }
+
+  html body.md3-on .table-wrap table.data-table tbody td.th-actions,
+  html body.md3-on .table-wrap table.data-table tbody td.num,
+  html body.md3-on .table-wrap table.data-table tbody td.money {
+    max-width: 6.5rem !important;
+  }
+
+  /* Partidas cotización ya usa ancho mínimo; asegura scroll suave */
+  html body.md3-on .cotz-lineas-table-wrap {
+    -webkit-overflow-scrolling: touch;
+    overflow-x: auto;
+  }
+}
+
+/* ---------- iOS / PWA: modales con altura dinámica ---------- */
+@media (max-width: 768px) {
+  body.theme-industrial.md3-on:not(.login-open) .modal-box,
+  body.theme-industrial.md3-on:not(.login-open) .modal-wrap .modal-box {
+    max-height: min(92dvh, 92vh) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  }
+}
