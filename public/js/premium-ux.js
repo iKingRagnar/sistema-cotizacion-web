@@ -2822,6 +2822,23 @@
     // initSidebarStats();    // DESHABILITADO temporal — hace 2 fetch al boot que pueden colgar
   }
 
+  /**
+   * Raíz para fixLabels / fillEmptySelects en la cola idle tras mutaciones.
+   * Con modal abierto solo se escanea ese subárbol (evita querySelectorAll sobre
+   * todo el SPA al abrir Ver/Editar cliente — Chrome se congelaba).
+   */
+  function domFixScanRoots() {
+    const modal = document.getElementById('modal');
+    if (modal && !modal.classList.contains('hidden')) return [modal];
+    const stack = document.getElementById('modal-stack');
+    if (stack && !stack.classList.contains('hidden')) return [stack];
+    const confirm = document.getElementById('confirm-modal');
+    if (confirm && !confirm.classList.contains('hidden')) return [confirm];
+    const main = document.getElementById('main-content');
+    if (main) return [main];
+    return [document.body];
+  }
+
   /* ═══════════════════════════════════════════════════════════
      initEmptySelectFix — arregla el bug de "select vacío barra negra"
      Inserta <option disabled selected>— Sin opciones —</option>
@@ -2857,7 +2874,9 @@
     }
     fillEmptySelects(document);
     if (typeof premOnDomChange === 'function') {
-      premOnDomChange(() => fillEmptySelects(document));
+      premOnDomChange(() => {
+        domFixScanRoots().forEach((root) => fillEmptySelects(root));
+      });
     }
   }
 
@@ -2882,7 +2901,9 @@
     }
     fixLabels(document);
     if (typeof premOnDomChange === 'function') {
-      premOnDomChange(() => fixLabels(document));
+      premOnDomChange(() => {
+        domFixScanRoots().forEach((root) => fixLabels(root));
+      });
     }
   }
 
