@@ -868,70 +868,70 @@
    ════════════════════════════════════════════════════════════════════════ */
 
 /* ── SIDEBAR PROSPECCIÓN: dark theme override (era blanco brillante) ──── */
-html body.theme-industrial .prospeccion-sidebar,
+html body.theme-industrial:not(.appearance-light) .prospeccion-sidebar,
 html body.dark-theme .prospeccion-sidebar,
 html body:not(.appearance-light) .prospeccion-sidebar {
   background: rgba(15,23,42,0.92) !important; /* solid alpha — backdrop-filter removido */
   border: 1px solid rgba(255,255,255,0.10) !important;
   color: #e2e8f0 !important;
 }
-html body.theme-industrial .prospeccion-sidebar__header,
+html body.theme-industrial:not(.appearance-light) .prospeccion-sidebar__header,
 html body.dark-theme .prospeccion-sidebar__header,
 html body:not(.appearance-light) .prospeccion-sidebar__header {
   border-bottom: 1px solid rgba(255,255,255,0.08) !important;
 }
-html body.theme-industrial .prospeccion-sidebar__search,
+html body.theme-industrial:not(.appearance-light) .prospeccion-sidebar__search,
 html body.dark-theme .prospeccion-sidebar__search,
 html body:not(.appearance-light) .prospeccion-sidebar__search {
   background: rgba(255,255,255,0.05) !important;
   border: 1px solid rgba(255,255,255,0.12) !important;
   color: #f8fafc !important;
 }
-html body.theme-industrial .prospeccion-sidebar__search::placeholder,
+html body.theme-industrial:not(.appearance-light) .prospeccion-sidebar__search::placeholder,
 html body.dark-theme .prospeccion-sidebar__search::placeholder,
 html body:not(.appearance-light) .prospeccion-sidebar__search::placeholder {
   color: #94a3b8 !important;
 }
-html body.theme-industrial .prospeccion-sidebar__search:focus,
+html body.theme-industrial:not(.appearance-light) .prospeccion-sidebar__search:focus,
 html body.dark-theme .prospeccion-sidebar__search:focus,
 html body:not(.appearance-light) .prospeccion-sidebar__search:focus {
   border-color: #60a5fa !important;
   background: rgba(59,130,246,0.08) !important;
 }
-html body.theme-industrial .prospeccion-filter-section,
+html body.theme-industrial:not(.appearance-light) .prospeccion-filter-section,
 html body.dark-theme .prospeccion-filter-section,
 html body:not(.appearance-light) .prospeccion-filter-section {
   border-bottom: 1px solid rgba(255,255,255,0.06) !important;
 }
-html body.theme-industrial .prospeccion-filter-section__title,
+html body.theme-industrial:not(.appearance-light) .prospeccion-filter-section__title,
 html body.dark-theme .prospeccion-filter-section__title,
 html body:not(.appearance-light) .prospeccion-filter-section__title {
   color: #cbd5e1 !important;
 }
-html body.theme-industrial .prospeccion-filter-section__clear,
+html body.theme-industrial:not(.appearance-light) .prospeccion-filter-section__clear,
 html body.dark-theme .prospeccion-filter-section__clear,
 html body:not(.appearance-light) .prospeccion-filter-section__clear {
   color: #60a5fa !important;
 }
-html body.theme-industrial .prospeccion-control-row label,
+html body.theme-industrial:not(.appearance-light) .prospeccion-control-row label,
 html body.dark-theme .prospeccion-control-row label,
 html body:not(.appearance-light) .prospeccion-control-row label {
   color: #cbd5e1 !important;
 }
-html body.theme-industrial .prospeccion-control-row select,
+html body.theme-industrial:not(.appearance-light) .prospeccion-control-row select,
 html body.dark-theme .prospeccion-control-row select,
 html body:not(.appearance-light) .prospeccion-control-row select {
   background: rgba(255,255,255,0.05) !important;
   border: 1px solid rgba(255,255,255,0.12) !important;
   color: #f8fafc !important;
 }
-html body.theme-industrial .prospeccion-sidebar__summary,
+html body.theme-industrial:not(.appearance-light) .prospeccion-sidebar__summary,
 html body.dark-theme .prospeccion-sidebar__summary,
 html body:not(.appearance-light) .prospeccion-sidebar__summary {
   color: #cbd5e1 !important;
   border-top: 1px solid rgba(255,255,255,0.06) !important;
 }
-html body.theme-industrial .prospeccion-sidebar-toggle,
+html body.theme-industrial:not(.appearance-light) .prospeccion-sidebar-toggle,
 html body.dark-theme .prospeccion-sidebar-toggle,
 html body:not(.appearance-light) .prospeccion-sidebar-toggle {
   background: rgba(15,23,42,0.85) !important;

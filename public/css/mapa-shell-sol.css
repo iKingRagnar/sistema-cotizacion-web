@@ -46,6 +46,29 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
   background: var(--nano-surface-strong) !important;
 }
 
+/* Cluster derecho (LIVE, notificaciones, Sol/Luna): mapa-app-layout usaba vidrio para barra oscura — en Sol era invisible */
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-header-user-cluster {
+  background: var(--nano-surface-subtle) !important;
+  border: 1px solid var(--nano-border) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    0 1px 3px rgba(15, 23, 42, 0.06) !important;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-live-pill {
+  background: rgba(21, 128, 61, 0.1) !important;
+  border: 1px solid rgba(21, 128, 61, 0.28) !important;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-live-dot {
+  background: var(--mapa-sol-accent) !important;
+  box-shadow: 0 0 0 2px rgba(21, 128, 61, 0.35) !important;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-live-text {
+  color: var(--mapa-sol-accent) !important;
+}
+
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) aside.sidebar-nav.mapa-ms-sidebar-root {
   background: var(--nano-surface) !important;
   -webkit-backdrop-filter: var(--nano-blur) !important;
@@ -313,6 +336,33 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .toolbar {
   border: 1px solid var(--nano-border) !important;
   border-radius: 12px !important;
+}
+
+/* Prospección: panel izquierdo sobre el mapa — mismo lenguaje que rail (vidrio claro, no bloque oscuro) */
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) #panel-prospeccion .prospeccion-sidebar {
+  color: var(--nano-text) !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) #panel-prospeccion .prospeccion-sidebar__search {
+  background: var(--nano-surface-subtle) !important;
+  color: var(--nano-text) !important;
+  border-color: var(--nano-border) !important;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) #panel-prospeccion .prospeccion-sidebar__search::placeholder {
+  color: var(--nano-text-muted) !important;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) #panel-prospeccion .prospeccion-filter-section__title,
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) #panel-prospeccion .prospeccion-control-row label {
+  color: var(--nano-text-muted) !important;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) #panel-prospeccion .prospeccion-control-row select {
+  background: var(--nano-surface-subtle) !important;
+  color: var(--nano-text) !important;
+  border-color: var(--nano-border) !important;
 }
 
 @media (max-width: 900px) {
