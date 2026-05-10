@@ -7668,6 +7668,7 @@
     }
     const modalBox = qs('#modal .modal-box');
     const previousFocus = document.activeElement;
+    modal.dataset.premModalContentSwap = '1';
     if (modalBox) {
       modalBox.classList.remove(
         'pdf-preview-modal',
@@ -7689,6 +7690,10 @@
     qs('#modal-title').textContent = title;
     qs('#modal-body').innerHTML = bodyHtml;
     try {
+      if (typeof window.premMigrateTitles === 'function') window.premMigrateTitles(qs('#modal-body'));
+      if (typeof window.premAriaScan === 'function') window.premAriaScan(qs('#modal-body'));
+    } catch (_e) {}
+    try {
       if (typeof window.__cotDebug === 'function') {
         window.__cotDebug('[openModal] innerHTML len=' + String(bodyHtml || '').length);
       }
@@ -7697,6 +7702,11 @@
     if (modalBox && /ref-pvc-hero/.test(String(bodyHtml || ''))) modalBox.classList.add('modal-box--refaccion-preview');
     if (modalBox) applyModalThemeToBox(modalBox);
     modal.classList.remove('hidden');
+    requestAnimationFrame(function () {
+      try {
+        delete modal.dataset.premModalContentSwap;
+      } catch (_e) {}
+    });
     try {
       if (typeof window.__cotDebug === 'function') {
         window.__cotDebug('[openModal] modal visible');
@@ -7745,6 +7755,9 @@
         modalBox.style.removeProperty('visibility');
       }
       modal.classList.add('hidden');
+      try {
+        delete modal.dataset.premModalContentSwap;
+      } catch (_e) {}
       const prevTrap = modal.__cotModalKeyTrap;
       if (prevTrap) {
         modal.removeEventListener('keydown', prevTrap);
@@ -7768,12 +7781,22 @@
     const modal = qs('#modal-stack');
     if (!modal) return function () {};
     const previousFocus = document.activeElement;
+    modal.dataset.premModalContentSwap = '1';
     qs('#modal-stack-title').textContent = title;
     qs('#modal-stack-body').innerHTML = bodyHtml;
+    try {
+      if (typeof window.premMigrateTitles === 'function') window.premMigrateTitles(qs('#modal-stack-body'));
+      if (typeof window.premAriaScan === 'function') window.premAriaScan(qs('#modal-stack-body'));
+    } catch (_e) {}
     wireModalMediaOpenButtons(qs('#modal-stack-body'));
     const stackBox = qs('#modal-stack .modal-box');
     if (stackBox) applyModalThemeToBox(stackBox);
     modal.classList.remove('hidden');
+    requestAnimationFrame(function () {
+      try {
+        delete modal.dataset.premModalContentSwap;
+      } catch (_e) {}
+    });
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
         if (!stackBox || modal.classList.contains('hidden')) return;
@@ -7814,6 +7837,9 @@
         stackBox.style.removeProperty('visibility');
       }
       modal.classList.add('hidden');
+      try {
+        delete modal.dataset.premModalContentSwap;
+      } catch (_e) {}
       const prevTrap = modal.__cotModalStackKeyTrap;
       if (prevTrap) {
         modal.removeEventListener('keydown', prevTrap);

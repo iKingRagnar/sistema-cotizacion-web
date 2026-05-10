@@ -49,14 +49,19 @@
   window.premScheduleIdleWork = scheduleIdleWork;
 
   /**
-   * True mientras el modal genérico #modal (Ver/Editar cliente, etc.) está visible.
-   * Varios MutationObserver de premium-ux hacen querySelectorAll sobre todo el documento
-   * en cada mutación; eso saturaba el hilo al rellenar #modal-body. No usamos #modal-stack
-   * aquí para no romper flujos que inyectan data-prem-attach en el stack.
+   * True mientras #modal o #modal-stack están visibles, O durante el swap de contenido:
+   * openModal pone innerHTML en #modal-body ANTES de quitar .hidden; si solo miráramos
+   * .hidden, los MutationObserver del body seguirían haciendo scans globales en esa
+   * ráfaga y Chrome se congelaba.
    */
   function premHeavyDomObserversSuppressed() {
     const m = document.getElementById('modal');
-    return !!(m && !m.classList.contains('hidden'));
+    if (m && !m.classList.contains('hidden')) return true;
+    if (m && m.dataset.premModalContentSwap === '1') return true;
+    const s = document.getElementById('modal-stack');
+    if (s && !s.classList.contains('hidden')) return true;
+    if (s && s.dataset.premModalContentSwap === '1') return true;
+    return false;
   }
   window.premHeavyDomObserversSuppressed = premHeavyDomObserversSuppressed;
 
@@ -1295,7 +1300,11 @@
       });
     }
     migrate(document);
+    window.premMigrateTitles = function (root) {
+      try { migrate(root && root.nodeType === 1 ? root : document); } catch (_) {}
+    };
     const mo = new MutationObserver(muts => {
+      if (premHeavyDomObserversSuppressed()) return;
       for (const m of muts) for (const n of m.addedNodes) {
         if (n.nodeType === 1) migrate(n);
       }
@@ -1386,12 +1395,16 @@
       }
     }
     function scan(root) {
-      if (!root.querySelectorAll) return;
+      if (!root || !root.querySelectorAll) return;
       root.querySelectorAll('table.data-table td.th-actions button, table.data-table td.th-actions .btn, .th-actions button, .th-actions .btn').forEach(processBtn);
       root.querySelectorAll('input, select, textarea').forEach(processInput);
     }
     scan(document);
+    window.premAriaScan = function (root) {
+      try { scan(root && root.nodeType === 1 ? root : document); } catch (_) {}
+    };
     const mo = new MutationObserver(muts => {
+      if (premHeavyDomObserversSuppressed()) return;
       for (const m of muts) for (const n of m.addedNodes) {
         if (n.nodeType === 1) scan(n);
       }
