@@ -17,14 +17,14 @@ html {
 
 /* ---------- ≤768px — layout principal ---------- */
 @media (max-width: 768px) {
-  /*
-   * iOS/WebKit: premium.css §132 (≤640px) pone overflow-x:hidden !important en html, body.
-   * Eso suele romper el scroll vertical táctil del documento en Safari iOS. Gana en cascada
-   * (misma especificidad + !important, hoja después) usando overflow-x: clip en map shell.
-   */
-  html:has(body.theme-industrial.universal-map-shell.md3-on:not(.login-open)) {
+  /* iOS/WebKit: overflow-x:hidden en html/body (varias hojas) suele romper pan vertical; clip + scroll en #root. */
+  /* html + body: scroll del documento; en iOS hace falta definir eje Y en #root, no solo en body */
+  html#root:has(body.theme-industrial.universal-map-shell.md3-on:not(.login-open)) {
     overflow-x: clip !important;
-    -webkit-overflow-scrolling: touch;
+    overflow-y: scroll !important;
+    height: auto !important;
+    min-height: 100% !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
   /*
@@ -97,7 +97,7 @@ html {
     max-height: calc(100dvh - 4rem - env(safe-area-inset-top, 0px)) !important;
     min-height: 0 !important;
     z-index: 1095 !important;
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;

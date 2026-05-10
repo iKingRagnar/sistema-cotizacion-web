@@ -33,7 +33,7 @@ body {
   text-rendering: optimizeLegibility;
   user-select: none;
   -webkit-user-select: none;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Light mode — fondo limpio Google (solo app; con login-open manda nano + login-exec, no velo gris). */
@@ -236,7 +236,7 @@ body.theme-industrial .sidebar-nav {
   top: 64px !important;
   max-height: calc(100dvh - 64px) !important;
   overflow-y: auto !important;
-  overflow-x: hidden !important;
+  overflow-x: clip !important;
   z-index: 9 !important;
   transition: width 250ms cubic-bezier(0.2,0,0,1),
               flex-basis 250ms cubic-bezier(0.2,0,0,1) !important;
@@ -296,7 +296,7 @@ body.theme-industrial .tabs.tabs--rail {
   gap: 2px !important;
   padding: 8px 12px 24px !important;
   overflow-y: auto !important;
-  overflow-x: hidden !important;
+  overflow-x: clip !important;
   flex: 1 !important;
   background: transparent !important;
   border: none !important;

@@ -85,7 +85,7 @@ body.md3-on .tabs.tabs--rail {
   border-right: 1px solid var(--md-sys-color-outline-variant);
   padding: var(--md-sys-spacing-2) 0;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: clip;
   position: sticky;
   top: 64px;
   height: calc(100dvh - 64px);
@@ -174,7 +174,7 @@ body.md3-on .main-content {
   min-width: 0;
   padding: var(--md-sys-spacing-6);
   background: var(--md-sys-color-surface);
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* ── Panel container (default) ──────────────────────────────────────── */
