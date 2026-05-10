@@ -330,6 +330,17 @@ html {
     flex-shrink: 0 !important;
   }
 
+  /* Monito/perfil: capa sobre theme switcher vecino; padding lateral para golpear la píldora entera */
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) header .header-profile-wrap {
+    position: relative;
+    z-index: 8;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .btn-header-profile {
+    min-width: 48px !important;
+    padding-inline: 6px 18px !important;
+  }
+
   /* Un solo control de rail: FAB inferior; el chevron del rail duplicaba “menú” */
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
     #app-sidebar-nav
@@ -378,6 +389,45 @@ html {
   }
 }
 
+/*
+ * ≤768 — un solo scrollport en el drawer: el aside, no nav#sidebar-rail-tabs anidado.
+ * Doble overflow + flex:1 en nav rompe pan-y en WebKit; la barra de scroll del drawer duplica la del contenido.
+ * (Este bloque va después del @media 960px para pisar overflow-y:auto del nav ahí mismo en móvil.)
+ */
+@media (max-width: 768px) {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-open
+    aside.sidebar-nav.mapa-app-shell {
+    /* Scroll sigue funcionando; se ocupa solo la barra del navegador en la página cuando el drawer está abierto */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-open
+    aside.sidebar-nav.mapa-app-shell::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+    background: transparent;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
+    nav#sidebar-rail-tabs.tabs.tabs--rail.mapa-ms-sidebar-scroll,
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
+    nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll {
+    flex: 0 0 auto !important;
+    flex-grow: 0 !important;
+    flex-shrink: 0 !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: auto !important;
+    overscroll-behavior: auto !important;
+    touch-action: auto !important;
+    scrollbar-width: none !important;
+  }
+}
+
 /* Modales — file inputs táctiles (editar fotos desde celular); 16px+ evita zoom iOS al abrir picker */
 @media (max-width: 768px) {
   body.theme-industrial.md3-on:not(.login-open) .modal-wrap input[type='file'],
@@ -417,4 +467,45 @@ html {
     justify-content: center !important;
     box-sizing: border-box !important;
   }
+}
+
+/*
+ * Perfil (monito): chevron real en DOM — el ::after triangular tenía hit box ~0×0 en móvil;
+ * taps junto al “triangulito” fallaban. Carga tarde vs premium/nano para ganar cascada.
+ */
+html body.md3-on header.header .btn-header-profile:has(.header-profile-caret)::after,
+html body header.header .btn-header-profile:has(.header-profile-caret)::after {
+  content: none !important;
+  display: none !important;
+  border: 0 none !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  visibility: hidden !important;
+}
+
+html body.theme-industrial.md3-on header.header .btn-header-profile .header-profile-caret,
+html body.md3-on header.header .btn-header-profile .header-profile-caret {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+  min-width: 22px !important;
+  min-height: 22px !important;
+  margin-inline-start: 2px !important;
+  padding: 2px 4px !important;
+  box-sizing: border-box !important;
+  font-size: 0.58rem !important;
+  line-height: 1 !important;
+  color: inherit !important;
+  opacity: 0.92 !important;
+  pointer-events: none !important;
+  transition: none !important;
+}
+
+html body.theme-industrial.md3-on header.header .btn-header-profile[aria-expanded='true'] .header-profile-caret,
+html body.md3-on header.header .btn-header-profile[aria-expanded='true'] .header-profile-caret {
+  transform: rotate(180deg) !important;
+  transition: none !important;
 }
