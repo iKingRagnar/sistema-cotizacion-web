@@ -153,10 +153,11 @@
   <link rel="stylesheet" href="css/ui-legibility-final.css?v=2-reportes-merge-poweredby-login-logo-2026-05-06">
   <!-- ★ UNIVERSAL ART SKIN — inspirado en MapaSuminregio (solo estética) -->
   <link rel="stylesheet" href="css/universal-art.css?v=3-no-login-overlay-position-override">
-  <link rel="stylesheet" href="css/universal-map-shell.css?v=4-appearance-agnostic-shell-2026-05-07">
+  <link rel="stylesheet" href="css/universal-map-shell.css?v=5-gate-dark-shell-appearance-light-2026-05-07">
   <link rel="stylesheet" href="css/mapa-app-layout.css?v=3-poweredby-slot-wrap-2026-05-07">
-  <link rel="stylesheet" href="css/universal-map-shell-workspace.css?v=1-dark-lienzo-md3-2026-05-07">
-  <link rel="stylesheet" href="css/mapa-chrome-clone.css?v=2-owner-nav-logo-powered-2026-05-07">
+  <link rel="stylesheet" href="css/universal-map-shell-workspace.css?v=2-gate-dark-workspace-appearance-light-2026-05-07">
+  <link rel="stylesheet" href="css/mapa-chrome-clone.css?v=3-gate-dark-chrome-appearance-light-2026-05-07">
+  <link rel="stylesheet" href="css/mapa-shell-sol.css?v=1-sol-chrome-lienzo-2026-05-07">
   <!-- KPI ejecutivos claros (después de nano / universal-art para ganar especificidad) -->
   <link rel="stylesheet" href="css/dashboard-exec-kpi-cards.css?v=1-exec-kpi-light-2026-05-07">
   <!-- Login ejecutivo: al final de la cascada (créditos tipográficos + sin artefactos bajo 100dvh) -->
@@ -2069,8 +2070,8 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=199-prospeccion-heat-hero-fs-2026-05-07"></script>
-  <script src="js/prospeccion-map.js?v=1-mapa-avanzado" defer></script>
+  <script src="js/app.js?v=200-theme-pref-sol-luna-maps-2026-05-07"></script>
+  <script src="js/prospeccion-map.js?v=2-tiles-sol-luna-2026-05-07" defer></script>
   <script src="js/bg-animation.js?v=6-no-motion-mobile-only" defer></script>
   <script src="js/premium-ux.js?v=16-no-motion-boot" defer></script>
   <script src="js/ux-enhancements.js?v=1-premium-ux" defer></script>
@@ -2078,7 +2079,7 @@
   <script src="js/davai.js?v=3-davai-fab-2026-05-08" defer></script>
   <!-- Mega-Essentials: 10 features VALIOSAS en 1 solo archivo, sin observers globales,
        boot diferido tras window.load + 800ms (no bloquea primer paint). -->
-  <script src="js/mega-essentials.js?v=2-mega-essentials-2026-05-07-theme-toggle" defer></script>
+  <script src="js/mega-essentials.js?v=3-html-appearance-light-sync-2026-05-07" defer></script>
   <!-- ❌ DESACTIVADOS v119 — causaban freeze por compounding observers/intervals/click-listeners.
        El CSS guard html#root body#app * en perf-emergency.css garantiza visibilidad sin necesidad de JS.
        Comentados (no removidos por si quieres reactivarlos selectivamente):

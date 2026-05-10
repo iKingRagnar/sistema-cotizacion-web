@@ -98,11 +98,17 @@
           });
 
           mapInstance = L.map(canvas).setView([23.6, -102.5], 5);
-          L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap &copy; CARTO',
-            subdomains: 'abcd',
-            maxZoom: 20,
-          }).addTo(mapInstance);
+          var _light = document.body && document.body.classList.contains('appearance-light');
+          L.tileLayer(
+            _light
+              ? 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+              : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+            {
+              attribution: '&copy; OpenStreetMap &copy; CARTO',
+              subdomains: 'abcd',
+              maxZoom: 20,
+            }
+          ).addTo(mapInstance);
 
           if (!withCoords.length) {
             mapWrap.innerHTML += '<div class="mega-clientmap__overlay">' +

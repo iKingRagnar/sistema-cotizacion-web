@@ -1466,7 +1466,7 @@
     });
   }
   let syncThemeToggleButtonUi = function () {};
-  /** Botón sol/luna eliminado: tema único nano cristalino (forzar oscuro). */
+  /** MegaTheme inyecta el interruptor Sol/Luna; aquí no hay UI legacy adicional. */
   function initThemeToggleButton() {
     syncThemeToggleButtonUi = function () {};
   }
@@ -12972,18 +12972,32 @@
     if (!prospeccionMap) {
       prospeccionMap = L.map(el, { scrollWheelZoom: true });
       var useIndustrialTiles = document.body && document.body.classList.contains('theme-industrial');
-      /* Industrial (Sol y Luna): Voyager — legible y cromático; evita dark_all (bloque negro). Fuera de industrial: OSM estándar. */
-      var tileUrl = useIndustrialTiles
-        ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-        : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-      var tileOpts = useIndustrialTiles
-        ? {
+      var appearanceLight = document.body && document.body.classList.contains('appearance-light');
+      /* Industrial: mapa claro en Sol (light_all), Voyager en Luna. Fuera de industrial: OSM estándar. */
+      var tileUrl;
+      var tileOpts;
+      if (useIndustrialTiles) {
+        if (appearanceLight) {
+          tileUrl = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+          tileOpts = {
             attribution:
               '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
             subdomains: 'abcd',
             maxZoom: 20,
-          }
-        : { attribution: '&copy; OpenStreetMap', maxZoom: 19 };
+          };
+        } else {
+          tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+          tileOpts = {
+            attribution:
+              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20,
+          };
+        }
+      } else {
+        tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+        tileOpts = { attribution: '&copy; OpenStreetMap', maxZoom: 19 };
+      }
       L.tileLayer(tileUrl, tileOpts).addTo(prospeccionMap);
       prospeccionMarkersLayer = makeProspeccionMarkersLayer(prospeccionMap);
     }
@@ -14556,8 +14570,58 @@
   }
 
   const THEME_STORAGE_KEY = 'cotizacion-theme';
-  /** Apariencia fija: solo industrial + nano (sin modo Sol/Luna). */
+  const MEGA_THEME_KEY = 'cotizacion-theme-pref';
+
+  function resolveStoredThemePref() {
+    let pref = null;
+    try {
+      pref = localStorage.getItem(MEGA_THEME_KEY);
+    } catch (_) {}
+    if (!pref) {
+      try {
+        pref = localStorage.getItem(THEME_STORAGE_KEY);
+      } catch (_) {}
+    }
+    if (pref === 'light' || pref === 'dark') return pref;
+    if (window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches) return 'light';
+    return 'dark';
+  }
+
+  /** Sol/Luna alineado a `appearance-light` (MegaTheme) y `cotizacion-theme-pref`. */
+  function applyThemeToDocument(pref, instant) {
+    if (window.MegaTheme && typeof window.MegaTheme.apply === 'function') {
+      window.MegaTheme.apply(pref, !!instant);
+    } else {
+      if (instant) document.body.classList.add('no-theme-transition');
+      if (pref === 'light') {
+        document.body.classList.remove('dark-theme', 'theme-light');
+        document.body.classList.add('theme-industrial', 'appearance-light');
+      } else {
+        document.body.classList.remove('theme-light', 'appearance-light');
+        document.body.classList.add('dark-theme', 'theme-industrial');
+      }
+      try {
+        localStorage.setItem(MEGA_THEME_KEY, pref);
+      } catch (_) {}
+      if (instant) {
+        setTimeout(function () {
+          document.body.classList.remove('no-theme-transition');
+        }, 60);
+      }
+    }
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, pref);
+    } catch (_) {}
+    try {
+      localStorage.setItem(MEGA_THEME_KEY, pref);
+    } catch (_) {}
+    try {
+      document.documentElement.classList.toggle('appearance-light', pref === 'light');
+    } catch (_) {}
+  }
+
   function getTheme() {
+    if (document.body && document.body.classList.contains('appearance-light')) return 'light';
     return 'dark';
   }
   function clearPremiumPaletteOverrides() {
@@ -14574,7 +14638,9 @@
   function applyModalThemeToBox(box) {
     if (!box) return;
     box.classList.remove('modal-box--theme-dark', 'modal-box--theme-industrial');
-    if (getTheme() === 'dark') box.classList.add('modal-box--theme-industrial');
+    /* Modo sol: modal oscuro legible (style.css). Luna: shell industrial. */
+    if (getTheme() === 'light') box.classList.add('modal-box--theme-dark');
+    else box.classList.add('modal-box--theme-industrial');
   }
   function syncOpenModalsTheme() {
     [['#modal', '#modal .modal-box'], ['#modal-stack', '#modal-stack .modal-box'], ['#confirm-modal', '#confirm-modal .modal-box']].forEach(
@@ -14585,15 +14651,15 @@
       }
     );
   }
-  function setTheme(_mode) {
-    try {
-      localStorage.setItem(THEME_STORAGE_KEY, 'dark');
-    } catch (_) {}
-    document.body.classList.remove('appearance-light', 'dark-high-contrast');
-    document.body.classList.add('theme-industrial', 'dark-theme');
+  function setTheme(mode, opts) {
+    const instant = opts && opts.instant === true;
+    const pref = mode === 'light' ? 'light' : 'dark';
+    applyThemeToDocument(pref, instant);
     syncOpenModalsTheme();
     syncThemeColorMeta();
-    try { syncThemeToggleButtonUi(); } catch (_) {}
+    try {
+      syncThemeToggleButtonUi();
+    } catch (_) {}
     /* Dashboard: Chart.js usa colores de leyenda/ejes según tema; recargar si el panel está activo */
     try {
       const pd = qs('#panel-dashboards');
@@ -14623,14 +14689,11 @@
   function syncThemeColorMeta() {
     const m = qs('#meta-theme-color');
     if (!m) return;
-    m.setAttribute('content', '#0c1929');
+    m.setAttribute('content', getTheme() === 'light' ? '#f8fafc' : '#0c1929');
   }
   function initTheme() {
     clearPremiumPaletteOverrides();
-    try {
-      localStorage.setItem(THEME_STORAGE_KEY, 'dark');
-    } catch (_) {}
-    setTheme('dark');
+    setTheme(resolveStoredThemePref(), { instant: true });
   }
   const logoutBtn = qs('#btn-logout');
   if (logoutBtn) {
@@ -14701,7 +14764,7 @@
         <p class="onboarding-lead">Así sacas provecho al sistema desde el primer minuto:</p>
         <ul class="onboarding-list">
           <li><i class="fas fa-keyboard"></i> <span>Atajos <kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> por sección, <kbd>Ctrl</kbd>+<kbd>7</kbd> Acerca de, <kbd>Ctrl</kbd>+<kbd>8</kbd> Auditoría (admin con login), <kbd>Ctrl</kbd>+<kbd>K</kbd> búsqueda global.</span></li>
-          <li><i class="fas fa-droplet"></i> <span>Tema visual fijo: nano machining con vidrio azul cristalino (sin modo día/noche).</span></li>
+          <li><i class="fas fa-droplet"></i> <span>Tema Sol/Luna: interruptor en la barra o <kbd>Shift</kbd>+<kbd>T</kbd>; nano machining con vidrio sobre la misma base industrial.</span></li>
           <li><i class="fas fa-robot"></i> <span>Agente de soporte (robot abajo a la derecha): preguntas sobre cotizaciones, incidentes y más.</span></li>
         </ul>
         <p class="hint" style="margin-top:1rem;">Vuelve a ver atajos con <kbd>?</kbd> o <kbd>Ctrl</kbd>+<kbd>/</kbd>.</p>

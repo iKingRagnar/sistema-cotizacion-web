@@ -107,6 +107,9 @@
         document.body.classList.remove('theme-light', 'appearance-light');
         document.body.classList.add('dark-theme', 'theme-industrial');
       }
+      try {
+        document.documentElement.classList.toggle('appearance-light', pref === 'light');
+      } catch (_) {}
       try { localStorage.setItem(Theme.KEY, pref); } catch (_) {}
       if (instant) setTimeout(function () { document.body.classList.remove('no-theme-transition'); }, 60);
     },

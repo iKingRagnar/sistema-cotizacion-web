@@ -1364,12 +1364,21 @@
     state.map = L.map(el, { scrollWheelZoom: true, zoomControl: false });
 
     var isIndustrial = document.body && document.body.classList.contains('theme-industrial');
-    var tileUrl = isIndustrial
-      ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-    var tileOpts = isIndustrial
-      ? { attribution: '&copy; OpenStreetMap &copy; CARTO', subdomains: 'abcd', maxZoom: 20 }
-      : { attribution: '&copy; OpenStreetMap', maxZoom: 19 };
+    var appearanceLight = document.body && document.body.classList.contains('appearance-light');
+    var tileUrl;
+    var tileOpts;
+    if (isIndustrial) {
+      if (appearanceLight) {
+        tileUrl = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+        tileOpts = { attribution: '&copy; OpenStreetMap &copy; CARTO', subdomains: 'abcd', maxZoom: 20 };
+      } else {
+        tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+        tileOpts = { attribution: '&copy; OpenStreetMap &copy; CARTO', subdomains: 'abcd', maxZoom: 20 };
+      }
+    } else {
+      tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+      tileOpts = { attribution: '&copy; OpenStreetMap', maxZoom: 19 };
+    }
     L.tileLayer(tileUrl, tileOpts).addTo(state.map);
 
     L.control.zoom({ position: 'bottomright' }).addTo(state.map);
