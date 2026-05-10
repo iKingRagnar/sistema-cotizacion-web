@@ -3954,6 +3954,74 @@ body.dark-theme.dark-high-contrast .modal-box.modal-box--theme-dark .table-simpl
   background: #020617;
 }
 
+/* Modales modo Sol: shell claro (modal-box--theme-sol) — contraste espejo de theme-dark */
+.modal-box.modal-box--theme-sol {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+  box-shadow: var(--shadow-xl), 0 0 0 1px rgba(15, 23, 42, 0.06);
+}
+.modal-box.modal-box--theme-sol .modal-header {
+  background: #ffffff;
+  border-bottom-color: #e2e8f0;
+}
+.modal-box.modal-box--theme-sol .modal-header h3 {
+  color: #0f172a;
+}
+.modal-box.modal-box--theme-sol .close {
+  color: #64748b;
+}
+.modal-box.modal-box--theme-sol .close:hover {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.06);
+}
+.modal-box.modal-box--theme-sol .modal-body {
+  background: transparent;
+  color: inherit;
+}
+.modal-box.modal-box--theme-sol.modal-cotizacion .modal-body {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, #f8fafc 14%);
+}
+.modal-box.modal-box--theme-sol .form-group label {
+  color: #475569;
+}
+.modal-box.modal-box--theme-sol .form-group input,
+.modal-box.modal-box--theme-sol .form-group select,
+.modal-box.modal-box--theme-sol .form-group textarea {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+.modal-box.modal-box--theme-sol .form-group input:focus,
+.modal-box.modal-box--theme-sol .form-group select:focus,
+.modal-box.modal-box--theme-sol .form-group textarea:focus {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.18);
+}
+.modal-box.modal-box--theme-sol .table-simple th,
+.modal-box.modal-box--theme-sol .table-simple td {
+  border-color: #e2e8f0;
+  color: #0f172a;
+}
+.modal-box.modal-box--theme-sol .table-simple thead th {
+  background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+  color: #0f172a;
+  font-weight: 600;
+}
+.modal-box.modal-box--theme-sol .table-simple tbody tr:nth-child(even) td {
+  background: rgba(241, 245, 249, 0.65);
+}
+.modal-box.modal-box--theme-sol .table-simple tbody tr:nth-child(odd) td {
+  background: transparent;
+}
+.modal-box.modal-box--theme-sol .table-simple tbody tr:hover td {
+  background: rgba(224, 242, 254, 0.85);
+  box-shadow: inset 0 0 0 1px rgba(14, 165, 233, 0.2);
+}
+.modal-box.modal-box--theme-sol .hint {
+  color: #64748b;
+}
+
 body.dark-theme .form-group label { color: #cbd5e1; }
 body.dark-theme .form-group input,
 body.dark-theme .form-group select,

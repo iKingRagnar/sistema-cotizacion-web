@@ -284,11 +284,11 @@ html body.theme-industrial header.header #btn-header-quick-logout.hidden {
   pointer-events: none !important;
 }
 
-/* ═══════════ Modales / vista previa — negro + texto blanco + borde cristalino (único tema oscuro) ═══ */
-html body.theme-industrial.md3-on #modal .modal-box,
-html body.theme-industrial.md3-on #modal-stack .modal-box,
-html body.theme-industrial.md3-on #confirm-modal .modal-box,
-html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial {
+/* ═══════════ LUNA — modales / vista previa — cristal oscuro (solo cuando NO appearance-light) ═══ */
+html body.theme-industrial.md3-on:not(.appearance-light) #modal .modal-box,
+html body.theme-industrial.md3-on:not(.appearance-light) #modal-stack .modal-box,
+html body.theme-industrial.md3-on:not(.appearance-light) #confirm-modal .modal-box,
+html body.theme-industrial.md3-on:not(.appearance-light) .modal-box.modal-box--theme-industrial {
   background: #121418 !important;
   background-color: #121418 !important;
   background-image: none !important;
@@ -300,51 +300,51 @@ html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial {
     0 0 0 1px rgba(56, 189, 248, 0.08) !important;
 }
 
-html body.theme-industrial.md3-on #modal .modal-header,
-html body.theme-industrial.md3-on #modal-stack .modal-header,
-html body.theme-industrial.md3-on #confirm-modal .modal-header,
-html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial .modal-header {
+html body.theme-industrial.md3-on:not(.appearance-light) #modal .modal-header,
+html body.theme-industrial.md3-on:not(.appearance-light) #modal-stack .modal-header,
+html body.theme-industrial.md3-on:not(.appearance-light) #confirm-modal .modal-header,
+html body.theme-industrial.md3-on:not(.appearance-light) .modal-box.modal-box--theme-industrial .modal-header {
   border-bottom-color: rgba(56, 189, 248, 0.18) !important;
 }
 
-html body.theme-industrial.md3-on #modal .modal-header h2,
-html body.theme-industrial.md3-on #modal .modal-header h3,
-html body.theme-industrial.md3-on #modal-stack .modal-header h2,
-html body.theme-industrial.md3-on #modal-stack .modal-header h3,
-html body.theme-industrial.md3-on #confirm-modal .modal-header h2,
-html body.theme-industrial.md3-on #confirm-modal .modal-title,
-html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial .modal-title {
+html body.theme-industrial.md3-on:not(.appearance-light) #modal .modal-header h2,
+html body.theme-industrial.md3-on:not(.appearance-light) #modal .modal-header h3,
+html body.theme-industrial.md3-on:not(.appearance-light) #modal-stack .modal-header h2,
+html body.theme-industrial.md3-on:not(.appearance-light) #modal-stack .modal-header h3,
+html body.theme-industrial.md3-on:not(.appearance-light) #confirm-modal .modal-header h2,
+html body.theme-industrial.md3-on:not(.appearance-light) #confirm-modal .modal-title,
+html body.theme-industrial.md3-on:not(.appearance-light) .modal-box.modal-box--theme-industrial .modal-title {
   color: #f8fafc !important;
   -webkit-text-fill-color: #f8fafc !important;
 }
 
-html body.theme-industrial.md3-on #modal .modal-body,
-html body.theme-industrial.md3-on #modal-stack .modal-body,
-html body.theme-industrial.md3-on #confirm-modal .modal-body,
-html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial .modal-body {
+html body.theme-industrial.md3-on:not(.appearance-light) #modal .modal-body,
+html body.theme-industrial.md3-on:not(.appearance-light) #modal-stack .modal-body,
+html body.theme-industrial.md3-on:not(.appearance-light) #confirm-modal .modal-body,
+html body.theme-industrial.md3-on:not(.appearance-light) .modal-box.modal-box--theme-industrial .modal-body {
   color: #e2e8f0 !important;
   -webkit-text-fill-color: #e2e8f0 !important;
 }
 
-html body.theme-industrial.md3-on #modal .modal-box .form-hint,
-html body.theme-industrial.md3-on #modal-stack .modal-box .form-hint,
-html body.theme-industrial.md3-on #confirm-modal .modal-box .form-hint,
-html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial .form-hint {
+html body.theme-industrial.md3-on:not(.appearance-light) #modal .modal-box .form-hint,
+html body.theme-industrial.md3-on:not(.appearance-light) #modal-stack .modal-box .form-hint,
+html body.theme-industrial.md3-on:not(.appearance-light) #confirm-modal .modal-box .form-hint,
+html body.theme-industrial.md3-on:not(.appearance-light) .modal-box.modal-box--theme-industrial .form-hint {
   color: #cbd5e1 !important;
   -webkit-text-fill-color: #cbd5e1 !important;
   line-height: 1.35 !important;
 }
-html body.theme-industrial.md3-on #modal .modal-box .form-hint strong,
-html body.theme-industrial.md3-on #modal-stack .modal-box .form-hint strong,
-html body.theme-industrial.md3-on #confirm-modal .modal-box .form-hint strong,
-html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial .form-hint strong {
+html body.theme-industrial.md3-on:not(.appearance-light) #modal .modal-box .form-hint strong,
+html body.theme-industrial.md3-on:not(.appearance-light) #modal-stack .modal-box .form-hint strong,
+html body.theme-industrial.md3-on:not(.appearance-light) #confirm-modal .modal-box .form-hint strong,
+html body.theme-industrial.md3-on:not(.appearance-light) .modal-box.modal-box--theme-industrial .form-hint strong {
   color: #f8fafc !important;
   -webkit-text-fill-color: #f8fafc !important;
 }
-html body.theme-industrial.md3-on #modal .modal-box .form-hint code,
-html body.theme-industrial.md3-on #modal-stack .modal-box .form-hint code,
-html body.theme-industrial.md3-on #confirm-modal .modal-box .form-hint code,
-html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial .form-hint code {
+html body.theme-industrial.md3-on:not(.appearance-light) #modal .modal-box .form-hint code,
+html body.theme-industrial.md3-on:not(.appearance-light) #modal-stack .modal-box .form-hint code,
+html body.theme-industrial.md3-on:not(.appearance-light) #confirm-modal .modal-box .form-hint code,
+html body.theme-industrial.md3-on:not(.appearance-light) .modal-box.modal-box--theme-industrial .form-hint code {
   background: rgba(148, 163, 184, 0.14) !important;
   color: #e2e8f0 !important;
   border: 1px solid rgba(148, 163, 184, 0.22) !important;
@@ -352,27 +352,27 @@ html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial .form-h
   border-radius: 8px !important;
 }
 
-html body.theme-industrial.md3-on #modal .modal-box label,
-html body.theme-industrial.md3-on #modal-stack .modal-box label,
-html body.theme-industrial.md3-on #confirm-modal .modal-box label,
-html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial label,
-html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial .form-label {
+html body.theme-industrial.md3-on:not(.appearance-light) #modal .modal-box label,
+html body.theme-industrial.md3-on:not(.appearance-light) #modal-stack .modal-box label,
+html body.theme-industrial.md3-on:not(.appearance-light) #confirm-modal .modal-box label,
+html body.theme-industrial.md3-on:not(.appearance-light) .modal-box.modal-box--theme-industrial label,
+html body.theme-industrial.md3-on:not(.appearance-light) .modal-box.modal-box--theme-industrial .form-label {
   color: #94a3b8 !important;
   -webkit-text-fill-color: #94a3b8 !important;
 }
 
-html body.theme-industrial.md3-on #modal .modal-box input,
-html body.theme-industrial.md3-on #modal .modal-box select,
-html body.theme-industrial.md3-on #modal .modal-box textarea,
-html body.theme-industrial.md3-on #modal-stack .modal-box input,
-html body.theme-industrial.md3-on #modal-stack .modal-box select,
-html body.theme-industrial.md3-on #modal-stack .modal-box textarea,
-html body.theme-industrial.md3-on #confirm-modal .modal-box input,
-html body.theme-industrial.md3-on #confirm-modal .modal-box select,
-html body.theme-industrial.md3-on #confirm-modal .modal-box textarea,
-html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial input,
-html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial select,
-html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial textarea {
+html body.theme-industrial.md3-on:not(.appearance-light) #modal .modal-box input,
+html body.theme-industrial.md3-on:not(.appearance-light) #modal .modal-box select,
+html body.theme-industrial.md3-on:not(.appearance-light) #modal .modal-box textarea,
+html body.theme-industrial.md3-on:not(.appearance-light) #modal-stack .modal-box input,
+html body.theme-industrial.md3-on:not(.appearance-light) #modal-stack .modal-box select,
+html body.theme-industrial.md3-on:not(.appearance-light) #modal-stack .modal-box textarea,
+html body.theme-industrial.md3-on:not(.appearance-light) #confirm-modal .modal-box input,
+html body.theme-industrial.md3-on:not(.appearance-light) #confirm-modal .modal-box select,
+html body.theme-industrial.md3-on:not(.appearance-light) #confirm-modal .modal-box textarea,
+html body.theme-industrial.md3-on:not(.appearance-light) .modal-box.modal-box--theme-industrial input,
+html body.theme-industrial.md3-on:not(.appearance-light) .modal-box.modal-box--theme-industrial select,
+html body.theme-industrial.md3-on:not(.appearance-light) .modal-box.modal-box--theme-industrial textarea {
   background: rgba(30, 41, 59, 0.85) !important;
   color: #f8fafc !important;
   -webkit-text-fill-color: #f8fafc !important;
@@ -380,29 +380,29 @@ html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial textare
 }
 
 /* Cotizaciones (editar): botones y acciones siempre con espacio (sin amontonarse) */
-html body.theme-industrial.md3-on #modal .cotz-modal .form-actions,
-html body.theme-industrial.md3-on #modal-stack .cotz-modal .form-actions,
-html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial .cotz-modal .form-actions {
+html body.theme-industrial.md3-on:not(.appearance-light) #modal .cotz-modal .form-actions,
+html body.theme-industrial.md3-on:not(.appearance-light) #modal-stack .cotz-modal .form-actions,
+html body.theme-industrial.md3-on:not(.appearance-light) .modal-box.modal-box--theme-industrial .cotz-modal .form-actions {
   display: flex !important;
   flex-wrap: wrap !important;
   gap: 0.5rem !important;
   justify-content: flex-end !important;
   align-items: center !important;
 }
-html body.theme-industrial.md3-on #modal .cotz-modal .form-actions .btn,
-html body.theme-industrial.md3-on #modal-stack .cotz-modal .form-actions .btn,
-html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial .cotz-modal .form-actions .btn {
+html body.theme-industrial.md3-on:not(.appearance-light) #modal .cotz-modal .form-actions .btn,
+html body.theme-industrial.md3-on:not(.appearance-light) #modal-stack .cotz-modal .form-actions .btn,
+html body.theme-industrial.md3-on:not(.appearance-light) .modal-box.modal-box--theme-industrial .cotz-modal .form-actions .btn {
   min-width: 140px;
 }
 
-html body.theme-industrial.md3-on #modal .modal-close,
-html body.theme-industrial.md3-on #modal-stack .modal-close,
-html body.theme-industrial.md3-on #confirm-modal .modal-close,
-html body.theme-industrial.md3-on .modal-box.modal-box--theme-industrial .close {
+html body.theme-industrial.md3-on:not(.appearance-light) #modal .modal-close,
+html body.theme-industrial.md3-on:not(.appearance-light) #modal-stack .modal-close,
+html body.theme-industrial.md3-on:not(.appearance-light) #confirm-modal .modal-close,
+html body.theme-industrial.md3-on:not(.appearance-light) .modal-box.modal-box--theme-industrial .close {
   color: #cbd5e1 !important;
 }
 
-html body.theme-industrial.md3-on .preview-card {
+html body.theme-industrial.md3-on:not(.appearance-light) .preview-card {
   background: #121418 !important;
   background-color: #121418 !important;
   color: #f8fafc !important;
@@ -410,82 +410,82 @@ html body.theme-industrial.md3-on .preview-card {
   border: 1px solid rgba(56, 189, 248, 0.22) !important;
 }
 
-html body.theme-industrial.md3-on .preview-card .pvc-body,
-html body.theme-industrial.md3-on .preview-card .preview-card-body {
+html body.theme-industrial.md3-on:not(.appearance-light) .preview-card .pvc-body,
+html body.theme-industrial.md3-on:not(.appearance-light) .preview-card .preview-card-body {
   color: #e2e8f0 !important;
 }
 
 /* PreviewCard (ojito “ver”): que NUNCA quede texto blanco sobre cajas claras */
-html body.theme-industrial.md3-on .preview-card .pvc-field {
+html body.theme-industrial.md3-on:not(.appearance-light) .preview-card .pvc-field {
   background: rgba(30, 41, 59, 0.88) !important;
   border-color: rgba(56, 189, 248, 0.22) !important;
 }
-html body.theme-industrial.md3-on .preview-card .pvc-field-label {
+html body.theme-industrial.md3-on:not(.appearance-light) .preview-card .pvc-field-label {
   color: #94a3b8 !important;
   -webkit-text-fill-color: #94a3b8 !important;
 }
-html body.theme-industrial.md3-on .preview-card .pvc-field-value {
+html body.theme-industrial.md3-on:not(.appearance-light) .preview-card .pvc-field-value {
   color: #f8fafc !important;
   -webkit-text-fill-color: #f8fafc !important;
 }
 
 /* Badges dentro de preview (evitar rojos claros que “tapan” texto en modo oscuro) */
-html body.theme-industrial.md3-on .preview-card .pvc-badge {
+html body.theme-industrial.md3-on:not(.appearance-light) .preview-card .pvc-badge {
   border-radius: 9999px !important;
   font-weight: 700 !important;
 }
-html body.theme-industrial.md3-on .preview-card .pvc-badge--danger {
+html body.theme-industrial.md3-on:not(.appearance-light) .preview-card .pvc-badge--danger {
   background: rgba(127, 29, 29, 0.92) !important;
   color: #fecaca !important;
   -webkit-text-fill-color: #fecaca !important;
   border: 1px solid rgba(239, 68, 68, 0.55) !important;
 }
-html body.theme-industrial.md3-on .preview-card .pvc-badge--error {
+html body.theme-industrial.md3-on:not(.appearance-light) .preview-card .pvc-badge--error {
   background: rgba(127, 29, 29, 0.92) !important;
   color: #fecaca !important;
   -webkit-text-fill-color: #fecaca !important;
   border: 1px solid rgba(239, 68, 68, 0.55) !important;
 }
-html body.theme-industrial.md3-on .preview-card .pvc-badge--warning {
+html body.theme-industrial.md3-on:not(.appearance-light) .preview-card .pvc-badge--warning {
   background: rgba(120, 53, 15, 0.92) !important;
   color: #fde68a !important;
   -webkit-text-fill-color: #fde68a !important;
   border: 1px solid rgba(245, 158, 11, 0.55) !important;
 }
-html body.theme-industrial.md3-on .preview-card .pvc-badge--success {
+html body.theme-industrial.md3-on:not(.appearance-light) .preview-card .pvc-badge--success {
   background: rgba(20, 83, 45, 0.92) !important;
   color: #86efac !important;
   -webkit-text-fill-color: #86efac !important;
   border: 1px solid rgba(34, 197, 94, 0.45) !important;
 }
-html body.theme-industrial.md3-on .preview-card .pvc-badge--info {
+html body.theme-industrial.md3-on:not(.appearance-light) .preview-card .pvc-badge--info {
   background: rgba(30, 58, 138, 0.92) !important;
   color: #93c5fd !important;
   -webkit-text-fill-color: #93c5fd !important;
   border: 1px solid rgba(59, 130, 246, 0.55) !important;
 }
-html body.theme-industrial.md3-on .preview-card .pvc-badge--purple {
+html body.theme-industrial.md3-on:not(.appearance-light) .preview-card .pvc-badge--purple {
   background: rgba(76, 29, 149, 0.92) !important;
   color: #ddd6fe !important;
   -webkit-text-fill-color: #ddd6fe !important;
   border: 1px solid rgba(168, 85, 247, 0.45) !important;
 }
 
-html body.theme-industrial.md3-on .preview-card .pvc-footer,
-html body.theme-industrial.md3-on .preview-card .pvc-close-row {
+html body.theme-industrial.md3-on:not(.appearance-light) .preview-card .pvc-footer,
+html body.theme-industrial.md3-on:not(.appearance-light) .preview-card .pvc-close-row {
   background: transparent !important;
   background-color: transparent !important;
   border-top-color: rgba(56, 189, 248, 0.18) !important;
 }
 
-html body.theme-industrial.md3-on .preview-card .pvc-footer .pvc-footer-link-hint,
-html body.theme-industrial.md3-on .preview-card .pvc-footer p,
-html body.theme-industrial.md3-on .preview-card .pvc-footer span {
+html body.theme-industrial.md3-on:not(.appearance-light) .preview-card .pvc-footer .pvc-footer-link-hint,
+html body.theme-industrial.md3-on:not(.appearance-light) .preview-card .pvc-footer p,
+html body.theme-industrial.md3-on:not(.appearance-light) .preview-card .pvc-footer span {
   color: #cbd5e1 !important;
   -webkit-text-fill-color: #cbd5e1 !important;
 }
 
-html body.theme-industrial.md3-on .preview-card .pvc-footer code {
+html body.theme-industrial.md3-on:not(.appearance-light) .preview-card .pvc-footer code {
   background: rgba(30, 41, 59, 0.75) !important;
   color: #e2e8f0 !important;
   -webkit-text-fill-color: #e2e8f0 !important;
@@ -494,38 +494,50 @@ html body.theme-industrial.md3-on .preview-card .pvc-footer code {
   padding: 2px 6px !important;
 }
 
-html body.theme-industrial.md3-on table.data-table td.th-actions .prem-action-view,
-html body.theme-industrial.md3-on table.data-table td.th-actions .prem-action-edit,
-html body.theme-industrial.md3-on .prem-action-view,
-html body.theme-industrial.md3-on .prem-action-edit,
-html body.theme-industrial.md3-on .row-actions .prem-action-view,
-html body.theme-industrial.md3-on .row-actions .prem-action-edit {
+html body.theme-industrial.md3-on:not(.appearance-light) table.data-table td.th-actions .prem-action-view,
+html body.theme-industrial.md3-on:not(.appearance-light) table.data-table td.th-actions .prem-action-edit,
+html body.theme-industrial.md3-on:not(.appearance-light) .prem-action-view,
+html body.theme-industrial.md3-on:not(.appearance-light) .prem-action-edit,
+html body.theme-industrial.md3-on:not(.appearance-light) .row-actions .prem-action-view,
+html body.theme-industrial.md3-on:not(.appearance-light) .row-actions .prem-action-edit {
   background: rgba(30, 41, 59, 0.9) !important;
   color: #e0f2fe !important;
   border: 1px solid rgba(56, 189, 248, 0.35) !important;
 }
 
-html body.theme-industrial.md3-on table.data-table td.th-actions .prem-action-view:hover,
-html body.theme-industrial.md3-on table.data-table td.th-actions .prem-action-edit:hover,
-html body.theme-industrial.md3-on .prem-action-view:hover,
-html body.theme-industrial.md3-on .prem-action-edit:hover,
-html body.theme-industrial.md3-on .row-actions .prem-action-view:hover,
-html body.theme-industrial.md3-on .row-actions .prem-action-edit:hover {
+html body.theme-industrial.md3-on:not(.appearance-light) table.data-table td.th-actions .prem-action-view:hover,
+html body.theme-industrial.md3-on:not(.appearance-light) table.data-table td.th-actions .prem-action-edit:hover,
+html body.theme-industrial.md3-on:not(.appearance-light) .prem-action-view:hover,
+html body.theme-industrial.md3-on:not(.appearance-light) .prem-action-edit:hover,
+html body.theme-industrial.md3-on:not(.appearance-light) .row-actions .prem-action-view:hover,
+html body.theme-industrial.md3-on:not(.appearance-light) .row-actions .prem-action-edit:hover {
   background: rgba(56, 189, 248, 0.15) !important;
   border-color: rgba(56, 189, 248, 0.55) !important;
   color: #f8fafc !important;
 }
 
-/* Avatar: el icono SVG no debe “desaparecer” en hover/focus (contraste estable) */
-html body.theme-industrial.md3-on header.header .btn-header-profile:hover > svg,
-html body.theme-industrial.md3-on header.header .btn-header-profile:focus > svg,
-html body.theme-industrial.md3-on header.header .btn-header-profile:focus-visible > svg,
-html body.theme-industrial.md3-on header.header .btn-header-profile:active > svg,
-html body.theme-industrial.md3-on header.header .btn-header-profile[aria-expanded='true'] > svg {
+/* Avatar: LUNA — icono claro sobre header oscuro */
+html body.theme-industrial.md3-on:not(.appearance-light) header.header .btn-header-profile:hover > svg,
+html body.theme-industrial.md3-on:not(.appearance-light) header.header .btn-header-profile:focus > svg,
+html body.theme-industrial.md3-on:not(.appearance-light) header.header .btn-header-profile:focus-visible > svg,
+html body.theme-industrial.md3-on:not(.appearance-light) header.header .btn-header-profile:active > svg,
+html body.theme-industrial.md3-on:not(.appearance-light) header.header .btn-header-profile[aria-expanded='true'] > svg {
   opacity: 1 !important;
   visibility: visible !important;
   display: block !important;
   color: #ffffff !important;
+}
+
+/* Avatar: SOL — mismo contraste invertido */
+html body.theme-industrial.md3-on.appearance-light header.header .btn-header-profile:hover > svg,
+html body.theme-industrial.md3-on.appearance-light header.header .btn-header-profile:focus > svg,
+html body.theme-industrial.md3-on.appearance-light header.header .btn-header-profile:focus-visible > svg,
+html body.theme-industrial.md3-on.appearance-light header.header .btn-header-profile:active > svg,
+html body.theme-industrial.md3-on.appearance-light header.header .btn-header-profile[aria-expanded='true'] > svg {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  color: #0f172a !important;
 }
 
 /* Rail expandido: el texto del módulo (nodo de texto tras el <i>) debe tener tamaño > 0 */
@@ -538,8 +550,8 @@ html body.theme-industrial.md3-on:not(.sidebar-rail-collapsed) .sidebar-nav .tab
 }
 
 /* Columna acciones: ver / editar / vista previa — mismo cristal oscuro (sin pisar peligro/borrar) */
-html body.theme-industrial.md3-on table.data-table td.th-actions .btn:not(.danger):not(.btn-danger):not([class*='delete']):not([class*='borrar']),
-html body.theme-industrial.md3-on table.data-table td.ref-td-actions .btn:not(.danger):not(.btn-danger) {
+html body.theme-industrial.md3-on:not(.appearance-light) table.data-table td.th-actions .btn:not(.danger):not(.btn-danger):not([class*='delete']):not([class*='borrar']),
+html body.theme-industrial.md3-on:not(.appearance-light) table.data-table td.ref-td-actions .btn:not(.danger):not(.btn-danger) {
   background: rgba(30, 41, 59, 0.92) !important;
   background-image: none !important;
   color: #e0f2fe !important;
@@ -548,16 +560,262 @@ html body.theme-industrial.md3-on table.data-table td.ref-td-actions .btn:not(.d
   box-shadow: none !important;
 }
 
-html body.theme-industrial.md3-on table.data-table td.th-actions .btn:not(.danger):not(.btn-danger):hover,
-html body.theme-industrial.md3-on table.data-table td.ref-td-actions .btn:not(.danger):not(.btn-danger):hover {
+html body.theme-industrial.md3-on:not(.appearance-light) table.data-table td.th-actions .btn:not(.danger):not(.btn-danger):hover,
+html body.theme-industrial.md3-on:not(.appearance-light) table.data-table td.ref-td-actions .btn:not(.danger):not(.btn-danger):hover {
   background: rgba(56, 189, 248, 0.14) !important;
   border-color: rgba(125, 211, 252, 0.55) !important;
   color: #f8fafc !important;
   -webkit-text-fill-color: #f8fafc !important;
 }
 
-html body.theme-industrial.md3-on table.data-table td.th-actions .btn:not(.danger):not(.btn-danger) i,
-html body.theme-industrial.md3-on table.data-table td.ref-td-actions .btn:not(.danger):not(.btn-danger) i {
+html body.theme-industrial.md3-on:not(.appearance-light) table.data-table td.th-actions .btn:not(.danger):not(.btn-danger) i,
+html body.theme-industrial.md3-on:not(.appearance-light) table.data-table td.ref-td-actions .btn:not(.danger):not(.btn-danger) i {
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+}
+
+/* ═══════════ SOL — modales / vista previa / acciones tabla (espejo claro legible de Luna) ═══ */
+html body.theme-industrial.md3-on.appearance-light #modal .modal-box,
+html body.theme-industrial.md3-on.appearance-light #modal-stack .modal-box,
+html body.theme-industrial.md3-on.appearance-light #confirm-modal .modal-box,
+html body.theme-industrial.md3-on.appearance-light .modal-box.modal-box--theme-sol {
+  background: #f8fafc !important;
+  background-color: #f8fafc !important;
+  background-image: none !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  border: 1px solid rgba(15, 23, 42, 0.1) !important;
+  box-shadow:
+    0 24px 48px rgba(15, 23, 42, 0.1),
+    0 0 0 1px rgba(56, 189, 248, 0.12) !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light #modal .modal-header,
+html body.theme-industrial.md3-on.appearance-light #modal-stack .modal-header,
+html body.theme-industrial.md3-on.appearance-light #confirm-modal .modal-header,
+html body.theme-industrial.md3-on.appearance-light .modal-box.modal-box--theme-sol .modal-header {
+  border-bottom-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light #modal .modal-header h2,
+html body.theme-industrial.md3-on.appearance-light #modal .modal-header h3,
+html body.theme-industrial.md3-on.appearance-light #modal-stack .modal-header h2,
+html body.theme-industrial.md3-on.appearance-light #modal-stack .modal-header h3,
+html body.theme-industrial.md3-on.appearance-light #confirm-modal .modal-header h2,
+html body.theme-industrial.md3-on.appearance-light #confirm-modal .modal-title,
+html body.theme-industrial.md3-on.appearance-light .modal-box.modal-box--theme-sol .modal-title {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light #modal .modal-body,
+html body.theme-industrial.md3-on.appearance-light #modal-stack .modal-body,
+html body.theme-industrial.md3-on.appearance-light #confirm-modal .modal-body,
+html body.theme-industrial.md3-on.appearance-light .modal-box.modal-box--theme-sol .modal-body {
+  color: #334155 !important;
+  -webkit-text-fill-color: #334155 !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light #modal .modal-box .form-hint,
+html body.theme-industrial.md3-on.appearance-light #modal-stack .modal-box .form-hint,
+html body.theme-industrial.md3-on.appearance-light #confirm-modal .modal-box .form-hint,
+html body.theme-industrial.md3-on.appearance-light .modal-box.modal-box--theme-sol .form-hint {
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
+  line-height: 1.35 !important;
+}
+html body.theme-industrial.md3-on.appearance-light #modal .modal-box .form-hint strong,
+html body.theme-industrial.md3-on.appearance-light #modal-stack .modal-box .form-hint strong,
+html body.theme-industrial.md3-on.appearance-light #confirm-modal .modal-box .form-hint strong,
+html body.theme-industrial.md3-on.appearance-light .modal-box.modal-box--theme-sol .form-hint strong {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+html body.theme-industrial.md3-on.appearance-light #modal .modal-box .form-hint code,
+html body.theme-industrial.md3-on.appearance-light #modal-stack .modal-box .form-hint code,
+html body.theme-industrial.md3-on.appearance-light #confirm-modal .modal-box .form-hint code,
+html body.theme-industrial.md3-on.appearance-light .modal-box.modal-box--theme-sol .form-hint code {
+  background: rgba(15, 23, 42, 0.06) !important;
+  color: #334155 !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  padding: 0.1rem 0.35rem !important;
+  border-radius: 8px !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light #modal .modal-box label,
+html body.theme-industrial.md3-on.appearance-light #modal-stack .modal-box label,
+html body.theme-industrial.md3-on.appearance-light #confirm-modal .modal-box label,
+html body.theme-industrial.md3-on.appearance-light .modal-box.modal-box--theme-sol label,
+html body.theme-industrial.md3-on.appearance-light .modal-box.modal-box--theme-sol .form-label {
+  color: #475569 !important;
+  -webkit-text-fill-color: #475569 !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light #modal .modal-box input,
+html body.theme-industrial.md3-on.appearance-light #modal .modal-box select,
+html body.theme-industrial.md3-on.appearance-light #modal .modal-box textarea,
+html body.theme-industrial.md3-on.appearance-light #modal-stack .modal-box input,
+html body.theme-industrial.md3-on.appearance-light #modal-stack .modal-box select,
+html body.theme-industrial.md3-on.appearance-light #modal-stack .modal-box textarea,
+html body.theme-industrial.md3-on.appearance-light #confirm-modal .modal-box input,
+html body.theme-industrial.md3-on.appearance-light #confirm-modal .modal-box select,
+html body.theme-industrial.md3-on.appearance-light #confirm-modal .modal-box textarea,
+html body.theme-industrial.md3-on.appearance-light .modal-box.modal-box--theme-sol input,
+html body.theme-industrial.md3-on.appearance-light .modal-box.modal-box--theme-sol select,
+html body.theme-industrial.md3-on.appearance-light .modal-box.modal-box--theme-sol textarea {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  border: 1px solid rgba(15, 23, 42, 0.14) !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light #modal .cotz-modal .form-actions,
+html body.theme-industrial.md3-on.appearance-light #modal-stack .cotz-modal .form-actions,
+html body.theme-industrial.md3-on.appearance-light .modal-box.modal-box--theme-sol .cotz-modal .form-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 0.5rem !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+}
+html body.theme-industrial.md3-on.appearance-light #modal .cotz-modal .form-actions .btn,
+html body.theme-industrial.md3-on.appearance-light #modal-stack .cotz-modal .form-actions .btn,
+html body.theme-industrial.md3-on.appearance-light .modal-box.modal-box--theme-sol .cotz-modal .form-actions .btn {
+  min-width: 140px;
+}
+
+html body.theme-industrial.md3-on.appearance-light #modal .modal-close,
+html body.theme-industrial.md3-on.appearance-light #modal-stack .modal-close,
+html body.theme-industrial.md3-on.appearance-light #confirm-modal .modal-close,
+html body.theme-industrial.md3-on.appearance-light .modal-box.modal-box--theme-sol .close {
+  color: #64748b !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light .preview-card {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  border: 1px solid rgba(15, 23, 42, 0.1) !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light .preview-card .pvc-body,
+html body.theme-industrial.md3-on.appearance-light .preview-card .preview-card-body {
+  color: #334155 !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light .preview-card .pvc-field {
+  background: #f1f5f9 !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+}
+html body.theme-industrial.md3-on.appearance-light .preview-card .pvc-field-label {
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
+}
+html body.theme-industrial.md3-on.appearance-light .preview-card .pvc-field-value {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light .preview-card .pvc-badge {
+  border-radius: 9999px !important;
+  font-weight: 700 !important;
+}
+html body.theme-industrial.md3-on.appearance-light .preview-card .pvc-badge--danger,
+html body.theme-industrial.md3-on.appearance-light .preview-card .pvc-badge--error {
+  background: rgba(254, 202, 202, 0.95) !important;
+  color: #991b1b !important;
+  -webkit-text-fill-color: #991b1b !important;
+  border: 1px solid rgba(239, 68, 68, 0.45) !important;
+}
+html body.theme-industrial.md3-on.appearance-light .preview-card .pvc-badge--warning {
+  background: rgba(254, 243, 199, 0.95) !important;
+  color: #92400e !important;
+  -webkit-text-fill-color: #92400e !important;
+  border: 1px solid rgba(245, 158, 11, 0.45) !important;
+}
+html body.theme-industrial.md3-on.appearance-light .preview-card .pvc-badge--success {
+  background: rgba(220, 252, 231, 0.95) !important;
+  color: #166534 !important;
+  -webkit-text-fill-color: #166534 !important;
+  border: 1px solid rgba(34, 197, 94, 0.4) !important;
+}
+html body.theme-industrial.md3-on.appearance-light .preview-card .pvc-badge--info {
+  background: rgba(219, 234, 254, 0.98) !important;
+  color: #1e40af !important;
+  -webkit-text-fill-color: #1e40af !important;
+  border: 1px solid rgba(59, 130, 246, 0.45) !important;
+}
+html body.theme-industrial.md3-on.appearance-light .preview-card .pvc-badge--purple {
+  background: rgba(237, 233, 254, 0.98) !important;
+  color: #6b21a8 !important;
+  -webkit-text-fill-color: #6b21a8 !important;
+  border: 1px solid rgba(168, 85, 247, 0.38) !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light .preview-card .pvc-footer,
+html body.theme-industrial.md3-on.appearance-light .preview-card .pvc-close-row {
+  background: transparent !important;
+  border-top-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light .preview-card .pvc-footer .pvc-footer-link-hint,
+html body.theme-industrial.md3-on.appearance-light .preview-card .pvc-footer p,
+html body.theme-industrial.md3-on.appearance-light .preview-card .pvc-footer span {
+  color: #475569 !important;
+  -webkit-text-fill-color: #475569 !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light .preview-card .pvc-footer code {
+  background: rgba(15, 23, 42, 0.06) !important;
+  color: #334155 !important;
+  border: 1px solid rgba(15, 23, 42, 0.1) !important;
+  border-radius: 8px !important;
+  padding: 2px 6px !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light table.data-table td.th-actions .prem-action-view,
+html body.theme-industrial.md3-on.appearance-light table.data-table td.th-actions .prem-action-edit,
+html body.theme-industrial.md3-on.appearance-light .prem-action-view,
+html body.theme-industrial.md3-on.appearance-light .prem-action-edit,
+html body.theme-industrial.md3-on.appearance-light .row-actions .prem-action-view,
+html body.theme-industrial.md3-on.appearance-light .row-actions .prem-action-edit {
+  background: rgba(255, 255, 255, 0.95) !important;
+  color: #0369a1 !important;
+  border: 1px solid rgba(14, 165, 233, 0.4) !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light table.data-table td.th-actions .prem-action-view:hover,
+html body.theme-industrial.md3-on.appearance-light table.data-table td.th-actions .prem-action-edit:hover,
+html body.theme-industrial.md3-on.appearance-light .prem-action-view:hover,
+html body.theme-industrial.md3-on.appearance-light .prem-action-edit:hover,
+html body.theme-industrial.md3-on.appearance-light .row-actions .prem-action-view:hover,
+html body.theme-industrial.md3-on.appearance-light .row-actions .prem-action-edit:hover {
+  background: rgba(224, 242, 254, 0.95) !important;
+  border-color: rgba(2, 132, 199, 0.55) !important;
+  color: #0c4a6e !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light table.data-table td.th-actions .btn:not(.danger):not(.btn-danger):not([class*='delete']):not([class*='borrar']),
+html body.theme-industrial.md3-on.appearance-light table.data-table td.ref-td-actions .btn:not(.danger):not(.btn-danger) {
+  background: rgba(255, 255, 255, 0.95) !important;
+  background-image: none !important;
+  color: #0369a1 !important;
+  -webkit-text-fill-color: #0369a1 !important;
+  border: 1px solid rgba(14, 165, 233, 0.38) !important;
+  box-shadow: none !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light table.data-table td.th-actions .btn:not(.danger):not(.btn-danger):hover,
+html body.theme-industrial.md3-on.appearance-light table.data-table td.ref-td-actions .btn:not(.danger):not(.btn-danger):hover {
+  background: rgba(224, 242, 254, 0.95) !important;
+  border-color: rgba(2, 132, 199, 0.5) !important;
+  color: #0c4a6e !important;
+  -webkit-text-fill-color: #0c4a6e !important;
+}
+
+html body.theme-industrial.md3-on.appearance-light table.data-table td.th-actions .btn:not(.danger):not(.btn-danger) i,
+html body.theme-industrial.md3-on.appearance-light table.data-table td.ref-td-actions .btn:not(.danger):not(.btn-danger) i {
   color: inherit !important;
   -webkit-text-fill-color: inherit !important;
 }

@@ -3012,7 +3012,7 @@
       }
       modal.classList.add('hidden');
       if (confirmBox) {
-        confirmBox.classList.remove('modal-box--theme-dark', 'modal-box--theme-industrial');
+        confirmBox.classList.remove('modal-box--theme-dark', 'modal-box--theme-sol', 'modal-box--theme-industrial');
       }
       resetOkButton();
       btnOk.onclick = null;
@@ -7709,6 +7709,7 @@
         'modal-box--refaccion-preview',
         'modal-box--ref-stock',
         'modal-box--theme-dark',
+        'modal-box--theme-sol',
         'modal-box--theme-industrial'
       );
       modalBox.style.left = '';
@@ -14856,9 +14857,9 @@
   }
   function applyModalThemeToBox(box) {
     if (!box) return;
-    box.classList.remove('modal-box--theme-dark', 'modal-box--theme-industrial');
-    /* Modo sol: modal oscuro legible (style.css). Luna: shell industrial. */
-    if (getTheme() === 'light') box.classList.add('modal-box--theme-dark');
+    box.classList.remove('modal-box--theme-dark', 'modal-box--theme-sol', 'modal-box--theme-industrial');
+    /* Sol: shell claro (espejo Luna). Luna: shell industrial + portal-overlays oscuro. */
+    if (getTheme() === 'light') box.classList.add('modal-box--theme-sol');
     else box.classList.add('modal-box--theme-industrial');
   }
   function syncOpenModalsTheme() {

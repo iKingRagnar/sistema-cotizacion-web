@@ -426,16 +426,17 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav#sideb
 /* Logo bare — más grande, centrado respecto al título; recorta halo blanco del JPG */
 html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   .header-brand .header-brand-logo-wrap.login-brand-logo.header-brand-logo-wrap--bare {
-  padding: 0 6px !important;
+  /* Padding horizontal: evita que U/L roce el borde; overflow+radio recorta JPEG con esquinas blancas */
+  padding: 2px 12px !important;
   margin: 0 0.25rem 0 0 !important;
-  background: transparent !important;
+  background: var(--mapa-ms-bg) !important;
   border: none !important;
   box-shadow: none !important;
   border-radius: 10px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  overflow: visible !important;
+  overflow: hidden !important;
   flex-shrink: 0;
   align-self: center !important;
   height: 54px !important;
@@ -474,18 +475,6 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   .header-brand .header-brand-logo-img#header-brand-logo:hover {
   /* Misma escala que estado normal: sin “salto” al pasar el mouse */
   transform: translateZ(0) scale(1) !important;
-}
-
-/* Luna: halo blanco en esquinas del asset → fusionar contra header oscuro */
-html body.theme-industrial.universal-map-shell.md3-on:not(.login-open):not(.appearance-light)
-  .header-brand .header-brand-logo-img#header-brand-logo {
-  mix-blend-mode: darken !important;
-}
-
-/* Sol: halos blancos del JPG — multiply funde con el header claro */
-html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).appearance-light
-  .header-brand .header-brand-logo-img#header-brand-logo {
-  mix-blend-mode: multiply !important;
 }
 
 /* Barra 6 accesos director */
