@@ -525,7 +525,7 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-badg
   color: var(--sk-accent) !important;
 }
 
-/* glass-panel--auth — sin caja azul/vidrio ni contorno: formulario flotando sobre la foto */
+/* glass-panel--auth — mismo marco y vidrio sutil que el panel izquierdo (--sk-*); sin capa azul login-neutral. */
 html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel {
   position: relative !important;
   z-index: 1 !important;
@@ -541,13 +541,19 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel
   min-width: 0 !important;
   padding: clamp(1.35rem, 2.8vw, 2rem) !important;
   margin: 0 !important;
-  border-radius: 0 !important;
-  border: none !important;
+  border-radius: var(--sk-radius) !important;
+  border: 1px solid var(--sk-border) !important;
   outline: none !important;
-  background: transparent !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  box-shadow: none !important;
+  background:
+    linear-gradient(145deg, var(--sk-highlight), transparent 40%),
+    var(--sk-glass) !important;
+  backdrop-filter: blur(var(--sk-blur)) saturate(1.32) !important;
+  -webkit-backdrop-filter: blur(var(--sk-blur)) saturate(1.32) !important;
+  box-shadow:
+    0 8px 48px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 0 0 1px rgba(52, 225, 207, 0.18),
+    0 0 42px rgba(52, 225, 207, 0.12) !important;
 }
 
 /* Legibilidad sin panel relleno: sombra de texto sobre la imagen */
@@ -559,7 +565,7 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel
     0 0 20px rgba(0, 0, 0, 0.55) !important;
 }
 
-/* Una sola lectura visual: sin panel contenedor ni ::before premium; inputs y botón aportan forma. */
+/* Tarjeta interior: solo flujo; el marco y el vidrio los lleva .login-form-panel (paridad con izquierda). */
 html body.login-open #login-overlay.login-overlay--exec-layout .login-card {
   width: 100% !important;
   max-width: none !important;
@@ -796,7 +802,7 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-role-card 
   }
 
   html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel {
-    background: transparent !important;
+    background: rgba(30, 41, 59, 0.82) !important;
   }
 }
 
