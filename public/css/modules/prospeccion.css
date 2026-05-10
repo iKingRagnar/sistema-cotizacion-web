@@ -605,47 +605,26 @@
   position: absolute;
   top: 10px;
   right: 10px;
-  z-index: 1020;
+  z-index: 3000;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-/* Fila: modo mapa (Marcadores/Calor/Ambos) + botón reabrir filtros */
-.prospeccion-map-controls__row {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: flex-end;
-  gap: 8px;
+/* Reabrir filtros: mismo bloque que Marcadores — debe respetar [hidden] (no usar solo display:inline-flex en base) */
+.prospeccion-seg.prospeccion-seg--filters-reopen[hidden] {
+  display: none !important;
 }
-.prospeccion-toolbar-filters-reopen {
+.prospeccion-seg.prospeccion-seg--filters-reopen:not([hidden]) {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.45rem 0.65rem;
-  border-radius: 10px;
-  font-size: 0.72rem;
+  gap: 0.3rem;
+  border-left: 1px solid rgba(71, 85, 105, 0.55);
+  color: var(--prs-accent, #2dd4bf);
   font-weight: 700;
-  letter-spacing: 0.03em;
-  cursor: pointer;
-  font-family: inherit;
-  white-space: nowrap;
-  border: 1px solid var(--prs-glass-border);
-  background: var(--prs-glass-bg);
-  backdrop-filter: var(--prs-glass-blur);
-  -webkit-backdrop-filter: var(--prs-glass-blur);
-  color: var(--prs-accent, #0d9488);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
-.prospeccion-toolbar-filters-reopen:hover {
-  color: var(--prs-text);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
-}
-.prospeccion-toolbar-filters-reopen i {
-  font-size: 0.85em;
-  opacity: 0.9;
+.prospeccion-seg.prospeccion-seg--filters-reopen:not([hidden]):hover {
+  color: var(--prs-text, #f1f5f9);
+  background: rgba(255, 255, 255, 0.06);
 }
 .prospeccion-map-btn {
   width: 36px;

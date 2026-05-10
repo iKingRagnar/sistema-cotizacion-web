@@ -140,3 +140,28 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).mapa-layo
 html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-open .mapa-mobile-rail-fab {
   display: none !important;
 }
+
+/* ─── Luna: campana (#btn-notifications) — premium.css aplica fondo crema/ámbar (#fffbeb).
+ *  Ese color gana a .btn-icon-header por el ID; en modo oscuro debe fundirse con el header. ─── */
+html body.theme-industrial:not(.appearance-light).md3-on header.header #btn-notifications,
+html body.theme-industrial:not(.appearance-light) header.header #btn-notifications {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 1px solid transparent !important;
+  color: #e8eaed !important;
+  box-shadow: none !important;
+}
+html body.theme-industrial:not(.appearance-light) header.header #btn-notifications:hover,
+html body.theme-industrial:not(.appearance-light) header.header #btn-notifications:focus-visible {
+  background: rgba(138, 180, 248, 0.14) !important;
+  background-color: rgba(138, 180, 248, 0.14) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+html body.theme-industrial:not(.appearance-light) header.header #btn-notifications i {
+  color: #e8eaed !important;
+}
+html body.theme-industrial:not(.appearance-light) header.header #btn-notifications:hover i {
+  color: #8ab4f8 !important;
+}
