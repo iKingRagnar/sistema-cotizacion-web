@@ -40,21 +40,21 @@
  *     3) Cubrir TODO contenedor intermedio con transparent
  * ============================================================ */
 html body.theme-industrial.appearance-light {
-  /* Sol: foto siempre visible; sin velo sobre el body */
+  /* Sol: vidrio blanco más presente + texto más contrastado (legible en toda la info) */
   --nano-overlay:           transparent;
-  --nano-surface:           rgba(255, 255, 255, 0.22);
-  --nano-surface-strong:    rgba(255, 255, 255, 0.30);
-  --nano-surface-solid:     rgba(255, 255, 255, 0.82);
-  --nano-surface-subtle:    rgba(255, 255, 255, 0.12);
-  --nano-border:            rgba(15, 23, 42, 0.10);
-  --nano-border-strong:     rgba(15, 23, 42, 0.16);
-  --nano-text:              #0b1220;
-  --nano-text-soft:         #1e293b;
-  --nano-text-muted:        #475569;
+  --nano-surface:           rgba(255, 255, 255, 0.38);
+  --nano-surface-strong:    rgba(255, 255, 255, 0.52);
+  --nano-surface-solid:     rgba(255, 255, 255, 0.92);
+  --nano-surface-subtle:    rgba(255, 255, 255, 0.20);
+  --nano-border:            rgba(15, 23, 42, 0.12);
+  --nano-border-strong:     rgba(15, 23, 42, 0.20);
+  --nano-text:              #020617;
+  --nano-text-soft:         #0f172a;
+  --nano-text-muted:        #334155;
   --nano-accent:            #1a73e8;
   --nano-blur:              blur(20px) saturate(180%) brightness(1.05);
   --nano-blur-light:        blur(14px) saturate(165%) brightness(1.04);
-  --nano-shadow:            0 8px 28px rgba(15, 23, 42, 0.08);
+  --nano-shadow:            0 8px 28px rgba(15, 23, 42, 0.10);
 }
 
 html body.theme-industrial:not(.appearance-light) {
