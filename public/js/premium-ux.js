@@ -55,6 +55,11 @@
    * ráfaga y Chrome se congelaba.
    */
   function premHeavyDomObserversSuppressed() {
+    /* Durante modalBody.innerHTML (mismo turno del event loop) #modal puede seguir
+       .hidden y el swap flag; este contador evita scans globales si falla cualquier supuesto. */
+    try {
+      if (typeof window.__premModalDomWriteDepth === 'number' && window.__premModalDomWriteDepth > 0) return true;
+    } catch (_e) {}
     const m = document.getElementById('modal');
     if (m && !m.classList.contains('hidden')) return true;
     if (m && m.dataset.premModalContentSwap === '1') return true;
@@ -727,6 +732,7 @@
 
     document.querySelectorAll('.dashboard-card').forEach(attach);
     const mo = new MutationObserver(muts => {
+      if (premHeavyDomObserversSuppressed()) return;
       for (const m of muts) for (const n of m.addedNodes) {
         if (n.nodeType !== 1) continue;
         if (n.classList?.contains('dashboard-card')) attach(n);

@@ -221,6 +221,18 @@
   function qs(s) { return document.querySelector(s); }
   function qsAll(s) { return document.querySelectorAll(s); }
 
+  /** premium-ux.js: premHeavyDomObserversSuppressed() — bloquea scans pesados durante innerHTML del modal. */
+  function beginPremModalDomWrite() {
+    try {
+      window.__premModalDomWriteDepth = (window.__premModalDomWriteDepth | 0) + 1;
+    } catch (_e) {}
+  }
+  function endPremModalDomWrite() {
+    try {
+      window.__premModalDomWriteDepth = Math.max(0, (window.__premModalDomWriteDepth | 0) - 1);
+    } catch (_e) {}
+  }
+
   (function bindTableReadOnlyGuards() {
     /** Solo columna Acciones: bloquea inicio de selección (refuerzo al CSS). Celdas de datos permiten copiar. */
     function isActionsColumnInteraction(el) {
@@ -7716,7 +7728,12 @@
       return function () {};
     }
     qs('#modal-title').textContent = title;
-    modalBody.innerHTML = bodyHtml;
+    beginPremModalDomWrite();
+    try {
+      modalBody.innerHTML = bodyHtml;
+    } finally {
+      endPremModalDomWrite();
+    }
     try {
       if (typeof window.__cotDebug === 'function') {
         window.__cotDebug('[openModal] innerHTML len=' + String(bodyHtml || '').length);
@@ -7829,7 +7846,12 @@
       return function () {};
     }
     qs('#modal-stack-title').textContent = title;
-    stackBody.innerHTML = bodyHtml;
+    beginPremModalDomWrite();
+    try {
+      stackBody.innerHTML = bodyHtml;
+    } finally {
+      endPremModalDomWrite();
+    }
     wireModalMediaOpenButtons(stackBody);
     const stackBox = qs('#modal-stack .modal-box');
     if (stackBox) applyModalThemeToBox(stackBox);
