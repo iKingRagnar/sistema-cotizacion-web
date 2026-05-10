@@ -367,9 +367,9 @@
       btn.title = 'Cambiar tema (⇧T)';
       btn.setAttribute('aria-label', 'Cambiar tema');
       btn.innerHTML =
+        '<span class="theme-switcher__thumb" aria-hidden="true"></span>' +
         '<i class="fas fa-sun theme-switcher__icon-sun" aria-hidden="true"></i>' +
-        '<i class="fas fa-moon theme-switcher__icon-moon" aria-hidden="true"></i>' +
-        '<span class="theme-switcher__thumb" aria-hidden="true"></span>';
+        '<i class="fas fa-moon theme-switcher__icon-moon" aria-hidden="true"></i>';
       btn.addEventListener('click', THEME.toggle);
 
       /* Insert en el header, antes del avatar de profile */

@@ -122,10 +122,11 @@
       btn.className = 'theme-switcher';
       btn.type = 'button';
       btn.title = 'Cambiar tema (Shift+T)';
+      /* Thumb primero: si va al final en el DOM pinta encima del sol aunque los <i> tengan z-index (FA ::before). */
       btn.innerHTML =
-        '<i class="fas fa-sun theme-switcher__icon-sun"></i>' +
-        '<i class="fas fa-moon theme-switcher__icon-moon"></i>' +
-        '<span class="theme-switcher__thumb"></span>';
+        '<span class="theme-switcher__thumb" aria-hidden="true"></span>' +
+        '<i class="fas fa-sun theme-switcher__icon-sun" aria-hidden="true"></i>' +
+        '<i class="fas fa-moon theme-switcher__icon-moon" aria-hidden="true"></i>';
       btn.addEventListener('click', Theme.toggle);
       var profile = $('#header-profile') || $('.header-profile');
       if (profile && profile.parentNode) profile.parentNode.insertBefore(btn, profile);

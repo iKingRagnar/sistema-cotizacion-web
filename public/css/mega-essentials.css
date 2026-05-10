@@ -77,6 +77,7 @@
   align-items: center;
   padding: 2px;
   margin-right: 8px;
+  isolation: isolate;
 }
 .theme-switcher__thumb {
   width: 20px; height: 20px;

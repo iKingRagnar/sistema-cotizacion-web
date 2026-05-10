@@ -842,8 +842,9 @@ body.theme-industrial .offline-banner {
 body.theme-industrial .notifications-wrap { position: relative !important; }
 
 /* Solo cuando el panel sigue bajo el wrap del header. Si está en portal + .floating,
-   app.js usa position:fixed + top/left inline; los !important de layout aquí rompían Sol (panel fuera de vista). */
-body.theme-industrial.appearance-light .notifications-panel:not(.floating):not([data-portal-body]) {
+   app.js usa position:fixed + top/left inline; los !important de layout aquí rompían Sol (panel fuera de vista).
+   Debe excluir .hidden: si no, display:flex !important gana a .notifications-panel.hidden y el panel “se achica” al cerrar. */
+body.theme-industrial.appearance-light .notifications-panel:not(.floating):not([data-portal-body]):not(.hidden) {
   position: absolute !important;
   right: 0 !important;
   top: calc(100% + 8px) !important;

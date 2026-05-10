@@ -16,6 +16,15 @@ html body.theme-industrial #notifications-panel.notifications-panel:not(.hidden)
   pointer-events: auto !important;
 }
 
+/* Cerrar campana: forzar oculto total si otra hoja gana especificidad con display:flex */
+html body.theme-industrial #notifications-panel.notifications-panel.hidden,
+html body.theme-industrial #notifications-panel.hidden {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
 /* Panel portaleado: app.js asigna top/left al abrir; reglas globales .notifications-panel { position:absolute; top:... !important } deben no aplicar aquí */
 html body.theme-industrial #notifications-panel.notifications-panel.floating[data-portal-body] {
   position: fixed !important;
