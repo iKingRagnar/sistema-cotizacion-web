@@ -3,7 +3,7 @@
  * - Safe areas (notch / home indicator)
  * - Rail lateral como drawer encima del contenido (evita rail ~400px en viewport)
  * - Tablas con scroll horizontal sin celdas clavadas a 120px (style.css @480)
- * - Touch: manipulation en controles, espacio para FAB módulos
+ * - Scroll vertical: región explícita en .app-main (iOS/Android); drawer cerrado no roba toques
  * Carga después de mapa-layout-exact.css
  */
 
@@ -15,10 +15,50 @@ html {
 
 /* ---------- ≤768px — layout principal ---------- */
 @media (max-width: 768px) {
+  /*
+   * Una sola columna táctil: el documento no depende de "scroll del body" (falla en iOS con flex/map).
+   * El marco bajo el header tiene altura de viewport; solo .app-main hace overflow-y.
+   */
+  /* Una sola superficie de scroll: .app-main. Si el body también hace bounce/scroll,
+   * WebKit móvil a veces "absorbe" el gesto y la región interna queda muerta. */
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) {
+    overflow-x: hidden;
+    overflow-y: hidden;
+    touch-action: pan-y pinch-zoom;
+    height: 100%;
+    min-height: 100dvh;
+  }
+
+  html#root {
+    height: 100%;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .app-frame.mapa-app-shell {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-height: calc(100dvh - 4rem) !important;
+    height: calc(100dvh - 4rem) !important;
+    max-height: calc(100dvh - 4rem) !important;
+    overflow: hidden !important;
+  }
+
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) header.header.mapa-app-shell {
     padding-left: max(0.65rem, env(safe-area-inset-left, 0px));
     padding-right: max(0.65rem, env(safe-area-inset-right, 0px));
     padding-top: max(0px, env(safe-area-inset-top, 0px));
+  }
+
+  /* Drawer cerrado: no interceptar toques en el lienzo (evita "pantalla muerta" en WebKit) */
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open):not(.sidebar-open)
+    aside.sidebar-nav.mapa-app-shell {
+    pointer-events: none !important;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-open aside.sidebar-nav.mapa-app-shell {
+    pointer-events: auto !important;
   }
 
   /* Drawer: por encima del workspace, debajo del header fijo (z ~1100 en mapa) */
@@ -45,17 +85,31 @@ html {
 
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-open aside.sidebar-nav.mapa-app-shell {
     left: 0 !important;
+    pointer-events: auto !important;
   }
 
-  /* Contenido full bleed; hueco inferior para FAB “Módulos” + safe area */
+  /* Región de scroll principal (reemplaza overflow-y:visible de mapa-app-layout en móvil) */
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .app-main {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: contain !important;
+    touch-action: pan-y pinch-zoom !important;
     padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .content#main-content {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    min-width: 0 !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    touch-action: pan-y pinch-zoom !important;
     padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
     padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
   }
@@ -64,16 +118,7 @@ html {
   #mobile-sidebar-overlay {
     z-index: 1048 !important;
     -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-  }
-
-  /* Menos delay táctil en controles principales */
-  html body.theme-industrial.md3-on button,
-  html body.theme-industrial.md3-on .btn,
-  html body.theme-industrial.md3-on .tab,
-  html body.theme-industrial.md3-on .btn-icon-header,
-  html body.theme-industrial.md3-on [role="button"] {
-    touch-action: manipulation;
+    touch-action: none;
   }
 
   /* FAB módulos: respeta safe area inferior */
