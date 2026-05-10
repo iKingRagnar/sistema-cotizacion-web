@@ -73,15 +73,16 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-p
   white-space: normal;
 }
 
-/* Contenido bajo barra fija */
+/* Contenido bajo barra fija.
+   Una sola barra vertical del viewport: sin max-height en el marco ni scroll en .app-main
+   (evitaba doble scrollbar: marco recortado + .app-main con overflow:auto). */
 html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .app-frame.mapa-app-shell {
   margin-top: 4rem;
   min-height: calc(100dvh - 4rem);
-  max-height: calc(100dvh - 4rem);
   width: 100%;
   display: flex;
   align-items: stretch;
-  overflow: hidden;
+  overflow: visible;
   box-sizing: border-box;
 }
 
@@ -89,9 +90,18 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .app-main
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: visible;
   display: flex;
   flex-direction: column;
+}
+
+/* nano-fondo pone overflow:auto en .table-wrap; aquí solo scroll horizontal si hace falta. */
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .table-wrap,
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .md-table-wrap {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  max-height: none !important;
 }
 
 /* Rail lateral (altura del workspace, columna flex) */
