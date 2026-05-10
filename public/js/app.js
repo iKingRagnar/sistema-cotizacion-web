@@ -10485,7 +10485,46 @@
     } catch (e) { showToast(parseApiError(e) || 'No se pudo cargar el registro.', 'error'); }
   }
 
-  /** Detalle de auditoría: legible (JSON formateado en acordeón), sin recorte tipo “consola”. */
+  /**
+   * Quita o acorta valores ilegibles en JSON de auditoría (p. ej. imágenes en data URL / base64).
+   */
+  function sanitizeAuditPayloadForDisplay(val, depth) {
+    const maxDepth = 24;
+    if (depth > maxDepth) return '[anidación demasiado profunda]';
+    if (val === null || val === undefined) return val;
+    const t = typeof val;
+    if (t === 'string') {
+      const str = val;
+      if (/^data:[^;]+;base64,/i.test(str)) {
+        const kb = Math.max(1, Math.round(str.length / 1024));
+        return '[data URL / base64 omitida en vista (~' + kb + ' KB de texto); no es un error]';
+      }
+      if (str.length > 420) {
+        return (
+          str.slice(0, 280) +
+          '\n… [' +
+          (str.length - 280) +
+          ' caracteres omitidos — texto largo truncado en auditoría]'
+        );
+      }
+      return str;
+    }
+    if (t !== 'object') return val;
+    if (Array.isArray(val)) {
+      return val.map(function (v) {
+        return sanitizeAuditPayloadForDisplay(v, depth + 1);
+      });
+    }
+    const out = {};
+    const keys = Object.keys(val);
+    for (let i = 0; i < keys.length; i++) {
+      const k = keys[i];
+      out[k] = sanitizeAuditPayloadForDisplay(val[k], depth + 1);
+    }
+    return out;
+  }
+
+  /** Detalle de auditoría: JSON legible; sin volcar base64 ni cadenas gigantes. */
   function formatAuditDetailCellHtml(raw) {
     const s = String(raw || '').trim();
     if (!s) return '<span class="audit-detail-empty">—</span>';
@@ -10493,10 +10532,15 @@
     try {
       parsed = JSON.parse(s);
     } catch (_) {}
-    const body =
-      parsed !== null && typeof parsed === 'object'
-        ? escapeHtml(JSON.stringify(parsed, null, 2))
-        : escapeHtml(s);
+    let body;
+    if (parsed !== null && typeof parsed === 'object') {
+      const safe = sanitizeAuditPayloadForDisplay(parsed, 0);
+      body = escapeHtml(JSON.stringify(safe, null, 2));
+    } else {
+      const truncated =
+        s.length > 900 ? s.slice(0, 700) + '\n… (' + (s.length - 700) + ' caracteres más)' : s;
+      body = escapeHtml(truncated);
+    }
     return (
       '<details class="audit-detail-wrap">' +
       '<summary class="audit-detail-summary">Ver datos del cambio</summary>' +
