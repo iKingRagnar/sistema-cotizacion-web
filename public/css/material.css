@@ -306,7 +306,9 @@ body.theme-industrial .tabs.tabs--rail {
   flex-wrap: nowrap !important;
 }
 
-body.theme-industrial .tab {
+/* Solo rail lateral: la barra superior (mapa-header-owner-nav) usa .tab pero NO .tabs.tabs--rail;
+ * aplicar width:100% / height:44px ahí rompía Sol vs Luna (mapa-chrome/map-shell ganaban en Luna por orden). */
+body.theme-industrial .tabs.tabs--rail .tab {
   display: flex !important;
   align-items: center !important;
   gap: 12px !important;
@@ -329,31 +331,31 @@ body.theme-industrial .tab {
   width: 100% !important;
 }
 
-body.theme-industrial .tab i {
+body.theme-industrial .tabs.tabs--rail .tab i {
   width: 20px !important;
   text-align: center !important;
   font-size: 1rem !important;
   flex-shrink: 0 !important;
 }
 
-body.theme-industrial.appearance-light .tab {
+body.theme-industrial.appearance-light .tabs.tabs--rail .tab {
   background: transparent !important;
   color: #3C4043 !important;
 }
-body.theme-industrial.appearance-light .tab:hover {
+body.theme-industrial.appearance-light .tabs.tabs--rail .tab:hover {
   background: rgba(26,115,232,.06) !important;
   color: #1A73E8 !important;
 }
-body.theme-industrial.appearance-light .tab.active {
+body.theme-industrial.appearance-light .tabs.tabs--rail .tab.active {
   background: #D3E3FD !important;
   color: #1A1B4B !important;
   font-weight: 600 !important;
   animation: none !important;
   box-shadow: none !important;
 }
-body.theme-industrial.appearance-light .tab.active i { color: #1A73E8 !important; }
-body.theme-industrial.appearance-light .tab.highlight { color: #137333 !important; }
-body.theme-industrial.appearance-light .tab.highlight:hover {
+body.theme-industrial.appearance-light .tabs.tabs--rail .tab.active i { color: #1A73E8 !important; }
+body.theme-industrial.appearance-light .tabs.tabs--rail .tab.highlight { color: #137333 !important; }
+body.theme-industrial.appearance-light .tabs.tabs--rail .tab.highlight:hover {
   background: #E6F4EA !important;
 }
 
@@ -364,15 +366,15 @@ body.sidebar-rail-collapsed .sidebar-nav {
 }
 body.sidebar-rail-collapsed .sidebar-nav-title,
 body.sidebar-rail-collapsed .sidebar-global-strip { display: none !important; }
-body.sidebar-rail-collapsed .tab {
+body.sidebar-rail-collapsed .tabs.tabs--rail .tab {
   justify-content: center !important;
   padding: 0 !important;
   width: 48px !important; height: 48px !important;
   border-radius: 9999px !important;
   margin: 0 auto !important;
 }
-body.sidebar-rail-collapsed .tab i { width: auto !important; }
-body.sidebar-rail-collapsed .tab > *:not(i) { display: none !important; }
+body.sidebar-rail-collapsed .tabs.tabs--rail .tab i { width: auto !important; }
+body.sidebar-rail-collapsed .tabs.tabs--rail .tab > *:not(i) { display: none !important; }
 body.sidebar-rail-collapsed .tabs.tabs--rail {
   align-items: center !important;
   padding: 8px 4px 24px !important;
@@ -1128,14 +1130,14 @@ body.theme-industrial:not(.appearance-light) .sidebar-nav {
   background: #1F2937 !important;
   border-right: 1px solid rgba(255,255,255,.08) !important;
 }
-body.theme-industrial:not(.appearance-light) .tab {
+body.theme-industrial:not(.appearance-light) .tabs.tabs--rail .tab {
   color: #94A3B8 !important;
 }
-body.theme-industrial:not(.appearance-light) .tab:hover {
+body.theme-industrial:not(.appearance-light) .tabs.tabs--rail .tab:hover {
   background: rgba(255,255,255,.08) !important;
   color: #E2E8F0 !important;
 }
-body.theme-industrial:not(.appearance-light) .tab.active {
+body.theme-industrial:not(.appearance-light) .tabs.tabs--rail .tab.active {
   background: rgba(26,115,232,.20) !important;
   color: #93C5FD !important;
 }

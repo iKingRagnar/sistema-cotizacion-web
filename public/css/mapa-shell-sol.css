@@ -167,9 +167,8 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
 }
 
 /*
- * Barra superior (Ventas / Clientes / Prospección…): mismo layout que Luna.
- * material.css pone .tab { width:100%; display:flex } para el rail; sin anularlo
- * en Sol los pills del header se apilan como lista vertical.
+ * Barra superior (Ventas / Clientes / Prospección…): mismas medidas que mapa-chrome-clone (Luna).
+ * material.css limita dimensiones .tab al rail (.tabs.tabs--rail); colores solo vía tokens Sol.
  */
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav.mapa-header-owner-nav {
   display: none;
@@ -196,25 +195,22 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill {
-  display: inline-flex !important;
+  display: inline-flex;
   align-items: center;
   gap: 0.38rem;
-  padding: 0.4rem 0.72rem !important;
-  margin: 0 !important;
-  border-radius: 0.55rem !important;
-  font-size: 0.72rem !important;
-  font-weight: 600 !important;
-  line-height: 1.1 !important;
+  padding: 0.4rem 0.72rem;
+  margin: 0;
+  border-radius: 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.1;
   border: none !important;
   background: transparent !important;
   color: var(--nano-text-muted) !important;
   box-shadow: none !important;
-  white-space: nowrap !important;
-  min-height: 0 !important;
-  width: auto !important;
-  height: auto !important;
-  text-align: center !important;
-  flex-shrink: 0;
+  white-space: nowrap;
+  min-height: 0;
+  width: auto;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill i {
