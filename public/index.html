@@ -103,7 +103,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-25..200&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/premium-upgrade.css?v=1-premium">
   <link rel="stylesheet" href="css/modules/dashboard-enhanced.css?v=4-darkmode-fix">
-  <link rel="stylesheet" href="css/modules/prospeccion.css?v=3-darkmode-fix">
+  <link rel="stylesheet" href="css/modules/prospeccion.css?v=4-sidebar-collapse-z-2026-05-08">
   <link rel="manifest" href="manifest.json">
   <!-- Font Awesome (iconos legacy — se mantiene para compat) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
@@ -171,7 +171,7 @@
   <!-- TABLES FIX: corrige primera columna oscura/negra en TODAS las tablas (DEBE ir al final). -->
   <link rel="stylesheet" href="css/tables-fix.css?v=5-tables-fix-actions-2026-05-08">
   <!-- PROSPECCION PRO: KPIs + IA hunter/enrich/pitch/insights/funnel/cluster/compare. -->
-  <link rel="stylesheet" href="css/prospeccion-pro.css?v=6-industrial-sol-sidebar-2026-05-07">
+  <link rel="stylesheet" href="css/prospeccion-pro.css?v=7-dark-head-collapse-2026-05-08">
   <!-- ❌ Supreme CSS desactivadas v119 (forms/tables/davai/prospeccion-supreme).
        Mantenían modificadores que podían interferir con layout original.
    <link rel="stylesheet" href="css/forms-supreme.css?v=4-no-blur-2026-05-08">
@@ -1051,8 +1051,15 @@
           <div id="map-prospeccion" class="prospeccion-map" role="region" aria-label="Mapa de prospectos (legacy)"></div>
 
           <!-- Sidebar (overlays left side of map) -->
-          <div id="prs-sidebar" class="prospeccion-sidebar">
+          <div id="prs-sidebar" class="prospeccion-sidebar" role="complementary" aria-label="Filtros y lista de prospectos en el mapa">
             <div class="prospeccion-sidebar__header">
+              <div class="prospeccion-sidebar__header-row">
+                <span class="prospeccion-sidebar__head-title">Filtros del mapa</span>
+                <button type="button" id="prs-sidebar-collapse" class="prospeccion-sidebar__head-collapse" aria-expanded="true" aria-controls="prs-sidebar" title="Ocultar panel y ver el mapa completo">
+                  <span class="prospeccion-sidebar__head-collapse-text">Ocultar</span>
+                  <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+              </div>
               <input type="search" id="prs-search" class="prospeccion-sidebar__search" placeholder="Buscar empresa, zona, industria..." autocomplete="off">
             </div>
 
@@ -1108,7 +1115,7 @@
           </div>
 
           <!-- Sidebar toggle -->
-          <button id="prs-sidebar-toggle" class="prospeccion-sidebar-toggle shifted" title="Mostrar/ocultar panel"><i class="fas fa-chevron-left"></i></button>
+          <button type="button" id="prs-sidebar-toggle" class="prospeccion-sidebar-toggle shifted" title="Ocultar o mostrar el panel de filtros" aria-expanded="true" aria-controls="prs-sidebar"><i class="fas fa-chevron-left" aria-hidden="true"></i></button>
 
           <!-- Map controls (top-right) — includes legacy toolbar segment + premium view toggle -->
           <div class="prospeccion-map-controls">
@@ -2071,7 +2078,7 @@
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
   <script src="js/app.js?v=200-theme-pref-sol-luna-maps-2026-05-07"></script>
-  <script src="js/prospeccion-map.js?v=2-tiles-sol-luna-2026-05-07" defer></script>
+  <script src="js/prospeccion-map.js?v=3-sidebar-collapse-2026-05-08" defer></script>
   <script src="js/bg-animation.js?v=6-no-motion-mobile-only" defer></script>
   <script src="js/premium-ux.js?v=16-no-motion-boot" defer></script>
   <script src="js/ux-enhancements.js?v=1-premium-ux" defer></script>

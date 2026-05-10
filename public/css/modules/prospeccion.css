@@ -175,7 +175,8 @@
   left: 10px;
   bottom: 10px;
   width: var(--prs-sidebar-w);
-  z-index: 800;
+  /* Por encima de capas internas de Leaflet (~400–700) y controles (~1000), por debajo del drawer (1050+) */
+  z-index: 1020;
   display: flex;
   flex-direction: column;
   background: var(--prs-glass-bg);
@@ -200,7 +201,7 @@
   top: 50%;
   left: 10px;
   transform: translateY(-50%);
-  z-index: 801;
+  z-index: 1022;
   width: 28px;
   height: 56px;
   background: var(--prs-glass-bg);
@@ -228,6 +229,61 @@
   padding: 12px 14px 10px;
   border-bottom: 1px solid var(--prs-glass-border);
   flex-shrink: 0;
+}
+.prospeccion-sidebar__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.prospeccion-sidebar__head-title {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--prs-text-muted);
+  line-height: 1.2;
+}
+.prospeccion-sidebar__head-collapse {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--prs-glass-border);
+  background: rgba(128, 128, 128, 0.08);
+  color: var(--prs-text);
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.prospeccion-sidebar__head-collapse:hover {
+  border-color: var(--prs-accent);
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--prs-text);
+}
+.prospeccion-sidebar__head-collapse:focus-visible {
+  outline: 2px solid var(--prs-accent);
+  outline-offset: 2px;
+}
+.prospeccion-sidebar__head-collapse-text {
+  max-width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 420px) {
+  .prospeccion-sidebar__head-collapse-text {
+    display: none;
+  }
+  .prospeccion-sidebar__head-collapse {
+    padding: 6px 8px;
+  }
 }
 .prospeccion-sidebar__search {
   width: 100%;
@@ -520,7 +576,7 @@
   position: absolute;
   top: 10px;
   right: 10px;
-  z-index: 800;
+  z-index: 1020;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -591,7 +647,7 @@
   position: absolute;
   bottom: 10px;
   right: 10px;
-  z-index: 800;
+  z-index: 1020;
   background: var(--prs-glass-bg);
   backdrop-filter: var(--prs-glass-blur);
   -webkit-backdrop-filter: var(--prs-glass-blur);
@@ -1178,7 +1234,7 @@
     position: absolute;
     top: -36px;
     right: 12px;
-    z-index: 5;
+    z-index: 1022;
     width: 44px;
     height: 32px;
     border-radius: 8px 8px 0 0;

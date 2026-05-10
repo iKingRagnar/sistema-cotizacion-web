@@ -880,6 +880,25 @@ html body.dark-theme .prospeccion-sidebar__header,
 html body:not(.appearance-light) .prospeccion-sidebar__header {
   border-bottom: 1px solid rgba(255,255,255,0.08) !important;
 }
+html body.theme-industrial:not(.appearance-light) .prospeccion-sidebar__head-title,
+html body.dark-theme .prospeccion-sidebar__head-title,
+html body:not(.appearance-light) .prospeccion-sidebar__head-title {
+  color: #f1f5f9 !important;
+}
+html body.theme-industrial:not(.appearance-light) .prospeccion-sidebar__head-collapse,
+html body.dark-theme .prospeccion-sidebar__head-collapse,
+html body:not(.appearance-light) .prospeccion-sidebar__head-collapse {
+  background: rgba(255,255,255,0.08) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  color: #e2e8f0 !important;
+}
+html body.theme-industrial:not(.appearance-light) .prospeccion-sidebar__head-collapse:hover,
+html body.dark-theme .prospeccion-sidebar__head-collapse:hover,
+html body:not(.appearance-light) .prospeccion-sidebar__head-collapse:hover {
+  background: rgba(250,204,21,0.15) !important;
+  border-color: rgba(250,204,21,0.45) !important;
+  color: #fef08a !important;
+}
 html body.theme-industrial:not(.appearance-light) .prospeccion-sidebar__search,
 html body.dark-theme .prospeccion-sidebar__search,
 html body:not(.appearance-light) .prospeccion-sidebar__search {
