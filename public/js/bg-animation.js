@@ -260,13 +260,16 @@
 
     const isMapShell = document.body.classList.contains('universal-map-shell');
 
-    /** En map-shell el rail móvil lo controla app.js (sidebar-open + #mobile-sidebar-overlay). */
-    let overlay = null;
-    if (!isMapShell) {
-      overlay = document.createElement('div');
-      overlay.className = 'prem-sidebar-overlay';
-      document.body.appendChild(overlay);
-    }
+    /**
+     * Mapa / universal-map-shell: el drawer lo abre app.js con #btn-mobile-sidebar-open (FAB en header).
+     * No inyectar .prem-hamburger aquí — duplicaba el icono y competía con el scroll táctil del cajón.
+     */
+    if (isMapShell) return;
+
+    /** Legacy (no map-shell): overlay + hamburguesa premium. */
+    const overlay = document.createElement('div');
+    overlay.className = 'prem-sidebar-overlay';
+    document.body.appendChild(overlay);
 
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -276,9 +279,7 @@
     header.insertBefore(btn, header.firstChild);
 
     function syncHamburgerAria() {
-      var open = isMapShell
-        ? document.body.classList.contains('sidebar-open')
-        : document.body.classList.contains('prem-sidebar-open');
+      var open = document.body.classList.contains('prem-sidebar-open');
       btn.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
     }
 
@@ -291,35 +292,20 @@
       syncHamburgerAria();
     }
 
-    function closeMapRail() {
-      document.body.classList.remove('sidebar-open');
-      var o = document.getElementById('mobile-sidebar-overlay');
-      if (o) o.remove();
-      syncHamburgerAria();
-    }
-
     btn.addEventListener('click', function () {
-      if (isMapShell) {
-        var fab = document.querySelector('#btn-mobile-sidebar-open');
-        if (fab) fab.click();
-        window.setTimeout(syncHamburgerAria, 0);
-        return;
-      }
       document.body.classList.contains('prem-sidebar-open') ? closePremDrawer() : openPremDrawer();
     });
-    if (overlay) overlay.addEventListener('click', closePremDrawer);
+    overlay.addEventListener('click', closePremDrawer);
 
     document.addEventListener('click', function (e) {
       if (window.innerWidth > 768) return;
       if (!e.target.closest('.tabs.tabs--rail .tab')) return;
-      if (isMapShell) closeMapRail();
-      else closePremDrawer();
+      closePremDrawer();
     });
 
     window.addEventListener('resize', function () {
       if (window.innerWidth > 768) {
         closePremDrawer();
-        if (isMapShell) closeMapRail();
       }
     }, { passive: true });
 

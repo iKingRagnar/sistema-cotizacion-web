@@ -105,15 +105,18 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).mapa-layo
   }
 }
 
-/* ─── Móvil: FAB para abrir drawer (Mapa no pone hamburguesa encima del logo) ─── */
+/* ─── Móvil: botón módulos en header (un solo control; app.js abre el drawer) ─── */
 .mapa-mobile-rail-fab {
   display: none;
-  position: fixed;
-  z-index: 1040;
-  left: max(0.75rem, env(safe-area-inset-left, 0px));
-  bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  position: relative;
+  z-index: 1;
+  left: auto;
+  right: auto;
+  top: auto;
+  bottom: auto;
   width: 3rem;
   height: 3rem;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
   padding: 0;
@@ -121,7 +124,7 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).mapa-layo
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: linear-gradient(180deg, rgba(20, 20, 26, 0.96) 0%, rgba(12, 12, 16, 0.98) 100%);
   color: rgba(212, 255, 0, 0.95);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
@@ -132,8 +135,11 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).mapa-layo
 }
 
 @media (max-width: 768px) {
-  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-mobile-rail-fab {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) header .mapa-mobile-rail-fab {
     display: inline-flex;
+    order: -1;
+    align-self: center;
+    margin-right: 0.1rem;
   }
 }
 

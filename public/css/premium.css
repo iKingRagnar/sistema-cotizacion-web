@@ -1252,6 +1252,8 @@ body.md3-on .empty-card p { font-size:.88rem!important; color:#64748b!important;
 
 @media (max-width: 768px) {
   body.md3-on .prem-hamburger { display: flex !important; }
+  /* Mapa shell: menú único en header (#btn-mobile-sidebar-open); ocultar hamburguesa legacy si existiera */
+  body.md3-on.universal-map-shell .prem-hamburger { display: none !important; }
 
   body.md3-on .sidebar-nav {
     position: fixed !important; top: 0 !important; bottom: 0 !important; left: -290px !important;
