@@ -7706,6 +7706,9 @@
       try {
         delete modal.dataset.premModalContentSwap;
       } catch (_e) {}
+      try {
+        if (typeof window.premScheduleIdleWork === 'function') window.premScheduleIdleWork();
+      } catch (_e2) {}
     });
     try {
       if (typeof window.__cotDebug === 'function') {
@@ -7796,6 +7799,9 @@
       try {
         delete modal.dataset.premModalContentSwap;
       } catch (_e) {}
+      try {
+        if (typeof window.premScheduleIdleWork === 'function') window.premScheduleIdleWork();
+      } catch (_e2) {}
     });
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {

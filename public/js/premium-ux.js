@@ -65,9 +65,14 @@
   }
   window.premHeavyDomObserversSuppressed = premHeavyDomObserversSuppressed;
 
-  // UN único MutationObserver global
+  // UN único MutationObserver global (cola idle: fillEmptySelects / fixLabels)
   if (typeof MutationObserver !== 'undefined') {
-    const globalMo = new MutationObserver(() => scheduleIdleWork());
+    const globalMo = new MutationObserver(() => {
+      const m = document.getElementById('modal');
+      const s = document.getElementById('modal-stack');
+      if ((m && m.dataset.premModalContentSwap === '1') || (s && s.dataset.premModalContentSwap === '1')) return;
+      scheduleIdleWork();
+    });
     if (document.body) {
       globalMo.observe(document.body, { childList: true, subtree: true });
     } else {
@@ -2868,12 +2873,24 @@
    * Raíz para fixLabels / fillEmptySelects en la cola idle tras mutaciones.
    * Con modal abierto solo se escanea ese subárbol (evita querySelectorAll sobre
    * todo el SPA al abrir Ver/Editar cliente — Chrome se congelaba).
+   * Importante: durante data-prem-modal-content-swap el modal sigue con .hidden
+   * pero ya mutó #modal-body; sin esta rama la cola idle escaneaba #main-content
+   * entero en cada mutación del body (síntoma: congelamiento aunque otros MO
+   * estuvieran suprimidos).
    */
   function domFixScanRoots() {
     const modal = document.getElementById('modal');
     if (modal && !modal.classList.contains('hidden')) return [modal];
+    if (modal && modal.dataset.premModalContentSwap === '1') {
+      const mb = document.getElementById('modal-body');
+      return mb ? [mb] : [modal];
+    }
     const stack = document.getElementById('modal-stack');
     if (stack && !stack.classList.contains('hidden')) return [stack];
+    if (stack && stack.dataset.premModalContentSwap === '1') {
+      const sb = document.getElementById('modal-stack-body');
+      return sb ? [sb] : [stack];
+    }
     const confirm = document.getElementById('confirm-modal');
     if (confirm && !confirm.classList.contains('hidden')) return [confirm];
     const main = document.getElementById('main-content');
