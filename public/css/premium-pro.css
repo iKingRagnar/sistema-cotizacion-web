@@ -3520,9 +3520,9 @@ html body.theme-industrial:not(.appearance-light) {
   --pp-sh-sm:        0 2px 8px rgba(0, 0, 0, 0.4) !important;
 }
 
-/* En SOL aseguramos los defaults (por si alguien los pisa en otro lado) */
-body.theme-industrial.appearance-light,
-html body.theme-industrial.appearance-light {
+/* En SOL aseguramos los defaults (solo app; no pisar tokens del intro con login-open). */
+body.theme-industrial.appearance-light:not(.login-open),
+html body.theme-industrial.appearance-light:not(.login-open) {
   --ds-surface:      #ffffff !important;
   --ds-surface-2:    #f8fafc !important;
   --ds-text:         #0f172a !important;
@@ -4023,7 +4023,7 @@ body.theme-industrial:not(.appearance-light) table.data-table tbody td {
 body.theme-industrial:not(.appearance-light) {
   color-scheme: dark !important;
 }
-body.theme-industrial.appearance-light {
+body.theme-industrial.appearance-light:not(.login-open) {
   color-scheme: light !important;
 }
 

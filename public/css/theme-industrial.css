@@ -1548,8 +1548,8 @@ body.theme-industrial.login-open #login-overlay .login-particle {
   filter: saturate(1.2);
 }
 
-/* —— Sol (día): cristal claro + acento teal (misma familia que pestañas rail en Luna), sin paneles “Luna” heredados —— */
-body.theme-industrial.appearance-light {
+/* —— Sol (día): cristal claro + acento teal (solo app; login-open conserva foto vía nano/login-exec). —— */
+body.theme-industrial.appearance-light:not(.login-open) {
   color: #0f172a;
   background-color: #f1f5f9;
 }

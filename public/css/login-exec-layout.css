@@ -4,6 +4,11 @@
  * Piel = tema Universal (teal / vidrio); sin amarillo Parker. No sustituye el fondo nano (premium-login-aurora).
  * Selector: #login-overlay.login-overlay--exec-layout (carga después de premium-login-aurora).
  */
+/* Sol + sesión abierta: el documento no debe usar color-scheme claro (inputs nativos / velos). */
+html body.theme-industrial.appearance-light.login-open {
+  color-scheme: dark !important;
+}
+
 html body.login-open #login-overlay.login-overlay--exec-layout {
   /* Acentos un poco más eléctricos */
   --sk-accent: #6ef3e8;

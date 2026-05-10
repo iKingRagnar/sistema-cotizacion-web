@@ -36,8 +36,8 @@ body {
   overflow-x: hidden;
 }
 
-/* Light mode — fondo limpio Google */
-body.theme-industrial.appearance-light {
+/* Light mode — fondo limpio Google (solo app; con login-open manda nano + login-exec, no velo gris). */
+body.theme-industrial.appearance-light:not(.login-open) {
   background-color: #F8F9FA !important;
   background-image: none !important;
   color: #202124 !important;
@@ -519,19 +519,20 @@ body.theme-industrial.appearance-light .btn-dashboard-refresh.outline:hover {
 }
 
 /* ─── 11. INPUTS / FORMS ────────────────────────────────────────────────── */
-body.theme-industrial.appearance-light input[type="text"],
-body.theme-industrial.appearance-light input[type="email"],
-body.theme-industrial.appearance-light input[type="password"],
-body.theme-industrial.appearance-light input[type="number"],
-body.theme-industrial.appearance-light input[type="search"],
-body.theme-industrial.appearance-light input[type="date"],
-body.theme-industrial.appearance-light input[type="tel"],
-body.theme-industrial.appearance-light input[type="url"],
-body.theme-industrial.appearance-light textarea,
-body.theme-industrial.appearance-light select,
-body.theme-industrial.appearance-light .search,
-body.theme-industrial.appearance-light .filter-input,
-body.theme-industrial.appearance-light .notifications-date {
+/* Excluir login-open: el intro usa vidrio oscuro (login-neutral), no inputs Google blancos. */
+body.theme-industrial.appearance-light:not(.login-open) input[type="text"],
+body.theme-industrial.appearance-light:not(.login-open) input[type="email"],
+body.theme-industrial.appearance-light:not(.login-open) input[type="password"],
+body.theme-industrial.appearance-light:not(.login-open) input[type="number"],
+body.theme-industrial.appearance-light:not(.login-open) input[type="search"],
+body.theme-industrial.appearance-light:not(.login-open) input[type="date"],
+body.theme-industrial.appearance-light:not(.login-open) input[type="tel"],
+body.theme-industrial.appearance-light:not(.login-open) input[type="url"],
+body.theme-industrial.appearance-light:not(.login-open) textarea,
+body.theme-industrial.appearance-light:not(.login-open) select,
+body.theme-industrial.appearance-light:not(.login-open) .search,
+body.theme-industrial.appearance-light:not(.login-open) .filter-input,
+body.theme-industrial.appearance-light:not(.login-open) .notifications-date {
   height: 40px !important;
   padding: 0 12px !important;
   border: 1px solid #DADCE0 !important;
@@ -545,26 +546,26 @@ body.theme-industrial.appearance-light .notifications-date {
   width: 100% !important;
 }
 
-body.theme-industrial.appearance-light textarea {
+body.theme-industrial.appearance-light:not(.login-open) textarea {
   height: auto !important;
   min-height: 80px !important;
   padding: 8px 12px !important;
   resize: vertical !important;
 }
 
-body.theme-industrial.appearance-light input:focus,
-body.theme-industrial.appearance-light textarea:focus,
-body.theme-industrial.appearance-light select:focus,
-body.theme-industrial.appearance-light .search:focus,
-body.theme-industrial.appearance-light .filter-input:focus {
+body.theme-industrial.appearance-light:not(.login-open) input:focus,
+body.theme-industrial.appearance-light:not(.login-open) textarea:focus,
+body.theme-industrial.appearance-light:not(.login-open) select:focus,
+body.theme-industrial.appearance-light:not(.login-open) .search:focus,
+body.theme-industrial.appearance-light:not(.login-open) .filter-input:focus {
   border-color: #1A73E8 !important;
   box-shadow: 0 0 0 2px rgba(26,115,232,.22) !important;
 }
 
-body.theme-industrial.appearance-light input::placeholder,
-body.theme-industrial.appearance-light textarea::placeholder { color: #80868B !important; }
+body.theme-industrial.appearance-light:not(.login-open) input::placeholder,
+body.theme-industrial.appearance-light:not(.login-open) textarea::placeholder { color: #80868B !important; }
 
-body.theme-industrial.appearance-light select {
+body.theme-industrial.appearance-light:not(.login-open) select {
   appearance: none !important;
   -webkit-appearance: none !important;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath fill='%235F6368' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E") !important;
@@ -573,7 +574,7 @@ body.theme-industrial.appearance-light select {
   padding-right: 36px !important;
 }
 
-body.theme-industrial.appearance-light .filter-input {
+body.theme-industrial.appearance-light:not(.login-open) .filter-input {
   height: 32px !important;
   font-size: 0.8125rem !important;
   padding: 0 8px !important;
@@ -585,7 +586,7 @@ body.theme-industrial .form-group {
   flex-direction: column !important;
   gap: 4px !important;
 }
-body.theme-industrial.appearance-light .form-group label {
+body.theme-industrial.appearance-light:not(.login-open) .form-group label {
   font-size: 0.8125rem !important;
   font-weight: 500 !important;
   color: #5F6368 !important;
@@ -895,11 +896,8 @@ body.theme-industrial.appearance-light:not(.login-open) .login-overlay.hidden {
   pointer-events: none !important;
 }
 
-/* Login: un solo layout (style.css + login-exec-layout + login-neutral).
-   Modo claro = mismo DOM que luna; solo velo más claro (sin grid/tamaños propios). */
-body.theme-industrial.appearance-light.login-open #login-overlay:not(.hidden) {
-  background-color: rgba(248, 250, 252, 0.9) !important;
-}
+/* Login: NO forzar velo blanco Material en Sol — ganaba a login-exec-layout y lavaba el intro.
+   Fondo/velo: login-exec-layout.css + login-neutral.css + nano. */
 
 body.theme-industrial .login-brand-decoration { display: none !important; }
 
