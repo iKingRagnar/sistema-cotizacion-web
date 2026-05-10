@@ -34,6 +34,14 @@ picture {
     text-size-adjust: 100%;
   }
 
+  /*
+   * nano-fondo/theme: background-attachment:fixed fuerza compositing raro en iOS/Android
+   * (scroll “muerto”, parpadeos, pan que no llega al documento). Scroll ancla la imagen al contenido.
+   */
+  html body.theme-industrial {
+    background-attachment: scroll !important;
+  }
+
   body.md3-on {
     /* Mínimo 16px efectivos aunque un token tema baje body-small */
     font-size: max(16px, 1rem);
@@ -46,15 +54,20 @@ picture {
     font-size: max(16px, 1rem) !important;
   }
 
-  /* Contenedores típicos de tablas datos: solo scroll lateral, alto natural */
-  .table-wrap,
+  /*
+   * Contenedores típicos de tablas datos: solo scroll lateral, alto natural.
+   * premium.css usa body.md3-on .table-wrap { overflow:hidden } — igual especificidad que
+   * body.md3-on aquí; !important rompe el cierre vertical que rompe el pan al documento en táctil.
+   */
+  body.md3-on .table-wrap,
+  body.md3-on .md-table-wrap,
   .cotz-lineas-table-wrap,
   .dashboard-charts-row,
   [class*="table-wrap"],
   body.md3-on .panel .table-responsive {
     max-width: 100%;
-    overflow-x: auto;
-    overflow-y: visible;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-x: contain;
   }
