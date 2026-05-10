@@ -81,11 +81,12 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).appearanc
   --mapa-ms-stat-surface: rgba(255, 255, 255, 0.38);
   --mapa-ms-stat-accent-bg: rgba(212, 255, 0, 0.14);
   --mapa-ms-stat-accent-border: rgba(212, 255, 0, 0.32);
-  --mapa-ms-stat-label: rgba(15, 23, 42, 0.45);
+  --mapa-ms-stat-label: rgba(15, 23, 42, 0.88);
   --mapa-ms-stat-value: #0f172a;
   --mapa-ms-stat-accent-label: #5c6600;
   --mapa-ms-stat-accent-value: #4d5800;
-  --mapa-ms-tab-muted: rgba(15, 23, 42, 0.62);
+  /* Texto rail / pills: sin alfa baja (se veía gris fantasma sobre vidrio claro) */
+  --mapa-ms-tab-muted: #0f172a;
   --mapa-ms-tab-hover-bg: rgba(255, 255, 255, 0.35);
   --mapa-ms-tab-hover-fg: rgba(15, 23, 42, 0.92);
   --mapa-ms-tab-row-border: rgba(15, 23, 42, 0.07);
@@ -94,9 +95,9 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).appearanc
   --mapa-ms-tab-active-icon: #5c6600;
   --mapa-ms-owner-wrap-bg: rgba(255, 255, 255, 0.38);
   --mapa-ms-owner-wrap-border: rgba(255, 255, 255, 0.55);
-  --mapa-ms-owner-pill: rgba(15, 23, 42, 0.55);
+  --mapa-ms-owner-pill: #0f172a;
   --mapa-ms-owner-pill-hover-bg: rgba(255, 255, 255, 0.45);
-  --mapa-ms-owner-pill-hover-fg: rgba(15, 23, 42, 0.92);
+  --mapa-ms-owner-pill-hover-fg: #0f172a;
   --mapa-ms-owner-pill-active-bg: rgba(212, 255, 0, 0.28);
   --mapa-ms-owner-pill-active-fg: var(--mapa-ms-ink-on-accent);
   --mapa-ms-owner-pill-active-icon: var(--mapa-ms-ink-on-accent);
@@ -429,7 +430,8 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   /* Padding horizontal: evita que U/L roce el borde; overflow+radio recorta JPEG con esquinas blancas */
   padding: 2px 12px !important;
   margin: 0 0.25rem 0 0 !important;
-  background: var(--mapa-ms-bg) !important;
+  /* Mismo tinte que la navbar vidrio para camuflar esquinas del JPEG */
+  background: var(--mapa-ms-glass-navbar) !important;
   border: none !important;
   box-shadow: none !important;
   border-radius: 10px !important;
@@ -457,7 +459,9 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   object-fit: contain !important;
   object-position: center center !important;
   display: block;
-  clip-path: none !important;
+  /* JPEG: mismo recorte que login-exec-layout (evita triángulos blancos) */
+  clip-path: inset(4px 6px) !important;
+  -webkit-clip-path: inset(4px 6px) !important;
   /* scale(1.14) + overflow recortaba EXTREMOS; sin movimiento al hover */
   transform: translateZ(0) scale(1);
   transform-origin: center center;

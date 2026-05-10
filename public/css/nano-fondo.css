@@ -50,8 +50,9 @@ html body.theme-industrial.appearance-light:not(.login-open) {
   --nano-border:            rgba(15, 23, 42, 0.12);
   --nano-border-strong:     rgba(15, 23, 42, 0.2);
   --nano-text:              #0f172a;
-  --nano-text-soft:         #334155;
-  --nano-text-muted:        #64748b;
+  /* Sol legible: mismo peso visual — grises legacy casi invisible sobre vidrio blanco */
+  --nano-text-soft:         #0f172a;
+  --nano-text-muted:        #0f172a;
   --nano-accent:            #00d2ff;
   --nano-blur:              blur(12px) saturate(118%);
   --nano-blur-light:        blur(10px) saturate(115%);
@@ -614,6 +615,11 @@ html body.theme-industrial input::placeholder,
 html body.theme-industrial textarea::placeholder {
   color: var(--nano-text-muted) !important;
   opacity: 0.7 !important;
+}
+/* Placeholders modo Sol: alto contraste (token muted ya es oscuro; opacidad plena). */
+html body.theme-industrial.appearance-light:not(.login-open) input::placeholder,
+html body.theme-industrial.appearance-light:not(.login-open) textarea::placeholder {
+  opacity: 1 !important;
 }
 
 
@@ -1932,12 +1938,7 @@ html body.theme-industrial header.header .header-brand img {
   box-shadow: none !important;
 }
 
-/* Map shell (#header-brand-logo): clip genérico anterior cortaba serifas; chrome-clone ya dimensiona. */
-html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) header.header .header-brand img#header-brand-logo {
-  clip-path: none !important;
-  max-width: none !important;
-  max-height: none !important;
-}
+/* Map shell (#header-brand-logo): recorte JPEG / “pestañitas” — ver mapa-layout-exact.css + mapa-chrome-clone.css (login-exec mismo inset). */
 
 /* Sol: sombra suave como antes en marca */
 html body.theme-industrial.appearance-light header.header .header-brand .login-brand-hero-img {

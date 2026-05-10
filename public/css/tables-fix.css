@@ -267,3 +267,116 @@ html body table.data-table tbody td span.cot-actions-row {
     height: 32px !important;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   13. MODO SOL — tables-fix + tables-premium fuerzan #e2e8f0 / hover #fff
+       (oscuro). Sobre vidrio/blanco es ilegible. Revertimos solo con
+       .appearance-light (Luna intacto).
+   ════════════════════════════════════════════════════════════════════════ */
+
+html body.theme-industrial.appearance-light:not(.login-open) table.data-table tbody td,
+html body.theme-industrial.appearance-light:not(.login-open).md3-on table.data-table tbody td,
+html body.theme-industrial.appearance-light:not(.login-open).md3-on .md-table tbody td,
+html body.theme-industrial.appearance-light:not(.login-open).md3-on .table-wrap > table tbody td {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  border-bottom-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+html body.theme-industrial.appearance-light:not(.login-open) table.data-table tbody td span:not(.badge):not(.pill):not(.stock-alert):not(.mega-tag):not(.mega-avatar),
+html body.theme-industrial.appearance-light:not(.login-open).md3-on table.data-table tbody td span:not(.badge):not(.pill):not(.stock-alert):not(.mega-tag):not(.mega-avatar),
+html body.theme-industrial.appearance-light:not(.login-open) table.data-table tbody td a:not(.btn):not(.btn-icon),
+html body.theme-industrial.appearance-light:not(.login-open).md3-on table.data-table tbody td a:not(.btn):not(.btn-icon),
+html body.theme-industrial.appearance-light:not(.login-open) table.data-table tbody td .ref-codigo-text,
+html body.theme-industrial.appearance-light:not(.login-open).md3-on table.data-table tbody td .ref-codigo-text {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+html body.theme-industrial.appearance-light:not(.login-open) table.data-table tbody td strong,
+html body.theme-industrial.appearance-light:not(.login-open).md3-on table.data-table tbody td strong,
+html body.theme-industrial.appearance-light:not(.login-open) table.data-table tbody td b,
+html body.theme-industrial.appearance-light:not(.login-open).md3-on table.data-table tbody td b {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+html body.theme-industrial.appearance-light:not(.login-open) table.data-table tbody td .muted,
+html body.theme-industrial.appearance-light:not(.login-open).md3-on table.data-table tbody td .muted {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+html body.theme-industrial.appearance-light:not(.login-open).md3-on table.data-table tbody td:first-of-type,
+html body.theme-industrial.appearance-light:not(.login-open).md3-on .md-table tbody td:first-of-type {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+html body.theme-industrial.appearance-light:not(.login-open).md3-on table.data-table tbody td.folio,
+html body.theme-industrial.appearance-light:not(.login-open).md3-on table.data-table tbody td.id,
+html body.theme-industrial.appearance-light:not(.login-open).md3-on table.data-table tbody td.codigo,
+html body.theme-industrial.appearance-light:not(.login-open).md3-on table.data-table tbody td.numero-serie,
+html body.theme-industrial.appearance-light:not(.login-open).md3-on table.data-table tbody td.num,
+html body.theme-industrial.appearance-light:not(.login-open).md3-on table.data-table tbody td.money,
+html body.theme-industrial.appearance-light:not(.login-open).md3-on table.data-table tbody td.text-right {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+html body.theme-industrial.appearance-light:not(.login-open).md3-on table.data-table tbody tr:hover td,
+html body.theme-industrial.appearance-light:not(.login-open).md3-on .md-table tbody tr:hover td {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+html body.theme-industrial.appearance-light:not(.login-open) table.data-table thead th,
+html body.theme-industrial.appearance-light:not(.login-open).md3-on table.data-table thead th {
+  background: rgba(248, 250, 252, 0.88) !important;
+  background-color: rgba(248, 250, 252, 0.88) !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  border-bottom-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+html body.theme-industrial.appearance-light:not(.login-open).md3-on table.data-table thead tr.filter-row td .filter-input,
+html body.theme-industrial.appearance-light:not(.login-open).md3-on table.data-table thead tr.filter-row td input.filter-input,
+html body.theme-industrial.appearance-light:not(.login-open).md3-on .md-table thead tr.filter-row td input.filter-input {
+  background: rgba(255, 255, 255, 0.72) !important;
+  border-color: rgba(15, 23, 42, 0.14) !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+html body.theme-industrial.appearance-light:not(.login-open).md3-on table.data-table thead tr.filter-row td .filter-input::placeholder {
+  color: #334155 !important;
+  -webkit-text-fill-color: #334155 !important;
+  opacity: 1 !important;
+}
+
+html body.theme-industrial.appearance-light:not(.login-open).md3-on table.data-table thead tr.filter-row td .filter-input:focus,
+html body.theme-industrial.appearance-light:not(.login-open).md3-on .md-table thead tr.filter-row td .filter-input:focus {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+html body.theme-industrial.appearance-light:not(.login-open) table.data-table .th-actions,
+html body.theme-industrial.appearance-light:not(.login-open) table.data-table td.th-actions,
+html body.theme-industrial.appearance-light:not(.login-open) table.data-table td.actions {
+  background: rgba(255, 255, 255, 0.94) !important;
+  box-shadow: -4px 0 12px -4px rgba(15, 23, 42, 0.1) !important;
+}
+
+/* Refacciones: pills categoría con texto gris sobre fondo claro */
+html body.theme-industrial.appearance-light:not(.login-open) .ref-cat-pill--part {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  border-color: rgba(15, 23, 42, 0.18) !important;
+}
+
+html body.theme-industrial.appearance-light:not(.login-open) .ref-cat-sep,
+html body.theme-industrial.appearance-light:not(.login-open) .ref-cat-empty {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  opacity: 1 !important;
+}

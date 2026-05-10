@@ -175,8 +175,9 @@ html#root body#app.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   font-style: normal !important;
 }
 
-/* Logo map shell: SIN clip-path — inset(4% 7%) cortaba la U y la L al combinar con overflow + scale. */
+/* Logo map shell: JPEG con esquinas blancas — mismo inset que login-exec-layout (px, no %). */
 html#root body#app.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   .header-brand .header-brand-logo-img#header-brand-logo {
-  clip-path: none !important;
+  clip-path: inset(4px 6px) !important;
+  -webkit-clip-path: inset(4px 6px) !important;
 }
