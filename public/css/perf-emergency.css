@@ -1,5 +1,8 @@
 /* ════════════════════════════════════════════════════════════════════════
-   PERF EMERGENCY v6 — v5 sin backdrop en .modal-box (evita freeze al abrir
+   PERF EMERGENCY v7 — v6 + bloque explícito #modal (3 IDs) por si alguna hoja
+   posterior o premium-pro reintroduce blur en el velo; Clientes «Ver» = mismo
+   modal que editar (openModalCliente).
+   v6 — v5 sin backdrop en .modal-box (evita freeze al abrir
    editar/ver: cotización y PDF son superficies enormes; blur GPU = UI colgada).
    v5 — v4 + excepción Nano industrial (backdrop en vidrio real).
    v4 — DOS IDs (html#root + body#app) para ganar contra
@@ -137,6 +140,15 @@ html#root body#app #modal-stack:not(.hidden) .md-dialog-surface {
   visibility: visible !important;
   transform: none !important;
   pointer-events: auto !important;
+}
+
+/* ── 6b. Velo modal: sin blur (refuerzo; 3 IDs > reglas con 1 ID + clases) ─ */
+html#root body#app.theme-industrial #modal,
+html#root body#app.theme-industrial #modal-stack,
+html#root body#app.theme-industrial #confirm-modal,
+html#root body#app.theme-industrial .modal {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 /* ── 7. Reduced motion respect ────────────────────────────────────── */

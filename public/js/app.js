@@ -7720,6 +7720,8 @@
         if (document.activeElement === lastFocusable()) { e.preventDefault(); firstFocusable().focus(); }
       }
     };
+    const prevOpenTrap = modal.__cotModalKeyTrap;
+    if (prevOpenTrap) modal.removeEventListener('keydown', prevOpenTrap);
     const close = () => {
       if (modalBox) {
         modalBox.style.removeProperty('animation');
@@ -7728,11 +7730,16 @@
         modalBox.style.removeProperty('visibility');
       }
       modal.classList.add('hidden');
-      modal.removeEventListener('keydown', handleKey);
+      const prevTrap = modal.__cotModalKeyTrap;
+      if (prevTrap) {
+        modal.removeEventListener('keydown', prevTrap);
+        modal.__cotModalKeyTrap = null;
+      }
       clearInvalidMarks();
       if (previousFocus && typeof previousFocus.focus === 'function') previousFocus.focus();
       if (onClose) onClose();
     };
+    modal.__cotModalKeyTrap = handleKey;
     modal.addEventListener('keydown', handleKey);
     qs('#modal .close').onclick = close;
     const cancelBtn = qs('#modal-body #modal-btn-cancel');
@@ -7782,6 +7789,8 @@
         if (document.activeElement === lastFocusable()) { e.preventDefault(); firstFocusable().focus(); }
       }
     };
+    const prevOpenTrap = modal.__cotModalStackKeyTrap;
+    if (prevOpenTrap) modal.removeEventListener('keydown', prevOpenTrap);
     const close = () => {
       if (stackBox) {
         stackBox.style.removeProperty('animation');
@@ -7790,11 +7799,16 @@
         stackBox.style.removeProperty('visibility');
       }
       modal.classList.add('hidden');
-      modal.removeEventListener('keydown', handleKey);
+      const prevTrap = modal.__cotModalStackKeyTrap;
+      if (prevTrap) {
+        modal.removeEventListener('keydown', prevTrap);
+        modal.__cotModalStackKeyTrap = null;
+      }
       clearInvalidMarks();
       if (previousFocus && typeof previousFocus.focus === 'function') previousFocus.focus();
       if (onClose) onClose();
     };
+    modal.__cotModalStackKeyTrap = handleKey;
     modal.addEventListener('keydown', handleKey);
     const btnClose = qs('#modal-stack-close');
     if (btnClose) btnClose.onclick = close;

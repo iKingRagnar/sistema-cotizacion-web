@@ -650,18 +650,17 @@ html body.theme-industrial .btn-dashboard-refresh {
  *
  *   IMPORTANTE: .modal es el VELO de fondo (overlay completo),
  *   .modal-box / .modal-content / .modal-panel es la CAJA.
- *   - El velo debe quedarse oscuro translucido con blur
- *     (permite ver la imagen industrial difuminada detras).
+ *   - El velo: oscuro translúcido SIN backdrop-filter (evita GPU stall).
  *   - La caja del modal: sólida (--nano-surface-solid), sin blur pesado (GPU).
  * ============================================================ */
 
-/* VELO del modal: oscuro translucido con blur (NO blanco!) */
+/* VELO del modal: oscuro translúcido SIN blur (blur a pantalla completa = GPU stall con tablas grandes). */
 html body.theme-industrial .modal {
-  background: rgba(5, 8, 15, 0.55) !important;
-  background-color: rgba(5, 8, 15, 0.55) !important;
+  background: rgba(5, 8, 15, 0.68) !important;
+  background-color: rgba(5, 8, 15, 0.68) !important;
   background-image: none !important;
-  backdrop-filter: blur(8px) saturate(120%) !important;
-  -webkit-backdrop-filter: blur(8px) saturate(120%) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   border: none !important;
   box-shadow: none !important;
 }
@@ -707,9 +706,9 @@ html body.theme-industrial header.header .notifications-panel *:not(img):not(i):
 
 html body.theme-industrial .modal-backdrop,
 html body.theme-industrial .admin-hub-overlay {
-  background: rgba(5, 8, 15, 0.55) !important;
-  backdrop-filter: blur(8px) saturate(120%) !important;
-  -webkit-backdrop-filter: blur(8px) saturate(120%) !important;
+  background: rgba(5, 8, 15, 0.68) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 

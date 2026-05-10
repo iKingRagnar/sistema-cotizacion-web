@@ -4050,9 +4050,10 @@ body.theme-industrial:not(.appearance-light) .modal,
 body.theme-industrial:not(.appearance-light) #modal,
 body.theme-industrial:not(.appearance-light) #modal-stack,
 body.theme-industrial:not(.appearance-light) #confirm-modal {
-  background: rgba(0, 0, 0, 0.80) !important;
-  backdrop-filter: blur(4px) !important;
-  -webkit-backdrop-filter: blur(4px) !important;
+  background: rgba(0, 0, 0, 0.82) !important;
+  /* Sin backdrop-filter: blur en velo a pantalla completa (GPU stall sobre tablas densas / Clientes Ver). */
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 body.theme-industrial:not(.appearance-light) .modal-box,
 body.theme-industrial:not(.appearance-light) .modal-confirm {
@@ -4116,9 +4117,9 @@ body.theme-industrial.appearance-light .modal,
 body.theme-industrial.appearance-light #modal,
 body.theme-industrial.appearance-light #modal-stack,
 body.theme-industrial.appearance-light #confirm-modal {
-  background: rgba(15, 23, 42, 0.45) !important;
-  backdrop-filter: blur(4px) !important;
-  -webkit-backdrop-filter: blur(4px) !important;
+  background: rgba(15, 23, 42, 0.52) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 body.theme-industrial.appearance-light .modal-box,
 body.theme-industrial.appearance-light .modal-confirm {
