@@ -18,16 +18,26 @@ html {
 /* ---------- ≤768px — layout principal ---------- */
 @media (max-width: 768px) {
   /*
+   * iOS/WebKit: premium.css §132 (≤640px) pone overflow-x:hidden !important en html, body.
+   * Eso suele romper el scroll vertical táctil del documento en Safari iOS. Gana en cascada
+   * (misma especificidad + !important, hoja después) usando overflow-x: clip en map shell.
+   */
+  html:has(body.theme-industrial.universal-map-shell.md3-on:not(.login-open)) {
+    overflow-x: clip !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /*
    * Scroll = documento (html/body). Sin altura fija en .app-frame: el contenido crece y el
    * viewport hace pan/scroll nativo (comportamiento que sí implementan todos los móviles).
    */
   html {
-    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
   }
 
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) {
-    overflow-x: hidden;
+    overflow-x: clip !important;
+    max-width: 100vw !important;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     min-height: 100dvh;
