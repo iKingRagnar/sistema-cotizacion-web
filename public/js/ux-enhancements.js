@@ -36,6 +36,9 @@
     if (prefersReducedMotion()) return;
     var btn = e.target.closest('.btn');
     if (!btn || btn.disabled) return;
+    /* Ripple en celdas de tablas dispara mutaciones en tbody → cientos de observers;
+       openModal ya ocurrió en este clic; el span extra puede recongelar Chrome. */
+    if (btn.closest('table.data-table')) return;
 
     var rect = btn.getBoundingClientRect();
     var ripple = document.createElement('span');
@@ -63,6 +66,9 @@
       if (!target.classList.contains('modal')) return;
 
       if (!target.classList.contains('hidden')) {
+        /* #modal / #modal-stack: app.js fuerza animation:none en .modal-box tras el paint;
+           pm-modal-entering choca con eso y añade trabajo/relayout innecesario. */
+        if (target.id === 'modal' || target.id === 'modal-stack') return;
         /* Modal just became visible */
         var box = target.querySelector('.modal-box');
         if (box) {

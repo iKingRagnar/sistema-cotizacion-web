@@ -73,9 +73,8 @@
   // UN único MutationObserver global (cola idle: fillEmptySelects / fixLabels)
   if (typeof MutationObserver !== 'undefined') {
     const globalMo = new MutationObserver(() => {
-      const m = document.getElementById('modal');
-      const s = document.getElementById('modal-stack');
-      if ((m && m.dataset.premModalContentSwap === '1') || (s && s.dataset.premModalContentSwap === '1')) return;
+      /* Misma política que el resto de observers: swap, depth, o modal visible */
+      if (premHeavyDomObserversSuppressed()) return;
       scheduleIdleWork();
     });
     if (document.body) {
