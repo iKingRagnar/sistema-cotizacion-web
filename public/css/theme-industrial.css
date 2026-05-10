@@ -1473,6 +1473,8 @@ body.theme-industrial.login-open #login-overlay {
     url('/fondos/nano-machining-services.webp');
   background-size: cover, cover, cover;
   background-position: center, center, center;
+  /* Misma URL que con scroll abajo: sin scroll fijo evita costura con varias capas (tema + exec). */
+  background-attachment: scroll, scroll, scroll;
 }
 body.theme-industrial.login-open #login-overlay::before {
   background-image:

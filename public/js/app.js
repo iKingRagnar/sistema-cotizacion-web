@@ -986,10 +986,30 @@
     }
   }
 
+  /** Tras logout desde pestañas largas (p. ej. Prospección), el navegador puede restaurar scroll; el login fijo queda desalineado y se ve una “costura” en el fondo. */
+  function resetViewportScrollForLogin() {
+    try {
+      if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    } catch (_) {}
+    const force = function () {
+      window.scrollTo(0, 0);
+      const de = document.documentElement;
+      if (de) {
+        de.scrollTop = 0;
+        de.scrollLeft = 0;
+      }
+      document.body.scrollTop = 0;
+      document.body.scrollLeft = 0;
+    };
+    force();
+    requestAnimationFrame(force);
+  }
+
   function showLoginOverlay(show) {
     const el = qs('#login-overlay');
     if (!el) return;
     if (show) {
+      resetViewportScrollForLogin();
       document.body.classList.add('login-open');
       el.classList.remove('hidden');
       const errEl = qs('#login-error');
@@ -1002,6 +1022,9 @@
     } else {
       el.classList.add('hidden');
       document.body.classList.remove('login-open');
+      try {
+        if ('scrollRestoration' in history) history.scrollRestoration = 'auto';
+      } catch (_) {}
     }
   }
   function updateAuditTabVisibility() {
@@ -15748,5 +15771,12 @@
     updateAuditTabVisibility();
     finishBoot();
   }
+  window.addEventListener('pageshow', function () {
+    if (document.body.classList.contains('login-open')) resetViewportScrollForLogin();
+  });
+  window.addEventListener('load', function () {
+    if (document.body.classList.contains('login-open')) resetViewportScrollForLogin();
+  });
+
   boot();
 })();

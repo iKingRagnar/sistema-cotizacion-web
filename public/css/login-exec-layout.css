@@ -42,7 +42,7 @@ html body.login-open #login-overlay.login-overlay.login-overlay--exec-layout {
     url("../fondos/nano-machining-services.webp") !important;
   background-size: cover, cover !important;
   background-position: center center, center center !important;
-  background-attachment: scroll, scroll !important;
+  background-attachment: scroll !important;
   background-repeat: no-repeat, no-repeat !important;
   box-shadow: none !important;
   outline: none !important;
@@ -69,6 +69,9 @@ html body.login-open #login-overlay.login-overlay.login-overlay--exec-layout {
 /* Solo cortar scroll del documento; sin max-height en html/body (evita franja inferior). */
 html:has(body.login-open #login-overlay.login-overlay--exec-layout:not(.hidden)) {
   overflow: hidden;
+  height: 100%;
+  overscroll-behavior: none;
+  scroll-padding-top: 0;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout::after {
