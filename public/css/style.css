@@ -94,7 +94,8 @@ body {
   cursor: default;
   position: relative;
   isolation: isolate;
-  overflow-x: hidden;
+  /* hidden en X rompe scroll vertical táctil en Safari iOS; clip recorta sin ese bug */
+  overflow-x: clip;
 }
 /* Allow text selection in data areas, prevent in chrome */
 .data-table td, .data-table th, .card p, .card span, .modal-box p, .modal-box span,
