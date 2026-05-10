@@ -1,38 +1,88 @@
 /**
  * mapa-shell-sol.css — Cromo universal-map-shell en modo Sol (.appearance-light).
- * Las reglas oscuras de mapa-chrome / universal-map-shell están acotadas con :not(.appearance-light);
- * aquí se aplica vidrio y tipografía legible usando tokens --nano-* (nano-fondo.css).
+ * Espejo estructural de mapa-chrome-clone.css (Luna): misma geometría, tipografía y jerarquía;
+ * solo invierten tintes de superficie y tinta para legibilidad en claro.
+ * Tokens de acento = mismos que Luna (--mapa-ms-accent #d4ff00, LIVE #3dd96f).
  */
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) {
-  --mapa-sol-accent: #15803d;
-  --mapa-sol-accent-dim: rgba(21, 128, 61, 0.22);
+  --mapa-sol-ms-bg: #f4f5f9;
+  --mapa-sol-accent: #d4ff00;
+  --mapa-sol-accent-dim: rgba(212, 255, 0, 0.35);
+  --mapa-sol-ink-on-accent: #07070a;
+  --mapa-sol-border: rgba(15, 23, 42, 0.08);
+  --mapa-sol-status-green: #3dd96f;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) header.header.mapa-ms-navbar-root {
-  background: var(--nano-surface-strong) !important;
-  -webkit-backdrop-filter: var(--nano-blur-light) !important;
-  backdrop-filter: var(--nano-blur-light) !important;
-  border-bottom: 1px solid var(--nano-border) !important;
-  box-shadow: var(--nano-shadow) !important;
+  background: color-mix(in oklab, var(--mapa-sol-ms-bg) 88%, transparent) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(12px) !important;
+  border-bottom: 1px solid var(--mapa-sol-border) !important;
+  box-shadow: none !important;
+  padding-inline: 1rem !important;
 }
 
+@media (min-width: 640px) {
+  html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) header.header.mapa-ms-navbar-root {
+    padding-inline: 1.5rem !important;
+  }
+}
+
+/* Marca: copia 1:1 de mapa-chrome-clone (columna + orden + tamaños Syne/Inter); tintas para claro */
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .header-brand-text {
-  border-left-color: var(--nano-border) !important;
+  border-left-color: rgba(15, 23, 42, 0.12) !important;
+  flex-direction: column !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .header-brand-service {
-  font-family: Inter, system-ui, sans-serif !important;
-  font-size: 0.8125rem !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.06em !important;
+  order: 1 !important;
+  font-family: "Syne", Inter, system-ui, sans-serif !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.18em !important;
   text-transform: uppercase !important;
-  color: var(--nano-text) !important;
+  color: rgba(15, 23, 42, 0.9) !important;
+  line-height: 1 !important;
+  margin: 0 !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .header-brand-eyebrow {
-  color: var(--nano-text-muted) !important;
-  letter-spacing: 0.1em !important;
+  order: 2 !important;
+  font-family: Inter, system-ui, sans-serif !important;
+  font-size: 0.625rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.25em !important;
+  text-transform: uppercase !important;
+  color: rgba(15, 23, 42, 0.42) !important;
+  line-height: 1.2 !important;
+  margin: 0.35rem 0 0 !important;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .header-brand-tagline {
+  display: none !important;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open)
+  .header-brand .header-brand-logo-wrap.login-brand-logo.header-brand-logo-wrap--bare {
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open)
+  .header-brand .header-brand-logo-wrap--bare .login-brand-hero-img,
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open)
+  .header-brand .header-brand-logo-img#header-brand-logo {
+  max-height: 38px !important;
+  width: auto !important;
+  height: auto !important;
+  clip-path: none !important;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 1px 3px rgba(15, 23, 42, 0.2));
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .btn-icon-header {
@@ -56,49 +106,62 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-live-pill {
-  background: rgba(21, 128, 61, 0.1) !important;
-  border: 1px solid rgba(21, 128, 61, 0.28) !important;
+  background: rgba(61, 217, 111, 0.1) !important;
+  border: 1px solid rgba(61, 217, 111, 0.22) !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-live-dot {
-  background: var(--mapa-sol-accent) !important;
-  box-shadow: 0 0 0 2px rgba(21, 128, 61, 0.35) !important;
+  background: var(--mapa-sol-status-green) !important;
+  box-shadow: 0 0 0 2px rgba(61, 217, 111, 0.35) !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-live-text {
-  color: var(--mapa-sol-accent) !important;
+  color: var(--mapa-sol-status-green) !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) aside.sidebar-nav.mapa-ms-sidebar-root {
-  background: var(--nano-surface) !important;
-  -webkit-backdrop-filter: var(--nano-blur) !important;
-  backdrop-filter: var(--nano-blur) !important;
-  border-right: 1px solid var(--nano-border) !important;
+  background: linear-gradient(to bottom, #f5f6fa 0%, #eef0f5 50%, #f2f4f8 100%) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(12px) !important;
+  border-right: 1px solid var(--mapa-sol-border) !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open)
   .sidebar-nav.mapa-ms-sidebar-root .sidebar-nav-toolbar.mapa-ms-sidebar-top {
-  border-bottom: 1px solid var(--nano-border) !important;
+  align-items: flex-start !important;
+  padding: 1.25rem 1.25rem 1rem !important;
+  border-bottom: 1px solid var(--mapa-sol-border) !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-title-accent.mapa-rail-accent {
-  background: linear-gradient(180deg, var(--mapa-sol-accent) 0%, var(--mapa-sol-accent-dim) 100%) !important;
+  background: linear-gradient(
+    180deg,
+    var(--mapa-sol-accent) 0%,
+    rgba(212, 255, 0, 0.4) 100%
+  ) !important;
   box-shadow: none !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-display-title.mapa-rail-title {
-  font-family: Inter, system-ui, sans-serif !important;
-  font-size: 0.8125rem !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.05em !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-family: "Syne", Inter, system-ui, sans-serif !important;
+  font-size: 1.5rem !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.18em !important;
   text-transform: uppercase !important;
-  line-height: 1.2 !important;
-  color: var(--nano-text) !important;
+  line-height: 1 !important;
+  color: #0f172a !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-display-kicker {
-  color: var(--nano-text-muted) !important;
-  letter-spacing: 0.08em !important;
+  margin: 0.35rem 0 0 !important;
+  padding: 0 !important;
+  font-size: 0.625rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.18em !important;
+  text-transform: uppercase !important;
+  color: rgba(15, 23, 42, 0.45) !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-rail-collapse.mapa-rail-collapse-btn {
@@ -111,59 +174,78 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-stat-trio {
-  border-bottom: 1px solid var(--nano-border);
+  border-bottom: 1px solid var(--mapa-sol-border);
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-stat-card {
-  background: var(--nano-surface-subtle);
-  border: 1px solid var(--nano-border);
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--mapa-sol-border);
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-stat-card--accent {
-  background: rgba(21, 128, 61, 0.08);
-  border-color: var(--mapa-sol-accent-dim);
+  background: rgba(212, 255, 0, 0.1);
+  border-color: rgba(212, 255, 0, 0.28);
+}
+
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-stat-card--accent::before {
+  content: "";
+  position: absolute;
+  top: -1rem;
+  right: -1rem;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  background: rgba(212, 255, 0, 0.14);
+  filter: blur(16px);
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-stat-head {
-  color: var(--nano-text-muted);
+  color: rgba(15, 23, 42, 0.45);
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-stat-card--accent .mapa-ms-stat-head {
-  color: var(--mapa-sol-accent);
+  color: #5c6600;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-stat-value {
-  color: var(--nano-text);
+  color: #0f172a;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-stat-card--accent .mapa-ms-stat-value {
-  color: var(--mapa-sol-accent);
+  color: #4d5800;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll .tab {
-  color: var(--nano-text-muted) !important;
-  border-bottom-color: var(--nano-border) !important;
+  width: 100% !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  padding: 0.875rem 1rem !important;
+  justify-content: flex-start !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  color: rgba(15, 23, 42, 0.52) !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06) !important;
+  box-shadow: none !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll .tab:hover {
-  background: var(--nano-surface-subtle) !important;
-  color: var(--nano-text) !important;
+  background: rgba(15, 23, 42, 0.04) !important;
+  color: rgba(15, 23, 42, 0.92) !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll .tab.active {
-  background: var(--nano-surface-strong) !important;
-  color: var(--mapa-sol-accent) !important;
+  background: rgba(212, 255, 0, 0.12) !important;
+  color: #3d4700 !important;
+  border-bottom-color: rgba(15, 23, 42, 0.06) !important;
+  box-shadow: none !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll .tab.active i {
-  color: var(--mapa-sol-accent) !important;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open)
-  .header-brand .header-brand-logo-wrap--bare .login-brand-hero-img,
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open)
-  .header-brand .header-brand-logo-img#header-brand-logo {
-  filter: drop-shadow(0 1px 3px rgba(15, 23, 42, 0.2));
+  color: #5c6600 !important;
 }
 
 /*
@@ -180,8 +262,8 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
   padding: 0.2rem;
   border-radius: 0.75rem;
   box-sizing: border-box;
-  background: var(--nano-surface-subtle);
-  border: 1px solid var(--nano-border);
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid var(--mapa-sol-border);
 }
 
 @media (min-width: 901px) {
@@ -206,7 +288,7 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
   line-height: 1.1;
   border: none !important;
   background: transparent !important;
-  color: var(--nano-text-muted) !important;
+  color: rgba(15, 23, 42, 0.55) !important;
   box-shadow: none !important;
   white-space: nowrap;
   min-height: 0;
@@ -219,17 +301,17 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill:hover {
-  background: var(--nano-surface-strong) !important;
-  color: var(--nano-text) !important;
+  background: rgba(15, 23, 42, 0.06) !important;
+  color: rgba(15, 23, 42, 0.92) !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill.active {
-  background: rgba(21, 128, 61, 0.12) !important;
-  color: var(--mapa-sol-accent) !important;
+  background: rgba(212, 255, 0, 0.22) !important;
+  color: var(--mapa-sol-ink-on-accent) !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill.active i {
-  color: var(--mapa-sol-accent) !important;
+  color: var(--mapa-sol-ink-on-accent) !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill--alt {
@@ -252,10 +334,18 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
 
 /* universal-map-shell.css: mismo cromo cuando el selector base no es mapa-ms-* */
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) header.header {
-  background: var(--nano-surface-strong) !important;
-  -webkit-backdrop-filter: var(--nano-blur-light) !important;
-  backdrop-filter: var(--nano-blur-light) !important;
-  border-bottom: 1px solid var(--nano-border) !important;
+  background: color-mix(in oklab, var(--mapa-sol-ms-bg) 88%, transparent) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(12px) !important;
+  border-bottom: 1px solid var(--mapa-sol-border) !important;
+  box-shadow: none !important;
+  padding-inline: 1rem !important;
+}
+
+@media (min-width: 640px) {
+  html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) header.header {
+    padding-inline: 1.5rem !important;
+  }
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .sidebar-nav:not(.mapa-ms-sidebar-root) {
@@ -291,14 +381,14 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .sidebar-nav .tab.active {
-  background: linear-gradient(135deg, #6ee7b7 0%, #14b8a6 52%, #0f766e 100%) !important;
-  color: #042f2e !important;
-  -webkit-text-fill-color: #042f2e !important;
-  box-shadow: var(--nano-shadow) !important;
+  background: rgba(212, 255, 0, 0.12) !important;
+  color: #3d4700 !important;
+  -webkit-text-fill-color: #3d4700 !important;
+  box-shadow: none !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .sidebar-nav .tab.active i {
-  color: #042f2e !important;
+  color: #5c6600 !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .app-frame,
@@ -312,12 +402,12 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
   padding-block-start: var(--md-sys-spacing-5, 20px) !important;
   padding-inline: var(--md-sys-spacing-5, 20px) !important;
   border-radius: 18px 18px 0 0 !important;
-  border: 1px solid var(--nano-border) !important;
+  border: 1px solid var(--mapa-sol-border) !important;
   border-bottom: none !important;
-  background: var(--nano-surface-strong) !important;
-  -webkit-backdrop-filter: var(--nano-blur-light) !important;
-  backdrop-filter: var(--nano-blur-light) !important;
-  box-shadow: var(--nano-shadow) !important;
+  background: color-mix(in oklab, #ffffff 92%, var(--mapa-sol-ms-bg)) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(12px) !important;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04) !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .section-header h2,
@@ -359,6 +449,23 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
   background: var(--nano-surface-subtle) !important;
   color: var(--nano-text) !important;
   border-color: var(--nano-border) !important;
+}
+
+/* Caja “Modo / Persistencia…” en rail: tinta oscura sobre halo lima (evita texto blanco sobre verde) */
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .header-system-status,
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .sidebar-system-status.header-system-status {
+  background: rgba(212, 255, 0, 0.16) !important;
+  border: 1px solid rgba(15, 23, 42, 0.1) !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+/* Subtítulos de sección (p. ej. Prospección): gana a polish-final / MD3 que dejan gris claro sobre vidrio */
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) main#main-content .section-header .section-sub,
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) main#main-content .section-header--ux .section-sub,
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) main#main-content .section-header p.section-sub {
+  color: #475569 !important;
+  -webkit-text-fill-color: #475569 !important;
 }
 
 @media (max-width: 900px) {
