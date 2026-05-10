@@ -1,102 +1,10 @@
 /**
- * mapa-shell-sol.css — Cromo universal-map-shell en modo Sol (.appearance-light).
- * Espejo estructural de mapa-chrome-clone.css (Luna): misma geometría, tipografía y jerarquía;
- * solo invierten tintes de superficie y tinta para legibilidad en claro.
- * Tokens de acento = mismos que Luna (--mapa-ms-accent #d4ff00, LIVE #3dd96f).
+ * mapa-shell-sol.css — Solo ajustes Sol que NO viven en mapa-chrome-clone.css.
+ * El cromo Navbar + rail mapa-ms es UN SOLO layout en mapa-chrome-clone.css (variables Luna/Sol).
+ * Aquí: cluster derecho (nano), shells sin mapa-ms*, lienzo principal, Prospección, status rail.
  */
 
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) {
-  --mapa-sol-ms-bg: #f4f5f9;
-  --mapa-sol-accent: #d4ff00;
-  --mapa-sol-accent-dim: rgba(212, 255, 0, 0.35);
-  --mapa-sol-ink-on-accent: #07070a;
-  --mapa-sol-border: rgba(15, 23, 42, 0.08);
-  --mapa-sol-status-green: #3dd96f;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) header.header.mapa-ms-navbar-root {
-  background: color-mix(in oklab, var(--mapa-sol-ms-bg) 88%, transparent) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  backdrop-filter: blur(12px) !important;
-  border-bottom: 1px solid var(--mapa-sol-border) !important;
-  box-shadow: none !important;
-  padding-inline: 1rem !important;
-}
-
-@media (min-width: 640px) {
-  html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) header.header.mapa-ms-navbar-root {
-    padding-inline: 1.5rem !important;
-  }
-}
-
-/* Marca: copia 1:1 de mapa-chrome-clone (columna + orden + tamaños Syne/Inter); tintas para claro */
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .header-brand-text {
-  border-left-color: rgba(15, 23, 42, 0.12) !important;
-  flex-direction: column !important;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .header-brand-service {
-  order: 1 !important;
-  font-family: "Syne", Inter, system-ui, sans-serif !important;
-  font-size: 0.875rem !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.18em !important;
-  text-transform: uppercase !important;
-  color: rgba(15, 23, 42, 0.9) !important;
-  line-height: 1 !important;
-  margin: 0 !important;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .header-brand-eyebrow {
-  order: 2 !important;
-  font-family: Inter, system-ui, sans-serif !important;
-  font-size: 0.625rem !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.25em !important;
-  text-transform: uppercase !important;
-  color: rgba(15, 23, 42, 0.42) !important;
-  line-height: 1.2 !important;
-  margin: 0.35rem 0 0 !important;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .header-brand-tagline {
-  display: none !important;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open)
-  .header-brand .header-brand-logo-wrap.login-brand-logo.header-brand-logo-wrap--bare {
-  padding: 0 !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open)
-  .header-brand .header-brand-logo-wrap--bare .login-brand-hero-img,
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open)
-  .header-brand .header-brand-logo-img#header-brand-logo {
-  max-height: 38px !important;
-  width: auto !important;
-  height: auto !important;
-  clip-path: none !important;
-  object-fit: contain;
-  display: block;
-  filter: drop-shadow(0 1px 3px rgba(15, 23, 42, 0.2));
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .btn-icon-header {
-  color: var(--nano-text-muted) !important;
-  border-color: var(--nano-border) !important;
-  background: var(--nano-surface-subtle) !important;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .btn-icon-header:hover {
-  color: var(--nano-text) !important;
-  background: var(--nano-surface-strong) !important;
-}
-
-/* Cluster derecho (LIVE, notificaciones, Sol/Luna): mapa-app-layout usaba vidrio para barra oscura — en Sol era invisible */
+/* Cluster derecho (LIVE, notificaciones, Sol/Luna): nano para superficie clara */
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-header-user-cluster {
   background: var(--nano-surface-subtle) !important;
   border: 1px solid var(--nano-border) !important;
@@ -105,225 +13,20 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
     0 1px 3px rgba(15, 23, 42, 0.06) !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-live-pill {
-  background: rgba(61, 217, 111, 0.1) !important;
-  border: 1px solid rgba(61, 217, 111, 0.22) !important;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-live-dot {
-  background: var(--mapa-sol-status-green) !important;
-  box-shadow: 0 0 0 2px rgba(61, 217, 111, 0.35) !important;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-live-text {
-  color: var(--mapa-sol-status-green) !important;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) aside.sidebar-nav.mapa-ms-sidebar-root {
-  background: linear-gradient(to bottom, #f5f6fa 0%, #eef0f5 50%, #f2f4f8 100%) !important;
+/* Fallback: header sin clase mapa-ms-navbar-root (misma geometría que chrome; tintas claras) */
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) header.header:not(.mapa-ms-navbar-root) {
+  background: color-mix(in oklab, #f4f5f9 88%, transparent) !important;
   -webkit-backdrop-filter: blur(12px) !important;
   backdrop-filter: blur(12px) !important;
-  border-right: 1px solid var(--mapa-sol-border) !important;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open)
-  .sidebar-nav.mapa-ms-sidebar-root .sidebar-nav-toolbar.mapa-ms-sidebar-top {
-  align-items: flex-start !important;
-  padding: 1.25rem 1.25rem 1rem !important;
-  border-bottom: 1px solid var(--mapa-sol-border) !important;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-title-accent.mapa-rail-accent {
-  background: linear-gradient(
-    180deg,
-    var(--mapa-sol-accent) 0%,
-    rgba(212, 255, 0, 0.4) 100%
-  ) !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
   box-shadow: none !important;
+  padding-inline: 1rem !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-display-title.mapa-rail-title {
-  margin: 0 !important;
-  padding: 0 !important;
-  font-family: "Syne", Inter, system-ui, sans-serif !important;
-  font-size: 1.5rem !important;
-  font-weight: 400 !important;
-  letter-spacing: 0.18em !important;
-  text-transform: uppercase !important;
-  line-height: 1 !important;
-  color: #0f172a !important;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-display-kicker {
-  margin: 0.35rem 0 0 !important;
-  padding: 0 !important;
-  font-size: 0.625rem !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.18em !important;
-  text-transform: uppercase !important;
-  color: rgba(15, 23, 42, 0.45) !important;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-rail-collapse.mapa-rail-collapse-btn {
-  color: var(--nano-text-muted) !important;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-rail-collapse:hover {
-  background: var(--nano-surface-subtle) !important;
-  color: var(--nano-text) !important;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-stat-trio {
-  border-bottom: 1px solid var(--mapa-sol-border);
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-stat-card {
-  position: relative;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid var(--mapa-sol-border);
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-stat-card--accent {
-  background: rgba(212, 255, 0, 0.1);
-  border-color: rgba(212, 255, 0, 0.28);
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-stat-card--accent::before {
-  content: "";
-  position: absolute;
-  top: -1rem;
-  right: -1rem;
-  width: 3rem;
-  height: 3rem;
-  border-radius: 999px;
-  background: rgba(212, 255, 0, 0.14);
-  filter: blur(16px);
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-stat-head {
-  color: rgba(15, 23, 42, 0.45);
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-stat-card--accent .mapa-ms-stat-head {
-  color: #5c6600;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-stat-value {
-  color: #0f172a;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-ms-stat-card--accent .mapa-ms-stat-value {
-  color: #4d5800;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll .tab {
-  width: 100% !important;
-  border-radius: 0 !important;
-  margin: 0 !important;
-  padding: 0.875rem 1rem !important;
-  justify-content: flex-start !important;
-  font-size: 0.8125rem !important;
-  font-weight: 600 !important;
-  color: rgba(15, 23, 42, 0.52) !important;
-  background: transparent !important;
-  border: none !important;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06) !important;
-  box-shadow: none !important;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll .tab:hover {
-  background: rgba(15, 23, 42, 0.04) !important;
-  color: rgba(15, 23, 42, 0.92) !important;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll .tab.active {
-  background: rgba(212, 255, 0, 0.12) !important;
-  color: #3d4700 !important;
-  border-bottom-color: rgba(15, 23, 42, 0.06) !important;
-  box-shadow: none !important;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll .tab.active i {
-  color: #5c6600 !important;
-}
-
-/*
- * Barra superior (Ventas / Clientes / Prospección…): mismas medidas que mapa-chrome-clone (Luna).
- * material.css limita dimensiones .tab al rail (.tabs.tabs--rail); colores solo vía tokens Sol.
- */
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav.mapa-header-owner-nav {
-  display: none;
-  flex: 0 1 auto;
-  align-items: center;
-  flex-wrap: nowrap;
-  gap: 0.2rem;
-  min-width: 0;
-  padding: 0.2rem;
-  border-radius: 0.75rem;
-  box-sizing: border-box;
-  background: rgba(15, 23, 42, 0.04);
-  border: 1px solid var(--mapa-sol-border);
-}
-
-@media (min-width: 901px) {
-  html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav.mapa-header-owner-nav {
-    display: flex;
+@media (min-width: 640px) {
+  html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) header.header:not(.mapa-ms-navbar-root) {
+    padding-inline: 1.5rem !important;
   }
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-owner-slot-comm {
-  display: contents;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.38rem;
-  padding: 0.4rem 0.72rem;
-  margin: 0;
-  border-radius: 0.55rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-  line-height: 1.1;
-  border: none !important;
-  background: transparent !important;
-  color: rgba(15, 23, 42, 0.55) !important;
-  box-shadow: none !important;
-  white-space: nowrap;
-  min-height: 0;
-  width: auto;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill i {
-  font-size: 0.78rem;
-  opacity: 0.9;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill:hover {
-  background: rgba(15, 23, 42, 0.06) !important;
-  color: rgba(15, 23, 42, 0.92) !important;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill.active {
-  background: rgba(212, 255, 0, 0.22) !important;
-  color: var(--mapa-sol-ink-on-accent) !important;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill.active i {
-  color: var(--mapa-sol-ink-on-accent) !important;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill--alt {
-  display: none !important;
-}
-
-html.hide-commissions body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill.comm-admin-only {
-  display: none !important;
-}
-
-html.hide-commissions body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill--alt {
-  display: inline-flex !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .header-powered-by--nav-slot .header-powered-by-italic {
@@ -332,22 +35,7 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
   text-shadow: none;
 }
 
-/* universal-map-shell.css: mismo cromo cuando el selector base no es mapa-ms-* */
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) header.header {
-  background: color-mix(in oklab, var(--mapa-sol-ms-bg) 88%, transparent) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  backdrop-filter: blur(12px) !important;
-  border-bottom: 1px solid var(--mapa-sol-border) !important;
-  box-shadow: none !important;
-  padding-inline: 1rem !important;
-}
-
-@media (min-width: 640px) {
-  html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) header.header {
-    padding-inline: 1.5rem !important;
-  }
-}
-
+/* universal-map-shell legacy: sidebar sin mapa-ms-sidebar-root */
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .sidebar-nav:not(.mapa-ms-sidebar-root) {
   background: var(--nano-surface) !important;
   -webkit-backdrop-filter: var(--nano-blur) !important;
@@ -402,9 +90,9 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
   padding-block-start: var(--md-sys-spacing-5, 20px) !important;
   padding-inline: var(--md-sys-spacing-5, 20px) !important;
   border-radius: 18px 18px 0 0 !important;
-  border: 1px solid var(--mapa-sol-border) !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
   border-bottom: none !important;
-  background: color-mix(in oklab, #ffffff 92%, var(--mapa-sol-ms-bg)) !important;
+  background: color-mix(in oklab, #ffffff 92%, #f4f5f9) !important;
   -webkit-backdrop-filter: blur(12px) !important;
   backdrop-filter: blur(12px) !important;
   box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04) !important;
@@ -424,7 +112,7 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
   border-radius: 12px !important;
 }
 
-/* Prospección: panel izquierdo sobre el mapa — mismo lenguaje que rail (vidrio claro, no bloque oscuro) */
+/* Prospección: panel sobre el mapa */
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) #panel-prospeccion .prospeccion-sidebar {
   color: var(--nano-text) !important;
   box-shadow: var(--nano-shadow) !important;
@@ -451,7 +139,7 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
   border-color: var(--nano-border) !important;
 }
 
-/* Caja “Modo / Persistencia…” en rail: tinta oscura sobre halo lima (evita texto blanco sobre verde) */
+/* Caja “Modo / Persistencia…” en rail */
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .header-system-status,
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .sidebar-system-status.header-system-status {
   background: rgba(212, 255, 0, 0.16) !important;
@@ -460,7 +148,7 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
   -webkit-text-fill-color: #0f172a !important;
 }
 
-/* Subtítulos de sección (p. ej. Prospección): gana a polish-final / MD3 que dejan gris claro sobre vidrio */
+/* Subtítulos de sección (p. ej. Prospección) */
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) main#main-content .section-header .section-sub,
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) main#main-content .section-header--ux .section-sub,
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) main#main-content .section-header p.section-sub {

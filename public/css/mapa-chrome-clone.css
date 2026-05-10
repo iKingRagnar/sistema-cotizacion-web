@@ -1,22 +1,111 @@
 /**
- * mapa-chrome-clone.css — Clon visual del Navbar + panel izquierdo tipo MapSidebar (MapaSuminregio).
- * Solo cromo (header + aside); el contenido principal no se redefine aquí.
- * Referencia: MapaSuminregio Navbar.tsx, MapSidebar.tsx, globals.css [data-theme="dark"].
- * Cargar al final del stack de shell.
+ * mapa-chrome-clone.css — Cromo Navbar + rail MapSidebar (referencia Luna).
+ * UN SOLO LAYOUT: las reglas usan html...universal-map-shell.md3-on:not(.login-open)
+ * sin bifurcar por .appearance-light. Luna vs Sol solo cambian variables (--mapa-ms-*).
+ * Cargar después de universal-map-shell para sobreescribir tintes legacy del rail.
  */
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) {
+/* ── Tokens Luna (default oscuro) ───────────────────────────────────────── */
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open):not(.appearance-light) {
   --mapa-ms-bg: #07070a;
   --mapa-ms-accent: #d4ff00;
   --mapa-ms-accent-dim: rgba(212, 255, 0, 0.35);
   --mapa-ms-ink-on-accent: #07070a;
   --mapa-ms-border: rgba(255, 255, 255, 0.06);
   --mapa-ms-status-green: #3dd96f;
+  --mapa-ms-glass-navbar: color-mix(in oklab, var(--mapa-ms-bg) 85%, transparent);
+  --mapa-ms-sidebar-bg: linear-gradient(to bottom, #0d0d11 0%, #08080b 50%, #0a0a0e 100%);
+  --mapa-ms-brand-divider: rgba(255, 255, 255, 0.1);
+  --mapa-ms-text-brand: rgba(255, 255, 255, 0.9);
+  --mapa-ms-text-brand-muted: rgba(255, 255, 255, 0.4);
+  --mapa-ms-text-rail-title: #fff;
+  --mapa-ms-text-rail-kicker: rgba(255, 255, 255, 0.4);
+  --mapa-ms-rail-collapse: rgba(255, 255, 255, 0.4);
+  --mapa-ms-stat-surface: rgba(255, 255, 255, 0.03);
+  --mapa-ms-stat-accent-bg: rgba(212, 255, 0, 0.06);
+  --mapa-ms-stat-accent-border: rgba(212, 255, 0, 0.2);
+  --mapa-ms-stat-label: rgba(255, 255, 255, 0.4);
+  --mapa-ms-stat-value: #fff;
+  --mapa-ms-stat-accent-label: var(--mapa-ms-accent);
+  --mapa-ms-stat-accent-value: var(--mapa-ms-accent);
+  --mapa-ms-tab-muted: rgba(255, 255, 255, 0.58);
+  --mapa-ms-tab-hover-bg: rgba(255, 255, 255, 0.03);
+  --mapa-ms-tab-hover-fg: rgba(255, 255, 255, 0.92);
+  --mapa-ms-tab-row-border: rgba(255, 255, 255, 0.04);
+  --mapa-ms-tab-active-bg: rgba(212, 255, 0, 0.06);
+  --mapa-ms-tab-active-fg: var(--mapa-ms-accent);
+  --mapa-ms-tab-active-icon: var(--mapa-ms-accent);
+  --mapa-ms-owner-wrap-bg: rgba(255, 255, 255, 0.04);
+  --mapa-ms-owner-wrap-border: rgba(255, 255, 255, 0.06);
+  --mapa-ms-owner-pill: rgba(255, 255, 255, 0.55);
+  --mapa-ms-owner-pill-hover-bg: rgba(255, 255, 255, 0.06);
+  --mapa-ms-owner-pill-hover-fg: rgba(255, 255, 255, 0.92);
+  --mapa-ms-owner-pill-active-bg: rgba(212, 255, 0, 0.12);
+  --mapa-ms-owner-pill-active-fg: var(--mapa-ms-accent);
+  --mapa-ms-owner-pill-active-icon: var(--mapa-ms-accent);
+  --mapa-ms-btn-icon-bg: rgba(255, 255, 255, 0.05);
+  --mapa-ms-btn-icon-border: rgba(255, 255, 255, 0.08);
+  --mapa-ms-btn-icon-fg: rgba(255, 255, 255, 0.85);
+  --mapa-ms-btn-icon-hover-bg: rgba(255, 255, 255, 0.08);
+  --mapa-ms-btn-icon-hover-border: rgba(212, 255, 0, 0.25);
+  --mapa-ms-btn-icon-hover-fg: #fff;
+  --mapa-ms-logo-drop: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55));
+  --mapa-ms-powered-fg: rgba(226, 232, 240, 0.88);
+  --mapa-ms-powered-shadow: 0 0 18px rgba(45, 212, 191, 0.22), 0 1px 0 rgba(0, 0, 0, 0.35);
 }
 
-/* ── Navbar (fixed h-16, blur, borde — espíritu Navbar.tsx) ─────────────── */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) header.header.mapa-ms-navbar-root {
-  background: color-mix(in oklab, var(--mapa-ms-bg) 85%, transparent) !important;
+/* ── Tokens Sol (misma geometría; solo tintas) ────────────────────────────── */
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).appearance-light {
+  --mapa-ms-bg: #f4f5f9;
+  --mapa-ms-accent: #d4ff00;
+  --mapa-ms-accent-dim: rgba(212, 255, 0, 0.35);
+  --mapa-ms-ink-on-accent: #07070a;
+  --mapa-ms-border: rgba(15, 23, 42, 0.08);
+  --mapa-ms-status-green: #3dd96f;
+  --mapa-ms-glass-navbar: color-mix(in oklab, var(--mapa-ms-bg) 88%, transparent);
+  --mapa-ms-sidebar-bg: linear-gradient(to bottom, #f5f6fa 0%, #eef0f5 50%, #f2f4f8 100%);
+  --mapa-ms-brand-divider: rgba(15, 23, 42, 0.12);
+  --mapa-ms-text-brand: rgba(15, 23, 42, 0.9);
+  --mapa-ms-text-brand-muted: rgba(15, 23, 42, 0.42);
+  --mapa-ms-text-rail-title: #0f172a;
+  --mapa-ms-text-rail-kicker: rgba(15, 23, 42, 0.45);
+  --mapa-ms-rail-collapse: rgba(15, 23, 42, 0.45);
+  --mapa-ms-stat-surface: rgba(255, 255, 255, 0.72);
+  --mapa-ms-stat-accent-bg: rgba(212, 255, 0, 0.1);
+  --mapa-ms-stat-accent-border: rgba(212, 255, 0, 0.28);
+  --mapa-ms-stat-label: rgba(15, 23, 42, 0.45);
+  --mapa-ms-stat-value: #0f172a;
+  --mapa-ms-stat-accent-label: #5c6600;
+  --mapa-ms-stat-accent-value: #4d5800;
+  --mapa-ms-tab-muted: rgba(15, 23, 42, 0.62);
+  --mapa-ms-tab-hover-bg: rgba(15, 23, 42, 0.04);
+  --mapa-ms-tab-hover-fg: rgba(15, 23, 42, 0.92);
+  --mapa-ms-tab-row-border: rgba(15, 23, 42, 0.06);
+  --mapa-ms-tab-active-bg: rgba(212, 255, 0, 0.12);
+  --mapa-ms-tab-active-fg: #3d4700;
+  --mapa-ms-tab-active-icon: #5c6600;
+  --mapa-ms-owner-wrap-bg: rgba(15, 23, 42, 0.04);
+  --mapa-ms-owner-wrap-border: var(--mapa-ms-border);
+  --mapa-ms-owner-pill: rgba(15, 23, 42, 0.55);
+  --mapa-ms-owner-pill-hover-bg: rgba(15, 23, 42, 0.06);
+  --mapa-ms-owner-pill-hover-fg: rgba(15, 23, 42, 0.92);
+  --mapa-ms-owner-pill-active-bg: rgba(212, 255, 0, 0.22);
+  --mapa-ms-owner-pill-active-fg: var(--mapa-ms-ink-on-accent);
+  --mapa-ms-owner-pill-active-icon: var(--mapa-ms-ink-on-accent);
+  --mapa-ms-btn-icon-bg: rgba(15, 23, 42, 0.04);
+  --mapa-ms-btn-icon-border: var(--mapa-ms-border);
+  --mapa-ms-btn-icon-fg: rgba(15, 23, 42, 0.72);
+  --mapa-ms-btn-icon-hover-bg: rgba(15, 23, 42, 0.07);
+  --mapa-ms-btn-icon-hover-border: rgba(212, 255, 0, 0.35);
+  --mapa-ms-btn-icon-hover-fg: #0f172a;
+  --mapa-ms-logo-drop: drop-shadow(0 1px 3px rgba(15, 23, 42, 0.2));
+  --mapa-ms-powered-fg: rgba(51, 65, 85, 0.88);
+  --mapa-ms-powered-shadow: none;
+}
+
+/* ── Navbar ─────────────────────────────────────────────────────────────── */
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) header.header.mapa-ms-navbar-root {
+  background: var(--mapa-ms-glass-navbar) !important;
   -webkit-backdrop-filter: blur(12px) !important;
   backdrop-filter: blur(12px) !important;
   border-bottom: 1px solid var(--mapa-ms-border) !important;
@@ -25,53 +114,53 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
 }
 
 @media (min-width: 640px) {
-  html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) header.header.mapa-ms-navbar-root {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) header.header.mapa-ms-navbar-root {
     padding-inline: 1.5rem !important;
   }
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open)
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   .header-brand-logo-wrap.login-brand-logo:not(.header-brand-logo-wrap--bare) {
   border-radius: 0.5rem !important;
   box-shadow: 0 4px 16px rgba(212, 255, 0, 0.12) !important;
 }
 
-/* Marca: misma jerarquía visual que Navbar Mapa (título display + subtítulo 10px) */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .header-brand-text {
-  border-left-color: rgba(255, 255, 255, 0.1) !important;
+/* Marca: jerarquía Luna (columna + orden) */
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand-text {
+  border-left-color: var(--mapa-ms-brand-divider) !important;
   flex-direction: column !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .header-brand-service {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand-service {
   order: 1;
   font-family: "Syne", Inter, system-ui, sans-serif !important;
   font-size: 0.875rem !important;
   font-weight: 600 !important;
   letter-spacing: 0.18em !important;
   text-transform: uppercase !important;
-  color: rgba(255, 255, 255, 0.9) !important;
+  color: var(--mapa-ms-text-brand) !important;
   line-height: 1 !important;
   margin: 0 !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .header-brand-eyebrow {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand-eyebrow {
   order: 2;
   font-family: Inter, system-ui, sans-serif !important;
   font-size: 0.625rem !important;
   font-weight: 600 !important;
   letter-spacing: 0.25em !important;
   text-transform: uppercase !important;
-  color: rgba(255, 255, 255, 0.4) !important;
+  color: var(--mapa-ms-text-brand-muted) !important;
   line-height: 1.2 !important;
   margin: 0.35rem 0 0 !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .header-brand-tagline {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand-tagline {
   display: none !important;
 }
 
-/* LIVE pill (Navbar.tsx derecha) */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-ms-live-pill {
+/* LIVE pill */
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-ms-live-pill {
   display: none;
   align-items: center;
   gap: 0.5rem;
@@ -82,12 +171,12 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
 }
 
 @media (min-width: 640px) {
-  html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-ms-live-pill {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-ms-live-pill {
     display: flex;
   }
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-ms-live-dot {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-ms-live-dot {
   position: relative;
   width: 0.375rem;
   height: 0.375rem;
@@ -96,52 +185,52 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   box-shadow: 0 0 0 2px rgba(61, 217, 111, 0.35);
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-ms-live-text {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-ms-live-text {
   font-size: 0.625rem;
   font-weight: 800;
   letter-spacing: 0.2em;
   color: var(--mapa-ms-status-green);
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .btn-icon-header {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .btn-icon-header {
   border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.85);
+  background: var(--mapa-ms-btn-icon-bg);
+  border: 1px solid var(--mapa-ms-btn-icon-border);
+  color: var(--mapa-ms-btn-icon-fg);
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .btn-icon-header:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(212, 255, 0, 0.25);
-  color: #fff;
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .btn-icon-header:hover {
+  background: var(--mapa-ms-btn-icon-hover-bg);
+  border-color: var(--mapa-ms-btn-icon-hover-border);
+  color: var(--mapa-ms-btn-icon-hover-fg);
 }
 
-/* ── Aside = gradiente MapSidebar (abierto) ─────────────────────────────── */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) aside.sidebar-nav.mapa-ms-sidebar-root {
-  background: linear-gradient(to bottom, #0d0d11 0%, #08080b 50%, #0a0a0e 100%) !important;
+/* ── Aside mapa-ms ───────────────────────────────────────────────────────── */
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) aside.sidebar-nav.mapa-ms-sidebar-root {
+  background: var(--mapa-ms-sidebar-bg) !important;
   border-right: 1px solid var(--mapa-ms-border) !important;
+  min-height: 0;
 }
 
-/* Cabecera panel: padding MapSidebar p-5 pb-4 */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .sidebar-nav.mapa-ms-sidebar-root .sidebar-nav-toolbar.mapa-ms-sidebar-top {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .sidebar-nav.mapa-ms-sidebar-root .sidebar-nav-toolbar.mapa-ms-sidebar-top {
   align-items: flex-start !important;
   padding: 1.25rem 1.25rem 1rem !important;
   border-bottom: 1px solid var(--mapa-ms-border) !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-ms-sidebar-top-inner {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-ms-sidebar-top-inner {
   flex: 1 1 auto;
   min-width: 0;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-ms-sidebar-title-block {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-ms-sidebar-title-block {
   display: flex !important;
   flex-direction: row !important;
   align-items: flex-start !important;
   gap: 0.5rem !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-ms-title-accent.mapa-rail-accent {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-ms-title-accent.mapa-rail-accent {
   width: 0.25rem !important;
   height: 1.25rem !important;
   margin-top: 0.2rem !important;
@@ -154,7 +243,7 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   box-shadow: none !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-ms-display-title.mapa-rail-title {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-ms-display-title.mapa-rail-title {
   margin: 0 !important;
   padding: 0 !important;
   font-family: "Syne", Inter, system-ui, sans-serif !important;
@@ -163,43 +252,43 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   letter-spacing: 0.18em !important;
   text-transform: uppercase !important;
   line-height: 1 !important;
-  color: #fff !important;
+  color: var(--mapa-ms-text-rail-title) !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-ms-display-kicker {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-ms-display-kicker {
   margin: 0.35rem 0 0 !important;
   padding: 0 !important;
   font-size: 0.625rem !important;
   font-weight: 600 !important;
   letter-spacing: 0.18em !important;
   text-transform: uppercase !important;
-  color: rgba(255, 255, 255, 0.4) !important;
+  color: var(--mapa-ms-text-rail-kicker) !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-ms-rail-collapse.mapa-rail-collapse-btn {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-ms-rail-collapse.mapa-rail-collapse-btn {
   padding: 0.5rem !important;
   border-radius: 0.5rem !important;
   background: transparent !important;
   border: none !important;
-  color: rgba(255, 255, 255, 0.4) !important;
+  color: var(--mapa-ms-rail-collapse) !important;
   box-shadow: none !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-ms-rail-collapse:hover {
-  background: rgba(255, 255, 255, 0.05) !important;
-  color: #fff !important;
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-ms-rail-collapse:hover {
+  background: var(--mapa-ms-tab-hover-bg) !important;
+  color: var(--mapa-ms-text-rail-title) !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-ms-rail-collapse .sidebar-rail-burger-icon {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-ms-rail-collapse .sidebar-rail-burger-icon {
   display: none !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-ms-chevron-icon {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-ms-chevron-icon {
   display: block;
 }
 
-/* Trio StatCard (MapSidebar.tsx) — valores placeholder */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-ms-stat-trio {
+/* Stat trio */
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-ms-stat-trio {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem;
@@ -208,21 +297,21 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   flex-shrink: 0;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-ms-stat-card {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-ms-stat-card {
   position: relative;
   border-radius: 0.75rem;
   padding: 0.625rem;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--mapa-ms-stat-surface);
   border: 1px solid var(--mapa-ms-border);
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-ms-stat-card--accent {
-  background: rgba(212, 255, 0, 0.06);
-  border-color: rgba(212, 255, 0, 0.2);
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-ms-stat-card--accent {
+  background: var(--mapa-ms-stat-accent-bg);
+  border-color: var(--mapa-ms-stat-accent-border);
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-ms-stat-card--accent::before {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-ms-stat-card--accent::before {
   content: "";
   position: absolute;
   top: -1rem;
@@ -234,7 +323,7 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   filter: blur(16px);
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-ms-stat-head {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-ms-stat-head {
   position: relative;
   display: flex;
   align-items: center;
@@ -244,31 +333,27 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   letter-spacing: 0.06em;
   text-transform: uppercase;
   margin-bottom: 0.25rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--mapa-ms-stat-label);
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-ms-stat-card--accent .mapa-ms-stat-head {
-  color: var(--mapa-ms-accent);
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-ms-stat-card--accent .mapa-ms-stat-head {
+  color: var(--mapa-ms-stat-accent-label);
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-ms-stat-value {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-ms-stat-value {
   position: relative;
   font-size: 0.8125rem;
   font-weight: 700;
   line-height: 1;
-  color: #fff;
+  color: var(--mapa-ms-stat-value);
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-ms-stat-card--accent .mapa-ms-stat-value {
-  color: var(--mapa-ms-accent);
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-ms-stat-card--accent .mapa-ms-stat-value {
+  color: var(--mapa-ms-stat-accent-value);
 }
 
-/* Lista de módulos: scroll flex-1 + filas tipo lista Mapa */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) aside.sidebar-nav.mapa-ms-sidebar-root {
-  min-height: 0;
-}
-
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll {
+/* Lista módulos rail */
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll {
   flex: 1 1 auto !important;
   min-height: 0 !important;
   padding: 0 !important;
@@ -279,7 +364,7 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   overscroll-behavior: contain;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll .tab {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll .tab {
   width: 100% !important;
   border-radius: 0 !important;
   margin: 0 !important;
@@ -287,35 +372,35 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   justify-content: flex-start !important;
   font-size: 0.8125rem !important;
   font-weight: 600 !important;
-  color: rgba(255, 255, 255, 0.58) !important;
+  color: var(--mapa-ms-tab-muted) !important;
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+  border-bottom: 1px solid var(--mapa-ms-tab-row-border) !important;
   box-shadow: none !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll .tab:hover {
-  background: rgba(255, 255, 255, 0.03) !important;
-  color: rgba(255, 255, 255, 0.92) !important;
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll .tab:hover {
+  background: var(--mapa-ms-tab-hover-bg) !important;
+  color: var(--mapa-ms-tab-hover-fg) !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll .tab.active {
-  background: rgba(212, 255, 0, 0.06) !important;
-  color: var(--mapa-ms-accent) !important;
-  border-bottom-color: rgba(255, 255, 255, 0.04) !important;
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll .tab.active {
+  background: var(--mapa-ms-tab-active-bg) !important;
+  color: var(--mapa-ms-tab-active-fg) !important;
+  border-bottom-color: var(--mapa-ms-tab-row-border) !important;
   box-shadow: none !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll .tab.active i {
-  color: var(--mapa-ms-accent) !important;
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll .tab.active i {
+  color: var(--mapa-ms-tab-active-icon) !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll .tab i {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll .tab i {
   opacity: 0.85;
 }
 
-/* ── Logo marca: sin pastilla blanca (solo la imagen sobre el navbar) ─────── */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open)
+/* Logo bare */
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   .header-brand .header-brand-logo-wrap.login-brand-logo.header-brand-logo-wrap--bare {
   padding: 0 !important;
   background: transparent !important;
@@ -324,9 +409,9 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   border-radius: 0 !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open)
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   .header-brand .header-brand-logo-wrap--bare .login-brand-hero-img,
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open)
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   .header-brand .header-brand-logo-img#header-brand-logo {
   max-height: 38px !important;
   width: auto !important;
@@ -334,11 +419,11 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   clip-path: none !important;
   object-fit: contain;
   display: block;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55));
+  filter: var(--mapa-ms-logo-drop);
 }
 
-/* ── Barra superior: 6 accesos director (espíritu Navbar Mapa) ─────────────── */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) nav.mapa-header-owner-nav {
+/* Barra 6 accesos director */
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav.mapa-header-owner-nav {
   display: none;
   flex: 0 1 auto;
   align-items: center;
@@ -347,22 +432,22 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   min-width: 0;
   padding: 0.2rem;
   border-radius: 0.75rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--mapa-ms-owner-wrap-bg);
+  border: 1px solid var(--mapa-ms-owner-wrap-border);
   box-sizing: border-box;
 }
 
 @media (min-width: 901px) {
-  html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) nav.mapa-header-owner-nav {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav.mapa-header-owner-nav {
     display: flex;
   }
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .mapa-owner-slot-comm {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-owner-slot-comm {
   display: contents;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill {
   display: inline-flex;
   align-items: center;
   gap: 0.38rem;
@@ -374,60 +459,56 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   line-height: 1.1;
   border: none !important;
   background: transparent !important;
-  color: rgba(255, 255, 255, 0.55) !important;
+  color: var(--mapa-ms-owner-pill) !important;
   box-shadow: none !important;
   white-space: nowrap;
   min-height: 0;
   width: auto;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill i {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill i {
   font-size: 0.78rem;
   opacity: 0.9;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill:hover {
-  background: rgba(255, 255, 255, 0.06) !important;
-  color: rgba(255, 255, 255, 0.92) !important;
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill:hover {
+  background: var(--mapa-ms-owner-pill-hover-bg) !important;
+  color: var(--mapa-ms-owner-pill-hover-fg) !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill.active {
-  background: rgba(212, 255, 0, 0.12) !important;
-  color: var(--mapa-ms-accent) !important;
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill.active {
+  background: var(--mapa-ms-owner-pill-active-bg) !important;
+  color: var(--mapa-ms-owner-pill-active-fg) !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill.active i {
-  color: var(--mapa-ms-accent) !important;
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill.active i {
+  color: var(--mapa-ms-owner-pill-active-icon) !important;
 }
 
-/* Sin permiso de comisiones: sexto acceso = Reportes en lugar de Viajes */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill--alt {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill--alt {
   display: none !important;
 }
 
-html.hide-commissions body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill.comm-admin-only {
+html.hide-commissions body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill.comm-admin-only {
   display: none !important;
 }
 
-html.hide-commissions body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill--alt {
+html.hide-commissions body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav.mapa-header-owner-nav .tab.mapa-owner-pill--alt {
   display: inline-flex !important;
 }
 
-/* ── Créditos “powered by” — cursiva y acento suave ─────────────────────── */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .header-powered-by.header-powered-by--nav-slot {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-powered-by.header-powered-by--nav-slot {
   text-transform: none !important;
   opacity: 0.92 !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .header-powered-by--nav-slot .header-powered-by-italic {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-powered-by--nav-slot .header-powered-by-italic {
   font-style: italic;
   font-weight: 500;
   font-size: 0.7rem;
   letter-spacing: 0.06em;
   text-transform: none !important;
-  color: rgba(226, 232, 240, 0.88) !important;
-  -webkit-text-fill-color: rgba(226, 232, 240, 0.88) !important;
-  text-shadow:
-    0 0 18px rgba(45, 212, 191, 0.22),
-    0 1px 0 rgba(0, 0, 0, 0.35);
+  color: var(--mapa-ms-powered-fg) !important;
+  -webkit-text-fill-color: var(--mapa-ms-powered-fg) !important;
+  text-shadow: var(--mapa-ms-powered-shadow);
 }

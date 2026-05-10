@@ -1,28 +1,49 @@
 /**
  * universal-map-shell.css — Shell autenticado estilo MapaSuminregio adaptado a Universal + IA Suprema.
- * Solo cuando body tiene .universal-map-shell y tema oscuro industrial (no login).
+ * Mismo layout Luna y Sol: selectores `md3-on:not(.login-open)`; Luna/Sol solo cambian --ums-* en tokens.
  * Prioridad: después de nano-fondo / universal-art para ganar en cascada.
  */
 
-/* Tokens locales (heredan al header / tabs) */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) {
+/* Tokens locales: mismo layout Luna/Sol; Sol pisa variables en .appearance-light */
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) {
   --ums-bg-deep: rgba(7, 7, 10, 0.82);
   --ums-border: rgba(255, 255, 255, 0.085);
   --ums-accent: #14b8a6;
   --ums-accent-glow: rgba(45, 212, 191, 0.28);
   --ums-ink: #f5f5f2;
+  --ums-eyebrow: rgba(153, 246, 228, 0.95);
+  --ums-tagline: rgba(248, 250, 252, 0.38);
+  --ums-powered: rgba(226, 232, 240, 0.75);
+  --ums-logo-pill-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(241, 245, 249, 0.94) 100%);
+  --ums-logo-pill-border: rgba(255, 255, 255, 0.72);
+  --ums-ambient: radial-gradient(ellipse 88% 58% at 72% -12%, rgba(45, 212, 191, 0.12) 0%, transparent 54%),
+    radial-gradient(ellipse 62% 48% at -5% 92%, rgba(250, 204, 21, 0.07) 0%, transparent 52%),
+    radial-gradient(ellipse 48% 40% at 96% 58%, rgba(56, 189, 248, 0.06) 0%, transparent 48%);
 }
 
-/* ── Ambiente (eco globals Mapa dark: auroras discretas) ─────────────────── */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open)::before {
-  background:
-    radial-gradient(ellipse 88% 58% at 72% -12%, rgba(45, 212, 191, 0.12) 0%, transparent 54%),
-    radial-gradient(ellipse 62% 48% at -5% 92%, rgba(250, 204, 21, 0.07) 0%, transparent 52%),
-    radial-gradient(ellipse 48% 40% at 96% 58%, rgba(56, 189, 248, 0.06) 0%, transparent 48%) !important;
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) {
+  --ums-bg-deep: rgba(255, 255, 255, 0.94);
+  --ums-border: rgba(15, 23, 42, 0.1);
+  --ums-accent: #14b8a6;
+  --ums-accent-glow: rgba(45, 212, 191, 0.12);
+  --ums-ink: #0f172a;
+  --ums-eyebrow: rgba(15, 118, 110, 0.95);
+  --ums-tagline: rgba(51, 65, 85, 0.72);
+  --ums-powered: rgba(51, 65, 85, 0.75);
+  --ums-logo-pill-bg: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+  --ums-logo-pill-border: rgba(15, 23, 42, 0.12);
+  --ums-ambient: radial-gradient(ellipse 80% 50% at 70% -8%, rgba(45, 212, 191, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 55% 42% at -5% 90%, rgba(250, 204, 21, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse 45% 36% at 96% 55%, rgba(56, 189, 248, 0.04) 0%, transparent 48%);
+}
+
+/* ── Ambiente (auroras discretas; tinta vía --ums-ambient) ───────────────── */
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)::before {
+  background: var(--ums-ambient) !important;
 }
 
 /* ── Header tipo Navbar Mapa: vidrio denso + borde fino ───────────────────── */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) header.header {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) header.header {
   background: color-mix(in srgb, var(--ums-bg-deep) 92%, transparent) !important;
   backdrop-filter: blur(22px) saturate(165%) !important;
   -webkit-backdrop-filter: blur(22px) saturate(165%) !important;
@@ -32,30 +53,30 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
     inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .header-inner {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-inner {
   gap: 0.75rem !important;
 }
 
 /* Logo en pastilla (similar contraste al Navbar Mapa) */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open)
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   .header-brand .header-brand-logo-wrap.login-brand-logo {
   padding: 0.35rem 0.55rem !important;
   border-radius: 12px !important;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(241, 245, 249, 0.94) 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.72) !important;
+  background: var(--ums-logo-pill-bg) !important;
+  border: 1px solid var(--ums-logo-pill-border) !important;
   box-shadow:
     0 4px 22px var(--ums-accent-glow),
     0 2px 10px rgba(0, 0, 0, 0.35) !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open)
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   .header-brand .login-brand-hero-img {
   max-height: 36px !important;
   clip-path: inset(2px round 8px) !important;
 }
 
 /* Stack marca + IA Suprema */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .header-brand-text {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand-text {
   display: flex !important;
   flex-direction: column !important;
   gap: 0.15rem !important;
@@ -71,12 +92,12 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   display: none;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .header-brand-eyebrow,
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .header-brand-tagline {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand-eyebrow,
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand-tagline {
   display: block !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .header-brand-eyebrow {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand-eyebrow {
   margin: 0 !important;
   padding: 0 !important;
   font-family: "Syne", var(--md-sys-typescale-font-family, Inter), system-ui, sans-serif !important;
@@ -84,25 +105,25 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   font-weight: 800 !important;
   letter-spacing: 0.26em !important;
   text-transform: uppercase !important;
-  color: rgba(153, 246, 228, 0.95) !important;
-  -webkit-text-fill-color: rgba(153, 246, 228, 0.95) !important;
+  color: var(--ums-eyebrow) !important;
+  -webkit-text-fill-color: var(--ums-eyebrow) !important;
   line-height: 1.2 !important;
   text-shadow: 0 0 18px rgba(45, 212, 191, 0.35) !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .header-brand-tagline {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand-tagline {
   margin: 0 !important;
   padding: 0 !important;
   font-size: 0.58rem !important;
   font-weight: 600 !important;
   letter-spacing: 0.2em !important;
   text-transform: uppercase !important;
-  color: rgba(248, 250, 252, 0.38) !important;
-  -webkit-text-fill-color: rgba(248, 250, 252, 0.38) !important;
+  color: var(--ums-tagline) !important;
+  -webkit-text-fill-color: var(--ums-tagline) !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .header-brand-service,
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) #app-title-name {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand-service,
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) #app-title-name {
   font-family: "Syne", var(--md-sys-typescale-font-family, Inter), system-ui, sans-serif !important;
   font-size: clamp(1rem, 2vw, 1.2rem) !important;
   font-weight: 800 !important;
@@ -111,30 +132,30 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   -webkit-text-fill-color: var(--ums-ink) !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .header-powered-by {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-powered-by {
   font-size: 0.62rem !important;
   letter-spacing: 0.06em !important;
   text-transform: uppercase !important;
   opacity: 0.55 !important;
-  color: rgba(226, 232, 240, 0.75) !important;
+  color: var(--ums-powered) !important;
 }
 
 /* Iconos header en capsulas tipo Mapa */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .btn-icon-header {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .btn-icon-header {
   border-radius: 11px !important;
   background: rgba(255, 255, 255, 0.055) !important;
   border: 1px solid rgba(255, 255, 255, 0.09) !important;
   transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .btn-icon-header:hover {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .btn-icon-header:hover {
   background: rgba(255, 255, 255, 0.1) !important;
   border-color: rgba(45, 212, 191, 0.28) !important;
   box-shadow: 0 0 18px rgba(45, 212, 191, 0.12) !important;
 }
 
 /* ── Sidebar: fondo “ink” + dock de módulos ─────────────────────────────── */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .sidebar-nav {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .sidebar-nav {
   background: linear-gradient(
     185deg,
     rgba(15, 15, 19, 0.94) 0%,
@@ -150,7 +171,7 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
 }
 
 /* Toolbar del rail: estilos base en mapa-app-layout (.mapa-rail-header); color del título heredado */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .sidebar-nav-title {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .sidebar-nav-title {
   color: rgba(248, 250, 252, 0.88) !important;
   letter-spacing: 0.06em !important;
   text-transform: none !important;
@@ -176,14 +197,14 @@ body.sidebar-rail-collapsed .sidebar-shell-chip {
   display: none !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .btn-sidebar-rail-toggle {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .btn-sidebar-rail-toggle {
   background: rgba(255, 255, 255, 0.06) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: rgba(248, 250, 252, 0.85) !important;
 }
 
 /* Contenedor tipo Mapa nav rail */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open)
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   nav#sidebar-rail-tabs.tabs.tabs--rail {
   margin: 0.35rem 0.55rem 1rem !important;
   padding: 0.35rem !important;
@@ -196,14 +217,14 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   flex-direction: column !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open).sidebar-rail-collapsed
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-rail-collapsed
   nav#sidebar-rail-tabs.tabs.tabs--rail {
   margin-inline: 0.28rem !important;
   padding: 0.28rem !important;
 }
 
 /* Items tipo enlaces Mapa — activo con acento (teal Universal, no lima Parker) */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .sidebar-nav .tab {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .sidebar-nav .tab {
   border-radius: 12px !important;
   margin: 0 !important;
   color: rgba(248, 250, 252, 0.58) !important;
@@ -211,12 +232,12 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   letter-spacing: 0.01em !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .sidebar-nav .tab:hover {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .sidebar-nav .tab:hover {
   background: rgba(255, 255, 255, 0.06) !important;
   color: rgba(248, 250, 252, 0.92) !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .sidebar-nav .tab.active {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .sidebar-nav .tab.active {
   background: linear-gradient(135deg, #5eead4 0%, var(--ums-accent) 48%, #0f766e 100%) !important;
   color: #042f2e !important;
   -webkit-text-fill-color: #042f2e !important;
@@ -226,20 +247,20 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
   font-weight: 700 !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .sidebar-nav .tab.active i {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .sidebar-nav .tab.active i {
   color: #042f2e !important;
 }
 
 /* ── Área principal: lienzo con borde interior ───────────────────────────── */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .app-frame {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .app-frame {
   background: transparent !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .app-main {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .app-main {
   background: transparent !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) main.content#main-content {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) main.content#main-content {
   margin-inline: max(0px, var(--md-sys-spacing-3, 12px)) !important;
   margin-block-start: 0.35rem !important;
   padding-block-start: var(--md-sys-spacing-5, 20px) !important;
@@ -256,42 +277,42 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
 }
 
 /* Títulos de sección estilo display Mapa */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .section-header h2,
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .dashboard-header .dashboard-title,
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .panel-section-header h2 {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .section-header h2,
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .dashboard-header .dashboard-title,
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .panel-section-header h2 {
   font-family: "Syne", Inter, system-ui, sans-serif !important;
   font-weight: 800 !important;
   letter-spacing: 0.03em !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .section-header,
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .dashboard-header {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .section-header,
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .dashboard-header {
   border-radius: 14px !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* Paneles activos: halos suaves */
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .panel.active {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .panel.active {
   animation-duration: 0.35s !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .toolbar {
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .toolbar {
   border-radius: 12px !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 @media (max-width: 900px) {
-  html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) main.content#main-content {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) main.content#main-content {
     margin-inline: 0 !important;
     border-radius: 0 !important;
     border-inline: none !important;
   }
 
-  html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .header-brand-tagline {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand-tagline {
     display: none !important;
   }
 
-  html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .header-brand-text {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand-text {
     border-left: none !important;
     padding-left: 0 !important;
     margin-left: 0 !important;
@@ -299,7 +320,7 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not
 }
 
 @media (max-width: 520px) {
-  html body.theme-industrial.universal-map-shell.md3-on:not(.appearance-light):not(.login-open) .header-brand-eyebrow {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand-eyebrow {
     letter-spacing: 0.18em !important;
     font-size: 0.55rem !important;
   }
