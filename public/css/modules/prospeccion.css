@@ -166,6 +166,11 @@
   z-index: 1;
 }
 
+/* Contenedor legacy vacío junto al canvas: no debe tapar clics ni pintar encima del rail */
+#prospeccion-map-chrome > #map-prospeccion.prospeccion-map {
+  display: none !important;
+}
+
 /* ============================================================
  * 3. SIDEBAR (overlays left side of map)
  * ============================================================ */
@@ -201,7 +206,7 @@
   top: 50%;
   left: 10px;
   transform: translateY(-50%);
-  z-index: 1022;
+  z-index: 2000;
   width: 28px;
   height: 56px;
   background: var(--prs-glass-bg);
@@ -222,6 +227,30 @@
 }
 .prospeccion-sidebar-toggle:hover {
   color: var(--prs-text);
+}
+
+/* Panel colapsado: rail siempre por encima de Leaflet y legible para reabrir */
+.prospeccion-map-container--sidebar-collapsed .prospeccion-sidebar-toggle {
+  z-index: 4500;
+  flex-direction: column;
+  gap: 5px;
+  width: auto;
+  min-width: 46px;
+  height: auto;
+  min-height: 56px;
+  padding: 8px 7px;
+  box-shadow: 0 4px 22px rgba(0, 0, 0, 0.38);
+  pointer-events: auto;
+}
+.prospeccion-sidebar-toggle__hint {
+  font-size: 0.52rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  line-height: 1.15;
+  text-align: center;
+  color: var(--prs-text-soft, #1e293b);
+  max-width: 56px;
 }
 
 /* Sidebar header */
@@ -1229,22 +1258,36 @@
   .prospeccion-sidebar.collapsed {
     transform: translateY(calc(100% + 10px));
   }
+  /* Dentro del mapa (overflow:hidden): no usar top negativo — quedaría recortado */
   .prospeccion-sidebar-toggle {
     display: flex;
     position: absolute;
-    top: -36px;
-    right: 12px;
-    z-index: 1022;
+    top: 12px;
+    left: 12px;
+    right: auto;
+    transform: none;
+    z-index: 4500;
     width: 44px;
-    height: 32px;
-    border-radius: 8px 8px 0 0;
+    height: 36px;
+    border-radius: 8px;
     background: var(--prs-glass-bg, rgba(15,23,42,0.85));
     border: 1px solid var(--prs-glass-border, rgba(255,255,255,0.08));
-    border-bottom: none;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+  }
+  .prospeccion-sidebar-toggle.shifted {
+    left: 12px;
+    top: 12px;
+  }
+  .prospeccion-map-container--sidebar-collapsed .prospeccion-sidebar-toggle {
+    flex-direction: column;
+    width: auto;
+    min-width: 48px;
+    height: auto;
+    min-height: 58px;
+    padding: 8px 6px;
   }
   .prospeccion-drawer {
     width: 100%;

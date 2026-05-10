@@ -957,6 +957,11 @@ html body:not(.appearance-light) .prospeccion-sidebar-toggle {
   border: 1px solid rgba(255,255,255,0.10) !important;
   color: #cbd5e1 !important;
 }
+html body.theme-industrial:not(.appearance-light) .prospeccion-sidebar-toggle__hint,
+html body.dark-theme .prospeccion-sidebar-toggle__hint,
+html body:not(.appearance-light) .prospeccion-sidebar-toggle__hint {
+  color: #f1f5f9 !important;
+}
 
 /* ── HOVER TABLAS: limpio, contrastado, premium (era muddy) ──────────── */
 html body table.data-table tbody tr,

@@ -198,9 +198,18 @@
     if (mapChrome) mapChrome.classList.toggle('prospeccion-map-container--sidebar-collapsed', !state.sidebarOpen);
     if (sidebarToggle) {
       sidebarToggle.classList.toggle('shifted', state.sidebarOpen);
-      sidebarToggle.innerHTML = state.sidebarOpen ? '<i class="fas fa-chevron-left" aria-hidden="true"></i>' : '<i class="fas fa-chevron-right" aria-hidden="true"></i>';
+      if (state.sidebarOpen) {
+        sidebarToggle.innerHTML = '<i class="fas fa-chevron-left" aria-hidden="true"></i>';
+      } else {
+        sidebarToggle.innerHTML =
+          '<span class="prospeccion-sidebar-toggle__hint">Filtros</span>' +
+          '<i class="fas fa-chevron-right" aria-hidden="true"></i>';
+      }
       sidebarToggle.setAttribute('aria-expanded', state.sidebarOpen ? 'true' : 'false');
-      sidebarToggle.setAttribute('title', state.sidebarOpen ? 'Ocultar panel de filtros' : 'Mostrar panel de filtros');
+      sidebarToggle.setAttribute(
+        'title',
+        state.sidebarOpen ? 'Ocultar panel de filtros' : 'Mostrar panel de filtros (Filtros)'
+      );
     }
     if (collapseBtn) {
       collapseBtn.setAttribute('aria-expanded', state.sidebarOpen ? 'true' : 'false');
