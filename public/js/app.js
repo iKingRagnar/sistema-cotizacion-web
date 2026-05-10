@@ -1050,6 +1050,24 @@
     root.classList.toggle('universal-map-mobile-doc-scroll', on);
   }
 
+  /** Quita overlays de rail móvil huérfanos y re-sincroniza scroll del documento (WebKit/Android). */
+  function sweepStaleMobileBlockingLayers() {
+    try {
+      if (!document.body.classList.contains('universal-map-shell')) return;
+      if (
+        typeof window.matchMedia !== 'function' ||
+        !window.matchMedia('(max-width: 768px)').matches
+      ) {
+        return;
+      }
+      if (!document.body.classList.contains('sidebar-open')) {
+        var stale = qs('#mobile-sidebar-overlay');
+        if (stale) stale.remove();
+      }
+      syncUniversalMapMobileDocScrollClass();
+    } catch (_) {}
+  }
+
   function showLoginOverlay(show) {
     const el = qs('#login-overlay');
     if (!el) return;
@@ -1777,7 +1795,15 @@
     window.addEventListener('resize', function () {
       syncSidebarRailToggleHeaderVisibility();
       if (!isMobileNav()) closeMobileSidebar();
+      sweepStaleMobileBlockingLayers();
     });
+    window.addEventListener(
+      'orientationchange',
+      function () {
+        setTimeout(sweepStaleMobileBlockingLayers, 250);
+      },
+      false
+    );
   })();
 
   async function fetchJson(url, opts = {}) {
@@ -15949,6 +15975,7 @@
         loadBitacoras({ force: true });
       }, REFRESH_INTERVAL_MS);
     }
+    sweepStaleMobileBlockingLayers();
     syncUniversalMapMobileDocScrollClass();
   }
   /** Quitar ":" inicial en créditos (HTML viejo en caché). No tocar textContent del span si hay <em>; borraría la cursiva. */
@@ -15967,6 +15994,7 @@
 
   async function boot() {
     normalizePoweredByCredits();
+    sweepStaleMobileBlockingLayers();
     syncUniversalMapMobileDocScrollClass();
     const hasToken = !!getAuthToken();
     /* Sin token: mostrar login enseguida. Antes el overlay esperaba a /api/config; si la red fallaba o tardaba, el usuario veía la app “vacía” o sin intro. */
@@ -15992,6 +16020,8 @@
   }
   window.addEventListener('pageshow', function () {
     if (document.body.classList.contains('login-open')) resetViewportScrollForLogin();
+    else sweepStaleMobileBlockingLayers();
+    syncUniversalMapMobileDocScrollClass();
   });
   window.addEventListener('load', function () {
     if (document.body.classList.contains('login-open')) resetViewportScrollForLogin();

@@ -86,14 +86,32 @@ html {
     padding-top: max(0px, env(safe-area-inset-top, 0px));
   }
 
-  /* Drawer cerrado: no interceptar toques en el lienzo (evita "pantalla muerta" en WebKit) */
+  /*
+   * Drawer cerrado: el rail debe ser totalmente permeable al documento.
+   * Solo `aside { pointer-events: none }` no basta: hijos pueden llevar `pointer-events: auto`
+   * en otras hojas (premium/material) y quedan interceptando touches aun fuera del rail.
+   */
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open):not(.sidebar-open)
-    aside.sidebar-nav.mapa-app-shell {
+    aside.sidebar-nav.mapa-app-shell,
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open):not(.sidebar-open)
+    aside.sidebar-nav.mapa-app-shell * {
     pointer-events: none !important;
   }
 
-  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-open aside.sidebar-nav.mapa-app-shell {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-open
+    aside.sidebar-nav.mapa-app-shell,
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-open
+    aside.sidebar-nav.mapa-app-shell * {
     pointer-events: auto !important;
+  }
+
+  /* Capa scrim zombie (p. ej. caché viejo): sin sidebar abierto debe desaparecer */
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open):not(.sidebar-open)
+    #mobile-sidebar-overlay {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
   }
 
   /* Drawer: por encima del workspace, debajo del header fijo (z ~1100 en mapa) */
@@ -120,7 +138,6 @@ html {
 
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-open aside.sidebar-nav.mapa-app-shell {
     left: 0 !important;
-    pointer-events: auto !important;
   }
 
   /* Contenido crece con la página; el scroll lo hace el documento (ver bloque body arriba). */
