@@ -165,3 +165,11 @@ html body.theme-industrial:not(.appearance-light) header.header #btn-notificatio
 html body.theme-industrial:not(.appearance-light) header.header #btn-notifications:hover i {
   color: #8ab4f8 !important;
 }
+
+/* Créditos “powered by…”: permanece visible; cursiva explícita al final de la cascada (el shorthand
+   `font:` del padre suele arrastrar font-style:normal y el <em> hereda recto si no lo re-forzamos). */
+html#root body#app.theme-industrial.universal-map-shell.md3-on:not(.login-open)
+  .header-powered-by.header-powered-by--nav-slot
+  em.header-powered-by-italic {
+  font-style: italic !important;
+}
