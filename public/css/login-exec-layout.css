@@ -525,7 +525,7 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-badg
   color: var(--sk-accent) !important;
 }
 
-/* glass-panel--auth — sin caja azul/vidrio: formulario directo sobre la foto del overlay */
+/* glass-panel--auth — sin caja azul/vidrio ni contorno: formulario flotando sobre la foto */
 html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel {
   position: relative !important;
   z-index: 1 !important;
@@ -541,8 +541,9 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel
   min-width: 0 !important;
   padding: clamp(1.35rem, 2.8vw, 2rem) !important;
   margin: 0 !important;
-  border-radius: var(--sk-radius) !important;
-  border: 1px solid var(--sk-border) !important;
+  border-radius: 0 !important;
+  border: none !important;
+  outline: none !important;
   background: transparent !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -558,7 +559,7 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel
     0 0 20px rgba(0, 0, 0, 0.55) !important;
 }
 
-/* Una sola capa de vidrio (el panel); la tarjeta interior es solo flujo */
+/* Una sola lectura visual: sin panel contenedor ni ::before premium; inputs y botón aportan forma. */
 html body.login-open #login-overlay.login-overlay--exec-layout .login-card {
   width: 100% !important;
   max-width: none !important;
@@ -570,6 +571,17 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-card {
   background: transparent !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+
+/* premium-upgrade.css — borde degradado animado; sin él en exec (lee como “marco” azul/morado). */
+html body.login-open #login-overlay.login-overlay--exec-layout .login-card::before {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+  animation: none !important;
+  padding: 0 !important;
+  inset: 0 !important;
+  pointer-events: none !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-card-header {

@@ -130,8 +130,8 @@ html body.login-open #login-overlay .login-brand-panel .login-brand-logo--hero .
   border: none !important;
 }
 
-/* Panel formulario */
-html body.login-open #login-overlay .login-form-panel {
+/* Panel formulario — NO aplicar al layout ejecutivo (#login-overlay.login-overlay--exec-layout: manda login-exec-layout.css). */
+html body.login-open #login-overlay:not(.login-overlay--exec-layout) .login-form-panel {
   flex: 1 1 44% !important;
   max-width: none !important;
   min-width: min(300px, 100%) !important;
@@ -142,8 +142,8 @@ html body.login-open #login-overlay .login-form-panel {
   -webkit-backdrop-filter: blur(18px) saturate(160%) !important;
 }
 
-/* Tarjeta: vidrio (no blanco opaco) */
-html body.login-open #login-overlay .login-card {
+/* Tarjeta: vidrio — solo login clásico, no exec */
+html body.login-open #login-overlay:not(.login-overlay--exec-layout) .login-card {
   background: linear-gradient(165deg, rgba(255, 255, 255, 0.14) 0%, rgba(15, 23, 42, 0.32) 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.35) !important;
@@ -203,7 +203,7 @@ html body.login-open #login-overlay .login-eye-btn {
   background: transparent !important;
 }
 
-html body.login-open #login-overlay .login-role-card {
+html body.login-open #login-overlay:not(.login-overlay--exec-layout) .login-role-card {
   background: rgba(15, 23, 42, 0.55) !important;
   border: 1px solid rgba(94, 234, 212, 0.28) !important;
   color: #e2e8f0 !important;
@@ -328,7 +328,7 @@ html body.login-open #login-overlay #login-user {
   html body.login-open #login-overlay .login-brand-badges {
     margin-top: 0.75rem !important;
   }
-  html body.login-open #login-overlay .login-form-panel {
+  html body.login-open #login-overlay:not(.login-overlay--exec-layout) .login-form-panel {
     flex: 0 0 auto !important;
     padding: 1rem !important;
   }

@@ -103,7 +103,7 @@ html body.login-open #login-overlay .login-split::before {
 }
 
 html body.login-open #login-overlay .login-brand-panel,
-html body.login-open #login-overlay .login-form-panel {
+html body.login-open #login-overlay:not(.login-overlay--exec-layout) .login-form-panel {
   position: relative !important;
   z-index: 2 !important;
 }
@@ -244,13 +244,13 @@ html body.login-open #login-overlay .login-brand-features .login-feature-item:ho
   background: rgba(45, 212, 191, 0.08) !important;
 }
 
-html body.login-open #login-overlay .login-form-panel {
+html body.login-open #login-overlay:not(.login-overlay--exec-layout) .login-form-panel {
   align-items: center !important;
   justify-content: center !important;
   padding: clamp(1.25rem, 3vw, 2rem) !important;
 }
 
-html body.login-open #login-overlay .login-card {
+html body.login-open #login-overlay:not(.login-overlay--exec-layout) .login-card {
   max-width: 420px !important;
   border-radius: 22px !important;
   border: 1px solid rgba(94, 234, 212, 0.38) !important;
