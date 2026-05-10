@@ -353,6 +353,51 @@
       } catch (e) {}
     })();
   </script>
+  <!-- Depuración sin F12: añade ?debug=1 a la URL o en consola (otro navegador): localStorage.setItem('cotizacion-debug','1') -->
+  <script>
+    (function () {
+      try {
+        var q = new URLSearchParams(location.search || '');
+        if (q.get('debug') === '0') {
+          try { localStorage.removeItem('cotizacion-debug'); } catch (_) {}
+          return;
+        }
+        var on = q.get('debug') === '1' || (typeof localStorage !== 'undefined' && localStorage.getItem('cotizacion-debug') === '1');
+        if (!on) return;
+        var pre = document.createElement('pre');
+        pre.id = 'cot-debug-overlay';
+        pre.setAttribute('aria-label', 'Registro de depuración');
+        pre.style.cssText = 'position:fixed;left:8px;bottom:8px;max-width:min(560px,92vw);max-height:38vh;overflow:auto;margin:0;padding:8px;background:#0d1117;color:#3fb950;font:11px/1.35 ui-monospace,Consolas,monospace;z-index:2147483647;opacity:0.96;border:1px solid #238636;pointer-events:auto;white-space:pre-wrap;word-break:break-word;box-shadow:0 4px 24px rgba(0,0,0,0.5);';
+        function line(msg) {
+          var t = new Date().toISOString().slice(11, 23);
+          pre.appendChild(document.createTextNode(t + ' ' + String(msg) + '\n'));
+          pre.scrollTop = pre.scrollHeight;
+        }
+        window.__cotDebug = line;
+        window.onerror = function (msg, src, row, col, err) {
+          line('onerror: ' + msg + ' @' + (src || '') + ':' + row + ':' + col);
+          if (err && err.stack) line(err.stack);
+        };
+        window.addEventListener('unhandledrejection', function (e) {
+          var r = e.reason;
+          line('unhandledrejection: ' + (r && r.message ? r.message : String(r)));
+          if (r && r.stack) line(r.stack);
+        });
+        var origLog = console.log;
+        var origErr = console.error;
+        console.log = function () {
+          try { line('[log] ' + Array.prototype.join.call(arguments, ' ')); } catch (_) {}
+          try { return origLog.apply(console, arguments); } catch (_) {}
+        };
+        console.error = function () {
+          try { line('[err] ' + Array.prototype.join.call(arguments, ' ')); } catch (_) {}
+          try { return origErr.apply(console, arguments); } catch (_) {}
+        };
+        document.body.appendChild(pre);
+        line('cot-debug: overlay ON. Apagar: ?debug=0 o localStorage.removeItem("cotizacion-debug")');
+      } catch (e) {}
+    })();
+  </script>
   <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
   <div id="app-watermark" class="prem-watermark-field" aria-hidden="true"></div>
   <div id="offline-banner" class="offline-banner hidden" role="alert" aria-live="polite">Sin conexión. Algunas funciones pueden no estar disponibles.</div>
@@ -2077,7 +2122,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=203-modal-keytrap-dedupe-2026-05-07"></script>
+  <script src="js/app.js?v=204-cot-debug-overlay-hints-2026-05-07"></script>
   <script src="js/prospeccion-map.js?v=5-sidebar-reopen-label-2026-05-08" defer></script>
   <script src="js/bg-animation.js?v=6-no-motion-mobile-only" defer></script>
   <script src="js/premium-ux.js?v=16-no-motion-boot" defer></script>

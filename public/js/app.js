@@ -7657,6 +7657,11 @@
   // ----- MODAL GENÉRICO ----- Focus trap, foco al abrir/cerrar, Escape cierra
   function openModal(title, bodyHtml, onClose) {
     const modal = qs('#modal');
+    try {
+      if (typeof window.__cotDebug === 'function') {
+        window.__cotDebug('[openModal] enter title=' + String(title || '').slice(0, 60));
+      }
+    } catch (_e) {}
     if (!modal) {
       console.warn('openModal: falta #modal en el DOM');
       return function () {};
@@ -7683,10 +7688,20 @@
     }
     qs('#modal-title').textContent = title;
     qs('#modal-body').innerHTML = bodyHtml;
+    try {
+      if (typeof window.__cotDebug === 'function') {
+        window.__cotDebug('[openModal] innerHTML len=' + String(bodyHtml || '').length);
+      }
+    } catch (_e) {}
     wireModalMediaOpenButtons(qs('#modal-body'));
     if (modalBox && /ref-pvc-hero/.test(String(bodyHtml || ''))) modalBox.classList.add('modal-box--refaccion-preview');
     if (modalBox) applyModalThemeToBox(modalBox);
     modal.classList.remove('hidden');
+    try {
+      if (typeof window.__cotDebug === 'function') {
+        window.__cotDebug('[openModal] modal visible');
+      }
+    } catch (_e) {}
     /* premium-pro.css anima .modal-box con pp-scale-in + fill-mode both; si la cascada
      o un repaint deja la animación sin aplicar el “to”, la caja puede quedar en opacity:0
      (vista previa “en blanco”). Forzar estado visible tras el siguiente pintado. */
@@ -7820,6 +7835,11 @@
 
   // ----- MODAL CLIENTE -----
   function openModalCliente(cliente) {
+    try {
+      if (typeof window.__cotDebug === 'function') {
+        window.__cotDebug('[openModalCliente] start id=' + (cliente && cliente.id != null ? String(cliente.id) : 'new'));
+      }
+    } catch (_e) {}
     const isNew = !cliente || !cliente.id;
     const hasConst = !!(cliente && cliente.has_constancia);
     const constanciaNombreEsc = cliente && cliente.constancia_nombre ? escapeHtml(cliente.constancia_nombre) : '';
@@ -7858,6 +7878,11 @@
       </div>
     `;
     openModal(isNew ? 'Nuevo cliente' : 'Editar cliente', body);
+    try {
+      if (typeof window.__cotDebug === 'function') {
+        window.__cotDebug('[openModalCliente] after openModal()');
+      }
+    } catch (_e) {}
     onlyNumbers(qs('#m-telefono'));
     qs('#m-rfc').addEventListener('input', function () { this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 13); });
     const fileInput = qs('#m-file-fiscal');
