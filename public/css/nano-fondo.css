@@ -40,45 +40,42 @@
  *     3) Cubrir TODO contenedor intermedio con transparent
  * ============================================================ */
 /* Sol solo con app visible: con login-open el intro debe heredar tokens Luna (fijo). */
-/* v16 Sol: slate-50/100 (menos blanco puro), blur sin “brightness pump” — espejo suave de Luna, menos fatiga. */
+/* v17 Sol: vidrio esmerilado claro rgba(255,255,255,0.7) + blur 10px; acento industrial #00d2ff */
 html body.theme-industrial.appearance-light:not(.login-open) {
   --nano-overlay:           transparent;
-  --nano-surface:           rgba(248, 250, 252, 0.82);
-  --nano-surface-strong:    rgba(241, 245, 249, 0.94);
-  --nano-surface-solid:     rgba(255, 255, 255, 0.97);
-  --nano-surface-subtle:    rgba(226, 232, 240, 0.72);
+  --nano-surface:           rgba(255, 255, 255, 0.7);
+  --nano-surface-strong:    rgba(255, 255, 255, 0.82);
+  --nano-surface-solid:     rgba(255, 255, 255, 0.96);
+  --nano-surface-subtle:    rgba(255, 255, 255, 0.55);
   --nano-border:            rgba(15, 23, 42, 0.10);
   --nano-border-strong:     rgba(15, 23, 42, 0.16);
   --nano-text:              #0f172a;
   --nano-text-soft:         #1e293b;
   --nano-text-muted:        #475569;
-  --nano-accent:            #1a73e8;
-  --nano-blur:              blur(18px) saturate(140%) brightness(1);
-  --nano-blur-light:        blur(12px) saturate(135%) brightness(1);
-  --nano-shadow:            0 6px 22px rgba(15, 23, 42, 0.07);
+  --nano-accent:            #00d2ff;
+  --nano-blur:              blur(10px) saturate(130%);
+  --nano-blur-light:        blur(10px) saturate(125%);
+  --nano-shadow:            0 6px 22px rgba(15, 23, 42, 0.08);
 }
 
 html body.theme-industrial:not(.appearance-light),
 html body.theme-industrial.login-open {
-  /* Luna v17: vidrio negro neutro (sin pizarra #0f172a ni saturate “azulado”).
-     Misma legibilidad estilo Chrome dark (#e8eaed), blur casi sin matiz. */
+  /* Luna v19: contenedores vidrio rgba(255,255,255,0.05) + blur 10px; acento #00d2ff */
   --nano-overlay:           transparent;
-  --nano-surface:           rgba(0, 0, 0, 0.26);
-  --nano-surface-strong:    rgba(0, 0, 0, 0.38);
-  --nano-surface-solid:     rgba(0, 0, 0, 0.88);
-  /* v18: “subtle” en Luna = negro vidrio (antes blanco 5.5% se veía grisáceo). */
-  --nano-surface-subtle:    rgba(0, 0, 0, 0.24);
-  /* Cebra tabla: NUNCA transparent — si no, el <tr> de premium (#fff / #eff6ff) se filtra. */
-  --nano-table-zebra-odd:   rgba(0, 0, 0, 0.14);
-  --nano-border:            rgba(255, 255, 255, 0.10);
-  --nano-border-strong:     rgba(255, 255, 255, 0.18);
-  --nano-text:              #e8eaed;
-  --nano-text-soft:         #bdc1c6;
-  --nano-text-muted:        #9aa0a6;
-  --nano-accent:            #8ab4f8;
-  --nano-blur:              blur(22px) saturate(106%);
-  --nano-blur-light:        blur(16px) saturate(106%);
-  --nano-shadow:            0 8px 28px rgba(0, 0, 0, 0.35);
+  --nano-surface:           rgba(255, 255, 255, 0.05);
+  --nano-surface-strong:      rgba(255, 255, 255, 0.09);
+  --nano-surface-solid:       rgba(13, 17, 23, 0.92);
+  --nano-surface-subtle:      rgba(255, 255, 255, 0.04);
+  --nano-table-zebra-odd:     rgba(255, 255, 255, 0.03);
+  --nano-border:              rgba(255, 255, 255, 0.10);
+  --nano-border-strong:       rgba(255, 255, 255, 0.16);
+  --nano-text:                #e8eaed;
+  --nano-text-soft:           #bdc1c6;
+  --nano-text-muted:          #9aa0a6;
+  --nano-accent:              #00d2ff;
+  --nano-blur:                blur(10px) saturate(115%);
+  --nano-blur-light:          blur(10px) saturate(115%);
+  --nano-shadow:              0 8px 28px rgba(0, 0, 0, 0.4);
 }
 
 
@@ -138,6 +135,13 @@ html body.theme-industrial.md3-on:not(.appearance-light),
 html body.theme-industrial.md3-on.login-open {
   --pmx: 50 !important;
   --pmy: 50 !important;
+}
+
+/* Luna app: tinte #0d1117 sobre la foto industrial (legible + imagen visible). */
+html body.theme-industrial.md3-on:not(.appearance-light):not(.login-open) {
+  background-image:
+    linear-gradient(rgba(13, 17, 23, 0.82), rgba(13, 17, 23, 0.82)),
+    var(--nano-machine-image) !important;
 }
 
 /* ============================================================

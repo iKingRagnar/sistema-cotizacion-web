@@ -1,5 +1,6 @@
 /* ════════════════════════════════════════════════════════════════════════
-   PERF EMERGENCY v4 — DOS IDs (html#root + body#app) para ganar contra
+   PERF EMERGENCY v5 — v4 + excepción Nano industrial (backdrop en vidrio real).
+   v4 — DOS IDs (html#root + body#app) para ganar contra
    selectores legacy con :is(#panel-X, #panel-Y, ...) que daban ID-specificity.
 
    Specificity comparison:
@@ -30,6 +31,49 @@ html#root body#app [data-glass="ok"]::before,
 html#root body#app [data-glass="ok"]::after {
   backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* v5: html#root body#app * mataba backdrop de nano-fondo; reactivar solo contenedores vidrio (--nano-blur*). */
+html#root body#app.theme-industrial header.header,
+html#root body#app.theme-industrial .header,
+html#root body#app.theme-industrial .section-header,
+html#root body#app.theme-industrial .dashboard-header,
+html#root body#app.theme-industrial .sidebar-nav,
+html#root body#app.theme-industrial .tabs.tabs--rail,
+html#root body#app.theme-industrial nav.tabs,
+html#root body#app.theme-industrial .dashboard-kpi-strip,
+html#root body#app.theme-industrial .dashboard-crossfilter-bar,
+html#root body#app.theme-industrial .dashboard-card,
+html#root body#app.theme-industrial .dashboard-grid > .dashboard-card,
+html#root body#app.theme-industrial .card,
+html#root body#app.theme-industrial .kpi-card,
+html#root body#app.theme-industrial .kpi-tile,
+html#root body#app.theme-industrial .kpi-box,
+html#root body#app.theme-industrial .module-card,
+html#root body#app.theme-industrial .admin-hub-panel,
+html#root body#app.theme-industrial .admin-hub-card,
+html#root body#app.theme-industrial .section-card,
+html#root body#app.theme-industrial .summary-card,
+html#root body#app.theme-industrial .resumen-card,
+html#root body#app.theme-industrial .prospeccion-kpi,
+html#root body#app.theme-industrial .prospeccion-kpi-card,
+html#root body#app.theme-industrial .maq-ficha-card,
+html#root body#app.theme-industrial .tarifas-section,
+html#root body#app.theme-industrial .form-card,
+html#root body#app.theme-industrial .table-wrap,
+html#root body#app.theme-industrial .modal-box,
+html#root body#app.theme-industrial .empty-card,
+html#root body#app.theme-industrial .filters-card,
+html#root body#app.theme-industrial .login-card,
+html#root body#app.theme-industrial .stock-alert-bar {
+  backdrop-filter: var(--nano-blur) !important;
+  -webkit-backdrop-filter: var(--nano-blur) !important;
+}
+
+html#root body#app.theme-industrial table thead,
+html#root body#app.theme-industrial .data-table thead {
+  backdrop-filter: var(--nano-blur-light) !important;
+  -webkit-backdrop-filter: var(--nano-blur-light) !important;
 }
 
 /* ── 2. Kill animations infinitas (excepto spinners funcionales) ──── */

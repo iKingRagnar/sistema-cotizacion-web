@@ -353,7 +353,7 @@ body.theme-industrial.appearance-light .tabs.tabs--rail .tab.active {
   animation: none !important;
   box-shadow: none !important;
 }
-body.theme-industrial.appearance-light .tabs.tabs--rail .tab.active i { color: #1A73E8 !important; }
+body.theme-industrial.appearance-light .tabs.tabs--rail .tab.active i { color: #00a8c4 !important; }
 body.theme-industrial.appearance-light .tabs.tabs--rail .tab.highlight { color: #137333 !important; }
 body.theme-industrial.appearance-light .tabs.tabs--rail .tab.highlight:hover {
   background: #E6F4EA !important;
@@ -1138,8 +1138,8 @@ body.theme-industrial:not(.appearance-light) .tabs.tabs--rail .tab:hover {
   color: #E2E8F0 !important;
 }
 body.theme-industrial:not(.appearance-light) .tabs.tabs--rail .tab.active {
-  background: rgba(26,115,232,.20) !important;
-  color: #93C5FD !important;
+  background: rgba(0, 210, 255, 0.14) !important;
+  color: #b8f4ff !important;
 }
 body.theme-industrial:not(.appearance-light) .header {
   background: #111827 !important;
