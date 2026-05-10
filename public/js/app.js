@@ -15935,10 +15935,16 @@
       }, REFRESH_INTERVAL_MS);
     }
   }
-  /** Quitar “:” inicial en créditos (HTML viejo en caché o copias sin actualizar). */
+  /** Quitar ":" inicial en créditos (HTML viejo en caché). No tocar textContent del span si hay <em>; borraría la cursiva. */
   function normalizePoweredByCredits() {
     qsAll('.header-powered-by').forEach(function (el) {
-      const s = String(el.textContent || '').trim();
+      var italic = el.querySelector('.header-powered-by-italic');
+      if (italic) {
+        var si = String(italic.textContent || '').trim();
+        if (si.startsWith(':')) italic.textContent = si.replace(/^:\s*/, '').trim();
+        return;
+      }
+      var s = String(el.textContent || '').trim();
       if (s.startsWith(':')) el.textContent = s.replace(/^:\s*/, '').trim();
     });
   }

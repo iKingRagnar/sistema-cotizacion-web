@@ -138,6 +138,15 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-b
   gap: 0.55rem !important;
 }
 
+/* Sin shimmer/animación en la marca (mega-upgrade u otros); evita “parpadeo” al pasar el mouse */
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand::after {
+  content: none !important;
+  display: none !important;
+  animation: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 /* Marca: jerarquía Luna (columna + orden) */
 html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand-text {
   border-left-color: var(--mapa-ms-brand-divider) !important;
@@ -432,6 +441,8 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   height: 54px !important;
   width: fit-content !important;
   max-width: min(230px, 40vw) !important;
+  transition: none !important;
+  animation: none !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
@@ -450,6 +461,8 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   transform-origin: center center;
   mix-blend-mode: normal !important;
   filter: var(--mapa-ms-logo-drop);
+  transition: none !important;
+  animation: none !important;
 }
 
 /* Luna: halo blanco en esquinas del asset → fusionar contra header oscuro */
