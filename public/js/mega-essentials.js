@@ -117,20 +117,42 @@
       Theme.apply(document.body.classList.contains('appearance-light') ? 'dark' : 'light', false);
     },
     injectButton: function () {
-      if ($('.theme-switcher')) return;
+      var tail = $('.header-actions-tail');
+      var existing = $('.theme-switcher');
+      /* Reubicar si ya existe (caché / carga vieja): al final del header quedaba fuera de vista en móvil */
+      if (existing && tail && existing.parentNode !== tail) {
+        try {
+          tail.insertBefore(existing, tail.firstChild);
+        } catch (_) {}
+        return;
+      }
+      if (existing) return;
       var btn = document.createElement('button');
       btn.className = 'theme-switcher';
       btn.type = 'button';
       btn.title = 'Cambiar tema (Shift+T)';
+      btn.setAttribute('aria-label', 'Cambiar tema claro u oscuro');
       /* Thumb primero: si va al final en el DOM pinta encima del sol aunque los <i> tengan z-index (FA ::before). */
       btn.innerHTML =
         '<span class="theme-switcher__thumb" aria-hidden="true"></span>' +
         '<i class="fas fa-sun theme-switcher__icon-sun" aria-hidden="true"></i>' +
         '<i class="fas fa-moon theme-switcher__icon-moon" aria-hidden="true"></i>';
       btn.addEventListener('click', Theme.toggle);
-      var profile = $('#header-profile') || $('.header-profile');
+      if (tail) {
+        tail.insertBefore(btn, tail.firstChild);
+        return;
+      }
+      var cluster = $('.mapa-header-user-cluster');
+      if (cluster) {
+        cluster.insertBefore(btn, cluster.firstChild);
+        return;
+      }
+      var profile = $('#btn-header-profile') || $('#header-profile') || $('.header-profile');
       if (profile && profile.parentNode) profile.parentNode.insertBefore(btn, profile);
-      else { var h = $('.header-inner'); if (h) h.appendChild(btn); }
+      else {
+        var h = $('.header-inner');
+        if (h) h.appendChild(btn);
+      }
     },
   };
   window.MegaTheme = Theme;

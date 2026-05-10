@@ -227,3 +227,116 @@ html {
     padding-bottom: env(safe-area-inset-bottom, 0px) !important;
   }
 }
+
+/* ---------- ≤768px — cabecera: sin solapes; Sol/Luna junto al resto de acciones ---------- */
+@media (max-width: 768px) {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) header.header.mapa-app-shell {
+    height: auto !important;
+    min-height: 3.5rem !important;
+    max-height: none !important;
+    padding-top: max(0.35rem, env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: 0.35rem !important;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) header.header.mapa-app-shell .header-inner {
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    min-height: 0 !important;
+  }
+
+  /* Quita hueco central y créditos que competían con iconos en viewport estrecho */
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-header-spacer {
+    display: none !important;
+    flex: 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-powered-by.header-powered-by--nav-slot {
+    display: none !important;
+  }
+
+  /* “LIVE” y sesión texto largo: menos ruido; el FAB ya abre módulos */
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-ms-live-pill {
+    display: none !important;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) #header-session:not(.hidden) {
+    display: none !important;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    align-items: center !important;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand-eyebrow {
+    display: none !important;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand-service,
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand #app-title-name {
+    font-size: 0.92rem !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: min(52vw, 14rem) !important;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand .login-brand-hero-img,
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand-logo-img#header-brand-logo {
+    max-height: 28px !important;
+    width: auto !important;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-actions {
+    flex: 0 0 auto !important;
+    margin-left: 0 !important;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .mapa-header-user-cluster {
+    flex-shrink: 0 !important;
+    max-width: 100% !important;
+    padding: 2px 4px !important;
+    gap: 0.2rem !important;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-actions-tail {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    gap: 0.25rem !important;
+    min-width: 0 !important;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-actions-tail .theme-switcher {
+    flex: 0 0 auto !important;
+    margin-right: 4px !important;
+    z-index: 3 !important;
+    position: relative !important;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .btn-icon-header,
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .btn-header-profile {
+    flex-shrink: 0 !important;
+  }
+
+  /* Un solo control de rail: FAB inferior; el chevron del rail duplicaba “menú” */
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
+    #app-sidebar-nav
+    #btn-sidebar-rail-toggle.mapa-ms-rail-collapse {
+    display: none !important;
+  }
+}
+
+@media (max-width: 380px) {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand-service,
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand #app-title-name {
+    max-width: 38vw !important;
+  }
+}
