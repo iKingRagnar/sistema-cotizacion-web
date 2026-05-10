@@ -3,7 +3,9 @@
  * - Safe areas (notch / home indicator)
  * - Rail lateral como drawer encima del contenido (evita rail ~400px en viewport)
  * - Tablas con scroll horizontal sin celdas clavadas a 120px (style.css @480)
- * - Scroll vertical: región explícita en .app-main (iOS/Android); drawer cerrado no roba toques
+ * - Scroll vertical: en móvil usar scroll del DOCUMENTO (html/body), no solo .app-main.
+ *   El patrón body{overflow:hidden}+.app-main{overflow:auto} rompe el pan táctil en varios WebKit.
+ * - Drawer cerrado: pointer-events none en el aside (no robar toques).
  * Carga después de mapa-layout-exact.css
  */
 
@@ -16,21 +18,28 @@ html {
 /* ---------- ≤768px — layout principal ---------- */
 @media (max-width: 768px) {
   /*
-   * Una sola columna táctil: el documento no depende de "scroll del body" (falla en iOS con flex/map).
-   * El marco bajo el header tiene altura de viewport; solo .app-main hace overflow-y.
+   * Scroll = documento (html/body). Sin altura fija en .app-frame: el contenido crece y el
+   * viewport hace pan/scroll nativo (comportamiento que sí implementan todos los móviles).
    */
-  /* Una sola superficie de scroll: .app-main. Si el body también hace bounce/scroll,
-   * WebKit móvil a veces "absorbe" el gesto y la región interna queda muerta. */
+  html {
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) {
     overflow-x: hidden;
-    overflow-y: hidden;
-    touch-action: pan-y pinch-zoom;
-    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     min-height: 100dvh;
+    min-height: 100svh;
+    height: auto;
+    /* No forzar pan-y en todo el body: en WebKit puede interferir con el scroll del documento */
+    touch-action: auto;
   }
 
   html#root {
-    height: 100%;
+    height: auto;
+    min-height: 100%;
   }
 
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .app-frame.mapa-app-shell {
@@ -40,9 +49,10 @@ html {
     box-sizing: border-box !important;
     width: 100% !important;
     min-height: calc(100dvh - 4rem) !important;
-    height: calc(100dvh - 4rem) !important;
-    max-height: calc(100dvh - 4rem) !important;
-    overflow: hidden !important;
+    min-height: calc(100svh - 4rem) !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
   }
 
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) header.header.mapa-app-shell {
@@ -88,30 +98,36 @@ html {
     pointer-events: auto !important;
   }
 
-  /* Región de scroll principal (reemplaza overflow-y:visible de mapa-app-layout en móvil) */
+  /* Contenido crece con la página; el scroll lo hace el documento (ver bloque body arriba). */
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .app-main {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
     flex: 1 1 auto !important;
     min-height: 0 !important;
-    overflow-y: auto !important;
     overflow-x: auto !important;
+    overflow-y: visible !important;
     -webkit-overflow-scrolling: touch !important;
-    overscroll-behavior-y: contain !important;
-    touch-action: pan-y pinch-zoom !important;
+    overscroll-behavior-y: auto !important;
+    touch-action: auto !important;
     padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .content#main-content {
     flex: 1 1 auto !important;
-    min-height: 0 !important;
     min-width: 0 !important;
     overflow-x: visible !important;
     overflow-y: visible !important;
-    touch-action: pan-y pinch-zoom !important;
+    touch-action: auto !important;
     padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
     padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+  }
+
+  /* Paneles activos: premium/style suelen poner overflow:hidden; en móvil eso puede
+   * comer el gesto de scroll hacia el ancestro. Dejar fluir el pan al documento. */
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) main.content .panel.active {
+    overflow: visible !important;
+    touch-action: auto !important;
   }
 
   /* Overlay bajo el rail, sobre el contenido (inline JS usa z-index 98 — ganamos con !important) */
