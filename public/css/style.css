@@ -2902,6 +2902,17 @@ body.theme-industrial.appearance-light .cotz-lineas-table-wrap.table-wrap {
 #tabla-cot-lineas .cot-line-actions-btns .btn {
   flex: 0 0 auto;
 }
+/* Modo Luna: columnas Tipo/Código/Máquina/Descripción (texto claro, alineado a .num) */
+body.dark-theme #tabla-cot-lineas td.td-cot-clip,
+body.dark-theme #tabla-cot-lineas td.td-cot-desc-multiline {
+  color: #f1f5f9 !important;
+  -webkit-text-fill-color: #f1f5f9 !important;
+}
+body.dark-theme #tabla-cot-lineas.data-table tbody tr:hover td.td-cot-clip,
+body.dark-theme #tabla-cot-lineas.data-table tbody tr:hover td.td-cot-desc-multiline {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
 body.dark-theme .cotz-lineas-table-wrap {
   border-color: rgba(34, 211, 238, 0.15);
 }
