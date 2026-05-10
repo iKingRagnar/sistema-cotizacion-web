@@ -1037,6 +1037,19 @@
     requestAnimationFrame(force);
   }
 
+  /** Android/WebViews sin :has() fiable en <html>: refleja el estado del map-shell para mobile-shell.css */
+  function syncUniversalMapMobileDocScrollClass() {
+    const root = document.documentElement;
+    const b = document.body;
+    if (!root || !b) return;
+    const on =
+      b.classList.contains('theme-industrial') &&
+      b.classList.contains('universal-map-shell') &&
+      b.classList.contains('md3-on') &&
+      !b.classList.contains('login-open');
+    root.classList.toggle('universal-map-mobile-doc-scroll', on);
+  }
+
   function showLoginOverlay(show) {
     const el = qs('#login-overlay');
     if (!el) return;
@@ -1058,6 +1071,7 @@
         if ('scrollRestoration' in history) history.scrollRestoration = 'auto';
       } catch (_) {}
     }
+    syncUniversalMapMobileDocScrollClass();
   }
   function updateAuditTabVisibility() {
     const tab = qs('#tab-auditoria');
@@ -15935,6 +15949,7 @@
         loadBitacoras({ force: true });
       }, REFRESH_INTERVAL_MS);
     }
+    syncUniversalMapMobileDocScrollClass();
   }
   /** Quitar ":" inicial en créditos (HTML viejo en caché). No tocar textContent del span si hay <em>; borraría la cursiva. */
   function normalizePoweredByCredits() {
@@ -15952,6 +15967,7 @@
 
   async function boot() {
     normalizePoweredByCredits();
+    syncUniversalMapMobileDocScrollClass();
     const hasToken = !!getAuthToken();
     /* Sin token: mostrar login enseguida. Antes el overlay esperaba a /api/config; si la red fallaba o tardaba, el usuario veía la app “vacía” o sin intro. */
     if (!hasToken) {

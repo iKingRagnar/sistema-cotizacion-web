@@ -28,6 +28,19 @@ html {
   }
 
   /*
+   * Cubot/Android y WebViews viejos: :has() a veces no aplica sobre <html>; sin overflow-y aquí el
+   * documento puede quedar sin pan vertical táctil. app.js sincroniza la clase cuando el body ya
+   * tiene universal-map-shell (mismo estado que la regla :has anterior).
+   */
+  html#root.universal-map-mobile-doc-scroll {
+    overflow-x: clip !important;
+    overflow-y: scroll !important;
+    height: auto !important;
+    min-height: 100% !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /*
    * Scroll = documento (html/body). Sin altura fija en .app-frame: el contenido crece y el
    * viewport hace pan/scroll nativo (comportamiento que sí implementan todos los móviles).
    */
