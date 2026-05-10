@@ -750,6 +750,8 @@
   let appUsersCache = [];
   let accessEditorState = { userId: null, tabPermissions: {}, columnPermissions: {} };
   let columnAccessObserverReady = false;
+  /** Evita ráfagas applyAllColumnPermissions() en mutaciones en cascada o con modal abierto. */
+  let columnAccessPermTimer = null;
 
   const ACCESS_TAB_DEFS = [
     ['dashboards', 'Dashboards'],
@@ -904,6 +906,24 @@
     });
   }
 
+  function scheduleApplyAllColumnPermissions() {
+    try {
+      if (typeof window.premHeavyDomObserversSuppressed === 'function' && window.premHeavyDomObserversSuppressed()) {
+        return;
+      }
+    } catch (_s) {}
+    if (columnAccessPermTimer) clearTimeout(columnAccessPermTimer);
+    columnAccessPermTimer = setTimeout(function () {
+      columnAccessPermTimer = null;
+      try {
+        if (typeof window.premHeavyDomObserversSuppressed === 'function' && window.premHeavyDomObserversSuppressed()) {
+          return;
+        }
+      } catch (_s2) {}
+      applyAllColumnPermissions();
+    }, 120);
+  }
+
   function ensureColumnAccessObserver() {
     if (columnAccessObserverReady) return;
     columnAccessObserverReady = true;
@@ -913,7 +933,7 @@
         const table = qs('#' + tid);
         if (!table) return;
         const obs = new MutationObserver(function () {
-          applyAllColumnPermissions();
+          scheduleApplyAllColumnPermissions();
         });
         obs.observe(table, { childList: true, subtree: true });
       });
@@ -7707,16 +7727,23 @@
     if (modalBox) applyModalThemeToBox(modalBox);
     modal.classList.remove('hidden');
     requestAnimationFrame(function () {
-      try {
-        if (typeof window.premMigrateTitles === 'function') window.premMigrateTitles(modalBody);
-        if (typeof window.premAriaScan === 'function') window.premAriaScan(modalBody);
-      } catch (_ePrem) {}
-      try {
-        delete modal.dataset.premModalContentSwap;
-      } catch (_e) {}
-      try {
-        if (typeof window.premScheduleIdleWork === 'function') window.premScheduleIdleWork();
-      } catch (_e2) {}
+      function afterModalDomEnhancements() {
+        try {
+          if (typeof window.premMigrateTitles === 'function') window.premMigrateTitles(modalBody);
+          if (typeof window.premAriaScan === 'function') window.premAriaScan(modalBody);
+        } catch (_ePrem) {}
+        try {
+          delete modal.dataset.premModalContentSwap;
+        } catch (_e) {}
+        try {
+          if (typeof window.premScheduleIdleWork === 'function') window.premScheduleIdleWork();
+        } catch (_e2) {}
+      }
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(afterModalDomEnhancements, { timeout: 400 });
+      } else {
+        setTimeout(afterModalDomEnhancements, 0);
+      }
     });
     try {
       if (typeof window.__cotDebug === 'function') {
@@ -7808,16 +7835,23 @@
     if (stackBox) applyModalThemeToBox(stackBox);
     modal.classList.remove('hidden');
     requestAnimationFrame(function () {
-      try {
-        if (typeof window.premMigrateTitles === 'function') window.premMigrateTitles(stackBody);
-        if (typeof window.premAriaScan === 'function') window.premAriaScan(stackBody);
-      } catch (_ePrem) {}
-      try {
-        delete modal.dataset.premModalContentSwap;
-      } catch (_e) {}
-      try {
-        if (typeof window.premScheduleIdleWork === 'function') window.premScheduleIdleWork();
-      } catch (_e2) {}
+      function afterStackDomEnhancements() {
+        try {
+          if (typeof window.premMigrateTitles === 'function') window.premMigrateTitles(stackBody);
+          if (typeof window.premAriaScan === 'function') window.premAriaScan(stackBody);
+        } catch (_ePrem) {}
+        try {
+          delete modal.dataset.premModalContentSwap;
+        } catch (_e) {}
+        try {
+          if (typeof window.premScheduleIdleWork === 'function') window.premScheduleIdleWork();
+        } catch (_e2) {}
+      }
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(afterStackDomEnhancements, { timeout: 400 });
+      } else {
+        setTimeout(afterStackDomEnhancements, 0);
+      }
     });
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {

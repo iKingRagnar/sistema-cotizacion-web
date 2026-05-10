@@ -1,4 +1,10 @@
 /* ════════════════════════════════════════════════════════════════════════
+   PERF EMERGENCY v8 — v7 + animation:none en .modal-box visible: premium-pro
+   aplica pp-scale-in … both sobre opacity; si el hilo principal se retrasa,
+   la capa animada puede quedar en el keyframe inicial (opacity:0) y verse
+   “modal en blanco” aunque haya reglas opacity:1. Anular animación aquí
+   (última hoja, máxima especificidad con html#root body#app #modal).
+
    PERF EMERGENCY v7 — v6 + bloque explícito #modal (3 IDs) por si alguna hoja
    posterior o premium-pro reintroduce blur en el velo; Clientes «Ver» = mismo
    modal que editar (openModalCliente).
@@ -136,6 +142,7 @@ html#root body#app #modal-stack:not(.hidden) .modal-box,
 html#root body#app .modal-overlay:not(.hidden) .modal-content,
 html#root body#app #modal:not(.hidden) .md-dialog-surface,
 html#root body#app #modal-stack:not(.hidden) .md-dialog-surface {
+  animation: none !important;
   opacity: 1 !important;
   visibility: visible !important;
   transform: none !important;
