@@ -1,24 +1,25 @@
 /**
- * mapa-shell-sol.css — Solo ajustes Sol que NO viven en mapa-chrome-clone.css.
- * El cromo Navbar + rail mapa-ms es UN SOLO layout en mapa-chrome-clone.css (variables Luna/Sol).
- * Aquí: cluster derecho (nano), shells sin mapa-ms*, lienzo principal, Prospección, status rail.
+ * mapa-shell-sol.css — Ajustes Sol fuera de mapa-chrome-clone (cluster, legacy rail, Prospección).
+ * Vidrio blanco traslúcido + blur: espejo de Luna; main + shell base en universal-map-shell.css.
  */
 
-/* Cluster derecho (LIVE, notificaciones, Sol/Luna): nano para superficie clara */
+/* Cluster derecho: vidrio blanco (mismo lenguaje que header Luna/Sol) */
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .mapa-header-user-cluster {
-  background: var(--nano-surface-subtle) !important;
-  border: 1px solid var(--nano-border) !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(150%) !important;
+  backdrop-filter: blur(12px) saturate(150%) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.75),
     0 1px 3px rgba(15, 23, 42, 0.06) !important;
 }
 
-/* Fallback: header sin clase mapa-ms-navbar-root (misma geometría que chrome; tintas claras) */
+/* Fallback: header sin clase mapa-ms-navbar-root */
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) header.header:not(.mapa-ms-navbar-root) {
-  background: color-mix(in oklab, #f4f5f9 88%, transparent) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  backdrop-filter: blur(12px) !important;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+  background: rgba(255, 255, 255, 0.52) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
+  backdrop-filter: blur(14px) saturate(160%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.55) !important;
   box-shadow: none !important;
   padding-inline: 1rem !important;
 }
@@ -35,13 +36,20 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
   text-shadow: none;
 }
 
-/* universal-map-shell legacy: sidebar sin mapa-ms-sidebar-root */
+/* universal-map-shell legacy: sidebar sin mapa-ms-sidebar-root (vidrio blanco) */
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .sidebar-nav:not(.mapa-ms-sidebar-root) {
-  background: var(--nano-surface) !important;
-  -webkit-backdrop-filter: var(--nano-blur) !important;
-  backdrop-filter: var(--nano-blur) !important;
-  border-right: 1px solid var(--nano-border) !important;
-  box-shadow: var(--nano-shadow) !important;
+  background: linear-gradient(
+    185deg,
+    rgba(255, 255, 255, 0.52) 0%,
+    rgba(255, 255, 255, 0.38) 55%,
+    rgba(255, 255, 255, 0.46) 100%
+  ) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(155%) !important;
+  backdrop-filter: blur(22px) saturate(155%) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.55) !important;
+  box-shadow:
+    inset -1px 0 0 rgba(255, 255, 255, 0.55),
+    12px 0 40px rgba(15, 23, 42, 0.06) !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .sidebar-nav-title {
@@ -49,14 +57,14 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .btn-sidebar-rail-toggle {
-  background: var(--nano-surface-subtle) !important;
-  border: 1px solid var(--nano-border) !important;
+  background: rgba(255, 255, 255, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
   color: var(--nano-text) !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) nav#sidebar-rail-tabs.tabs.tabs--rail {
-  background: var(--nano-surface-subtle) !important;
-  border: 1px solid var(--nano-border) !important;
+  background: rgba(255, 255, 255, 0.38) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .sidebar-nav .tab {
@@ -64,7 +72,7 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .sidebar-nav .tab:hover {
-  background: var(--nano-surface-strong) !important;
+  background: rgba(255, 255, 255, 0.42) !important;
   color: var(--nano-text) !important;
 }
 
@@ -84,19 +92,7 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
   background: transparent !important;
 }
 
-html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) main.content#main-content {
-  margin-inline: max(0px, var(--md-sys-spacing-3, 12px)) !important;
-  margin-block-start: 0.35rem !important;
-  padding-block-start: var(--md-sys-spacing-5, 20px) !important;
-  padding-inline: var(--md-sys-spacing-5, 20px) !important;
-  border-radius: 18px 18px 0 0 !important;
-  border: 1px solid rgba(15, 23, 42, 0.08) !important;
-  border-bottom: none !important;
-  background: color-mix(in oklab, #ffffff 92%, #f4f5f9) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  backdrop-filter: blur(12px) !important;
-  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04) !important;
-}
+/* main#main-content: vidrio Sol en universal-map-shell.css (evitar duplicar) */
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .section-header h2,
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .dashboard-header .dashboard-title,
@@ -112,16 +108,22 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
   border-radius: 12px !important;
 }
 
-/* Prospección: panel sobre el mapa */
+/* Prospección: panel flotante vidrio blanco (paridad con Luna oscuro translúcido) */
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) #panel-prospeccion .prospeccion-sidebar {
   color: var(--nano-text) !important;
-  box-shadow: var(--nano-shadow) !important;
+  background: rgba(255, 255, 255, 0.38) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(150%) !important;
+  backdrop-filter: blur(14px) saturate(150%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    var(--nano-shadow) !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) #panel-prospeccion .prospeccion-sidebar__search {
-  background: var(--nano-surface-subtle) !important;
+  background: rgba(255, 255, 255, 0.48) !important;
   color: var(--nano-text) !important;
-  border-color: var(--nano-border) !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
 }
 
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) #panel-prospeccion .prospeccion-sidebar__search::placeholder {
@@ -139,11 +141,13 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
   border-color: var(--nano-border) !important;
 }
 
-/* Caja “Modo / Persistencia…” en rail */
+/* Caja “Modo / Persistencia…” en rail: lima suave sobre vidrio */
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .header-system-status,
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .sidebar-system-status.header-system-status {
-  background: rgba(212, 255, 0, 0.16) !important;
-  border: 1px solid rgba(15, 23, 42, 0.1) !important;
+  background: rgba(212, 255, 0, 0.22) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
   color: #0f172a !important;
   -webkit-text-fill-color: #0f172a !important;
 }
