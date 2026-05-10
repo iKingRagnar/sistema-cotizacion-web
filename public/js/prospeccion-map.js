@@ -163,6 +163,7 @@
     clusterGroup: null,
     heatLayer: null,
     viewMode: 'markers',       // markers | heatmap | both
+    heatWeight: 'potential',    // potential | score — peso del heatmap (#prospeccion-heat-weight)
     sidebarOpen: true,
     selectedStages: [],
     selectedSegments: [],
@@ -178,6 +179,51 @@
     routeMarkers: [],
     initialized: false
   };
+
+  function normalizeMapViewMode(mode) {
+    if (mode === 'heatmap' || mode === 'both' || mode === 'markers') return mode;
+    return 'markers';
+  }
+
+  /** Sync segment + icon toggle + visibilidad del selector de intensidad heat */
+  function syncMapModeChrome() {
+    var mode = normalizeMapViewMode(state.viewMode);
+    qsa('.prospeccion-view-toggle__btn').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-mode') === mode);
+    });
+    qsa('.prospeccion-segment [data-prosp-mode]').forEach(function (b) {
+      b.classList.toggle('is-active', b.getAttribute('data-prosp-mode') === mode);
+    });
+    var heatOpt = qs('.prospeccion-toolbar-heat-opt');
+    if (heatOpt) heatOpt.hidden = !(mode === 'heatmap' || mode === 'both');
+  }
+
+  function setMapViewMode(mode, persist) {
+    state.viewMode = normalizeMapViewMode(mode);
+    if (persist !== false) {
+      try { localStorage.setItem('prospeccion-view-mode', state.viewMode); } catch (_) {}
+    }
+    syncMapModeChrome();
+    renderMapMarkers();
+  }
+
+  function readPersistedHeatWeightIntoState() {
+    var hw = qs('#prospeccion-heat-weight');
+    if (!hw) return;
+    try {
+      var sw = localStorage.getItem('prospeccion-heat-weight');
+      if (sw === 'score' || sw === 'potential') hw.value = sw;
+    } catch (_) {}
+    state.heatWeight = hw.value === 'score' ? 'score' : 'potential';
+  }
+
+  function readPersistedViewModeIntoState() {
+    try {
+      var m = localStorage.getItem('prospeccion-view-mode');
+      if (m === 'heatmap' || m === 'both' || m === 'markers') state.viewMode = m;
+    } catch (_) {}
+    syncMapModeChrome();
+  }
 
   /**
    * Mapa Leaflet creado por app.js (renderProspeccionMap): invalidar al colapsar/expandir panel.
@@ -616,17 +662,20 @@
       }
     }
 
-    // Heatmap
+    // Heatmap (intensidad por potencial USD o score IA — #prospeccion-heat-weight)
     if (state.viewMode === 'heatmap' || state.viewMode === 'both') {
       if (L.heatLayer) {
-        var maxPot = 1;
+        var byScore = state.heatWeight === 'score';
+        var maxW = 1;
         for (var k = 0; k < valid.length; k++) {
-          var p = Number(valid[k].potencial_usd) || 0;
-          if (p > maxPot) maxPot = p;
+          var rawMax = byScore ? (Number(valid[k].score_ia) || 0) : (Number(valid[k].potencial_usd) || 0);
+          if (rawMax > maxW) maxW = rawMax;
         }
+        if (maxW <= 0) maxW = 1;
         var points = [];
         for (var m = 0; m < valid.length; m++) {
-          var intensity = Math.max(0.05, Math.min(1, (Number(valid[m].potencial_usd) || 0) / maxPot));
+          var rawPt = byScore ? (Number(valid[m].score_ia) || 0) : (Number(valid[m].potencial_usd) || 0);
+          var intensity = Math.max(0.05, Math.min(1, rawPt / maxW));
           points.push([Number(valid[m].lat), Number(valid[m].lng), intensity]);
         }
         state.heatLayer = L.heatLayer(points, {
@@ -1664,15 +1713,35 @@
       });
     }
 
-    // View mode toggle
+    // View mode: iconos (legacy) + segmento principal Marcadores/Calor/Ambos
     qsa('.prospeccion-view-toggle__btn').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        state.viewMode = btn.getAttribute('data-mode');
-        qsa('.prospeccion-view-toggle__btn').forEach(function (b) { b.classList.remove('active'); });
-        btn.classList.add('active');
-        renderMapMarkers();
+        setMapViewMode(btn.getAttribute('data-mode'), true);
       });
     });
+    var segMode = qs('.prospeccion-segment');
+    if (segMode && !segMode._prsMapViewSegBound) {
+      segMode._prsMapViewSegBound = true;
+      segMode.querySelectorAll('[data-prosp-mode]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          setMapViewMode(btn.getAttribute('data-prosp-mode'), true);
+        });
+      });
+    }
+
+    // Peso del heatmap (Potencial USD vs Score IA)
+    var heatWeightSel = qs('#prospeccion-heat-weight');
+    if (heatWeightSel && !heatWeightSel._prsHeatWeightBound) {
+      heatWeightSel._prsHeatWeightBound = true;
+      readPersistedHeatWeightIntoState();
+      heatWeightSel.addEventListener('change', function () {
+        state.heatWeight = heatWeightSel.value === 'score' ? 'score' : 'potential';
+        try { localStorage.setItem('prospeccion-heat-weight', state.heatWeight); } catch (_) {}
+        renderMapMarkers();
+      });
+    }
+
+    readPersistedViewModeIntoState();
 
     // Ocultar / chevron: se enlazan al cargar el script (bindProspeccionSidebarToggleOnce) porque
     // app.js usa loadProspeccion/renderProspeccionMap sin llamar ProspeccionMap.init().
