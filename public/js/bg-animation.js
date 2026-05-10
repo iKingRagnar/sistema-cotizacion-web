@@ -258,12 +258,16 @@
     const header = document.querySelector('header.header, header.app-header, .app-header');
     if (!header) return;
 
-    // Overlay
-    const overlay = document.createElement('div');
-    overlay.className = 'prem-sidebar-overlay';
-    document.body.appendChild(overlay);
+    const isMapShell = document.body.classList.contains('universal-map-shell');
 
-    // Hamburger button
+    /** En map-shell el rail móvil lo controla app.js (sidebar-open + #mobile-sidebar-overlay). */
+    let overlay = null;
+    if (!isMapShell) {
+      overlay = document.createElement('div');
+      overlay.className = 'prem-sidebar-overlay';
+      document.body.appendChild(overlay);
+    }
+
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'prem-hamburger';
@@ -271,23 +275,55 @@
     btn.innerHTML = '<i class="fas fa-bars"></i>';
     header.insertBefore(btn, header.firstChild);
 
-    function open()  { document.body.classList.add('prem-sidebar-open'); btn.setAttribute('aria-label', 'Cerrar menú'); }
-    function close() { document.body.classList.remove('prem-sidebar-open'); btn.setAttribute('aria-label', 'Abrir menú'); }
+    function syncHamburgerAria() {
+      var open = isMapShell
+        ? document.body.classList.contains('sidebar-open')
+        : document.body.classList.contains('prem-sidebar-open');
+      btn.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+    }
 
-    btn.addEventListener('click', () => {
-      document.body.classList.contains('prem-sidebar-open') ? close() : open();
+    function closePremDrawer() {
+      document.body.classList.remove('prem-sidebar-open');
+      syncHamburgerAria();
+    }
+    function openPremDrawer() {
+      document.body.classList.add('prem-sidebar-open');
+      syncHamburgerAria();
+    }
+
+    function closeMapRail() {
+      document.body.classList.remove('sidebar-open');
+      var o = document.getElementById('mobile-sidebar-overlay');
+      if (o) o.remove();
+      syncHamburgerAria();
+    }
+
+    btn.addEventListener('click', function () {
+      if (isMapShell) {
+        var fab = document.querySelector('#btn-mobile-sidebar-open');
+        if (fab) fab.click();
+        window.setTimeout(syncHamburgerAria, 0);
+        return;
+      }
+      document.body.classList.contains('prem-sidebar-open') ? closePremDrawer() : openPremDrawer();
     });
-    overlay.addEventListener('click', close);
+    if (overlay) overlay.addEventListener('click', closePremDrawer);
 
-    // Cerrar al seleccionar módulo en mobile
-    document.addEventListener('click', e => {
+    document.addEventListener('click', function (e) {
       if (window.innerWidth > 768) return;
-      if (e.target.closest('.tabs.tabs--rail .tab')) close();
+      if (!e.target.closest('.tabs.tabs--rail .tab')) return;
+      if (isMapShell) closeMapRail();
+      else closePremDrawer();
     });
 
-    window.addEventListener('resize', () => {
-      if (window.innerWidth > 768) close();
+    window.addEventListener('resize', function () {
+      if (window.innerWidth > 768) {
+        closePremDrawer();
+        if (isMapShell) closeMapRail();
+      }
     }, { passive: true });
+
+    syncHamburgerAria();
   }
 
   /* ─── Bootstrap ─────────────────────────────────────────── */

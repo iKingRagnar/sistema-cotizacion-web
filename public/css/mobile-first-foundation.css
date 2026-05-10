@@ -1,0 +1,127 @@
+/**
+ * mobile-first-foundation.css
+ *
+ * Contrato de UX “mobile-first práctico” sobre el stack existente (no reescribe premium/md3).
+ * - Base legible ≥16px en viewports estrechos (zoom iOS por inputs).
+ * - Medios fluidos; tablas con pan horizontal táctil.
+ * - Targets táctiles mínimos 44×44px en controles clave (Apple HIG / Material).
+ * - Fallbacks donde hace falta (100vh si 100dvh no existe se resuelve en otras hojas).
+ *
+ * Carga después de mobile-shell.css para poder refinar sin :has/table bugs.
+ */
+
+/* ─── Medios fluidos (globales — no rompe desktop) ─────────────────────────── */
+img,
+video,
+canvas,
+picture img {
+  max-width: 100%;
+  height: auto;
+}
+
+picture {
+  display: block;
+  max-width: 100%;
+}
+
+/* ─── Estrechos: defaults pensados primero para móvil; desktop relaja más abajo ─ */
+@media screen and (max-width: 768px) {
+  html {
+    /* 100% respeta tamaño configurado por usuario (≈16px por defecto) */
+    font-size: 100%;
+    /* Refuerzo contra zoom automático molesto en algunos WebKit */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body.md3-on {
+    /* Mínimo 16px efectivos aunque un token tema baje body-small */
+    font-size: max(16px, 1rem);
+  }
+
+  /* Evita texto <16px en campos → iOS suele hacer zoom al enfocar */
+  body.md3-on input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="image"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+  body.md3-on select,
+  body.md3-on textarea {
+    font-size: max(16px, 1rem) !important;
+  }
+
+  /* Contenedores típicos de tablas datos: solo scroll lateral, alto natural */
+  .table-wrap,
+  .cotz-lineas-table-wrap,
+  .dashboard-charts-row,
+  [class*="table-wrap"],
+  body.md3-on .panel .table-responsive {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  body.md3-on table.data-table {
+    width: max(100%, min-content);
+  }
+
+  /* Layouts principales no desbordan el viewport horizontal */
+  body.md3-on .app-frame,
+  body.md3-on .header-inner,
+  body.md3-on .content,
+  body.md3-on main.content {
+    max-width: 100vw;
+    box-sizing: border-box;
+  }
+
+  /* Hamburguesa premium / rail móvil: área táctil mínima */
+  button.prem-hamburger,
+  .prem-hamburger {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    width: max(44px, 10vw) !important;
+    height: max(44px, 10vw) !important;
+    max-width: 48px;
+    max-height: 48px;
+    touch-action: manipulation;
+    padding: 0;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .mapa-mobile-rail-fab,
+  body.theme-industrial .btn-icon-header,
+  header .btn-icon-header,
+  button.mapa-mobile-rail-fab {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    touch-action: manipulation;
+  }
+
+  /* Pestañas del rail lateral: objetivo táctil cómodo */
+  body.md3-on .tabs.tabs--rail .tab,
+  body.md3-on .tabs.tabs--rail a.tab {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    box-sizing: border-box;
+    touch-action: manipulation;
+  }
+
+  /* Botones de acción general (respeta modificadores muy pequeños si existen) */
+  body.md3-on button.btn:not(.btn-sm):not(.btn-xs):not(.is-compact):not(.input-group-text),
+  body.md3-on a.btn:not(.btn-sm):not(.btn-xs):not(.is-compact) {
+    min-height: 44px;
+    box-sizing: border-box;
+    touch-action: manipulation;
+  }
+}
+
+/*
+ * Pantallas grandes: relajar tamaño mínimo de botón genérico (el diseño desktop usa alturas menores).
+ * Los targets del header/hamburguesa siguen razonables en tablet estrecha vía regla anterior.
+ */
+@media screen and (min-width: 769px) {
+  body.md3-on button.btn:not(.btn-sm):not(.btn-xs):not(.is-compact):not(.input-group-text),
+  body.md3-on a.btn:not(.btn-sm):not(.btn-xs):not(.is-compact) {
+    min-height: 0;
+  }
+}
