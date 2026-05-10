@@ -1,5 +1,7 @@
 /* ════════════════════════════════════════════════════════════════════════
-   PERF EMERGENCY v5 — v4 + excepción Nano industrial (backdrop en vidrio real).
+   PERF EMERGENCY v6 — v5 sin backdrop en .modal-box (evita freeze al abrir
+   editar/ver: cotización y PDF son superficies enormes; blur GPU = UI colgada).
+   v5 — v4 + excepción Nano industrial (backdrop en vidrio real).
    v4 — DOS IDs (html#root + body#app) para ganar contra
    selectores legacy con :is(#panel-X, #panel-Y, ...) que daban ID-specificity.
 
@@ -33,7 +35,7 @@ html#root body#app [data-glass="ok"]::after {
   -webkit-backdrop-filter: blur(8px) !important;
 }
 
-/* v5: html#root body#app * mataba backdrop de nano-fondo; reactivar solo contenedores vidrio (--nano-blur*). */
+/* v5+: reactivar vidrio solo en paneles/cards/tablas — NO .modal-box (modales grandes). */
 html#root body#app.theme-industrial header.header,
 html#root body#app.theme-industrial .header,
 html#root body#app.theme-industrial .section-header,
@@ -61,7 +63,6 @@ html#root body#app.theme-industrial .maq-ficha-card,
 html#root body#app.theme-industrial .tarifas-section,
 html#root body#app.theme-industrial .form-card,
 html#root body#app.theme-industrial .table-wrap,
-html#root body#app.theme-industrial .modal-box,
 html#root body#app.theme-industrial .empty-card,
 html#root body#app.theme-industrial .filters-card,
 html#root body#app.theme-industrial .login-card,

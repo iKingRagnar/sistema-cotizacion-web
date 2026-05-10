@@ -40,22 +40,22 @@
  *     3) Cubrir TODO contenedor intermedio con transparent
  * ============================================================ */
 /* Sol solo con app visible: con login-open el intro debe heredar tokens Luna (fijo). */
-/* v17 Sol: vidrio esmerilado claro rgba(255,255,255,0.7) + blur 10px; acento industrial #00d2ff */
+/* v18 Sol: menos “blanco hospital” — vidrio más suave + velo slate en body (abajo) */
 html body.theme-industrial.appearance-light:not(.login-open) {
   --nano-overlay:           transparent;
-  --nano-surface:           rgba(255, 255, 255, 0.7);
-  --nano-surface-strong:    rgba(255, 255, 255, 0.82);
-  --nano-surface-solid:     rgba(255, 255, 255, 0.96);
-  --nano-surface-subtle:    rgba(255, 255, 255, 0.55);
-  --nano-border:            rgba(15, 23, 42, 0.10);
-  --nano-border-strong:     rgba(15, 23, 42, 0.16);
+  --nano-surface:           rgba(248, 250, 252, 0.42);
+  --nano-surface-strong:    rgba(241, 245, 249, 0.52);
+  --nano-surface-solid:     rgba(252, 252, 250, 0.94);
+  --nano-surface-subtle:    rgba(248, 250, 252, 0.28);
+  --nano-border:            rgba(15, 23, 42, 0.12);
+  --nano-border-strong:     rgba(15, 23, 42, 0.2);
   --nano-text:              #0f172a;
-  --nano-text-soft:         #1e293b;
-  --nano-text-muted:        #475569;
+  --nano-text-soft:         #334155;
+  --nano-text-muted:        #64748b;
   --nano-accent:            #00d2ff;
-  --nano-blur:              blur(10px) saturate(130%);
-  --nano-blur-light:        blur(10px) saturate(125%);
-  --nano-shadow:            0 6px 22px rgba(15, 23, 42, 0.08);
+  --nano-blur:              blur(12px) saturate(118%);
+  --nano-blur-light:        blur(10px) saturate(115%);
+  --nano-shadow:            0 6px 20px rgba(15, 23, 42, 0.07);
 }
 
 html body.theme-industrial:not(.appearance-light),
@@ -141,6 +141,13 @@ html body.theme-industrial.md3-on.login-open {
 html body.theme-industrial.md3-on:not(.appearance-light):not(.login-open) {
   background-image:
     linear-gradient(rgba(13, 17, 23, 0.82), rgba(13, 17, 23, 0.82)),
+    var(--nano-machine-image) !important;
+}
+
+/* Sol app: velo claro cálido sobre la foto — baja brillo y contraste duro */
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) {
+  background-image:
+    linear-gradient(rgba(241, 245, 249, 0.72), rgba(248, 250, 252, 0.78)),
     var(--nano-machine-image) !important;
 }
 
@@ -645,7 +652,7 @@ html body.theme-industrial .btn-dashboard-refresh {
  *   .modal-box / .modal-content / .modal-panel es la CAJA.
  *   - El velo debe quedarse oscuro translucido con blur
  *     (permite ver la imagen industrial difuminada detras).
- *   - La caja es glass blanco (Sol) o negro (Luna).
+ *   - La caja del modal: sólida (--nano-surface-solid), sin blur pesado (GPU).
  * ============================================================ */
 
 /* VELO del modal: oscuro translucido con blur (NO blanco!) */
@@ -659,13 +666,22 @@ html body.theme-industrial .modal {
   box-shadow: none !important;
 }
 
-/* CAJA del modal: glass blanco (Sol) / negro (Luna) */
+/* CAJA del modal: sólido legible (sin blur en superficies grandes = rendimiento). */
 html body.theme-industrial .modal-box,
 html body.theme-industrial .modal-content,
 html body.theme-industrial .modal-panel,
 html body.theme-industrial .md-dialog,
 html body.theme-industrial .md-prompt,
-html body.theme-industrial .md-prompt-content,
+html body.theme-industrial .md-prompt-content {
+  background: var(--nano-surface-solid) !important;
+  background-color: var(--nano-surface-solid) !important;
+  color: var(--nano-text) !important;
+  border: 1px solid var(--nano-border-strong) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: var(--nano-shadow) !important;
+}
+
 /* Dropdowns: solo cuando viven bajo el header. Si están portados a body (#header-profile-menu / panel abierto), NO pisar — ver portal-overlays.css */
 html body.theme-industrial header.header .header-profile-menu,
 html body.theme-industrial .dropdown-menu,
