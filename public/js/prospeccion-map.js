@@ -190,6 +190,7 @@
     var sidebar = qs('#prs-sidebar');
     var sidebarToggle = qs('#prs-sidebar-toggle');
     var collapseBtn = qs('#prs-sidebar-collapse');
+    var toolbarFiltersReopen = qs('#prs-toolbar-filters-reopen');
     var mapChrome = qs('#prospeccion-map-chrome');
     if (sidebar) {
       sidebar.classList.toggle('collapsed', !state.sidebarOpen);
@@ -216,6 +217,10 @@
       collapseBtn.setAttribute('title', state.sidebarOpen ? 'Ocultar panel y ver el mapa completo' : '');
       collapseBtn.hidden = !state.sidebarOpen;
     }
+    if (toolbarFiltersReopen) {
+      toolbarFiltersReopen.hidden = state.sidebarOpen;
+      toolbarFiltersReopen.setAttribute('aria-expanded', state.sidebarOpen ? 'true' : 'false');
+    }
     setTimeout(function () {
       try {
         if (state.map) state.map.invalidateSize();
@@ -239,6 +244,12 @@
     prospeccionSidebarToggleBound = true;
     if (sidebarToggle) sidebarToggle.addEventListener('click', toggleProspeccionSidebar);
     if (sidebarCollapse) sidebarCollapse.addEventListener('click', toggleProspeccionSidebar);
+    var toolbarReopen = qs('#prs-toolbar-filters-reopen');
+    if (toolbarReopen) {
+      toolbarReopen.addEventListener('click', function () {
+        setProspeccionSidebarOpen(true);
+      });
+    }
   }
 
   /* ----------------------------------------------------------

@@ -103,7 +103,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-25..200&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/premium-upgrade.css?v=1-premium">
   <link rel="stylesheet" href="css/modules/dashboard-enhanced.css?v=4-darkmode-fix">
-  <link rel="stylesheet" href="css/modules/prospeccion.css?v=5-sidebar-reopen-rail-2026-05-08">
+  <link rel="stylesheet" href="css/modules/prospeccion.css?v=6-toolbar-filters-reopen-2026-05-08">
   <link rel="manifest" href="manifest.json">
   <!-- Font Awesome (iconos legacy — se mantiene para compat) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
@@ -181,7 +181,7 @@
    -->
   <!-- 🚨 PERF EMERGENCY: kill backdrop-filter + animations infinitas (era 1.7s freeze por click). PURO CSS, sin JS. -->
   <link rel="stylesheet" href="css/perf-emergency.css?v=8-modal-box-kill-pp-scale-in-2026-05-07">
-  <link rel="stylesheet" href="css/mapa-layout-exact.css?v=1-mapaside-strip-no-header-burger-2026-05-07">
+  <link rel="stylesheet" href="css/mapa-layout-exact.css?v=2-rail-expand-chevron-red-2026-05-08">
   <!-- Tema único: nano machining + vidrio azul cristalino (sin modo Sol/Luna). -->
   <!-- ★ FORCE-RELOAD: SOLO en browser normal, NUNCA en PWA standalone (evita loop crash) -->
   <script>
@@ -1164,10 +1164,15 @@
 
           <!-- Map controls (top-right) — includes legacy toolbar segment + premium view toggle -->
           <div class="prospeccion-map-controls">
+            <div class="prospeccion-map-controls__row">
             <div class="prospeccion-segment" role="radiogroup" aria-label="Modo del mapa">
               <button type="button" class="prospeccion-seg is-active" data-prosp-mode="markers" title="Marcadores agrupados"><i class="fas fa-map-pin"></i> Marcadores</button>
               <button type="button" class="prospeccion-seg" data-prosp-mode="heatmap" title="Densidad / intensidad"><i class="fas fa-fire"></i> Calor</button>
               <button type="button" class="prospeccion-seg" data-prosp-mode="both" title="Calor detrás + puntos"><i class="fas fa-chart-area"></i> Ambos</button>
+            </div>
+            <button type="button" id="prs-toolbar-filters-reopen" class="prospeccion-toolbar-filters-reopen" hidden title="Mostrar panel de filtros del mapa" aria-controls="prs-sidebar">
+              <i class="fas fa-sliders-h" aria-hidden="true"></i> Filtros
+            </button>
             </div>
             <div class="prospeccion-view-toggle">
               <button class="prospeccion-view-toggle__btn active" data-mode="markers" title="Marcadores"><i class="fas fa-map-marker-alt"></i></button>
@@ -2123,7 +2128,7 @@
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
   <script src="js/app.js?v=210-audit-detail-sanitize-base64-2026-05-10"></script>
-  <script src="js/prospeccion-map.js?v=5-sidebar-reopen-label-2026-05-08" defer></script>
+  <script src="js/prospeccion-map.js?v=6-toolbar-filters-reopen-2026-05-08" defer></script>
   <script src="js/bg-animation.js?v=6-no-motion-mobile-only" defer></script>
   <script src="js/premium-ux.js?v=24-globalmo-full-suppress-2026-05-07" defer></script>
   <script src="js/ux-enhancements.js?v=2-no-ripple-table-no-main-modal-anim-2026-05-07" defer></script>
