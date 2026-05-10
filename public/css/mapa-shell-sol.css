@@ -166,3 +166,57 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
     border-inline: none !important;
   }
 }
+
+/* ── Sol + map shell: modales ver/editar/datos — misma estructura que Luna, tinta oscura legible ── */
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .modal-body,
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .modal-dialog .modal-body {
+  background: var(--pp-bg-subtle, #f8fafc) !important;
+  color: var(--pp-n800, #1e293b) !important;
+  -webkit-text-fill-color: var(--pp-n800, #1e293b) !important;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .modal-body .step-card,
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .modal-body .form-step,
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .modal-body .step-section,
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .modal-body .form-section {
+  background: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  color: #0f172a !important;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .modal-body label,
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .modal-body label.form-label,
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .modal-body .form-group label {
+  color: #475569 !important;
+  -webkit-text-fill-color: #475569 !important;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .modal-body input,
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .modal-body select,
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .modal-body textarea {
+  background: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.14) !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .modal-body input::placeholder,
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .modal-body textarea::placeholder {
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
+  opacity: 1 !important;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .modal-footer {
+  background: #ffffff !important;
+  border-top-color: rgba(15, 23, 42, 0.1) !important;
+  color: #0f172a !important;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .modal-content,
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .modal-box,
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .prem-modal {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+}

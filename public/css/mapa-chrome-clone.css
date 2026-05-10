@@ -426,7 +426,7 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav#sideb
 /* Logo bare — más grande, centrado respecto al título; recorta halo blanco del JPG */
 html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   .header-brand .header-brand-logo-wrap.login-brand-logo.header-brand-logo-wrap--bare {
-  padding: 0 !important;
+  padding: 0 6px !important;
   margin: 0 0.25rem 0 0 !important;
   background: transparent !important;
   border: none !important;
@@ -435,12 +435,12 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  overflow: hidden !important;
+  overflow: visible !important;
   flex-shrink: 0;
   align-self: center !important;
   height: 54px !important;
   width: fit-content !important;
-  max-width: min(230px, 40vw) !important;
+  max-width: min(292px, 48vw) !important;
   transition: none !important;
   animation: none !important;
 }
@@ -457,12 +457,23 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   object-position: center center !important;
   display: block;
   clip-path: none !important;
-  transform: translateZ(0) scale(1.14);
+  /* scale(1.14) + overflow recortaba EXTREMOS; sin movimiento al hover */
+  transform: translateZ(0) scale(1);
   transform-origin: center center;
   mix-blend-mode: normal !important;
   filter: var(--mapa-ms-logo-drop);
   transition: none !important;
   animation: none !important;
+  will-change: auto !important;
+}
+
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
+  .header-brand .header-brand-logo-wrap--bare:hover
+  .header-brand-logo-img#header-brand-logo,
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
+  .header-brand .header-brand-logo-img#header-brand-logo:hover {
+  /* Misma escala que estado normal: sin “salto” al pasar el mouse */
+  transform: translateZ(0) scale(1) !important;
 }
 
 /* Luna: halo blanco en esquinas del asset → fusionar contra header oscuro */

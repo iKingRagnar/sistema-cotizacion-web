@@ -175,8 +175,8 @@ html#root body#app.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   font-style: normal !important;
 }
 
-/* Logo: refuerzo de recorte ante halos / triángulos del asset (nano §34 usa clip genérico en img). */
+/* Logo map shell: SIN clip-path — inset(4% 7%) cortaba la U y la L al combinar con overflow + scale. */
 html#root body#app.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   .header-brand .header-brand-logo-img#header-brand-logo {
-  clip-path: inset(4% 7% 4% 7%) !important;
+  clip-path: none !important;
 }

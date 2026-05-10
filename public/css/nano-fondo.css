@@ -1932,6 +1932,13 @@ html body.theme-industrial header.header .header-brand img {
   box-shadow: none !important;
 }
 
+/* Map shell (#header-brand-logo): clip genérico anterior cortaba serifas; chrome-clone ya dimensiona. */
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) header.header .header-brand img#header-brand-logo {
+  clip-path: none !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+
 /* Sol: sombra suave como antes en marca */
 html body.theme-industrial.appearance-light header.header .header-brand .login-brand-hero-img {
   filter: drop-shadow(0 1px 3px rgba(15, 23, 42, 0.12)) !important;
