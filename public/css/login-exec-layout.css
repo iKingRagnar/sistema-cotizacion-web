@@ -890,3 +890,73 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-split::aft
   visibility: hidden !important;
   pointer-events: none !important;
 }
+
+/* =============================================================================
+ * Móvil (≤900px): solo tarjeta de acceso. El panel izquierdo (marca + bullets)
+ * quedaba primero en el flujo y empujaba usuario/contraseña fuera de la vista.
+ * Además: inset 0 (sin offsets negativos de escritorio) + scroll suave si hace falta.
+ * html.login-open: refuerzo sin depender solo de :has() (WebViews antiguos).
+ * ============================================================================= */
+html.login-open {
+  overflow: hidden;
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+@media (max-width: 900px) {
+  html body.login-open #login-overlay.login-overlay--exec-layout,
+  html body.login-open #login-overlay.login-overlay.login-overlay--exec-layout {
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    min-height: 100dvh !important;
+    min-height: 100vh !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding: max(0.65rem, env(safe-area-inset-top, 0px)) max(0.75rem, env(safe-area-inset-right, 0px))
+      max(0.65rem, env(safe-area-inset-bottom, 0px)) max(0.75rem, env(safe-area-inset-left, 0px)) !important;
+  }
+
+  /* Efecto “chispas” fijo: no aporta en pantalla estrecha y evita rarezas de rejilla */
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-weld-sparks {
+    display: none !important;
+  }
+
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-panel {
+    display: none !important;
+  }
+
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-split {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    min-height: min-content !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel {
+    order: 1 !important;
+    width: 100% !important;
+    max-width: min(440px, 94vw) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    flex: 0 1 auto !important;
+  }
+}
+
+/* Pantallas bajas: la rejilla “Niveles de acceso” alarga el bloque; se puede recuperar con scroll del overlay */
+@media (max-width: 600px) {
+  html body.login-open #login-overlay.login-overlay--exec-layout .login-roles-info {
+    display: none !important;
+  }
+}

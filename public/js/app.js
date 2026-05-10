@@ -1074,6 +1074,9 @@
     if (show) {
       resetViewportScrollForLogin();
       document.body.classList.add('login-open');
+      try {
+        document.documentElement.classList.add('login-open');
+      } catch (_) {}
       el.classList.remove('hidden');
       const errEl = qs('#login-error');
       if (errEl) {
@@ -1085,6 +1088,9 @@
     } else {
       el.classList.add('hidden');
       document.body.classList.remove('login-open');
+      try {
+        document.documentElement.classList.remove('login-open');
+      } catch (_) {}
       try {
         if ('scrollRestoration' in history) history.scrollRestoration = 'auto';
       } catch (_) {}
