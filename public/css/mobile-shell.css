@@ -146,17 +146,21 @@ html {
   }
 
   /* Contenido crece con la página; el scroll lo hace el documento (ver bloque body arriba). */
+  /*
+   * overflow-x: clip evita una barra horizontal “fantasma” a nivel app-main cuando algún hijo se
+   * desborda unos px; las tablas siguen usando .table-wrap / .ref-table-scroll-x (overflow-x: auto).
+   */
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .app-main {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
     flex: 1 1 auto !important;
     min-height: 0 !important;
-    overflow-x: auto !important;
+    overflow-x: clip !important;
     overflow-y: visible !important;
     -webkit-overflow-scrolling: touch !important;
     overscroll-behavior-y: auto !important;
-    touch-action: auto !important;
+    touch-action: pan-y pinch-zoom !important;
     pointer-events: auto !important;
     padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)) !important;
   }
@@ -338,5 +342,79 @@ html {
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand-service,
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand #app-title-name {
     max-width: 38vw !important;
+  }
+}
+
+/*
+ * layout-rail.css (≤960px) fuerza .tabs.tabs--rail en FILA + overflow-x:auto.
+ * El shell Mapa (mapa-chrome-clone) pone cada .tab a width:100% → ancho combinado gigante,
+ * dos barras de desplazamiento y pan táctil inútil en cajón lateral y tablets.
+ * En mapa autenticado: lista de módulos siempre VERTICAL dentro del rail/drawer.
+ */
+@media (max-width: 960px) {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
+    nav#sidebar-rail-tabs.tabs.tabs--rail.mapa-ms-sidebar-scroll {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-x: contain !important;
+    touch-action: pan-y pinch-zoom !important;
+    scrollbar-width: thin !important;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
+    nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll .tab {
+    width: 100% !important;
+    max-width: none !important;
+    flex: 0 0 auto !important;
+    box-sizing: border-box !important;
+    min-height: 44px !important;
+    -webkit-tap-highlight-color: transparent !important;
+  }
+}
+
+/* Modales — file inputs táctiles (editar fotos desde celular); 16px+ evita zoom iOS al abrir picker */
+@media (max-width: 768px) {
+  body.theme-industrial.md3-on:not(.login-open) .modal-wrap input[type='file'],
+  body.theme-industrial.md3-on:not(.login-open) #modal input[type='file'],
+  body.theme-industrial.md3-on:not(.login-open) #modal-stack input[type='file'],
+  body.theme-industrial.md3-on:not(.login-open) .modal-box input[type='file'] {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 48px !important;
+    padding: 0.5rem 0.35rem !important;
+    box-sizing: border-box !important;
+    font-size: max(16px, 1rem) !important;
+    line-height: 1.25 !important;
+    cursor: pointer !important;
+  }
+}
+
+/* Dashboard: cabecera y bloque de acciones no fuerzan overflow lateral en pantallas angostas */
+@media (max-width: 768px) {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
+    #panel-dashboards.panel.active .dashboard-header,
+  body.md3-on #panel-dashboards.active .dashboard-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  body.md3-on #panel-dashboards.active .dashboard-header-right {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 0.5rem !important;
+  }
+
+  body.md3-on #panel-dashboards.active .dashboard-header-right .btn-dashboard-refresh {
+    width: 100% !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
   }
 }
