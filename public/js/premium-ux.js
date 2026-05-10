@@ -1306,7 +1306,10 @@
     }
     migrate(document);
     window.premMigrateTitles = function (root) {
-      try { migrate(root && root.nodeType === 1 ? root : document); } catch (_) {}
+      try {
+        if (!root || root.nodeType !== 1) return;
+        migrate(root);
+      } catch (_) {}
     };
     const mo = new MutationObserver(muts => {
       if (premHeavyDomObserversSuppressed()) return;
@@ -1417,7 +1420,10 @@
     }
     scan(document);
     window.premAriaScan = function (root) {
-      try { scan(root && root.nodeType === 1 ? root : document); } catch (_) {}
+      try {
+        if (!root || root.nodeType !== 1) return;
+        scan(root);
+      } catch (_) {}
     };
     const mo = new MutationObserver(muts => {
       if (premHeavyDomObserversSuppressed()) return;
@@ -2891,13 +2897,19 @@
    */
   function domFixScanRoots() {
     const modal = document.getElementById('modal');
-    if (modal && !modal.classList.contains('hidden')) return [modal];
+    if (modal && !modal.classList.contains('hidden')) {
+      const mb = document.getElementById('modal-body');
+      return mb ? [mb] : [modal];
+    }
     if (modal && modal.dataset.premModalContentSwap === '1') {
       const mb = document.getElementById('modal-body');
       return mb ? [mb] : [modal];
     }
     const stack = document.getElementById('modal-stack');
-    if (stack && !stack.classList.contains('hidden')) return [stack];
+    if (stack && !stack.classList.contains('hidden')) {
+      const sb = document.getElementById('modal-stack-body');
+      return sb ? [sb] : [stack];
+    }
     if (stack && stack.dataset.premModalContentSwap === '1') {
       const sb = document.getElementById('modal-stack-body');
       return sb ? [sb] : [stack];

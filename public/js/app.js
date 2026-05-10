@@ -7687,22 +7687,30 @@
       const _t = String(title || '');
       if (/cotizaci/i.test(_t) || /m\u00e1quina/i.test(_t) || /maquina/i.test(_t)) modalBox.classList.add('modal-cotizacion');
     }
+    const modalBody = qs('#modal-body');
+    if (!modalBody) {
+      console.warn('openModal: falta #modal-body en el DOM');
+      try {
+        delete modal.dataset.premModalContentSwap;
+      } catch (_e0) {}
+      return function () {};
+    }
     qs('#modal-title').textContent = title;
-    qs('#modal-body').innerHTML = bodyHtml;
-    try {
-      if (typeof window.premMigrateTitles === 'function') window.premMigrateTitles(qs('#modal-body'));
-      if (typeof window.premAriaScan === 'function') window.premAriaScan(qs('#modal-body'));
-    } catch (_e) {}
+    modalBody.innerHTML = bodyHtml;
     try {
       if (typeof window.__cotDebug === 'function') {
         window.__cotDebug('[openModal] innerHTML len=' + String(bodyHtml || '').length);
       }
     } catch (_e) {}
-    wireModalMediaOpenButtons(qs('#modal-body'));
+    wireModalMediaOpenButtons(modalBody);
     if (modalBox && /ref-pvc-hero/.test(String(bodyHtml || ''))) modalBox.classList.add('modal-box--refaccion-preview');
     if (modalBox) applyModalThemeToBox(modalBox);
     modal.classList.remove('hidden');
     requestAnimationFrame(function () {
+      try {
+        if (typeof window.premMigrateTitles === 'function') window.premMigrateTitles(modalBody);
+        if (typeof window.premAriaScan === 'function') window.premAriaScan(modalBody);
+      } catch (_ePrem) {}
       try {
         delete modal.dataset.premModalContentSwap;
       } catch (_e) {}
@@ -7785,17 +7793,25 @@
     if (!modal) return function () {};
     const previousFocus = document.activeElement;
     modal.dataset.premModalContentSwap = '1';
+    const stackBody = qs('#modal-stack-body');
+    if (!stackBody) {
+      console.warn('openModalStack: falta #modal-stack-body en el DOM');
+      try {
+        delete modal.dataset.premModalContentSwap;
+      } catch (_e0) {}
+      return function () {};
+    }
     qs('#modal-stack-title').textContent = title;
-    qs('#modal-stack-body').innerHTML = bodyHtml;
-    try {
-      if (typeof window.premMigrateTitles === 'function') window.premMigrateTitles(qs('#modal-stack-body'));
-      if (typeof window.premAriaScan === 'function') window.premAriaScan(qs('#modal-stack-body'));
-    } catch (_e) {}
-    wireModalMediaOpenButtons(qs('#modal-stack-body'));
+    stackBody.innerHTML = bodyHtml;
+    wireModalMediaOpenButtons(stackBody);
     const stackBox = qs('#modal-stack .modal-box');
     if (stackBox) applyModalThemeToBox(stackBox);
     modal.classList.remove('hidden');
     requestAnimationFrame(function () {
+      try {
+        if (typeof window.premMigrateTitles === 'function') window.premMigrateTitles(stackBody);
+        if (typeof window.premAriaScan === 'function') window.premAriaScan(stackBody);
+      } catch (_ePrem) {}
       try {
         delete modal.dataset.premModalContentSwap;
       } catch (_e) {}
@@ -7859,7 +7875,7 @@
     modal.addEventListener('keydown', handleKey);
     const btnClose = qs('#modal-stack-close');
     if (btnClose) btnClose.onclick = close;
-    const cancelBtn = qs('#modal-stack-body #modal-btn-cancel');
+    const cancelBtn = stackBody.querySelector('#modal-btn-cancel');
     if (cancelBtn) cancelBtn.onclick = close;
     setTimeout(() => { const el = firstFocusable(); if (el) el.focus(); }, 50);
     return close;
