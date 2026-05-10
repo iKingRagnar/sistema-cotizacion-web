@@ -359,11 +359,12 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
   box-shadow: 0 0 14px rgba(45, 212, 191, 0.12) !important;
 }
 
-/* Títulos de sección estilo display Mapa */
+/* Títulos de sección estilo display Mapa — misma caja métrica en Sol y Luna (solo color cambia en mapa-shell-sol) */
 html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .section-header h2,
 html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .dashboard-header .dashboard-title,
 html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .panel-section-header h2 {
   font-family: "Syne", Inter, system-ui, sans-serif !important;
+  font-size: 1.05rem !important;
   font-weight: 800 !important;
   letter-spacing: 0.03em !important;
 }

@@ -94,12 +94,11 @@ html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.logi
 
 /* main#main-content: vidrio Sol en universal-map-shell.css (evitar duplicar) */
 
+/* Tipografía de títulos: NO duplicar aquí — universal-map-shell.css ya define Syne + 800 + 0.03em
+   para Sol y Luna. Antes forzábamos Inter solo en Sol y el mismo rem se veía distinto al cambiar tema. */
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .section-header h2,
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .dashboard-header .dashboard-title,
 html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .panel-section-header h2 {
-  font-family: Inter, system-ui, sans-serif !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.02em !important;
   color: var(--nano-text) !important;
 }
 
