@@ -122,6 +122,12 @@ body.appearance-light .theme-switcher__icon-moon {
 }
 body.appearance-light .theme-switcher__icon-moon { opacity: 0.38; }
 
+/* Con overlay de login: no mostrar ni pulsar Sol/Luna (evita cambio de tokens y salto de layout en el header). */
+body.login-open .theme-switcher {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 body.no-theme-transition, body.no-theme-transition * { transition: none !important; }
 
 /* ── CMD+K PALETTE ─────────────────────────────────────────────── */

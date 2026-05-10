@@ -39,7 +39,8 @@
  *     2) brightness(1.08) en el blur -> blanco brillante, no opaco
  *     3) Cubrir TODO contenedor intermedio con transparent
  * ============================================================ */
-html body.theme-industrial.appearance-light {
+/* Sol solo con app visible: con login-open el intro debe heredar tokens Luna (fijo). */
+html body.theme-industrial.appearance-light:not(.login-open) {
   /* Sol: vidrio blanco más presente + texto más contrastado (legible en toda la info) */
   --nano-overlay:           transparent;
   --nano-surface:           rgba(255, 255, 255, 0.38);
@@ -57,7 +58,8 @@ html body.theme-industrial.appearance-light {
   --nano-shadow:            0 8px 28px rgba(15, 23, 42, 0.10);
 }
 
-html body.theme-industrial:not(.appearance-light) {
+html body.theme-industrial:not(.appearance-light),
+html body.theme-industrial.login-open {
   /* Luna v17: vidrio negro neutro (sin pizarra #0f172a ni saturate “azulado”).
      Misma legibilidad estilo Chrome dark (#e8eaed), blur casi sin matiz. */
   --nano-overlay:           transparent;
@@ -85,7 +87,8 @@ html body.theme-industrial:not(.appearance-light) {
  * ============================================================ */
 
 /* Parallax premium (--pmx/--pmy): el JS escribe en <html style>; !important aquí gana a ese inline sin !important. */
-html:has(body.theme-industrial:not(.appearance-light)) {
+html:has(body.theme-industrial:not(.appearance-light)),
+html:has(body.theme-industrial.login-open) {
   --pmx: 50 !important;
   --pmy: 50 !important;
 }
@@ -130,8 +133,9 @@ html body.theme-industrial.md3-on {
   background-attachment: fixed !important;
 }
 
-/* Luna: refuerzo en body (capas que leen vars heredadas del body). */
-html body.theme-industrial.md3-on:not(.appearance-light) {
+/* Luna: refuerzo en body (capas que leen vars heredadas del body). Login abierto = mismo refuerzo (Sol no altera parallax del intro). */
+html body.theme-industrial.md3-on:not(.appearance-light),
+html body.theme-industrial.md3-on.login-open {
   --pmx: 50 !important;
   --pmy: 50 !important;
 }
@@ -539,7 +543,7 @@ html body.theme-industrial table tbody tr {
 
 /* Luna: sin cambio de fondo al pasar el mouse en la fila (evita “parche negro”).
    Sol: ligera pista de hover. */
-html body.theme-industrial.appearance-light table tbody tr:hover {
+html body.theme-industrial.appearance-light:not(.login-open) table tbody tr:hover {
   background: var(--nano-surface-subtle) !important;
 }
 
@@ -1073,7 +1077,7 @@ html body.theme-industrial .dashboard-card:hover,
 html body.theme-industrial .kpi-card:hover,
 html body.theme-industrial .module-card:hover,
 html body.theme-industrial .dashboard-score-tile:hover,
-html body.theme-industrial.appearance-light table tbody tr:hover {
+html body.theme-industrial.appearance-light:not(.login-open) table tbody tr:hover {
   transform: none !important;
 }
 
@@ -1379,7 +1383,7 @@ body.md3-on > #app-watermark.prem-watermark-field {
   background-repeat: repeat !important;
 }
 
-html body.theme-industrial.appearance-light #app-watermark.prem-watermark-field {
+html body.theme-industrial.appearance-light:not(.login-open) #app-watermark.prem-watermark-field {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='320'%3E%3Cdefs%3E%3Cpattern id='wm' width='520' height='200' patternUnits='userSpaceOnUse'%3E%3Ctext x='30' y='36' fill='%230f172a' fill-opacity='0.045' font-family='system-ui,Segoe UI,sans-serif' font-size='13' font-weight='600' transform='rotate(-24 80 60)'%3EIng. David Cantú · David Orlando Cantú · DEV · Universal Servicio Técnico · %3C/text%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23wm)'/%3E%3C/svg%3E");
 }
 
@@ -2446,31 +2450,31 @@ html body.theme-industrial.md3-on:not(.appearance-light) .data-table tbody tr:ho
   box-shadow: none !important;
 }
 
-/* Sol — mismo criterio: hover = mismo que reposo (#fff / #fafbfc, sin #eff6ff) */
-html body.theme-industrial.md3-on.appearance-light table.data-table tbody tr:nth-child(odd):hover td,
-html body.theme-industrial.md3-on.appearance-light .data-table tbody tr:nth-child(odd):hover td,
-html body.theme-industrial.md3-on.appearance-light table.data-table tbody tr:nth-child(odd):hover td.th-actions,
-html body.theme-industrial.md3-on.appearance-light .data-table tbody tr:nth-child(odd):hover td.th-actions {
+/* Sol — mismo criterio: hover = mismo que reposo (#fff / #fafbfc, sin #eff6ff). No login-open. */
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) table.data-table tbody tr:nth-child(odd):hover td,
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) .data-table tbody tr:nth-child(odd):hover td,
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) table.data-table tbody tr:nth-child(odd):hover td.th-actions,
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) .data-table tbody tr:nth-child(odd):hover td.th-actions {
   background: #ffffff !important;
   background-color: #ffffff !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
 
-html body.theme-industrial.md3-on.appearance-light table.data-table tbody tr:nth-child(even):hover td,
-html body.theme-industrial.md3-on.appearance-light .data-table tbody tr:nth-child(even):hover td,
-html body.theme-industrial.md3-on.appearance-light table.data-table tbody tr:nth-child(even):hover td.th-actions,
-html body.theme-industrial.md3-on.appearance-light .data-table tbody tr:nth-child(even):hover td.th-actions {
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) table.data-table tbody tr:nth-child(even):hover td,
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) .data-table tbody tr:nth-child(even):hover td,
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) table.data-table tbody tr:nth-child(even):hover td.th-actions,
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) .data-table tbody tr:nth-child(even):hover td.th-actions {
   background: #fafbfc !important;
   background-color: #fafbfc !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
 
-html body.theme-industrial.md3-on.appearance-light table.data-table tbody tr:hover td,
-html body.theme-industrial.md3-on.appearance-light .data-table tbody tr:hover td,
-html body.theme-industrial.md3-on.appearance-light table.data-table tbody tr:hover td.th-actions,
-html body.theme-industrial.md3-on.appearance-light .data-table tbody tr:hover td.th-actions {
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) table.data-table tbody tr:hover td,
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) .data-table tbody tr:hover td,
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) table.data-table tbody tr:hover td.th-actions,
+html body.theme-industrial.md3-on.appearance-light:not(.login-open) .data-table tbody tr:hover td.th-actions {
   transition: none !important;
   box-shadow: none !important;
 }
