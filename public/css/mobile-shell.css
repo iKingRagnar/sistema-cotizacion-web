@@ -21,10 +21,11 @@ html {
   /* html + body: scroll del documento; en iOS hace falta definir eje Y en #root, no solo en body */
   html#root:has(body.theme-industrial.universal-map-shell.md3-on:not(.login-open)) {
     overflow-x: clip !important;
-    overflow-y: scroll !important;
+    overflow-y: auto !important;
     height: auto !important;
     min-height: 100% !important;
     -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y pinch-zoom !important;
   }
 
   /*
@@ -34,10 +35,11 @@ html {
    */
   html#root.universal-map-mobile-doc-scroll {
     overflow-x: clip !important;
-    overflow-y: scroll !important;
+    overflow-y: auto !important;
     height: auto !important;
     min-height: 100% !important;
     -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y pinch-zoom !important;
   }
 
   /*
@@ -48,17 +50,20 @@ html {
     -webkit-overflow-scrolling: touch;
   }
 
+  /*
+   * Un solo “scrollport” para el documento: el pan vertical táctil en WebKit/Android suele
+   * romperse si html Y body tienen overflow-y: scroll/auto a la vez (doble contenedor).
+   * El scroll lo lleva html#root (bloques :has y .universal-map-mobile-doc-scroll arriba);
+   * el body solo crece en altura — overflow-y visible evita competir con <html>.
+   */
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open),
   html#root body#app.theme-industrial.universal-map-shell.md3-on:not(.login-open) {
     overflow-x: clip !important;
     max-width: 100vw !important;
-    /* scroll fuerza barra lógica en algunos WebKit móviles donde auto no pan-ea el documento */
-    overflow-y: scroll !important;
-    -webkit-overflow-scrolling: touch !important;
+    overflow-y: visible !important;
     min-height: 100dvh;
     min-height: 100svh;
     height: auto;
-    /* No forzar pan-y en todo el body: en WebKit puede interferir con el scroll del documento */
     touch-action: auto;
   }
 
@@ -152,6 +157,7 @@ html {
     -webkit-overflow-scrolling: touch !important;
     overscroll-behavior-y: auto !important;
     touch-action: auto !important;
+    pointer-events: auto !important;
     padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)) !important;
   }
 
@@ -161,6 +167,7 @@ html {
     overflow-x: visible !important;
     overflow-y: visible !important;
     touch-action: auto !important;
+    pointer-events: auto !important;
     padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
     padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
   }

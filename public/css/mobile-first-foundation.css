@@ -126,6 +126,19 @@ picture {
     box-sizing: border-box;
     touch-action: manipulation;
   }
+
+  /* Títulos de panel: escala fluida solo en shell mapa (no toca desktop ≥769px) */
+  body.md3-on.theme-industrial.universal-map-shell:not(.login-open) .section-header h2,
+  body.md3-on.theme-industrial.universal-map-shell:not(.login-open) .section-header .section-title {
+    font-size: clamp(1.05rem, 4vw, 1.35rem) !important;
+    line-height: 1.28;
+  }
+
+  body.md3-on.theme-industrial.universal-map-shell:not(.login-open) .section-header .section-subtitle,
+  body.md3-on.theme-industrial.universal-map-shell:not(.login-open) .section-header p {
+    font-size: max(0.9rem, 14px);
+    line-height: 1.45;
+  }
 }
 
 /*

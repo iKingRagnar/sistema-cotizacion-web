@@ -16027,5 +16027,18 @@
     if (document.body.classList.contains('login-open')) resetViewportScrollForLogin();
   });
 
+  /* Lo antes posible: class en <html> para mobile-shell.css (WebViews sin :has fiable). */
+  function runEarlyMobileShellSync() {
+    try {
+      sweepStaleMobileBlockingLayers();
+      syncUniversalMapMobileDocScrollClass();
+    } catch (_) {}
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', runEarlyMobileShellSync, { once: true });
+  } else {
+    runEarlyMobileShellSync();
+  }
+
   boot();
 })();
