@@ -1746,12 +1746,18 @@
 
   function closeMobileSidebar() {
     document.body.classList.remove('sidebar-open');
+    try {
+      document.documentElement.classList.remove('sidebar-drawer-open');
+    } catch (_) {}
     var overlay = qs('#mobile-sidebar-overlay');
     if (overlay) overlay.remove();
   }
 
   function openMobileSidebar() {
     document.body.classList.add('sidebar-open');
+    try {
+      document.documentElement.classList.add('sidebar-drawer-open');
+    } catch (_) {}
     if (!qs('#mobile-sidebar-overlay')) {
       var overlay = document.createElement('div');
       overlay.id = 'mobile-sidebar-overlay';

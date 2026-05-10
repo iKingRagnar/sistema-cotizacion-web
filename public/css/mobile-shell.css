@@ -120,7 +120,7 @@ html {
   }
 
   /* Drawer: por encima del workspace, debajo del header fijo (z ~1100 en mapa) */
-  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) aside.sidebar-nav.mapa-app-shell {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) aside#app-sidebar-nav.sidebar-nav.mapa-app-shell {
     position: fixed !important;
     top: calc(4rem + env(safe-area-inset-top, 0px)) !important;
     left: -105% !important;
@@ -133,16 +133,40 @@ html {
     max-height: calc(100dvh - 4rem - env(safe-area-inset-top, 0px)) !important;
     min-height: 0 !important;
     z-index: 1095 !important;
+    /* mapa-app-layout usa overflow:hidden en aside — forzar eje Y para que el cajón pueda hacer pan vertical */
     overflow-x: clip !important;
     overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior: contain !important;
+    touch-action: pan-y pinch-zoom !important;
     box-shadow: 8px 0 28px rgba(0, 0, 0, 0.4) !important;
     border-radius: 0 12px 12px 0 !important;
   }
 
-  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-open aside.sidebar-nav.mapa-app-shell {
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-open aside#app-sidebar-nav.sidebar-nav.mapa-app-shell {
     left: 0 !important;
+  }
+
+  /* Cajón abierto: un solo scroll — el del aside; el documento no debe competir (evita 2 barras / gesto roto). */
+  html#root.sidebar-drawer-open,
+  html#root.sidebar-drawer-open:has(body.theme-industrial.universal-map-shell.md3-on:not(.login-open)) {
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
+    height: 100% !important;
+  }
+
+  html#root.sidebar-drawer-open body.theme-industrial.universal-map-shell.md3-on:not(.login-open),
+  html#root.sidebar-drawer-open body#app.theme-industrial.universal-map-shell.md3-on:not(.login-open) {
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
+    overscroll-behavior-y: none !important;
+  }
+
+  /* El FAB y la cabecera siguen táctiles aunque el documento esté bloqueado. */
+  html#root.sidebar-drawer-open .mapa-mobile-rail-fab,
+  html#root.sidebar-drawer-open header.header.mapa-app-shell button,
+  html#root.sidebar-drawer-open header.header.mapa-app-shell a {
+    touch-action: manipulation !important;
   }
 
   /* Contenido crece con la página; el scroll lo hace el documento (ver bloque body arriba). */
@@ -364,21 +388,33 @@ html {
  */
 @media (max-width: 960px) {
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
+    #app-sidebar-nav
     nav#sidebar-rail-tabs.tabs.tabs--rail.mapa-ms-sidebar-scroll {
     display: flex !important;
     flex-direction: column !important;
     flex-wrap: nowrap !important;
     align-items: stretch !important;
     gap: 0 !important;
+    /* layout-rail: fila + overflow-x:auto → barra horizontal “de arriba”; aquí solo columna + sin scroll interno */
     overflow-x: hidden !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
+    overflow-y: visible !important;
+    max-height: none !important;
+    -webkit-overflow-scrolling: auto !important;
     overscroll-behavior-x: contain !important;
     touch-action: pan-y pinch-zoom !important;
-    scrollbar-width: thin !important;
+    scrollbar-width: none !important;
   }
 
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
+    #app-sidebar-nav
+    nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll::-webkit-scrollbar {
+    width: 0 !important;
+    height: 0 !important;
+    display: none !important;
+  }
+
+  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
+    #app-sidebar-nav
     nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll .tab {
     width: 100% !important;
     max-width: none !important;
@@ -386,33 +422,21 @@ html {
     box-sizing: border-box !important;
     min-height: 44px !important;
     -webkit-tap-highlight-color: transparent !important;
+    /* mobile-first-foundation usa manipulation; pan-y deja que el padre (aside) reciba el scroll vertical */
+    touch-action: pan-y !important;
   }
 }
 
 /*
- * ≤768 — un solo scrollport en el drawer: el aside, no nav#sidebar-rail-tabs anidado.
- * Doble overflow + flex:1 en nav rompe pan-y en WebKit; la barra de scroll del drawer duplica la del contenido.
- * (Este bloque va después del @media 960px para pisar overflow-y:auto del nav ahí mismo en móvil.)
+ * ≤768 — scroll vertical solo en el aside del drawer; el nav crece en altura (sin segundo scrollport).
+ * mapa-chrome-clone pone flex:1 + overflow-y:auto en nav — se anula aquí con #app-sidebar-nav.
  */
 @media (max-width: 768px) {
-  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-open
-    aside.sidebar-nav.mapa-app-shell {
-    /* Scroll sigue funcionando; se ocupa solo la barra del navegador en la página cuando el drawer está abierto */
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-
-  html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-open
-    aside.sidebar-nav.mapa-app-shell::-webkit-scrollbar {
-    display: none;
-    width: 0;
-    height: 0;
-    background: transparent;
-  }
-
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
+    #app-sidebar-nav
     nav#sidebar-rail-tabs.tabs.tabs--rail.mapa-ms-sidebar-scroll,
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
+    #app-sidebar-nav
     nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll {
     flex: 0 0 auto !important;
     flex-grow: 0 !important;
@@ -423,7 +447,7 @@ html {
     overflow-y: visible !important;
     -webkit-overflow-scrolling: auto !important;
     overscroll-behavior: auto !important;
-    touch-action: auto !important;
+    touch-action: pan-y pinch-zoom !important;
     scrollbar-width: none !important;
   }
 }
