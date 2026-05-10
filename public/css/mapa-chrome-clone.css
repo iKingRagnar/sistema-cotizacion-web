@@ -430,8 +430,8 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   /* Padding horizontal: evita que U/L roce el borde; overflow+radio recorta JPEG con esquinas blancas */
   padding: 2px 12px !important;
   margin: 0 0.25rem 0 0 !important;
-  /* Mismo tinte que la navbar vidrio para camuflar esquinas del JPEG */
-  background: var(--mapa-ms-glass-navbar) !important;
+  /* Sin capa extra: fondo = barra (transparente) para que no se note otro color/plancha */
+  background: transparent !important;
   border: none !important;
   box-shadow: none !important;
   border-radius: 10px !important;

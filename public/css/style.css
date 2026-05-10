@@ -2829,13 +2829,21 @@ body.theme-industrial:not(.appearance-light) .cotz-inventory-hint i {
   font-size: 0.88rem;
   table-layout: fixed;
   width: 100%;
-  min-width: 780px;
+  min-width: 960px;
 }
 #tabla-cot-lineas .col-cot-tipo {
   width: 6.25rem;
 }
 #tabla-cot-lineas .col-cot-codigo {
   width: 6.75rem;
+}
+#tabla-cot-lineas .col-cot-maq {
+  width: 7.5rem;
+  min-width: 6.5rem;
+}
+#tabla-cot-lineas .col-cot-desc {
+  min-width: 14rem;
+  width: 36%;
 }
 #tabla-cot-lineas .col-cot-cant {
   width: 3.1rem;
@@ -2865,7 +2873,9 @@ body.theme-industrial:not(.appearance-light) .cotz-inventory-hint i {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   vertical-align: top;
-  max-width: 0;
+  /* max-width:0 + table-layout:fixed colapsaba la columna (una letra por renglón). */
+  min-width: 12rem;
+  max-width: none;
 }
 #tabla-cot-lineas td.td-cot-actions-cell {
   vertical-align: middle;
@@ -3983,7 +3993,7 @@ body.dark-theme.dark-high-contrast .modal-box.modal-box--theme-dark .table-simpl
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, #f8fafc 14%);
 }
 .modal-box.modal-box--theme-sol .form-group label {
-  color: #475569;
+  color: #0f172a;
 }
 .modal-box.modal-box--theme-sol .form-group input,
 .modal-box.modal-box--theme-sol .form-group select,

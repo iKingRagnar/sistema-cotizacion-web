@@ -75,6 +75,14 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   clip-path: inset(2px round 8px) !important;
 }
 
+/* Logo “bare” en navbar: anula la pastilla blanca del bloque anterior (mismo efecto que Modo Luna). */
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
+  .header-brand .header-brand-logo-wrap.login-brand-logo.header-brand-logo-wrap--bare {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
 /* Stack marca + IA Suprema */
 html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-brand-text {
   display: flex !important;
