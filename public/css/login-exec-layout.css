@@ -525,7 +525,7 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-badg
   color: var(--sk-accent) !important;
 }
 
-/* glass-panel--auth */
+/* glass-panel--auth — sin caja azul/vidrio: formulario directo sobre la foto del overlay */
 html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel {
   position: relative !important;
   z-index: 1 !important;
@@ -543,16 +543,19 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel
   margin: 0 !important;
   border-radius: var(--sk-radius) !important;
   border: 1px solid var(--sk-border) !important;
-  background:
-    linear-gradient(155deg, var(--sk-highlight), transparent 35%),
-    var(--sk-glass-strong) !important;
-  backdrop-filter: blur(var(--sk-blur)) saturate(1.32) !important;
-  -webkit-backdrop-filter: blur(var(--sk-blur)) saturate(1.32) !important;
-  box-shadow:
-    0 8px 48px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 0 0 1px rgba(52, 225, 207, 0.2),
-    0 0 48px rgba(52, 225, 207, 0.14) !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+/* Legibilidad sin panel relleno: sombra de texto sobre la imagen */
+html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel .login-card-header h2,
+html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel .login-card .login-hint,
+html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel .login-form label {
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.92),
+    0 0 20px rgba(0, 0, 0, 0.55) !important;
 }
 
 /* Una sola capa de vidrio (el panel); la tarjeta interior es solo flujo */
@@ -710,6 +713,9 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-roles-titl
   color: var(--sk-text-muted) !important;
   text-align: center !important;
   margin-bottom: 0.75rem !important;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    0 0 16px rgba(0, 0, 0, 0.5) !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-roles-title i {
@@ -725,14 +731,17 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-roles-grid
 html body.login-open #login-overlay.login-overlay--exec-layout .login-role-card {
   padding: 0.55rem 0.4rem !important;
   border-radius: 12px !important;
-  background: rgba(15, 23, 42, 0.12) !important;
-  border: 1px solid rgba(110, 243, 232, 0.28) !important;
+  background: transparent !important;
+  border: 1px solid rgba(110, 243, 232, 0.45) !important;
   font-size: 0.62rem !important;
   font-family: var(--login-mono, "JetBrains Mono", ui-monospace, monospace) !important;
   color: var(--sk-text-muted) !important;
   text-align: center !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    0 0 14px rgba(0, 0, 0, 0.5) !important;
 }
 
 html body.login-open #login-overlay.login-overlay--exec-layout .login-role-card i {
@@ -775,7 +784,7 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-role-card 
   }
 
   html body.login-open #login-overlay.login-overlay--exec-layout .login-form-panel {
-    background: rgba(30, 41, 59, 0.84) !important;
+    background: transparent !important;
   }
 }
 
