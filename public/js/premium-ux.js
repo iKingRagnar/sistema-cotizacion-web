@@ -48,6 +48,18 @@
   };
   window.premScheduleIdleWork = scheduleIdleWork;
 
+  /**
+   * True mientras el modal genérico #modal (Ver/Editar cliente, etc.) está visible.
+   * Varios MutationObserver de premium-ux hacen querySelectorAll sobre todo el documento
+   * en cada mutación; eso saturaba el hilo al rellenar #modal-body. No usamos #modal-stack
+   * aquí para no romper flujos que inyectan data-prem-attach en el stack.
+   */
+  function premHeavyDomObserversSuppressed() {
+    const m = document.getElementById('modal');
+    return !!(m && !m.classList.contains('hidden'));
+  }
+  window.premHeavyDomObserversSuppressed = premHeavyDomObserversSuppressed;
+
   // UN único MutationObserver global
   if (typeof MutationObserver !== 'undefined') {
     const globalMo = new MutationObserver(() => scheduleIdleWork());
@@ -316,6 +328,7 @@
     };
 
     const mo = new MutationObserver((muts) => {
+      if (premHeavyDomObserversSuppressed()) return;
       for (const m of muts) {
         if (m.type !== 'childList') continue;
         const target = m.target;
@@ -470,6 +483,7 @@
 
     document.querySelectorAll('table.data-table').forEach(attach);
     const mo = new MutationObserver((muts) => {
+      if (premHeavyDomObserversSuppressed()) return;
       for (const m of muts) for (const n of m.addedNodes) {
         if (n.nodeType !== 1) continue;
         if (n.matches?.('table.data-table')) attach(n);
@@ -816,6 +830,7 @@
 
     document.querySelectorAll('table.data-table').forEach(attach);
     const mo = new MutationObserver(muts => {
+      if (premHeavyDomObserversSuppressed()) return;
       for (const m of muts) for (const n of m.addedNodes) {
         if (n.nodeType !== 1) continue;
         if (n.matches?.('table.data-table')) attach(n);
@@ -974,6 +989,7 @@
 
     document.querySelectorAll('[data-prem-attach]').forEach(attach);
     const mo = new MutationObserver(muts => {
+      if (premHeavyDomObserversSuppressed()) return;
       for (const m of muts) for (const n of m.addedNodes) {
         if (n.nodeType !== 1) continue;
         if (n.matches?.('[data-prem-attach]')) attach(n);
@@ -1073,6 +1089,7 @@
     init();
     // Si el grid se construye más tarde
     const wait = new MutationObserver(() => {
+      if (premHeavyDomObserversSuppressed()) return;
       const g = document.getElementById('dashboard-grid');
       if (g && !g._reorderInit) attach(g);
     });
@@ -1190,6 +1207,7 @@
 
     document.querySelectorAll('table.data-table').forEach(attach);
     const mo = new MutationObserver(muts => {
+      if (premHeavyDomObserversSuppressed()) return;
       for (const m of muts) for (const n of m.addedNodes) {
         if (n.nodeType !== 1) continue;
         if (n.matches?.('table.data-table')) attach(n);
@@ -1250,7 +1268,10 @@
       });
     }
     ensureTitles();
-    const mo = new MutationObserver(ensureTitles);
+    const mo = new MutationObserver(() => {
+      if (premHeavyDomObserversSuppressed()) return;
+      ensureTitles();
+    });
     mo.observe(document.body, { childList: true, subtree: true });
   }
 
@@ -1534,6 +1555,7 @@
       mo.observe(el, { childList: true, characterData: true, subtree: true });
     }
     function scan() {
+      if (premHeavyDomObserversSuppressed()) return;
       document.querySelectorAll('.dash-value, .dashboard-card-value').forEach(watch);
     }
     scan();
@@ -1621,6 +1643,7 @@
     }
     document.querySelectorAll('.table-wrap, .md-table-wrap').forEach(attach);
     const mo = new MutationObserver(muts => {
+      if (premHeavyDomObserversSuppressed()) return;
       for (const m of muts) for (const n of m.addedNodes) {
         if (n.nodeType !== 1) continue;
         if (n.matches?.('.table-wrap, .md-table-wrap')) attach(n);
@@ -1739,6 +1762,7 @@
     }
 
     function scan() {
+      if (premHeavyDomObserversSuppressed()) return;
       document.querySelectorAll('.modal-dialog.active, .md-modal-panel.active, .modal.show, [role="dialog"]:not([aria-hidden="true"])')
         .forEach(tryInject);
     }
@@ -2334,6 +2358,7 @@
 
     document.querySelectorAll('table.data-table').forEach(attach);
     const mo = new MutationObserver(muts => {
+      if (premHeavyDomObserversSuppressed()) return;
       for (const m of muts) for (const n of m.addedNodes) {
         if (n.nodeType !== 1) continue;
         if (n.matches?.('table.data-table')) attach(n);
@@ -2421,6 +2446,7 @@
       io.observe(el);
     }
     function scan() {
+      if (premHeavyDomObserversSuppressed()) return;
       document.querySelectorAll('.dashboard-card, .admin-hub-card, .empty-card, .prem-views-bar, .prem-ext-filter-bar').forEach(watch);
     }
     scan();
@@ -2448,7 +2474,10 @@
       const n = parseInt((badge.textContent || '0').trim(), 10);
       if (n > 0) badge.classList.add('prem-badge-active');
     }
-    function scan() { document.querySelectorAll('.tab-badge').forEach(watch); }
+    function scan() {
+      if (premHeavyDomObserversSuppressed()) return;
+      document.querySelectorAll('.tab-badge').forEach(watch);
+    }
     scan();
     new MutationObserver(scan).observe(document.body, { childList: true, subtree: true });
   }
