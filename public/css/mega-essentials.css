@@ -111,16 +111,30 @@ body.dark-theme:not(.appearance-light) .theme-switcher__thumb {
 body.dark-theme:not(.appearance-light) .theme-switcher__icon-sun { opacity: 0.4; }
 body.dark-theme:not(.appearance-light) .theme-switcher__icon-moon { opacity: 1; }
 
-/* Carril claro en modo sol (legible sobre header vidrio) */
+/* Carril claro en modo sol: contraste real sobre header blanco / vidrio claro */
 body.appearance-light .theme-switcher {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(248, 250, 252, 0.58));
-  border-color: rgba(15, 23, 42, 0.14);
+  background: linear-gradient(180deg, rgba(226, 232, 240, 0.98), rgba(203, 213, 225, 0.72));
+  border-color: rgba(15, 23, 42, 0.24);
+  box-shadow:
+    0 1px 3px rgba(15, 23, 42, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+body.appearance-light .theme-switcher__thumb {
+  border-color: rgba(15, 23, 42, 0.2);
+  box-shadow:
+    0 1px 3px rgba(15, 23, 42, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 body.appearance-light .theme-switcher__icon-sun,
 body.appearance-light .theme-switcher__icon-moon {
   color: #0f172a;
 }
-body.appearance-light .theme-switcher__icon-moon { opacity: 0.38; }
+body.appearance-light .theme-switcher__icon-sun {
+  opacity: 1;
+}
+body.appearance-light .theme-switcher__icon-moon {
+  opacity: 0.55;
+}
 
 /* Con overlay de login: no mostrar ni pulsar Sol/Luna (evita cambio de tokens y salto de layout en el header). */
 body.login-open .theme-switcher {
