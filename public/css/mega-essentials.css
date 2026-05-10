@@ -120,13 +120,17 @@ body.appearance-light .theme-switcher {
     inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 body.appearance-light .theme-switcher__thumb {
+  z-index: 0;
   border-color: rgba(15, 23, 42, 0.2);
   box-shadow:
     0 1px 3px rgba(15, 23, 42, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
+/* El knob debe quedar debajo de los iconos FA; si no, la “bolita” blanca tapa el sol */
 body.appearance-light .theme-switcher__icon-sun,
 body.appearance-light .theme-switcher__icon-moon {
+  z-index: 3 !important;
+  position: absolute;
   color: #0f172a;
 }
 body.appearance-light .theme-switcher__icon-sun {

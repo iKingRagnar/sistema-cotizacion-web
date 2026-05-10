@@ -16,6 +16,11 @@ html body.theme-industrial #notifications-panel.notifications-panel:not(.hidden)
   pointer-events: auto !important;
 }
 
+/* Panel portaleado: app.js asigna top/left al abrir; reglas globales .notifications-panel { position:absolute; top:... !important } deben no aplicar aquí */
+html body.theme-industrial #notifications-panel.notifications-panel.floating[data-portal-body] {
+  position: fixed !important;
+}
+
 /* ═══════════ SOL — panel notificaciones (texto legible, sin depender del portal) ═══ */
 html body.theme-industrial.appearance-light #notifications-panel.notifications-panel,
 html body.theme-industrial.appearance-light #notifications-panel {
