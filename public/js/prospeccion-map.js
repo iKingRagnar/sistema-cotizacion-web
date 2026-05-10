@@ -179,8 +179,61 @@
     initialized: false
   };
 
+  /**
+   * Mapa Leaflet creado por app.js (renderProspeccionMap): invalidar al colapsar/expandir panel.
+   * Registrado desde setupProspeccionUi vía ProspeccionMap.setHostMapInvalidate.
+   */
+  var hostMapInvalidate = null;
+
+  function setProspeccionSidebarOpen(isOpen) {
+    state.sidebarOpen = !!isOpen;
+    var sidebar = qs('#prs-sidebar');
+    var sidebarToggle = qs('#prs-sidebar-toggle');
+    var collapseBtn = qs('#prs-sidebar-collapse');
+    var mapChrome = qs('#prospeccion-map-chrome');
+    if (sidebar) {
+      sidebar.classList.toggle('collapsed', !state.sidebarOpen);
+      sidebar.setAttribute('aria-hidden', state.sidebarOpen ? 'false' : 'true');
+    }
+    if (mapChrome) mapChrome.classList.toggle('prospeccion-map-container--sidebar-collapsed', !state.sidebarOpen);
+    if (sidebarToggle) {
+      sidebarToggle.classList.toggle('shifted', state.sidebarOpen);
+      sidebarToggle.innerHTML = state.sidebarOpen ? '<i class="fas fa-chevron-left" aria-hidden="true"></i>' : '<i class="fas fa-chevron-right" aria-hidden="true"></i>';
+      sidebarToggle.setAttribute('aria-expanded', state.sidebarOpen ? 'true' : 'false');
+      sidebarToggle.setAttribute('title', state.sidebarOpen ? 'Ocultar panel de filtros' : 'Mostrar panel de filtros');
+    }
+    if (collapseBtn) {
+      collapseBtn.setAttribute('aria-expanded', state.sidebarOpen ? 'true' : 'false');
+      collapseBtn.setAttribute('title', state.sidebarOpen ? 'Ocultar panel y ver el mapa completo' : '');
+      collapseBtn.hidden = !state.sidebarOpen;
+    }
+    setTimeout(function () {
+      try {
+        if (state.map) state.map.invalidateSize();
+      } catch (_) {}
+      try {
+        if (typeof hostMapInvalidate === 'function') hostMapInvalidate();
+      } catch (_) {}
+    }, 350);
+  }
+
+  function toggleProspeccionSidebar() {
+    setProspeccionSidebarOpen(!state.sidebarOpen);
+  }
+
+  var prospeccionSidebarToggleBound = false;
+  function bindProspeccionSidebarToggleOnce() {
+    if (prospeccionSidebarToggleBound) return;
+    var sidebarToggle = qs('#prs-sidebar-toggle');
+    var sidebarCollapse = qs('#prs-sidebar-collapse');
+    if (!sidebarToggle && !sidebarCollapse) return;
+    prospeccionSidebarToggleBound = true;
+    if (sidebarToggle) sidebarToggle.addEventListener('click', toggleProspeccionSidebar);
+    if (sidebarCollapse) sidebarCollapse.addEventListener('click', toggleProspeccionSidebar);
+  }
+
   /* ----------------------------------------------------------
-   * 4. ICON BUILDERS — Teardrop pins with emoji (MapaSuminregio style)
+   * 4. ICON BUILDERS — Teardrop pins con emoji (MapaSuminregio style)
    * ---------------------------------------------------------- */
   var iconCache = {};
   function buildLeadIcon(lead) {
@@ -1601,44 +1654,8 @@
       });
     });
 
-    function setProspeccionSidebarOpen(isOpen) {
-      state.sidebarOpen = !!isOpen;
-      var sidebar = qs('#prs-sidebar');
-      var sidebarToggle = qs('#prs-sidebar-toggle');
-      var collapseBtn = qs('#prs-sidebar-collapse');
-      var mapChrome = qs('#prospeccion-map-chrome');
-      if (sidebar) {
-        sidebar.classList.toggle('collapsed', !state.sidebarOpen);
-        sidebar.setAttribute('aria-hidden', state.sidebarOpen ? 'false' : 'true');
-      }
-      if (mapChrome) mapChrome.classList.toggle('prospeccion-map-container--sidebar-collapsed', !state.sidebarOpen);
-      if (sidebarToggle) {
-        sidebarToggle.classList.toggle('shifted', state.sidebarOpen);
-        sidebarToggle.innerHTML = state.sidebarOpen ? '<i class="fas fa-chevron-left" aria-hidden="true"></i>' : '<i class="fas fa-chevron-right" aria-hidden="true"></i>';
-        sidebarToggle.setAttribute('aria-expanded', state.sidebarOpen ? 'true' : 'false');
-        sidebarToggle.setAttribute('title', state.sidebarOpen ? 'Ocultar panel de filtros' : 'Mostrar panel de filtros');
-      }
-      if (collapseBtn) {
-        collapseBtn.setAttribute('aria-expanded', state.sidebarOpen ? 'true' : 'false');
-        collapseBtn.setAttribute('title', state.sidebarOpen ? 'Ocultar panel y ver el mapa completo' : '');
-        collapseBtn.hidden = !state.sidebarOpen;
-      }
-      setTimeout(function () { if (state.map) state.map.invalidateSize(); }, 350);
-    }
-
-    function toggleProspeccionSidebar() {
-      setProspeccionSidebarOpen(!state.sidebarOpen);
-    }
-
-    // Sidebar toggle (borde del mapa) + botón "Ocultar" dentro del panel
-    var sidebarToggle = qs('#prs-sidebar-toggle');
-    if (sidebarToggle) {
-      sidebarToggle.addEventListener('click', toggleProspeccionSidebar);
-    }
-    var sidebarCollapse = qs('#prs-sidebar-collapse');
-    if (sidebarCollapse) {
-      sidebarCollapse.addEventListener('click', toggleProspeccionSidebar);
-    }
+    // Ocultar / chevron: se enlazan al cargar el script (bindProspeccionSidebarToggleOnce) porque
+    // app.js usa loadProspeccion/renderProspeccionMap sin llamar ProspeccionMap.init().
 
     // Drawer close
     var drawerClose = qs('#prs-drawer-close');
@@ -1847,8 +1864,15 @@
     exportCSV: exportCSV,
     SEED_DATA: SEED_DATA,
     STAGES: STAGES,
-    SEGMENTS: SEGMENTS
+    SEGMENTS: SEGMENTS,
+    setSidebarOpen: setProspeccionSidebarOpen,
+    toggleSidebar: toggleProspeccionSidebar,
+    setHostMapInvalidate: function (fn) {
+      hostMapInvalidate = typeof fn === 'function' ? fn : null;
+    }
   };
+
+  bindProspeccionSidebarToggleOnce();
 
   // Also keep backward-compatible loadProspeccion
   window.loadProspeccion = function () {

@@ -12818,6 +12818,15 @@
   }
 
   function setupProspeccionUi() {
+    try {
+      if (window.ProspeccionMap && typeof window.ProspeccionMap.setHostMapInvalidate === 'function') {
+        window.ProspeccionMap.setHostMapInvalidate(function () {
+          try {
+            if (prospeccionMap) prospeccionMap.invalidateSize();
+          } catch (_) {}
+        });
+      }
+    } catch (_) {}
     const segWrap = qs('.prospeccion-segment');
     if (segWrap && !segWrap._prospeccionSegBound) {
       segWrap._prospeccionSegBound = true;
