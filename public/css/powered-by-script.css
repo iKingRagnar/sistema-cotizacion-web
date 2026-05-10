@@ -1,0 +1,77 @@
+/**
+ * “Cursiva” de marca = caligrafía / script (p. ej. Great Vibes), no solo font-style:italic sobre Inter.
+ * Header, login y texto SVG de la marca de agua comparten la misma familia.
+ */
+:root {
+  --font-powered-by-script: "Great Vibes", "Brush Script MT", "Segoe Script", cursive;
+}
+
+/* Contenedor fijo: sin data-URL (ahí las fuentes web no cargan). El patrón es SVG inline en index. */
+#app-watermark.prem-watermark-field {
+  background-image: none !important;
+}
+
+#app-watermark.prem-watermark-field .prem-watermark-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+/* ── Marca de agua: <text> dentro del SVG inline (#app-watermark) ── */
+.prem-watermark-script-text {
+  font-family: var(--font-powered-by-script);
+  font-size: 40px;
+  font-style: normal;
+  font-weight: 400;
+  dominant-baseline: middle;
+}
+
+html body:not(.appearance-light) .prem-watermark-script-text {
+  fill: rgba(255, 255, 255, 0.072);
+}
+
+html body.appearance-light .prem-watermark-script-text {
+  fill: rgba(15, 23, 42, 0.055);
+}
+
+/* ── Créditos en barra (mapa + legacy sin universal-map-shell) ── */
+html body.theme-industrial.md3-on:not(.login-open)
+  .header-powered-by.header-powered-by--nav-slot
+  em.header-powered-by-italic,
+html#root body#app.theme-industrial.md3-on:not(.login-open)
+  .header-powered-by.header-powered-by--nav-slot
+  em.header-powered-by-italic {
+  font-family: var(--font-powered-by-script) !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  font-size: clamp(1.15rem, 2.4vw, 1.55rem) !important;
+  letter-spacing: 0.02em !important;
+  line-height: 1.2 !important;
+}
+
+/* Login overlay: exec y legacy */
+html body.theme-industrial.login-open
+  #login-overlay:not(.hidden)
+  .header-powered-by.login-overlay-powered-by
+  em.header-powered-by-italic {
+  font-family: var(--font-powered-by-script) !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  font-size: clamp(1.05rem, 2.8vw, 1.45rem) !important;
+  letter-spacing: 0.03em !important;
+}
+
+/* El span padre no debe forzar Inter / italic sobre el <em> */
+html body.theme-industrial .header .header-powered-by.header-powered-by--nav-slot {
+  font-style: normal !important;
+}
+
+html body.theme-industrial.login-open
+  #login-overlay:not(.hidden)
+  .header-powered-by.login-overlay-powered-by {
+  font-family: inherit !important;
+  font-style: normal !important;
+}

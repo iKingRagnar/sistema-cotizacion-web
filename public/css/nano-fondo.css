@@ -1376,7 +1376,7 @@ html body.theme-industrial.appearance-light:not(.login-open) .login-brand-panel 
 }
 
 /* ============================================================
- * 28. Marcas de agua — desactivadas en industrial: prioridad = foto limpia
+ * 28. Marca de agua — SVG inline + Great Vibes (index); sin data-URL.
  * ============================================================ */
 #app-watermark.prem-watermark-field {
   position: fixed !important;
@@ -1386,8 +1386,8 @@ html body.theme-industrial.appearance-light:not(.login-open) .login-brand-panel 
   overflow: hidden !important;
 }
 
+/* Industrial: la marca de agua vive en SVG inline (Great Vibes) — ver powered-by-script.css */
 html body.theme-industrial #app-watermark.prem-watermark-field {
-  display: none !important;
   background: none !important;
   background-image: none !important;
 }
@@ -1396,14 +1396,10 @@ body.md3-on > #app-watermark.prem-watermark-field {
   z-index: 0 !important;
 }
 
-/* Patrón repetido SVG (texto diagonal) */
+/* Patrón antiguo (data-URL) retirado: no podía usar fuentes web; index trae <svg> dentro de #app-watermark. */
 #app-watermark.prem-watermark-field {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='320'%3E%3Cdefs%3E%3Cpattern id='wm' width='520' height='200' patternUnits='userSpaceOnUse'%3E%3Ctext x='30' y='36' fill='%23ffffff' fill-opacity='0.065' font-family='system-ui,Segoe UI,sans-serif' font-size='13' font-weight='600' transform='rotate(-24 80 60)'%3EIng. David Cantú · David Orlando Cantú · DEV · Universal Servicio Técnico · %3C/text%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23wm)'/%3E%3C/svg%3E");
+  background-image: none !important;
   background-repeat: repeat !important;
-}
-
-html body.theme-industrial.appearance-light:not(.login-open) #app-watermark.prem-watermark-field {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='320'%3E%3Cdefs%3E%3Cpattern id='wm' width='520' height='200' patternUnits='userSpaceOnUse'%3E%3Ctext x='30' y='36' fill='%230f172a' fill-opacity='0.045' font-family='system-ui,Segoe UI,sans-serif' font-size='13' font-weight='600' transform='rotate(-24 80 60)'%3EIng. David Cantú · David Orlando Cantú · DEV · Universal Servicio Técnico · %3C/text%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23wm)'/%3E%3C/svg%3E");
 }
 
 html.prem-pwa #app-watermark.prem-watermark-field {

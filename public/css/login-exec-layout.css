@@ -369,13 +369,12 @@ html body.login-open #login-overlay.login-overlay--exec-layout .login-brand-logo
   box-shadow: none !important;
 }
 
-/* Carga al final del CSS: gana a ui-legibility (cursiva manuscrita, no solo italic).
- * material.css ocultaba todo .header-powered-by; aquí display + fixed al viewport (z por encima del overlay).
- * Esquina inferior derecha; en viewport ancho alinea con margen del shell 1240px (zona del login). */
+/* material.css ocultaba todo .header-powered-by; aquí display + fixed al viewport (z por encima del overlay).
+ * Fuente script (Great Vibes) en <em> — powered-by-script.css */
 html body.theme-industrial.login-open #login-overlay.login-overlay--exec-layout:not(.hidden) .header-powered-by.login-overlay-powered-by {
-  font-family: "Segoe Script", "Brush Script MT", "Snell Roundhand", "Apple Chancery", cursive !important;
+  font-family: inherit !important;
   font-style: normal !important;
-  font-weight: 500 !important;
+  font-weight: 400 !important;
   font-size: clamp(0.78rem, 2vw, 0.92rem) !important;
   position: fixed !important;
   top: auto !important;

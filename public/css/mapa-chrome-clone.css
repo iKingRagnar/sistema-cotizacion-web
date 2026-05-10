@@ -457,7 +457,7 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   object-position: center center !important;
   display: block;
   clip-path: none !important;
-  transform: translateZ(0) scale(1.09);
+  transform: translateZ(0) scale(1.14);
   transform-origin: center center;
   mix-blend-mode: normal !important;
   filter: var(--mapa-ms-logo-drop);
@@ -469,6 +469,12 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
 html body.theme-industrial.universal-map-shell.md3-on:not(.login-open):not(.appearance-light)
   .header-brand .header-brand-logo-img#header-brand-logo {
   mix-blend-mode: darken !important;
+}
+
+/* Sol: halos blancos del JPG — multiply funde con el header claro */
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).appearance-light
+  .header-brand .header-brand-logo-img#header-brand-logo {
+  mix-blend-mode: multiply !important;
 }
 
 /* Barra 6 accesos director */
@@ -551,12 +557,11 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-p
   opacity: 0.92 !important;
 }
 
+/* Tipografía “cursiva” de marca = script (Great Vibes) vía powered-by-script.css */
 html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .header-powered-by--nav-slot .header-powered-by-italic {
-  font-style: italic !important;
-  font-weight: 500;
-  font-size: 0.875rem !important;
-  letter-spacing: 0.04em !important;
-  line-height: 1.35 !important;
+  font-weight: 400;
+  letter-spacing: 0.02em !important;
+  line-height: 1.25 !important;
   text-transform: none !important;
   color: var(--mapa-ms-powered-fg) !important;
   -webkit-text-fill-color: var(--mapa-ms-powered-fg) !important;

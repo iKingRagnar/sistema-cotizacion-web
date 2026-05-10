@@ -168,8 +168,15 @@ html body.theme-industrial:not(.appearance-light) header.header #btn-notificatio
 
 /* Créditos “powered by…”: permanece visible; cursiva explícita al final de la cascada (el shorthand
    `font:` del padre suele arrastrar font-style:normal y el <em> hereda recto si no lo re-forzamos). */
+/* Créditos header: cursiva = caligrafía (Great Vibes) en powered-by-script.css */
 html#root body#app.theme-industrial.universal-map-shell.md3-on:not(.login-open)
   .header-powered-by.header-powered-by--nav-slot
   em.header-powered-by-italic {
-  font-style: italic !important;
+  font-style: normal !important;
+}
+
+/* Logo: refuerzo de recorte ante halos / triángulos del asset (nano §34 usa clip genérico en img). */
+html#root body#app.theme-industrial.universal-map-shell.md3-on:not(.login-open)
+  .header-brand .header-brand-logo-img#header-brand-logo {
+  clip-path: inset(4% 7% 4% 7%) !important;
 }
