@@ -380,3 +380,23 @@ html body.theme-industrial.appearance-light:not(.login-open) .ref-cat-empty {
   -webkit-text-fill-color: #0f172a !important;
   opacity: 1 !important;
 }
+
+/* §14 Cotización — Partidas (#tabla-cot-lineas): tables-premium fuerza gris, nowrap, max-width, overflow hidden */
+html body.theme-industrial.appearance-light:not(.login-open).md3-on #tabla-cot-lineas.data-table tbody td {
+  max-width: none !important;
+  overflow: visible !important;
+  white-space: normal !important;
+  text-overflow: clip !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+html body.theme-industrial.appearance-light:not(.login-open).md3-on #tabla-cot-lineas.data-table tbody td.num,
+html body.theme-industrial.appearance-light:not(.login-open).md3-on #tabla-cot-lineas.data-table tbody td.col-cot-actions {
+  white-space: nowrap !important;
+}
+
+html body.theme-industrial.appearance-light:not(.login-open).md3-on #tabla-cot-lineas.data-table thead th {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}

@@ -2825,25 +2825,32 @@ body.theme-industrial:not(.appearance-light) .cotz-inventory-hint i {
   -webkit-overflow-scrolling: touch;
   border: 1px solid rgba(13, 148, 136, 0.12);
 }
+/* Material (Sol) pone .table-wrap { overflow:hidden } y recorta partidas multilínea */
+body.theme-industrial.appearance-light .cotz-lineas-table-wrap.table-wrap {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+}
 .cotz-lineas-table-wrap .data-table {
   font-size: 0.88rem;
   table-layout: fixed;
   width: 100%;
-  min-width: 960px;
+  min-width: 1040px;
 }
 #tabla-cot-lineas .col-cot-tipo {
-  width: 6.25rem;
+  width: 5.5rem;
+  min-width: 4.5rem;
 }
 #tabla-cot-lineas .col-cot-codigo {
-  width: 6.75rem;
+  width: 7.5rem;
+  min-width: 6rem;
 }
 #tabla-cot-lineas .col-cot-maq {
-  width: 7.5rem;
-  min-width: 6.5rem;
+  width: 9rem;
+  min-width: 7.5rem;
 }
 #tabla-cot-lineas .col-cot-desc {
-  min-width: 14rem;
-  width: 36%;
+  min-width: 16rem;
+  width: 38%;
 }
 #tabla-cot-lineas .col-cot-cant {
   width: 3.1rem;
@@ -2855,27 +2862,29 @@ body.theme-industrial:not(.appearance-light) .cotz-inventory-hint i {
 #tabla-cot-lineas .col-cot-actions {
   width: 5.75rem;
 }
+/* Texto legible: sin max-width:0 ni ellipsis forzada (tables-premium / layout fijo). */
 #tabla-cot-lineas td.td-cot-clip {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 0;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  word-break: break-word;
+  max-width: none;
   vertical-align: top;
-  padding-top: 0.55rem;
+  padding-top: 0.5rem;
+  color: #0f172a;
+  -webkit-text-fill-color: #0f172a;
 }
 #tabla-cot-lineas td.td-cot-desc-multiline {
   white-space: normal;
   word-break: break-word;
-  line-height: 1.35;
-  max-height: 4.5em;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
+  line-height: 1.45;
   vertical-align: top;
-  /* max-width:0 + table-layout:fixed colapsaba la columna (una letra por renglón). */
-  min-width: 12rem;
+  min-width: 14rem;
   max-width: none;
+  overflow: visible;
+  display: table-cell;
+  color: #0f172a;
+  -webkit-text-fill-color: #0f172a;
 }
 #tabla-cot-lineas td.td-cot-actions-cell {
   vertical-align: middle;
