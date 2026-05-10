@@ -1384,13 +1384,22 @@
         }
       }
     }
-    function processInput(el) {
+    function escapeIdForAttrSelector(id) {
+      if (id == null || id === '') return '';
+      if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') return CSS.escape(String(id));
+      return String(id).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    }
+    function processInput(el, labelSearchRoot) {
+      const scope = labelSearchRoot && labelSearchRoot.querySelectorAll ? labelSearchRoot : document;
       if (el._premLabeled) return;
       if (el.type === 'hidden' || el.type === 'submit' || el.type === 'button') { el._premLabeled = true; return; }
       if (el.getAttribute('aria-label') || el.getAttribute('aria-labelledby')) { el._premLabeled = true; return; }
       if (el.id) {
-        const lbl = document.querySelector('label[for="' + el.id + '"]');
-        if (lbl && (lbl.textContent || '').trim()) { el._premLabeled = true; return; }
+        const esc = escapeIdForAttrSelector(el.id);
+        if (esc) {
+          const lbl = scope.querySelector('label[for="' + esc + '"]');
+          if (lbl && (lbl.textContent || '').trim()) { el._premLabeled = true; return; }
+        }
       }
       if (el.closest && el.closest('label')) { el._premLabeled = true; return; }
       const fromAttr = (el.getAttribute('placeholder') || el.getAttribute('title') || el.getAttribute('data-prem-tooltip') || '').trim();
@@ -1402,7 +1411,9 @@
     function scan(root) {
       if (!root || !root.querySelectorAll) return;
       root.querySelectorAll('table.data-table td.th-actions button, table.data-table td.th-actions .btn, .th-actions button, .th-actions .btn').forEach(processBtn);
-      root.querySelectorAll('input, select, textarea').forEach(processInput);
+      root.querySelectorAll('input, select, textarea').forEach(function (el) {
+        processInput(el, root);
+      });
     }
     scan(document);
     window.premAriaScan = function (root) {
