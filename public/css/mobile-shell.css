@@ -152,14 +152,12 @@ html {
   html#root.sidebar-drawer-open:has(body.theme-industrial.universal-map-shell.md3-on:not(.login-open)) {
     overflow-x: hidden !important;
     overflow-y: hidden !important;
-    height: 100% !important;
   }
 
   html#root.sidebar-drawer-open body.theme-industrial.universal-map-shell.md3-on:not(.login-open),
   html#root.sidebar-drawer-open body#app.theme-industrial.universal-map-shell.md3-on:not(.login-open) {
     overflow-x: hidden !important;
     overflow-y: hidden !important;
-    overscroll-behavior-y: none !important;
   }
 
   /* El FAB y la cabecera siguen táctiles aunque el documento esté bloqueado. */
@@ -430,6 +428,11 @@ html {
     -webkit-tap-highlight-color: transparent !important;
     /* mobile-first-foundation usa manipulation; pan-y deja que el padre (aside) reciba el scroll vertical */
     touch-action: pan-y !important;
+    font-size: 1.05rem !important; /* Más legible en móvil */
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+    margin-bottom: 4px !important;
+    border-radius: 8px !important;
   }
 }
 

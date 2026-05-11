@@ -79,8 +79,7 @@ body.md3-on .header-powered-by {
 }
 
 /* ── SIDEBAR RAIL / NAVIGATION ──────────────────────────────────────── */
-body.md3-on .sidebar-nav,
-body.md3-on .tabs.tabs--rail {
+body.md3-on .sidebar-nav {
   background: var(--md-sys-color-surface-container-low);
   border-right: 1px solid var(--md-sys-color-outline-variant);
   padding: var(--md-sys-spacing-2) 0;
@@ -231,8 +230,7 @@ body.md3-on .section-header .actions {
   body.md3-on .tabs.tabs--rail { width: 220px; }
 }
 @media (max-width: 768px) {
-  body.md3-on .sidebar-nav,
-  body.md3-on .tabs.tabs--rail {
+  body.md3-on .sidebar-nav {
     position: fixed;
     left: -100%;
     top: 64px;
@@ -240,8 +238,7 @@ body.md3-on .section-header .actions {
     transition: left var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized);
     box-shadow: var(--md-sys-elevation-level3);
   }
-  body.md3-on.sidebar-open .sidebar-nav,
-  body.md3-on.sidebar-open .tabs.tabs--rail {
+  body.md3-on.sidebar-open .sidebar-nav {
     left: 0;
     width: min(280px, calc(100vw - 56px));
     z-index: 100;

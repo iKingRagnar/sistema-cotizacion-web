@@ -143,9 +143,9 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).mapa-layo
   }
 }
 
-html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-open .mapa-mobile-rail-fab {
+/* html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-open .mapa-mobile-rail-fab {
   display: none !important;
-}
+} */
 
 /* ─── Luna: campana (#btn-notifications) — premium.css aplica fondo crema/ámbar (#fffbeb).
  *  Ese color gana a .btn-icon-header por el ID; en modo oscuro debe fundirse con el header. ─── */
