@@ -141,6 +141,7 @@ html {
     touch-action: auto !important;
     box-shadow: 8px 0 28px rgba(0, 0, 0, 0.4) !important;
     border-radius: 0 12px 12px 0 !important;
+    padding-bottom: 5rem !important; /* Asegura que las pestañas no queden debajo del footer */
   }
 
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-open aside#app-sidebar-nav.sidebar-nav.mapa-app-shell {
@@ -406,7 +407,7 @@ html {
     max-height: none !important;
     -webkit-overflow-scrolling: auto !important;
     overscroll-behavior-x: contain !important;
-    touch-action: pan-y pinch-zoom !important;
+    touch-action: auto !important;
     scrollbar-width: none !important;
   }
 
@@ -428,7 +429,7 @@ html {
     min-height: 44px !important;
     -webkit-tap-highlight-color: transparent !important;
     /* mobile-first-foundation usa manipulation; pan-y deja que el padre (aside) reciba el scroll vertical */
-    touch-action: pan-y !important;
+    touch-action: auto !important;
     font-size: 1.05rem !important; /* Más legible en móvil */
     padding-top: 12px !important;
     padding-bottom: 12px !important;
