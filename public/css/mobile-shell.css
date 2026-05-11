@@ -86,6 +86,11 @@ html {
   }
 
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) header.header.mapa-app-shell {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1100 !important;
     padding-left: max(0.65rem, env(safe-area-inset-left, 0px));
     padding-right: max(0.65rem, env(safe-area-inset-right, 0px));
     padding-top: max(0px, env(safe-area-inset-top, 0px));
@@ -135,13 +140,14 @@ html {
     z-index: 1095 !important;
     /* mapa-app-layout usa overflow:hidden en aside — forzar eje Y para que el cajón pueda hacer pan vertical */
     overflow-x: clip !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
+    overflow-y: hidden !important; /* El scroll lo manejará el nav interno */
+    -webkit-overflow-scrolling: auto !important;
     overscroll-behavior: auto !important;
     touch-action: auto !important;
     box-shadow: 8px 0 28px rgba(0, 0, 0, 0.4) !important;
     border-radius: 0 12px 12px 0 !important;
-    padding-bottom: 5rem !important; /* Asegura que las pestañas no queden debajo del footer */
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).sidebar-open aside#app-sidebar-nav.sidebar-nav.mapa-app-shell {
@@ -403,12 +409,15 @@ html {
     gap: 0 !important;
     /* layout-rail: fila + overflow-x:auto → barra horizontal “de arriba”; aquí solo columna + sin scroll interno */
     overflow-x: hidden !important;
-    overflow-y: visible !important;
+    overflow-y: auto !important;
     max-height: none !important;
-    -webkit-overflow-scrolling: auto !important;
+    -webkit-overflow-scrolling: touch !important;
     overscroll-behavior-x: contain !important;
     touch-action: auto !important;
     scrollbar-width: none !important;
+    flex: 1 1 0 !important; /* Toma todo el espacio restante */
+    min-height: 0 !important;
+    padding-bottom: 5rem !important; /* Espacio para el footer */
   }
 
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
@@ -449,17 +458,18 @@ html {
   html body.theme-industrial.universal-map-shell.md3-on:not(.login-open)
     #app-sidebar-nav
     nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll {
-    flex: 0 0 auto !important;
-    flex-grow: 0 !important;
-    flex-shrink: 0 !important;
+    flex: 1 1 0 !important;
+    flex-grow: 1 !important;
+    flex-shrink: 1 !important;
     min-height: 0 !important;
     max-height: none !important;
     overflow-x: hidden !important;
-    overflow-y: visible !important;
-    -webkit-overflow-scrolling: auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
     overscroll-behavior: auto !important;
     touch-action: auto !important;
     scrollbar-width: none !important;
+    padding-bottom: 5rem !important;
   }
 }
 
