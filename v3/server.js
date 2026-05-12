@@ -785,6 +785,21 @@ app.post('/api/davai/chat', requireAuth, async (req, res) => {
   }
 });
 
+/* ── MOBILE: rutas con no-cache (antes del fallback SPA) ── */
+const _pub = path.join(__dirname, 'public');
+[
+  ['/mobile.html',       'mobile.html'],
+  ['/mobile-app.css',    'mobile-app.css'],
+  ['/mobile-app.js',     'mobile-app.js'],
+].forEach(([route, file]) => {
+  app.get(route, (_req, res) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.sendFile(path.join(_pub, file));
+  });
+});
+
 /* ════════════════════════════════════════════════════════════════
    FALLBACK SPA (sirve index.html para cualquier ruta no /api)
    ════════════════════════════════════════════════════════════════ */
