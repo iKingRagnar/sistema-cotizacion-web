@@ -1076,7 +1076,11 @@ if (!process.env.VERCEL) {
   const _staticProd = express.static(_publicDir, {
     maxAge: 0,
     setHeaders: (res, filePath) => {
-      if (/\.(css|js|woff2?|ttf|eot|png|jpe?g|webp|gif|svg|ico)$/i.test(filePath)) {
+      if (/mobile-app\.(css|js)$|mobile\.html$|\/m\.html$/i.test(filePath)) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      } else if (/\.(css|js|woff2?|ttf|eot|png|jpe?g|webp|gif|svg|ico)$/i.test(filePath)) {
         res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
       } else if (/\.html$/i.test(filePath)) {
         res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
