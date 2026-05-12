@@ -47,6 +47,20 @@ if (JWT_SECRET === 'change-me-in-production-please-use-openssl-rand-hex-32' && N
 const app = express();
 app.use(express.json({ limit: '5mb' }));
 app.use(cookieParser());
+/* ── MOBILE: siempre fresh, va ANTES de express.static ── */
+const _pubDir = path.join(__dirname, 'public');
+app.use((req, res, next) => {
+  const mobileFiles = ['mobile.html', 'mobile-app.css', 'mobile-app.js'];
+  const fname = req.path.replace(/^\//,'').split('?')[0];
+  if (mobileFiles.includes(fname)) {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    return res.sendFile(path.join(_pubDir, fname));
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.html')) res.setHeader('Cache-Control', 'no-store');
