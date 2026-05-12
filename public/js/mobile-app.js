@@ -99,13 +99,13 @@
     showPage(prev);
   };
 
-  // ── LOAD PAGE ────────────────────────────────────────────────────────────
+  // ── LOAD PAGE ───────────────────────────────────────────────────────
   function loadPage(id) {
     if (id === 'dashboard')    loadDashboard();
     else if (id === 'clientes')     loadClientes();
+    else if (id === 'refacciones')  loadRefacciones();
     else if (id === 'maquinas')     loadMaquinas();
     else if (id === 'cotizaciones') loadCotizaciones();
-    else if (id === 'almacen')      loadAlmacen();
   }
 
   // ── DASHBOARD ────────────────────────────────────────────────────────────
@@ -207,31 +207,38 @@
 
   window.mSearch = function(page, val) {
     if (page === 'clientes') loadClientes(val);
+    else if (page === 'refacciones') loadRefacciones(val);
     else if (page === 'maquinas') loadMaquinas(val);
     else if (page === 'cotizaciones') loadCotizaciones(val);
-    else if (page === 'almacen') loadAlmacen(val);
   };
 
   window.mClienteDetail = async function(id) {
     const c = (listCache.clientes || []).find(x => x.id === id);
     if (!c) return;
     const rows = [
-      ['Código',    c.codigo],
-      ['RFC',       c.rfc],
-      ['Contacto',  c.contacto],
-      ['Teléfono',  c.telefono],
-      ['Email',     c.email],
-      ['Ciudad',    c.ciudad],
-      ['Estado',    c.estado_pais],
-      ['Dirección', c.direccion],
+      ['Código', c.codigo], ['RFC', c.rfc], ['Contacto', c.contacto],
+      ['Teléfono', c.telefono], ['Email', c.email],
+      ['Ciudad', c.ciudad], ['Estado', c.estado_pais], ['Dirección', c.direccion],
     ].filter(([,v]) => v);
+    const tel = c.telefono ? `<a href="tel:${c.telefono}" style="color:var(--clr-accent)"><i class="fas fa-phone"></i> Llamar</a>` : '';
+    const wa  = c.telefono ? `<a href="https://wa.me/${c.telefono.replace(/\D/g,'')}" target="_blank" style="color:#25D366"><i class="fab fa-whatsapp"></i> WhatsApp</a>` : '';
     showDetail(`
       <div class="m-info-block">
         ${rows.map(([k,v]) => `<div class="m-info-row"><span class="m-info-key">${k}</span><span class="m-info-val">${v}</span></div>`).join('')}
       </div>
-      <button class="m-btn-primary mt-8" onclick="window.mGoCotByCliente(${id})">
-        <i class="fas fa-file-invoice-dollar"></i> Ver cotizaciones de este cliente
-      </button>`, c.nombre || 'Cliente');
+      ${tel||wa ? `<div style="display:flex;gap:12px;margin-top:10px">${tel}${wa}</div>` : ''}
+      <p class="m-section-title mt-16">Acciones</p>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button class="m-btn-primary" onclick="window.mGoCotByCliente(${id})">
+          <i class="fas fa-file-invoice-dollar"></i> Ver cotizaciones
+        </button>
+        <button class="m-btn-primary" onclick="window.mAdjunto('cliente',${id})">
+          <i class="fas fa-camera"></i> Subir foto / archivo
+        </button>
+        <button class="m-btn-primary" style="background:var(--clr-surface2);color:var(--clr-text);border:1px solid var(--clr-border)" onclick="window.mVerAdjuntos('cliente',${id})">
+          <i class="fas fa-folder-open"></i> Ver archivos adjuntos
+        </button>
+      </div>`, c.nombre || 'Cliente');
   };
 
   window.mGoCotByCliente = function(clienteId) {
@@ -284,8 +291,48 @@
     showDetail(`
       <div class="m-info-block">
         ${rows.map(([k,v]) => `<div class="m-info-row"><span class="m-info-key">${k}</span><span class="m-info-val">${v}</span></div>`).join('')}
+      </div>
+      <p class="m-section-title mt-16">Acciones</p>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button class="m-btn-primary" onclick="window.mAdjunto('maquina',${id})">
+          <i class="fas fa-camera"></i> Subir foto / archivo
+        </button>
+        <button class="m-btn-primary" style="background:var(--clr-surface2);color:var(--clr-text);border:1px solid var(--clr-border)" onclick="window.mVerAdjuntos('maquina',${id})">
+          <i class="fas fa-folder-open"></i> Ver archivos adjuntos
+        </button>
       </div>`, m.nombre || 'Máquina');
   };
+
+  // ── REFACCIONES ──────────────────────────────────────────────────────
+  async function loadRefacciones(q = '') {
+    const el = document.getElementById('page-refacciones');
+    if (!el) return;
+    if (!listCache.refacciones) {
+      el.innerHTML = loader();
+      try {
+        const r = await fetch(API + '/refacciones', { headers: headers() });
+        listCache.refacciones = r.ok ? await r.json() : [];
+      } catch(_) { listCache.refacciones = []; }
+    }
+    const list = (Array.isArray(listCache.refacciones) ? listCache.refacciones : []).filter(a =>
+      !q || [a.codigo, a.descripcion, a.categoria].some(f => f && String(f).toLowerCase().includes(q.toLowerCase()))
+    );
+    el.innerHTML = `
+      <div class="m-search-wrap"><i class="fas fa-search"></i>
+        <input class="m-search" id="q-refacciones" placeholder="Buscar refacción…" value="${q}" oninput="window.mSearch('refacciones',this.value)">
+      </div>
+      <p class="m-section-title">${list.length} refacciones</p>
+      ${list.length ? list.map(a => {
+        const bajo = (a.stock || 0) <= (a.stock_minimo || 0);
+        return `
+          <div class="m-card">
+            <div class="m-card-icon ${bajo ? 'red' : 'green'}"><i class="fas fa-cogs"></i></div>
+            <div class="m-card-body">
+              <div class="m-card-title">${a.descripcion || a.codigo || '—'}</div>
+              <div class="m-card-sub">${a.codigo||''} · Cat: ${a.categoria||'—'} · Stock: <strong>${a.stock??'—'}</strong>${bajo?' <span style="color:var(--clr-danger)">⚠ bajo</span>':''}</div>
+            </div>
+          </div>`;}).join('') : empty()}`;
+  }
 
   // ── COTIZACIONES ─────────────────────────────────────────────────────────
   async function loadCotizaciones(q = '') {

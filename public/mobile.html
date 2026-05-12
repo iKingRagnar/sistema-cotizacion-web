@@ -48,13 +48,13 @@
     </button>
   </header>
 
-  <!-- Content -->
+  <!-- Pages -->
   <div id="m-content">
     <div class="m-page active" id="page-dashboard"></div>
     <div class="m-page" id="page-clientes"></div>
+    <div class="m-page" id="page-refacciones"></div>
     <div class="m-page" id="page-maquinas"></div>
     <div class="m-page" id="page-cotizaciones"></div>
-    <div class="m-page" id="page-almacen"></div>
     <div class="m-page" id="page-detail"></div>
   </div>
 
@@ -68,6 +68,10 @@
       <i class="fas fa-users"></i>
       <span>Clientes</span>
     </button>
+    <button class="m-nav-btn" data-page="refacciones" aria-label="Refacciones">
+      <i class="fas fa-cogs"></i>
+      <span>Refacciones</span>
+    </button>
     <button class="m-nav-btn" data-page="maquinas" aria-label="Máquinas">
       <i class="fas fa-industry"></i>
       <span>Máquinas</span>
@@ -75,10 +79,6 @@
     <button class="m-nav-btn" data-page="cotizaciones" aria-label="Cotizaciones">
       <i class="fas fa-file-invoice-dollar"></i>
       <span>Cotizaciones</span>
-    </button>
-    <button class="m-nav-btn" data-page="almacen" aria-label="Almacén">
-      <i class="fas fa-warehouse"></i>
-      <span>Almacén</span>
     </button>
   </nav>
 
@@ -103,6 +103,6 @@
 <!-- Toast -->
 <div id="m-toast"></div>
 
-<script src="js/mobile-app.js?v=1"></script>
+<script src="js/mobile-app.js?v=4"></script>
 </body>
 </html>
