@@ -2,6 +2,16 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
+<!-- REDIRECT MÓVIL: si es celular → app móvil dedicada -->
+<script>
+  (function(){
+    var mob=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    var desk=location.search.indexOf('desktop=1')!==-1;
+    if(mob&&!desk&&location.pathname.indexOf('m.html')===-1){
+      location.replace('/m.html?_='+Date.now());
+    }
+  })();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#0f172a" />
 <title>Servicio Técnico</title>
