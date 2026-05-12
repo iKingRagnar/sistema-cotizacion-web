@@ -146,24 +146,20 @@
       el.innerHTML = `
         <p class="m-section-title">Bienvenido, ${u ? (u.displayName || u.username) : 'usuario'}</p>
         <div class="m-kpi-grid">
-          </div>
+          <div class="m-kpi"><div class="m-kpi-label">Clientes</div><div class="m-kpi-value accent">${clientes.length}</div><div class="m-kpi-sub">Registrados</div></div>
+          <div class="m-kpi"><div class="m-kpi-label">Cotizaciones</div><div class="m-kpi-value">${cotArr.length}</div><div class="m-kpi-sub">${aprobadas} aprobadas</div></div>
+          <div class="m-kpi"><div class="m-kpi-label">Valor total</div><div class="m-kpi-value" style="font-size:1.1rem">$${(totalCot/1000).toFixed(1)}k</div><div class="m-kpi-sub">En cotizaciones</div></div>
+          <div class="m-kpi"><div class="m-kpi-label">Refacciones</div><div class="m-kpi-value">${refArr.length}</div><div class="m-kpi-sub">${stockBajo > 0 ? '<span style=color:var(--clr-danger)>' + stockBajo + ' stock bajo</span>' : 'Stock OK'}</div></div>
         </div>
-        <p class="m-section-title mt-16">Accesos rápidos</p>
-        ${['clientes','cotizaciones','maquinas','almacen'].map(p => `
-          <div class="m-card" onclick="window.mGo('${p}')">
-            <div class="m-card-icon ${p==='cotizaciones'?'blue':p==='maquinas'?'yellow':p==='almacen'?'green':''}">
-              <i class="fas fa-${p==='clientes'?'users':p==='cotizaciones'?'file-invoice-dollar':p==='maquinas'?'industry':'warehouse'}"></i>
-            </div>
-            <div class="m-card-body">
-              <div class="m-card-title">${p.charAt(0).toUpperCase()+p.slice(1)}</div>
-              <div class="m-card-sub">Ver listado completo</div>
-            </div>
-            <div class="m-card-arrow"><i class="fas fa-chevron-right"></i></div>
-          </div>`).join('')}`;
+        <p class="m-section-title mt-16">Módulos</p>
+        <div class="m-modules-grid">
+          ${allModules.map(m => '<div class="m-module-btn" onclick="window.mGo(\'' + m.id + '\')"><div class="m-module-icon ' + m.col + '"><i class="fas fa-' + m.icon + '"></i></div><span>' + m.label + '</span></div>').join('')}
+        </div>`;
     } catch(e) {
       el.innerHTML = `<div class="m-empty"><i class="fas fa-exclamation-triangle"></i><p>${e.message}</p></div>`;
     }
   }
+
 
   window.mGo = function(p) { showPage(p); };
 
