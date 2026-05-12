@@ -121,40 +121,31 @@
       ]);
       const clientes     = r1.ok ? await r1.json() : [];
       const cotRaw       = r2.ok ? await r2.json() : {};
-      const cotizaciones = Array.isArray(cotRaw) ? cotRaw : (cotRaw.rows || []);
-      const maquinas     = r3.ok ? await r3.json() : [];
-      const refRaw       = r4.ok ? await r4.json() : [];
-      const almacen      = Array.isArray(refRaw) ? refRaw : [];
-
-      const cotArr = Array.isArray(cotizaciones) ? cotizaciones : [];
-
-      const totalCot = cotArr.reduce((s, c) => s + (parseFloat(c.total) || 0), 0);
-      const aprobadas = cotArr.filter(c => /aprobada|vendida/i.test(c.estado || '')).length;
-      const stockBajo = (Array.isArray(almacen) ? almacen : []).filter(r => (r.stock || 0) <= (r.stock_minimo || 0)).length;
+      const cotArr       = Array.isArray(cotRaw) ? cotRaw : (cotRaw.rows || []);
+      const refArr       = r4.ok ? await r4.json() : [];
+      const totalCot     = cotArr.reduce((s, c) => s + (parseFloat(c.total) || 0), 0);
+      const aprobadas    = cotArr.filter(c => /aprobada|vendida/i.test(c.estado || '')).length;
+      const stockBajo    = (Array.isArray(refArr) ? refArr : []).filter(r => (r.stock || 0) <= (r.stock_minimo || 0)).length;
       const u = getUser();
+
+      const allModules = [
+        { id:'clientes',      label:'Clientes',      icon:'users',                col:'' },
+        { id:'refacciones',   label:'Refacciones',   icon:'cogs',                 col:'yellow' },
+        { id:'maquinas',      label:'Máquinas',      icon:'industry',             col:'yellow' },
+        { id:'cotizaciones',  label:'Cotizaciones',  icon:'file-invoice-dollar',  col:'blue' },
+        { id:'ventas',        label:'Ventas',         icon:'check-double',         col:'green' },
+        { id:'incidentes',    label:'Incidentes',    icon:'exclamation-triangle',  col:'red' },
+        { id:'bitacoras',     label:'Bitácora',      icon:'clock',               col:'' },
+        { id:'reportes',      label:'Reportes',      icon:'file-alt',             col:'blue' },
+        { id:'garantias',     label:'Garantías',     icon:'shield-alt',           col:'green' },
+        { id:'tecnicos',      label:'Personal',      icon:'user-tie',             col:'' },
+        { id:'prospeccion',   label:'Prospección',   icon:'map-marked-alt',       col:'blue' },
+        { id:'tarifas',       label:'Tarifas',       icon:'tags',                 col:'yellow' },
+      ];
 
       el.innerHTML = `
         <p class="m-section-title">Bienvenido, ${u ? (u.displayName || u.username) : 'usuario'}</p>
         <div class="m-kpi-grid">
-          <div class="m-kpi">
-            <div class="m-kpi-label">Clientes</div>
-            <div class="m-kpi-value accent">${Array.isArray(clientes) ? clientes.length : '—'}</div>
-            <div class="m-kpi-sub">Registrados</div>
-          </div>
-          <div class="m-kpi">
-            <div class="m-kpi-label">Cotizaciones</div>
-            <div class="m-kpi-value">${cotArr.length}</div>
-            <div class="m-kpi-sub">${aprobadas} aprobadas</div>
-          </div>
-          <div class="m-kpi">
-            <div class="m-kpi-label">Valor total</div>
-            <div class="m-kpi-value" style="font-size:1.1rem">$${(totalCot/1000).toFixed(1)}k</div>
-            <div class="m-kpi-sub">En cotizaciones</div>
-          </div>
-          <div class="m-kpi">
-            <div class="m-kpi-label">Máquinas</div>
-            <div class="m-kpi-value">${Array.isArray(maquinas) ? maquinas.length : '—'}</div>
-            <div class="m-kpi-sub">${stockBajo > 0 ? `<span style="color:var(--clr-danger)">${stockBajo} stock bajo</span>` : 'Almacén OK'}</div>
           </div>
         </div>
         <p class="m-section-title mt-16">Accesos rápidos</p>
@@ -325,14 +316,39 @@
       ${list.length ? list.map(a => {
         const bajo = (a.stock || 0) <= (a.stock_minimo || 0);
         return `
-          <div class="m-card">
+          <div class="m-card" onclick="window.mRefDetail(${a.id})">
             <div class="m-card-icon ${bajo ? 'red' : 'green'}"><i class="fas fa-cogs"></i></div>
             <div class="m-card-body">
               <div class="m-card-title">${a.descripcion || a.codigo || '—'}</div>
-              <div class="m-card-sub">${a.codigo||''} · Cat: ${a.categoria||'—'} · Stock: <strong>${a.stock??'—'}</strong>${bajo?' <span style="color:var(--clr-danger)">⚠ bajo</span>':''}</div>
+              <div class="m-card-sub">${a.codigo||''} · Stock: <strong>${a.stock??'—'}</strong>${bajo?' <span style="color:var(--clr-danger)">⚠ bajo</span>':''}</div>
             </div>
-          </div>`;}).join('') : empty()}`;
+            <div class="m-card-arrow"><i class="fas fa-chevron-right"></i></div>
+          </div>`;
+      }).join('') : empty()}`;
   }
+
+  window.mRefDetail = function(id) {
+    const a = (listCache.refacciones || []).find(x => x.id === id);
+    if (!a) return;
+    const rows = [
+      ['Código', a.codigo], ['Categoría', a.categoria], ['Subcategoría', a.subcategoria],
+      ['Stock', a.stock], ['Stock mín.', a.stock_minimo], ['Precio', fmt(a.precio,'$')],
+      ['Unidad', a.unidad], ['Proveedor', a.proveedor], ['Notas', a.notas],
+    ].filter(([,v]) => v != null && v !== '');
+    showDetail(`
+      <div class="m-info-block">
+        ${rows.map(([k,v]) => `<div class="m-info-row"><span class="m-info-key">${k}</span><span class="m-info-val">${v}</span></div>`).join('')}
+      </div>
+      <p class="m-section-title mt-16">Acciones</p>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button class="m-btn-primary" onclick="window.mAdjunto('refaccion',${id})">
+          <i class="fas fa-camera"></i> Subir foto / archivo
+        </button>
+        <button class="m-btn-primary" style="background:var(--clr-surface2);color:var(--clr-text);border:1px solid var(--clr-border)" onclick="window.mVerAdjuntos('refaccion',${id})">
+          <i class="fas fa-folder-open"></i> Ver archivos adjuntos
+        </button>
+      </div>`, a.descripcion || a.codigo || 'Refacción');
+  };
 
   // ── COTIZACIONES ─────────────────────────────────────────────────────────
   async function loadCotizaciones(q = '') {
@@ -559,22 +575,35 @@
       if (!list.length) { toast('No hay archivos adjuntos'); return; }
       const html = `
         <p class="m-section-title">Archivos adjuntos (${list.length})</p>
-        <div class="m-info-block">
-          ${list.map(a => `
-            <div class="m-info-row">
-              <span class="m-info-key">${a.mime_type && a.mime_type.startsWith('image') ? '🖼' : '📄'}</span>
-              <span class="m-info-val">
-                ${a.filename}<br>
-                <a href="${API}/attachments/${a.id}/download" target="_blank" style="color:var(--clr-accent);font-size:0.8rem">
-                  <i class="fas fa-download"></i> Descargar
-                </a>
-              </span>
-            </div>`).join('')}
+        <div class="m-adjuntos-grid">
+          ${list.map(a => {
+            const isImg = a.mime_type && a.mime_type.startsWith('image');
+            const url = `${API}/attachments/${a.id}/download`;
+            return isImg
+              ? `<div class="m-adjunto-thumb" onclick="window.mFullImg('${url}','${a.filename}')">
+                   <img src="${url}" alt="${a.filename}" loading="lazy">
+                   <span>${a.filename.slice(0,18)}</span>
+                 </div>`
+              : `<div class="m-adjunto-file">
+                   <i class="fas fa-file-alt"></i>
+                   <span>${a.filename.slice(0,18)}</span>
+                   <a href="${url}" target="_blank" class="m-dl-link"><i class="fas fa-download"></i></a>
+                 </div>`;
+          }).join('')}
         </div>`;
       const det = document.getElementById('page-detail');
       det.insertAdjacentHTML('beforeend', html);
       document.getElementById('m-content').scrollTop = 99999;
     } catch(e) { toast('Error al cargar adjuntos'); }
+  };
+
+  window.mFullImg = function(url, name) {
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px';
+    ov.innerHTML = `<img src="${url}" style="max-width:100%;max-height:85vh;border-radius:8px;object-fit:contain" alt="${name}">
+      <p style="color:#fff;margin-top:12px;font-size:0.8rem;opacity:0.7">${name}</p>
+      <button onclick="this.parentElement.remove()" style="margin-top:12px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:8px 24px;border-radius:8px;cursor:pointer">Cerrar</button>`;
+    document.body.appendChild(ov);
   };
 
   function fileToDataUrl(file) {
