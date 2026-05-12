@@ -2,6 +2,16 @@
 <html id="root" lang="es" class="no-motion">
 <head>
   <meta charset="UTF-8">
+  <!-- MOBILE REDIRECT: Si es celular y no viene de ?desktop=1, manda a mobile.html -->
+  <script>
+    (function(){
+      var mob = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      var forceDk = location.search.indexOf('desktop=1') !== -1;
+      if (mob && !forceDk && location.pathname.indexOf('mobile.html') === -1) {
+        location.replace('mobile.html');
+      }
+    })();
+  </script>
   <!-- Desarrollo local: quitar SW cuanto antes (evita index/CSS viejos por caché del worker). -->
   <script>
     (function () {

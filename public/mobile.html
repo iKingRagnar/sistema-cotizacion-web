@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0d1117">
+  <title>Universal · Móvil</title>
+  <meta name="description" content="Sistema de cotización Universal — versión móvil">
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" crossorigin="anonymous">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Mobile App Styles (standalone) -->
+  <link rel="stylesheet" href="css/mobile-app.css?v=1">
+</head>
+<body>
+
+<!-- ══ LOGIN ══════════════════════════════════════════════════════════ -->
+<div id="m-login">
+  <img src="fondos/universal-logo.jpg?v=4" alt="Universal" class="m-login-logo">
+  <div class="m-login-title">Sistema Universal</div>
+  <div class="m-login-sub">Servicio Técnico · Versión Móvil</div>
+  <form class="m-login-form" id="m-login-form">
+    <div class="m-input-wrap">
+      <i class="fas fa-user"></i>
+      <input class="m-input" id="m-login-user" type="text" placeholder="Usuario" autocomplete="username" required>
+    </div>
+    <div class="m-input-wrap">
+      <i class="fas fa-lock"></i>
+      <input class="m-input" id="m-login-pass" type="password" placeholder="Contraseña" autocomplete="current-password" required>
+    </div>
+    <div class="m-login-err" id="m-login-err"></div>
+    <button class="m-btn-primary" id="m-login-btn" type="submit">Entrar</button>
+  </form>
+</div>
+
+<!-- ══ APP SHELL ══════════════════════════════════════════════════════ -->
+<div id="m-shell" style="display:none">
+
+  <!-- Header -->
+  <header id="m-header">
+    <img src="fondos/universal-logo.jpg?v=4" alt="Universal" class="m-logo">
+    <div class="m-title">Universal <small>Servicio Técnico</small></div>
+    <button id="m-user-btn" title="Cuenta" aria-label="Cuenta">
+      <i class="fas fa-user-circle"></i>
+    </button>
+  </header>
+
+  <!-- Content -->
+  <div id="m-content">
+    <div class="m-page active" id="page-dashboard"></div>
+    <div class="m-page" id="page-clientes"></div>
+    <div class="m-page" id="page-maquinas"></div>
+    <div class="m-page" id="page-cotizaciones"></div>
+    <div class="m-page" id="page-almacen"></div>
+    <div class="m-page" id="page-detail"></div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav id="m-nav" role="navigation" aria-label="Navegación principal">
+    <button class="m-nav-btn active" data-page="dashboard" aria-label="Inicio">
+      <i class="fas fa-home"></i>
+      <span>Inicio</span>
+    </button>
+    <button class="m-nav-btn" data-page="clientes" aria-label="Clientes">
+      <i class="fas fa-users"></i>
+      <span>Clientes</span>
+    </button>
+    <button class="m-nav-btn" data-page="maquinas" aria-label="Máquinas">
+      <i class="fas fa-industry"></i>
+      <span>Máquinas</span>
+    </button>
+    <button class="m-nav-btn" data-page="cotizaciones" aria-label="Cotizaciones">
+      <i class="fas fa-file-invoice-dollar"></i>
+      <span>Cotizaciones</span>
+    </button>
+    <button class="m-nav-btn" data-page="almacen" aria-label="Almacén">
+      <i class="fas fa-warehouse"></i>
+      <span>Almacén</span>
+    </button>
+  </nav>
+
+</div><!-- /m-shell -->
+
+<!-- ══ USER DRAWER ════════════════════════════════════════════════════ -->
+<div class="m-drawer-overlay" id="m-drawer-overlay"></div>
+<div id="m-user-drawer" role="dialog" aria-label="Menú de cuenta">
+  <div class="m-drawer-header">
+    <div class="m-drawer-name" id="m-drawer-name">—</div>
+    <div class="m-drawer-role" id="m-drawer-role"></div>
+  </div>
+  <button class="m-drawer-item" id="m-drawer-logout">
+    <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+  </button>
+  <div class="m-drawer-spacer"></div>
+  <button class="m-drawer-item" onclick="window.location.href='/'">
+    <i class="fas fa-desktop"></i> Ir a versión escritorio
+  </button>
+</div>
+
+<!-- Toast -->
+<div id="m-toast"></div>
+
+<script src="js/mobile-app.js?v=1"></script>
+</body>
+</html>
