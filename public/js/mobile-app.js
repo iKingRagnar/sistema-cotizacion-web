@@ -117,13 +117,14 @@
         fetch(API + '/clientes', { headers: headers() }),
         fetch(API + '/cotizaciones?limit=200', { headers: headers() }),
         fetch(API + '/maquinas', { headers: headers() }),
-        fetch(API + '/almacen', { headers: headers() }),
+        fetch(API + '/refacciones', { headers: headers() }),
       ]);
       const clientes     = r1.ok ? await r1.json() : [];
       const cotRaw       = r2.ok ? await r2.json() : {};
       const cotizaciones = Array.isArray(cotRaw) ? cotRaw : (cotRaw.rows || []);
       const maquinas     = r3.ok ? await r3.json() : [];
-      const almacen      = r4.ok ? await r4.json() : [];
+      const refRaw       = r4.ok ? await r4.json() : [];
+      const almacen      = Array.isArray(refRaw) ? refRaw : [];
 
       const cotArr = Array.isArray(cotizaciones) ? cotizaciones : [];
 
@@ -321,7 +322,7 @@
     if (!c) return;
     let items = [];
     try {
-      const r = await fetch(`${API}/cotizaciones/${id}/items`, { headers: headers() });
+      const r = await fetch(`${API}/cotizaciones/${id}/lineas`, { headers: headers() });
       if (r.ok) items = await r.json();
     } catch(_) {}
     const rows = [
@@ -334,16 +335,26 @@
       <div class="m-info-block">
         ${items.map(it => `
           <div class="m-info-row">
-            <span class="m-info-key">${it.codigo || it.descripcion?.slice(0,12) || '—'}</span>
-            <span class="m-info-val">${it.descripcion || '—'}<br>
+            <span class="m-info-key">${(it.codigo || it.refaccion_codigo || '').slice(0,14) || '—'}</span>
+            <span class="m-info-val">${it.descripcion || it.refaccion_descripcion || '—'}<br>
               <span class="text-muted">Cant: ${it.cantidad} · ${fmt(it.precio_unitario,'$')} · Total: ${fmt(it.total,'$')}</span>
             </span>
           </div>`).join('')}
       </div>` : '';
+    const adjunto = `
+      <p class="m-section-title mt-16">Acciones</p>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button class="m-btn-primary" onclick="window.mAdjunto('cotizacion',${id})">
+          <i class="fas fa-paperclip"></i> Subir archivo / foto
+        </button>
+        <button class="m-btn-primary" style="background:var(--clr-surface2);color:var(--clr-text);border:1px solid var(--clr-border)" onclick="window.mVerAdjuntos('cotizacion',${id})">
+          <i class="fas fa-folder-open"></i> Ver archivos adjuntos
+        </button>
+      </div>`;
     showDetail(`
       <div class="m-info-block">
         ${rows.map(([k,v]) => `<div class="m-info-row"><span class="m-info-key">${k}</span><span class="m-info-val">${v}</span></div>`).join('')}
-      </div>${itemsHtml}`, (c.folio || '#'+id));
+      </div>${itemsHtml}${adjunto}`, (c.folio || '#'+id));
   };
 
   // ── ALMACÉN ──────────────────────────────────────────────────────────────
@@ -352,7 +363,7 @@
     if (!listCache.almacen) {
       el.innerHTML = loader();
       try {
-        const r = await fetch(API + '/almacen', { headers: headers() });
+        const r = await fetch(API + '/refacciones', { headers: headers() });
         listCache.almacen = r.ok ? await r.json() : [];
       } catch(_) { listCache.almacen = []; }
     }
@@ -468,4 +479,64 @@
     document.getElementById('m-login').classList.remove('hidden');
     document.getElementById('m-shell').style.display = 'none';
   }
+
+  // ── ADJUNTOS ────────────────────────────────────────────────────────────
+  window.mAdjunto = function(entityType, entityId) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*,application/pdf,.doc,.docx,.xlsx';
+    input.onchange = async function() {
+      const file = input.files[0];
+      if (!file) return;
+      if (file.size > 8 * 1024 * 1024) { toast('Archivo muy grande (máx 8 MB)'); return; }
+      toast('Subiendo archivo…', 5000);
+      try {
+        const dataUrl = await fileToDataUrl(file);
+        const r = await fetch(API + '/attachments', {
+          method: 'POST',
+          headers: headers(),
+          body: JSON.stringify({ entity_type: entityType, entity_id: entityId, filename: file.name, data_url: dataUrl })
+        });
+        if (r.ok) { toast('✅ Archivo subido correctamente'); }
+        else { const e = await r.json(); toast('Error: ' + (e.error || 'al subir')); }
+      } catch(e) { toast('Error: ' + e.message); }
+    };
+    input.click();
+  };
+
+  window.mVerAdjuntos = async function(entityType, entityId) {
+    toast('Cargando adjuntos…', 3000);
+    try {
+      const r = await fetch(`${API}/attachments?entity_type=${entityType}&entity_id=${entityId}`, { headers: headers() });
+      const list = r.ok ? await r.json() : [];
+      if (!list.length) { toast('No hay archivos adjuntos'); return; }
+      const html = `
+        <p class="m-section-title">Archivos adjuntos (${list.length})</p>
+        <div class="m-info-block">
+          ${list.map(a => `
+            <div class="m-info-row">
+              <span class="m-info-key">${a.mime_type && a.mime_type.startsWith('image') ? '🖼' : '📄'}</span>
+              <span class="m-info-val">
+                ${a.filename}<br>
+                <a href="${API}/attachments/${a.id}/download" target="_blank" style="color:var(--clr-accent);font-size:0.8rem">
+                  <i class="fas fa-download"></i> Descargar
+                </a>
+              </span>
+            </div>`).join('')}
+        </div>`;
+      const det = document.getElementById('page-detail');
+      det.insertAdjacentHTML('beforeend', html);
+      document.getElementById('m-content').scrollTop = 99999;
+    } catch(e) { toast('Error al cargar adjuntos'); }
+  };
+
+  function fileToDataUrl(file) {
+    return new Promise((res, rej) => {
+      const fr = new FileReader();
+      fr.onload = () => res(fr.result);
+      fr.onerror = () => rej(new Error('Error leyendo archivo'));
+      fr.readAsDataURL(file);
+    });
+  }
+
 })();
