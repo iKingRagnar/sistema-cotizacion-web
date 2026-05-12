@@ -68,18 +68,14 @@ async function loadDash(){
   const stk=rArr.filter(r=>(r.stock||0)<=(r.stock_minimo||0)).length;
   const u=user();
   const mods=[
-    {id:'clientes',label:'Clientes',icon:'users',col:''},
-    {id:'maquinas',label:'Máquinas',icon:'industry',col:'yellow'},
-    {id:'refacciones',label:'Refacciones',icon:'cogs',col:'yellow'},
-    {id:'cotizaciones',label:'Cotizaciones',icon:'file-invoice-dollar',col:'blue'},
-    {id:'ventas',label:'Ventas',icon:'check-double',col:'green'},
-    {id:'garantias',label:'Garantías',icon:'shield-alt',col:'green'},
-    {id:'prospeccion',label:'Prospección',icon:'map-marked-alt',col:'blue'},
-    {id:'tecnicos',label:'Personal',icon:'user-tie',col:''},
-    {id:'tarifas',label:'Tarifas',icon:'tags',col:'yellow'},
-    {id:'bitacoras',label:'Bitácora',icon:'clock',col:''},
-    {id:'incidentes',label:'Revisiones',icon:'exclamation-triangle',col:'red'},
-    {id:'reportes',label:'Reportes',icon:'file-csv',col:'blue'},
+    {id:'ventas',    label:'Ventas',      icon:'check-double',        col:'green'},
+    {id:'garantias', label:'Garantías',   icon:'shield-alt',          col:'green'},
+    {id:'prospeccion',label:'Prospección',icon:'map-marked-alt',      col:'blue'},
+    {id:'tecnicos',  label:'Personal',    icon:'user-tie',            col:''},
+    {id:'tarifas',   label:'Tarifas',     icon:'tags',                col:'yellow'},
+    {id:'bitacoras', label:'Bitácora',    icon:'clock',               col:''},
+    {id:'incidentes',label:'Revisiones',  icon:'exclamation-triangle', col:'red'},
+    {id:'reportes',  label:'Reportes',    icon:'file-csv',            col:'blue'},
   ];
   el.innerHTML=`
     <p class="m-section-title">Bienvenido, ${u?(u.nombre||u.username):'usuario'}</p>
