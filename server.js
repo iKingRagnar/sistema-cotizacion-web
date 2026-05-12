@@ -1083,6 +1083,21 @@ if (!process.env.VERCEL) {
       }
     },
   });
+  /* ── MOBILE: nunca cachear los archivos de la app móvil ── */
+  const _mobileFiles = {
+    '/mobile.html':           path.join(__dirname, 'public', 'mobile.html'),
+    '/css/mobile-app.css':    path.join(__dirname, 'public', 'css', 'mobile-app.css'),
+    '/js/mobile-app.js':      path.join(__dirname, 'public', 'js', 'mobile-app.js'),
+  };
+  Object.entries(_mobileFiles).forEach(([route, filePath]) => {
+    app.get(route, (req, res, next) => {
+      if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+      res.sendFile(filePath, (err) => { if (err) next(err); });
+    });
+  });
   app.use((req, res, next) => {
     if (isLocalDevRequest(req)) return _staticLoopback(req, res, next);
     return _staticProd(req, res, next);
