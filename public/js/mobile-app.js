@@ -120,11 +120,13 @@
         fetch(API + '/almacen', { headers: headers() }),
       ]);
       const clientes     = r1.ok ? await r1.json() : [];
-      const cotizaciones = r2.ok ? (await r2.json()).rows || await r2.json() : [];
+      const cotRaw       = r2.ok ? await r2.json() : {};
+      const cotizaciones = Array.isArray(cotRaw) ? cotRaw : (cotRaw.rows || []);
       const maquinas     = r3.ok ? await r3.json() : [];
       const almacen      = r4.ok ? await r4.json() : [];
 
-      const cotArr = Array.isArray(cotizaciones) ? cotizaciones : (cotizaciones.rows || []);
+      const cotArr = Array.isArray(cotizaciones) ? cotizaciones : [];
+
       const totalCot = cotArr.reduce((s, c) => s + (parseFloat(c.total) || 0), 0);
       const aprobadas = cotArr.filter(c => /aprobada|vendida/i.test(c.estado || '')).length;
       const stockBajo = (Array.isArray(almacen) ? almacen : []).filter(r => (r.stock || 0) <= (r.stock_minimo || 0)).length;
