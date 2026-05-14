@@ -14560,23 +14560,26 @@
       openConfirmModal(
         `Se importarán ${rows.length} refacciones.\n\nMapeo detectado: ${mapSummary}\n\nPrimeras filas:\n${preview}\n\nLas que ya existen (por código) se actualizarán. ¿Continuar?`,
         async () => {
+          showToast(`Importando ${rows.length} refacciones…`, 'info');
           let ok = 0, errors = 0;
-          for (const r of rows) {
-            try {
-              // Intentar insertar; si existe (409) hacer PUT
-              try {
-                await fetchJson(API + '/refacciones', { method: 'POST', body: JSON.stringify(r) });
-              } catch (e) {
-                if (e && (String(e.message || e).includes('409') || String(e.message || e).includes('UNIQUE'))) {
-                  // Solo intentar UPDATE si hay código real (sin código no se puede emparejar)
-                  if (r.codigo) {
-                    const existing = refaccionesCache.find(x => x.codigo === r.codigo);
-                    if (existing) await fetchJson(API + '/refacciones/' + existing.id, { method: 'PUT', body: JSON.stringify(r) });
-                  }
-                } else throw e;
+          const BATCH = 200;
+          try {
+            for (let i = 0; i < rows.length; i += BATCH) {
+              const slice = rows.slice(i, i + BATCH);
+              const resp = await fetchJson(API + '/refacciones/bulk', {
+                method: 'POST',
+                body: JSON.stringify({ items: slice }),
+              });
+              ok += (resp && resp.ok) || 0;
+              errors += (resp && resp.errors) || 0;
+              if (resp && resp.errorSamples && resp.errorSamples.length) {
+                console.warn('[ImportXLSX] Muestras de error:', resp.errorSamples);
               }
-              ok++;
-            } catch (_) { errors++; }
+            }
+          } catch (e) {
+            console.error('[ImportXLSX] Fallo en bulk:', e);
+            showToast('Error en importación masiva: ' + (e.message || e), 'error');
+            return;
           }
           showToast(`Importación completada: ${ok} registros, ${errors} errores.`, errors ? 'warning' : 'success');
           loadRefacciones();

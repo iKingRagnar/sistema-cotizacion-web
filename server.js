@@ -1502,6 +1502,47 @@ app.delete('/api/refacciones/:id', async (req, res) => {
   }
 });
 
+// Bulk insert de refacciones (para import XLSX). Inserta en una sola transacción.
+app.post('/api/refacciones/bulk', async (req, res) => {
+  try {
+    const items = Array.isArray(req.body && req.body.items) ? req.body.items : [];
+    if (!items.length) return res.status(400).json({ error: 'items vacío' });
+    const tcSnap = await fetchTipoCambioBanxico();
+    const tcReg = Number(tcSnap && tcSnap.valor) > 0 ? Number(tcSnap.valor) : 17;
+    let ok = 0, errors = 0;
+    const errorSamples = [];
+    for (const it of items) {
+      try {
+        const cod = (it.codigo != null && String(it.codigo).trim() !== '') ? String(it.codigo).trim() : null;
+        const puUsd = Number(it.precio_usd) || 0;
+        await db.runQuery(
+          `INSERT INTO refacciones (codigo, descripcion, zona, bloque, stock, stock_minimo, precio_unitario, precio_usd, tipo_cambio_registro, unidad, categoria)
+           VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
+          [
+            cod,
+            it.descripcion || '',
+            it.zona || null,
+            (it.bloque != null && String(it.bloque).trim() !== '') ? String(it.bloque).trim() : null,
+            Number(it.stock) || 0,
+            Number(it.minimo) || Number(it.stock_minimo) || 1,
+            puUsd,
+            tcReg,
+            it.unidad || 'PZA',
+            it.categoria || null,
+          ]
+        );
+        ok++;
+      } catch (e) {
+        errors++;
+        if (errorSamples.length < 5) errorSamples.push(String(e.message || e));
+      }
+    }
+    res.json({ ok, errors, errorSamples });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
 // Borrar todas las refacciones (soft delete: activo=0). Requiere confirm=YES en body.
 app.post('/api/refacciones/borrar-todas', async (req, res) => {
   try {
