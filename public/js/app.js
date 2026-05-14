@@ -14526,7 +14526,23 @@
           activo: 1,
         });
       });
-      if (!rows.length) { showToast('No se encontraron datos en el archivo.', 'warning'); return; }
+      // Debug: imprimir encabezados leídos y mapeo detectado
+      try {
+        const headersDbg = [];
+        headerRow.eachCell((c, n) => headersDbg.push(`${n}:"${(c.text || c.value || '').toString()}"`));
+        console.log('[ImportXLSX] Encabezados:', headersDbg.join(' | '));
+        console.log('[ImportXLSX] Mapeo de columnas:', JSON.parse(JSON.stringify(colMap)));
+        console.log('[ImportXLSX] Filas detectadas:', rows.length, 'de', ws.rowCount, 'filas totales');
+        if (rows.length === 0 && sampleRows.length > 0) {
+          console.log('[ImportXLSX] Primera fila de datos (raw):',
+            sampleRows[0].values);
+        }
+      } catch (_e) { /* noop */ }
+      if (!rows.length) {
+        const detected = Object.keys(colMap).join(', ') || 'ninguna';
+        showToast(`No se encontraron datos. Columnas detectadas: ${detected}. Abre la consola (F12) para más detalles.`, 'warning');
+        return;
+      }
       // Resumen de mapeo + preview de primeras filas
       const mapSummary = [
         colMap.codigo ? `Código=col ${colMap.codigo}` : 'Código=auto',
