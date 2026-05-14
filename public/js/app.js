@@ -14409,27 +14409,117 @@
       await wb.xlsx.load(buffer);
       const ws = wb.worksheets[0];
       if (!ws) { showToast('No se encontró hoja de cálculo.', 'error'); return; }
+      // Detectar columnas por nombre del encabezado (soporta múltiples formatos)
+      const norm = (s) => (s == null ? '' : s.toString()).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+      const headerRow = ws.getRow(1);
+      const colMap = {};
+      headerRow.eachCell((cell, colNum) => {
+        const h = norm(cell.text || cell.value);
+        if (!h) return;
+        if (/^cod(igo)?$/.test(h) || h === 'sku' || h === 'clave') colMap.codigo = colNum;
+        else if (h.startsWith('descrip')) colMap.descripcion = colNum;
+        else if (h.startsWith('categor')) colMap.categoria = colNum;
+        else if (h.startsWith('ubicaci') || h === 'zona' || h === 'estante' || h === 'rack') colMap.zona = colNum;
+        else if (h === 'bloque') colMap.bloque = colNum;
+        else if (h === 'stock' || h === 'existencia' || h === 'cantidad') colMap.stock = colNum;
+        else if (h === 'min' || h.startsWith('minim')) colMap.minimo = colNum;
+        else if (h === 'precio' || h.includes('precio')) colMap.precio = colNum;
+        else if (h === 'unidad' || h === 'um' || h === 'u.m.') colMap.unidad = colNum;
+      });
+      // ----- Fallback heurístico: si faltan columnas clave, adivinar por contenido -----
+      const sampleRows = [];
+      ws.eachRow((row, rowNum) => {
+        if (rowNum === 1) return;
+        if (sampleRows.length >= 20) return;
+        sampleRows.push(row);
+      });
+      const totalCols = ws.columnCount || headerRow.cellCount;
+      const usedCols = new Set(Object.values(colMap));
+      // Estadísticas por columna
+      const stats = {};
+      for (let c = 1; c <= totalCols; c++) {
+        if (usedCols.has(c)) continue;
+        const s = { num: 0, dec: 0, txt: 0, longTxt: 0, shortCode: 0, upper: 0, empty: 0, maxNum: 0, samples: [] };
+        for (const r of sampleRows) {
+          const v = r.getCell(c).value;
+          if (v == null || v === '') { s.empty++; continue; }
+          if (typeof v === 'number') {
+            s.num++;
+            if (!Number.isInteger(v)) s.dec++;
+            if (v > s.maxNum) s.maxNum = v;
+          } else {
+            const t = v.toString().trim();
+            if (!t) { s.empty++; continue; }
+            s.txt++;
+            if (t.length > 15) s.longTxt++;
+            if (/^[A-Z0-9\-\.]{1,6}$/i.test(t)) s.shortCode++;
+            if (t === t.toUpperCase() && /[A-Z]/.test(t)) s.upper++;
+            if (s.samples.length < 3) s.samples.push(t);
+          }
+        }
+        stats[c] = s;
+      }
+      const pickCol = (predicate) => {
+        let best = null, bestScore = -1;
+        for (const [c, s] of Object.entries(stats)) {
+          const score = predicate(s);
+          if (score > bestScore) { bestScore = score; best = Number(c); }
+        }
+        return bestScore > 0 ? best : null;
+      };
+      if (!colMap.descripcion) {
+        const c = pickCol(s => s.longTxt);
+        if (c) { colMap.descripcion = c; usedCols.add(c); delete stats[c]; }
+      }
+      if (!colMap.precio) {
+        const c = pickCol(s => s.dec * 2 + (s.maxNum > 10 ? s.num : 0));
+        if (c) { colMap.precio = c; usedCols.add(c); delete stats[c]; }
+      }
+      if (!colMap.stock) {
+        const c = pickCol(s => (s.num - s.dec) + (s.maxNum < 10000 ? 1 : 0));
+        if (c) { colMap.stock = c; usedCols.add(c); delete stats[c]; }
+      }
+      if (!colMap.categoria) {
+        const c = pickCol(s => s.upper > 1 && s.longTxt < 3 ? s.upper : 0);
+        if (c) { colMap.categoria = c; usedCols.add(c); delete stats[c]; }
+      }
+      if (!colMap.zona) {
+        const c = pickCol(s => s.shortCode);
+        if (c) { colMap.zona = c; usedCols.add(c); delete stats[c]; }
+      }
+      if (!colMap.descripcion) { showToast('No se pudo detectar una columna de descripción. Verifica el archivo.', 'error'); return; }
+      const getCell = (row, key) => {
+        const c = colMap[key]; if (!c) return '';
+        const cell = row.getCell(c);
+        return cell.text || cell.value || '';
+      };
       const rows = [];
       ws.eachRow((row, rowNum) => {
-        if (rowNum === 1) return; // skip header
-        const desc = (row.getCell(1).text || row.getCell(1).value || '').toString().trim();
+        if (rowNum === 1) return;
+        const desc = (getCell(row, 'descripcion') || '').toString().trim();
         if (!desc) return;
-        const unidad = (row.getCell(2).text || row.getCell(2).value || 'PZA').toString().trim() || 'PZA';
-        const precioUsdRaw = row.getCell(3).value;
-        const stockRaw = row.getCell(4).value;
-        const categoria = refCategoriaLabel(row.getCell(5).value != null ? row.getCell(5).value : row.getCell(5).text) || null;
-        const zona = (row.getCell(6).text || row.getCell(6).value || '').toString().trim();
-        const bloque = (row.getCell(7).text || row.getCell(7).value || '').toString().trim();
-        // Intentar extraer código del inicio de la descripción (números + guiones)
-        const codeMatch = desc.match(/^([\d\-A-Z]+(?:\s[\d\-A-Z]+)?)\s+(.+)$/);
-        const codigo = codeMatch ? codeMatch[1].trim() : desc.slice(0, 20).replace(/\s+/g, '-').toUpperCase();
-        const descripcion = codeMatch ? codeMatch[2].trim() : desc;
+        let codigo = (getCell(row, 'codigo') || '').toString().trim();
+        let descripcion = desc;
+        if (!codigo) {
+          // Intentar extraer código del inicio de la descripción
+          const codeMatch = desc.match(/^([\d\-A-Z]+(?:\s[\d\-A-Z]+)?)\s+(.+)$/);
+          if (codeMatch) { codigo = codeMatch[1].trim(); descripcion = codeMatch[2].trim(); }
+          else codigo = desc.slice(0, 20).replace(/\s+/g, '-').toUpperCase();
+        }
+        const unidad = (getCell(row, 'unidad') || 'PZA').toString().trim() || 'PZA';
+        const precioUsdRaw = getCell(row, 'precio');
+        const stockRaw = getCell(row, 'stock');
+        const minRaw = getCell(row, 'minimo');
+        const categoria = refCategoriaLabel(getCell(row, 'categoria')) || null;
+        const zona = (getCell(row, 'zona') || '').toString().trim();
+        const bloque = (getCell(row, 'bloque') || '').toString().trim();
         rows.push({
           codigo,
           descripcion,
           unidad,
           precio_usd: Number(precioUsdRaw) || 0,
           stock: Number(stockRaw) || 0,
+          minimo: Number(minRaw) || 0,
           categoria: categoria || null,
           zona: zona || null,
           bloque: bloque || null,
@@ -14437,9 +14527,26 @@
         });
       });
       if (!rows.length) { showToast('No se encontraron datos en el archivo.', 'warning'); return; }
-      // Mostrar preview y confirmar
+      // Resumen de mapeo + preview de primeras filas
+      const mapSummary = [
+        colMap.codigo ? `Código=col ${colMap.codigo}` : 'Código=auto',
+        colMap.descripcion ? `Descripción=col ${colMap.descripcion}` : null,
+        colMap.categoria ? `Categoría=col ${colMap.categoria}` : null,
+        colMap.zona ? `Zona=col ${colMap.zona}` : null,
+        colMap.bloque ? `Bloque=col ${colMap.bloque}` : null,
+        colMap.stock ? `Stock=col ${colMap.stock}` : null,
+        colMap.minimo ? `Mín=col ${colMap.minimo}` : null,
+        colMap.precio ? `Precio=col ${colMap.precio}` : null,
+        colMap.unidad ? `Unidad=col ${colMap.unidad}` : null,
+      ].filter(Boolean).join(', ');
+      const preview = rows.slice(0, 5).map((r, i) =>
+        `${i + 1}. [${r.codigo}] ${r.descripcion.slice(0, 40)} | ${r.categoria || '-'} | ${r.zona || '-'} | stock:${r.stock} | $${r.precio_usd}`
+      ).join('\n');
+      // Asegurar saltos de línea visibles en el modal
+      const _msgEl = qs('#confirm-message');
+      if (_msgEl) _msgEl.style.whiteSpace = 'pre-wrap';
       openConfirmModal(
-        `Se importarán ${rows.length} refacciones. Las que ya existen (por código) serán actualizadas. ¿Continuar?`,
+        `Se importarán ${rows.length} refacciones.\n\nMapeo detectado: ${mapSummary}\n\nPrimeras filas:\n${preview}\n\nLas que ya existen (por código) se actualizarán. ¿Continuar?`,
         async () => {
           let ok = 0, errors = 0;
           for (const r of rows) {
