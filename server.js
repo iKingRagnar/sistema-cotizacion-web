@@ -1284,10 +1284,10 @@ app.delete('/api/clientes/:id', async (req, res) => {
 app.get('/api/refacciones', async (req, res) => {
   try {
     const q = (req.query.q || '').trim();
-    let sql = 'SELECT * FROM refacciones WHERE activo = 1 ORDER BY id DESC';
+    let sql = 'SELECT * FROM refacciones WHERE activo = 1 ORDER BY id ASC';
     let params = [];
     if (q) {
-      sql = 'SELECT * FROM refacciones WHERE activo = 1 AND (codigo LIKE ? OR descripcion LIKE ?) ORDER BY id DESC LIMIT 100';
+      sql = 'SELECT * FROM refacciones WHERE activo = 1 AND (codigo LIKE ? OR descripcion LIKE ?) ORDER BY id ASC LIMIT 100';
       const p = `%${q}%`;
       params = [p, p];
     }
