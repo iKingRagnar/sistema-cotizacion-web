@@ -35,7 +35,7 @@ function getSchema() {
        costo_usd para precio en dólares */
     `CREATE TABLE IF NOT EXISTS refacciones (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      codigo TEXT UNIQUE NOT NULL,
+      codigo TEXT UNIQUE,
       descripcion TEXT NOT NULL,
       zona TEXT,
       stock REAL NOT NULL DEFAULT 0,
@@ -516,6 +516,7 @@ async function init() {
     db = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
     for (const sql of getSchema()) await db.execute(sql);
     await runMigrations();
+    await migrateRefaccionesCodigoNullable();
     await migrateDavidCantuRefacciones15();
     await seedCatalogosDefaults();
     await seedCatalogoCategoriasFromLegacy();
@@ -549,6 +550,7 @@ async function init() {
     await runQuery("INSERT INTO tecnicos (nombre) VALUES ('Juan Pérez'), ('María García'), ('Carlos López')");
   }
   await seedPersonalAndPricing();
+  await migrateRefaccionesCodigoNullable();
   await migrateDavidCantuRefacciones15();
   await seedCatalogosDefaults();
   await seedCatalogoCategoriasFromLegacy();
@@ -658,6 +660,7 @@ async function reseedAfterFullWipe() {
     await runQuery("INSERT INTO tecnicos (nombre) VALUES ('Juan Pérez'), ('María García'), ('Carlos López')");
   }
   await seedPersonalAndPricing();
+  await migrateRefaccionesCodigoNullable();
   await migrateDavidCantuRefacciones15();
 }
 
@@ -761,6 +764,52 @@ async function seedPersonalAndPricing() {
  * David Cantú: 15% comisión en refacciones (regla vigente; semillas antiguas usaban 10%).
  * Solo actualiza filas que siguen en 10 o NULL para no pisar ajustes manuales del admin.
  */
+/** Migración: convertir refacciones.codigo de NOT NULL a NULLABLE.
+ *  Permite importar refacciones sin código (caso XLSX con columna CODIGO vacía). */
+async function migrateRefaccionesCodigoNullable() {
+  try {
+    let createSql = '';
+    if (useTurso) {
+      const r = await db.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='refacciones'");
+      if (r.rows && r.rows[0]) createSql = String(r.rows[0][0] || r.rows[0].sql || '');
+    } else {
+      const row = await getOne("SELECT sql FROM sqlite_master WHERE type='table' AND name='refacciones'");
+      createSql = row ? String(row.sql || '') : '';
+    }
+    if (!createSql || !/codigo\s+TEXT\s+UNIQUE\s+NOT\s+NULL/i.test(createSql)) return; // ya migrado
+    console.log('[Migration] refacciones.codigo → nullable (rebuild)');
+    const exec = (sql) => runQuery(sql, []);
+    // Lista de columnas a copiar (las que existían antes de esta migración)
+    const cols = 'id, codigo, descripcion, zona, bloque, stock, stock_minimo, precio_unitario, precio_usd, tipo_cambio_registro, unidad, categoria, subcategoria, imagen_url, manual_url, numero_parte_manual, activo, creado_en';
+    await exec(`CREATE TABLE IF NOT EXISTS refacciones_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      codigo TEXT UNIQUE,
+      descripcion TEXT NOT NULL,
+      zona TEXT,
+      bloque TEXT,
+      stock REAL NOT NULL DEFAULT 0,
+      stock_minimo REAL DEFAULT 1,
+      precio_unitario REAL NOT NULL DEFAULT 0,
+      precio_usd REAL DEFAULT 0,
+      tipo_cambio_registro REAL,
+      unidad TEXT DEFAULT 'PZA',
+      categoria TEXT,
+      subcategoria TEXT,
+      imagen_url TEXT,
+      manual_url TEXT,
+      numero_parte_manual TEXT,
+      activo INTEGER DEFAULT 1,
+      creado_en TEXT DEFAULT (datetime('now','localtime'))
+    )`);
+    await exec(`INSERT INTO refacciones_new (${cols}) SELECT ${cols} FROM refacciones`);
+    await exec(`DROP TABLE refacciones`);
+    await exec(`ALTER TABLE refacciones_new RENAME TO refacciones`);
+    console.log('[Migration] refacciones.codigo nullable OK');
+  } catch (e) {
+    console.error('[Migration] refacciones.codigo nullable falló:', e.message);
+  }
+}
+
 async function migrateDavidCantuRefacciones15() {
   try {
     await runQuery(
