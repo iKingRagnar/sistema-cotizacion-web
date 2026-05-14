@@ -14561,41 +14561,36 @@
       const preview = rows.slice(0, 5).map((r, i) =>
         `${i + 1}. [${r.codigo || '(sin código)'}] ${r.descripcion.slice(0, 40)} | ${r.categoria || '-'} | ${r.zona || '-'} | stock:${r.stock} | $${r.precio_usd}`
       ).join('\n');
-      console.log('[ImportXLSX] Abriendo modal de confirmación…');
-      // Asegurar saltos de línea visibles en el modal
-      const _msgEl = qs('#confirm-message');
-      if (_msgEl) _msgEl.style.whiteSpace = 'pre-wrap';
-      // Pequeño yield para que la UI repinte antes del modal pesado
+      // Import directo, sin modal de confirmación (causaba freeze con 1300+ filas)
+      console.log('[ImportXLSX] Mapeo:', mapSummary);
+      console.log('[ImportXLSX] Preview primeras 5 filas:\n' + preview);
+      showToast(`Importando ${rows.length} refacciones…`, 'info');
+      // Yield para que el toast pinte antes de empezar el batch
       await new Promise(r => setTimeout(r, 50));
-      openConfirmModal(
-        `Se importarán ${rows.length} refacciones.\n\nMapeo detectado: ${mapSummary}\n\nPrimeras filas:\n${preview}\n\nLas que ya existen (por código) se actualizarán. ¿Continuar?`,
-        async () => {
-          showToast(`Importando ${rows.length} refacciones…`, 'info');
-          let ok = 0, errors = 0;
-          const BATCH = 200;
-          try {
-            for (let i = 0; i < rows.length; i += BATCH) {
-              const slice = rows.slice(i, i + BATCH);
-              const resp = await fetchJson(API + '/refacciones/bulk', {
-                method: 'POST',
-                body: JSON.stringify({ items: slice }),
-              });
-              ok += (resp && resp.ok) || 0;
-              errors += (resp && resp.errors) || 0;
-              if (resp && resp.errorSamples && resp.errorSamples.length) {
-                console.warn('[ImportXLSX] Muestras de error:', resp.errorSamples);
-              }
-            }
-          } catch (e) {
-            console.error('[ImportXLSX] Fallo en bulk:', e);
-            showToast('Error en importación masiva: ' + (e.message || e), 'error');
-            return;
+      let ok = 0, errors = 0;
+      const BATCH = 200;
+      try {
+        for (let i = 0; i < rows.length; i += BATCH) {
+          const slice = rows.slice(i, i + BATCH);
+          console.log(`[ImportXLSX] Enviando batch ${i + 1}-${Math.min(i + BATCH, rows.length)} de ${rows.length}…`);
+          const resp = await fetchJson(API + '/refacciones/bulk', {
+            method: 'POST',
+            body: JSON.stringify({ items: slice }),
+          });
+          ok += (resp && resp.ok) || 0;
+          errors += (resp && resp.errors) || 0;
+          if (resp && resp.errorSamples && resp.errorSamples.length) {
+            console.warn('[ImportXLSX] Muestras de error:', resp.errorSamples);
           }
-          showToast(`Importación completada: ${ok} registros, ${errors} errores.`, errors ? 'warning' : 'success');
-          loadRefacciones();
-        },
-        { confirmLabel: 'Cargar', confirmIcon: 'fa-file-import', confirmClass: 'btn primary' }
-      );
+          showToast(`Importando… ${Math.min(i + BATCH, rows.length)}/${rows.length}`, 'info');
+        }
+      } catch (e) {
+        console.error('[ImportXLSX] Fallo en bulk:', e);
+        showToast('Error en importación masiva: ' + (e.message || e), 'error');
+        return;
+      }
+      showToast(`Importación completada: ${ok} registros, ${errors} errores.`, errors ? 'warning' : 'success');
+      loadRefacciones();
     } catch (e) {
       showToast('Error al leer el archivo: ' + (e.message || e), 'error');
       console.error(e);
