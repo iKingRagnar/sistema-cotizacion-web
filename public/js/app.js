@@ -14494,26 +14494,13 @@
         return cell.text || cell.value || '';
       };
       const rows = [];
-      // Códigos ya usados (en BD y dentro del mismo import) para evitar duplicados
-      const usedCodigos = new Set((refaccionesCache || []).map(r => (r.codigo || '').toString().toUpperCase()));
-      let autoSeq = 1;
-      const nextAutoCode = () => {
-        let c;
-        do {
-          c = 'REF-' + String(autoSeq++).padStart(4, '0');
-        } while (usedCodigos.has(c));
-        usedCodigos.add(c);
-        return c;
-      };
       ws.eachRow((row, rowNum) => {
         if (rowNum === 1) return;
         const desc = (getCell(row, 'descripcion') || '').toString().trim();
         if (!desc) return;
-        let codigoRaw = (getCell(row, 'codigo') || '').toString().trim();
-        // Tratar "0", "-" o vacío como sin código → autogenerar REF-XXXX
-        const codigo = (!codigoRaw || codigoRaw === '0' || codigoRaw === '-')
-          ? nextAutoCode()
-          : codigoRaw;
+        const codigoRaw = (getCell(row, 'codigo') || '').toString().trim();
+        // Si la celda CODIGO viene vacía, "0" o "-" → dejar el código vacío (NULL en BD)
+        const codigo = (!codigoRaw || codigoRaw === '0' || codigoRaw === '-') ? null : codigoRaw;
         const descripcion = desc; // siempre se conserva intacta
         const unidad = (getCell(row, 'unidad') || 'PZA').toString().trim() || 'PZA';
         const precioUsdRaw = getCell(row, 'precio');
@@ -14565,7 +14552,7 @@
         colMap.unidad ? `Unidad=col ${colMap.unidad}` : null,
       ].filter(Boolean).join(', ');
       const preview = rows.slice(0, 5).map((r, i) =>
-        `${i + 1}. [${r.codigo}] ${r.descripcion.slice(0, 40)} | ${r.categoria || '-'} | ${r.zona || '-'} | stock:${r.stock} | $${r.precio_usd}`
+        `${i + 1}. [${r.codigo || '(sin código)'}] ${r.descripcion.slice(0, 40)} | ${r.categoria || '-'} | ${r.zona || '-'} | stock:${r.stock} | $${r.precio_usd}`
       ).join('\n');
       // Asegurar saltos de línea visibles en el modal
       const _msgEl = qs('#confirm-message');
@@ -14581,8 +14568,11 @@
                 await fetchJson(API + '/refacciones', { method: 'POST', body: JSON.stringify(r) });
               } catch (e) {
                 if (e && (String(e.message || e).includes('409') || String(e.message || e).includes('UNIQUE'))) {
-                  const existing = refaccionesCache.find(x => x.codigo === r.codigo);
-                  if (existing) await fetchJson(API + '/refacciones/' + existing.id, { method: 'PUT', body: JSON.stringify(r) });
+                  // Solo intentar UPDATE si hay código real (sin código no se puede emparejar)
+                  if (r.codigo) {
+                    const existing = refaccionesCache.find(x => x.codigo === r.codigo);
+                    if (existing) await fetchJson(API + '/refacciones/' + existing.id, { method: 'PUT', body: JSON.stringify(r) });
+                  }
                 } else throw e;
               }
               ok++;

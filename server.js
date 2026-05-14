@@ -1332,7 +1332,7 @@ app.post('/api/refacciones', async (req, res) => {
       `INSERT INTO refacciones (codigo, descripcion, zona, bloque, stock, stock_minimo, precio_unitario, precio_usd, tipo_cambio_registro, unidad, categoria, subcategoria, imagen_url, manual_url, numero_parte_manual)
        VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        codigo || '',
+        (codigo != null && String(codigo).trim() !== '') ? String(codigo).trim() : null,
         descripcion || '',
         zona || null,
         bloque != null && String(bloque).trim() !== '' ? String(bloque).trim() : null,
@@ -1390,7 +1390,7 @@ app.put('/api/refacciones/:id', async (req, res) => {
     await db.runQuery(
       `UPDATE refacciones SET codigo=?, descripcion=?, zona=?, bloque=?, stock=?, stock_minimo=?, precio_unitario=0, precio_usd=?, tipo_cambio_registro=?, unidad=?, categoria=?, subcategoria=?, imagen_url=?, manual_url=?, numero_parte_manual=? WHERE id=?`,
       [
-        codigo || '',
+        (codigo != null && String(codigo).trim() !== '') ? String(codigo).trim() : null,
         descripcion || '',
         zona || null,
         bloque != null && String(bloque).trim() !== '' ? String(bloque).trim() : null,
