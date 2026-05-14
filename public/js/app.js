@@ -14404,9 +14404,12 @@
     }
     showToast('Leyendo archivo…', 'info');
     try {
+      console.log('[ImportXLSX] Iniciando lectura, size:', file.size);
       const buffer = await file.arrayBuffer();
+      console.log('[ImportXLSX] Buffer cargado, parseando con ExcelJS…');
       const wb = new ExcelJS.Workbook();
       await wb.xlsx.load(buffer);
+      console.log('[ImportXLSX] ExcelJS load OK');
       const ws = wb.worksheets[0];
       if (!ws) { showToast('No se encontró hoja de cálculo.', 'error'); return; }
       // Detectar columnas por nombre del encabezado (soporta múltiples formatos)
@@ -14427,17 +14430,20 @@
         else if (h === 'unidad' || h === 'um' || h === 'u.m.') colMap.unidad = colNum;
       });
       // ----- Fallback heurístico: si faltan columnas clave, adivinar por contenido -----
+      // Si ya tenemos descripcion + (precio O stock O categoria), saltamos el escaneo (rápido y suficiente)
+      const headerCoverageOk = !!colMap.descripcion && (!!colMap.precio || !!colMap.stock || !!colMap.categoria);
       const sampleRows = [];
-      ws.eachRow((row, rowNum) => {
-        if (rowNum === 1) return;
-        if (sampleRows.length >= 20) return;
-        sampleRows.push(row);
-      });
-      const totalCols = ws.columnCount || headerRow.cellCount;
-      const usedCols = new Set(Object.values(colMap));
-      // Estadísticas por columna
       const stats = {};
-      for (let c = 1; c <= totalCols; c++) {
+      const usedCols = new Set(Object.values(colMap));
+      let totalCols = 0;
+      if (!headerCoverageOk) {
+        ws.eachRow((row, rowNum) => {
+          if (rowNum === 1) return;
+          if (sampleRows.length >= 20) return;
+          sampleRows.push(row);
+        });
+        totalCols = ws.columnCount || headerRow.cellCount;
+        for (let c = 1; c <= totalCols; c++) {
         if (usedCols.has(c)) continue;
         const s = { num: 0, dec: 0, txt: 0, longTxt: 0, shortCode: 0, upper: 0, empty: 0, maxNum: 0, samples: [] };
         for (const r of sampleRows) {
@@ -14458,6 +14464,7 @@
           }
         }
         stats[c] = s;
+        }
       }
       const pickCol = (predicate) => {
         let best = null, bestScore = -1;
@@ -14554,9 +14561,12 @@
       const preview = rows.slice(0, 5).map((r, i) =>
         `${i + 1}. [${r.codigo || '(sin código)'}] ${r.descripcion.slice(0, 40)} | ${r.categoria || '-'} | ${r.zona || '-'} | stock:${r.stock} | $${r.precio_usd}`
       ).join('\n');
+      console.log('[ImportXLSX] Abriendo modal de confirmación…');
       // Asegurar saltos de línea visibles en el modal
       const _msgEl = qs('#confirm-message');
       if (_msgEl) _msgEl.style.whiteSpace = 'pre-wrap';
+      // Pequeño yield para que la UI repinte antes del modal pesado
+      await new Promise(r => setTimeout(r, 50));
       openConfirmModal(
         `Se importarán ${rows.length} refacciones.\n\nMapeo detectado: ${mapSummary}\n\nPrimeras filas:\n${preview}\n\nLas que ya existen (por código) se actualizarán. ¿Continuar?`,
         async () => {
