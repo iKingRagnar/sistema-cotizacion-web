@@ -14494,18 +14494,27 @@
         return cell.text || cell.value || '';
       };
       const rows = [];
+      // Códigos ya usados (en BD y dentro del mismo import) para evitar duplicados
+      const usedCodigos = new Set((refaccionesCache || []).map(r => (r.codigo || '').toString().toUpperCase()));
+      let autoSeq = 1;
+      const nextAutoCode = () => {
+        let c;
+        do {
+          c = 'REF-' + String(autoSeq++).padStart(4, '0');
+        } while (usedCodigos.has(c));
+        usedCodigos.add(c);
+        return c;
+      };
       ws.eachRow((row, rowNum) => {
         if (rowNum === 1) return;
         const desc = (getCell(row, 'descripcion') || '').toString().trim();
         if (!desc) return;
-        let codigo = (getCell(row, 'codigo') || '').toString().trim();
-        let descripcion = desc;
-        if (!codigo) {
-          // Intentar extraer código del inicio de la descripción
-          const codeMatch = desc.match(/^([\d\-A-Z]+(?:\s[\d\-A-Z]+)?)\s+(.+)$/);
-          if (codeMatch) { codigo = codeMatch[1].trim(); descripcion = codeMatch[2].trim(); }
-          else codigo = desc.slice(0, 20).replace(/\s+/g, '-').toUpperCase();
-        }
+        let codigoRaw = (getCell(row, 'codigo') || '').toString().trim();
+        // Tratar "0", "-" o vacío como sin código → autogenerar REF-XXXX
+        const codigo = (!codigoRaw || codigoRaw === '0' || codigoRaw === '-')
+          ? nextAutoCode()
+          : codigoRaw;
+        const descripcion = desc; // siempre se conserva intacta
         const unidad = (getCell(row, 'unidad') || 'PZA').toString().trim() || 'PZA';
         const precioUsdRaw = getCell(row, 'precio');
         const stockRaw = getCell(row, 'stock');
