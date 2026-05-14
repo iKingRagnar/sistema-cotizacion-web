@@ -14601,6 +14601,26 @@
     qs('#import-refacciones-file')?.click();
   });
 
+  qs('#btn-borrar-todas-refacciones')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    openConfirmModal(
+      '¿Borrar TODAS las refacciones? Esta acción dejará el catálogo vacío. No se puede deshacer.',
+      async () => {
+        try {
+          const r = await fetchJson(API + '/refacciones/borrar-todas', {
+            method: 'POST',
+            body: JSON.stringify({ confirm: 'YES' }),
+          });
+          showToast(`Eliminadas ${r && r.changes ? r.changes : 0} refacciones.`, 'success');
+          loadRefacciones();
+        } catch (err) {
+          showToast('Error al borrar: ' + (err.message || err), 'error');
+        }
+      },
+      { confirmLabel: 'Borrar todas', confirmIcon: 'fa-trash', confirmClass: 'btn danger' }
+    );
+  });
+
   // ----- EVENT LISTENERS -----
   qs('#buscar-clientes').addEventListener('input', debounce(loadClientes, 350));
   qs('#buscar-refacciones').addEventListener('input', debounce(loadRefacciones, 350));

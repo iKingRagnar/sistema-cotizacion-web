@@ -1502,6 +1502,18 @@ app.delete('/api/refacciones/:id', async (req, res) => {
   }
 });
 
+// Borrar todas las refacciones (soft delete: activo=0). Requiere confirm=YES en body.
+app.post('/api/refacciones/borrar-todas', async (req, res) => {
+  try {
+    const confirm = req.body && req.body.confirm;
+    if (confirm !== 'YES') return res.status(400).json({ error: 'Falta confirmación' });
+    const result = await db.runQuery('UPDATE refacciones SET activo = 0 WHERE COALESCE(activo,1) = 1');
+    res.json({ ok: true, changes: (result && result.changes) || 0 });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
 // --- Máquinas ---
 app.get('/api/maquinas', async (req, res) => {
   try {
