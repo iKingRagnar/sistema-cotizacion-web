@@ -1822,7 +1822,26 @@
     const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
     const tok = getAuthToken();
     if (tok) headers['Authorization'] = 'Bearer ' + tok;
-    const r = await fetch(url, Object.assign({}, opts, { headers }));
+    // Timeout defensivo (45s): si Render se durmió o algo se cuelga, no congelar la UI eternamente.
+    // Si el caller ya pasó un signal propio, lo respetamos en lugar de inyectar uno nuevo.
+    let timer = null;
+    const fetchOpts = Object.assign({}, opts, { headers });
+    if (!fetchOpts.signal) {
+      const ctrl = new AbortController();
+      timer = setTimeout(() => ctrl.abort(), Number(opts.timeoutMs) || 45000);
+      fetchOpts.signal = ctrl.signal;
+    }
+    let r;
+    try {
+      r = await fetch(url, fetchOpts);
+    } catch (err) {
+      if (timer) clearTimeout(timer);
+      if (err && err.name === 'AbortError') {
+        throw new Error('El servidor tardó demasiado en responder (45s). Render puede estar despertando — vuelve a intentar.');
+      }
+      throw err;
+    }
+    if (timer) clearTimeout(timer);
     const text = await r.text();
     if (r.status === 401 && serverConfig.authRequired) {
       clearAuthSession();
