@@ -3355,6 +3355,76 @@ app.post('/api/cotizaciones/:id/aplicar', async (req, res) => {
       await enviarCorreoAprobacion(cotUp || cot, cliente);
     } catch (_) { /* correo opcional */ }
 
+    /* Hook bonos automáticos: por cada línea calcular comisión según tipo_linea,
+       y bono de $1000 por cada $20k completos sobre el total MXN. Idempotencia: se
+       intenta evitar duplicación si ya hubo movimientos previos para esta cotización. */
+    try {
+      if (vendedorNombre) {
+        const yaRegistrados = await db.getOne(
+          `SELECT COUNT(*) AS c FROM bonos_movimientos WHERE referencia_tipo='cotizacion' AND referencia_id=?`,
+          [Number(req.params.id)]
+        );
+        if (!yaRegistrados || Number(yaRegistrados.c) === 0) {
+          const pctRef = (await getTarifaNum('comision_ref', 15)) || 15;
+          const pctSvc = (await getTarifaNum('comision_svc', 15)) || 15;
+          const pctMaq = (await getTarifaNum('comision_maq_david', 10)) || 10;
+          const bono20k = (await getTarifaNum('bono_20k', 1000)) || 1000;
+          const tc = Number(cot.tipo_cambio) > 0 ? Number(cot.tipo_cambio) : 17;
+          const esUSD = String(cot.moneda || 'MXN').toUpperCase() === 'USD';
+          let totalMxn = 0;
+          for (const l of lineas) {
+            const sub = Number(l.subtotal) || (Number(l.cantidad) * Number(l.precio_unitario)) || 0;
+            const subMxn = esUSD ? sub * tc : sub;
+            totalMxn += subMxn;
+            const tipoL = String(l.tipo_linea || 'refaccion').toLowerCase();
+            let pct = 0;
+            let tipoBono = '';
+            if (tipoL === 'refaccion') { pct = pctRef; tipoBono = 'comision_refacciones'; }
+            else if (tipoL === 'mano_obra' || tipoL === 'vuelta' || tipoL === 'servicio') { pct = pctSvc; tipoBono = 'comision_servicios'; }
+            else if (tipoL === 'maquina') { pct = pctMaq; tipoBono = 'comision_maquinas'; }
+            if (pct > 0 && subMxn > 0 && tipoBono) {
+              const monto = Math.round((subMxn * pct / 100) * 100) / 100;
+              await insertarBonoMovimiento({
+                tecnico: vendedorNombre,
+                tipo: tipoBono,
+                monto,
+                referencia_tipo: 'cotizacion',
+                referencia_id: Number(req.params.id),
+                descripcion: `Comisión ${pct}% ${tipoL} (${cot.folio || '#' + req.params.id})`,
+              });
+            }
+          }
+          // Bono $1000 por cada $20,000 MXN completos del total
+          if (totalMxn >= 20000 && bono20k > 0) {
+            const veces = Math.floor(totalMxn / 20000);
+            await insertarBonoMovimiento({
+              tecnico: vendedorNombre,
+              tipo: 'bono_20k',
+              monto: bono20k * veces,
+              referencia_tipo: 'cotizacion',
+              referencia_id: Number(req.params.id),
+              descripcion: `Bono $${bono20k} × ${veces} ($20k completos) cot ${cot.folio || '#' + req.params.id}`,
+            });
+          }
+        }
+      }
+    } catch (e) { console.warn('[bonos-aplicar]', e && e.message); }
+
+    /* Hook preparación: si la cotización incluye líneas con maquina_id (venta de máquina),
+       las máquinas entran a 'pendiente' de preparación. */
+    try {
+      const maqIds = new Set();
+      for (const l of lineas) {
+        if (l.maquina_id && Number(l.maquina_id) > 0) maqIds.add(Number(l.maquina_id));
+      }
+      for (const mid of maqIds) {
+        await db.runQuery(
+          `UPDATE maquinas SET estado_preparacion='pendiente', preparacion_iniciada_en=datetime('now','localtime') WHERE id=?`,
+          [mid]
+        );
+      }
+    } catch (e) { console.warn('[preparacion-maquinas]', e && e.message); }
+
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
@@ -5987,6 +6057,44 @@ app.put('/api/reportes/:id', async (req, res) => {
     res.json(r || {});
     if (r && isFinalizado && !Number(existing.finalizado)) {
       enviarCorreoReporte(r, 'finalizado').catch(() => {});
+      /* Bonos automáticos al finalizar el reporte (0→1) */
+      (async () => {
+        try {
+          if (!r.tecnico) return;
+          // Bono días fuera de ciudad
+          if (Number(r.fuera_ciudad) === 1 && Number(r.dias) > 0) {
+            const tarifaDia = (await getTarifaNum('bono_dia', 500)) || 500;
+            await insertarBonoMovimiento({
+              tecnico: r.tecnico,
+              tipo: 'bono_dia_fuera_ciudad',
+              monto: tarifaDia * Number(r.dias),
+              referencia_tipo: 'reporte',
+              referencia_id: r.id,
+              descripcion: `Días fuera de ciudad (${r.folio || '#' + r.id})`,
+            });
+          }
+          // Bono capacitación (local / linea / foránea)
+          if (String(r.subtipo || '').toLowerCase() === 'capacitacion') {
+            const texto = `${r.notas || ''} ${r.descripcion || ''}`.toLowerCase()
+              .normalize('NFD').replace(/[̀-ͯ]/g, '');
+            let modalidad = 'local';
+            let tipoBono = 'bono_capacitacion_local';
+            let clave = 'bono_capacitacion_local_mxn';
+            if (texto.includes('foranea')) { modalidad = 'foranea'; tipoBono = 'bono_capacitacion_foranea'; clave = 'bono_capacitacion_foranea_mxn'; }
+            else if (texto.includes('linea')) { modalidad = 'linea'; tipoBono = 'bono_capacitacion_linea'; clave = 'bono_capacitacion_linea_mxn'; }
+            const monto = (await getTarifaNum(clave, 500)) || 500;
+            const dias = Number(r.dias) > 0 ? Number(r.dias) : 1;
+            await insertarBonoMovimiento({
+              tecnico: r.tecnico,
+              tipo: tipoBono,
+              monto: monto * dias,
+              referencia_tipo: 'reporte',
+              referencia_id: r.id,
+              descripcion: `Capacitación ${modalidad} × ${dias} día(s) (${r.folio || '#' + r.id})`,
+            });
+          }
+        } catch (e) { console.warn('[bonos-reporte]', e && e.message); }
+      })();
     }
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
@@ -7877,6 +7985,428 @@ async function runPostListenStartup() {
     startMonthlyAdminReportsScheduler();
     startReportSchedulesScheduler();
   }
+}
+
+/* ============================================================================
+   EMBARQUES · BONOS · CONFIG CORREOS · REPORTES MENSUALES (2026-05)
+   ============================================================================ */
+
+const TIPOS_CORREO_REPORTE = ['ventas_mensual', 'bonos_mensual', 'inventario_mensual'];
+const TIPOS_BONO_VALIDOS = [
+  'comision_refacciones', 'comision_servicios', 'comision_maquinas',
+  'bono_20k', 'bono_capacitacion_local', 'bono_capacitacion_linea',
+  'bono_capacitacion_foranea', 'bono_dia_fuera_ciudad',
+];
+const ESTADOS_EMBARQUE = ['en_camino', 'llegado', 'cancelado'];
+
+/** Inserta un movimiento de bono/comisión. Idempotente sólo a nivel inserción simple. */
+async function insertarBonoMovimiento({ tecnico, tipo, monto, referencia_tipo, referencia_id, descripcion, fecha }) {
+  if (!tecnico || !tipo || !(Number(monto) > 0)) return;
+  if (!TIPOS_BONO_VALIDOS.includes(tipo)) return;
+  const f = fecha || new Date().toISOString().slice(0, 10);
+  const mesClave = String(f).slice(0, 7);
+  await db.runQuery(
+    `INSERT INTO bonos_movimientos (tecnico, tipo, monto, referencia_tipo, referencia_id, descripcion, fecha, mes_clave)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [String(tecnico), String(tipo), Number(monto), referencia_tipo || null, referencia_id || null, descripcion || null, f, mesClave]
+  );
+}
+
+/* -------- EMBARQUES -------- */
+app.get('/api/embarques', async (req, res) => {
+  try {
+    const incluirInactivos = String(req.query.includeInactivos || '') === '1';
+    const where = incluirInactivos ? '' : 'WHERE activo=1';
+    const rows = await db.getAll(
+      `SELECT * FROM embarques ${where}
+       ORDER BY (CASE WHEN eta_fecha IS NULL OR eta_fecha = '' THEN 1 ELSE 0 END) ASC,
+                eta_fecha ASC, id DESC`
+    );
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.post('/api/embarques', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const nombre = _maqNullableStr(b.nombre_maquina);
+    if (!nombre) return res.status(400).json({ error: 'nombre_maquina requerido' });
+    const estado = ESTADOS_EMBARQUE.includes(String(b.estado || '').trim()) ? String(b.estado).trim() : 'en_camino';
+    const r = await db.runQuery(
+      `INSERT INTO embarques (nombre_maquina, numero_serie, proveedor, origen, destino_sucursal, eta_fecha, estado, notas)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        nombre,
+        _maqNullableStr(b.numero_serie),
+        _maqNullableStr(b.proveedor),
+        _maqNullableStr(b.origen),
+        _maqNullableStr(b.destino_sucursal),
+        _maqNullableStr(b.eta_fecha),
+        estado,
+        _maqNullableStr(b.notas),
+      ]
+    );
+    const row = await db.getOne('SELECT * FROM embarques WHERE id=?', [r.lastInsertRowid]);
+    res.status(201).json(row);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.put('/api/embarques/:id', async (req, res) => {
+  try {
+    const existing = await db.getOne('SELECT * FROM embarques WHERE id=?', [req.params.id]);
+    if (!existing) return res.status(404).json({ error: 'No encontrado' });
+    const merged = Object.assign({}, existing, req.body || {});
+    const estado = ESTADOS_EMBARQUE.includes(String(merged.estado || '').trim())
+      ? String(merged.estado).trim() : (existing.estado || 'en_camino');
+    await db.runQuery(
+      `UPDATE embarques SET nombre_maquina=?, numero_serie=?, proveedor=?, origen=?, destino_sucursal=?,
+        eta_fecha=?, estado=?, notas=? WHERE id=?`,
+      [
+        _maqNullableStr(merged.nombre_maquina) || existing.nombre_maquina,
+        _maqNullableStr(merged.numero_serie),
+        _maqNullableStr(merged.proveedor),
+        _maqNullableStr(merged.origen),
+        _maqNullableStr(merged.destino_sucursal),
+        _maqNullableStr(merged.eta_fecha),
+        estado,
+        _maqNullableStr(merged.notas),
+        req.params.id,
+      ]
+    );
+    const row = await db.getOne('SELECT * FROM embarques WHERE id=?', [req.params.id]);
+    res.json(row);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.delete('/api/embarques/:id', async (req, res) => {
+  try {
+    await db.runQuery('UPDATE embarques SET activo=0 WHERE id=?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+/* -------- BONOS -------- */
+app.get('/api/bonos/acumulado', async (req, res) => {
+  try {
+    const mes = String(req.query.mes || new Date().toISOString().slice(0, 7)).slice(0, 7);
+    const tecnicoFilt = String(req.query.tecnico || '').trim();
+    const params = [mes];
+    let sql = `SELECT tecnico, tipo, COALESCE(SUM(monto),0) AS total FROM bonos_movimientos WHERE mes_clave=?`;
+    if (tecnicoFilt) { sql += ' AND tecnico=?'; params.push(tecnicoFilt); }
+    sql += ' GROUP BY tecnico, tipo';
+    const rows = await db.getAll(sql, params);
+    const byTec = {};
+    for (const r of rows) {
+      if (!byTec[r.tecnico]) byTec[r.tecnico] = { tecnico: r.tecnico, total_general: 0 };
+      byTec[r.tecnico][r.tipo] = Number(r.total) || 0;
+      byTec[r.tecnico].total_general += Number(r.total) || 0;
+    }
+    res.json({ mes, tecnicos: Object.values(byTec) });
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.post('/api/bonos/movimiento', async (req, res) => {
+  try {
+    if (auth.AUTH_ENABLED && (!req.authUser || req.authUser.role !== 'admin')) {
+      return res.status(403).json({ error: 'Solo admin' });
+    }
+    const b = req.body || {};
+    const tecnico = String(b.tecnico || '').trim();
+    const tipo = String(b.tipo || '').trim();
+    const monto = Number(b.monto);
+    if (!tecnico || !tipo) return res.status(400).json({ error: 'tecnico y tipo requeridos' });
+    if (!TIPOS_BONO_VALIDOS.includes(tipo)) return res.status(400).json({ error: 'tipo inválido' });
+    if (!(monto > 0)) return res.status(400).json({ error: 'monto debe ser > 0' });
+    await insertarBonoMovimiento({
+      tecnico, tipo, monto,
+      descripcion: b.descripcion || null,
+      fecha: b.fecha || null,
+    });
+    res.status(201).json({ ok: true });
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.delete('/api/bonos/movimiento/:id', async (req, res) => {
+  try {
+    if (auth.AUTH_ENABLED && (!req.authUser || req.authUser.role !== 'admin')) {
+      return res.status(403).json({ error: 'Solo admin' });
+    }
+    const n = await db.runMutationCount('DELETE FROM bonos_movimientos WHERE id=?', [req.params.id]);
+    res.json({ ok: true, deleted: n });
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+/* -------- CONFIG CORREOS REPORTES -------- */
+function _isValidEmail(s) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || '').trim());
+}
+
+app.get('/api/config/correos-reportes', async (req, res) => {
+  try {
+    const tipo = String(req.query.tipo || '').trim();
+    if (tipo) {
+      if (!TIPOS_CORREO_REPORTE.includes(tipo)) return res.status(400).json({ error: 'tipo inválido' });
+      const rows = await db.getAll(
+        `SELECT id, tipo, email, activo, creado_en FROM config_correos_reportes WHERE activo=1 AND tipo=? ORDER BY id ASC`,
+        [tipo]
+      );
+      return res.json(rows);
+    }
+    const rows = await db.getAll(
+      `SELECT id, tipo, email, activo, creado_en FROM config_correos_reportes WHERE activo=1 ORDER BY tipo ASC, id ASC`
+    );
+    const grouped = {};
+    for (const r of rows) {
+      if (!grouped[r.tipo]) grouped[r.tipo] = [];
+      grouped[r.tipo].push(r);
+    }
+    res.json(grouped);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.post('/api/config/correos-reportes', async (req, res) => {
+  try {
+    if (auth.AUTH_ENABLED && (!req.authUser || req.authUser.role !== 'admin')) {
+      return res.status(403).json({ error: 'Solo admin' });
+    }
+    const b = req.body || {};
+    const tipo = String(b.tipo || '').trim();
+    const email = String(b.email || '').trim();
+    if (!TIPOS_CORREO_REPORTE.includes(tipo)) return res.status(400).json({ error: 'tipo inválido' });
+    if (!_isValidEmail(email)) return res.status(400).json({ error: 'email inválido' });
+    const r = await db.runQuery(
+      'INSERT INTO config_correos_reportes (tipo, email) VALUES (?, ?)', [tipo, email]
+    );
+    const row = await db.getOne('SELECT * FROM config_correos_reportes WHERE id=?', [r.lastInsertRowid]);
+    res.status(201).json(row);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+app.delete('/api/config/correos-reportes/:id', async (req, res) => {
+  try {
+    if (auth.AUTH_ENABLED && (!req.authUser || req.authUser.role !== 'admin')) {
+      return res.status(403).json({ error: 'Solo admin' });
+    }
+    await db.runQuery('UPDATE config_correos_reportes SET activo=0 WHERE id=?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+/* -------- REPORTE MENSUAL VENTAS (JSON / Excel) -------- */
+
+/** Construye datasets (ventas/comisiones/inventario) para un mes 'YYYY-MM'. */
+async function _buildReporteMensualData(mesYm) {
+  const mes = String(mesYm || '').slice(0, 7);
+  const ventas = await db.getAll(
+    `SELECT c.id, c.folio, c.fecha, c.total, c.moneda, c.tipo_cambio, c.vendedor,
+            cli.nombre AS cliente_nombre, c.estado
+     FROM cotizaciones c LEFT JOIN clientes cli ON cli.id = c.cliente_id
+     WHERE c.estado IN ('aplicada','venta') AND substr(c.fecha,1,7) = ?
+     ORDER BY c.fecha ASC, c.id ASC`,
+    [mes]
+  );
+  const ventasOut = ventas.map(v => {
+    const tc = Number(v.tipo_cambio) > 0 ? Number(v.tipo_cambio) : 17;
+    const total = Number(v.total) || 0;
+    const esUSD = String(v.moneda || 'MXN').toUpperCase() === 'USD';
+    return {
+      folio: v.folio,
+      fecha: v.fecha,
+      cliente: v.cliente_nombre || '',
+      total_mxn: esUSD ? total * tc : total,
+      total_usd: esUSD ? total : (tc > 0 ? total / tc : 0),
+      tipo_cambio: tc,
+      vendedor: v.vendedor || '',
+    };
+  });
+  const comisionesRows = await db.getAll(
+    `SELECT tecnico, tipo, COALESCE(SUM(monto),0) AS total
+     FROM bonos_movimientos WHERE mes_clave = ? GROUP BY tecnico, tipo`,
+    [mes]
+  );
+  const byTec = {};
+  for (const r of comisionesRows) {
+    if (!byTec[r.tecnico]) byTec[r.tecnico] = { tecnico: r.tecnico, total_general: 0 };
+    byTec[r.tecnico][r.tipo] = Number(r.total) || 0;
+    byTec[r.tecnico].total_general += Number(r.total) || 0;
+  }
+  const comisiones = Object.values(byTec);
+  const inventario = await db.getAll(
+    `SELECT codigo, descripcion, stock, precio_usd, categoria, zona FROM refacciones WHERE activo=1 ORDER BY codigo ASC`
+  );
+  const totales = {
+    total_mxn: ventasOut.reduce((s, v) => s + (v.total_mxn || 0), 0),
+    total_usd: ventasOut.reduce((s, v) => s + (v.total_usd || 0), 0),
+    num_ventas: ventasOut.length,
+    total_comisiones_mxn: comisiones.reduce((s, c) => s + (c.total_general || 0), 0),
+  };
+  return { mes, ventas: ventasOut, comisiones, inventario, totales };
+}
+
+/** Genera buffer Excel multi-hoja para el reporte mensual usando exceljs. */
+async function _buildReporteMensualXlsxBuffer(data) {
+  const ExcelJS = require('exceljs');
+  const wb = new ExcelJS.Workbook();
+  const wsV = wb.addWorksheet('Ventas');
+  wsV.columns = [
+    { header: 'Folio', key: 'folio', width: 16 },
+    { header: 'Fecha', key: 'fecha', width: 12 },
+    { header: 'Cliente', key: 'cliente', width: 32 },
+    { header: 'Total MXN', key: 'total_mxn', width: 14 },
+    { header: 'Total USD', key: 'total_usd', width: 14 },
+    { header: 'Tipo cambio', key: 'tipo_cambio', width: 12 },
+    { header: 'Vendedor', key: 'vendedor', width: 22 },
+  ];
+  for (const v of data.ventas) wsV.addRow(v);
+  wsV.getRow(1).font = { bold: true };
+
+  const wsC = wb.addWorksheet('Comisiones');
+  const tiposCol = TIPOS_BONO_VALIDOS;
+  wsC.columns = [
+    { header: 'Técnico', key: 'tecnico', width: 24 },
+    ...tiposCol.map(t => ({ header: t, key: t, width: 22 })),
+    { header: 'Total general', key: 'total_general', width: 16 },
+  ];
+  for (const c of data.comisiones) {
+    const row = { tecnico: c.tecnico, total_general: c.total_general || 0 };
+    for (const t of tiposCol) row[t] = c[t] || 0;
+    wsC.addRow(row);
+  }
+  wsC.getRow(1).font = { bold: true };
+
+  const wsI = wb.addWorksheet('Inventario');
+  wsI.columns = [
+    { header: 'Código', key: 'codigo', width: 16 },
+    { header: 'Descripción', key: 'descripcion', width: 40 },
+    { header: 'Stock', key: 'stock', width: 10 },
+    { header: 'Precio USD', key: 'precio_usd', width: 12 },
+    { header: 'Categoría', key: 'categoria', width: 20 },
+    { header: 'Zona', key: 'zona', width: 12 },
+  ];
+  for (const i of data.inventario) wsI.addRow(i);
+  wsI.getRow(1).font = { bold: true };
+
+  return await wb.xlsx.writeBuffer();
+}
+
+app.get('/api/reportes/ventas-mensual', async (req, res) => {
+  try {
+    const mes = String(req.query.mes || new Date().toISOString().slice(0, 7)).slice(0, 7);
+    const data = await _buildReporteMensualData(mes);
+    if (String(req.query.download || '') === '1') {
+      const buf = await _buildReporteMensualXlsxBuffer(data);
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="ventas-${mes}.xlsx"`);
+      return res.send(Buffer.from(buf));
+    }
+    res.json(data);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+/* -------- ENVIAR REPORTE MENSUAL POR CORREO -------- */
+async function _enviarReporteMensualPorTipos({ mes, tipos }) {
+  const tiposPedidos = (Array.isArray(tipos) && tipos.length ? tipos : ['ventas_mensual', 'bonos_mensual'])
+    .filter(t => TIPOS_CORREO_REPORTE.includes(t));
+  const data = await _buildReporteMensualData(mes);
+  const xlsxBuf = await _buildReporteMensualXlsxBuffer(data);
+  const t = createMailTransport();
+  const from = (process.env.SMTP_FROM || process.env.SMTP_USER || '').trim();
+  const errores = [];
+  let enviados = 0;
+  if (!t || !from) {
+    errores.push('SMTP no configurado (SMTP_HOST/SMTP_USER/SMTP_FROM)');
+    return { enviados, errores };
+  }
+  for (const tipo of tiposPedidos) {
+    try {
+      const dests = await db.getAll(
+        `SELECT email FROM config_correos_reportes WHERE activo=1 AND tipo=?`, [tipo]
+      );
+      const to = dests.map(r => r.email).filter(Boolean);
+      if (!to.length) { errores.push(`${tipo}: sin destinatarios configurados`); continue; }
+      let subject = '';
+      let title = '';
+      let bodyRows = [];
+      if (tipo === 'ventas_mensual') {
+        subject = `Reporte mensual de ventas ${mes}`;
+        title = `Ventas ${mes}`;
+        bodyRows = [
+          { label: 'Mes', value: mes },
+          { label: 'Ventas registradas', value: String(data.totales.num_ventas) },
+          { label: 'Total MXN', value: data.totales.total_mxn.toFixed(2) },
+          { label: 'Total USD', value: data.totales.total_usd.toFixed(2) },
+        ];
+      } else if (tipo === 'bonos_mensual') {
+        subject = `Reporte mensual de bonos/comisiones ${mes}`;
+        title = `Bonos y comisiones ${mes}`;
+        bodyRows = [
+          { label: 'Mes', value: mes },
+          { label: 'Técnicos con movimientos', value: String(data.comisiones.length) },
+          { label: 'Total comisiones MXN', value: data.totales.total_comisiones_mxn.toFixed(2) },
+        ];
+      } else if (tipo === 'inventario_mensual') {
+        subject = `Reporte mensual de inventario ${mes}`;
+        title = `Inventario ${mes}`;
+        bodyRows = [
+          { label: 'Mes', value: mes },
+          { label: 'SKUs activos', value: String(data.inventario.length) },
+        ];
+      }
+      const html = buildEmailHtml({
+        title,
+        subtitle: `Universal Machine Tools — ${new Date().toLocaleDateString('es-MX')}`,
+        rows: bodyRows,
+        accentColor: '#0d9488',
+      });
+      const result = await safeSendMail(t, {
+        from, to: to.join(', '), subject,
+        text: `${title}\nVer adjunto Excel.`,
+        html,
+        attachments: [{
+          filename: `reporte-${tipo}-${mes}.xlsx`,
+          content: Buffer.from(xlsxBuf),
+          contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        }],
+      });
+      if (result.ok) enviados++;
+      else errores.push(`${tipo}: ${result.reason}`);
+    } catch (e) {
+      errores.push(`${tipo}: ${e.message}`);
+    }
+  }
+  return { enviados, errores };
+}
+
+app.post('/api/reportes/enviar-mensual', async (req, res) => {
+  try {
+    if (auth.AUTH_ENABLED && (!req.authUser || req.authUser.role !== 'admin')) {
+      return res.status(403).json({ error: 'Solo admin' });
+    }
+    const b = req.body || {};
+    const mes = String(b.mes || new Date().toISOString().slice(0, 7)).slice(0, 7);
+    const tipos = Array.isArray(b.tipos) && b.tipos.length ? b.tipos : ['ventas_mensual', 'bonos_mensual'];
+    const out = await _enviarReporteMensualPorTipos({ mes, tipos });
+    res.json(out);
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
+/* -------- CRON MENSUAL (falla suave si node-cron no está instalado) -------- */
+try {
+  const cron = require('node-cron');
+  // Día 1 de cada mes a las 8:00 AM hora servidor
+  cron.schedule('0 8 1 * *', async () => {
+    try {
+      const ahora = new Date();
+      ahora.setMonth(ahora.getMonth() - 1); // mes anterior
+      const mes = ahora.toISOString().slice(0, 7);
+      console.log('[cron mensual] Enviando reportes para', mes);
+      const out = await _enviarReporteMensualPorTipos({ mes, tipos: ['ventas_mensual', 'bonos_mensual'] });
+      console.log('[cron mensual] Resultado:', JSON.stringify(out));
+    } catch (e) { console.warn('[cron mensual]', e && e.message); }
+  });
+  console.log('[cron] Reportes mensuales programados (día 1 de cada mes, 08:00)');
+} catch (_) {
+  console.log('[cron] node-cron no instalado, usar POST /api/reportes/enviar-mensual manualmente');
 }
 
 let serverInitPromise = null;

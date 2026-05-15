@@ -674,6 +674,7 @@
     <button type="button" data-tab="ventas" class="tab" title="Histórico de ventas aprobadas"><i class="fas fa-check-double"></i> Ventas</button>
     <button type="button" data-tab="prospeccion" class="tab" id="tab-prospeccion" title="Mapa y pipeline de prospectos (COVIA)"><i class="fas fa-map-marked-alt"></i> Prospección</button>
     <button type="button" data-tab="revision-maquinas" class="tab" title="Revisión y preparación de máquinas"><i class="fas fa-tools"></i> Revisión Máquinas</button>
+    <button type="button" data-tab="embarques" class="tab" title="Embarques y máquinas en camino"><i class="fas fa-truck-fast"></i> Embarques</button>
     <button type="button" data-tab="tarifas" class="tab" id="tab-tarifas" title="Tarifas y esquemas de cobro"><i class="fas fa-tags"></i> Tarifas</button>
     <button type="button" data-tab="reportes" class="tab" title="Reportes de servicio y venta"><i class="fas fa-file-alt"></i> Reportes</button>
     <button type="button" data-tab="garantias" class="tab" title="Alta y edición de garantías"><i class="fas fa-shield-alt"></i> Garantías</button>
@@ -993,6 +994,66 @@
           </thead>
           <tbody></tbody>
         </table>
+      </div>
+    </section>
+
+    <!-- EMBARQUES -->
+    <section id="panel-embarques" class="panel">
+      <div class="section-header">
+        <h2><i class="fas fa-truck-fast"></i> Embarques — máquinas en camino</h2>
+        <div class="toolbar">
+          <input type="search" id="buscar-embarques" class="search" placeholder="Buscar nombre, serie, proveedor…" aria-label="Buscar embarques">
+          <select id="filtro-estado-embarque" title="Filtrar por estado">
+            <option value="">Todos los estados</option>
+            <option value="en_camino">En camino</option>
+            <option value="llegado">Llegado</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+          <select id="filtro-sucursal-embarque" title="Filtrar por sucursal destino">
+            <option value="">Todas las sucursales</option>
+            <option value="QUERETARO">QUERÉTARO</option>
+            <option value="MONTERREY">MONTERREY</option>
+            <option value="GUADALAJARA">GUADALAJARA</option>
+            <option value="REYNOSA">REYNOSA</option>
+            <option value="CHIHUAHUA">CHIHUAHUA</option>
+            <option value="MEXICO">MÉXICO</option>
+          </select>
+          <button type="button" id="btn-refresh-embarques" class="btn outline" title="Recargar"><i class="fas fa-sync-alt"></i> Actualizar</button>
+          <button type="button" id="btn-nuevo-embarque" class="btn primary"><i class="fas fa-plus"></i> Nuevo embarque</button>
+        </div>
+      </div>
+      <p class="hint">Máquinas que vienen en camino con su número de serie y fecha estimada de llegada (ETA). Al llegar, marca el estado como "Llegado" y la máquina debe registrarse formalmente en <strong>Catálogo de Máquinas</strong>.</p>
+      <div class="table-wrap">
+        <table class="data-table filterable-table" id="tabla-embarques">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Máquina</th>
+              <th>N.º de serie</th>
+              <th>Proveedor</th>
+              <th>Origen</th>
+              <th>Destino</th>
+              <th>ETA</th>
+              <th>Estado</th>
+              <th>Notas</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+            <tr class="filter-row">
+              <td><input type="text" class="filter-input" data-key="id" data-type="number" placeholder=">1"></td>
+              <td><input type="text" class="filter-input" data-key="nombre_maquina" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="numero_serie" data-type="text" placeholder="Serie…"></td>
+              <td><input type="text" class="filter-input" data-key="proveedor" data-type="text" placeholder="Proveedor…"></td>
+              <td><input type="text" class="filter-input" data-key="origen" data-type="text" placeholder="Origen…"></td>
+              <td><input type="text" class="filter-input" data-key="destino_sucursal" data-type="text" placeholder="Sucursal…"></td>
+              <td><input type="text" class="filter-input" data-key="eta_fecha" data-type="text" placeholder="aaaa-mm-dd"></td>
+              <td><input type="text" class="filter-input" data-key="estado" data-type="text" placeholder="estado…"></td>
+              <td><input type="text" class="filter-input" data-key="notas" data-type="text" placeholder="Filtrar…"></td>
+              <td class="th-actions"></td>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-footer" id="footer-tabla-embarques" aria-live="polite"></div>
       </div>
     </section>
 
@@ -1329,6 +1390,17 @@
           <button type="button" id="nueva-revision-maq" class="btn primary"><i class="fas fa-plus"></i> Nueva revisión</button>
         </div>
       </div>
+      <div class="toolbar" style="margin-bottom:0.75rem;gap:0.5rem;flex-wrap:wrap">
+        <label class="toolbar-checkbox" title="Mostrar solo máquinas en preparación (cotización aceptada, pendientes de entregar)">
+          <input type="checkbox" id="rev-filtro-preparacion"> En preparación (vendidas, pendientes de entregar)
+        </label>
+        <select id="rev-filtro-estado-preparacion" title="Estado de preparación" style="display:none">
+          <option value="">Todos</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="lista">Lista para entregar</option>
+          <option value="entregada">Entregada</option>
+        </select>
+      </div>
       <div id="revision-maq-catalog-wrap" class="revision-maq-catalog-wrap">
         <h3 class="revision-maq-catalog-heading"><i class="fas fa-th-large"></i> Catálogo de equipos</h3>
         <p class="hint revision-maq-catalog-intro">Todas las máquinas registradas. Usa <strong>Nueva revisión</strong> o el botón en cada tarjeta.</p>
@@ -1427,6 +1499,41 @@
             <input type="hidden" id="tarifa-bono-40k" value="0">
           </div>
         </div>
+        <div class="tarifas-section comm-admin-only">
+          <h3 class="tarifas-section-title"><i class="fas fa-envelope"></i> Correos para reportes mensuales</h3>
+          <p class="tarifas-hint">El día 1 de cada mes se envían automáticamente:
+            <strong>(a)</strong> Resumen de ventas + desglose de comisión + inventario de refacciones (Excel),
+            <strong>(b)</strong> Acumulado de bonos por técnico.
+            Agrega los correos que recibirán cada reporte.
+          </p>
+          <div class="tarifas-form-grid" style="grid-template-columns:1fr 1fr 1fr;gap:1rem">
+            <div class="form-group">
+              <label><i class="fas fa-file-invoice-dollar"></i> Reporte de ventas</label>
+              <div id="corr-list-ventas" class="corr-emails-list"><div class="muted" style="font-size:0.85rem">— Sin correos —</div></div>
+              <div class="form-row" style="gap:0.5rem;margin-top:0.5rem">
+                <input type="email" id="corr-input-ventas" placeholder="correo@empresa.com" style="flex:1">
+                <button type="button" class="btn small primary" id="btn-corr-add-ventas"><i class="fas fa-plus"></i></button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-award"></i> Reporte de bonos</label>
+              <div id="corr-list-bonos" class="corr-emails-list"><div class="muted" style="font-size:0.85rem">— Sin correos —</div></div>
+              <div class="form-row" style="gap:0.5rem;margin-top:0.5rem">
+                <input type="email" id="corr-input-bonos" placeholder="correo@empresa.com" style="flex:1">
+                <button type="button" class="btn small primary" id="btn-corr-add-bonos"><i class="fas fa-plus"></i></button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-boxes"></i> Reporte de inventario</label>
+              <div id="corr-list-inventario" class="corr-emails-list"><div class="muted" style="font-size:0.85rem">— Sin correos —</div></div>
+              <div class="form-row" style="gap:0.5rem;margin-top:0.5rem">
+                <input type="email" id="corr-input-inventario" placeholder="correo@empresa.com" style="flex:1">
+                <button type="button" class="btn small primary" id="btn-corr-add-inventario"><i class="fas fa-plus"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="tarifas-section tarifas-nota-calc">
           <h3 class="tarifas-section-title"><i class="fas fa-info-circle"></i> Resumen — tarifas UNIVERSAL 2026</h3>
           <ul class="tarifas-notas-list">
@@ -1610,40 +1717,72 @@
 
     <!-- BONOS -->
     <section id="panel-bonos" class="panel panel-ux comm-admin-only">
-      <div class="section-header section-header--ux">
-        <h2><i class="fas fa-award"></i> Bonos de capacitación</h2>
+      <div class="section-header">
+        <h2><i class="fas fa-award"></i> Bonos y comisiones</h2>
         <div class="toolbar">
-          <select id="filtro-mes-bonos" title="Mes de liquidación">
-            <option value="">Todos los meses</option>
+          <label class="toolbar-label" style="display:flex;align-items:center;gap:0.35rem;margin:0">
+            <span>Mes:</span>
+            <input type="month" id="bonos-mes-filtro" title="Mes a consultar">
+          </label>
+          <select id="bonos-tecnico-filtro" title="Filtrar por técnico">
+            <option value="">Todos los técnicos</option>
           </select>
-          <button type="button" id="btn-bonos-imprimir" class="btn outline"><i class="fas fa-print"></i> Imprimir mes</button>
-          <button type="button" id="export-bonos" class="btn outline"><i class="fas fa-file-csv"></i> CSV</button>
-          <button type="button" id="email-bonos" class="btn outline" title="Enviar por correo el reporte de la tabla visible"><i class="fas fa-envelope"></i> Enviar reporte</button>
-          <button type="button" id="nuevo-bono" class="btn primary"><i class="fas fa-plus"></i> Nuevo bono</button>
+          <button type="button" id="btn-refresh-bonos" class="btn outline" title="Recargar"><i class="fas fa-sync-alt"></i> Actualizar</button>
+          <button type="button" id="btn-enviar-bonos-correo" class="btn primary" title="Enviar reporte por correo a destinatarios configurados"><i class="fas fa-paper-plane"></i> Enviar por correo</button>
         </div>
       </div>
-      <div id="bonos-resumen-bar" class="bonos-resumen-bar" aria-live="polite"></div>
-      <div class="table-wrap">
-        <table class="data-table filterable-table" id="tabla-bonos">
-          <thead>
-            <tr>
-              <th>Técnico</th><th>Reporte</th><th>Tipo capacitación</th><th>Monto bono</th><th>Fecha</th><th>Pagado</th><th>Notas</th>
-              <th class="th-actions">Acciones</th>
-            </tr>
-            <tr class="filter-row">
-              <td><input type="text" class="filter-input" data-key="tecnico" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="reporte_folio" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="tipo_capacitacion" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="monto_bono" data-type="number" placeholder="&gt;500"></td>
-              <td><input type="text" class="filter-input" data-key="fecha" data-type="text" placeholder="aaaa-mm-dd"></td>
-              <td><input type="text" class="filter-input" data-key="pagado" data-type="text" placeholder="0|1"></td>
-              <td><input type="text" class="filter-input" data-key="notas" data-type="text" placeholder="Filtrar…"></td>
-              <td class="th-actions"></td>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-        <div class="table-footer" id="footer-tabla-bonos" aria-live="polite"></div>
+      <p class="hint">Acumulado de comisiones (refacciones, servicios, máquinas) y bonos (capacitación, días fuera de ciudad, facturación $20k) por técnico, calculado desde <strong>Cotizaciones aprobadas</strong> y <strong>Reportes finalizados</strong>.</p>
+      <div class="tarifas-container">
+        <div class="tarifas-section">
+          <h3 class="tarifas-section-title"><i class="fas fa-chart-bar"></i> Resumen del mes</h3>
+          <div id="bonos-resumen-kpis" class="tarifas-form-grid">
+            <div class="form-group"><label>Total comisiones (MXN)</label><div class="kpi-num" id="bonos-kpi-comisiones">$0</div></div>
+            <div class="form-group"><label>Total bonos (MXN)</label><div class="kpi-num" id="bonos-kpi-bonos">$0</div></div>
+            <div class="form-group"><label>Total general (MXN)</label><div class="kpi-num" id="bonos-kpi-total"><strong>$0</strong></div></div>
+            <div class="form-group"><label>Técnicos con movimientos</label><div class="kpi-num" id="bonos-kpi-tecnicos">0</div></div>
+          </div>
+        </div>
+        <div class="tarifas-section">
+          <h3 class="tarifas-section-title"><i class="fas fa-table"></i> Desglose por técnico</h3>
+          <div class="table-wrap">
+            <table class="data-table" id="tabla-bonos">
+              <thead>
+                <tr>
+                  <th>Técnico</th>
+                  <th>Com. refacciones</th>
+                  <th>Com. servicios</th>
+                  <th>Com. máquinas</th>
+                  <th>Bono 20k</th>
+                  <th>Bono capacitación</th>
+                  <th>Bono días fuera</th>
+                  <th>Total MXN</th>
+                  <th class="th-actions">Acciones</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="tarifas-section">
+          <h3 class="tarifas-section-title"><i class="fas fa-list"></i> Detalle de movimientos</h3>
+          <p class="hint">Cada cotización aprobada o reporte finalizado se desglosa aquí.</p>
+          <div class="table-wrap">
+            <table class="data-table" id="tabla-bonos-movimientos">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Técnico</th>
+                  <th>Tipo</th>
+                  <th>Monto MXN</th>
+                  <th>Referencia</th>
+                  <th>Descripción</th>
+                  <th class="th-actions">Acciones</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -2142,7 +2281,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=241-aplicar-cot-confirm-nativo-2026-05-15"></script>
+  <script src="js/app.js?v=242-bloques-bcd-embarques-bonos-correos-cotizacion-2026-05-15"></script>
   <script src="js/prospeccion-map.js?v=7-sync-segment-heat-weight-2026-05-10" defer></script>
   <script src="js/bg-animation.js?v=8-map-shell-no-duplicate-hamburger" defer></script>
   <script src="js/premium-ux.js?v=24-globalmo-full-suppress-2026-05-07" defer></script>

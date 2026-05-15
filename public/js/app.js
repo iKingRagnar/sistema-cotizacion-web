@@ -748,7 +748,7 @@
   }
 
   const LAST_TAB_KEY = 'cotizacion-last-tab';
-  const VALID_TABS = ['dashboards', 'clientes', 'refacciones', 'maquinas', 'almacen', 'cotizaciones', 'reportes', 'garantias', 'mantenimiento-garantia', 'garantias-sin-cobertura', 'bonos', 'prospeccion'];
+  const VALID_TABS = ['dashboards', 'clientes', 'refacciones', 'maquinas', 'almacen', 'embarques', 'cotizaciones', 'reportes', 'garantias', 'mantenimiento-garantia', 'garantias-sin-cobertura', 'bonos', 'prospeccion'];
   const TABS_PERSIST = VALID_TABS.concat(['auditoria', 'usuarios', 'categorias-catalogo']);
   let reportesCache = [];
   let garantiasCache = [];
@@ -1707,7 +1707,9 @@
     if (id === 'prospeccion') loadProspeccion();
     if (id === 'revision-maquinas') loadRevisionMaquinas();
     if (id === 'almacen') loadAlmacen();
-    if (id === 'tarifas') loadTarifas();
+    if (id === 'embarques') loadEmbarques();
+    if (id === 'tarifas') { loadTarifas(); loadCorreosDestinatarios(); }
+    if (id === 'bonos') loadBonosAcumulado();
     if (id === 'tecnicos') loadTecnicos();
     applyAllColumnPermissions();
   }
@@ -5614,7 +5616,21 @@
       ? `<p class="cdp-equiv"><span>Equivalente MXN</span><span>${fmtMxn(total * tipoCambio)}</span></p>`
       : '';
     return `
-<div class="cotizacion-doc-preview">
+<div class="cotizacion-doc-preview universal-doc">
+  <div class="universal-brand-header" style="display:flex;align-items:center;gap:14px;padding:10px 14px;background:#fff;border-bottom:3px solid #b91c1c;margin-bottom:8px">
+    <img src="/fondos/universal-logo.jpg" alt="UNIVERSAL" style="height:54px;width:auto;border-radius:6px" onerror="this.style.display='none'">
+    <div style="flex:1">
+      <div style="font-weight:900;letter-spacing:.06em;color:#0f172a;font-size:15px">UNIVERSAL MAQUINARIA</div>
+      <div style="font-size:11px;color:#475569">Tel. 81 8366 8946 · Donde la competencia no existe</div>
+    </div>
+    <div style="text-align:right;font-size:11px;color:#475569">
+      <div><strong>Folio:</strong> ${escapeHtml(String(cot.folio || '—'))}</div>
+      <div><strong>Fecha:</strong> ${fmtDate(cot.fecha)}</div>
+    </div>
+  </div>
+  <div class="universal-precio-banda" style="background:#b91c1c;color:#fff;text-align:center;padding:6px 10px;font-weight:800;letter-spacing:.08em;font-size:14px;margin-bottom:10px">
+    TOTAL ${escapeHtml(moneda)}: ${fmtMonto(total)}${moneda === 'USD' && tipoCambio > 0 ? ' &nbsp;·&nbsp; T.C. ' + Number(tipoCambio).toFixed(4) : ''}
+  </div>
   <div class="cdp-hero">
     <div class="cdp-hero-main">
       <span class="cdp-kicker">Documento</span>
@@ -5669,7 +5685,10 @@
     ${cot.fecha_aprobacion ? `<span><i class="fas fa-check-circle"></i> Aprobación ${fmtDate(cot.fecha_aprobacion)}</span>` : ''}
   </div>
   ${cot.notas ? `<div class="cdp-notes-block"><strong>Notas</strong><p>${escapeHtml(String(cot.notas))}</p></div>` : ''}
-  <p class="cdp-disclaimer">Los importes en la columna Subtotal están expresados en <strong>${escapeHtml(moneda)}</strong>. Columnas USD/MXN son referencia. Vigencia sujeta a disponibilidad.</p>
+  <p class="cdp-disclaimer">Los importes en la columna Subtotal están expresados en <strong>${escapeHtml(moneda)}</strong>. Columnas USD/MXN son referencia. Vigencia 30 días naturales, sujeto a disponibilidad. Garantía estándar 6 meses en refacciones / 12 meses en equipo (no aplica desgaste).</p>
+  <div class="universal-footer-banda" style="background:#fde047;color:#0f172a;text-align:center;padding:10px;font-weight:900;letter-spacing:.12em;margin-top:10px;border-top:3px solid #b91c1c;border-radius:0 0 8px 8px">
+    UNIVERSAL MAQUINARIA · DONDE LA COMPETENCIA NO EXISTE
+  </div>
 </div>`;
   }
 
@@ -6672,10 +6691,62 @@
       renderMantenimientoGarantiaTable();
       renderMantenimientoGarantiaCalendar();
       checkGarantiasAlertas();
+      try { renderAgendaActividadesProximas(); } catch (_) {}
     } catch (e) {
       mantenimientosGarantiaCache = [];
       showToast(parseApiError(e) || 'No se pudieron cargar los mantenimientos.', 'error');
     } finally { hideLoading(); }
+  }
+
+  // ----- AGENDA: Actividades próximas (reportes pendientes + máquinas en preparación) -----
+  async function renderAgendaActividadesProximas() {
+    const panel = document.querySelector('#panel-mantenimiento-garantia');
+    if (!panel) return;
+    let cont = document.querySelector('#agenda-actividades-proximas');
+    if (!cont) {
+      panel.insertAdjacentHTML('afterbegin', '<section id="agenda-actividades-proximas" class="cotz-card" style="margin-bottom:0.75rem"><h4 class="cotz-card-title"><i class="fas fa-list-check"></i> Actividades próximas</h4><div id="agenda-actividades-body"><div class="muted" style="font-size:0.85rem">Cargando…</div></div></section>');
+      cont = document.querySelector('#agenda-actividades-proximas');
+    }
+    const body = document.querySelector('#agenda-actividades-body');
+    if (!body) return;
+    try {
+      const [reps, maqs] = await Promise.all([
+        fetchJson(API + '/reportes').catch(() => []),
+        fetchJson(API + '/maquinas').catch(() => []),
+      ]);
+      const hoy = new Date().toISOString().slice(0, 10);
+      const reportesPend = (Array.isArray(reps) ? reps : []).filter(r => {
+        const fp = (r.fecha_programada || r.fecha || '').toString().slice(0, 10);
+        const est = (r.estatus || r.estado || '').toString().toLowerCase();
+        return fp && fp >= hoy && est !== 'finalizado' && est !== 'cancelado';
+      }).slice(0, 30);
+      const maqPrep = (Array.isArray(maqs) ? maqs : []).filter(m => (m.estado_preparacion || '') === 'pendiente').slice(0, 30);
+      let html = '';
+      html += '<div style="font-size:0.85rem;font-weight:600;margin-bottom:0.25rem"><i class="fas fa-file-alt"></i> Reportes pendientes (' + reportesPend.length + ')</div>';
+      if (!reportesPend.length) {
+        html += '<div class="muted" style="font-size:0.82rem;margin-bottom:0.5rem">— Sin reportes próximos —</div>';
+      } else {
+        html += '<ul style="margin:0 0 0.5rem 1.1rem;padding:0;font-size:0.85rem">';
+        reportesPend.forEach(r => {
+          const fp = (r.fecha_programada || r.fecha || '').toString().slice(0, 10);
+          html += '<li>' + escapeHtml(r.folio || ('#' + r.id)) + ' - ' + escapeHtml(r.maquina_modelo || r.modelo || '-') + ' - ' + escapeHtml(fp) + ' - ' + escapeHtml(r.tecnico || '-') + '</li>';
+        });
+        html += '</ul>';
+      }
+      html += '<div style="font-size:0.85rem;font-weight:600;margin-bottom:0.25rem"><i class="fas fa-tools"></i> Máquinas en preparación (' + maqPrep.length + ')</div>';
+      if (!maqPrep.length) {
+        html += '<div class="muted" style="font-size:0.82rem">— Sin máquinas pendientes —</div>';
+      } else {
+        html += '<ul style="margin:0 0 0 1.1rem;padding:0;font-size:0.85rem">';
+        maqPrep.forEach(m => {
+          html += '<li>' + escapeHtml(m.modelo || m.nombre || '-') + ' - ' + escapeHtml(m.numero_serie || '-') + ' - ' + escapeHtml(m.ubicacion || m.sucursal_destino || '-') + '</li>';
+        });
+        html += '</ul>';
+      }
+      body.innerHTML = html;
+    } catch (e) {
+      body.innerHTML = '<div class="muted" style="font-size:0.82rem">No se pudieron cargar actividades próximas.</div>';
+    }
   }
 
   function renderMantenimientoGarantiaTable() {
@@ -9564,6 +9635,7 @@
 
           <div class="form-actions cotz-add-actions">
             <button type="button" class="btn primary" id="cot-line-add"><i class="fas fa-plus"></i> Agregar a la cotización</button>
+            <button type="button" class="btn success" id="cot-line-save-partida" title="Guardar esta partida y cerrar el formulario"><i class="fas fa-check"></i> Guardar partida</button>
           </div>
         </div>
 
@@ -9982,6 +10054,7 @@
       if (t === 'refaccion') {
         const rid = Number(qm('#cot-line-refaccion')?.value);
         const r = (refaccionesCache || []).find((x) => Number(x.id) === rid);
+        console.log('[cot][refaccion] cambio refaccion_id=', rid, 'encontrada=', !!r, 'desc=', r && r.descripcion);
         if (r && precioEl) {
           const usd = resolveRefaccionPrecioUsd(r);
           if (mon === 'USD') {
@@ -9989,17 +10062,30 @@
           } else {
             precioEl.value = (usd != null && usd > 0 ? Math.round(usd * tc * 100) / 100 : 0).toFixed(2);
           }
+          // Refacción: solo cantidad es editable. Precio readonly. Sin campo descripción visible.
+          precioEl.readOnly = true;
+          precioEl.classList.add('input-readonly');
+          // Forzar cantidad >=1 si está vacía
+          const cantEl = qm('#cot-line-cant');
+          if (cantEl && (!cantEl.value || Number(cantEl.value) <= 0)) cantEl.value = '1';
+        } else if (precioEl) {
+          precioEl.readOnly = false;
+          precioEl.classList.remove('input-readonly');
         }
       }
       if (t === 'equipo') {
         const mid = Number(qm('#cot-line-maq')?.value);
         const m = cotMaqPool().find((x) => Number(x.id) === mid);
+        console.log('[cot][maquina] cambio maquina_id=', mid, 'encontrada=', !!m, 'precio_lista_usd=', m && m.precio_lista_usd);
         if (m && precioEl) {
           const usd = Number(m.precio_lista_usd) || 0;
           if (mon === 'USD') {
             precioEl.value = listaUsdTomxnDisplayed(usd).toFixed(2);
           } else {
             precioEl.value = (usd > 0 ? Math.round(usd * tc * 100) / 100 : 0).toFixed(2);
+          }
+          if (!(usd > 0)) {
+            console.warn('[cot][maquina] La máquina seleccionada no tiene precio_lista_usd definido. Verifica catálogo de máquinas.');
           }
         }
       }
@@ -10242,7 +10328,7 @@
       renderLineas([]);
     }
 
-    qm('#cot-line-add')?.addEventListener('click', async () => {
+    async function addCotLineFromPanel() {
       if (!currentCotId) return;
       const tipoLinea = qm('#cot-line-tipo')?.value || 'refaccion';
       const cant = Number(qm('#cot-line-cant')?.value) || 0;
@@ -10250,6 +10336,7 @@
       const precio = precioRefEquipoInputToStoredUsd(precioRaw, tipoLinea);
       const maqEquipo = Number(qm('#cot-line-maq')?.value) || null;
       const maqOpt = Number(qm('#cot-line-maq-opt')?.value) || null;
+      console.log('[cot][add] tipoLinea=', tipoLinea, 'cant=', cant, 'precioRaw=', precioRaw, 'precioUsdStored=', precio, 'maqEquipo=', maqEquipo, 'maqOpt=', maqOpt);
       let maqId = null;
       if (tipoLinea === 'equipo') maqId = maqEquipo;
       else if (tipoLinea === 'vuelta' || tipoLinea === 'mano_obra' || tipoLinea === 'otro') maqId = maqOpt;
@@ -10331,9 +10418,12 @@
         await loadBitacorasForCotizacion();
         showToast('Línea agregada.', 'success');
       } catch (e) {
+        console.error('[cot][add] error al guardar línea:', e, 'payload=', payload);
         showToast(parseApiError(e) || 'No se pudo agregar la línea.', 'error');
       }
-    });
+    }
+    qm('#cot-line-add')?.addEventListener('click', addCotLineFromPanel);
+    qm('#cot-line-save-partida')?.addEventListener('click', addCotLineFromPanel);
 
     async function openModalEditarLinea(linea) {
       try {
@@ -13050,6 +13140,7 @@
     if (id === 'refacciones') loadRefacciones();
     if (id === 'maquinas') loadMaquinas({ force: true });
     if (id === 'almacen') loadAlmacen();
+    if (id === 'embarques') loadEmbarques();
     if (id === 'cotizaciones') loadCotizaciones({ force: true });
     if (id === 'garantias') loadGarantias();
     if (id === 'mantenimiento-garantia') loadMantenimientoGarantia();
@@ -14120,13 +14211,27 @@
     tbody.innerHTML = '';
     const filtEnt = qs('#filtro-entregado-rev') && qs('#filtro-entregado-rev').value;
     const filtPrueba = qs('#filtro-prueba-rev') && qs('#filtro-prueba-rev').value;
+    const filtPrepChk = qs('#rev-filtro-preparacion');
+    const filtPrepEstadoEl = qs('#rev-filtro-estado-preparacion');
+    const filtPrepActivo = !!(filtPrepChk && filtPrepChk.checked);
+    const filtPrepEstado = filtPrepActivo && filtPrepEstadoEl ? (filtPrepEstadoEl.value || '') : '';
     let filtered = data;
     if (filtEnt) filtered = filtered.filter(r => r.entregado === filtEnt);
     if (filtPrueba) filtered = filtered.filter(r => r.prueba === filtPrueba);
+    if (filtPrepActivo) {
+      filtered = filtered.filter(r => {
+        const ep = r.estado_preparacion;
+        if (!ep) return false;
+        if (filtPrepEstado) return ep === filtPrepEstado;
+        return ep === 'pendiente';
+      });
+    }
     if (!filtered.length) {
       tbody.innerHTML = '<tr><td colspan="8" class="empty">Sin registros. Agrega una revisión.</td></tr>';
       return;
     }
+    const _canEditRev = canEdit();
+    const _canDeleteRev = canDelete();
     filtered.forEach(r => {
       const tr = document.createElement('tr');
       const entregadoBadge = r.entregado === 'Si'
@@ -14144,8 +14249,8 @@
         <td>${pruebaBadge}</td>
         <td class="td-text-wrap">${escapeHtml(r.comentarios || '')}</td>
         <td class="th-actions">
-          <button type="button" class="btn small primary btn-edit-rev" data-id="${r.id}"><i class="fas fa-edit"></i></button>
-          <button type="button" class="btn small danger btn-del-rev" data-id="${r.id}"><i class="fas fa-trash"></i></button>
+          ${_canEditRev ? `<button type="button" class="btn small primary btn-edit-rev" data-id="${r.id}"><i class="fas fa-edit"></i></button>` : ''}
+          ${_canDeleteRev ? `<button type="button" class="btn small danger btn-del-rev" data-id="${r.id}"><i class="fas fa-trash"></i></button>` : ''}
         </td>`;
       tbody.appendChild(tr);
     });
@@ -16742,6 +16847,403 @@
   });
 
   /* Lo antes posible: class en <html> para mobile-shell.css (WebViews sin :has fiable). */
+  // ============================================================
+  // EMBARQUES, BONOS ACUMULADO, CORREOS DESTINATARIOS
+  // ============================================================
+
+  // ----- EMBARQUES -----
+  let embarquesCache = [];
+
+  async function loadEmbarques() {
+    try {
+      showLoading();
+      const raw = await fetchJson(API + '/embarques?includeInactivos=0');
+      embarquesCache = Array.isArray(raw) ? raw : [];
+      renderEmbarquesTable();
+    } catch (e) {
+      console.error('[embarques]', e);
+      showToast(parseApiError(e) || 'No se pudo cargar embarques.', 'error');
+    } finally {
+      hideLoading();
+    }
+  }
+
+  function renderEmbarquesTable() {
+    const tbody = document.querySelector('#tabla-embarques tbody');
+    if (!tbody) return;
+    const q = (document.querySelector('#buscar-embarques') && document.querySelector('#buscar-embarques').value || '').trim().toLowerCase();
+    const filtroEstado = (document.querySelector('#filtro-estado-embarque') && document.querySelector('#filtro-estado-embarque').value) || '';
+    const filtroSucursal = (document.querySelector('#filtro-sucursal-embarque') && document.querySelector('#filtro-sucursal-embarque').value) || '';
+    let rows = embarquesCache.slice();
+    if (filtroEstado) rows = rows.filter(r => r.estado === filtroEstado);
+    if (filtroSucursal) rows = rows.filter(r => (r.destino_sucursal || '').toUpperCase() === filtroSucursal);
+    if (q) {
+      rows = rows.filter(r => [r.nombre_maquina, r.numero_serie, r.proveedor, r.origen, r.notas]
+        .some(v => (v || '').toString().toLowerCase().includes(q)));
+    }
+    tbody.innerHTML = '';
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="10" class="empty">Sin embarques registrados. Usa "Nuevo embarque".</td></tr>';
+      return;
+    }
+    const isAdmin = canDelete();
+    rows.forEach(r => {
+      const eta = r.eta_fecha ? String(r.eta_fecha).slice(0, 10) : '<span class="cell-empty">-</span>';
+      const estadoClass = r.estado === 'llegado' ? 'badge-ok' : r.estado === 'cancelado' ? 'badge-danger' : 'badge-warn';
+      const estadoLbl = r.estado === 'en_camino' ? 'En camino' : r.estado === 'llegado' ? 'Llegado' : 'Cancelado';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.id}</td>
+        <td><strong>${escapeHtml(r.nombre_maquina || '')}</strong></td>
+        <td>${escapeHtml(r.numero_serie || '') || '<span class="cell-empty">-</span>'}</td>
+        <td>${escapeHtml(r.proveedor || '') || '<span class="cell-empty">-</span>'}</td>
+        <td>${escapeHtml(r.origen || '') || '<span class="cell-empty">-</span>'}</td>
+        <td>${escapeHtml(r.destino_sucursal || '') || '<span class="cell-empty">-</span>'}</td>
+        <td>${eta}</td>
+        <td><span class="badge ${estadoClass}">${estadoLbl}</span></td>
+        <td>${escapeHtml((r.notas || '').slice(0, 60))}${(r.notas || '').length > 60 ? '...' : ''}</td>
+        <td class="th-actions">
+          <button type="button" class="btn small primary btn-emb-edit" data-id="${r.id}" title="Editar"><i class="fas fa-edit"></i></button>
+          ${isAdmin ? `<button type="button" class="btn small danger btn-emb-del" data-id="${r.id}" title="Eliminar"><i class="fas fa-trash"></i></button>` : ''}
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.btn-emb-edit').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const r = embarquesCache.find(x => Number(x.id) === Number(btn.dataset.id));
+        if (r) openModalEmbarque(r);
+      });
+    });
+    tbody.querySelectorAll('.btn-emb-del').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = Number(btn.dataset.id);
+        if (!window.confirm('Eliminar este embarque?')) return;
+        fetchJson(API + '/embarques/' + id, { method: 'DELETE' })
+          .then(() => { showToast('Embarque eliminado.', 'success'); loadEmbarques(); })
+          .catch(e => showToast(parseApiError(e) || 'No se pudo eliminar.', 'error'));
+      });
+    });
+  }
+
+  function openModalEmbarque(emb) {
+    const isNew = !emb || !emb.id;
+    const e = emb || {};
+    const body = `
+      <div class="cotz-modal">
+        <section class="cotz-card">
+          <h4 class="cotz-card-title"><i class="fas fa-truck-fast"></i> ${isNew ? 'Nuevo embarque' : 'Editar embarque'}</h4>
+          <div class="form-group"><label>Nombre de la maquina *</label>
+            <input type="text" id="emb-nombre" maxlength="200" value="${escapeHtml(e.nombre_maquina || '')}" placeholder="Ej: Torno CNC HZ7900L">
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Numero de serie</label>
+              <input type="text" id="emb-serie" maxlength="120" value="${escapeHtml(e.numero_serie || '')}">
+            </div>
+            <div class="form-group"><label>ETA (fecha llegada)</label>
+              <input type="date" id="emb-eta" value="${(e.eta_fecha || '').slice(0, 10)}">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Proveedor</label>
+              <input type="text" id="emb-proveedor" maxlength="200" value="${escapeHtml(e.proveedor || '')}">
+            </div>
+            <div class="form-group"><label>Origen</label>
+              <input type="text" id="emb-origen" maxlength="200" value="${escapeHtml(e.origen || '')}" placeholder="Pais / ciudad">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Destino (sucursal)</label>
+              <select id="emb-destino">
+                <option value="">- Seleccionar -</option>
+                <option value="QUERETARO">QUERETARO</option>
+                <option value="MONTERREY">MONTERREY</option>
+                <option value="GUADALAJARA">GUADALAJARA</option>
+                <option value="REYNOSA">REYNOSA</option>
+                <option value="CHIHUAHUA">CHIHUAHUA</option>
+                <option value="MEXICO">MEXICO</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Estado</label>
+              <select id="emb-estado">
+                <option value="en_camino">En camino</option>
+                <option value="llegado">Llegado</option>
+                <option value="cancelado">Cancelado</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group"><label>Notas</label>
+            <textarea id="emb-notas" rows="2" maxlength="500">${escapeHtml(e.notas || '')}</textarea>
+          </div>
+        </section>
+        <div class="form-actions">
+          <button type="button" class="btn primary" id="emb-save"><i class="fas fa-save"></i> Guardar</button>
+          <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
+        </div>
+      </div>
+    `;
+    openModal(isNew ? 'Nuevo embarque' : 'Editar embarque', body);
+    if (e.destino_sucursal) document.querySelector('#emb-destino').value = String(e.destino_sucursal).toUpperCase();
+    if (e.estado) document.querySelector('#emb-estado').value = e.estado;
+    document.querySelector('#emb-save').onclick = async () => {
+      const nombre = (document.querySelector('#emb-nombre').value || '').trim();
+      if (!nombre) { showToast('El nombre de la maquina es obligatorio.', 'error'); return; }
+      const payload = {
+        nombre_maquina: nombre,
+        numero_serie: (document.querySelector('#emb-serie').value || '').trim() || null,
+        eta_fecha: document.querySelector('#emb-eta').value || null,
+        proveedor: (document.querySelector('#emb-proveedor').value || '').trim() || null,
+        origen: (document.querySelector('#emb-origen').value || '').trim() || null,
+        destino_sucursal: document.querySelector('#emb-destino').value || null,
+        estado: document.querySelector('#emb-estado').value || 'en_camino',
+        notas: (document.querySelector('#emb-notas').value || '').trim() || null,
+      };
+      const btn = document.querySelector('#emb-save');
+      btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+      try {
+        if (isNew) await fetchJson(API + '/embarques', { method: 'POST', body: JSON.stringify(payload) });
+        else await fetchJson(API + '/embarques/' + emb.id, { method: 'PUT', body: JSON.stringify(payload) });
+        document.querySelector('#modal').classList.add('hidden');
+        showToast(isNew ? 'Embarque creado.' : 'Embarque actualizado.', 'success');
+        loadEmbarques();
+      } catch (err) {
+        btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Guardar';
+        showToast(parseApiError(err) || 'No se pudo guardar.', 'error');
+      }
+    };
+  }
+
+  // ----- BONOS ACUMULADO (resumen mensual) -----
+  // NOTA: convive con loadBonos/renderBonos existentes (tabla #tabla-bonos)
+  // Esta variante usa KPIs y la tabla #tabla-bonos-movimientos del nuevo HTML.
+  let bonosResumenCache = null;
+
+  async function loadBonosAcumulado() {
+    try {
+      const mesInput = document.querySelector('#bonos-mes-filtro');
+      if (!mesInput) { return; } // si no existe HTML nuevo, no hacer nada
+      let mes = mesInput.value;
+      if (!mes) {
+        const d = new Date();
+        mes = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+        mesInput.value = mes;
+      }
+      const tecFilter = (document.querySelector('#bonos-tecnico-filtro') && document.querySelector('#bonos-tecnico-filtro').value) || '';
+      const url = API + '/bonos/acumulado?mes=' + encodeURIComponent(mes) + (tecFilter ? '&tecnico=' + encodeURIComponent(tecFilter) : '');
+      const data = await fetchJson(url);
+      bonosResumenCache = data || { tecnicos: [], movimientos: [], totales: {} };
+      renderBonosAcumulado();
+      rellenarTecnicoFilterBonos(bonosResumenCache);
+    } catch (e) {
+      console.error('[bonos acumulado]', e);
+      // No mostrar toast si el endpoint aún no existe; silencioso
+    }
+  }
+
+  function rellenarTecnicoFilterBonos(data) {
+    const sel = document.querySelector('#bonos-tecnico-filtro');
+    if (!sel) return;
+    const cur = sel.value;
+    const tecnicos = Array.from(new Set((data.tecnicos || []).map(t => t.tecnico).filter(Boolean))).sort();
+    sel.innerHTML = '<option value="">Todos los tecnicos</option>' + tecnicos.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+    if (cur && tecnicos.includes(cur)) sel.value = cur;
+  }
+
+  function renderBonosAcumulado() {
+    if (!bonosResumenCache) return;
+    const tecnicos = bonosResumenCache.tecnicos || [];
+    const movimientos = bonosResumenCache.movimientos || [];
+    const totales = bonosResumenCache.totales || {};
+    const fmt = (n) => '$' + (Math.round(Number(n || 0) * 100) / 100).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const elCom = document.querySelector('#bonos-kpi-comisiones'); if (elCom) elCom.textContent = fmt(totales.comisiones || 0);
+    const elBon = document.querySelector('#bonos-kpi-bonos'); if (elBon) elBon.textContent = fmt(totales.bonos || 0);
+    const elTot = document.querySelector('#bonos-kpi-total'); if (elTot) elTot.innerHTML = '<strong>' + fmt(totales.total || ((totales.comisiones || 0) + (totales.bonos || 0))) + '</strong>';
+    const elTec = document.querySelector('#bonos-kpi-tecnicos'); if (elTec) elTec.textContent = tecnicos.length;
+
+    // Tabla #tabla-bonos: solo escribir si el thead tiene 9 columnas (HTML nuevo). De lo contrario, no pisar la tabla del módulo bonos legacy.
+    const tablaBonos = document.querySelector('#tabla-bonos');
+    if (tablaBonos) {
+      const headCols = tablaBonos.querySelectorAll('thead th').length;
+      if (headCols === 9) {
+        const tbody = tablaBonos.querySelector('tbody');
+        if (tbody) {
+          if (!tecnicos.length) {
+            tbody.innerHTML = '<tr><td colspan="9" class="empty">Sin movimientos en el mes seleccionado.</td></tr>';
+          } else {
+            tbody.innerHTML = tecnicos.map(t => `
+              <tr>
+                <td><strong>${escapeHtml(t.tecnico)}</strong></td>
+                <td>${fmt(t.comision_refacciones || 0)}</td>
+                <td>${fmt(t.comision_servicios || 0)}</td>
+                <td>${fmt(t.comision_maquinas || 0)}</td>
+                <td>${fmt(t.bono_20k || 0)}</td>
+                <td>${fmt((t.bono_capacitacion_local || 0) + (t.bono_capacitacion_linea || 0) + (t.bono_capacitacion_foranea || 0))}</td>
+                <td>${fmt(t.bono_dia_fuera_ciudad || 0)}</td>
+                <td><strong>${fmt(t.total || 0)}</strong></td>
+                <td class="th-actions"><span class="muted" style="font-size:0.78rem">-</span></td>
+              </tr>
+            `).join('');
+          }
+        }
+      }
+    }
+    const tbodyM = document.querySelector('#tabla-bonos-movimientos tbody');
+    if (tbodyM) {
+      if (!movimientos.length) {
+        tbodyM.innerHTML = '<tr><td colspan="7" class="empty">Sin movimientos.</td></tr>';
+      } else {
+        const isAdmin = canDelete();
+        tbodyM.innerHTML = movimientos.map(m => `
+          <tr>
+            <td>${escapeHtml((m.fecha || '').slice(0, 10))}</td>
+            <td>${escapeHtml(m.tecnico || '')}</td>
+            <td>${escapeHtml(m.tipo || '')}</td>
+            <td>${fmt(m.monto || 0)}</td>
+            <td>${m.referencia_tipo ? escapeHtml(m.referencia_tipo + ' #' + (m.referencia_id || '?')) : '-'}</td>
+            <td>${escapeHtml((m.descripcion || '').slice(0, 80))}</td>
+            <td class="th-actions">${isAdmin ? `<button type="button" class="btn small danger btn-bonos-mov-del" data-id="${m.id}" title="Eliminar"><i class="fas fa-trash"></i></button>` : ''}</td>
+          </tr>
+        `).join('');
+        tbodyM.querySelectorAll('.btn-bonos-mov-del').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = Number(btn.dataset.id);
+            if (!window.confirm('Eliminar este movimiento de bono?')) return;
+            fetchJson(API + '/bonos/movimiento/' + id, { method: 'DELETE' })
+              .then(() => { showToast('Movimiento eliminado.', 'success'); loadBonosAcumulado(); })
+              .catch(e => showToast(parseApiError(e) || 'No se pudo eliminar.', 'error'));
+          });
+        });
+      }
+    }
+  }
+
+  async function enviarBonosCorreo() {
+    const mes = document.querySelector('#bonos-mes-filtro') && document.querySelector('#bonos-mes-filtro').value;
+    if (!mes) { showToast('Selecciona un mes primero.', 'warning'); return; }
+    if (!window.confirm('Enviar reporte de bonos del mes ' + mes + ' por correo a los destinatarios configurados?')) return;
+    try {
+      showToast('Enviando reportes...', 'info');
+      const resp = await fetchJson(API + '/reportes/enviar-mensual', {
+        method: 'POST',
+        body: JSON.stringify({ mes, tipos: ['bonos_mensual'] }),
+        timeoutMs: 90000,
+      });
+      showToast('Reporte enviado. ' + (resp.enviados || 0) + ' correos OK, ' + ((resp.errores || []).length) + ' errores.', 'success');
+    } catch (e) {
+      showToast(parseApiError(e) || 'No se pudo enviar.', 'error');
+    }
+  }
+
+  // ----- CORREOS DESTINATARIOS (admin) -----
+  async function loadCorreosDestinatarios() {
+    if (!document.querySelector('#corr-list-ventas') && !document.querySelector('#corr-list-bonos') && !document.querySelector('#corr-list-inventario')) return;
+    try {
+      const data = await fetchJson(API + '/config/correos-reportes');
+      const grupos = (data && data.grupos) || { ventas_mensual: [], bonos_mensual: [], inventario_mensual: [] };
+      renderCorreoList('corr-list-ventas', grupos.ventas_mensual || [], 'ventas_mensual');
+      renderCorreoList('corr-list-bonos', grupos.bonos_mensual || [], 'bonos_mensual');
+      renderCorreoList('corr-list-inventario', grupos.inventario_mensual || [], 'inventario_mensual');
+    } catch (e) {
+      console.warn('[correos config]', e);
+    }
+  }
+
+  function renderCorreoList(elId, items, tipo) {
+    const el = document.querySelector('#' + elId);
+    if (!el) return;
+    if (!items.length) { el.innerHTML = '<div class="muted" style="font-size:0.85rem">- Sin correos -</div>'; return; }
+    el.innerHTML = items.map(it => `
+      <div class="form-row" style="gap:0.35rem;margin-bottom:0.25rem;align-items:center">
+        <span style="flex:1;font-size:0.88rem">${escapeHtml(it.email)}</span>
+        <button type="button" class="btn small danger" data-id="${it.id}" data-tipo="${tipo}" title="Quitar"><i class="fas fa-times"></i></button>
+      </div>
+    `).join('');
+    el.querySelectorAll('button.danger').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!window.confirm('Quitar este correo?')) return;
+        fetchJson(API + '/config/correos-reportes/' + btn.dataset.id, { method: 'DELETE' })
+          .then(() => { showToast('Correo quitado.', 'success'); loadCorreosDestinatarios(); })
+          .catch(e => showToast(parseApiError(e) || 'No se pudo quitar.', 'error'));
+      });
+    });
+  }
+
+  async function addCorreoDestinatario(tipo) {
+    const inp = document.querySelector('#corr-input-' + tipo.replace('_mensual', ''));
+    if (!inp) return;
+    const email = (inp.value || '').trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showToast('Email invalido.', 'error'); inp.focus(); return;
+    }
+    try {
+      await fetchJson(API + '/config/correos-reportes', {
+        method: 'POST',
+        body: JSON.stringify({ tipo, email }),
+      });
+      inp.value = '';
+      showToast('Correo agregado.', 'success');
+      loadCorreosDestinatarios();
+    } catch (e) {
+      showToast(parseApiError(e) || 'No se pudo agregar.', 'error');
+    }
+  }
+
+  // ----- WIRING DE EVENTOS (idempotente) -----
+  function wireEmbarquesBonosCorreosEventos() {
+    const btnEmbRefresh = document.querySelector('#btn-refresh-embarques');
+    if (btnEmbRefresh && !btnEmbRefresh.dataset.wired) { btnEmbRefresh.dataset.wired = '1'; btnEmbRefresh.addEventListener('click', () => loadEmbarques()); }
+    const btnEmbNuevo = document.querySelector('#btn-nuevo-embarque');
+    if (btnEmbNuevo && !btnEmbNuevo.dataset.wired) { btnEmbNuevo.dataset.wired = '1'; btnEmbNuevo.addEventListener('click', () => openModalEmbarque(null)); }
+    const buscarEmb = document.querySelector('#buscar-embarques');
+    if (buscarEmb && !buscarEmb.dataset.wired) { buscarEmb.dataset.wired = '1'; buscarEmb.addEventListener('input', debounce(() => renderEmbarquesTable(), 250)); }
+    const filEstadoEmb = document.querySelector('#filtro-estado-embarque');
+    if (filEstadoEmb && !filEstadoEmb.dataset.wired) { filEstadoEmb.dataset.wired = '1'; filEstadoEmb.addEventListener('change', () => renderEmbarquesTable()); }
+    const filSucEmb = document.querySelector('#filtro-sucursal-embarque');
+    if (filSucEmb && !filSucEmb.dataset.wired) { filSucEmb.dataset.wired = '1'; filSucEmb.addEventListener('change', () => renderEmbarquesTable()); }
+
+    const btnRefBonos = document.querySelector('#btn-refresh-bonos');
+    if (btnRefBonos && !btnRefBonos.dataset.wired) { btnRefBonos.dataset.wired = '1'; btnRefBonos.addEventListener('click', () => loadBonosAcumulado()); }
+    const btnEnviarBonos = document.querySelector('#btn-enviar-bonos-correo');
+    if (btnEnviarBonos && !btnEnviarBonos.dataset.wired) { btnEnviarBonos.dataset.wired = '1'; btnEnviarBonos.addEventListener('click', () => enviarBonosCorreo()); }
+    const mesBonos = document.querySelector('#bonos-mes-filtro');
+    if (mesBonos && !mesBonos.dataset.wired) { mesBonos.dataset.wired = '1'; mesBonos.addEventListener('change', () => loadBonosAcumulado()); }
+    const tecBonos = document.querySelector('#bonos-tecnico-filtro');
+    if (tecBonos && !tecBonos.dataset.wired) { tecBonos.dataset.wired = '1'; tecBonos.addEventListener('change', () => renderBonosAcumulado()); }
+
+    const btnAddV = document.querySelector('#btn-corr-add-ventas');
+    if (btnAddV && !btnAddV.dataset.wired) { btnAddV.dataset.wired = '1'; btnAddV.addEventListener('click', () => addCorreoDestinatario('ventas_mensual')); }
+    const btnAddB = document.querySelector('#btn-corr-add-bonos');
+    if (btnAddB && !btnAddB.dataset.wired) { btnAddB.dataset.wired = '1'; btnAddB.addEventListener('click', () => addCorreoDestinatario('bonos_mensual')); }
+    const btnAddI = document.querySelector('#btn-corr-add-inventario');
+    if (btnAddI && !btnAddI.dataset.wired) { btnAddI.dataset.wired = '1'; btnAddI.addEventListener('click', () => addCorreoDestinatario('inventario_mensual')); }
+
+    // Revision maquinas: filtro preparacion
+    const filterPrep = document.querySelector('#rev-filtro-preparacion');
+    const selPrepEstado = document.querySelector('#rev-filtro-estado-preparacion');
+    if (filterPrep && !filterPrep.dataset.wired) {
+      filterPrep.dataset.wired = '1';
+      filterPrep.addEventListener('change', () => {
+        if (selPrepEstado) selPrepEstado.style.display = filterPrep.checked ? '' : 'none';
+        if (typeof renderRevisionMaquinas === 'function' && typeof revisionMaquinasCache !== 'undefined') renderRevisionMaquinas(revisionMaquinasCache);
+        else if (typeof loadRevisionMaquinas === 'function') loadRevisionMaquinas();
+      });
+      if (selPrepEstado) selPrepEstado.style.display = filterPrep.checked ? '' : 'none';
+    }
+    if (selPrepEstado && !selPrepEstado.dataset.wired) {
+      selPrepEstado.dataset.wired = '1';
+      selPrepEstado.addEventListener('change', () => {
+        if (typeof renderRevisionMaquinas === 'function' && typeof revisionMaquinasCache !== 'undefined') renderRevisionMaquinas(revisionMaquinasCache);
+        else if (typeof loadRevisionMaquinas === 'function') loadRevisionMaquinas();
+      });
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wireEmbarquesBonosCorreosEventos, { once: true });
+  } else {
+    wireEmbarquesBonosCorreosEventos();
+  }
+
   function runEarlyMobileShellSync() {
     try {
       sweepStaleMobileBlockingLayers();

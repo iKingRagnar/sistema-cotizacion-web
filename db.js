@@ -329,6 +329,51 @@ function getSchema() {
       creado_en TEXT DEFAULT (datetime('now','localtime'))
     )`,
     `CREATE UNIQUE INDEX IF NOT EXISTS idx_catalogo_sub_nombre ON catalogo_subcategorias(categoria_id, nombre)`,
+    /* EMBARQUES: máquinas en tránsito al almacén / sucursal.
+       Estados: 'en_camino' | 'llegado' | 'cancelado'. Soft delete con activo=0. */
+    `CREATE TABLE IF NOT EXISTS embarques (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre_maquina TEXT NOT NULL,
+      numero_serie TEXT,
+      proveedor TEXT,
+      origen TEXT,
+      destino_sucursal TEXT,
+      eta_fecha TEXT,
+      estado TEXT DEFAULT 'en_camino',
+      notas TEXT,
+      activo INTEGER DEFAULT 1,
+      creado_en TEXT DEFAULT (datetime('now','localtime'))
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_embarques_estado ON embarques(estado)`,
+    /* BONOS_MOVIMIENTOS: log granular de comisiones y bonos por técnico/vendedor.
+       tipo: comision_refacciones|comision_servicios|comision_maquinas|bono_20k|
+             bono_capacitacion_local|bono_capacitacion_linea|bono_capacitacion_foranea|
+             bono_dia_fuera_ciudad
+       mes_clave = 'YYYY-MM' (filtros rápidos por mes). */
+    `CREATE TABLE IF NOT EXISTS bonos_movimientos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      tecnico TEXT NOT NULL,
+      tipo TEXT NOT NULL,
+      monto REAL NOT NULL DEFAULT 0,
+      referencia_tipo TEXT,
+      referencia_id INTEGER,
+      descripcion TEXT,
+      fecha TEXT DEFAULT (date('now','localtime')),
+      mes_clave TEXT,
+      creado_en TEXT DEFAULT (datetime('now','localtime'))
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_bonos_mov_tecnico_mes ON bonos_movimientos(tecnico, mes_clave)`,
+    `CREATE INDEX IF NOT EXISTS idx_bonos_mov_tipo ON bonos_movimientos(tipo)`,
+    /* CONFIG_CORREOS_REPORTES: destinatarios por tipo de reporte mensual.
+       tipo: 'ventas_mensual' | 'bonos_mensual' | 'inventario_mensual'. */
+    `CREATE TABLE IF NOT EXISTS config_correos_reportes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      tipo TEXT NOT NULL,
+      email TEXT NOT NULL,
+      activo INTEGER DEFAULT 1,
+      creado_en TEXT DEFAULT (datetime('now','localtime'))
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_config_correos_tipo ON config_correos_reportes(tipo, activo)`,
   ];
 }
 
@@ -491,6 +536,47 @@ async function runMigrations() {
     `ALTER TABLE audit_log ADD COLUMN entity_type TEXT`,
     `ALTER TABLE audit_log ADD COLUMN entity_id INTEGER`,
     `ALTER TABLE audit_log ADD COLUMN diff_json TEXT`,
+    /* Preparación de máquinas tras aprobar cotización con líneas tipo 'maquina'.
+       estado_preparacion: 'pendiente' (acabada de pasar a preparación) | 'lista' | 'entregada' */
+    `ALTER TABLE maquinas ADD COLUMN estado_preparacion TEXT`,
+    `ALTER TABLE maquinas ADD COLUMN preparacion_iniciada_en TEXT`,
+    /* Tablas nuevas 2026-05 (idempotentes con IF NOT EXISTS para BDs antiguas) */
+    `CREATE TABLE IF NOT EXISTS embarques (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre_maquina TEXT NOT NULL,
+      numero_serie TEXT,
+      proveedor TEXT,
+      origen TEXT,
+      destino_sucursal TEXT,
+      eta_fecha TEXT,
+      estado TEXT DEFAULT 'en_camino',
+      notas TEXT,
+      activo INTEGER DEFAULT 1,
+      creado_en TEXT DEFAULT (datetime('now','localtime'))
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_embarques_estado ON embarques(estado)`,
+    `CREATE TABLE IF NOT EXISTS bonos_movimientos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      tecnico TEXT NOT NULL,
+      tipo TEXT NOT NULL,
+      monto REAL NOT NULL DEFAULT 0,
+      referencia_tipo TEXT,
+      referencia_id INTEGER,
+      descripcion TEXT,
+      fecha TEXT DEFAULT (date('now','localtime')),
+      mes_clave TEXT,
+      creado_en TEXT DEFAULT (datetime('now','localtime'))
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_bonos_mov_tecnico_mes ON bonos_movimientos(tecnico, mes_clave)`,
+    `CREATE INDEX IF NOT EXISTS idx_bonos_mov_tipo ON bonos_movimientos(tipo)`,
+    `CREATE TABLE IF NOT EXISTS config_correos_reportes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      tipo TEXT NOT NULL,
+      email TEXT NOT NULL,
+      activo INTEGER DEFAULT 1,
+      creado_en TEXT DEFAULT (datetime('now','localtime'))
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_config_correos_tipo ON config_correos_reportes(tipo, activo)`,
   ];
   for (const sql of migrations) {
     try {

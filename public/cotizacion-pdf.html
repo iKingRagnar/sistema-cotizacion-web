@@ -296,18 +296,22 @@
           : '';
         const html = `
           <div class="doc" id="doc">
-            <div class="head">
+            <div class="head" style="background:#fff;color:#0f172a;border-bottom:3px solid #b91c1c;border-radius:12px 12px 0 0">
               <div class="brand">
-                <img src="${esc(logoUrl)}" alt="">
+                <img src="fondos/universal-logo.jpg" alt="UNIVERSAL" style="height:48px;width:auto;background:transparent;padding:0;border-radius:6px" onerror="this.src='${esc(logoUrl)}'">
                 <div>
-                  <h1>${esc(shortName)}</h1>
-                  <p>${esc(tagline)}</p>
+                  <h1 style="color:#0f172a">UNIVERSAL MAQUINARIA</h1>
+                  <p style="color:#475569">Tel. 81 8366 8946 · Donde la competencia no existe</p>
                 </div>
               </div>
-              <div class="meta-mini">
-                <div><strong>Documento:</strong> Cotización</div>
-                <div><strong>Impresión:</strong> ${fmtDate(new Date().toISOString())}</div>
+              <div class="meta-mini" style="color:#0f172a">
+                <div><strong>Folio:</strong> ${esc(cot.folio || '—')}</div>
+                <div><strong>Fecha:</strong> ${fmtDate(cot.fecha)}</div>
+                <div><strong>Vigencia:</strong> ${fmtDate(validHasta(cot.fecha))}</div>
               </div>
+            </div>
+            <div style="background:#b91c1c;color:#fff;text-align:center;padding:6px 10px;font-weight:800;letter-spacing:.08em;font-size:13px;margin:8px 0;border-radius:6px">
+              TOTAL ${esc(moneda)}: ${fmtMonto(total)}${moneda === 'USD' && tipoCambio > 0 ? ' &nbsp;·&nbsp; T.C. ' + fmtNum(tipoCambio) : ''}
             </div>
             <div class="title">COTIZACIÓN</div>
             <div class="meta-grid">
@@ -374,6 +378,9 @@
             <div class="sign">
               <div><div class="line"></div><div class="lbl">Firma de aceptación</div></div>
               <div><div class="line"></div><div class="lbl">Nombre y fecha</div></div>
+            </div>
+            <div style="background:#fde047;color:#0f172a;text-align:center;padding:8px;font-weight:900;letter-spacing:.12em;margin-top:8px;border-top:3px solid #b91c1c;border-radius:0 0 8px 8px;font-size:11px">
+              UNIVERSAL MAQUINARIA · DONDE LA COMPETENCIA NO EXISTE
             </div>
             <div class="doc-foot">Documento generado para fines informativos · Vigencia y disponibilidad sujetas a condiciones comerciales.</div>
           </div>
