@@ -1849,6 +1849,9 @@
       updateCommissionsUiVisibility();
       syncSessionHeader();
       showLoginOverlay(true);
+      // Avisar al usuario explícitamente para que no piense que la web está rota.
+      try { showToast('Sesión expirada. Inicia sesión de nuevo y vuelve a intentar.', 'error'); } catch (_) {}
+      throw new Error('SESION_EXPIRADA');
     }
     if (!r.ok) throw new Error(text || r.statusText);
     if (!text || !String(text).trim()) return {};
