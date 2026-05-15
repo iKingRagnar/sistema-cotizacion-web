@@ -6023,14 +6023,27 @@
   }
 
   async function aplicarCotizacion(id) {
+    console.log('[cot][aplicar] iniciando POST /aplicar para id=', id);
+    showToast('Aplicando cotización… (descontando inventario)', 'info');
     try {
-      await fetchJson(API + '/cotizaciones/' + id + '/aplicar', { method: 'POST', body: JSON.stringify({}) });
+      // POST con timeout extendido (60s) — el endpoint hace varios UPDATEs encadenados en Turso.
+      await fetchJson(API + '/cotizaciones/' + id + '/aplicar', {
+        method: 'POST',
+        body: JSON.stringify({}),
+        timeoutMs: 60000,
+      });
+      console.log('[cot][aplicar] POST OK, refrescando UI…');
       showToast('Cotización aplicada como venta. Inventario actualizado.', 'success');
-      loadCotizaciones({ force: true });
-      loadRefacciones();
-      loadVentas();
-      if (typeof refreshAlertasHeader === 'function') refreshAlertasHeader();
-    } catch (e) { showToast(parseApiError(e) || 'No se pudo aplicar la cotización.', 'error'); }
+      // Refresco SOLO lo visible (cotizaciones). El resto se actualiza al cambiar de pestaña.
+      try { await loadCotizaciones({ force: true }); } catch (e) { console.warn('[cot][aplicar] loadCotizaciones falló:', e); }
+      // Alertas en background sin bloquear UI
+      if (typeof refreshAlertasHeader === 'function') {
+        refreshAlertasHeader().catch(err => console.warn('[cot][aplicar] refreshAlertas falló:', err));
+      }
+    } catch (e) {
+      console.error('[cot][aplicar] error:', e);
+      showToast(parseApiError(e) || 'No se pudo aplicar la cotización: ' + (e.message || e), 'error');
+    }
   }
 
   async function updateCotizacionTipoCambioInline(id, tc) {
