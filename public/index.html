@@ -966,17 +966,24 @@
       <div class="section-header">
         <h2><i class="fas fa-warehouse"></i> Almacén</h2>
         <div class="toolbar">
-          <input type="search" id="buscar-almacen" class="search" placeholder="Buscar modelo, serie, cliente…" aria-label="Buscar en almacén">
+          <input type="search" id="buscar-almacen" class="search" placeholder="Buscar modelo, serie…" aria-label="Buscar en almacén">
           <label class="toolbar-label" style="display:flex;align-items:center;gap:0.35rem;margin:0">
             <span class="visually-hidden">Sucursal</span>
-            <select id="filtro-sucursal-almacen" title="Filtrar por sucursal (ciudad del cliente)" aria-label="Filtrar por sucursal">
+            <select id="filtro-sucursal-almacen" title="Filtrar por sucursal" aria-label="Filtrar por sucursal">
               <option value="">Todas las sucursales</option>
+              <option value="QUERETARO">QUERÉTARO</option>
+              <option value="MONTERREY">MONTERREY</option>
+              <option value="GUADALAJARA">GUADALAJARA</option>
+              <option value="REYNOSA">REYNOSA</option>
+              <option value="CHIHUAHUA">CHIHUAHUA</option>
+              <option value="MEXICO">MÉXICO</option>
             </select>
           </label>
           <button type="button" id="btn-refresh-almacen" class="btn outline" title="Recargar datos"><i class="fas fa-sync-alt"></i> Actualizar</button>
+          <button type="button" id="btn-nueva-maquina-almacen" class="btn primary" title="Agregar máquina al almacén"><i class="fas fa-plus"></i> Agregar máquina</button>
         </div>
       </div>
-      <p class="hint">Listado del catálogo de <strong>Máquinas</strong>: modelo, sucursal (ciudad del cliente o ubicación), número de serie, estado según <strong>Revisión Máquinas</strong> y si el equipo ya está en una <strong>cotización pendiente</strong> (no se puede volver a cotizar hasta cancelar o concluir esa cotización).</p>
+      <p class="hint">Equipos asignados a las sucursales <strong>UNIVERSAL</strong>: Querétaro, Monterrey, Guadalajara, Reynosa, Chihuahua, México. Para alta rápida usa <strong>«Agregar máquina»</strong> (nombre + número de serie + sucursal). Para ficha técnica completa, ver pestaña <strong>Máquinas</strong>.</p>
       <div class="table-wrap">
         <table class="data-table" id="tabla-almacen">
           <thead>
@@ -1400,37 +1407,41 @@
           <h3 class="tarifas-section-title"><i class="fas fa-table"></i> AGENDA SERVICIO — hoja TARIFAS (mano de obra en cotización)</h3>
           <p class="tarifas-hint">Mismos números que la pestaña <strong>TARIFAS</strong> del Excel <em>AGENDA SERVICIO</em>: traslado en carro, mecánico 1–3 personas, electrónico 1–2, viáticos 1–2 personas. La cotización «Mano de obra» usa estas claves (servidor y vista previa); las tarifas MXN/USD de la tabla de arriba son referencia aparte.</p>
           <div class="tarifas-form-grid">
-            <div class="form-group"><label>Traslado carro (MXN/h)</label><input type="number" class="tarifa-input" data-key="mo_agenda_traslado_carro_mxn_hr" min="0" step="50" placeholder="2000"></div>
-            <div class="form-group"><label>Mecánico (MXN/h)</label><input type="number" class="tarifa-input" data-key="mo_agenda_mecanico_mxn_hr" min="0" step="50" placeholder="1000"></div>
-            <div class="form-group"><label>Mec. 2 pers. — recargo (MXN)</label><input type="number" class="tarifa-input" data-key="mo_agenda_mecanico_2pers_extra_mxn" min="0" step="50" placeholder="400" title="Total trabajo ≈ h×tarifa mecánico + este monto (como fila MECANICO 2 PERSONAS del Excel)"></div>
-            <div class="form-group"><label>Mec. 3 pers. — recargo (MXN)</label><input type="number" class="tarifa-input" data-key="mo_agenda_mecanico_3pers_extra_mxn" min="0" step="50" placeholder="900"></div>
-            <div class="form-group"><label>Electrónico (MXN/h)</label><input type="number" class="tarifa-input" data-key="mo_agenda_electronico_mxn_hr" min="0" step="50" placeholder="1500"></div>
-            <div class="form-group"><label>Electr. con ayudante — multiplicador</label><input type="number" class="tarifa-input" data-key="mo_agenda_electronico_2pers_mult" min="0" step="0.05" placeholder="1.4"></div>
-            <div class="form-group"><label>Viático 1 pers. (MXN/día)</label><input type="number" class="tarifa-input" data-key="mo_agenda_viatico1_por_dia_mxn" min="0" step="100" placeholder="1800"></div>
-            <div class="form-group"><label>Viático 1 pers. — fijo (MXN)</label><input type="number" class="tarifa-input" data-key="mo_agenda_viatico1_fijo_mxn" min="0" step="100" placeholder="1200"></div>
-            <div class="form-group"><label>Viático 2 pers. (MXN/día)</label><input type="number" class="tarifa-input" data-key="mo_agenda_viatico2_por_dia_mxn" min="0" step="100" placeholder="3600"></div>
-            <div class="form-group"><label>Viático 2 pers. — fijo (MXN)</label><input type="number" class="tarifa-input" data-key="mo_agenda_viatico2_fijo_mxn" min="0" step="100" placeholder="1900"></div>
+            <div class="form-group"><label>Traslado por hora en carro (MXN)</label><input type="number" class="tarifa-input" data-key="mo_agenda_traslado_carro_mxn_hr" min="0" step="50" value="2000" placeholder="2000"></div>
+            <div class="form-group"><label>Mecánico (MXN/h)</label><input type="number" class="tarifa-input" data-key="mo_agenda_mecanico_mxn_hr" min="0" step="50" value="1000" placeholder="1000"></div>
+            <div class="form-group"><label>Mecánico y ayudante (MXN/h)</label><input type="number" class="tarifa-input" data-key="mo_agenda_mecanico_ayudante_mxn_hr" min="0" step="50" value="1400" placeholder="1400"></div>
+            <div class="form-group"><label>Mecánico y 2 ayudantes (MXN/h)</label><input type="number" class="tarifa-input" data-key="mo_agenda_mecanico_2ayudantes_mxn_hr" min="0" step="50" value="1900" placeholder="1900"></div>
+            <div class="form-group"><label>Electrónico (MXN/h)</label><input type="number" class="tarifa-input" data-key="mo_agenda_electronico_mxn_hr" min="0" step="50" value="1500" placeholder="1500"></div>
+            <div class="form-group"><label>Electrónico y ayudante (MXN/h)</label><input type="number" class="tarifa-input" data-key="mo_agenda_electronico_ayudante_mxn_hr" min="0" step="50" value="2100" placeholder="2100"></div>
+            <div class="form-group"><label>Viáticos 1 persona (MXN/día)</label><input type="number" class="tarifa-input" data-key="mo_agenda_viatico1_por_dia_mxn" min="0" step="100" value="3000" placeholder="3000"></div>
+            <div class="form-group"><label>Viáticos 2 personas (MXN/día)</label><input type="number" class="tarifa-input" data-key="mo_agenda_viatico2_por_dia_mxn" min="0" step="100" value="5500" placeholder="5500"></div>
+            <!-- Recargos viejos (compatibilidad sin data-key: no se guardan ni sobrescriben lo que haya en BD) -->
           </div>
         </div>
         <div class="tarifas-section comm-admin-only">
-          <h3 class="tarifas-section-title"><i class="fas fa-percentage"></i> Reglas de comisiones</h3>
+          <h3 class="tarifas-section-title"><i class="fas fa-percentage"></i> Reglas de comisiones y bonos</h3>
           <div class="tarifas-form-grid">
             <div class="form-group"><label>Comisión refacciones (%)</label><input type="number" id="tarifa-comision-ref" class="tarifa-input" min="0" max="100" step="0.5" value="15"></div>
             <div class="form-group"><label>Comisión servicios (%)</label><input type="number" id="tarifa-comision-svc" class="tarifa-input" min="0" max="100" step="0.5" value="15"></div>
-            <div class="form-group"><label>Comisión máquinas – David Cantú (%)</label><input type="number" id="tarifa-comision-maq-david" class="tarifa-input" min="0" max="100" step="0.5" value="10"></div>
-            <div class="form-group"><label>Bono por cada $20,000 facturados (MXN)</label><input type="number" id="tarifa-bono-20k" class="tarifa-input" min="0" step="100" value="1000"></div>
-            <div class="form-group"><label>Bono extra si supera $40,000 (MXN)</label><input type="number" id="tarifa-bono-40k" class="tarifa-input" min="0" step="100" value="2000"></div>
+            <div class="form-group"><label>Comisión máquinas (%)</label><input type="number" id="tarifa-comision-maq-david" class="tarifa-input" min="0" max="100" step="0.5" value="10"></div>
+            <div class="form-group"><label>Bono por cada $20,000 facturados (MXN/persona)</label><input type="number" id="tarifa-bono-20k" class="tarifa-input" min="0" step="100" value="1000"></div>
+            <div class="form-group"><label>Bono capacitación local (MXN)</label><input type="number" id="tarifa-bono-cap-local" class="tarifa-input" data-key="bono_capacitacion_local_mxn" min="0" step="100" value="500"></div>
+            <div class="form-group"><label>Bono capacitación en línea (MXN)</label><input type="number" id="tarifa-bono-cap-linea" class="tarifa-input" data-key="bono_capacitacion_linea_mxn" min="0" step="100" value="800"></div>
+            <div class="form-group"><label>Bono capacitación foránea (MXN)</label><input type="number" id="tarifa-bono-cap-foranea" class="tarifa-input" data-key="bono_capacitacion_foranea_mxn" min="0" step="100" value="1000"></div>
             <div class="form-group"><label>Bono por día fuera de ciudad (MXN/persona)</label><input type="number" id="tarifa-bono-dia" class="tarifa-input" min="0" step="100" value="500"></div>
+            <input type="hidden" id="tarifa-bono-40k" value="0">
           </div>
         </div>
         <div class="tarifas-section tarifas-nota-calc">
-          <h3 class="tarifas-section-title"><i class="fas fa-info-circle"></i> Cómo se calculan las tarifas</h3>
+          <h3 class="tarifas-section-title"><i class="fas fa-info-circle"></i> Resumen — tarifas UNIVERSAL 2026</h3>
           <ul class="tarifas-notas-list">
-            <li>Cotización de <strong>mano de obra</strong>: misma lógica en MXN que la hoja <strong>TARIFAS</strong> de <em>AGENDA SERVICIO</em> (traslado en carro h×2000; mecánico h×1000 + recargos 2/3 personas; electrónico h×1500 o ×1,4 con ayudante; viáticos 1 o 2 personas por días), luego conversión a USD con el T.C. Los valores editables están en <strong>AGENDA SERVICIO — hoja TARIFAS</strong> arriba (claves <code>mo_agenda_*</code>).</li>
-            <li class="comm-admin-only">Cotización de <strong>refacciones</strong>: precio USD × tipo de cambio Banxico (o manual). Comisión del <span id="nota-comision-ref">15</span>% sobre total.</li>
-            <li class="comm-admin-only">Cotización de <strong>máquina</strong>: precio USD × tipo de cambio. Si vendedor = David Cantú: comisión del <span id="nota-comision-maq">15</span>% (resumen en <strong>Cotizaciones → Comisiones David Cantú</strong>).</li>
-            <li class="comm-admin-only"><strong>Bono por facturación</strong>: $<span id="nota-bono-20k">1,000</span> por cada $20,000 facturados. Si supera $40,000: bono máximo $<span id="nota-bono-40k">2,000</span>.</li>
-            <li class="comm-admin-only"><strong>Bono por viaje</strong>: $<span id="nota-bono-dia">500</span>/día/persona si es fuera de ciudad.</li>
+            <li><strong>Traslado por hora en carro:</strong> $2,000 MXN/h</li>
+            <li><strong>Mecánico:</strong> $1,000/h · <strong>Mec. + ayudante:</strong> $1,400/h · <strong>Mec. + 2 ayudantes:</strong> $1,900/h</li>
+            <li><strong>Electrónico:</strong> $1,500/h · <strong>Electrónico + ayudante:</strong> $2,100/h</li>
+            <li><strong>Viáticos:</strong> $3,000/día (1 persona) · $5,500/día (2 personas)</li>
+            <li class="comm-admin-only"><strong>Comisiones:</strong> 15% refacciones · 15% servicios · 10% máquinas</li>
+            <li class="comm-admin-only"><strong>Bonos:</strong> $<span id="nota-bono-20k">1,000</span> por cada $20,000 facturados/persona · $<span id="nota-bono-dia">500</span>/día fuera de ciudad</li>
+            <li class="comm-admin-only"><strong>Capacitación:</strong> $500 local · $800 en línea · $1,000 foránea</li>
           </ul>
         </div>
       </div>
@@ -2154,7 +2165,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=229-maquinas-catalogo-universal-2026-05-15"></script>
+  <script src="js/app.js?v=230-almacen-sucursales-tarifas-universal-2026-05-15"></script>
   <script src="js/prospeccion-map.js?v=7-sync-segment-heat-weight-2026-05-10" defer></script>
   <script src="js/bg-animation.js?v=8-map-shell-no-duplicate-hamburger" defer></script>
   <script src="js/premium-ux.js?v=24-globalmo-full-suppress-2026-05-07" defer></script>

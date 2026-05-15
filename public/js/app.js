@@ -13650,6 +13650,68 @@
   }
 
   // ----- ALMACÉN (modelo, sucursal, serie, estado revisión, cotización pendiente) -----
+  // ----- MODAL: Agregar máquina al almacén (versión corta: solo nombre + serie + sucursal) -----
+  async function openModalNuevaMaquinaAlmacen() {
+    const body = `
+      <div class="cotz-modal">
+        <section class="cotz-card">
+          <h4 class="cotz-card-title"><i class="fas fa-warehouse"></i> Datos básicos del equipo</h4>
+          <p class="form-hint" style="margin-top:0">Alta rápida en almacén. Después podrás complementar la ficha técnica desde la pestaña <strong>Máquinas</strong>.</p>
+          <div class="form-group"><label>Nombre de la máquina *</label>
+            <input type="text" id="alm-nombre" maxlength="200" placeholder="Ej: Torno CNC HZ7900L">
+          </div>
+          <div class="form-group"><label>Número de serie</label>
+            <input type="text" id="alm-serie" maxlength="120" placeholder="Ej: 7900L-2024-001">
+          </div>
+          <div class="form-group"><label>Sucursal / Ubicación *</label>
+            <select id="alm-sucursal">
+              <option value="">-- Seleccionar sucursal --</option>
+              <option value="QUERETARO">QUERÉTARO</option>
+              <option value="MONTERREY">MONTERREY</option>
+              <option value="GUADALAJARA">GUADALAJARA</option>
+              <option value="REYNOSA">REYNOSA</option>
+              <option value="CHIHUAHUA">CHIHUAHUA</option>
+              <option value="MEXICO">MÉXICO</option>
+            </select>
+          </div>
+        </section>
+        <div class="form-actions">
+          <button type="button" class="btn primary" id="alm-save"><i class="fas fa-save"></i> Guardar</button>
+          <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
+        </div>
+      </div>
+    `;
+    openModal('Agregar máquina al almacén', body);
+    qs('#alm-save').onclick = async () => {
+      const nombre = (qs('#alm-nombre').value || '').trim();
+      const serie = (qs('#alm-serie').value || '').trim();
+      const sucursal = (qs('#alm-sucursal').value || '').trim();
+      if (!nombre) { showToast('El nombre de la máquina es obligatorio.', 'error'); qs('#alm-nombre').focus(); return; }
+      if (!sucursal) { showToast('Selecciona una sucursal.', 'error'); qs('#alm-sucursal').focus(); return; }
+      const btn = qs('#alm-save');
+      const orig = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando…';
+      try {
+        const payload = {
+          nombre,
+          modelo: nombre,
+          numero_serie: serie || null,
+          ubicacion: sucursal,
+        };
+        await fetchJson(API + '/maquinas', { method: 'POST', body: JSON.stringify(payload) });
+        qs('#modal').classList.add('hidden');
+        showToast('Máquina agregada al almacén.', 'success');
+        loadAlmacen();
+      } catch (e) {
+        showToast(parseApiError(e) || 'No se pudo guardar.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = orig;
+      }
+    };
+  }
+
   async function loadAlmacen() {
     showLoading();
     try {
@@ -13667,18 +13729,13 @@
           updateGlobalBranchOptions();
         } catch (_) {}
       }
+      // Lista fija de sucursales UNIVERSAL (6 ciudades). No se infiere de clientes.
+      const SUCURSALES_UNIVERSAL = ['QUERETARO', 'MONTERREY', 'GUADALAJARA', 'REYNOSA', 'CHIHUAHUA', 'MEXICO'];
       const sel = qs('#filtro-sucursal-almacen');
       if (sel) {
         const cur = sel.value || '';
-        const cities = [
-          ...new Set(
-            almacenMaquinasSnapshot.map((m) => ciudadSucursalMaquina(m)).filter((c) => c && c !== '—')
-          ),
-        ].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
-        sel.innerHTML =
-          '<option value="">Todas las sucursales</option>' +
-          cities.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-        if (cur && cities.includes(cur)) sel.value = cur;
+        // Mantener las opciones que ya vienen del HTML (lista fija). Solo restaurar selección.
+        if (cur && SUCURSALES_UNIVERSAL.includes(cur)) sel.value = cur;
       }
       renderAlmacenTable();
     } catch (e) {
@@ -13691,17 +13748,27 @@
 
   function ciudadSucursalMaquina(m) {
     if (!m) return '—';
-    if (m.ciudad && String(m.ciudad).trim()) return String(m.ciudad).trim();
+    // Sucursales fijas UNIVERSAL — la ubicación manual gana sobre la ciudad del cliente.
+    const SUCS = ['QUERETARO', 'MONTERREY', 'GUADALAJARA', 'REYNOSA', 'CHIHUAHUA', 'MEXICO'];
+    const normSuc = (s) => String(s || '').toUpperCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+    // 1) Si ubicacion mapea a una sucursal fija → usarla
+    const ub = normSuc(m.ubicacion);
+    if (ub && SUCS.includes(ub)) return ub;
+    // 2) Si ciudad del cliente mapea a una sucursal fija → usarla
+    if (m.ciudad) {
+      const c = normSuc(m.ciudad);
+      if (SUCS.includes(c)) return c;
+    }
     const cid = m.cliente_id;
     if (cid != null && clientesCache && clientesCache.length) {
       const c = clientesCache.find((x) => String(x.id) === String(cid));
-      if (c && c.ciudad) return String(c.ciudad).trim();
+      if (c && c.ciudad) {
+        const cn = normSuc(c.ciudad);
+        if (SUCS.includes(cn)) return cn;
+      }
     }
-    const nom = (m.cliente_nombre || '').trim();
-    if (nom) {
-      const k = nom.toLowerCase();
-      if (clienteCityByName[k]) return clienteCityByName[k];
-    }
+    // Fallback: mostrar ubicación cruda si la hay (sin filtrar), si no, raya
     const u = (m.ubicacion && String(m.ubicacion).trim()) || '';
     return u || '—';
   }
@@ -15008,6 +15075,8 @@
   if (buscarAlmacen) buscarAlmacen.addEventListener('input', debounce(() => renderAlmacenTable(), 250));
   const filtroSucursalAlmacen = qs('#filtro-sucursal-almacen');
   if (filtroSucursalAlmacen) filtroSucursalAlmacen.addEventListener('change', () => renderAlmacenTable());
+  const btnNuevaMaqAlm = qs('#btn-nueva-maquina-almacen');
+  if (btnNuevaMaqAlm) btnNuevaMaqAlm.addEventListener('click', () => openModalNuevaMaquinaAlmacen());
   const dashboardGoBackups = qs('#dashboard-go-backups');
   if (dashboardGoBackups) dashboardGoBackups.addEventListener('click', () => showPanel('demo'));
   const dashboardGoExecutivePdf = qs('#dashboard-go-executive-pdf');
