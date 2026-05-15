@@ -5750,8 +5750,29 @@
     tbody.querySelectorAll('.btn-aplicar-cot').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
-        console.log('[cot][aplicar] click id=', btn.dataset.id);
-        openConfirmModal('¿Aprobar como venta? Se descontará del almacén la cantidad de cada refacción en las líneas (según catálogo).', () => aplicarCotizacion(btn.dataset.id));
+        const id = btn.dataset.id;
+        console.log('[cot][aplicar] click id=', id);
+        // Verificar primero que el modal #confirm-modal existe; si no, usar window.confirm.
+        const modal = document.querySelector('#confirm-modal');
+        console.log('[cot][aplicar] #confirm-modal existe?', !!modal, modal ? 'classes:' + modal.className : '');
+        if (!modal) {
+          // Fallback: confirm nativo
+          if (window.confirm('¿Aprobar como venta? Se descontará del almacén la cantidad de cada refacción en las líneas.')) {
+            aplicarCotizacion(id);
+          }
+          return;
+        }
+        try {
+          openConfirmModal('¿Aprobar como venta? Se descontará del almacén la cantidad de cada refacción en las líneas (según catálogo).', () => {
+            console.log('[cot][aplicar] confirmado, llamando aplicarCotizacion…');
+            aplicarCotizacion(id);
+          }, { confirmLabel: 'Aprobar', confirmIcon: 'fa-check', confirmClass: 'btn success' });
+          console.log('[cot][aplicar] openConfirmModal llamado, modal hidden?', modal.classList.contains('hidden'));
+        } catch (err) {
+          console.error('[cot][aplicar] openConfirmModal lanzó error:', err);
+          // Fallback emergencia
+          if (window.confirm('¿Aprobar como venta?')) aplicarCotizacion(id);
+        }
       });
     });
     tbody.querySelectorAll('.btn-pdf-cot').forEach(btn => {
