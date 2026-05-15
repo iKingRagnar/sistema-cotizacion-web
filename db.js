@@ -415,6 +415,21 @@ async function runMigrations() {
     `ALTER TABLE clientes ADD COLUMN constancia_nombre TEXT`,
     `ALTER TABLE clientes ADD COLUMN constancia_thumb_url TEXT`,
     `ALTER TABLE maquinas ADD COLUMN subcategoria TEXT`,
+    /* Catálogo de máquinas estilo ficha técnica UNIVERSAL (2026-05-15):
+       descripcion_corta = 1-2 líneas tipo "Torno Vertical CNC HZ7900L"
+       descripcion_larga = párrafo principal de specs
+       ficha_tecnica_specs = JSON [{label:"Maximum swing diameter", value:"900"}, ...]
+       incluye = JSON ["Envío sin costo", "Instalación", "Capacitación"]
+       puesta_en = "Bodega Nuestra Monterrey"; garantia = "1 año"; condiciones_pago = "Contado"
+       tiempo_entrega_dias = INTEGER (ej. 65) */
+    `ALTER TABLE maquinas ADD COLUMN tiempo_entrega_dias INTEGER`,
+    `ALTER TABLE maquinas ADD COLUMN descripcion_corta TEXT`,
+    `ALTER TABLE maquinas ADD COLUMN descripcion_larga TEXT`,
+    `ALTER TABLE maquinas ADD COLUMN incluye TEXT`,
+    `ALTER TABLE maquinas ADD COLUMN ficha_tecnica_specs TEXT`,
+    `ALTER TABLE maquinas ADD COLUMN puesta_en TEXT`,
+    `ALTER TABLE maquinas ADD COLUMN garantia TEXT`,
+    `ALTER TABLE maquinas ADD COLUMN condiciones_pago TEXT`,
     `ALTER TABLE refacciones ADD COLUMN bloque TEXT`,
     `ALTER TABLE refacciones ADD COLUMN tipo_cambio_registro REAL`,
     /* Personal: INE y licencia (data URL + miniatura) */

@@ -4908,7 +4908,157 @@
     };
   }
 
+  // ----- VISTA UNIVERSAL (ficha técnica estilo Doc2.pdf) -----
+  function previewMaquinaUniversal(m) {
+    const piezaUrl = m.imagen_pieza_url ? String(m.imagen_pieza_url).trim() : '';
+    const titulo = (m.modelo || m.nombre || '').trim() || 'Máquina';
+    const descCorta = (m.descripcion_corta || '').trim();
+    const descLarga = (m.descripcion_larga || '').trim();
+    const precio = Number(m.precio_lista_usd) > 0 ? Number(m.precio_lista_usd) : null;
+    const precioFmt = precio != null ? precio.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '—';
+    const tiempoEntrega = m.tiempo_entrega_dias != null && Number(m.tiempo_entrega_dias) > 0 ? Number(m.tiempo_entrega_dias) : null;
+    const puestaEn = (m.puesta_en || '').trim();
+    const garantia = (m.garantia || '').trim();
+    const condPago = (m.condiciones_pago || '').trim();
+    let incluyeArr = [];
+    try { if (m.incluye) { const p = JSON.parse(m.incluye); if (Array.isArray(p)) incluyeArr = p; } } catch (_) {}
+    let specsArr = [];
+    try { if (m.ficha_tecnica_specs) { const p = JSON.parse(m.ficha_tecnica_specs); if (Array.isArray(p)) specsArr = p; } } catch (_) {}
+    const escH = (s) => String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const incluyeHtml = incluyeArr.length
+      ? `<div class="uv-incluye"><div class="uv-incluye-title">Incluye:</div><ul>${incluyeArr.map(t => `<li>${escH(t)}</li>`).join('')}</ul></div>`
+      : '';
+    const specsRowsHtml = specsArr.length
+      ? specsArr.map(s => `<tr><td class="uv-spec-label">${escH(s.label || '')}</td><td class="uv-spec-value">${escH(s.value || '')}</td></tr>`).join('')
+      : '<tr><td colspan="2" class="uv-spec-empty">Sin ficha técnica capturada — edítala desde el catálogo.</td></tr>';
+    const pieDatosArr = [];
+    if (puestaEn) pieDatosArr.push(`Puesta en: ${puestaEn}`);
+    if (garantia) pieDatosArr.push(garantia);
+    if (tiempoEntrega) pieDatosArr.push(`Tiempo de entrega: ${tiempoEntrega} días`);
+    if (condPago) pieDatosArr.push(`Condiciones de Pago: ${condPago}`);
+    const pieDatosHtml = pieDatosArr.length
+      ? pieDatosArr.map(t => `<div>${escH(t)}</div>`).join('')
+      : '<div class="uv-pie-empty">— Edita la máquina para agregar condiciones comerciales —</div>';
+    const fotoHtml = piezaUrl
+      ? `<img src="${escH(piezaUrl)}" alt="${escH(titulo)}" class="uv-foto-maquina">`
+      : `<div class="uv-foto-placeholder"><i style="font-size:48px;color:#cbd5e1">📷</i><br><span style="color:#94a3b8;font-size:13px">Sin foto</span></div>`;
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>${escH(titulo)} — Ficha técnica UNIVERSAL</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; color: #1a1a1a; background: #f3f4f6; }
+  .uv-toolbar { position: sticky; top: 0; z-index: 100; background: #1e293b; color: #fff; padding: 10px 20px; display: flex; gap: 12px; justify-content: flex-end; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .uv-toolbar button { background: #2563eb; color: #fff; border: 0; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600; }
+  .uv-toolbar button:hover { background: #1d4ed8; }
+  .uv-toolbar button.outline { background: transparent; border: 1px solid #94a3b8; }
+  .uv-page { max-width: 850px; margin: 20px auto; background: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+  .uv-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 24px 28px 8px; }
+  .uv-header-left { flex: 1; }
+  .uv-logo { max-width: 320px; height: auto; display: block; }
+  .uv-tel { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 18px; font-weight: 700; color: #1a1a1a; }
+  .uv-tel-icon { width: 26px; height: 26px; background: #22c55e; color: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; }
+  .uv-foto-maquina { max-width: 380px; max-height: 280px; object-fit: contain; }
+  .uv-foto-placeholder { width: 380px; height: 220px; border: 2px dashed #cbd5e1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .uv-titulo { padding: 8px 28px 0; font-size: 30px; font-weight: 900; color: #1a1a1a; letter-spacing: -0.5px; }
+  .uv-precio-banda { position: relative; margin: 14px 0 18px; padding: 14px 28px 14px 28px; background: linear-gradient(90deg, #c41e3a 0%, #d93a4f 70%, transparent 100%); color: #fff; display: flex; align-items: baseline; gap: 14px; clip-path: polygon(0 0, 95% 0, 80% 100%, 0% 100%); }
+  .uv-precio-label { font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; opacity: 0.95; }
+  .uv-precio-cifra { font-size: 38px; font-weight: 900; line-height: 1; }
+  .uv-precio-moneda { font-size: 16px; font-weight: 700; background: #1a1a1a; padding: 4px 10px; border-radius: 4px; }
+  .uv-cuerpo { display: grid; grid-template-columns: 1fr 1.1fr; gap: 22px; padding: 0 28px 18px; }
+  .uv-desc-corta { font-size: 15px; font-weight: 600; margin-bottom: 10px; color: #1a1a1a; }
+  .uv-desc-larga { font-size: 13.5px; line-height: 1.5; color: #2a2a2a; white-space: pre-wrap; }
+  .uv-incluye { margin-top: 14px; }
+  .uv-incluye-title { font-size: 15px; font-weight: 700; color: #c41e3a; margin-bottom: 6px; }
+  .uv-incluye ul { margin: 0; padding-left: 18px; list-style: none; }
+  .uv-incluye li { font-size: 13.5px; color: #1a1a1a; padding: 2px 0; position: relative; padding-left: 14px; }
+  .uv-incluye li::before { content: "-"; position: absolute; left: 0; color: #c41e3a; font-weight: 700; }
+  .uv-pie-datos { margin-top: 18px; padding-top: 12px; border-top: 2px solid #c41e3a; font-size: 12.5px; line-height: 1.55; color: #1a1a1a; }
+  .uv-pie-empty { color: #94a3b8; font-style: italic; }
+  .uv-specs-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+  .uv-specs-table td { border: 1px solid #d1d5db; padding: 5px 8px; vertical-align: middle; }
+  .uv-spec-label { background: #f8fafc; color: #1a1a1a; }
+  .uv-spec-value { color: #1a1a1a; }
+  .uv-spec-empty { padding: 20px; text-align: center; color: #94a3b8; font-style: italic; }
+  .uv-footer { background: #1a1a1a; color: #fff; padding: 14px 28px; margin-top: 8px; }
+  .uv-footer-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 15px; font-weight: 800; }
+  .uv-footer-top-left { color: #facc15; letter-spacing: 0.5px; }
+  .uv-footer-top-right { color: #fff; font-size: 14px; }
+  .uv-footer-bottom { margin-top: 10px; padding-top: 10px; border-top: 1px solid #444; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #cbd5e1; flex-wrap: wrap; gap: 8px; }
+  .uv-ciudades { letter-spacing: 1px; font-weight: 600; color: #facc15; }
+  .uv-web { color: #fff; }
+  @media print {
+    body { background: #fff; }
+    .uv-toolbar { display: none !important; }
+    .uv-page { box-shadow: none; margin: 0; max-width: 100%; }
+    @page { size: letter; margin: 10mm; }
+  }
+  @media (max-width: 700px) {
+    .uv-cuerpo { grid-template-columns: 1fr; }
+    .uv-header { flex-direction: column; align-items: stretch; }
+    .uv-foto-maquina, .uv-foto-placeholder { width: 100%; max-width: 100%; margin-top: 10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="uv-toolbar">
+    <button class="outline" onclick="window.close()">✕ Cerrar</button>
+    <button onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+  </div>
+  <div class="uv-page">
+    <div class="uv-header">
+      <div class="uv-header-left">
+        <img src="/fondos/universal-logo.jpg" alt="UNIVERSAL" class="uv-logo">
+        <div class="uv-tel"><span class="uv-tel-icon">✆</span> 81 8366 8946</div>
+      </div>
+      <div class="uv-header-right">${fotoHtml}</div>
+    </div>
+    <h1 class="uv-titulo">${escH(titulo)}</h1>
+    <div class="uv-precio-banda">
+      <span class="uv-precio-label">PRECIO</span>
+      <span class="uv-precio-cifra">$ ${precioFmt}</span>
+      <span class="uv-precio-moneda">USD + IVA</span>
+    </div>
+    <div class="uv-cuerpo">
+      <div class="uv-cuerpo-left">
+        ${descCorta ? `<div class="uv-desc-corta">${escH(descCorta)}</div>` : ''}
+        ${descLarga ? `<div class="uv-desc-larga">${escH(descLarga)}</div>` : ''}
+        ${incluyeHtml}
+        <div class="uv-pie-datos">${pieDatosHtml}</div>
+      </div>
+      <div class="uv-cuerpo-right">
+        <table class="uv-specs-table">${specsRowsHtml}</table>
+      </div>
+    </div>
+    <div class="uv-footer">
+      <div class="uv-footer-top">
+        <div class="uv-footer-top-left">UNIVERSAL MAQUINARIA</div>
+        <div class="uv-footer-top-right">DONDE LA COMPETENCIA NO EXISTE</div>
+      </div>
+      <div class="uv-footer-bottom">
+        <span class="uv-web">universalmaquinaria.com</span>
+        <span class="uv-ciudades">MONTERREY · CDMX · QUERÉTARO · GUADALAJARA · REYNOSA · CHIHUAHUA</span>
+        <span class="uv-web">www.universalmaquinaria.com</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+    const w = window.open('', '_blank', 'width=900,height=1100,scrollbars=yes');
+    if (!w) { showToast('El navegador bloqueó la ventana emergente. Permite popups para ver la ficha.', 'warning'); return; }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  }
+
   function previewMaquina(m) {
+    // Vista nueva: formato UNIVERSAL estilo Doc2.pdf en ventana nueva (imprimible).
+    return previewMaquinaUniversal(m);
+  }
+  function previewMaquinaLegacy(m) {
     clearPvcMediaUrlRegistry();
     const piezaUrl = m.imagen_pieza_url ? String(m.imagen_pieza_url).trim() : '';
     const ensUrl = m.imagen_ensamble_url ? String(m.imagen_ensamble_url).trim() : '';
@@ -5183,7 +5333,7 @@
     if (!tbody) return;
     tbody.innerHTML = '';
     if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty">No hay máquinas. Carga datos demo o agrega una nueva.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay máquinas. Carga datos demo o agrega una nueva.</td></tr>';
       return;
     }
     const _canEdit = canEdit(); const _canDelete = canDelete();
@@ -5194,14 +5344,22 @@
           ? pvcTablaThumbOpenButton(m.imagen_pieza_url)
           : `<button type="button" class="pvc-tabla-thumb-placeholder" data-id="${m.id}" title="Sin imagen · clic para subir"><i class="fas fa-camera" aria-hidden="true"></i></button>`;
       const idCell = `<div class="maq-id-thumb-row">${thumbPart}<button type="button" class="btn-id-maq link-btn" data-id="${m.id}" title="Subir o cambiar imagen de catálogo (ID ${m.id})">${m.id}</button></div>`;
+      const dashEmpty = '<span class="cell-empty">—</span>';
+      const precioUsd = Number(m.precio_lista_usd) > 0
+        ? `<strong>$${Number(m.precio_lista_usd).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</strong> <span class="muted">USD</span>`
+        : dashEmpty;
+      const tEntrega = (m.tiempo_entrega_dias != null && Number(m.tiempo_entrega_dias) > 0)
+        ? `${Number(m.tiempo_entrega_dias)} días`
+        : dashEmpty;
       tr.innerHTML = `
         <td>${idCell}</td>
-        <td>${escapeHtml(m.categoria || '')}</td>
-        <td>${escapeHtml(m.subcategoria || '')}</td>
+        <td>${escapeHtml(m.categoria || '') || dashEmpty}</td>
         <td><strong>${escapeHtml(m.modelo || m.nombre || '')}</strong></td>
+        <td class="ref-td-price">${precioUsd}</td>
+        <td class="ref-td-num">${tEntrega}</td>
         <td>${formatMaquinaFichaTecnicaCell(m)}</td>
         <td class="th-actions">
-          <button type="button" class="btn small outline btn-view-maq" data-id="${m.id}" title="Ver ficha"><i class="fas fa-eye"></i></button>
+          <button type="button" class="btn small outline btn-view-maq" data-id="${m.id}" title="Ver ficha técnica Universal (PDF)"><i class="fas fa-eye"></i></button>
           ${_canEdit ? `<button type="button" class="btn small primary btn-edit-maq" data-id="${m.id}"><i class="fas fa-edit"></i></button>` : ''}
           ${_canDelete ? `<button type="button" class="btn small danger btn-delete-maq" data-id="${m.id}"><i class="fas fa-trash"></i></button>` : ''}
         </td>
@@ -8682,11 +8840,36 @@
     const subOpts = hasCats
       ? ('<option value="">— (opcional) —</option>' + subs.map(s => `<option value="${escapeHtml(s.nombre)}" ${curSub === s.nombre ? 'selected' : ''}>${escapeHtml(s.nombre)}</option>`).join(''))
       : '<option value="" selected>—</option>';
+    // Parsear specs e incluye (JSON arrays). Fallback robusto.
+    let specsArr = [];
+    try {
+      if (maquina && maquina.ficha_tecnica_specs) {
+        const parsed = JSON.parse(maquina.ficha_tecnica_specs);
+        if (Array.isArray(parsed)) specsArr = parsed;
+      }
+    } catch (_) { /* invalid JSON ignored */ }
+    let incluyeArr = [];
+    try {
+      if (maquina && maquina.incluye) {
+        const parsed = JSON.parse(maquina.incluye);
+        if (Array.isArray(parsed)) incluyeArr = parsed;
+      }
+    } catch (_) { /* invalid JSON ignored */ }
+    const specsRowsHtml = (specsArr.length ? specsArr : [{ label: '', value: '' }]).map((row, i) => `
+      <div class="form-row maq-spec-row" data-idx="${i}" style="gap:0.5rem;margin-bottom:0.35rem">
+        <input type="text" class="maq-spec-label" placeholder="Ej: Maximum swing diameter (mm)" value="${escapeHtml(row.label || '')}" style="flex:2">
+        <input type="text" class="maq-spec-value" placeholder="Ej: 900" value="${escapeHtml(row.value || '')}" style="flex:1">
+        <button type="button" class="btn small danger maq-spec-remove" title="Quitar"><i class="fas fa-times"></i></button>
+      </div>`).join('');
+    const incluyeRowsHtml = (incluyeArr.length ? incluyeArr : ['']).map((txt, i) => `
+      <div class="form-row maq-incluye-row" data-idx="${i}" style="gap:0.5rem;margin-bottom:0.35rem">
+        <input type="text" class="maq-incluye-text" placeholder="Ej: Envío sin costo a Querétaro" value="${escapeHtml(txt || '')}" style="flex:1">
+        <button type="button" class="btn small danger maq-incluye-remove" title="Quitar"><i class="fas fa-times"></i></button>
+      </div>`).join('');
     const body = `
       <div class="cotz-modal">
         <section class="cotz-card" aria-labelledby="maq-sec-machine">
-          <h4 class="cotz-card-title" id="maq-sec-machine"><span class="cotz-step-num">1</span> Máquina</h4>
-          <p class="form-hint" style="margin-top:0"><i class="fas fa-layer-group"></i> <strong>Nombre de la máquina</strong> (campo categoría), <strong>parte</strong> (subcategoría) y <strong>versión</strong> (modelo) definen el equipo. El catálogo de nombres/partes lo administra el administrador en <strong>Categorías</strong>. En la tabla, clic en el <strong>ID</strong> para cambiar solo la imagen principal.</p>
+          <h4 class="cotz-card-title" id="maq-sec-machine"><span class="cotz-step-num">1</span> Datos básicos de la máquina</h4>
           ${hasCats ? '' : `
             <div class="form-actions" style="justify-content:flex-start;margin:0.15rem 0 0.75rem">
               <button type="button" class="btn" id="m-open-categorias"><i class="fas fa-sitemap"></i> Abrir Categorías</button>
@@ -8695,33 +8878,67 @@
           <div class="form-group"><label>Nombre de la máquina *</label>
             <select id="m-categoria">${catOpts}</select>
           </div>
-          <div class="form-group"><label>Parte</label>
+          <div class="form-group" hidden><label>Parte</label>
             <select id="m-subcategoria">${subOpts}</select>
           </div>
-          <div class="form-group"><label>Versión / modelo *</label><input type="text" id="m-modelo" maxlength="120" value="${escapeHtml(maquina && maquina.modelo) || ''}" required placeholder="Ej: GH1440A, CTX 510…"></div>
-          <div class="form-group"><label>Ficha técnica (opcional)</label>
-            <textarea id="m-ficha-tecnica" rows="2" maxlength="4000" placeholder="Enlace, nota o referencia (se muestra en la columna «Ficha técnica» del catálogo).">${escapeHtml(maquina && maquina.ficha_tecnica != null ? String(maquina.ficha_tecnica) : '')}</textarea>
-            <p class="form-hint" style="margin:0.35rem 0 0;font-size:0.8rem"><i class="fas fa-info-circle"></i> Distinto del archivo de <strong>Especificaciones</strong> (imagen/PDF arriba): aquí va texto o URL corta.</p>
+          <div class="form-group"><label>Versión / modelo *</label><input type="text" id="m-modelo" maxlength="120" value="${escapeHtml(maquina && maquina.modelo) || ''}" required placeholder="Ej: HZ7900L FANUC-HERR.VIVAS"></div>
+          <div class="form-group"><label>Descripción corta (1-2 líneas)</label>
+            <input type="text" id="m-desc-corta" maxlength="200" value="${escapeHtml(maquina && maquina.descripcion_corta || '')}" placeholder="Ej: Torno Vertical CNC HZ7900L">
+          </div>
+          <div class="form-group"><label>Descripción larga (specs principales)</label>
+            <textarea id="m-desc-larga" rows="4" maxlength="2000" placeholder="Ej: HZ900L, Fanuc oi TF system, Spindle A2-11, spindle motor power 15KW…">${escapeHtml(maquina && maquina.descripcion_larga || '')}</textarea>
+          </div>
+          <div class="form-row" style="gap:1rem">
+            <div class="form-group" style="flex:1"><label>Precio USD</label>
+              <input type="number" id="m-precio-usd" min="0" step="0.01" value="${maquina && maquina.precio_lista_usd != null ? Number(maquina.precio_lista_usd) : ''}" placeholder="Ej: 82354">
+            </div>
+            <div class="form-group" style="flex:1"><label>Tiempo de entrega (días)</label>
+              <input type="number" id="m-tiempo-entrega" min="0" step="1" value="${maquina && maquina.tiempo_entrega_dias != null ? Number(maquina.tiempo_entrega_dias) : ''}" placeholder="Ej: 65">
+            </div>
+          </div>
+          <div class="form-group"><label>Ficha técnica (nota corta / URL — opcional)</label>
+            <textarea id="m-ficha-tecnica" rows="2" maxlength="4000" placeholder="Enlace o referencia que aparece en la columna «Ficha técnica» del catálogo.">${escapeHtml(maquina && maquina.ficha_tecnica != null ? String(maquina.ficha_tecnica) : '')}</textarea>
+          </div>
+        </section>
+        <section class="cotz-card" aria-labelledby="maq-sec-incluye">
+          <h4 class="cotz-card-title" id="maq-sec-incluye"><span class="cotz-step-num">2</span> Incluye (bullets de la ficha)</h4>
+          <p class="form-hint" style="margin-top:0"><i class="fas fa-list-ul"></i> Cada línea es un bullet que aparece en la sección "Incluye:" de la ficha técnica UNIVERSAL.</p>
+          <div id="m-incluye-list">${incluyeRowsHtml}</div>
+          <button type="button" class="btn small outline" id="m-incluye-add"><i class="fas fa-plus"></i> Agregar línea</button>
+        </section>
+        <section class="cotz-card" aria-labelledby="maq-sec-specs">
+          <h4 class="cotz-card-title" id="maq-sec-specs"><span class="cotz-step-num">3</span> Ficha técnica (tabla)</h4>
+          <p class="form-hint" style="margin-top:0"><i class="fas fa-table"></i> Pares "concepto → valor" que aparecen en la tabla derecha de la ficha (project → HZ900L, Maximum swing diameter → 900, etc.).</p>
+          <div id="m-specs-list">${specsRowsHtml}</div>
+          <button type="button" class="btn small outline" id="m-specs-add"><i class="fas fa-plus"></i> Agregar fila</button>
+        </section>
+        <section class="cotz-card" aria-labelledby="maq-sec-condiciones">
+          <h4 class="cotz-card-title" id="maq-sec-condiciones"><span class="cotz-step-num">4</span> Condiciones comerciales</h4>
+          <div class="form-row" style="gap:1rem">
+            <div class="form-group" style="flex:1"><label>Puesta en</label>
+              <input type="text" id="m-puesta-en" maxlength="200" value="${escapeHtml(maquina && maquina.puesta_en || '')}" placeholder="Ej: Bodega Nuestra Monterrey">
+            </div>
+            <div class="form-group" style="flex:1"><label>Garantía</label>
+              <input type="text" id="m-garantia" maxlength="200" value="${escapeHtml(maquina && maquina.garantia || '')}" placeholder="Ej: 1 año de Garantía">
+            </div>
+          </div>
+          <div class="form-group"><label>Condiciones de pago</label>
+            <input type="text" id="m-condiciones-pago" maxlength="200" value="${escapeHtml(maquina && maquina.condiciones_pago || '')}" placeholder="Ej: Contado · Precio en pesos MX al tipo de cambio del día">
           </div>
         </section>
         <section class="cotz-card" aria-labelledby="maq-sec-spec">
-          <h4 class="cotz-card-title" id="maq-sec-spec"><span class="cotz-step-num">2</span> Archivos</h4>
-          <p class="form-hint" style="margin-top:0"><i class="fas fa-images"></i> Los archivos se guardan en el registro (data URL). La imagen de especificaciones puede ser <strong>PDF</strong> u otra imagen.</p>
+          <h4 class="cotz-card-title" id="maq-sec-spec"><span class="cotz-step-num">5</span> Foto de la máquina</h4>
           <div class="form-row" style="margin-top:0.65rem">
-            <div class="form-group" style="margin-bottom:0">
+            <div class="form-group" style="margin-bottom:0;flex:1">
               <label>Imagen de carga máquina</label>
               <input type="file" id="m-cat-file-pieza" accept="image/*">
-            </div>
-            <div class="form-group" style="margin-bottom:0">
-              <label>Especificaciones de máquina (opcional)</label>
-              <input type="file" id="m-cat-file-ensamble" accept="image/*,application/pdf">
             </div>
           </div>
           <input type="hidden" id="m-h-imagen-pieza" value="${escapeHtml(maquina && maquina.imagen_pieza_url) || ''}">
           <input type="hidden" id="m-h-imagen-ensamble" value="${escapeHtml(maquina && maquina.imagen_ensamble_url) || ''}">
           <div class="form-row" style="margin-top:0.75rem;gap:1rem;align-items:flex-start">
             <div class="form-group" style="margin-bottom:0;flex:1;min-width:0">
-              <label style="font-size:0.85rem">Vista previa imagen</label>
+              <label style="font-size:0.85rem">Vista previa</label>
               <div id="m-prev-pieza">${(maquina && maquina.imagen_pieza_url) ? previewMediaThumbBlock(maquina.imagen_pieza_url, 'Imagen de carga máquina') : '<span class="muted">—</span>'}</div>
             </div>
             <div class="form-group" style="margin-bottom:0;flex:1;min-width:0">
@@ -8789,6 +9006,45 @@
       qs('#m-h-imagen-ensamble').value = dataUrl;
       renderMaqMediaPrev(prevEns, dataUrl, 'Especificaciones');
     });
+
+    // ----- Specs dinámicos (ficha técnica tabla) -----
+    const specsList = qs('#m-specs-list');
+    function addSpecRow(label = '', value = '') {
+      if (!specsList) return;
+      const div = document.createElement('div');
+      div.className = 'form-row maq-spec-row';
+      div.style.cssText = 'gap:0.5rem;margin-bottom:0.35rem';
+      div.innerHTML = `
+        <input type="text" class="maq-spec-label" placeholder="Ej: Maximum swing diameter (mm)" value="${escapeHtml(label)}" style="flex:2">
+        <input type="text" class="maq-spec-value" placeholder="Ej: 900" value="${escapeHtml(value)}" style="flex:1">
+        <button type="button" class="btn small danger maq-spec-remove" title="Quitar"><i class="fas fa-times"></i></button>
+      `;
+      specsList.appendChild(div);
+      div.querySelector('.maq-spec-remove').addEventListener('click', () => div.remove());
+    }
+    qs('#m-specs-add')?.addEventListener('click', () => addSpecRow());
+    specsList?.querySelectorAll('.maq-spec-remove').forEach(btn => {
+      btn.addEventListener('click', () => btn.closest('.maq-spec-row')?.remove());
+    });
+
+    // ----- Incluye dinámicos -----
+    const incluyeList = qs('#m-incluye-list');
+    function addIncluyeRow(txt = '') {
+      if (!incluyeList) return;
+      const div = document.createElement('div');
+      div.className = 'form-row maq-incluye-row';
+      div.style.cssText = 'gap:0.5rem;margin-bottom:0.35rem';
+      div.innerHTML = `
+        <input type="text" class="maq-incluye-text" placeholder="Ej: Envío sin costo a Querétaro" value="${escapeHtml(txt)}" style="flex:1">
+        <button type="button" class="btn small danger maq-incluye-remove" title="Quitar"><i class="fas fa-times"></i></button>
+      `;
+      incluyeList.appendChild(div);
+      div.querySelector('.maq-incluye-remove').addEventListener('click', () => div.remove());
+    }
+    qs('#m-incluye-add')?.addEventListener('click', () => addIncluyeRow());
+    incluyeList?.querySelectorAll('.maq-incluye-remove').forEach(btn => {
+      btn.addEventListener('click', () => btn.closest('.maq-incluye-row')?.remove());
+    });
     qs('#m-save').onclick = async () => {
       clearInvalidMarks();
       const modelo = (qs('#m-modelo').value || '').trim();
@@ -8803,7 +9059,6 @@
       const imagenPieza = fotoPieza || hPieza || null;
       const imagenEns = fotoEns || hEns || null;
       const stockNum = !isNew && maquina && maquina.stock != null ? Number(maquina.stock) : 0;
-      const plUsd = !isNew && maquina && maquina.precio_lista_usd != null ? Number(maquina.precio_lista_usd) : 0;
       const clienteIdFinal = (maquina && maquina.cliente_id != null)
         ? Number(maquina.cliente_id)
         : (defaultClienteId != null ? defaultClienteId : null);
@@ -8812,6 +9067,31 @@
       const fichaEl = qs('#m-ficha-tecnica');
       const fichaTxt = fichaEl && typeof fichaEl.value === 'string' ? fichaEl.value.trim() : '';
       const ficha_tecnica = fichaTxt !== '' ? fichaTxt : null;
+      // Nuevos campos catálogo Universal
+      const precioUsdInput = qs('#m-precio-usd');
+      const precioUsdVal = precioUsdInput && precioUsdInput.value.trim() !== '' ? Number(precioUsdInput.value) : null;
+      const tEntregaInput = qs('#m-tiempo-entrega');
+      const tEntregaVal = tEntregaInput && tEntregaInput.value.trim() !== '' ? Number(tEntregaInput.value) : null;
+      const descCorta = (qs('#m-desc-corta')?.value || '').trim() || null;
+      const descLarga = (qs('#m-desc-larga')?.value || '').trim() || null;
+      const puestaEn = (qs('#m-puesta-en')?.value || '').trim() || null;
+      const garantia = (qs('#m-garantia')?.value || '').trim() || null;
+      const condPago = (qs('#m-condiciones-pago')?.value || '').trim() || null;
+      // Recoger specs (filas dinámicas con valor)
+      const specsArr = [];
+      document.querySelectorAll('#m-specs-list .maq-spec-row').forEach(row => {
+        const lbl = (row.querySelector('.maq-spec-label')?.value || '').trim();
+        const val = (row.querySelector('.maq-spec-value')?.value || '').trim();
+        if (lbl || val) specsArr.push({ label: lbl, value: val });
+      });
+      const specsJson = specsArr.length ? JSON.stringify(specsArr) : null;
+      // Recoger incluye (filas dinámicas con texto)
+      const incluyeArr = [];
+      document.querySelectorAll('#m-incluye-list .maq-incluye-row').forEach(row => {
+        const t = (row.querySelector('.maq-incluye-text')?.value || '').trim();
+        if (t) incluyeArr.push(t);
+      });
+      const incluyeJson = incluyeArr.length ? JSON.stringify(incluyeArr) : null;
       const payload = {
         nombre: modelo,
         codigo: !isNew && maquina && maquina.codigo != null ? String(maquina.codigo).trim() || null : null,
@@ -8826,7 +9106,15 @@
         imagen_ensamble_url: imagenEns,
         ficha_tecnica,
         stock: Number.isFinite(stockNum) ? stockNum : 0,
-        precio_lista_usd: Number.isFinite(plUsd) ? plUsd : 0,
+        precio_lista_usd: precioUsdVal,
+        tiempo_entrega_dias: tEntregaVal,
+        descripcion_corta: descCorta,
+        descripcion_larga: descLarga,
+        incluye: incluyeJson,
+        ficha_tecnica_specs: specsJson,
+        puesta_en: puestaEn,
+        garantia: garantia,
+        condiciones_pago: condPago,
       };
       if (clienteIdFinal != null && Number.isFinite(clienteIdFinal)) payload.cliente_id = clienteIdFinal;
       const btn = qs('#m-save');

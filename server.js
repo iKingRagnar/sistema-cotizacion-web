@@ -1729,54 +1729,58 @@ app.delete('/api/admin/categorias-catalogo/subcategorias/:id', async (req, res) 
   }
 });
 
+// Helper para campos nullable usado en máquinas
+function _maqNullableStr(v) {
+  return (v != null && String(v).trim() !== '') ? String(v).trim() : null;
+}
+function _maqNullableNum(v) {
+  if (v === null || v === undefined || v === '') return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
 app.post('/api/maquinas', async (req, res) => {
   try {
     const {
-      cliente_id,
-      codigo,
-      nombre,
-      marca,
-      modelo,
-      numero_serie,
-      ubicacion,
-      categoria,
-      categoria_principal,
-      subcategoria,
-      imagen_pieza_url,
-      imagen_ensamble_url,
-      stock,
-      precio_lista_usd,
-      ficha_tecnica,
+      cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion,
+      categoria, categoria_principal, subcategoria,
+      imagen_pieza_url, imagen_ensamble_url, stock, precio_lista_usd, ficha_tecnica,
+      // Nuevos campos catálogo (2026-05-15)
+      tiempo_entrega_dias, descripcion_corta, descripcion_larga, incluye, ficha_tecnica_specs,
+      puesta_en, garantia, condiciones_pago,
     } = req.body || {};
     let cid = cliente_id != null && cliente_id !== '' ? Number(cliente_id) : null;
     if (!cid || !Number.isFinite(cid)) {
       const first = await db.getOne('SELECT id FROM clientes ORDER BY id LIMIT 1');
-      if (!first || first.id == null) {
-        return res.status(400).json({ error: 'No hay clientes en el sistema. Crea al menos un cliente o indica cliente_id.' });
-      }
-      cid = first.id;
+      cid = first && first.id != null ? Number(first.id) : null;
     }
-    const stockNum = stock != null && stock !== '' ? Number(stock) : 0;
-    const plUsd = precio_lista_usd != null && precio_lista_usd !== '' ? Number(precio_lista_usd) : 0;
     await db.runQuery(
-      `INSERT INTO maquinas (cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion, categoria, categoria_principal, subcategoria, imagen_pieza_url, imagen_ensamble_url, stock, precio_lista_usd, ficha_tecnica)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO maquinas (cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion, categoria, categoria_principal, subcategoria, imagen_pieza_url, imagen_ensamble_url, stock, precio_lista_usd, ficha_tecnica, tiempo_entrega_dias, descripcion_corta, descripcion_larga, incluye, ficha_tecnica_specs, puesta_en, garantia, condiciones_pago)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         cid,
-        codigo || null,
+        _maqNullableStr(codigo),
         nombre || modelo || '',
-        marca || null,
-        modelo || null,
-        numero_serie || null,
-        ubicacion || null,
-        categoria || null,
-        categoria_principal || null,
-        subcategoria != null && String(subcategoria).trim() !== '' ? String(subcategoria).trim() : null,
+        _maqNullableStr(marca),
+        _maqNullableStr(modelo),
+        _maqNullableStr(numero_serie),
+        _maqNullableStr(ubicacion),
+        _maqNullableStr(categoria),
+        _maqNullableStr(categoria_principal),
+        _maqNullableStr(subcategoria),
         imagen_pieza_url || null,
         imagen_ensamble_url || null,
-        Number.isFinite(stockNum) ? stockNum : 0,
-        Number.isFinite(plUsd) ? plUsd : 0,
-        ficha_tecnica != null && String(ficha_tecnica).trim() !== '' ? String(ficha_tecnica).trim() : null,
+        _maqNullableNum(stock) || 0,
+        _maqNullableNum(precio_lista_usd) || 0,
+        _maqNullableStr(ficha_tecnica),
+        _maqNullableNum(tiempo_entrega_dias),
+        _maqNullableStr(descripcion_corta),
+        _maqNullableStr(descripcion_larga),
+        _maqNullableStr(incluye),
+        _maqNullableStr(ficha_tecnica_specs),
+        _maqNullableStr(puesta_en),
+        _maqNullableStr(garantia),
+        _maqNullableStr(condiciones_pago),
       ]
     );
     const r = await db.getOne('SELECT * FROM maquinas ORDER BY id DESC LIMIT 1');
@@ -1789,24 +1793,12 @@ app.post('/api/maquinas', async (req, res) => {
 app.put('/api/maquinas/:id', async (req, res) => {
   try {
     const {
-      cliente_id,
-      codigo,
-      nombre,
-      marca,
-      modelo,
-      numero_serie,
-      ubicacion,
-      categoria,
-      categoria_principal,
-      subcategoria,
-      imagen_pieza_url,
-      imagen_ensamble_url,
-      stock,
-      precio_lista_usd,
-      ficha_tecnica,
+      cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion,
+      categoria, categoria_principal, subcategoria,
+      imagen_pieza_url, imagen_ensamble_url, stock, precio_lista_usd, ficha_tecnica,
+      tiempo_entrega_dias, descripcion_corta, descripcion_larga, incluye, ficha_tecnica_specs,
+      puesta_en, garantia, condiciones_pago,
     } = req.body || {};
-    const stockNum = stock != null && stock !== '' ? Number(stock) : 0;
-    const plUsd = precio_lista_usd != null && precio_lista_usd !== '' ? Number(precio_lista_usd) : 0;
     let cidPut = cliente_id != null && cliente_id !== '' ? Number(cliente_id) : null;
     if (!cidPut || !Number.isFinite(cidPut)) {
       const cur = await db.getOne('SELECT cliente_id FROM maquinas WHERE id = ?', [req.params.id]);
@@ -1818,23 +1810,33 @@ app.put('/api/maquinas/:id', async (req, res) => {
     }
     await db.runQuery(
       `UPDATE maquinas SET cliente_id=?, codigo=?, nombre=?, marca=?, modelo=?, numero_serie=?, ubicacion=?, categoria=?, categoria_principal=?, subcategoria=?,
-       imagen_pieza_url=?, imagen_ensamble_url=?, stock=?, precio_lista_usd=?, ficha_tecnica=? WHERE id=?`,
+       imagen_pieza_url=?, imagen_ensamble_url=?, stock=?, precio_lista_usd=?, ficha_tecnica=?,
+       tiempo_entrega_dias=?, descripcion_corta=?, descripcion_larga=?, incluye=?, ficha_tecnica_specs=?,
+       puesta_en=?, garantia=?, condiciones_pago=? WHERE id=?`,
       [
         cidPut,
-        codigo || null,
+        _maqNullableStr(codigo),
         nombre || modelo || '',
-        marca || null,
-        modelo || null,
-        numero_serie || null,
-        ubicacion || null,
-        categoria || null,
-        categoria_principal || null,
-        subcategoria != null && String(subcategoria).trim() !== '' ? String(subcategoria).trim() : null,
+        _maqNullableStr(marca),
+        _maqNullableStr(modelo),
+        _maqNullableStr(numero_serie),
+        _maqNullableStr(ubicacion),
+        _maqNullableStr(categoria),
+        _maqNullableStr(categoria_principal),
+        _maqNullableStr(subcategoria),
         imagen_pieza_url || null,
         imagen_ensamble_url || null,
-        Number.isFinite(stockNum) ? stockNum : 0,
-        Number.isFinite(plUsd) ? plUsd : 0,
-        ficha_tecnica != null && String(ficha_tecnica).trim() !== '' ? String(ficha_tecnica).trim() : null,
+        _maqNullableNum(stock) || 0,
+        _maqNullableNum(precio_lista_usd) || 0,
+        _maqNullableStr(ficha_tecnica),
+        _maqNullableNum(tiempo_entrega_dias),
+        _maqNullableStr(descripcion_corta),
+        _maqNullableStr(descripcion_larga),
+        _maqNullableStr(incluye),
+        _maqNullableStr(ficha_tecnica_specs),
+        _maqNullableStr(puesta_en),
+        _maqNullableStr(garantia),
+        _maqNullableStr(condiciones_pago),
         req.params.id,
       ]
     );

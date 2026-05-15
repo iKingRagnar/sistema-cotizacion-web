@@ -925,14 +925,15 @@
         <table class="data-table filterable-table" id="tabla-maquinas" data-cache="maquinasCache">
           <thead>
             <tr>
-              <th>Id</th><th>Nombre máquina</th><th>Parte</th><th>Versión</th><th>Ficha técnica</th>
+              <th>Id</th><th>Nombre máquina</th><th>Versión</th><th>Precio USD</th><th>Tiempo entrega</th><th>Ficha técnica</th>
               <th class="th-actions">Acciones</th>
             </tr>
             <tr class="filter-row">
               <td><input type="text" class="filter-input" data-key="id" data-type="number" placeholder="ej. &gt;1"></td>
               <td><input type="text" class="filter-input" data-key="categoria" data-type="text" placeholder="Filtrar…"></td>
-              <td><input type="text" class="filter-input" data-key="subcategoria" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="modelo" data-type="text" placeholder="Filtrar…"></td>
+              <td><input type="text" class="filter-input" data-key="precio_lista_usd" data-type="number" placeholder="ej. &gt;1000"></td>
+              <td><input type="text" class="filter-input" data-key="tiempo_entrega_dias" data-type="number" placeholder="días"></td>
               <td><input type="text" class="filter-input" data-key="ficha_tecnica" data-type="text" placeholder="Filtrar…"></td>
               <td class="th-actions"></td>
             </tr>
@@ -2153,7 +2154,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=228-min-nullable-cell-empty-2026-05-15"></script>
+  <script src="js/app.js?v=229-maquinas-catalogo-universal-2026-05-15"></script>
   <script src="js/prospeccion-map.js?v=7-sync-segment-heat-weight-2026-05-10" defer></script>
   <script src="js/bg-animation.js?v=8-map-shell-no-duplicate-hamburger" defer></script>
   <script src="js/premium-ux.js?v=24-globalmo-full-suppress-2026-05-07" defer></script>
