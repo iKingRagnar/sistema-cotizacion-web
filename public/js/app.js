@@ -14506,8 +14506,9 @@
         const desc = (getCell(row, 'descripcion') || '').toString().trim();
         if (!desc) return;
         const codigoRaw = (getCell(row, 'codigo') || '').toString().trim();
-        // Si la celda CODIGO viene vacía, "0" o "-" → dejar el código vacío (NULL en BD)
-        const codigo = (!codigoRaw || codigoRaw === '0' || codigoRaw === '-') ? null : codigoRaw;
+        // Solo nulificar si la celda viene REALMENTE vacía/whitespace.
+        // Si trae "0", "-", "1", "ABC", etc → se respeta tal cual (el cliente decide).
+        const codigo = codigoRaw === '' ? null : codigoRaw;
         const descripcion = desc; // siempre se conserva intacta
         const unidad = (getCell(row, 'unidad') || 'PZA').toString().trim() || 'PZA';
         const precioUsdRaw = getCell(row, 'precio');
@@ -14564,6 +14565,11 @@
       // Import directo, sin modal de confirmación (causaba freeze con 1300+ filas)
       console.log('[ImportXLSX] Mapeo:', mapSummary);
       console.log('[ImportXLSX] Preview primeras 5 filas:\n' + preview);
+      // Debug: ver exactamente qué payload se va a enviar para las primeras 5 filas
+      console.log('[ImportXLSX] Primeras 5 filas (payload exacto que se enviará al servidor):');
+      rows.slice(0, 5).forEach((r, i) => {
+        console.log(`  [${i + 1}]`, JSON.stringify({ codigo: r.codigo, descripcion: r.descripcion, categoria: r.categoria, zona: r.zona, stock: r.stock, precio_usd: r.precio_usd }));
+      });
       showToast(`Importando ${rows.length} refacciones…`, 'info');
       // Yield para que el toast pinte antes de empezar el batch
       await new Promise(r => setTimeout(r, 50));
