@@ -3062,6 +3062,15 @@
     const confirmBox = qs('#confirm-modal .modal-box');
     if (confirmBox) applyModalThemeToBox(confirmBox);
     modal.classList.remove('hidden');
+    // Forzar visibilidad del modal por encima de cualquier overlay (PDF preview, headers sticky, etc.)
+    // En cotizaciones había elementos con z-index > 100 que tapaban el modal de confirmación.
+    try {
+      modal.style.setProperty('z-index', '999999', 'important');
+      modal.style.setProperty('display', 'flex', 'important');
+      modal.style.setProperty('visibility', 'visible', 'important');
+      modal.style.setProperty('opacity', '1', 'important');
+      modal.style.setProperty('pointer-events', 'auto', 'important');
+    } catch (_e) {}
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
         if (!confirmBox || modal.classList.contains('hidden')) return;
@@ -3070,6 +3079,7 @@
           confirmBox.style.setProperty('opacity', '1', 'important');
           confirmBox.style.setProperty('transform', 'none', 'important');
           confirmBox.style.setProperty('visibility', 'visible', 'important');
+          confirmBox.style.setProperty('z-index', '1000000', 'important');
         } catch (_e) {
           confirmBox.style.animation = 'none';
           confirmBox.style.opacity = '1';
@@ -3083,8 +3093,15 @@
         confirmBox.style.removeProperty('opacity');
         confirmBox.style.removeProperty('transform');
         confirmBox.style.removeProperty('visibility');
+        confirmBox.style.removeProperty('z-index');
       }
       modal.classList.add('hidden');
+      // Limpiar overrides inline forzados al abrir
+      modal.style.removeProperty('z-index');
+      modal.style.removeProperty('display');
+      modal.style.removeProperty('visibility');
+      modal.style.removeProperty('opacity');
+      modal.style.removeProperty('pointer-events');
       if (confirmBox) {
         confirmBox.classList.remove('modal-box--theme-dark', 'modal-box--theme-sol', 'modal-box--theme-industrial');
       }
