@@ -5769,26 +5769,14 @@
         e.stopPropagation();
         const id = btn.dataset.id;
         console.log('[cot][aplicar] click id=', id);
-        // Verificar primero que el modal #confirm-modal existe; si no, usar window.confirm.
-        const modal = document.querySelector('#confirm-modal');
-        console.log('[cot][aplicar] #confirm-modal existe?', !!modal, modal ? 'classes:' + modal.className : '');
-        if (!modal) {
-          // Fallback: confirm nativo
-          if (window.confirm('¿Aprobar como venta? Se descontará del almacén la cantidad de cada refacción en las líneas.')) {
-            aplicarCotizacion(id);
-          }
-          return;
-        }
-        try {
-          openConfirmModal('¿Aprobar como venta? Se descontará del almacén la cantidad de cada refacción en las líneas (según catálogo).', () => {
-            console.log('[cot][aplicar] confirmado, llamando aplicarCotizacion…');
-            aplicarCotizacion(id);
-          }, { confirmLabel: 'Aprobar', confirmIcon: 'fa-check', confirmClass: 'btn success' });
-          console.log('[cot][aplicar] openConfirmModal llamado, modal hidden?', modal.classList.contains('hidden'));
-        } catch (err) {
-          console.error('[cot][aplicar] openConfirmModal lanzó error:', err);
-          // Fallback emergencia
-          if (window.confirm('¿Aprobar como venta?')) aplicarCotizacion(id);
+        // BYPASS del modal custom: usar window.confirm nativo (100% confiable).
+        // El modal #confirm-modal está siendo enmascarado por algún stacking context en panel-cotizaciones
+        // y los z-index forzados no lo solucionan. Workaround temporal hasta encontrar la causa raíz.
+        if (window.confirm('¿Aprobar como venta?\n\nSe descontará del almacén la cantidad de cada refacción en las líneas.')) {
+          console.log('[cot][aplicar] confirmado por window.confirm, llamando aplicarCotizacion…');
+          aplicarCotizacion(id);
+        } else {
+          console.log('[cot][aplicar] cancelado por usuario');
         }
       });
     });
