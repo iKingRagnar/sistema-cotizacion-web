@@ -5740,23 +5740,41 @@
       tbody.appendChild(tr);
     });
     tbody.querySelectorAll('.btn-preview-cot').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); const c = cotizacionesCache.find(x => x.id == btn.dataset.id); if (c) previewCotizacion(c); });
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        console.log('[cot][preview] click id=', btn.dataset.id);
+        const c = cotizacionesCache.find(x => x.id == btn.dataset.id);
+        if (c) previewCotizacion(c).catch(err => console.error('[cot][preview] error:', err));
+      });
     });
     tbody.querySelectorAll('.btn-aplicar-cot').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
+        console.log('[cot][aplicar] click id=', btn.dataset.id);
         openConfirmModal('¿Aprobar como venta? Se descontará del almacén la cantidad de cada refacción en las líneas (según catálogo).', () => aplicarCotizacion(btn.dataset.id));
       });
     });
     tbody.querySelectorAll('.btn-pdf-cot').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); openCotizacionPdf(btn.dataset.id); });
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        console.log('[cot][pdf] click id=', btn.dataset.id);
+        try { openCotizacionPdf(btn.dataset.id); } catch (err) { console.error('[cot][pdf] error:', err); }
+      });
     });
     tbody.querySelectorAll('.btn-edit-cot').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); editCotizacion(btn.dataset.id); });
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        console.log('[cot][edit] click id=', btn.dataset.id);
+        editCotizacion(btn.dataset.id).catch(err => console.error('[cot][edit] error:', err));
+      });
     });
     // btn-duplicate-cot removido
     tbody.querySelectorAll('.btn-delete-cot').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar esta cotización?', () => deleteCotizacion(btn.dataset.id)); });
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        console.log('[cot][delete] click id=', btn.dataset.id);
+        openConfirmModal('¿Eliminar esta cotización?', () => deleteCotizacion(btn.dataset.id));
+      });
     });
     updateTableFooter('tabla-cotizaciones', list.length, cotizacionesCache.length, () => clearTableFiltersAndRefresh('tabla-cotizaciones', null, applyCotizacionesFiltersAndRender), arguments[2]);
     animateTableRows('tabla-cotizaciones');
