@@ -13910,12 +13910,44 @@
         const m = (almacenMaquinasSnapshot || []).find(x => Number(x.id) === id);
         const nom = m ? modeloAlmacenDisplay(m) : 'esta máquina';
         openConfirmModal(`¿Eliminar "${nom}" del almacén? Esta acción solo la marca como inactiva.`, async () => {
+          // Spinner en el botón mientras procesa
+          const origHtml = btn.innerHTML;
+          btn.disabled = true;
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+          showToast('Eliminando…', 'info');
+          // Timeout defensivo de 30s: si el servidor no responde, no congelar la UI
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 30000);
           try {
-            await fetchJson(API + '/maquinas/' + id, { method: 'DELETE' });
+            const r = await fetch(API + '/maquinas/' + id, {
+              method: 'DELETE',
+              headers: Object.assign(
+                { 'Content-Type': 'application/json' },
+                getAuthToken() ? { Authorization: 'Bearer ' + getAuthToken() } : {}
+              ),
+              signal: ctrl.signal,
+            });
+            clearTimeout(timer);
+            if (!r.ok) {
+              const txt = await r.text().catch(() => '');
+              throw new Error(txt || ('HTTP ' + r.status));
+            }
+            // Optimista: quitar la fila del snapshot local y re-render sin esperar al fetch nuevo
+            almacenMaquinasSnapshot = (almacenMaquinasSnapshot || []).filter(x => Number(x.id) !== id);
+            renderAlmacenTable();
             showToast('Máquina eliminada.', 'success');
-            loadAlmacen();
+            // Refresco real en segundo plano (no bloquea UI)
+            loadAlmacen().catch(err => console.warn('[almacen] reload post-delete falló:', err));
           } catch (err) {
-            showToast(parseApiError(err) || 'No se pudo eliminar.', 'error');
+            clearTimeout(timer);
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+            const aborted = err && err.name === 'AbortError';
+            const msg = aborted
+              ? 'El servidor tardó demasiado en responder (30s). Render puede estar despertando — vuelve a intentar en unos segundos.'
+              : (parseApiError(err) || ('No se pudo eliminar: ' + (err.message || err)));
+            console.error('[almacen][delete]', err);
+            showToast(msg, 'error');
           }
         });
       });
