@@ -382,6 +382,9 @@ async function runMigrations() {
     `ALTER TABLE cotizacion_lineas ADD COLUMN tarifa_aplicada TEXT`,
     // reportes: eliminar tipo_maquina (ya no se usa)
     `ALTER TABLE reportes ADD COLUMN subtipo TEXT`,
+    /* Reportes 2026-05-15: días de actividad + flag fuera de ciudad (bono viaje automático) */
+    `ALTER TABLE reportes ADD COLUMN dias INTEGER DEFAULT 1`,
+    `ALTER TABLE reportes ADD COLUMN fuera_ciudad INTEGER DEFAULT 0`,
     // garantias: quitar tipo_maquina, usar solo modelo_maquina
     `ALTER TABLE garantias ADD COLUMN maximo_mantenimientos INTEGER DEFAULT 0`,
     `ALTER TABLE garantias ADD COLUMN pagos_log TEXT DEFAULT '[]'`,

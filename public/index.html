@@ -538,7 +538,6 @@
         <button type="button" class="tab mapa-owner-pill" data-tab="clientes" title="Cartera de clientes (Ctrl+1)"><i class="fas fa-users" aria-hidden="true"></i><span>Clientes</span></button>
         <button type="button" class="tab mapa-owner-pill" id="tab-prospeccion-header" data-tab="prospeccion" title="Mapa y pipeline de prospectos"><i class="fas fa-map-marked-alt" aria-hidden="true"></i><span>Prospección</span></button>
         <div class="mapa-owner-slot-comm" role="presentation">
-          <button type="button" class="tab mapa-owner-pill comm-admin-only" data-tab="viajes" title="Viajes y viáticos"><i class="fas fa-plane" aria-hidden="true"></i><span>Viajes</span></button>
           <button type="button" class="tab mapa-owner-pill mapa-owner-pill--alt" data-tab="reportes" title="Reportes de servicio y venta"><i class="fas fa-file-alt" aria-hidden="true"></i><span>Reportes</span></button>
         </div>
       </nav>
@@ -678,12 +677,10 @@
     <button type="button" data-tab="tarifas" class="tab" id="tab-tarifas" title="Tarifas y esquemas de cobro"><i class="fas fa-tags"></i> Tarifas</button>
     <button type="button" data-tab="reportes" class="tab" title="Reportes de servicio y venta"><i class="fas fa-file-alt"></i> Reportes</button>
     <button type="button" data-tab="garantias" class="tab" title="Alta y edición de garantías"><i class="fas fa-shield-alt"></i> Garantías</button>
-    <button type="button" data-tab="mantenimiento-garantia" class="tab" title="Calendario y alertas de mantenimiento"><i class="fas fa-calendar-check"></i> Mantenimientos</button>
+    <button type="button" data-tab="mantenimiento-garantia" class="tab" title="Agenda: organiza actividades de Reportes y Revisión de Máquinas"><i class="fas fa-calendar-check"></i> Agenda</button>
     <button type="button" data-tab="garantias-sin-cobertura" class="tab" title="Garantías dadas de baja"><i class="fas fa-ban"></i> Sin cobertura</button>
     <button type="button" data-tab="bonos" class="tab comm-admin-only" title="Bonos y liquidación (solo administrador)"><i class="fas fa-award"></i> Bonos</button>
-    <button type="button" data-tab="viajes" class="tab comm-admin-only" title="Viajes, viáticos y liquidación mensual (misma visibilidad que Bonos)"><i class="fas fa-plane"></i> Viajes</button>
     <button type="button" data-tab="tecnicos" class="tab" id="tab-tecnicos" title="Personal: puestos, vendedores y comisiones"><i class="fas fa-users"></i> Personal</button>
-    <button type="button" data-tab="bitacoras" class="tab" title="Bitácora (Ctrl+6)"><i class="fas fa-clock"></i> Bitácora de horas</button>
     <button type="button" data-tab="auditoria" class="tab hidden" id="tab-auditoria" title="Auditoría (Ctrl+8, solo admin)"><i class="fas fa-clipboard-list"></i> Auditoría</button>
     <button type="button" data-tab="usuarios" class="tab hidden" id="tab-usuarios" title="Cuentas y permisos (solo admin)"><i class="fas fa-user-shield"></i> Usuarios</button>
     <button type="button" data-tab="categorias-catalogo" class="tab hidden" id="tab-categorias-catalogo" title="Categorías y subcategorías (solo admin)"><i class="fas fa-sitemap"></i> Categorías</button>
@@ -1451,33 +1448,26 @@
         <h2><i class="fas fa-file-alt"></i> Reportes de servicio</h2>
         <div class="toolbar">
           <select id="filtro-tipo-reporte">
-            <option value="">Todos los tipos</option>
-            <option value="servicio">Servicio (fallas / campo)</option>
-            <option value="venta">Venta (instalación, capacitación, garantía)</option>
-            <option value="garantia">Legado: tipo «Garantía»</option>
-            <option value="instalacion">Legado: tipo «Instalación»</option>
+            <option value="">Todas las actividades</option>
+            <option value="servicio">Servicio en campo</option>
+            <option value="venta">Instalación / Capacitación / Garantía</option>
+            <option value="garantia">Legado: Garantía</option>
+            <option value="instalacion">Legado: Instalación</option>
           </select>
-          <select id="filtro-subtipo-reporte">
-            <option value="">Todos los subtipos</option>
-            <option value="falla_electrica">Falla eléctrica</option>
-            <option value="falla_mecanica">Falla mecánica</option>
-            <option value="falla_electronica">Falla electrónica</option>
-            <option value="instalacion">Instalación</option>
-            <option value="capacitacion">Capacitación</option>
-            <option value="garantia">Garantía</option>
-            <option value="otro">Otro / Otra</option>
+          <select id="filtro-subtipo-reporte" class="hidden" style="display:none">
+            <option value="">Todos</option>
           </select>
           <input type="search" id="buscar-reportes" placeholder="Buscar…" class="search" style="width:160px">
           <button type="button" id="export-reportes" class="btn outline"><i class="fas fa-file-csv"></i> CSV</button>
           <button type="button" id="nuevo-reporte" class="btn primary"><i class="fas fa-plus"></i> Nuevo reporte</button>
         </div>
       </div>
-      <p class="section-sub"><i class="fas fa-info-circle"></i> Tipo principal: <strong>Servicio</strong> (subtipos de falla) o <strong>Venta</strong> (instalación, capacitación, garantía como subtipo). Los folios nuevos usan prefijo REP-S (servicio) o REP-V (venta). Reportes viejos con tipo «Garantía» o «Instalación» siguen visibles con los filtros de legado.</p>
+      <p class="section-sub"><i class="fas fa-info-circle"></i> <strong>Actividad:</strong> Servicio en campo (fallas) o Instalación/Capacitación/Garantía. Los reportes con cliente <strong>fuera de la ciudad</strong> se marcan automáticamente con <i class="fas fa-plane" style="color:#facc15"></i> (genera bono de viaje).</p>
       <div class="table-wrap">
         <table class="data-table filterable-table" id="tabla-reportes">
           <thead>
             <tr>
-              <th>Folio</th><th>Razón Social</th><th>Máquina</th><th>Nº Serie</th><th>Tipo</th><th>Subtipo</th><th>Técnico</th><th>Fecha Reporte</th>
+              <th>Folio</th><th>Razón Social</th><th>Máquina</th><th>Nº Serie</th><th>Actividad</th><th>Técnico</th><th>Fecha Reporte</th><th>Días</th>
               <th class="admin-only-col" title="Solo visible para administrador">Fecha Programada <i class="fas fa-lock" style="font-size:0.7em;opacity:.6"></i></th>
               <th>Estatus</th>
               <th class="th-actions rep-th-final-acciones">Finalizado · Acciones</th>
@@ -1489,27 +1479,16 @@
               <td><input type="text" class="filter-input" data-key="numero_maquina" data-type="text" placeholder="Nº serie…"></td>
               <td>
                 <select class="filter-input" data-key="tipo_reporte" data-type="text" id="tabla-reportes-filter-tipo">
-                  <option value="">Todos</option>
+                  <option value="">Todas</option>
                   <option value="servicio">Servicio</option>
                   <option value="venta">Venta</option>
                   <option value="garantia">Legado: Garantía</option>
                   <option value="instalacion">Legado: Instalación</option>
                 </select>
               </td>
-              <td>
-                <select class="filter-input" data-key="subtipo" data-type="text" id="tabla-reportes-filter-subtipo">
-                  <option value="">Todos</option>
-                  <option value="falla_electrica">Falla eléctrica</option>
-                  <option value="falla_mecanica">Falla mecánica</option>
-                  <option value="falla_electronica">Falla electrónica</option>
-                  <option value="instalacion">Instalación</option>
-                  <option value="capacitacion">Capacitación</option>
-                  <option value="garantia">Garantía</option>
-                  <option value="otro">Otro</option>
-                </select>
-              </td>
               <td><input type="text" class="filter-input" data-key="tecnico" data-type="text" placeholder="Filtrar…"></td>
               <td><input type="text" class="filter-input" data-key="fecha" data-type="text" placeholder="aaaa-mm-dd"></td>
+              <td><input type="text" class="filter-input" data-key="dias" data-type="number" placeholder=">0"></td>
               <td class="admin-only-col"></td>
               <td><input type="text" class="filter-input" data-key="estatus" data-type="text" placeholder="abierto…"></td>
               <td class="th-actions"></td>
@@ -1558,7 +1537,7 @@
     <!-- MANTENIMIENTOS POR GARANTÍA (operativo) -->
     <section id="panel-mantenimiento-garantia" class="panel panel-ux">
       <div class="section-header section-header--ux">
-        <h2><i class="fas fa-calendar-check"></i> Mantenimientos por garantía</h2>
+        <h2><i class="fas fa-calendar-check"></i> Agenda — actividades programadas</h2>
         <div class="toolbar">
           <label class="toolbar-label-inline">Mes</label>
           <input type="month" id="mant-gar-month" title="Mes del calendario">
@@ -2163,7 +2142,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=233-almacen-delete-timeout-2026-05-15"></script>
+  <script src="js/app.js?v=234-bloque-a-agenda-reportes-2026-05-15"></script>
   <script src="js/prospeccion-map.js?v=7-sync-segment-heat-weight-2026-05-10" defer></script>
   <script src="js/bg-animation.js?v=8-map-shell-no-duplicate-hamburger" defer></script>
   <script src="js/premium-ux.js?v=24-globalmo-full-suppress-2026-05-07" defer></script>

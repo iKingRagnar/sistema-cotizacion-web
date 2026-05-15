@@ -5914,7 +5914,7 @@ app.get('/api/reportes/:id', async (req, res) => {
 app.post('/api/reportes', async (req, res) => {
   try {
     const body = req.body || {};
-    const { cliente_id, razon_social, maquina_id, numero_maquina, tipo_reporte, subtipo, descripcion, tecnico, fecha, fecha_programada, estatus, notas, finalizado, archivo_firmado, archivo_firmado_b64, archivo_firmado_nombre } = body;
+    const { cliente_id, razon_social, maquina_id, numero_maquina, tipo_reporte, subtipo, descripcion, tecnico, fecha, fecha_programada, estatus, notas, finalizado, archivo_firmado, archivo_firmado_b64, archivo_firmado_nombre, dias, fuera_ciudad } = body;
     const repAdmin = !auth.AUTH_ENABLED || (req.authUser && req.authUser.role === 'admin');
     const fechaProgIns = repAdmin ? (fecha_programada || null) : null;
     const archivo =
@@ -5923,13 +5923,15 @@ app.post('/api/reportes', async (req, res) => {
     const folio = generarFolioReporte(tipo_reporte);
     const isFinalizado = finalizado ? 1 : 0;
     const finalEstatus = isFinalizado ? 'finalizado' : (estatus || 'abierto');
+    const diasNum = dias != null && Number(dias) > 0 ? Math.floor(Number(dias)) : 1;
+    const fueraNum = fuera_ciudad ? 1 : 0;
     await db.runQuery(
-      `INSERT INTO reportes (folio, cliente_id, razon_social, maquina_id, numero_maquina, tipo_reporte, subtipo, descripcion, tecnico, fecha, fecha_programada, estatus, notas, finalizado, archivo_firmado, archivo_firmado_nombre)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO reportes (folio, cliente_id, razon_social, maquina_id, numero_maquina, tipo_reporte, subtipo, descripcion, tecnico, fecha, fecha_programada, estatus, notas, finalizado, archivo_firmado, archivo_firmado_nombre, dias, fuera_ciudad)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [folio, cliente_id || null, razon_social || null, maquina_id || null, numero_maquina || null,
        tipo_reporte || 'servicio', subtipo || null, descripcion || null, tecnico || null,
        fecha || new Date().toISOString().slice(0,10), fechaProgIns, finalEstatus, notas || null,
-       isFinalizado, archivo || null, archivo_firmado_nombre || null]
+       isFinalizado, archivo || null, archivo_firmado_nombre || null, diasNum, fueraNum]
     );
     const r = await db.getOne('SELECT r.*, c.nombre as cliente_nombre FROM reportes r LEFT JOIN clientes c ON c.id=r.cliente_id ORDER BY r.id DESC LIMIT 1');
     if (r && r.id && isFinalizado) {
@@ -5960,14 +5962,17 @@ app.put('/api/reportes/:id', async (req, res) => {
     const isFinalizado = b.finalizado !== undefined ? (b.finalizado ? 1 : 0) : (Number(existing.finalizado) ? 1 : 0);
     let finalEstatus = pick('estatus', existing.estatus || 'abierto');
     if (isFinalizado) finalEstatus = 'finalizado';
+    const diasUpd = b.dias !== undefined ? (Number(b.dias) > 0 ? Math.floor(Number(b.dias)) : 1) : (Number(existing.dias) > 0 ? Number(existing.dias) : 1);
+    const fueraUpd = b.fuera_ciudad !== undefined ? (b.fuera_ciudad ? 1 : 0) : (Number(existing.fuera_ciudad) ? 1 : 0);
     await db.runQuery(
-      `UPDATE reportes SET cliente_id=?, razon_social=?, maquina_id=?, numero_maquina=?, tipo_reporte=?, subtipo=?, descripcion=?, tecnico=?, fecha=?, fecha_programada=?, estatus=?, notas=?, finalizado=?, archivo_firmado=?, archivo_firmado_nombre=? WHERE id=?`,
+      `UPDATE reportes SET cliente_id=?, razon_social=?, maquina_id=?, numero_maquina=?, tipo_reporte=?, subtipo=?, descripcion=?, tecnico=?, fecha=?, fecha_programada=?, estatus=?, notas=?, finalizado=?, archivo_firmado=?, archivo_firmado_nombre=?, dias=?, fuera_ciudad=? WHERE id=?`,
       [
         pick('cliente_id'), pick('razon_social'), pick('maquina_id'), pick('numero_maquina'),
         pick('tipo_reporte', 'servicio'), pick('subtipo'), pick('descripcion'), pick('tecnico'),
         pick('fecha'), repAdmin ? pick('fecha_programada', existing.fecha_programada) : existing.fecha_programada,
         finalEstatus, pick('notas'),
         isFinalizado, archivo || null, archivoNombre || null,
+        diasUpd, fueraUpd,
         req.params.id,
       ]
     );

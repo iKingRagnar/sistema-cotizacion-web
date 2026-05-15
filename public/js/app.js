@@ -748,7 +748,7 @@
   }
 
   const LAST_TAB_KEY = 'cotizacion-last-tab';
-  const VALID_TABS = ['dashboards', 'clientes', 'refacciones', 'maquinas', 'almacen', 'cotizaciones', 'reportes', 'garantias', 'mantenimiento-garantia', 'garantias-sin-cobertura', 'bonos', 'viajes', 'bitacoras', 'prospeccion'];
+  const VALID_TABS = ['dashboards', 'clientes', 'refacciones', 'maquinas', 'almacen', 'cotizaciones', 'reportes', 'garantias', 'mantenimiento-garantia', 'garantias-sin-cobertura', 'bonos', 'prospeccion'];
   const TABS_PERSIST = VALID_TABS.concat(['auditoria', 'usuarios', 'categorias-catalogo']);
   let reportesCache = [];
   let garantiasCache = [];
@@ -778,7 +778,7 @@
     ['tarifas', 'Tarifas'],
     ['reportes', 'Reportes'],
     ['garantias', 'Garantías'],
-    ['mantenimiento-garantia', 'Mantenimientos'],
+    ['mantenimiento-garantia', 'Agenda'],
     ['garantias-sin-cobertura', 'Sin cobertura'],
     ['bonos', 'Bonos'],
     ['viajes', 'Viajes'],
@@ -1576,7 +1576,7 @@
       cotizaciones: 'Cotizaciones',
       reportes: 'Reportes',
       garantias: 'Garantías',
-      'mantenimiento-garantia': 'Mantenimientos por garantía',
+      'mantenimiento-garantia': 'Agenda',
       'garantias-sin-cobertura': 'Sin cobertura',
       bonos: 'Bonos',
       viajes: 'Viajes',
@@ -6071,6 +6071,7 @@
 
     if (!data || data.length === 0) {
       tbody.innerHTML = `<tr><td colspan="${isAdmin ? 11 : 10}" class="empty">No hay reportes. Agrega uno nuevo.</td></tr>`;
+      // (11 admin: Folio, RazSoc, Maq, Serie, Actividad, Tec, Fecha, Días, FechaProg, Estatus, Acciones; 10 no-admin sin FechaProg)
       updateTableFooter('tabla-reportes', 0, reportesCache.length, () => clearTableFiltersAndRefresh('tabla-reportes', null, applyReportesFiltersAndRender));
       return;
     }
@@ -6097,15 +6098,20 @@
       const estLabel = r.estatus || '—';
       const fpCell = isAdmin ? `<td>${escapeHtml((r.fecha_programada || '').toString().slice(0, 10))}</td>` : '';
       const finalizado = Number(r.finalizado) === 1;
+      const fueraCiudad = Number(r.fuera_ciudad) === 1;
+      const fueraIcon = fueraCiudad
+        ? ' <i class="fas fa-plane" title="Cliente fuera de la ciudad (genera bono de viaje)" style="color:#facc15;margin-left:4px"></i>'
+        : '';
+      const diasNum = r.dias != null && Number(r.dias) > 0 ? Number(r.dias) : 1;
       tr.innerHTML = `
         <td>${escapeHtml(r.folio || '')}</td>
-        <td>${escapeHtml(r.razon_social || r.cliente_nombre || '')}</td>
+        <td>${escapeHtml(r.razon_social || r.cliente_nombre || '')}${fueraIcon}</td>
         <td>${escapeHtml(r.maquina_nombre || r.maquina_modelo || '')}</td>
         <td>${escapeHtml(r.numero_maquina || r.maquina_serie || '')}</td>
         <td><span class="badge badge-tipo-rep-${TIPO_COLORS[r.tipo_reporte] || 'otro'}">${tipoLabel}</span></td>
-        <td>${escapeHtml(formatReporteSubtipoCell(r.subtipo))}</td>
         <td>${escapeHtml(r.tecnico || '')}</td>
         <td>${escapeHtml((r.fecha || '').toString().slice(0, 10))}</td>
+        <td>${diasNum}</td>
         ${fpCell}
         <td><span class="semaforo semaforo-${r.estatus === 'en_proceso' ? 'warn' : r.estatus === 'cerrado' ? 'ok' : 'gray'}">${estLabel}</span></td>
         <td class="th-actions rep-combined-actions-cell">
@@ -6349,14 +6355,23 @@
         </div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>Tipo de reporte *</label>
+        <div class="form-group"><label>Actividad *</label>
           <select id="m-tipo-rep">
-            <option value="servicio" ${modalTipoInicial.tipo === 'servicio' ? 'selected' : ''}>Servicio (fallas / campo)</option>
-            <option value="venta" ${modalTipoInicial.tipo === 'venta' ? 'selected' : ''}>Venta (instalación, capacitación, garantía)</option>
+            <option value="servicio" ${modalTipoInicial.tipo === 'servicio' ? 'selected' : ''}>Servicio en campo</option>
+            <option value="venta" ${modalTipoInicial.tipo === 'venta' ? 'selected' : ''}>Instalación / Capacitación / Garantía</option>
           </select>
         </div>
-        <div class="form-group"><label>Subtipo</label>
-          <select id="m-subtipo-rep"><option value="">— Selecciona —</option></select>
+        <div class="form-group" style="display:none">
+          <select id="m-subtipo-rep"><option value="">—</option></select>
+        </div>
+        <div class="form-group"><label>Días</label>
+          <input type="number" id="m-dias-rep" min="1" step="1" value="${reporte && reporte.dias != null && Number(reporte.dias) > 0 ? Number(reporte.dias) : 1}">
+        </div>
+        <div class="form-group"><label style="display:flex;align-items:center;gap:0.5rem;margin-top:1.6rem">
+          <input type="checkbox" id="m-fuera-ciudad" ${reporte && Number(reporte.fuera_ciudad) === 1 ? 'checked' : ''}>
+          <span><i class="fas fa-plane" style="color:#facc15"></i> Cliente fuera de la ciudad</span>
+        </label>
+        <p class="form-hint" style="margin:0;font-size:0.78rem">Activa bono de viaje ($500/día/persona)</p>
         </div>
       </div>
       <div class="form-row">
@@ -6460,6 +6475,9 @@
     qs('#m-save').onclick = async () => {
       const tipo = qs('#m-tipo-rep').value;
       if (!tipo) { showToast('Selecciona el tipo de reporte.', 'error'); return; }
+      const diasInput = qs('#m-dias-rep');
+      const diasVal = diasInput && diasInput.value && Number(diasInput.value) > 0 ? Math.floor(Number(diasInput.value)) : 1;
+      const fueraEl = qs('#m-fuera-ciudad');
       const payload = {
         cliente_id: qs('#m-cliente').value || null,
         razon_social: qs('#m-rsocial').value.trim() || null,
@@ -6473,6 +6491,8 @@
         estatus: qs('#m-est-rep').value,
         notas: qs('#m-notas-rep').value.trim() || null,
         fecha_programada: isAdmin && qs('#m-fecha-prog') ? (qs('#m-fecha-prog').value || null) : undefined,
+        dias: diasVal,
+        fuera_ciudad: fueraEl && fueraEl.checked ? 1 : 0,
       };
       // Si no es admin, no enviar fecha_programada
       if (!isAdmin) delete payload.fecha_programada;
