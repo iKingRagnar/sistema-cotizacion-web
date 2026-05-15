@@ -13650,6 +13650,66 @@
   }
 
   // ----- ALMACÉN (modelo, sucursal, serie, estado revisión, cotización pendiente) -----
+  // ----- MODAL: Editar máquina del almacén (versión corta: nombre + serie + sucursal) -----
+  async function openModalEditarMaquinaAlmacen(m) {
+    const sucActual = (m.ubicacion || '').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const SUCS = ['QUERETARO', 'MONTERREY', 'GUADALAJARA', 'REYNOSA', 'CHIHUAHUA', 'MEXICO'];
+    const sucOpts = ['<option value="">-- Seleccionar sucursal --</option>']
+      .concat(SUCS.map(s => `<option value="${s}" ${sucActual === s ? 'selected' : ''}>${s === 'QUERETARO' ? 'QUERÉTARO' : s === 'MEXICO' ? 'MÉXICO' : s}</option>`))
+      .join('');
+    const body = `
+      <div class="cotz-modal">
+        <section class="cotz-card">
+          <h4 class="cotz-card-title"><i class="fas fa-warehouse"></i> Editar equipo del almacén</h4>
+          <p class="form-hint" style="margin-top:0">Edita solo nombre, número de serie y sucursal. Para campos avanzados (precio, ficha técnica, foto), usa la pestaña <strong>Máquinas</strong>.</p>
+          <div class="form-group"><label>Nombre de la máquina *</label>
+            <input type="text" id="alm-edit-nombre" maxlength="200" value="${escapeHtml(m.nombre || m.modelo || '')}">
+          </div>
+          <div class="form-group"><label>Número de serie</label>
+            <input type="text" id="alm-edit-serie" maxlength="120" value="${escapeHtml(m.numero_serie || '')}">
+          </div>
+          <div class="form-group"><label>Sucursal / Ubicación *</label>
+            <select id="alm-edit-sucursal">${sucOpts}</select>
+          </div>
+        </section>
+        <div class="form-actions">
+          <button type="button" class="btn primary" id="alm-edit-save"><i class="fas fa-save"></i> Guardar</button>
+          <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
+        </div>
+      </div>
+    `;
+    openModal('Editar máquina del almacén', body);
+    qs('#alm-edit-save').onclick = async () => {
+      const nombre = (qs('#alm-edit-nombre').value || '').trim();
+      const serie = (qs('#alm-edit-serie').value || '').trim();
+      const sucursal = (qs('#alm-edit-sucursal').value || '').trim();
+      if (!nombre) { showToast('El nombre es obligatorio.', 'error'); qs('#alm-edit-nombre').focus(); return; }
+      if (!sucursal) { showToast('Selecciona una sucursal.', 'error'); qs('#alm-edit-sucursal').focus(); return; }
+      const btn = qs('#alm-edit-save');
+      const orig = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando…';
+      try {
+        // Preservar resto de campos (precio, foto, ficha técnica, etc.) — solo cambiamos los 3 del modal.
+        const payload = Object.assign({}, m, {
+          nombre,
+          modelo: m.modelo || nombre,
+          numero_serie: serie || null,
+          ubicacion: sucursal,
+        });
+        await fetchJson(API + '/maquinas/' + m.id, { method: 'PUT', body: JSON.stringify(payload) });
+        qs('#modal').classList.add('hidden');
+        showToast('Máquina actualizada.', 'success');
+        loadAlmacen();
+      } catch (e) {
+        showToast(parseApiError(e) || 'No se pudo guardar.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = orig;
+      }
+    };
+  }
+
   // ----- MODAL: Agregar máquina al almacén (versión corta: solo nombre + serie + sucursal) -----
   async function openModalNuevaMaquinaAlmacen() {
     const body = `
@@ -13813,7 +13873,7 @@
     }
     if (!rows.length) {
       tbody.innerHTML =
-        '<tr><td colspan="6" class="empty">Sin equipos que coincidan. <strong>Máquinas</strong> define modelo y serie; <strong>Revisión Máquinas</strong> el estado; <strong>Cotizaciones</strong> pendientes bloquean duplicar equipo.</td></tr>';
+        '<tr><td colspan="4" class="empty">Sin equipos. Usa <strong>«Agregar máquina»</strong> para registrar uno nuevo en alguna sucursal.</td></tr>';
       return;
     }
     rows.sort((a, b) =>
@@ -13824,54 +13884,39 @@
       const modelo = modeloAlmacenDisplay(m);
       const sucursal = ciudadSucursalMaquina(m);
       const serie = (m.numero_serie && String(m.numero_serie).trim()) || '—';
-      const rev = latestRevisionForMaquinaId(revs, m.id);
-      const est = estadoAlmacenDesdeRevision(rev);
-      const lock = maquinaIdBloqueoCotizacionMap.get(Number(m.id));
-      const cotCell = lock
-        ? `<button type="button" class="link-btn btn-almacen-open-cot" data-cot-id="${lock.cotId}" title="Abrir cotización pendiente">${escapeHtml(lock.folio)}</button>`
-        : '—';
-      const revBtn =
-        rev && rev.id
-          ? `<button type="button" class="btn small outline btn-almacen-open-rev" title="Ir a Revisión Máquinas"><i class="fas fa-tools"></i></button>`
-          : `<button type="button" class="btn small outline btn-almacen-new-rev" data-maq-id="${m.id}" title="Nueva revisión"><i class="fas fa-plus"></i></button>`;
       const subLine = [m.categoria, m.subcategoria].filter((x) => x && String(x).trim()).join(' · ');
       tr.innerHTML = `
         <td><strong>${escapeHtml(modelo)}</strong>${subLine ? `<div class="muted" style="font-size:0.82rem">${escapeHtml(subLine)}</div>` : ''}</td>
         <td>${escapeHtml(sucursal)}</td>
         <td>${escapeHtml(serie)}</td>
-        <td><span class="badge ${est.cls}" title="${escapeHtml(est.hint)}">${escapeHtml(est.label)}</span></td>
-        <td>${cotCell}</td>
-        <td class="th-actions">${revBtn}</td>`;
+        <td class="th-actions">
+          <button type="button" class="btn small primary btn-almacen-edit" data-maq-id="${m.id}" title="Editar"><i class="fas fa-edit"></i></button>
+          <button type="button" class="btn small danger btn-almacen-del" data-maq-id="${m.id}" title="Eliminar del almacén"><i class="fas fa-trash"></i></button>
+        </td>`;
       tbody.appendChild(tr);
     });
-    tbody.querySelectorAll('.btn-almacen-open-cot').forEach((btn) => {
-      btn.addEventListener('click', async function (e) {
-        e.preventDefault();
-        const cid = Number(btn.dataset.cotId);
-        if (!cid) return;
-        try {
-          const cot = await fetchJson(API + '/cotizaciones/' + cid);
-          showPanel('cotizaciones', { skipLoad: true });
-          openModalCotizacion(cot);
-        } catch (err) {
-          showToast(parseApiError(err) || 'No se pudo abrir la cotización.', 'error');
-        }
-      });
-    });
-    tbody.querySelectorAll('.btn-almacen-open-rev').forEach((btn) => {
-      btn.addEventListener('click', function (e) {
-        e.preventDefault();
-        showPanel('revision-maquinas');
-        loadRevisionMaquinas();
-      });
-    });
-    tbody.querySelectorAll('.btn-almacen-new-rev').forEach((btn) => {
+    tbody.querySelectorAll('.btn-almacen-edit').forEach((btn) => {
       btn.addEventListener('click', function (e) {
         e.preventDefault();
         const id = Number(btn.dataset.maqId);
-        showPanel('revision-maquinas');
-        loadRevisionMaquinas().then(function () {
-          openModalRevisionMaquina({ maquina_id: id });
+        const m = (almacenMaquinasSnapshot || []).find(x => Number(x.id) === id);
+        if (m) openModalEditarMaquinaAlmacen(m);
+      });
+    });
+    tbody.querySelectorAll('.btn-almacen-del').forEach((btn) => {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        const id = Number(btn.dataset.maqId);
+        const m = (almacenMaquinasSnapshot || []).find(x => Number(x.id) === id);
+        const nom = m ? modeloAlmacenDisplay(m) : 'esta máquina';
+        openConfirmModal(`¿Eliminar "${nom}" del almacén? Esta acción solo la marca como inactiva.`, async () => {
+          try {
+            await fetchJson(API + '/maquinas/' + id, { method: 'DELETE' });
+            showToast('Máquina eliminada.', 'success');
+            loadAlmacen();
+          } catch (err) {
+            showToast(parseApiError(err) || 'No se pudo eliminar.', 'error');
+          }
         });
       });
     });
