@@ -1511,20 +1511,30 @@ app.post('/api/refacciones/bulk', async (req, res) => {
     const tcReg = Number(tcSnap && tcSnap.valor) > 0 ? Number(tcSnap.valor) : 17;
     let ok = 0, errors = 0;
     const errorSamples = [];
+    // Helper: respetar null cuando el cliente lo manda (no convertir a default).
+    const nullableStr = (v) => (v != null && String(v).trim() !== '') ? String(v).trim() : null;
+    const nullableNum = (v) => {
+      if (v === null || v === undefined || v === '') return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    };
     for (const it of items) {
       try {
-        const cod = (it.codigo != null && String(it.codigo).trim() !== '') ? String(it.codigo).trim() : null;
-        const puUsd = Number(it.precio_usd) || 0;
+        const cod = nullableStr(it.codigo);
+        const puUsd = nullableNum(it.precio_usd);
+        const stk = nullableNum(it.stock);
+        // MIN: respetar null si así viene (mismo patrón que codigo)
+        const minVal = it.minimo !== undefined ? nullableNum(it.minimo) : nullableNum(it.stock_minimo);
         await db.runQuery(
           `INSERT INTO refacciones (codigo, descripcion, zona, bloque, stock, stock_minimo, precio_unitario, precio_usd, tipo_cambio_registro, unidad, categoria)
            VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
           [
             cod,
             it.descripcion || '',
-            it.zona || null,
-            (it.bloque != null && String(it.bloque).trim() !== '') ? String(it.bloque).trim() : null,
-            Number(it.stock) || 0,
-            Number(it.minimo) || Number(it.stock_minimo) || 1,
+            nullableStr(it.zona),
+            nullableStr(it.bloque),
+            stk,
+            minVal,
             puUsd,
             tcReg,
             it.unidad || 'PZA',

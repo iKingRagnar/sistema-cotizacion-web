@@ -4501,7 +4501,8 @@
     }
     const _canEdit = canEdit(); const _canDelete = canDelete(); const _canStock = canAdjustStock();
     // Alerta de stock bajo
-    const bajos = data.filter(r => Number(r.stock) <= Number(r.stock_minimo || 1) && Number(r.stock_minimo || 1) > 0);
+    // Alerta solo si stock_minimo está EXPLICITAMENTE definido en BD (no inventar 1 por defecto)
+    const bajos = data.filter(r => r.stock_minimo != null && Number(r.stock_minimo) > 0 && Number(r.stock || 0) <= Number(r.stock_minimo));
     const alertBar = qs('#ref-stock-alert-bar');
     if (alertBar) {
       if (bajos.length) {
@@ -4512,20 +4513,23 @@
       }
     }
     data.forEach(r => {
-      const stockBajo = Number(r.stock) <= Number(r.stock_minimo || 1);
+      // Solo marcar como stock-bajo si stock_minimo está definido en BD (no inventar 1 por defecto)
+      const stockBajo = r.stock_minimo != null && Number(r.stock_minimo) > 0 && Number(r.stock || 0) <= Number(r.stock_minimo);
       const tr = document.createElement('tr');
       if (stockBajo) tr.classList.add('row-stock-bajo');
       const thumbUrlRaw = (r.imagen_url && String(r.imagen_url).trim()) || (r.manual_url && String(r.manual_url).trim()) || '';
       const thumbBtn = thumbUrlRaw && pvcIsDisplayableImageUrl(thumbUrlRaw) ? pvcTablaThumbOpenButton(thumbUrlRaw) : '';
-      const imgThumb = `<span class="ref-code-with-thumb">${thumbBtn}<span class="ref-codigo-text">${escapeHtml(r.codigo || '')}</span></span>`;
+      const codigoTxt = r.codigo != null && String(r.codigo).trim() !== '' ? escapeHtml(r.codigo) : '<span class="cell-empty">—</span>';
+      const imgThumb = `<span class="ref-code-with-thumb">${thumbBtn}<span class="ref-codigo-text">${codigoTxt}</span></span>`;
+      const dash = '<span class="cell-empty">—</span>';
       tr.innerHTML = `
         <td class="ref-td-code">${imgThumb}</td>
         <td class="td-desc-wrap td-text-wrap ref-td-desc">${escapeHtml(r.descripcion || '')}</td>
         <td class="ref-td-cat">${formatRefaccionCategoriaCellHtml(r)}</td>
-        <td class="ref-td-meta">${escapeHtml(r.zona || '')}</td>
-        <td class="ref-td-meta">${escapeHtml(r.bloque || '')}</td>
-        <td class="ref-td-num ${stockBajo ? 'stock-bajo' : ''}">${r.stock != null ? Number(r.stock).toLocaleString('es-MX') : '0'}</td>
-        <td class="ref-td-num">${r.stock_minimo != null ? Number(r.stock_minimo) : 1}</td>
+        <td class="ref-td-meta">${r.zona ? escapeHtml(r.zona) : dash}</td>
+        <td class="ref-td-meta">${r.bloque ? escapeHtml(r.bloque) : dash}</td>
+        <td class="ref-td-num ${stockBajo ? 'stock-bajo' : ''}">${r.stock != null ? Number(r.stock).toLocaleString('es-MX') : dash}</td>
+        <td class="ref-td-num">${r.stock_minimo != null ? Number(r.stock_minimo) : dash}</td>
         <td class="ref-td-price">${formatRefaccionPrecioUsdCell(r)}</td>
         <td class="ref-td-unit">${escapeHtml(r.unidad || 'PZA')}</td>
         <td class="th-actions ref-td-actions">
@@ -14517,13 +14521,22 @@
         const categoria = refCategoriaLabel(getCell(row, 'categoria')) || null;
         const zona = (getCell(row, 'zona') || '').toString().trim();
         const bloque = (getCell(row, 'bloque') || '').toString().trim();
+        // MIN: si la celda está vacía → null (no defaultear a 1, mismo patrón que código)
+        const minStr = (minRaw == null ? '' : String(minRaw)).trim();
+        const minimo = minStr === '' ? null : (Number(minStr) || 0);
+        // Stock: si está vacío → null (no defaultear a 0, así no se marca como stock-bajo falso)
+        const stockStr = (stockRaw == null ? '' : String(stockRaw)).trim();
+        const stock = stockStr === '' ? null : (Number(stockStr) || 0);
+        // Precio: si está vacío → null
+        const precioStr = (precioUsdRaw == null ? '' : String(precioUsdRaw)).trim();
+        const precio_usd = precioStr === '' ? null : (Number(precioStr) || 0);
         rows.push({
           codigo,
           descripcion,
           unidad,
-          precio_usd: Number(precioUsdRaw) || 0,
-          stock: Number(stockRaw) || 0,
-          minimo: Number(minRaw) || 0,
+          precio_usd,
+          stock,
+          minimo,
           categoria: categoria || null,
           zona: zona || null,
           bloque: bloque || null,

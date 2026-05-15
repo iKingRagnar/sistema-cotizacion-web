@@ -7450,6 +7450,17 @@ body.dark-theme #panel-refacciones .toolbar select {
   color: #e2e8f0;
 }
 
+/* Placeholder visual uniforme para celdas vacías (código, zona, bloque, stock, mín, etc.) */
+#tabla-refacciones .cell-empty {
+  color: rgba(148, 163, 184, 0.55);
+  font-weight: 400;
+  user-select: none;
+}
+body.dark-theme #tabla-refacciones .cell-empty,
+html body.theme-industrial:not(.appearance-light) #tabla-refacciones .cell-empty {
+  color: rgba(148, 163, 184, 0.40);
+}
+
 /* Catálogo refacciones: misma línea visual que máquinas (sin filas/filtros amarillos; hover legible) */
 #ref-stock-alert-bar.stock-alert-bar {
   background: linear-gradient(135deg, #f1f5f9 0%, #e8f0fe 45%, #f8fafc 100%);
