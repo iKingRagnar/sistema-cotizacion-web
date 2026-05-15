@@ -2073,17 +2073,26 @@ const DEFAULT_TARIFAS = {
   /** Vuelta (ida): cargo fijo MXN + horas trabajo/traslado × tarifa hora MXN; se convierte con T.C. si la cotización es USD */
   vuelta_ida_mxn: '650',
   vuelta_hora_mxn: '450',
-  /** Mano de obra — hoja TARIFAS de AGENDA SERVICIO.xlsx (traslado, mecánico 1–3 pers., electrónico 1–2, viáticos 1–2). */
+  /** Mano de obra UNIVERSAL 2026 — tarifas FINALES por hora según equipo. */
   mo_agenda_traslado_carro_mxn_hr: '2000',
   mo_agenda_mecanico_mxn_hr: '1000',
-  mo_agenda_mecanico_2pers_extra_mxn: '400',
-  mo_agenda_mecanico_3pers_extra_mxn: '900',
+  mo_agenda_mecanico_ayudante_mxn_hr: '1400',
+  mo_agenda_mecanico_2ayudantes_mxn_hr: '1900',
   mo_agenda_electronico_mxn_hr: '1500',
-  mo_agenda_electronico_2pers_mult: '1.4',
-  mo_agenda_viatico1_por_dia_mxn: '1800',
-  mo_agenda_viatico1_fijo_mxn: '1200',
-  mo_agenda_viatico2_por_dia_mxn: '3600',
-  mo_agenda_viatico2_fijo_mxn: '1900',
+  mo_agenda_electronico_ayudante_mxn_hr: '2100',
+  // Recargos viejos (compatibilidad con cotizaciones legado, ya no se usan en cálculo nuevo)
+  mo_agenda_mecanico_2pers_extra_mxn: '0',
+  mo_agenda_mecanico_3pers_extra_mxn: '0',
+  mo_agenda_electronico_2pers_mult: '1',
+  // Viáticos UNIVERSAL 2026: 1 persona $3000/día, 2 personas $5500/día (sin fijo)
+  mo_agenda_viatico1_por_dia_mxn: '3000',
+  mo_agenda_viatico1_fijo_mxn: '0',
+  mo_agenda_viatico2_por_dia_mxn: '5500',
+  mo_agenda_viatico2_fijo_mxn: '0',
+  // Bonos de capacitación UNIVERSAL 2026
+  bono_capacitacion_local_mxn: '500',
+  bono_capacitacion_linea_mxn: '800',
+  bono_capacitacion_foranea_mxn: '1000',
 };
 
 async function ensureTarifasDefaults() {
@@ -2693,30 +2702,39 @@ async function calcManoObraMxnAgendaServicioAsync(tipoTec, hrsTraslado, hrsTraba
   const trHr = await getTarifaNum('mo_agenda_traslado_carro_mxn_hr', 2000);
   const trMx = hinT * trHr;
 
+  // UNIVERSAL 2026: tarifas FINALES por hora según composición del equipo (no recargos).
   const mecHr = await getTarifaNum('mo_agenda_mecanico_mxn_hr', 1000);
-  const mec2Extra = await getTarifaNum('mo_agenda_mecanico_2pers_extra_mxn', 400);
-  const mec3Extra = await getTarifaNum('mo_agenda_mecanico_3pers_extra_mxn', 900);
+  const mecAyuHr = await getTarifaNum('mo_agenda_mecanico_ayudante_mxn_hr', 1400);
+  const mec2AyuHr = await getTarifaNum('mo_agenda_mecanico_2ayudantes_mxn_hr', 1900);
   const elecHr = await getTarifaNum('mo_agenda_electronico_mxn_hr', 1500);
-  const elec2Mult = await getTarifaNum('mo_agenda_electronico_2pers_mult', 1.4);
+  const elecAyuHr = await getTarifaNum('mo_agenda_electronico_ayudante_mxn_hr', 2100);
+  // Compatibilidad con cotizaciones viejas que usaban recargos / multiplicador.
+  // Si los valores nuevos están en 0/no definidos, recurrimos a la fórmula anterior.
+  const mec2Extra = await getTarifaNum('mo_agenda_mecanico_2pers_extra_mxn', 0);
+  const mec3Extra = await getTarifaNum('mo_agenda_mecanico_3pers_extra_mxn', 0);
+  const elec2Mult = await getTarifaNum('mo_agenda_electronico_2pers_mult', 0);
 
   let trabajoMx = 0;
   const tt = String(tipoTec || 'mecanico').toLowerCase();
   if (tt === 'mecanico') {
-    if (ayu >= 2) trabajoMx = hinW * mecHr + mec3Extra;
-    else if (ayu === 1) trabajoMx = hinW * mecHr + mec2Extra;
+    if (ayu >= 2) trabajoMx = mec2AyuHr > 0 ? hinW * mec2AyuHr : (hinW * mecHr + mec3Extra);
+    else if (ayu === 1) trabajoMx = mecAyuHr > 0 ? hinW * mecAyuHr : (hinW * mecHr + mec2Extra);
     else trabajoMx = hinW * mecHr;
   } else if (tt === 'electronico') {
-    if (ayu >= 1) trabajoMx = hinW * elecHr * elec2Mult;
+    if (ayu >= 1) trabajoMx = elecAyuHr > 0 ? hinW * elecAyuHr : (hinW * elecHr * (elec2Mult || 1));
     else trabajoMx = hinW * elecHr;
   } else {
     const cncHr = (await getTarifaNum('cnc_mxn', 0)) || mecHr;
     trabajoMx = hinW * cncHr;
   }
 
-  const v1d = await getTarifaNum('mo_agenda_viatico1_por_dia_mxn', 1800);
-  const v1f = await getTarifaNum('mo_agenda_viatico1_fijo_mxn', 1200);
-  const v2d = await getTarifaNum('mo_agenda_viatico2_por_dia_mxn', 3600);
-  const v2f = await getTarifaNum('mo_agenda_viatico2_fijo_mxn', 1900);
+  // UNIVERSAL 2026: viáticos = (días × tarifa por persona) — sin componente fijo.
+  // 1 persona/día = $3000, 2 personas/día = $5500. Si los hay viejos fijos, se respetan
+  // como fallback aditivo (mo_agenda_viatico*_fijo_mxn) para cotizaciones legado.
+  const v1d = await getTarifaNum('mo_agenda_viatico1_por_dia_mxn', 3000);
+  const v1f = await getTarifaNum('mo_agenda_viatico1_fijo_mxn', 0);
+  const v2d = await getTarifaNum('mo_agenda_viatico2_por_dia_mxn', 5500);
+  const v2f = await getTarifaNum('mo_agenda_viatico2_fijo_mxn', 0);
   let viaticoMx = 0;
   if (vd > 0) {
     if (ayu >= 1) viaticoMx = vd * v2d + v2f;
