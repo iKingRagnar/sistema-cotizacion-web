@@ -5797,6 +5797,93 @@ body.dark-theme .cdp-hero {
 body.dark-theme .cdp-doc-title { color: #e2e8f0; }
 body.dark-theme .cdp-folio-line { color: #94a3b8; }
 body.dark-theme .cdp-folio-line strong { color: #f1f5f9; }
+
+/* ---- FIX 2026-05-18: forzar vista previa cotización como FACTURA BLANCA ----
+   El doc debe verse como papel impreso (fondo blanco + texto oscuro)
+   independientemente del tema oscuro de la app. Sobreescribe todas las reglas
+   dark-theme arriba con especificidad mayor + !important. */
+.preview-card.preview-card--cotizacion-doc,
+.preview-card.preview-card--cotizacion-doc .pvc-body,
+body.dark-theme .preview-card.preview-card--cotizacion-doc,
+body.dark-theme .preview-card.preview-card--cotizacion-doc .pvc-body {
+  background: #ffffff !important;
+}
+.cotizacion-doc-preview,
+body.dark-theme .cotizacion-doc-preview,
+html body.theme-industrial .cotizacion-doc-preview {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+.cotizacion-doc-preview *,
+body.dark-theme .cotizacion-doc-preview *,
+html body.theme-industrial .cotizacion-doc-preview * {
+  color: inherit;
+  -webkit-text-fill-color: inherit;
+}
+/* Textos secundarios (muted) se ven con suficiente contraste sobre blanco */
+.cotizacion-doc-preview .cdp-kicker,
+.cotizacion-doc-preview .cdp-mini-k,
+.cotizacion-doc-preview .cdp-tc-note,
+.cotizacion-doc-preview .cdp-disclaimer,
+.cotizacion-doc-preview .cdp-money-row > span:first-child,
+body.dark-theme .cotizacion-doc-preview .cdp-kicker,
+body.dark-theme .cotizacion-doc-preview .cdp-mini-k,
+body.dark-theme .cotizacion-doc-preview .cdp-tc-note,
+body.dark-theme .cotizacion-doc-preview .cdp-disclaimer {
+  color: #475569 !important;
+  -webkit-text-fill-color: #475569 !important;
+}
+/* Hero (encabezado COTIZACIÓN — Documento) en oscuro como en factura impresa */
+.cotizacion-doc-preview .cdp-hero,
+body.dark-theme .cotizacion-doc-preview .cdp-hero {
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%) !important;
+  border-color: #1e3a5f !important;
+  color: #f8fafc !important;
+}
+.cotizacion-doc-preview .cdp-hero *,
+body.dark-theme .cotizacion-doc-preview .cdp-hero * {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+.cotizacion-doc-preview .cdp-hero .cdp-kicker,
+.cotizacion-doc-preview .cdp-hero .cdp-mini-k,
+body.dark-theme .cotizacion-doc-preview .cdp-hero .cdp-kicker,
+body.dark-theme .cotizacion-doc-preview .cdp-hero .cdp-mini-k {
+  color: #cbd5e1 !important;
+  -webkit-text-fill-color: #cbd5e1 !important;
+}
+/* Cards y tablas siempre con fondo claro */
+.cotizacion-doc-preview .cdp-card,
+body.dark-theme .cotizacion-doc-preview .cdp-card {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+.cotizacion-doc-preview .cdp-card *,
+body.dark-theme .cotizacion-doc-preview .cdp-card * {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+.cotizacion-doc-preview table,
+.cotizacion-doc-preview table tr,
+.cotizacion-doc-preview table td,
+.cotizacion-doc-preview table th,
+body.dark-theme .cotizacion-doc-preview table,
+body.dark-theme .cotizacion-doc-preview table tr,
+body.dark-theme .cotizacion-doc-preview table td,
+body.dark-theme .cotizacion-doc-preview table th {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+.cotizacion-doc-preview table thead th,
+body.dark-theme .cotizacion-doc-preview table thead th {
+  background: #f1f5f9 !important;
+  color: #1e3a5f !important;
+  -webkit-text-fill-color: #1e3a5f !important;
+}
 body.dark-theme .cdp-mini-v { color: #cbd5e1; }
 body.dark-theme .cdp-pill {
   background: #334155;

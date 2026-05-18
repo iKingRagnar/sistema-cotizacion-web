@@ -2533,12 +2533,44 @@ function startBanxicoTipoCambioScheduler() {
 // --- Revisión de Máquinas ---
 app.get('/api/revision-maquinas', async (req, res) => {
   try {
+    /* JOIN incluye estado_preparacion y preparacion_iniciada_en para que el
+       checkbox "En preparación" del frontend pueda filtrar. */
     const rows = await db.getAll(
-      `SELECT r.*, m.modelo as maquina_modelo, m.categoria as maquina_categoria
+      `SELECT r.*,
+              m.modelo as maquina_modelo,
+              m.categoria as maquina_categoria,
+              m.estado_preparacion,
+              m.preparacion_iniciada_en
        FROM revision_maquinas r LEFT JOIN maquinas m ON m.id = r.maquina_id
        ORDER BY r.id DESC`, []
     );
-    res.json(Array.isArray(rows) ? rows : []);
+    /* Máquinas vendidas (estado_preparacion != null) que TODAVÍA NO tienen
+       revisión registrada — aparecen como filas "virtuales" para que la pestaña
+       Revisión Máquinas (con checkbox "En preparación") las muestre. */
+    const orphanMaqs = await db.getAll(
+      `SELECT m.id as maquina_id, m.modelo as maquina_modelo, m.categoria as maquina_categoria,
+              m.modelo, m.categoria, m.numero_serie, m.estado_preparacion, m.preparacion_iniciada_en
+       FROM maquinas m
+       LEFT JOIN revision_maquinas r ON r.maquina_id = m.id
+       WHERE m.estado_preparacion IS NOT NULL AND r.id IS NULL`, []
+    );
+    const virtualRows = (orphanMaqs || []).map((m, i) => ({
+      id: -1 - i, // id negativo = fila virtual (no es una revisión real, no editable como tal)
+      maquina_id: m.maquina_id,
+      maquina_modelo: m.maquina_modelo,
+      maquina_categoria: m.maquina_categoria,
+      modelo: m.modelo,
+      categoria: m.categoria,
+      numero_serie: m.numero_serie,
+      entregado: 'No',
+      prueba: 'En Proceso',
+      comentarios: null,
+      estado_preparacion: m.estado_preparacion,
+      preparacion_iniciada_en: m.preparacion_iniciada_en,
+      _virtual: true,
+    }));
+    const merged = [...(Array.isArray(rows) ? rows : []), ...virtualRows];
+    res.json(merged);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
