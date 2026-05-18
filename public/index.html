@@ -1728,7 +1728,8 @@
             <option value="">Todos los técnicos</option>
           </select>
           <button type="button" id="btn-refresh-bonos" class="btn outline" title="Recargar"><i class="fas fa-sync-alt"></i> Actualizar</button>
-          <button type="button" id="btn-enviar-bonos-correo" class="btn primary" title="Enviar reporte por correo a destinatarios configurados"><i class="fas fa-paper-plane"></i> Enviar por correo</button>
+          <button type="button" id="btn-descargar-bonos-excel" class="btn outline" title="Descargar reporte completo en Excel (Ventas + Comisiones + Inventario)"><i class="fas fa-file-excel"></i> Descargar Excel</button>
+          <button type="button" id="btn-enviar-bonos-correo" class="btn primary" title="Enviar reporte por correo a destinatarios configurados (requiere SMTP en Render)"><i class="fas fa-paper-plane"></i> Enviar por correo</button>
         </div>
       </div>
       <p class="hint">Acumulado de comisiones (refacciones, servicios, máquinas) y bonos (capacitación, días fuera de ciudad, facturación $20k) por técnico, calculado desde <strong>Cotizaciones aprobadas</strong> y <strong>Reportes finalizados</strong>.</p>
@@ -2281,7 +2282,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=244-preparacion-maquinas-contraste-factura-2026-05-18"></script>
+  <script src="js/app.js?v=245-bonos-descargar-excel-2026-05-18"></script>
   <script src="js/prospeccion-map.js?v=7-sync-segment-heat-weight-2026-05-10" defer></script>
   <script src="js/bg-animation.js?v=8-map-shell-no-duplicate-hamburger" defer></script>
   <script src="js/premium-ux.js?v=24-globalmo-full-suppress-2026-05-07" defer></script>
