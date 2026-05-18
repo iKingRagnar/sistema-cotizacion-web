@@ -5884,6 +5884,54 @@ body.dark-theme .cotizacion-doc-preview table thead th {
   color: #1e3a5f !important;
   -webkit-text-fill-color: #1e3a5f !important;
 }
+/* ---- FIX 2026-05-18 (b): tabla con anchos fijos + wrap en concepto, evita
+   solapamientos cuando el texto "ENGRANES VIEJOS MEDIANOS Y CHICOS" se desborda
+   sobre las columnas CANT y P.U. USD ---- */
+.cotizacion-doc-preview .cdp-table {
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+.cotizacion-doc-preview .cdp-table th:nth-child(1),
+.cotizacion-doc-preview .cdp-table td:nth-child(1) { width: 9% !important; }  /* Tipo */
+.cotizacion-doc-preview .cdp-table th:nth-child(2),
+.cotizacion-doc-preview .cdp-table td:nth-child(2) { width: 9% !important; }  /* Código */
+.cotizacion-doc-preview .cdp-table th:nth-child(3),
+.cotizacion-doc-preview .cdp-table td:nth-child(3) { width: 11% !important; } /* Máquina */
+.cotizacion-doc-preview .cdp-table th:nth-child(4),
+.cotizacion-doc-preview .cdp-table td:nth-child(4) {
+  width: 31% !important;                /* Concepto: el más ancho */
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  white-space: normal !important;
+}
+.cotizacion-doc-preview .cdp-table th:nth-child(5),
+.cotizacion-doc-preview .cdp-table td:nth-child(5) { width: 7% !important; }  /* Cant */
+.cotizacion-doc-preview .cdp-table th:nth-child(6),
+.cotizacion-doc-preview .cdp-table td:nth-child(6) { width: 11% !important; } /* P.U.USD */
+.cotizacion-doc-preview .cdp-table th:nth-child(7),
+.cotizacion-doc-preview .cdp-table td:nth-child(7) { width: 11% !important; } /* P.U.MXN */
+.cotizacion-doc-preview .cdp-table th:nth-child(8),
+.cotizacion-doc-preview .cdp-table td:nth-child(8) { width: 11% !important; } /* Subtotal */
+/* Forzar contraste oscuro en Subtotal/IVA/Total/Equivalente MXN del card "Resumen (USD)" */
+.cotizacion-doc-preview .cdp-money-row,
+.cotizacion-doc-preview .cdp-money-row > span,
+.cotizacion-doc-preview .cdp-equiv,
+.cotizacion-doc-preview .cdp-equiv > span,
+body.dark-theme .cotizacion-doc-preview .cdp-money-row,
+body.dark-theme .cotizacion-doc-preview .cdp-money-row > span,
+body.dark-theme .cotizacion-doc-preview .cdp-equiv,
+body.dark-theme .cotizacion-doc-preview .cdp-equiv > span {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+.cotizacion-doc-preview .cdp-money-row--total,
+.cotizacion-doc-preview .cdp-money-row--total > span,
+body.dark-theme .cotizacion-doc-preview .cdp-money-row--total,
+body.dark-theme .cotizacion-doc-preview .cdp-money-row--total > span {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  font-weight: 800 !important;
+}
 body.dark-theme .cdp-mini-v { color: #cbd5e1; }
 body.dark-theme .cdp-pill {
   background: #334155;

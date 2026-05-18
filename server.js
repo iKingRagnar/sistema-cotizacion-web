@@ -8081,9 +8081,23 @@ app.post('/api/embarques', async (req, res) => {
         _maqNullableStr(b.notas),
       ]
     );
-    const row = await db.getOne('SELECT * FROM embarques WHERE id=?', [r.lastInsertRowid]);
-    res.status(201).json(row);
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+    /* lastInsertRowid puede venir como BigInt en libsql/Turso y romper el =?.
+       Convertir a Number; si no viene, fallback al último registro creado. */
+    let row = null;
+    try {
+      const lid = r && r.lastInsertRowid != null ? Number(r.lastInsertRowid) : null;
+      if (lid && !Number.isNaN(lid)) {
+        row = await db.getOne('SELECT * FROM embarques WHERE id=?', [lid]);
+      }
+    } catch (_) { /* fallback abajo */ }
+    if (!row) {
+      row = await db.getOne('SELECT * FROM embarques ORDER BY id DESC LIMIT 1');
+    }
+    res.status(201).json(row || { ok: true });
+  } catch (e) {
+    console.error('[embarques][POST]', e && e.message);
+    res.status(500).json({ error: String(e.message) });
+  }
 });
 
 app.put('/api/embarques/:id', async (req, res) => {
