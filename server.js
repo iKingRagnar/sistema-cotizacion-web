@@ -7944,36 +7944,11 @@ app.get(['/legacy-app', '/legacy-app/'], (req, res, next) => {
   });
 });
 
-// SPA: rutas no-API → index.html (rutas alternativas para bundle serverless de Vercel)
-app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api')) return res.status(404).end();
-  const indexPath = resolvePublicIndexHtmlPath();
-  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-  if (!indexPath) {
-    return res
-      .status(500)
-      .type('html')
-      .send(
-        '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Error</title></head><body><h1>No se encontró public/index.html</h1><p>Revisa el despliegue (includeFiles) o la raíz del proyecto.</p></body></html>'
-      );
-  }
-  res.sendFile(indexPath, (err) => {
-    if (err) next(err);
-  });
-});
-
-/** Errores (p. ej. init BD o sendFile): evita respuesta genérica sin pista. */
-app.use((err, req, res, next) => {
-  if (res.headersSent) return next(err);
-  const msg = err && err.message ? String(err.message) : String(err || 'Error');
-  console.error('[express]', err && err.stack ? err.stack : msg);
-  if (req.path && String(req.path).startsWith('/api')) {
-    return res.status(500).json({ error: msg });
-  }
-  res.status(500).type('html').send(
-    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Error</title></head><body><h1>Error del servidor</h1><pre>${msg.replace(/</g, '&lt;')}</pre></body></html>`
-  );
-});
+/* NOTA 2026-05-18: el catchall `app.get('*')` y el error handler `app.use((err,req,res,next))`
+   se movieron AL FINAL del archivo (antes de `module.exports = app`) porque su posición previa
+   en línea ~7948 bloqueaba con 404 todos los endpoints API registrados DESPUÉS
+   (incluyendo /api/embarques, /api/bonos/acumulado, /api/config/correos-reportes, etc.).
+   Express ejecuta middlewares en orden de registro: el catchall debe ser el ÚLTIMO. */
 
 /** Seed demo, backfill y respaldos: después de escuchar el puerto para no bloquear el health check de Render. */
 async function runPostListenStartup() {
@@ -8516,6 +8491,43 @@ if (require.main === module) {
     process.exit(1);
   });
 }
+
+/* ============================================================================
+   CATCHALL Y ERROR HANDLER — registrados al FINAL para que TODAS las rutas API
+   declaradas arriba tengan prioridad. Mover esto antes de algún app.get/post
+   provoca que esos endpoints devuelvan 404 (lección aprendida 2026-05-18).
+   ============================================================================ */
+
+// SPA: rutas no-API → index.html (rutas alternativas para bundle serverless de Vercel)
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) return res.status(404).end();
+  const indexPath = resolvePublicIndexHtmlPath();
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  if (!indexPath) {
+    return res
+      .status(500)
+      .type('html')
+      .send(
+        '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Error</title></head><body><h1>No se encontró public/index.html</h1><p>Revisa el despliegue (includeFiles) o la raíz del proyecto.</p></body></html>'
+      );
+  }
+  res.sendFile(indexPath, (err) => {
+    if (err) next(err);
+  });
+});
+
+/** Errores (p. ej. init BD o sendFile): evita respuesta genérica sin pista. */
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  const msg = err && err.message ? String(err.message) : String(err || 'Error');
+  console.error('[express]', err && err.stack ? err.stack : msg);
+  if (req.path && String(req.path).startsWith('/api')) {
+    return res.status(500).json({ error: msg });
+  }
+  res.status(500).type('html').send(
+    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Error</title></head><body><h1>Error del servidor</h1><pre>${msg.replace(/</g, '&lt;')}</pre></body></html>`
+  );
+});
 
 /** Vercel: export default de la app Express (Fluid Compute). Local: node server.js */
 module.exports = app;
