@@ -5616,19 +5616,19 @@
       ? `<p class="cdp-equiv"><span>Equivalente MXN</span><span>${fmtMxn(total * tipoCambio)}</span></p>`
       : '';
     return `
-<div class="cotizacion-doc-preview universal-doc">
-  <div class="universal-brand-header" style="display:flex;align-items:center;gap:14px;padding:10px 14px;background:#fff;border-bottom:3px solid #b91c1c;margin-bottom:8px">
-    <img src="/fondos/universal-logo.jpg" alt="UNIVERSAL" style="height:54px;width:auto;border-radius:6px" onerror="this.style.display='none'">
-    <div style="flex:1">
-      <div style="font-weight:900;letter-spacing:.06em;color:#0f172a;font-size:15px">UNIVERSAL MAQUINARIA</div>
-      <div style="font-size:11px;color:#475569">Tel. 81 8366 8946 · Donde la competencia no existe</div>
+<div class="cotizacion-doc-preview universal-doc" style="background:#fff;color:#0f172a">
+  <div class="universal-brand-header" style="display:flex !important;align-items:center !important;gap:14px !important;padding:14px 18px !important;background:#fff !important;border-bottom:3px solid #b91c1c !important;margin-bottom:8px !important">
+    <img src="/fondos/universal-logo.jpg" alt="UNIVERSAL" style="height:60px !important;width:auto !important;border-radius:6px !important;background:#fff !important" onerror="this.style.display='none'">
+    <div style="flex:1 !important">
+      <div style="font-weight:900 !important;letter-spacing:.06em !important;color:#0f172a !important;-webkit-text-fill-color:#0f172a !important;font-size:18px !important;line-height:1.2 !important">UNIVERSAL MAQUINARIA</div>
+      <div style="font-size:12px !important;color:#475569 !important;-webkit-text-fill-color:#475569 !important;margin-top:3px !important">Tel. 81 8366 8946 · Donde la competencia no existe</div>
     </div>
-    <div style="text-align:right;font-size:11px;color:#475569">
-      <div><strong>Folio:</strong> ${escapeHtml(String(cot.folio || '—'))}</div>
-      <div><strong>Fecha:</strong> ${fmtDate(cot.fecha)}</div>
+    <div style="text-align:right !important;font-size:12px !important;color:#475569 !important;-webkit-text-fill-color:#475569 !important">
+      <div style="color:#475569 !important;-webkit-text-fill-color:#475569 !important"><strong style="color:#0f172a !important;-webkit-text-fill-color:#0f172a !important">Folio:</strong> ${escapeHtml(String(cot.folio || '—'))}</div>
+      <div style="color:#475569 !important;-webkit-text-fill-color:#475569 !important"><strong style="color:#0f172a !important;-webkit-text-fill-color:#0f172a !important">Fecha:</strong> ${fmtDate(cot.fecha)}</div>
     </div>
   </div>
-  <div class="universal-precio-banda" style="background:#b91c1c;color:#fff;text-align:center;padding:6px 10px;font-weight:800;letter-spacing:.08em;font-size:14px;margin-bottom:10px">
+  <div class="universal-precio-banda" style="background:#b91c1c !important;color:#fff !important;-webkit-text-fill-color:#fff !important;text-align:center !important;padding:10px 14px !important;font-weight:800 !important;letter-spacing:.08em !important;font-size:16px !important;margin-bottom:10px !important">
     TOTAL ${escapeHtml(moneda)}: ${fmtMonto(total)}${moneda === 'USD' && tipoCambio > 0 ? ' &nbsp;·&nbsp; T.C. ' + Number(tipoCambio).toFixed(4) : ''}
   </div>
   <div class="cdp-hero">
