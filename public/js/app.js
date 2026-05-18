@@ -17134,51 +17134,8 @@
     }
   }
 
-  /** Descarga directa del Excel mensual (Ventas + Comisiones + Inventario).
-   *  No requiere SMTP. Usa el mismo endpoint backend con ?download=1.
-   *  Mantiene la sesión (cookie) porque navegamos a la URL en mismo origen. */
-  async function descargarExcelBonos() {
-    const mesEl = document.querySelector('#bonos-mes-filtro');
-    let mes = mesEl && mesEl.value;
-    if (!mes) {
-      const d = new Date();
-      mes = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-    }
-    try {
-      showToast('Generando Excel...', 'info');
-      // Fetch como blob para forzar descarga aunque la sesión esté en cookie.
-      const url = API + '/reportes/ventas-mensual?mes=' + encodeURIComponent(mes) + '&download=1';
-      const tok = (typeof getAuthToken === 'function') ? getAuthToken() : null;
-      const headers = tok ? { Authorization: 'Bearer ' + tok } : {};
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 60000);
-      let resp;
-      try { resp = await fetch(url, { headers, signal: ctrl.signal }); }
-      finally { clearTimeout(t); }
-      if (!resp.ok) {
-        const txt = await resp.text().catch(() => '');
-        throw new Error(txt || ('HTTP ' + resp.status));
-      }
-      const blob = await resp.blob();
-      const dlUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = dlUrl;
-      a.download = 'reporte-bonos-' + mes + '.xlsx';
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(dlUrl);
-      }, 100);
-      showToast('Excel descargado: reporte-bonos-' + mes + '.xlsx', 'success');
-    } catch (e) {
-      console.error('[bonos][descarga-excel]', e);
-      const msg = (e && e.name === 'AbortError')
-        ? 'El servidor tardó demasiado en generar el Excel (60s).'
-        : (parseApiError(e) || 'No se pudo descargar el Excel: ' + (e.message || e));
-      showToast(msg, 'error');
-    }
-  }
+  // descargarExcelBonos eliminada 2026-05-18: el cliente prefiere correo
+  // automático en lugar de descarga manual.
 
   // ----- CORREOS DESTINATARIOS (admin) -----
   async function loadCorreosDestinatarios() {
@@ -17251,22 +17208,13 @@
     if (btnRefBonos && !btnRefBonos.dataset.wired) { btnRefBonos.dataset.wired = '1'; btnRefBonos.addEventListener('click', () => loadBonosAcumulado()); }
     const btnEnviarBonos = document.querySelector('#btn-enviar-bonos-correo');
     if (btnEnviarBonos && !btnEnviarBonos.dataset.wired) { btnEnviarBonos.dataset.wired = '1'; btnEnviarBonos.addEventListener('click', () => enviarBonosCorreo()); }
-    const btnDescargarExcelBonos = document.querySelector('#btn-descargar-bonos-excel');
-    if (btnDescargarExcelBonos && !btnDescargarExcelBonos.dataset.wired) {
-      btnDescargarExcelBonos.dataset.wired = '1';
-      btnDescargarExcelBonos.addEventListener('click', () => descargarExcelBonos());
-    }
     const mesBonos = document.querySelector('#bonos-mes-filtro');
     if (mesBonos && !mesBonos.dataset.wired) { mesBonos.dataset.wired = '1'; mesBonos.addEventListener('change', () => loadBonosAcumulado()); }
     const tecBonos = document.querySelector('#bonos-tecnico-filtro');
     if (tecBonos && !tecBonos.dataset.wired) { tecBonos.dataset.wired = '1'; tecBonos.addEventListener('change', () => renderBonosAcumulado()); }
 
-    const btnAddV = document.querySelector('#btn-corr-add-ventas');
-    if (btnAddV && !btnAddV.dataset.wired) { btnAddV.dataset.wired = '1'; btnAddV.addEventListener('click', () => addCorreoDestinatario('ventas_mensual')); }
-    const btnAddB = document.querySelector('#btn-corr-add-bonos');
-    if (btnAddB && !btnAddB.dataset.wired) { btnAddB.dataset.wired = '1'; btnAddB.addEventListener('click', () => addCorreoDestinatario('bonos_mensual')); }
-    const btnAddI = document.querySelector('#btn-corr-add-inventario');
-    if (btnAddI && !btnAddI.dataset.wired) { btnAddI.dataset.wired = '1'; btnAddI.addEventListener('click', () => addCorreoDestinatario('inventario_mensual')); }
+    // Handlers de UI "Correos destinatarios" eliminados 2026-05-18:
+    // ahora el destinatario es fijo en env var EMAIL_REPORTES_DESTINATARIO en Render.
 
     // Revision maquinas: filtro preparacion
     const filterPrep = document.querySelector('#rev-filtro-preparacion');
