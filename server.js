@@ -6092,21 +6092,30 @@ app.put('/api/reportes/:id', async (req, res) => {
     res.json(r || {});
     if (r && isFinalizado && !Number(existing.finalizado)) {
       enviarCorreoReporte(r, 'finalizado').catch(() => {});
+      console.log('[reporte][bonos-hook] reporte finalizado 0->1', { id: r.id, folio: r.folio, tecnico: r.tecnico, fuera_ciudad: r.fuera_ciudad, dias: r.dias, subtipo: r.subtipo });
       /* Bonos automáticos al finalizar el reporte (0→1) */
       (async () => {
         try {
-          if (!r.tecnico) return;
+          if (!r.tecnico) {
+            console.warn('[reporte][bonos-hook] SKIP: reporte sin técnico asignado, no se generan bonos');
+            return;
+          }
           // Bono días fuera de ciudad
           if (Number(r.fuera_ciudad) === 1 && Number(r.dias) > 0) {
             const tarifaDia = (await getTarifaNum('bono_dia', 500)) || 500;
-            await insertarBonoMovimiento({
+            const monto = tarifaDia * Number(r.dias);
+            console.log('[reporte][bonos-hook] CREANDO bono_dia_fuera_ciudad', { tecnico: r.tecnico, dias: r.dias, tarifaDia, monto });
+            const result = await insertarBonoMovimiento({
               tecnico: r.tecnico,
               tipo: 'bono_dia_fuera_ciudad',
-              monto: tarifaDia * Number(r.dias),
+              monto,
               referencia_tipo: 'reporte',
               referencia_id: r.id,
               descripcion: `Días fuera de ciudad (${r.folio || '#' + r.id})`,
             });
+            console.log('[reporte][bonos-hook] bono_dia_fuera_ciudad creado:', result);
+          } else {
+            console.log('[reporte][bonos-hook] sin bono fuera ciudad: fuera_ciudad=' + r.fuera_ciudad + ' dias=' + r.dias);
           }
           // Bono capacitación (local / linea / foránea)
           if (String(r.subtipo || '').toLowerCase() === 'capacitacion') {

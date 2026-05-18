@@ -11474,6 +11474,8 @@
     accessEditorState.tabPermissions = parseUserAccessObject(row.tab_permissions || row.tabPermissions);
     accessEditorState.columnPermissions = parseUserAccessObject(row.column_permissions || row.columnPermissions);
 
+    console.log('[permisos][render] usuario seleccionado:', row.username, 'tab_permissions raw:', row.tab_permissions, 'parseado:', accessEditorState.tabPermissions);
+
     tabsWrap.innerHTML = ACCESS_TAB_DEFS.map(([id, label]) => {
       const checked = accessEditorState.tabPermissions[id] !== false;
       return `<label style="display:flex;align-items:center;gap:0.45rem;"><input type="checkbox" class="usuarios-perm-tab-check" data-tab-id="${escapeHtml(id)}" ${checked ? 'checked' : ''}> <span>${escapeHtml(label)}</span> <span class="muted">(${escapeHtml(id)})</span></label>`;
@@ -11950,8 +11952,22 @@
     const permSel = qs('#usuarios-perm-user');
     if (permSel && !permSel._bound) {
       permSel._bound = true;
-      permSel.addEventListener('change', function () {
-        accessEditorState.userId = Number(permSel.value);
+      permSel.addEventListener('change', async function () {
+        const newId = Number(permSel.value);
+        accessEditorState.userId = newId;
+        console.log('[permisos] cambio a usuario id=', newId);
+        // Re-fetch usuarios para asegurar permisos FRESCOS desde BD (no cache local).
+        try {
+          await loadAppUsers();
+        } catch (e) {
+          console.warn('[permisos] loadAppUsers falló, uso cache:', e);
+        }
+        const row = (appUsersCache || []).find(u => Number(u.id) === newId);
+        console.log('[permisos] permisos del usuario:', row && {
+          username: row.username,
+          tab_permissions: row.tab_permissions,
+          column_permissions: row.column_permissions,
+        });
         renderUsuariosAccessEditor(appUsersCache);
       });
     }
@@ -17000,15 +17016,20 @@
       };
       const btn = document.querySelector('#emb-save');
       btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+      console.log('[embarques][save] payload:', payload, 'isNew:', isNew);
       try {
-        if (isNew) await fetchJson(API + '/embarques', { method: 'POST', body: JSON.stringify(payload) });
-        else await fetchJson(API + '/embarques/' + emb.id, { method: 'PUT', body: JSON.stringify(payload) });
+        let resp;
+        if (isNew) resp = await fetchJson(API + '/embarques', { method: 'POST', body: JSON.stringify(payload) });
+        else resp = await fetchJson(API + '/embarques/' + emb.id, { method: 'PUT', body: JSON.stringify(payload) });
+        console.log('[embarques][save] OK resp:', resp);
         document.querySelector('#modal').classList.add('hidden');
         showToast(isNew ? 'Embarque creado.' : 'Embarque actualizado.', 'success');
         loadEmbarques();
       } catch (err) {
+        console.error('[embarques][save] ERROR:', err, 'payload era:', payload);
         btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Guardar';
-        showToast(parseApiError(err) || 'No se pudo guardar.', 'error');
+        const msg = parseApiError(err) || ('Error al guardar: ' + (err && err.message || err));
+        showToast(msg, 'error');
       }
     };
   }
