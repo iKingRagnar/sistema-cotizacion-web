@@ -8123,19 +8123,52 @@ app.get('/api/bonos/acumulado', async (req, res) => {
   try {
     const mes = String(req.query.mes || new Date().toISOString().slice(0, 7)).slice(0, 7);
     const tecnicoFilt = String(req.query.tecnico || '').trim();
-    const params = [mes];
-    let sql = `SELECT tecnico, tipo, COALESCE(SUM(monto),0) AS total FROM bonos_movimientos WHERE mes_clave=?`;
-    if (tecnicoFilt) { sql += ' AND tecnico=?'; params.push(tecnicoFilt); }
-    sql += ' GROUP BY tecnico, tipo';
-    const rows = await db.getAll(sql, params);
+
+    /* --- 1) Agregado por técnico × tipo (para tabla de desglose + KPIs) --- */
+    const paramsAgg = [mes];
+    let sqlAgg = `SELECT tecnico, tipo, COALESCE(SUM(monto),0) AS total FROM bonos_movimientos WHERE mes_clave=?`;
+    if (tecnicoFilt) { sqlAgg += ' AND tecnico=?'; paramsAgg.push(tecnicoFilt); }
+    sqlAgg += ' GROUP BY tecnico, tipo';
+    const rowsAgg = await db.getAll(sqlAgg, paramsAgg);
+
     const byTec = {};
-    for (const r of rows) {
-      if (!byTec[r.tecnico]) byTec[r.tecnico] = { tecnico: r.tecnico, total_general: 0 };
-      byTec[r.tecnico][r.tipo] = Number(r.total) || 0;
-      byTec[r.tecnico].total_general += Number(r.total) || 0;
+    let totalComisiones = 0;
+    let totalBonos = 0;
+    for (const r of rowsAgg) {
+      const monto = Number(r.total) || 0;
+      if (!byTec[r.tecnico]) byTec[r.tecnico] = { tecnico: r.tecnico, total_general: 0, total: 0 };
+      byTec[r.tecnico][r.tipo] = monto;
+      byTec[r.tecnico].total_general += monto;
+      byTec[r.tecnico].total += monto; // alias para frontend
+      if (String(r.tipo || '').startsWith('comision_')) totalComisiones += monto;
+      else if (String(r.tipo || '').startsWith('bono_')) totalBonos += monto;
     }
-    res.json({ mes, tecnicos: Object.values(byTec) });
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+
+    /* --- 2) Lista detallada de movimientos (para tabla "Detalle de movimientos") --- */
+    const paramsMov = [mes];
+    let sqlMov = `SELECT id, tecnico, tipo, monto, referencia_tipo, referencia_id, descripcion, fecha
+                  FROM bonos_movimientos WHERE mes_clave=?`;
+    if (tecnicoFilt) { sqlMov += ' AND tecnico=?'; paramsMov.push(tecnicoFilt); }
+    sqlMov += ' ORDER BY fecha DESC, id DESC LIMIT 500';
+    const movimientos = await db.getAll(sqlMov, paramsMov);
+
+    const totales = {
+      comisiones: totalComisiones,
+      bonos: totalBonos,
+      total: totalComisiones + totalBonos,
+      num_movimientos: movimientos.length,
+    };
+
+    res.json({
+      mes,
+      tecnicos: Object.values(byTec),
+      movimientos,
+      totales,
+    });
+  } catch (e) {
+    console.error('[bonos/acumulado] error:', e && e.message);
+    res.status(500).json({ error: String(e.message) });
+  }
 });
 
 app.post('/api/bonos/movimiento', async (req, res) => {
