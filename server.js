@@ -8352,18 +8352,13 @@ async function _enviarReporteMensualPorTipos({ mes, tipos }) {
     errores.push('SMTP no configurado (SMTP_HOST/SMTP_USER/SMTP_FROM)');
     return { enviados, errores };
   }
-  /* DESTINATARIO FIJO desde env var EMAIL_REPORTES_DESTINATARIO (2026-05-18).
-     El cliente pidió un único correo destino para todos los reportes. La tabla
-     config_correos_reportes queda en BD pero ya no se consulta (compat futura).
-     Fallback: si la env no existe, intenta SMTP_USER. */
-  const destinatarioFijo = (process.env.EMAIL_REPORTES_DESTINATARIO || process.env.SMTP_USER || '').trim();
-  if (!destinatarioFijo) {
-    errores.push('Falta configurar EMAIL_REPORTES_DESTINATARIO en el servidor');
-    return { enviados, errores };
-  }
   for (const tipo of tiposPedidos) {
     try {
-      const to = [destinatarioFijo];
+      const dests = await db.getAll(
+        `SELECT email FROM config_correos_reportes WHERE activo=1 AND tipo=?`, [tipo]
+      );
+      const to = dests.map(r => r.email).filter(Boolean);
+      if (!to.length) { errores.push(`${tipo}: sin destinatarios configurados`); continue; }
       let subject = '';
       let title = '';
       let bodyRows = [];
