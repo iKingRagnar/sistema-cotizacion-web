@@ -956,12 +956,35 @@ body.dark-theme #tabla-bitacoras th.th-actions {
 .section-header .toolbar .toolbar-checkbox {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.85rem;
-  color: var(--text-muted, #64748b);
+  gap: 0.5rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text, #e2e8f0);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
   cursor: pointer;
   user-select: none;
   margin-right: 0.25rem;
+  transition: background 0.15s, border-color 0.15s;
+}
+.section-header .toolbar .toolbar-checkbox:hover {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.20);
+}
+.section-header .toolbar .toolbar-checkbox input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: #2563eb;
+}
+body.appearance-light .section-header .toolbar .toolbar-checkbox {
+  color: #1e293b;
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.12);
+}
+body.appearance-light .section-header .toolbar .toolbar-checkbox:hover {
+  background: rgba(15, 23, 42, 0.08);
+  border-color: rgba(15, 23, 42, 0.20);
 }
 .header-alerts .alert-badge {
   display: inline-flex;

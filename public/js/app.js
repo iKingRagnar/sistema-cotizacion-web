@@ -11991,18 +11991,27 @@
         const tabId = String(t.dataset.tabId || '').trim();
         const col = String(t.dataset.colLabel || '').trim();
         if (!tabId || !col) return;
-        const arr = Array.isArray(accessEditorState.columnPermissions[tabId])
-          ? accessEditorState.columnPermissions[tabId].slice()
-          : [];
+        const headers = readTableHeaders((ACCESS_TABLE_MAP[tabId] || [])[0] || '');
+        const totalCols = headers.length;
+        /* BUG FIX 2026-05-18: si NO había restricción previa (entry undefined),
+           todos los checkboxes estaban marcados por default. Al desmarcar uno,
+           el "baseline" debe ser TODAS las columnas existentes, no [].
+           Sin esto, desmarcar Id en clientes resultaba en next=[] → delete
+           columnPermissions[tabId] → al recargar todo se veía marcado. */
+        const prev = accessEditorState.columnPermissions[tabId];
+        const baseline = Array.isArray(prev) ? prev.slice() : headers.map((h) => h.label);
         const norm = normalizeAccessText(col);
-        const next = arr.filter((x) => normalizeAccessText(x) !== norm);
+        const next = baseline.filter((x) => normalizeAccessText(x) !== norm);
         if (t.checked) next.push(col);
-        const totalCols = readTableHeaders((ACCESS_TABLE_MAP[tabId] || [])[0] || '').length;
-        if (!next.length || next.length >= totalCols) {
+        if (next.length >= totalCols) {
+          /* Todas marcadas: borrar entry para "default open" (consistencia BD). */
           delete accessEditorState.columnPermissions[tabId];
         } else {
+          /* Si next.length === 0 conservamos el array vacío para que persista
+             como "ninguna columna visible" (caso extremo válido). */
           accessEditorState.columnPermissions[tabId] = next;
         }
+        console.log('[permisos][col-change]', tabId, col, 'checked=' + t.checked, 'result:', accessEditorState.columnPermissions[tabId] || '(default-open)');
       });
     }
     const btnSaveAccess = qs('#btn-usuarios-save-access');
@@ -12016,15 +12025,24 @@
         }
         btnSaveAccess.disabled = true;
         try {
-          await fetchJson(API + '/app-users/' + userId, {
+          const payload = {
+            tab_permissions: accessEditorState.tabPermissions,
+            column_permissions: accessEditorState.columnPermissions,
+          };
+          console.log('[permisos][save] enviando para userId=' + userId, payload);
+          const resp = await fetchJson(API + '/app-users/' + userId, {
             method: 'PATCH',
-            body: JSON.stringify({
-              tab_permissions: accessEditorState.tabPermissions,
-              column_permissions: accessEditorState.columnPermissions,
-            }),
+            body: JSON.stringify(payload),
           });
+          console.log('[permisos][save] respuesta backend:', resp);
           showToast('Permisos guardados correctamente.', 'success');
+          /* Re-fetch usuarios para refrescar cache + RE-RENDER con datos frescos
+             del usuario que acabamos de guardar (clave para que se vean los
+             checkboxes desmarcados en pantalla). */
           await loadAppUsers();
+          // Forzar render manteniendo el mismo userId seleccionado
+          accessEditorState.userId = userId;
+          renderUsuariosAccessEditor(appUsersCache);
           const me = getSessionUser();
           if (me && Number(me.id) === userId) {
             if (typeof refreshSessionUser === 'function') await refreshSessionUser();
@@ -12032,6 +12050,7 @@
             applyAllColumnPermissions();
           }
         } catch (e) {
+          console.error('[permisos][save] error:', e);
           showToast(parseApiError(e) || 'No se pudo guardar permisos.', 'error');
         } finally {
           btnSaveAccess.disabled = false;
@@ -17041,8 +17060,14 @@
 
   async function loadBonosAcumulado() {
     try {
+      // Esperar un microframe para asegurar que el panel-bonos está visible
+      // (showPanel toggle de hidden ocurre en el mismo turno; los querySelector
+      // funcionan pero algunos navegadores reportan medidas vacías hasta el
+      // siguiente paint frame).
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+
       const mesInput = document.querySelector('#bonos-mes-filtro');
-      if (!mesInput) { return; } // si no existe HTML nuevo, no hacer nada
+      if (!mesInput) { return; }
       let mes = mesInput.value;
       if (!mes) {
         const d = new Date();
@@ -17056,11 +17081,16 @@
       const url = API + '/bonos/acumulado?mes=' + encodeURIComponent(mes);
       const data = await fetchJson(url);
       bonosResumenCache = data || { tecnicos: [], movimientos: [], totales: {} };
+      console.log('[bonos] datos recibidos:', { mes, tecnicos: bonosResumenCache.tecnicos?.length, movimientos: bonosResumenCache.movimientos?.length });
       rellenarTecnicoFilterBonos(bonosResumenCache);
       renderBonosAcumulado();
+      // Segundo render diferido por si el primer render corrió antes de que el DOM
+      // de las tablas estuviera 100% listo (el panel apenas se hace visible).
+      setTimeout(() => {
+        try { renderBonosAcumulado(); } catch (_) {}
+      }, 80);
     } catch (e) {
       console.error('[bonos acumulado]', e);
-      // No mostrar toast si el endpoint aún no existe; silencioso
     }
   }
 
