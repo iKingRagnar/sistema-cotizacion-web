@@ -953,11 +953,12 @@ body.dark-theme #tabla-bitacoras th.th-actions {
   align-items: center;
   gap: 0.35rem;
 }
-/* TOOLBAR-CHECKBOX (Incluir aplicadas, En preparación, etc.) — debe verse idéntico
-   a los demás .btn.outline de la toolbar. Especificidad alta + !important para
-   sobrescribir premium-pro.css que aplica un look light "blanco/gris". */
+/* TOOLBAR-CHECKBOX (Incluir aplicadas, En preparación, etc.) — debe verse IDÉNTICO
+   a los demás .btn.outline de la toolbar. Estilos calcados de premium-pro.css:3638
+   donde se define el look real de los botones outline en la toolbar de cotizaciones. */
 html body .section-header .toolbar .toolbar-checkbox,
 html body.md3-on .section-header .toolbar .toolbar-checkbox,
+html body.theme-industrial:not(.appearance-light) .section-header .toolbar .toolbar-checkbox,
 html body .toolbar .toolbar-checkbox {
   display: inline-flex !important;
   align-items: center !important;
@@ -973,25 +974,27 @@ html body .toolbar .toolbar-checkbox {
   user-select: none !important;
   margin: 0 0.25rem 0 0 !important;
   transition: background 0.15s, border-color 0.15s, color 0.15s !important;
-  /* Dark theme defaults (igual a .btn.outline en oscuro) */
-  color: #e2e8f0 !important;
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  /* COLORES exactos copiados de .btn.outline en premium-pro.css:3638-3642 */
+  background: #303134 !important;
+  color: #e8eaed !important;
+  border: 1px solid #3c4043 !important;
 }
 html body .section-header .toolbar .toolbar-checkbox:hover,
 html body.md3-on .section-header .toolbar .toolbar-checkbox:hover,
+html body.theme-industrial:not(.appearance-light) .section-header .toolbar .toolbar-checkbox:hover,
 html body .toolbar .toolbar-checkbox:hover {
-  background: rgba(255, 255, 255, 0.10) !important;
-  border-color: rgba(255, 255, 255, 0.30) !important;
-  color: #fff !important;
+  /* HOVER exacto copiado de premium-pro.css:3643-3647 */
+  background: rgba(138, 180, 248, 0.14) !important;
+  border-color: #8ab4f8 !important;
+  color: #8ab4f8 !important;
 }
 html body .section-header .toolbar .toolbar-checkbox * {
-  /* Sobrescribe la regla de premium.css line 4620 que pone .toolbar-checkbox * con color tenue */
+  /* Sobrescribe la regla de premium.css:4620 que ponía .toolbar-checkbox * tenue */
   color: inherit !important;
 }
 html body .section-header .toolbar .toolbar-checkbox input[type="checkbox"] {
   cursor: pointer !important;
-  accent-color: #2563eb !important;
+  accent-color: #8ab4f8 !important;
   margin: 0 !important;
 }
 /* Light theme (igual a .btn.outline en claro) */
