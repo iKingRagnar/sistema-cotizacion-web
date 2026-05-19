@@ -953,38 +953,59 @@ body.dark-theme #tabla-bitacoras th.th-actions {
   align-items: center;
   gap: 0.35rem;
 }
-.section-header .toolbar .toolbar-checkbox {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.45rem 0.85rem;
-  font-size: 0.88rem;
-  font-weight: 500;
-  color: var(--text, #e2e8f0);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 6px;
-  cursor: pointer;
-  user-select: none;
-  margin-right: 0.25rem;
-  transition: background 0.15s, border-color 0.15s;
+/* TOOLBAR-CHECKBOX (Incluir aplicadas, En preparación, etc.) — debe verse idéntico
+   a los demás .btn.outline de la toolbar. Especificidad alta + !important para
+   sobrescribir premium-pro.css que aplica un look light "blanco/gris". */
+html body .section-header .toolbar .toolbar-checkbox,
+html body.md3-on .section-header .toolbar .toolbar-checkbox,
+html body .toolbar .toolbar-checkbox {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  padding: 0.5rem 0.85rem !important;
+  height: auto !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+  font-family: inherit !important;
+  line-height: 1.2 !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  margin: 0 0.25rem 0 0 !important;
+  transition: background 0.15s, border-color 0.15s, color 0.15s !important;
+  /* Dark theme defaults (igual a .btn.outline en oscuro) */
+  color: #e2e8f0 !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
 }
-.section-header .toolbar .toolbar-checkbox:hover {
-  background: rgba(255, 255, 255, 0.10);
-  border-color: rgba(255, 255, 255, 0.20);
+html body .section-header .toolbar .toolbar-checkbox:hover,
+html body.md3-on .section-header .toolbar .toolbar-checkbox:hover,
+html body .toolbar .toolbar-checkbox:hover {
+  background: rgba(255, 255, 255, 0.10) !important;
+  border-color: rgba(255, 255, 255, 0.30) !important;
+  color: #fff !important;
 }
-.section-header .toolbar .toolbar-checkbox input[type="checkbox"] {
-  cursor: pointer;
-  accent-color: #2563eb;
+html body .section-header .toolbar .toolbar-checkbox * {
+  /* Sobrescribe la regla de premium.css line 4620 que pone .toolbar-checkbox * con color tenue */
+  color: inherit !important;
 }
-body.appearance-light .section-header .toolbar .toolbar-checkbox {
-  color: #1e293b;
-  background: rgba(15, 23, 42, 0.04);
-  border-color: rgba(15, 23, 42, 0.12);
+html body .section-header .toolbar .toolbar-checkbox input[type="checkbox"] {
+  cursor: pointer !important;
+  accent-color: #2563eb !important;
+  margin: 0 !important;
 }
-body.appearance-light .section-header .toolbar .toolbar-checkbox:hover {
-  background: rgba(15, 23, 42, 0.08);
-  border-color: rgba(15, 23, 42, 0.20);
+/* Light theme (igual a .btn.outline en claro) */
+html body.appearance-light .section-header .toolbar .toolbar-checkbox,
+html body.theme-industrial.appearance-light .section-header .toolbar .toolbar-checkbox {
+  color: #0c1222 !important;
+  background: transparent !important;
+  border-color: #c8d2e0 !important;
+}
+html body.appearance-light .section-header .toolbar .toolbar-checkbox:hover,
+html body.theme-industrial.appearance-light .section-header .toolbar .toolbar-checkbox:hover {
+  background: #f1f4f9 !important;
+  border-color: #0c1222 !important;
+  color: #0c1222 !important;
 }
 .header-alerts .alert-badge {
   display: inline-flex;
