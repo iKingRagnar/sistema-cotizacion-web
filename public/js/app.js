@@ -17049,12 +17049,15 @@
         mes = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
         mesInput.value = mes;
       }
-      const tecFilter = (document.querySelector('#bonos-tecnico-filtro') && document.querySelector('#bonos-tecnico-filtro').value) || '';
-      const url = API + '/bonos/acumulado?mes=' + encodeURIComponent(mes) + (tecFilter ? '&tecnico=' + encodeURIComponent(tecFilter) : '');
+      /* IMPORTANTE: NO mandar &tecnico= al endpoint para evitar que el filtro
+         deje el cache vacío si el técnico seleccionado ya no tiene movimientos
+         en el nuevo mes. Mantenemos TODOS los datos del mes en cache y filtramos
+         en cliente en renderBonosAcumulado(). */
+      const url = API + '/bonos/acumulado?mes=' + encodeURIComponent(mes);
       const data = await fetchJson(url);
       bonosResumenCache = data || { tecnicos: [], movimientos: [], totales: {} };
-      renderBonosAcumulado();
       rellenarTecnicoFilterBonos(bonosResumenCache);
+      renderBonosAcumulado();
     } catch (e) {
       console.error('[bonos acumulado]', e);
       // No mostrar toast si el endpoint aún no existe; silencioso
@@ -17072,9 +17075,24 @@
 
   function renderBonosAcumulado() {
     if (!bonosResumenCache) return;
-    const tecnicos = bonosResumenCache.tecnicos || [];
-    const movimientos = bonosResumenCache.movimientos || [];
-    const totales = bonosResumenCache.totales || {};
+    const allTecnicos = bonosResumenCache.tecnicos || [];
+    const allMovimientos = bonosResumenCache.movimientos || [];
+    /* Filtro por técnico aplicado en CLIENTE (no en backend) para mantener
+       el cache completo y permitir cambiar de filtro sin re-fetch. */
+    const tecFilter = (document.querySelector('#bonos-tecnico-filtro') && document.querySelector('#bonos-tecnico-filtro').value) || '';
+    const tecnicos = tecFilter ? allTecnicos.filter(t => t.tecnico === tecFilter) : allTecnicos;
+    const movimientos = tecFilter ? allMovimientos.filter(m => m.tecnico === tecFilter) : allMovimientos;
+    /* Recalcular totales según filtro (los del backend son del mes completo). */
+    let totalComisionesF = 0, totalBonosF = 0;
+    for (const m of movimientos) {
+      const monto = Number(m.monto) || 0;
+      const tipo = String(m.tipo || '');
+      if (tipo.startsWith('comision_')) totalComisionesF += monto;
+      else if (tipo.startsWith('bono_')) totalBonosF += monto;
+    }
+    const totales = tecFilter
+      ? { comisiones: totalComisionesF, bonos: totalBonosF, total: totalComisionesF + totalBonosF }
+      : (bonosResumenCache.totales || {});
     const fmt = (n) => '$' + (Math.round(Number(n || 0) * 100) / 100).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const elCom = document.querySelector('#bonos-kpi-comisiones'); if (elCom) elCom.textContent = fmt(totales.comisiones || 0);
     const elBon = document.querySelector('#bonos-kpi-bonos'); if (elBon) elBon.textContent = fmt(totales.bonos || 0);
