@@ -5057,24 +5057,33 @@
       const titulo = ((mq && (mq.modelo || mq.nombre)) || '').trim() || 'Máquina';
       let specsArr = [];
       try { if (mq && mq.ficha_tecnica_specs) { const p = JSON.parse(mq.ficha_tecnica_specs); if (Array.isArray(p)) specsArr = p; } } catch (_) {}
-      const specsRowsHtml = specsArr.length
-        ? specsArr.map(s => `<tr>
-            <td class="uv-spec-icon-cell">${maqIconSvg(s.icon)}</td>
-            <td class="uv-spec-label">${escH(s.label || '')}</td>
-            <td class="uv-spec-value">${escH(s.value || '')}</td>
-          </tr>`).join('')
-        : '<tr><td colspan="3" class="uv-spec-empty">Sin ficha técnica capturada — edítala desde el catálogo.</td></tr>';
+      // Specs en 2 sub-columnas estilo ejemplo1.jpeg (tipo Excel). Cada fila tiene 2 pares icon|label|value.
+      let specsHtml = '';
+      if (specsArr.length) {
+        const mid = Math.ceil(specsArr.length / 2);
+        const leftCol = specsArr.slice(0, mid);
+        const rightCol = specsArr.slice(mid);
+        const maxRows = Math.max(leftCol.length, rightCol.length);
+        const rows = [];
+        for (let i = 0; i < maxRows; i++) {
+          const L = leftCol[i] || null;
+          const R = rightCol[i] || null;
+          rows.push(`<tr>
+            ${L ? `<td class="uv-sx-ico">${maqIconSvg(L.icon)}</td><td class="uv-sx-lbl">${escH(L.label || '')}</td><td class="uv-sx-val">${escH(L.value || '')}</td>` : '<td></td><td></td><td></td>'}
+            ${R ? `<td class="uv-sx-ico uv-sx-divider">${maqIconSvg(R.icon)}</td><td class="uv-sx-lbl">${escH(R.label || '')}</td><td class="uv-sx-val">${escH(R.value || '')}</td>` : '<td class="uv-sx-divider"></td><td></td><td></td>'}
+          </tr>`);
+        }
+        specsHtml = `<table class="uv-specs-table-2col">${rows.join('')}</table>`;
+      } else {
+        specsHtml = '<div class="uv-spec-empty">Sin ficha técnica capturada — edítala desde el catálogo.</div>';
+      }
       const fotoHtml = piezaUrl
         ? `<img src="${escH(piezaUrl)}" alt="${escH(titulo)}" class="uv-foto-maquina">`
-        : `<div class="uv-foto-placeholder"><span style="font-size:48px;color:#9ca3af">📷</span><br><span style="color:#9ca3af;font-size:12px;font-weight:600">Sin foto</span></div>`;
+        : `<div class="uv-foto-placeholder"><span style="font-size:42px;color:#9ca3af">📷</span><br><span style="color:#9ca3af;font-size:11px;font-weight:600">Sin foto</span></div>`;
       return `<div class="uv-model-card">
         <div class="uv-model-head">MODELO ${escH(titulo)}</div>
-        <div class="uv-model-body${modo === 'pair' ? ' uv-pair-body' : ''}">
-          <div class="uv-model-foto">${fotoHtml}</div>
-          <div class="uv-model-specs">
-            <table class="uv-specs-table">${specsRowsHtml}</table>
-          </div>
-        </div>
+        <div class="uv-model-photo-wrap">${fotoHtml}</div>
+        <div class="uv-model-specs-wrap">${specsHtml}</div>
       </div>`;
     }
     function buildLista(mq) {
@@ -5122,6 +5131,12 @@
       const l = buildLista(m);
       incluyeHtml = l.incluyeHtml; accesoriosHtml = l.accesoriosHtml;
     }
+    // Imagen industrial decorativa para el hero (fondo SVG simulando CNC). Si Luis sube
+    // una imagen header (hero_url) se usa esa; si no, SVG decorativo embebido.
+    const heroBg = (m && m.flyer_hero_url) ? String(m.flyer_hero_url).trim() : '';
+    const heroBgCss = heroBg
+      ? `background:#0a0a0a url('${heroBg.replace(/'/g, "\\'")}') center/cover no-repeat`
+      : `background:linear-gradient(115deg,#fff 0%,#fff 42%,#1a1a1a 42%,#0a0a0a 100%)`;
     const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -5129,111 +5144,123 @@
 <title>${escH(titulo)} — Catálogo UNIVERSAL</title>
 <style>
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; font-family: 'Inter', Arial, Helvetica, sans-serif; color: #0a0a0a; background: #e5e5e5; }
+  html, body { margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', Arial, sans-serif; color: #0a0a0a; background: #e5e5e5; }
   .uv-toolbar { position: sticky; top: 0; z-index: 100; background: #0a0a0a; color: #fff; padding: 10px 20px; display: flex; gap: 12px; justify-content: flex-end; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
   .uv-toolbar button { background: #FFD200; color: #0a0a0a; border: 0; padding: 9px 18px; border-radius: 4px; font-size: 13px; cursor: pointer; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
-  .uv-toolbar button:hover { background: #FFE033; box-shadow: 0 0 16px rgba(255, 210, 0, 0.4); }
+  .uv-toolbar button:hover { background: #FFE033; }
   .uv-toolbar button.outline { background: transparent; color: #FFD200; border: 2px solid #FFD200; }
   .uv-toolbar button.outline:hover { background: #FFD200; color: #0a0a0a; }
-  .uv-page { max-width: 900px; margin: 20px auto; background: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.2); position: relative; overflow: hidden; }
+  .uv-page { max-width: 980px; margin: 20px auto; background: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.2); position: relative; overflow: hidden; }
 
-  /* ==== HEADER ==== */
-  .uv-hero { background: #fff; padding: 32px 36px 24px; position: relative; overflow: hidden; }
+  /* ==== HEADER tipo ejemplo1 ==== */
+  .uv-hero { ${heroBgCss}; padding: 28px 38px 50px; position: relative; overflow: hidden; min-height: 280px; }
   .uv-hero::before, .uv-hero::after {
     content: ''; position: absolute; top: 0; height: 100%;
-    background: repeating-linear-gradient(-45deg, #FFD200 0px, #FFD200 8px, #0a0a0a 8px, #0a0a0a 16px);
-    opacity: 0.95;
+    background: repeating-linear-gradient(-50deg, #FFD200 0px, #FFD200 18px, transparent 18px, transparent 36px);
+    width: 110px; pointer-events: none;
   }
-  .uv-hero::before { left: 0; width: 8px; }
-  .uv-hero::after { right: 0; width: 8px; }
-  .uv-hero-inner { display: flex; gap: 24px; align-items: flex-start; }
-  .uv-hero-left { flex: 1; }
-  .uv-logo { max-width: 280px; height: auto; display: block; margin-bottom: 12px; }
-  .uv-titulo-mega { font-size: 42px; font-weight: 900; color: #0a0a0a; letter-spacing: -1px; line-height: 0.95; margin: 8px 0 4px; text-transform: uppercase; }
-  .uv-subtitulo { font-size: 16px; font-weight: 700; color: #525252; text-transform: uppercase; letter-spacing: 1px; }
-  .uv-tagline { font-size: 13px; font-weight: 600; color: #0a0a0a; margin-top: 8px; }
-  .uv-tagline strong { color: #d97706; }
-  .uv-hero-right { flex: 0 0 320px; }
-  .uv-foto-hero { max-width: 320px; max-height: 240px; width: 100%; object-fit: contain; }
+  .uv-hero::before { left: -20px; transform: skewX(-12deg); opacity: 0.95; }
+  .uv-hero::after { display: none; }
+  .uv-logo-bar { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0 auto 6px; padding: 4px 0; width: max-content; min-width: 280px; }
+  .uv-logo-img { max-width: 320px; height: auto; display: block; }
+  .uv-logo-fallback { background: linear-gradient(180deg,#fafafa,#cfcfcf); border: 2px solid #0a0a0a; border-radius: 6px; padding: 6px 28px; box-shadow: inset 0 -3px 0 rgba(0,0,0,0.18), 0 2px 4px rgba(0,0,0,0.15); }
+  .uv-logo-fallback .uv-logo-main { font-size: 32px; font-weight: 900; letter-spacing: 3px; color: #0a0a0a; line-height: 1; }
+  .uv-logo-fallback .uv-logo-sub { font-size: 10px; letter-spacing: 6px; color: #0a0a0a; text-align: center; margin-top: 2px; font-weight: 700; }
+  .uv-titulo-mega { font-size: 78px; font-weight: 900; color: #0a0a0a; letter-spacing: -2px; line-height: 0.88; margin: 14px 0 0; text-transform: uppercase; max-width: 56%; }
+  .uv-titulo-mega .uv-tit-l2 { color: #d97706; }
+  .uv-tagline-banner { background: #0a0a0a; color: #fff; padding: 8px 16px; font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; display: inline-block; margin-top: 14px; }
+  .uv-tagline-banner strong { color: #FFD200; }
 
-  /* ==== CÁPSULAS (envío/garantía/capacitación) ==== */
-  .uv-capsulas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; background: #fff; padding: 8px 36px 24px; border-bottom: 4px solid #FFD200; }
-  .uv-capsula { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-right: 2px solid #e5e5e5; }
+  /* ==== CÁPSULAS ==== */
+  .uv-capsulas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; background: #fff; padding: 18px 38px 18px; border-bottom: 5px solid #FFD200; }
+  .uv-capsula { display: flex; align-items: center; gap: 14px; padding: 4px 14px; border-right: 1px solid #e5e5e5; }
   .uv-capsula:last-child { border-right: 0; }
-  .uv-capsula-icon { flex: 0 0 44px; width: 44px; height: 44px; background: #FFD200; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 2px 8px rgba(255, 210, 0, 0.4); }
-  .uv-capsula-text { display: flex; flex-direction: column; }
-  .uv-capsula-title { font-size: 13px; font-weight: 800; color: #0a0a0a; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.1; }
-  .uv-capsula-sub { font-size: 10px; font-weight: 700; color: #525252; text-transform: uppercase; letter-spacing: 0.5px; }
+  .uv-capsula-icon { flex: 0 0 50px; width: 50px; height: 50px; background: #FFD200; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .uv-capsula-icon svg { width: 28px; height: 28px; fill: #0a0a0a; }
+  .uv-capsula-text { display: flex; flex-direction: column; line-height: 1.15; }
+  .uv-capsula-title { font-size: 16px; font-weight: 900; color: #0a0a0a; text-transform: uppercase; letter-spacing: 0.3px; }
+  .uv-capsula-title em { font-style: normal; color: #d97706; }
+  .uv-capsula-sub { font-size: 10px; font-weight: 700; color: #525252; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1px; }
 
   /* ==== CARD DE MODELO ==== */
-  .uv-single-wrap { display: flex; justify-content: center; margin: 24px 28px; }
-  .uv-single-wrap .uv-model-card { max-width: 560px; width: 100%; margin: 0; }
-  .uv-pair-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 20px 22px; }
+  .uv-single-wrap { display: flex; justify-content: center; margin: 18px 28px; }
+  .uv-single-wrap .uv-model-card { max-width: 100%; width: 100%; margin: 0; }
+  .uv-pair-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 18px 22px; }
   .uv-pair-grid .uv-model-card { margin: 0; }
-  .uv-pair-body { grid-template-columns: 1fr !important; }
-  .uv-pair-body .uv-model-foto { border-right: 0 !important; border-bottom: 1px solid #e5e5e5; max-height: 220px; }
-  .uv-pair-body .uv-foto-maquina { max-height: 180px; }
-  .uv-spec-icon-cell { width: 28px; padding: 4px !important; text-align: center; background: #fff; }
-  .uv-spec-icon-cell svg { width: 20px; height: 20px; display: block; margin: 0 auto; }
-  .uv-model-card { margin: 24px 28px; background: #fff; border: 2px solid #e5e5e5; }
-  .uv-model-head { background: #FFD200; color: #0a0a0a; padding: 12px 20px; font-size: 18px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; text-align: center; box-shadow: inset 0 -4px 0 rgba(0,0,0,0.1); }
-  .uv-model-body { display: grid; grid-template-columns: 0.95fr 1.05fr; gap: 0; }
-  .uv-model-foto { background: #fff; padding: 20px; display: flex; align-items: center; justify-content: center; border-right: 1px solid #e5e5e5; }
-  .uv-foto-maquina { max-width: 100%; max-height: 320px; object-fit: contain; }
-  .uv-foto-placeholder { width: 100%; height: 260px; border: 2px dashed #cbd5e1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  .uv-model-specs { padding: 14px 20px; }
-  .uv-specs-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-  .uv-specs-table td { border: 1px solid #d1d5db; padding: 6px 8px; vertical-align: middle; }
-  .uv-spec-label { background: #f8fafc; color: #0a0a0a; font-weight: 600; width: 60%; }
-  .uv-spec-value { color: #0a0a0a; text-align: center; font-weight: 700; }
-  .uv-spec-empty { padding: 24px; text-align: center; color: #94a3b8; font-style: italic; }
-  .uv-specs-icon { color: #FFD200; font-size: 14px; margin-right: 4px; }
+  .uv-model-card { background: #fff; border: 1px solid #d1d5db; border-radius: 4px; overflow: hidden; }
+  .uv-model-head { background: #FFD200; color: #0a0a0a; padding: 9px 18px; font-size: 16px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.2px; text-align: center; box-shadow: inset 0 -3px 0 rgba(0,0,0,0.12); }
+  .uv-model-photo-wrap { background: #fff; padding: 12px 16px; display: flex; align-items: center; justify-content: center; min-height: 200px; border-bottom: 1px solid #d1d5db; }
+  .uv-foto-maquina { max-width: 100%; max-height: 280px; object-fit: contain; }
+  .uv-foto-placeholder { width: 100%; min-height: 180px; border: 2px dashed #cbd5e1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .uv-model-specs-wrap { padding: 0; background: #fff; }
+  .uv-specs-table-2col { width: 100%; border-collapse: collapse; font-size: 9.5px; }
+  .uv-specs-table-2col td { border: 1px solid #cfcfcf; padding: 5px 6px; vertical-align: middle; }
+  .uv-sx-ico { width: 22px; padding: 4px 4px !important; text-align: center; background: #fff; }
+  .uv-sx-ico svg { width: 14px; height: 14px; display: block; margin: 0 auto; stroke: #0a0a0a; }
+  .uv-sx-lbl { font-weight: 700; text-transform: uppercase; letter-spacing: 0.2px; color: #1a1a1a; line-height: 1.15; max-width: 30%; }
+  .uv-sx-val { text-align: left; font-weight: 700; color: #0a0a0a; }
+  .uv-sx-divider { border-left: 2px solid #FFD200 !important; }
+  .uv-spec-empty { padding: 22px; text-align: center; color: #94a3b8; font-style: italic; font-size: 11px; }
 
-  /* ==== EQUIPO INCLUIDO + ACCESORIOS ==== */
-  .uv-listas { background: #0a0a0a; color: #fff; padding: 20px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-  .uv-lista-titulo { font-size: 14px; font-weight: 900; color: #FFD200; text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 10px; padding-bottom: 8px; border-bottom: 2px solid #FFD200; }
-  .uv-lista ul { margin: 0; padding: 0; list-style: none; }
-  .uv-lista li { font-size: 12px; padding: 4px 0 4px 20px; position: relative; line-height: 1.4; color: #fafafa; }
-  .uv-lista li::before { content: ""; position: absolute; left: 0; top: 6px; width: 8px; height: 8px; background: #FFD200; border-radius: 50%; box-shadow: 0 0 6px rgba(255, 210, 0, 0.6); }
-  .uv-lista .uv-empty-item { color: #525252; font-style: italic; padding-left: 0; }
-  .uv-lista .uv-empty-item::before { display: none; }
+  /* ==== EQUIPO INCLUIDO + ACCESORIOS (negro con check amarillo) ==== */
+  .uv-bloque-incluido { background: #0a0a0a; color: #fff; padding: 14px 28px 10px; margin: 0 22px 0; border-radius: 4px 4px 0 0; }
+  .uv-bloque-acc { background: #1a1a1a; color: #fff; padding: 10px 28px 14px; margin: 0 22px 18px; border-radius: 0 0 4px 4px; border-top: 1px solid #2a2a2a; }
+  .uv-bi-titulo { font-size: 16px; font-weight: 900; color: #FFD200; text-transform: uppercase; letter-spacing: 1.3px; margin: 0 0 10px; text-align: center; }
+  .uv-bi-titulo.uv-acc { font-size: 14px; margin-bottom: 6px; }
+  .uv-bi-list { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; }
+  .uv-bi-list li { font-size: 12px; padding: 3px 0 3px 24px; position: relative; color: #fafafa; line-height: 1.35; }
+  .uv-bi-list li::before {
+    content: ""; position: absolute; left: 0; top: 6px; width: 14px; height: 14px;
+    background: #FFD200; border-radius: 50%;
+  }
+  .uv-bi-list li::after {
+    content: ""; position: absolute; left: 3px; top: 9px; width: 7px; height: 4px;
+    border-left: 2px solid #0a0a0a; border-bottom: 2px solid #0a0a0a;
+    transform: rotate(-45deg);
+  }
+  .uv-acc-list { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 24px; }
+  .uv-acc-list li { font-size: 11px; padding: 2px 0 2px 14px; position: relative; color: #fafafa; line-height: 1.35; }
+  .uv-acc-list li::before { content: "•"; position: absolute; left: 2px; top: 1px; color: #FFD200; font-size: 14px; }
+  .uv-empty-item { color: #777; font-style: italic; padding-left: 0 !important; }
+  .uv-empty-item::before, .uv-empty-item::after { display: none !important; }
 
   /* ==== 4 FEATURES ==== */
-  .uv-features { background: #fff; padding: 24px 28px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; border-top: 4px solid #FFD200; }
+  .uv-features { background: #fff; padding: 18px 28px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
   .uv-feature { display: flex; flex-direction: column; align-items: center; text-align: center; }
-  .uv-feature-icon { width: 56px; height: 56px; background: #FFD200; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #0a0a0a; margin-bottom: 8px; box-shadow: 0 4px 12px rgba(255, 210, 0, 0.4); }
-  .uv-feature-title { font-size: 13px; font-weight: 900; color: #0a0a0a; text-transform: uppercase; letter-spacing: 0.6px; margin: 0 0 3px; }
-  .uv-feature-desc { font-size: 10px; font-weight: 600; color: #525252; text-transform: uppercase; line-height: 1.3; margin: 0; letter-spacing: 0.3px; }
+  .uv-feature-icon { width: 62px; height: 62px; background: #FFD200; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.15); }
+  .uv-feature-icon svg { width: 32px; height: 32px; fill: #0a0a0a; }
+  .uv-feature-title { font-size: 14px; font-weight: 900; color: #0a0a0a; text-transform: uppercase; letter-spacing: 0.4px; margin: 0 0 2px; }
+  .uv-feature-desc { font-size: 10px; font-weight: 600; color: #525252; text-transform: uppercase; line-height: 1.3; margin: 0; letter-spacing: 0.2px; }
 
   /* ==== FOOTER ==== */
   .uv-footer { background: #0a0a0a; color: #fff; }
-  .uv-footer-banner { padding: 14px 28px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-  .uv-footer-brand { color: #FFD200; font-size: 18px; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; }
-  .uv-footer-slogan { color: #fff; font-size: 14px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
-  .uv-footer-web { padding: 8px 28px; background: #1a1a1a; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-  .uv-footer-social { font-size: 12px; font-weight: 700; color: #FFD200; }
-  .uv-footer-site { font-size: 12px; font-weight: 600; color: #fff; }
-  .uv-footer-cities { background: #FFD200; color: #0a0a0a; padding: 10px 16px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; text-align: center; }
-  .uv-footer-city { font-size: 10px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; }
-  .uv-footer-city-tel { font-size: 10px; font-weight: 700; color: #0a0a0a; opacity: 0.85; margin-top: 1px; }
+  .uv-footer-banner { padding: 14px 32px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+  .uv-footer-brand { color: #fff; font-size: 22px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; }
+  .uv-footer-slogan { color: #fff; font-size: 15px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; }
+  .uv-footer-web-row { background: #FFD200; padding: 7px 32px; display: flex; justify-content: space-between; align-items: center; gap: 16px; color: #0a0a0a; }
+  .uv-footer-social { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 700; }
+  .uv-footer-social svg { width: 16px; height: 16px; fill: #0a0a0a; }
+  .uv-footer-site { font-size: 12px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+  .uv-footer-site svg { width: 14px; height: 14px; fill: #0a0a0a; }
+  .uv-footer-cities { background: #0a0a0a; padding: 10px 24px 14px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; text-align: center; border-top: 2px solid #FFD200; }
+  .uv-footer-city { font-size: 12px; font-weight: 900; color: #FFD200; letter-spacing: 0.6px; text-transform: uppercase; }
+  .uv-footer-city-tel { font-size: 10.5px; font-weight: 700; color: #fff; margin-top: 1px; }
 
   /* ==== PRINT ==== */
   @media print {
     body { background: #fff; }
     .uv-toolbar { display: none !important; }
     .uv-page { box-shadow: none; margin: 0; max-width: 100%; }
-    @page { size: letter; margin: 8mm; }
+    @page { size: letter; margin: 6mm; }
   }
-  @media (max-width: 720px) {
-    .uv-hero-inner { flex-direction: column; }
-    .uv-hero-right { flex: none; width: 100%; }
-    .uv-capsulas { grid-template-columns: 1fr; padding: 8px 16px 16px; }
+  @media (max-width: 760px) {
+    .uv-titulo-mega { font-size: 48px; max-width: 100%; }
+    .uv-capsulas { grid-template-columns: 1fr; }
     .uv-capsula { border-right: 0; border-bottom: 1px solid #e5e5e5; }
-    .uv-model-body { grid-template-columns: 1fr; }
-    .uv-model-foto { border-right: 0; border-bottom: 1px solid #e5e5e5; }
-    .uv-listas, .uv-features { grid-template-columns: 1fr; }
-    .uv-footer-cities { grid-template-columns: repeat(2, 1fr); }
-    .uv-titulo-mega { font-size: 32px; }
+    .uv-pair-grid { grid-template-columns: 1fr; }
+    .uv-features { grid-template-columns: repeat(2, 1fr); }
+    .uv-footer-cities { grid-template-columns: repeat(3, 1fr); }
+    .uv-bi-list, .uv-acc-list { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -5244,92 +5271,97 @@
   </div>
   <div class="uv-page">
 
-    <!-- HEADER -->
+    <!-- HEADER tipo ejemplo1: logo metálico arriba + título mega + cinta tagline -->
     <div class="uv-hero">
-      <div class="uv-hero-inner">
-        <div class="uv-hero-left">
-          <img src="/fondos/universal-logo.jpg" alt="UNIVERSAL MAQUINARIA" class="uv-logo">
-          <h1 class="uv-titulo-mega">${escH(T.titulo_general)}</h1>
-          ${subtitulo ? `<p class="uv-subtitulo">${escH(subtitulo)}</p>` : ''}
-          <p class="uv-tagline">${escH(T.tagline_pre)} <strong>${escH(T.tagline_strong)}</strong></p>
+      <div class="uv-logo-bar">
+        <div class="uv-logo-fallback" aria-hidden="false">
+          <div class="uv-logo-main">UNIVERSAL</div>
+          <div class="uv-logo-sub">MAQUINARIA</div>
         </div>
-        <div class="uv-hero-right">${fotoHtml}</div>
       </div>
+      <h1 class="uv-titulo-mega">${escH(T.titulo_general).replace(/^(\S+\s\S+)\s/, '$1<br><span class="uv-tit-l2">') + (escH(T.titulo_general).split(/\s/).length > 2 ? '</span>' : '')}</h1>
+      <div class="uv-tagline-banner">${escH(T.tagline_pre)} <strong>${escH(T.tagline_strong)}</strong></div>
     </div>
 
-    <!-- 3 CÁPSULAS -->
+    <!-- 3 CÁPSULAS con iconos SVG -->
     <div class="uv-capsulas">
       <div class="uv-capsula">
-        <div class="uv-capsula-icon">🚚</div>
+        <div class="uv-capsula-icon"><svg viewBox="0 0 24 24"><path d="M2 6h11v9H2zm11 3h4l3 3v3h-7zm-7.5 7a2 2 0 100 4 2 2 0 000-4zm12 0a2 2 0 100 4 2 2 0 000-4z"/></svg></div>
         <div class="uv-capsula-text">
-          <span class="uv-capsula-title">${escH(T.capsula_envio_titulo).replace(/\n/g, '<br>')}</span>
+          <span class="uv-capsula-title">ENVÍO <em>${escH((T.capsula_envio_titulo||'').replace(/.*\n/,'').toUpperCase() || 'SIN COSTO')}</em></span>
           <span class="uv-capsula-sub">${escH(T.capsula_envio_sub)}</span>
         </div>
       </div>
       <div class="uv-capsula">
-        <div class="uv-capsula-icon">🛡️</div>
+        <div class="uv-capsula-icon"><svg viewBox="0 0 24 24"><path d="M12 2L3 5v6c0 5 4 9.5 9 11 5-1.5 9-6 9-11V5l-9-3zm-1.2 13.2l-3.5-3.5L8.7 10.3l2.1 2.1 4.6-4.6 1.4 1.4-6 6z"/></svg></div>
         <div class="uv-capsula-text">
-          <span class="uv-capsula-title">${escH(T.capsula_garantia_titulo).replace(/\n/g, '<br>')}</span>
+          <span class="uv-capsula-title">GARANTÍA <em>${escH((T.capsula_garantia_titulo||'').replace(/.*\n/,'').toUpperCase() || 'EN TODOS')}</em></span>
           <span class="uv-capsula-sub">${escH(T.capsula_garantia_sub)}</span>
         </div>
       </div>
       <div class="uv-capsula">
-        <div class="uv-capsula-icon">🎓</div>
+        <div class="uv-capsula-icon"><svg viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9zm-7 9.5V16c0 1.66 3.13 3 7 3s7-1.34 7-3v-3.5l-7 3.82z"/></svg></div>
         <div class="uv-capsula-text">
-          <span class="uv-capsula-title">${escH(T.capsula_capacitacion_titulo).replace(/\n/g, '<br>')}</span>
+          <span class="uv-capsula-title">CAPACITACIÓN <em>${escH((T.capsula_capacitacion_titulo||'').replace(/.*\n/,'').toUpperCase() || 'INCLUIDA')}</em></span>
           <span class="uv-capsula-sub">${escH(T.capsula_capacitacion_sub)}</span>
         </div>
       </div>
     </div>
 
-    <!-- CARD(S) DE MODELO -->
+    <!-- CARD(S) DE MODELO con tabla specs en 2 sub-columnas tipo Excel -->
     ${modelCardsHtml}
 
-    <!-- EQUIPO INCLUIDO + ACCESORIOS -->
-    <div class="uv-listas">
-      <div class="uv-lista">
-        <h3 class="uv-lista-titulo">EQUIPO INCLUIDO:</h3>
-        <ul>${incluyeHtml}</ul>
-      </div>
-      <div class="uv-lista">
-        <h3 class="uv-lista-titulo">ACCESORIOS ESTÁNDAR</h3>
-        <ul>${accesoriosHtml}</ul>
-      </div>
+    <!-- EQUIPO INCLUIDO (checks amarillos) -->
+    <div class="uv-bloque-incluido">
+      <h3 class="uv-bi-titulo">EQUIPO INCLUIDO:</h3>
+      <ul class="uv-bi-list">${incluyeHtml}</ul>
+    </div>
+    <!-- ACCESORIOS ESTÁNDAR (bullets pequeños) -->
+    <div class="uv-bloque-acc">
+      <h3 class="uv-bi-titulo uv-acc">ACCESORIOS ESTÁNDAR</h3>
+      <ul class="uv-acc-list">${accesoriosHtml}</ul>
     </div>
 
-    <!-- 4 FEATURES -->
+    <!-- 4 FEATURES con iconos SVG -->
     <div class="uv-features">
       <div class="uv-feature">
-        <div class="uv-feature-icon">🎯</div>
+        <div class="uv-feature-icon"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 4a6 6 0 110 12 6 6 0 010-12zm0 3a3 3 0 100 6 3 3 0 000-6z"/></svg></div>
         <p class="uv-feature-title">${escH(T.feature_1_titulo)}</p>
         <p class="uv-feature-desc">${escH(T.feature_1_desc)}</p>
       </div>
       <div class="uv-feature">
-        <div class="uv-feature-icon">⚙️</div>
+        <div class="uv-feature-icon"><svg viewBox="0 0 24 24"><path d="M19.4 13l-1.7-1c.1-.6.1-1.2 0-1.8l1.7-1-1.6-2.8-1.9.8c-.4-.4-1-.7-1.5-1L14 4h-3l-.3 2.2c-.6.2-1.1.5-1.5.9l-1.9-.8L5.6 9.2l1.7 1c-.1.6-.1 1.2 0 1.8l-1.7 1 1.6 2.8 1.9-.8c.4.4 1 .7 1.5.9l.4 2.1h3l.3-2.2c.6-.2 1.1-.5 1.5-.9l1.9.8 1.7-2.7zM12.5 14a2 2 0 110-4 2 2 0 010 4z"/></svg></div>
         <p class="uv-feature-title">${escH(T.feature_2_titulo)}</p>
         <p class="uv-feature-desc">${escH(T.feature_2_desc)}</p>
       </div>
       <div class="uv-feature">
-        <div class="uv-feature-icon">👍</div>
+        <div class="uv-feature-icon"><svg viewBox="0 0 24 24"><path d="M9 21h9a2 2 0 002-2v-7a2 2 0 00-2-2h-3v-4a3 3 0 00-3-3l-4 9v9zM4 11h3v10H4z"/></svg></div>
         <p class="uv-feature-title">${escH(T.feature_3_titulo)}</p>
         <p class="uv-feature-desc">${escH(T.feature_3_desc)}</p>
       </div>
       <div class="uv-feature">
-        <div class="uv-feature-icon">🛡️</div>
+        <div class="uv-feature-icon"><svg viewBox="0 0 24 24"><path d="M12 2L3 5v6c0 5 4 9.5 9 11 5-1.5 9-6 9-11V5l-9-3z"/></svg></div>
         <p class="uv-feature-title">${escH(T.feature_4_titulo)}</p>
         <p class="uv-feature-desc">${escH(T.feature_4_desc)}</p>
       </div>
     </div>
 
-    <!-- FOOTER -->
+    <!-- FOOTER negro + tira amarilla -->
     <div class="uv-footer">
       <div class="uv-footer-banner">
         <span class="uv-footer-brand">${escH(T.footer_brand)}</span>
         <span class="uv-footer-slogan">${escH(T.footer_slogan)}</span>
       </div>
-      <div class="uv-footer-web">
-        <span class="uv-footer-social">📷 📘 ${escH(T.footer_web)}</span>
-        <span class="uv-footer-site">🌐 ${escH(T.footer_web)}</span>
+      <div class="uv-footer-web-row">
+        <span class="uv-footer-social">
+          <svg viewBox="0 0 24 24"><path d="M12 2.2c3.2 0 3.6 0 4.85.07a6.7 6.7 0 012.23.41 3.7 3.7 0 011.34.87 3.7 3.7 0 01.87 1.34 6.7 6.7 0 01.41 2.23C21.8 8.4 21.8 8.8 21.8 12s0 3.6-.07 4.85a6.7 6.7 0 01-.41 2.23 3.7 3.7 0 01-.87 1.34 3.7 3.7 0 01-1.34.87 6.7 6.7 0 01-2.23.41C15.6 21.8 15.2 21.8 12 21.8s-3.6 0-4.85-.07a6.7 6.7 0 01-2.23-.41 3.7 3.7 0 01-1.34-.87 3.7 3.7 0 01-.87-1.34 6.7 6.7 0 01-.41-2.23C2.2 15.6 2.2 15.2 2.2 12s0-3.6.07-4.85a6.7 6.7 0 01.41-2.23 3.7 3.7 0 01.87-1.34A3.7 3.7 0 014.9 2.7a6.7 6.7 0 012.23-.41C8.4 2.2 8.8 2.2 12 2.2zm0 1.6c-3.15 0-3.52 0-4.76.07a5.1 5.1 0 00-1.7.31 2.85 2.85 0 00-1.06.69 2.85 2.85 0 00-.69 1.06 5.1 5.1 0 00-.31 1.7C3.4 8.48 3.4 8.85 3.4 12s0 3.52.08 4.76a5.1 5.1 0 00.31 1.7 2.85 2.85 0 00.69 1.06 2.85 2.85 0 001.06.69 5.1 5.1 0 001.7.31c1.24.08 1.61.08 4.76.08s3.52 0 4.76-.08a5.1 5.1 0 001.7-.31 2.85 2.85 0 001.06-.69 2.85 2.85 0 00.69-1.06 5.1 5.1 0 00.31-1.7c.08-1.24.08-1.61.08-4.76s0-3.52-.08-4.76a5.1 5.1 0 00-.31-1.7 2.85 2.85 0 00-.69-1.06 2.85 2.85 0 00-1.06-.69 5.1 5.1 0 00-1.7-.31C15.52 3.8 15.15 3.8 12 3.8zm0 2.7a5.5 5.5 0 110 11 5.5 5.5 0 010-11zm0 1.6a3.9 3.9 0 100 7.8 3.9 3.9 0 000-7.8zm5.7-1.8a1.3 1.3 0 110 2.6 1.3 1.3 0 010-2.6z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M22 12a10 10 0 10-11.56 9.88V14.9H7.9V12h2.54V9.8c0-2.5 1.5-3.88 3.78-3.88 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.9h-2.34v6.98A10 10 0 0022 12z"/></svg>
+          ${escH((T.footer_web || '').replace(/^www\./, ''))}
+        </span>
+        <span class="uv-footer-site">
+          <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1 17.93A8 8 0 014.07 13H7.5a14 14 0 001.5 5.86c.6.42 1.3.74 2 .94v.13zm0-3.93H6.7a12 12 0 01-.63-3h4.93v3zm0-5H6.07a12 12 0 01.63-3H11v3zm0-5H7.5C8.4 4.6 9.62 4 11 4v2zm10 5h-3.5a14 14 0 00-1.5-5.86A8 8 0 0119.93 11zM13 4c1.38 0 2.6.6 3.5 1.5L13 6V4zm0 3h4.93a12 12 0 01.63 3H13V7zm0 5h5.56a12 12 0 01-.63 3H13v-3zm0 7v-2c1.38 0 2.6-.6 3.5-1.5L13 19z"/></svg>
+          ${escH(T.footer_web)}
+        </span>
       </div>
       <div class="uv-footer-cities" style="grid-template-columns: repeat(${T.ciudades.length || 6}, 1fr)">
         ${T.ciudades.map(c => `<div><div class="uv-footer-city">${escH(c.ciudad || '')}</div><div class="uv-footer-city-tel">${escH(c.tel || '')}</div></div>`).join('')}
@@ -5577,7 +5609,6 @@
         </div>
         <div class="maq-card-actions">
           <button type="button" class="btn small outline btn-view-maq" data-id="${m.id}" title="Ver flyer (modo del registro)"><i class="fas fa-eye"></i> Ver</button>
-          <button type="button" class="btn small outline btn-compare-maq" data-id="${m.id}" title="Comparar con otra máquina (modo PAIR temporal)"><i class="fas fa-clone"></i></button>
           ${_ce ? `<button type="button" class="btn small primary btn-edit-maq" data-id="${m.id}" title="Editar"><i class="fas fa-edit"></i></button>` : ''}
           ${_cd ? `<button type="button" class="btn small danger btn-delete-maq" data-id="${m.id}" title="Eliminar"><i class="fas fa-trash"></i></button>` : ''}
         </div>
@@ -5693,7 +5724,6 @@
         <td>${formatMaquinaFichaTecnicaCell(m)}</td>
         <td class="th-actions">
           <button type="button" class="btn small outline btn-view-maq" data-id="${m.id}" title="Ver flyer (modo del registro)"><i class="fas fa-eye"></i></button>
-          <button type="button" class="btn small outline btn-compare-maq" data-id="${m.id}" title="Comparar con otra máquina (PAIR temporal)"><i class="fas fa-clone"></i></button>
           ${_canEdit ? `<button type="button" class="btn small primary btn-edit-maq" data-id="${m.id}"><i class="fas fa-edit"></i></button>` : ''}
           ${_canDelete ? `<button type="button" class="btn small danger btn-delete-maq" data-id="${m.id}"><i class="fas fa-trash"></i></button>` : ''}
         </td>
