@@ -1,0 +1,610 @@
+/* ============================================================================
+   UNIVERSAL THEME — paleta amarillo-negro extraída de cota1.pdf / ejemplo1.jpeg
+   Aplica SOLO al panel-dashboards en esta fase (prototipo). Si Luis valida,
+   se expande a toda la web con clase global .universal-theme en body.
+   ============================================================================
+   Paleta:
+   - Amarillo Universal: #FFD200 (acento principal)
+   - Amarillo oscuro:    #E5BD00 (hover, gradientes)
+   - Negro profundo:     #0a0a0a (footer, headers principales en sol)
+   - Gris carbón:        #1a1a1a (cards en luna)
+   - Gris medio:         #262626 (separadores en luna)
+   - Blanco:             #ffffff (fondo sol)
+   - Gris claro:         #f4f4f4 (cards en sol)
+   - Texto claro:        #fafafa
+   - Texto oscuro:       #0a0a0a
+============================================================================ */
+
+:root {
+  --uni-amarillo: #FFD200;
+  --uni-amarillo-hover: #E5BD00;
+  --uni-amarillo-soft: #FFE066;
+  --uni-negro: #0a0a0a;
+  --uni-carbon: #1a1a1a;
+  --uni-gris-medio: #262626;
+  --uni-blanco: #ffffff;
+  --uni-gris-claro: #f4f4f4;
+  --uni-gris-separador: #e5e5e5;
+  --uni-texto-claro: #fafafa;
+  --uni-texto-oscuro: #0a0a0a;
+  --uni-texto-medio: #525252;
+  --uni-sombra-amarilla: 0 4px 14px rgba(255, 210, 0, 0.25);
+  --uni-sombra-card: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --uni-sombra-card-hover: 0 6px 20px rgba(0, 0, 0, 0.15);
+  --uni-chevron: linear-gradient(135deg, transparent 50%, var(--uni-amarillo) 50%);
+}
+
+/* ----------------------------------------------------------------------------
+   PANEL DASHBOARDS — fondo base
+---------------------------------------------------------------------------- */
+#panel-dashboards.panel.panel-dashboard {
+  background: var(--uni-gris-claro) !important;
+  padding-bottom: 0 !important;
+}
+body.dark-theme #panel-dashboards.panel.panel-dashboard,
+body.theme-industrial:not(.appearance-light) #panel-dashboards.panel.panel-dashboard {
+  background: var(--uni-negro) !important;
+}
+
+#panel-dashboards .dashboard-surface {
+  background: transparent !important;
+  position: relative;
+}
+
+/* ----------------------------------------------------------------------------
+   QUICK STATS BAR — tira amarilla horizontal con métricas rápidas
+   (recuerda la cabecera del flyer con "ENVÍO / GARANTÍA / CAPACITACIÓN")
+---------------------------------------------------------------------------- */
+#panel-dashboards #dashboard-quick-stats.dashboard-quick-stats {
+  background: var(--uni-amarillo) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 14px 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 32px !important;
+  flex-wrap: wrap !important;
+  position: relative;
+  margin: -1rem -1.5rem 1.5rem !important;
+  box-shadow: var(--uni-sombra-amarilla);
+}
+#panel-dashboards #dashboard-quick-stats::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 60px;
+  height: 100%;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--uni-negro) 0px,
+    var(--uni-negro) 6px,
+    var(--uni-amarillo) 6px,
+    var(--uni-amarillo) 12px
+  );
+  opacity: 0.85;
+}
+#panel-dashboards #dashboard-quick-stats::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60px;
+  height: 100%;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--uni-negro) 0px,
+    var(--uni-negro) 6px,
+    var(--uni-amarillo) 6px,
+    var(--uni-amarillo) 12px
+  );
+  opacity: 0.85;
+}
+#panel-dashboards #dashboard-quick-stats .quick-stat-item {
+  position: relative;
+  z-index: 1;
+  background: transparent !important;
+  color: var(--uni-negro) !important;
+  font-weight: 700 !important;
+  padding: 4px 12px !important;
+  border: 0 !important;
+}
+#panel-dashboards #dashboard-quick-stats .quick-stat-item i {
+  color: var(--uni-negro) !important;
+}
+#panel-dashboards #dashboard-quick-stats .quick-stat-label {
+  color: var(--uni-negro) !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.72rem;
+  opacity: 0.85;
+}
+#panel-dashboards #dashboard-quick-stats .quick-stat-value {
+  color: var(--uni-negro) !important;
+  font-weight: 800 !important;
+  font-size: 0.95rem;
+}
+
+/* ----------------------------------------------------------------------------
+   DASHBOARD HEADER — título grande estilo "CENTROS DE MAQUINADO"
+---------------------------------------------------------------------------- */
+#panel-dashboards .dashboard-header {
+  background: var(--uni-blanco) !important;
+  padding: 28px 24px 24px !important;
+  border-left: 8px solid var(--uni-amarillo) !important;
+  border-radius: 0 !important;
+  box-shadow: var(--uni-sombra-card) !important;
+  margin-bottom: 1.5rem !important;
+  position: relative;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  gap: 1.5rem !important;
+  flex-wrap: wrap !important;
+}
+body.dark-theme #panel-dashboards .dashboard-header,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-header {
+  background: var(--uni-carbon) !important;
+  border-left-color: var(--uni-amarillo) !important;
+}
+#panel-dashboards .dashboard-header::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 120px;
+  height: 8px;
+  background: var(--uni-amarillo);
+}
+#panel-dashboards .dashboard-title {
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
+  font-size: 2.2rem !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.02em !important;
+  text-transform: uppercase !important;
+  color: var(--uni-negro) !important;
+  margin: 0 0 0.4rem 0 !important;
+}
+body.dark-theme #panel-dashboards .dashboard-title,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-title {
+  color: var(--uni-amarillo) !important;
+}
+#panel-dashboards .dashboard-title i {
+  color: var(--uni-amarillo) !important;
+  margin-right: 0.5rem;
+}
+body.dark-theme #panel-dashboards .dashboard-title i,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-title i {
+  color: var(--uni-amarillo) !important;
+}
+#panel-dashboards .dashboard-subtitle {
+  color: var(--uni-texto-medio) !important;
+  font-size: 0.88rem !important;
+  margin: 0 !important;
+  max-width: 700px;
+}
+body.dark-theme #panel-dashboards .dashboard-subtitle,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-subtitle {
+  color: #a3a3a3 !important;
+}
+#panel-dashboards .dashboard-subtitle strong {
+  color: var(--uni-negro) !important;
+  font-weight: 700;
+}
+body.dark-theme #panel-dashboards .dashboard-subtitle strong,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-subtitle strong {
+  color: var(--uni-amarillo) !important;
+}
+
+#panel-dashboards .dashboard-header-right {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+#panel-dashboards .btn-dashboard-refresh {
+  background: var(--uni-negro) !important;
+  color: var(--uni-amarillo) !important;
+  border: 2px solid var(--uni-negro) !important;
+  border-radius: 6px !important;
+  padding: 0.55rem 1rem !important;
+  font-weight: 700 !important;
+  font-size: 0.82rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+#panel-dashboards .btn-dashboard-refresh:hover {
+  background: var(--uni-amarillo) !important;
+  color: var(--uni-negro) !important;
+  border-color: var(--uni-amarillo) !important;
+  transform: translateY(-1px);
+  box-shadow: var(--uni-sombra-amarilla);
+}
+#panel-dashboards .btn-dashboard-refresh.outline {
+  background: transparent !important;
+  color: var(--uni-negro) !important;
+  border: 2px solid var(--uni-negro) !important;
+}
+#panel-dashboards .btn-dashboard-refresh.outline:hover {
+  background: var(--uni-negro) !important;
+  color: var(--uni-amarillo) !important;
+}
+body.dark-theme #panel-dashboards .btn-dashboard-refresh.outline,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .btn-dashboard-refresh.outline {
+  color: var(--uni-amarillo) !important;
+  border-color: var(--uni-amarillo) !important;
+}
+body.dark-theme #panel-dashboards .btn-dashboard-refresh.outline:hover,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .btn-dashboard-refresh.outline:hover {
+  background: var(--uni-amarillo) !important;
+  color: var(--uni-negro) !important;
+}
+
+/* ----------------------------------------------------------------------------
+   DASHBOARD GRID — cards de KPIs con header amarillo (estilo "MODELO VMC-1050")
+---------------------------------------------------------------------------- */
+#panel-dashboards .dashboard-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  gap: 1.25rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+#panel-dashboards .dashboard-card,
+#panel-dashboards .dashboard-section-title,
+#panel-dashboards .dashboard-charts,
+#panel-dashboards .dashboard-comparativo,
+#panel-dashboards .dashboard-pronosticos,
+#panel-dashboards .dashboard-activity-feed,
+#panel-dashboards .dashboard-health-panel {
+  background: var(--uni-blanco) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: var(--uni-sombra-card) !important;
+  overflow: hidden;
+}
+body.dark-theme #panel-dashboards .dashboard-card,
+body.dark-theme #panel-dashboards .dashboard-charts,
+body.dark-theme #panel-dashboards .dashboard-comparativo,
+body.dark-theme #panel-dashboards .dashboard-pronosticos,
+body.dark-theme #panel-dashboards .dashboard-activity-feed,
+body.dark-theme #panel-dashboards .dashboard-health-panel,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-card,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-charts,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-comparativo,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-pronosticos,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-activity-feed,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-health-panel {
+  background: var(--uni-carbon) !important;
+  border: 1px solid var(--uni-gris-medio) !important;
+}
+
+#panel-dashboards .dashboard-card {
+  position: relative;
+  transition: all 0.25s ease;
+  cursor: pointer;
+  padding: 0 !important;
+}
+#panel-dashboards .dashboard-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: var(--uni-amarillo);
+  z-index: 1;
+}
+#panel-dashboards .dashboard-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--uni-sombra-card-hover) !important;
+}
+#panel-dashboards .dashboard-card:hover::before {
+  height: 10px;
+  transition: height 0.2s ease;
+}
+
+#panel-dashboards .dashboard-card-icon {
+  background: var(--uni-amarillo) !important;
+  color: var(--uni-negro) !important;
+  width: 60px !important;
+  height: 60px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1.6rem !important;
+  margin: 1.2rem 1.2rem 0.5rem !important;
+  box-shadow: 0 2px 8px rgba(255, 210, 0, 0.4);
+}
+#panel-dashboards .dashboard-card-label {
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  font-weight: 700 !important;
+  font-size: 0.78rem !important;
+  color: var(--uni-texto-medio) !important;
+  padding: 0 1.2rem !important;
+  margin: 0 0 0.3rem !important;
+}
+body.dark-theme #panel-dashboards .dashboard-card-label,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-card-label {
+  color: #a3a3a3 !important;
+}
+#panel-dashboards .dashboard-card-value {
+  font-family: 'Inter', system-ui, sans-serif !important;
+  font-size: 2rem !important;
+  font-weight: 900 !important;
+  color: var(--uni-negro) !important;
+  padding: 0 1.2rem !important;
+  margin: 0 !important;
+  line-height: 1.1 !important;
+}
+body.dark-theme #panel-dashboards .dashboard-card-value,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-card-value {
+  color: var(--uni-amarillo) !important;
+}
+#panel-dashboards .dashboard-card-trend,
+#panel-dashboards .dashboard-card-sub {
+  padding: 0.5rem 1.2rem 1.2rem !important;
+  font-size: 0.82rem !important;
+  color: var(--uni-texto-medio) !important;
+}
+body.dark-theme #panel-dashboards .dashboard-card-trend,
+body.dark-theme #panel-dashboards .dashboard-card-sub,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-card-trend,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-card-sub {
+  color: #a3a3a3 !important;
+}
+
+/* ----------------------------------------------------------------------------
+   SECTION TITLES — barra amarilla + texto bold
+---------------------------------------------------------------------------- */
+#panel-dashboards .dashboard-section-title {
+  background: var(--uni-amarillo) !important;
+  color: var(--uni-negro) !important;
+  padding: 0.85rem 1.2rem !important;
+  margin: 1.5rem 0 0 !important;
+  border-radius: 0 !important;
+  font-weight: 900 !important;
+  font-size: 1rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.6rem !important;
+  box-shadow: var(--uni-sombra-card) !important;
+}
+#panel-dashboards .dashboard-section-title i {
+  color: var(--uni-negro) !important;
+  font-size: 1.1rem;
+}
+body.dark-theme #panel-dashboards .dashboard-section-title,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-section-title {
+  background: var(--uni-amarillo) !important;
+  color: var(--uni-negro) !important;
+}
+
+/* Wrappers que siguen al section-title */
+#panel-dashboards .dashboard-charts,
+#panel-dashboards #dashboard-advanced,
+#panel-dashboards .dashboard-activity-feed,
+#panel-dashboards .dashboard-health-panel {
+  padding: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+/* ----------------------------------------------------------------------------
+   FEATURE PILLS — las 4 cápsulas tipo "ALTA PRECISIÓN, ROBUSTEZ, ..." al pie
+   Las inserto via JS al cargar el panel
+---------------------------------------------------------------------------- */
+#panel-dashboards .uni-features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  background: var(--uni-blanco);
+  padding: 2rem 1.5rem;
+  margin: 1.5rem 0 0;
+  box-shadow: var(--uni-sombra-card);
+}
+body.dark-theme #panel-dashboards .uni-features-grid,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .uni-features-grid {
+  background: var(--uni-carbon);
+}
+#panel-dashboards .uni-feature-pill {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem;
+}
+#panel-dashboards .uni-feature-icon {
+  flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--uni-amarillo);
+  color: var(--uni-negro);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  box-shadow: 0 3px 12px rgba(255, 210, 0, 0.4);
+}
+#panel-dashboards .uni-feature-content {
+  flex: 1;
+}
+#panel-dashboards .uni-feature-title {
+  font-weight: 900;
+  font-size: 1rem;
+  color: var(--uni-negro);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 0 0 0.2rem;
+}
+body.dark-theme #panel-dashboards .uni-feature-title,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .uni-feature-title {
+  color: var(--uni-amarillo);
+}
+#panel-dashboards .uni-feature-desc {
+  font-size: 0.78rem;
+  color: var(--uni-texto-medio);
+  margin: 0;
+  line-height: 1.35;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+body.dark-theme #panel-dashboards .uni-feature-desc,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .uni-feature-desc {
+  color: #a3a3a3;
+}
+
+/* ----------------------------------------------------------------------------
+   UNIVERSAL FOOTER — banda negra global + tira amarilla con ciudades
+---------------------------------------------------------------------------- */
+#panel-dashboards .uni-footer {
+  background: var(--uni-negro);
+  color: var(--uni-blanco);
+  padding: 1.5rem;
+  margin: 1.5rem 0 0;
+  position: relative;
+}
+#panel-dashboards .uni-footer-tagline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+#panel-dashboards .uni-footer-brand {
+  color: var(--uni-amarillo);
+  font-size: 1.1rem;
+}
+#panel-dashboards .uni-footer-slogan {
+  color: var(--uni-blanco);
+  font-size: 0.95rem;
+}
+#panel-dashboards .uni-footer-cities {
+  background: var(--uni-amarillo);
+  color: var(--uni-negro);
+  padding: 0.75rem 1.5rem;
+  margin: 1rem -1.5rem -1.5rem;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 2rem;
+  font-weight: 800;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+#panel-dashboards .uni-footer-cities span {
+  white-space: nowrap;
+}
+
+/* ----------------------------------------------------------------------------
+   SCORECARDS / TILES / SEGMENTS (los que ya existen en dashboard)
+---------------------------------------------------------------------------- */
+#panel-dashboards .dashboard-score-tile,
+#panel-dashboards .segment-card,
+#panel-dashboards .kpi-card {
+  background: var(--uni-blanco) !important;
+  border: 0 !important;
+  border-top: 4px solid var(--uni-amarillo) !important;
+  border-radius: 0 !important;
+  box-shadow: var(--uni-sombra-card) !important;
+  transition: all 0.2s ease;
+}
+body.dark-theme #panel-dashboards .dashboard-score-tile,
+body.dark-theme #panel-dashboards .segment-card,
+body.dark-theme #panel-dashboards .kpi-card,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-score-tile,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .segment-card,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .kpi-card {
+  background: var(--uni-carbon) !important;
+  border-top-color: var(--uni-amarillo) !important;
+}
+#panel-dashboards .dashboard-score-tile:hover,
+#panel-dashboards .segment-card:hover,
+#panel-dashboards .kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--uni-sombra-card-hover) !important;
+}
+
+/* ----------------------------------------------------------------------------
+   HEALTH PANEL (estado del sistema)
+---------------------------------------------------------------------------- */
+#panel-dashboards .health-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+#panel-dashboards .health-item {
+  background: var(--uni-gris-claro) !important;
+  border-left: 4px solid var(--uni-amarillo) !important;
+  padding: 0.85rem 1rem !important;
+  font-weight: 700 !important;
+  color: var(--uni-negro) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.55rem !important;
+}
+body.dark-theme #panel-dashboards .health-item,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .health-item {
+  background: var(--uni-gris-medio) !important;
+  color: var(--uni-amarillo) !important;
+}
+#panel-dashboards .health-dot {
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 50% !important;
+  background: var(--uni-amarillo) !important;
+  box-shadow: 0 0 0 3px rgba(255, 210, 0, 0.25);
+}
+
+/* ----------------------------------------------------------------------------
+   ACTIVITY FEED
+---------------------------------------------------------------------------- */
+#panel-dashboards .activity-feed-list .activity-item {
+  background: var(--uni-gris-claro) !important;
+  border-left: 4px solid var(--uni-amarillo) !important;
+  padding: 0.85rem 1rem !important;
+  margin-bottom: 0.6rem !important;
+  border-radius: 0 !important;
+}
+body.dark-theme #panel-dashboards .activity-feed-list .activity-item,
+body.theme-industrial:not(.appearance-light) #panel-dashboards .activity-feed-list .activity-item {
+  background: var(--uni-gris-medio) !important;
+}
+
+/* ----------------------------------------------------------------------------
+   RESPONSIVE — móvil
+---------------------------------------------------------------------------- */
+@media (max-width: 720px) {
+  #panel-dashboards #dashboard-quick-stats {
+    padding: 12px 14px !important;
+    gap: 12px !important;
+  }
+  #panel-dashboards #dashboard-quick-stats::before,
+  #panel-dashboards #dashboard-quick-stats::after {
+    width: 24px;
+  }
+  #panel-dashboards .dashboard-title {
+    font-size: 1.6rem !important;
+  }
+  #panel-dashboards .dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+  #panel-dashboards .uni-features-grid {
+    grid-template-columns: 1fr;
+  }
+  #panel-dashboards .uni-footer-cities {
+    gap: 1rem;
+    font-size: 0.7rem;
+  }
+}
