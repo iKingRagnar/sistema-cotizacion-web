@@ -20,6 +20,43 @@
   let incidentesCache = [];
   let bitacorasCache = [];
   let globalBranchFilter = '';
+  /**
+   * Catálogo de iconos SVG inline (24x24, línea 1.5px negra) para specs de máquinas CNC.
+   * Las entradas de ficha_tecnica_specs ahora soportan {label, value, icon} donde icon es la KEY.
+   * Si una entrada vieja no trae icon, se renderiza con `generico`.
+   */
+  const MAQUINA_SPEC_ICONS = {
+    motor: { label: 'Motor', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="8" width="11" height="8" rx="1"/><circle cx="10.5" cy="12" r="2"/><path d="M16 10h3v4h-3M3 11v2"/></svg>' },
+    mesa: { label: 'Dimensiones mesa', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="9"/><path d="M6 15v4M18 15v4M3 9h18"/></svg>' },
+    viaje_x: { label: 'Viaje longitudinal (X)', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg>' },
+    viaje_y: { label: 'Viaje transversal (Y)', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3"/></svg>' },
+    viaje_z: { label: 'Viaje vertical (Z)', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8l-8 16h8M8 4l-2 2M16 4l2 2"/></svg>' },
+    viajes_xyz: { label: 'Viajes rápidos XYZ', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M4 12h16M12 4l-2 2M12 4l2 2M12 20l-2-2M12 20l2-2M4 12l2-2M4 12l2 2M20 12l-2-2M20 12l-2 2"/></svg>' },
+    husillo_tipo: { label: 'Tipo de husillo', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="14" rx="1"/><path d="M9 7h6M9 11h6M9 15h6M11 17v3M13 17v3"/></svg>' },
+    husillo_velocidad: { label: 'Velocidad husillo (RPM)', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 12l4-3M12 4v2M20 12h-2M12 20v-2M4 12h2"/></svg>' },
+    husillo_motor: { label: 'Motor husillo (kW)', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L5 14h6l-2 7 8-11h-6l2-7z"/></svg>' },
+    husillo_cono: { label: 'Cono del husillo', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10l-3 8h-4z"/><path d="M10 12h4v3h-4zM11 15h2v6h-2z"/></svg>' },
+    carrusel: { label: 'Carrusel / cambiador', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="5.5" r="1.4"/><circle cx="18.5" cy="12" r="1.4"/><circle cx="12" cy="18.5" r="1.4"/><circle cx="5.5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/></svg>' },
+    herr_num: { label: 'Núm. herramientas', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M7 8h10M7 12h10M7 16h6"/></svg>' },
+    herr_diam: { label: 'Diámetro máx herramienta', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><path d="M5 12h14"/></svg>' },
+    herr_long: { label: 'Longitud máx herramienta', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4v16M5 4h3M5 4h-3M5 20h3M5 20h-3M9 12h10"/></svg>' },
+    herr_peso: { label: 'Peso máx herramienta', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h6l1 2H8zM5 9h14l-2 11H7z"/></svg>' },
+    peso_mesa: { label: 'Peso máx mesa', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="3"/><path d="M6 13v6M18 13v6M9 7l3-3 3 3M12 4v6"/></svg>' },
+    rango_vel: { label: 'Rango de velocidades', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18a9 9 0 0118 0"/><path d="M12 18l5-5"/><circle cx="12" cy="18" r="1"/></svg>' },
+    posicion: { label: 'Posicionamiento', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 2c-4 0-7 3-7 7 0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7z"/></svg>' },
+    repetib: { label: 'Repetibilidad', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1116 0M20 12l-2-2M20 12l2-2M12 7v5l3 2"/></svg>' },
+    error_vert: { label: 'Error vertical permisible', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M8 7l4-4 4 4M8 17l4 4 4-4"/><circle cx="18" cy="12" r="2"/></svg>' },
+    config_sis: { label: 'Configuración del sistema', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 00-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 00-2-1.2l-.4-2.5h-4l-.4 2.5a7 7 0 00-2 1.2l-2.3-1-2 3.4 2 1.5A7 7 0 005 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.3-1a7 7 0 002 1.2l.4 2.5h4l.4-2.5a7 7 0 002-1.2l2.3 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z"/></svg>' },
+    peso_total: { label: 'Peso total', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.5 11h-11z"/><path d="M9 8V6a3 3 0 016 0v2"/><path d="M10 13h4"/></svg>' },
+    dim_maq: { label: 'Dimensiones máquina', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 4l16 16M8 4v3M16 4v3M4 8h3M4 16h3"/></svg>' },
+    cnc: { label: 'Control CNC', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="1"/><path d="M7 9h3v3H7zM13 9h4M13 13h4M3 18l3 3M21 18l-3 3"/></svg>' },
+    precision: { label: 'Precisión', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="#0a0a0a"/></svg>' },
+    generico: { label: 'Genérico (punto)', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5"><circle cx="12" cy="12" r="3" fill="#0a0a0a"/></svg>' },
+  };
+  function maqIconSvg(key) {
+    if (key && Object.prototype.hasOwnProperty.call(MAQUINA_SPEC_ICONS, key)) return MAQUINA_SPEC_ICONS[key].svg;
+    return MAQUINA_SPEC_ICONS.generico.svg;
+  }
   const clienteCityById = {};
   const clienteCityByName = {};
   const notificationsFeed = [];
@@ -4950,7 +4987,63 @@
   }
 
   // ----- VISTA UNIVERSAL (ficha técnica estilo Doc2.pdf) -----
-  function previewMaquinaUniversal(m) {
+  /** Defaults para textos del flyer (overridables vía m.flyer_textos JSON). */
+  const FLYER_DEFAULT_TEXTS = {
+    titulo_general: 'CENTROS DE MAQUINADO',
+    tagline_pre: 'PRECISIÓN QUE IMPULSA',
+    tagline_strong: 'TU PRODUCCIÓN',
+    capsula_envio_titulo: 'Envío\nsin costo',
+    capsula_envio_sub: 'A todo México',
+    capsula_garantia_titulo: 'Garantía\nen todos',
+    capsula_garantia_sub: 'Nuestros equipos',
+    capsula_capacitacion_titulo: 'Capacitación\nincluida',
+    capsula_capacitacion_sub: 'Para tu equipo',
+    feature_1_titulo: 'Alta precisión', feature_1_desc: 'Acabados exactos y consistentes',
+    feature_2_titulo: 'Robustez', feature_2_desc: 'Estructura rígida y duradera',
+    feature_3_titulo: 'Versatilidad', feature_3_desc: 'Ideal para diversos tipos de trabajo',
+    feature_4_titulo: 'Rendimiento', feature_4_desc: 'Eficiencia en cada proceso',
+    footer_brand: 'UNIVERSAL MAQUINARIA',
+    footer_slogan: 'DONDE LA COMPETENCIA NO EXISTE',
+    footer_web: 'www.universalmaquinaria.com',
+    ciudades: [
+      { ciudad: 'MONTERREY', tel: '81 8366 8946' },
+      { ciudad: 'CDMX', tel: '55 2899 8360' },
+      { ciudad: 'QUERÉTARO', tel: '442 787 0089' },
+      { ciudad: 'GUADALAJARA', tel: '33 1683 8801' },
+      { ciudad: 'REYNOSA', tel: '899 950 2450' },
+      { ciudad: 'CHIHUAHUA', tel: '614 2033 565' },
+    ],
+  };
+  function readFlyerTextos(m) {
+    let out = Object.assign({}, FLYER_DEFAULT_TEXTS);
+    if (!m) return out;
+    let raw = m.flyer_textos;
+    if (raw && typeof raw === 'string') {
+      try { raw = JSON.parse(raw); } catch (_) { raw = null; }
+    }
+    if (raw && typeof raw === 'object') {
+      for (const k of Object.keys(out)) {
+        if (raw[k] != null && raw[k] !== '') out[k] = raw[k];
+      }
+      if (Array.isArray(raw.ciudades) && raw.ciudades.length) out.ciudades = raw.ciudades;
+    }
+    return out;
+  }
+
+  async function previewMaquinaUniversal(m, opts) {
+    opts = opts || {};
+    let modo = opts.modo || (m && m.flyer_modo) || 'single';
+    if (modo !== 'pair') modo = 'single';
+    let companion = opts.companion || null;
+    if (modo === 'pair' && !companion && m && m.flyer_pareja_id) {
+      try {
+        const other = await fetchJson(API + '/maquinas/' + Number(m.flyer_pareja_id)).catch(() => null);
+        if (other && other.id) companion = other;
+      } catch (_) {}
+      if (!companion && Array.isArray(maquinasCache)) {
+        companion = maquinasCache.find(x => Number(x.id) === Number(m.flyer_pareja_id)) || null;
+      }
+    }
     /* CATÁLOGO de máquinas formato flyer ejemplo1.jpeg — SIN PRECIOS.
        David Cantú no quiere mostrar precios a sus clientes para evitar que
        la competencia espíe. La vista replica EXACTO el flyer:
@@ -4961,29 +5054,79 @@
        - "ACCESORIOS ESTÁNDAR" con bullets normales
        - 4 features fijas (ALTA PRECISIÓN / ROBUSTEZ / VERSATILIDAD / RENDIMIENTO)
        - Footer negro UNIVERSAL MAQUINARIA + tira amarilla con 6 ciudades + teléfonos */
-    const piezaUrl = m.imagen_pieza_url ? String(m.imagen_pieza_url).trim() : '';
-    const titulo = (m.modelo || m.nombre || '').trim() || 'Máquina';
-    const subtitulo = (m.categoria || m.descripcion_corta || '').trim();
-    let incluyeArr = [];
-    try { if (m.incluye) { const p = JSON.parse(m.incluye); if (Array.isArray(p)) incluyeArr = p; } } catch (_) {}
-    let accesoriosArr = [];
-    try { if (m.accesorios_estandar) { const p = JSON.parse(m.accesorios_estandar); if (Array.isArray(p)) accesoriosArr = p; } } catch (_) {}
-    let specsArr = [];
-    try { if (m.ficha_tecnica_specs) { const p = JSON.parse(m.ficha_tecnica_specs); if (Array.isArray(p)) specsArr = p; } } catch (_) {}
     const escH = (s) => String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    const specsRowsHtml = specsArr.length
-      ? specsArr.map(s => `<tr><td class="uv-spec-label">${escH(s.label || '')}</td><td class="uv-spec-value">${escH(s.value || '')}</td></tr>`).join('')
-      : '<tr><td colspan="2" class="uv-spec-empty">Sin ficha técnica capturada — edítala desde el catálogo.</td></tr>';
-    const incluyeHtml = incluyeArr.length
-      ? incluyeArr.map(t => `<li>${escH(t)}</li>`).join('')
-      : '<li class="uv-empty-item">— Captura el equipo incluido al editar la máquina —</li>';
-    const accesoriosHtml = accesoriosArr.length
-      ? accesoriosArr.map(t => `<li>${escH(t)}</li>`).join('')
-      : '<li class="uv-empty-item">— Captura los accesorios estándar al editar la máquina —</li>';
+    const T = readFlyerTextos(m);
+    function buildModel(mq) {
+      const piezaUrl = mq && mq.imagen_pieza_url ? String(mq.imagen_pieza_url).trim() : '';
+      const titulo = ((mq && (mq.modelo || mq.nombre)) || '').trim() || 'Máquina';
+      let specsArr = [];
+      try { if (mq && mq.ficha_tecnica_specs) { const p = JSON.parse(mq.ficha_tecnica_specs); if (Array.isArray(p)) specsArr = p; } } catch (_) {}
+      const specsRowsHtml = specsArr.length
+        ? specsArr.map(s => `<tr>
+            <td class="uv-spec-icon-cell">${maqIconSvg(s.icon)}</td>
+            <td class="uv-spec-label">${escH(s.label || '')}</td>
+            <td class="uv-spec-value">${escH(s.value || '')}</td>
+          </tr>`).join('')
+        : '<tr><td colspan="3" class="uv-spec-empty">Sin ficha técnica capturada — edítala desde el catálogo.</td></tr>';
+      const fotoHtml = piezaUrl
+        ? `<img src="${escH(piezaUrl)}" alt="${escH(titulo)}" class="uv-foto-maquina">`
+        : `<div class="uv-foto-placeholder"><span style="font-size:48px;color:#9ca3af">📷</span><br><span style="color:#9ca3af;font-size:12px;font-weight:600">Sin foto</span></div>`;
+      return `<div class="uv-model-card">
+        <div class="uv-model-head">MODELO ${escH(titulo)}</div>
+        <div class="uv-model-body${modo === 'pair' ? ' uv-pair-body' : ''}">
+          <div class="uv-model-foto">${fotoHtml}</div>
+          <div class="uv-model-specs">
+            <table class="uv-specs-table">${specsRowsHtml}</table>
+          </div>
+        </div>
+      </div>`;
+    }
+    function buildLista(mq) {
+      let incluyeArr = [];
+      try { if (mq && mq.incluye) { const p = JSON.parse(mq.incluye); if (Array.isArray(p)) incluyeArr = p; } } catch (_) {}
+      let accesoriosArr = [];
+      try { if (mq && mq.accesorios_estandar) { const p = JSON.parse(mq.accesorios_estandar); if (Array.isArray(p)) accesoriosArr = p; } } catch (_) {}
+      const incluyeHtml = incluyeArr.length
+        ? incluyeArr.map(t => `<li>${escH(t)}</li>`).join('')
+        : '<li class="uv-empty-item">— Captura el equipo incluido al editar la máquina —</li>';
+      const accesoriosHtml = accesoriosArr.length
+        ? accesoriosArr.map(t => `<li>${escH(t)}</li>`).join('')
+        : '<li class="uv-empty-item">— Captura los accesorios estándar al editar la máquina —</li>';
+      return { incluyeHtml, accesoriosHtml };
+    }
+    const titulo = (m.modelo || m.nombre || '').trim() || 'Máquina';
+    const piezaUrl = m.imagen_pieza_url ? String(m.imagen_pieza_url).trim() : '';
+    const subtitulo = (m.categoria || m.descripcion_corta || '').trim();
     const fotoHtml = piezaUrl
       ? `<img src="${escH(piezaUrl)}" alt="${escH(titulo)}" class="uv-foto-maquina">`
       : `<div class="uv-foto-placeholder"><span style="font-size:60px;color:#9ca3af">📷</span><br><span style="color:#9ca3af;font-size:14px;font-weight:600">Sin foto</span></div>`;
+    // En modo pair: dos cards lado a lado. En single: una card centrada.
+    const modelCardsHtml = modo === 'pair' && companion
+      ? `<div class="uv-pair-grid">${buildModel(m)}${buildModel(companion)}</div>`
+      : `<div class="uv-single-wrap">${buildModel(m)}</div>`;
+    // Listas: si pair, fusionamos las dos máquinas en EQUIPO INCLUIDO + ACCESORIOS
+    let incluyeHtml, accesoriosHtml;
+    if (modo === 'pair' && companion) {
+      const a = buildLista(m); const b = buildLista(companion);
+      // Tomamos las del registro principal; si están vacías, usamos las del compañero.
+      let arrI = []; let arrA = [];
+      try { if (m.incluye) arrI = JSON.parse(m.incluye) || []; } catch (_) {}
+      try { if (m.accesorios_estandar) arrA = JSON.parse(m.accesorios_estandar) || []; } catch (_) {}
+      if (!arrI.length) {
+        try { if (companion.incluye) arrI = JSON.parse(companion.incluye) || []; } catch (_) {}
+      }
+      if (!arrA.length) {
+        try { if (companion.accesorios_estandar) arrA = JSON.parse(companion.accesorios_estandar) || []; } catch (_) {}
+      }
+      incluyeHtml = arrI.length ? arrI.map(t => `<li>${escH(t)}</li>`).join('')
+        : '<li class="uv-empty-item">— Captura el equipo incluido al editar la máquina —</li>';
+      accesoriosHtml = arrA.length ? arrA.map(t => `<li>${escH(t)}</li>`).join('')
+        : '<li class="uv-empty-item">— Captura los accesorios estándar al editar la máquina —</li>';
+    } else {
+      const l = buildLista(m);
+      incluyeHtml = l.incluyeHtml; accesoriosHtml = l.accesoriosHtml;
+    }
     const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -5028,6 +5171,15 @@
   .uv-capsula-sub { font-size: 10px; font-weight: 700; color: #525252; text-transform: uppercase; letter-spacing: 0.5px; }
 
   /* ==== CARD DE MODELO ==== */
+  .uv-single-wrap { display: flex; justify-content: center; margin: 24px 28px; }
+  .uv-single-wrap .uv-model-card { max-width: 560px; width: 100%; margin: 0; }
+  .uv-pair-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 20px 22px; }
+  .uv-pair-grid .uv-model-card { margin: 0; }
+  .uv-pair-body { grid-template-columns: 1fr !important; }
+  .uv-pair-body .uv-model-foto { border-right: 0 !important; border-bottom: 1px solid #e5e5e5; max-height: 220px; }
+  .uv-pair-body .uv-foto-maquina { max-height: 180px; }
+  .uv-spec-icon-cell { width: 28px; padding: 4px !important; text-align: center; background: #fff; }
+  .uv-spec-icon-cell svg { width: 20px; height: 20px; display: block; margin: 0 auto; }
   .uv-model-card { margin: 24px 28px; background: #fff; border: 2px solid #e5e5e5; }
   .uv-model-head { background: #FFD200; color: #0a0a0a; padding: 12px 20px; font-size: 18px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; text-align: center; box-shadow: inset 0 -4px 0 rgba(0,0,0,0.1); }
   .uv-model-body { display: grid; grid-template-columns: 0.95fr 1.05fr; gap: 0; }
@@ -5102,9 +5254,9 @@
       <div class="uv-hero-inner">
         <div class="uv-hero-left">
           <img src="/fondos/universal-logo.jpg" alt="UNIVERSAL MAQUINARIA" class="uv-logo">
-          <h1 class="uv-titulo-mega">${escH(titulo)}</h1>
+          <h1 class="uv-titulo-mega">${escH(T.titulo_general)}</h1>
           ${subtitulo ? `<p class="uv-subtitulo">${escH(subtitulo)}</p>` : ''}
-          <p class="uv-tagline">PRECISIÓN QUE IMPULSA <strong>TU PRODUCCIÓN</strong></p>
+          <p class="uv-tagline">${escH(T.tagline_pre)} <strong>${escH(T.tagline_strong)}</strong></p>
         </div>
         <div class="uv-hero-right">${fotoHtml}</div>
       </div>
@@ -5115,36 +5267,28 @@
       <div class="uv-capsula">
         <div class="uv-capsula-icon">🚚</div>
         <div class="uv-capsula-text">
-          <span class="uv-capsula-title">Envío<br>sin costo</span>
-          <span class="uv-capsula-sub">A todo México</span>
+          <span class="uv-capsula-title">${escH(T.capsula_envio_titulo).replace(/\n/g, '<br>')}</span>
+          <span class="uv-capsula-sub">${escH(T.capsula_envio_sub)}</span>
         </div>
       </div>
       <div class="uv-capsula">
         <div class="uv-capsula-icon">🛡️</div>
         <div class="uv-capsula-text">
-          <span class="uv-capsula-title">Garantía<br>en todos</span>
-          <span class="uv-capsula-sub">Nuestros equipos</span>
+          <span class="uv-capsula-title">${escH(T.capsula_garantia_titulo).replace(/\n/g, '<br>')}</span>
+          <span class="uv-capsula-sub">${escH(T.capsula_garantia_sub)}</span>
         </div>
       </div>
       <div class="uv-capsula">
         <div class="uv-capsula-icon">🎓</div>
         <div class="uv-capsula-text">
-          <span class="uv-capsula-title">Capacitación<br>incluida</span>
-          <span class="uv-capsula-sub">Para tu equipo</span>
+          <span class="uv-capsula-title">${escH(T.capsula_capacitacion_titulo).replace(/\n/g, '<br>')}</span>
+          <span class="uv-capsula-sub">${escH(T.capsula_capacitacion_sub)}</span>
         </div>
       </div>
     </div>
 
-    <!-- CARD DE MODELO -->
-    <div class="uv-model-card">
-      <div class="uv-model-head">MODELO ${escH(titulo)}</div>
-      <div class="uv-model-body">
-        <div class="uv-model-foto">${fotoHtml}</div>
-        <div class="uv-model-specs">
-          <table class="uv-specs-table">${specsRowsHtml}</table>
-        </div>
-      </div>
-    </div>
+    <!-- CARD(S) DE MODELO -->
+    ${modelCardsHtml}
 
     <!-- EQUIPO INCLUIDO + ACCESORIOS -->
     <div class="uv-listas">
@@ -5162,43 +5306,38 @@
     <div class="uv-features">
       <div class="uv-feature">
         <div class="uv-feature-icon">🎯</div>
-        <p class="uv-feature-title">Alta precisión</p>
-        <p class="uv-feature-desc">Acabados exactos y consistentes</p>
+        <p class="uv-feature-title">${escH(T.feature_1_titulo)}</p>
+        <p class="uv-feature-desc">${escH(T.feature_1_desc)}</p>
       </div>
       <div class="uv-feature">
         <div class="uv-feature-icon">⚙️</div>
-        <p class="uv-feature-title">Robustez</p>
-        <p class="uv-feature-desc">Estructura rígida y duradera</p>
+        <p class="uv-feature-title">${escH(T.feature_2_titulo)}</p>
+        <p class="uv-feature-desc">${escH(T.feature_2_desc)}</p>
       </div>
       <div class="uv-feature">
         <div class="uv-feature-icon">👍</div>
-        <p class="uv-feature-title">Versatilidad</p>
-        <p class="uv-feature-desc">Ideal para diversos tipos de trabajo</p>
+        <p class="uv-feature-title">${escH(T.feature_3_titulo)}</p>
+        <p class="uv-feature-desc">${escH(T.feature_3_desc)}</p>
       </div>
       <div class="uv-feature">
         <div class="uv-feature-icon">🛡️</div>
-        <p class="uv-feature-title">Rendimiento</p>
-        <p class="uv-feature-desc">Eficiencia en cada proceso</p>
+        <p class="uv-feature-title">${escH(T.feature_4_titulo)}</p>
+        <p class="uv-feature-desc">${escH(T.feature_4_desc)}</p>
       </div>
     </div>
 
     <!-- FOOTER -->
     <div class="uv-footer">
       <div class="uv-footer-banner">
-        <span class="uv-footer-brand">UNIVERSAL MAQUINARIA</span>
-        <span class="uv-footer-slogan">DONDE LA COMPETENCIA NO EXISTE</span>
+        <span class="uv-footer-brand">${escH(T.footer_brand)}</span>
+        <span class="uv-footer-slogan">${escH(T.footer_slogan)}</span>
       </div>
       <div class="uv-footer-web">
-        <span class="uv-footer-social">📷 📘 universalmaquinaria.com</span>
-        <span class="uv-footer-site">🌐 www.universalmaquinaria.com</span>
+        <span class="uv-footer-social">📷 📘 ${escH(T.footer_web)}</span>
+        <span class="uv-footer-site">🌐 ${escH(T.footer_web)}</span>
       </div>
-      <div class="uv-footer-cities">
-        <div><div class="uv-footer-city">MONTERREY</div><div class="uv-footer-city-tel">81 8366 8946</div></div>
-        <div><div class="uv-footer-city">CDMX</div><div class="uv-footer-city-tel">55 2899 8360</div></div>
-        <div><div class="uv-footer-city">QUERÉTARO</div><div class="uv-footer-city-tel">442 787 0089</div></div>
-        <div><div class="uv-footer-city">GUADALAJARA</div><div class="uv-footer-city-tel">33 1683 8801</div></div>
-        <div><div class="uv-footer-city">REYNOSA</div><div class="uv-footer-city-tel">899 950 2450</div></div>
-        <div><div class="uv-footer-city">CHIHUAHUA</div><div class="uv-footer-city-tel">614 2033 565</div></div>
+      <div class="uv-footer-cities" style="grid-template-columns: repeat(${T.ciudades.length || 6}, 1fr)">
+        ${T.ciudades.map(c => `<div><div class="uv-footer-city">${escH(c.ciudad || '')}</div><div class="uv-footer-city-tel">${escH(c.tel || '')}</div></div>`).join('')}
       </div>
     </div>
 
@@ -5215,6 +5354,43 @@
   function previewMaquina(m) {
     // Vista nueva: formato UNIVERSAL estilo Doc2.pdf en ventana nueva (imprimible).
     return previewMaquinaUniversal(m);
+  }
+
+  /**
+   * Abre un modal compacto para elegir una 2da máquina y generar un flyer PAIR temporal
+   * (no se persiste — solo se muestra). Útil para comparar dos modelos sin editar.
+   */
+  function openCompareMaquinasPrompt(mPrimary) {
+    const lista = (Array.isArray(maquinasCache) ? maquinasCache : []).filter(x => Number(x.id) !== Number(mPrimary.id));
+    if (!lista.length) {
+      showToast('No hay otras máquinas para comparar.', 'warning');
+      return;
+    }
+    const opts = lista.map(x => `<option value="${x.id}">${escapeHtml((x.modelo || x.nombre || 'Máquina') + (x.categoria ? ' · ' + x.categoria : ''))}</option>`).join('');
+    const body = `
+      <div class="cotz-modal">
+        <p>Selecciona la 2da máquina que aparecerá lado a lado en el flyer (temporal, no se guarda).</p>
+        <div class="form-group">
+          <label>Máquina principal</label>
+          <input type="text" disabled value="${escapeHtml(mPrimary.modelo || mPrimary.nombre || '')}">
+        </div>
+        <div class="form-group">
+          <label>Máquina compañera</label>
+          <select id="cmp-pareja"><option value="">— Seleccionar —</option>${opts}</select>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn primary" id="cmp-go"><i class="fas fa-eye"></i> Ver flyer PAIR</button>
+          <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
+        </div>
+      </div>`;
+    openModal('Comparar 2 máquinas en un flyer', body);
+    qs('#cmp-go')?.addEventListener('click', async () => {
+      const id = qs('#cmp-pareja')?.value;
+      if (!id) { showToast('Elige una máquina compañera.', 'warning'); return; }
+      const companion = lista.find(x => Number(x.id) === Number(id));
+      try { qs('#modal')?.classList.add('hidden'); } catch (_) {}
+      await previewMaquinaUniversal(mPrimary, { modo: 'pair', companion });
+    });
   }
   function previewMaquinaLegacy(m) {
     clearPvcMediaUrlRegistry();
@@ -5405,7 +5581,8 @@
           <div class="maq-card-row"><i class="fas fa-user-tie"></i> <strong>Cliente:</strong> ${cliente}</div>
         </div>
         <div class="maq-card-actions">
-          <button type="button" class="btn small outline btn-view-maq" data-id="${m.id}" title="Ver ficha"><i class="fas fa-eye"></i> Ver</button>
+          <button type="button" class="btn small outline btn-view-maq" data-id="${m.id}" title="Ver flyer (modo del registro)"><i class="fas fa-eye"></i> Ver</button>
+          <button type="button" class="btn small outline btn-compare-maq" data-id="${m.id}" title="Comparar con otra máquina (modo PAIR temporal)"><i class="fas fa-clone"></i></button>
           ${_ce ? `<button type="button" class="btn small primary btn-edit-maq" data-id="${m.id}" title="Editar"><i class="fas fa-edit"></i></button>` : ''}
           ${_cd ? `<button type="button" class="btn small danger btn-delete-maq" data-id="${m.id}" title="Eliminar"><i class="fas fa-trash"></i></button>` : ''}
         </div>
@@ -5480,6 +5657,9 @@
       cardsWrap.querySelectorAll('.btn-view-maq').forEach(btn => {
         btn.addEventListener('click', e => { e.stopPropagation(); const m = maquinasCache.find(x => x.id == btn.dataset.id); if (m) previewMaquina(m); });
       });
+      cardsWrap.querySelectorAll('.btn-compare-maq').forEach(btn => {
+        btn.addEventListener('click', e => { e.stopPropagation(); const m = maquinasCache.find(x => x.id == btn.dataset.id); if (m) openCompareMaquinasPrompt(m); });
+      });
       cardsWrap.querySelectorAll('.maq-card-thumb-upload').forEach(el => {
         el.addEventListener('click', e => { e.stopPropagation(); const row = maquinasCache.find(x => x.id == el.dataset.id); if (row) openModalMaquinaImagen(row); });
         el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); } });
@@ -5517,7 +5697,8 @@
         <td class="ref-td-num">${tEntrega}</td>
         <td>${formatMaquinaFichaTecnicaCell(m)}</td>
         <td class="th-actions">
-          <button type="button" class="btn small outline btn-view-maq" data-id="${m.id}" title="Ver ficha técnica Universal (PDF)"><i class="fas fa-eye"></i></button>
+          <button type="button" class="btn small outline btn-view-maq" data-id="${m.id}" title="Ver flyer (modo del registro)"><i class="fas fa-eye"></i></button>
+          <button type="button" class="btn small outline btn-compare-maq" data-id="${m.id}" title="Comparar con otra máquina (PAIR temporal)"><i class="fas fa-clone"></i></button>
           ${_canEdit ? `<button type="button" class="btn small primary btn-edit-maq" data-id="${m.id}"><i class="fas fa-edit"></i></button>` : ''}
           ${_canDelete ? `<button type="button" class="btn small danger btn-delete-maq" data-id="${m.id}"><i class="fas fa-trash"></i></button>` : ''}
         </td>
@@ -5538,6 +5719,9 @@
     });
     tbody.querySelectorAll('.btn-view-maq').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const m = data.find(x => x.id == btn.dataset.id); if (m) previewMaquina(m); });
+    });
+    tbody.querySelectorAll('.btn-compare-maq').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); const m = data.find(x => x.id == btn.dataset.id); if (m) openCompareMaquinasPrompt(m); });
     });
     tbody.querySelectorAll('.btn-edit-maq').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const m = data.find(x => x.id == btn.dataset.id); if (m) openModalMaquina(m); });
@@ -9149,12 +9333,40 @@
         if (Array.isArray(parsed)) accesoriosArr = parsed;
       }
     } catch (_) { /* invalid JSON ignored */ }
-    const specsRowsHtml = (specsArr.length ? specsArr : [{ label: '', value: '' }]).map((row, i) => `
-      <div class="form-row maq-spec-row" data-idx="${i}" style="gap:0.5rem;margin-bottom:0.35rem">
+    // Helper para opciones del select de iconos
+    function iconOptsHtml(selectedKey) {
+      const keys = Object.keys(MAQUINA_SPEC_ICONS);
+      return keys.map(k => `<option value="${k}" ${selectedKey === k ? 'selected' : ''}>${escapeHtml(MAQUINA_SPEC_ICONS[k].label)}</option>`).join('');
+    }
+    function iconRowHtml(row, i) {
+      const iconKey = row.icon && MAQUINA_SPEC_ICONS[row.icon] ? row.icon : 'generico';
+      return `
+      <div class="form-row maq-spec-row" data-idx="${i}" style="gap:0.5rem;margin-bottom:0.35rem;align-items:center">
+        <div class="maq-spec-icon-prev" style="flex:0 0 36px;width:36px;height:36px;border:1px solid #d1d5db;border-radius:4px;background:#fff;display:flex;align-items:center;justify-content:center;padding:4px">${maqIconSvg(iconKey)}</div>
+        <select class="maq-spec-icon" style="flex:1;min-width:140px">${iconOptsHtml(iconKey)}</select>
         <input type="text" class="maq-spec-label" placeholder="Ej: Maximum swing diameter (mm)" value="${escapeHtml(row.label || '')}" style="flex:2">
         <input type="text" class="maq-spec-value" placeholder="Ej: 900" value="${escapeHtml(row.value || '')}" style="flex:1">
         <button type="button" class="btn small danger maq-spec-remove" title="Quitar"><i class="fas fa-times"></i></button>
-      </div>`).join('');
+      </div>`;
+    }
+    const specsRowsHtml = (specsArr.length ? specsArr : [{ label: '', value: '', icon: 'generico' }]).map((row, i) => iconRowHtml(row, i)).join('');
+    // Textos del flyer (overrides). Default texts from FLYER_DEFAULT_TEXTS.
+    let flyerTextosObj = {};
+    try { if (maquina && maquina.flyer_textos) flyerTextosObj = JSON.parse(maquina.flyer_textos) || {}; } catch (_) {}
+    const ftVal = (k) => escapeHtml(flyerTextosObj[k] != null ? flyerTextosObj[k] : '');
+    const ciudadesArr = Array.isArray(flyerTextosObj.ciudades) ? flyerTextosObj.ciudades : [];
+    function ciudadVal(i, k) { return escapeHtml((ciudadesArr[i] && ciudadesArr[i][k]) || ''); }
+    const curModo = (maquina && maquina.flyer_modo === 'pair') ? 'pair' : 'single';
+    const curPareja = maquina && maquina.flyer_pareja_id != null ? String(maquina.flyer_pareja_id) : '';
+    // Lista de máquinas disponibles para selector "pareja" (carga ligera desde caché o API).
+    let listaMaquinasPair = [];
+    try {
+      if (Array.isArray(maquinasCache) && maquinasCache.length) listaMaquinasPair = maquinasCache.slice();
+      else listaMaquinasPair = toArray(await fetchJson(API + '/maquinas').catch(() => []));
+    } catch (_) { listaMaquinasPair = []; }
+    const parejaOpts = '<option value="">— Selecciona una máquina —</option>' + listaMaquinasPair
+      .filter(x => !maquina || Number(x.id) !== Number(maquina.id))
+      .map(x => `<option value="${x.id}" ${curPareja === String(x.id) ? 'selected' : ''}>${escapeHtml((x.modelo || x.nombre || 'Máquina') + (x.categoria ? ' · ' + x.categoria : ''))}</option>`).join('');
     const incluyeRowsHtml = (incluyeArr.length ? incluyeArr : ['']).map((txt, i) => `
       <div class="form-row maq-incluye-row" data-idx="${i}" style="gap:0.5rem;margin-bottom:0.35rem">
         <input type="text" class="maq-incluye-text" placeholder="Ej: Envío sin costo a Querétaro" value="${escapeHtml(txt || '')}" style="flex:1">
@@ -9252,7 +9464,103 @@
             </div>
           </div>
         </section>
+        <section class="cotz-card" aria-labelledby="maq-sec-flyer-modo">
+          <h4 class="cotz-card-title" id="maq-sec-flyer-modo"><span class="cotz-step-num">6</span> Modo del flyer</h4>
+          <p class="form-hint" style="margin-top:0"><i class="fas fa-th-large"></i> Elige cómo se verá el flyer al imprimirlo: una sola máquina, o dos lado a lado (estilo catálogo doble).</p>
+          <div class="form-row" style="gap:1rem;margin-top:0.5rem">
+            <label class="maq-flyer-modo-thumb" data-modo="single" style="flex:1;cursor:pointer;border:2px solid ${curModo === 'single' ? '#FFD200' : '#e5e7eb'};border-radius:8px;padding:10px;background:${curModo === 'single' ? '#fffbe6' : '#fff'};text-align:center">
+              <input type="radio" name="m-flyer-modo" value="single" ${curModo === 'single' ? 'checked' : ''} style="display:none">
+              <svg viewBox="0 0 120 80" style="width:100%;max-width:140px;height:auto">
+                <rect x="2" y="2" width="116" height="76" fill="#fff" stroke="#0a0a0a" stroke-width="1.5"/>
+                <rect x="2" y="2" width="116" height="14" fill="#FFD200"/>
+                <rect x="35" y="24" width="50" height="40" fill="#fff" stroke="#0a0a0a" stroke-width="1.5"/>
+                <rect x="35" y="24" width="50" height="8" fill="#FFD200"/>
+                <rect x="40" y="36" width="18" height="22" fill="#e5e7eb"/>
+                <rect x="62" y="38" width="18" height="3" fill="#0a0a0a"/>
+                <rect x="62" y="44" width="18" height="3" fill="#0a0a0a"/>
+                <rect x="62" y="50" width="14" height="3" fill="#0a0a0a"/>
+              </svg>
+              <div style="font-weight:800;font-size:12px;margin-top:4px">SINGLE (1 máquina)</div>
+            </label>
+            <label class="maq-flyer-modo-thumb" data-modo="pair" style="flex:1;cursor:pointer;border:2px solid ${curModo === 'pair' ? '#FFD200' : '#e5e7eb'};border-radius:8px;padding:10px;background:${curModo === 'pair' ? '#fffbe6' : '#fff'};text-align:center">
+              <input type="radio" name="m-flyer-modo" value="pair" ${curModo === 'pair' ? 'checked' : ''} style="display:none">
+              <svg viewBox="0 0 120 80" style="width:100%;max-width:140px;height:auto">
+                <rect x="2" y="2" width="116" height="76" fill="#fff" stroke="#0a0a0a" stroke-width="1.5"/>
+                <rect x="2" y="2" width="116" height="14" fill="#FFD200"/>
+                <rect x="8" y="24" width="50" height="40" fill="#fff" stroke="#0a0a0a" stroke-width="1.5"/>
+                <rect x="8" y="24" width="50" height="6" fill="#FFD200"/>
+                <rect x="13" y="34" width="20" height="20" fill="#e5e7eb"/>
+                <rect x="36" y="36" width="18" height="2" fill="#0a0a0a"/>
+                <rect x="36" y="42" width="18" height="2" fill="#0a0a0a"/>
+                <rect x="62" y="24" width="50" height="40" fill="#fff" stroke="#0a0a0a" stroke-width="1.5"/>
+                <rect x="62" y="24" width="50" height="6" fill="#FFD200"/>
+                <rect x="67" y="34" width="20" height="20" fill="#e5e7eb"/>
+                <rect x="90" y="36" width="18" height="2" fill="#0a0a0a"/>
+                <rect x="90" y="42" width="18" height="2" fill="#0a0a0a"/>
+              </svg>
+              <div style="font-weight:800;font-size:12px;margin-top:4px">PAIR (2 máquinas)</div>
+            </label>
+          </div>
+          <div class="form-group" id="m-flyer-pareja-wrap" style="margin-top:0.75rem;${curModo === 'pair' ? '' : 'display:none'}">
+            <label>Máquina compañera (para modo PAIR)</label>
+            <select id="m-flyer-pareja">${parejaOpts}</select>
+          </div>
+        </section>
+        <section class="cotz-card" aria-labelledby="maq-sec-flyer-textos">
+          <h4 class="cotz-card-title" id="maq-sec-flyer-textos" style="cursor:pointer" id="m-flyer-textos-toggle">
+            <span class="cotz-step-num">7</span> Textos del flyer (opcional)
+            <span style="float:right;font-size:0.85rem;color:#525252">▼ Mostrar / ocultar</span>
+          </h4>
+          <p class="form-hint" style="margin-top:0"><i class="fas fa-pen"></i> Deja los campos vacíos para usar los textos predefinidos del catálogo UNIVERSAL.</p>
+          <div id="m-flyer-textos-body">
+            <div class="form-row" style="gap:1rem">
+              <div class="form-group" style="flex:1"><label>Título general</label>
+                <input type="text" id="ft-titulo_general" maxlength="80" placeholder="CENTROS DE MAQUINADO" value="${ftVal('titulo_general')}">
+              </div>
+              <div class="form-group" style="flex:1"><label>Tagline (prefijo)</label>
+                <input type="text" id="ft-tagline_pre" maxlength="60" placeholder="PRECISIÓN QUE IMPULSA" value="${ftVal('tagline_pre')}">
+              </div>
+              <div class="form-group" style="flex:1"><label>Tagline (negrita)</label>
+                <input type="text" id="ft-tagline_strong" maxlength="40" placeholder="TU PRODUCCIÓN" value="${ftVal('tagline_strong')}">
+              </div>
+            </div>
+            <h5 style="margin:0.5rem 0 0.25rem;font-size:0.9rem;color:#525252;text-transform:uppercase;letter-spacing:0.5px">Cápsulas (envío / garantía / capacitación)</h5>
+            <div class="form-row" style="gap:0.5rem">
+              <div class="form-group" style="flex:1"><label>Envío título</label><input type="text" id="ft-capsula_envio_titulo" maxlength="60" placeholder="Envío\\nsin costo" value="${ftVal('capsula_envio_titulo')}"></div>
+              <div class="form-group" style="flex:1"><label>Envío sub</label><input type="text" id="ft-capsula_envio_sub" maxlength="60" placeholder="A todo México" value="${ftVal('capsula_envio_sub')}"></div>
+            </div>
+            <div class="form-row" style="gap:0.5rem">
+              <div class="form-group" style="flex:1"><label>Garantía título</label><input type="text" id="ft-capsula_garantia_titulo" maxlength="60" placeholder="Garantía\\nen todos" value="${ftVal('capsula_garantia_titulo')}"></div>
+              <div class="form-group" style="flex:1"><label>Garantía sub</label><input type="text" id="ft-capsula_garantia_sub" maxlength="60" placeholder="Nuestros equipos" value="${ftVal('capsula_garantia_sub')}"></div>
+            </div>
+            <div class="form-row" style="gap:0.5rem">
+              <div class="form-group" style="flex:1"><label>Capacitación título</label><input type="text" id="ft-capsula_capacitacion_titulo" maxlength="60" placeholder="Capacitación\\nincluida" value="${ftVal('capsula_capacitacion_titulo')}"></div>
+              <div class="form-group" style="flex:1"><label>Capacitación sub</label><input type="text" id="ft-capsula_capacitacion_sub" maxlength="60" placeholder="Para tu equipo" value="${ftVal('capsula_capacitacion_sub')}"></div>
+            </div>
+            <h5 style="margin:0.5rem 0 0.25rem;font-size:0.9rem;color:#525252;text-transform:uppercase;letter-spacing:0.5px">4 features</h5>
+            ${[1,2,3,4].map(i => `
+              <div class="form-row" style="gap:0.5rem">
+                <div class="form-group" style="flex:1"><label>Feature ${i} título</label><input type="text" id="ft-feature_${i}_titulo" maxlength="40" value="${ftVal('feature_' + i + '_titulo')}"></div>
+                <div class="form-group" style="flex:2"><label>Feature ${i} descripción</label><input type="text" id="ft-feature_${i}_desc" maxlength="120" value="${ftVal('feature_' + i + '_desc')}"></div>
+              </div>
+            `).join('')}
+            <h5 style="margin:0.5rem 0 0.25rem;font-size:0.9rem;color:#525252;text-transform:uppercase;letter-spacing:0.5px">Footer</h5>
+            <div class="form-row" style="gap:0.5rem">
+              <div class="form-group" style="flex:1"><label>Brand</label><input type="text" id="ft-footer_brand" maxlength="60" placeholder="UNIVERSAL MAQUINARIA" value="${ftVal('footer_brand')}"></div>
+              <div class="form-group" style="flex:1"><label>Slogan</label><input type="text" id="ft-footer_slogan" maxlength="80" placeholder="DONDE LA COMPETENCIA NO EXISTE" value="${ftVal('footer_slogan')}"></div>
+              <div class="form-group" style="flex:1"><label>Web</label><input type="text" id="ft-footer_web" maxlength="80" placeholder="www.universalmaquinaria.com" value="${ftVal('footer_web')}"></div>
+            </div>
+            <h5 style="margin:0.5rem 0 0.25rem;font-size:0.9rem;color:#525252;text-transform:uppercase;letter-spacing:0.5px">Ciudades (6)</h5>
+            ${[0,1,2,3,4,5].map(i => `
+              <div class="form-row" style="gap:0.5rem">
+                <div class="form-group" style="flex:1"><label>Ciudad ${i + 1}</label><input type="text" id="ft-ciudad-${i}" maxlength="40" value="${ciudadVal(i, 'ciudad')}"></div>
+                <div class="form-group" style="flex:1"><label>Teléfono ${i + 1}</label><input type="text" id="ft-tel-${i}" maxlength="40" value="${ciudadVal(i, 'tel')}"></div>
+              </div>
+            `).join('')}
+          </div>
+        </section>
         <div class="form-actions">
+          <button type="button" class="btn" id="m-preview" style="background:#FFD200;color:#0a0a0a;font-weight:800"><i class="fas fa-eye"></i> Vista previa</button>
           <button type="button" class="btn primary" id="m-save"><i class="fas fa-save"></i> Guardar</button>
           <button type="button" class="btn" id="modal-btn-cancel">Cancelar</button>
         </div>
@@ -9314,22 +9622,128 @@
 
     // ----- Specs dinámicos (ficha técnica tabla) -----
     const specsList = qs('#m-specs-list');
-    function addSpecRow(label = '', value = '') {
+    function wireSpecRow(div) {
+      div.querySelector('.maq-spec-remove')?.addEventListener('click', () => div.remove());
+      const sel = div.querySelector('.maq-spec-icon');
+      const prev = div.querySelector('.maq-spec-icon-prev');
+      if (sel && prev) {
+        sel.addEventListener('change', () => { prev.innerHTML = maqIconSvg(sel.value); });
+      }
+    }
+    function addSpecRow(label = '', value = '', icon = 'generico') {
       if (!specsList) return;
-      const div = document.createElement('div');
-      div.className = 'form-row maq-spec-row';
-      div.style.cssText = 'gap:0.5rem;margin-bottom:0.35rem';
-      div.innerHTML = `
-        <input type="text" class="maq-spec-label" placeholder="Ej: Maximum swing diameter (mm)" value="${escapeHtml(label)}" style="flex:2">
-        <input type="text" class="maq-spec-value" placeholder="Ej: 900" value="${escapeHtml(value)}" style="flex:1">
-        <button type="button" class="btn small danger maq-spec-remove" title="Quitar"><i class="fas fa-times"></i></button>
-      `;
+      const idx = specsList.children.length;
+      const tmp = document.createElement('div');
+      tmp.innerHTML = iconRowHtml({ label, value, icon }, idx);
+      const div = tmp.firstElementChild;
       specsList.appendChild(div);
-      div.querySelector('.maq-spec-remove').addEventListener('click', () => div.remove());
+      wireSpecRow(div);
     }
     qs('#m-specs-add')?.addEventListener('click', () => addSpecRow());
-    specsList?.querySelectorAll('.maq-spec-remove').forEach(btn => {
-      btn.addEventListener('click', () => btn.closest('.maq-spec-row')?.remove());
+    specsList?.querySelectorAll('.maq-spec-row').forEach(wireSpecRow);
+
+    // ----- Modo del flyer (single/pair) -----
+    const parejaWrap = qs('#m-flyer-pareja-wrap');
+    document.querySelectorAll('.maq-flyer-modo-thumb').forEach(lbl => {
+      lbl.addEventListener('click', (e) => {
+        e.preventDefault();
+        const modoSel = lbl.getAttribute('data-modo');
+        document.querySelectorAll('input[name="m-flyer-modo"]').forEach(r => { r.checked = (r.value === modoSel); });
+        document.querySelectorAll('.maq-flyer-modo-thumb').forEach(t => {
+          const on = t.getAttribute('data-modo') === modoSel;
+          t.style.borderColor = on ? '#FFD200' : '#e5e7eb';
+          t.style.background = on ? '#fffbe6' : '#fff';
+        });
+        if (parejaWrap) parejaWrap.style.display = modoSel === 'pair' ? '' : 'none';
+      });
+    });
+
+    // ----- Toggle textos del flyer -----
+    const ftHead = qs('#maq-sec-flyer-textos');
+    const ftBody = qs('#m-flyer-textos-body');
+    if (ftHead && ftBody) {
+      // por defecto colapsado si no hay overrides
+      const hasOverrides = flyerTextosObj && Object.keys(flyerTextosObj).length > 0;
+      ftBody.style.display = hasOverrides ? '' : 'none';
+      ftHead.addEventListener('click', () => {
+        ftBody.style.display = (ftBody.style.display === 'none') ? '' : 'none';
+      });
+    }
+
+    // Helper para construir payload temporal (usado por Vista previa y por Guardar).
+    function buildSpecsArrFromForm() {
+      const arr = [];
+      document.querySelectorAll('#m-specs-list .maq-spec-row').forEach(row => {
+        const lbl = (row.querySelector('.maq-spec-label')?.value || '').trim();
+        const val = (row.querySelector('.maq-spec-value')?.value || '').trim();
+        const icon = (row.querySelector('.maq-spec-icon')?.value || 'generico').trim();
+        if (lbl || val) arr.push({ label: lbl, value: val, icon });
+      });
+      return arr;
+    }
+    function buildFlyerTextosFromForm() {
+      const keys = ['titulo_general','tagline_pre','tagline_strong',
+        'capsula_envio_titulo','capsula_envio_sub',
+        'capsula_garantia_titulo','capsula_garantia_sub',
+        'capsula_capacitacion_titulo','capsula_capacitacion_sub',
+        'feature_1_titulo','feature_1_desc','feature_2_titulo','feature_2_desc',
+        'feature_3_titulo','feature_3_desc','feature_4_titulo','feature_4_desc',
+        'footer_brand','footer_slogan','footer_web'];
+      const out = {};
+      keys.forEach(k => {
+        const el = qs('#ft-' + k);
+        const v = el ? (el.value || '').trim() : '';
+        if (v) out[k] = v;
+      });
+      const ciudades = [];
+      for (let i = 0; i < 6; i++) {
+        const c = (qs('#ft-ciudad-' + i)?.value || '').trim();
+        const t = (qs('#ft-tel-' + i)?.value || '').trim();
+        if (c || t) ciudades.push({ ciudad: c, tel: t });
+      }
+      if (ciudades.length) out.ciudades = ciudades;
+      return Object.keys(out).length ? out : null;
+    }
+    function buildTempMaquinaFromForm() {
+      const modoSel = (document.querySelector('input[name="m-flyer-modo"]:checked')?.value) || 'single';
+      const parejaVal = qs('#m-flyer-pareja')?.value || '';
+      const incluyeArrT = [];
+      document.querySelectorAll('#m-incluye-list .maq-incluye-row').forEach(row => {
+        const t = (row.querySelector('.maq-incluye-text')?.value || '').trim();
+        if (t) incluyeArrT.push(t);
+      });
+      const accesoriosArrT = [];
+      document.querySelectorAll('#m-accesorios-list .maq-accesorio-row').forEach(row => {
+        const t = (row.querySelector('.maq-accesorio-text')?.value || '').trim();
+        if (t) accesoriosArrT.push(t);
+      });
+      const specsT = buildSpecsArrFromForm();
+      const textosT = buildFlyerTextosFromForm();
+      return {
+        id: maquina && maquina.id ? maquina.id : null,
+        modelo: (qs('#m-modelo')?.value || '').trim(),
+        nombre: (qs('#m-modelo')?.value || '').trim(),
+        categoria: (selMaqCat && selMaqCat.value) || '',
+        descripcion_corta: (qs('#m-desc-corta')?.value || '').trim(),
+        imagen_pieza_url: (qs('#m-h-imagen-pieza')?.value || '').trim(),
+        incluye: incluyeArrT.length ? JSON.stringify(incluyeArrT) : null,
+        accesorios_estandar: accesoriosArrT.length ? JSON.stringify(accesoriosArrT) : null,
+        ficha_tecnica_specs: specsT.length ? JSON.stringify(specsT) : null,
+        flyer_modo: modoSel,
+        flyer_pareja_id: parejaVal ? Number(parejaVal) : null,
+        flyer_textos: textosT ? JSON.stringify(textosT) : null,
+      };
+    }
+
+    // ----- Botón Vista previa -----
+    qs('#m-preview')?.addEventListener('click', async () => {
+      const temp = buildTempMaquinaFromForm();
+      let companion = null;
+      if (temp.flyer_modo === 'pair' && temp.flyer_pareja_id) {
+        companion = listaMaquinasPair.find(x => Number(x.id) === Number(temp.flyer_pareja_id)) || null;
+      }
+      try { await previewMaquinaUniversal(temp, { modo: temp.flyer_modo, companion }); }
+      catch (e) { showToast('No se pudo abrir la vista previa: ' + (e && e.message ? e.message : e), 'error'); }
     });
 
     // ----- Incluye dinámicos -----
@@ -9401,14 +9815,15 @@
       const puestaEn = (qs('#m-puesta-en')?.value || '').trim() || null;
       const garantia = (qs('#m-garantia')?.value || '').trim() || null;
       const condPago = (qs('#m-condiciones-pago')?.value || '').trim() || null;
-      // Recoger specs (filas dinámicas con valor)
-      const specsArr = [];
-      document.querySelectorAll('#m-specs-list .maq-spec-row').forEach(row => {
-        const lbl = (row.querySelector('.maq-spec-label')?.value || '').trim();
-        const val = (row.querySelector('.maq-spec-value')?.value || '').trim();
-        if (lbl || val) specsArr.push({ label: lbl, value: val });
-      });
+      // Recoger specs (filas dinámicas con valor + icono SVG)
+      const specsArr = buildSpecsArrFromForm();
       const specsJson = specsArr.length ? JSON.stringify(specsArr) : null;
+      // Modo del flyer + pareja + textos
+      const flyerModoSel = (document.querySelector('input[name="m-flyer-modo"]:checked')?.value) || 'single';
+      const flyerParejaSel = qs('#m-flyer-pareja')?.value || '';
+      const flyerParejaId = flyerModoSel === 'pair' && flyerParejaSel ? Number(flyerParejaSel) : null;
+      const flyerTextosBuilt = buildFlyerTextosFromForm();
+      const flyerTextosJson = flyerTextosBuilt ? JSON.stringify(flyerTextosBuilt) : null;
       // Recoger incluye (filas dinámicas con texto)
       const incluyeArr = [];
       document.querySelectorAll('#m-incluye-list .maq-incluye-row').forEach(row => {
@@ -9447,6 +9862,9 @@
         garantia: garantia,
         condiciones_pago: condPago,
         accesorios_estandar: accesoriosJson,
+        flyer_modo: flyerModoSel,
+        flyer_pareja_id: flyerParejaId,
+        flyer_textos: flyerTextosJson,
       };
       if (clienteIdFinal != null && Number.isFinite(clienteIdFinal)) payload.cliente_id = clienteIdFinal;
       const btn = qs('#m-save');

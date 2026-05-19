@@ -480,6 +480,10 @@ async function runMigrations() {
     `ALTER TABLE maquinas ADD COLUMN condiciones_pago TEXT`,
     /* Accesorios estándar para flyer catálogo (2026-05-19): JSON ["Plato 3 mordazas", "Luneta fija", ...] */
     `ALTER TABLE maquinas ADD COLUMN accesorios_estandar TEXT`,
+    /* Flyer modo + textos personalizables (2026-05-19): 'single' | 'pair'; pareja_id apunta a otra máquina; textos = JSON con overrides */
+    `ALTER TABLE maquinas ADD COLUMN flyer_modo TEXT`,
+    `ALTER TABLE maquinas ADD COLUMN flyer_pareja_id INTEGER`,
+    `ALTER TABLE maquinas ADD COLUMN flyer_textos TEXT`,
     `ALTER TABLE refacciones ADD COLUMN bloque TEXT`,
     `ALTER TABLE refacciones ADD COLUMN tipo_cambio_registro REAL`,
     /* Personal: INE y licencia (data URL + miniatura) */
