@@ -5030,19 +5030,14 @@
     return out;
   }
 
-  async function previewMaquinaUniversal(m, opts) {
+  function previewMaquinaUniversal(m, opts) {
     opts = opts || {};
     let modo = opts.modo || (m && m.flyer_modo) || 'single';
     if (modo !== 'pair') modo = 'single';
     let companion = opts.companion || null;
-    if (modo === 'pair' && !companion && m && m.flyer_pareja_id) {
-      try {
-        const other = await fetchJson(API + '/maquinas/' + Number(m.flyer_pareja_id)).catch(() => null);
-        if (other && other.id) companion = other;
-      } catch (_) {}
-      if (!companion && Array.isArray(maquinasCache)) {
-        companion = maquinasCache.find(x => Number(x.id) === Number(m.flyer_pareja_id)) || null;
-      }
+    if (modo === 'pair' && !companion && m && m.flyer_pareja_id && Array.isArray(maquinasCache)) {
+      // Solo caché sincrónica — async + window.open causa que Chrome bloquee el popup.
+      companion = maquinasCache.find(x => Number(x.id) === Number(m.flyer_pareja_id)) || null;
     }
     /* CATÁLOGO de máquinas formato flyer ejemplo1.jpeg — SIN PRECIOS.
        David Cantú no quiere mostrar precios a sus clientes para evitar que
@@ -9362,8 +9357,22 @@
     let listaMaquinasPair = [];
     try {
       if (Array.isArray(maquinasCache) && maquinasCache.length) listaMaquinasPair = maquinasCache.slice();
-      else listaMaquinasPair = toArray(await fetchJson(API + '/maquinas').catch(() => []));
     } catch (_) { listaMaquinasPair = []; }
+    // Fetch asíncrono SIN bloquear apertura del modal: refresca el select después.
+    if (!listaMaquinasPair.length) {
+      Promise.resolve(fetchJson(API + '/maquinas').catch(() => [])).then(res => {
+        const arr = toArray(res);
+        if (!arr.length) return;
+        listaMaquinasPair = arr;
+        const sel = qs('#m-flyer-pareja');
+        if (!sel) return;
+        const cur = sel.value;
+        const opts = '<option value="">— Selecciona una máquina —</option>' + arr
+          .filter(x => !maquina || Number(x.id) !== Number(maquina.id))
+          .map(x => `<option value="${x.id}" ${cur === String(x.id) ? 'selected' : ''}>${escapeHtml((x.modelo || x.nombre || 'Máquina') + (x.categoria ? ' · ' + x.categoria : ''))}</option>`).join('');
+        sel.innerHTML = opts;
+      });
+    }
     const parejaOpts = '<option value="">— Selecciona una máquina —</option>' + listaMaquinasPair
       .filter(x => !maquina || Number(x.id) !== Number(maquina.id))
       .map(x => `<option value="${x.id}" ${curPareja === String(x.id) ? 'selected' : ''}>${escapeHtml((x.modelo || x.nombre || 'Máquina') + (x.categoria ? ' · ' + x.categoria : ''))}</option>`).join('');
