@@ -37,16 +37,16 @@
 /* ----------------------------------------------------------------------------
    PANEL DASHBOARDS — fondo base
 ---------------------------------------------------------------------------- */
-#panel-dashboards.panel.panel-dashboard {
+html body #panel-dashboards.panel.panel-dashboard {
   background: var(--uni-gris-claro) !important;
   padding-bottom: 0 !important;
 }
-body.dark-theme #panel-dashboards.panel.panel-dashboard,
-body.theme-industrial:not(.appearance-light) #panel-dashboards.panel.panel-dashboard {
+body.dark-theme html body #panel-dashboards.panel.panel-dashboard,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards.panel.panel-dashboard {
   background: var(--uni-negro) !important;
 }
 
-#panel-dashboards .dashboard-surface {
+html body #panel-dashboards .dashboard-surface {
   background: transparent !important;
   position: relative;
 }
@@ -55,7 +55,7 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards.panel.panel-dashb
    QUICK STATS BAR — tira amarilla horizontal con métricas rápidas
    (recuerda la cabecera del flyer con "ENVÍO / GARANTÍA / CAPACITACIÓN")
 ---------------------------------------------------------------------------- */
-#panel-dashboards #dashboard-quick-stats.dashboard-quick-stats {
+html body #panel-dashboards #dashboard-quick-stats.dashboard-quick-stats {
   background: var(--uni-amarillo) !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -68,7 +68,7 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards.panel.panel-dashb
   margin: -1rem -1.5rem 1.5rem !important;
   box-shadow: var(--uni-sombra-amarilla);
 }
-#panel-dashboards #dashboard-quick-stats::before {
+html body #panel-dashboards #dashboard-quick-stats::before {
   content: '';
   position: absolute;
   top: 0;
@@ -84,7 +84,7 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards.panel.panel-dashb
   );
   opacity: 0.85;
 }
-#panel-dashboards #dashboard-quick-stats::after {
+html body #panel-dashboards #dashboard-quick-stats::after {
   content: '';
   position: absolute;
   top: 0;
@@ -100,7 +100,7 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards.panel.panel-dashb
   );
   opacity: 0.85;
 }
-#panel-dashboards #dashboard-quick-stats .quick-stat-item {
+html body #panel-dashboards #dashboard-quick-stats .quick-stat-item {
   position: relative;
   z-index: 1;
   background: transparent !important;
@@ -109,10 +109,10 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards.panel.panel-dashb
   padding: 4px 12px !important;
   border: 0 !important;
 }
-#panel-dashboards #dashboard-quick-stats .quick-stat-item i {
+html body #panel-dashboards #dashboard-quick-stats .quick-stat-item i {
   color: var(--uni-negro) !important;
 }
-#panel-dashboards #dashboard-quick-stats .quick-stat-label {
+html body #panel-dashboards #dashboard-quick-stats .quick-stat-label {
   color: var(--uni-negro) !important;
   font-weight: 600 !important;
   text-transform: uppercase;
@@ -120,7 +120,7 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards.panel.panel-dashb
   font-size: 0.72rem;
   opacity: 0.85;
 }
-#panel-dashboards #dashboard-quick-stats .quick-stat-value {
+html body #panel-dashboards #dashboard-quick-stats .quick-stat-value {
   color: var(--uni-negro) !important;
   font-weight: 800 !important;
   font-size: 0.95rem;
@@ -129,7 +129,7 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards.panel.panel-dashb
 /* ----------------------------------------------------------------------------
    DASHBOARD HEADER — título grande estilo "CENTROS DE MAQUINADO"
 ---------------------------------------------------------------------------- */
-#panel-dashboards .dashboard-header {
+html body #panel-dashboards .dashboard-header {
   background: var(--uni-blanco) !important;
   padding: 28px 24px 24px !important;
   border-left: 8px solid var(--uni-amarillo) !important;
@@ -143,12 +143,12 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards.panel.panel-dashb
   gap: 1.5rem !important;
   flex-wrap: wrap !important;
 }
-body.dark-theme #panel-dashboards .dashboard-header,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-header {
+body.dark-theme html body #panel-dashboards .dashboard-header,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .dashboard-header {
   background: var(--uni-carbon) !important;
   border-left-color: var(--uni-amarillo) !important;
 }
-#panel-dashboards .dashboard-header::after {
+html body #panel-dashboards .dashboard-header::after {
   content: '';
   position: absolute;
   top: 0;
@@ -157,7 +157,7 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-header
   height: 8px;
   background: var(--uni-amarillo);
 }
-#panel-dashboards .dashboard-title {
+html body #panel-dashboards .dashboard-title {
   font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
   font-size: 2.2rem !important;
   font-weight: 900 !important;
@@ -167,43 +167,43 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-header
   color: var(--uni-negro) !important;
   margin: 0 0 0.4rem 0 !important;
 }
-body.dark-theme #panel-dashboards .dashboard-title,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-title {
+body.dark-theme html body #panel-dashboards .dashboard-title,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .dashboard-title {
   color: var(--uni-amarillo) !important;
 }
-#panel-dashboards .dashboard-title i {
+html body #panel-dashboards .dashboard-title i {
   color: var(--uni-amarillo) !important;
   margin-right: 0.5rem;
 }
-body.dark-theme #panel-dashboards .dashboard-title i,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-title i {
+body.dark-theme html body #panel-dashboards .dashboard-title i,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .dashboard-title i {
   color: var(--uni-amarillo) !important;
 }
-#panel-dashboards .dashboard-subtitle {
+html body #panel-dashboards .dashboard-subtitle {
   color: var(--uni-texto-medio) !important;
   font-size: 0.88rem !important;
   margin: 0 !important;
   max-width: 700px;
 }
-body.dark-theme #panel-dashboards .dashboard-subtitle,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-subtitle {
+body.dark-theme html body #panel-dashboards .dashboard-subtitle,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .dashboard-subtitle {
   color: #a3a3a3 !important;
 }
-#panel-dashboards .dashboard-subtitle strong {
+html body #panel-dashboards .dashboard-subtitle strong {
   color: var(--uni-negro) !important;
   font-weight: 700;
 }
-body.dark-theme #panel-dashboards .dashboard-subtitle strong,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-subtitle strong {
+body.dark-theme html body #panel-dashboards .dashboard-subtitle strong,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .dashboard-subtitle strong {
   color: var(--uni-amarillo) !important;
 }
 
-#panel-dashboards .dashboard-header-right {
+html body #panel-dashboards .dashboard-header-right {
   display: flex;
   gap: 0.6rem;
   flex-wrap: wrap;
 }
-#panel-dashboards .btn-dashboard-refresh {
+html body #panel-dashboards .btn-dashboard-refresh {
   background: var(--uni-negro) !important;
   color: var(--uni-amarillo) !important;
   border: 2px solid var(--uni-negro) !important;
@@ -216,29 +216,29 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-subtit
   transition: all 0.2s ease;
   cursor: pointer;
 }
-#panel-dashboards .btn-dashboard-refresh:hover {
+html body #panel-dashboards .btn-dashboard-refresh:hover {
   background: var(--uni-amarillo) !important;
   color: var(--uni-negro) !important;
   border-color: var(--uni-amarillo) !important;
   transform: translateY(-1px);
   box-shadow: var(--uni-sombra-amarilla);
 }
-#panel-dashboards .btn-dashboard-refresh.outline {
+html body #panel-dashboards .btn-dashboard-refresh.outline {
   background: transparent !important;
   color: var(--uni-negro) !important;
   border: 2px solid var(--uni-negro) !important;
 }
-#panel-dashboards .btn-dashboard-refresh.outline:hover {
+html body #panel-dashboards .btn-dashboard-refresh.outline:hover {
   background: var(--uni-negro) !important;
   color: var(--uni-amarillo) !important;
 }
-body.dark-theme #panel-dashboards .btn-dashboard-refresh.outline,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .btn-dashboard-refresh.outline {
+body.dark-theme html body #panel-dashboards .btn-dashboard-refresh.outline,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .btn-dashboard-refresh.outline {
   color: var(--uni-amarillo) !important;
   border-color: var(--uni-amarillo) !important;
 }
-body.dark-theme #panel-dashboards .btn-dashboard-refresh.outline:hover,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .btn-dashboard-refresh.outline:hover {
+body.dark-theme html body #panel-dashboards .btn-dashboard-refresh.outline:hover,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .btn-dashboard-refresh.outline:hover {
   background: var(--uni-amarillo) !important;
   color: var(--uni-negro) !important;
 }
@@ -246,49 +246,49 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards .btn-dashboard-re
 /* ----------------------------------------------------------------------------
    DASHBOARD GRID — cards de KPIs con header amarillo (estilo "MODELO VMC-1050")
 ---------------------------------------------------------------------------- */
-#panel-dashboards .dashboard-grid {
+html body #panel-dashboards .dashboard-grid {
   display: grid !important;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
   gap: 1.25rem !important;
   margin-bottom: 1.5rem !important;
 }
 
-#panel-dashboards .dashboard-card,
-#panel-dashboards .dashboard-section-title,
-#panel-dashboards .dashboard-charts,
-#panel-dashboards .dashboard-comparativo,
-#panel-dashboards .dashboard-pronosticos,
-#panel-dashboards .dashboard-activity-feed,
-#panel-dashboards .dashboard-health-panel {
+html body #panel-dashboards .dashboard-card,
+html body #panel-dashboards .dashboard-section-title,
+html body #panel-dashboards .dashboard-charts,
+html body #panel-dashboards .dashboard-comparativo,
+html body #panel-dashboards .dashboard-pronosticos,
+html body #panel-dashboards .dashboard-activity-feed,
+html body #panel-dashboards .dashboard-health-panel {
   background: var(--uni-blanco) !important;
   border: 0 !important;
   border-radius: 0 !important;
   box-shadow: var(--uni-sombra-card) !important;
   overflow: hidden;
 }
-body.dark-theme #panel-dashboards .dashboard-card,
-body.dark-theme #panel-dashboards .dashboard-charts,
-body.dark-theme #panel-dashboards .dashboard-comparativo,
-body.dark-theme #panel-dashboards .dashboard-pronosticos,
-body.dark-theme #panel-dashboards .dashboard-activity-feed,
-body.dark-theme #panel-dashboards .dashboard-health-panel,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-card,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-charts,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-comparativo,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-pronosticos,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-activity-feed,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-health-panel {
+body.dark-theme html body #panel-dashboards .dashboard-card,
+body.dark-theme html body #panel-dashboards .dashboard-charts,
+body.dark-theme html body #panel-dashboards .dashboard-comparativo,
+body.dark-theme html body #panel-dashboards .dashboard-pronosticos,
+body.dark-theme html body #panel-dashboards .dashboard-activity-feed,
+body.dark-theme html body #panel-dashboards .dashboard-health-panel,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .dashboard-card,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .dashboard-charts,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .dashboard-comparativo,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .dashboard-pronosticos,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .dashboard-activity-feed,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .dashboard-health-panel {
   background: var(--uni-carbon) !important;
   border: 1px solid var(--uni-gris-medio) !important;
 }
 
-#panel-dashboards .dashboard-card {
+html body #panel-dashboards .dashboard-card {
   position: relative;
   transition: all 0.25s ease;
   cursor: pointer;
   padding: 0 !important;
 }
-#panel-dashboards .dashboard-card::before {
+html body #panel-dashboards .dashboard-card::before {
   content: '';
   position: absolute;
   top: 0;
@@ -298,16 +298,16 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-health
   background: var(--uni-amarillo);
   z-index: 1;
 }
-#panel-dashboards .dashboard-card:hover {
+html body #panel-dashboards .dashboard-card:hover {
   transform: translateY(-4px);
   box-shadow: var(--uni-sombra-card-hover) !important;
 }
-#panel-dashboards .dashboard-card:hover::before {
+html body #panel-dashboards .dashboard-card:hover::before {
   height: 10px;
   transition: height 0.2s ease;
 }
 
-#panel-dashboards .dashboard-card-icon {
+html body #panel-dashboards .dashboard-card-icon {
   background: var(--uni-amarillo) !important;
   color: var(--uni-negro) !important;
   width: 60px !important;
@@ -320,7 +320,7 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-health
   margin: 1.2rem 1.2rem 0.5rem !important;
   box-shadow: 0 2px 8px rgba(255, 210, 0, 0.4);
 }
-#panel-dashboards .dashboard-card-label {
+html body #panel-dashboards .dashboard-card-label {
   text-transform: uppercase !important;
   letter-spacing: 0.06em !important;
   font-weight: 700 !important;
@@ -329,11 +329,11 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-health
   padding: 0 1.2rem !important;
   margin: 0 0 0.3rem !important;
 }
-body.dark-theme #panel-dashboards .dashboard-card-label,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-card-label {
+body.dark-theme html body #panel-dashboards .dashboard-card-label,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .dashboard-card-label {
   color: #a3a3a3 !important;
 }
-#panel-dashboards .dashboard-card-value {
+html body #panel-dashboards .dashboard-card-value {
   font-family: 'Inter', system-ui, sans-serif !important;
   font-size: 2rem !important;
   font-weight: 900 !important;
@@ -342,27 +342,27 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-card-l
   margin: 0 !important;
   line-height: 1.1 !important;
 }
-body.dark-theme #panel-dashboards .dashboard-card-value,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-card-value {
+body.dark-theme html body #panel-dashboards .dashboard-card-value,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .dashboard-card-value {
   color: var(--uni-amarillo) !important;
 }
-#panel-dashboards .dashboard-card-trend,
-#panel-dashboards .dashboard-card-sub {
+html body #panel-dashboards .dashboard-card-trend,
+html body #panel-dashboards .dashboard-card-sub {
   padding: 0.5rem 1.2rem 1.2rem !important;
   font-size: 0.82rem !important;
   color: var(--uni-texto-medio) !important;
 }
-body.dark-theme #panel-dashboards .dashboard-card-trend,
-body.dark-theme #panel-dashboards .dashboard-card-sub,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-card-trend,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-card-sub {
+body.dark-theme html body #panel-dashboards .dashboard-card-trend,
+body.dark-theme html body #panel-dashboards .dashboard-card-sub,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .dashboard-card-trend,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .dashboard-card-sub {
   color: #a3a3a3 !important;
 }
 
 /* ----------------------------------------------------------------------------
    SECTION TITLES — barra amarilla + texto bold
 ---------------------------------------------------------------------------- */
-#panel-dashboards .dashboard-section-title {
+html body #panel-dashboards .dashboard-section-title {
   background: var(--uni-amarillo) !important;
   color: var(--uni-negro) !important;
   padding: 0.85rem 1.2rem !important;
@@ -377,21 +377,21 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-card-s
   gap: 0.6rem !important;
   box-shadow: var(--uni-sombra-card) !important;
 }
-#panel-dashboards .dashboard-section-title i {
+html body #panel-dashboards .dashboard-section-title i {
   color: var(--uni-negro) !important;
   font-size: 1.1rem;
 }
-body.dark-theme #panel-dashboards .dashboard-section-title,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-section-title {
+body.dark-theme html body #panel-dashboards .dashboard-section-title,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .dashboard-section-title {
   background: var(--uni-amarillo) !important;
   color: var(--uni-negro) !important;
 }
 
 /* Wrappers que siguen al section-title */
-#panel-dashboards .dashboard-charts,
-#panel-dashboards #dashboard-advanced,
-#panel-dashboards .dashboard-activity-feed,
-#panel-dashboards .dashboard-health-panel {
+html body #panel-dashboards .dashboard-charts,
+html body #panel-dashboards #dashboard-advanced,
+html body #panel-dashboards .dashboard-activity-feed,
+html body #panel-dashboards .dashboard-health-panel {
   padding: 1.5rem !important;
   margin-bottom: 1.5rem !important;
 }
@@ -400,7 +400,7 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-sectio
    FEATURE PILLS — las 4 cápsulas tipo "ALTA PRECISIÓN, ROBUSTEZ, ..." al pie
    Las inserto via JS al cargar el panel
 ---------------------------------------------------------------------------- */
-#panel-dashboards .uni-features-grid {
+html body #panel-dashboards .uni-features-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
@@ -409,17 +409,17 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-sectio
   margin: 1.5rem 0 0;
   box-shadow: var(--uni-sombra-card);
 }
-body.dark-theme #panel-dashboards .uni-features-grid,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .uni-features-grid {
+body.dark-theme html body #panel-dashboards .uni-features-grid,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .uni-features-grid {
   background: var(--uni-carbon);
 }
-#panel-dashboards .uni-feature-pill {
+html body #panel-dashboards .uni-feature-pill {
   display: flex;
   align-items: center;
   gap: 1rem;
   padding: 0.5rem;
 }
-#panel-dashboards .uni-feature-icon {
+html body #panel-dashboards .uni-feature-icon {
   flex: 0 0 64px;
   width: 64px;
   height: 64px;
@@ -432,10 +432,10 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards .uni-features-gri
   font-size: 1.8rem;
   box-shadow: 0 3px 12px rgba(255, 210, 0, 0.4);
 }
-#panel-dashboards .uni-feature-content {
+html body #panel-dashboards .uni-feature-content {
   flex: 1;
 }
-#panel-dashboards .uni-feature-title {
+html body #panel-dashboards .uni-feature-title {
   font-weight: 900;
   font-size: 1rem;
   color: var(--uni-negro);
@@ -443,11 +443,11 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards .uni-features-gri
   letter-spacing: 0.03em;
   margin: 0 0 0.2rem;
 }
-body.dark-theme #panel-dashboards .uni-feature-title,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .uni-feature-title {
+body.dark-theme html body #panel-dashboards .uni-feature-title,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .uni-feature-title {
   color: var(--uni-amarillo);
 }
-#panel-dashboards .uni-feature-desc {
+html body #panel-dashboards .uni-feature-desc {
   font-size: 0.78rem;
   color: var(--uni-texto-medio);
   margin: 0;
@@ -455,22 +455,22 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards .uni-feature-titl
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
-body.dark-theme #panel-dashboards .uni-feature-desc,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .uni-feature-desc {
+body.dark-theme html body #panel-dashboards .uni-feature-desc,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .uni-feature-desc {
   color: #a3a3a3;
 }
 
 /* ----------------------------------------------------------------------------
    UNIVERSAL FOOTER — banda negra global + tira amarilla con ciudades
 ---------------------------------------------------------------------------- */
-#panel-dashboards .uni-footer {
+html body #panel-dashboards .uni-footer {
   background: var(--uni-negro);
   color: var(--uni-blanco);
   padding: 1.5rem;
   margin: 1.5rem 0 0;
   position: relative;
 }
-#panel-dashboards .uni-footer-tagline {
+html body #panel-dashboards .uni-footer-tagline {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -480,15 +480,15 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards .uni-feature-desc
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
-#panel-dashboards .uni-footer-brand {
+html body #panel-dashboards .uni-footer-brand {
   color: var(--uni-amarillo);
   font-size: 1.1rem;
 }
-#panel-dashboards .uni-footer-slogan {
+html body #panel-dashboards .uni-footer-slogan {
   color: var(--uni-blanco);
   font-size: 0.95rem;
 }
-#panel-dashboards .uni-footer-cities {
+html body #panel-dashboards .uni-footer-cities {
   background: var(--uni-amarillo);
   color: var(--uni-negro);
   padding: 0.75rem 1.5rem;
@@ -502,16 +502,16 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards .uni-feature-desc
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-#panel-dashboards .uni-footer-cities span {
+html body #panel-dashboards .uni-footer-cities span {
   white-space: nowrap;
 }
 
 /* ----------------------------------------------------------------------------
    SCORECARDS / TILES / SEGMENTS (los que ya existen en dashboard)
 ---------------------------------------------------------------------------- */
-#panel-dashboards .dashboard-score-tile,
-#panel-dashboards .segment-card,
-#panel-dashboards .kpi-card {
+html body #panel-dashboards .dashboard-score-tile,
+html body #panel-dashboards .segment-card,
+html body #panel-dashboards .kpi-card {
   background: var(--uni-blanco) !important;
   border: 0 !important;
   border-top: 4px solid var(--uni-amarillo) !important;
@@ -519,18 +519,18 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards .uni-feature-desc
   box-shadow: var(--uni-sombra-card) !important;
   transition: all 0.2s ease;
 }
-body.dark-theme #panel-dashboards .dashboard-score-tile,
-body.dark-theme #panel-dashboards .segment-card,
-body.dark-theme #panel-dashboards .kpi-card,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-score-tile,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .segment-card,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .kpi-card {
+body.dark-theme html body #panel-dashboards .dashboard-score-tile,
+body.dark-theme html body #panel-dashboards .segment-card,
+body.dark-theme html body #panel-dashboards .kpi-card,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .dashboard-score-tile,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .segment-card,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .kpi-card {
   background: var(--uni-carbon) !important;
   border-top-color: var(--uni-amarillo) !important;
 }
-#panel-dashboards .dashboard-score-tile:hover,
-#panel-dashboards .segment-card:hover,
-#panel-dashboards .kpi-card:hover {
+html body #panel-dashboards .dashboard-score-tile:hover,
+html body #panel-dashboards .segment-card:hover,
+html body #panel-dashboards .kpi-card:hover {
   transform: translateY(-3px);
   box-shadow: var(--uni-sombra-card-hover) !important;
 }
@@ -538,13 +538,13 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards .kpi-card {
 /* ----------------------------------------------------------------------------
    HEALTH PANEL (estado del sistema)
 ---------------------------------------------------------------------------- */
-#panel-dashboards .health-grid {
+html body #panel-dashboards .health-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.85rem;
   margin-top: 1rem;
 }
-#panel-dashboards .health-item {
+html body #panel-dashboards .health-item {
   background: var(--uni-gris-claro) !important;
   border-left: 4px solid var(--uni-amarillo) !important;
   padding: 0.85rem 1rem !important;
@@ -554,12 +554,12 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards .kpi-card {
   align-items: center !important;
   gap: 0.55rem !important;
 }
-body.dark-theme #panel-dashboards .health-item,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .health-item {
+body.dark-theme html body #panel-dashboards .health-item,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .health-item {
   background: var(--uni-gris-medio) !important;
   color: var(--uni-amarillo) !important;
 }
-#panel-dashboards .health-dot {
+html body #panel-dashboards .health-dot {
   width: 10px !important;
   height: 10px !important;
   border-radius: 50% !important;
@@ -570,40 +570,258 @@ body.theme-industrial:not(.appearance-light) #panel-dashboards .health-item {
 /* ----------------------------------------------------------------------------
    ACTIVITY FEED
 ---------------------------------------------------------------------------- */
-#panel-dashboards .activity-feed-list .activity-item {
+html body #panel-dashboards .activity-feed-list .activity-item {
   background: var(--uni-gris-claro) !important;
   border-left: 4px solid var(--uni-amarillo) !important;
   padding: 0.85rem 1rem !important;
   margin-bottom: 0.6rem !important;
   border-radius: 0 !important;
 }
-body.dark-theme #panel-dashboards .activity-feed-list .activity-item,
-body.theme-industrial:not(.appearance-light) #panel-dashboards .activity-feed-list .activity-item {
+body.dark-theme html body #panel-dashboards .activity-feed-list .activity-item,
+body.theme-industrial:not(.appearance-light) html body #panel-dashboards .activity-feed-list .activity-item {
   background: var(--uni-gris-medio) !important;
+}
+
+/* ============================================================================
+   ========== APLICACIÓN GLOBAL — TODAS LAS PESTAÑAS ==========
+   ============================================================================
+   Estilos aplicados a TODA la web (no solo dashboards). Si Luis no le late,
+   git revert deja todo como estaba (1 commit limpio).
+   Modo Luna: fondo negro + cards gris carbón + acentos amarillos
+   Modo Sol:  fondo blanco + textos negros + acentos amarillos sutiles
+============================================================================ */
+
+/* SIDEBAR — barra lateral con acento amarillo */
+html body.theme-industrial:not(.appearance-light) .sidebar-nav,
+html body.dark-theme .sidebar-nav,
+html body.theme-industrial:not(.appearance-light) #app-sidebar-nav,
+html body.dark-theme #app-sidebar-nav {
+  background: var(--uni-negro) !important;
+  border-right: 4px solid var(--uni-amarillo) !important;
+}
+html body.appearance-light .sidebar-nav,
+html body.appearance-light #app-sidebar-nav {
+  border-right: 4px solid var(--uni-amarillo) !important;
+}
+/* Pestaña activa del sidebar — banda amarilla */
+html body .sidebar-nav .tab.active,
+html body .sidebar-nav .tab.mapa-owner-pill.active,
+html body #app-sidebar-nav .tab.active {
+  background: var(--uni-amarillo) !important;
+  color: var(--uni-negro) !important;
+  border-left: 6px solid var(--uni-negro) !important;
+  font-weight: 800 !important;
+}
+html body .sidebar-nav .tab.active i,
+html body .sidebar-nav .tab.mapa-owner-pill.active i,
+html body #app-sidebar-nav .tab.active i {
+  color: var(--uni-negro) !important;
+}
+/* Hover del sidebar — borde amarillo sutil */
+html body .sidebar-nav .tab:not(.active):hover,
+html body #app-sidebar-nav .tab:not(.active):hover {
+  border-left: 4px solid var(--uni-amarillo) !important;
+  background: rgba(255, 210, 0, 0.08) !important;
+}
+
+/* Título del sidebar MODULOS */
+html body .sidebar-nav-title,
+html body .mapa-ms-display-title {
+  color: var(--uni-amarillo) !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.1em !important;
+}
+
+/* HEADER superior global — banda amarilla bajo el header */
+html body.theme-industrial:not(.appearance-light) .app-header,
+html body.dark-theme .app-header {
+  border-bottom: 4px solid var(--uni-amarillo) !important;
+}
+html body.appearance-light .app-header {
+  border-bottom: 4px solid var(--uni-amarillo) !important;
+}
+
+/* Section headers de TODOS los paneles (excluyendo el de dashboards ya tematizado) */
+html body .panel:not(#panel-dashboards) .section-header {
+  border-left: 6px solid var(--uni-amarillo) !important;
+  padding-left: 1rem !important;
+  position: relative;
+}
+html body .panel:not(#panel-dashboards) .section-header h2 {
+  color: var(--uni-negro) !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.03em !important;
+}
+html body.dark-theme .panel:not(#panel-dashboards) .section-header h2,
+html body.theme-industrial:not(.appearance-light) .panel:not(#panel-dashboards) .section-header h2 {
+  color: var(--uni-amarillo) !important;
+}
+html body .panel:not(#panel-dashboards) .section-header h2 i {
+  color: var(--uni-amarillo) !important;
+  margin-right: 0.5rem;
+}
+
+/* Botones PRIMARY → amarillos */
+html body .btn.primary,
+html body button.btn.primary,
+html body .toolbar .btn.primary {
+  background: var(--uni-amarillo) !important;
+  color: var(--uni-negro) !important;
+  border: 2px solid var(--uni-amarillo) !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  transition: all 0.2s ease;
+}
+html body .btn.primary:hover {
+  background: var(--uni-amarillo-hover) !important;
+  border-color: var(--uni-amarillo-hover) !important;
+  color: var(--uni-negro) !important;
+  transform: translateY(-1px);
+  box-shadow: var(--uni-sombra-amarilla);
+}
+html body .btn.primary i {
+  color: var(--uni-negro) !important;
+}
+
+/* Botones SUCCESS → amarillo también (consistencia visual) */
+html body .btn.success {
+  background: var(--uni-amarillo) !important;
+  color: var(--uni-negro) !important;
+  border-color: var(--uni-amarillo) !important;
+}
+
+/* Cards / paneles internos con franja amarilla superior */
+html body .panel:not(#panel-dashboards) .table-wrap,
+html body .panel:not(#panel-dashboards) .tarifas-section,
+html body .panel:not(#panel-dashboards) .cotz-card {
+  position: relative;
+  border-top: 4px solid var(--uni-amarillo) !important;
+}
+
+/* Tabla data-table — header con fondo amarillo en TODOS los paneles */
+html body .panel:not(#panel-dashboards) .data-table thead tr:first-child th {
+  background: var(--uni-amarillo) !important;
+  color: var(--uni-negro) !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  border-bottom: 2px solid var(--uni-negro) !important;
+}
+html body.dark-theme .panel:not(#panel-dashboards) .data-table,
+html body.theme-industrial:not(.appearance-light) .panel:not(#panel-dashboards) .data-table {
+  background: var(--uni-carbon) !important;
+}
+html body.dark-theme .panel:not(#panel-dashboards) .data-table tbody td,
+html body.theme-industrial:not(.appearance-light) .panel:not(#panel-dashboards) .data-table tbody td {
+  background: var(--uni-carbon) !important;
+  color: var(--uni-texto-claro) !important;
+  border-color: var(--uni-gris-medio) !important;
+}
+html body.dark-theme .panel:not(#panel-dashboards) .data-table tbody tr:hover td,
+html body.theme-industrial:not(.appearance-light) .panel:not(#panel-dashboards) .data-table tbody tr:hover td {
+  background: var(--uni-gris-medio) !important;
+}
+
+/* Badges activos → amarillos */
+html body .badge.badge-ok,
+html body .badge-ok {
+  background: var(--uni-amarillo) !important;
+  color: var(--uni-negro) !important;
+  font-weight: 800;
+}
+
+/* Fondo general en modo Luna — negro profundo */
+html body.dark-theme,
+html body.theme-industrial:not(.appearance-light) {
+  background: var(--uni-negro) !important;
+}
+html body.dark-theme .panel,
+html body.theme-industrial:not(.appearance-light) .panel {
+  background: var(--uni-negro) !important;
+}
+html body.dark-theme .app-main,
+html body.theme-industrial:not(.appearance-light) .app-main {
+  background: var(--uni-negro) !important;
+}
+
+/* FOOTER UNIVERSAL GLOBAL — banda negra al pie de TODOS los paneles */
+html body .panel:not(#panel-dashboards)::after {
+  content: '';
+  display: block;
+  margin: 2rem -1.5rem -1rem;
+  height: 8px;
+  background: linear-gradient(90deg,
+    var(--uni-amarillo) 0%,
+    var(--uni-amarillo) 30%,
+    var(--uni-negro) 30%,
+    var(--uni-negro) 70%,
+    var(--uni-amarillo) 70%,
+    var(--uni-amarillo) 100%);
+}
+
+/* Inputs de filtros — borde amarillo al focus */
+html body .filter-input:focus,
+html body input[type="text"]:focus,
+html body input[type="search"]:focus,
+html body input[type="number"]:focus,
+html body input[type="email"]:focus,
+html body input[type="date"]:focus,
+html body input[type="month"]:focus,
+html body select:focus,
+html body textarea:focus {
+  border-color: var(--uni-amarillo) !important;
+  box-shadow: 0 0 0 3px rgba(255, 210, 0, 0.18) !important;
+  outline: none !important;
+}
+
+/* Modales — header amarillo */
+html body .modal .modal-box .modal-header {
+  background: var(--uni-amarillo) !important;
+  border-bottom: 3px solid var(--uni-negro) !important;
+}
+html body .modal .modal-box .modal-header h2,
+html body .modal .modal-box .modal-header h3,
+html body .modal .modal-box .modal-header .modal-title {
+  color: var(--uni-negro) !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.03em !important;
+}
+html body .modal .modal-box .modal-header .close,
+html body .modal .modal-box .modal-header button[aria-label="Cerrar"] {
+  color: var(--uni-negro) !important;
+}
+
+/* Toolbar — fondo sutil amarillo en hover de filtros */
+html body .toolbar .btn.outline:hover {
+  border-color: var(--uni-amarillo) !important;
+  color: var(--uni-amarillo) !important;
 }
 
 /* ----------------------------------------------------------------------------
    RESPONSIVE — móvil
 ---------------------------------------------------------------------------- */
 @media (max-width: 720px) {
-  #panel-dashboards #dashboard-quick-stats {
+  html body #panel-dashboards #dashboard-quick-stats {
     padding: 12px 14px !important;
     gap: 12px !important;
   }
-  #panel-dashboards #dashboard-quick-stats::before,
-  #panel-dashboards #dashboard-quick-stats::after {
+  html body #panel-dashboards #dashboard-quick-stats::before,
+  html body #panel-dashboards #dashboard-quick-stats::after {
     width: 24px;
   }
-  #panel-dashboards .dashboard-title {
+  html body #panel-dashboards .dashboard-title {
     font-size: 1.6rem !important;
   }
-  #panel-dashboards .dashboard-grid {
+  html body #panel-dashboards .dashboard-grid {
     grid-template-columns: 1fr !important;
   }
-  #panel-dashboards .uni-features-grid {
+  html body #panel-dashboards .uni-features-grid {
     grid-template-columns: 1fr;
   }
-  #panel-dashboards .uni-footer-cities {
+  html body #panel-dashboards .uni-footer-cities {
     gap: 1rem;
     font-size: 0.7rem;
   }
