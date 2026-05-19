@@ -5647,7 +5647,7 @@
         btn.addEventListener('click', e => { e.stopPropagation(); const m = maquinasCache.find(x => x.id == btn.dataset.id); if (m) openModalMaquina(m); });
       });
       cardsWrap.querySelectorAll('.btn-delete-maq').forEach(btn => {
-        btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar esta máquina?', () => deleteMaquina(btn.dataset.id)); });
+        btn.addEventListener('click', e => { e.stopPropagation(); ((window.confirm('¿Eliminar esta máquina?')) ? deleteMaquina(btn.dataset.id) : null); });
       });
       cardsWrap.querySelectorAll('.btn-view-maq').forEach(btn => {
         btn.addEventListener('click', e => { e.stopPropagation(); const m = maquinasCache.find(x => x.id == btn.dataset.id); if (m) previewMaquina(m); });
@@ -5722,7 +5722,7 @@
       btn.addEventListener('click', e => { e.stopPropagation(); const m = data.find(x => x.id == btn.dataset.id); if (m) openModalMaquina(m); });
     });
     tbody.querySelectorAll('.btn-delete-maq').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); openConfirmModal('¿Eliminar esta máquina?', () => deleteMaquina(btn.dataset.id)); });
+      btn.addEventListener('click', e => { e.stopPropagation(); ((window.confirm('¿Eliminar esta máquina?')) ? deleteMaquina(btn.dataset.id) : null); });
     });
   }
 
