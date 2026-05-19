@@ -4951,96 +4951,142 @@
 
   // ----- VISTA UNIVERSAL (ficha técnica estilo Doc2.pdf) -----
   function previewMaquinaUniversal(m) {
+    /* CATÁLOGO de máquinas formato flyer ejemplo1.jpeg — SIN PRECIOS.
+       David Cantú no quiere mostrar precios a sus clientes para evitar que
+       la competencia espíe. La vista replica EXACTO el flyer:
+       - Header con franjas diagonales amarillas + logo UNIVERSAL + título "CATÁLOGO DE MAQUINARIA"
+       - 3 cápsulas (envío sin costo / garantía / capacitación)
+       - Card grande con header amarillo "MODELO {nombre}" + foto + tabla técnica
+       - "EQUIPO INCLUIDO" con bullets (checks amarillos)
+       - "ACCESORIOS ESTÁNDAR" con bullets normales
+       - 4 features fijas (ALTA PRECISIÓN / ROBUSTEZ / VERSATILIDAD / RENDIMIENTO)
+       - Footer negro UNIVERSAL MAQUINARIA + tira amarilla con 6 ciudades + teléfonos */
     const piezaUrl = m.imagen_pieza_url ? String(m.imagen_pieza_url).trim() : '';
     const titulo = (m.modelo || m.nombre || '').trim() || 'Máquina';
-    const descCorta = (m.descripcion_corta || '').trim();
-    const descLarga = (m.descripcion_larga || '').trim();
-    const precio = Number(m.precio_lista_usd) > 0 ? Number(m.precio_lista_usd) : null;
-    const precioFmt = precio != null ? precio.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '—';
-    const tiempoEntrega = m.tiempo_entrega_dias != null && Number(m.tiempo_entrega_dias) > 0 ? Number(m.tiempo_entrega_dias) : null;
-    const puestaEn = (m.puesta_en || '').trim();
-    const garantia = (m.garantia || '').trim();
-    const condPago = (m.condiciones_pago || '').trim();
+    const subtitulo = (m.categoria || m.descripcion_corta || '').trim();
     let incluyeArr = [];
     try { if (m.incluye) { const p = JSON.parse(m.incluye); if (Array.isArray(p)) incluyeArr = p; } } catch (_) {}
+    let accesoriosArr = [];
+    try { if (m.accesorios_estandar) { const p = JSON.parse(m.accesorios_estandar); if (Array.isArray(p)) accesoriosArr = p; } } catch (_) {}
     let specsArr = [];
     try { if (m.ficha_tecnica_specs) { const p = JSON.parse(m.ficha_tecnica_specs); if (Array.isArray(p)) specsArr = p; } } catch (_) {}
     const escH = (s) => String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    const incluyeHtml = incluyeArr.length
-      ? `<div class="uv-incluye"><div class="uv-incluye-title">Incluye:</div><ul>${incluyeArr.map(t => `<li>${escH(t)}</li>`).join('')}</ul></div>`
-      : '';
     const specsRowsHtml = specsArr.length
       ? specsArr.map(s => `<tr><td class="uv-spec-label">${escH(s.label || '')}</td><td class="uv-spec-value">${escH(s.value || '')}</td></tr>`).join('')
       : '<tr><td colspan="2" class="uv-spec-empty">Sin ficha técnica capturada — edítala desde el catálogo.</td></tr>';
-    const pieDatosArr = [];
-    if (puestaEn) pieDatosArr.push(`Puesta en: ${puestaEn}`);
-    if (garantia) pieDatosArr.push(garantia);
-    if (tiempoEntrega) pieDatosArr.push(`Tiempo de entrega: ${tiempoEntrega} días`);
-    if (condPago) pieDatosArr.push(`Condiciones de Pago: ${condPago}`);
-    const pieDatosHtml = pieDatosArr.length
-      ? pieDatosArr.map(t => `<div>${escH(t)}</div>`).join('')
-      : '<div class="uv-pie-empty">— Edita la máquina para agregar condiciones comerciales —</div>';
+    const incluyeHtml = incluyeArr.length
+      ? incluyeArr.map(t => `<li>${escH(t)}</li>`).join('')
+      : '<li class="uv-empty-item">— Captura el equipo incluido al editar la máquina —</li>';
+    const accesoriosHtml = accesoriosArr.length
+      ? accesoriosArr.map(t => `<li>${escH(t)}</li>`).join('')
+      : '<li class="uv-empty-item">— Captura los accesorios estándar al editar la máquina —</li>';
     const fotoHtml = piezaUrl
       ? `<img src="${escH(piezaUrl)}" alt="${escH(titulo)}" class="uv-foto-maquina">`
-      : `<div class="uv-foto-placeholder"><i style="font-size:48px;color:#cbd5e1">📷</i><br><span style="color:#94a3b8;font-size:13px">Sin foto</span></div>`;
+      : `<div class="uv-foto-placeholder"><span style="font-size:60px;color:#9ca3af">📷</span><br><span style="color:#9ca3af;font-size:14px;font-weight:600">Sin foto</span></div>`;
     const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>${escH(titulo)} — Ficha técnica UNIVERSAL</title>
+<title>${escH(titulo)} — Catálogo UNIVERSAL</title>
 <style>
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; color: #1a1a1a; background: #f3f4f6; }
-  .uv-toolbar { position: sticky; top: 0; z-index: 100; background: #1e293b; color: #fff; padding: 10px 20px; display: flex; gap: 12px; justify-content: flex-end; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-  .uv-toolbar button { background: #2563eb; color: #fff; border: 0; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600; }
-  .uv-toolbar button:hover { background: #1d4ed8; }
-  .uv-toolbar button.outline { background: transparent; border: 1px solid #94a3b8; }
-  .uv-page { max-width: 850px; margin: 20px auto; background: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-  .uv-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 24px 28px 8px; }
-  .uv-header-left { flex: 1; }
-  .uv-logo { max-width: 320px; height: auto; display: block; }
-  .uv-tel { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 18px; font-weight: 700; color: #1a1a1a; }
-  .uv-tel-icon { width: 26px; height: 26px; background: #22c55e; color: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; }
-  .uv-foto-maquina { max-width: 380px; max-height: 280px; object-fit: contain; }
-  .uv-foto-placeholder { width: 380px; height: 220px; border: 2px dashed #cbd5e1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  .uv-titulo { padding: 8px 28px 0; font-size: 30px; font-weight: 900; color: #1a1a1a; letter-spacing: -0.5px; }
-  .uv-precio-banda { position: relative; margin: 14px 0 18px; padding: 14px 28px 14px 28px; background: linear-gradient(90deg, #c41e3a 0%, #d93a4f 70%, transparent 100%); color: #fff; display: flex; align-items: baseline; gap: 14px; clip-path: polygon(0 0, 95% 0, 80% 100%, 0% 100%); }
-  .uv-precio-label { font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; opacity: 0.95; }
-  .uv-precio-cifra { font-size: 38px; font-weight: 900; line-height: 1; }
-  .uv-precio-moneda { font-size: 16px; font-weight: 700; background: #1a1a1a; padding: 4px 10px; border-radius: 4px; }
-  .uv-cuerpo { display: grid; grid-template-columns: 1fr 1.1fr; gap: 22px; padding: 0 28px 18px; }
-  .uv-desc-corta { font-size: 15px; font-weight: 600; margin-bottom: 10px; color: #1a1a1a; }
-  .uv-desc-larga { font-size: 13.5px; line-height: 1.5; color: #2a2a2a; white-space: pre-wrap; }
-  .uv-incluye { margin-top: 14px; }
-  .uv-incluye-title { font-size: 15px; font-weight: 700; color: #c41e3a; margin-bottom: 6px; }
-  .uv-incluye ul { margin: 0; padding-left: 18px; list-style: none; }
-  .uv-incluye li { font-size: 13.5px; color: #1a1a1a; padding: 2px 0; position: relative; padding-left: 14px; }
-  .uv-incluye li::before { content: "-"; position: absolute; left: 0; color: #c41e3a; font-weight: 700; }
-  .uv-pie-datos { margin-top: 18px; padding-top: 12px; border-top: 2px solid #c41e3a; font-size: 12.5px; line-height: 1.55; color: #1a1a1a; }
-  .uv-pie-empty { color: #94a3b8; font-style: italic; }
-  .uv-specs-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
-  .uv-specs-table td { border: 1px solid #d1d5db; padding: 5px 8px; vertical-align: middle; }
-  .uv-spec-label { background: #f8fafc; color: #1a1a1a; }
-  .uv-spec-value { color: #1a1a1a; }
-  .uv-spec-empty { padding: 20px; text-align: center; color: #94a3b8; font-style: italic; }
-  .uv-footer { background: #1a1a1a; color: #fff; padding: 14px 28px; margin-top: 8px; }
-  .uv-footer-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 15px; font-weight: 800; }
-  .uv-footer-top-left { color: #facc15; letter-spacing: 0.5px; }
-  .uv-footer-top-right { color: #fff; font-size: 14px; }
-  .uv-footer-bottom { margin-top: 10px; padding-top: 10px; border-top: 1px solid #444; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #cbd5e1; flex-wrap: wrap; gap: 8px; }
-  .uv-ciudades { letter-spacing: 1px; font-weight: 600; color: #facc15; }
-  .uv-web { color: #fff; }
+  html, body { margin: 0; padding: 0; font-family: 'Inter', Arial, Helvetica, sans-serif; color: #0a0a0a; background: #e5e5e5; }
+  .uv-toolbar { position: sticky; top: 0; z-index: 100; background: #0a0a0a; color: #fff; padding: 10px 20px; display: flex; gap: 12px; justify-content: flex-end; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+  .uv-toolbar button { background: #FFD200; color: #0a0a0a; border: 0; padding: 9px 18px; border-radius: 4px; font-size: 13px; cursor: pointer; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
+  .uv-toolbar button:hover { background: #FFE033; box-shadow: 0 0 16px rgba(255, 210, 0, 0.4); }
+  .uv-toolbar button.outline { background: transparent; color: #FFD200; border: 2px solid #FFD200; }
+  .uv-toolbar button.outline:hover { background: #FFD200; color: #0a0a0a; }
+  .uv-page { max-width: 900px; margin: 20px auto; background: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.2); position: relative; overflow: hidden; }
+
+  /* ==== HEADER ==== */
+  .uv-hero { background: #fff; padding: 32px 36px 24px; position: relative; overflow: hidden; }
+  .uv-hero::before, .uv-hero::after {
+    content: ''; position: absolute; top: 0; height: 100%;
+    background: repeating-linear-gradient(-45deg, #FFD200 0px, #FFD200 8px, #0a0a0a 8px, #0a0a0a 16px);
+    opacity: 0.95;
+  }
+  .uv-hero::before { left: 0; width: 8px; }
+  .uv-hero::after { right: 0; width: 8px; }
+  .uv-hero-inner { display: flex; gap: 24px; align-items: flex-start; }
+  .uv-hero-left { flex: 1; }
+  .uv-logo { max-width: 280px; height: auto; display: block; margin-bottom: 12px; }
+  .uv-titulo-mega { font-size: 42px; font-weight: 900; color: #0a0a0a; letter-spacing: -1px; line-height: 0.95; margin: 8px 0 4px; text-transform: uppercase; }
+  .uv-subtitulo { font-size: 16px; font-weight: 700; color: #525252; text-transform: uppercase; letter-spacing: 1px; }
+  .uv-tagline { font-size: 13px; font-weight: 600; color: #0a0a0a; margin-top: 8px; }
+  .uv-tagline strong { color: #d97706; }
+  .uv-hero-right { flex: 0 0 320px; }
+  .uv-foto-hero { max-width: 320px; max-height: 240px; width: 100%; object-fit: contain; }
+
+  /* ==== CÁPSULAS (envío/garantía/capacitación) ==== */
+  .uv-capsulas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; background: #fff; padding: 8px 36px 24px; border-bottom: 4px solid #FFD200; }
+  .uv-capsula { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-right: 2px solid #e5e5e5; }
+  .uv-capsula:last-child { border-right: 0; }
+  .uv-capsula-icon { flex: 0 0 44px; width: 44px; height: 44px; background: #FFD200; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 2px 8px rgba(255, 210, 0, 0.4); }
+  .uv-capsula-text { display: flex; flex-direction: column; }
+  .uv-capsula-title { font-size: 13px; font-weight: 800; color: #0a0a0a; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.1; }
+  .uv-capsula-sub { font-size: 10px; font-weight: 700; color: #525252; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ==== CARD DE MODELO ==== */
+  .uv-model-card { margin: 24px 28px; background: #fff; border: 2px solid #e5e5e5; }
+  .uv-model-head { background: #FFD200; color: #0a0a0a; padding: 12px 20px; font-size: 18px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; text-align: center; box-shadow: inset 0 -4px 0 rgba(0,0,0,0.1); }
+  .uv-model-body { display: grid; grid-template-columns: 0.95fr 1.05fr; gap: 0; }
+  .uv-model-foto { background: #fff; padding: 20px; display: flex; align-items: center; justify-content: center; border-right: 1px solid #e5e5e5; }
+  .uv-foto-maquina { max-width: 100%; max-height: 320px; object-fit: contain; }
+  .uv-foto-placeholder { width: 100%; height: 260px; border: 2px dashed #cbd5e1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .uv-model-specs { padding: 14px 20px; }
+  .uv-specs-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .uv-specs-table td { border: 1px solid #d1d5db; padding: 6px 8px; vertical-align: middle; }
+  .uv-spec-label { background: #f8fafc; color: #0a0a0a; font-weight: 600; width: 60%; }
+  .uv-spec-value { color: #0a0a0a; text-align: center; font-weight: 700; }
+  .uv-spec-empty { padding: 24px; text-align: center; color: #94a3b8; font-style: italic; }
+  .uv-specs-icon { color: #FFD200; font-size: 14px; margin-right: 4px; }
+
+  /* ==== EQUIPO INCLUIDO + ACCESORIOS ==== */
+  .uv-listas { background: #0a0a0a; color: #fff; padding: 20px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .uv-lista-titulo { font-size: 14px; font-weight: 900; color: #FFD200; text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 10px; padding-bottom: 8px; border-bottom: 2px solid #FFD200; }
+  .uv-lista ul { margin: 0; padding: 0; list-style: none; }
+  .uv-lista li { font-size: 12px; padding: 4px 0 4px 20px; position: relative; line-height: 1.4; color: #fafafa; }
+  .uv-lista li::before { content: ""; position: absolute; left: 0; top: 6px; width: 8px; height: 8px; background: #FFD200; border-radius: 50%; box-shadow: 0 0 6px rgba(255, 210, 0, 0.6); }
+  .uv-lista .uv-empty-item { color: #525252; font-style: italic; padding-left: 0; }
+  .uv-lista .uv-empty-item::before { display: none; }
+
+  /* ==== 4 FEATURES ==== */
+  .uv-features { background: #fff; padding: 24px 28px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; border-top: 4px solid #FFD200; }
+  .uv-feature { display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .uv-feature-icon { width: 56px; height: 56px; background: #FFD200; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #0a0a0a; margin-bottom: 8px; box-shadow: 0 4px 12px rgba(255, 210, 0, 0.4); }
+  .uv-feature-title { font-size: 13px; font-weight: 900; color: #0a0a0a; text-transform: uppercase; letter-spacing: 0.6px; margin: 0 0 3px; }
+  .uv-feature-desc { font-size: 10px; font-weight: 600; color: #525252; text-transform: uppercase; line-height: 1.3; margin: 0; letter-spacing: 0.3px; }
+
+  /* ==== FOOTER ==== */
+  .uv-footer { background: #0a0a0a; color: #fff; }
+  .uv-footer-banner { padding: 14px 28px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .uv-footer-brand { color: #FFD200; font-size: 18px; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; }
+  .uv-footer-slogan { color: #fff; font-size: 14px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+  .uv-footer-web { padding: 8px 28px; background: #1a1a1a; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .uv-footer-social { font-size: 12px; font-weight: 700; color: #FFD200; }
+  .uv-footer-site { font-size: 12px; font-weight: 600; color: #fff; }
+  .uv-footer-cities { background: #FFD200; color: #0a0a0a; padding: 10px 16px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; text-align: center; }
+  .uv-footer-city { font-size: 10px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; }
+  .uv-footer-city-tel { font-size: 10px; font-weight: 700; color: #0a0a0a; opacity: 0.85; margin-top: 1px; }
+
+  /* ==== PRINT ==== */
   @media print {
     body { background: #fff; }
     .uv-toolbar { display: none !important; }
     .uv-page { box-shadow: none; margin: 0; max-width: 100%; }
-    @page { size: letter; margin: 10mm; }
+    @page { size: letter; margin: 8mm; }
   }
-  @media (max-width: 700px) {
-    .uv-cuerpo { grid-template-columns: 1fr; }
-    .uv-header { flex-direction: column; align-items: stretch; }
-    .uv-foto-maquina, .uv-foto-placeholder { width: 100%; max-width: 100%; margin-top: 10px; }
+  @media (max-width: 720px) {
+    .uv-hero-inner { flex-direction: column; }
+    .uv-hero-right { flex: none; width: 100%; }
+    .uv-capsulas { grid-template-columns: 1fr; padding: 8px 16px 16px; }
+    .uv-capsula { border-right: 0; border-bottom: 1px solid #e5e5e5; }
+    .uv-model-body { grid-template-columns: 1fr; }
+    .uv-model-foto { border-right: 0; border-bottom: 1px solid #e5e5e5; }
+    .uv-listas, .uv-features { grid-template-columns: 1fr; }
+    .uv-footer-cities { grid-template-columns: repeat(2, 1fr); }
+    .uv-titulo-mega { font-size: 32px; }
   }
 </style>
 </head>
@@ -5050,45 +5096,116 @@
     <button onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
   </div>
   <div class="uv-page">
-    <div class="uv-header">
-      <div class="uv-header-left">
-        <img src="/fondos/universal-logo.jpg" alt="UNIVERSAL" class="uv-logo">
-        <div class="uv-tel"><span class="uv-tel-icon">✆</span> 81 8366 8946</div>
-      </div>
-      <div class="uv-header-right">${fotoHtml}</div>
-    </div>
-    <h1 class="uv-titulo">${escH(titulo)}</h1>
-    <div class="uv-precio-banda">
-      <span class="uv-precio-label">PRECIO</span>
-      <span class="uv-precio-cifra">$ ${precioFmt}</span>
-      <span class="uv-precio-moneda">USD + IVA</span>
-    </div>
-    <div class="uv-cuerpo">
-      <div class="uv-cuerpo-left">
-        ${descCorta ? `<div class="uv-desc-corta">${escH(descCorta)}</div>` : ''}
-        ${descLarga ? `<div class="uv-desc-larga">${escH(descLarga)}</div>` : ''}
-        ${incluyeHtml}
-        <div class="uv-pie-datos">${pieDatosHtml}</div>
-      </div>
-      <div class="uv-cuerpo-right">
-        <table class="uv-specs-table">${specsRowsHtml}</table>
+
+    <!-- HEADER -->
+    <div class="uv-hero">
+      <div class="uv-hero-inner">
+        <div class="uv-hero-left">
+          <img src="/fondos/universal-logo.jpg" alt="UNIVERSAL MAQUINARIA" class="uv-logo">
+          <h1 class="uv-titulo-mega">${escH(titulo)}</h1>
+          ${subtitulo ? `<p class="uv-subtitulo">${escH(subtitulo)}</p>` : ''}
+          <p class="uv-tagline">PRECISIÓN QUE IMPULSA <strong>TU PRODUCCIÓN</strong></p>
+        </div>
+        <div class="uv-hero-right">${fotoHtml}</div>
       </div>
     </div>
+
+    <!-- 3 CÁPSULAS -->
+    <div class="uv-capsulas">
+      <div class="uv-capsula">
+        <div class="uv-capsula-icon">🚚</div>
+        <div class="uv-capsula-text">
+          <span class="uv-capsula-title">Envío<br>sin costo</span>
+          <span class="uv-capsula-sub">A todo México</span>
+        </div>
+      </div>
+      <div class="uv-capsula">
+        <div class="uv-capsula-icon">🛡️</div>
+        <div class="uv-capsula-text">
+          <span class="uv-capsula-title">Garantía<br>en todos</span>
+          <span class="uv-capsula-sub">Nuestros equipos</span>
+        </div>
+      </div>
+      <div class="uv-capsula">
+        <div class="uv-capsula-icon">🎓</div>
+        <div class="uv-capsula-text">
+          <span class="uv-capsula-title">Capacitación<br>incluida</span>
+          <span class="uv-capsula-sub">Para tu equipo</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD DE MODELO -->
+    <div class="uv-model-card">
+      <div class="uv-model-head">MODELO ${escH(titulo)}</div>
+      <div class="uv-model-body">
+        <div class="uv-model-foto">${fotoHtml}</div>
+        <div class="uv-model-specs">
+          <table class="uv-specs-table">${specsRowsHtml}</table>
+        </div>
+      </div>
+    </div>
+
+    <!-- EQUIPO INCLUIDO + ACCESORIOS -->
+    <div class="uv-listas">
+      <div class="uv-lista">
+        <h3 class="uv-lista-titulo">EQUIPO INCLUIDO:</h3>
+        <ul>${incluyeHtml}</ul>
+      </div>
+      <div class="uv-lista">
+        <h3 class="uv-lista-titulo">ACCESORIOS ESTÁNDAR</h3>
+        <ul>${accesoriosHtml}</ul>
+      </div>
+    </div>
+
+    <!-- 4 FEATURES -->
+    <div class="uv-features">
+      <div class="uv-feature">
+        <div class="uv-feature-icon">🎯</div>
+        <p class="uv-feature-title">Alta precisión</p>
+        <p class="uv-feature-desc">Acabados exactos y consistentes</p>
+      </div>
+      <div class="uv-feature">
+        <div class="uv-feature-icon">⚙️</div>
+        <p class="uv-feature-title">Robustez</p>
+        <p class="uv-feature-desc">Estructura rígida y duradera</p>
+      </div>
+      <div class="uv-feature">
+        <div class="uv-feature-icon">👍</div>
+        <p class="uv-feature-title">Versatilidad</p>
+        <p class="uv-feature-desc">Ideal para diversos tipos de trabajo</p>
+      </div>
+      <div class="uv-feature">
+        <div class="uv-feature-icon">🛡️</div>
+        <p class="uv-feature-title">Rendimiento</p>
+        <p class="uv-feature-desc">Eficiencia en cada proceso</p>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
     <div class="uv-footer">
-      <div class="uv-footer-top">
-        <div class="uv-footer-top-left">UNIVERSAL MAQUINARIA</div>
-        <div class="uv-footer-top-right">DONDE LA COMPETENCIA NO EXISTE</div>
+      <div class="uv-footer-banner">
+        <span class="uv-footer-brand">UNIVERSAL MAQUINARIA</span>
+        <span class="uv-footer-slogan">DONDE LA COMPETENCIA NO EXISTE</span>
       </div>
-      <div class="uv-footer-bottom">
-        <span class="uv-web">universalmaquinaria.com</span>
-        <span class="uv-ciudades">MONTERREY · CDMX · QUERÉTARO · GUADALAJARA · REYNOSA · CHIHUAHUA</span>
-        <span class="uv-web">www.universalmaquinaria.com</span>
+      <div class="uv-footer-web">
+        <span class="uv-footer-social">📷 📘 universalmaquinaria.com</span>
+        <span class="uv-footer-site">🌐 www.universalmaquinaria.com</span>
+      </div>
+      <div class="uv-footer-cities">
+        <div><div class="uv-footer-city">MONTERREY</div><div class="uv-footer-city-tel">81 8366 8946</div></div>
+        <div><div class="uv-footer-city">CDMX</div><div class="uv-footer-city-tel">55 2899 8360</div></div>
+        <div><div class="uv-footer-city">QUERÉTARO</div><div class="uv-footer-city-tel">442 787 0089</div></div>
+        <div><div class="uv-footer-city">GUADALAJARA</div><div class="uv-footer-city-tel">33 1683 8801</div></div>
+        <div><div class="uv-footer-city">REYNOSA</div><div class="uv-footer-city-tel">899 950 2450</div></div>
+        <div><div class="uv-footer-city">CHIHUAHUA</div><div class="uv-footer-city-tel">614 2033 565</div></div>
       </div>
     </div>
+
   </div>
 </body>
 </html>`;
-    const w = window.open('', '_blank', 'width=900,height=1100,scrollbars=yes');
+    const w = window.open('', '_blank', 'width=960,height=1100,scrollbars=yes');
     if (!w) { showToast('El navegador bloqueó la ventana emergente. Permite popups para ver la ficha.', 'warning'); return; }
     w.document.open();
     w.document.write(html);
@@ -9025,6 +9142,13 @@
         if (Array.isArray(parsed)) incluyeArr = parsed;
       }
     } catch (_) { /* invalid JSON ignored */ }
+    let accesoriosArr = [];
+    try {
+      if (maquina && maquina.accesorios_estandar) {
+        const parsed = JSON.parse(maquina.accesorios_estandar);
+        if (Array.isArray(parsed)) accesoriosArr = parsed;
+      }
+    } catch (_) { /* invalid JSON ignored */ }
     const specsRowsHtml = (specsArr.length ? specsArr : [{ label: '', value: '' }]).map((row, i) => `
       <div class="form-row maq-spec-row" data-idx="${i}" style="gap:0.5rem;margin-bottom:0.35rem">
         <input type="text" class="maq-spec-label" placeholder="Ej: Maximum swing diameter (mm)" value="${escapeHtml(row.label || '')}" style="flex:2">
@@ -9035,6 +9159,11 @@
       <div class="form-row maq-incluye-row" data-idx="${i}" style="gap:0.5rem;margin-bottom:0.35rem">
         <input type="text" class="maq-incluye-text" placeholder="Ej: Envío sin costo a Querétaro" value="${escapeHtml(txt || '')}" style="flex:1">
         <button type="button" class="btn small danger maq-incluye-remove" title="Quitar"><i class="fas fa-times"></i></button>
+      </div>`).join('');
+    const accesoriosRowsHtml = (accesoriosArr.length ? accesoriosArr : ['']).map((txt, i) => `
+      <div class="form-row maq-accesorio-row" data-idx="${i}" style="gap:0.5rem;margin-bottom:0.35rem">
+        <input type="text" class="maq-accesorio-text" placeholder="Ej: Plato 3 mordazas 250 mm" value="${escapeHtml(txt || '')}" style="flex:1">
+        <button type="button" class="btn small danger maq-accesorio-remove" title="Quitar"><i class="fas fa-times"></i></button>
       </div>`).join('');
     const body = `
       <div class="cotz-modal">
@@ -9075,6 +9204,12 @@
           <p class="form-hint" style="margin-top:0"><i class="fas fa-list-ul"></i> Cada línea es un bullet que aparece en la sección "Incluye:" de la ficha técnica UNIVERSAL.</p>
           <div id="m-incluye-list">${incluyeRowsHtml}</div>
           <button type="button" class="btn small outline" id="m-incluye-add"><i class="fas fa-plus"></i> Agregar línea</button>
+        </section>
+        <section class="cotz-card" aria-labelledby="maq-sec-accesorios">
+          <h4 class="cotz-card-title" id="maq-sec-accesorios"><span class="cotz-step-num">2b</span> Accesorios estándar (flyer)</h4>
+          <p class="form-hint" style="margin-top:0"><i class="fas fa-toolbox"></i> Bullets que aparecen en la columna "Accesorios Estándar" del flyer/catálogo SIN precios.</p>
+          <div id="m-accesorios-list">${accesoriosRowsHtml}</div>
+          <button type="button" class="btn small outline" id="m-accesorios-add"><i class="fas fa-plus"></i> Agregar accesorio</button>
         </section>
         <section class="cotz-card" aria-labelledby="maq-sec-specs">
           <h4 class="cotz-card-title" id="maq-sec-specs"><span class="cotz-step-num">3</span> Ficha técnica (tabla)</h4>
@@ -9215,6 +9350,25 @@
     incluyeList?.querySelectorAll('.maq-incluye-remove').forEach(btn => {
       btn.addEventListener('click', () => btn.closest('.maq-incluye-row')?.remove());
     });
+
+    // ----- Accesorios estándar dinámicos -----
+    const accesoriosList = qs('#m-accesorios-list');
+    function addAccesorioRow(txt = '') {
+      if (!accesoriosList) return;
+      const div = document.createElement('div');
+      div.className = 'form-row maq-accesorio-row';
+      div.style.cssText = 'gap:0.5rem;margin-bottom:0.35rem';
+      div.innerHTML = `
+        <input type="text" class="maq-accesorio-text" placeholder="Ej: Plato 3 mordazas 250 mm" value="${escapeHtml(txt)}" style="flex:1">
+        <button type="button" class="btn small danger maq-accesorio-remove" title="Quitar"><i class="fas fa-times"></i></button>
+      `;
+      accesoriosList.appendChild(div);
+      div.querySelector('.maq-accesorio-remove').addEventListener('click', () => div.remove());
+    }
+    qs('#m-accesorios-add')?.addEventListener('click', () => addAccesorioRow());
+    accesoriosList?.querySelectorAll('.maq-accesorio-remove').forEach(btn => {
+      btn.addEventListener('click', () => btn.closest('.maq-accesorio-row')?.remove());
+    });
     qs('#m-save').onclick = async () => {
       clearInvalidMarks();
       const modelo = (qs('#m-modelo').value || '').trim();
@@ -9262,6 +9416,13 @@
         if (t) incluyeArr.push(t);
       });
       const incluyeJson = incluyeArr.length ? JSON.stringify(incluyeArr) : null;
+      // Recoger accesorios estándar
+      const accesoriosArr = [];
+      document.querySelectorAll('#m-accesorios-list .maq-accesorio-row').forEach(row => {
+        const t = (row.querySelector('.maq-accesorio-text')?.value || '').trim();
+        if (t) accesoriosArr.push(t);
+      });
+      const accesoriosJson = accesoriosArr.length ? JSON.stringify(accesoriosArr) : null;
       const payload = {
         nombre: modelo,
         codigo: !isNew && maquina && maquina.codigo != null ? String(maquina.codigo).trim() || null : null,
@@ -9285,6 +9446,7 @@
         puesta_en: puestaEn,
         garantia: garantia,
         condiciones_pago: condPago,
+        accesorios_estandar: accesoriosJson,
       };
       if (clienteIdFinal != null && Number.isFinite(clienteIdFinal)) payload.cliente_id = clienteIdFinal;
       const btn = qs('#m-save');

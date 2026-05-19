@@ -1750,7 +1750,7 @@ app.post('/api/maquinas', async (req, res) => {
       imagen_pieza_url, imagen_ensamble_url, stock, precio_lista_usd, ficha_tecnica,
       // Nuevos campos catálogo (2026-05-15)
       tiempo_entrega_dias, descripcion_corta, descripcion_larga, incluye, ficha_tecnica_specs,
-      puesta_en, garantia, condiciones_pago,
+      puesta_en, garantia, condiciones_pago, accesorios_estandar,
     } = req.body || {};
     let cid = cliente_id != null && cliente_id !== '' ? Number(cliente_id) : null;
     if (!cid || !Number.isFinite(cid)) {
@@ -1758,8 +1758,8 @@ app.post('/api/maquinas', async (req, res) => {
       cid = first && first.id != null ? Number(first.id) : null;
     }
     await db.runQuery(
-      `INSERT INTO maquinas (cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion, categoria, categoria_principal, subcategoria, imagen_pieza_url, imagen_ensamble_url, stock, precio_lista_usd, ficha_tecnica, tiempo_entrega_dias, descripcion_corta, descripcion_larga, incluye, ficha_tecnica_specs, puesta_en, garantia, condiciones_pago)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO maquinas (cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion, categoria, categoria_principal, subcategoria, imagen_pieza_url, imagen_ensamble_url, stock, precio_lista_usd, ficha_tecnica, tiempo_entrega_dias, descripcion_corta, descripcion_larga, incluye, ficha_tecnica_specs, puesta_en, garantia, condiciones_pago, accesorios_estandar)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         cid,
         _maqNullableStr(codigo),
@@ -1784,6 +1784,7 @@ app.post('/api/maquinas', async (req, res) => {
         _maqNullableStr(puesta_en),
         _maqNullableStr(garantia),
         _maqNullableStr(condiciones_pago),
+        _maqNullableStr(accesorios_estandar),
       ]
     );
     const r = await db.getOne('SELECT * FROM maquinas ORDER BY id DESC LIMIT 1');
@@ -1800,7 +1801,7 @@ app.put('/api/maquinas/:id', async (req, res) => {
       categoria, categoria_principal, subcategoria,
       imagen_pieza_url, imagen_ensamble_url, stock, precio_lista_usd, ficha_tecnica,
       tiempo_entrega_dias, descripcion_corta, descripcion_larga, incluye, ficha_tecnica_specs,
-      puesta_en, garantia, condiciones_pago,
+      puesta_en, garantia, condiciones_pago, accesorios_estandar,
     } = req.body || {};
     let cidPut = cliente_id != null && cliente_id !== '' ? Number(cliente_id) : null;
     if (!cidPut || !Number.isFinite(cidPut)) {
@@ -1815,7 +1816,7 @@ app.put('/api/maquinas/:id', async (req, res) => {
       `UPDATE maquinas SET cliente_id=?, codigo=?, nombre=?, marca=?, modelo=?, numero_serie=?, ubicacion=?, categoria=?, categoria_principal=?, subcategoria=?,
        imagen_pieza_url=?, imagen_ensamble_url=?, stock=?, precio_lista_usd=?, ficha_tecnica=?,
        tiempo_entrega_dias=?, descripcion_corta=?, descripcion_larga=?, incluye=?, ficha_tecnica_specs=?,
-       puesta_en=?, garantia=?, condiciones_pago=? WHERE id=?`,
+       puesta_en=?, garantia=?, condiciones_pago=?, accesorios_estandar=? WHERE id=?`,
       [
         cidPut,
         _maqNullableStr(codigo),
@@ -1840,6 +1841,7 @@ app.put('/api/maquinas/:id', async (req, res) => {
         _maqNullableStr(puesta_en),
         _maqNullableStr(garantia),
         _maqNullableStr(condiciones_pago),
+        _maqNullableStr(accesorios_estandar),
         req.params.id,
       ]
     );

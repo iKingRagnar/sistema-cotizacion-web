@@ -478,6 +478,8 @@ async function runMigrations() {
     `ALTER TABLE maquinas ADD COLUMN puesta_en TEXT`,
     `ALTER TABLE maquinas ADD COLUMN garantia TEXT`,
     `ALTER TABLE maquinas ADD COLUMN condiciones_pago TEXT`,
+    /* Accesorios estándar para flyer catálogo (2026-05-19): JSON ["Plato 3 mordazas", "Luneta fija", ...] */
+    `ALTER TABLE maquinas ADD COLUMN accesorios_estandar TEXT`,
     `ALTER TABLE refacciones ADD COLUMN bloque TEXT`,
     `ALTER TABLE refacciones ADD COLUMN tipo_cambio_registro REAL`,
     /* Personal: INE y licencia (data URL + miniatura) */
