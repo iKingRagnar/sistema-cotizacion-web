@@ -5048,6 +5048,8 @@
   function previewMaquinaTemplate(m, companion, opts) {
     opts = opts || {};
     const isSingle = opts.singleSide === true || (!companion && (m && m.flyer_modo === 'single'));
+    // Debug: ?flyerdebug=1 en la URL actual activa bordes rojos en cada overlay
+    const debugMode = typeof window !== 'undefined' && /[?&]flyerdebug=1/.test(window.location.search || '');
     const escH = (s) => String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     function parseSpecs(mq) {
@@ -5117,6 +5119,10 @@
   .tpl-page { position: relative; display: block; width: 100%; max-width: 1024px; margin: 20px auto; box-shadow: 0 8px 32px rgba(0,0,0,0.3); background: #fff; line-height: 0; }
   .tpl-bg { display: block; width: 100%; height: auto; user-select: none; pointer-events: none; }
   .tpl-ov { position: absolute; background:#fff; overflow:hidden; line-height: 1.2; }
+  ${debugMode ? `
+  .tpl-ov { outline: 3px solid #ff0066 !important; background: rgba(255,255,255,0.85) !important; }
+  .tpl-ov::after { content: attr(data-debug); position: absolute; top: 0; left: 0; background: #ff0066; color: #fff; font-size: 11px; font-weight: 800; padding: 2px 6px; z-index: 100; font-family: monospace; }
+  ` : ''}
   .tpl-modelo-head { background:#FFD200; color:#0a0a0a; font-weight:900; text-align:center; padding:6px 8px; font-size:18px; letter-spacing:1px; text-transform:uppercase; display:flex; align-items:center; justify-content:center; }
   .tpl-foto-wrap { background:#fff; display:flex; align-items:center; justify-content:center; padding:6px; }
   .tpl-foto { max-width:100%; max-height:100%; object-fit:contain; }
@@ -5170,11 +5176,11 @@
   </div>
   <div class="tpl-page">
     <img src="/img/flyer-template-ejemplo1.jpeg" class="tpl-bg" alt="">
-    <div class="tpl-ov tpl-modelo-head tpl-h1">MODELO ${escH(modeloName(m1))}</div>
-    <div class="tpl-ov tpl-foto-wrap tpl-f1">${fotoHtml(m1, modeloName(m1))}</div>
-    <div class="tpl-ov tpl-specs-wrap tpl-s1">${specsHtml(parseSpecs(m1))}</div>
-    <div class="tpl-ov tpl-list-wrap tpl-i1"><ul>${listHtml(parseIncluye(m1),'Captura equipo incluido al editar la máquina',true)}</ul></div>
-    <div class="tpl-ov tpl-list-wrap acc tpl-a1"><ul>${listHtml(parseAccesorios(m1),'Captura accesorios al editar la máquina',false)}</ul></div>
+    <div class="tpl-ov tpl-modelo-head tpl-h1" data-debug="h1 MODELO">MODELO ${escH(modeloName(m1))}</div>
+    <div class="tpl-ov tpl-foto-wrap tpl-f1" data-debug="f1 FOTO">${fotoHtml(m1, modeloName(m1))}</div>
+    <div class="tpl-ov tpl-specs-wrap tpl-s1" data-debug="s1 SPECS">${specsHtml(parseSpecs(m1))}</div>
+    <div class="tpl-ov tpl-list-wrap tpl-i1" data-debug="i1 INCLUIDO"><ul>${listHtml(parseIncluye(m1),'Captura equipo incluido al editar la máquina',true)}</ul></div>
+    <div class="tpl-ov tpl-list-wrap acc tpl-a1" data-debug="a1 ACCESORIOS"><ul>${listHtml(parseAccesorios(m1),'Captura accesorios al editar la máquina',false)}</ul></div>
     ${rightSideHtml}
   </div>
 </body></html>`;
