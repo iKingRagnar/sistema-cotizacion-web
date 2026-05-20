@@ -54,6 +54,11 @@
     generico: { label: 'Genérico (punto)', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5"><circle cx="12" cy="12" r="3" fill="#0a0a0a"/></svg>' },
   };
   function maqIconSvg(key) {
+    // Si es una URL/data-URL custom subida por el usuario, renderiza como <img>.
+    if (typeof key === 'string' && (key.startsWith('data:') || key.startsWith('http://') || key.startsWith('https://') || key.startsWith('/'))) {
+      const safe = key.replace(/"/g, '&quot;');
+      return `<img src="${safe}" alt="icono" style="width:100%;height:100%;object-fit:contain;display:block">`;
+    }
     if (key && Object.prototype.hasOwnProperty.call(MAQUINA_SPEC_ICONS, key)) return MAQUINA_SPEC_ICONS[key].svg;
     return MAQUINA_SPEC_ICONS.generico.svg;
   }
@@ -9408,13 +9413,20 @@
       return keys.map(k => `<option value="${k}" ${selectedKey === k ? 'selected' : ''}>${escapeHtml(MAQUINA_SPEC_ICONS[k].label)}</option>`).join('');
     }
     function iconRowHtml(row, i) {
-      const iconKey = row.icon && MAQUINA_SPEC_ICONS[row.icon] ? row.icon : 'generico';
+      // row.icon puede ser: (1) key del catálogo, (2) data:URL/http URL de imagen propia, (3) 'generico'
+      const rawIcon = row.icon || 'generico';
+      const isCustomImg = typeof rawIcon === 'string' && (rawIcon.startsWith('data:') || rawIcon.startsWith('http://') || rawIcon.startsWith('https://') || rawIcon.startsWith('/'));
+      const selectedKey = isCustomImg ? '__custom__' : (MAQUINA_SPEC_ICONS[rawIcon] ? rawIcon : 'generico');
+      const customOpt = `<option value="__custom__" ${isCustomImg ? 'selected' : ''}>📷 Imagen propia (subir archivo)</option>`;
       return `
-      <div class="form-row maq-spec-row" data-idx="${i}" style="gap:0.5rem;margin-bottom:0.35rem;align-items:center">
-        <div class="maq-spec-icon-prev" style="flex:0 0 36px;width:36px;height:36px;border:1px solid #d1d5db;border-radius:4px;background:#fff;display:flex;align-items:center;justify-content:center;padding:4px">${maqIconSvg(iconKey)}</div>
-        <select class="maq-spec-icon" style="flex:1;min-width:140px">${iconOptsHtml(iconKey)}</select>
-        <input type="text" class="maq-spec-label" placeholder="Ej: Maximum swing diameter (mm)" value="${escapeHtml(row.label || '')}" style="flex:2">
-        <input type="text" class="maq-spec-value" placeholder="Ej: 900" value="${escapeHtml(row.value || '')}" style="flex:1">
+      <div class="form-row maq-spec-row" data-idx="${i}" style="gap:0.5rem;margin-bottom:0.35rem;align-items:center;flex-wrap:nowrap">
+        <div class="maq-spec-icon-prev" style="flex:0 0 36px;width:36px;height:36px;border:1px solid #d1d5db;border-radius:4px;background:#fff;display:flex;align-items:center;justify-content:center;padding:3px;overflow:hidden">${maqIconSvg(rawIcon)}</div>
+        <input type="hidden" class="maq-spec-icon-data" value="${isCustomImg ? escapeHtml(rawIcon) : ''}">
+        <select class="maq-spec-icon" style="flex:0 0 180px;min-width:140px">${customOpt}${iconOptsHtml(selectedKey)}</select>
+        <button type="button" class="btn small outline maq-spec-img-upload" title="Subir imagen propia (recomendado 40×40 px, PNG transparente)"><i class="fas fa-image"></i></button>
+        <input type="file" class="maq-spec-img-file" accept="image/*" style="display:none">
+        <input type="text" class="maq-spec-label" placeholder="Ej: Maximum swing diameter (mm)" value="${escapeHtml(row.label || '')}" style="flex:2;min-width:0">
+        <input type="text" class="maq-spec-value" placeholder="Ej: 900" value="${escapeHtml(row.value || '')}" style="flex:1;min-width:0">
         <button type="button" class="btn small danger maq-spec-remove" title="Quitar"><i class="fas fa-times"></i></button>
       </div>`;
     }
@@ -9472,23 +9484,13 @@
           <div class="form-group"><label>Nombre de la máquina *</label>
             <select id="m-categoria">${catOpts}</select>
           </div>
-          <div class="form-group" hidden><label>Parte</label>
-            <select id="m-subcategoria">${subOpts}</select>
-          </div>
+          <div class="form-group" style="display:none"><select id="m-subcategoria">${subOpts}</select></div>
           <div class="form-group"><label>Versión / modelo *</label><input type="text" id="m-modelo" maxlength="120" value="${escapeHtml(maquina && maquina.modelo) || ''}" required placeholder="Ej: HZ7900L FANUC-HERR.VIVAS"></div>
           <div class="form-group"><label>Descripción corta (1-2 líneas)</label>
             <input type="text" id="m-desc-corta" maxlength="200" value="${escapeHtml(maquina && maquina.descripcion_corta || '')}" placeholder="Ej: Torno Vertical CNC HZ7900L">
           </div>
           <div class="form-group"><label>Descripción larga (specs principales)</label>
             <textarea id="m-desc-larga" rows="4" maxlength="2000" placeholder="Ej: HZ900L, Fanuc oi TF system, Spindle A2-11, spindle motor power 15KW…">${escapeHtml(maquina && maquina.descripcion_larga || '')}</textarea>
-          </div>
-          <div class="form-row" style="gap:1rem">
-            <div class="form-group" style="flex:1"><label>Precio USD</label>
-              <input type="number" id="m-precio-usd" min="0" step="0.01" value="${maquina && maquina.precio_lista_usd != null ? Number(maquina.precio_lista_usd) : ''}" placeholder="Ej: 82354">
-            </div>
-            <div class="form-group" style="flex:1"><label>Tiempo de entrega (días)</label>
-              <input type="number" id="m-tiempo-entrega" min="0" step="1" value="${maquina && maquina.tiempo_entrega_dias != null ? Number(maquina.tiempo_entrega_dias) : ''}" placeholder="Ej: 65">
-            </div>
           </div>
           <div class="form-group"><label>Ficha técnica (nota corta / URL — opcional)</label>
             <textarea id="m-ficha-tecnica" rows="2" maxlength="4000" placeholder="Enlace o referencia que aparece en la columna «Ficha técnica» del catálogo.">${escapeHtml(maquina && maquina.ficha_tecnica != null ? String(maquina.ficha_tecnica) : '')}</textarea>
@@ -9508,7 +9510,7 @@
         </section>
         <section class="cotz-card" aria-labelledby="maq-sec-specs">
           <h4 class="cotz-card-title" id="maq-sec-specs"><span class="cotz-step-num">3</span> Ficha técnica (tabla)</h4>
-          <p class="form-hint" style="margin-top:0"><i class="fas fa-table"></i> Pares "concepto → valor" que aparecen en la tabla derecha de la ficha (project → HZ900L, Maximum swing diameter → 900, etc.).</p>
+          <p class="form-hint" style="margin-top:0"><i class="fas fa-table"></i> Pares "concepto → valor" para la tabla del flyer. En cada fila puedes elegir un icono del catálogo o subir <strong>tu propia imagen</strong> con el botón <i class="fas fa-image"></i> (recomendado: <strong>40×40 px PNG transparente</strong>, máx 500 KB).</p>
           <div id="m-specs-list">${specsRowsHtml}</div>
           <button type="button" class="btn small outline" id="m-specs-add"><i class="fas fa-plus"></i> Agregar fila</button>
         </section>
@@ -9709,9 +9711,42 @@
       div.querySelector('.maq-spec-remove')?.addEventListener('click', () => div.remove());
       const sel = div.querySelector('.maq-spec-icon');
       const prev = div.querySelector('.maq-spec-icon-prev');
+      const dataIn = div.querySelector('.maq-spec-icon-data');
+      const fileIn = div.querySelector('.maq-spec-img-file');
+      const upBtn = div.querySelector('.maq-spec-img-upload');
       if (sel && prev) {
-        sel.addEventListener('change', () => { prev.innerHTML = maqIconSvg(sel.value); });
+        sel.addEventListener('change', () => {
+          if (sel.value === '__custom__') {
+            // Si ya hay imagen subida, muestrarla. Si no, abrir file picker.
+            if (dataIn && dataIn.value) prev.innerHTML = maqIconSvg(dataIn.value);
+            else fileIn?.click();
+          } else {
+            if (dataIn) dataIn.value = '';
+            prev.innerHTML = maqIconSvg(sel.value);
+          }
+        });
       }
+      upBtn?.addEventListener('click', () => fileIn?.click());
+      fileIn?.addEventListener('change', async () => {
+        const f = fileIn.files && fileIn.files[0]; if (!f) return;
+        if (f.size > 500 * 1024) { showToast('La imagen es muy grande (máx 500 KB). Comprímela primero.', 'warning'); fileIn.value = ''; return; }
+        const reader = new FileReader();
+        reader.onload = () => {
+          const url = String(reader.result || '');
+          if (!url.startsWith('data:image')) { showToast('El archivo no es una imagen válida.', 'error'); return; }
+          if (dataIn) dataIn.value = url;
+          if (sel) {
+            // Asegurar que __custom__ exista y esté seleccionada
+            if (!Array.from(sel.options).some(o => o.value === '__custom__')) {
+              const opt = document.createElement('option'); opt.value = '__custom__'; opt.textContent = '📷 Imagen propia (subir archivo)';
+              sel.insertBefore(opt, sel.firstChild);
+            }
+            sel.value = '__custom__';
+          }
+          if (prev) prev.innerHTML = maqIconSvg(url);
+        };
+        reader.readAsDataURL(f);
+      });
     }
     function addSpecRow(label = '', value = '', icon = 'generico') {
       if (!specsList) return;
@@ -9759,7 +9794,11 @@
       document.querySelectorAll('#m-specs-list .maq-spec-row').forEach(row => {
         const lbl = (row.querySelector('.maq-spec-label')?.value || '').trim();
         const val = (row.querySelector('.maq-spec-value')?.value || '').trim();
-        const icon = (row.querySelector('.maq-spec-icon')?.value || 'generico').trim();
+        let icon = (row.querySelector('.maq-spec-icon')?.value || 'generico').trim();
+        if (icon === '__custom__') {
+          const custom = (row.querySelector('.maq-spec-icon-data')?.value || '').trim();
+          icon = custom || 'generico';
+        }
         if (lbl || val) arr.push({ label: lbl, value: val, icon });
       });
       return arr;
