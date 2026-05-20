@@ -5140,20 +5140,22 @@
   .tpl-bullet { font-size:9px; color:#fafafa; padding:1px 0 1px 11px; position:relative; line-height:1.2; }
   .tpl-bullet::before { content:"•"; position:absolute; left:1px; top:-1px; color:#FFD200; font-size:13px; }
   .tpl-empty-li { color:#777; font-style:italic; font-size:9px; }
-  /* Posiciones en % (calibradas para ejemplo1.jpeg). Lado izquierdo: */
-  .tpl-h1 { left:3.5%; top:24.0%; width:${leftWidthCss}; height:3.2%; }
-  .tpl-f1 { left:3.5%; top:27.5%; width:${leftWidthCss}; height:17.5%; }
-  .tpl-s1 { left:3.5%; top:45.2%; width:${leftWidthCss}; height:12.4%; }
-  .tpl-i1 { left:3.5%; top:58.0%; width:${leftWidthCss}; height:8.7%; }
-  .tpl-a1 { left:3.5%; top:67.0%; width:${leftWidthCss}; height:5.5%; }
+  /* Posiciones en % calibradas sobre ejemplo1.jpeg 1024×1536 px.
+     Verticalmente: cápsulas terminan ~22%, modelo header ~22-26%, foto ~26-56%,
+     specs ~56-70%, equipo ~71-78%, accesorios ~79-83%, features ~83-92%, footer ~92-100% */
+  .tpl-h1 { left:5.0%; top:22.5%; width:${leftWidthCss}; height:3.5%; }
+  .tpl-f1 { left:5.0%; top:26.5%; width:${leftWidthCss}; height:29.5%; }
+  .tpl-s1 { left:5.0%; top:56.5%; width:${leftWidthCss}; height:13.5%; }
+  .tpl-i1 { left:5.0%; top:70.5%; width:${leftWidthCss}; height:7.5%; }
+  .tpl-a1 { left:5.0%; top:78.5%; width:${leftWidthCss}; height:4.5%; }
   /* Lado derecho (modo PAIR): */
-  .tpl-h2 { left:52.5%; top:24.0%; width:44%; height:3.2%; }
-  .tpl-f2 { left:52.5%; top:27.5%; width:44%; height:17.5%; }
-  .tpl-s2 { left:52.5%; top:45.2%; width:44%; height:12.4%; }
-  .tpl-i2 { left:52.5%; top:58.0%; width:44%; height:8.7%; }
-  .tpl-a2 { left:52.5%; top:67.0%; width:44%; height:5.5%; }
+  .tpl-h2 { left:51.0%; top:22.5%; width:44%; height:3.5%; }
+  .tpl-f2 { left:51.0%; top:26.5%; width:44%; height:29.5%; }
+  .tpl-s2 { left:51.0%; top:56.5%; width:44%; height:13.5%; }
+  .tpl-i2 { left:51.0%; top:70.5%; width:44%; height:7.5%; }
+  .tpl-a2 { left:51.0%; top:78.5%; width:44%; height:4.5%; }
   /* Modo SINGLE: parche blanco gigante tapando el lado derecho del template original */
-  .tpl-single-cover { left:50%; top:23.5%; width:46%; height:50%; background:#fff !important; border:none; }
+  .tpl-single-cover { left:50%; top:22%; width:46%; height:62%; background:#fff !important; border:none; }
   @media print {
     html, body { background:#fff !important; margin:0; padding:0; }
     .tpl-toolbar { display:none !important; }
