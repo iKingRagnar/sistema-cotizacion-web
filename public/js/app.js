@@ -5143,19 +5143,19 @@
   /* Posiciones en % calibradas sobre ejemplo1.jpeg 1024×1536 px.
      Verticalmente: cápsulas terminan ~22%, modelo header ~22-26%, foto ~26-56%,
      specs ~56-70%, equipo ~71-78%, accesorios ~79-83%, features ~83-92%, footer ~92-100% */
-  .tpl-h1 { left:5.0%; top:22.5%; width:${leftWidthCss}; height:3.5%; }
-  .tpl-f1 { left:5.0%; top:26.5%; width:${leftWidthCss}; height:29.5%; }
-  .tpl-s1 { left:5.0%; top:56.5%; width:${leftWidthCss}; height:13.5%; }
-  .tpl-i1 { left:5.0%; top:70.5%; width:${leftWidthCss}; height:7.5%; }
-  .tpl-a1 { left:5.0%; top:78.5%; width:${leftWidthCss}; height:4.5%; }
+  .tpl-h1 { left:5.0%; top:21.5%; width:${leftWidthCss}; height:3.2%; }
+  .tpl-f1 { left:5.0%; top:24.9%; width:${leftWidthCss}; height:20.2%; }
+  .tpl-s1 { left:5.0%; top:45.6%; width:${leftWidthCss}; height:19.5%; }
+  .tpl-i1 { left:5.0%; top:65.8%; width:${leftWidthCss}; height:8.4%; }
+  .tpl-a1 { left:5.0%; top:74.9%; width:${leftWidthCss}; height:5.8%; }
   /* Lado derecho (modo PAIR): */
-  .tpl-h2 { left:51.0%; top:22.5%; width:44%; height:3.5%; }
-  .tpl-f2 { left:51.0%; top:26.5%; width:44%; height:29.5%; }
-  .tpl-s2 { left:51.0%; top:56.5%; width:44%; height:13.5%; }
-  .tpl-i2 { left:51.0%; top:70.5%; width:44%; height:7.5%; }
-  .tpl-a2 { left:51.0%; top:78.5%; width:44%; height:4.5%; }
+  .tpl-h2 { left:51.0%; top:21.5%; width:44%; height:3.2%; }
+  .tpl-f2 { left:51.0%; top:24.9%; width:44%; height:20.2%; }
+  .tpl-s2 { left:51.0%; top:45.6%; width:44%; height:19.5%; }
+  .tpl-i2 { left:51.0%; top:65.8%; width:44%; height:8.4%; }
+  .tpl-a2 { left:51.0%; top:74.9%; width:44%; height:5.8%; }
   /* Modo SINGLE: parche blanco gigante tapando el lado derecho del template original */
-  .tpl-single-cover { left:50%; top:22%; width:46%; height:62%; background:#fff !important; border:none; }
+  .tpl-single-cover { left:50%; top:21%; width:46%; height:60%; background:#fff !important; border:none; }
   @media print {
     html, body { background:#fff !important; margin:0; padding:0; }
     .tpl-toolbar { display:none !important; }
