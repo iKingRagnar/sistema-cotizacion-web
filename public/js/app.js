@@ -5159,8 +5159,9 @@
     background: repeating-linear-gradient(-50deg, #FFD200 0px, #FFD200 18px, transparent 18px, transparent 36px);
     width: 110px; pointer-events: none;
   }
-  .uv-hero::before { left: -20px; transform: skewX(-12deg); opacity: 0.95; }
+  .uv-hero::before { left: -20px; transform: skewX(-12deg); opacity: 0.95; z-index: 0; }
   .uv-hero::after { display: none; }
+  .uv-hero > * { position: relative; z-index: 2; }
   .uv-logo-bar { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0 auto 6px; padding: 4px 0; width: max-content; min-width: 280px; }
   .uv-logo-img { max-width: 320px; height: auto; display: block; }
   .uv-logo-fallback { background: linear-gradient(180deg,#fafafa,#cfcfcf); border: 2px solid #0a0a0a; border-radius: 6px; padding: 6px 28px; box-shadow: inset 0 -3px 0 rgba(0,0,0,0.18), 0 2px 4px rgba(0,0,0,0.15); }
