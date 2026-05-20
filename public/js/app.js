@@ -5115,9 +5115,10 @@
   .tpl-toolbar { position: sticky; top:0; z-index:100; background:#0a0a0a; color:#fff; padding:10px 20px; display:flex; gap:12px; justify-content:flex-end; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
   .tpl-toolbar button { background:#FFD200; color:#0a0a0a; border:0; padding:9px 18px; border-radius:4px; font-size:13px; cursor:pointer; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; }
   .tpl-toolbar button.outline { background:transparent; color:#FFD200; border:2px solid #FFD200; }
-  /* Wrapper: posición relativa, sin tamaño fijo. La <img> dicta el tamaño y los overlays caen exactos. */
-  .tpl-page { position: relative; display: block; width: 100%; max-width: 1024px; margin: 20px auto; box-shadow: 0 8px 32px rgba(0,0,0,0.3); background: #fff; line-height: 0; }
-  .tpl-bg { display: block; width: 100%; height: auto; user-select: none; pointer-events: none; }
+  /* Wrapper con aspect-ratio FORZADO 1024×1536 (padding-bottom 150%).
+     La imagen ocupa 100% del wrapper y los overlays absolute caen exactos. */
+  .tpl-page { position: relative; width: 100%; max-width: 1024px; margin: 20px auto; box-shadow: 0 8px 32px rgba(0,0,0,0.3); background: #fff; padding-bottom: 150%; height: 0; }
+  .tpl-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; user-select: none; pointer-events: none; display: block; }
   .tpl-ov { position: absolute; background:#fff; overflow:hidden; line-height: 1.2; }
   ${debugMode ? `
   .tpl-ov { outline: 3px solid #ff0066 !important; background: rgba(255,255,255,0.85) !important; }
