@@ -5251,7 +5251,9 @@
   @media print {
     html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
     .uv-toolbar { display: none !important; }
-    .uv-page { box-shadow: none !important; margin: 0 !important; max-width: 100% !important; width: 100% !important; }
+    /* zoom 0.72 + page-break-inside avoid garantiza que TODO el flyer entra en UNA hoja carta */
+    .uv-page { box-shadow: none !important; margin: 0 !important; max-width: 100% !important; width: 100% !important; zoom: 0.72; page-break-inside: avoid !important; break-inside: avoid !important; }
+    .uv-hero, .uv-capsulas, .uv-single-wrap, .uv-pair-grid, .uv-bloque-incluido, .uv-bloque-acc, .uv-features, .uv-footer { page-break-inside: avoid !important; break-inside: avoid !important; }
     .uv-hero, .uv-capsulas, .uv-bloque-incluido, .uv-bloque-acc, .uv-features, .uv-footer,
     .uv-footer-banner, .uv-footer-web-row, .uv-footer-cities, .uv-model-head,
     .uv-capsula-icon, .uv-feature-icon, .uv-bi-list li::before, .uv-sx-divider,
