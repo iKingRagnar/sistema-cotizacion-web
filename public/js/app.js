@@ -5171,11 +5171,12 @@
 </style></head>
 <body>
   <div class="tpl-toolbar">
+    <div style="background:#ff0066;color:#fff;padding:4px 12px;font-weight:900;font-size:13px;letter-spacing:1px;border-radius:4px;align-self:center;margin-right:auto">FLYER TEMPLATE v268 ACTIVO · modo: ${isSingle ? 'SINGLE' : 'PAIR'} · debug: ${debugMode ? 'ON' : 'OFF'}</div>
     <button class="outline" onclick="window.close()">✕ Cerrar</button>
     <button onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
   </div>
   <div class="tpl-page">
-    <img src="/img/flyer-template-ejemplo1.jpeg" class="tpl-bg" alt="">
+    <img src="/img/flyer-template-ejemplo1.jpeg" class="tpl-bg" alt="" onerror="this.outerHTML='<div style=&quot;padding:40px;background:#ffe0e0;color:#900;font-weight:700;text-align:center&quot;>ERROR: no se cargó /img/flyer-template-ejemplo1.jpeg</div>'">
     <div class="tpl-ov tpl-modelo-head tpl-h1" data-debug="h1 MODELO">MODELO ${escH(modeloName(m1))}</div>
     <div class="tpl-ov tpl-foto-wrap tpl-f1" data-debug="f1 FOTO">${fotoHtml(m1, modeloName(m1))}</div>
     <div class="tpl-ov tpl-specs-wrap tpl-s1" data-debug="s1 SPECS">${specsHtml(parseSpecs(m1))}</div>
