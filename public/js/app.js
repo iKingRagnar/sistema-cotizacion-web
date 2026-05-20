@@ -5135,8 +5135,8 @@
     // una imagen header (hero_url) se usa esa; si no, SVG decorativo embebido.
     const heroBg = (m && m.flyer_hero_url) ? String(m.flyer_hero_url).trim() : '';
     const heroBgCss = heroBg
-      ? `background:#0a0a0a url('${heroBg.replace(/'/g, "\\'")}') center/cover no-repeat`
-      : `background:linear-gradient(115deg,#fff 0%,#fff 42%,#1a1a1a 42%,#0a0a0a 100%)`;
+      ? `background:#fff url('${heroBg.replace(/'/g, "\\'")}') center/cover no-repeat`
+      : `background:#fff`;
     const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
