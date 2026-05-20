@@ -1752,6 +1752,7 @@ app.post('/api/maquinas', async (req, res) => {
       tiempo_entrega_dias, descripcion_corta, descripcion_larga, incluye, ficha_tecnica_specs,
       puesta_en, garantia, condiciones_pago, accesorios_estandar,
       flyer_modo, flyer_pareja_id, flyer_textos,
+      modelo_2, incluye_2, accesorios_estandar_2, ficha_tecnica_specs_2,
     } = req.body || {};
     let cid = cliente_id != null && cliente_id !== '' ? Number(cliente_id) : null;
     if (!cid || !Number.isFinite(cid)) {
@@ -1759,8 +1760,8 @@ app.post('/api/maquinas', async (req, res) => {
       cid = first && first.id != null ? Number(first.id) : null;
     }
     await db.runQuery(
-      `INSERT INTO maquinas (cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion, categoria, categoria_principal, subcategoria, imagen_pieza_url, imagen_ensamble_url, stock, precio_lista_usd, ficha_tecnica, tiempo_entrega_dias, descripcion_corta, descripcion_larga, incluye, ficha_tecnica_specs, puesta_en, garantia, condiciones_pago, accesorios_estandar, flyer_modo, flyer_pareja_id, flyer_textos)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO maquinas (cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion, categoria, categoria_principal, subcategoria, imagen_pieza_url, imagen_ensamble_url, stock, precio_lista_usd, ficha_tecnica, tiempo_entrega_dias, descripcion_corta, descripcion_larga, incluye, ficha_tecnica_specs, puesta_en, garantia, condiciones_pago, accesorios_estandar, flyer_modo, flyer_pareja_id, flyer_textos, modelo_2, incluye_2, accesorios_estandar_2, ficha_tecnica_specs_2)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         cid,
         _maqNullableStr(codigo),
@@ -1789,6 +1790,10 @@ app.post('/api/maquinas', async (req, res) => {
         _maqNullableStr(flyer_modo),
         _maqNullableNum(flyer_pareja_id),
         _maqNullableStr(flyer_textos),
+        _maqNullableStr(modelo_2),
+        _maqNullableStr(incluye_2),
+        _maqNullableStr(accesorios_estandar_2),
+        _maqNullableStr(ficha_tecnica_specs_2),
       ]
     );
     const r = await db.getOne('SELECT * FROM maquinas ORDER BY id DESC LIMIT 1');
@@ -1807,6 +1812,7 @@ app.put('/api/maquinas/:id', async (req, res) => {
       tiempo_entrega_dias, descripcion_corta, descripcion_larga, incluye, ficha_tecnica_specs,
       puesta_en, garantia, condiciones_pago, accesorios_estandar,
       flyer_modo, flyer_pareja_id, flyer_textos,
+      modelo_2, incluye_2, accesorios_estandar_2, ficha_tecnica_specs_2,
     } = req.body || {};
     let cidPut = cliente_id != null && cliente_id !== '' ? Number(cliente_id) : null;
     if (!cidPut || !Number.isFinite(cidPut)) {
@@ -1822,7 +1828,8 @@ app.put('/api/maquinas/:id', async (req, res) => {
        imagen_pieza_url=?, imagen_ensamble_url=?, stock=?, precio_lista_usd=?, ficha_tecnica=?,
        tiempo_entrega_dias=?, descripcion_corta=?, descripcion_larga=?, incluye=?, ficha_tecnica_specs=?,
        puesta_en=?, garantia=?, condiciones_pago=?, accesorios_estandar=?,
-       flyer_modo=?, flyer_pareja_id=?, flyer_textos=? WHERE id=?`,
+       flyer_modo=?, flyer_pareja_id=?, flyer_textos=?,
+       modelo_2=?, incluye_2=?, accesorios_estandar_2=?, ficha_tecnica_specs_2=? WHERE id=?`,
       [
         cidPut,
         _maqNullableStr(codigo),
@@ -1851,6 +1858,10 @@ app.put('/api/maquinas/:id', async (req, res) => {
         _maqNullableStr(flyer_modo),
         _maqNullableNum(flyer_pareja_id),
         _maqNullableStr(flyer_textos),
+        _maqNullableStr(modelo_2),
+        _maqNullableStr(incluye_2),
+        _maqNullableStr(accesorios_estandar_2),
+        _maqNullableStr(ficha_tecnica_specs_2),
         req.params.id,
       ]
     );
