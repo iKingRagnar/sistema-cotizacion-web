@@ -5045,7 +5045,9 @@
    * Si Luis sube una versión "vacía" del template, simplemente reemplaza
    * /img/flyer-template-ejemplo1.jpeg y los overlays caen exactos.
    */
-  function previewMaquinaTemplate(m, companion) {
+  function previewMaquinaTemplate(m, companion, opts) {
+    opts = opts || {};
+    const isSingle = opts.singleSide === true || (!companion && (m && m.flyer_modo === 'single'));
     const escH = (s) => String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     function parseSpecs(mq) {
@@ -5090,36 +5092,45 @@
     // Datos del par. Si NO hay companion, duplicamos el principal en el lado derecho.
     const m1 = m;
     const m2 = companion || m;
+    // Overlays del lado derecho. En modo SINGLE (1 máquina) se ocultan
+    // y se pinta un parche blanco grande sobre el lado derecho del template.
+    const rightSideHtml = isSingle ? `
+      <div class="tpl-ov tpl-single-cover"></div>
+    ` : `
+      <div class="tpl-ov tpl-modelo-head tpl-h2">MODELO ${escH(modeloName(m2))}</div>
+      <div class="tpl-ov tpl-foto-wrap tpl-f2">${fotoHtml(m2, modeloName(m2))}</div>
+      <div class="tpl-ov tpl-specs-wrap tpl-s2">${specsHtml(parseSpecs(m2))}</div>
+      <div class="tpl-ov tpl-list-wrap tpl-i2"><ul>${listHtml(parseIncluye(m2),'Captura equipo incluido al editar la máquina',true)}</ul></div>
+      <div class="tpl-ov tpl-list-wrap acc tpl-a2"><ul>${listHtml(parseAccesorios(m2),'Captura accesorios al editar la máquina',false)}</ul></div>
+    `;
+    // En modo SINGLE estiramos los overlays izquierdos para ocupar el ancho completo
+    const leftWidthCss = isSingle ? '93%' : '44%';
     const html = `<!DOCTYPE html>
 <html lang="es"><head><meta charset="UTF-8"><title>${escH(modeloName(m1))} — Flyer UNIVERSAL</title>
 <style>
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   html, body { margin: 0; padding: 0; background: #2c2c2c; font-family: 'Inter','Segoe UI',Arial,sans-serif; color: #0a0a0a; }
   .tpl-toolbar { position: sticky; top:0; z-index:100; background:#0a0a0a; color:#fff; padding:10px 20px; display:flex; gap:12px; justify-content:flex-end; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
   .tpl-toolbar button { background:#FFD200; color:#0a0a0a; border:0; padding:9px 18px; border-radius:4px; font-size:13px; cursor:pointer; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; }
   .tpl-toolbar button.outline { background:transparent; color:#FFD200; border:2px solid #FFD200; }
-  /* Página flyer: relación 1024×1536 del template */
-  .tpl-page { position: relative; width: 1024px; max-width: 100%; margin: 20px auto; aspect-ratio: 1024 / 1536; background:#fff url('/img/flyer-template-ejemplo1.jpeg') center/contain no-repeat; box-shadow:0 8px 32px rgba(0,0,0,0.3); }
-  /* Overlays absolutos en % del contenedor */
-  .tpl-ov { position: absolute; background:#fff; border:0; overflow:hidden; }
-  /* Header modelo amarillo: tapa el "MODELO VMC-1050" o "MODELO XH7126" */
+  /* Wrapper: posición relativa, sin tamaño fijo. La <img> dicta el tamaño y los overlays caen exactos. */
+  .tpl-page { position: relative; display: block; width: 100%; max-width: 1024px; margin: 20px auto; box-shadow: 0 8px 32px rgba(0,0,0,0.3); background: #fff; line-height: 0; }
+  .tpl-bg { display: block; width: 100%; height: auto; user-select: none; pointer-events: none; }
+  .tpl-ov { position: absolute; background:#fff; overflow:hidden; line-height: 1.2; }
   .tpl-modelo-head { background:#FFD200; color:#0a0a0a; font-weight:900; text-align:center; padding:6px 8px; font-size:18px; letter-spacing:1px; text-transform:uppercase; display:flex; align-items:center; justify-content:center; }
-  /* Foto máquina: fondo blanco para tapar la foto original */
-  .tpl-foto-wrap { background:#fff; display:flex; align-items:center; justify-content:center; padding:6px; border-left:1px solid #d1d5db; border-right:1px solid #d1d5db; }
+  .tpl-foto-wrap { background:#fff; display:flex; align-items:center; justify-content:center; padding:6px; }
   .tpl-foto { max-width:100%; max-height:100%; object-fit:contain; }
   .tpl-foto-empty { width:100%; height:100%; border:2px dashed #cbd5e1; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  /* Tabla specs */
   .tpl-specs-wrap { background:#fff; padding:0; overflow:hidden; }
   .tpl-specs { width:100%; height:100%; border-collapse:collapse; font-size:10px; }
   .tpl-specs td { border:1px solid #c8c8c8; padding:3px 4px; vertical-align:middle; }
   .tpl-ic { width:18px; padding:2px !important; text-align:center; background:#fff; }
-  .tpl-ic svg { width:11px; height:11px; display:block; margin:0 auto; stroke:#0a0a0a; }
+  .tpl-ic svg { width:12px; height:12px; display:block; margin:0 auto; stroke:#0a0a0a; }
   .tpl-ic img { width:14px; height:14px; object-fit:contain; }
   .tpl-lb { font-weight:700; text-transform:uppercase; font-size:8.5px; color:#1a1a1a; line-height:1.1; }
   .tpl-vl { text-align:left; font-weight:700; font-size:9px; }
   .tpl-div { border-left:2px solid #FFD200 !important; }
   .tpl-empty { padding:14px; text-align:center; color:#999; font-style:italic; font-size:10px; }
-  /* Listas */
   .tpl-list-wrap { background:#0a0a0a; color:#fff; padding:6px 14px; }
   .tpl-list-wrap.acc { background:#1a1a1a; padding:4px 14px; }
   .tpl-list-wrap ul { margin:0; padding:0; list-style:none; display:grid; grid-template-columns:1fr 1fr; gap:1px 14px; }
@@ -5129,19 +5140,20 @@
   .tpl-bullet { font-size:9px; color:#fafafa; padding:1px 0 1px 11px; position:relative; line-height:1.2; }
   .tpl-bullet::before { content:"•"; position:absolute; left:1px; top:-1px; color:#FFD200; font-size:13px; }
   .tpl-empty-li { color:#777; font-style:italic; font-size:9px; }
-  /* Posiciones en % (calibradas para 1024×1536 ejemplo1.jpeg) */
-  .tpl-h1 { left:3.5%; top:24.0%; width:44%; height:3.2%; } /* MODELO 1 */
-  .tpl-h2 { left:52.5%; top:24.0%; width:44%; height:3.2%; } /* MODELO 2 */
-  .tpl-f1 { left:3.5%; top:27.5%; width:44%; height:17.5%; } /* Foto 1 */
-  .tpl-f2 { left:52.5%; top:27.5%; width:44%; height:17.5%; } /* Foto 2 */
-  .tpl-s1 { left:3.5%; top:45.2%; width:44%; height:12.4%; } /* Specs 1 */
-  .tpl-s2 { left:52.5%; top:45.2%; width:44%; height:12.4%; } /* Specs 2 */
-  .tpl-i1 { left:3.5%; top:58.0%; width:44%; height:8.7%; }  /* Incluido 1 */
-  .tpl-i2 { left:52.5%; top:58.0%; width:44%; height:8.7%; } /* Incluido 2 */
-  .tpl-a1 { left:3.5%; top:67.0%; width:44%; height:5.5%; }  /* Accesorios 1 */
-  .tpl-a2 { left:52.5%; top:67.0%; width:44%; height:5.5%; } /* Accesorios 2 */
-  /* Print: una sola hoja vertical letter, colores forzados */
-  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  /* Posiciones en % (calibradas para ejemplo1.jpeg). Lado izquierdo: */
+  .tpl-h1 { left:3.5%; top:24.0%; width:${leftWidthCss}; height:3.2%; }
+  .tpl-f1 { left:3.5%; top:27.5%; width:${leftWidthCss}; height:17.5%; }
+  .tpl-s1 { left:3.5%; top:45.2%; width:${leftWidthCss}; height:12.4%; }
+  .tpl-i1 { left:3.5%; top:58.0%; width:${leftWidthCss}; height:8.7%; }
+  .tpl-a1 { left:3.5%; top:67.0%; width:${leftWidthCss}; height:5.5%; }
+  /* Lado derecho (modo PAIR): */
+  .tpl-h2 { left:52.5%; top:24.0%; width:44%; height:3.2%; }
+  .tpl-f2 { left:52.5%; top:27.5%; width:44%; height:17.5%; }
+  .tpl-s2 { left:52.5%; top:45.2%; width:44%; height:12.4%; }
+  .tpl-i2 { left:52.5%; top:58.0%; width:44%; height:8.7%; }
+  .tpl-a2 { left:52.5%; top:67.0%; width:44%; height:5.5%; }
+  /* Modo SINGLE: parche blanco gigante tapando el lado derecho del template original */
+  .tpl-single-cover { left:50%; top:23.5%; width:46%; height:50%; background:#fff !important; border:none; }
   @media print {
     html, body { background:#fff !important; margin:0; padding:0; }
     .tpl-toolbar { display:none !important; }
@@ -5155,16 +5167,13 @@
     <button onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
   </div>
   <div class="tpl-page">
+    <img src="/img/flyer-template-ejemplo1.jpeg" class="tpl-bg" alt="">
     <div class="tpl-ov tpl-modelo-head tpl-h1">MODELO ${escH(modeloName(m1))}</div>
-    <div class="tpl-ov tpl-modelo-head tpl-h2">MODELO ${escH(modeloName(m2))}</div>
     <div class="tpl-ov tpl-foto-wrap tpl-f1">${fotoHtml(m1, modeloName(m1))}</div>
-    <div class="tpl-ov tpl-foto-wrap tpl-f2">${fotoHtml(m2, modeloName(m2))}</div>
     <div class="tpl-ov tpl-specs-wrap tpl-s1">${specsHtml(parseSpecs(m1))}</div>
-    <div class="tpl-ov tpl-specs-wrap tpl-s2">${specsHtml(parseSpecs(m2))}</div>
     <div class="tpl-ov tpl-list-wrap tpl-i1"><ul>${listHtml(parseIncluye(m1),'Captura equipo incluido al editar la máquina',true)}</ul></div>
-    <div class="tpl-ov tpl-list-wrap tpl-i2"><ul>${listHtml(parseIncluye(m2),'Captura equipo incluido al editar la máquina',true)}</ul></div>
     <div class="tpl-ov tpl-list-wrap acc tpl-a1"><ul>${listHtml(parseAccesorios(m1),'Captura accesorios al editar la máquina',false)}</ul></div>
-    <div class="tpl-ov tpl-list-wrap acc tpl-a2"><ul>${listHtml(parseAccesorios(m2),'Captura accesorios al editar la máquina',false)}</ul></div>
+    ${rightSideHtml}
   </div>
 </body></html>`;
     const w = window.open('', '_blank', 'width=1080,height=1100,scrollbars=yes');
@@ -5177,15 +5186,16 @@
   function previewMaquinaUniversal(m, opts) {
     opts = opts || {};
     let modo = opts.modo || (m && m.flyer_modo) || 'single';
-    if (modo !== 'pair' && modo !== 'template') modo = 'single';
+    if (modo !== 'pair') modo = 'single';
     let companion = opts.companion || null;
-    if ((modo === 'pair' || modo === 'template') && !companion && m && m.flyer_pareja_id && Array.isArray(maquinasCache)) {
-      // Solo caché sincrónica — async + window.open causa que Chrome bloquee el popup.
+    if (modo === 'pair' && !companion && m && m.flyer_pareja_id && Array.isArray(maquinasCache)) {
       companion = maquinasCache.find(x => Number(x.id) === Number(m.flyer_pareja_id)) || null;
     }
-    if (modo === 'template') {
-      return previewMaquinaTemplate(m, companion);
-    }
+    // SIEMPRE renderizar con el template ejemplo1.jpeg como base.
+    // single = 1 máquina (lado derecho tapado con parche blanco)
+    // pair   = 2 máquinas lado a lado (foto/specs/listas de ambas)
+    return previewMaquinaTemplate(m, companion, { singleSide: modo === 'single' });
+    /* eslint-disable no-unreachable */ /* eslint-enable no-unreachable -- código viejo HTML/CSS deshabilitado debajo, queda para rollback */
     /* CATÁLOGO de máquinas formato flyer ejemplo1.jpeg — SIN PRECIOS.
        David Cantú no quiere mostrar precios a sus clientes para evitar que
        la competencia espíe. La vista replica EXACTO el flyer:
@@ -9579,7 +9589,10 @@
     const ftVal = (k) => escapeHtml(flyerTextosObj[k] != null ? flyerTextosObj[k] : '');
     const ciudadesArr = Array.isArray(flyerTextosObj.ciudades) ? flyerTextosObj.ciudades : [];
     function ciudadVal(i, k) { return escapeHtml((ciudadesArr[i] && ciudadesArr[i][k]) || ''); }
-    const curModo = (maquina && (maquina.flyer_modo === 'pair' || maquina.flyer_modo === 'template')) ? maquina.flyer_modo : 'single';
+    // Compat: si una máquina vieja tiene flyer_modo='template', mapéala a 'pair'.
+    let _rawModo = maquina && maquina.flyer_modo;
+    if (_rawModo === 'template') _rawModo = 'pair';
+    const curModo = (_rawModo === 'pair') ? 'pair' : 'single';
     const curPareja = maquina && maquina.flyer_pareja_id != null ? String(maquina.flyer_pareja_id) : '';
     // Lista de máquinas disponibles para selector "pareja" (carga ligera desde caché o API).
     let listaMaquinasPair = [];
@@ -9727,26 +9740,9 @@
               </svg>
               <div style="font-weight:800;font-size:12px;margin-top:4px">PAIR (2 máquinas)</div>
             </label>
-            <label class="maq-flyer-modo-thumb" data-modo="template" style="flex:1;cursor:pointer;border:2px solid ${curModo === 'template' ? '#FFD200' : '#e5e7eb'};border-radius:8px;padding:10px;background:${curModo === 'template' ? '#fffbe6' : '#fff'};text-align:center" title="Usa la imagen ejemplo1.jpeg como base fija y pone tus datos encima (idéntico al ejemplo1)">
-              <input type="radio" name="m-flyer-modo" value="template" ${curModo === 'template' ? 'checked' : ''} style="display:none">
-              <svg viewBox="0 0 120 80" style="width:100%;max-width:140px;height:auto">
-                <rect x="2" y="2" width="116" height="76" fill="#0a0a0a"/>
-                <polygon points="2,2 30,2 18,30 2,30" fill="#FFD200"/>
-                <rect x="40" y="6" width="42" height="10" fill="#e5e7eb"/>
-                <rect x="20" y="20" width="80" height="6" fill="#fff"/>
-                <rect x="8" y="32" width="48" height="14" fill="#fff"/>
-                <rect x="8" y="32" width="48" height="3" fill="#FFD200"/>
-                <rect x="64" y="32" width="48" height="14" fill="#fff"/>
-                <rect x="64" y="32" width="48" height="3" fill="#FFD200"/>
-                <rect x="8" y="50" width="104" height="10" fill="#0a0a0a"/>
-                <rect x="8" y="62" width="104" height="6" fill="#1a1a1a"/>
-                <rect x="2" y="72" width="116" height="6" fill="#FFD200"/>
-              </svg>
-              <div style="font-weight:800;font-size:12px;margin-top:4px;color:#d97706">TEMPLATE (ejemplo1)</div>
-            </label>
           </div>
-          <p class="form-hint" style="margin-top:0.5rem"><i class="fas fa-info-circle"></i> <strong>Template:</strong> usa la imagen <code>ejemplo1.jpeg</code> como base fija y monta tus datos (modelo, foto, specs, equipo, accesorios) encima. Idéntico al flyer original. Requiere modo PAIR mentalmente (2 máquinas) — si dejas vacía la compañera, se duplica la principal a ambos lados.</p>
-          <div class="form-group" id="m-flyer-pareja-wrap" style="margin-top:0.75rem;${(curModo === 'pair' || curModo === 'template') ? '' : 'display:none'}">
+          <p class="form-hint" style="margin-top:0.5rem"><i class="fas fa-info-circle"></i> Ambos modos usan el formato <code>ejemplo1.jpeg</code> como base fija. <strong>SINGLE</strong>: solo tu máquina (el lado derecho se tapa con blanco). <strong>PAIR</strong>: dos máquinas lado a lado — selecciona la compañera abajo.</p>
+          <div class="form-group" id="m-flyer-pareja-wrap" style="margin-top:0.75rem;${curModo === 'pair' ? '' : 'display:none'}">
             <label>Máquina compañera (para modo PAIR)</label>
             <select id="m-flyer-pareja">${parejaOpts}</select>
           </div>
@@ -9932,7 +9928,7 @@
           t.style.borderColor = on ? '#FFD200' : '#e5e7eb';
           t.style.background = on ? '#fffbe6' : '#fff';
         });
-        if (parejaWrap) parejaWrap.style.display = (modoSel === 'pair' || modoSel === 'template') ? '' : 'none';
+        if (parejaWrap) parejaWrap.style.display = modoSel === 'pair' ? '' : 'none';
       });
     });
 
