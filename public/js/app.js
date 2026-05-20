@@ -5246,12 +5246,53 @@
   .uv-footer-city { font-size: 12px; font-weight: 900; color: #FFD200; letter-spacing: 0.6px; text-transform: uppercase; }
   .uv-footer-city-tel { font-size: 10.5px; font-weight: 700; color: #fff; margin-top: 1px; }
 
-  /* ==== PRINT ==== */
+  /* ==== PRINT — forzar colores e imprimir todo en una hoja tipo flyer ==== */
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   @media print {
-    body { background: #fff; }
+    html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
     .uv-toolbar { display: none !important; }
-    .uv-page { box-shadow: none; margin: 0; max-width: 100%; }
-    @page { size: letter; margin: 6mm; }
+    .uv-page { box-shadow: none !important; margin: 0 !important; max-width: 100% !important; width: 100% !important; }
+    .uv-hero, .uv-capsulas, .uv-bloque-incluido, .uv-bloque-acc, .uv-features, .uv-footer,
+    .uv-footer-banner, .uv-footer-web-row, .uv-footer-cities, .uv-model-head,
+    .uv-capsula-icon, .uv-feature-icon, .uv-bi-list li::before, .uv-sx-divider,
+    .uv-tagline-banner, .uv-hero::before { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    /* Reducir levemente paddings/typos para que TODO el flyer quepa en una hoja vertical letter */
+    .uv-hero { padding: 18px 32px 28px !important; min-height: 220px !important; }
+    .uv-titulo-mega { font-size: 60px !important; line-height: 0.9 !important; margin-top: 8px !important; }
+    .uv-tagline-banner { font-size: 13px !important; padding: 6px 14px !important; margin-top: 10px !important; }
+    .uv-logo-fallback { padding: 4px 22px !important; }
+    .uv-logo-fallback .uv-logo-main { font-size: 26px !important; }
+    .uv-capsulas { padding: 10px 32px !important; }
+    .uv-capsula-icon { flex: 0 0 38px !important; width: 38px !important; height: 38px !important; }
+    .uv-capsula-icon svg { width: 22px !important; height: 22px !important; }
+    .uv-capsula-title { font-size: 13px !important; }
+    .uv-capsula-sub { font-size: 9px !important; }
+    .uv-single-wrap, .uv-pair-grid { margin: 10px 22px !important; }
+    .uv-model-head { padding: 6px 16px !important; font-size: 14px !important; }
+    .uv-model-photo-wrap { min-height: 0 !important; padding: 8px 12px !important; }
+    .uv-foto-maquina { max-height: 200px !important; }
+    .uv-specs-table-2col { font-size: 8px !important; }
+    .uv-specs-table-2col td { padding: 3px 4px !important; }
+    .uv-sx-ico svg { width: 11px !important; height: 11px !important; }
+    .uv-bloque-incluido, .uv-bloque-acc { padding: 8px 24px !important; margin: 0 22px !important; }
+    .uv-bi-titulo { font-size: 13px !important; margin-bottom: 4px !important; }
+    .uv-bi-list li { font-size: 10px !important; padding: 1px 0 1px 20px !important; }
+    .uv-bi-list li::before { width: 12px !important; height: 12px !important; top: 3px !important; }
+    .uv-bi-list li::after { top: 6px !important; }
+    .uv-acc-list li { font-size: 9px !important; padding: 1px 0 1px 14px !important; }
+    .uv-features { padding: 10px 24px !important; }
+    .uv-feature-icon { width: 46px !important; height: 46px !important; }
+    .uv-feature-icon svg { width: 24px !important; height: 24px !important; }
+    .uv-feature-title { font-size: 12px !important; }
+    .uv-feature-desc { font-size: 9px !important; }
+    .uv-footer-banner { padding: 8px 24px !important; }
+    .uv-footer-brand { font-size: 17px !important; }
+    .uv-footer-slogan { font-size: 12px !important; }
+    .uv-footer-web-row { padding: 5px 24px !important; }
+    .uv-footer-cities { padding: 7px 18px !important; }
+    .uv-footer-city { font-size: 10px !important; }
+    .uv-footer-city-tel { font-size: 9px !important; }
+    @page { size: letter portrait; margin: 0; }
   }
   @media (max-width: 760px) {
     .uv-titulo-mega { font-size: 48px; max-width: 100%; }
