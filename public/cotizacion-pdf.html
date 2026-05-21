@@ -533,15 +533,16 @@
         try {
           document.getElementById('msg').textContent = 'Preparando impresión…';
           const canvas = await captureDocCanvas();
-          const dataUrl = canvas.toDataURL('image/png');
-          const w = window.open('', '_blank');
-          if (!w) { alert('Permite ventanas emergentes para imprimir.'); return; }
-          w.document.write('<!DOCTYPE html><html><head><title>Imprimir Cotización</title><style>'
-            + '@page{size:letter portrait;margin:0}'
-            + 'html,body{margin:0;padding:0;background:#fff}'
-            + 'img{display:block;width:100%;height:auto}'
-            + '</style></head><body><img src="' + dataUrl + '" onload="setTimeout(function(){window.print();window.close();},250)"></body></html>');
-          w.document.close();
+          const jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+          if (!jsPDFCtor) throw new Error('jsPDF no disponible');
+          // MISMO PDF que el botón "Descargar PDF" -> imprimir lo idéntico
+          const wMm = canvas.width * 0.264583;
+          const hMm = canvas.height * 0.264583;
+          const pdf = new jsPDFCtor({ orientation: hMm > wMm ? 'p' : 'l', unit: 'mm', format: [wMm, hMm] });
+          pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, wMm, hMm);
+          pdf.autoPrint();
+          const blobUrl = pdf.output('bloburl');
+          window.open(blobUrl, '_blank');
           document.getElementById('msg').textContent = 'Documento listo.';
         } catch (e) {
           console.error(e);
