@@ -228,8 +228,39 @@
         if (!doc) return;
         // LETTER alto útil = 279mm - 2*6mm padding = 267mm en CSS px (1mm=3.7795)
         const pageMax = Math.round(267 * 3.7795);
+        doc.classList.remove('compact', 'ultra');
+        doc.style.transform = '';
+        doc.style.transformOrigin = '';
+        doc.style.height = '';
         if (doc.scrollHeight > pageMax - 30) doc.classList.add('compact');
         if (doc.scrollHeight > pageMax) doc.classList.add('ultra');
+        // Última red de seguridad: si aún excede, escalar uniformemente para forzar 1 hoja
+        if (doc.scrollHeight > pageMax) {
+          const scale = Math.max(0.6, pageMax / doc.scrollHeight);
+          doc.style.transformOrigin = 'top center';
+          doc.style.transform = 'scale(' + scale + ')';
+          // Reservar el alto reducido para que no quede espacio fantasma
+          doc.style.height = Math.ceil(doc.scrollHeight * scale) + 'px';
+        }
+      }
+      function waitForImages() {
+        const imgs = Array.from(document.querySelectorAll('.doc img'));
+        if (!imgs.length) return Promise.resolve();
+        return Promise.all(imgs.map(function (img) {
+          if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+          return new Promise(function (res) {
+            img.addEventListener('load', res, { once: true });
+            img.addEventListener('error', res, { once: true });
+            // Safety timeout 2s
+            setTimeout(res, 2000);
+          });
+        }));
+      }
+      async function fitWhenReady() {
+        await waitForImages();
+        // Doble RAF para garantizar layout final tras imágenes
+        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        fitSinglePage();
       }
       function updateAudienceLabel() {
         const b = document.getElementById('btn-audience');
@@ -457,10 +488,16 @@
         `;
         document.getElementById('doc-body').innerHTML = html;
         fitSinglePage();
+        fitWhenReady();
         updateAudienceLabel();
-        document.getElementById('msg').textContent = 'Documento listo en formato optimizado para una sola página A4.';
+        document.getElementById('msg').textContent = 'Documento listo (Letter, 1 hoja).';
       }
-      function runPrint() { window.print(); }
+      async function runPrint() {
+        await fitWhenReady();
+        // Pequeño delay para que el navegador aplique las clases antes del print
+        await new Promise(r => setTimeout(r, 50));
+        window.print();
+      }
       document.getElementById('btn-print').addEventListener('click', runPrint);
       document.getElementById('btn-close').addEventListener('click', function () { window.close(); });
       document.getElementById('btn-audience').addEventListener('click', function () {
@@ -479,7 +516,7 @@
           let cliente = null;
           if (cot.cliente_id) cliente = await getJson(API + '/clientes/' + cot.cliente_id).catch(() => null);
           render(cot, cliente, cfg || {});
-          if (shouldAutoPrint) setTimeout(runPrint, 350);
+          if (shouldAutoPrint) setTimeout(runPrint, 600);
         } catch (e) {
           document.getElementById('doc-body').innerHTML = '<div class="error">' + esc(e.message || 'No se pudo cargar la cotización.') + '</div>';
           document.getElementById('msg').textContent = 'Error al cargar.';
