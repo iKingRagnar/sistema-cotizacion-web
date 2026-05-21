@@ -184,12 +184,15 @@
     }
     .error { margin: 1rem auto; max-width: 700px; padding: 1rem; border-radius: 10px; border: 1px solid #fecaca; background: #fef2f2; color: #991b1b; }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
   <div class="no-print">
     <span id="msg">Cargando cotización…</span>
     <button type="button" id="btn-audience">Modo: Cliente</button>
-    <button type="button" id="btn-print">Imprimir / Guardar PDF</button>
+    <button type="button" id="btn-pdf">Descargar PDF</button>
+    <button type="button" id="btn-print">Imprimir</button>
     <button type="button" id="btn-close">Cerrar</button>
   </div>
   <div id="doc-body"></div>
@@ -492,13 +495,61 @@
         updateAudienceLabel();
         document.getElementById('msg').textContent = 'Documento listo (Letter, 1 hoja).';
       }
-      async function runPrint() {
+      async function captureDocCanvas() {
         await fitWhenReady();
-        // Pequeño delay para que el navegador aplique las clases antes del print
-        await new Promise(r => setTimeout(r, 50));
-        window.print();
+        const doc = document.querySelector('.doc');
+        if (!doc || !window.html2canvas) throw new Error('html2canvas no disponible');
+        return await window.html2canvas(doc, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          logging: false,
+          windowWidth: doc.scrollWidth,
+          windowHeight: doc.scrollHeight,
+        });
+      }
+      async function downloadPdf() {
+        try {
+          document.getElementById('msg').textContent = 'Generando PDF…';
+          const canvas = await captureDocCanvas();
+          const jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+          if (!jsPDFCtor) throw new Error('jsPDF no disponible');
+          // PDF con el MISMO tamaño que el canvas -> 1 sola página, idéntico a la vista
+          const wMm = canvas.width * 0.264583;
+          const hMm = canvas.height * 0.264583;
+          const pdf = new jsPDFCtor({ orientation: hMm > wMm ? 'p' : 'l', unit: 'mm', format: [wMm, hMm] });
+          pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, wMm, hMm);
+          const folio = (document.title.match(/[A-Z0-9-]{5,}/) || ['cotizacion'])[0];
+          pdf.save('Cotizacion_' + folio + '.pdf');
+          document.getElementById('msg').textContent = 'PDF descargado.';
+        } catch (e) {
+          console.error(e);
+          alert('Error al generar PDF: ' + (e.message || e));
+          document.getElementById('msg').textContent = 'Error al generar PDF.';
+        }
+      }
+      async function runPrint() {
+        try {
+          document.getElementById('msg').textContent = 'Preparando impresión…';
+          const canvas = await captureDocCanvas();
+          const dataUrl = canvas.toDataURL('image/png');
+          const w = window.open('', '_blank');
+          if (!w) { alert('Permite ventanas emergentes para imprimir.'); return; }
+          w.document.write('<!DOCTYPE html><html><head><title>Imprimir Cotización</title><style>'
+            + '@page{size:letter portrait;margin:0}'
+            + 'html,body{margin:0;padding:0;background:#fff}'
+            + 'img{display:block;width:100%;height:auto}'
+            + '</style></head><body><img src="' + dataUrl + '" onload="setTimeout(function(){window.print();window.close();},250)"></body></html>');
+          w.document.close();
+          document.getElementById('msg').textContent = 'Documento listo.';
+        } catch (e) {
+          console.error(e);
+          alert('Error al imprimir: ' + (e.message || e));
+        }
       }
       document.getElementById('btn-print').addEventListener('click', runPrint);
+      document.getElementById('btn-pdf').addEventListener('click', downloadPdf);
       document.getElementById('btn-close').addEventListener('click', function () { window.close(); });
       document.getElementById('btn-audience').addEventListener('click', function () {
         audience = audience === 'cliente' ? 'interno' : 'cliente';
@@ -516,7 +567,7 @@
           let cliente = null;
           if (cot.cliente_id) cliente = await getJson(API + '/clientes/' + cot.cliente_id).catch(() => null);
           render(cot, cliente, cfg || {});
-          if (shouldAutoPrint) setTimeout(runPrint, 600);
+          if (shouldAutoPrint) setTimeout(runPrint, 800);
         } catch (e) {
           document.getElementById('doc-body').innerHTML = '<div class="error">' + esc(e.message || 'No se pudo cargar la cotización.') + '</div>';
           document.getElementById('msg').textContent = 'Error al cargar.';
