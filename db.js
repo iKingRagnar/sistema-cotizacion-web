@@ -591,6 +591,15 @@ async function runMigrations() {
       creado_en TEXT DEFAULT (datetime('now','localtime'))
     )`,
     `CREATE INDEX IF NOT EXISTS idx_config_correos_tipo ON config_correos_reportes(tipo, activo)`,
+    /* Cotización rediseño UNIVERSAL (2026-05-20): imagen máquina, ficha técnica, textos editables, atendido por, bancarios */
+    `ALTER TABLE cotizaciones ADD COLUMN imagen_maquina_url TEXT`,
+    `ALTER TABLE cotizaciones ADD COLUMN ficha_tecnica_url TEXT`,
+    `ALTER TABLE cotizaciones ADD COLUMN alcance_servicio TEXT`,
+    `ALTER TABLE cotizaciones ADD COLUMN siguiente_paso TEXT`,
+    `ALTER TABLE cotizaciones ADD COLUMN atendido_por_nombre TEXT`,
+    `ALTER TABLE cotizaciones ADD COLUMN atendido_por_puesto TEXT`,
+    `ALTER TABLE cotizaciones ADD COLUMN bancarios_rfc TEXT`,
+    `ALTER TABLE cotizaciones ADD COLUMN bancarios_cuentas TEXT`,
   ];
   for (const sql of migrations) {
     try {

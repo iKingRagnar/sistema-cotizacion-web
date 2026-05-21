@@ -6,14 +6,14 @@
   <title>Cotización</title>
   <style>
     * { box-sizing: border-box; }
-    :root { --p: #1e3a5f; --a: #0d9488; --ink: #0f172a; --muted: #475569; }
+    :root { --y: #FFD200; --k: #0a0a0a; --ink: #0f172a; --muted: #475569; --border: #cbd5e1; }
     html { cursor: default; }
     @page { size: A4 portrait; margin: 8mm; }
     body {
       margin: 0;
       font-family: "Segoe UI", Arial, sans-serif;
       color: var(--ink);
-      background: linear-gradient(160deg, #eef2ff 0%, #f0fdfa 45%, #f8fafc 100%);
+      background: #f1f5f9;
       font-size: 10pt;
       line-height: 1.32;
       cursor: default;
@@ -23,8 +23,8 @@
       top: 0;
       z-index: 1000;
       padding: 10px 14px;
-      background: linear-gradient(90deg, #0f172a 0%, var(--p) 55%, var(--a) 100%);
-      color: #e2e8f0;
+      background: linear-gradient(90deg, #0a0a0a 0%, #1f2937 60%, #FFD200 100%);
+      color: #f8fafc;
       display: flex;
       align-items: center;
       gap: 10px;
@@ -37,15 +37,16 @@
       font-weight: 700;
       cursor: pointer;
     }
-    #btn-print { background: #14b8a6; color: #fff; }
+    #btn-print { background: var(--y); color: var(--k); }
     #btn-close { background: #475569; color: #fff; }
+    #btn-audience { background: #0a0a0a; color: var(--y); border: 1px solid var(--y); }
     .doc {
       width: 100%;
       max-width: 196mm;
       margin: 0 auto;
       padding: 7mm 8mm 8mm 9mm;
       background: #fff;
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--border);
       border-radius: 14px;
       box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
       position: relative;
@@ -58,7 +59,7 @@
       bottom: 10mm;
       width: 3px;
       border-radius: 3px;
-      background: linear-gradient(180deg, #1e3a5f 0%, #0d9488 55%, #2563eb 100%);
+      background: linear-gradient(180deg, var(--k) 0%, var(--y) 55%, var(--k) 100%);
     }
     .head {
       border-radius: 12px;
@@ -66,23 +67,37 @@
       display: flex;
       justify-content: space-between;
       gap: 12px;
-      color: #fff;
-      background: linear-gradient(125deg, var(--p), #2563eb 58%, var(--a));
+      background: #fff;
+      color: #0f172a;
+      border-bottom: 3px solid var(--k);
+      border-radius: 12px 12px 0 0;
     }
-    .brand { display: flex; align-items: center; gap: 8px; }
-    .brand img { width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,0.2); padding: 2px; }
-    .brand h1 { margin: 0; font-size: 13px; }
-    .brand p { margin: 2px 0 0 0; font-size: 10px; opacity: .9; }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand img { height: 48px; width: auto; border-radius: 6px; background: transparent; padding: 0; }
+    .brand h1 { margin: 0; font-size: 14px; color: #0f172a; }
+    .brand p { margin: 2px 0 0 0; font-size: 10px; color: #475569; }
     .meta-mini { font-size: 10px; text-align: right; }
+    .banner-total {
+      background: var(--k);
+      color: #fff;
+      text-align: center;
+      padding: 10px 12px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      font-size: 15px;
+      margin: 10px 0 8px;
+      border-radius: 6px;
+      border-bottom: 4px solid var(--y);
+    }
     .title {
       margin: 8px auto 10px;
       text-align: center;
-      font-size: 20px;
+      font-size: 22px;
       font-weight: 900;
-      letter-spacing: .12em;
-      color: var(--p);
+      letter-spacing: .14em;
+      color: var(--k);
       padding-bottom: 6px;
-      border-bottom: 2px solid #e0e7ff;
+      border-bottom: 2px solid var(--y);
       max-width: 92%;
     }
     .meta-grid {
@@ -91,87 +106,68 @@
       gap: 8px;
       margin-bottom: 8px;
     }
-    .chip { border: 1px solid #cbd5e1; border-radius: 10px; padding: 7px; background: #f8fafc; font-size: 10px; }
-    .chip strong { color: #0f766e; }
-    .insight-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin-bottom: 8px; }
-    .insight {
-      border: 1px solid #dbeafe;
-      border-radius: 9px;
-      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-      padding: 6px 7px;
-    }
-    .insight .k { font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: .04em; }
-    .insight .v { margin-top: 2px; font-size: 11px; font-weight: 800; color: #0f172a; }
-    .cols { display: grid; grid-template-columns: 1.4fr 1fr; gap: 8px; margin-bottom: 8px; }
-    .block { border: 1px solid #cbd5e1; border-radius: 10px; padding: 8px; background: #fff; }
-    .block h3 { margin: 0 0 5px; font-size: 10px; color: #0f766e; letter-spacing: .08em; text-transform: uppercase; }
+    .chip { border: 1px solid var(--border); border-radius: 10px; padding: 7px; background: #fafafa; font-size: 10px; }
+    .chip strong { color: var(--k); }
+    .cols { display: grid; grid-template-columns: 1.2fr 1fr; gap: 8px; margin-bottom: 8px; }
+    .block { border: 1px solid var(--border); border-radius: 10px; padding: 8px; background: #fff; }
+    .block h3 { margin: 0 0 5px; font-size: 10px; color: var(--k); letter-spacing: .08em; text-transform: uppercase; background: var(--y); display: inline-block; padding: 2px 8px; border-radius: 4px; }
     .block p { margin: 2px 0; font-size: 10px; color: #1e293b; }
-    .totals { border: 1px solid #99f6e4; background: #f0fdfa; }
-    .totals p { display: flex; justify-content: space-between; font-weight: 700; }
-    .totals p:last-child { color: #115e59; font-size: 11px; border-top: 1px dashed #99f6e4; padding-top: 4px; }
+    .img-maquina-card { display: flex; align-items: center; justify-content: center; min-height: 180px; background: #fafafa; border: 1px dashed var(--border); border-radius: 8px; padding: 6px; }
+    .img-maquina-card img { max-width: 100%; max-height: 180px; object-fit: contain; }
+    .img-placeholder { color: #94a3b8; font-size: 10px; font-style: italic; }
+    .totals { background: #fffbe6; border: 1px solid var(--y); margin-top: 8px; }
+    .totals p { display: flex; justify-content: space-between; font-weight: 700; margin: 2px 0; font-size: 10.5px; }
+    .totals p:last-child { color: var(--k); font-size: 12px; border-top: 1px dashed var(--y); padding-top: 4px; }
     table { width: 100%; border-collapse: collapse; margin: 7px 0; font-size: 10px; }
-    th, td { border: 1px solid #dbeafe; padding: 6px; }
-    th { background: linear-gradient(180deg, #eff6ff 0%, #e0f2fe 100%); color: #1e3a8a; text-transform: uppercase; letter-spacing: .05em; font-size: 9px; }
-    tbody tr:nth-child(even) td { background: #f8fafc; }
+    th, td { border: 1px solid var(--border); padding: 6px; }
+    th { background: var(--k); color: var(--y); text-transform: uppercase; letter-spacing: .05em; font-size: 9px; }
+    tbody tr:nth-child(even) td { background: #fafafa; }
     td.num { text-align: right; font-variant-numeric: tabular-nums; }
     .notes {
       margin-top: 6px;
-      border: 1px solid #fde68a;
-      background: #fffbeb;
+      border: 1px solid var(--y);
+      background: #fffbe6;
       border-radius: 8px;
       padding: 7px 8px;
       font-size: 9.5px;
       color: #475569;
     }
-    .proposal-grid { margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .proposal-card { border: 1px solid #dbeafe; border-radius: 8px; padding: 7px; background: #f8fbff; }
-    .proposal-card h4 { margin: 0 0 4px; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: #1e3a8a; }
-    .proposal-card p { margin: 0; font-size: 9.5px; color: #475569; line-height: 1.35; }
+    /* Bandas con header amarillo + cuerpo blanco */
+    .y-section { margin-top: 10px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .y-head { background: var(--y); color: var(--k); font-weight: 900; font-size: 11px; letter-spacing: .14em; padding: 7px 12px; text-transform: uppercase; }
+    .y-body { padding: 8px 11px; background: #fff; font-size: 10px; }
+    .ficha-frame { width: 100%; height: 380px; border: 1px solid var(--border); border-radius: 6px; }
+    .ficha-img { max-width: 100%; max-height: 380px; display: block; margin: 0 auto; }
+    .ficha-empty { color: #94a3b8; font-style: italic; font-size: 10px; text-align: center; padding: 14px; }
+    .proposal-grid { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .proposal-card { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fff; }
+    .proposal-card h4 { margin: 0; background: var(--y); color: var(--k); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; padding: 6px 9px; }
+    .proposal-card p { margin: 0; padding: 8px 10px; font-size: 9.8px; color: #1e293b; line-height: 1.4; }
+    .atendido-body { padding: 8px 11px; background: #fff; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+    .atendido-nombre { font-weight: 800; font-size: 11.5px; color: var(--k); }
+    .atendido-puesto { color: #475569; font-weight: 700; font-size: 10px; }
+    .atendido-contact { font-size: 9.5px; color: #475569; display: flex; gap: 10px; }
+    .bancarios-empresa { padding: 8px 11px; background: #fffbe6; border-bottom: 1px solid var(--y); font-size: 10.5px; color: var(--k); }
+    .bancarios-rfc { font-family: monospace; font-weight: 700; color: var(--k); background: var(--y); padding: 2px 7px; border-radius: 4px; }
+    .bancarios-table { width: 100%; border-collapse: collapse; margin: 0; font-size: 9.5px; }
+    .bancarios-table th { background: var(--k); color: var(--y); padding: 6px; font-size: 9px; letter-spacing: .06em; border: 1px solid var(--k); }
+    .bancarios-table td { padding: 5px 6px; border: 1px solid var(--border); text-align: center; font-family: monospace; font-size: 9.5px; color: var(--ink); }
+    .bancarios-table tbody tr:nth-child(even) td { background: #fafafa; }
+    .bancarios-politica { padding: 7px 11px; font-size: 8.5px; color: #475569; background: #fff; line-height: 1.35; border-top: 2px solid var(--y); }
+    .doc-foot-banda { background: var(--y); color: var(--k); text-align: center; padding: 9px; font-weight: 900; letter-spacing: .14em; margin-top: 10px; border-radius: 0 0 8px 8px; font-size: 11.5px; }
     .doc-foot {
-      margin-top: 8px;
+      margin-top: 6px;
       padding-top: 6px;
-      border-top: 1px solid #e2e8f0;
+      border-top: 1px solid var(--border);
       font-size: 8px;
       color: #94a3b8;
       text-align: center;
       letter-spacing: .02em;
     }
-    .sign { margin-top: 12px; padding-top: 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-    .line { border-bottom: 1.5px solid #94a3b8; height: 14px; margin-bottom: 2px; }
-    .lbl { font-size: 9px; color: #64748b; text-transform: uppercase; }
-    /* ===== Estilo cota1: banners azul oscuro/teal con texto blanco ===== */
-    .atendido-box, .maquinas-box, .bancarios-box { margin-top: 8px; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; }
-    .atendido-head, .maquinas-head, .bancarios-head {
-      background: linear-gradient(90deg, #1e3a5f 0%, #2c5f7f 70%, #0d9488 100%);
-      color: #ffffff;
-      font-weight: 800;
-      font-size: 11px;
-      letter-spacing: .15em;
-      padding: 7px 12px;
-      text-transform: uppercase;
-      border-bottom: 2px solid #0d9488;
-    }
-    .atendido-body { padding: 7px 9px; background: #f0f9ff; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; border-left: 3px solid #0d9488; }
-    .atendido-nombre { font-weight: 700; font-size: 11px; color: #0f172a; }
-    .atendido-puesto { color: #0d9488; font-weight: 700; font-size: 10px; }
-    .atendido-contact { font-size: 9.5px; color: #475569; display: flex; gap: 10px; }
-    .maquinas-grid { padding: 8px 10px; background: #f8fafc; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .maquina-card { display: flex; gap: 7px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px; background: #fff; }
-    .maquina-card img { width: 80px; height: 60px; object-fit: contain; background: #fff; border-radius: 4px; flex-shrink: 0; }
-    .maquina-info { flex: 1; min-width: 0; }
-    .maquina-modelo { font-weight: 800; font-size: 10px; color: #1e3a5f; }
-    .maquina-desc { font-size: 9px; color: #64748b; margin-top: 2px; }
-    .bancarios-empresa { padding: 7px 11px; background: #ecfeff; border-bottom: 1px solid #a5f3fc; font-size: 10.5px; color: #0f172a; }
-    .bancarios-rfc { font-family: monospace; font-weight: 700; color: #0d9488; background: #f0fdfa; padding: 2px 6px; border-radius: 4px; border: 1px solid #99f6e4; }
-    .bancarios-table { width: 100%; border-collapse: collapse; margin: 0; font-size: 9.5px; }
-    .bancarios-table th { background: linear-gradient(180deg, #1e3a5f 0%, #2c5f7f 100%); color: #ffffff; padding: 6px; font-size: 9px; letter-spacing: .06em; border: 1px solid #1e3a5f; }
-    .bancarios-table td { padding: 5px 6px; border: 1px solid #e2e8f0; text-align: center; font-family: monospace; font-size: 9.5px; color: #0f172a; }
-    .bancarios-table tbody tr:nth-child(even) td { background: #f0f9ff; }
-    .bancarios-politica { padding: 7px 11px; font-size: 8.5px; color: #475569; background: #fff; line-height: 1.35; border-top: 2px solid #0d9488; }
     .doc.compact { font-size: 9.3pt; line-height: 1.24; }
-    .doc.compact .title { margin: 6px 0; font-size: 17px; }
+    .doc.compact .title { margin: 6px 0; font-size: 18px; }
     .doc.compact th, .doc.compact td { padding: 5px; }
-    .doc.compact .meta-grid, .doc.compact .cols, .doc.compact .sign { gap: 6px; margin-bottom: 6px; }
+    .doc.compact .meta-grid, .doc.compact .cols { gap: 6px; margin-bottom: 6px; }
     .doc.ultra { font-size: 8.8pt; line-height: 1.18; }
     .doc.ultra .notes { font-size: 9px; }
     @media print {
@@ -206,6 +202,7 @@
         return;
       }
       function esc(s) { if (s == null) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+      function escAttr(s) { return esc(s).replace(/"/g, '&quot;'); }
       function fmtNum(n) { return Number(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
       function fmtDate(s) { return s ? String(s).slice(0, 10) : '—'; }
       function validHasta(fecha) { const d = new Date(fecha || Date.now()); d.setDate(d.getDate() + 30); return d.toISOString().slice(0, 10); }
@@ -231,6 +228,15 @@
         const b = document.getElementById('btn-audience');
         if (b) b.textContent = audience === 'interno' ? 'Modo: Interno' : 'Modo: Cliente';
       }
+      function isPdfUrl(u) {
+        const s = String(u || '').slice(0, 200).toLowerCase();
+        return s.includes('application/pdf') || /\.pdf(\?|$)/.test(s);
+      }
+      function parseCuentasJson(raw) {
+        if (!raw) return null;
+        if (Array.isArray(raw)) return raw;
+        try { const a = JSON.parse(String(raw)); return Array.isArray(a) && a.length ? a : null; } catch (_) { return null; }
+      }
       function render(cot, cliente, cfg) {
         const tipoLabel = cot.tipo === 'mano_obra' ? 'Mano de obra' : cot.tipo === 'refacciones' ? 'Refacciones' : (cot.tipo || 'Cotización');
         const moneda = (cot.moneda || 'MXN').toUpperCase();
@@ -238,17 +244,12 @@
         const subtotal = Number(cot.subtotal) || 0;
         const iva = Number(cot.iva) || 0;
         const total = Number(cot.total) || subtotal + iva;
-        const monedaEtiqueta = moneda === 'USD' ? 'USD — Dólares estadounidenses' : 'MXN — Pesos mexicanos';
         function fmtMonto(n) {
           if (moneda === 'USD') return 'US$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
           return '$' + Number(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
-        function fmtUsd(n) {
-          return 'US$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
-        function fmtMxn(n) {
-          return '$' + Number(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
+        function fmtUsd(n) { return 'US$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+        function fmtMxn(n) { return '$' + Number(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
         function tipoLineaLabelPdf(t) {
           const m = { refaccion: 'Refacción', vuelta: 'Vuelta', mano_obra: 'Mano de obra', equipo: 'Equipo / máquina', otro: 'Otro' };
           const k = String(t || '').trim();
@@ -269,11 +270,9 @@
           }
           return esc(desc);
         }
-        /** Precio unitario en USD y MXN por línea (precio_unitario va en moneda de la cotización). */
         function unitUsdMxn(l) {
           const pu = Number(l.precio_unitario || 0);
-          let usd;
-          let mxn;
+          let usd, mxn;
           if (moneda === 'USD') {
             usd = pu;
             mxn = tipoCambio > 0 ? pu * tipoCambio : null;
@@ -284,7 +283,6 @@
           }
           return { usd, mxn };
         }
-        // Construir filas: Código → Descripción → Cantidad → USD → MXN → Subtotal (moneda cotización)
         const lineas = Array.isArray(cot.lineas) ? cot.lineas : [];
         let lineasHtml = '';
         if (lineas.length > 0) {
@@ -294,7 +292,7 @@
             const colMxn = mxn != null && !isNaN(mxn) ? fmtMxn(mxn) : '—';
             return `<tr>
               <td style="font-size:0.78em">${tipoLineaLabelPdf(l.tipo_linea)}</td>
-              <td style="font-size:0.82em;color:#334155;font-weight:600">${esc(l.codigo || '—')}</td>
+              <td style="font-size:0.82em;color:#0f172a;font-weight:600">${esc(l.codigo || '—')}</td>
               <td style="font-size:0.78em">${esc(l.maquina_nombre || '—')}</td>
               <td>${lineDescPdf(l)}</td>
               <td class="num">${Number(l.cantidad || 1)}</td>
@@ -304,98 +302,67 @@
             </tr>`;
           }).join('');
         } else {
-          lineasHtml = `<tr>
-            <td>${esc(tipoLabel)}</td>
-            <td>—</td>
-            <td>—</td>
-            <td>${esc(tipoLabel)}</td>
-            <td class="num">1</td>
-            <td class="num">—</td>
-            <td class="num">—</td>
-            <td class="num">${fmtMonto(subtotal)}</td>
-          </tr>`;
+          lineasHtml = `<tr><td>${esc(tipoLabel)}</td><td>—</td><td>—</td><td>${esc(tipoLabel)}</td><td class="num">1</td><td class="num">—</td><td class="num">—</td><td class="num">${fmtMonto(subtotal)}</td></tr>`;
         }
         const basePath = window.location.pathname.replace(/\/[^/]*$/, '') || '';
         const defaultLogo = basePath ? (window.location.origin + basePath + '/favicon.svg') : (window.location.origin + '/favicon.svg');
         const logoUrl = cfg.logoUrl || defaultLogo;
-        const shortName = cfg.shortName || cfg.appName || 'Gestor Administrativo';
-        const tagline = cfg.tagline || 'Cotizaciones y operaciones empresariales';
         const internalBox = audience === 'interno'
           ? `<div class="notes"><strong>Uso interno:</strong> ID #${esc(cot.id || '—')} · Cliente ID: ${esc(cot.cliente_id || '—')} · Tipo técnico: ${esc(cot.tipo || '—')}</div>`
           : '';
+        // ===== IMAGEN DE MÁQUINA =====
+        const imgUrl = cot.imagen_maquina_url ? String(cot.imagen_maquina_url) : '';
+        const imgMaquinaHtml = imgUrl
+          ? `<img src="${escAttr(imgUrl)}" alt="Máquina cotizada" onerror="this.parentNode.innerHTML='<span class=&quot;img-placeholder&quot;>No se pudo cargar la imagen</span>'">`
+          : `<span class="img-placeholder">Sin imagen</span>`;
+        // ===== FICHA TÉCNICA =====
+        const fichaUrl = cot.ficha_tecnica_url ? String(cot.ficha_tecnica_url) : '';
+        let fichaHtml;
+        if (fichaUrl) {
+          if (isPdfUrl(fichaUrl)) {
+            fichaHtml = `<iframe class="ficha-frame" src="${escAttr(fichaUrl)}"></iframe>
+              <p style="margin-top:6px;font-size:9.5px"><a href="${escAttr(fichaUrl)}" target="_blank">Abrir ficha técnica completa</a></p>`;
+          } else {
+            fichaHtml = `<img class="ficha-img" src="${escAttr(fichaUrl)}" alt="Ficha técnica">`;
+          }
+        } else {
+          fichaHtml = `<div class="ficha-empty">No se cargó ficha técnica para esta cotización</div>`;
+        }
         // ===== ATENDIDO POR =====
-        const vendedorNombre = cot.vendedor_catalogo_nombre || cot.vendedor || '—';
-        const vendedorPuesto = cot.vendedor_puesto || '';
+        const vendedorNombre = cot.atendido_por_nombre || cot.vendedor_catalogo_nombre || cot.vendedor || '—';
+        const vendedorPuesto = cot.atendido_por_puesto || cot.vendedor_puesto || '';
         const vendedorTel = cot.vendedor_telefono || '';
         const vendedorMail = cot.vendedor_email || '';
-        const atendidoBox = `
-          <div class="atendido-box">
-            <div class="atendido-head"><i style="margin-right:6px">👤</i>ATENDIDO POR</div>
-            <div class="atendido-body">
-              <div class="atendido-nombre">${esc(vendedorNombre)}${vendedorPuesto ? ' <span class="atendido-puesto">· ' + esc(vendedorPuesto) + '</span>' : ''}</div>
-              ${vendedorTel || vendedorMail ? '<div class="atendido-contact">' + [vendedorTel ? '<span>📞 ' + esc(vendedorTel) + '</span>' : '', vendedorMail ? '<span>✉️ ' + esc(vendedorMail) + '</span>' : ''].filter(Boolean).join(' &nbsp; ') + '</div>' : ''}
-            </div>
-          </div>`;
-        // ===== IMÁGENES DE MÁQUINAS COTIZADAS =====
-        const maquinasConImagen = (cot.lineas || []).filter(l => l.maquina_imagen_url && String(l.maquina_imagen_url).trim());
-        const maquinasUnicas = [];
-        const idsVistos = new Set();
-        maquinasConImagen.forEach(l => {
-          if (l.maquina_id && !idsVistos.has(l.maquina_id)) {
-            idsVistos.add(l.maquina_id);
-            maquinasUnicas.push(l);
-          }
-        });
-        const maquinasBox = maquinasUnicas.length ? `
-          <div class="maquinas-box">
-            <div class="maquinas-head"><i style="margin-right:6px">🔧</i>EQUIPO COTIZADO</div>
-            <div class="maquinas-grid">
-              ${maquinasUnicas.map(l => `
-                <div class="maquina-card">
-                  <img src="${esc(l.maquina_imagen_url)}" alt="${esc(l.maquina_nombre || '')}" onerror="this.style.display='none'">
-                  <div class="maquina-info">
-                    <div class="maquina-modelo">${esc(l.maquina_modelo || l.maquina_nombre || '—')}</div>
-                    ${l.maquina_descripcion_corta ? '<div class="maquina-desc">' + esc(l.maquina_descripcion_corta) + '</div>' : ''}
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-          </div>` : '';
-        // ===== DATOS BANCARIOS UNIVERSAL =====
-        const bancariosBox = `
-          <div class="bancarios-box">
-            <div class="bancarios-head"><i style="margin-right:6px">🏦</i>INFORMACIÓN BANCARIA</div>
-            <div class="bancarios-empresa"><strong>UNIVERSAL MAQUINARIA S.A. DE C.V.</strong> &nbsp; · &nbsp; RFC: <span class="bancarios-rfc">UMA000000XX0</span></div>
-            <table class="bancarios-table">
-              <thead>
-                <tr><th>BANCO</th><th>MONEDA</th><th>CUENTA</th><th>CLABE</th><th>SUC.</th><th>SWIFT</th></tr>
-              </thead>
-              <tbody>
-                <tr><td>BANORTE</td><td>PESOS</td><td>0000000000</td><td>072000000000000000</td><td>———</td><td>———</td></tr>
-                <tr><td>BANORTE</td><td>DÓLARES</td><td>0000000000</td><td>072000000000000000</td><td>———</td><td>MENOMXMTXXX</td></tr>
-                <tr><td>BANAMEX</td><td>PESOS</td><td>0000000</td><td>002000000000000000</td><td>0000</td><td>———</td></tr>
-                <tr><td>BANAMEX</td><td>DÓLARES</td><td>0000000</td><td>002000000000000000</td><td>0000</td><td>BNMXMXMMXXX</td></tr>
-              </tbody>
-            </table>
-            <div class="bancarios-politica"><strong>Política de pago con cheque:</strong> Por seguridad financiera, cuando el pago sea con cheque la entrega de máquinas y/o refacciones se hará al siguiente día hábil del depósito previa confirmación de acreditamiento de fondos.</div>
-          </div>`;
+        // ===== BANCARIOS =====
+        const rfc = cot.bancarios_rfc || 'UMA000000XX0';
+        const cuentas = parseCuentasJson(cot.bancarios_cuentas) || [
+          { banco: 'BANORTE', moneda: 'PESOS', cuenta: '0000000000', clabe: '072000000000000000', suc: '———', swift: '———' },
+          { banco: 'BANORTE', moneda: 'DÓLARES', cuenta: '0000000000', clabe: '072000000000000000', suc: '———', swift: 'MENOMXMTXXX' },
+          { banco: 'BANAMEX', moneda: 'PESOS', cuenta: '0000000', clabe: '002000000000000000', suc: '0000', swift: '———' },
+          { banco: 'BANAMEX', moneda: 'DÓLARES', cuenta: '0000000', clabe: '002000000000000000', suc: '0000', swift: 'BNMXMXMMXXX' },
+        ];
+        const cuentasRows = cuentas.map(c => `<tr><td>${esc(c.banco || '—')}</td><td>${esc(c.moneda || '—')}</td><td>${esc(c.cuenta || '—')}</td><td>${esc(c.clabe || '—')}</td><td>${esc(c.suc || '—')}</td><td>${esc(c.swift || '—')}</td></tr>`).join('');
+        const alcanceDefault = 'Incluye suministro y/o ejecución conforme al tipo de cotización seleccionado, con validación técnica previa.';
+        const siguienteDefault = 'Al autorizar, programamos fecha de atención y confirmamos entregables. Tiempo estimado sujeto a disponibilidad.';
+        const alcance = cot.alcance_servicio || alcanceDefault;
+        const siguiente = cot.siguiente_paso || siguienteDefault;
         const html = `
           <div class="doc" id="doc">
-            <div class="head" style="background:#fff;color:#0f172a;border-bottom:3px solid #1e3a5f;border-radius:12px 12px 0 0">
+            <div class="head">
               <div class="brand">
-                <img src="fondos/universal-logo.jpg" alt="UNIVERSAL" style="height:48px;width:auto;background:transparent;padding:0;border-radius:6px" onerror="this.src='${esc(logoUrl)}'">
+                <img src="fondos/universal-logo.jpg" alt="UNIVERSAL" onerror="this.src='${escAttr(logoUrl)}'">
                 <div>
-                  <h1 style="color:#0f172a">UNIVERSAL MAQUINARIA</h1>
-                  <p style="color:#475569">Tel. 81 8366 8946 · Donde la competencia no existe</p>
+                  <h1>UNIVERSAL MAQUINARIA</h1>
+                  <p>Tel. 81 8366 8946 · Donde la competencia no existe</p>
                 </div>
               </div>
-              <div class="meta-mini" style="color:#0f172a">
+              <div class="meta-mini">
                 <div><strong>Folio:</strong> ${esc(cot.folio || '—')}</div>
                 <div><strong>Fecha:</strong> ${fmtDate(cot.fecha)}</div>
                 <div><strong>Vigencia:</strong> ${fmtDate(validHasta(cot.fecha))}</div>
               </div>
             </div>
-            <div style="background:linear-gradient(90deg,#1e3a5f 0%,#2c5f7f 70%,#0d9488 100%);color:#fff;text-align:center;padding:6px 10px;font-weight:800;letter-spacing:.08em;font-size:13px;margin:8px 0;border-radius:6px">
+            <div class="banner-total">
               TOTAL ${esc(moneda)}: ${fmtMonto(total)}${moneda === 'USD' && tipoCambio > 0 ? ' &nbsp;·&nbsp; T.C. ' + fmtNum(tipoCambio) : ''}
             </div>
             <div class="title">COTIZACIÓN</div>
@@ -403,12 +370,6 @@
               <div class="chip"><strong>Folio:</strong> ${esc(cot.folio || '—')}</div>
               <div class="chip"><strong>Fecha emisión:</strong> ${fmtDate(cot.fecha)}</div>
               <div class="chip"><strong>Vigencia:</strong> ${fmtDate(validHasta(cot.fecha))}</div>
-            </div>
-            <div class="insight-grid">
-              <div class="insight"><div class="k">Modalidad</div><div class="v">${esc(tipoLabel)}</div></div>
-              <div class="insight"><div class="k">Moneda de cotización</div><div class="v">${esc(monedaEtiqueta)}${tipoCambio > 0 ? ' · T.C. ' + fmtNum(tipoCambio) + ' MXN/USD' : ''}</div></div>
-              <div class="insight"><div class="k">IVA aplicado</div><div class="v">16%</div></div>
-              <div class="insight"><div class="k">Importe final</div><div class="v">${fmtMonto(total)}</div></div>
             </div>
             <div class="cols">
               <div class="block">
@@ -419,15 +380,18 @@
                 ${cliente && cliente.telefono ? '<p>Teléfono: ' + esc(cliente.telefono) + '</p>' : ''}
                 ${cliente && cliente.ciudad ? '<p>Ciudad: ' + esc(cliente.ciudad) + '</p>' : ''}
               </div>
-              <div class="block totals">
-                <h3>Resumen <small style="font-weight:400;color:#6b7280">${moneda}</small></h3>
-                <p><span>Subtotal</span><span>${fmtMonto(subtotal)}</span></p>
-                <p><span>IVA 16%</span><span>${fmtMonto(iva)}</span></p>
-                <p><span>Total</span><span>${fmtMonto(total)}</span></p>
-                ${moneda === 'USD' && tipoCambio > 0 ? `<p style="font-size:0.8em;color:#6b7280"><span>Equiv. MXN</span><span>$${fmtNum(total * tipoCambio)}</span></p>` : ''}
+              <div class="block">
+                <h3>Imagen de máquina</h3>
+                <div class="img-maquina-card">${imgMaquinaHtml}</div>
               </div>
             </div>
-            ${moneda === 'USD' && tipoCambio > 0 ? `<p style="font-size:0.8em;color:#6b7280;margin-bottom:0.5rem">Tipo de cambio aplicado: 1 USD = $${fmtNum(tipoCambio)} MXN</p>` : ''}
+            <div class="block totals">
+              <h3>Resumen ${esc(moneda)}</h3>
+              <p><span>Subtotal</span><span>${fmtMonto(subtotal)}</span></p>
+              <p><span>IVA 16%</span><span>${fmtMonto(iva)}</span></p>
+              <p><span>Total</span><span>${fmtMonto(total)}</span></p>
+              ${moneda === 'USD' && tipoCambio > 0 ? `<p style="font-size:0.85em;color:#6b7280"><span>Equiv. MXN</span><span>$${fmtNum(total * tipoCambio)}</span></p>` : ''}
+            </div>
             <table>
               <thead>
                 <tr>
@@ -441,31 +405,46 @@
                   <th class="num" style="width:9%">Subtotal (${moneda})</th>
                 </tr>
               </thead>
-              <tbody>
-                ${lineasHtml}
-              </tbody>
+              <tbody>${lineasHtml}</tbody>
             </table>
             <div class="notes">
-              <strong>Condiciones:</strong> Importes de cotización en <strong>${moneda}</strong> (columna Subtotal). Columnas de precio unitario muestran referencia en <strong>USD</strong> y <strong>MXN</strong>. Vigencia 30 días naturales, sujeto a disponibilidad.
+              <strong>Condiciones:</strong> Importes en <strong>${moneda}</strong>. Vigencia 30 días naturales, sujeto a disponibilidad.
               ${tipoCambio > 0 ? ' Tipo de cambio referencia: $' + fmtNum(tipoCambio) + ' MXN por 1 USD.' : ''}
             </div>
             ${internalBox}
+            <div class="y-section">
+              <div class="y-head">📎 Ficha técnica</div>
+              <div class="y-body">${fichaHtml}</div>
+            </div>
             <div class="proposal-grid">
               <article class="proposal-card">
                 <h4>Alcance del servicio</h4>
-                <p>Incluye suministro y/o ejecución conforme al tipo de cotización seleccionado, con validación técnica previa.</p>
+                <p>${esc(alcance)}</p>
               </article>
               <article class="proposal-card">
                 <h4>Siguiente paso</h4>
-                <p>Al autorizar, programamos fecha de atención y confirmamos entregables. Tiempo estimado sujeto a disponibilidad.</p>
+                <p>${esc(siguiente)}</p>
               </article>
             </div>
-            ${atendidoBox}
-            ${maquinasBox}
-            ${bancariosBox}
-            <div style="background:#fde047;color:#0f172a;text-align:center;padding:8px;font-weight:900;letter-spacing:.12em;margin-top:8px;border-top:3px solid #0d9488;border-radius:0 0 8px 8px;font-size:11px">
-              UNIVERSAL MAQUINARIA · DONDE LA COMPETENCIA NO EXISTE
+            <div class="y-section">
+              <div class="y-head">👤 Atendido por</div>
+              <div class="atendido-body">
+                <div class="atendido-nombre">${esc(vendedorNombre)}${vendedorPuesto ? ' <span class="atendido-puesto">· ' + esc(vendedorPuesto) + '</span>' : ''}</div>
+                ${vendedorTel || vendedorMail ? '<div class="atendido-contact">' + [vendedorTel ? '<span>📞 ' + esc(vendedorTel) + '</span>' : '', vendedorMail ? '<span>✉️ ' + esc(vendedorMail) + '</span>' : ''].filter(Boolean).join(' &nbsp; ') + '</div>' : ''}
+              </div>
             </div>
+            <div class="y-section">
+              <div class="y-head">🏦 Información bancaria</div>
+              <div class="bancarios-empresa"><strong>UNIVERSAL MAQUINARIA S.A. DE C.V.</strong> &nbsp; · &nbsp; RFC: <span class="bancarios-rfc">${esc(rfc)}</span></div>
+              <table class="bancarios-table">
+                <thead>
+                  <tr><th>BANCO</th><th>MONEDA</th><th>CUENTA</th><th>CLABE</th><th>SUC.</th><th>SWIFT</th></tr>
+                </thead>
+                <tbody>${cuentasRows}</tbody>
+              </table>
+              <div class="bancarios-politica"><strong>Política de pago con cheque:</strong> Por seguridad financiera, cuando el pago sea con cheque la entrega de máquinas y/o refacciones se hará al siguiente día hábil del depósito previa confirmación de acreditamiento de fondos.</div>
+            </div>
+            <div class="doc-foot-banda">UNIVERSAL · DONDE LA COMPETENCIA NO EXISTE</div>
             <div class="doc-foot">Documento generado para fines informativos · Vigencia y disponibilidad sujetas a condiciones comerciales.</div>
           </div>
         `;

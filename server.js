@@ -3225,6 +3225,14 @@ app.post('/api/cotizaciones', async (req, res) => {
       vendedor_personal_id,
       descuento_pct,
       vendedor,
+      imagen_maquina_url,
+      ficha_tecnica_url,
+      alcance_servicio,
+      siguiente_paso,
+      atendido_por_nombre,
+      atendido_por_puesto,
+      bancarios_rfc,
+      bancarios_cuentas,
     } = req.body || {};
     if (!cliente_id) return res.status(400).json({ error: 'cliente_id requerido' });
     const prefijoFolio = tipo === 'mano_obra' ? 'COT-MO' : tipo === 'maquina' ? 'COT-MAQ' : 'COT-REF';
@@ -3237,9 +3245,16 @@ app.post('/api/cotizaciones', async (req, res) => {
     const maqIds = typeof maquinas_ids === 'string' ? maquinas_ids : JSON.stringify(maquinas_ids || []);
     const dct = Math.min(100, Math.max(0, Number(descuento_pct) || 0));
     const vid = vendedor_personal_id != null && String(vendedor_personal_id).trim() !== '' ? Number(vendedor_personal_id) : null;
+    const nstr = (v) => (v != null && String(v).trim() !== '' ? String(v).trim() : null);
+    const bancariosCuentasStr = (() => {
+      if (bancarios_cuentas == null || bancarios_cuentas === '') return null;
+      if (typeof bancarios_cuentas === 'string') return bancarios_cuentas;
+      try { return JSON.stringify(bancarios_cuentas); } catch (_) { return null; }
+    })();
     await db.runQuery(
-      `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total, tipo_cambio, moneda, maquinas_ids, estado, notas, vendedor_personal_id, descuento_pct, vendedor)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total, tipo_cambio, moneda, maquinas_ids, estado, notas, vendedor_personal_id, descuento_pct, vendedor,
+        imagen_maquina_url, ficha_tecnica_url, alcance_servicio, siguiente_paso, atendido_por_nombre, atendido_por_puesto, bancarios_rfc, bancarios_cuentas)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         f,
         cliente_id,
@@ -3256,6 +3271,14 @@ app.post('/api/cotizaciones', async (req, res) => {
         Number.isFinite(vid) && vid > 0 ? vid : null,
         dct,
         vendedor ? String(vendedor).trim() : null,
+        nstr(imagen_maquina_url),
+        nstr(ficha_tecnica_url),
+        nstr(alcance_servicio),
+        nstr(siguiente_paso),
+        nstr(atendido_por_nombre),
+        nstr(atendido_por_puesto),
+        nstr(bancarios_rfc),
+        bancariosCuentasStr,
       ]
     );
     const r = await db.getOne(
@@ -3277,7 +3300,8 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
   try {
     const existing = await db.getOne('SELECT * FROM cotizaciones WHERE id = ?', [req.params.id]);
     if (!existing) return res.status(404).json({ error: 'No encontrada' });
-    const { folio, cliente_id, tipo, fecha, tipo_cambio, moneda, maquinas_ids, estado, notas, vendedor_personal_id, descuento_pct, vendedor } = req.body || {};
+    const { folio, cliente_id, tipo, fecha, tipo_cambio, moneda, maquinas_ids, estado, notas, vendedor_personal_id, descuento_pct, vendedor,
+      imagen_maquina_url, ficha_tecnica_url, alcance_servicio, siguiente_paso, atendido_por_nombre, atendido_por_puesto, bancarios_rfc, bancarios_cuentas } = req.body || {};
     const hasBody = req.body && typeof req.body === 'object';
     const hasMaqIds = hasBody && Object.prototype.hasOwnProperty.call(req.body, 'maquinas_ids');
     const hasNotas = hasBody && Object.prototype.hasOwnProperty.call(req.body, 'notas');
@@ -3308,10 +3332,27 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
     const nextMon = (moneda != null && String(moneda).trim() !== '') ? String(moneda).trim().toUpperCase() : (existing.moneda || 'USD');
     const tcChanged = hasBody && Object.prototype.hasOwnProperty.call(req.body, 'tipo_cambio') && nextTc !== (Number(existing.tipo_cambio) || 17.0);
     const monChanged = hasBody && Object.prototype.hasOwnProperty.call(req.body, 'moneda') && nextMon !== String(existing.moneda || 'USD').toUpperCase();
+    // Nuevos campos del rediseño UNIVERSAL (preservar valor existente si no se envían)
+    const _has = (k) => hasBody && Object.prototype.hasOwnProperty.call(req.body, k);
+    const _nstr = (v) => (v != null && String(v).trim() !== '' ? String(v).trim() : null);
+    const imgMaq = _has('imagen_maquina_url') ? _nstr(imagen_maquina_url) : (existing.imagen_maquina_url || null);
+    const fichaT = _has('ficha_tecnica_url') ? _nstr(ficha_tecnica_url) : (existing.ficha_tecnica_url || null);
+    const alcSvc = _has('alcance_servicio') ? _nstr(alcance_servicio) : (existing.alcance_servicio || null);
+    const sigPaso = _has('siguiente_paso') ? _nstr(siguiente_paso) : (existing.siguiente_paso || null);
+    const atNom = _has('atendido_por_nombre') ? _nstr(atendido_por_nombre) : (existing.atendido_por_nombre || null);
+    const atPue = _has('atendido_por_puesto') ? _nstr(atendido_por_puesto) : (existing.atendido_por_puesto || null);
+    const banRfc = _has('bancarios_rfc') ? _nstr(bancarios_rfc) : (existing.bancarios_rfc || null);
+    const banCuentas = _has('bancarios_cuentas')
+      ? (bancarios_cuentas == null || bancarios_cuentas === ''
+          ? null
+          : (typeof bancarios_cuentas === 'string' ? bancarios_cuentas : (() => { try { return JSON.stringify(bancarios_cuentas); } catch (_) { return null; } })()))
+      : (existing.bancarios_cuentas || null);
     await db.runQuery(
       `UPDATE cotizaciones
        SET folio=?, cliente_id=?, tipo=?, fecha=?, tipo_cambio=?, moneda=?, maquinas_ids=?, estado=?, notas=?,
-           vendedor_personal_id=?, descuento_pct=?, vendedor=?
+           vendedor_personal_id=?, descuento_pct=?, vendedor=?,
+           imagen_maquina_url=?, ficha_tecnica_url=?, alcance_servicio=?, siguiente_paso=?,
+           atendido_por_nombre=?, atendido_por_puesto=?, bancarios_rfc=?, bancarios_cuentas=?
        WHERE id=?`,
       [
         (folio != null && String(folio).trim() !== '') ? String(folio).trim() : (existing.folio || null),
@@ -3326,6 +3367,7 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
         Number.isFinite(vidPut) && vidPut > 0 ? vidPut : null,
         dctPut,
         vendPut || null,
+        imgMaq, fichaT, alcSvc, sigPaso, atNom, atPue, banRfc, banCuentas,
         req.params.id,
       ]
     );
