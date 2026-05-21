@@ -373,25 +373,40 @@
             fichaHtml = `<img class="ficha-img" src="${escAttr(fichaUrl)}" alt="Ficha técnica">`;
           }
         } else if (fichaManualArr.length) {
-          // Tabla tipo Excel con tipo por fila: pair | value-only | header
-          const renderRow = (r) => {
+          // Agrupar por secciones: cada header inicia una nueva sección, sus rows hasta el siguiente header
+          const sections = [];
+          let cur = null;
+          for (const r of fichaManualArr) {
             const t = r.type || 'pair';
             if (t === 'header') {
-              return `<tr><th colspan="2" style="background:var(--y);color:var(--k);border:1px solid #c8a000;padding:4px 8px;text-align:left;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase">${esc(r.label||'')}</th></tr>`;
+              cur = { title: r.label || '', rows: [] };
+              sections.push(cur);
+            } else {
+              if (!cur) { cur = { title: null, rows: [] }; sections.push(cur); }
+              cur.rows.push(r);
             }
+          }
+          const renderRow = (r) => {
+            const t = r.type || 'pair';
             if (t === 'value-only') {
               return `<tr><td colspan="2" style="border:1px solid var(--border);padding:4px 7px;font-size:9.5px;color:#1e293b;background:#fff">${esc(r.value||'')}</td></tr>`;
             }
             return `<tr><th style="background:#fffbe6;border:1px solid var(--border);padding:4px 7px;text-align:left;font-size:9.5px;color:var(--k);font-weight:800;width:42%">${esc(r.label||'')}</th><td style="border:1px solid var(--border);padding:4px 7px;font-size:9.5px;color:#1e293b">${esc(r.value||'')}</td></tr>`;
           };
-          // Partir en 2 columnas respetando headers (los headers anclan grupos)
-          const half = Math.ceil(fichaManualArr.length / 2);
-          const col1 = fichaManualArr.slice(0, half);
-          const col2 = fichaManualArr.slice(half);
-          const renderCol = (rows) => rows.map(renderRow).join('');
-          fichaHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-            <table style="width:100%;border-collapse:collapse;margin:0;box-shadow:none">${renderCol(col1)}</table>
-            <table style="width:100%;border-collapse:collapse;margin:0;box-shadow:none">${renderCol(col2)}</table>
+          const renderSection = (s) => {
+            const titleHtml = s.title
+              ? `<div style="text-align:center;font-weight:900;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--k);padding:4px 6px;border:1px solid var(--border);border-bottom:none;background:#fff">${esc(s.title)}</div>`
+              : '';
+            const rowsHtml = s.rows.length
+              ? `<table style="width:100%;border-collapse:collapse;margin:0;box-shadow:none">${s.rows.map(renderRow).join('')}</table>`
+              : '';
+            return `<div>${titleHtml}${rowsHtml}</div>`;
+          };
+          // Columnas según cantidad de secciones: 1 -> 1, 2 -> 2, 3 -> 3, 4+ -> 2x2 (grid 2 cols)
+          const n = sections.length;
+          const cols = n <= 1 ? 1 : (n === 2 ? 2 : (n === 3 ? 3 : 2));
+          fichaHtml = `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:6px;align-items:start">
+            ${sections.map(renderSection).join('')}
           </div>`;
         } else {
           fichaHtml = `<div class="ficha-empty">No se cargó ficha técnica para esta cotización</div>`;
