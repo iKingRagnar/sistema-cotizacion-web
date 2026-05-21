@@ -8,7 +8,7 @@
     * { box-sizing: border-box; }
     :root { --y: #FFD200; --k: #0a0a0a; --ink: #0f172a; --muted: #475569; --border: #cbd5e1; }
     html { cursor: default; }
-    @page { size: A4 portrait; margin: 8mm; }
+    @page { size: A4 portrait; margin: 0; }
     body {
       margin: 0;
       font-family: "Segoe UI", Arial, sans-serif;
@@ -155,17 +155,32 @@
       text-align: center;
       letter-spacing: .02em;
     }
-    .doc.compact { font-size: 9.3pt; line-height: 1.24; }
-    .doc.compact .title { margin: 6px 0; font-size: 18px; }
-    .doc.compact th, .doc.compact td { padding: 5px; }
+    .doc.compact { font-size: 9.3pt; line-height: 1.22; }
+    .doc.compact .title { margin: 4px 0; font-size: 18px; }
+    .doc.compact th, .doc.compact td { padding: 4px 5px; }
     .doc.compact .meta-grid, .doc.compact .cols { gap: 6px; margin-bottom: 6px; }
-    .doc.ultra { font-size: 8.8pt; line-height: 1.18; }
-    .doc.ultra .notes { font-size: 9px; }
+    .doc.compact .block, .doc.compact .y-body { padding: 7px 9px; }
+    .doc.compact .banner-total { padding: 7px 12px; font-size: 13px; margin: 7px 0 6px; }
+    .doc.compact .img-maquina-card { min-height: 150px; }
+    .doc.compact .img-maquina-card img { max-height: 150px; }
+    .doc.compact .ficha-frame, .doc.compact .ficha-img { height: 260px; max-height: 260px; }
+    .doc.ultra { font-size: 8.6pt; line-height: 1.16; }
+    .doc.ultra .notes { font-size: 8.5px; }
+    .doc.ultra .title { font-size: 15px; margin: 3px 0; }
+    .doc.ultra th, .doc.ultra td { padding: 3px 4px; }
+    .doc.ultra .block, .doc.ultra .y-body { padding: 5px 7px; }
+    .doc.ultra .banner-total { padding: 5px 10px; font-size: 11px; margin: 5px 0 4px; }
+    .doc.ultra .img-maquina-card { min-height: 110px; }
+    .doc.ultra .img-maquina-card img { max-height: 110px; }
+    .doc.ultra .ficha-frame, .doc.ultra .ficha-img { height: 190px; max-height: 190px; }
+    .doc.ultra .cols, .doc.ultra .meta-grid, .doc.ultra .proposal-grid { gap: 5px; margin-bottom: 5px; }
     @media print {
       * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      body { background: #fff; }
+      html, body { background: #fff; margin: 0; padding: 0; }
       .no-print { display: none !important; }
-      .doc { margin: 0; border-radius: 0; border: none; box-shadow: none; max-width: none; padding: 0; }
+      /* Print MATCHES preview: misma .doc, mismo padding, mismo max-width */
+      .doc { margin: 0 auto; border: none; border-radius: 0; box-shadow: none; max-width: 210mm; width: 210mm; padding: 8mm 9mm; }
+      .doc, .doc * { page-break-inside: avoid; }
     }
     .error { margin: 1rem auto; max-width: 700px; padding: 1rem; border-radius: 10px; border: 1px solid #fecaca; background: #fef2f2; color: #991b1b; }
   </style>
@@ -211,8 +226,10 @@
       function fitSinglePage() {
         const doc = document.querySelector('.doc');
         if (!doc) return;
-        const pageMax = Math.round(277 * 3.7795);
-        if (doc.scrollHeight > pageMax) doc.classList.add('compact');
+        // A4 alto util = 297mm - 2*(8mm padding interno) = 281mm; convertir a px CSS
+        const pageMax = Math.round(281 * 3.7795);
+        // Aplicar compact siempre que esté cerca del límite, ultra si sigue excedido
+        if (doc.scrollHeight > pageMax - 40) doc.classList.add('compact');
         if (doc.scrollHeight > pageMax) doc.classList.add('ultra');
       }
       function updateAudienceLabel() {
