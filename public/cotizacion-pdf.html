@@ -139,33 +139,35 @@
     .sign { margin-top: 12px; padding-top: 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
     .line { border-bottom: 1.5px solid #94a3b8; height: 14px; margin-bottom: 2px; }
     .lbl { font-size: 9px; color: #64748b; text-transform: uppercase; }
-    /* ===== Atendido por + Equipo cotizado + Bancarios (estilo cota1 UNIVERSAL) ===== */
+    /* ===== Estilo cota1: banners azul oscuro/teal con texto blanco ===== */
     .atendido-box, .maquinas-box, .bancarios-box { margin-top: 8px; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; }
     .atendido-head, .maquinas-head, .bancarios-head {
-      background: linear-gradient(180deg, #0f172a 0%, #1e3a5f 100%);
-      color: #FFD200;
+      background: linear-gradient(90deg, #1e3a5f 0%, #2c5f7f 70%, #0d9488 100%);
+      color: #ffffff;
       font-weight: 800;
-      font-size: 10px;
-      letter-spacing: .12em;
-      padding: 5px 9px;
+      font-size: 11px;
+      letter-spacing: .15em;
+      padding: 7px 12px;
+      text-transform: uppercase;
+      border-bottom: 2px solid #0d9488;
     }
-    .atendido-body { padding: 7px 9px; background: #fff; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+    .atendido-body { padding: 7px 9px; background: #f0f9ff; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; border-left: 3px solid #0d9488; }
     .atendido-nombre { font-weight: 700; font-size: 11px; color: #0f172a; }
-    .atendido-puesto { color: #475569; font-weight: 600; font-size: 10px; }
+    .atendido-puesto { color: #0d9488; font-weight: 700; font-size: 10px; }
     .atendido-contact { font-size: 9.5px; color: #475569; display: flex; gap: 10px; }
-    .maquinas-grid { padding: 7px 9px; background: #fff; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .maquina-card { display: flex; gap: 7px; border: 1px solid #e2e8f0; border-radius: 6px; padding: 5px; background: #f8fafc; }
+    .maquinas-grid { padding: 8px 10px; background: #f8fafc; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .maquina-card { display: flex; gap: 7px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px; background: #fff; }
     .maquina-card img { width: 80px; height: 60px; object-fit: contain; background: #fff; border-radius: 4px; flex-shrink: 0; }
     .maquina-info { flex: 1; min-width: 0; }
-    .maquina-modelo { font-weight: 800; font-size: 10px; color: #0f172a; }
+    .maquina-modelo { font-weight: 800; font-size: 10px; color: #1e3a5f; }
     .maquina-desc { font-size: 9px; color: #64748b; margin-top: 2px; }
-    .bancarios-empresa { padding: 6px 9px; background: #fffbeb; border-bottom: 1px solid #fde68a; font-size: 10px; color: #0f172a; }
-    .bancarios-rfc { font-family: monospace; font-weight: 700; color: #b91c1c; }
+    .bancarios-empresa { padding: 7px 11px; background: #ecfeff; border-bottom: 1px solid #a5f3fc; font-size: 10.5px; color: #0f172a; }
+    .bancarios-rfc { font-family: monospace; font-weight: 700; color: #0d9488; background: #f0fdfa; padding: 2px 6px; border-radius: 4px; border: 1px solid #99f6e4; }
     .bancarios-table { width: 100%; border-collapse: collapse; margin: 0; font-size: 9.5px; }
-    .bancarios-table th { background: #FFD200; color: #0a0a0a; padding: 5px; font-size: 9px; letter-spacing: .04em; border: 1px solid #c8a000; }
-    .bancarios-table td { padding: 4px 5px; border: 1px solid #e2e8f0; text-align: center; font-family: monospace; font-size: 9px; }
-    .bancarios-table tbody tr:nth-child(even) td { background: #f8fafc; }
-    .bancarios-politica { padding: 6px 9px; font-size: 8.5px; color: #475569; background: #fff; line-height: 1.3; border-top: 1px solid #e2e8f0; }
+    .bancarios-table th { background: linear-gradient(180deg, #1e3a5f 0%, #2c5f7f 100%); color: #ffffff; padding: 6px; font-size: 9px; letter-spacing: .06em; border: 1px solid #1e3a5f; }
+    .bancarios-table td { padding: 5px 6px; border: 1px solid #e2e8f0; text-align: center; font-family: monospace; font-size: 9.5px; color: #0f172a; }
+    .bancarios-table tbody tr:nth-child(even) td { background: #f0f9ff; }
+    .bancarios-politica { padding: 7px 11px; font-size: 8.5px; color: #475569; background: #fff; line-height: 1.35; border-top: 2px solid #0d9488; }
     .doc.compact { font-size: 9.3pt; line-height: 1.24; }
     .doc.compact .title { margin: 6px 0; font-size: 17px; }
     .doc.compact th, .doc.compact td { padding: 5px; }
