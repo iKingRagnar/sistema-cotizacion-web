@@ -3233,6 +3233,7 @@ app.post('/api/cotizaciones', async (req, res) => {
       atendido_por_puesto,
       bancarios_rfc,
       bancarios_cuentas,
+      ficha_tecnica_manual,
     } = req.body || {};
     if (!cliente_id) return res.status(400).json({ error: 'cliente_id requerido' });
     const prefijoFolio = tipo === 'mano_obra' ? 'COT-MO' : tipo === 'maquina' ? 'COT-MAQ' : 'COT-REF';
@@ -3251,10 +3252,15 @@ app.post('/api/cotizaciones', async (req, res) => {
       if (typeof bancarios_cuentas === 'string') return bancarios_cuentas;
       try { return JSON.stringify(bancarios_cuentas); } catch (_) { return null; }
     })();
+    const fichaManualStr = (() => {
+      if (ficha_tecnica_manual == null || ficha_tecnica_manual === '') return null;
+      if (typeof ficha_tecnica_manual === 'string') return ficha_tecnica_manual;
+      try { return JSON.stringify(ficha_tecnica_manual); } catch (_) { return null; }
+    })();
     await db.runQuery(
       `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total, tipo_cambio, moneda, maquinas_ids, estado, notas, vendedor_personal_id, descuento_pct, vendedor,
-        imagen_maquina_url, ficha_tecnica_url, alcance_servicio, siguiente_paso, atendido_por_nombre, atendido_por_puesto, bancarios_rfc, bancarios_cuentas)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        imagen_maquina_url, ficha_tecnica_url, alcance_servicio, siguiente_paso, atendido_por_nombre, atendido_por_puesto, bancarios_rfc, bancarios_cuentas, ficha_tecnica_manual)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         f,
         cliente_id,
@@ -3279,6 +3285,7 @@ app.post('/api/cotizaciones', async (req, res) => {
         nstr(atendido_por_puesto),
         nstr(bancarios_rfc),
         bancariosCuentasStr,
+        fichaManualStr,
       ]
     );
     const r = await db.getOne(
@@ -3301,7 +3308,7 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
     const existing = await db.getOne('SELECT * FROM cotizaciones WHERE id = ?', [req.params.id]);
     if (!existing) return res.status(404).json({ error: 'No encontrada' });
     const { folio, cliente_id, tipo, fecha, tipo_cambio, moneda, maquinas_ids, estado, notas, vendedor_personal_id, descuento_pct, vendedor,
-      imagen_maquina_url, ficha_tecnica_url, alcance_servicio, siguiente_paso, atendido_por_nombre, atendido_por_puesto, bancarios_rfc, bancarios_cuentas } = req.body || {};
+      imagen_maquina_url, ficha_tecnica_url, alcance_servicio, siguiente_paso, atendido_por_nombre, atendido_por_puesto, bancarios_rfc, bancarios_cuentas, ficha_tecnica_manual } = req.body || {};
     const hasBody = req.body && typeof req.body === 'object';
     const hasMaqIds = hasBody && Object.prototype.hasOwnProperty.call(req.body, 'maquinas_ids');
     const hasNotas = hasBody && Object.prototype.hasOwnProperty.call(req.body, 'notas');
@@ -3347,12 +3354,17 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
           ? null
           : (typeof bancarios_cuentas === 'string' ? bancarios_cuentas : (() => { try { return JSON.stringify(bancarios_cuentas); } catch (_) { return null; } })()))
       : (existing.bancarios_cuentas || null);
+    const fichaManual = _has('ficha_tecnica_manual')
+      ? (ficha_tecnica_manual == null || ficha_tecnica_manual === ''
+          ? null
+          : (typeof ficha_tecnica_manual === 'string' ? ficha_tecnica_manual : (() => { try { return JSON.stringify(ficha_tecnica_manual); } catch (_) { return null; } })()))
+      : (existing.ficha_tecnica_manual || null);
     await db.runQuery(
       `UPDATE cotizaciones
        SET folio=?, cliente_id=?, tipo=?, fecha=?, tipo_cambio=?, moneda=?, maquinas_ids=?, estado=?, notas=?,
            vendedor_personal_id=?, descuento_pct=?, vendedor=?,
            imagen_maquina_url=?, ficha_tecnica_url=?, alcance_servicio=?, siguiente_paso=?,
-           atendido_por_nombre=?, atendido_por_puesto=?, bancarios_rfc=?, bancarios_cuentas=?
+           atendido_por_nombre=?, atendido_por_puesto=?, bancarios_rfc=?, bancarios_cuentas=?, ficha_tecnica_manual=?
        WHERE id=?`,
       [
         (folio != null && String(folio).trim() !== '') ? String(folio).trim() : (existing.folio || null),
@@ -3367,7 +3379,7 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
         Number.isFinite(vidPut) && vidPut > 0 ? vidPut : null,
         dctPut,
         vendPut || null,
-        imgMaq, fichaT, alcSvc, sigPaso, atNom, atPue, banRfc, banCuentas,
+        imgMaq, fichaT, alcSvc, sigPaso, atNom, atPue, banRfc, banCuentas, fichaManual,
         req.params.id,
       ]
     );
