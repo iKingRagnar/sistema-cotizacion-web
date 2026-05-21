@@ -606,6 +606,9 @@ async function runMigrations() {
     `ALTER TABLE cotizaciones ADD COLUMN ficha_tecnica_fotos TEXT`,
     /* 2026-05-21: slot horario del reporte (madrugada/manana/tarde/noche) — para Agenda */
     `ALTER TABLE reportes ADD COLUMN slot TEXT`,
+    /* 2026-05-21: fecha estimada en que la máquina estará LISTA tras revisión/preparación.
+       Permite calcular tiempo de entrega dinámico en cotizaciones. */
+    `ALTER TABLE maquinas ADD COLUMN fecha_lista_estimada TEXT`,
   ];
   for (const sql of migrations) {
     try {

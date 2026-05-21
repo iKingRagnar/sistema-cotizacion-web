@@ -67,6 +67,14 @@
     .brand h1 { margin: 0; font-size: 14px; color: #0f172a; }
     .brand p { margin: 2px 0 0 0; font-size: 10px; color: #475569; }
     .meta-mini { font-size: 10px; text-align: right; }
+    .entrega-box { background: #ecfdf5; border-color: #10b981 !important; color: #065f46; }
+    .entrega-box.entrega-disponible { background: #ecfdf5; border-color: #10b981 !important; color: #065f46; }
+    .entrega-box.entrega-embarque { background: #eff6ff; border-color: #3b82f6 !important; color: #1e3a8a; }
+    .entrega-box.entrega-revision { background: #fef3c7; border-color: #f59e0b !important; color: #78350f; }
+    .entrega-box.entrega-revision-sin-fecha,
+    .entrega-box.entrega-sin-ubicacion,
+    .entrega-box.entrega-desconocido { background: #fef2f2; border-color: #dc2626 !important; color: #7f1d1d; }
+    .entrega-box i { flex-shrink: 0; }
     .banner-total {
       background: var(--k);
       color: #fff;
@@ -344,7 +352,7 @@
         if (Array.isArray(raw)) return raw;
         try { const a = JSON.parse(String(raw)); return Array.isArray(a) && a.length ? a : null; } catch (_) { return null; }
       }
-      function render(cot, cliente, cfg) {
+      function render(cot, cliente, cfg, entrega) {
         const tipoLabel = cot.tipo === 'mano_obra' ? 'Mano de obra' : cot.tipo === 'refacciones' ? 'Refacciones' : (cot.tipo || 'Cotización');
         const moneda = (cot.moneda || 'MXN').toUpperCase();
         const tipoCambio = Number(cot.tipo_cambio) || 0;
@@ -520,6 +528,10 @@
             <div class="banner-total">
               TOTAL ${esc(moneda)}: ${fmtMonto(total)}${moneda === 'USD' && tipoCambio > 0 ? ' &nbsp;·&nbsp; T.C. ' + fmtNum(tipoCambio) : ''}
             </div>
+            ${entrega ? `<div class="entrega-box entrega-${entrega.estado}" style="margin:6px 0;padding:8px 12px;border-radius:8px;border:2px solid;display:flex;align-items:center;gap:10px;font-size:11px">
+              <i class="${entrega.bloquear ? 'fas fa-exclamation-triangle' : 'fas fa-truck-fast'}" style="font-size:18px"></i>
+              <div><strong style="text-transform:uppercase;letter-spacing:0.08em;font-size:10px">Tiempo de entrega</strong><br>${esc(entrega.mensaje)}</div>
+            </div>` : ''}
             <div class="title">COTIZACIÓN</div>
             <div class="meta-grid">
               <div class="chip"><strong>Folio:</strong> ${esc(cot.folio || '—')}</div>
@@ -671,6 +683,87 @@
         localStorage.setItem('pdf-audience', audience);
         load();
       });
+      // ===== TIEMPO DE ENTREGA DINÁMICO =====
+      // Según estado de la máquina determina fecha estimada de entrega
+      // - Disponible en almacén: hoy + 3 a 5 días
+      // - Revisión programada (estado_preparacion='pendiente' con fecha_lista_estimada): fecha_lista + 3 a 5 días
+      // - En embarque (eta_fecha futura): eta + 3 a 5 días
+      // - Sin ubicación / sin info: bloquear con mensaje
+      function calcularEntregaEstimada(maquina, embarques) {
+        if (!maquina) return { estado: 'desconocido', bloquear: true, mensaje: 'No se identificó la máquina cotizada. Se revisará para dar fecha.' };
+        const hoyIso = new Date().toISOString().slice(0, 10);
+        const addDays = (iso, days) => {
+          const d = new Date(iso + 'T00:00:00');
+          d.setDate(d.getDate() + Number(days));
+          return d.toISOString().slice(0, 10);
+        };
+        const fmt = (iso) => {
+          try { const d = new Date(iso + 'T12:00:00'); return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' }); } catch (_) { return iso; }
+        };
+        // 1) ¿En embarque? Buscar embarque con numero_serie igual o nombre que coincida
+        const sn = String(maquina.numero_serie || '').trim().toLowerCase();
+        const modelo = String(maquina.modelo || maquina.nombre || '').trim().toLowerCase();
+        const embarqueMatch = (Array.isArray(embarques) ? embarques : []).find(e => {
+          const eSn = String(e.numero_serie || '').trim().toLowerCase();
+          const eNm = String(e.nombre_maquina || '').trim().toLowerCase();
+          const estPend = String(e.estado || '').toLowerCase();
+          if (estPend === 'entregado' || estPend === 'cancelado') return false;
+          if (sn && eSn && sn === eSn) return true;
+          if (modelo && eNm && modelo === eNm) return true;
+          return false;
+        });
+        if (embarqueMatch && embarqueMatch.eta_fecha) {
+          const eta = String(embarqueMatch.eta_fecha).slice(0, 10);
+          const desde = addDays(eta, 3);
+          const hasta = addDays(eta, 5);
+          return {
+            estado: 'embarque',
+            bloquear: false,
+            etaFecha: eta,
+            desde, hasta,
+            mensaje: `Máquina en embarque, llegada estimada ${fmt(eta)}. Entrega estimada ${fmt(desde)} – ${fmt(hasta)} (3-5 días tras llegada).`,
+          };
+        }
+        // 2) ¿En revisión programada?
+        const estadoPrep = String(maquina.estado_preparacion || '').toLowerCase();
+        if (estadoPrep === 'pendiente') {
+          const flista = maquina.fecha_lista_estimada ? String(maquina.fecha_lista_estimada).slice(0, 10) : null;
+          if (flista && flista >= hoyIso) {
+            const desde = addDays(flista, 3);
+            const hasta = addDays(flista, 5);
+            return {
+              estado: 'revision',
+              bloquear: false,
+              listaFecha: flista,
+              desde, hasta,
+              mensaje: `Máquina en revisión programada, lista el ${fmt(flista)}. Entrega estimada ${fmt(desde)} – ${fmt(hasta)} (3-5 días tras revisión).`,
+            };
+          }
+          return {
+            estado: 'revision-sin-fecha',
+            bloquear: true,
+            mensaje: 'Máquina en revisión. Aún no hay fecha estimada de salida. Se revisará para dar fecha de entrega.',
+          };
+        }
+        // 3) Disponible en almacén (stock > 0 ó estado_preparacion 'lista')
+        const stock = Number(maquina.stock || 0);
+        if (estadoPrep === 'lista' || stock > 0 || maquina.ubicacion) {
+          const desde = addDays(hoyIso, 3);
+          const hasta = addDays(hoyIso, 5);
+          return {
+            estado: 'disponible',
+            bloquear: false,
+            desde, hasta,
+            mensaje: `Máquina disponible. Entrega estimada ${fmt(desde)} – ${fmt(hasta)} (3-5 días hábiles).`,
+          };
+        }
+        // 4) Sin ubicación
+        return {
+          estado: 'sin-ubicacion',
+          bloquear: true,
+          mensaje: '⚠️ Máquina sin ubicación confirmada. Cotización pendiente de revisión para dar fecha de entrega.',
+        };
+      }
       async function load() {
         try {
           const saved = localStorage.getItem('pdf-audience');
@@ -681,7 +774,21 @@
           ]);
           let cliente = null;
           if (cot.cliente_id) cliente = await getJson(API + '/clientes/' + cot.cliente_id).catch(() => null);
-          render(cot, cliente, cfg || {});
+          // Tiempo entrega dinámico: cargar máquina y embarques relacionados
+          let entrega = null;
+          try {
+            let maquinaIds = [];
+            if (cot.maquinas_ids) { try { const a = JSON.parse(cot.maquinas_ids); if (Array.isArray(a)) maquinaIds = a; } catch (_) {} }
+            const primaryMaq = maquinaIds.length ? maquinaIds[0] : null;
+            if (primaryMaq) {
+              const [maq, embarques] = await Promise.all([
+                getJson(API + '/maquinas/' + primaryMaq).catch(() => null),
+                getJson(API + '/embarques').catch(() => []),
+              ]);
+              entrega = calcularEntregaEstimada(maq, embarques);
+            }
+          } catch (_) { /* entrega queda en null */ }
+          render(cot, cliente, cfg || {}, entrega);
           if (shouldAutoPrint) setTimeout(runPrint, 800);
         } catch (e) {
           document.getElementById('doc-body').innerHTML = '<div class="error">' + esc(e.message || 'No se pudo cargar la cotización.') + '</div>';

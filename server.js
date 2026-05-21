@@ -1587,6 +1587,19 @@ app.get('/api/maquinas', async (req, res) => {
   }
 });
 
+// PATCH: actualizar SOLO la fecha en que la máquina estará lista tras revisión/preparación
+app.patch('/api/maquinas/:id/fecha-lista', async (req, res) => {
+  try {
+    const { fecha_lista_estimada } = req.body || {};
+    const val = (fecha_lista_estimada == null || String(fecha_lista_estimada).trim() === '')
+      ? null
+      : String(fecha_lista_estimada).trim().slice(0, 10);
+    await db.runQuery('UPDATE maquinas SET fecha_lista_estimada = ? WHERE id = ?', [val, req.params.id]);
+    const row = await db.getOne('SELECT id, fecha_lista_estimada, estado_preparacion FROM maquinas WHERE id = ?', [req.params.id]);
+    res.json(row || {});
+  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+});
+
 app.get('/api/maquinas/:id', async (req, res) => {
   try {
     const row = await db.getOne('SELECT m.*, c.nombre as cliente_nombre FROM maquinas m LEFT JOIN clientes c ON c.id = m.cliente_id WHERE m.id = ?', [req.params.id]);
