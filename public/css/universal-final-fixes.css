@@ -6,6 +6,28 @@
    Se carga AL FINAL para ganar especificidad.
    ==================================================================== */
 
+/* ===== 0) DESHABILITAR animaciones de entrada de filas/cards (causaba sensación de demo) ===== */
+html body .data-table tbody tr,
+html body table tbody tr,
+html body .card,
+html body [class*="card-"],
+html body [class*="-card"],
+html body .panel,
+html body section,
+html body .section,
+html body button,
+html body .btn,
+html body .tab,
+html body input,
+html body select,
+html body textarea,
+html body label {
+  animation: none !important;
+}
+/* Anular keyframes que generan movimientos */
+html body * { animation-iteration-count: 1 !important; }
+html body *:hover { animation-play-state: paused !important; }
+
 /* ===== 1) ANULAR HOVER EFFECTS QUE CAMBIAN COLORES O MOVIMIENTO ===== */
 html body .tab:hover,
 html body .tab:focus,
@@ -40,20 +62,50 @@ html body .btn {
 }
 
 /* ===== 2) TABS ACTIVAS: amarillo UNIVERSAL con texto NEGRO (contraste claro) ===== */
+/* Selectores masivos para ganar a TODOS los archivos legacy (theme-industrial, luna-nuclear, etc.) */
 html body .tab.active,
 html body button.tab.active,
 html body .mapa-owner-pill.active,
-html body [data-tab].active {
+html body [data-tab].active,
+html body.theme-industrial .tab.active,
+html body.theme-industrial:not(.appearance-light) .tab.active,
+html body.theme-industrial:not(.appearance-light) .sidebar .tab.active,
+html body.theme-industrial:not(.appearance-light) .sidebar-nav .tab.active,
+html body.theme-industrial.appearance-light .tab.active,
+html body.theme-industrial.appearance-light .tabs.tabs--rail .tab.active,
+html body.theme-industrial:not(.appearance-light) .tabs.tabs--rail .tab.active,
+html body.theme-industrial.universal-map-shell .sidebar-nav .tab.active,
+html body.theme-industrial.universal-map-shell.md3-on .sidebar-nav .tab.active,
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) .sidebar-nav .tab.active,
+html body.theme-industrial.universal-map-shell.md3-on.appearance-light:not(.login-open) .sidebar-nav .tab.active,
+html body.dark-theme .tab.active,
+html body.dark-theme.dark-high-contrast .tab.active,
+html body.md3-on .tab.active,
+html body.md3-on .tabs.tabs--rail .tab.active,
+html body.sidebar-rail-collapsed.md3-on .tabs.tabs--rail .tab.active,
+html body aside .tab.active,
+html.enterprise-ui .tab.active,
+html body.theme-industrial.universal-map-shell.md3-on:not(.login-open) nav#sidebar-rail-tabs.mapa-ms-sidebar-scroll .tab.active,
+html body .tabs.tabs--rail .tab.active,
+html body .sidebar-nav .tab.active {
   background: #FFD200 !important;
   background-image: none !important;
   color: #0a0a0a !important;
-  border-color: #FFD200 !important;
-  box-shadow: 0 2px 6px rgba(255, 210, 0, 0.4) !important;
+  border-color: #c8a000 !important;
+  box-shadow: 0 4px 14px rgba(255, 210, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.15) inset !important;
 }
 html body .tab.active *,
 html body button.tab.active *,
 html body .mapa-owner-pill.active *,
-html body [data-tab].active * {
+html body [data-tab].active *,
+html body.theme-industrial .tab.active *,
+html body.theme-industrial:not(.appearance-light) .tab.active *,
+html body.theme-industrial:not(.appearance-light) .sidebar-nav .tab.active *,
+html body.dark-theme .tab.active *,
+html body.md3-on .tab.active *,
+html body.md3-on .tabs.tabs--rail .tab.active *,
+html body .tabs.tabs--rail .tab.active *,
+html body .sidebar-nav .tab.active * {
   color: #0a0a0a !important;
   fill: #0a0a0a !important;
 }

@@ -1352,20 +1352,23 @@ body.theme-industrial.appearance-light .header-powered-by {
   transition: background var(--duration-fast) var(--ease-out-expo), border-color var(--duration-fast) var(--ease-out-expo), color var(--duration-fast) var(--ease-out-expo), transform var(--duration-instant) var(--ease-out-expo), box-shadow var(--duration-fast) var(--ease-out-expo);
 }
 .tab i { transition: transform var(--duration-fast) var(--ease-out-back); }
-.tab:hover { background: #f8fafc; border-color: #c8d2e0; color: #0c1222; box-shadow: 0 3px 12px rgba(12, 18, 34, 0.06); }
-.tab:hover i { transform: scale(1.05); }
-.tab:active { transform: scale(0.98); }
+.tab:hover { background: rgba(255, 210, 0, 0.12); border-color: rgba(255, 210, 0, 0.5); color: #FFD200; box-shadow: none; }
+.tab:hover i { transform: none; }
+.tab:active { transform: none; }
 .tab.active {
-  background: linear-gradient(145deg, #115e59 0%, #0f766e 45%, #0d9488 100%);
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.25);
-  box-shadow: 0 6px 20px rgba(15, 118, 110, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+  background: #FFD200;
+  background-image: none;
+  color: #0a0a0a;
+  border-color: #c8a000;
+  box-shadow: 0 4px 14px rgba(255, 210, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.15) inset;
   animation: none;
 }
+.tab.active * { color: #0a0a0a; }
 .tab.active:hover {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.35);
-  box-shadow: 0 8px 26px rgba(15, 118, 110, 0.32), 0 0 0 1px rgba(255, 255, 255, 0.14) inset;
+  background: #ffdd33;
+  color: #0a0a0a;
+  border-color: #c8a000;
+  box-shadow: 0 6px 18px rgba(255, 210, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.2) inset;
 }
 @media (prefers-reduced-motion: reduce) {
   .tab.active { animation: none; }
@@ -3745,15 +3748,18 @@ body.dark-theme .tab:hover {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
 }
 body.dark-theme .tab.active {
-  background: linear-gradient(145deg, #115e59 0%, #0f766e 48%, #0d9488 100%);
-  border-color: rgba(255, 255, 255, 0.22);
-  color: #fff;
-  box-shadow: 0 6px 22px rgba(15, 118, 110, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-  animation: none;
+  background: #FFD200 !important;
+  background-image: none !important;
+  border-color: #c8a000 !important;
+  color: #0a0a0a !important;
+  box-shadow: 0 4px 14px rgba(255, 210, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.15) inset !important;
+  animation: none !important;
 }
+body.dark-theme .tab.active * { color: #0a0a0a !important; }
 body.dark-theme .tab.active:hover {
-  color: #fff;
-  box-shadow: 0 8px 28px rgba(15, 118, 110, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+  background: #ffdd33 !important;
+  color: #0a0a0a !important;
+  box-shadow: 0 6px 18px rgba(255, 210, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.2) inset !important;
 }
 @media (prefers-reduced-motion: reduce) {
   body.dark-theme .tab.active { animation: none; }
@@ -7452,14 +7458,10 @@ body.login-open > #app-particles-layer.app-particles-layer {
   width: 60%;
 }
 .tab:hover {
-  transform: translateY(-1px);
+  transform: none;
 }
 .tab.active {
-  animation: tabActivate 0.25s ease both;
-}
-@keyframes tabActivate {
-  from { transform: scale(0.95); }
-  to   { transform: scale(1); }
+  animation: none;
 }
 
 /* ---------- Table row stagger animations ---------- */
