@@ -32,8 +32,8 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open):not(.appe
   --mapa-ms-tab-hover-bg: rgba(255, 255, 255, 0.03);
   --mapa-ms-tab-hover-fg: rgba(255, 255, 255, 0.92);
   --mapa-ms-tab-row-border: rgba(255, 255, 255, 0.04);
-  --mapa-ms-tab-active-bg: rgba(212, 255, 0, 0.06);
-  --mapa-ms-tab-active-fg: var(--mapa-ms-accent);
+  --mapa-ms-tab-active-bg: #FFD200;
+  --mapa-ms-tab-active-fg: #0a0a0a;
   --mapa-ms-tab-active-icon: var(--mapa-ms-accent);
   --mapa-ms-owner-wrap-bg: rgba(255, 255, 255, 0.04);
   --mapa-ms-owner-wrap-border: rgba(255, 255, 255, 0.06);
@@ -90,8 +90,8 @@ html body.theme-industrial.universal-map-shell.md3-on:not(.login-open).appearanc
   --mapa-ms-tab-hover-bg: rgba(255, 255, 255, 0.35);
   --mapa-ms-tab-hover-fg: rgba(15, 23, 42, 0.92);
   --mapa-ms-tab-row-border: rgba(15, 23, 42, 0.07);
-  --mapa-ms-tab-active-bg: rgba(212, 255, 0, 0.2);
-  --mapa-ms-tab-active-fg: #3d4700;
+  --mapa-ms-tab-active-bg: #FFD200;
+  --mapa-ms-tab-active-fg: #0a0a0a;
   --mapa-ms-tab-active-icon: #5c6600;
   --mapa-ms-owner-wrap-bg: rgba(255, 255, 255, 0.38);
   --mapa-ms-owner-wrap-border: rgba(255, 255, 255, 0.55);
