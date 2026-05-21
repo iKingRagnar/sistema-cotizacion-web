@@ -413,20 +413,11 @@
     })();
   </script>
   <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
-  <div id="app-watermark" class="prem-watermark-field" aria-hidden="true">
-    <!-- SVG inline: las fuentes web (Great Vibes) sí aplican; data-URL en background no. -->
-    <svg class="prem-watermark-svg" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" preserveAspectRatio="none" aria-hidden="true">
-      <defs>
-        <pattern id="premWmScriptPat" width="520" height="200" patternUnits="userSpaceOnUse" patternTransform="rotate(-22)">
-          <text x="20" y="108" class="prem-watermark-script-text">Powered by Ing. David Cantú · IA Suprema · Universal Servicio Técnico · </text>
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#premWmScriptPat)"/>
-    </svg>
-  </div>
+  <!-- Watermark de fondo removido por solicitud del cliente -->
+  <div id="app-watermark" class="prem-watermark-field" aria-hidden="true" style="display:none"></div>
   <div id="offline-banner" class="offline-banner hidden" role="alert" aria-live="polite">Sin conexión. Algunas funciones pueden no estar disponibles.</div>
   <div id="login-overlay" class="login-overlay login-overlay--exec-layout hidden" role="dialog" aria-modal="true" aria-labelledby="login-title">
-    <span class="header-powered-by login-overlay-powered-by" aria-label="Créditos"><em class="header-powered-by-italic">powered by Ing. David Cantu</em></span>
+    <span class="header-powered-by login-overlay-powered-by" aria-label="Créditos" style="display:none"></span>
     <div class="login-split">
       <div class="login-weld-sparks" aria-hidden="true"></div>
       <!-- Panel izquierdo: branding -->
@@ -542,7 +533,7 @@
         </div>
       </nav>
       <div class="mapa-header-spacer" aria-hidden="true"></div>
-      <span class="header-powered-by header-powered-by--nav-slot" aria-label="Créditos"><em class="header-powered-by-italic">powered by Ing. David Cantu</em></span>
+      <span class="header-powered-by header-powered-by--nav-slot" aria-label="Créditos" style="display:none"></span>
       <div class="header-actions">
         <div class="mapa-header-user-cluster">
         <div class="mapa-ms-live-pill" aria-hidden="true" title="Estado">
