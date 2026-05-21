@@ -4656,7 +4656,53 @@ body.dark-theme .cal-grid--animated .cal-day:hover {
   border: 1px dashed rgba(255, 210, 0, 0.5);
 }
 .agenda-detalle-card:hover { background: #fff8d6 !important; transform: translateX(3px); transition: all 0.15s; }
-/* Time strip de slots día completo — colores forzados para legibilidad en dark theme */
+/* AGENDA MODAL — wrapper que IGNORA el dark theme con altísima especificidad */
+html body .modal .agenda-light-modal {
+  background: #ffffff !important;
+  color: #0a0a0a !important;
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.15);
+}
+html body .modal .agenda-light-modal,
+html body .modal .agenda-light-modal div,
+html body .modal .agenda-light-modal span,
+html body .modal .agenda-light-modal strong,
+html body .modal .agenda-light-modal p,
+html body .modal .agenda-light-modal h4,
+html body .modal .agenda-light-modal li,
+html body .modal .agenda-light-modal ul,
+html body .modal .agenda-light-modal label,
+html body .modal .agenda-light-modal small {
+  color: #0a0a0a !important;
+}
+/* Excepciones por clase específica (mayor especificidad gracias a la doble clase) */
+html body .modal .agenda-light-modal .ag-dark-text,
+html body .modal .agenda-light-modal .ag-dark-text strong,
+html body .modal .agenda-light-modal .ag-dark-text span,
+html body .modal .agenda-light-modal .ag-dark-text div,
+html body .modal .agenda-light-modal .ag-dark-text i { color: #FFD200 !important; }
+html body .modal .agenda-light-modal .ag-dark-text .ag-chip-amarillo,
+html body .modal .agenda-light-modal .ag-dark-text .ag-chip-amarillo * { color: #0a0a0a !important; }
+html body .modal .agenda-light-modal .agenda-slot-estado.libre,
+html body .modal .agenda-light-modal .agenda-slot-estado.ocupado { color: #ffffff !important; }
+html body .modal .agenda-light-modal .agenda-slot-estado.libre *,
+html body .modal .agenda-light-modal .agenda-slot-estado.ocupado * { color: #ffffff !important; }
+html body .modal .agenda-light-modal .ag-section-title { color: #0a0a0a !important; font-weight: 900 !important; font-size: 0.98rem !important; margin: 12px 0 6px !important; border-bottom: 2px solid #FFD200 !important; padding-bottom: 4px !important; background: transparent !important; }
+html body .modal .agenda-light-modal .ag-section-title * { color: #0a0a0a !important; }
+/* Badge negro con amarillo (slot del técnico) */
+html body .modal .agenda-light-modal .ag-pill-dark { background: #0a0a0a !important; color: #FFD200 !important; padding: 4px 10px !important; border-radius: 6px !important; font-weight: 800 !important; font-size: 0.78rem !important; }
+html body .modal .agenda-light-modal .ag-pill-dark * { color: #FFD200 !important; }
+/* Badge "Sin slot" amarillo con texto negro */
+html body .modal .agenda-light-modal .ag-pill-warn { background: #fbbf24 !important; color: #0a0a0a !important; padding: 4px 10px !important; border-radius: 6px !important; font-weight: 800 !important; font-size: 0.78rem !important; }
+html body .modal .agenda-light-modal .ag-pill-warn * { color: #0a0a0a !important; }
+/* Badge estatus */
+html body .modal .agenda-light-modal .ag-pill-status { background: #fef3c7 !important; color: #92400e !important; padding: 2px 8px !important; border-radius: 5px !important; font-weight: 800 !important; font-size: 0.75rem !important; }
+html body .modal .agenda-light-modal .ag-pill-status * { color: #92400e !important; }
+/* Texto verde para "está LIBRE en:" */
+html body .modal .agenda-light-modal div[style*="color:#065f46"] { color: #065f46 !important; }
+html body .modal .agenda-light-modal div[style*="color:#065f46"] * { color: #065f46 !important; }
+/* Time strip de slots día completo */
 .agenda-timestrip { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 8px !important; margin: 0.5rem 0 0.75rem !important; }
 .agenda-slot-block {
   border-radius: 10px !important; padding: 10px !important; min-height: 95px !important;
@@ -4679,8 +4725,9 @@ body.dark-theme .cal-grid--animated .cal-day:hover {
 .agenda-slot-block.ocupado { cursor: pointer; transition: transform .2s, box-shadow .2s; }
 .agenda-slot-block.ocupado:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(220, 38, 38, 0.25); }
 /* Modal Agenda - asegurar contraste oscuro sobre fondo claro */
-.modal .agenda-libre-badge { display: inline-block; background: #d1fae5 !important; color: #065f46 !important; border: 1.5px solid #10b981 !important; border-radius: 8px; padding: 4px 10px; margin: 2px 4px 2px 0; font-size: 0.8rem; font-weight: 800; }
-.modal .agenda-libre-badge .h { font-family: ui-monospace, monospace; opacity: 0.85; font-weight: 700; }
+html body .modal .agenda-light-modal .agenda-libre-badge { display: inline-block !important; background: #ffffff !important; color: #065f46 !important; border: 2px solid #10b981 !important; border-radius: 8px !important; padding: 4px 10px !important; margin: 3px 4px 3px 0 !important; font-size: 0.8rem !important; font-weight: 800 !important; }
+html body .modal .agenda-light-modal .agenda-libre-badge * { color: #065f46 !important; }
+html body .modal .agenda-light-modal .agenda-libre-badge .h { font-family: ui-monospace, monospace !important; opacity: 0.85; font-weight: 700; }
 @media (max-width: 720px) {
   .agenda-timestrip { grid-template-columns: repeat(2, 1fr) !important; }
 }
