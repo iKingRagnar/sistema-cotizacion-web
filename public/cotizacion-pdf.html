@@ -373,11 +373,22 @@
             fichaHtml = `<img class="ficha-img" src="${escAttr(fichaUrl)}" alt="Ficha técnica">`;
           }
         } else if (fichaManualArr.length) {
-          // Tabla tipo Excel con las filas capturadas manualmente, en 2 columnas para mejor uso del espacio
+          // Tabla tipo Excel con tipo por fila: pair | value-only | header
+          const renderRow = (r) => {
+            const t = r.type || 'pair';
+            if (t === 'header') {
+              return `<tr><th colspan="2" style="background:var(--y);color:var(--k);border:1px solid #c8a000;padding:4px 8px;text-align:left;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase">${esc(r.label||'')}</th></tr>`;
+            }
+            if (t === 'value-only') {
+              return `<tr><td colspan="2" style="border:1px solid var(--border);padding:4px 7px;font-size:9.5px;color:#1e293b;background:#fff">${esc(r.value||'')}</td></tr>`;
+            }
+            return `<tr><th style="background:#fffbe6;border:1px solid var(--border);padding:4px 7px;text-align:left;font-size:9.5px;color:var(--k);font-weight:800;width:42%">${esc(r.label||'')}</th><td style="border:1px solid var(--border);padding:4px 7px;font-size:9.5px;color:#1e293b">${esc(r.value||'')}</td></tr>`;
+          };
+          // Partir en 2 columnas respetando headers (los headers anclan grupos)
           const half = Math.ceil(fichaManualArr.length / 2);
           const col1 = fichaManualArr.slice(0, half);
           const col2 = fichaManualArr.slice(half);
-          const renderCol = (rows) => rows.map(r => `<tr><th style="background:#fffbe6;border:1px solid var(--border);padding:4px 7px;text-align:left;font-size:9.5px;color:var(--k);font-weight:800;width:42%">${esc(r.label||'')}</th><td style="border:1px solid var(--border);padding:4px 7px;font-size:9.5px;color:#1e293b">${esc(r.value||'')}</td></tr>`).join('');
+          const renderCol = (rows) => rows.map(renderRow).join('');
           fichaHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
             <table style="width:100%;border-collapse:collapse;margin:0;box-shadow:none">${renderCol(col1)}</table>
             <table style="width:100%;border-collapse:collapse;margin:0;box-shadow:none">${renderCol(col2)}</table>
