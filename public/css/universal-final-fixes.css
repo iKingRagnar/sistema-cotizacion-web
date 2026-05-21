@@ -128,22 +128,72 @@ html body .sidebar-nav .tab.active * {
   color: #0a0a0a !important;
   fill: #0a0a0a !important;
 }
-/* Sidebar nav link activo */
+/* Sidebar nav link activo — selectores MASIVOS para todos los temas/variantes */
+html body .sidebar .active,
+html body .sidebar [aria-current="page"],
+html body .sidebar [aria-selected="true"],
+html body .sidebar-nav .active,
+html body .sidebar-nav [aria-current="page"],
+html body .sidebar-nav [aria-selected="true"],
 html body .sidebar-nav .sidebar-link.active,
 html body .sidebar-nav a.active,
 html body .sidebar-nav button.active,
-html body nav .nav-item.active {
+html body .sidebar-nav .tab.active,
+html body .sidebar-nav .tab-link.active,
+html body .sidebar-nav .sidebar-item.active,
+html body nav .nav-item.active,
+html body aside .tab.active,
+html body aside .active,
+html body.theme-industrial .sidebar .tab.active,
+html body.theme-industrial .sidebar-nav .tab.active,
+html body.theme-industrial .sidebar-nav .tab-link.active,
+html body.theme-industrial .sidebar-nav .sidebar-item.active,
+html body.theme-industrial .sidebar-nav button.active,
+html body.theme-industrial:not(.appearance-light) .sidebar .tab.active,
+html body.theme-industrial:not(.appearance-light) .sidebar-nav .tab.active,
+html body.theme-industrial:not(.appearance-light) .sidebar-nav .tab-link.active,
+html body.theme-industrial:not(.appearance-light) .sidebar-nav .sidebar-item.active,
+html body.theme-industrial:not(.appearance-light) .sidebar-nav button.active,
+html body.md3-on .sidebar-nav .tab.active,
+html body.md3-on .tabs.tabs--rail .tab.active,
+html body.dark-theme .sidebar .tab.active,
+html body.dark-theme .sidebar-nav .tab.active {
   background: #FFD200 !important;
   background-image: none !important;
   color: #0a0a0a !important;
   border-left: 4px solid #c8a000 !important;
+  border-color: #c8a000 !important;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.2) inset !important;
 }
+html body .sidebar .active *,
+html body .sidebar [aria-current="page"] *,
+html body .sidebar-nav .active *,
 html body .sidebar-nav .sidebar-link.active *,
 html body .sidebar-nav a.active *,
 html body .sidebar-nav button.active *,
-html body nav .nav-item.active * {
+html body .sidebar-nav .tab.active *,
+html body .sidebar-nav .tab-link.active *,
+html body .sidebar-nav .sidebar-item.active *,
+html body nav .nav-item.active *,
+html body aside .tab.active *,
+html body aside .active *,
+html body.theme-industrial .sidebar-nav .tab.active *,
+html body.theme-industrial .sidebar-nav .tab-link.active *,
+html body.theme-industrial .sidebar-nav .sidebar-item.active *,
+html body.theme-industrial .sidebar-nav button.active *,
+html body.theme-industrial:not(.appearance-light) .sidebar-nav .tab.active *,
+html body.theme-industrial:not(.appearance-light) .sidebar-nav .tab-link.active *,
+html body.theme-industrial:not(.appearance-light) .sidebar-nav .sidebar-item.active *,
+html body.theme-industrial:not(.appearance-light) .sidebar-nav button.active *,
+html body.md3-on .sidebar-nav .tab.active *,
+html body.dark-theme .sidebar-nav .tab.active * {
   color: #0a0a0a !important;
   fill: #0a0a0a !important;
+}
+/* Sidebar item: anular ANY gradient/verde-azul de fondo */
+html body .sidebar-nav [class*="active"]:not(input):not(textarea),
+html body .sidebar [class*="active"]:not(input):not(textarea) {
+  background-image: none !important;
 }
 
 /* ===== 3) HOVER SIMPLE: solo cambia el FONDO ligeramente, sin movimiento ===== */
