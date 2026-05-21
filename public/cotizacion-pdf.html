@@ -381,7 +381,7 @@
           </div>`;
         const html = `
           <div class="doc" id="doc">
-            <div class="head" style="background:#fff;color:#0f172a;border-bottom:3px solid #b91c1c;border-radius:12px 12px 0 0">
+            <div class="head" style="background:#fff;color:#0f172a;border-bottom:3px solid #1e3a5f;border-radius:12px 12px 0 0">
               <div class="brand">
                 <img src="fondos/universal-logo.jpg" alt="UNIVERSAL" style="height:48px;width:auto;background:transparent;padding:0;border-radius:6px" onerror="this.src='${esc(logoUrl)}'">
                 <div>
@@ -395,7 +395,7 @@
                 <div><strong>Vigencia:</strong> ${fmtDate(validHasta(cot.fecha))}</div>
               </div>
             </div>
-            <div style="background:#b91c1c;color:#fff;text-align:center;padding:6px 10px;font-weight:800;letter-spacing:.08em;font-size:13px;margin:8px 0;border-radius:6px">
+            <div style="background:linear-gradient(90deg,#1e3a5f 0%,#2c5f7f 70%,#0d9488 100%);color:#fff;text-align:center;padding:6px 10px;font-weight:800;letter-spacing:.08em;font-size:13px;margin:8px 0;border-radius:6px">
               TOTAL ${esc(moneda)}: ${fmtMonto(total)}${moneda === 'USD' && tipoCambio > 0 ? ' &nbsp;·&nbsp; T.C. ' + fmtNum(tipoCambio) : ''}
             </div>
             <div class="title">COTIZACIÓN</div>
@@ -463,7 +463,7 @@
             ${atendidoBox}
             ${maquinasBox}
             ${bancariosBox}
-            <div style="background:#fde047;color:#0f172a;text-align:center;padding:8px;font-weight:900;letter-spacing:.12em;margin-top:8px;border-top:3px solid #b91c1c;border-radius:0 0 8px 8px;font-size:11px">
+            <div style="background:#fde047;color:#0f172a;text-align:center;padding:8px;font-weight:900;letter-spacing:.12em;margin-top:8px;border-top:3px solid #0d9488;border-radius:0 0 8px 8px;font-size:11px">
               UNIVERSAL MAQUINARIA · DONDE LA COMPETENCIA NO EXISTE
             </div>
             <div class="doc-foot">Documento generado para fines informativos · Vigencia y disponibilidad sujetas a condiciones comerciales.</div>
