@@ -1,3 +1,22 @@
+/* === MARCADOR VISIBLE DE VERSIÓN PARA CONFIRMAR QUE EL CSS NUEVO CARGÓ === */
+body::before {
+  content: 'v351 ✓ UNIVERSAL ACTIVO';
+  position: fixed !important;
+  bottom: 4px !important;
+  left: 4px !important;
+  background: #FFD200 !important;
+  color: #0a0a0a !important;
+  font-weight: 900 !important;
+  font-size: 10px !important;
+  padding: 3px 8px !important;
+  border-radius: 4px !important;
+  z-index: 99999 !important;
+  font-family: monospace !important;
+  pointer-events: none !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3) !important;
+  letter-spacing: 0.5px !important;
+}
+
 /* ====================================================================
    UNIVERSAL FINAL FIXES — Override absoluto para resolver:
    1. Hover effects raros (morph/quita colores) -> elementos FIJOS
