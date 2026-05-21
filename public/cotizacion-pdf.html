@@ -8,7 +8,7 @@
     * { box-sizing: border-box; }
     :root { --y: #FFD200; --k: #0a0a0a; --ink: #0f172a; --muted: #475569; --border: #cbd5e1; }
     html { cursor: default; }
-    @page { size: A4 portrait; margin: 0; }
+    @page { size: letter portrait; margin: 0; }
     body {
       margin: 0;
       font-family: "Segoe UI", Arial, sans-serif;
@@ -42,9 +42,9 @@
     #btn-audience { background: #0a0a0a; color: var(--y); border: 1px solid var(--y); }
     .doc {
       width: 100%;
-      max-width: 210mm;
+      max-width: 216mm;
       margin: 0 auto;
-      padding: 8mm 9mm;
+      padding: 6mm 8mm;
       background: #fff;
       border: none;
       border-radius: 0;
@@ -178,8 +178,8 @@
       * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
       html, body { background: #fff; margin: 0; padding: 0; }
       .no-print { display: none !important; }
-      /* Print MATCHES preview: misma .doc, mismo padding, mismo max-width */
-      .doc { margin: 0 auto; border: none; border-radius: 0; box-shadow: none; max-width: 210mm; width: 210mm; padding: 8mm 9mm; }
+      /* Print MATCHES preview: misma .doc, mismo padding. LETTER 216x279mm */
+      .doc { margin: 0 auto; border: none; border-radius: 0; box-shadow: none; max-width: 216mm; width: 216mm; padding: 6mm 8mm; }
       .doc, .doc * { page-break-inside: avoid; }
     }
     .error { margin: 1rem auto; max-width: 700px; padding: 1rem; border-radius: 10px; border: 1px solid #fecaca; background: #fef2f2; color: #991b1b; }
@@ -226,10 +226,9 @@
       function fitSinglePage() {
         const doc = document.querySelector('.doc');
         if (!doc) return;
-        // A4 alto util = 297mm - 2*(8mm padding interno) = 281mm; convertir a px CSS
-        const pageMax = Math.round(281 * 3.7795);
-        // Aplicar compact siempre que esté cerca del límite, ultra si sigue excedido
-        if (doc.scrollHeight > pageMax - 40) doc.classList.add('compact');
+        // LETTER alto útil = 279mm - 2*6mm padding = 267mm en CSS px (1mm=3.7795)
+        const pageMax = Math.round(267 * 3.7795);
+        if (doc.scrollHeight > pageMax - 30) doc.classList.add('compact');
         if (doc.scrollHeight > pageMax) doc.classList.add('ultra');
       }
       function updateAudienceLabel() {
