@@ -246,6 +246,53 @@
           doc.style.height = Math.ceil(doc.scrollHeight * scale) + 'px';
         }
       }
+      function splitFichaImage() {
+        const host = document.getElementById('ficha-split-host');
+        if (!host) return;
+        const src = host.getAttribute('data-ficha-src');
+        if (!src) return;
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function () {
+          const w = img.naturalWidth, h = img.naturalHeight;
+          if (!w || !h) { host.innerHTML = '<img src="' + src + '" style="max-width:100%;max-height:180px;object-fit:contain">'; return; }
+          try {
+            const cnv1 = document.createElement('canvas');
+            const cnv2 = document.createElement('canvas');
+            let html;
+            if (w >= h) {
+              // Imagen más ancha que alta -> partir VERTICALMENTE (mitad izq + mitad der) y APILAR
+              const halfW = Math.floor(w / 2);
+              cnv1.width = halfW; cnv1.height = h;
+              cnv2.width = w - halfW; cnv2.height = h;
+              cnv1.getContext('2d').drawImage(img, 0, 0, halfW, h, 0, 0, halfW, h);
+              cnv2.getContext('2d').drawImage(img, halfW, 0, w - halfW, h, 0, 0, w - halfW, h);
+              html = '<div style="width:100%;height:180px;display:flex;flex-direction:column;gap:3px">'
+                + '<img src="' + cnv1.toDataURL('image/jpeg', 0.92) + '" style="width:100%;flex:1;min-height:0;object-fit:contain;border:1px solid #ddd;border-radius:3px;background:#fff">'
+                + '<img src="' + cnv2.toDataURL('image/jpeg', 0.92) + '" style="width:100%;flex:1;min-height:0;object-fit:contain;border:1px solid #ddd;border-radius:3px;background:#fff">'
+                + '</div>';
+            } else {
+              // Imagen más alta que ancha -> partir HORIZONTALMENTE (mitad arriba + mitad abajo) y poner LADO A LADO
+              const halfH = Math.floor(h / 2);
+              cnv1.width = w; cnv1.height = halfH;
+              cnv2.width = w; cnv2.height = h - halfH;
+              cnv1.getContext('2d').drawImage(img, 0, 0, w, halfH, 0, 0, w, halfH);
+              cnv2.getContext('2d').drawImage(img, 0, halfH, w, h - halfH, 0, 0, w, h - halfH);
+              html = '<div style="width:100%;height:180px;display:grid;grid-template-columns:1fr 1fr;gap:3px">'
+                + '<img src="' + cnv1.toDataURL('image/jpeg', 0.92) + '" style="width:100%;height:100%;object-fit:contain;border:1px solid #ddd;border-radius:3px;background:#fff">'
+                + '<img src="' + cnv2.toDataURL('image/jpeg', 0.92) + '" style="width:100%;height:100%;object-fit:contain;border:1px solid #ddd;border-radius:3px;background:#fff">'
+                + '</div>';
+            }
+            host.outerHTML = html;
+          } catch (e) {
+            host.innerHTML = '<img src="' + src + '" style="max-width:100%;max-height:180px;object-fit:contain">';
+          }
+        };
+        img.onerror = function () {
+          host.innerHTML = '<div style="color:#94a3b8;font-style:italic;font-size:10px;text-align:center;padding:14px">No se pudo cargar la ficha</div>';
+        };
+        img.src = src;
+      }
       function waitForImages() {
         const imgs = Array.from(document.querySelectorAll('.doc img'));
         if (!imgs.length) return Promise.resolve();
@@ -370,7 +417,8 @@
             fichaHtml = `<iframe class="ficha-frame" src="${escAttr(fichaUrl)}"></iframe>
               <p style="margin-top:6px;font-size:9.5px"><a href="${escAttr(fichaUrl)}" target="_blank">Abrir ficha técnica completa</a></p>`;
           } else {
-            fichaHtml = `<img class="ficha-img" src="${escAttr(fichaUrl)}" alt="Ficha técnica">`;
+            // Placeholder; tras render, splitFichaImage() detecta orientación y parte la imagen
+            fichaHtml = `<div id="ficha-split-host" data-ficha-src="${escAttr(fichaUrl)}" style="width:100%;height:180px;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--border);border-radius:4px;color:#94a3b8;font-size:9.5px">Cargando ficha…</div>`;
           }
         } else if (fichaManualArr.length) {
           // Agrupar por secciones: cada header inicia una nueva sección, sus rows hasta el siguiente header
@@ -532,6 +580,7 @@
           </div>
         `;
         document.getElementById('doc-body').innerHTML = html;
+        splitFichaImage();
         fitSinglePage();
         fitWhenReady();
         updateAudienceLabel();
