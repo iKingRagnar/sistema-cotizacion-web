@@ -602,6 +602,8 @@ async function runMigrations() {
     `ALTER TABLE cotizaciones ADD COLUMN bancarios_cuentas TEXT`,
     /* 2026-05-21: ficha técnica manual (JSON array de filas {label,value}) cuando no se sube imagen */
     `ALTER TABLE cotizaciones ADD COLUMN ficha_tecnica_manual TEXT`,
+    /* 2026-05-21: fotos adjuntas de ficha técnica (JSON array de dataURLs, máx 4) */
+    `ALTER TABLE cotizaciones ADD COLUMN ficha_tecnica_fotos TEXT`,
   ];
   for (const sql of migrations) {
     try {

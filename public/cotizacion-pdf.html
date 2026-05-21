@@ -404,23 +404,25 @@
           ? `<img src="${escAttr(imgUrl)}" alt="Máquina cotizada" onerror="this.parentNode.innerHTML='<span class=&quot;img-placeholder&quot;>No se pudo cargar la imagen</span>'">`
           : `<span class="img-placeholder">Sin imagen</span>`;
         // ===== FICHA TÉCNICA =====
-        const fichaUrl = cot.ficha_tecnica_url ? String(cot.ficha_tecnica_url) : '';
         const fichaManualRaw = cot.ficha_tecnica_manual;
         let fichaManualArr = [];
         if (fichaManualRaw) {
           if (Array.isArray(fichaManualRaw)) fichaManualArr = fichaManualRaw;
           else { try { const a = JSON.parse(String(fichaManualRaw)); if (Array.isArray(a)) fichaManualArr = a; } catch (_) {} }
         }
-        let fichaHtml;
-        if (fichaUrl) {
-          if (isPdfUrl(fichaUrl)) {
-            fichaHtml = `<iframe class="ficha-frame" src="${escAttr(fichaUrl)}"></iframe>
-              <p style="margin-top:6px;font-size:9.5px"><a href="${escAttr(fichaUrl)}" target="_blank">Abrir ficha técnica completa</a></p>`;
-          } else {
-            // Placeholder; tras render, splitFichaImage() detecta orientación y parte la imagen
-            fichaHtml = `<div id="ficha-split-host" data-ficha-src="${escAttr(fichaUrl)}" style="width:100%;height:180px;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--border);border-radius:4px;color:#94a3b8;font-size:9.5px">Cargando ficha…</div>`;
-          }
-        } else if (fichaManualArr.length) {
+        const fichaFotosRaw = cot.ficha_tecnica_fotos;
+        let fichaFotosArr = [];
+        if (fichaFotosRaw) {
+          if (Array.isArray(fichaFotosRaw)) fichaFotosArr = fichaFotosRaw.filter(Boolean).slice(0,4);
+          else { try { const a = JSON.parse(String(fichaFotosRaw)); if (Array.isArray(a)) fichaFotosArr = a.filter(Boolean).slice(0,4); } catch (_) {} }
+        }
+        // Mini-botones de fotos (independientes del contenido — siempre arriba si existen)
+        const fotosBtnsHtml = fichaFotosArr.length
+          ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">${fichaFotosArr.map((u,i) => `<a href="${escAttr(u)}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px;background:var(--k);color:var(--y);border:1px solid var(--y);border-radius:4px;text-decoration:none;font-size:9.5px;font-weight:800"><img src="${escAttr(u)}" style="width:18px;height:18px;object-fit:cover;border-radius:2px;border:1px solid var(--y)"> FOTO ${i+1}</a>`).join('')}</div>`
+          : '';
+        // Construcción del contenido: fotos (mini-botones) arriba + tabla manual abajo si existe
+        let fichaContent = '';
+        if (fichaManualArr.length) {
           // Agrupar por secciones: cada header inicia una nueva sección, sus rows hasta el siguiente header
           const sections = [];
           let cur = null;
@@ -439,26 +441,27 @@
             if (t === 'value-only') {
               return `<tr><td colspan="2" style="border:1px solid var(--border);padding:4px 7px;font-size:9.5px;color:#1e293b;background:#fff">${esc(r.value||'')}</td></tr>`;
             }
-            return `<tr><th style="background:#fffbe6;border:1px solid var(--border);padding:4px 7px;text-align:left;font-size:9.5px;color:var(--k);font-weight:800;width:42%">${esc(r.label||'')}</th><td style="border:1px solid var(--border);padding:4px 7px;font-size:9.5px;color:#1e293b">${esc(r.value||'')}</td></tr>`;
+            // PAR: 50/50 alineado y simétrico
+            return `<tr><th style="background:#fffbe6;border:1px solid var(--border);padding:4px 7px;text-align:left;font-size:9.5px;color:var(--k);font-weight:800;width:50%">${esc(r.label||'')}</th><td style="border:1px solid var(--border);padding:4px 7px;font-size:9.5px;color:#1e293b;width:50%">${esc(r.value||'')}</td></tr>`;
           };
           const renderSection = (s) => {
             const titleHtml = s.title
               ? `<div style="text-align:center;font-weight:900;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--k);padding:4px 6px;border:1px solid var(--border);border-bottom:none;background:#fff">${esc(s.title)}</div>`
               : '';
             const rowsHtml = s.rows.length
-              ? `<table style="width:100%;border-collapse:collapse;margin:0;box-shadow:none">${s.rows.map(renderRow).join('')}</table>`
+              ? `<table style="width:100%;border-collapse:collapse;margin:0;box-shadow:none;table-layout:fixed">${s.rows.map(renderRow).join('')}</table>`
               : '';
             return `<div>${titleHtml}${rowsHtml}</div>`;
           };
-          // Columnas según cantidad de secciones: 1 -> 1, 2 -> 2, 3 -> 3, 4+ -> 2x2 (grid 2 cols)
           const n = sections.length;
           const cols = n <= 1 ? 1 : (n === 2 ? 2 : (n === 3 ? 3 : 2));
-          fichaHtml = `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:6px;align-items:start">
+          fichaContent = `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:6px;align-items:start">
             ${sections.map(renderSection).join('')}
           </div>`;
-        } else {
-          fichaHtml = `<div class="ficha-empty">No se cargó ficha técnica para esta cotización</div>`;
         }
+        const fichaHtml = (fotosBtnsHtml || fichaContent)
+          ? `${fotosBtnsHtml}${fichaContent}`
+          : `<div class="ficha-empty">No se cargó ficha técnica para esta cotización</div>`;
         // ===== ATENDIDO POR =====
         const vendedorNombre = cot.atendido_por_nombre || cot.vendedor_catalogo_nombre || cot.vendedor || '—';
         const vendedorPuesto = cot.atendido_por_puesto || cot.vendedor_puesto || '';
@@ -580,7 +583,6 @@
           </div>
         `;
         document.getElementById('doc-body').innerHTML = html;
-        splitFichaImage();
         fitSinglePage();
         fitWhenReady();
         updateAudienceLabel();
