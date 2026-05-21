@@ -2675,7 +2675,9 @@ app.get('/api/cotizaciones/:id', async (req, res) => {
     );
     if (!row) return res.status(404).json({ error: 'No encontrado' });
     const lineas = await db.getAll(
-      `SELECT l.*, r.codigo as codigo, r.descripcion as refaccion_descripcion, m.nombre as maquina_nombre,
+      `SELECT l.*, r.codigo as codigo, r.descripcion as refaccion_descripcion,
+              m.nombre as maquina_nombre, m.imagen_pieza_url as maquina_imagen_url,
+              m.descripcion_corta as maquina_descripcion_corta, m.modelo as maquina_modelo,
               b.fecha as bitacora_fecha, b.tecnico as bitacora_tecnico, b.tiempo_horas as bitacora_tiempo_horas, b.actividades as bitacora_actividades
        FROM cotizacion_lineas l
        LEFT JOIN refacciones r ON r.id = l.refaccion_id
@@ -2981,7 +2983,9 @@ async function recalcCotizacionTotals(cotizacionId) {
 app.get('/api/cotizaciones/:id/lineas', async (req, res) => {
   try {
     const rows = await db.getAll(
-      `SELECT l.*, r.codigo as codigo, r.descripcion as refaccion_descripcion, m.nombre as maquina_nombre,
+      `SELECT l.*, r.codigo as codigo, r.descripcion as refaccion_descripcion,
+              m.nombre as maquina_nombre, m.imagen_pieza_url as maquina_imagen_url,
+              m.descripcion_corta as maquina_descripcion_corta, m.modelo as maquina_modelo,
               b.fecha as bitacora_fecha, b.tecnico as bitacora_tecnico, b.tiempo_horas as bitacora_tiempo_horas, b.actividades as bitacora_actividades
        FROM cotizacion_lineas l
        LEFT JOIN refacciones r ON r.id = l.refaccion_id

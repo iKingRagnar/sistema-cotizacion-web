@@ -139,6 +139,33 @@
     .sign { margin-top: 12px; padding-top: 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
     .line { border-bottom: 1.5px solid #94a3b8; height: 14px; margin-bottom: 2px; }
     .lbl { font-size: 9px; color: #64748b; text-transform: uppercase; }
+    /* ===== Atendido por + Equipo cotizado + Bancarios (estilo cota1 UNIVERSAL) ===== */
+    .atendido-box, .maquinas-box, .bancarios-box { margin-top: 8px; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; }
+    .atendido-head, .maquinas-head, .bancarios-head {
+      background: linear-gradient(180deg, #0f172a 0%, #1e3a5f 100%);
+      color: #FFD200;
+      font-weight: 800;
+      font-size: 10px;
+      letter-spacing: .12em;
+      padding: 5px 9px;
+    }
+    .atendido-body { padding: 7px 9px; background: #fff; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+    .atendido-nombre { font-weight: 700; font-size: 11px; color: #0f172a; }
+    .atendido-puesto { color: #475569; font-weight: 600; font-size: 10px; }
+    .atendido-contact { font-size: 9.5px; color: #475569; display: flex; gap: 10px; }
+    .maquinas-grid { padding: 7px 9px; background: #fff; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .maquina-card { display: flex; gap: 7px; border: 1px solid #e2e8f0; border-radius: 6px; padding: 5px; background: #f8fafc; }
+    .maquina-card img { width: 80px; height: 60px; object-fit: contain; background: #fff; border-radius: 4px; flex-shrink: 0; }
+    .maquina-info { flex: 1; min-width: 0; }
+    .maquina-modelo { font-weight: 800; font-size: 10px; color: #0f172a; }
+    .maquina-desc { font-size: 9px; color: #64748b; margin-top: 2px; }
+    .bancarios-empresa { padding: 6px 9px; background: #fffbeb; border-bottom: 1px solid #fde68a; font-size: 10px; color: #0f172a; }
+    .bancarios-rfc { font-family: monospace; font-weight: 700; color: #b91c1c; }
+    .bancarios-table { width: 100%; border-collapse: collapse; margin: 0; font-size: 9.5px; }
+    .bancarios-table th { background: #FFD200; color: #0a0a0a; padding: 5px; font-size: 9px; letter-spacing: .04em; border: 1px solid #c8a000; }
+    .bancarios-table td { padding: 4px 5px; border: 1px solid #e2e8f0; text-align: center; font-family: monospace; font-size: 9px; }
+    .bancarios-table tbody tr:nth-child(even) td { background: #f8fafc; }
+    .bancarios-politica { padding: 6px 9px; font-size: 8.5px; color: #475569; background: #fff; line-height: 1.3; border-top: 1px solid #e2e8f0; }
     .doc.compact { font-size: 9.3pt; line-height: 1.24; }
     .doc.compact .title { margin: 6px 0; font-size: 17px; }
     .doc.compact th, .doc.compact td { padding: 5px; }
@@ -294,6 +321,62 @@
         const internalBox = audience === 'interno'
           ? `<div class="notes"><strong>Uso interno:</strong> ID #${esc(cot.id || '—')} · Cliente ID: ${esc(cot.cliente_id || '—')} · Tipo técnico: ${esc(cot.tipo || '—')}</div>`
           : '';
+        // ===== ATENDIDO POR =====
+        const vendedorNombre = cot.vendedor_catalogo_nombre || cot.vendedor || '—';
+        const vendedorPuesto = cot.vendedor_puesto || '';
+        const vendedorTel = cot.vendedor_telefono || '';
+        const vendedorMail = cot.vendedor_email || '';
+        const atendidoBox = `
+          <div class="atendido-box">
+            <div class="atendido-head"><i style="margin-right:6px">👤</i>ATENDIDO POR</div>
+            <div class="atendido-body">
+              <div class="atendido-nombre">${esc(vendedorNombre)}${vendedorPuesto ? ' <span class="atendido-puesto">· ' + esc(vendedorPuesto) + '</span>' : ''}</div>
+              ${vendedorTel || vendedorMail ? '<div class="atendido-contact">' + [vendedorTel ? '<span>📞 ' + esc(vendedorTel) + '</span>' : '', vendedorMail ? '<span>✉️ ' + esc(vendedorMail) + '</span>' : ''].filter(Boolean).join(' &nbsp; ') + '</div>' : ''}
+            </div>
+          </div>`;
+        // ===== IMÁGENES DE MÁQUINAS COTIZADAS =====
+        const maquinasConImagen = (cot.lineas || []).filter(l => l.maquina_imagen_url && String(l.maquina_imagen_url).trim());
+        const maquinasUnicas = [];
+        const idsVistos = new Set();
+        maquinasConImagen.forEach(l => {
+          if (l.maquina_id && !idsVistos.has(l.maquina_id)) {
+            idsVistos.add(l.maquina_id);
+            maquinasUnicas.push(l);
+          }
+        });
+        const maquinasBox = maquinasUnicas.length ? `
+          <div class="maquinas-box">
+            <div class="maquinas-head"><i style="margin-right:6px">🔧</i>EQUIPO COTIZADO</div>
+            <div class="maquinas-grid">
+              ${maquinasUnicas.map(l => `
+                <div class="maquina-card">
+                  <img src="${esc(l.maquina_imagen_url)}" alt="${esc(l.maquina_nombre || '')}" onerror="this.style.display='none'">
+                  <div class="maquina-info">
+                    <div class="maquina-modelo">${esc(l.maquina_modelo || l.maquina_nombre || '—')}</div>
+                    ${l.maquina_descripcion_corta ? '<div class="maquina-desc">' + esc(l.maquina_descripcion_corta) + '</div>' : ''}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>` : '';
+        // ===== DATOS BANCARIOS UNIVERSAL =====
+        const bancariosBox = `
+          <div class="bancarios-box">
+            <div class="bancarios-head"><i style="margin-right:6px">🏦</i>INFORMACIÓN BANCARIA</div>
+            <div class="bancarios-empresa"><strong>UNIVERSAL MAQUINARIA S.A. DE C.V.</strong> &nbsp; · &nbsp; RFC: <span class="bancarios-rfc">UMA000000XX0</span></div>
+            <table class="bancarios-table">
+              <thead>
+                <tr><th>BANCO</th><th>MONEDA</th><th>CUENTA</th><th>CLABE</th><th>SUC.</th><th>SWIFT</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>BANORTE</td><td>PESOS</td><td>0000000000</td><td>072000000000000000</td><td>———</td><td>———</td></tr>
+                <tr><td>BANORTE</td><td>DÓLARES</td><td>0000000000</td><td>072000000000000000</td><td>———</td><td>MENOMXMTXXX</td></tr>
+                <tr><td>BANAMEX</td><td>PESOS</td><td>0000000</td><td>002000000000000000</td><td>0000</td><td>———</td></tr>
+                <tr><td>BANAMEX</td><td>DÓLARES</td><td>0000000</td><td>002000000000000000</td><td>0000</td><td>BNMXMXMMXXX</td></tr>
+              </tbody>
+            </table>
+            <div class="bancarios-politica"><strong>Política de pago con cheque:</strong> Por seguridad financiera, cuando el pago sea con cheque la entrega de máquinas y/o refacciones se hará al siguiente día hábil del depósito previa confirmación de acreditamiento de fondos.</div>
+          </div>`;
         const html = `
           <div class="doc" id="doc">
             <div class="head" style="background:#fff;color:#0f172a;border-bottom:3px solid #b91c1c;border-radius:12px 12px 0 0">
@@ -375,10 +458,9 @@
                 <p>Al autorizar, programamos fecha de atención y confirmamos entregables. Tiempo estimado sujeto a disponibilidad.</p>
               </article>
             </div>
-            <div class="sign">
-              <div><div class="line"></div><div class="lbl">Firma de aceptación</div></div>
-              <div><div class="line"></div><div class="lbl">Nombre y fecha</div></div>
-            </div>
+            ${atendidoBox}
+            ${maquinasBox}
+            ${bancariosBox}
             <div style="background:#fde047;color:#0f172a;text-align:center;padding:8px;font-weight:900;letter-spacing:.12em;margin-top:8px;border-top:3px solid #b91c1c;border-radius:0 0 8px 8px;font-size:11px">
               UNIVERSAL MAQUINARIA · DONDE LA COMPETENCIA NO EXISTE
             </div>
