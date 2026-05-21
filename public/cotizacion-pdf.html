@@ -128,7 +128,7 @@
     .y-head { background: var(--y); color: var(--k); font-weight: 900; font-size: 11px; letter-spacing: .14em; padding: 4px 11px; text-transform: uppercase; }
     .y-body { padding: 5px 10px; background: #fff; font-size: 10px; }
     .ficha-frame { width: 100%; height: 180px; border: 1px solid var(--border); border-radius: 6px; }
-    .ficha-img { max-width: 100%; max-height: 180px; display: block; margin: 0 auto; object-fit: contain; }
+    .ficha-img { width: 100%; height: 180px; display: block; margin: 0; object-fit: contain; background: #fff; border-radius: 4px; }
     .ficha-empty { color: #94a3b8; font-style: italic; font-size: 10px; text-align: center; padding: 14px; }
     .proposal-grid { margin-top: 5px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     .proposal-card { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fff; }
@@ -163,7 +163,7 @@
     .doc.compact .banner-total { padding: 7px 12px; font-size: 13px; margin: 7px 0 6px; }
     .doc.compact .img-maquina-card { min-height: 150px; }
     .doc.compact .img-maquina-card img { max-height: 150px; }
-    .doc.compact .ficha-frame, .doc.compact .ficha-img { height: 140px; max-height: 140px; }
+    .doc.compact .ficha-frame, .doc.compact .ficha-img { width: 100%; height: 140px; max-height: 140px; }
     .doc.ultra { font-size: 8.6pt; line-height: 1.16; }
     .doc.ultra .notes { font-size: 8.5px; }
     .doc.ultra .title { font-size: 15px; margin: 3px 0; }
@@ -172,7 +172,7 @@
     .doc.ultra .banner-total { padding: 5px 10px; font-size: 11px; margin: 5px 0 4px; }
     .doc.ultra .img-maquina-card { min-height: 110px; }
     .doc.ultra .img-maquina-card img { max-height: 110px; }
-    .doc.ultra .ficha-frame, .doc.ultra .ficha-img { height: 100px; max-height: 100px; }
+    .doc.ultra .ficha-frame, .doc.ultra .ficha-img { width: 100%; height: 100px; max-height: 100px; }
     .doc.ultra .cols, .doc.ultra .meta-grid, .doc.ultra .proposal-grid { gap: 5px; margin-bottom: 5px; }
     @media print {
       * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
