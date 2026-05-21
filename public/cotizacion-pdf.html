@@ -293,6 +293,25 @@
         };
         img.src = src;
       }
+      // Expuesta globalmente: abre la foto N en ventana nueva (funciona desde iframe + dataURL)
+      window.openFichaFoto = function (idx) {
+        const arr = window.__fichaFotos || [];
+        const url = arr[idx];
+        if (!url) return;
+        // Usar window.top.open para escapar del iframe del modal
+        const opener = (window.top && window.top.open) ? window.top : window;
+        const w = opener.open('', '_blank');
+        if (!w) { alert('Permite ventanas emergentes para ver la foto.'); return; }
+        try {
+          w.document.write('<!DOCTYPE html><html><head><title>Ficha técnica — Foto ' + (idx+1) + '</title><style>'
+            + 'html,body{margin:0;padding:0;background:#0a0a0a;display:flex;align-items:center;justify-content:center;min-height:100vh}'
+            + 'img{max-width:100vw;max-height:100vh;display:block;object-fit:contain}'
+            + '</style></head><body><img src="' + url + '"></body></html>');
+          w.document.close();
+        } catch (e) {
+          alert('No se pudo abrir la foto.');
+        }
+      };
       function waitForImages() {
         const imgs = Array.from(document.querySelectorAll('.doc img'));
         if (!imgs.length) return Promise.resolve();
@@ -416,9 +435,11 @@
           if (Array.isArray(fichaFotosRaw)) fichaFotosArr = fichaFotosRaw.filter(Boolean).slice(0,4);
           else { try { const a = JSON.parse(String(fichaFotosRaw)); if (Array.isArray(a)) fichaFotosArr = a.filter(Boolean).slice(0,4); } catch (_) {} }
         }
+        // Guardar fotos globalmente para que el handler de click pueda abrirlas
+        window.__fichaFotos = fichaFotosArr.slice();
         // Mini-botones de fotos (independientes del contenido — siempre arriba si existen)
         const fotosBtnsHtml = fichaFotosArr.length
-          ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">${fichaFotosArr.map((u,i) => `<a href="${escAttr(u)}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px;background:var(--k);color:var(--y);border:1px solid var(--y);border-radius:4px;text-decoration:none;font-size:9.5px;font-weight:800"><img src="${escAttr(u)}" style="width:18px;height:18px;object-fit:cover;border-radius:2px;border:1px solid var(--y)"> FOTO ${i+1}</a>`).join('')}</div>`
+          ? `<div class="no-print-foto-row" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">${fichaFotosArr.map((u,i) => `<button type="button" onclick="openFichaFoto(${i})" style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px;background:var(--k);color:var(--y);border:1px solid var(--y);border-radius:4px;cursor:pointer;font-size:9.5px;font-weight:800;font-family:inherit"><img src="${escAttr(u)}" style="width:18px;height:18px;object-fit:cover;border-radius:2px;border:1px solid var(--y);pointer-events:none"> FOTO ${i+1}</button>`).join('')}</div>`
           : '';
         // Construcción del contenido: fotos (mini-botones) arriba + tabla manual abajo si existe
         let fichaContent = '';
