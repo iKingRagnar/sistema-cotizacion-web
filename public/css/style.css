@@ -2684,8 +2684,10 @@ body.dark-theme .footer-build-id {
   height: min(86vh, 900px);
   max-height: none;
   inset: auto;
-  left: 4vw;
-  top: 7vh;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
   overflow: hidden;
   resize: both;
 }
