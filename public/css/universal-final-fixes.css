@@ -1,0 +1,196 @@
+/* ====================================================================
+   UNIVERSAL FINAL FIXES — Override absoluto para resolver:
+   1. Hover effects raros (morph/quita colores) -> elementos FIJOS
+   2. Tabs activas con contraste correcto (amarillo UNIVERSAL, no verde)
+   3. Coherencia visual global con paleta amarillo+negro
+   Se carga AL FINAL para ganar especificidad.
+   ==================================================================== */
+
+/* ===== 1) ANULAR HOVER EFFECTS QUE CAMBIAN COLORES O MOVIMIENTO ===== */
+html body .tab:hover,
+html body .tab:focus,
+html body button.tab:hover,
+html body button.tab:focus,
+html body [data-tab]:hover,
+html body [data-tab]:focus,
+html body .mapa-owner-pill:hover,
+html body .mapa-owner-pill:focus,
+html body .sidebar-link:hover,
+html body .sidebar-link:focus,
+html body .btn:hover,
+html body .btn:focus,
+html body a:hover,
+html body a:focus {
+  transform: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  animation: none !important;
+}
+
+/* Reducir transitions agresivas globalmente */
+html body .tab,
+html body button.tab,
+html body [data-tab],
+html body .mapa-owner-pill,
+html body .sidebar-link,
+html body .btn {
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease !important;
+  transform: none !important;
+  animation: none !important;
+}
+
+/* ===== 2) TABS ACTIVAS: amarillo UNIVERSAL con texto NEGRO (contraste claro) ===== */
+html body .tab.active,
+html body button.tab.active,
+html body .mapa-owner-pill.active,
+html body [data-tab].active {
+  background: #FFD200 !important;
+  background-image: none !important;
+  color: #0a0a0a !important;
+  border-color: #FFD200 !important;
+  box-shadow: 0 2px 6px rgba(255, 210, 0, 0.4) !important;
+}
+html body .tab.active *,
+html body button.tab.active *,
+html body .mapa-owner-pill.active *,
+html body [data-tab].active * {
+  color: #0a0a0a !important;
+  fill: #0a0a0a !important;
+}
+/* Sidebar nav link activo */
+html body .sidebar-nav .sidebar-link.active,
+html body .sidebar-nav a.active,
+html body .sidebar-nav button.active,
+html body nav .nav-item.active {
+  background: #FFD200 !important;
+  background-image: none !important;
+  color: #0a0a0a !important;
+  border-left: 4px solid #c8a000 !important;
+}
+html body .sidebar-nav .sidebar-link.active *,
+html body .sidebar-nav a.active *,
+html body .sidebar-nav button.active *,
+html body nav .nav-item.active * {
+  color: #0a0a0a !important;
+  fill: #0a0a0a !important;
+}
+
+/* ===== 3) HOVER SIMPLE: solo cambia el FONDO ligeramente, sin movimiento ===== */
+html body .tab:not(.active):hover,
+html body button.tab:not(.active):hover,
+html body .mapa-owner-pill:not(.active):hover,
+html body [data-tab]:not(.active):hover {
+  background: rgba(255, 210, 0, 0.12) !important;
+  color: #FFD200 !important;
+  border-color: rgba(255, 210, 0, 0.5) !important;
+}
+html body .sidebar-nav .sidebar-link:not(.active):hover,
+html body .sidebar-nav a:not(.active):hover {
+  background: rgba(255, 210, 0, 0.08) !important;
+  color: #FFD200 !important;
+}
+
+/* ===== 4) ELIMINAR ANIMACIONES INFINITAS / CONFETTI / BREATHING ===== */
+html body [class*="pulse"],
+html body [class*="breath"],
+html body [class*="shimmer"],
+html body [class*="confetti"],
+html body [class*="float-anim"],
+html body [class*="bounce-anim"],
+html body [class*="glow-anim"] {
+  animation: none !important;
+}
+html body *::before, html body *::after {
+  animation: none !important;
+}
+/* Permitir solo animaciones explícitamente marcadas como necesarias */
+html body .keep-anim, html body .keep-anim * { animation: revert !important; }
+
+/* ===== 5) DESHABILITAR backdrop-filter (causa freezes y look "vidrio falso") ===== */
+html body * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ===== 6) FIX CONTRASTE EN INPUTS Y SELECTS (dark) ===== */
+html body input[type="text"],
+html body input[type="number"],
+html body input[type="date"],
+html body input[type="email"],
+html body input[type="tel"],
+html body input[type="search"],
+html body select,
+html body textarea {
+  background: #0f172a !important;
+  color: #f1f5f9 !important;
+  border: 1px solid #334155 !important;
+}
+html body input::placeholder, html body textarea::placeholder {
+  color: #64748b !important;
+  opacity: 1 !important;
+}
+html body input:focus,
+html body select:focus,
+html body textarea:focus {
+  border-color: #FFD200 !important;
+  outline: 2px solid rgba(255, 210, 0, 0.35) !important;
+  outline-offset: 0 !important;
+}
+
+/* ===== 7) BOTONES PRIMARIOS: amarillo UNIVERSAL ===== */
+html body .btn-primary,
+html body .btn.btn-primary,
+html body button.btn-primary {
+  background: #FFD200 !important;
+  background-image: none !important;
+  color: #0a0a0a !important;
+  border: 1px solid #c8a000 !important;
+  font-weight: 800 !important;
+}
+html body .btn-primary:hover {
+  background: #ffdd33 !important;
+  color: #0a0a0a !important;
+}
+html body .btn-secondary {
+  background: #1f2937 !important;
+  background-image: none !important;
+  color: #FFD200 !important;
+  border: 1px solid #FFD200 !important;
+}
+html body .btn-secondary:hover {
+  background: #2d3748 !important;
+  color: #FFD200 !important;
+}
+html body .btn.danger, html body .btn-danger {
+  background: #dc2626 !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  border: 1px solid #991b1b !important;
+}
+html body .btn.danger:hover, html body .btn-danger:hover {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+/* ===== 8) ROW HOVER en tablas: sutil y fijo ===== */
+html body table tbody tr:hover,
+html body table tbody tr:hover td {
+  background: rgba(255, 210, 0, 0.06) !important;
+  transition: background 0.1s ease !important;
+}
+
+/* ===== 9) ELIMINAR ESCALADO DE BOTONES Y CARDS AL CLICK ===== */
+html body button:active,
+html body .btn:active,
+html body .card:active,
+html body [role="button"]:active {
+  transform: none !important;
+  scale: 1 !important;
+}
+
+/* ===== 10) FIX FOCO VISIBLE (accesibilidad) ===== */
+html body *:focus-visible {
+  outline: 2px solid #FFD200 !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 4px rgba(255, 210, 0, 0.2) !important;
+}
