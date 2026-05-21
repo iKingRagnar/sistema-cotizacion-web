@@ -44,7 +44,7 @@
       width: 100%;
       max-width: 216mm;
       margin: 0 auto;
-      padding: 6mm 8mm;
+      padding: 3mm 8mm 4mm;
       background: #fff;
       border: none;
       border-radius: 0;
@@ -53,7 +53,7 @@
     }
     .head {
       border-radius: 12px;
-      padding: 10px 12px;
+      padding: 4px 10px 6px;
       display: flex;
       justify-content: space-between;
       gap: 12px;
@@ -71,16 +71,16 @@
       background: var(--k);
       color: #fff;
       text-align: center;
-      padding: 10px 12px;
+      padding: 6px 12px;
       font-weight: 900;
       letter-spacing: .12em;
-      font-size: 15px;
-      margin: 10px 0 8px;
+      font-size: 14px;
+      margin: 5px 0 4px;
       border-radius: 6px;
-      border-bottom: 4px solid var(--y);
+      border-bottom: 3px solid var(--y);
     }
     .title {
-      margin: 8px auto 10px;
+      margin: 4px auto 6px;
       text-align: center;
       font-size: 22px;
       font-weight: 900;
@@ -93,23 +93,23 @@
     .meta-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
-      margin-bottom: 8px;
+      gap: 6px;
+      margin-bottom: 5px;
     }
-    .chip { border: 1px solid var(--border); border-radius: 10px; padding: 7px; background: #fafafa; font-size: 10px; }
+    .chip { border: 1px solid var(--border); border-radius: 10px; padding: 4px 7px; background: #fafafa; font-size: 10px; }
     .chip strong { color: var(--k); }
-    .cols { display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px; margin-bottom: 10px; }
-    .block { border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: #fff; box-shadow: 0 2px 6px rgba(15,23,42,0.05); }
-    .block h3 { margin: 0 0 8px; font-size: 10px; color: var(--k); letter-spacing: .1em; text-transform: uppercase; background: var(--y); display: inline-block; padding: 3px 10px; border-radius: 4px; font-weight: 900; }
-    .block p { margin: 3px 0; font-size: 10.5px; color: #1e293b; }
-    .img-maquina-card { display: flex; align-items: center; justify-content: center; min-height: 200px; background: #fafafa; border: 2px dashed var(--border); border-radius: 8px; padding: 8px; }
-    .img-maquina-card img { max-width: 100%; max-height: 200px; object-fit: contain; }
+    .cols { display: grid; grid-template-columns: 1.2fr 1fr; gap: 6px; margin-bottom: 5px; }
+    .block { border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; background: #fff; box-shadow: 0 2px 6px rgba(15,23,42,0.05); }
+    .block h3 { margin: 0 0 4px; font-size: 10px; color: var(--k); letter-spacing: .1em; text-transform: uppercase; background: var(--y); display: inline-block; padding: 2px 9px; border-radius: 4px; font-weight: 900; }
+    .block p { margin: 2px 0; font-size: 10.5px; color: #1e293b; }
+    .img-maquina-card { display: flex; align-items: center; justify-content: center; min-height: 140px; background: #fafafa; border: 2px dashed var(--border); border-radius: 8px; padding: 4px; }
+    .img-maquina-card img { max-width: 100%; max-height: 140px; object-fit: contain; }
     .img-placeholder { color: #94a3b8; font-size: 11px; font-style: italic; text-align: center; }
-    .totals { background: linear-gradient(180deg,#fffbe6 0%,#fff8d6 100%); border: 1px solid var(--y); margin-top: 10px; box-shadow: 0 2px 6px rgba(255,210,0,0.15); }
-    .totals p { display: flex; justify-content: space-between; font-weight: 700; margin: 3px 0; font-size: 11px; }
-    .totals p:last-child { color: var(--k); font-size: 13px; font-weight: 900; border-top: 2px solid var(--y); padding-top: 5px; margin-top: 4px; }
-    table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 10px; box-shadow: 0 2px 6px rgba(15,23,42,0.05); border-radius: 6px; overflow: hidden; }
-    th, td { border: 1px solid var(--border); padding: 7px; }
+    .totals { background: linear-gradient(180deg,#fffbe6 0%,#fff8d6 100%); border: 1px solid var(--y); margin-top: 5px; box-shadow: 0 2px 6px rgba(255,210,0,0.15); padding: 6px 10px; }
+    .totals p { display: flex; justify-content: space-between; font-weight: 700; margin: 2px 0; font-size: 11px; }
+    .totals p:last-child { color: var(--k); font-size: 13px; font-weight: 900; border-top: 2px solid var(--y); padding-top: 3px; margin-top: 3px; }
+    table { width: 100%; border-collapse: collapse; margin: 5px 0; font-size: 10px; box-shadow: 0 2px 6px rgba(15,23,42,0.05); border-radius: 6px; overflow: hidden; }
+    th, td { border: 1px solid var(--border); padding: 5px 6px; }
     th { background: var(--y); color: var(--k); text-transform: uppercase; letter-spacing: .06em; font-size: 9px; font-weight: 900; border-color: #c8a000; }
     tbody tr:nth-child(even) td { background: #fafafa; }
     tbody tr:hover td { background: #fffbe6; }
@@ -124,28 +124,28 @@
       color: #475569;
     }
     /* Bandas con header amarillo + cuerpo blanco */
-    .y-section { margin-top: 10px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-    .y-head { background: var(--y); color: var(--k); font-weight: 900; font-size: 11px; letter-spacing: .14em; padding: 7px 12px; text-transform: uppercase; }
-    .y-body { padding: 8px 11px; background: #fff; font-size: 10px; }
+    .y-section { margin-top: 5px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .y-head { background: var(--y); color: var(--k); font-weight: 900; font-size: 11px; letter-spacing: .14em; padding: 4px 11px; text-transform: uppercase; }
+    .y-body { padding: 5px 10px; background: #fff; font-size: 10px; }
     .ficha-frame { width: 100%; height: 180px; border: 1px solid var(--border); border-radius: 6px; }
     .ficha-img { max-width: 100%; max-height: 180px; display: block; margin: 0 auto; object-fit: contain; }
     .ficha-empty { color: #94a3b8; font-style: italic; font-size: 10px; text-align: center; padding: 14px; }
-    .proposal-grid { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .proposal-grid { margin-top: 5px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     .proposal-card { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fff; }
-    .proposal-card h4 { margin: 0; background: var(--y); color: var(--k); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; padding: 6px 9px; }
-    .proposal-card p { margin: 0; padding: 8px 10px; font-size: 9.8px; color: #1e293b; line-height: 1.4; }
-    .atendido-body { padding: 8px 11px; background: #fff; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+    .proposal-card h4 { margin: 0; background: var(--y); color: var(--k); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; padding: 4px 9px; }
+    .proposal-card p { margin: 0; padding: 5px 10px; font-size: 9.8px; color: #1e293b; line-height: 1.3; }
+    .atendido-body { padding: 5px 10px; background: #fff; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
     .atendido-nombre { font-weight: 800; font-size: 11.5px; color: var(--k); }
     .atendido-puesto { color: #475569; font-weight: 700; font-size: 10px; }
     .atendido-contact { font-size: 9.5px; color: #475569; display: flex; gap: 10px; }
-    .bancarios-empresa { padding: 8px 11px; background: #fffbe6; border-bottom: 1px solid var(--y); font-size: 10.5px; color: var(--k); }
+    .bancarios-empresa { padding: 5px 11px; background: #fffbe6; border-bottom: 1px solid var(--y); font-size: 10.5px; color: var(--k); }
     .bancarios-rfc { font-family: monospace; font-weight: 700; color: var(--k); background: var(--y); padding: 2px 7px; border-radius: 4px; }
     .bancarios-table { width: 100%; border-collapse: collapse; margin: 0; font-size: 9.5px; }
     .bancarios-table th { background: var(--k); color: var(--y); padding: 6px; font-size: 9px; letter-spacing: .06em; border: 1px solid var(--k); }
     .bancarios-table td { padding: 5px 6px; border: 1px solid var(--border); text-align: center; font-family: monospace; font-size: 9.5px; color: var(--ink); }
     .bancarios-table tbody tr:nth-child(even) td { background: #fafafa; }
     .bancarios-politica { padding: 7px 11px; font-size: 8.5px; color: #475569; background: #fff; line-height: 1.35; border-top: 2px solid var(--y); }
-    .doc-foot-banda { background: var(--y); color: var(--k); text-align: center; padding: 9px; font-weight: 900; letter-spacing: .14em; margin-top: 10px; border-radius: 0 0 8px 8px; font-size: 11.5px; }
+    .doc-foot-banda { background: var(--y); color: var(--k); text-align: center; padding: 5px; font-weight: 900; letter-spacing: .14em; margin-top: 5px; border-radius: 0 0 8px 8px; font-size: 11px; }
     .doc-foot {
       margin-top: 6px;
       padding-top: 6px;
