@@ -604,6 +604,8 @@ async function runMigrations() {
     `ALTER TABLE cotizaciones ADD COLUMN ficha_tecnica_manual TEXT`,
     /* 2026-05-21: fotos adjuntas de ficha técnica (JSON array de dataURLs, máx 4) */
     `ALTER TABLE cotizaciones ADD COLUMN ficha_tecnica_fotos TEXT`,
+    /* 2026-05-21: slot horario del reporte (madrugada/manana/tarde/noche) — para Agenda */
+    `ALTER TABLE reportes ADD COLUMN slot TEXT`,
   ];
   for (const sql of migrations) {
     try {
