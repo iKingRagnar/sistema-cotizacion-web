@@ -1083,8 +1083,13 @@ if (!process.env.VERCEL) {
         res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
         res.setHeader('Pragma', 'no-cache');
         res.setHeader('Expires', '0');
-      } else if (/\.(css|js|woff2?|ttf|eot|png|jpe?g|webp|gif|svg|ico)$/i.test(filePath)) {
-        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      } else if (/\.(css|js)$/i.test(filePath)) {
+        // ⚠️ no-cache: el browser debe revalidar SIEMPRE para detectar cambios
+        // (era 1 año immutable y bloqueaba todos los cambios visuales en cliente)
+        res.setHeader('Cache-Control', 'no-cache, must-revalidate, max-age=0');
+      } else if (/\.(woff2?|ttf|eot|png|jpe?g|webp|gif|svg|ico)$/i.test(filePath)) {
+        // Assets binarios: pueden cachear más, pero NO immutable para poder forzar reload si hace falta
+        res.setHeader('Cache-Control', 'public, max-age=86400, must-revalidate');
       } else if (/\.html$/i.test(filePath)) {
         res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
       }
