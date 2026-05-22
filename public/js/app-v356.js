@@ -4772,7 +4772,23 @@
     try {
       await fetchJson(API + '/refacciones/' + id, { method: 'DELETE' });
       showToast('Refacción eliminada correctamente.', 'success');
-      loadRefacciones();
+      // 🚀 FIX FREEZE: en vez de reconstruir TODA la tabla (que dispara el JS nuclear
+      // sobre cientos de celdas y bloquea el hilo), quitamos solo la fila eliminada
+      // del DOM y del cache en memoria. El diseño queda EXACTAMENTE igual.
+      try {
+        const idStr = String(id);
+        if (Array.isArray(refaccionesCache)) {
+          refaccionesCache = refaccionesCache.filter(r => String(r.id) !== idStr);
+        }
+        const btn = document.querySelector('#tabla-refacciones .btn-delete-ref[data-id="' + idStr + '"]');
+        const tr = btn ? btn.closest('tr') : null;
+        if (tr && tr.parentNode) tr.parentNode.removeChild(tr);
+        // Actualizar contador del footer si existe
+        try { updateTableFooter('tabla-refacciones', (document.querySelectorAll('#tabla-refacciones tbody tr') || []).length, (refaccionesCache || []).length); } catch (_) {}
+      } catch (_) {
+        // Si algo falla en el quick-remove, hacer reload tradicional como fallback
+        loadRefacciones();
+      }
     } catch (e) { showToast(parseApiError(e) || 'No se pudo eliminar.', 'error'); }
   }
 
