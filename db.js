@@ -614,7 +614,13 @@ async function runMigrations() {
     try {
       if (useTurso) await db.execute(sql);
       else await new Promise((res) => db.run(sql, () => res()));
-    } catch (_) { /* columna ya existe */ }
+    } catch (e) {
+      // Logear si NO es "duplicate column" (eso es esperado al re-ejecutar migración)
+      const msg = String(e && e.message || '');
+      if (!/duplicate column|already exists/i.test(msg)) {
+        console.warn('[migration]', sql, '->', msg);
+      }
+    }
   }
 }
 

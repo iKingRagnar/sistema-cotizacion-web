@@ -6150,7 +6150,8 @@ app.get('/api/reportes/:id', async (req, res) => {
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
 
-// AGENDA: asignaciones del mes (con o sin técnico). También considera fecha_programada
+// AGENDA: asignaciones del mes. Query RESILIENTE: si columnas slot/fecha_programada no
+// existen aún (migración no aplicó), reintenta sin ellas.
 app.get('/api/agenda/mes', async (req, res) => {
   try {
     const y = Number(req.query.year) || new Date().getFullYear();
@@ -6158,21 +6159,39 @@ app.get('/api/agenda/mes', async (req, res) => {
     const mm = String(m).padStart(2, '0');
     const start = `${y}-${mm}-01`;
     const end = `${y}-${mm}-31`;
-    const rows = await db.getAll(
-      `SELECT r.id, r.folio, r.fecha, r.fecha_programada, r.slot, r.tecnico, r.estatus, r.tipo_reporte, r.subtipo,
-              r.descripcion, r.notas, r.maquina_id, r.numero_maquina, r.razon_social,
-              c.nombre as cliente_nombre, m.nombre as maquina_nombre
-       FROM reportes r
-       LEFT JOIN clientes c ON c.id = r.cliente_id
-       LEFT JOIN maquinas m ON m.id = r.maquina_id
-       WHERE ((substr(COALESCE(r.fecha_programada, r.fecha), 1, 10) >= ?
-               AND substr(COALESCE(r.fecha_programada, r.fecha), 1, 10) <= ?)
-              OR (substr(COALESCE(r.fecha, ''), 1, 10) >= ?
-                  AND substr(COALESCE(r.fecha, ''), 1, 10) <= ?))
-       ORDER BY COALESCE(r.fecha_programada, r.fecha) ASC, r.slot ASC`,
-      [start, end, start, end]
-    );
-    // Normalizar fecha al formato YYYY-MM-DD (prefiere fecha_programada si existe)
+    let rows = [];
+    try {
+      // Query completo con slot y fecha_programada
+      rows = await db.getAll(
+        `SELECT r.id, r.folio, r.fecha, r.fecha_programada, r.slot, r.tecnico, r.estatus, r.tipo_reporte, r.subtipo,
+                r.descripcion, r.notas, r.maquina_id, r.numero_maquina, r.razon_social,
+                c.nombre as cliente_nombre, m.nombre as maquina_nombre
+         FROM reportes r
+         LEFT JOIN clientes c ON c.id = r.cliente_id
+         LEFT JOIN maquinas m ON m.id = r.maquina_id
+         WHERE substr(COALESCE(r.fecha_programada, r.fecha, ''), 1, 10) >= ?
+           AND substr(COALESCE(r.fecha_programada, r.fecha, ''), 1, 10) <= ?
+         ORDER BY COALESCE(r.fecha_programada, r.fecha) ASC, COALESCE(r.slot, 'zzz') ASC`,
+        [start, end]
+      );
+    } catch (e1) {
+      // Fallback sin slot ni fecha_programada (columnas pueden no existir aún)
+      console.warn('[agenda/mes] fallback sin slot:', e1 && e1.message);
+      const rows2 = await db.getAll(
+        `SELECT r.id, r.folio, r.fecha, r.tecnico, r.estatus, r.tipo_reporte, r.subtipo,
+                r.descripcion, r.notas, r.maquina_id, r.numero_maquina, r.razon_social,
+                c.nombre as cliente_nombre, m.nombre as maquina_nombre
+         FROM reportes r
+         LEFT JOIN clientes c ON c.id = r.cliente_id
+         LEFT JOIN maquinas m ON m.id = r.maquina_id
+         WHERE substr(COALESCE(r.fecha, ''), 1, 10) >= ?
+           AND substr(COALESCE(r.fecha, ''), 1, 10) <= ?
+         ORDER BY r.fecha ASC`,
+        [start, end]
+      );
+      rows = rows2.map(r => Object.assign({}, r, { fecha_programada: null, slot: null }));
+    }
+    // Normalizar fecha
     const out = rows.map(r => Object.assign({}, r, {
       fecha: ((r.fecha_programada || r.fecha) || '').toString().slice(0, 10),
     }));
@@ -6190,8 +6209,8 @@ app.post('/api/reportes', async (req, res) => {
     // Validación: si hay tecnico+fecha+slot, NO permitir 2 actividades del mismo técnico en mismo slot del mismo día
     if (tecnico && fecha && slotVal) {
       const conflict = await db.getOne(
-        'SELECT id, folio FROM reportes WHERE tecnico=? AND fecha=? AND LOWER(COALESCE(slot,""))=? LIMIT 1',
-        [tecnico, fecha, slotVal]
+        'SELECT id, folio FROM reportes WHERE tecnico=? AND fecha=? LIMIT 1',
+        [tecnico, fecha]
       );
       if (conflict) return res.status(409).json({ error: `El técnico ${tecnico} ya está asignado en ${slotVal} del ${fecha} (reporte ${conflict.folio}).`, conflict });
     }
@@ -6205,14 +6224,31 @@ app.post('/api/reportes', async (req, res) => {
     const finalEstatus = isFinalizado ? 'finalizado' : (estatus || 'abierto');
     const diasNum = dias != null && Number(dias) > 0 ? Math.floor(Number(dias)) : 1;
     const fueraNum = fuera_ciudad ? 1 : 0;
-    await db.runQuery(
-      `INSERT INTO reportes (folio, cliente_id, razon_social, maquina_id, numero_maquina, tipo_reporte, subtipo, descripcion, tecnico, fecha, fecha_programada, estatus, notas, finalizado, archivo_firmado, archivo_firmado_nombre, dias, fuera_ciudad, slot)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [folio, cliente_id || null, razon_social || null, maquina_id || null, numero_maquina || null,
-       tipo_reporte || 'servicio', subtipo || null, descripcion || null, tecnico || null,
-       fecha || new Date().toISOString().slice(0,10), fechaProgIns, finalEstatus, notas || null,
-       isFinalizado, archivo || null, archivo_firmado_nombre || null, diasNum, fueraNum, slotVal]
-    );
+    try {
+      await db.runQuery(
+        `INSERT INTO reportes (folio, cliente_id, razon_social, maquina_id, numero_maquina, tipo_reporte, subtipo, descripcion, tecnico, fecha, fecha_programada, estatus, notas, finalizado, archivo_firmado, archivo_firmado_nombre, dias, fuera_ciudad, slot)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [folio, cliente_id || null, razon_social || null, maquina_id || null, numero_maquina || null,
+         tipo_reporte || 'servicio', subtipo || null, descripcion || null, tecnico || null,
+         fecha || new Date().toISOString().slice(0,10), fechaProgIns, finalEstatus, notas || null,
+         isFinalizado, archivo || null, archivo_firmado_nombre || null, diasNum, fueraNum, slotVal]
+      );
+    } catch (eIns) {
+      // Fallback: columna slot quizás no existe en BD, intentar sin ella
+      if (/no such column.*slot|no column named slot/i.test(String(eIns.message))) {
+        console.warn('[reportes POST] reintentando INSERT sin columna slot');
+        await db.runQuery(
+          `INSERT INTO reportes (folio, cliente_id, razon_social, maquina_id, numero_maquina, tipo_reporte, subtipo, descripcion, tecnico, fecha, fecha_programada, estatus, notas, finalizado, archivo_firmado, archivo_firmado_nombre, dias, fuera_ciudad)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [folio, cliente_id || null, razon_social || null, maquina_id || null, numero_maquina || null,
+           tipo_reporte || 'servicio', subtipo || null, descripcion || null, tecnico || null,
+           fecha || new Date().toISOString().slice(0,10), fechaProgIns, finalEstatus, notas || null,
+           isFinalizado, archivo || null, archivo_firmado_nombre || null, diasNum, fueraNum]
+        );
+        // Intentar crear la columna para futuras inserciones
+        try { await db.runQuery('ALTER TABLE reportes ADD COLUMN slot TEXT'); } catch (_) {}
+      } else { throw eIns; }
+    }
     const r = await db.getOne('SELECT r.*, c.nombre as cliente_nombre FROM reportes r LEFT JOIN clientes c ON c.id=r.cliente_id ORDER BY r.id DESC LIMIT 1');
     if (r && r.id && isFinalizado) {
       try {
@@ -6253,23 +6289,42 @@ app.put('/api/reportes/:id', async (req, res) => {
     // Validación de conflicto al editar (excluyendo el propio reporte)
     if (tecnicoUpd && fechaUpd && slotUpd) {
       const conflict = await db.getOne(
-        'SELECT id, folio FROM reportes WHERE tecnico=? AND fecha=? AND LOWER(COALESCE(slot,""))=? AND id<>? LIMIT 1',
-        [tecnicoUpd, fechaUpd, slotUpd, req.params.id]
+        'SELECT id, folio FROM reportes WHERE tecnico=? AND fecha=? AND id<>? LIMIT 1',
+        [tecnicoUpd, fechaUpd, req.params.id]
       );
       if (conflict) return res.status(409).json({ error: `El técnico ${tecnicoUpd} ya está asignado en ${slotUpd} del ${fechaUpd} (reporte ${conflict.folio}).`, conflict });
     }
-    await db.runQuery(
-      `UPDATE reportes SET cliente_id=?, razon_social=?, maquina_id=?, numero_maquina=?, tipo_reporte=?, subtipo=?, descripcion=?, tecnico=?, fecha=?, fecha_programada=?, estatus=?, notas=?, finalizado=?, archivo_firmado=?, archivo_firmado_nombre=?, dias=?, fuera_ciudad=?, slot=? WHERE id=?`,
-      [
-        pick('cliente_id'), pick('razon_social'), pick('maquina_id'), pick('numero_maquina'),
-        pick('tipo_reporte', 'servicio'), pick('subtipo'), pick('descripcion'), tecnicoUpd,
-        fechaUpd, repAdmin ? pick('fecha_programada', existing.fecha_programada) : existing.fecha_programada,
-        finalEstatus, pick('notas'),
-        isFinalizado, archivo || null, archivoNombre || null,
-        diasUpd, fueraUpd, slotUpd,
-        req.params.id,
-      ]
-    );
+    try {
+      await db.runQuery(
+        `UPDATE reportes SET cliente_id=?, razon_social=?, maquina_id=?, numero_maquina=?, tipo_reporte=?, subtipo=?, descripcion=?, tecnico=?, fecha=?, fecha_programada=?, estatus=?, notas=?, finalizado=?, archivo_firmado=?, archivo_firmado_nombre=?, dias=?, fuera_ciudad=?, slot=? WHERE id=?`,
+        [
+          pick('cliente_id'), pick('razon_social'), pick('maquina_id'), pick('numero_maquina'),
+          pick('tipo_reporte', 'servicio'), pick('subtipo'), pick('descripcion'), tecnicoUpd,
+          fechaUpd, repAdmin ? pick('fecha_programada', existing.fecha_programada) : existing.fecha_programada,
+          finalEstatus, pick('notas'),
+          isFinalizado, archivo || null, archivoNombre || null,
+          diasUpd, fueraUpd, slotUpd,
+          req.params.id,
+        ]
+      );
+    } catch (eUpd) {
+      if (/no such column.*slot|no column named slot/i.test(String(eUpd.message))) {
+        console.warn('[reportes PUT] reintentando UPDATE sin columna slot');
+        await db.runQuery(
+          `UPDATE reportes SET cliente_id=?, razon_social=?, maquina_id=?, numero_maquina=?, tipo_reporte=?, subtipo=?, descripcion=?, tecnico=?, fecha=?, fecha_programada=?, estatus=?, notas=?, finalizado=?, archivo_firmado=?, archivo_firmado_nombre=?, dias=?, fuera_ciudad=? WHERE id=?`,
+          [
+            pick('cliente_id'), pick('razon_social'), pick('maquina_id'), pick('numero_maquina'),
+            pick('tipo_reporte', 'servicio'), pick('subtipo'), pick('descripcion'), tecnicoUpd,
+            fechaUpd, repAdmin ? pick('fecha_programada', existing.fecha_programada) : existing.fecha_programada,
+            finalEstatus, pick('notas'),
+            isFinalizado, archivo || null, archivoNombre || null,
+            diasUpd, fueraUpd,
+            req.params.id,
+          ]
+        );
+        try { await db.runQuery('ALTER TABLE reportes ADD COLUMN slot TEXT'); } catch (_) {}
+      } else { throw eUpd; }
+    }
     const r = await db.getOne('SELECT r.*, c.nombre as cliente_nombre FROM reportes r LEFT JOIN clientes c ON c.id=r.cliente_id WHERE r.id=?', [req.params.id]);
     if (r && r.id && isFinalizado) {
       try {
