@@ -402,6 +402,49 @@ html body .data-table tbody td:hover {
   border-color: rgba(255,255,255,0.05) !important;
 }
 
+/* ========= NUCLEAR FINAL: anular TODA sombra/transición/transform en tablas ========= */
+html body table,
+html body table *,
+html body .data-table,
+html body .data-table *,
+html body .table-wrap,
+html body .table-wrap * {
+  text-shadow: inherit;  /* permite text-shadow heredado de los iconos */
+}
+html body table tbody tr,
+html body table tbody tr td,
+html body .data-table tbody tr,
+html body .data-table tbody tr td,
+html body table thead th,
+html body .data-table thead th {
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  position: static !important;
+  z-index: auto !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  animation: none !important;
+  -webkit-animation: none !important;
+  transition: background-color 0.1s ease, color 0.1s ease !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  outline: none !important;
+}
+/* Excepción ÚNICA: el row puede iluminar su fondo levemente al hover (sin sombra) */
+html body table.data-table tbody tr:hover,
+html body .data-table tbody tr:hover {
+  background-color: rgba(255, 210, 0, 0.06) !important;
+  box-shadow: none !important;
+}
+html body table.data-table tbody tr:hover td,
+html body .data-table tbody tr:hover td {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  position: static !important;
+}
+
 /* ===== 9) ELIMINAR ESCALADO DE BOTONES Y CARDS AL CLICK ===== */
 html body button:active,
 html body .btn:active,
