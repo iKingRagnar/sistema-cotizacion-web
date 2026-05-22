@@ -613,6 +613,17 @@
           });
         } catch (e) { console.warn('[universal-force]', e); }
       }
+      // 🚀 FIX FREEZE: debounce 120ms — el diseño NO cambia, solo evita que
+      // forceUniversalColors se ejecute 10-20 veces seguidas cuando se abre un modal
+      // (cada setProperty del modal disparaba una mutation → freeze en click delete).
+      var _forceTimer = null;
+      function forceUniversalColorsDebounced() {
+        if (_forceTimer) return;
+        _forceTimer = setTimeout(function() {
+          _forceTimer = null;
+          try { forceUniversalColors(); } catch (_) {}
+        }, 120);
+      }
       // Ejecutar al cargar y cada vez que cambia el DOM
       document.addEventListener('DOMContentLoaded', forceUniversalColors);
       window.addEventListener('load', forceUniversalColors);
@@ -622,14 +633,14 @@
           var relevant = muts.some(function(m) {
             return m.type === 'attributes' && (m.attributeName === 'class' || m.attributeName === 'aria-current' || m.attributeName === 'aria-selected');
           });
-          if (relevant) forceUniversalColors();
+          if (relevant) forceUniversalColorsDebounced();
         });
         document.addEventListener('DOMContentLoaded', function() {
           mo.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class', 'aria-current', 'aria-selected'] });
         });
       } catch (e) {}
-      // Repintar cada 500ms como red de seguridad
-      setInterval(forceUniversalColors, 500);
+      // Repintar cada 500ms como red de seguridad (usa debounce para no encimar ejecuciones)
+      setInterval(forceUniversalColorsDebounced, 500);
     })();
   </script>
   <!-- Watermark de fondo removido por solicitud del cliente -->
@@ -2487,7 +2498,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app-v356.js?cb=delete-optimista-fix-freeze-2026-05-22"></script>
+  <script src="js/app-v356.js?cb=debounce-only-fix-freeze-2026-05-22"></script>
   <script src="js/prospeccion-map.js?v=7-sync-segment-heat-weight-2026-05-10" defer></script>
   <script src="js/bg-animation.js?v=8-map-shell-no-duplicate-hamburger" defer></script>
   <script src="js/premium-ux.js?v=24-globalmo-full-suppress-2026-05-07" defer></script>
