@@ -3095,22 +3095,14 @@
               showToast('No hay constancia en sistema para este cliente.', 'error');
               return;
             }
-            // CRÍTICO: cerrar PRIMERO el modal del cliente para que el lightbox no quede
-            // detrás (problema reportado por Luis: 'no veo el lightbox hasta cerrar el modal').
-            try {
-              const cmodal = document.getElementById('modal');
-              if (cmodal && !cmodal.classList.contains('hidden')) {
-                cmodal.classList.add('hidden');
-              }
-            } catch (_) {}
-            // CASO RÁPIDO: si ya tenemos el dataURL en cache (preloaded por previewCliente),
-            // abrir el lightbox INMEDIATAMENTE con el dataURL directo (sin fetch, sin spinner)
-            const cached = (window.__cClienteConstUrls || {})[id];
+            // CASO RÁPIDO: el preload ya convirtió dataURL -> blob URL.
+            // El lightbox lo asignará al iframe directo, sin re-fetch ni re-decode. INSTANTÁNEO.
+            const cachedBlob = (window.__cClienteConstBlobUrls || {})[id];
             const label = 'Constancia · ' + ((found && found.nombre) || 'Cliente');
             const forcePdf = (found && String(found.constancia_kind || '') === 'pdf') || forceFromBtn;
-            if (cached) {
+            if (cachedBlob) {
               void openPvcMediaLightboxGallery(
-                [{ url: cached, label, forcePdf }],
+                [{ url: cachedBlob, label, forcePdf }],
                 0,
               );
               return;
@@ -3123,18 +3115,29 @@
             lb.disabled = true;
             (async () => {
               try {
-                let dataUrl;
+                let useUrl;
                 if (direct) {
-                  dataUrl = direct;
+                  // direct = URL HTTP del endpoint binario (legacy). Hacer fetch y crear blob URL.
+                  const r = await fetch(direct, {
+                    headers: (function () { const h = {}; const t = getAuthToken(); if (t) h['Authorization'] = 'Bearer ' + t; return h; })(),
+                    credentials: 'same-origin',
+                  });
+                  if (!r.ok) throw new Error('No se pudo cargar la constancia.');
+                  const blob = await r.blob();
+                  useUrl = URL.createObjectURL(blob);
                 } else {
+                  // Pedir dataURL completo y convertir a blob URL una sola vez
                   const full = await fetchJson(fetchUrl);
-                  dataUrl = full && full.constancia_url;
+                  const dataUrl = full && full.constancia_url;
                   if (!dataUrl) throw new Error('No se pudo obtener la constancia.');
-                  if (!window.__cClienteConstUrls) window.__cClienteConstUrls = {};
-                  window.__cClienteConstUrls[id] = dataUrl;
+                  const r = await fetch(dataUrl);
+                  const blob = await r.blob();
+                  useUrl = URL.createObjectURL(blob);
+                  if (!window.__cClienteConstBlobUrls) window.__cClienteConstBlobUrls = {};
+                  window.__cClienteConstBlobUrls[id] = useUrl;
                 }
                 await openPvcMediaLightboxGallery(
-                  [{ url: dataUrl, label, forcePdf }],
+                  [{ url: useUrl, label, forcePdf }],
                   0,
                 );
               } catch (e) {
@@ -4517,18 +4520,23 @@
 
   function previewCliente(c) {
     clearPvcMediaUrlRegistry();
-    // PRELOAD del dataURL completo de constancia: pedirlo al servidor con ?with_constancia=1
-    // mientras el usuario lee el modal. Guardamos el dataURL en window.__cClienteConstUrls
-    // para uso instantáneo cuando hagan click en "Ver" (sin hacer otro fetch).
+    // PRELOAD INTELIGENTE: pedir el dataURL, convertirlo a blob URL UNA SOLA VEZ
+    // (decode base64 cuesta CPU; hacerlo en preload mientras el user lee el modal
+    // significa que click 'Ver' obtiene un blob URL = render INSTANTÁNEO sin re-fetch).
     if (c && c.has_constancia && c.id != null) {
       try {
-        if (!window.__cClienteConstUrls) window.__cClienteConstUrls = {};
-        if (!window.__cClienteConstUrls[c.id]) {
+        if (!window.__cClienteConstBlobUrls) window.__cClienteConstBlobUrls = {};
+        if (!window.__cClienteConstBlobUrls[c.id]) {
           fetchJson(API + '/clientes/' + encodeURIComponent(c.id) + '?with_constancia=1')
             .then(function (full) {
-              if (full && full.constancia_url) {
-                window.__cClienteConstUrls[c.id] = full.constancia_url;
-              }
+              if (!full || !full.constancia_url) return;
+              // Convertir dataURL -> Blob -> blob URL (una sola decodificación base64)
+              return fetch(full.constancia_url)
+                .then(function (r) { return r.blob(); })
+                .then(function (blob) {
+                  const burl = URL.createObjectURL(blob);
+                  window.__cClienteConstBlobUrls[c.id] = burl;
+                });
             })
             .catch(function () {});
         }
