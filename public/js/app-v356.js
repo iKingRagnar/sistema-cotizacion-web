@@ -3110,19 +3110,17 @@
               showToast('No hay constancia en sistema para este cliente.', 'error');
               return;
             }
-            // SOLUCIÓN ÓPTIMA: asignar URL del endpoint directo al iframe con ?token=...
-            // El browser maneja el download streaming nativamente (más rápido que JS+fetch+blob)
-            const label = 'Constancia · ' + ((found && found.nombre) || 'Cliente');
-            const forcePdf = (found && String(found.constancia_kind || '') === 'pdf') || forceFromBtn;
+            // OPCIÓN A: abrir en NUEVA PESTAÑA del browser (rápido, sin spinners feos)
+            // El browser nativo maneja descarga + render del PDF en su propia pestaña.
             const tok = (typeof getAuthToken === 'function') ? getAuthToken() : null;
             const tokParam = tok ? ('?token=' + encodeURIComponent(tok)) : '';
             const streamUrl = direct
               ? (direct + (direct.indexOf('?') >= 0 ? '&' : '?') + (tok ? 'token=' + encodeURIComponent(tok) : ''))
               : (API + '/clientes/' + encodeURIComponent(found.id) + '/constancia' + tokParam);
-            void openPvcMediaLightboxGallery(
-              [{ url: streamUrl, label, forcePdf, isApiBinary: true }],
-              0,
-            );
+            const win = window.open(streamUrl, '_blank', 'noopener,noreferrer');
+            if (!win) {
+              showToast('Permite ventanas emergentes en el navegador para ver la constancia.', 'error');
+            }
             return;
           }
           const g = lb.getAttribute('data-lb-g');
