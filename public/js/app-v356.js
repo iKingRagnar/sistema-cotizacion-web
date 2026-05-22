@@ -3700,14 +3700,18 @@
     const head = headers.map((h) => `<th>${escapeHtml(h)}</th>`).join('');
     const body = rows.slice(0, 20).map((r) => `<tr>${r.map((c) => `<td>${escapeHtml(String(c || ''))}</td>`).join('')}</tr>`).join('');
     return `
-      <div style="margin-top:0.5rem">
-        <p style="margin:0 0 0.5rem 0;color:var(--text-muted,#6b7280);font-size:0.9rem;">
-          Vista previa de <strong>${escapeHtml(title)}</strong> (${rows.length} registro(s), se muestran hasta 20 filas).
+      <div class="report-preview-wrap" style="margin-top:0.5rem;background:#0a0a0a;border:1px solid #FFD200;border-radius:10px;padding:0.85rem;">
+        <p style="margin:0 0 0.6rem 0;color:#FFD200;font-size:0.9rem;font-weight:600;">
+          Vista previa de <strong style="color:#ffffff;">${escapeHtml(title)}</strong> <span style="color:#cbd5e1;font-weight:500;">(${rows.length} registro(s), se muestran hasta 20 filas).</span>
         </p>
-        <div style="max-height:280px;overflow:auto;border:1px solid var(--border-color,#e5e7eb);border-radius:8px;">
-          <table class="data-table" style="margin:0;">
-            <thead><tr>${head}</tr></thead>
-            <tbody>${body || `<tr><td colspan="${Math.max(1, headers.length)}">Sin datos</td></tr>`}</tbody>
+        <div style="max-height:280px;overflow:auto;border:1px solid rgba(255,210,0,0.35);border-radius:8px;background:#0a0a0a;">
+          <table class="data-table report-preview-table" style="margin:0;background:#0a0a0a;color:#f8fafc;width:100%;border-collapse:collapse;">
+            <thead><tr style="background:#1f2937;">${head.replace(/<th>/g, '<th style="color:#FFD200;background:#1f2937;border-bottom:2px solid #FFD200;padding:8px 10px;text-align:left;font-weight:700;">')}</tr></thead>
+            <tbody style="background:#0a0a0a;color:#f8fafc;">${
+              body
+                ? body.replace(/<td>/g, '<td style="color:#f8fafc;background:transparent;border-bottom:1px solid rgba(255,210,0,0.15);padding:7px 10px;">')
+                : `<tr><td colspan="${Math.max(1, headers.length)}" style="color:#cbd5e1;padding:10px;background:#0a0a0a;">Sin datos</td></tr>`
+            }</tbody>
           </table>
         </div>
       </div>
