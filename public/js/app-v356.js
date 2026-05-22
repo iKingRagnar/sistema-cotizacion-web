@@ -3181,6 +3181,23 @@
   }
 
   function openConfirmModal(message, onConfirm, opts) {
+    // ⚡ FIX FREEZE GLOBAL: el modal personalizado de confirmación congelaba la web
+    // al abrirse sobre páginas con muchas filas (refacciones, almacén, máquinas, etc.)
+    // por la cascada de mutations DOM. Solución aprobada por Luis (2026-05-22):
+    // usar confirm() nativo en TODOS los callers. Instantáneo y sin bloqueos.
+    setTimeout(function () {
+      try {
+        if (window.confirm(message || '¿Confirmar esta acción?')) {
+          if (typeof onConfirm === 'function') onConfirm();
+        }
+      } catch (err) {
+        console.error('[openConfirmModal:native]', err);
+        try { alert('Error: ' + (err && err.message || err)); } catch (_) {}
+      }
+    }, 0);
+    return;
+    // --- LEGACY (modal personalizado) — conservado por si se necesita revertir ---
+    // eslint-disable-next-line no-unreachable
     const modal = qs('#confirm-modal');
     const title = qs('#confirm-title');
     const msgEl = qs('#confirm-message');
@@ -4762,20 +4779,8 @@
     tbody.querySelectorAll('.btn-delete-ref').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
-        // ⚡ FIX FREEZE: usar confirm() nativo (openConfirmModal congelaba la web
-        // al click en eliminar; el modal personalizado disparaba cascada de
-        // mutations sobre tabla con cientos de filas). Solución confirmada por Luis.
-        const id = btn.dataset.id;
-        setTimeout(function() {
-          try {
-            if (window.confirm('¿Eliminar esta refacción?')) {
-              deleteRefaccion(id);
-            }
-          } catch (err) {
-            console.error('[delete-ref]', err);
-            alert('Error: ' + (err && err.message || err));
-          }
-        }, 0);
+        closeRefaccionRowMenu(btn);
+        openConfirmModal('¿Eliminar esta refacción?', () => deleteRefaccion(btn.dataset.id));
       });
     });
   }
