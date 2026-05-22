@@ -521,28 +521,32 @@ html body [role="button"]:active {
   scale: 1 !important;
 }
 
-/* ===== LIGHTBOX SIEMPRE ENCIMA: garantiza que pvc-media-lightbox esté por encima de cualquier modal ===== */
-html body #pvc-media-lightbox,
-html body dialog#pvc-media-lightbox,
-html body .pvc-media-lightbox {
+/* ===== LIGHTBOX: oculto por defecto, solo visible cuando está abierto =====
+   IMPORTANTE: dialog DEBE ser display:none cuando no está [open]. Si no,
+   se muestra todo el tiempo bloqueando la web. */
+html body dialog#pvc-media-lightbox:not([open]),
+html body #pvc-media-lightbox.hidden {
+  display: none !important;
+}
+/* Solo cuando está abierto (sea con [open] de showModal o sin .hidden) */
+html body dialog#pvc-media-lightbox[open] {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   z-index: 2147483647 !important;
   position: fixed !important;
   inset: 0 !important;
-}
-html body #pvc-media-lightbox:not(.hidden),
-html body dialog#pvc-media-lightbox[open] {
-  display: flex !important;
   visibility: visible !important;
   opacity: 1 !important;
 }
-/* Asegurar que el backdrop del lightbox tenga fondo oscuro semi opaco, NO transparent */
-html body #pvc-media-lightbox .pvc-lb-backdrop {
+/* Backdrop oscuro semi opaco SOLO cuando el dialog está abierto */
+html body dialog#pvc-media-lightbox[open] .pvc-lb-backdrop {
   position: absolute !important;
   inset: 0 !important;
   background: rgba(0, 0, 0, 0.85) !important;
   z-index: 1 !important;
 }
-html body #pvc-media-lightbox .pvc-lb-dialog {
+html body dialog#pvc-media-lightbox[open] .pvc-lb-dialog {
   position: relative !important;
   z-index: 2 !important;
   background: #0a0a0a !important;
