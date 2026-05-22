@@ -184,7 +184,7 @@
   <link rel="stylesheet" href="css/premium-login-aurora.css?v=5-exec-form-aurora-scoped-2026-05-08">
   <link rel="stylesheet" href="css/ui-legibility-final.css?v=2-reportes-merge-poweredby-login-logo-2026-05-06">
   <!-- 🎯 OVERRIDE FINAL: paleta UNIVERSAL + sin animaciones raras (carga al final para ganar especificidad) -->
-  <link rel="stylesheet" href="css/universal-final-fixes.css?v=22-botones-puro-css-no-fouc-2026-05-22">
+  <link rel="stylesheet" href="css/universal-final-fixes.css?v=21-no-freeze-tablas-css-2026-05-22">
   <!-- ★ UNIVERSAL ART SKIN — inspirado en MapaSuminregio (solo estética) -->
   <link rel="stylesheet" href="css/universal-art.css?v=3-no-login-overlay-position-override">
   <link rel="stylesheet" href="css/universal-map-shell.css?v=9-logo-bare-transparent-2026-05-08">
@@ -501,8 +501,65 @@
               c.style.setProperty('color', '#0a0a0a', 'important');
             });
           });
-          // (Botones de acciones de tabla: TODO movido a CSS puro para evitar
-          // recorrer cientos de elementos en JS — eliminaba FOUC y freeze)
+          // 🎨 BOTONES DE ACCIONES EN TODAS LAS TABLAS — fix definitivo con inline styles
+          var btnDefs = [
+            // VER (ojito) — azul oscuro
+            { sel: 'td .btn.small.outline, td [class*="btn-preview-"], td [class*="btn-view-"], td [class*="btn-ver-"]',
+              bg: '#1e40af', border: '#3b82f6', color: '#ffffff', hoverBg: '#2563eb' },
+            // EDITAR (pencil) — amarillo UNIVERSAL
+            { sel: 'td .btn.small.primary, td [class*="btn-edit-"]:not([class*="btn-edit-cot"]), td [class*="btn-editar-"]',
+              bg: '#FFD200', border: '#c8a000', color: '#0a0a0a', hoverBg: '#ffdd33' },
+            // ELIMINAR (trash) — rojo
+            { sel: 'td .btn.small.danger, td [class*="btn-delete-"], td [class*="btn-del-"]:not([class*="btn-delete-"])',
+              bg: '#dc2626', border: '#991b1b', color: '#ffffff', hoverBg: '#ef4444' },
+          ];
+          // (Botones tabla y celdas hover: TODO movido a CSS para evitar recorrer miles de td en JS)
+          btnDefs.forEach(function(def) {
+            try {
+              document.querySelectorAll(def.sel).forEach(function(b) {
+                if (b.dataset.uniBtnPainted === '1') return;
+                b.dataset.uniBtnPainted = '1';
+                b.style.setProperty('background', def.bg, 'important');
+                b.style.setProperty('background-image', 'none', 'important');
+                b.style.setProperty('background-color', def.bg, 'important');
+                b.style.setProperty('color', def.color, 'important');
+                b.style.setProperty('border', '1.5px solid ' + def.border, 'important');
+                b.style.setProperty('border-radius', '6px', 'important');
+                b.style.setProperty('padding', '6px 10px', 'important');
+                b.style.setProperty('margin', '0 2px', 'important');
+                b.style.setProperty('box-shadow', '0 1px 3px rgba(0,0,0,0.25)', 'important');
+                b.style.setProperty('opacity', '1', 'important');
+                b.style.setProperty('transform', 'none', 'important');
+                b.style.setProperty('min-width', '32px', 'important');
+                b.style.setProperty('min-height', '30px', 'important');
+                b.style.setProperty('display', 'inline-flex', 'important');
+                b.style.setProperty('align-items', 'center', 'important');
+                b.style.setProperty('justify-content', 'center', 'important');
+                b.querySelectorAll('i, svg').forEach(function(ic) {
+                  ic.style.setProperty('color', def.color, 'important');
+                  ic.style.setProperty('fill', def.color, 'important');
+                  ic.style.setProperty('text-shadow',
+                    '-1px -1px 0 #0a0a0a, 1px -1px 0 #0a0a0a, -1px 1px 0 #0a0a0a, 1px 1px 0 #0a0a0a, 0 0 2px rgba(0,0,0,0.6)',
+                    'important');
+                  ic.style.setProperty('-webkit-text-stroke', '0.5px #0a0a0a', 'important');
+                  ic.style.setProperty('font-size', '0.9rem', 'important');
+                });
+                // Hover events: cambia brightness sin transform
+                b.addEventListener('mouseenter', function() {
+                  b.style.setProperty('background', def.hoverBg, 'important');
+                  b.style.setProperty('background-color', def.hoverBg, 'important');
+                  b.style.setProperty('filter', 'brightness(1.05)', 'important');
+                  b.style.setProperty('transform', 'none', 'important');
+                });
+                b.addEventListener('mouseleave', function() {
+                  b.style.setProperty('background', def.bg, 'important');
+                  b.style.setProperty('background-color', def.bg, 'important');
+                  b.style.setProperty('filter', 'none', 'important');
+                  b.style.setProperty('transform', 'none', 'important');
+                });
+              });
+            } catch (_) {}
+          });
         } catch (e) { console.warn('[universal-force]', e); }
       }
       // Throttling agresivo: forceUniversalColors es caro (recorre todo el DOM).
