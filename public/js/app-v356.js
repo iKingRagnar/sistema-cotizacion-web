@@ -2654,8 +2654,11 @@
       !u.startsWith('blob:') &&
       !u.startsWith('data:');
 
+    // PDF: ahora permitimos API binary URLs (con token en query) → render streaming nativo
     const useDirectPdf =
-      pvcIsPdfUrl(u) && !pvcIsApiBinaryResourceUrl(u) && !u.startsWith('blob:') && !u.startsWith('data:');
+      (pvcIsPdfUrl(u) || (item && item.forcePdf) || (item && item.isApiBinary)) &&
+      !u.startsWith('blob:') &&
+      !u.startsWith('data:');
 
     if (useDirectImg) {
       imgEl.onload = () => {
@@ -2674,9 +2677,21 @@
     }
 
     if (useDirectPdf) {
+      // Mantener oculto + status hasta que el iframe dispare load. Fallback 800ms.
+      if (statusEl) {
+        statusEl.classList.remove('hidden');
+        statusEl.textContent = 'Mostrando PDF…';
+      }
+      let pdfShown = false;
+      const showPdf = () => {
+        if (pdfShown) return;
+        pdfShown = true;
+        pdfEl.classList.remove('hidden');
+        clearLoading();
+      };
+      pdfEl.onload = () => { pdfEl.onload = null; showPdf(); };
+      setTimeout(showPdf, 800);
       pdfEl.src = u;
-      pdfEl.classList.remove('hidden');
-      clearLoading();
       return;
     }
 
@@ -3095,58 +3110,19 @@
               showToast('No hay constancia en sistema para este cliente.', 'error');
               return;
             }
-            // CASO RÁPIDO: el preload ya convirtió dataURL -> blob URL.
-            // El lightbox lo asignará al iframe directo, sin re-fetch ni re-decode. INSTANTÁNEO.
-            const cachedBlob = (window.__cClienteConstBlobUrls || {})[id];
+            // SOLUCIÓN ÓPTIMA: asignar URL del endpoint directo al iframe con ?token=...
+            // El browser maneja el download streaming nativamente (más rápido que JS+fetch+blob)
             const label = 'Constancia · ' + ((found && found.nombre) || 'Cliente');
             const forcePdf = (found && String(found.constancia_kind || '') === 'pdf') || forceFromBtn;
-            if (cachedBlob) {
-              void openPvcMediaLightboxGallery(
-                [{ url: cachedBlob, label, forcePdf }],
-                0,
-              );
-              return;
-            }
-            // FALLBACK (no debería pasar si previewCliente cargó bien): fetch ahora
-            const fetchUrl = direct || (API + '/clientes/' + encodeURIComponent(found.id) + '?with_constancia=1');
-            const originalHtml = lb.innerHTML;
-            const originalDisabled = lb.disabled;
-            lb.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando…';
-            lb.disabled = true;
-            (async () => {
-              try {
-                let useUrl;
-                if (direct) {
-                  // direct = URL HTTP del endpoint binario (legacy). Hacer fetch y crear blob URL.
-                  const r = await fetch(direct, {
-                    headers: (function () { const h = {}; const t = getAuthToken(); if (t) h['Authorization'] = 'Bearer ' + t; return h; })(),
-                    credentials: 'same-origin',
-                  });
-                  if (!r.ok) throw new Error('No se pudo cargar la constancia.');
-                  const blob = await r.blob();
-                  useUrl = URL.createObjectURL(blob);
-                } else {
-                  // Pedir dataURL completo y convertir a blob URL una sola vez
-                  const full = await fetchJson(fetchUrl);
-                  const dataUrl = full && full.constancia_url;
-                  if (!dataUrl) throw new Error('No se pudo obtener la constancia.');
-                  const r = await fetch(dataUrl);
-                  const blob = await r.blob();
-                  useUrl = URL.createObjectURL(blob);
-                  if (!window.__cClienteConstBlobUrls) window.__cClienteConstBlobUrls = {};
-                  window.__cClienteConstBlobUrls[id] = useUrl;
-                }
-                await openPvcMediaLightboxGallery(
-                  [{ url: useUrl, label, forcePdf }],
-                  0,
-                );
-              } catch (e) {
-                showToast(e.message || 'Error al cargar la constancia.', 'error');
-              } finally {
-                lb.innerHTML = originalHtml;
-                lb.disabled = originalDisabled;
-              }
-            })();
+            const tok = (typeof getAuthToken === 'function') ? getAuthToken() : null;
+            const tokParam = tok ? ('?token=' + encodeURIComponent(tok)) : '';
+            const streamUrl = direct
+              ? (direct + (direct.indexOf('?') >= 0 ? '&' : '?') + (tok ? 'token=' + encodeURIComponent(tok) : ''))
+              : (API + '/clientes/' + encodeURIComponent(found.id) + '/constancia' + tokParam);
+            void openPvcMediaLightboxGallery(
+              [{ url: streamUrl, label, forcePdf, isApiBinary: true }],
+              0,
+            );
             return;
           }
           const g = lb.getAttribute('data-lb-g');
@@ -4520,28 +4496,6 @@
 
   function previewCliente(c) {
     clearPvcMediaUrlRegistry();
-    // PRELOAD INTELIGENTE: pedir el dataURL, convertirlo a blob URL UNA SOLA VEZ
-    // (decode base64 cuesta CPU; hacerlo en preload mientras el user lee el modal
-    // significa que click 'Ver' obtiene un blob URL = render INSTANTÁNEO sin re-fetch).
-    if (c && c.has_constancia && c.id != null) {
-      try {
-        if (!window.__cClienteConstBlobUrls) window.__cClienteConstBlobUrls = {};
-        if (!window.__cClienteConstBlobUrls[c.id]) {
-          fetchJson(API + '/clientes/' + encodeURIComponent(c.id) + '?with_constancia=1')
-            .then(function (full) {
-              if (!full || !full.constancia_url) return;
-              // Convertir dataURL -> Blob -> blob URL (una sola decodificación base64)
-              return fetch(full.constancia_url)
-                .then(function (r) { return r.blob(); })
-                .then(function (blob) {
-                  const burl = URL.createObjectURL(blob);
-                  window.__cClienteConstBlobUrls[c.id] = burl;
-                });
-            })
-            .catch(function () {});
-        }
-      } catch (_) {}
-    }
     const constHdr =
       c && c.has_constancia ? '<div style="margin-bottom:0.75rem">' + clienteConstanciaThumbHtml(c, { showVerButton: true }) + '</div>' : '';
     openPreviewCard({

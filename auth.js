@@ -92,7 +92,15 @@ function verifyToken(token) {
 function parseBearer(req) {
   const h = req.headers.authorization || '';
   const m = /^Bearer\s+(.+)$/i.exec(h);
-  return m ? m[1].trim() : null;
+  if (m) return m[1].trim();
+  // Fallback: token vía query string (?token=XXX) — necesario para iframes/<img>
+  // que cargan archivos binarios directos del API (NO envían Authorization header).
+  // El navegador SÍ envía la query string en el GET.
+  try {
+    const q = (req.query && req.query.token) ? String(req.query.token).trim() : '';
+    if (q) return q;
+  } catch (_) {}
+  return null;
 }
 
 /** Rol canónico en minúsculas (evita fallos si en BD/token vino "Admin", espacios, etc.) */
