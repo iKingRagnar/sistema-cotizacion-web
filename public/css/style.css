@@ -4716,15 +4716,18 @@ html body .modal .agenda-light-modal .ag-asign-card {
 }
 html body .modal .agenda-light-modal .ag-asign-card * { color: #f1f5f9 !important; }
 html body .modal .agenda-light-modal .ag-asign-card strong { color: #ffffff !important; font-weight: 800 !important; }
-/* Badge negro con amarillo (slot del técnico) */
-html body .modal .agenda-light-modal .ag-pill-dark { background: #FFD200 !important; color: #0a0a0a !important; padding: 4px 10px !important; border-radius: 6px !important; font-weight: 900 !important; font-size: 0.8rem !important; display: inline-block !important; }
-html body .modal .agenda-light-modal .ag-pill-dark * { color: #0a0a0a !important; }
-/* Badge "Sin slot" amarillo con texto negro */
-html body .modal .agenda-light-modal .ag-pill-warn { background: #fbbf24 !important; color: #0a0a0a !important; padding: 4px 10px !important; border-radius: 6px !important; font-weight: 800 !important; font-size: 0.78rem !important; display: inline-block !important; }
-html body .modal .agenda-light-modal .ag-pill-warn * { color: #0a0a0a !important; }
-/* Badge estatus */
-html body .modal .agenda-light-modal .ag-pill-status { background: #fbbf24 !important; color: #0a0a0a !important; padding: 2px 8px !important; border-radius: 5px !important; font-weight: 800 !important; font-size: 0.75rem !important; display: inline-block !important; }
-html body .modal .agenda-light-modal .ag-pill-status * { color: #0a0a0a !important; }
+/* Badge slot del técnico — verde oscuro con texto blanco (mejor contraste) */
+html body .modal .agenda-light-modal .ag-pill-dark { background: #065f46 !important; color: #ffffff !important; padding: 4px 10px !important; border-radius: 6px !important; font-weight: 900 !important; font-size: 0.8rem !important; display: inline-block !important; border: 1px solid #10b981 !important; }
+html body .modal .agenda-light-modal .ag-pill-dark * { color: #ffffff !important; }
+/* Badge "Sin slot" -- naranja oscuro con texto blanco */
+html body .modal .agenda-light-modal .ag-pill-warn { background: #b45309 !important; color: #ffffff !important; padding: 4px 10px !important; border-radius: 6px !important; font-weight: 800 !important; font-size: 0.78rem !important; display: inline-block !important; border: 1px solid #f59e0b !important; }
+html body .modal .agenda-light-modal .ag-pill-warn * { color: #ffffff !important; }
+/* Badge estatus -- verde oscuro con texto blanco */
+html body .modal .agenda-light-modal .ag-pill-status { background: #065f46 !important; color: #ffffff !important; padding: 2px 8px !important; border-radius: 5px !important; font-weight: 800 !important; font-size: 0.75rem !important; display: inline-block !important; border: 1px solid #10b981 !important; }
+html body .modal .agenda-light-modal .ag-pill-status * { color: #ffffff !important; }
+/* Badge contador en header (X asignación(es)) -- verde oscuro con texto blanco */
+html body .modal .agenda-light-modal .ag-pill-yellow { background: #065f46 !important; color: #ffffff !important; padding: 4px 12px !important; border-radius: 8px !important; font-weight: 900 !important; font-size: 0.85rem !important; border: 1.5px solid #10b981 !important; }
+html body .modal .agenda-light-modal .ag-pill-yellow * { color: #ffffff !important; }
 /* Box descripción/notas: fondo oscuro con borde amarillo */
 html body .modal .agenda-light-modal .ag-box-desc { background: rgba(255, 210, 0, 0.08) !important; border-left: 4px solid #FFD200 !important; padding: 7px 11px !important; border-radius: 4px !important; font-size: 0.88rem !important; margin-top: 8px !important; color: #fef9c3 !important; }
 html body .modal .agenda-light-modal .ag-box-desc * { color: #fef9c3 !important; }

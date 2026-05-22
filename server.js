@@ -3656,7 +3656,7 @@ app.get('/api/tecnicos', async (req, res) => {
     const reportesActivos = await db.getAll("SELECT tecnico FROM reportes WHERE estatus IN ('abierto','en_proceso') AND tecnico IS NOT NULL AND tecnico != ''");
     const ocupados = new Set(reportesActivos.map(r => r.tecnico));
     const strip = shouldStripCommissions(req);
-    const enriched = rows.map(t => {
+    let enriched = rows.map(t => {
       let base = { ...t, ocupado: ocupados.has(t.nombre) ? 1 : 0 };
       if (strip) {
         delete base.comision_maquinas_pct;
@@ -3665,6 +3665,21 @@ app.get('/api/tecnicos', async (req, res) => {
       base = publicTecnicoListRow(base);
       return base;
     });
+    // Asegurar que 'David Cantú' SIEMPRE esté en la lista (admin que también puede ser técnico)
+    const hasDavid = enriched.some(t => {
+      const n = String(t.nombre || '').toLowerCase();
+      return n.includes('david') && n.includes('cant');
+    });
+    if (!hasDavid) {
+      enriched.unshift({
+        id: 0,
+        nombre: 'David Cantú',
+        puesto: 'Admin',
+        activo: 1,
+        es_vendedor: 1,
+        ocupado: ocupados.has('David Cantú') ? 1 : 0,
+      });
+    }
     res.json(enriched);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
