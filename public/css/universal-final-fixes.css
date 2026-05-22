@@ -521,9 +521,17 @@ html body [role="button"]:active {
   scale: 1 !important;
 }
 
-/* Lightbox: solo asegurar que esté oculto por defecto (sin estilos custom) */
+/* Lightbox: oculto por defecto */
 html body dialog#pvc-media-lightbox:not([open]) {
   display: none !important;
+}
+/* PDF iframe del lightbox: fondo blanco para que NO aparezca negro mientras
+   el visor PDFium del browser arranca (causa principal de la "pantalla negra"
+   feé que reportaba Luis). */
+html body #pvc-lb-pdf,
+html body iframe#pvc-lb-pdf,
+html body .pvc-lb-pdf {
+  background: #ffffff !important;
 }
 
 /* ===== 10) FIX FOCO VISIBLE (accesibilidad) ===== */

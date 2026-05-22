@@ -2729,8 +2729,22 @@
         imgEl.src = objUrl;
         imgEl.classList.remove('hidden');
       } else if (looksPdf) {
+        // PDF: mantener oculto hasta que el iframe dispare load (evita "pantalla negra"
+        // mientras el visor PDFium del browser inicializa). Fallback 800ms.
+        if (statusEl) {
+          statusEl.classList.remove('hidden');
+          statusEl.textContent = 'Mostrando PDF…';
+        }
+        let pdfShown = false;
+        const showPdf = () => {
+          if (pdfShown) return;
+          pdfShown = true;
+          pdfEl.classList.remove('hidden');
+          clearLoading();
+        };
+        pdfEl.onload = () => { pdfEl.onload = null; showPdf(); };
+        setTimeout(showPdf, 800);
         pdfEl.src = objUrl;
-        pdfEl.classList.remove('hidden');
       } else {
         fbEl.innerHTML =
           '<a class="btn primary" href="' +
