@@ -4467,18 +4467,6 @@
 
   function previewCliente(c) {
     clearPvcMediaUrlRegistry();
-    // PRELOAD: si tiene constancia, descargarla EN BACKGROUND apenas abre el modal,
-    // así cuando dé click en 'Ver' ya está en cache del browser y carga instantáneo
-    if (c && c.has_constancia && c.id != null) {
-      try {
-        const preUrl = API + '/clientes/' + encodeURIComponent(c.id) + '/constancia';
-        const preHeaders = {};
-        const preTok = getAuthToken();
-        if (preTok) preHeaders['Authorization'] = 'Bearer ' + preTok;
-        // No await: la promesa corre en background mientras el usuario lee el modal
-        fetch(preUrl, { headers: preHeaders, credentials: 'same-origin' }).catch(() => {});
-      } catch (_) {}
-    }
     const constHdr =
       c && c.has_constancia ? '<div style="margin-bottom:0.75rem">' + clienteConstanciaThumbHtml(c, { showVerButton: true }) + '</div>' : '';
     openPreviewCard({
