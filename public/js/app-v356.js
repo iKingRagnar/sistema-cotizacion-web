@@ -1898,15 +1898,8 @@
       throw new Error('SESION_EXPIRADA');
     }
     if (!r.ok) throw new Error(text || r.statusText);
-    // 🔄 AUTO-REFRESH HOOK: después de mutación exitosa (POST/PUT/DELETE/PATCH), avisar al sistema
-    try {
-      var method = (opts && opts.method ? String(opts.method) : 'GET').toUpperCase();
-      if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
-        window.dispatchEvent(new CustomEvent('api:mutation', {
-          detail: { url: url, method: method, status: r.status }
-        }));
-      }
-    } catch (_) {}
+    // 🔄 AUTO-REFRESH HOOK: DESACTIVADO — causaba freeze en eliminación de refacciones
+    // (doble carga: loader manual + auto-refresh disparaba reflow masivo)
     if (!text || !String(text).trim()) return {};
     try { return JSON.parse(text); } catch (_) { throw new Error(text); }
   }
@@ -1956,9 +1949,7 @@
       // Solo si ese panel está visible o se ha cargado antes
     }
   }
-  window.addEventListener('api:mutation', function (ev) {
-    reloadActiveTabSoon(ev.detail || {});
-  });
+  // window.addEventListener('api:mutation', ...) DESACTIVADO — causaba freeze al eliminar refacciones
 
   /** Siempre devuelve un array para listas del API (evita undefined/objeto). */
   function toArray(x) {
