@@ -4762,8 +4762,19 @@
     tbody.querySelectorAll('.btn-delete-ref').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
-        closeRefaccionRowMenu(btn);
-        openConfirmModal('¿Eliminar esta refacción?', () => deleteRefaccion(btn.dataset.id));
+        // 🔬 DIAGNÓSTICO FREEZE: usar confirm() nativo en vez de openConfirmModal.
+        // Si así NO se congela, el bug es openConfirmModal (modal personalizado).
+        const id = btn.dataset.id;
+        setTimeout(function() {
+          try {
+            if (window.confirm('¿Eliminar esta refacción?')) {
+              deleteRefaccion(id);
+            }
+          } catch (err) {
+            console.error('[delete-ref]', err);
+            alert('Error: ' + (err && err.message || err));
+          }
+        }, 0);
       });
     });
   }
