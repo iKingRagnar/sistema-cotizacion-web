@@ -1902,6 +1902,12 @@
     try {
       var method = (opts && opts.method ? String(opts.method) : 'GET').toUpperCase();
       if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+        // Pausar JS nuclear durante 1.5s para que el render de la tabla NO compita
+        // con la pasada de pintar botones/sidebar (evita freeze al eliminar)
+        try {
+          window.__skipUniversalColors = true;
+          setTimeout(function () { window.__skipUniversalColors = false; }, 1500);
+        } catch (_) {}
         window.dispatchEvent(new CustomEvent('api:mutation', {
           detail: { url: url, method: method, status: r.status }
         }));
@@ -1921,14 +1927,15 @@
   var _lastAutoReload = 0;
   function reloadActiveTabSoon(reason) {
     if (_autoReloadTimer) clearTimeout(_autoReloadTimer);
-    // Guard: si ya se hizo un reload en los últimos 600ms (típico tras una mutación con
-    // recarga manual), saltar el auto-refresh para evitar doble carga que congela la UI.
+    // Guard amplio: si ya hubo reload (manual o auto) en los últimos 1500ms, skip.
+    // La mayoría de mutaciones ya recargan manualmente con loadX() — el auto-refresh
+    // es solo backup para los pocos casos que no lo hacen.
     const now = Date.now();
-    if (now - _lastAutoReload < 600) return;
+    if (now - _lastAutoReload < 1500) return;
     _autoReloadTimer = setTimeout(function () {
       _lastAutoReload = Date.now();
       try { reloadActiveTabNow(reason); } catch (e) { console.warn('[auto-refresh]', e); }
-    }, 350);
+    }, 800); // delay más largo para que la recarga manual termine primero
   }
   function reloadActiveTabNow(reason) {
     // Determinar qué tab está activo (panel con clase .active)
