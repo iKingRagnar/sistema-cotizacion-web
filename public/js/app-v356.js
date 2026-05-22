@@ -3095,6 +3095,14 @@
               showToast('No hay constancia en sistema para este cliente.', 'error');
               return;
             }
+            // CRÍTICO: cerrar PRIMERO el modal del cliente para que el lightbox no quede
+            // detrás (problema reportado por Luis: 'no veo el lightbox hasta cerrar el modal').
+            try {
+              const cmodal = document.getElementById('modal');
+              if (cmodal && !cmodal.classList.contains('hidden')) {
+                cmodal.classList.add('hidden');
+              }
+            } catch (_) {}
             // CASO RÁPIDO: si ya tenemos el dataURL en cache (preloaded por previewCliente),
             // abrir el lightbox INMEDIATAMENTE con el dataURL directo (sin fetch, sin spinner)
             const cached = (window.__cClienteConstUrls || {})[id];
