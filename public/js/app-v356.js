@@ -9539,6 +9539,17 @@ async function imprimirFlyer() {
         <p class="upload-hint">Sube PDF, Word, Excel o una imagen (JPG, PNG, GIF, WebP) para detectar nombre, RFC, dirección, etc. Los PDF escaneados sin texto seleccionable pueden fallar; en ese caso usa foto o PDF con texto. El archivo queda guardado al pulsar <strong>Guardar</strong>.</p>
         <div id="m-constancia-existing" class="${hasConst && !isNew ? '' : 'hidden'}">
           <p class="form-hint" style="margin-top:0"><i class="fas fa-paperclip"></i> Constancia en sistema${constanciaNombreEsc ? ': <strong>' + constanciaNombreEsc + '</strong>' : ''}</p>
+          <div id="m-constancia-thumb-wrap" style="margin:0.4rem 0;display:flex;align-items:center;gap:0.6rem;background:rgba(255,210,0,0.08);border:1px solid rgba(255,210,0,0.25);border-radius:8px;padding:8px 12px">
+            ${cliente && cliente.constancia_kind === 'pdf'
+              ? '<div style="width:48px;height:60px;background:#dc2626;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:6px;font-weight:900;font-size:11px;flex-shrink:0">PDF</div>'
+              : (cliente && cliente.constancia_kind === 'image'
+                ? '<div style="width:48px;height:48px;background:#3b82f6;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:6px;flex-shrink:0"><i class="fas fa-image" style="font-size:20px"></i></div>'
+                : '<div style="width:48px;height:48px;background:#475569;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:6px;flex-shrink:0"><i class="fas fa-file" style="font-size:20px"></i></div>')}
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;color:var(--text-primary,#f1f5f9);font-size:0.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${constanciaNombreEsc || 'Constancia adjunta'}</div>
+              <div style="font-size:0.78rem;color:var(--text-muted,#94a3b8)">Click en <strong>Ver</strong> para abrir · <strong>Descargar</strong> para guardarla</div>
+            </div>
+          </div>
           <div class="form-row" style="gap:0.5rem;flex-wrap:wrap;margin-top:0.35rem">
             <button type="button" class="btn small outline js-pvc-media-lightbox" id="m-btn-ver-constancia" data-lb-role="cliente-const" data-cliente-id="${cliente && cliente.id != null ? escapeHtml(String(cliente.id)) : ''}"${cliente && cliente.id != null ? ' data-const-url="' + escapeHtml(API + '/clientes/' + encodeURIComponent(cliente.id) + '/constancia') + '"' : ''}${cliente && cliente.constancia_kind === 'pdf' ? ' data-const-kind="pdf"' : cliente && cliente.constancia_kind === 'image' ? ' data-const-kind="image"' : ''} title="Ver solo constancia (pantalla completa)"><i class="fas fa-magnifying-glass-plus"></i> Ver</button>
             <button type="button" class="btn small outline" id="m-btn-dl-constancia"><i class="fas fa-download"></i> Descargar</button>
@@ -11432,6 +11443,11 @@ async function imprimirFlyer() {
               <textarea id="cot-siguiente" rows="3" maxlength="500">${escapeHtml((cot && cot.siguiente_paso) || '')}</textarea>
             </div>
           </div>
+          <div class="form-row" style="gap:1rem;margin-top:0.5rem">
+            <div class="form-group" style="flex:1"><label><i class="fas fa-sticky-note" style="color:#FFD200"></i> Notas / Memo <small style="color:#94a3b8;font-weight:400">(notas internas o comentarios al cliente)</small></label>
+              <textarea id="cot-notas" rows="3" maxlength="1000" placeholder="Notas, comentarios o memo del vendedor…">${escapeHtml((cot && cot.notas) || '')}</textarea>
+            </div>
+          </div>
         </section>
         <section class="cotz-card">
           <h4 class="cotz-card-title"><span class="cotz-step-num">7</span> Atendido por</h4>
@@ -12729,6 +12745,7 @@ async function imprimirFlyer() {
         ficha_tecnica_fotos: _fichaFotosArr && _fichaFotosArr.length ? JSON.stringify(_fichaFotosArr) : null,
         alcance_servicio: (qm('#cot-alcance')?.value || '').trim() || null,
         siguiente_paso: (qm('#cot-siguiente')?.value || '').trim() || null,
+        notas: (qm('#cot-notas')?.value || '').trim() || null,
         atendido_por_nombre: (qm('#cot-atendido-nombre')?.value || '').trim() || null,
         atendido_por_puesto: (qm('#cot-atendido-puesto')?.value || '').trim() || null,
         bancarios_rfc: (qm('#cot-banca-rfc')?.value || '').trim() || null,

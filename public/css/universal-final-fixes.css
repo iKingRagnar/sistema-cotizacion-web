@@ -526,6 +526,67 @@ html body dialog#pvc-media-lightbox:not([open]) {
   display: none !important;
 }
 /* PDF iframe del lightbox: fondo blanco para que NO aparezca negro mientras
+   el visor PDFium del browser arranca */
+html body #pvc-lb-pdf,
+html body iframe#pvc-lb-pdf,
+html body .pvc-lb-pdf {
+  background: #ffffff !important;
+}
+
+/* ============================================================================
+   TABLA DE PARTIDAS DE COTIZACIÓN: columnas TIPO/CÓDIGO/MÁQUINA no se cortan
+   ============================================================================ */
+html body .cotz-lineas-table-wrap .data-table th,
+html body .cotz-lineas-table-wrap .data-table td {
+  white-space: normal !important;
+  word-break: break-word !important;
+  vertical-align: middle !important;
+  padding: 10px 8px !important;
+}
+html body .cotz-lineas-table-wrap .data-table th:nth-child(1),
+html body .cotz-lineas-table-wrap .data-table td:nth-child(1) {
+  min-width: 90px !important;
+  white-space: nowrap !important;
+}
+html body .cotz-lineas-table-wrap .data-table th:nth-child(2),
+html body .cotz-lineas-table-wrap .data-table td:nth-child(2) {
+  min-width: 110px !important;
+}
+html body .cotz-lineas-table-wrap .data-table th:nth-child(3),
+html body .cotz-lineas-table-wrap .data-table td:nth-child(3) {
+  min-width: 100px !important;
+}
+html body .cotz-lineas-table-wrap .data-table th:nth-child(4),
+html body .cotz-lineas-table-wrap .data-table td:nth-child(4) {
+  min-width: 240px !important;
+}
+
+/* ============================================================================
+   MODALES SIEMPRE CENTRADOS Y NO MOVIBLES — Luis pidió fijar al centro
+   ============================================================================ */
+html body .modal {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+html body .modal .modal-box {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  margin: 0 auto !important;
+  cursor: default !important;
+}
+/* Anular cualquier handle/header de drag */
+html body .modal .modal-header,
+html body .modal .modal-box-header,
+html body .modal [class*="drag-handle"],
+html body .modal [class*="draggable"] {
+  cursor: default !important;
+}
+/* PDF iframe del lightbox: fondo blanco para que NO aparezca negro mientras
    el visor PDFium del browser arranca (causa principal de la "pantalla negra"
    feé que reportaba Luis). */
 html body #pvc-lb-pdf,
