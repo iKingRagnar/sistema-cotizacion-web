@@ -3802,6 +3802,14 @@
       </div>
     `;
     openModal(`Enviar reporte — ${title}`, body);
+    // 📐 Ensanchar el modal para que quepa la tabla preview y los botones inferiores
+    try {
+      const _mb = qs('#modal .modal-box');
+      if (_mb) {
+        _mb.style.maxWidth = 'min(1100px, 95vw)';
+        _mb.style.width = 'min(1100px, 95vw)';
+      }
+    } catch (_) {}
     const sendBtn = qs('#rep-mail-send-btn');
     const scheduleBtn = qs('#rep-mail-schedule-btn');
     const templateSel = qs('#rep-mail-template');
@@ -15971,6 +15979,14 @@ async function imprimirFlyer() {
 
   async function loadProspeccion() {
     setupProspeccionUi();
+    // 🔧 Activar listeners del toolbar de Prospección (Actualizar, CSV, Importar, Planear ruta)
+    // ProspeccionMap.bindEvents solo se ejecuta dentro de init(), así que lo llamamos una vez.
+    try {
+      if (window.ProspeccionMap && typeof window.ProspeccionMap.init === 'function' && !window.__prospeccionMapInitDone) {
+        window.__prospeccionMapInitDone = true;
+        try { window.ProspeccionMap.init(); } catch (e) { console.warn('[ProspeccionMap.init]', e); }
+      }
+    } catch (_) {}
     showLoading();
     try {
       await ensureLeaflet();
@@ -17637,6 +17653,51 @@ async function imprimirFlyer() {
     btnEmailVentas.addEventListener('click', () =>
       sendTableReportEmail({ moduleName: 'ventas', tableId: 'tabla-ventas', title: 'Reporte de Ventas' })
     );
+  }
+  // 🔧 Faltantes: #export-ventas y #btn-reporte-mensual-ventas
+  const btnExportVentas = qs('#export-ventas');
+  if (btnExportVentas) {
+    btnExportVentas.addEventListener('click', () => {
+      try {
+        const rows = Array.isArray(ventasCache) ? ventasCache : [];
+        if (!rows.length) { showToast('No hay ventas para exportar.', 'warning'); return; }
+        exportToCsv(rows, 'tabla-ventas', 'ventas');
+      } catch (e) { console.error('[export-ventas]', e); showToast('Error al exportar CSV.', 'error'); }
+    });
+  }
+  const btnReporteMensualVentas = qs('#btn-reporte-mensual-ventas');
+  if (btnReporteMensualVentas) {
+    btnReporteMensualVentas.addEventListener('click', async () => {
+      if (!canViewCommissions()) {
+        showToast('Solo el administrador puede generar el reporte mensual.', 'error');
+        return;
+      }
+      const hoy = new Date();
+      const yyyy = hoy.getFullYear();
+      const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+      const periodoDefault = `${yyyy}-${mm}`;
+      const periodo = (window.prompt('Período del reporte mensual (YYYY-MM):', periodoDefault) || '').trim();
+      if (!periodo || !/^\d{4}-\d{2}$/.test(periodo)) {
+        showToast('Período inválido. Usa formato YYYY-MM (ej. 2026-05).', 'error');
+        return;
+      }
+      showLoading();
+      try {
+        const r = await fetchJson(API + '/admin/monthly-reports/run', {
+          method: 'POST',
+          body: JSON.stringify({ periodo }),
+        });
+        if (r && r.ok) {
+          showToast('Reporte mensual enviado por correo a administradores.', 'success');
+        } else {
+          showToast((r && r.reason) || 'No se pudo generar el reporte mensual.', 'warning');
+        }
+      } catch (e) {
+        showToast(parseApiError(e) || 'Error al generar reporte mensual.', 'error');
+      } finally {
+        hideLoading();
+      }
+    });
   }
   const btnEmailBonos = qs('#email-bonos');
   if (btnEmailBonos) {
