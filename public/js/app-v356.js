@@ -4762,8 +4762,9 @@
     tbody.querySelectorAll('.btn-delete-ref').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
-        // 🔬 DIAGNÓSTICO FREEZE: usar confirm() nativo en vez de openConfirmModal.
-        // Si así NO se congela, el bug es openConfirmModal (modal personalizado).
+        // ⚡ FIX FREEZE: usar confirm() nativo (openConfirmModal congelaba la web
+        // al click en eliminar; el modal personalizado disparaba cascada de
+        // mutations sobre tabla con cientos de filas). Solución confirmada por Luis.
         const id = btn.dataset.id;
         setTimeout(function() {
           try {
