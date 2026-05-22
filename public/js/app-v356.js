@@ -1918,11 +1918,17 @@
      Debounced 250ms para evitar recargas en cascada.
      ==================================================================== */
   var _autoReloadTimer = null;
+  var _lastAutoReload = 0;
   function reloadActiveTabSoon(reason) {
     if (_autoReloadTimer) clearTimeout(_autoReloadTimer);
+    // Guard: si ya se hizo un reload en los últimos 600ms (típico tras una mutación con
+    // recarga manual), saltar el auto-refresh para evitar doble carga que congela la UI.
+    const now = Date.now();
+    if (now - _lastAutoReload < 600) return;
     _autoReloadTimer = setTimeout(function () {
+      _lastAutoReload = Date.now();
       try { reloadActiveTabNow(reason); } catch (e) { console.warn('[auto-refresh]', e); }
-    }, 250);
+    }, 350);
   }
   function reloadActiveTabNow(reason) {
     // Determinar qué tab está activo (panel con clase .active)
@@ -4927,7 +4933,11 @@
     }
   }
 
+  let _refLoadingFlag = false;
   async function loadRefacciones() {
+    // Guard contra cargas concurrentes (eliminar refacción + auto-refresh hook = doble carga = freeze)
+    if (_refLoadingFlag) return;
+    _refLoadingFlag = true;
     showLoading();
     renderTableSkeleton('tabla-refacciones', 10);
     setupRefaccionFiltrosCategoriasOnce();
@@ -4950,6 +4960,7 @@
     }
     finally {
       hideLoading();
+      _refLoadingFlag = false;
       if (typeof refreshAlertasHeader === 'function') refreshAlertasHeader();
     }
   }
