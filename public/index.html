@@ -443,7 +443,32 @@
     (function() {
       function forceUniversalColors() {
         try {
-          // Sidebar: items activos -> amarillo + texto negro
+          // PASO 1: DES-pintar items del sidebar que YA NO están activos (cambió la pestaña)
+          var sidebarItems = document.querySelectorAll(
+            '.sidebar .tab, .sidebar-nav .tab, .sidebar-nav .tab-link, .sidebar-nav .sidebar-item, ' +
+            '.sidebar-nav button, aside .tab, nav#sidebar-rail-tabs .tab, ' +
+            '.mapa-owner-pill, .mapa-header-owner-nav .tab'
+          );
+          sidebarItems.forEach(function(el) {
+            if (el.closest('.modal') || el.id === 'universal-version-badge') return;
+            if (el.hasAttribute('data-no-universal-paint')) return;
+            var isActive = el.classList.contains('active') ||
+                           el.getAttribute('aria-current') === 'page' ||
+                           el.getAttribute('aria-selected') === 'true';
+            if (!isActive) {
+              // Quitar el highlight amarillo si lo tenía pintado
+              el.style.removeProperty('background');
+              el.style.removeProperty('background-image');
+              el.style.removeProperty('color');
+              el.style.removeProperty('border-color');
+              el.querySelectorAll('*').forEach(function(c) {
+                c.style.removeProperty('color');
+                c.style.removeProperty('fill');
+              });
+            }
+          });
+
+          // PASO 2: Pintar amarillo SOLO los items activos
           var activeSelectors = [
             '.sidebar .active', '.sidebar-nav .active',
             '.sidebar .tab.active', '.sidebar-nav .tab.active',
@@ -456,13 +481,11 @@
           activeSelectors.forEach(function(sel) {
             document.querySelectorAll(sel).forEach(function(el) {
               if (el.closest('.modal') || el.id === 'universal-version-badge') return;
-              // No tocar chips de agenda ni elementos marcados con data-no-universal-paint
               if (el.hasAttribute('data-no-universal-paint') || el.classList.contains('cal-tec-chip') || el.closest('.cal-tec-chip') || el.closest('.cal-tec-chips') || el.closest('[data-no-universal-paint]')) return;
               el.style.setProperty('background', '#FFD200', 'important');
               el.style.setProperty('background-image', 'none', 'important');
               el.style.setProperty('color', '#0a0a0a', 'important');
               el.style.setProperty('border-color', '#c8a000', 'important');
-              // hijos
               el.querySelectorAll('*').forEach(function(c) {
                 c.style.setProperty('color', '#0a0a0a', 'important');
                 c.style.setProperty('fill', '#0a0a0a', 'important');
