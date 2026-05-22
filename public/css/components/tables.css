@@ -88,6 +88,9 @@ body.md3-on .table-wrap > table tbody td {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* ELIMINADO: el td:hover expandía la celda hovered (white-space:normal + overflow:visible)
+   y desfasaba visualmente las columnas vecinas (en especial la columna acciones).
+   Ahora las celdas mantienen su tamaño fijo siempre.
 body.md3-on table.data-table tbody td:hover,
 body.md3-on .md-table tbody td:hover {
   white-space: normal;
@@ -95,6 +98,7 @@ body.md3-on .md-table tbody td:hover {
   position: relative;
   z-index: 1;
 }
+*/
 body.md3-on table.data-table tbody td.no-truncate,
 body.md3-on table.data-table tbody td.td-text-wrap {
   white-space: normal;

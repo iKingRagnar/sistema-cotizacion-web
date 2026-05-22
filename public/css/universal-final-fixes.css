@@ -321,6 +321,39 @@ html body table tbody tr:hover td.th-actions {
   animation: none !important;
   filter: none !important;
 }
+/* CRÍTICO: anular td:hover que expande celda y desfasa columnas vecinas */
+html body table tbody td:hover,
+html body .data-table tbody td:hover,
+html body.md3-on table.data-table tbody td:hover,
+html body.md3-on .md-table tbody td:hover {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  position: static !important;
+  z-index: auto !important;
+  transform: none !important;
+  filter: none !important;
+}
+/* Excepción: celdas marcadas como td-text-wrap o no-truncate sí pueden envolver texto */
+html body table tbody td.no-truncate,
+html body table tbody td.td-text-wrap,
+html body table tbody td.th-actions {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+/* th-actions: que no se mueva al hover de la celda */
+html body table tbody td.th-actions {
+  text-align: right !important;
+  white-space: nowrap !important;
+}
+html body table tbody td.th-actions:hover {
+  white-space: nowrap !important;
+  overflow: visible !important;
+  position: static !important;
+  z-index: auto !important;
+  transform: none !important;
+}
 
 /* ===== 9) ELIMINAR ESCALADO DE BOTONES Y CARDS AL CLICK ===== */
 html body button:active,
