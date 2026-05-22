@@ -3074,11 +3074,35 @@
           if (role === 'cliente-const') {
             const direct = String(lb.getAttribute('data-const-url') || '').trim();
             const forceFromBtn = lb.getAttribute('data-const-kind') === 'pdf';
+            // PRE-DESCARGAR: mostrar spinner en el botón mientras se baja la constancia,
+            // luego abrir el lightbox con blob URL local (carga INSTANTÁNEA en el iframe)
+            const preDownloadAndOpen = async (constUrl, label, fp) => {
+              const originalHtml = lb.innerHTML;
+              const originalDisabled = lb.disabled;
+              lb.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando…';
+              lb.disabled = true;
+              try {
+                const headers = {};
+                const tok = getAuthToken();
+                if (tok) headers['Authorization'] = 'Bearer ' + tok;
+                const r = await fetch(constUrl, { headers, credentials: 'same-origin' });
+                if (!r.ok) throw new Error('No se pudo cargar la constancia.');
+                const blob = await r.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                // Abrir el lightbox YA con el blob local (render instantáneo en el iframe/img)
+                await openPvcMediaLightboxGallery(
+                  [{ url: blobUrl, label, forcePdf: fp || /pdf/i.test(blob.type) }],
+                  0,
+                );
+              } catch (e) {
+                showToast(e.message || 'Error al cargar la constancia.', 'error');
+              } finally {
+                lb.innerHTML = originalHtml;
+                lb.disabled = originalDisabled;
+              }
+            };
             if (direct) {
-              void openPvcMediaLightboxGallery(
-                [{ url: direct, label: 'Constancia', forcePdf: forceFromBtn }],
-                0,
-              );
+              void preDownloadAndOpen(direct, 'Constancia', forceFromBtn);
               return;
             }
             const id = lb.getAttribute('data-cliente-id');
@@ -3090,10 +3114,7 @@
             }
             const url = API + '/clientes/' + encodeURIComponent(found.id) + '/constancia';
             const forcePdf = String(found.constancia_kind || '') === 'pdf' || forceFromBtn;
-            void openPvcMediaLightboxGallery(
-              [{ url, label: 'Constancia · ' + (found.nombre || 'Cliente'), forcePdf }],
-              0,
-            );
+            void preDownloadAndOpen(url, 'Constancia · ' + (found.nombre || 'Cliente'), forcePdf);
             return;
           }
           const g = lb.getAttribute('data-lb-g');

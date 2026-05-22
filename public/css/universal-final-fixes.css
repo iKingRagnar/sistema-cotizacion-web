@@ -560,29 +560,11 @@ html body dialog#pvc-media-lightbox[open] .pvc-lb-dialog {
   flex-direction: column !important;
   border: 1px solid rgba(255, 210, 0, 0.25) !important;
 }
-/* Status / loading: visible grande mientras carga */
+/* Status del lightbox: por defecto OCULTO (el spinner ahora se muestra en el botón "Ver" antes de abrir) */
 html body dialog#pvc-media-lightbox[open] .pvc-lb-status {
-  position: absolute !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  background: rgba(255, 210, 0, 0.15) !important;
-  border: 2px solid #FFD200 !important;
-  color: #FFD200 !important;
-  padding: 18px 30px !important;
-  border-radius: 12px !important;
-  font-size: 1.05rem !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.05em !important;
-  font-family: monospace !important;
-  z-index: 10 !important;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.7), 0 0 40px rgba(255,210,0,0.15) !important;
-  white-space: nowrap !important;
-}
-html body dialog#pvc-media-lightbox[open] .pvc-lb-status.hidden {
   display: none !important;
 }
-/* Body del lightbox: fondo oscuro consistente mientras carga */
+/* Body del lightbox: fondo oscuro consistente */
 html body dialog#pvc-media-lightbox[open] .pvc-lb-body {
   background: #0a0a0a !important;
   flex: 1 !important;
@@ -592,11 +574,6 @@ html body dialog#pvc-media-lightbox[open] .pvc-lb-body {
   justify-content: center !important;
   position: relative !important;
   overflow: hidden !important;
-}
-/* Iframe PDF y img: solo visibles cuando ya tienen src cargada */
-html body dialog#pvc-media-lightbox[open] .pvc-lb-img:not([src]),
-html body dialog#pvc-media-lightbox[open] .pvc-lb-pdf:not([src]) {
-  display: none !important;
 }
 
 /* ===== 10) FIX FOCO VISIBLE (accesibilidad) ===== */
