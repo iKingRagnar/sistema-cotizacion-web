@@ -442,9 +442,6 @@
   <script>
     (function() {
       function forceUniversalColors() {
-        // GUARD: si hay una mutación en curso (delete, edit, etc.) saltar la pasada
-        // para no competir por CPU mientras se procesa el cambio.
-        if (window.__skipUniversalColors) return;
         try {
           // PASO 1: DES-pintar items del sidebar que YA NO están activos (cambió la pestaña)
           var sidebarItems = document.querySelectorAll(
@@ -504,61 +501,8 @@
               c.style.setProperty('color', '#0a0a0a', 'important');
             });
           });
-          // 🎨 BOTONES DE ACCIONES EN TABLAS — pintar UNA SOLA VEZ por botón (con flag)
-          // El querySelectorAll de td/th que recorría TODAS las celdas fue eliminado
-          // (eso causaba el freeze). Aquí solo recorremos botones con clases específicas,
-          // que son mucho menos que todas las celdas, y solo procesamos los nuevos.
-          var btnDefs = [
-            { sel: 'td .btn.small.outline, td [class*="btn-preview-"], td [class*="btn-view-"], td [class*="btn-ver-"]',
-              bg: '#1e40af', border: '#3b82f6', color: '#ffffff', hoverBg: '#2563eb' },
-            { sel: 'td .btn.small.primary, td [class*="btn-edit-"], td [class*="btn-editar-"]',
-              bg: '#FFD200', border: '#c8a000', color: '#0a0a0a', hoverBg: '#ffdd33' },
-            { sel: 'td .btn.small.danger, td [class*="btn-delete-"], td [class*="btn-del-"]:not([class*="btn-delete-"])',
-              bg: '#dc2626', border: '#991b1b', color: '#ffffff', hoverBg: '#ef4444' },
-          ];
-          btnDefs.forEach(function(def) {
-            try {
-              document.querySelectorAll(def.sel).forEach(function(b) {
-                if (b.dataset.uniBtnPainted === '1') return; // ya procesado, skip
-                b.dataset.uniBtnPainted = '1';
-                b.style.setProperty('background', def.bg, 'important');
-                b.style.setProperty('background-image', 'none', 'important');
-                b.style.setProperty('background-color', def.bg, 'important');
-                b.style.setProperty('color', def.color, 'important');
-                b.style.setProperty('border', '1.5px solid ' + def.border, 'important');
-                b.style.setProperty('border-radius', '6px', 'important');
-                b.style.setProperty('padding', '6px 10px', 'important');
-                b.style.setProperty('margin', '0 2px', 'important');
-                b.style.setProperty('box-shadow', '0 1px 3px rgba(0,0,0,0.25)', 'important');
-                b.style.setProperty('opacity', '1', 'important');
-                b.style.setProperty('transform', 'none', 'important');
-                b.style.setProperty('min-width', '32px', 'important');
-                b.style.setProperty('min-height', '30px', 'important');
-                b.style.setProperty('display', 'inline-flex', 'important');
-                b.style.setProperty('align-items', 'center', 'important');
-                b.style.setProperty('justify-content', 'center', 'important');
-                b.querySelectorAll('i, svg').forEach(function(ic) {
-                  ic.style.setProperty('color', def.color, 'important');
-                  ic.style.setProperty('fill', def.color, 'important');
-                  ic.style.setProperty('text-shadow',
-                    '-1px -1px 0 #0a0a0a, 1px -1px 0 #0a0a0a, -1px 1px 0 #0a0a0a, 1px 1px 0 #0a0a0a, 0 0 2px rgba(0,0,0,0.6)',
-                    'important');
-                  ic.style.setProperty('-webkit-text-stroke', '0.5px #0a0a0a', 'important');
-                  ic.style.setProperty('font-size', '0.9rem', 'important');
-                });
-                b.addEventListener('mouseenter', function() {
-                  b.style.setProperty('background', def.hoverBg, 'important');
-                  b.style.setProperty('background-color', def.hoverBg, 'important');
-                  b.style.setProperty('filter', 'brightness(1.05)', 'important');
-                });
-                b.addEventListener('mouseleave', function() {
-                  b.style.setProperty('background', def.bg, 'important');
-                  b.style.setProperty('background-color', def.bg, 'important');
-                  b.style.setProperty('filter', 'none', 'important');
-                });
-              });
-            } catch (_) {}
-          });
+          // (Botones de acciones de tabla: TODO movido a CSS puro para evitar
+          // recorrer cientos de elementos en JS — eliminaba FOUC y freeze)
         } catch (e) { console.warn('[universal-force]', e); }
       }
       // Throttling agresivo: forceUniversalColors es caro (recorre todo el DOM).
@@ -2452,7 +2396,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app-v356.js?cb=fix-freeze-v3-skip-js-en-mutation-2026-05-22"></script>
+  <script src="js/app-v356.js?cb=fix-freeze-v2-2026-05-22"></script>
   <script src="js/prospeccion-map.js?v=7-sync-segment-heat-weight-2026-05-10" defer></script>
   <script src="js/bg-animation.js?v=8-map-shell-no-duplicate-hamburger" defer></script>
   <script src="js/premium-ux.js?v=24-globalmo-full-suppress-2026-05-07" defer></script>
