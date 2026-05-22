@@ -354,6 +354,39 @@ html body table tbody td.th-actions:hover {
   z-index: auto !important;
   transform: none !important;
 }
+/* CRÍTICO: anular background propio de la columna acciones — debe heredar del row */
+html body table tbody tr td.actions,
+html body table tbody tr td.th-actions,
+html body table tbody tr:hover td.actions,
+html body table tbody tr:hover td.th-actions,
+html body.md3-on table.data-table tbody tr td.actions,
+html body.md3-on table.data-table tbody tr td.th-actions,
+html body.md3-on table.data-table tbody tr:hover td.actions,
+html body.md3-on table.data-table tbody tr:hover td.th-actions {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+/* Anular box-shadow lateral de la columna header acciones (creaba sombra a la izquierda) */
+html body thead th.actions,
+html body thead th.th-actions,
+html body.md3-on .md-table thead th.actions,
+html body.md3-on .md-table thead th.th-actions {
+  box-shadow: none !important;
+}
+/* Asegurar que ninguna celda tenga cambios de border/padding al hover (otra fuente de 'movimiento') */
+html body table tbody td,
+html body .data-table tbody td {
+  border-top: 1px solid rgba(255,255,255,0.05) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+  border-left: none !important;
+  border-right: none !important;
+}
+html body table tbody td:hover,
+html body .data-table tbody td:hover {
+  border-color: rgba(255,255,255,0.05) !important;
+}
 
 /* ===== 9) ELIMINAR ESCALADO DE BOTONES Y CARDS AL CLICK ===== */
 html body button:active,

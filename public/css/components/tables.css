@@ -160,8 +160,11 @@ body.md3-on table.data-table thead th.th-actions,
 body.md3-on .md-table thead th.actions {
   z-index: 4;
   background: var(--md-sys-color-surface-container, #1e293b);
-  box-shadow: -8px 0 12px -8px rgba(0,0,0,0.45);
+  /* box-shadow eliminado: causaba 'sombra' lateral visible al hover */
+  box-shadow: none;
 }
+/* ELIMINADO: background especial de td.actions/td.th-actions causaba que la columna
+   acciones se viera con fondo diferente al resto (parecía 'sombra debajo de los botones').
 body.md3-on table.data-table tbody tr td.actions,
 body.md3-on table.data-table tbody tr td.th-actions {
   background: var(--md-sys-color-surface, #0f172a);
@@ -169,6 +172,14 @@ body.md3-on table.data-table tbody tr td.th-actions {
 body.md3-on table.data-table tbody tr:hover td.actions,
 body.md3-on table.data-table tbody tr:hover td.th-actions {
   background: color-mix(in srgb, var(--md-sys-color-on-surface) 6%, var(--md-sys-color-surface));
+}
+*/
+body.md3-on table.data-table tbody tr td.actions,
+body.md3-on table.data-table tbody tr td.th-actions,
+body.md3-on table.data-table tbody tr:hover td.actions,
+body.md3-on table.data-table tbody tr:hover td.th-actions {
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 body.md3-on td.actions .btn,
