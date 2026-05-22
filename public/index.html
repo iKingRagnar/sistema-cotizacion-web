@@ -437,7 +437,7 @@
   </script>
   <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
   <!-- 🔖 BADGE DE VERSIÓN (Luis): si ves esto en la esquina inferior izquierda, los cambios v351 están activos -->
-  <div id="universal-version-badge" style="position:fixed !important; bottom:6px !important; left:6px !important; z-index:2147483647 !important; background:#FFD200 !important; color:#0a0a0a !important; font-family:monospace !important; font-size:11px !important; font-weight:900 !important; padding:4px 10px !important; border-radius:5px !important; box-shadow:0 3px 10px rgba(0,0,0,0.5), 0 0 0 2px #0a0a0a !important; pointer-events:none !important; letter-spacing:1px !important;">v354 ✓ JS NUCLEAR · 2026-05-21</div>
+  <div id="universal-version-badge" style="position:fixed !important; bottom:6px !important; left:6px !important; z-index:2147483647 !important; background:#FFD200 !important; color:#0a0a0a !important; font-family:monospace !important; font-size:11px !important; font-weight:900 !important; padding:4px 10px !important; border-radius:5px !important; box-shadow:0 3px 10px rgba(0,0,0,0.5), 0 0 0 2px #0a0a0a !important; pointer-events:none !important; letter-spacing:1px !important;">v355 ✓ CHIPS AGENDA · 2026-05-22</div>
   <!-- 💥 NUCLEAR: forza estilo inline a TODO elemento activo del sidebar para bypassear CSS specificity -->
   <script>
     (function() {
@@ -456,6 +456,8 @@
           activeSelectors.forEach(function(sel) {
             document.querySelectorAll(sel).forEach(function(el) {
               if (el.closest('.modal') || el.id === 'universal-version-badge') return;
+              // No tocar chips de agenda ni elementos marcados con data-no-universal-paint
+              if (el.hasAttribute('data-no-universal-paint') || el.classList.contains('cal-tec-chip') || el.closest('.cal-tec-chip') || el.closest('.cal-tec-chips') || el.closest('[data-no-universal-paint]')) return;
               el.style.setProperty('background', '#FFD200', 'important');
               el.style.setProperty('background-image', 'none', 'important');
               el.style.setProperty('color', '#0a0a0a', 'important');
@@ -2352,7 +2354,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app-v351.js?cb=agenda-fix-mes-no-animaciones-2026-05-21"></script>
+  <script src="js/app-v352.js?cb=agenda-chips-inline-no-pisar-2026-05-22"></script>
   <script src="js/prospeccion-map.js?v=7-sync-segment-heat-weight-2026-05-10" defer></script>
   <script src="js/bg-animation.js?v=8-map-shell-no-duplicate-hamburger" defer></script>
   <script src="js/premium-ux.js?v=24-globalmo-full-suppress-2026-05-07" defer></script>
