@@ -2246,7 +2246,12 @@ body.dark-theme .data-table thead tr:first-child th { background: #334155; box-s
 .data-table tbody tr:nth-child(n) { animation-delay: 0s; }
 .data-table tbody tr:hover {
   background: rgba(255, 210, 0, 0.06) !important;
-  box-shadow: inset 3px 0 0 #FFD200;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.data-table tbody tr:hover td {
+  background: transparent !important;
+  box-shadow: none !important;
   transform: none !important;
 }
 .data-table tbody tr:last-child td { border-bottom: none; }

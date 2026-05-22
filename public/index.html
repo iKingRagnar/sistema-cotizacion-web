@@ -490,6 +490,28 @@
             { sel: 'td .btn.small.danger, td [class*="btn-delete-"], td [class*="btn-del-"]:not([class*="btn-delete-"])',
               bg: '#dc2626', border: '#991b1b', color: '#ffffff', hoverBg: '#ef4444' },
           ];
+          // 🛡️ Nuclear: eliminar TODA sombra/sticky/animación de td.actions/.th-actions
+          document.querySelectorAll('td.actions, td.th-actions, th.actions, th.th-actions, .row-actions-inline').forEach(function(td) {
+            td.style.setProperty('box-shadow', 'none', 'important');
+            td.style.setProperty('-webkit-box-shadow', 'none', 'important');
+            td.style.setProperty('position', 'static', 'important');
+            td.style.setProperty('right', 'auto', 'important');
+            td.style.setProperty('z-index', 'auto', 'important');
+            td.style.setProperty('background', 'transparent', 'important');
+            td.style.setProperty('background-color', 'transparent', 'important');
+            td.style.setProperty('background-image', 'none', 'important');
+            td.style.setProperty('transform', 'none', 'important');
+            td.style.setProperty('transition', 'none', 'important');
+            td.style.setProperty('animation', 'none', 'important');
+            td.style.setProperty('filter', 'none', 'important');
+            td.style.setProperty('outline', 'none', 'important');
+          });
+          // Anular box-shadow inset (franja amarilla) en el tr:hover que pueda ser visto como sombra
+          document.querySelectorAll('table.data-table tbody tr, .data-table tbody tr, table tbody tr').forEach(function(tr) {
+            tr.style.setProperty('transform', 'none', 'important');
+            tr.style.setProperty('animation', 'none', 'important');
+            tr.style.setProperty('transition', 'background-color 0.1s ease', 'important');
+          });
           btnDefs.forEach(function(def) {
             try {
               document.querySelectorAll(def.sel).forEach(function(b) {
