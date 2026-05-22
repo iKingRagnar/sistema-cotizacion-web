@@ -315,3 +315,101 @@ html body *:focus-visible {
   outline-offset: 2px !important;
   box-shadow: 0 0 0 4px rgba(255, 210, 0, 0.2) !important;
 }
+
+/* ===== 11) BOTONES DE ACCIONES EN TABLAS (Ver/Editar/Eliminar) ===== */
+/* Fondos sólidos consistentes — sin transparencias bug ni hovers raros */
+html body table td .btn.small,
+html body .data-table td .btn.small,
+html body table td button.btn,
+html body .data-table td button.btn,
+html body td .btn-icon-header {
+  background: #1f2937 !important;
+  background-image: none !important;
+  color: #f1f5f9 !important;
+  border: 1px solid #475569 !important;
+  border-radius: 6px !important;
+  padding: 6px 9px !important;
+  margin: 0 2px !important;
+  transition: background 0.15s ease, border-color 0.15s ease !important;
+  transform: none !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+}
+html body table td .btn.small i,
+html body .data-table td .btn.small i { color: inherit !important; }
+
+/* Ver (ojito) — azul oscuro */
+html body table td .btn.small:has(.fa-eye),
+html body .data-table td .btn.small:has(.fa-eye),
+html body table td .btn.small[title*="Ver"],
+html body table td .btn.small[title*="ver"],
+html body table td .btn.small[data-action="ver"] {
+  background: #1e3a8a !important;
+  border-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+html body table td .btn.small:has(.fa-eye):hover,
+html body .data-table td .btn.small:has(.fa-eye):hover,
+html body table td .btn.small[title*="Ver"]:hover {
+  background: #2563eb !important;
+  border-color: #60a5fa !important;
+}
+
+/* Editar (pencil) — amarillo UNIVERSAL */
+html body table td .btn.small:has(.fa-pen),
+html body table td .btn.small:has(.fa-pencil),
+html body table td .btn.small:has(.fa-edit),
+html body table td .btn.small[title*="ditar"],
+html body table td .btn.small[data-action="editar"] {
+  background: #FFD200 !important;
+  border-color: #c8a000 !important;
+  color: #0a0a0a !important;
+}
+html body table td .btn.small:has(.fa-pen):hover,
+html body table td .btn.small:has(.fa-pencil):hover,
+html body table td .btn.small:has(.fa-edit):hover,
+html body table td .btn.small[title*="ditar"]:hover {
+  background: #ffdd33 !important;
+  border-color: #FFD200 !important;
+}
+
+/* Eliminar (trash) — rojo */
+html body table td .btn.small.danger,
+html body table td .btn.small:has(.fa-trash),
+html body .data-table td .btn.small.danger,
+html body .data-table td .btn.small:has(.fa-trash),
+html body table td .btn.small[title*="liminar"],
+html body table td .btn.small[data-action="eliminar"] {
+  background: #dc2626 !important;
+  border-color: #991b1b !important;
+  color: #ffffff !important;
+}
+html body table td .btn.small.danger:hover,
+html body table td .btn.small:has(.fa-trash):hover,
+html body .data-table td .btn.small.danger:hover,
+html body table td .btn.small[title*="liminar"]:hover {
+  background: #ef4444 !important;
+  border-color: #dc2626 !important;
+}
+
+/* PDF (file-pdf) — gris oscuro con icono PDF */
+html body table td .btn.small:has(.fa-file-pdf) {
+  background: #b91c1c !important;
+  border-color: #dc2626 !important;
+  color: #ffffff !important;
+}
+html body table td .btn.small:has(.fa-file-pdf):hover {
+  background: #dc2626 !important;
+}
+
+/* Cualquier hover general en botones de tabla: sin transform, sin opacity rara */
+html body table td .btn:hover,
+html body .data-table td .btn:hover {
+  transform: none !important;
+  opacity: 1 !important;
+  filter: brightness(1.1) !important;
+}
+html body table td .btn:active,
+html body .data-table td .btn:active {
+  transform: none !important;
+  filter: brightness(0.95) !important;
+}
