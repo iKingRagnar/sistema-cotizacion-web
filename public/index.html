@@ -613,40 +613,23 @@
           });
         } catch (e) { console.warn('[universal-force]', e); }
       }
-      // Throttling agresivo: forceUniversalColors es caro (recorre todo el DOM).
-      // No ejecutar más de 1 vez cada 800ms y siempre con requestIdleCallback/setTimeout.
-      var __forceTicket = null;
-      var __forceLastRun = 0;
-      function scheduleForce() {
-        if (__forceTicket) return; // ya hay uno encolado
-        var now = Date.now();
-        var wait = Math.max(0, 800 - (now - __forceLastRun));
-        __forceTicket = setTimeout(function () {
-          __forceTicket = null;
-          __forceLastRun = Date.now();
-          try { forceUniversalColors(); } catch (_) {}
-        }, wait);
-      }
-      document.addEventListener('DOMContentLoaded', scheduleForce);
-      window.addEventListener('load', scheduleForce);
-      // MutationObserver SOLO para sidebar/top-nav (no todo el body) → evita loops por filas de tabla
+      // Ejecutar al cargar y cada vez que cambia el DOM
+      document.addEventListener('DOMContentLoaded', forceUniversalColors);
+      window.addEventListener('load', forceUniversalColors);
+      // MutationObserver para detectar cambios de clase active
       try {
-        var mo = new MutationObserver(function (muts) {
-          var relevant = muts.some(function (m) {
+        var mo = new MutationObserver(function(muts) {
+          var relevant = muts.some(function(m) {
             return m.type === 'attributes' && (m.attributeName === 'class' || m.attributeName === 'aria-current' || m.attributeName === 'aria-selected');
           });
-          if (relevant) scheduleForce();
+          if (relevant) forceUniversalColors();
         });
-        document.addEventListener('DOMContentLoaded', function () {
-          var sidebar = document.querySelector('.sidebar-nav, .sidebar, nav#sidebar-rail-tabs');
-          var topNav = document.querySelector('.mapa-header-owner-nav, #mapa-header-owner-nav');
-          var opts = { attributes: true, subtree: true, attributeFilter: ['class', 'aria-current', 'aria-selected'] };
-          if (sidebar) mo.observe(sidebar, opts);
-          if (topNav) mo.observe(topNav, opts);
+        document.addEventListener('DOMContentLoaded', function() {
+          mo.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class', 'aria-current', 'aria-selected'] });
         });
       } catch (e) {}
-      // Red de seguridad: cada 3 segundos (no 500ms — eso saturaba CPU)
-      setInterval(scheduleForce, 3000);
+      // Repintar cada 500ms como red de seguridad
+      setInterval(forceUniversalColors, 500);
     })();
   </script>
   <!-- Watermark de fondo removido por solicitud del cliente -->
