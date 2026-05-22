@@ -624,22 +624,13 @@
           try { forceUniversalColors(); } catch (_) {}
         }, 120);
       }
-      // Ejecutar al cargar y cada vez que cambia el DOM
+      // Ejecutar al cargar
       document.addEventListener('DOMContentLoaded', forceUniversalColors);
       window.addEventListener('load', forceUniversalColors);
-      // MutationObserver para detectar cambios de clase active
-      try {
-        var mo = new MutationObserver(function(muts) {
-          var relevant = muts.some(function(m) {
-            return m.type === 'attributes' && (m.attributeName === 'class' || m.attributeName === 'aria-current' || m.attributeName === 'aria-selected');
-          });
-          if (relevant) forceUniversalColorsDebounced();
-        });
-        document.addEventListener('DOMContentLoaded', function() {
-          mo.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class', 'aria-current', 'aria-selected'] });
-        });
-      } catch (e) {}
-      // Repintar cada 500ms como red de seguridad (usa debounce para no encimar ejecuciones)
+      // 🚀 FIX FREEZE: MutationObserver ELIMINADO.
+      // Causaba freeze al click en eliminar: openConfirmModal modifica classList del modal,
+      // MO disparaba forceUniversalColors que recorría toda la página y se atoraba sincrónicamente.
+      // El setInterval de 500ms ya cubre el repintado de tabs activos sin necesidad de MO.
       setInterval(forceUniversalColorsDebounced, 500);
     })();
   </script>
@@ -2498,7 +2489,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app-v356.js?cb=debounce-only-fix-freeze-2026-05-22"></script>
+  <script src="js/app-v356.js?cb=no-mo-fix-freeze-2026-05-22"></script>
   <script src="js/prospeccion-map.js?v=7-sync-segment-heat-weight-2026-05-10" defer></script>
   <script src="js/bg-animation.js?v=8-map-shell-no-duplicate-hamburger" defer></script>
   <script src="js/premium-ux.js?v=24-globalmo-full-suppress-2026-05-07" defer></script>
