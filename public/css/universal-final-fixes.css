@@ -461,6 +461,34 @@ html body .data-table *::after {
   animation: none !important;
   -webkit-animation: none !important;
 }
+/* ========= ULTRA CRÍTICO: td individual JAMÁS cambia su background al hover ========= */
+/* Solo cambia el background al hover del TR completo, nunca del TD individual */
+html body td:hover,
+html body th:hover,
+html body table td:hover,
+html body table th:hover,
+html body .data-table td:hover,
+html body .data-table th:hover,
+html body table tbody td:hover,
+html body table thead th:hover,
+html body table tbody tr td:hover,
+html body table tbody tr:hover td:hover,
+html body.md3-on table td:hover,
+html body.md3-on table th:hover,
+html body[class*="theme-"] table td:hover,
+html body[class*="theme-"] table th:hover {
+  background: inherit !important;
+  background-color: inherit !important;
+  background-image: none !important;
+  color: inherit !important;
+  box-shadow: none !important;
+  filter: none !important;
+  transform: none !important;
+  outline: none !important;
+  text-decoration: none !important;
+  font-weight: inherit !important;
+  border-color: inherit !important;
+}
 /* Pseudo-elementos: invisibles dentro de tabla (probable origen de animaciones) */
 html body .table-wrap td::before,
 html body .table-wrap td::after,

@@ -184,7 +184,7 @@
   <link rel="stylesheet" href="css/premium-login-aurora.css?v=5-exec-form-aurora-scoped-2026-05-08">
   <link rel="stylesheet" href="css/ui-legibility-final.css?v=2-reportes-merge-poweredby-login-logo-2026-05-06">
   <!-- 🎯 OVERRIDE FINAL: paleta UNIVERSAL + sin animaciones raras (carga al final para ganar especificidad) -->
-  <link rel="stylesheet" href="css/universal-final-fixes.css?v=12-kill-transitions-pseudos-2026-05-22">
+  <link rel="stylesheet" href="css/universal-final-fixes.css?v=13-td-jamas-cambia-bg-2026-05-22">
   <!-- ★ UNIVERSAL ART SKIN — inspirado en MapaSuminregio (solo estética) -->
   <link rel="stylesheet" href="css/universal-art.css?v=3-no-login-overlay-position-override">
   <link rel="stylesheet" href="css/universal-map-shell.css?v=9-logo-bare-transparent-2026-05-08">
@@ -490,6 +490,35 @@
             { sel: 'td .btn.small.danger, td [class*="btn-delete-"], td [class*="btn-del-"]:not([class*="btn-delete-"])',
               bg: '#dc2626', border: '#991b1b', color: '#ffffff', hoverBg: '#ef4444' },
           ];
+          // 🛡️ ÚLTIMO RECURSO: forzar inline-style en TODAS las celdas para que JAMÁS cambien al hover
+          document.querySelectorAll('table td, table th').forEach(function(c) {
+            if (c.dataset.uniCellLocked === '1') return;
+            c.dataset.uniCellLocked = '1';
+            // mouseover/mouseout: matar cualquier cambio visual de la celda
+            c.addEventListener('mouseover', function() {
+              c.style.setProperty('background', 'transparent', 'important');
+              c.style.setProperty('background-color', 'transparent', 'important');
+              c.style.setProperty('background-image', 'none', 'important');
+              c.style.setProperty('box-shadow', 'none', 'important');
+              c.style.setProperty('transform', 'none', 'important');
+              c.style.setProperty('filter', 'none', 'important');
+              c.style.setProperty('animation', 'none', 'important');
+              c.style.setProperty('transition', 'none', 'important');
+            });
+            c.addEventListener('mouseout', function() {
+              c.style.setProperty('background', 'transparent', 'important');
+              c.style.setProperty('background-color', 'transparent', 'important');
+            });
+            // Aplicar inicial
+            c.style.setProperty('background', 'transparent', 'important');
+            c.style.setProperty('background-color', 'transparent', 'important');
+            c.style.setProperty('box-shadow', 'none', 'important');
+            c.style.setProperty('transform', 'none', 'important');
+            c.style.setProperty('animation', 'none', 'important');
+            c.style.setProperty('transition', 'none', 'important');
+            c.style.setProperty('position', 'static', 'important');
+            c.style.setProperty('outline', 'none', 'important');
+          });
           // 🛡️ Nuclear: eliminar TODA sombra/sticky/animación de td.actions/.th-actions
           document.querySelectorAll('td.actions, td.th-actions, th.actions, th.th-actions, .row-actions-inline').forEach(function(td) {
             td.style.setProperty('box-shadow', 'none', 'important');
