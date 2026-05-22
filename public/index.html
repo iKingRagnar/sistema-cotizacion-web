@@ -437,7 +437,66 @@
   </script>
   <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
   <!-- 🔖 BADGE DE VERSIÓN (Luis): si ves esto en la esquina inferior izquierda, los cambios v351 están activos -->
-  <div id="universal-version-badge" style="position:fixed !important; bottom:6px !important; left:6px !important; z-index:2147483647 !important; background:#FFD200 !important; color:#0a0a0a !important; font-family:monospace !important; font-size:11px !important; font-weight:900 !important; padding:4px 10px !important; border-radius:5px !important; box-shadow:0 3px 10px rgba(0,0,0,0.5), 0 0 0 2px #0a0a0a !important; pointer-events:none !important; letter-spacing:1px !important;">v353 ✓ MAPA-MS BG FIX · 2026-05-21</div>
+  <div id="universal-version-badge" style="position:fixed !important; bottom:6px !important; left:6px !important; z-index:2147483647 !important; background:#FFD200 !important; color:#0a0a0a !important; font-family:monospace !important; font-size:11px !important; font-weight:900 !important; padding:4px 10px !important; border-radius:5px !important; box-shadow:0 3px 10px rgba(0,0,0,0.5), 0 0 0 2px #0a0a0a !important; pointer-events:none !important; letter-spacing:1px !important;">v354 ✓ JS NUCLEAR · 2026-05-21</div>
+  <!-- 💥 NUCLEAR: forza estilo inline a TODO elemento activo del sidebar para bypassear CSS specificity -->
+  <script>
+    (function() {
+      function forceUniversalColors() {
+        try {
+          // Sidebar: items activos -> amarillo + texto negro
+          var activeSelectors = [
+            '.sidebar .active', '.sidebar-nav .active',
+            '.sidebar .tab.active', '.sidebar-nav .tab.active',
+            '.sidebar-nav .tab-link.active', '.sidebar-nav .sidebar-item.active',
+            '.sidebar-nav button.active',
+            'aside .tab.active', 'aside .active',
+            'nav#sidebar-rail-tabs .tab.active',
+            '[aria-current="page"]', '[aria-selected="true"]'
+          ];
+          activeSelectors.forEach(function(sel) {
+            document.querySelectorAll(sel).forEach(function(el) {
+              if (el.closest('.modal') || el.id === 'universal-version-badge') return;
+              el.style.setProperty('background', '#FFD200', 'important');
+              el.style.setProperty('background-image', 'none', 'important');
+              el.style.setProperty('color', '#0a0a0a', 'important');
+              el.style.setProperty('border-color', '#c8a000', 'important');
+              // hijos
+              el.querySelectorAll('*').forEach(function(c) {
+                c.style.setProperty('color', '#0a0a0a', 'important');
+                c.style.setProperty('fill', '#0a0a0a', 'important');
+              });
+            });
+          });
+          // Top nav tabs activas
+          document.querySelectorAll('.mapa-owner-pill.active, .mapa-header-owner-nav .tab.active').forEach(function(el) {
+            el.style.setProperty('background', '#FFD200', 'important');
+            el.style.setProperty('background-image', 'none', 'important');
+            el.style.setProperty('color', '#0a0a0a', 'important');
+            el.querySelectorAll('*').forEach(function(c) {
+              c.style.setProperty('color', '#0a0a0a', 'important');
+            });
+          });
+        } catch (e) { console.warn('[universal-force]', e); }
+      }
+      // Ejecutar al cargar y cada vez que cambia el DOM
+      document.addEventListener('DOMContentLoaded', forceUniversalColors);
+      window.addEventListener('load', forceUniversalColors);
+      // MutationObserver para detectar cambios de clase active
+      try {
+        var mo = new MutationObserver(function(muts) {
+          var relevant = muts.some(function(m) {
+            return m.type === 'attributes' && (m.attributeName === 'class' || m.attributeName === 'aria-current' || m.attributeName === 'aria-selected');
+          });
+          if (relevant) forceUniversalColors();
+        });
+        document.addEventListener('DOMContentLoaded', function() {
+          mo.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class', 'aria-current', 'aria-selected'] });
+        });
+      } catch (e) {}
+      // Repintar cada 500ms como red de seguridad
+      setInterval(forceUniversalColors, 500);
+    })();
+  </script>
   <!-- Watermark de fondo removido por solicitud del cliente -->
   <div id="app-watermark" class="prem-watermark-field" aria-hidden="true" style="display:none"></div>
   <div id="offline-banner" class="offline-banner hidden" role="alert" aria-live="polite">Sin conexión. Algunas funciones pueden no estar disponibles.</div>
