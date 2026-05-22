@@ -17617,6 +17617,17 @@ async function imprimirFlyer() {
   if (btnMantGarRefreshSin) btnMantGarRefreshSin.addEventListener('click', () => loadGarantiasSinCobertura());
   const exportGarantiasSin = qs('#export-garantias-sin');
   if (exportGarantiasSin) exportGarantiasSin.addEventListener('click', () => exportToCsv(applyFilters(garantiasSinCoberturaCache, getFilterValues('#tabla-garantias-sin'), 'tabla-garantias-sin'), 'tabla-garantias-sin', 'garantias_sin_cobertura'));
+  // 🔧 Faltante: #export-garantias (pestaña Garantías principal)
+  const btnExportGarantias = qs('#export-garantias');
+  if (btnExportGarantias) {
+    btnExportGarantias.addEventListener('click', () => {
+      try {
+        const rows = Array.isArray(garantiasCache) ? garantiasCache : [];
+        if (!rows.length) { showToast('No hay garantías para exportar.', 'warning'); return; }
+        exportToCsv(rows, 'tabla-garantias', 'garantias');
+      } catch (e) { console.error('[export-garantias]', e); showToast('Error al exportar CSV.', 'error'); }
+    });
+  }
   qs('.btn-empty-cot').addEventListener('click', () => openModalCotizacion(null));
   const btnEmptyInc = qs('.btn-empty-inc');
   if (btnEmptyInc) btnEmptyInc.addEventListener('click', () => openModalIncidente(null));
@@ -19384,9 +19395,19 @@ async function imprimirFlyer() {
         body: JSON.stringify({ mes, tipos: ['bonos_mensual'] }),
         timeoutMs: 90000,
       });
-      showToast('Reporte enviado. ' + (resp.enviados || 0) + ' correos OK, ' + ((resp.errores || []).length) + ' errores.', 'success');
+      const env = Number(resp && resp.enviados) || 0;
+      const errs = Array.isArray(resp && resp.errores) ? resp.errores : [];
+      if (env > 0) {
+        showToast('Reporte enviado a ' + env + ' destinatario(s).' + (errs.length ? ' ' + errs.length + ' error(es).' : ''), 'success');
+      } else {
+        // Sin envíos: mostrar el error REAL para que Luis pueda diagnosticarlo
+        const msg = errs.length ? errs.join(' · ') : 'No se envió ningún correo.';
+        showToast('No se pudo enviar: ' + msg, 'error');
+        console.warn('[enviarBonosCorreo] respuesta del servidor:', resp);
+      }
     } catch (e) {
       showToast(parseApiError(e) || 'No se pudo enviar.', 'error');
+      console.error('[enviarBonosCorreo]', e);
     }
   }
 

@@ -707,3 +707,23 @@ html body td .btn.small:active {
   transform: none !important;
   filter: brightness(0.9) !important;
 }
+
+/* ====================================================================
+   FIX 2026-05-22: Tarifas — el fondo de cada .tarifas-section debe
+   abarcar TODO el contenido (tabla, inputs, botones). Antes se veía
+   "cortado" porque la tabla era más ancha que el card.
+   ==================================================================== */
+html body #panel-tarifas .tarifas-section {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow-x: auto !important;
+  display: block !important;
+}
+html body #panel-tarifas .tarifas-section > * {
+  max-width: 100% !important;
+}
+html body #panel-tarifas .tarifas-section table.data-table {
+  width: 100% !important;
+  table-layout: auto !important;
+}
