@@ -6135,7 +6135,7 @@ app.get('/api/reportes/:id', async (req, res) => {
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
 
-// AGENDA: asignaciones de técnicos por mes (slot + reporte + detalles)
+// AGENDA: asignaciones del mes (con o sin técnico). También considera fecha_programada
 app.get('/api/agenda/mes', async (req, res) => {
   try {
     const y = Number(req.query.year) || new Date().getFullYear();
@@ -6144,18 +6144,24 @@ app.get('/api/agenda/mes', async (req, res) => {
     const start = `${y}-${mm}-01`;
     const end = `${y}-${mm}-31`;
     const rows = await db.getAll(
-      `SELECT r.id, r.folio, r.fecha, r.slot, r.tecnico, r.estatus, r.tipo_reporte, r.subtipo,
+      `SELECT r.id, r.folio, r.fecha, r.fecha_programada, r.slot, r.tecnico, r.estatus, r.tipo_reporte, r.subtipo,
               r.descripcion, r.notas, r.maquina_id, r.numero_maquina, r.razon_social,
               c.nombre as cliente_nombre, m.nombre as maquina_nombre
        FROM reportes r
        LEFT JOIN clientes c ON c.id = r.cliente_id
        LEFT JOIN maquinas m ON m.id = r.maquina_id
-       WHERE r.tecnico IS NOT NULL AND r.tecnico <> ''
-         AND r.fecha >= ? AND r.fecha <= ?
-       ORDER BY r.fecha ASC, r.slot ASC`,
-      [start, end]
+       WHERE ((substr(COALESCE(r.fecha_programada, r.fecha), 1, 10) >= ?
+               AND substr(COALESCE(r.fecha_programada, r.fecha), 1, 10) <= ?)
+              OR (substr(COALESCE(r.fecha, ''), 1, 10) >= ?
+                  AND substr(COALESCE(r.fecha, ''), 1, 10) <= ?))
+       ORDER BY COALESCE(r.fecha_programada, r.fecha) ASC, r.slot ASC`,
+      [start, end, start, end]
     );
-    res.json(rows);
+    // Normalizar fecha al formato YYYY-MM-DD (prefiere fecha_programada si existe)
+    const out = rows.map(r => Object.assign({}, r, {
+      fecha: ((r.fecha_programada || r.fecha) || '').toString().slice(0, 10),
+    }));
+    res.json(out);
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
 
