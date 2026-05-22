@@ -1222,7 +1222,13 @@ app.get('/api/clientes/:id', async (req, res) => {
   try {
     const row = await db.getOne('SELECT * FROM clientes WHERE id = ?', [req.params.id]);
     if (!row) return res.status(404).json({ error: 'No encontrado' });
-    res.json(publicClienteRow(row));
+    const pub = publicClienteRow(row);
+    // Cuando se pide ?with_constancia=1 incluir el dataURL completo (para visualizar
+    // instantáneamente sin hacer fetch separado al endpoint binario)
+    if (req.query.with_constancia === '1' && row.constancia_url) {
+      pub.constancia_url = row.constancia_url;
+    }
+    res.json(pub);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }

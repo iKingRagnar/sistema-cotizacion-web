@@ -3074,24 +3074,45 @@
           if (role === 'cliente-const') {
             const direct = String(lb.getAttribute('data-const-url') || '').trim();
             const forceFromBtn = lb.getAttribute('data-const-kind') === 'pdf';
-            // PRE-DESCARGAR: mostrar spinner en el botón mientras se baja la constancia,
-            // luego abrir el lightbox con blob URL local (carga INSTANTÁNEA en el iframe)
-            const preDownloadAndOpen = async (constUrl, label, fp) => {
-              const originalHtml = lb.innerHTML;
-              const originalDisabled = lb.disabled;
-              lb.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando…';
-              lb.disabled = true;
+            const id = lb.getAttribute('data-cliente-id');
+            const list = clientesCache && clientesCache.length ? clientesCache : [];
+            const found = list.find((x) => String(x && x.id) === String(id));
+            if (!found && !direct) {
+              showToast('No hay constancia en sistema para este cliente.', 'error');
+              return;
+            }
+            // CASO RÁPIDO: si ya tenemos el dataURL en cache (preloaded por previewCliente),
+            // abrir el lightbox INMEDIATAMENTE con el dataURL directo (sin fetch, sin spinner)
+            const cached = (window.__cClienteConstUrls || {})[id];
+            const label = 'Constancia · ' + ((found && found.nombre) || 'Cliente');
+            const forcePdf = (found && String(found.constancia_kind || '') === 'pdf') || forceFromBtn;
+            if (cached) {
+              void openPvcMediaLightboxGallery(
+                [{ url: cached, label, forcePdf }],
+                0,
+              );
+              return;
+            }
+            // FALLBACK (no debería pasar si previewCliente cargó bien): fetch ahora
+            const fetchUrl = direct || (API + '/clientes/' + encodeURIComponent(found.id) + '?with_constancia=1');
+            const originalHtml = lb.innerHTML;
+            const originalDisabled = lb.disabled;
+            lb.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando…';
+            lb.disabled = true;
+            (async () => {
               try {
-                const headers = {};
-                const tok = getAuthToken();
-                if (tok) headers['Authorization'] = 'Bearer ' + tok;
-                const r = await fetch(constUrl, { headers, credentials: 'same-origin' });
-                if (!r.ok) throw new Error('No se pudo cargar la constancia.');
-                const blob = await r.blob();
-                const blobUrl = URL.createObjectURL(blob);
-                // Abrir el lightbox YA con el blob local (render instantáneo en el iframe/img)
+                let dataUrl;
+                if (direct) {
+                  dataUrl = direct;
+                } else {
+                  const full = await fetchJson(fetchUrl);
+                  dataUrl = full && full.constancia_url;
+                  if (!dataUrl) throw new Error('No se pudo obtener la constancia.');
+                  if (!window.__cClienteConstUrls) window.__cClienteConstUrls = {};
+                  window.__cClienteConstUrls[id] = dataUrl;
+                }
                 await openPvcMediaLightboxGallery(
-                  [{ url: blobUrl, label, forcePdf: fp || /pdf/i.test(blob.type) }],
+                  [{ url: dataUrl, label, forcePdf }],
                   0,
                 );
               } catch (e) {
@@ -3100,21 +3121,7 @@
                 lb.innerHTML = originalHtml;
                 lb.disabled = originalDisabled;
               }
-            };
-            if (direct) {
-              void preDownloadAndOpen(direct, 'Constancia', forceFromBtn);
-              return;
-            }
-            const id = lb.getAttribute('data-cliente-id');
-            const list = clientesCache && clientesCache.length ? clientesCache : [];
-            const found = list.find((x) => String(x && x.id) === String(id));
-            if (!found || !found.has_constancia) {
-              showToast('No hay constancia en sistema para este cliente.', 'error');
-              return;
-            }
-            const url = API + '/clientes/' + encodeURIComponent(found.id) + '/constancia';
-            const forcePdf = String(found.constancia_kind || '') === 'pdf' || forceFromBtn;
-            void preDownloadAndOpen(url, 'Constancia · ' + (found.nombre || 'Cliente'), forcePdf);
+            })();
             return;
           }
           const g = lb.getAttribute('data-lb-g');
@@ -4488,6 +4495,23 @@
 
   function previewCliente(c) {
     clearPvcMediaUrlRegistry();
+    // PRELOAD del dataURL completo de constancia: pedirlo al servidor con ?with_constancia=1
+    // mientras el usuario lee el modal. Guardamos el dataURL en window.__cClienteConstUrls
+    // para uso instantáneo cuando hagan click en "Ver" (sin hacer otro fetch).
+    if (c && c.has_constancia && c.id != null) {
+      try {
+        if (!window.__cClienteConstUrls) window.__cClienteConstUrls = {};
+        if (!window.__cClienteConstUrls[c.id]) {
+          fetchJson(API + '/clientes/' + encodeURIComponent(c.id) + '?with_constancia=1')
+            .then(function (full) {
+              if (full && full.constancia_url) {
+                window.__cClienteConstUrls[c.id] = full.constancia_url;
+              }
+            })
+            .catch(function () {});
+        }
+      } catch (_) {}
+    }
     const constHdr =
       c && c.has_constancia ? '<div style="margin-bottom:0.75rem">' + clienteConstanciaThumbHtml(c, { showVerButton: true }) + '</div>' : '';
     openPreviewCard({
