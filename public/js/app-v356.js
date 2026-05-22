@@ -2684,8 +2684,15 @@
     const tok = getAuthToken();
     if (tok) headers['Authorization'] = 'Bearer ' + tok;
     try {
-      if (statusEl) statusEl.textContent = 'Descargando archivo…';
-      const r = await fetch(u, { headers, credentials: 'same-origin' });
+      if (statusEl) statusEl.textContent = 'Cargando archivo…';
+      // Pequeño indicador animado de actividad mientras tarda — sin streaming overhead
+      let dotCount = 0;
+      const dotTimer = setInterval(() => {
+        if (!statusEl) return;
+        dotCount = (dotCount + 1) % 4;
+        statusEl.textContent = 'Cargando archivo' + '.'.repeat(dotCount + 1);
+      }, 400);
+      const r = await fetch(u, { headers, credentials: 'same-origin' }).finally(() => clearInterval(dotTimer));
       if (!r.ok) {
         let msg = 'No se pudo cargar el archivo.';
         try {
@@ -2695,35 +2702,8 @@
         throw new Error(msg);
       }
       const ct = String(r.headers.get('content-type') || '');
-      // Stream con progreso: si tenemos Content-Length, mostramos % descargado
-      let blob;
-      const total = Number(r.headers.get('content-length') || 0);
-      if (total > 0 && r.body && typeof r.body.getReader === 'function' && total > 200 * 1024) {
-        // Solo usar streaming visible si el archivo es > 200 KB (vale la pena mostrar progreso)
-        try {
-          const reader = r.body.getReader();
-          const chunks = [];
-          let received = 0;
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            chunks.push(value);
-            received += value.length;
-            if (statusEl) {
-              const pct = Math.round((received / total) * 100);
-              const mb = (received / 1048576).toFixed(1);
-              const mbT = (total / 1048576).toFixed(1);
-              statusEl.textContent = `Descargando archivo… ${pct}% (${mb}/${mbT} MB)`;
-            }
-          }
-          blob = new Blob(chunks, { type: ct });
-        } catch (_) {
-          // Fallback a blob normal si falló el streaming
-          blob = await r.blob();
-        }
-      } else {
-        blob = await r.blob();
-      }
+      // Método rápido: blob() directo (más eficiente que streaming chunks)
+      const blob = await r.blob();
       const objUrl = URL.createObjectURL(blob);
       _pvcLbBlobUrl = objUrl;
       const looksImage =
@@ -4487,6 +4467,18 @@
 
   function previewCliente(c) {
     clearPvcMediaUrlRegistry();
+    // PRELOAD: si tiene constancia, descargarla EN BACKGROUND apenas abre el modal,
+    // así cuando dé click en 'Ver' ya está en cache del browser y carga instantáneo
+    if (c && c.has_constancia && c.id != null) {
+      try {
+        const preUrl = API + '/clientes/' + encodeURIComponent(c.id) + '/constancia';
+        const preHeaders = {};
+        const preTok = getAuthToken();
+        if (preTok) preHeaders['Authorization'] = 'Bearer ' + preTok;
+        // No await: la promesa corre en background mientras el usuario lee el modal
+        fetch(preUrl, { headers: preHeaders, credentials: 'same-origin' }).catch(() => {});
+      } catch (_) {}
+    }
     const constHdr =
       c && c.has_constancia ? '<div style="margin-bottom:0.75rem">' + clienteConstanciaThumbHtml(c, { showVerButton: true }) + '</div>' : '';
     openPreviewCard({
