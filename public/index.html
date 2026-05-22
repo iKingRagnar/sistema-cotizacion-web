@@ -184,7 +184,7 @@
   <link rel="stylesheet" href="css/premium-login-aurora.css?v=5-exec-form-aurora-scoped-2026-05-08">
   <link rel="stylesheet" href="css/ui-legibility-final.css?v=2-reportes-merge-poweredby-login-logo-2026-05-06">
   <!-- 🎯 OVERRIDE FINAL: paleta UNIVERSAL + sin animaciones raras (carga al final para ganar especificidad) -->
-  <link rel="stylesheet" href="css/universal-final-fixes.css?v=6-action-buttons-clases-directas-2026-05-22">
+  <link rel="stylesheet" href="css/universal-final-fixes.css?v=7-rows-quietas-iconos-silueta-2026-05-22">
   <!-- ★ UNIVERSAL ART SKIN — inspirado en MapaSuminregio (solo estética) -->
   <link rel="stylesheet" href="css/universal-art.css?v=3-no-login-overlay-position-override">
   <link rel="stylesheet" href="css/universal-map-shell.css?v=9-logo-bare-transparent-2026-05-08">
@@ -514,6 +514,12 @@
                 b.querySelectorAll('i, svg').forEach(function(ic) {
                   ic.style.setProperty('color', def.color, 'important');
                   ic.style.setProperty('fill', def.color, 'important');
+                  // Silueta negra alrededor del icono para que se vea sobre cualquier fondo
+                  ic.style.setProperty('text-shadow',
+                    '-1px -1px 0 #0a0a0a, 1px -1px 0 #0a0a0a, -1px 1px 0 #0a0a0a, 1px 1px 0 #0a0a0a, 0 0 2px rgba(0,0,0,0.6)',
+                    'important');
+                  ic.style.setProperty('-webkit-text-stroke', '0.5px #0a0a0a', 'important');
+                  ic.style.setProperty('font-size', '0.9rem', 'important');
                 });
                 // Hover events: cambia brightness sin transform
                 b.addEventListener('mouseenter', function() {

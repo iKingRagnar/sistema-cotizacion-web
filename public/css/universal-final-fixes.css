@@ -293,11 +293,33 @@ html body .btn.danger:hover, html body .btn-danger:hover {
   color: #ffffff !important;
 }
 
-/* ===== 8) ROW HOVER en tablas: sutil y fijo ===== */
+/* ===== 8) ROW HOVER en tablas: sutil y FIJO (sin transform/scale/animation) ===== */
+html body table tbody tr,
+html body table tbody tr td,
+html body .data-table tbody tr,
+html body .data-table tbody tr td {
+  transform: none !important;
+  animation: none !important;
+  transition: background-color 0.1s ease !important;
+}
 html body table tbody tr:hover,
-html body table tbody tr:hover td {
+html body table tbody tr:hover td,
+html body .data-table tbody tr:hover,
+html body .data-table tbody tr:hover td {
   background: rgba(255, 210, 0, 0.06) !important;
-  transition: background 0.1s ease !important;
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+  box-shadow: none !important;
+}
+/* Anular cualquier movimiento del row entero o de la celda de acciones */
+html body table tbody tr:hover .th-actions,
+html body table tbody tr .th-actions,
+html body table tbody tr td.th-actions,
+html body table tbody tr:hover td.th-actions {
+  transform: none !important;
+  animation: none !important;
+  filter: none !important;
 }
 
 /* ===== 9) ELIMINAR ESCALADO DE BOTONES Y CARDS AL CLICK ===== */
