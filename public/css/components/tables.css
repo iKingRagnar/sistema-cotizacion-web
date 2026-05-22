@@ -139,7 +139,7 @@ body.md3-on .md-table tbody tr.selected {
   color: var(--md-sys-color-on-primary-container);
 }
 
-/* ── Row actions cell — sticky right + sombra suave a la izquierda ──── */
+/* ── Row actions cell — SIN sticky ni sombra (causaba 'animación bajo botones') ──── */
 body.md3-on table.data-table .th-actions,
 body.md3-on table.data-table td.actions,
 body.md3-on .md-table .actions {
@@ -148,13 +148,14 @@ body.md3-on .md-table .actions {
   max-width: none;
   white-space: nowrap;
   text-align: right;
-  position: sticky;
-  right: 0;
-  z-index: 1;
-  background: inherit;
+  /* position: sticky + box-shadow ELIMINADOS: creaban sombra-halo lateral
+     visible al hacer hover sobre cualquier celda del row */
+  position: static;
+  z-index: auto;
+  background: transparent;
   overflow: visible;
   text-overflow: clip;
-  box-shadow: -8px 0 12px -8px rgba(0,0,0,0.35);
+  box-shadow: none;
 }
 body.md3-on table.data-table thead th.th-actions,
 body.md3-on .md-table thead th.actions {

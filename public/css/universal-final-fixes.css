@@ -368,12 +368,26 @@ html body.md3-on table.data-table tbody tr:hover td.th-actions {
   background-image: none !important;
   box-shadow: none !important;
 }
-/* Anular box-shadow lateral de la columna header acciones (creaba sombra a la izquierda) */
+/* Anular box-shadow lateral + position sticky de la columna acciones
+   (causaba 'animación/halo bajo los botones' al hover de cualquier celda) */
 html body thead th.actions,
 html body thead th.th-actions,
+html body table.data-table .th-actions,
+html body table.data-table td.actions,
+html body table.data-table td.th-actions,
+html body .md-table .actions,
+html body .md-table .th-actions,
 html body.md3-on .md-table thead th.actions,
-html body.md3-on .md-table thead th.th-actions {
+html body.md3-on .md-table thead th.th-actions,
+html body.md3-on table.data-table .th-actions,
+html body.md3-on table.data-table td.actions,
+html body.md3-on table.data-table td.th-actions,
+html body.md3-on .md-table .actions,
+html body.md3-on .md-table .th-actions {
   box-shadow: none !important;
+  position: static !important;
+  right: auto !important;
+  z-index: auto !important;
 }
 /* Asegurar que ninguna celda tenga cambios de border/padding al hover (otra fuente de 'movimiento') */
 html body table tbody td,
