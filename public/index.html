@@ -613,41 +613,23 @@
           });
         } catch (e) { console.warn('[universal-force]', e); }
       }
-      // Debounce: evitar que se ejecute cientos de veces durante rebuild de tablas
-      var _forceTimer = null;
-      function forceUniversalColorsDebounced() {
-        if (_forceTimer) return;
-        _forceTimer = setTimeout(function() {
-          _forceTimer = null;
-          forceUniversalColors();
-        }, 150);
-      }
-      // Ejecutar al cargar
+      // Ejecutar al cargar y cada vez que cambia el DOM
       document.addEventListener('DOMContentLoaded', forceUniversalColors);
       window.addEventListener('load', forceUniversalColors);
-      // MutationObserver SOLO sobre sidebar/topnav (no document.body completo) para detectar tab active
+      // MutationObserver para detectar cambios de clase active
       try {
         var mo = new MutationObserver(function(muts) {
           var relevant = muts.some(function(m) {
             return m.type === 'attributes' && (m.attributeName === 'class' || m.attributeName === 'aria-current' || m.attributeName === 'aria-selected');
           });
-          if (relevant) forceUniversalColorsDebounced();
+          if (relevant) forceUniversalColors();
         });
         document.addEventListener('DOMContentLoaded', function() {
-          var targets = [
-            document.querySelector('.sidebar'),
-            document.querySelector('.sidebar-nav'),
-            document.querySelector('nav#sidebar-rail-tabs'),
-            document.querySelector('.mapa-header-owner-nav'),
-            document.querySelector('aside')
-          ].filter(Boolean);
-          targets.forEach(function(t) {
-            try { mo.observe(t, { attributes: true, subtree: true, attributeFilter: ['class', 'aria-current', 'aria-selected'] }); } catch(_) {}
-          });
+          mo.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class', 'aria-current', 'aria-selected'] });
         });
       } catch (e) {}
-      // Red de seguridad: cada 3s en vez de 500ms (suficiente y no congela)
-      setInterval(forceUniversalColorsDebounced, 3000);
+      // Repintar cada 500ms como red de seguridad
+      setInterval(forceUniversalColors, 500);
     })();
   </script>
   <!-- Watermark de fondo removido por solicitud del cliente -->
@@ -2505,7 +2487,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app-v356.js?cb=debounce-mo-fix-freeze-2026-05-22"></script>
+  <script src="js/app-v356.js?cb=no-auto-refresh-fix-freeze-2026-05-22"></script>
   <script src="js/prospeccion-map.js?v=7-sync-segment-heat-weight-2026-05-10" defer></script>
   <script src="js/bg-animation.js?v=8-map-shell-no-duplicate-hamburger" defer></script>
   <script src="js/premium-ux.js?v=24-globalmo-full-suppress-2026-05-07" defer></script>
