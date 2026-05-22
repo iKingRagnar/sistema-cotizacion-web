@@ -2907,17 +2907,6 @@
   function pvcTablaThumbOpenButton(url) {
     const u = String(url || '').trim();
     if (!u || !pvcIsDisplayableImageUrl(u)) return '';
-    // 🚀 FIX FREEZE: las data URLs base64 grandes congelan el render al decodificarse
-    // síncronamente dentro de <img src>. Mostrar un placeholder (la miniatura completa
-    // se ve igualmente al darle "Ver" / Vista previa).
-    if (u.startsWith('data:') && u.length > 4000) {
-      return (
-        '<span class="cliente-const-inline ref-tabla-thumb-wrap">' +
-        '<span class="cliente-const-slot cliente-const-slot--static ref-tabla-thumb-static" aria-hidden="true">' +
-        '<i class="fas fa-image" aria-hidden="true"></i></span>' +
-        '</span>'
-      );
-    }
     if (u.startsWith('/api/')) {
       return (
         '<span class="cliente-const-inline ref-tabla-thumb-wrap">' +
