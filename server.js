@@ -1200,8 +1200,18 @@ app.get('/api/clientes/:id/constancia', async (req, res) => {
     else if (mime.includes('gif')) ext = '.gif';
     else if (mime.includes('webp')) ext = '.webp';
     if (name.indexOf('.') < 0) name += ext;
+    // ETag basado en hash del buffer (cache fuerte: si la constancia no cambió, 304 Not Modified)
+    const crypto = require('crypto');
+    const etag = '"' + crypto.createHash('md5').update(parsed.buffer).digest('hex') + '"';
+    if (req.headers['if-none-match'] === etag) {
+      return res.status(304).end();
+    }
     res.setHeader('Content-Type', mime);
+    res.setHeader('Content-Length', parsed.buffer.length);
     res.setHeader('Content-Disposition', dl ? `attachment; filename="${name}"` : `inline; filename="${name}"`);
+    // Cache privada 1 hora -> 2da visita al mismo cliente es INSTANTÁNEA (304 con ETag o cache local)
+    res.setHeader('Cache-Control', 'private, max-age=3600, must-revalidate');
+    res.setHeader('ETag', etag);
     res.send(parsed.buffer);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
