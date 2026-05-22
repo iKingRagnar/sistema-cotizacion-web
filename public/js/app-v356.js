@@ -2760,17 +2760,14 @@
     } catch (_) {}
     _pvcLbItems = list;
     _pvcLbIndex = Math.max(0, Math.min(Number(startIndex) || 0, list.length - 1));
+    // Asegurar que el lightbox esté siempre visible y encima de TODO (incluso si showModal falla)
+    root.classList.remove('hidden');
+    root.style.setProperty('display', 'flex', 'important');
+    root.style.setProperty('z-index', '2147483647', 'important');
+    root.style.setProperty('position', 'fixed', 'important');
     if (pvcMediaLbRootIsDialog(root)) {
-      try {
-        if (root.open) root.close();
-      } catch (_) {}
-      try {
-        root.showModal();
-      } catch (_) {
-        root.classList.remove('hidden');
-      }
-    } else {
-      root.classList.remove('hidden');
+      try { if (root.open) root.close(); } catch (_) {}
+      try { root.showModal(); } catch (_) { /* fallback: ya está con classList.remove + inline styles */ }
     }
     try {
       document.body.classList.add('pvc-lb-open');

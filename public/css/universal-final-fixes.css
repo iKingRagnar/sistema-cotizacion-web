@@ -521,6 +521,39 @@ html body [role="button"]:active {
   scale: 1 !important;
 }
 
+/* ===== LIGHTBOX SIEMPRE ENCIMA: garantiza que pvc-media-lightbox esté por encima de cualquier modal ===== */
+html body #pvc-media-lightbox,
+html body dialog#pvc-media-lightbox,
+html body .pvc-media-lightbox {
+  z-index: 2147483647 !important;
+  position: fixed !important;
+  inset: 0 !important;
+}
+html body #pvc-media-lightbox:not(.hidden),
+html body dialog#pvc-media-lightbox[open] {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+/* Asegurar que el backdrop del lightbox tenga fondo oscuro semi opaco, NO transparent */
+html body #pvc-media-lightbox .pvc-lb-backdrop {
+  position: absolute !important;
+  inset: 0 !important;
+  background: rgba(0, 0, 0, 0.85) !important;
+  z-index: 1 !important;
+}
+html body #pvc-media-lightbox .pvc-lb-dialog {
+  position: relative !important;
+  z-index: 2 !important;
+  background: #0a0a0a !important;
+  border-radius: 10px !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7) !important;
+  max-width: 95vw !important;
+  max-height: 95vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
 /* ===== 10) FIX FOCO VISIBLE (accesibilidad) ===== */
 html body *:focus-visible {
   outline: 2px solid #FFD200 !important;
