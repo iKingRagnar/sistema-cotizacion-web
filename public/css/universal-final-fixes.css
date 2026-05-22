@@ -534,47 +534,6 @@ html body .pvc-lb-pdf {
 }
 
 /* ============================================================================
-   TABLAS — sin animaciones/sombras/transforms (REEMPLAZA el JS nuclear que
-   recorría miles de td por iteración — causaba freeze al renderizar tablas
-   grandes). CSS solo es virtualmente gratis comparado con JS sobre miles de
-   elementos.
-   ============================================================================ */
-html body table tbody tr,
-html body .data-table tbody tr,
-html body table tbody tr td,
-html body .data-table tbody tr td {
-  transform: none !important;
-  animation: none !important;
-  transition: background-color 0.1s ease !important;
-}
-html body table td:hover,
-html body .data-table td:hover {
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-  box-shadow: none !important;
-  transform: none !important;
-  filter: none !important;
-  position: static !important;
-}
-html body td.actions,
-html body td.th-actions,
-html body th.actions,
-html body th.th-actions {
-  box-shadow: none !important;
-  position: static !important;
-  right: auto !important;
-  z-index: auto !important;
-  background: transparent !important;
-  background-image: none !important;
-  transform: none !important;
-  transition: none !important;
-  animation: none !important;
-  filter: none !important;
-  outline: none !important;
-}
-
-/* ============================================================================
    TABLA DE PARTIDAS DE COTIZACIÓN: columnas TIPO/CÓDIGO/MÁQUINA no se cortan
    ============================================================================ */
 html body .cotz-lineas-table-wrap .data-table th,
