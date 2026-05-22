@@ -575,6 +575,103 @@ html body th.th-actions {
 }
 
 /* ============================================================================
+   BOTONES DE ACCIONES EN TABLAS — TODO en CSS puro (sin FOUC ni freeze)
+   ============================================================================ */
+html body td .btn.small,
+html body td button.btn,
+html body th .btn.small {
+  border-radius: 6px !important;
+  padding: 6px 10px !important;
+  margin: 0 2px !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25) !important;
+  opacity: 1 !important;
+  transform: none !important;
+  min-width: 32px !important;
+  min-height: 30px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: filter 0.12s ease, background-color 0.12s ease !important;
+  cursor: pointer !important;
+}
+html body td .btn.small i,
+html body td .btn.small svg,
+html body td button.btn i,
+html body td button.btn svg {
+  text-shadow: -1px -1px 0 #0a0a0a, 1px -1px 0 #0a0a0a, -1px 1px 0 #0a0a0a, 1px 1px 0 #0a0a0a, 0 0 2px rgba(0,0,0,0.6) !important;
+  -webkit-text-stroke: 0.5px #0a0a0a !important;
+  font-size: 0.9rem !important;
+}
+/* VER (ojito) — azul oscuro */
+html body td .btn.small.outline,
+html body td [class*="btn-preview-"],
+html body td [class*="btn-view-"],
+html body td [class*="btn-ver-"] {
+  background: #1e40af !important;
+  background-image: none !important;
+  background-color: #1e40af !important;
+  color: #ffffff !important;
+  border: 1.5px solid #3b82f6 !important;
+}
+html body td .btn.small.outline:hover,
+html body td [class*="btn-preview-"]:hover,
+html body td [class*="btn-view-"]:hover,
+html body td [class*="btn-ver-"]:hover {
+  background: #2563eb !important;
+  background-color: #2563eb !important;
+  filter: brightness(1.05) !important;
+  transform: none !important;
+}
+html body td .btn.small.outline i,
+html body td [class*="btn-preview-"] i,
+html body td [class*="btn-view-"] i,
+html body td [class*="btn-ver-"] i { color: #ffffff !important; fill: #ffffff !important; }
+
+/* EDITAR (pencil) — amarillo UNIVERSAL */
+html body td .btn.small.primary,
+html body td [class*="btn-edit-"],
+html body td [class*="btn-editar-"] {
+  background: #FFD200 !important;
+  background-image: none !important;
+  background-color: #FFD200 !important;
+  color: #0a0a0a !important;
+  border: 1.5px solid #c8a000 !important;
+}
+html body td .btn.small.primary:hover,
+html body td [class*="btn-edit-"]:hover,
+html body td [class*="btn-editar-"]:hover {
+  background: #ffdd33 !important;
+  background-color: #ffdd33 !important;
+  filter: brightness(1.05) !important;
+  transform: none !important;
+}
+html body td .btn.small.primary i,
+html body td [class*="btn-edit-"] i,
+html body td [class*="btn-editar-"] i { color: #0a0a0a !important; fill: #0a0a0a !important; }
+
+/* ELIMINAR (trash) — rojo */
+html body td .btn.small.danger,
+html body td [class*="btn-delete-"],
+html body td [class*="btn-del-"]:not([class*="btn-delete-"]) {
+  background: #dc2626 !important;
+  background-image: none !important;
+  background-color: #dc2626 !important;
+  color: #ffffff !important;
+  border: 1.5px solid #991b1b !important;
+}
+html body td .btn.small.danger:hover,
+html body td [class*="btn-delete-"]:hover,
+html body td [class*="btn-del-"]:hover {
+  background: #ef4444 !important;
+  background-color: #ef4444 !important;
+  filter: brightness(1.05) !important;
+  transform: none !important;
+}
+html body td .btn.small.danger i,
+html body td [class*="btn-delete-"] i,
+html body td [class*="btn-del-"] i { color: #ffffff !important; fill: #ffffff !important; }
+
+/* ============================================================================
    TABLA DE PARTIDAS DE COTIZACIÓN: columnas TIPO/CÓDIGO/MÁQUINA no se cortan
    ============================================================================ */
 html body .cotz-lineas-table-wrap .data-table th,
