@@ -12,6 +12,14 @@ const db = require('./db');
 // Auth siempre activa a menos que explícitamente se desactive con AUTH_ENABLED=0
 const AUTH_ENABLED = process.env.AUTH_ENABLED !== '0' && process.env.AUTH_ENABLED !== 'false';
 const AUTH_SECRET = process.env.AUTH_SECRET || '';
+// Fail-fast en producción: si AUTH está activo pero AUTH_SECRET no está definido,
+// abortar arranque del server. Evita firmar/verificar tokens con un secret inseguro hardcoded.
+const _isProdLike = !!(process.env.RENDER || process.env.RENDER_SERVICE_NAME || process.env.VERCEL || process.env.NODE_ENV === 'production');
+if (AUTH_ENABLED && !AUTH_SECRET && _isProdLike) {
+  console.error('[auth] FATAL: AUTH_ENABLED=1 en producción pero AUTH_SECRET no está definido.');
+  console.error('[auth] Define AUTH_SECRET en variables de entorno antes de arrancar. Abortando.');
+  process.exit(1);
+}
 const TOKEN_MS = (parseInt(process.env.AUTH_TOKEN_DAYS || '7', 10) || 7) * 24 * 60 * 60 * 1000;
 const AUDIT_ENABLED = process.env.AUDIT_ENABLED !== '0' && process.env.AUDIT_ENABLED !== 'false';
 

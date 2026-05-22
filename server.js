@@ -3482,15 +3482,24 @@ app.post('/api/cotizaciones/:id/aplicar', async (req, res) => {
       return res.status(400).json({ error: 'No se puede aplicar la cotización por inventario.', errores });
     }
 
-    for (const l of lineas) {
-      if (!l.refaccion_id || String(l.tipo_linea || 'refaccion') !== 'refaccion') continue;
+    // OPTIMIZACIÓN N+1: pre-cargar TODAS las refacciones en UNA sola query (era N selects en loop)
+    const lineasRef = lineas.filter(l => l.refaccion_id && String(l.tipo_linea || 'refaccion') === 'refaccion' && Number(l.cantidad) > 0);
+    const refIds = [...new Set(lineasRef.map(l => l.refaccion_id))];
+    const refMap = new Map();
+    if (refIds.length) {
+      const placeholders = refIds.map(() => '?').join(',');
+      const refsRows = await db.getAll(`SELECT * FROM refacciones WHERE id IN (${placeholders})`, refIds);
+      for (const r of refsRows) refMap.set(Number(r.id), r);
+    }
+    for (const l of lineasRef) {
       const cant = Number(l.cantidad) || 0;
-      if (cant <= 0) continue;
-      const ref = await db.getOne('SELECT * FROM refacciones WHERE id = ?', [l.refaccion_id]);
+      const ref = refMap.get(Number(l.refaccion_id));
       if (!ref) continue;
       await registrarSalidaStockFifo(ref.id, cant, cot.id, `Cot: ${cot.folio || cot.id}`);
       const nuevoStock = Number(ref.stock) - cant;
       await db.runQuery('UPDATE refacciones SET stock=? WHERE id=?', [nuevoStock, ref.id]);
+      // Actualizar también el map para que siguientes iteraciones del mismo id (refacción repetida) usen stock fresco
+      refMap.set(Number(ref.id), Object.assign({}, ref, { stock: nuevoStock }));
     }
     let vendedorNombre = req.body && req.body.vendedor ? String(req.body.vendedor).trim() : null;
     if (!vendedorNombre && cot.vendedor_personal_id) {
