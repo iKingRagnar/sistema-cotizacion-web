@@ -445,6 +445,45 @@ html body .data-table tbody tr:hover td {
   position: static !important;
 }
 
+/* ========= ÚLTIMA MEDIDA: anular TODAS las transitions y animations en la tabla y sus hijos ========= */
+html body .table-wrap,
+html body .table-wrap *,
+html body table.data-table,
+html body table.data-table *,
+html body .data-table,
+html body .data-table *,
+html body .table-wrap *::before,
+html body .table-wrap *::after,
+html body .data-table *::before,
+html body .data-table *::after {
+  transition: none !important;
+  -webkit-transition: none !important;
+  animation: none !important;
+  -webkit-animation: none !important;
+}
+/* Pseudo-elementos: invisibles dentro de tabla (probable origen de animaciones) */
+html body .table-wrap td::before,
+html body .table-wrap td::after,
+html body .table-wrap th::before,
+html body .table-wrap th::after,
+html body .data-table td::before,
+html body .data-table td::after,
+html body .data-table th::before,
+html body .data-table th::after,
+html body .data-table tr::before,
+html body .data-table tr::after,
+html body .table-wrap tr::before,
+html body .table-wrap tr::after {
+  display: none !important;
+  content: none !important;
+  opacity: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 /* ===== 9) ELIMINAR ESCALADO DE BOTONES Y CARDS AL CLICK ===== */
 html body button:active,
 html body .btn:active,
