@@ -17659,6 +17659,31 @@ async function imprimirFlyer() {
       applyCotizacionesFiltersAndRender();
     });
   }
+  // 🆕 2026-05-22: mover la barra "Incluir aplicadas" justo arriba de la tabla,
+  // DESPUÉS de FILTROS y de Vistas (premium-ux y mega-saved-views insertan sus
+  // contenedores antes de .table-wrap). Reposicionamos cada vez que se entra al
+  // panel para que quede en el lugar correcto aunque otros scripts reinserten.
+  function placeIncluirAplicadasBar() {
+    try {
+      const bar = document.getElementById('cot-incluir-aplicadas-bar');
+      const wrap = document.getElementById('cotizaciones-list');
+      if (!bar || !wrap || !wrap.parentNode) return;
+      // Insertar inmediatamente antes de .table-wrap = después de FILTROS y Vistas
+      if (bar.nextElementSibling !== wrap) {
+        wrap.parentNode.insertBefore(bar, wrap);
+      }
+    } catch (_) {}
+  }
+  placeIncluirAplicadasBar();
+  // Re-posicionar al cambiar a la pestaña cotizaciones (otros scripts pueden insertar elementos)
+  window.addEventListener('hashchange', () => setTimeout(placeIncluirAplicadasBar, 200));
+  document.addEventListener('panel:shown', (e) => {
+    if (e && e.detail && (e.detail.panel === 'cotizaciones' || e.detail === 'cotizaciones')) {
+      setTimeout(placeIncluirAplicadasBar, 100);
+    }
+  });
+  setTimeout(placeIncluirAplicadasBar, 500);
+  setTimeout(placeIncluirAplicadasBar, 1500);
   bindTableFilters('tabla-reportes', applyReportesFiltersAndRender);
   if (qs('#tabla-incidentes')) bindTableFilters('tabla-incidentes', applyIncidentesFiltersAndRender);
   bindTableFilters('tabla-bitacoras', applyBitacorasFiltersAndRender);

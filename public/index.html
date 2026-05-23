@@ -184,7 +184,7 @@
   <link rel="stylesheet" href="css/premium-login-aurora.css?v=5-exec-form-aurora-scoped-2026-05-08">
   <link rel="stylesheet" href="css/ui-legibility-final.css?v=2-reportes-merge-poweredby-login-logo-2026-05-06">
   <!-- 🎯 OVERRIDE FINAL: paleta UNIVERSAL + sin animaciones raras (carga al final para ganar especificidad) -->
-  <link rel="stylesheet" href="css/universal-final-fixes.css?v=24-maquinas-equipo-simetrico-2026-05-22">
+  <link rel="stylesheet" href="css/universal-final-fixes.css?v=25-incluir-aplicadas-verde-2026-05-22">
   <!-- ★ UNIVERSAL ART SKIN — inspirado en MapaSuminregio (solo estética) -->
   <link rel="stylesheet" href="css/universal-art.css?v=3-no-login-overlay-position-override">
   <link rel="stylesheet" href="css/universal-map-shell.css?v=9-logo-bare-transparent-2026-05-08">
@@ -1297,10 +1297,13 @@
         <p>Crea tu primera cotización de refacciones o mano de obra.</p>
         <button type="button" class="btn primary big btn-empty-cot"><i class="fas fa-plus"></i> Agregar cotización</button>
       </div>
-      <!-- 🆕 2026-05-22: 'Incluir aplicadas' movido aquí (más a la mano sobre la tabla) -->
-      <div class="cot-table-toolbar" style="display:flex;align-items:center;gap:0.6rem;padding:0.5rem 0.25rem;margin-top:0.5rem">
-        <label class="toolbar-checkbox" title="Mostrar cotizaciones ya aplicadas o convertidas en venta" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;background:rgba(255,210,0,0.08);border:1px solid rgba(255,210,0,0.35);border-radius:8px;cursor:pointer;font-size:0.85rem;color:#FFD200;font-weight:600">
-          <input type="checkbox" id="cot-incluir-aplicadas" style="accent-color:#FFD200"> Incluir aplicadas
+      <!-- 🆕 2026-05-22: 'Incluir aplicadas' botón VERDE, justo arriba de la tabla
+           (debajo de FILTROS, al mismo nivel que el botón Vistas a la derecha).
+           Se mueve por JS a esa posición exacta tras render de premium-ux/mega-saved-views. -->
+      <div id="cot-incluir-aplicadas-bar" class="cot-incluir-aplicadas-bar">
+        <label id="cot-incluir-aplicadas-label" class="cot-incluir-aplicadas-toggle" title="Mostrar cotizaciones ya aplicadas o convertidas en venta">
+          <input type="checkbox" id="cot-incluir-aplicadas">
+          <span class="cot-incluir-aplicadas-text"><i class="fas fa-check-circle"></i> Incluir aplicadas</span>
         </label>
       </div>
       <div id="cotizaciones-list" class="table-wrap">
@@ -2492,7 +2495,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app-v356.js?cb=cliente-historial-auto-garantia-2026-05-22"></script>
+  <script src="js/app-v356.js?cb=incluir-aplicadas-verde-arriba-tabla-2026-05-22"></script>
   <script src="js/prospeccion-map.js?v=8-route-gmaps-newtab-2026-05-22" defer></script>
   <script src="js/bg-animation.js?v=8-map-shell-no-duplicate-hamburger" defer></script>
   <script src="js/premium-ux.js?v=24-globalmo-full-suppress-2026-05-07" defer></script>
