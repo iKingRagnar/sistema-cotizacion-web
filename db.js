@@ -1013,10 +1013,59 @@ function normalizeLibsqlArgs(params) {
 function translateSqlForPg(sql) {
   let s = String(sql);
   // 1) Funciones de fecha SQLite → Postgres
+  //    SQLite: datetime('now','localtime'), date('now','+7 days'), date(columna), etc.
+  //    Postgres no tiene esos modificadores nativos. Convertimos a equivalentes.
+
+  // datetime('now','localtime') / datetime('now') — timestamp completo
   s = s.replace(/datetime\s*\(\s*'now'\s*,\s*'localtime'\s*\)/gi, "to_char(now(),'YYYY-MM-DD HH24:MI:SS')");
   s = s.replace(/datetime\s*\(\s*'now'\s*\)/gi, "to_char(now() AT TIME ZONE 'UTC','YYYY-MM-DD HH24:MI:SS')");
+
+  // date('now','localtime','+N days') o date('now','+N days') — fecha con offset
+  s = s.replace(
+    /date\s*\(\s*'now'\s*,\s*'localtime'\s*,\s*'([+-]?\d+)\s+(days?|months?|years?|hours?|minutes?)'\s*\)/gi,
+    (_, n, u) => `to_char((now() + interval '${n} ${u}'),'YYYY-MM-DD')`
+  );
+  s = s.replace(
+    /date\s*\(\s*'now'\s*,\s*'([+-]?\d+)\s+(days?|months?|years?|hours?|minutes?)'\s*\)/gi,
+    (_, n, u) => `to_char((now() + interval '${n} ${u}'),'YYYY-MM-DD')`
+  );
+
+  // date('now','localtime') / date('now') — fecha del día
   s = s.replace(/date\s*\(\s*'now'\s*,\s*'localtime'\s*\)/gi, "to_char(now(),'YYYY-MM-DD')");
   s = s.replace(/date\s*\(\s*'now'\s*\)/gi, "to_char(now() AT TIME ZONE 'UTC','YYYY-MM-DD')");
+
+  // date(columna) o date(EXPR) — en SQLite extrae la fecha de un string; en Postgres convierte
+  //   a tipo 'date' lo que rompe comparaciones con strings. Como nuestras columnas son TEXT
+  //   en formato 'YYYY-MM-DD', solo quitamos el wrapping y dejamos la expresión.
+  //   IMPORTANTE: respetar paréntesis anidados.
+  s = s.replace(/\bdate\s*\(/gi, function () { return '__DATE_PG__('; });
+  {
+    let out = '';
+    let i = 0;
+    while (i < s.length) {
+      const idx = s.indexOf('__DATE_PG__(', i);
+      if (idx === -1) { out += s.slice(i); break; }
+      out += s.slice(i, idx) + '(';
+      i = idx + '__DATE_PG__('.length;
+      let depth = 1;
+      let inStr = false;
+      const start = i;
+      while (i < s.length && depth > 0) {
+        const c = s[i];
+        if (c === "'") {
+          if (inStr && s[i + 1] === "'") { i += 2; continue; }
+          inStr = !inStr;
+        } else if (!inStr) {
+          if (c === '(') depth++;
+          else if (c === ')') { depth--; if (depth === 0) break; }
+        }
+        i++;
+      }
+      out += s.slice(start, i) + ')';
+      if (i < s.length) i++; // consumir el ')'
+    }
+    s = out;
+  }
   // 2) IFNULL → COALESCE
   s = s.replace(/\bIFNULL\s*\(/gi, 'COALESCE(');
   // 2.5) ROUND(expr, N) → ROUND((expr)::numeric, N)
