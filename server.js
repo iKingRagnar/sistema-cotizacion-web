@@ -8951,7 +8951,8 @@ async function start() {
     console.log('[cotizacion]  Tienes varias carpetas "sistema-cotizacion-web*" en David Proyecto;');
     console.log('[cotizacion]  si esta ruta no es la que editas, verás código distinto a GitHub aunque el remoto esté bien.');
     console.log('');
-    if (db.useTurso) console.log('Base de datos: Turso (nube)');
+    if (db.usePostgres) console.log('Base de datos: Postgres (Supabase) ✓');
+    else if (db.useTurso) console.log('Base de datos: Turso (nube)');
     else {
       const storage = db.getStorageInfo && db.getStorageInfo();
       console.log('Base de datos: SQLite local');
