@@ -1,8 +1,10 @@
 name: Auto-deploy to Render
 
+# Deshabilitado 2026-05-23: Render auto-deploya nativamente via GitHub App.
+# Este workflow era solo backup vía Deploy Hook URL pero generaba falsos
+# fallos cuando la verify-version fallaba. Lo dejamos solo para
+# workflow_dispatch manual si se necesita.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 env:
