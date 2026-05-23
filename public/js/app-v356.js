@@ -17659,23 +17659,39 @@ async function imprimirFlyer() {
       applyCotizacionesFiltersAndRender();
     });
   }
-  // 🆕 2026-05-22: mover la barra "Incluir aplicadas" justo arriba de la tabla,
-  // DESPUÉS de FILTROS y de Vistas (premium-ux y mega-saved-views insertan sus
-  // contenedores antes de .table-wrap). Reposicionamos cada vez que se entra al
-  // panel para que quede en el lugar correcto aunque otros scripts reinserten.
+  // 🆕 2026-05-22: poner "Incluir aplicadas" en LA MISMA FILA que el botón Vistas
+  // (a la izquierda, Vistas a la derecha), debajo de FILTROS y arriba de la tabla.
+  // Para lograrlo metemos ambos elementos en un wrapper flex .cot-row-vistas-aplicadas.
   function placeIncluirAplicadasBar() {
     try {
       const bar = document.getElementById('cot-incluir-aplicadas-bar');
       const wrap = document.getElementById('cotizaciones-list');
       if (!bar || !wrap || !wrap.parentNode) return;
-      // Insertar inmediatamente antes de .table-wrap = después de FILTROS y Vistas
-      if (bar.nextElementSibling !== wrap) {
-        wrap.parentNode.insertBefore(bar, wrap);
+      const vistas = document.querySelector('.mega-saved-views[data-for="tabla-cotizaciones"]');
+      let row = document.getElementById('cot-row-vistas-aplicadas');
+      if (vistas && vistas.parentNode) {
+        // Crear wrapper flex si no existe
+        if (!row) {
+          row = document.createElement('div');
+          row.id = 'cot-row-vistas-aplicadas';
+          row.className = 'cot-row-vistas-aplicadas';
+        }
+        // Posicionar el wrapper justo antes de .table-wrap
+        if (row.parentNode !== wrap.parentNode || row.nextElementSibling !== wrap) {
+          wrap.parentNode.insertBefore(row, wrap);
+        }
+        // Meter botón a la izquierda, Vistas a la derecha
+        if (bar.parentNode !== row) row.appendChild(bar);
+        if (vistas.parentNode !== row) row.appendChild(vistas);
+      } else {
+        // Sin Vistas todavía: colocar el botón solo, antes de .table-wrap
+        if (bar.nextElementSibling !== wrap) {
+          wrap.parentNode.insertBefore(bar, wrap);
+        }
       }
     } catch (_) {}
   }
   placeIncluirAplicadasBar();
-  // Re-posicionar al cambiar a la pestaña cotizaciones (otros scripts pueden insertar elementos)
   window.addEventListener('hashchange', () => setTimeout(placeIncluirAplicadasBar, 200));
   document.addEventListener('panel:shown', (e) => {
     if (e && e.detail && (e.detail.panel === 'cotizaciones' || e.detail === 'cotizaciones')) {
@@ -17684,6 +17700,12 @@ async function imprimirFlyer() {
   });
   setTimeout(placeIncluirAplicadasBar, 500);
   setTimeout(placeIncluirAplicadasBar, 1500);
+  setTimeout(placeIncluirAplicadasBar, 3000);
+  // No usar MutationObserver global (causa freezes); revisamos cada 2s mientras la pestaña cotizaciones esté activa
+  setInterval(() => {
+    const panel = document.getElementById('panel-cotizaciones');
+    if (panel && panel.classList.contains('active')) placeIncluirAplicadasBar();
+  }, 2000);
   bindTableFilters('tabla-reportes', applyReportesFiltersAndRender);
   if (qs('#tabla-incidentes')) bindTableFilters('tabla-incidentes', applyIncidentesFiltersAndRender);
   bindTableFilters('tabla-bitacoras', applyBitacorasFiltersAndRender);
