@@ -666,7 +666,14 @@ async function init() {
   /* 🆕 POSTGRES (Supabase): el schema ya se creó en Supabase (migrations/01-schema-postgres.sql).
      Aquí solo conectamos y opcionalmente sembramos catálogos default si la tabla está vacía. */
   if (usePostgres) {
-    const { Pool } = require('pg');
+    const { Pool, types } = require('pg');
+    // 🔧 CRITICAL: parsear BIGINT (OID 20) como Number, no como String.
+    //   Por default pg devuelve BIGINT como '25' (string) para preservar precisión > 2^53.
+    //   Nuestros IDs nunca llegarán a 2^53. El frontend está hecho para IDs numéricos
+    //   (igual que Turso/SQLite). Sin esto, todas las comparaciones id==X fallan.
+    types.setTypeParser(20, (val) => val === null ? null : parseInt(val, 10));
+    // También NUMERIC (OID 1700) → Number cuando es entero, por consistencia.
+    types.setTypeParser(1700, (val) => val === null ? null : parseFloat(val));
     pgPool = new Pool({
       connectionString: PG_URL,
       ssl: { rejectUnauthorized: false }, // Supabase requiere SSL

@@ -15193,6 +15193,9 @@ async function imprimirFlyer() {
       } else if (st && st.mode === 'turso') {
         detail.textContent = 'Modo Turso (base de datos en nube).';
         systemStatusState.mode = 'Turso';
+      } else if (st && st.mode === 'postgres') {
+        detail.textContent = 'Modo Postgres / Supabase (base de datos en nube).';
+        systemStatusState.mode = 'Supabase';
       } else {
         detail.textContent = st && st.details ? st.details : 'No se pudo determinar el estado de persistencia.';
         systemStatusState.mode = 'desconocido';

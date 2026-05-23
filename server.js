@@ -321,6 +321,11 @@ app.get('/api/storage-health', async (req, res) => {
       payload.details = 'Base en nube (Turso): persistente entre reinicios y cierres.';
       return res.json(payload);
     }
+    if (storage.mode === 'postgres') {
+      payload.persistence = 'persistent_cloud';
+      payload.details = 'Base en nube (Postgres / Supabase): persistente entre reinicios y cierres.';
+      return res.json(payload);
+    }
     if (!storage.path) {
       payload.persistence = 'unknown';
       payload.details = 'No se pudo resolver la ruta del archivo SQLite.';
