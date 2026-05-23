@@ -1,5 +1,9 @@
 /**
- * Base de datos: Turso (nube) o SQLite local. 100% gratuito, sin Supabase.
+ * Base de datos: Postgres (Supabase) > Turso (nube) > SQLite local.
+ * Detección automática por env vars:
+ *  - SUPABASE_POSTGRES_URL → usePostgres
+ *  - TURSO_DATABASE_URL + TURSO_AUTH_TOKEN → useTurso
+ *  - default → SQLite local
  */
 const path = require('path');
 const fs = require('fs');
@@ -7,10 +11,13 @@ const os = require('os');
 
 const TURSO_URL = process.env.TURSO_DATABASE_URL;
 const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN;
-const useTurso = !!(TURSO_URL && TURSO_TOKEN);
+const PG_URL = (process.env.SUPABASE_POSTGRES_URL || process.env.DATABASE_URL || '').trim();
+const usePostgres = /^postgres(ql)?:\/\//i.test(PG_URL);
+const useTurso = !usePostgres && !!(TURSO_URL && TURSO_TOKEN);
 const SQLITE_DB_PATH = (process.env.SQLITE_DB_PATH || '').trim();
 
 let db;
+let pgPool = null;
 let sqliteResolvedPath = '';
 
 function getSchema() {
@@ -641,28 +648,38 @@ function isVercelServerless() {
 }
 
 async function init() {
-  if (isVercelServerless() && !useTurso) {
+  if (isVercelServerless() && !useTurso && !usePostgres) {
     throw new Error(
-      'Vercel requiere TURSO_DATABASE_URL y TURSO_AUTH_TOKEN (Project → Settings → Environment Variables). SQLite en disco no funciona en serverless.'
+      'Vercel requiere TURSO_DATABASE_URL+TURSO_AUTH_TOKEN o SUPABASE_POSTGRES_URL. SQLite en disco no funciona en serverless.'
     );
   }
-  /* Render filesystem es efímero — SQLite local se borra en CADA redeploy.
-     Si el usuario no configuró Turso, advertir loud y claro en logs. */
+  /* Render filesystem es efímero — SQLite local se borra en CADA redeploy. */
   const isRender = !!(process.env.RENDER || process.env.RENDER_SERVICE_NAME);
-  if (isRender && !useTurso) {
+  if (isRender && !useTurso && !usePostgres) {
     console.warn('');
     console.warn('================================================================');
     console.warn('⚠  ADVERTENCIA CRÍTICA: Render + SQLite local = pérdida de datos');
-    console.warn('   El filesystem de Render es EFÍMERO. Cada deploy borra la DB.');
-    console.warn('   Configura Turso (gratis) para persistencia real:');
-    console.warn('   1. https://turso.tech → Sign Up → Create Database');
-    console.warn('   2. Copia TURSO_DATABASE_URL y TURSO_AUTH_TOKEN');
-    console.warn('   3. Render Dashboard → tu servicio → Environment → Add:');
-    console.warn('      TURSO_DATABASE_URL=libsql://...turso.io');
-    console.warn('      TURSO_AUTH_TOKEN=<token>');
-    console.warn('   4. Manual Deploy → Clear cache & deploy');
+    console.warn('   Configura SUPABASE_POSTGRES_URL o TURSO_DATABASE_URL+TURSO_AUTH_TOKEN');
     console.warn('================================================================');
     console.warn('');
+  }
+  /* 🆕 POSTGRES (Supabase): el schema ya se creó en Supabase (migrations/01-schema-postgres.sql).
+     Aquí solo conectamos y opcionalmente sembramos catálogos default si la tabla está vacía. */
+  if (usePostgres) {
+    const { Pool } = require('pg');
+    pgPool = new Pool({
+      connectionString: PG_URL,
+      ssl: { rejectUnauthorized: false }, // Supabase requiere SSL
+      max: 10,
+    });
+    // Test de conexión (falla rápido si la URL es incorrecta)
+    await pgPool.query('SELECT 1');
+    console.log('[db] Conectado a Postgres (Supabase). Schema ya cargado desde migrations/01-schema-postgres.sql');
+    // Seeds idempotentes (usan INSERT OR IGNORE que se traduce a ON CONFLICT DO NOTHING)
+    try { await seedCatalogosDefaults(); } catch (e) { console.warn('[seed catalogos]', e.message); }
+    try { await seedCatalogoCategoriasFromLegacy(); } catch (e) { console.warn('[seed cat-legacy]', e.message); }
+    try { await migrateDavidCantuRefacciones15(); } catch (e) { console.warn('[seed david15]', e.message); }
+    return;
   }
   if (useTurso) {
     const { createClient } = require('@libsql/client');
@@ -983,7 +1000,97 @@ function normalizeLibsqlArgs(params) {
   });
 }
 
+/** 🆕 TRADUCTOR SQLite → Postgres
+ *  Aplica las conversiones necesarias para que un SQL escrito para SQLite
+ *  funcione en Postgres SIN cambiar el código de server.js. */
+function translateSqlForPg(sql) {
+  let s = String(sql);
+  // 1) Funciones de fecha SQLite → Postgres
+  s = s.replace(/datetime\s*\(\s*'now'\s*,\s*'localtime'\s*\)/gi, "to_char(now(),'YYYY-MM-DD HH24:MI:SS')");
+  s = s.replace(/datetime\s*\(\s*'now'\s*\)/gi, "to_char(now() AT TIME ZONE 'UTC','YYYY-MM-DD HH24:MI:SS')");
+  s = s.replace(/date\s*\(\s*'now'\s*,\s*'localtime'\s*\)/gi, "to_char(now(),'YYYY-MM-DD')");
+  s = s.replace(/date\s*\(\s*'now'\s*\)/gi, "to_char(now() AT TIME ZONE 'UTC','YYYY-MM-DD')");
+  // 2) IFNULL → COALESCE
+  s = s.replace(/\bIFNULL\s*\(/gi, 'COALESCE(');
+  // 3) INSERT OR IGNORE INTO X → INSERT INTO X ... ON CONFLICT DO NOTHING
+  let wasInsertOrIgnore = false;
+  if (/INSERT\s+OR\s+IGNORE\s+INTO/i.test(s)) {
+    wasInsertOrIgnore = true;
+    s = s.replace(/INSERT\s+OR\s+IGNORE\s+INTO/gi, 'INSERT INTO');
+  }
+  // 4) INSERT OR REPLACE → INSERT (sin upsert auto; el código maneja explícito si necesita)
+  s = s.replace(/INSERT\s+OR\s+REPLACE\s+INTO/gi, 'INSERT INTO');
+  // 5) Convertir placeholders `?` a `$1, $2, ...` respetando strings literales 'foo?bar'.
+  let translated = '';
+  let inString = false;
+  let paramIdx = 0;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (c === "'") {
+      // Manejar escape de comilla simple ('')
+      if (inString && s[i + 1] === "'") {
+        translated += "''";
+        i++;
+        continue;
+      }
+      inString = !inString;
+      translated += c;
+    } else if (c === '?' && !inString) {
+      translated += '$' + (++paramIdx);
+    } else {
+      translated += c;
+    }
+  }
+  // 6) Si era INSERT OR IGNORE, agregar ON CONFLICT DO NOTHING al final (antes de RETURNING si existe)
+  if (wasInsertOrIgnore && !/\bON\s+CONFLICT\b/i.test(translated)) {
+    if (/\bRETURNING\b/i.test(translated)) {
+      translated = translated.replace(/\bRETURNING\b/i, 'ON CONFLICT DO NOTHING RETURNING');
+    } else {
+      translated = translated.trimEnd().replace(/;\s*$/, '') + ' ON CONFLICT DO NOTHING';
+    }
+  }
+  return translated;
+}
+
+/** Postgres no acepta undefined; convertir a null. */
+function normalizePgArgs(params) {
+  if (!Array.isArray(params) || params.length === 0) return params;
+  return params.map((p) => {
+    if (p === undefined) return null;
+    if (typeof p === 'number' && (Number.isNaN(p) || !Number.isFinite(p))) return null;
+    return p;
+  });
+}
+
+async function pgRunInsertWithReturning(sqlOriginal, args) {
+  const translated = translateSqlForPg(sqlOriginal);
+  // Si es INSERT que NO trae RETURNING, lo añadimos para obtener lastInsertRowid (id).
+  // Si la tabla no tiene columna `id` (tarifas, cron_jobs_log), Postgres dará error y reintentamos sin RETURNING.
+  const isInsert = /^\s*INSERT\s+INTO/i.test(translated);
+  const hasReturning = /\bRETURNING\b/i.test(translated);
+  if (isInsert && !hasReturning) {
+    try {
+      const r = await pgPool.query(translated + ' RETURNING id', args);
+      const lastInsertRowid = (r.rows && r.rows[0] && r.rows[0].id !== undefined) ? r.rows[0].id : null;
+      return { lastInsertRowid, rowCount: r.rowCount };
+    } catch (e) {
+      // Si falló por "column id does not exist" o similar, reintentar sin RETURNING
+      const msg = String(e && e.message || '');
+      if (/does not exist|column "id"|returning/i.test(msg)) {
+        const r2 = await pgPool.query(translated, args);
+        return { lastInsertRowid: null, rowCount: r2.rowCount };
+      }
+      throw e;
+    }
+  }
+  const r = await pgPool.query(translated, args);
+  return { lastInsertRowid: null, rowCount: r.rowCount };
+}
+
 function runQuery(sql, params = []) {
+  if (usePostgres) {
+    return pgRunInsertWithReturning(sql, normalizePgArgs(params));
+  }
   if (useTurso) {
     const args = normalizeLibsqlArgs(params);
     return db.execute({ sql, args }).then(r => ({ lastInsertRowid: r.meta?.last_insert_row_id }));
@@ -997,6 +1104,10 @@ function runQuery(sql, params = []) {
 }
 
 function getAll(sql, params = []) {
+  if (usePostgres) {
+    const translated = translateSqlForPg(sql);
+    return pgPool.query(translated, normalizePgArgs(params)).then(r => r.rows || []);
+  }
   if (useTurso) {
     const args = normalizeLibsqlArgs(params);
     return db.execute({ sql, args }).then(r => {
@@ -1020,8 +1131,13 @@ function getOne(sql, params = []) {
   return getAll(sql, params).then(rows => (rows && rows[0]) || null);
 }
 
-/** DELETE/UPDATE: filas afectadas. En Turso no usar SELECT changes() (otra petición = otro contexto). */
+/** DELETE/UPDATE: filas afectadas. */
 async function runMutationCount(sql, params = []) {
+  if (usePostgres) {
+    const translated = translateSqlForPg(sql);
+    const r = await pgPool.query(translated, normalizePgArgs(params));
+    return r.rowCount || 0;
+  }
   if (useTurso) {
     const args = normalizeLibsqlArgs(params);
     const r = await db.execute({ sql, args });
@@ -1033,8 +1149,9 @@ async function runMutationCount(sql, params = []) {
 }
 
 function getStorageInfo() {
+  if (usePostgres) return { mode: 'postgres', path: null };
   if (useTurso) return { mode: 'turso', path: null };
   return { mode: 'sqlite', path: sqliteResolvedPath || null };
 }
 
-module.exports = { init, runQuery, getAll, getOne, useTurso, getStorageInfo, runMutationCount, reseedAfterFullWipe };
+module.exports = { init, runQuery, getAll, getOne, useTurso, usePostgres, getStorageInfo, runMutationCount, reseedAfterFullWipe };

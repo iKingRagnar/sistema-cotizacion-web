@@ -1,6 +1,8 @@
 node_modules/
 data/
 .env
+.env.migration
+.env.*
 *.log
 
 # SQLite temporal del script scripts/verify-implemented.cjs
