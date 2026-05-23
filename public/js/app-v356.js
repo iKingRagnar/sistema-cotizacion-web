@@ -8002,10 +8002,13 @@ async function imprimirFlyer() {
       }
     });
     html += '</div>';
-    // Detalle COMPLETO de cada asignación inline (no más segundo modal)
+    // Detalle COMPLETO de cada asignación inline (colapsable, en grid 2-col cuando hay varias)
     if (asigns && asigns.length) {
-      html += '<h4 class="ag-section-title"><i class="fas fa-user-clock"></i> Detalle de asignaciones</h4>';
+      html += '<details class="ag-asign-details" open>';
+      html += '<summary class="ag-asign-summary"><i class="fas fa-user-clock"></i> Detalle de asignaciones <span class="ag-asign-count">(' + asigns.length + ')</span></summary>';
+      html += '<div class="ag-asign-grid">';
       asigns.forEach(a => { html += renderAsignFull(a); });
+      html += '</div></details>';
     }
     if (items && items.length) {
       html += '<h4 class="ag-section-title"><i class="fas fa-wrench"></i> Mantenimientos programados (' + items.length + ')</h4>';
@@ -8565,6 +8568,13 @@ async function imprimirFlyer() {
   function renderBonos(data) {
     const tbody = qs('#tabla-bonos tbody');
     if (!tbody) return;
+    // 🛡️ Guard: si la tabla #tabla-bonos ya fue tomada por el sistema nuevo
+    // (loadBonosAcumulado pinta 9 columnas: TÉCNICO/COM.REFACC/SERV/MAQ/BONO 20K/CAPACIT/DÍAS FUERA/TOTAL/ACC),
+    // NO sobrescribir con el mensaje "No hay bonos registrados" del sistema legacy.
+    try {
+      const headThs = document.querySelectorAll('#tabla-bonos thead th');
+      if (headThs && headThs.length === 9) return;
+    } catch (_) {}
     tbody.innerHTML = '';
     if (!data || data.length === 0) {
       tbody.innerHTML = '<tr><td colspan="8" class="empty">No hay bonos registrados.</td></tr>';

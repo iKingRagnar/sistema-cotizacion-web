@@ -813,3 +813,154 @@ html body #panel-prospeccion p,
 html body #panel-prospeccion span:not([class*="badge"]):not([class*="chip"]) {
   color: #e5e7eb;
 }
+
+/* ====================================================================
+   FIX 2026-05-22: Modal "Enviar reporte" — aprovechar todo el ancho.
+   El .report-mail-grid usaba 2 columnas, dejando ~50% del modal vacío.
+   En desktop subimos a 4 columnas para acomodar Plantilla/Programación/
+   Día/Hora en una sola fila aprovechando los 1400px.
+   ==================================================================== */
+@media (min-width: 1100px) {
+  html body #modal .modal-box .report-mail-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 0.65rem 0.9rem !important;
+  }
+  /* Asunto, Mensaje, Para, CC → full-width (4 cols) */
+  html body #modal .modal-box .report-mail-grid .report-mail-grid-item--full,
+  html body #modal .modal-box .report-mail-grid .form-group:has(#rep-mail-subject),
+  html body #modal .modal-box .report-mail-grid .form-group:has(#rep-mail-intro),
+  html body #modal .modal-box .report-mail-grid .form-group:has(#rep-mail-to),
+  html body #modal .modal-box .report-mail-grid .form-group:has(#rep-mail-cc) {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+/* ====================================================================
+   FIX 2026-05-22: Agenda — modal de detalle del día más limpio
+   ==================================================================== */
+/* Timestrip: 4 columnas iguales, alturas uniformes, mejor jerarquía */
+html body .agenda-timestrip {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  margin-bottom: 14px !important;
+}
+html body .agenda-slot-block {
+  padding: 10px 12px !important;
+  border-radius: 10px !important;
+  border-left: 4px solid #475569 !important;
+  background: rgba(30, 41, 59, 0.65) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  min-height: 130px !important;
+}
+/* LIBRE: borde verde tenue + fondo verde tenue */
+html body .agenda-slot-block.libre {
+  border-left-color: #10b981 !important;
+  background: rgba(16, 185, 129, 0.08) !important;
+}
+html body .agenda-slot-block.libre .agenda-slot-estado.libre {
+  background: rgba(16, 185, 129, 0.18) !important;
+  color: #6ee7b7 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+}
+/* OCUPADO/PENDIENTE: rojo */
+html body .agenda-slot-block.ocupado {
+  border-left-color: #dc2626 !important;
+  background: rgba(220, 38, 38, 0.10) !important;
+}
+html body .agenda-slot-block.ocupado .agenda-slot-estado {
+  background: rgba(220, 38, 38, 0.22) !important;
+  color: #fca5a5 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 0.7rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.04em !important;
+}
+/* Head compacto en una línea */
+html body .agenda-slot-head {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  color: #f1f5f9 !important;
+}
+html body .agenda-slot-hora {
+  font-size: 0.72rem !important;
+  color: #94a3b8 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+html body .agenda-slot-info {
+  font-size: 0.78rem !important;
+  color: #cbd5e1 !important;
+  line-height: 1.35 !important;
+}
+
+/* Detalle de asignaciones: colapsable + grid responsive */
+html body .ag-asign-details {
+  margin-top: 6px !important;
+}
+html body .ag-asign-summary {
+  cursor: pointer !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  color: #FFD200 !important;
+  padding: 8px 12px !important;
+  background: rgba(255, 210, 0, 0.08) !important;
+  border-radius: 8px !important;
+  margin-bottom: 8px !important;
+  list-style: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+html body .ag-asign-summary::-webkit-details-marker { display: none !important; }
+html body .ag-asign-summary::before {
+  content: "▾" !important;
+  display: inline-block !important;
+  transition: transform 0.2s ease !important;
+  font-size: 0.85rem !important;
+}
+html body .ag-asign-details:not([open]) .ag-asign-summary::before {
+  transform: rotate(-90deg) !important;
+}
+html body .ag-asign-count {
+  background: rgba(255, 210, 0, 0.18) !important;
+  color: #FFD200 !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 0.78rem !important;
+  margin-left: auto !important;
+}
+html body .ag-asign-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)) !important;
+  gap: 10px !important;
+}
+/* Card de asignación más compacta */
+html body .ag-asign-grid .ag-asign-card {
+  padding: 10px 12px !important;
+  border-left: 3px solid #FFD200 !important;
+  background: rgba(15, 23, 42, 0.6) !important;
+  border-radius: 8px !important;
+}
+
+/* Móvil: timestrip apilado */
+@media (max-width: 720px) {
+  html body .agenda-timestrip {
+    grid-template-columns: 1fr !important;
+  }
+  html body .ag-asign-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
