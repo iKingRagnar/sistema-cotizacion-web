@@ -3802,19 +3802,20 @@
       </div>
     `;
     openModal(`Enviar reporte — ${title}`, body);
-    // 📐 Modal más grande y centrado: 1400px máx, 95vw, max-height 92vh con scroll interno
+    // 📐 Modal MUY ancho: cubre casi todo el viewport (98vw, hasta 1800px máx).
     try {
       const _mb = qs('#modal .modal-box');
       if (_mb) {
-        _mb.style.maxWidth = 'min(1400px, 95vw)';
-        _mb.style.width = 'min(1400px, 95vw)';
-        _mb.style.maxHeight = '92vh';
-        _mb.style.margin = 'auto';
+        _mb.style.setProperty('max-width', 'min(1800px, 98vw)', 'important');
+        _mb.style.setProperty('width', 'min(1800px, 98vw)', 'important');
+        _mb.style.setProperty('max-height', '94vh', 'important');
+        _mb.style.setProperty('margin', 'auto', 'important');
       }
       const _m = qs('#modal');
       if (_m) {
-        _m.style.alignItems = 'center';
-        _m.style.justifyContent = 'center';
+        _m.style.setProperty('align-items', 'center', 'important');
+        _m.style.setProperty('justify-content', 'center', 'important');
+        _m.style.setProperty('padding', '0.5rem', 'important');
       }
     } catch (_) {}
     const sendBtn = qs('#rep-mail-send-btn');
