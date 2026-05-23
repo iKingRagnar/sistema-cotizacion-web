@@ -609,6 +609,17 @@ async function runMigrations() {
     /* 2026-05-21: fecha estimada en que la máquina estará LISTA tras revisión/preparación.
        Permite calcular tiempo de entrega dinámico en cotizaciones. */
     `ALTER TABLE maquinas ADD COLUMN fecha_lista_estimada TEXT`,
+    /* 🆕 2026-05-22 — INTERCONEXIÓN EMBARQUES ↔ INVENTARIO:
+       - refaccion_id / maquina_id: FK opcional al catálogo (NULL si es texto libre legacy).
+       - cantidad: para refacciones (cuántas unidades llegaron en el embarque).
+       - aplicado_stock: 0|1 — evita duplicar entrada de stock si el embarque pasa
+         a 'llegado' varias veces. */
+    `ALTER TABLE embarques ADD COLUMN refaccion_id INTEGER`,
+    `ALTER TABLE embarques ADD COLUMN maquina_id INTEGER`,
+    `ALTER TABLE embarques ADD COLUMN cantidad REAL DEFAULT 1`,
+    `ALTER TABLE embarques ADD COLUMN aplicado_stock INTEGER DEFAULT 0`,
+    `CREATE INDEX IF NOT EXISTS idx_embarques_refaccion ON embarques(refaccion_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_embarques_maquina ON embarques(maquina_id)`,
   ];
   for (const sql of migrations) {
     try {

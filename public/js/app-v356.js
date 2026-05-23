@@ -4565,6 +4565,127 @@
       const btn = qs('#pvc-dl-constancia');
       if (btn) btn.addEventListener('click', () => downloadClienteConstanciaFile(c.id, c.constancia_nombre || 'constancia'));
     }, 0);
+    // 🆕 2026-05-22 — Inyectar HISTÓRICO del cliente (cotizaciones, ventas, reportes,
+    // garantías, máquinas) directamente en el modal "Ver cliente". Antes había que
+    // saltar pestaña por pestaña para reconstruir el panorama del cliente.
+    if (c && c.id) renderClienteHistorial(c.id);
+  }
+
+  async function renderClienteHistorial(clienteId) {
+    try {
+      const dst = qs('.pvc-card') || qs('#modal-body') || qs('#modal .modal-box');
+      if (!dst) return;
+      // Placeholder mientras carga
+      const placeholder = document.createElement('div');
+      placeholder.className = 'pvc-historial-loading';
+      placeholder.style.cssText = 'padding:1rem;text-align:center;color:#94a3b8;font-size:0.85rem;border-top:1px dashed rgba(148,163,184,0.3);margin-top:1rem;';
+      placeholder.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando histórico del cliente…';
+      dst.appendChild(placeholder);
+      const data = await fetchJson(API + '/clientes/' + clienteId + '?with_historial=1');
+      placeholder.remove();
+      const cot = (data && data.historial_cotizaciones) || [];
+      const ven = (data && data.historial_ventas) || [];
+      const rep = (data && data.historial_reportes) || [];
+      const gar = (data && data.historial_garantias) || [];
+      const maq = (data && data.historial_maquinas) || [];
+      const res = (data && data.historial_resumen) || {};
+      function tabla(rows, columns, emptyMsg) {
+        if (!rows || !rows.length) return `<p class="muted" style="text-align:center;padding:0.5rem;color:#94a3b8;font-style:italic">${emptyMsg}</p>`;
+        const head = columns.map(c => `<th style="text-align:left;padding:5px 8px;border-bottom:1px solid rgba(255,210,0,0.4);color:#FFD200;font-size:0.78rem">${escapeHtml(c.label)}</th>`).join('');
+        const body = rows.map(r => `<tr>${columns.map(c => `<td style="padding:5px 8px;border-bottom:1px solid rgba(148,163,184,0.15);color:#e5e7eb;font-size:0.8rem">${c.render ? c.render(r) : (r[c.key] != null ? escapeHtml(String(r[c.key])) : '<span style="color:#64748b">—</span>')}</td>`).join('')}</tr>`).join('');
+        return `<table style="width:100%;border-collapse:collapse;background:#0a0a0a"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+      }
+      const wrap = document.createElement('div');
+      wrap.className = 'pvc-historial';
+      wrap.style.cssText = 'margin-top:1rem;background:#0a0a0a;border:1px solid #FFD200;border-radius:10px;padding:0.85rem';
+      wrap.innerHTML = `
+        <h3 style="margin:0 0 0.6rem 0;color:#FFD200;font-size:1rem;font-weight:800"><i class="fas fa-history"></i> Histórico del cliente</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.4rem;margin-bottom:0.85rem">
+          <div style="background:rgba(255,210,0,0.08);padding:0.5rem;border-radius:6px;border-left:3px solid #FFD200">
+            <div style="font-size:0.7rem;color:#cbd5e1;text-transform:uppercase">Cotizaciones</div>
+            <div style="font-size:1.2rem;color:#FFD200;font-weight:800">${res.cotizaciones_count || 0}</div>
+          </div>
+          <div style="background:rgba(16,185,129,0.08);padding:0.5rem;border-radius:6px;border-left:3px solid #10b981">
+            <div style="font-size:0.7rem;color:#cbd5e1;text-transform:uppercase">Ventas</div>
+            <div style="font-size:1.2rem;color:#6ee7b7;font-weight:800">${res.ventas_count || 0}</div>
+          </div>
+          <div style="background:rgba(59,130,246,0.08);padding:0.5rem;border-radius:6px;border-left:3px solid #3b82f6">
+            <div style="font-size:0.7rem;color:#cbd5e1;text-transform:uppercase">Reportes</div>
+            <div style="font-size:1.2rem;color:#93c5fd;font-weight:800">${res.reportes_count || 0}</div>
+          </div>
+          <div style="background:rgba(168,85,247,0.08);padding:0.5rem;border-radius:6px;border-left:3px solid #a855f7">
+            <div style="font-size:0.7rem;color:#cbd5e1;text-transform:uppercase">Garantías activas</div>
+            <div style="font-size:1.2rem;color:#d8b4fe;font-weight:800">${res.garantias_activas || 0}</div>
+          </div>
+          <div style="background:rgba(244,114,182,0.08);padding:0.5rem;border-radius:6px;border-left:3px solid #f472b6">
+            <div style="font-size:0.7rem;color:#cbd5e1;text-transform:uppercase">Máquinas</div>
+            <div style="font-size:1.2rem;color:#fbcfe8;font-weight:800">${res.maquinas_count || 0}</div>
+          </div>
+        </div>
+        ${res.total_ventas_mxn > 0 || res.total_ventas_usd > 0 ? `
+          <p style="margin:0 0 0.6rem 0;color:#cbd5e1;font-size:0.85rem">
+            <strong style="color:#FFD200">Total ventas:</strong>
+            ${res.total_ventas_mxn > 0 ? `$${Number(res.total_ventas_mxn).toLocaleString('es-MX',{minimumFractionDigits:2})} MXN` : ''}
+            ${res.total_ventas_mxn > 0 && res.total_ventas_usd > 0 ? ' · ' : ''}
+            ${res.total_ventas_usd > 0 ? `US$${Number(res.total_ventas_usd).toLocaleString('en-US',{minimumFractionDigits:2})}` : ''}
+          </p>
+        ` : ''}
+        <details open style="margin-bottom:0.5rem">
+          <summary style="cursor:pointer;color:#FFD200;font-weight:700;font-size:0.88rem;padding:0.35rem 0">Cotizaciones (${cot.length})</summary>
+          <div style="max-height:200px;overflow:auto;margin-top:0.35rem">${tabla(cot, [
+            { key: 'folio', label: 'Folio' },
+            { key: 'fecha', label: 'Fecha' },
+            { key: 'tipo', label: 'Tipo' },
+            { key: 'estado', label: 'Estado' },
+            { key: 'total', label: 'Total', render: r => r.total != null ? `${r.moneda === 'USD' ? 'US$' : '$'}${Number(r.total).toLocaleString('en-US',{minimumFractionDigits:2})}` : '—' },
+          ], 'Sin cotizaciones registradas.')}</div>
+        </details>
+        <details style="margin-bottom:0.5rem">
+          <summary style="cursor:pointer;color:#10b981;font-weight:700;font-size:0.88rem;padding:0.35rem 0">Ventas aplicadas (${ven.length})</summary>
+          <div style="max-height:200px;overflow:auto;margin-top:0.35rem">${tabla(ven, [
+            { key: 'folio', label: 'Folio' },
+            { key: 'fecha_aprobacion', label: 'Aprobada' },
+            { key: 'tipo', label: 'Tipo' },
+            { key: 'vendedor_nombre', label: 'Vendedor' },
+            { key: 'total', label: 'Total', render: r => r.total != null ? `${r.moneda === 'USD' ? 'US$' : '$'}${Number(r.total).toLocaleString('en-US',{minimumFractionDigits:2})}` : '—' },
+          ], 'Sin ventas aplicadas.')}</div>
+        </details>
+        <details style="margin-bottom:0.5rem">
+          <summary style="cursor:pointer;color:#3b82f6;font-weight:700;font-size:0.88rem;padding:0.35rem 0">Reportes de servicio (${rep.length})</summary>
+          <div style="max-height:200px;overflow:auto;margin-top:0.35rem">${tabla(rep, [
+            { key: 'folio', label: 'Folio' },
+            { key: 'fecha_programada', label: 'Fecha' },
+            { key: 'tecnico', label: 'Técnico' },
+            { key: 'modelo_maquina', label: 'Máquina' },
+            { key: 'estado', label: 'Estado' },
+          ], 'Sin reportes de servicio.')}</div>
+        </details>
+        <details style="margin-bottom:0.5rem">
+          <summary style="cursor:pointer;color:#a855f7;font-weight:700;font-size:0.88rem;padding:0.35rem 0">Garantías (${gar.length})</summary>
+          <div style="max-height:200px;overflow:auto;margin-top:0.35rem">${tabla(gar, [
+            { key: 'modelo_maquina', label: 'Modelo' },
+            { key: 'numero_serie', label: 'N° Serie' },
+            { key: 'fecha_entrega', label: 'Entrega' },
+            { key: 'activa', label: 'Estatus', render: r => r.activa ? '<span style="color:#10b981">● Activa</span>' : '<span style="color:#64748b">○ Inactiva</span>' },
+          ], 'Sin garantías registradas.')}</div>
+        </details>
+        <details style="margin-bottom:0.25rem">
+          <summary style="cursor:pointer;color:#f472b6;font-weight:700;font-size:0.88rem;padding:0.35rem 0">Máquinas (${maq.length})</summary>
+          <div style="max-height:200px;overflow:auto;margin-top:0.35rem">${tabla(maq, [
+            { key: 'modelo', label: 'Modelo' },
+            { key: 'categoria', label: 'Categoría' },
+            { key: 'numero_serie', label: 'N° Serie' },
+            { key: 'estado_preparacion', label: 'Preparación' },
+            { key: 'precio_lista_usd', label: 'Precio USD', render: r => r.precio_lista_usd != null ? `US$${Number(r.precio_lista_usd).toLocaleString('en-US')}` : '—' },
+          ], 'Sin máquinas vendidas.')}</div>
+        </details>
+      `;
+      dst.appendChild(wrap);
+    } catch (e) {
+      console.warn('[historial-cliente]', e);
+      const ph = qs('.pvc-historial-loading');
+      if (ph) ph.innerHTML = '<span style="color:#f87171">No se pudo cargar el histórico.</span>';
+    }
   }
 
   (function bindClienteConstanciaViewerCloseCapture() {

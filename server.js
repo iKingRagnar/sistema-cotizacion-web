@@ -1228,6 +1228,76 @@ app.get('/api/clientes/:id', async (req, res) => {
     if (req.query.with_constancia === '1' && row.constancia_url) {
       pub.constancia_url = row.constancia_url;
     }
+    // 🆕 2026-05-22 — HISTÓRICO EMBEBIDO: con ?with_historial=1 traer
+    // cotizaciones, ventas, reportes, garantías y máquinas vendidas del cliente.
+    // Evita que David tenga que saltar de pestaña en pestaña.
+    if (req.query.with_historial === '1') {
+      try {
+        const cliId = Number(row.id);
+        const razonSocial = row.razon_social || row.nombre || '';
+        // Cotizaciones (últimas 20, todas las estados)
+        pub.historial_cotizaciones = await db.getAll(
+          `SELECT id, folio, fecha, estado, total, moneda, tipo, vendedor_nombre
+           FROM cotizaciones
+           WHERE cliente_id=? OR razon_social=?
+           ORDER BY fecha DESC, id DESC
+           LIMIT 20`,
+          [cliId, razonSocial]
+        );
+        // Ventas (cotizaciones aplicadas)
+        pub.historial_ventas = await db.getAll(
+          `SELECT id, folio, fecha, fecha_aprobacion, total, moneda, tipo, vendedor_nombre
+           FROM cotizaciones
+           WHERE (cliente_id=? OR razon_social=?) AND estado IN ('aplicada','venta')
+           ORDER BY fecha_aprobacion DESC, id DESC
+           LIMIT 20`,
+          [cliId, razonSocial]
+        );
+        // Reportes (últimos 20)
+        pub.historial_reportes = await db.getAll(
+          `SELECT id, folio, fecha_programada, estado, tecnico, modelo_maquina, finalizado
+           FROM reportes
+           WHERE cliente_id=? OR razon_social=?
+           ORDER BY fecha_programada DESC, id DESC
+           LIMIT 20`,
+          [cliId, razonSocial]
+        ).catch(() => []);
+        // Garantías activas
+        pub.historial_garantias = await db.getAll(
+          `SELECT id, modelo_maquina, numero_serie, tipo_maquina, fecha_entrega, activa
+           FROM garantias
+           WHERE cliente_id=? OR razon_social=?
+           ORDER BY fecha_entrega DESC, id DESC`,
+          [cliId, razonSocial]
+        ).catch(() => []);
+        // Máquinas (catálogo - todas las vendidas/asociadas al cliente vía cotizaciones aplicadas)
+        pub.historial_maquinas = await db.getAll(
+          `SELECT DISTINCT m.id, m.modelo, m.categoria, m.numero_serie, m.precio_lista_usd, m.estado_preparacion
+           FROM maquinas m
+           JOIN cotizacion_lineas cl ON cl.maquina_id = m.id
+           JOIN cotizaciones c ON c.id = cl.cotizacion_id
+           WHERE (c.cliente_id=? OR c.razon_social=?) AND c.estado IN ('aplicada','venta')
+           ORDER BY m.id DESC
+           LIMIT 50`,
+          [cliId, razonSocial]
+        ).catch(() => []);
+        // Totales rápidos
+        const totMxn = (pub.historial_ventas || []).filter(v => v.moneda === 'MXN').reduce((s, v) => s + (Number(v.total) || 0), 0);
+        const totUsd = (pub.historial_ventas || []).filter(v => v.moneda === 'USD').reduce((s, v) => s + (Number(v.total) || 0), 0);
+        pub.historial_resumen = {
+          cotizaciones_count: (pub.historial_cotizaciones || []).length,
+          ventas_count: (pub.historial_ventas || []).length,
+          reportes_count: (pub.historial_reportes || []).length,
+          garantias_activas: (pub.historial_garantias || []).filter(g => g.activa).length,
+          maquinas_count: (pub.historial_maquinas || []).length,
+          total_ventas_mxn: totMxn,
+          total_ventas_usd: totUsd,
+        };
+      } catch (e) {
+        console.warn('[historial-cliente]', e && e.message);
+        pub.historial_error = String(e && e.message || e);
+      }
+    }
     res.json(pub);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
@@ -3603,6 +3673,63 @@ app.post('/api/cotizaciones/:id/aplicar', async (req, res) => {
         );
       }
     } catch (e) { console.warn('[preparacion-maquinas]', e && e.message); }
+
+    /* 🆕 2026-05-22 — AUTO-GARANTÍA: por cada máquina vendida, crear automáticamente
+       el registro en `garantias` + los 2 mantenimientos programados del primer año.
+       Antes solo se cambiaba estado_preparacion y la garantía quedaba sin crearse
+       (riesgo: máquinas vendidas sin ciclo de servicio activo). */
+    try {
+      const maqIdsGarantia = new Set();
+      for (const l of lineas) {
+        if (l.maquina_id && Number(l.maquina_id) > 0) maqIdsGarantia.add(Number(l.maquina_id));
+      }
+      if (maqIdsGarantia.size > 0) {
+        // Cliente de la cotización (puede venir como cliente_id o razon_social directa)
+        const cli = cot.cliente_id
+          ? await db.getOne('SELECT * FROM clientes WHERE id=?', [cot.cliente_id])
+          : null;
+        const razonSocial = (cli && cli.razon_social) || cot.razon_social || cot.cliente_nombre || 'Cliente sin razón social';
+        const hoyStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+        for (const mid of maqIdsGarantia) {
+          try {
+            const maq = await db.getOne('SELECT * FROM maquinas WHERE id=?', [mid]);
+            if (!maq) continue;
+            const modelo = (maq.modelo || maq.nombre || 'Sin modelo').trim();
+            const tipoMaq = (maq.tipo || maq.categoria || '').trim() || null;
+            // Buscar número de serie en línea de cotización (puede traerlo); si no, dejar null
+            const lineaMaq = lineas.find(l => Number(l.maquina_id) === mid);
+            const numSerie = (lineaMaq && (lineaMaq.numero_serie || lineaMaq.serial)) || maq.numero_serie || null;
+            // Guard contra duplicados: si ya hay una garantía activa para este cliente+modelo+serie hoy, no duplicar
+            const yaExiste = await db.getOne(
+              `SELECT id FROM garantias WHERE razon_social=? AND modelo_maquina=? AND IFNULL(numero_serie,'')=IFNULL(?,'') AND fecha_entrega=? AND activa=1`,
+              [razonSocial, modelo, numSerie, hoyStr]
+            );
+            if (yaExiste) {
+              console.log('[auto-garantia] ya existe garantía id', yaExiste.id, 'para cot', cot.id, 'maq', mid);
+              continue;
+            }
+            await db.runQuery(
+              `INSERT INTO garantias (cliente_id, razon_social, modelo_maquina, numero_serie, tipo_maquina, fecha_entrega) VALUES (?, ?, ?, ?, ?, ?)`,
+              [cot.cliente_id || null, razonSocial, modelo, numSerie, tipoMaq, hoyStr]
+            );
+            const g = await db.getOne('SELECT * FROM garantias ORDER BY id DESC LIMIT 1');
+            const modeloHint = modelo + ' ' + (tipoMaq || '');
+            const [f1, f2] = fechasMantenimientoPar(hoyStr, modeloHint, 0);
+            const anio1 = new Date(f1 + 'T12:00:00').getFullYear();
+            const anio2 = new Date(f2 + 'T12:00:00').getFullYear();
+            await db.runQuery(
+              `INSERT INTO mantenimientos_garantia (garantia_id, numero, anio, fecha_programada) VALUES (?, 1, ?, ?)`,
+              [g.id, anio1, f1]
+            );
+            await db.runQuery(
+              `INSERT INTO mantenimientos_garantia (garantia_id, numero, anio, fecha_programada) VALUES (?, 2, ?, ?)`,
+              [g.id, anio2, f2]
+            );
+            console.log('[auto-garantia] creada garantía', g.id, 'para cot', cot.id, 'maq', mid, '(' + modelo + ')');
+          } catch (e2) { console.warn('[auto-garantia] maq', mid, e2 && e2.message); }
+        }
+      }
+    } catch (e) { console.warn('[auto-garantia]', e && e.message); }
 
     res.json({ ok: true });
   } catch (e) {
@@ -8320,9 +8447,13 @@ app.post('/api/embarques', async (req, res) => {
     const nombre = _maqNullableStr(b.nombre_maquina);
     if (!nombre) return res.status(400).json({ error: 'nombre_maquina requerido' });
     const estado = ESTADOS_EMBARQUE.includes(String(b.estado || '').trim()) ? String(b.estado).trim() : 'en_camino';
+    // 🆕 FK opcionales al catálogo + cantidad para refacciones
+    const refId = b.refaccion_id != null && b.refaccion_id !== '' ? Number(b.refaccion_id) : null;
+    const maqId = b.maquina_id != null && b.maquina_id !== '' ? Number(b.maquina_id) : null;
+    const cant = b.cantidad != null && b.cantidad !== '' ? Number(b.cantidad) : 1;
     const r = await db.runQuery(
-      `INSERT INTO embarques (nombre_maquina, numero_serie, proveedor, origen, destino_sucursal, eta_fecha, estado, notas)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO embarques (nombre_maquina, numero_serie, proveedor, origen, destino_sucursal, eta_fecha, estado, notas, refaccion_id, maquina_id, cantidad)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         nombre,
         _maqNullableStr(b.numero_serie),
@@ -8332,6 +8463,9 @@ app.post('/api/embarques', async (req, res) => {
         _maqNullableStr(b.eta_fecha),
         estado,
         _maqNullableStr(b.notas),
+        refId,
+        maqId,
+        cant > 0 ? cant : 1,
       ]
     );
     /* lastInsertRowid puede venir como BigInt en libsql/Turso y romper el =?.
@@ -8360,9 +8494,12 @@ app.put('/api/embarques/:id', async (req, res) => {
     const merged = Object.assign({}, existing, req.body || {});
     const estado = ESTADOS_EMBARQUE.includes(String(merged.estado || '').trim())
       ? String(merged.estado).trim() : (existing.estado || 'en_camino');
+    const refId = merged.refaccion_id != null && merged.refaccion_id !== '' ? Number(merged.refaccion_id) : null;
+    const maqId = merged.maquina_id != null && merged.maquina_id !== '' ? Number(merged.maquina_id) : null;
+    const cant = merged.cantidad != null && merged.cantidad !== '' ? Number(merged.cantidad) : (existing.cantidad || 1);
     await db.runQuery(
       `UPDATE embarques SET nombre_maquina=?, numero_serie=?, proveedor=?, origen=?, destino_sucursal=?,
-        eta_fecha=?, estado=?, notas=? WHERE id=?`,
+        eta_fecha=?, estado=?, notas=?, refaccion_id=?, maquina_id=?, cantidad=? WHERE id=?`,
       [
         _maqNullableStr(merged.nombre_maquina) || existing.nombre_maquina,
         _maqNullableStr(merged.numero_serie),
@@ -8372,9 +8509,48 @@ app.put('/api/embarques/:id', async (req, res) => {
         _maqNullableStr(merged.eta_fecha),
         estado,
         _maqNullableStr(merged.notas),
+        refId,
+        maqId,
+        cant > 0 ? cant : 1,
         req.params.id,
       ]
     );
+    /* 🆕 2026-05-22 — INTERCONEXIÓN EMBARQUES → INVENTARIO:
+       Al pasar a estado 'llegado' por primera vez (aplicado_stock=0):
+       - Si tiene refaccion_id → sumar cantidad al stock + registrar entrada FIFO.
+       - Si tiene maquina_id → marcar máquina como 'lista' (preparación) y
+         actualizar fecha_lista_estimada a hoy.
+       Idempotente: aplicado_stock=1 evita duplicar. */
+    try {
+      if (estado === 'llegado' && !existing.aplicado_stock) {
+        const ya = await db.getOne('SELECT aplicado_stock FROM embarques WHERE id=?', [req.params.id]);
+        if (ya && !ya.aplicado_stock) {
+          if (refId) {
+            const ref = await db.getOne('SELECT * FROM refacciones WHERE id=?', [refId]);
+            if (ref) {
+              const nuevoStock = (Number(ref.stock) || 0) + cant;
+              await db.runQuery('UPDATE refacciones SET stock=? WHERE id=?', [nuevoStock, refId]);
+              try {
+                await db.runQuery(
+                  `INSERT INTO stock_movimientos (refaccion_id, tipo, cantidad, referencia_tipo, referencia_id, descripcion)
+                   VALUES (?, 'entrada', ?, 'embarque', ?, ?)`,
+                  [refId, cant, Number(req.params.id), `Embarque #${req.params.id} recibido — ${ref.codigo}`]
+                );
+              } catch (_) { /* tabla movimientos opcional */ }
+              console.log('[embarque-recibido] +', cant, 'unidades de', ref.codigo, '(ref', refId, ')');
+            }
+          }
+          if (maqId) {
+            await db.runQuery(
+              `UPDATE maquinas SET estado_preparacion='lista', fecha_lista_estimada=date('now','localtime') WHERE id=?`,
+              [maqId]
+            );
+            console.log('[embarque-recibido] máquina', maqId, 'marcada como lista');
+          }
+          await db.runQuery('UPDATE embarques SET aplicado_stock=1 WHERE id=?', [req.params.id]);
+        }
+      }
+    } catch (e2) { console.warn('[embarque-aplicar-stock]', e2 && e2.message); }
     const row = await db.getOne('SELECT * FROM embarques WHERE id=?', [req.params.id]);
     res.json(row);
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
