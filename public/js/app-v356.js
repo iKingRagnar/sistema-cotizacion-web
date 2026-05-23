@@ -19475,13 +19475,19 @@ async function imprimirFlyer() {
         const txt = (inp.value || '').trim();
         const serie = (serieInp && serieInp.value || '').trim();
         if (!txt) { matchBox.style.display = 'none'; return; }
-        // Buscar coincidencia exacta de modelo (y serie si está)
+        const txtLow = txt.toLowerCase();
+        const serieLow = serie.toLowerCase();
+        // Buscar coincidencia (case-insensitive) en este orden:
+        //   1. modelo+serie exactos
+        //   2. modelo exacto
+        //   3. numero_serie exacto (por si el usuario escribió la serie en "Nombre")
         let m = null;
         if (serie) {
-          m = _cache.find(x => String(x.modelo || '').toLowerCase() === txt.toLowerCase() &&
-                               String(x.numero_serie || '').toLowerCase() === serie.toLowerCase());
+          m = _cache.find(x => String(x.modelo || '').toLowerCase() === txtLow &&
+                               String(x.numero_serie || '').toLowerCase() === serieLow);
         }
-        if (!m) m = _cache.find(x => String(x.modelo || '').toLowerCase() === txt.toLowerCase());
+        if (!m) m = _cache.find(x => String(x.modelo || '').toLowerCase() === txtLow);
+        if (!m) m = _cache.find(x => String(x.numero_serie || '').toLowerCase() === txtLow);
         if (m) {
           matchBox.style.display = 'block';
           matchBox.style.background = 'rgba(34,197,94,0.10)';
