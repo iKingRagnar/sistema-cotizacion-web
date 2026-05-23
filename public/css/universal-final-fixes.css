@@ -1041,41 +1041,40 @@ html body #cot-incluir-aplicadas-bar {
   padding: 0.4rem 0.5rem !important;
   margin: 0 0 0.35rem 0 !important;
 }
-/* Botón VERDE VIVO con texto NEGRO */
+/* Botón estilo "Excel/outline": fondo oscuro, texto y check blancos, borde sutil */
 html body .cot-incluir-aplicadas-toggle {
   display: inline-flex !important;
   align-items: center !important;
   gap: 0.55rem !important;
   cursor: pointer !important;
   user-select: none !important;
-  padding: 0.55rem 1.1rem !important;
-  background: #22c55e !important;
-  background-image: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
-  border: 2px solid #15803d !important;
+  padding: 0.5rem 0.95rem !important;
+  background: #1e293b !important;
+  background-image: linear-gradient(135deg, #1f2937 0%, #0f172a 100%) !important;
+  border: 1px solid rgba(148, 163, 184, 0.35) !important;
   border-radius: 8px !important;
-  color: #0a0a0a !important;
-  font-size: 0.9rem !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.02em !important;
-  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.45) !important;
-  transition: filter 0.15s ease, transform 0.05s ease !important;
+  color: #f8fafc !important;
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.05s ease !important;
 }
 html body .cot-incluir-aplicadas-toggle:hover {
-  filter: brightness(1.1) !important;
-  box-shadow: 0 3px 12px rgba(34, 197, 94, 0.6) !important;
+  background: #273548 !important;
+  border-color: rgba(148, 163, 184, 0.55) !important;
 }
 html body .cot-incluir-aplicadas-toggle:active {
   transform: translateY(1px) !important;
-  filter: brightness(0.95) !important;
 }
 html body .cot-incluir-aplicadas-toggle input[type="checkbox"] {
   appearance: none !important;
   -webkit-appearance: none !important;
-  width: 18px !important;
-  height: 18px !important;
-  border: 2px solid #0a0a0a !important;
-  border-radius: 4px !important;
-  background: #ffffff !important;
+  width: 16px !important;
+  height: 16px !important;
+  border: 1.5px solid #94a3b8 !important;
+  border-radius: 3px !important;
+  background: transparent !important;
   cursor: pointer !important;
   margin: 0 !important;
   position: relative !important;
@@ -1083,8 +1082,8 @@ html body .cot-incluir-aplicadas-toggle input[type="checkbox"] {
   flex-shrink: 0 !important;
 }
 html body .cot-incluir-aplicadas-toggle input[type="checkbox"]:checked {
-  background: #0a0a0a !important;
-  border-color: #0a0a0a !important;
+  background: #f8fafc !important;
+  border-color: #f8fafc !important;
 }
 html body .cot-incluir-aplicadas-toggle input[type="checkbox"]:checked::after {
   content: "✓" !important;
@@ -1092,17 +1091,17 @@ html body .cot-incluir-aplicadas-toggle input[type="checkbox"]:checked::after {
   top: 50% !important;
   left: 50% !important;
   transform: translate(-50%, -55%) !important;
-  color: #22c55e !important;
-  font-size: 14px !important;
+  color: #0f172a !important;
+  font-size: 13px !important;
   font-weight: 900 !important;
   line-height: 1 !important;
 }
 html body .cot-incluir-aplicadas-text {
-  color: #0a0a0a !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.03em !important;
+  color: #f8fafc !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em !important;
 }
-html body .cot-incluir-aplicadas-text i { color: #0a0a0a !important; }
+html body .cot-incluir-aplicadas-text i { color: #f8fafc !important; }
 
 /* Wrapper FLEX: Incluir aplicadas a la izquierda, Vistas a la derecha */
 html body .cot-row-vistas-aplicadas {
