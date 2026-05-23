@@ -1713,6 +1713,75 @@ app.get('/api/maquinas/:id', async (req, res) => {
   }
 });
 
+/* 🆕 2026-05-23 — AUTO-POBLADO DE MÁQUINAS
+ * Función reutilizable que busca una máquina por modelo+serie. Si no existe, la crea.
+ * Política de matching:
+ *   1. Si hay numero_serie no vacío → busca por (modelo, numero_serie) exacto.
+ *   2. Si NO hay serie → busca por modelo solo (devuelve la primera activa).
+ *   3. Si nada coincide → INSERT en maquinas con datos mínimos.
+ * Devuelve { id, created (bool), maquina }.
+ *
+ * Usado desde: POST/PUT /api/embarques, futuro: cotizaciones, garantías, revisión. */
+async function findOrCreateMaquina({ modelo, numero_serie, cliente_id, categoria }) {
+  const modeloLimpio = (modelo == null ? '' : String(modelo)).trim();
+  if (!modeloLimpio) return { id: null, created: false, maquina: null };
+  const serieLimpia = (numero_serie == null ? '' : String(numero_serie)).trim() || null;
+
+  // 1) Buscar por modelo + serie exacto si hay serie
+  let row = null;
+  if (serieLimpia) {
+    row = await db.getOne(
+      `SELECT * FROM maquinas WHERE modelo = ? AND COALESCE(numero_serie,'') = ? AND COALESCE(activo,1) = 1 ORDER BY id DESC LIMIT 1`,
+      [modeloLimpio, serieLimpia]
+    );
+  }
+  // 2) Si no, buscar por modelo solo
+  if (!row) {
+    row = await db.getOne(
+      `SELECT * FROM maquinas WHERE modelo = ? AND COALESCE(activo,1) = 1 ORDER BY id DESC LIMIT 1`,
+      [modeloLimpio]
+    );
+  }
+  if (row) return { id: row.id, created: false, maquina: row };
+
+  // 3) Crear con datos mínimos
+  // cliente_id es obligatorio en schema legacy (NOT NULL). Usar 1 como default si no se pasa.
+  const cliFallback = await db.getOne('SELECT id FROM clientes ORDER BY id LIMIT 1');
+  const cliId = cliente_id || (cliFallback && cliFallback.id) || 1;
+  await db.runQuery(
+    `INSERT INTO maquinas (cliente_id, nombre, modelo, numero_serie, categoria, activo) VALUES (?, ?, ?, ?, ?, 1)`,
+    [cliId, modeloLimpio, modeloLimpio, serieLimpia, (categoria || '').trim() || null]
+  );
+  const created = await db.getOne(
+    `SELECT * FROM maquinas WHERE modelo = ? AND COALESCE(numero_serie,'') = COALESCE(?,'') ORDER BY id DESC LIMIT 1`,
+    [modeloLimpio, serieLimpia]
+  );
+  console.log('[auto-poblado-maquina] creada id=', created && created.id, 'modelo=', modeloLimpio, 'serie=', serieLimpia);
+  return { id: created && created.id, created: true, maquina: created };
+}
+
+/* 🆕 GET /api/maquinas/autocomplete?q=texto
+ * Devuelve top 10 máquinas que matcheen modelo o numero_serie con el texto.
+ * Usado en autocomplete del frontend (Embarques, Cotizaciones, etc.). */
+app.get('/api/maquinas/autocomplete', async (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim();
+    if (!q || q.length < 2) return res.json([]);
+    const like = '%' + q + '%';
+    const rows = await db.getAll(
+      `SELECT id, modelo, numero_serie, categoria, estado_preparacion
+       FROM maquinas
+       WHERE COALESCE(activo,1) = 1
+         AND (UPPER(COALESCE(modelo,'')) LIKE UPPER(?) OR UPPER(COALESCE(numero_serie,'')) LIKE UPPER(?))
+       ORDER BY id DESC LIMIT 10`,
+      [like, like]
+    );
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
 /* 🆕 2026-05-23 — ENTREGA ESTIMADA DINÁMICA (pedido por David Cantú)
  * Calcula la fecha de entrega de una máquina basada en su estado actual:
  *   1. Si tiene tiempo_entrega_dias manual (override del admin) → ese gana.
@@ -8595,8 +8664,19 @@ app.post('/api/embarques', async (req, res) => {
     const estado = ESTADOS_EMBARQUE.includes(String(b.estado || '').trim()) ? String(b.estado).trim() : 'en_camino';
     // 🆕 FK opcionales al catálogo + cantidad para refacciones
     const refId = b.refaccion_id != null && b.refaccion_id !== '' ? Number(b.refaccion_id) : null;
-    const maqId = b.maquina_id != null && b.maquina_id !== '' ? Number(b.maquina_id) : null;
+    let maqId = b.maquina_id != null && b.maquina_id !== '' ? Number(b.maquina_id) : null;
     const cant = b.cantidad != null && b.cantidad !== '' ? Number(b.cantidad) : 1;
+    // 🆕 2026-05-23 AUTO-POBLADO: si NO viene maquina_id ni refaccion_id pero SÍ nombre_maquina,
+    //    buscar o crear en el catálogo de máquinas automáticamente.
+    if (!maqId && !refId && nombre) {
+      try {
+        const fc = await findOrCreateMaquina({ modelo: nombre, numero_serie: b.numero_serie });
+        if (fc && fc.id) {
+          maqId = fc.id;
+          console.log('[embarques POST] auto-ligado a maquina_id=', maqId, 'created=', fc.created);
+        }
+      } catch (e) { console.warn('[embarques POST findOrCreateMaquina]', e.message); }
+    }
     const r = await db.runQuery(
       `INSERT INTO embarques (nombre_maquina, numero_serie, proveedor, origen, destino_sucursal, eta_fecha, estado, notas, refaccion_id, maquina_id, cantidad)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -8641,8 +8721,19 @@ app.put('/api/embarques/:id', async (req, res) => {
     const estado = ESTADOS_EMBARQUE.includes(String(merged.estado || '').trim())
       ? String(merged.estado).trim() : (existing.estado || 'en_camino');
     const refId = merged.refaccion_id != null && merged.refaccion_id !== '' ? Number(merged.refaccion_id) : null;
-    const maqId = merged.maquina_id != null && merged.maquina_id !== '' ? Number(merged.maquina_id) : null;
+    let maqId = merged.maquina_id != null && merged.maquina_id !== '' ? Number(merged.maquina_id) : null;
     const cant = merged.cantidad != null && merged.cantidad !== '' ? Number(merged.cantidad) : (existing.cantidad || 1);
+    // 🆕 2026-05-23: si edita y aún no tiene maquina_id pero hay nombre_maquina → autoligar
+    const nombreAct = _maqNullableStr(merged.nombre_maquina) || existing.nombre_maquina;
+    if (!maqId && !refId && nombreAct) {
+      try {
+        const fc = await findOrCreateMaquina({ modelo: nombreAct, numero_serie: merged.numero_serie });
+        if (fc && fc.id) {
+          maqId = fc.id;
+          console.log('[embarques PUT] auto-ligado a maquina_id=', maqId, 'created=', fc.created);
+        }
+      } catch (e) { console.warn('[embarques PUT findOrCreateMaquina]', e.message); }
+    }
     await db.runQuery(
       `UPDATE embarques SET nombre_maquina=?, numero_serie=?, proveedor=?, origen=?, destino_sucursal=?,
         eta_fecha=?, estado=?, notas=?, refaccion_id=?, maquina_id=?, cantidad=? WHERE id=?`,

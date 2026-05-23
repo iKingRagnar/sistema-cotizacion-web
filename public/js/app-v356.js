@@ -19397,11 +19397,15 @@ async function imprimirFlyer() {
         <section class="cotz-card">
           <h4 class="cotz-card-title"><i class="fas fa-truck-fast"></i> ${isNew ? 'Nuevo embarque' : 'Editar embarque'}</h4>
           <div class="form-group"><label>Nombre de la maquina *</label>
-            <input type="text" id="emb-nombre" maxlength="200" value="${escapeHtml(e.nombre_maquina || '')}" placeholder="Ej: Torno CNC HZ7900L">
+            <input type="text" id="emb-nombre" maxlength="200" value="${escapeHtml(e.nombre_maquina || '')}" placeholder="Ej: Torno CNC HZ7900L · escribe y verás sugerencias" autocomplete="off" list="emb-nombre-suggestions">
+            <datalist id="emb-nombre-suggestions"></datalist>
+            <div id="emb-nombre-match" style="font-size:0.78rem;margin-top:0.35rem;padding:0.35rem 0.55rem;border-radius:6px;display:none">
+              <i class="fas fa-link"></i> <span id="emb-nombre-match-text"></span>
+            </div>
           </div>
           <div class="form-row">
             <div class="form-group"><label>Numero de serie</label>
-              <input type="text" id="emb-serie" maxlength="120" value="${escapeHtml(e.numero_serie || '')}">
+              <input type="text" id="emb-serie" maxlength="120" value="${escapeHtml(e.numero_serie || '')}" autocomplete="off">
             </div>
             <div class="form-group"><label>ETA (fecha llegada)</label>
               <input type="date" id="emb-eta" value="${(e.eta_fecha || '').slice(0, 10)}">
@@ -19448,6 +19452,58 @@ async function imprimirFlyer() {
     openModal(isNew ? 'Nuevo embarque' : 'Editar embarque', body);
     if (e.destino_sucursal) document.querySelector('#emb-destino').value = String(e.destino_sucursal).toUpperCase();
     if (e.estado) document.querySelector('#emb-estado').value = e.estado;
+    // 🆕 2026-05-23: autocomplete de máquinas del catálogo + feedback visual
+    (function setupEmbarqueAutocomplete() {
+      const inp = document.querySelector('#emb-nombre');
+      const serieInp = document.querySelector('#emb-serie');
+      const dlist = document.querySelector('#emb-nombre-suggestions');
+      const matchBox = document.querySelector('#emb-nombre-match');
+      const matchText = document.querySelector('#emb-nombre-match-text');
+      if (!inp || !dlist || !matchBox) return;
+      let _cache = [];
+      let _debounce = null;
+      async function fetchSugg(q) {
+        if (!q || q.length < 2) { dlist.innerHTML = ''; _cache = []; updateMatch(); return; }
+        try {
+          const rows = await fetchJson(API + '/maquinas/autocomplete?q=' + encodeURIComponent(q));
+          _cache = rows || [];
+          dlist.innerHTML = _cache.map(m => `<option value="${escapeHtml(m.modelo || '')}" data-id="${m.id}">ID ${m.id} · ${escapeHtml(m.modelo || '')} ${m.numero_serie ? '· ' + escapeHtml(m.numero_serie) : ''}</option>`).join('');
+        } catch (_) { _cache = []; }
+        updateMatch();
+      }
+      function updateMatch() {
+        const txt = (inp.value || '').trim();
+        const serie = (serieInp && serieInp.value || '').trim();
+        if (!txt) { matchBox.style.display = 'none'; return; }
+        // Buscar coincidencia exacta de modelo (y serie si está)
+        let m = null;
+        if (serie) {
+          m = _cache.find(x => String(x.modelo || '').toLowerCase() === txt.toLowerCase() &&
+                               String(x.numero_serie || '').toLowerCase() === serie.toLowerCase());
+        }
+        if (!m) m = _cache.find(x => String(x.modelo || '').toLowerCase() === txt.toLowerCase());
+        if (m) {
+          matchBox.style.display = 'block';
+          matchBox.style.background = 'rgba(34,197,94,0.10)';
+          matchBox.style.color = '#86efac';
+          matchBox.style.border = '1px solid rgba(34,197,94,0.4)';
+          matchText.textContent = `Se vinculará a máquina ID ${m.id} del catálogo · ${m.modelo || ''}${m.numero_serie ? ' · ' + m.numero_serie : ''}`;
+        } else {
+          matchBox.style.display = 'block';
+          matchBox.style.background = 'rgba(250,204,21,0.10)';
+          matchBox.style.color = '#fde68a';
+          matchBox.style.border = '1px solid rgba(250,204,21,0.4)';
+          matchText.textContent = 'No existe en el catálogo · se agregará automáticamente al guardar';
+        }
+      }
+      inp.addEventListener('input', () => {
+        clearTimeout(_debounce);
+        _debounce = setTimeout(() => fetchSugg((inp.value || '').trim()), 250);
+      });
+      if (serieInp) serieInp.addEventListener('input', updateMatch);
+      // Carga inicial si ya hay texto (modo editar)
+      if ((inp.value || '').trim().length >= 2) fetchSugg(inp.value.trim());
+    })();
     document.querySelector('#emb-save').onclick = async () => {
       const nombre = (document.querySelector('#emb-nombre').value || '').trim();
       if (!nombre) { showToast('El nombre de la maquina es obligatorio.', 'error'); return; }
