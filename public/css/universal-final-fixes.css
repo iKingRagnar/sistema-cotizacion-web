@@ -964,3 +964,68 @@ html body .ag-asign-grid .ag-asign-card {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* ====================================================================
+   FIX 2026-05-22: Máquinas — EQUIPO INCLUIDO / ACCESORIOS ESTÁNDAR
+   simetría: las columnas usaban grid 1fr 1fr con flujo por filas, lo que
+   dejaba huecos visibles cuando el número de items era impar. Cambio a
+   CSS multi-column que AUTO-BALANCEA: ambas columnas con el mismo alto,
+   ítems distribuidos parejos. Resultado: la lista se ve simétrica
+   siempre, sin importar si hay 5, 6, 7 ítems.
+   ==================================================================== */
+html body .uv-bi-list,
+html body .uv-acc-list {
+  display: block !important;
+  column-count: 2 !important;
+  column-gap: 36px !important;
+  column-fill: balance !important;
+  grid-template-columns: none !important;
+  list-style: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: 720px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+html body .uv-bi-list li,
+html body .uv-acc-list li {
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+  -webkit-column-break-inside: avoid !important;
+  display: block !important;
+  padding: 4px 0 4px 26px !important;
+  position: relative !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+}
+/* Mantener el bullet amarillo redondo con checkmark */
+html body .uv-bi-list li::before,
+html body .uv-acc-list li::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 7px !important;
+  width: 16px !important;
+  height: 16px !important;
+  background: #FFD200 !important;
+  border-radius: 50% !important;
+}
+html body .uv-bi-list li::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 3.5px !important;
+  top: 10.5px !important;
+  width: 8px !important;
+  height: 4px !important;
+  border-left: 2px solid #0a0a0a !important;
+  border-bottom: 2px solid #0a0a0a !important;
+  transform: rotate(-45deg) !important;
+  background: transparent !important;
+}
+/* Title centrado del bloque EQUIPO INCLUIDO + ACCESORIOS */
+html body .uv-bi-titulo {
+  text-align: center !important;
+  letter-spacing: 1.5px !important;
+  margin-bottom: 12px !important;
+}
