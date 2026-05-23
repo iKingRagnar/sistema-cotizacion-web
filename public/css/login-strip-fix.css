@@ -1,0 +1,18 @@
+/* ============================================================================
+   LOGIN STRIP FIX — solo quita la franja borrosa/lechosa del borde superior
+   del card derecho de "Iniciar sesión".
+   No toca nada más del diseño. Reversible borrando la línea <link> del HTML.
+   ============================================================================ */
+
+/* Quita el highlight inset blanco (la línea lechosa superior) y suaviza el
+   gradiente diagonal para que no concentre brillo en el top-edge.
+   Mantiene el resto del glass cyan tal cual estaba. */
+html body #login-overlay.login-overlay--exec-layout .login-form-panel {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.06), transparent 35%),
+    var(--sk-glass) !important;
+  box-shadow:
+    0 8px 48px rgba(0, 0, 0, 0.18),
+    0 0 0 1px rgba(52, 225, 207, 0.18),
+    0 0 42px rgba(52, 225, 207, 0.12) !important;
+}
