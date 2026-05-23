@@ -1764,6 +1764,46 @@ async function findOrCreateMaquina({ modelo, numero_serie, cliente_id, categoria
   return { id: created && created.id, created: true, maquina: created };
 }
 
+/* 🆕 2026-05-23 — RE-LIGAR embarques históricos al catálogo de máquinas.
+ * Para embarques antiguos creados ANTES del auto-poblado (maquina_id = null) o
+ * con maquina_id apuntando a una máquina borrada/inexistente.
+ * Endpoint admin: POST /api/admin/relink-embarques */
+app.post('/api/admin/relink-embarques', async (req, res) => {
+  try {
+    const embs = await db.getAll(
+      `SELECT e.id, e.nombre_maquina, e.numero_serie, e.maquina_id,
+              CASE WHEN m.id IS NULL THEN 1 ELSE 0 END AS maq_borrada
+       FROM embarques e LEFT JOIN maquinas m ON m.id = e.maquina_id
+       WHERE COALESCE(e.activo, 1) = 1
+         AND (e.refaccion_id IS NULL)
+         AND (e.maquina_id IS NULL OR m.id IS NULL)`
+    );
+    let ligados = 0, creados = 0, sinNombre = 0;
+    for (const e of embs) {
+      const nombre = (e.nombre_maquina || '').trim();
+      if (!nombre) { sinNombre++; continue; }
+      try {
+        const fc = await findOrCreateMaquina({ modelo: nombre, numero_serie: e.numero_serie });
+        if (fc && fc.id) {
+          await db.runQuery('UPDATE embarques SET maquina_id = ? WHERE id = ?', [fc.id, e.id]);
+          if (fc.created) creados++; else ligados++;
+        }
+      } catch (err) {
+        console.warn('[relink-embarques] embarque', e.id, err.message);
+      }
+    }
+    res.json({
+      ok: true,
+      total_revisados: embs.length,
+      ligados_existentes: ligados,
+      maquinas_creadas: creados,
+      sin_nombre: sinNombre,
+    });
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
 /* 🆕 GET /api/maquinas/autocomplete?q=texto
  * Devuelve top 10 máquinas que matcheen modelo o numero_serie con el texto.
  * Usado en autocomplete del frontend (Embarques, Cotizaciones, etc.). */
