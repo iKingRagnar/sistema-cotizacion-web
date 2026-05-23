@@ -11480,6 +11480,14 @@ async function imprimirFlyer() {
                 <option value="">— Elige equipo —</option>
               </select>
             </div>
+            <!-- 🆕 2026-05-23: badge de entrega estimada dinámica -->
+            <div id="cot-line-maq-entrega" style="display:none;margin-top:0.6rem;padding:0.5rem 0.75rem;background:rgba(34,197,94,0.08);border-left:3px solid #22c55e;border-radius:6px;font-size:0.85rem;color:#bbf7d0">
+              <div style="display:flex;align-items:center;gap:0.45rem;font-weight:700;color:#86efac">
+                <i class="fas fa-truck"></i>
+                <span id="cot-line-maq-entrega-texto">Calculando entrega estimada…</span>
+              </div>
+              <div id="cot-line-maq-entrega-fuente" style="font-size:0.75rem;color:#94a3b8;margin-top:0.2rem;padding-left:1.4rem"></div>
+            </div>
           </div>
 
           <div class="form-group" id="cot-line-maq-opt-wrap" style="display:none">
@@ -12086,6 +12094,39 @@ async function imprimirFlyer() {
           }
           if (!(usd > 0)) {
             console.warn('[cot][maquina] La máquina seleccionada no tiene precio_lista_usd definido. Verifica catálogo de máquinas.');
+          }
+        }
+        // 🆕 2026-05-23: cargar entrega estimada dinámica para esta máquina
+        const entregaWrap = qm('#cot-line-maq-entrega');
+        const entregaTexto = qm('#cot-line-maq-entrega-texto');
+        const entregaFuente = qm('#cot-line-maq-entrega-fuente');
+        if (entregaWrap && entregaTexto) {
+          if (!mid || mid <= 0) {
+            entregaWrap.style.display = 'none';
+          } else {
+            entregaWrap.style.display = 'block';
+            entregaTexto.textContent = 'Calculando entrega estimada…';
+            if (entregaFuente) entregaFuente.textContent = '';
+            fetchJson(API + '/maquinas/' + mid + '/entrega-estimada')
+              .then((data) => {
+                entregaTexto.textContent = (data && data.texto) || 'Sin información de entrega';
+                if (entregaFuente) {
+                  const fuenteLabels = {
+                    manual: 'Tiempo capturado manualmente',
+                    en_stock: 'Disponible en stock',
+                    mantenimiento_programado: 'Basado en mantenimiento programado',
+                    embarque_en_camino: 'Basado en embarque en tránsito',
+                    revision_en_proceso: 'Revisión técnica en proceso',
+                    sin_info: 'Sin stock — probable pedido a fábrica',
+                  };
+                  const label = fuenteLabels[data.fuente] || data.fuente || '';
+                  entregaFuente.textContent = data.info_extra ? `${label} · ${data.info_extra}` : label;
+                }
+              })
+              .catch((err) => {
+                console.warn('[entrega-estimada]', err);
+                entregaTexto.textContent = 'No se pudo calcular la entrega.';
+              });
           }
         }
       }

@@ -1713,6 +1713,140 @@ app.get('/api/maquinas/:id', async (req, res) => {
   }
 });
 
+/* 🆕 2026-05-23 — ENTREGA ESTIMADA DINÁMICA (pedido por David Cantú)
+ * Calcula la fecha de entrega de una máquina basada en su estado actual:
+ *   1. Si tiene tiempo_entrega_dias manual (override del admin) → ese gana.
+ *   2. Si estado_preparacion='lista' o 'entregada' → lista HOY.
+ *   3. Si hay mantenimiento de garantía programado en el futuro → fecha lista = ese día.
+ *   4. Si hay embarque 'en_camino' con eta_fecha futura → fecha lista = eta_fecha.
+ *   5. Si hay revisión en proceso (revision_maquinas con prueba='En Proceso') → +2 días desde hoy.
+ *   6. Si ninguno → no se puede calcular (pedido a fábrica).
+ *
+ * Después suma margen 3-5 días (configurable en Tarifas) para entrega final.
+ * Respuesta: { fecha_lista, fecha_min, fecha_max, fuente, texto } */
+app.get('/api/maquinas/:id/entrega-estimada', async (req, res) => {
+  try {
+    const maqId = Number(req.params.id);
+    if (!Number.isFinite(maqId) || maqId <= 0) return res.status(400).json({ error: 'ID inválido' });
+
+    const maq = await db.getOne('SELECT id, modelo, estado_preparacion, fecha_lista_estimada, tiempo_entrega_dias FROM maquinas WHERE id = ?', [maqId]);
+    if (!maq) return res.status(404).json({ error: 'Máquina no encontrada' });
+
+    // Tarifas configurables: margen min/max días
+    const tarifaMin = await db.getOne("SELECT valor FROM tarifas WHERE clave = 'entrega_margen_dias_min'");
+    const tarifaMax = await db.getOne("SELECT valor FROM tarifas WHERE clave = 'entrega_margen_dias_max'");
+    const margenMin = Math.max(0, Math.floor(Number(tarifaMin && tarifaMin.valor) || 3));
+    const margenMax = Math.max(margenMin, Math.floor(Number(tarifaMax && tarifaMax.valor) || 5));
+
+    function addDays(dateStr, n) {
+      const d = new Date((dateStr || new Date().toISOString().slice(0, 10)) + 'T12:00:00');
+      d.setDate(d.getDate() + n);
+      return d.toISOString().slice(0, 10);
+    }
+    function fmtDate(iso) {
+      if (!iso) return '';
+      const d = new Date(iso + 'T12:00:00');
+      return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    let fecha_lista = null;
+    let fuente = '';
+    let info_extra = null;
+    const hoy = new Date().toISOString().slice(0, 10);
+
+    // 1) Override manual del admin (tiempo_entrega_dias capturado a mano)
+    if (maq.tiempo_entrega_dias != null && Number(maq.tiempo_entrega_dias) > 0) {
+      const dias = Number(maq.tiempo_entrega_dias);
+      fecha_lista = addDays(hoy, dias);
+      fuente = 'manual';
+      info_extra = `tiempo capturado manualmente: ${dias} días`;
+    }
+    // 2) Máquina YA lista o entregada
+    else if (maq.estado_preparacion === 'lista' || maq.estado_preparacion === 'entregada') {
+      fecha_lista = maq.fecha_lista_estimada || hoy;
+      fuente = 'en_stock';
+      info_extra = maq.fecha_lista_estimada ? `marcada como lista desde ${fmtDate(maq.fecha_lista_estimada)}` : 'disponible en stock';
+    }
+    // 3) Mantenimiento de garantía programado en el futuro
+    else {
+      const mant = await db.getOne(`
+        SELECT mg.fecha_programada
+        FROM mantenimientos_garantia mg
+        JOIN garantias g ON g.id = mg.garantia_id
+        WHERE date(mg.fecha_programada) >= date('now')
+          AND COALESCE(mg.confirmado, 0) = 0
+          AND COALESCE(g.activa, 1) = 1
+          AND EXISTS (SELECT 1 FROM maquinas m WHERE m.id = ? AND (m.modelo = g.modelo_maquina OR (m.numero_serie IS NOT NULL AND m.numero_serie = g.numero_serie)))
+        ORDER BY date(mg.fecha_programada) ASC LIMIT 1
+      `, [maqId]);
+      if (mant && mant.fecha_programada) {
+        fecha_lista = mant.fecha_programada;
+        fuente = 'mantenimiento_programado';
+        info_extra = `mantenimiento programado para ${fmtDate(mant.fecha_programada)}`;
+      }
+      // 4) Embarque en camino con eta_fecha futura
+      else {
+        const emb = await db.getOne(`
+          SELECT eta_fecha FROM embarques
+          WHERE maquina_id = ? AND estado = 'en_camino'
+            AND eta_fecha IS NOT NULL AND date(eta_fecha) >= date('now')
+            AND COALESCE(activo, 1) = 1
+          ORDER BY date(eta_fecha) ASC LIMIT 1
+        `, [maqId]);
+        if (emb && emb.eta_fecha) {
+          fecha_lista = emb.eta_fecha;
+          fuente = 'embarque_en_camino';
+          info_extra = `embarque arribando el ${fmtDate(emb.eta_fecha)}`;
+        }
+        // 5) Revisión en proceso (revision_maquinas) → asumir +2 días de hoy
+        else {
+          const rev = await db.getOne(`
+            SELECT id FROM revision_maquinas
+            WHERE maquina_id = ? AND prueba = 'En Proceso'
+            ORDER BY id DESC LIMIT 1
+          `, [maqId]);
+          if (rev) {
+            fecha_lista = addDays(hoy, 2);
+            fuente = 'revision_en_proceso';
+            info_extra = 'revisión técnica en proceso (~2 días para liberar)';
+          }
+        }
+      }
+    }
+
+    // Sin información → pedido a fábrica (no se puede calcular)
+    if (!fecha_lista) {
+      return res.json({
+        fecha_lista: null,
+        fecha_min: null,
+        fecha_max: null,
+        fuente: 'sin_info',
+        texto: 'A consultar (probable pedido a fábrica)',
+        info_extra: 'Sin stock, sin embarque ni revisión programada',
+      });
+    }
+
+    const fecha_min = addDays(fecha_lista, margenMin);
+    const fecha_max = addDays(fecha_lista, margenMax);
+
+    return res.json({
+      fecha_lista,
+      fecha_min,
+      fecha_max,
+      fuente,
+      info_extra,
+      margen_dias: { min: margenMin, max: margenMax },
+      texto:
+        margenMin === margenMax
+          ? `Entrega estimada: ${fmtDate(fecha_min)}`
+          : `Entrega estimada: del ${fmtDate(fecha_min)} al ${fmtDate(fecha_max)}`,
+    });
+  } catch (e) {
+    console.error('[entrega-estimada]', e);
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
 app.get('/api/catalogo-universal-maquinas', async (req, res) => {
   try {
     const p = path.join(__dirname, 'public', 'data', 'catalogo-universal-maquinas.json');

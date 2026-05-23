@@ -781,6 +781,10 @@ async function seedCatalogosDefaults() {
     for (const [clave, valor] of defaults) {
       await runQuery('INSERT OR IGNORE INTO catalogos (clave, valor) VALUES (?, ?)', [clave, valor]);
     }
+    // 🆕 2026-05-23: tarifas defaults para cálculo de entrega dinámica.
+    //   Si ya existen no se sobrescriben (INSERT OR IGNORE / ON CONFLICT DO NOTHING).
+    await runQuery("INSERT OR IGNORE INTO tarifas (clave, valor) VALUES (?, ?)", ['entrega_margen_dias_min', '3']);
+    await runQuery("INSERT OR IGNORE INTO tarifas (clave, valor) VALUES (?, ?)", ['entrega_margen_dias_max', '5']);
     const cols = ['rol', 'puesto', 'departamento', 'profesion'];
     for (const col of cols) {
       const found = await getAll(
