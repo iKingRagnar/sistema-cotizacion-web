@@ -1703,6 +1703,33 @@ app.patch('/api/maquinas/:id/fecha-lista', async (req, res) => {
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
 
+/* 🆕 GET /api/maquinas/autocomplete?q=texto — ¡DEBE ir ANTES de /api/maquinas/:id!
+ * Express evalúa rutas en orden: si /:id va primero, intercepta "autocomplete" como id.
+ * Devuelve top 10 máquinas que matcheen modelo, numero_serie o categoria con el texto. */
+app.get('/api/maquinas/autocomplete', async (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim();
+    if (!q || q.length < 2) return res.json([]);
+    const like = '%' + q + '%';
+    const rows = await db.getAll(
+      `SELECT id, modelo, numero_serie, categoria, nombre, estado_preparacion
+       FROM maquinas
+       WHERE COALESCE(activo,1) = 1
+         AND (
+           UPPER(COALESCE(modelo,''))       LIKE UPPER(?)
+           OR UPPER(COALESCE(numero_serie,'')) LIKE UPPER(?)
+           OR UPPER(COALESCE(categoria,''))     LIKE UPPER(?)
+           OR UPPER(COALESCE(nombre,''))        LIKE UPPER(?)
+         )
+       ORDER BY id DESC LIMIT 10`,
+      [like, like, like, like]
+    );
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
 app.get('/api/maquinas/:id', async (req, res) => {
   try {
     const row = await db.getOne('SELECT m.*, c.nombre as cliente_nombre FROM maquinas m LEFT JOIN clientes c ON c.id = m.cliente_id WHERE m.id = ?', [req.params.id]);
@@ -1803,28 +1830,6 @@ app.post('/api/admin/relink-embarques', async (req, res) => {
       maquinas_creadas: creados,
       sin_nombre: sinNombre,
     });
-  } catch (e) {
-    res.status(500).json({ error: String(e.message) });
-  }
-});
-
-/* 🆕 GET /api/maquinas/autocomplete?q=texto
- * Devuelve top 10 máquinas que matcheen modelo o numero_serie con el texto.
- * Usado en autocomplete del frontend (Embarques, Cotizaciones, etc.). */
-app.get('/api/maquinas/autocomplete', async (req, res) => {
-  try {
-    const q = String(req.query.q || '').trim();
-    if (!q || q.length < 2) return res.json([]);
-    const like = '%' + q + '%';
-    const rows = await db.getAll(
-      `SELECT id, modelo, numero_serie, categoria, estado_preparacion
-       FROM maquinas
-       WHERE COALESCE(activo,1) = 1
-         AND (UPPER(COALESCE(modelo,'')) LIKE UPPER(?) OR UPPER(COALESCE(numero_serie,'')) LIKE UPPER(?))
-       ORDER BY id DESC LIMIT 10`,
-      [like, like]
-    );
-    res.json(rows);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
