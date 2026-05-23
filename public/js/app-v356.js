@@ -19396,9 +19396,10 @@ async function imprimirFlyer() {
       <div class="cotz-modal">
         <section class="cotz-card">
           <h4 class="cotz-card-title"><i class="fas fa-truck-fast"></i> ${isNew ? 'Nuevo embarque' : 'Editar embarque'}</h4>
-          <div class="form-group"><label>Nombre de la maquina *</label>
-            <input type="text" id="emb-nombre" maxlength="200" value="${escapeHtml(e.nombre_maquina || '')}" placeholder="Ej: Torno CNC HZ7900L · escribe y verás sugerencias" autocomplete="off" list="emb-nombre-suggestions">
-            <datalist id="emb-nombre-suggestions"></datalist>
+          <div class="form-group" style="position:relative"><label>Nombre de la maquina *</label>
+            <input type="text" id="emb-nombre" maxlength="200" value="${escapeHtml(e.nombre_maquina || '')}" placeholder="Ej: Torno CNC HZ7900L · escribe y aparecen sugerencias" autocomplete="off">
+            <!-- Dropdown custom de sugerencias (estilo Google) -->
+            <div id="emb-nombre-dropdown" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:1000;background:#0f172a;border:1px solid rgba(255,210,0,0.4);border-radius:8px;margin-top:2px;max-height:240px;overflow:auto;box-shadow:0 8px 20px rgba(0,0,0,0.5)"></div>
             <div id="emb-nombre-match" style="font-size:0.78rem;margin-top:0.35rem;padding:0.35rem 0.55rem;border-radius:6px;display:none">
               <i class="fas fa-link"></i> <span id="emb-nombre-match-text"></span>
             </div>
@@ -19452,23 +19453,75 @@ async function imprimirFlyer() {
     openModal(isNew ? 'Nuevo embarque' : 'Editar embarque', body);
     if (e.destino_sucursal) document.querySelector('#emb-destino').value = String(e.destino_sucursal).toUpperCase();
     if (e.estado) document.querySelector('#emb-estado').value = e.estado;
-    // 🆕 2026-05-23: autocomplete de máquinas del catálogo + feedback visual
+    // 🆕 2026-05-23: autocomplete tipo Google con dropdown custom visible
     (function setupEmbarqueAutocomplete() {
       const inp = document.querySelector('#emb-nombre');
       const serieInp = document.querySelector('#emb-serie');
-      const dlist = document.querySelector('#emb-nombre-suggestions');
+      const dd = document.querySelector('#emb-nombre-dropdown');
       const matchBox = document.querySelector('#emb-nombre-match');
       const matchText = document.querySelector('#emb-nombre-match-text');
-      if (!inp || !dlist || !matchBox) return;
+      if (!inp || !dd || !matchBox) return;
       let _cache = [];
       let _debounce = null;
+      let _selectedFromDropdown = false;
+
+      function renderDropdown(rows, query) {
+        if (!rows || !rows.length) {
+          dd.style.display = 'none';
+          dd.innerHTML = '';
+          return;
+        }
+        const qLow = (query || '').toLowerCase();
+        const items = rows.map((m, idx) => {
+          const modelo = m.modelo || '';
+          const serie = m.numero_serie || '';
+          // Resaltar la parte que coincide
+          function highlight(text) {
+            if (!qLow) return escapeHtml(text);
+            const tLow = text.toLowerCase();
+            const i = tLow.indexOf(qLow);
+            if (i < 0) return escapeHtml(text);
+            return escapeHtml(text.slice(0, i)) +
+              '<span style="background:rgba(255,210,0,0.35);color:#FFD200;font-weight:700">' + escapeHtml(text.slice(i, i + qLow.length)) + '</span>' +
+              escapeHtml(text.slice(i + qLow.length));
+          }
+          return `
+            <div class="emb-sugg-item" data-idx="${idx}" style="padding:0.55rem 0.85rem;cursor:pointer;border-bottom:1px solid rgba(148,163,184,0.15);display:flex;align-items:center;gap:0.6rem">
+              <i class="fas fa-cog" style="color:#FFD200;font-size:0.85rem"></i>
+              <div style="flex:1;min-width:0">
+                <div style="color:#f1f5f9;font-weight:600;font-size:0.9rem">${highlight(modelo)}</div>
+                ${serie ? `<div style="color:#94a3b8;font-size:0.78rem;margin-top:1px"><i class="fas fa-barcode" style="font-size:0.7rem"></i> Serie: ${highlight(serie)}</div>` : ''}
+              </div>
+              <span style="color:#64748b;font-size:0.7rem;background:rgba(148,163,184,0.15);padding:2px 7px;border-radius:999px">ID ${m.id}</span>
+            </div>`;
+        }).join('');
+        dd.innerHTML = items;
+        dd.style.display = 'block';
+        // Hover style
+        dd.querySelectorAll('.emb-sugg-item').forEach((el) => {
+          el.addEventListener('mouseenter', () => { el.style.background = 'rgba(255,210,0,0.10)'; });
+          el.addEventListener('mouseleave', () => { el.style.background = 'transparent'; });
+          el.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            const idx = Number(el.dataset.idx);
+            const sel = _cache[idx];
+            if (sel) {
+              inp.value = sel.modelo || '';
+              if (serieInp && sel.numero_serie) serieInp.value = sel.numero_serie;
+              _selectedFromDropdown = true;
+              dd.style.display = 'none';
+              updateMatch();
+            }
+          });
+        });
+      }
       async function fetchSugg(q) {
-        if (!q || q.length < 2) { dlist.innerHTML = ''; _cache = []; updateMatch(); return; }
+        if (!q || q.length < 2) { dd.style.display = 'none'; _cache = []; updateMatch(); return; }
         try {
           const rows = await fetchJson(API + '/maquinas/autocomplete?q=' + encodeURIComponent(q));
           _cache = rows || [];
-          dlist.innerHTML = _cache.map(m => `<option value="${escapeHtml(m.modelo || '')}" data-id="${m.id}">ID ${m.id} · ${escapeHtml(m.modelo || '')} ${m.numero_serie ? '· ' + escapeHtml(m.numero_serie) : ''}</option>`).join('');
-        } catch (_) { _cache = []; }
+          renderDropdown(_cache, q);
+        } catch (_) { _cache = []; dd.style.display = 'none'; }
         updateMatch();
       }
       function updateMatch() {
@@ -19477,10 +19530,6 @@ async function imprimirFlyer() {
         if (!txt) { matchBox.style.display = 'none'; return; }
         const txtLow = txt.toLowerCase();
         const serieLow = serie.toLowerCase();
-        // Buscar coincidencia (case-insensitive) en este orden:
-        //   1. modelo+serie exactos
-        //   2. modelo exacto
-        //   3. numero_serie exacto (por si el usuario escribió la serie en "Nombre")
         let m = null;
         if (serie) {
           m = _cache.find(x => String(x.modelo || '').toLowerCase() === txtLow &&
@@ -19493,18 +19542,27 @@ async function imprimirFlyer() {
           matchBox.style.background = 'rgba(34,197,94,0.10)';
           matchBox.style.color = '#86efac';
           matchBox.style.border = '1px solid rgba(34,197,94,0.4)';
-          matchText.textContent = `Se vinculará a máquina ID ${m.id} del catálogo · ${m.modelo || ''}${m.numero_serie ? ' · ' + m.numero_serie : ''}`;
+          matchText.textContent = `✓ Se vinculará a máquina ID ${m.id} del catálogo · ${m.modelo || ''}${m.numero_serie ? ' · ' + m.numero_serie : ''}`;
         } else {
           matchBox.style.display = 'block';
           matchBox.style.background = 'rgba(250,204,21,0.10)';
           matchBox.style.color = '#fde68a';
           matchBox.style.border = '1px solid rgba(250,204,21,0.4)';
-          matchText.textContent = 'No existe en el catálogo · se agregará automáticamente al guardar';
+          matchText.textContent = '✦ No existe en el catálogo · se agregará automáticamente al guardar';
         }
       }
       inp.addEventListener('input', () => {
+        _selectedFromDropdown = false;
         clearTimeout(_debounce);
-        _debounce = setTimeout(() => fetchSugg((inp.value || '').trim()), 250);
+        _debounce = setTimeout(() => fetchSugg((inp.value || '').trim()), 200);
+      });
+      inp.addEventListener('focus', () => {
+        const q = (inp.value || '').trim();
+        if (q.length >= 2 && _cache.length) renderDropdown(_cache, q);
+      });
+      // Cerrar dropdown al click fuera
+      document.addEventListener('click', (ev) => {
+        if (ev.target !== inp && !dd.contains(ev.target)) dd.style.display = 'none';
       });
       if (serieInp) serieInp.addEventListener('input', updateMatch);
       // Carga inicial si ya hay texto (modo editar)

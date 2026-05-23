@@ -1752,9 +1752,13 @@ async function findOrCreateMaquina({ modelo, numero_serie, cliente_id, categoria
   // cliente_id es obligatorio en schema legacy (NOT NULL). Usar 1 como default si no se pasa.
   const cliFallback = await db.getOne('SELECT id FROM clientes ORDER BY id LIMIT 1');
   const cliId = cliente_id || (cliFallback && cliFallback.id) || 1;
+  // Categoría distintiva para máquinas auto-creadas desde otras pestañas (Embarques, etc.)
+  // Evita que el backfill default 'Centro de Maquinado' la sobrescriba sin que David sepa
+  // de dónde vino. Si el caller pasa categoria explícita, esa gana.
+  const categoriaFinal = (categoria || '').trim() || 'Auto-importada (Embarque)';
   await db.runQuery(
     `INSERT INTO maquinas (cliente_id, nombre, modelo, numero_serie, categoria, activo) VALUES (?, ?, ?, ?, ?, 1)`,
-    [cliId, modeloLimpio, modeloLimpio, serieLimpia, (categoria || '').trim() || null]
+    [cliId, modeloLimpio, modeloLimpio, serieLimpia, categoriaFinal]
   );
   const created = await db.getOne(
     `SELECT * FROM maquinas WHERE modelo = ? AND COALESCE(numero_serie,'') = COALESCE(?,'') ORDER BY id DESC LIMIT 1`,
