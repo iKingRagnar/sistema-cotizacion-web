@@ -1301,7 +1301,12 @@ async function pgRunInsertWithReturning(sqlOriginal, args) {
     }
   }
   const r = await pgPool.query(translated, args);
-  return { lastInsertRowid: null, rowCount: r.rowCount };
+  // Si la query ya traía RETURNING (caller explícito), extraer el id si está en rows[0].id
+  let lastInsertRowid = null;
+  if (r.rows && r.rows[0] && r.rows[0].id !== undefined) {
+    lastInsertRowid = r.rows[0].id;
+  }
+  return { lastInsertRowid, rowCount: r.rowCount };
 }
 
 function runQuery(sql, params = []) {

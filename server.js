@@ -238,10 +238,16 @@ try {
 /* Solo login con límite; /api/auth/me y demás no consumen el mismo contador (evita falsos “bloqueos”). */
 app.use('/api/test-email', _emailLimiter);
 
-/** Respuesta HTTP para errores SQLite típicos al guardar refacciones (código único). */
+/** Respuesta HTTP para errores típicos al guardar refacciones (código único).
+ *  Soporta mensajes de error de SQLite (Turso) Y de Postgres (Supabase). */
 function refaccionesSqliteErrorResponse(err) {
   const m = String(err && err.message ? err.message : '');
-  if (/UNIQUE constraint failed:\s*refacciones\.codigo/i.test(m)) {
+  const code = String(err && err.code ? err.code : '');
+  // SQLite: UNIQUE constraint failed: refacciones.codigo
+  // Postgres: duplicate key value violates unique constraint "refacciones_codigo_key" (code 23505)
+  const isPgDuplicate = code === '23505' || /duplicate key value violates/i.test(m);
+  const isSqliteDuplicate = /UNIQUE constraint failed:\s*refacciones\.codigo/i.test(m);
+  if (isSqliteDuplicate || (isPgDuplicate && /codigo|refacciones/i.test(m))) {
     return {
       status: 409,
       body: {
@@ -250,7 +256,8 @@ function refaccionesSqliteErrorResponse(err) {
       },
     };
   }
-  if (/SQLITE_CONSTRAINT/i.test(m) && /refacciones/i.test(m)) {
+  // Cualquier otro constraint violation sobre refacciones
+  if ((/SQLITE_CONSTRAINT/i.test(m) || code === '23505' || code === '23503' || code === '23502') && /refacciones/i.test(m)) {
     return {
       status: 409,
       body: { error: 'No se puede guardar: el dato choca con otro registro (revisa código u otros campos únicos).' },
