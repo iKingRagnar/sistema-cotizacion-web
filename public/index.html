@@ -1270,9 +1270,6 @@
       <div class="section-header">
         <h2><i class="fas fa-file-invoice-dollar"></i> Cotizaciones</h2>
         <div class="toolbar">
-          <label class="toolbar-checkbox" title="Mostrar cotizaciones ya aplicadas o convertidas en venta">
-            <input type="checkbox" id="cot-incluir-aplicadas"> Incluir aplicadas
-          </label>
           <button type="button" id="export-cotizaciones" class="btn outline" title="Exportar tabla visible a CSV"><i class="fas fa-file-csv"></i> CSV</button>
           <button type="button" id="export-excel-cotizaciones" class="btn outline" title="Exportar tabla visible a Excel"><i class="fas fa-file-excel"></i> Excel</button>
           <button type="button" id="email-cotizaciones" class="btn outline" title="Enviar por correo el reporte de la tabla visible"><i class="fas fa-envelope"></i> Enviar reporte</button>
@@ -1299,6 +1296,12 @@
         <h3>No hay cotizaciones</h3>
         <p>Crea tu primera cotización de refacciones o mano de obra.</p>
         <button type="button" class="btn primary big btn-empty-cot"><i class="fas fa-plus"></i> Agregar cotización</button>
+      </div>
+      <!-- 🆕 2026-05-22: 'Incluir aplicadas' movido aquí (más a la mano sobre la tabla) -->
+      <div class="cot-table-toolbar" style="display:flex;align-items:center;gap:0.6rem;padding:0.5rem 0.25rem;margin-top:0.5rem">
+        <label class="toolbar-checkbox" title="Mostrar cotizaciones ya aplicadas o convertidas en venta" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;background:rgba(255,210,0,0.08);border:1px solid rgba(255,210,0,0.35);border-radius:8px;cursor:pointer;font-size:0.85rem;color:#FFD200;font-weight:600">
+          <input type="checkbox" id="cot-incluir-aplicadas" style="accent-color:#FFD200"> Incluir aplicadas
+        </label>
       </div>
       <div id="cotizaciones-list" class="table-wrap">
         <table class="data-table data-table--fluid filterable-table" id="tabla-cotizaciones" data-cache="cotizacionesCache">
