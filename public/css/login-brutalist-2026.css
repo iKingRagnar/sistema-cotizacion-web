@@ -1,0 +1,769 @@
+/* ==========================================================================
+   LOGIN BRUTALIST 2026 — Industrial + Neon (mood Porsche / BMW M)
+   ----------------------------------------------------------------------
+   Tipografía MASIVA, layout asimétrico, corner brackets HUD, scanlines
+   sutiles, neon amarillo #FFD200 sobre negro profundo. Cero glass cyan.
+   ========================================================================== */
+
+/* ====== OVERLAY: fondo industrial con scanlines + grid + vignette ====== */
+html body #login-overlay.login-overlay--exec-layout {
+  background: #050505 !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  padding: 0 !important;
+  position: fixed !important;
+  inset: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Capa de fondo industrial + tinte negro + scanlines */
+html body #login-overlay.login-overlay--exec-layout::before {
+  content: '' !important;
+  position: absolute !important;
+  inset: 0 !important;
+  background:
+    /* SCANLINES */
+    repeating-linear-gradient(180deg, transparent 0px, transparent 2px, rgba(255,210,0,0.025) 2px, rgba(255,210,0,0.025) 3px),
+    /* GRID HAIRLINES */
+    linear-gradient(rgba(255,210,0,0.04) 1px, transparent 1px) 0 0/72px 72px,
+    linear-gradient(90deg, rgba(255,210,0,0.04) 1px, transparent 1px) 0 0/72px 72px,
+    /* VIGNETTE */
+    radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.75) 75%, #000 100%),
+    /* TINT */
+    linear-gradient(180deg, rgba(0,0,0,0.7), rgba(0,0,0,0.55)),
+    /* IMAGEN INDUSTRIAL */
+    url('../fondos/nano-machining-services.webp') center/cover no-repeat !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+  animation: lbScanlinesMove 18s linear infinite !important;
+}
+@keyframes lbScanlinesMove {
+  from { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, center; }
+  to   { background-position: 0 4px, 0 0, 0 0, 0 0, 0 0, center; }
+}
+
+/* Hairline horizontal amarillo arriba y abajo (deco HUD) */
+html body #login-overlay.login-overlay--exec-layout::after {
+  content: '' !important;
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 40px !important;
+  height: 1px !important;
+  background: linear-gradient(90deg, transparent 0%, #FFD200 20%, #FFD200 80%, transparent 100%) !important;
+  opacity: 0.3 !important;
+  z-index: 0 !important;
+  box-shadow: 0 0 12px rgba(255,210,0,0.4) !important;
+}
+
+/* ====== SPLIT: full-screen, asimétrico ====== */
+html body #login-overlay .login-split {
+  max-width: none !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  display: grid !important;
+  grid-template-columns: 1.4fr 1fr !important;
+  gap: 0 !important;
+  position: relative !important;
+  z-index: 1 !important;
+  border-radius: 0 !important;
+  overflow: hidden !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  animation: none !important;
+}
+
+/* ====== PANEL IZQUIERDO: HERO BRUTALIST ====== */
+html body #login-overlay .login-brand-panel {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  padding: 4rem 4rem 3rem !important;
+  position: relative !important;
+  overflow: hidden !important;
+  border-right: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+}
+
+/* CORNER BRACKETS HUD (esquinas dobladas tipo visor) */
+html body #login-overlay .login-brand-panel::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 60px !important;
+  left: 60px !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-top: 2px solid #FFD200 !important;
+  border-left: 2px solid #FFD200 !important;
+  z-index: 2 !important;
+  pointer-events: none !important;
+  box-shadow: -2px -2px 0 -1px rgba(255,210,0,0.4) !important;
+}
+html body #login-overlay .login-brand-panel::after {
+  content: '' !important;
+  position: absolute !important;
+  bottom: 60px !important;
+  left: 60px !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-bottom: 2px solid #FFD200 !important;
+  border-left: 2px solid #FFD200 !important;
+  z-index: 2 !important;
+  pointer-events: none !important;
+}
+
+/* Header row: logo + eyebrow estilo HUD */
+html body #login-overlay .login-brand-headrow {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 1.5rem !important;
+  margin: 0 0 3rem 0 !important;
+  animation: lbFadeRight 0.7s 0.15s cubic-bezier(0.16,1,0.3,1) both !important;
+}
+html body #login-overlay .login-brand-logo-shell {
+  background: transparent !important;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+html body #login-overlay .login-brand-hero-img {
+  width: 140px !important;
+  height: auto !important;
+  max-height: 70px !important;
+  object-fit: contain !important;
+  filter:
+    drop-shadow(0 0 18px rgba(255,210,0,0.4))
+    drop-shadow(0 0 36px rgba(255,210,0,0.15)) !important;
+  border-radius: 0 !important;
+}
+
+/* Eyebrow: dato técnico monospace */
+html body #login-overlay .login-eyebrow {
+  background: transparent !important;
+  color: #FFD200 !important;
+  font-family: 'Courier New', 'Consolas', monospace !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.4em !important;
+  text-transform: uppercase !important;
+  padding: 0.4rem 0.9rem !important;
+  border: 1px solid #FFD200 !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+  position: relative !important;
+}
+html body #login-overlay .login-eyebrow::before {
+  content: '> ' !important;
+  font-weight: 900 !important;
+}
+
+/* TÍTULO MASIVO BRUTALIST */
+html body #login-overlay .login-brand-title {
+  font-size: clamp(3.5rem, 8vw, 7rem) !important;
+  font-weight: 900 !important;
+  color: #ffffff !important;
+  letter-spacing: -0.04em !important;
+  line-height: 0.92 !important;
+  margin: 0 0 1.5rem 0 !important;
+  text-transform: uppercase !important;
+  font-stretch: condensed !important;
+  text-shadow:
+    0 0 40px rgba(255,210,0,0.15),
+    4px 4px 0 rgba(255,210,0,0.08) !important;
+  animation: lbSliceIn 1s 0.3s cubic-bezier(0.7,0,0.3,1) both !important;
+  position: relative !important;
+}
+@keyframes lbSliceIn {
+  from { clip-path: inset(0 100% 0 0); opacity: 0; }
+  to   { clip-path: inset(0 0 0 0); opacity: 1; }
+}
+
+/* Línea diagonal amarilla decorativa cruzando el panel */
+html body #login-overlay .login-brand-title::before {
+  content: '' !important;
+  position: absolute !important;
+  top: -10px !important;
+  left: 0 !important;
+  width: 60px !important;
+  height: 6px !important;
+  background: #FFD200 !important;
+  box-shadow: 0 0 16px rgba(255,210,0,0.6), 0 0 32px rgba(255,210,0,0.3) !important;
+  animation: lbBarGrow 0.6s 0.5s cubic-bezier(0.7,0,0.3,1) both !important;
+}
+@keyframes lbBarGrow {
+  from { width: 0; opacity: 0; }
+  to   { width: 60px; opacity: 1; }
+}
+
+/* Subtitle estilo dato técnico */
+html body #login-overlay .login-brand-tagline {
+  font-family: 'Courier New', 'Consolas', monospace !important;
+  font-size: 0.88rem !important;
+  color: #94a3b8 !important;
+  font-weight: 500 !important;
+  line-height: 1.55 !important;
+  letter-spacing: 0.05em !important;
+  margin: 0 0 2.5rem 0 !important;
+  max-width: 90% !important;
+  padding-left: 1rem !important;
+  border-left: 2px solid #FFD200 !important;
+  animation: lbFadeRight 0.6s 0.55s cubic-bezier(0.16,1,0.3,1) both !important;
+}
+
+/* FEATURES: lista numerada brutalist con 01, 02, 03, 04 */
+html body #login-overlay .login-brand-features {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 0 !important;
+  margin: 0 0 2.5rem 0 !important;
+  border-top: 1px solid rgba(255,210,0,0.15) !important;
+  border-bottom: 1px solid rgba(255,210,0,0.15) !important;
+}
+html body #login-overlay .login-feature-item {
+  display: grid !important;
+  grid-template-columns: auto 1fr !important;
+  align-items: center !important;
+  gap: 0.85rem !important;
+  color: #f1f5f9 !important;
+  font-family: 'Courier New', 'Consolas', monospace !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  padding: 1rem 1.25rem 1rem 0 !important;
+  border-bottom: 1px solid rgba(255,210,0,0.1) !important;
+  position: relative !important;
+  counter-increment: feature !important;
+  animation: lbFadeRight 0.5s cubic-bezier(0.16,1,0.3,1) both !important;
+}
+html body #login-overlay .login-brand-features { counter-reset: feature !important; }
+html body #login-overlay .login-feature-item:nth-child(1) { animation-delay: 0.65s !important; }
+html body #login-overlay .login-feature-item:nth-child(2) { animation-delay: 0.75s !important; border-left: 1px solid rgba(255,210,0,0.1) !important; padding-left: 1.25rem !important; }
+html body #login-overlay .login-feature-item:nth-child(3) { animation-delay: 0.85s !important; border-bottom: none !important; }
+html body #login-overlay .login-feature-item:nth-child(4) { animation-delay: 0.95s !important; border-left: 1px solid rgba(255,210,0,0.1) !important; padding-left: 1.25rem !important; border-bottom: none !important; }
+
+/* Icono se convierte en NÚMERO 01/02/03/04 monospace */
+html body #login-overlay .login-feature-item i {
+  width: auto !important;
+  height: auto !important;
+  background: none !important;
+  color: #FFD200 !important;
+  border-radius: 0 !important;
+  font-size: 0 !important;
+  box-shadow: none !important;
+  position: relative !important;
+  flex-shrink: 0 !important;
+}
+html body #login-overlay .login-feature-item i::before {
+  content: counter(feature, decimal-leading-zero) !important;
+  font-family: 'Courier New', 'Consolas', monospace !important;
+  font-size: 1.4rem !important;
+  font-weight: 900 !important;
+  color: #FFD200 !important;
+  text-shadow: 0 0 12px rgba(255,210,0,0.5) !important;
+  letter-spacing: 0 !important;
+  display: inline-block !important;
+}
+
+/* BADGES: pills tech con borde glow */
+html body #login-overlay .login-brand-badges {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 0.5rem !important;
+  margin-top: auto !important;
+  animation: lbFadeUp 0.6s 1.05s cubic-bezier(0.16,1,0.3,1) both !important;
+}
+html body #login-overlay .login-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  background: rgba(0,0,0,0.5) !important;
+  border: 1px solid rgba(255, 210, 0, 0.4) !important;
+  color: #FFD200 !important;
+  padding: 0.4rem 0.9rem !important;
+  border-radius: 0 !important;
+  font-family: 'Courier New', 'Consolas', monospace !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  backdrop-filter: none !important;
+  position: relative !important;
+}
+html body #login-overlay .login-badge::before {
+  content: '' !important;
+  display: inline-block !important;
+  width: 6px !important;
+  height: 6px !important;
+  background: #FFD200 !important;
+  border-radius: 50% !important;
+  box-shadow: 0 0 8px #FFD200 !important;
+  animation: lbDotPulse 2s ease-in-out infinite !important;
+}
+@keyframes lbDotPulse {
+  0%, 100% { opacity: 0.4; box-shadow: 0 0 4px #FFD200; }
+  50%      { opacity: 1;   box-shadow: 0 0 12px #FFD200; }
+}
+html body #login-overlay .login-badge i { color: #FFD200 !important; font-size: 0.78rem !important; }
+
+/* Decoración circles (ocultar — usamos brutalismo geométrico) */
+html body #login-overlay .login-brand-decoration { display: none !important; }
+
+/* ====== PANEL DERECHO: PANEL DE CONTROL ====== */
+html body #login-overlay .login-form-panel {
+  background:
+    linear-gradient(180deg, rgba(8, 8, 8, 0.92) 0%, rgba(0, 0, 0, 0.96) 100%) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  padding: 4rem 3.5rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+  box-shadow:
+    inset 6px 0 0 -5px #FFD200,
+    inset 0 0 0 1px rgba(255,210,0,0.1) !important;
+  border: none !important;
+  overflow: hidden !important;
+}
+
+/* CORNER BRACKETS HUD en panel derecho (esquinas opuestas al izq) */
+html body #login-overlay .login-form-panel::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 60px !important;
+  right: 60px !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-top: 2px solid #FFD200 !important;
+  border-right: 2px solid #FFD200 !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+  display: block !important;
+}
+html body #login-overlay .login-form-panel::after {
+  content: '' !important;
+  position: absolute !important;
+  bottom: 60px !important;
+  right: 60px !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-bottom: 2px solid #FFD200 !important;
+  border-right: 2px solid #FFD200 !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+  display: block !important;
+}
+
+html body #login-overlay .login-card {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: 440px !important;
+  animation: lbFadeUp 0.7s 0.4s cubic-bezier(0.16,1,0.3,1) both !important;
+  position: relative !important;
+}
+
+/* Dato técnico arriba del card (estilo dashboard de auto) */
+html body #login-overlay .login-card::before {
+  content: 'AUTH/v2.0 · ACCESS_PROTOCOL · 256bit' !important;
+  display: block !important;
+  font-family: 'Courier New', 'Consolas', monospace !important;
+  font-size: 0.65rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.3em !important;
+  color: rgba(255, 210, 0, 0.55) !important;
+  margin-bottom: 1.5rem !important;
+  border-bottom: 1px dashed rgba(255, 210, 0, 0.25) !important;
+  padding-bottom: 0.65rem !important;
+  text-transform: uppercase !important;
+}
+
+/* Header del card */
+html body #login-overlay .login-card-header {
+  text-align: left !important;
+  margin-bottom: 2.25rem !important;
+  padding-top: 0 !important;
+}
+html body #login-overlay .login-card-icon {
+  display: none !important;
+}
+html body #login-overlay #login-title {
+  color: #ffffff !important;
+  font-size: 2.4rem !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1 !important;
+  margin: 0 0 0.6rem 0 !important;
+  text-transform: uppercase !important;
+  text-shadow: 0 0 24px rgba(255,210,0,0.12) !important;
+  position: relative !important;
+  display: inline-block !important;
+}
+html body #login-overlay #login-title::after {
+  content: '' !important;
+  display: block !important;
+  width: 100%;
+  height: 3px !important;
+  background: #FFD200 !important;
+  margin-top: 0.5rem !important;
+  box-shadow: 0 0 12px rgba(255,210,0,0.5), 0 0 24px rgba(255,210,0,0.2) !important;
+  animation: lbBarGrow 0.7s 0.7s cubic-bezier(0.7,0,0.3,1) both !important;
+  transform-origin: left !important;
+}
+html body #login-overlay .login-hint {
+  color: #64748b !important;
+  font-family: 'Courier New', 'Consolas', monospace !important;
+  font-size: 0.72rem !important;
+  margin: 0 !important;
+  line-height: 1.5 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+}
+
+/* Form: campos estilo instrumento */
+html body #login-overlay .login-form {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.4rem !important;
+}
+html body #login-overlay .login-field {
+  margin: 0 !important;
+  position: relative !important;
+}
+html body #login-overlay .login-field label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  font-family: 'Courier New', 'Consolas', monospace !important;
+  font-size: 0.68rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.3em !important;
+  text-transform: uppercase !important;
+  color: #FFD200 !important;
+  margin: 0 0 0.5rem 0 !important;
+}
+html body #login-overlay .login-field label i {
+  color: #FFD200 !important;
+  font-size: 0.78rem !important;
+}
+html body #login-overlay .login-field-hint {
+  display: block !important;
+  font-family: 'Courier New', 'Consolas', monospace !important;
+  font-size: 0.68rem !important;
+  color: #475569 !important;
+  margin-bottom: 0.4rem !important;
+  font-style: normal !important;
+  letter-spacing: 0.04em !important;
+  text-transform: lowercase !important;
+}
+html body #login-overlay .login-field input[type="text"],
+html body #login-overlay .login-field input[type="password"],
+html body #login-overlay .login-field input {
+  width: 100% !important;
+  background: #0a0a0a !important;
+  border: none !important;
+  border-bottom: 2px solid rgba(255, 210, 0, 0.3) !important;
+  border-radius: 0 !important;
+  padding: 0.95rem 0.5rem !important;
+  color: #ffffff !important;
+  font-family: 'Courier New', 'Consolas', monospace !important;
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.05em !important;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease !important;
+  box-shadow: none !important;
+}
+html body #login-overlay .login-field input::placeholder {
+  color: #334155 !important;
+  opacity: 1 !important;
+  font-family: 'Courier New', 'Consolas', monospace !important;
+  letter-spacing: 0.05em !important;
+}
+html body #login-overlay .login-field input:hover {
+  border-bottom-color: rgba(255, 210, 0, 0.6) !important;
+  background: rgba(255, 210, 0, 0.02) !important;
+}
+html body #login-overlay .login-field input:focus {
+  outline: none !important;
+  border-bottom-color: #FFD200 !important;
+  background: rgba(255, 210, 0, 0.04) !important;
+  box-shadow: 0 4px 16px -8px rgba(255,210,0,0.5) !important;
+}
+
+/* Eye button */
+html body #login-overlay .login-pass-wrap { position: relative !important; }
+html body #login-overlay .login-eye-btn {
+  position: absolute !important;
+  right: 0.4rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  background: transparent !important;
+  border: none !important;
+  color: #64748b !important;
+  padding: 0.5rem !important;
+  cursor: pointer !important;
+  font-size: 1rem !important;
+  border-radius: 0 !important;
+  transition: color 0.2s ease !important;
+}
+html body #login-overlay .login-eye-btn:hover {
+  color: #FFD200 !important;
+  background: transparent !important;
+}
+
+/* Error */
+html body #login-overlay .login-error {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  background: rgba(220, 38, 38, 0.08) !important;
+  border-left: 3px solid #dc2626 !important;
+  color: #fca5a5 !important;
+  padding: 0.7rem 0.9rem !important;
+  border-radius: 0 !important;
+  font-family: 'Courier New', 'Consolas', monospace !important;
+  font-size: 0.78rem !important;
+  margin: 0 !important;
+  letter-spacing: 0.04em !important;
+}
+html body #login-overlay .login-error.hidden { display: none !important; }
+
+/* BOTÓN SUBMIT BRUTALIST: rectangular masivo, sin radius, mono caps */
+html body #login-overlay .login-submit {
+  width: 100% !important;
+  padding: 1.15rem 1.5rem !important;
+  font-family: 'Courier New', 'Consolas', monospace !important;
+  font-size: 0.95rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.25em !important;
+  text-transform: uppercase !important;
+  color: #0a0a0a !important;
+  background: #FFD200 !important;
+  border: 2px solid #FFD200 !important;
+  border-radius: 0 !important;
+  cursor: pointer !important;
+  margin-top: 0.5rem !important;
+  box-shadow:
+    8px 8px 0 0 rgba(255, 210, 0, 0.15),
+    0 0 32px rgba(255, 210, 0, 0.25) !important;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+html body #login-overlay .login-submit:hover {
+  background: #ffe566 !important;
+  transform: translate(-2px, -2px) !important;
+  box-shadow:
+    10px 10px 0 0 rgba(255, 210, 0, 0.25),
+    0 0 48px rgba(255, 210, 0, 0.5) !important;
+}
+html body #login-overlay .login-submit:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow:
+    4px 4px 0 0 rgba(255, 210, 0, 0.15),
+    0 0 16px rgba(255, 210, 0, 0.25) !important;
+}
+html body #login-overlay .login-submit .login-submit-text,
+html body #login-overlay .login-submit .login-submit-loading {
+  position: relative !important;
+  z-index: 1 !important;
+  color: #0a0a0a !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.7rem !important;
+}
+/* ⚠️ El spinner SOLO se ve cuando el form lo activa con submit (la clase .hidden funciona) */
+html body #login-overlay .login-submit .login-submit-loading.hidden { display: none !important; }
+html body #login-overlay .login-submit i {
+  color: #0a0a0a !important;
+  font-size: 0.85rem !important;
+}
+/* Reemplazar flecha simple por triple chevron tipo "execute" */
+html body #login-overlay .login-submit .login-submit-text i.fa-arrow-right::before {
+  content: '>>>' !important;
+  font-family: 'Courier New', 'Consolas', monospace !important;
+  font-weight: 900 !important;
+  letter-spacing: 0 !important;
+}
+
+/* ROLES: matriz tipo selector de modo de auto (comfort/sport/track) */
+html body #login-overlay .login-roles-info {
+  margin-top: 2rem !important;
+  padding-top: 1.5rem !important;
+  border-top: 1px dashed rgba(255, 210, 0, 0.2) !important;
+  animation: lbFadeUp 0.7s 0.85s cubic-bezier(0.16,1,0.3,1) both !important;
+}
+html body #login-overlay .login-roles-title {
+  font-family: 'Courier New', 'Consolas', monospace !important;
+  font-size: 0.65rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.35em !important;
+  text-transform: uppercase !important;
+  color: #94a3b8 !important;
+  text-align: left !important;
+  margin: 0 0 1rem 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  justify-content: flex-start !important;
+}
+html body #login-overlay .login-roles-title i { color: #FFD200 !important; }
+html body #login-overlay .login-roles-title::before {
+  content: '◢' !important;
+  color: #FFD200 !important;
+  font-size: 0.8rem !important;
+}
+html body #login-overlay .login-roles-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 0 !important;
+  border: 1px solid rgba(255, 210, 0, 0.25) !important;
+}
+html body #login-overlay .login-role-card {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: none !important;
+  border-right: 1px solid rgba(255, 210, 0, 0.18) !important;
+  border-radius: 0 !important;
+  padding: 0.95rem 0.5rem !important;
+  text-align: center !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  transition: background 0.2s ease, color 0.2s ease !important;
+  cursor: default !important;
+  position: relative !important;
+}
+html body #login-overlay .login-role-card:last-child { border-right: none !important; }
+html body #login-overlay .login-role-card:hover {
+  background: rgba(255, 210, 0, 0.08) !important;
+}
+html body #login-overlay .login-role-card:hover::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: 0 !important;
+  border: 2px solid #FFD200 !important;
+  box-shadow: inset 0 0 24px rgba(255,210,0,0.15) !important;
+  pointer-events: none !important;
+}
+html body #login-overlay .login-role-card i {
+  font-size: 1rem !important;
+  color: #FFD200 !important;
+}
+html body #login-overlay .login-role-card strong {
+  color: #f1f5f9 !important;
+  font-family: 'Courier New', 'Consolas', monospace !important;
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.15em !important;
+  text-transform: uppercase !important;
+}
+html body #login-overlay .login-role-card span {
+  color: #64748b !important;
+  font-family: 'Courier New', 'Consolas', monospace !important;
+  font-size: 0.62rem !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+}
+
+/* ====== Chispas activadas como partículas amarillas ====== */
+html body #login-overlay .login-weld-sparks {
+  position: absolute !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+  z-index: 0 !important;
+  opacity: 0.6 !important;
+}
+html body #login-overlay .login-weld-sparks::before {
+  content: '' !important;
+  position: absolute !important;
+  width: 2px !important;
+  height: 2px !important;
+  border-radius: 50% !important;
+  background: #FFD200 !important;
+  box-shadow:
+    50px 200px 0 0 #FFD200,
+    180px 400px 0 -0.5px #FFD200,
+    300px 100px 0 -0.5px #FFD200,
+    420px 600px 0 0 #FFD200,
+    560px 320px 0 -0.5px #FFD200,
+    680px 80px 0 0 #FFD200,
+    100px 720px 0 -0.5px #FFD200,
+    270px 850px 0 0 #FFD200,
+    500px 980px 0 -0.5px #FFD200,
+    150px 540px 0 -0.5px #FFD200,
+    620px 460px 0 -0.5px #FFD200,
+    380px 880px 0 0 #FFD200 !important;
+  animation: lbSparksDrift 16s linear infinite !important;
+  filter: blur(0.5px) !important;
+}
+@keyframes lbSparksDrift {
+  0%   { transform: translateY(-120%) translateX(0); }
+  100% { transform: translateY(120%) translateX(40px); }
+}
+
+/* ====== ANIMACIONES auxiliares ====== */
+@keyframes lbFadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes lbFadeRight {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 980px) {
+  html body #login-overlay .login-split {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+    min-height: 100vh !important;
+  }
+  html body #login-overlay .login-brand-panel {
+    padding: 3rem 2rem 2rem !important;
+    border-right: none !important;
+  }
+  html body #login-overlay .login-brand-panel::before,
+  html body #login-overlay .login-brand-panel::after,
+  html body #login-overlay .login-form-panel::before,
+  html body #login-overlay .login-form-panel::after {
+    width: 24px !important;
+    height: 24px !important;
+    top: 30px !important;
+    left: 30px !important;
+  }
+  html body #login-overlay .login-form-panel::before { top: 30px !important; right: 30px !important; left: auto !important; }
+  html body #login-overlay .login-brand-panel::after { bottom: 30px !important; left: 30px !important; }
+  html body #login-overlay .login-form-panel::after { bottom: 30px !important; right: 30px !important; left: auto !important; }
+  html body #login-overlay .login-form-panel {
+    padding: 3rem 2rem !important;
+    box-shadow: inset 0 6px 0 -5px #FFD200 !important;
+  }
+  html body #login-overlay .login-brand-features {
+    grid-template-columns: 1fr !important;
+  }
+  html body #login-overlay .login-feature-item:nth-child(2),
+  html body #login-overlay .login-feature-item:nth-child(4) {
+    border-left: none !important;
+    padding-left: 0 !important;
+  }
+  html body #login-overlay .login-brand-title {
+    font-size: clamp(3rem, 12vw, 4.5rem) !important;
+  }
+}
+
+/* ====== Limpieza de artifacts del legacy ====== */
+html body #login-overlay .login-brand-decoration { display: none !important; }
