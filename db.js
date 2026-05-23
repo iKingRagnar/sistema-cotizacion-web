@@ -1028,6 +1028,7 @@ function translateSqlForPg(sql) {
       // Buscar la coma del PRIMER argumento (respetando paréntesis y strings)
       let depth = 1;
       let inStr = false;
+      let handled = false; // flag para saber si ya cerramos la expresión adentro
       const start = i;
       while (i < s.length && depth > 0) {
         const c = s[i];
@@ -1036,15 +1037,21 @@ function translateSqlForPg(sql) {
           inStr = !inStr;
         } else if (!inStr) {
           if (c === '(') depth++;
-          else if (c === ')') { depth--; if (depth === 0) break; }
-          else if (c === ',' && depth === 1) {
-            // Cerramos cast numeric del primer arg
+          else if (c === ')') {
+            depth--;
+            if (depth === 0) {
+              // ROUND con UN SOLO argumento: cerrar como ROUND((expr)::numeric)
+              out += s.slice(start, i) + ')::numeric)';
+              i++; // consumir el ')'
+              handled = true;
+              break;
+            }
+          } else if (c === ',' && depth === 1) {
+            // ROUND con DOS argumentos: cerrar primer arg con cast numeric
             out += s.slice(start, i) + ')::numeric';
-            // Resto hasta el ) lo dejamos igual
             out += ',';
             i++;
             const restoStart = i;
-            // continuar hasta cerrar ROUND
             while (i < s.length && depth > 0) {
               const c2 = s[i];
               if (c2 === "'") {
@@ -1057,21 +1064,16 @@ function translateSqlForPg(sql) {
               i++;
             }
             out += s.slice(restoStart, i) + ')';
-            i++; // consumir el ')'
+            i++; // consumir el ')' final
+            handled = true;
             break;
           }
         }
         i++;
       }
-      // Si no había coma (ROUND con un solo argumento), cerrar como ROUND((expr)::numeric)
-      if (depth > 0 && i >= s.length) {
-        // No debería pasar; SQL mal formado
-      } else if (depth === 0 && s[i - 1] !== ')') {
-        // Ya cerramos arriba
-      } else if (depth === 0 && i < s.length) {
-        // ROUND con un solo argumento; cerrar
+      // Safety: si no se manejó (SQL malformado), agregar el resto literal sin romper
+      if (!handled) {
         out += s.slice(start, i) + ')::numeric)';
-        i++; // consumir el ')'
       }
     }
     s = out;
