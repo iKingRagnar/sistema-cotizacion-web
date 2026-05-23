@@ -3802,12 +3802,19 @@
       </div>
     `;
     openModal(`Enviar reporte — ${title}`, body);
-    // 📐 Ensanchar el modal para que quepa la tabla preview y los botones inferiores
+    // 📐 Modal más grande y centrado: 1400px máx, 95vw, max-height 92vh con scroll interno
     try {
       const _mb = qs('#modal .modal-box');
       if (_mb) {
-        _mb.style.maxWidth = 'min(1100px, 95vw)';
-        _mb.style.width = 'min(1100px, 95vw)';
+        _mb.style.maxWidth = 'min(1400px, 95vw)';
+        _mb.style.width = 'min(1400px, 95vw)';
+        _mb.style.maxHeight = '92vh';
+        _mb.style.margin = 'auto';
+      }
+      const _m = qs('#modal');
+      if (_m) {
+        _m.style.alignItems = 'center';
+        _m.style.justifyContent = 'center';
       }
     } catch (_) {}
     const sendBtn = qs('#rep-mail-send-btn');

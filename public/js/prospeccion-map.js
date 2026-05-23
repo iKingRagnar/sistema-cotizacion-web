@@ -1204,15 +1204,35 @@
   }
 
   function openRoutePlanner() {
-    var modal = qs('#prs-route-overlay');
-    if (!modal) return;
-    modal.classList.add('open');
-    renderRouteStops();
-    var routeMapEl = qs('#prs-route-map');
-    if (routeMapEl && routeMapEl._routeMap) {
-      setTimeout(function () { routeMapEl._routeMap.invalidateSize(); }, 300);
+    // 🆕 2026-05-22 (Luis): abrir la ruta en Google Maps en pestaña nueva,
+    // igual que la constancia PDF de clientes. Más confiable que el overlay
+    // interno (que tenía bugs con OSRM y el mapa Leaflet anidado).
+    try {
+      var coords = [];
+      for (var i = 0; i < state.routeLeadIds.length; i++) {
+        var lid = state.routeLeadIds[i];
+        for (var j = 0; j < state.allLeads.length; j++) {
+          if (state.allLeads[j].id === lid) {
+            var lat = state.allLeads[j].lat;
+            var lng = state.allLeads[j].lng;
+            if (Number.isFinite(lat) && Number.isFinite(lng)) {
+              coords.push(lat.toFixed(6) + ',' + lng.toFixed(6));
+            }
+            break;
+          }
+        }
+      }
+      if (coords.length < 2) {
+        try { window.alert('Necesitas al menos 2 paradas con coordenadas válidas.'); } catch (_) {}
+        return;
+      }
+      // Formato Google Maps Directions: /maps/dir/<origen>/<wp1>/.../<destino>
+      var url = 'https://www.google.com/maps/dir/' + coords.join('/');
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (e) {
+      console.error('[openRoutePlanner]', e);
+      try { window.alert('No se pudo abrir Google Maps: ' + (e && e.message || e)); } catch (_) {}
     }
-    calculateRoute();
   }
   function closeRoutePlanner() {
     var modal = qs('#prs-route-overlay');

@@ -727,3 +727,89 @@ html body #panel-tarifas .tarifas-section table.data-table {
   width: 100% !important;
   table-layout: auto !important;
 }
+
+/* ====================================================================
+   FIX 2026-05-22 (v2): Tarifas — eliminar scroll horizontal. Las cards
+   deben usar TODO el ancho disponible del panel para que la tabla quepa
+   sin barra de desplazamiento.
+   ==================================================================== */
+html body #panel-tarifas {
+  max-width: none !important;
+  width: 100% !important;
+}
+html body #panel-tarifas .tarifas-section {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: visible !important;
+  padding: 1.25rem 1.5rem !important;
+  box-sizing: border-box !important;
+}
+/* Quitar el scroll horizontal anterior y permitir que la tabla se ajuste */
+html body #panel-tarifas .tarifas-section table.data-table {
+  width: 100% !important;
+  min-width: 0 !important;
+  table-layout: auto !important;
+}
+html body #panel-tarifas .tarifas-section table.data-table th,
+html body #panel-tarifas .tarifas-section table.data-table td {
+  word-break: break-word;
+  white-space: normal !important;
+}
+html body #panel-tarifas .tarifas-section .tarifa-input,
+html body #panel-tarifas .tarifas-section .tarifa-input-text {
+  max-width: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* ====================================================================
+   FIX 2026-05-22: Bonos — extender cards al ancho completo del panel
+   (igual que tarifas, evitar el "hueco" a la derecha).
+   ==================================================================== */
+html body #panel-bonos {
+  max-width: none !important;
+  width: 100% !important;
+}
+html body #panel-bonos .card,
+html body #panel-bonos .panel-card,
+html body #panel-bonos .bonos-section,
+html body #panel-bonos > div {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+html body #panel-bonos table.data-table {
+  width: 100% !important;
+}
+
+/* ====================================================================
+   FIX 2026-05-22: Prospección — contraste de números/texto que se
+   confundían con el fondo oscuro. Forzar texto claro en KPI/values y
+   acento amarillo UNIVERSAL en métricas destacadas.
+   ==================================================================== */
+html body #panel-prospeccion .kpi-value,
+html body #panel-prospeccion .prs-kpi-value,
+html body #panel-prospeccion [class*="kpi"] [class*="value"],
+html body #panel-prospeccion [class*="kpi"] strong,
+html body #panel-prospeccion [class*="kpi"] .num,
+html body #panel-prospeccion [class*="metric"] .num,
+html body #panel-prospeccion .metric-value {
+  color: #FFD200 !important;
+  font-weight: 800 !important;
+}
+html body #panel-prospeccion .kpi-label,
+html body #panel-prospeccion [class*="kpi"] [class*="label"],
+html body #panel-prospeccion .metric-label {
+  color: #e2e8f0 !important;
+}
+html body #panel-prospeccion .muted,
+html body #panel-prospeccion .hint,
+html body #panel-prospeccion .text-muted,
+html body #panel-prospeccion small {
+  color: #cbd5e1 !important;
+}
+/* Cualquier texto sin clase específica dentro del panel: claro sobre oscuro */
+html body #panel-prospeccion p,
+html body #panel-prospeccion span:not([class*="badge"]):not([class*="chip"]) {
+  color: #e5e7eb;
+}
