@@ -1727,18 +1727,22 @@ async function findOrCreateMaquina({ modelo, numero_serie, cliente_id, categoria
   if (!modeloLimpio) return { id: null, created: false, maquina: null };
   const serieLimpia = (numero_serie == null ? '' : String(numero_serie)).trim() || null;
 
-  // 1) Buscar por modelo + serie exacto si hay serie
+  // 1) Buscar por modelo + serie exacto si hay serie (case-insensitive)
   let row = null;
   if (serieLimpia) {
     row = await db.getOne(
-      `SELECT * FROM maquinas WHERE modelo = ? AND COALESCE(numero_serie,'') = ? AND COALESCE(activo,1) = 1 ORDER BY id DESC LIMIT 1`,
+      `SELECT * FROM maquinas
+       WHERE UPPER(TRIM(modelo)) = UPPER(?) AND UPPER(TRIM(COALESCE(numero_serie,''))) = UPPER(?) AND COALESCE(activo,1) = 1
+       ORDER BY id DESC LIMIT 1`,
       [modeloLimpio, serieLimpia]
     );
   }
-  // 2) Si no, buscar por modelo solo
+  // 2) Si no, buscar por modelo solo (case-insensitive)
   if (!row) {
     row = await db.getOne(
-      `SELECT * FROM maquinas WHERE modelo = ? AND COALESCE(activo,1) = 1 ORDER BY id DESC LIMIT 1`,
+      `SELECT * FROM maquinas
+       WHERE UPPER(TRIM(modelo)) = UPPER(?) AND COALESCE(activo,1) = 1
+       ORDER BY id DESC LIMIT 1`,
       [modeloLimpio]
     );
   }
