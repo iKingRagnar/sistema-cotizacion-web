@@ -19520,8 +19520,19 @@ async function imprimirFlyer() {
         try {
           const rows = await fetchJson(API + '/maquinas/autocomplete?q=' + encodeURIComponent(q));
           _cache = rows || [];
-          renderDropdown(_cache, q);
-        } catch (_) { _cache = []; dd.style.display = 'none'; }
+          if (_cache.length === 0) {
+            // Sin coincidencias: mostrar mensaje informativo en el dropdown
+            dd.style.display = 'block';
+            dd.innerHTML = `<div style="padding:0.7rem 0.85rem;color:#94a3b8;font-size:0.85rem;font-style:italic">Sin coincidencias en el catálogo · al guardar se agregará como nueva</div>`;
+          } else {
+            renderDropdown(_cache, q);
+          }
+        } catch (err) {
+          _cache = [];
+          dd.style.display = 'block';
+          dd.innerHTML = `<div style="padding:0.7rem 0.85rem;color:#fca5a5;font-size:0.85rem"><i class="fas fa-exclamation-triangle"></i> Error consultando catálogo: ${escapeHtml(String(err && err.message || err).slice(0, 100))}</div>`;
+          console.warn('[autocomplete] error:', err);
+        }
         updateMatch();
       }
       function updateMatch() {
