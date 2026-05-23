@@ -1012,6 +1012,29 @@ function normalizeLibsqlArgs(params) {
  *  funcione en Postgres SIN cambiar el código de server.js. */
 function translateSqlForPg(sql) {
   let s = String(sql);
+
+  // 0) PRAGMA SQLite → equivalente Postgres o no-op
+  //    PRAGMA table_info(X) → query equivalente con information_schema
+  //    Otros PRAGMA (foreign_keys, wal_checkpoint, journal_mode, etc.) → SELECT 1 (no-op)
+  {
+    const m = s.match(/^\s*PRAGMA\s+table_info\s*\(\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\)\s*;?\s*$/i);
+    if (m) {
+      const tableName = m[1];
+      return `SELECT ordinal_position::int AS cid,
+        column_name AS name,
+        UPPER(data_type) AS type,
+        (CASE WHEN is_nullable='NO' THEN 1 ELSE 0 END)::int AS notnull,
+        column_default AS dflt_value,
+        (CASE WHEN column_name = 'id' THEN 1 ELSE 0 END)::int AS pk
+      FROM information_schema.columns
+      WHERE table_schema='public' AND table_name='${tableName}'
+      ORDER BY ordinal_position`;
+    }
+    if (/^\s*PRAGMA\s+/i.test(s)) {
+      // PRAGMA no soportado en Postgres: convertir a no-op
+      return 'SELECT 1 AS pragma_noop';
+    }
+  }
   // 1) Funciones de fecha SQLite → Postgres
   //    SQLite: datetime('now','localtime'), date('now','+7 days'), date(columna), etc.
   //    Postgres no tiene esos modificadores nativos. Convertimos a equivalentes.
@@ -1068,6 +1091,78 @@ function translateSqlForPg(sql) {
   }
   // 2) IFNULL → COALESCE
   s = s.replace(/\bIFNULL\s*\(/gi, 'COALESCE(');
+
+  // 2.1) strftime('%Y-%m', x) → to_char(x::timestamp, 'YYYY-MM')
+  //      strftime('%Y-%m','now') → to_char(now(),'YYYY-MM')
+  //      Parser respetando paréntesis anidados (el 2do arg puede tener COALESCE(...) etc.)
+  function sqliteFormatToPg(fmt) {
+    return fmt
+      .replace(/%Y/g, 'YYYY')
+      .replace(/%m/g, 'MM')
+      .replace(/%d/g, 'DD')
+      .replace(/%H/g, 'HH24')
+      .replace(/%M/g, 'MI')
+      .replace(/%S/g, 'SS');
+  }
+  s = s.replace(/\bstrftime\s*\(/gi, function () { return '__STRFTIME_PG__('; });
+  {
+    let out = '';
+    let i = 0;
+    while (i < s.length) {
+      const idx = s.indexOf('__STRFTIME_PG__(', i);
+      if (idx === -1) { out += s.slice(i); break; }
+      out += s.slice(i, idx);
+      i = idx + '__STRFTIME_PG__('.length;
+      // Saltar espacios y leer el formato string entre comillas simples
+      while (i < s.length && /\s/.test(s[i])) i++;
+      if (s[i] !== "'") { out += s.slice(idx, i); continue; }
+      i++; // saltar '
+      let fmtStart = i;
+      while (i < s.length && !(s[i] === "'" && s[i + 1] !== "'")) {
+        if (s[i] === "'" && s[i + 1] === "'") i += 2;
+        else i++;
+      }
+      const fmt = s.slice(fmtStart, i);
+      i++; // saltar ' de cierre
+      // Saltar espacios y coma
+      while (i < s.length && /\s/.test(s[i])) i++;
+      if (s[i] !== ',') { out += `strftime('${fmt}')`; continue; }
+      i++; // saltar ,
+      while (i < s.length && /\s/.test(s[i])) i++;
+      // Leer expr respetando paréntesis y strings
+      let depth = 1;
+      let inStr = false;
+      const exprStart = i;
+      while (i < s.length && depth > 0) {
+        const c = s[i];
+        if (c === "'") {
+          if (inStr && s[i + 1] === "'") { i += 2; continue; }
+          inStr = !inStr;
+        } else if (!inStr) {
+          if (c === '(') depth++;
+          else if (c === ')') { depth--; if (depth === 0) break; }
+        }
+        i++;
+      }
+      const expr = s.slice(exprStart, i).trim();
+      i++; // saltar ) final
+      const pgFmt = sqliteFormatToPg(fmt);
+      // Caso especial: strftime(..., 'now') → to_char(now(),...)
+      if (expr === "'now'" || expr === '"now"') {
+        out += `to_char(now(),'${pgFmt}')`;
+      } else {
+        // Para expresiones de columna o COALESCE, no hace falta cast a timestamp
+        // porque to_char acepta text directamente y nuestras columnas son TEXT YYYY-MM-DD.
+        // Pero to_char(text, ...) NO funciona en Postgres. Hay que castear a timestamp/date.
+        out += `to_char((${expr})::timestamp,'${pgFmt}')`;
+      }
+    }
+    s = out;
+  }
+
+  // 2.2) CAST(x AS REAL) → CAST(x AS DOUBLE PRECISION)
+  //      Postgres acepta REAL en columnas pero CAST AS REAL puede fallar en algunas versiones.
+  s = s.replace(/\bCAST\s*\(\s*([^)]+)\s+AS\s+REAL\s*\)/gi, 'CAST($1 AS DOUBLE PRECISION)');
   // 2.5) ROUND(expr, N) → ROUND((expr)::numeric, N)
   //      Postgres no acepta ROUND(double precision, integer); requiere numeric.
   //      Cuidado: cuenta paréntesis para extraer la expresión completa.
