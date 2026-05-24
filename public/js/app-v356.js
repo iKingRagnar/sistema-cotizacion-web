@@ -8435,11 +8435,11 @@ async function imprimirFlyer() {
         <td>${escapeHtml((g.fecha_entrega || '').toString().slice(0,10))}</td>
         <td><span class="badge badge-gar-mant" title="Mantenimientos registrados">${nMant}</span></td>
         <td><span class="badge badge-gar-${activa ? 'activa' : 'cancelada'}">${activa ? 'Sí' : 'No'}</span></td>
-        <td class="th-actions">
-          <button type="button" class="btn small outline btn-preview-gar" data-id="${g.id}" title="Vista previa"><i class="fas fa-eye"></i></button>
-          <button type="button" class="btn small outline btn-mant-gar" data-id="${g.id}" title="Ver mantenimientos"><i class="fas fa-calendar-check"></i></button>
-          ${_canEdit ? `<button type="button" class="btn small primary btn-edit-gar" data-id="${g.id}"><i class="fas fa-edit"></i></button>` : ''}
-          ${_canDelete ? `<button type="button" class="btn small danger btn-del-gar" data-id="${g.id}"><i class="fas fa-trash"></i></button>` : ''}
+        <td class="th-actions" style="white-space:nowrap;overflow:visible;">
+          <button type="button" class="btn small outline btn-preview-gar" data-id="${g.id}" title="Vista previa" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;line-height:1;overflow:visible;box-sizing:border-box;vertical-align:middle;"><i class="fas fa-eye" style="font-size:14px;line-height:1;"></i></button>
+          <button type="button" class="btn small outline btn-mant-gar" data-id="${g.id}" title="Ver mantenimientos" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;line-height:1;overflow:visible;box-sizing:border-box;vertical-align:middle;"><i class="fas fa-calendar-check" style="font-size:14px;line-height:1;"></i></button>
+          ${_canEdit ? `<button type="button" class="btn small primary btn-edit-gar" data-id="${g.id}" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;line-height:1;overflow:visible;box-sizing:border-box;vertical-align:middle;"><i class="fas fa-edit" style="font-size:14px;line-height:1;"></i></button>` : ''}
+          ${_canDelete ? `<button type="button" class="btn small danger btn-del-gar" data-id="${g.id}" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;line-height:1;overflow:visible;box-sizing:border-box;vertical-align:middle;"><i class="fas fa-trash" style="font-size:14px;line-height:1;"></i></button>` : ''}
         </td>
       `;
       tbody.appendChild(tr);
