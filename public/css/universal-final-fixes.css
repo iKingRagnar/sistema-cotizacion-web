@@ -1267,3 +1267,116 @@ html body table td.th-actions .btn::after {
   opacity: 0 !important;
   animation: none !important;
 }
+
+/* ============================================================
+   🌞 FIX 2026-05-24 — Histórico del cliente en MODO SOL (light)
+   El panel se construye con style inline oscuros. En modo claro
+   los hacemos legibles sin perder identidad visual.
+   ============================================================ */
+html body.appearance-light .pvc-historial,
+html body.theme-industrial.appearance-light .pvc-historial {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08) !important;
+}
+/* Título */
+html body.appearance-light .pvc-historial h3,
+html body.theme-industrial.appearance-light .pvc-historial h3 {
+  color: #1e3a5f !important;
+  border-bottom: 2px solid #FFD200 !important;
+  padding-bottom: 6px !important;
+}
+/* Las 5 stat cards: fondos claros con acento del color original */
+html body.appearance-light .pvc-historial > div[style*="grid-template-columns"] > div,
+html body.theme-industrial.appearance-light .pvc-historial > div[style*="grid-template-columns"] > div {
+  background: #f8fafc !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06) !important;
+}
+/* Labels de stats: gris oscuro legible */
+html body.appearance-light .pvc-historial > div[style*="grid-template-columns"] > div > div:first-child,
+html body.theme-industrial.appearance-light .pvc-historial > div[style*="grid-template-columns"] > div > div:first-child {
+  color: #64748b !important;
+  font-weight: 700 !important;
+}
+/* Valores grandes de stats: colores oscuros saturados (legibles sobre fondo claro) */
+html body.appearance-light .pvc-historial > div[style*="grid-template-columns"] > div:nth-child(1) > div:last-child,
+html body.theme-industrial.appearance-light .pvc-historial > div[style*="grid-template-columns"] > div:nth-child(1) > div:last-child {
+  color: #b45309 !important; /* Cotizaciones - dorado oscuro */
+}
+html body.appearance-light .pvc-historial > div[style*="grid-template-columns"] > div:nth-child(2) > div:last-child,
+html body.theme-industrial.appearance-light .pvc-historial > div[style*="grid-template-columns"] > div:nth-child(2) > div:last-child {
+  color: #047857 !important; /* Ventas - verde oscuro */
+}
+html body.appearance-light .pvc-historial > div[style*="grid-template-columns"] > div:nth-child(3) > div:last-child,
+html body.theme-industrial.appearance-light .pvc-historial > div[style*="grid-template-columns"] > div:nth-child(3) > div:last-child {
+  color: #1d4ed8 !important; /* Reportes - azul oscuro */
+}
+html body.appearance-light .pvc-historial > div[style*="grid-template-columns"] > div:nth-child(4) > div:last-child,
+html body.theme-industrial.appearance-light .pvc-historial > div[style*="grid-template-columns"] > div:nth-child(4) > div:last-child {
+  color: #7e22ce !important; /* Garantías - púrpura oscuro */
+}
+html body.appearance-light .pvc-historial > div[style*="grid-template-columns"] > div:nth-child(5) > div:last-child,
+html body.theme-industrial.appearance-light .pvc-historial > div[style*="grid-template-columns"] > div:nth-child(5) > div:last-child {
+  color: #be185d !important; /* Máquinas - rosa oscuro */
+}
+/* Línea "Total ventas:" */
+html body.appearance-light .pvc-historial > p,
+html body.theme-industrial.appearance-light .pvc-historial > p {
+  color: #334155 !important;
+  background: #fef3c7 !important;
+  padding: 8px 12px !important;
+  border-radius: 6px !important;
+  border-left: 3px solid #FFD200 !important;
+}
+html body.appearance-light .pvc-historial > p strong,
+html body.theme-industrial.appearance-light .pvc-historial > p strong {
+  color: #92400e !important;
+}
+/* Summaries (Cotizaciones, Ventas, Reportes, Garantías, Máquinas) */
+html body.appearance-light .pvc-historial details > summary,
+html body.theme-industrial.appearance-light .pvc-historial details > summary {
+  background: #f1f5f9 !important;
+  border-radius: 6px !important;
+  padding: 8px 12px !important;
+  border-left: 3px solid currentColor !important;
+}
+/* Cada summary mantiene su color de acento pero más oscuro/legible */
+html body.appearance-light .pvc-historial details:nth-of-type(1) > summary,
+html body.theme-industrial.appearance-light .pvc-historial details:nth-of-type(1) > summary { color: #b45309 !important; }
+html body.appearance-light .pvc-historial details:nth-of-type(2) > summary,
+html body.theme-industrial.appearance-light .pvc-historial details:nth-of-type(2) > summary { color: #047857 !important; }
+html body.appearance-light .pvc-historial details:nth-of-type(3) > summary,
+html body.theme-industrial.appearance-light .pvc-historial details:nth-of-type(3) > summary { color: #1d4ed8 !important; }
+html body.appearance-light .pvc-historial details:nth-of-type(4) > summary,
+html body.theme-industrial.appearance-light .pvc-historial details:nth-of-type(4) > summary { color: #7e22ce !important; }
+html body.appearance-light .pvc-historial details:nth-of-type(5) > summary,
+html body.theme-industrial.appearance-light .pvc-historial details:nth-of-type(5) > summary { color: #be185d !important; }
+/* Tablas internas en modo SOL */
+html body.appearance-light .pvc-historial table,
+html body.theme-industrial.appearance-light .pvc-historial table {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+}
+html body.appearance-light .pvc-historial table th,
+html body.theme-industrial.appearance-light .pvc-historial table th {
+  background: #1e3a5f !important;
+  color: #ffffff !important;
+  border-bottom: 1px solid #1e3a5f !important;
+}
+html body.appearance-light .pvc-historial table td,
+html body.theme-industrial.appearance-light .pvc-historial table td {
+  color: #0f172a !important;
+  background: transparent !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+html body.appearance-light .pvc-historial table tr:nth-child(even) td,
+html body.theme-industrial.appearance-light .pvc-historial table tr:nth-child(even) td {
+  background: #f8fafc !important;
+}
+/* Mensaje "Sin X registradas" */
+html body.appearance-light .pvc-historial .muted,
+html body.theme-industrial.appearance-light .pvc-historial .muted {
+  color: #94a3b8 !important;
+  background: #f8fafc !important;
+  border-radius: 6px !important;
+}
