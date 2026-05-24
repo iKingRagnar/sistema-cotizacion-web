@@ -1414,6 +1414,30 @@ html body.theme-industrial.appearance-light .maq-flyer-modo-mini[style*="backgro
   background: #ffffff !important;
   border-color: #cbd5e1 !important;
 }
+/* Contenedores Foto 1 / Foto 2 / Locked (fondo #0f1626 inline) */
+html body.appearance-light .maq-sticky-toolbar div[style*="#0f1626"],
+html body.theme-industrial.appearance-light .maq-sticky-toolbar div[style*="#0f1626"],
+html body.appearance-light #m-foto2-wrap-top,
+html body.appearance-light #m-foto2-locked-top,
+html body.theme-industrial.appearance-light #m-foto2-wrap-top,
+html body.theme-industrial.appearance-light #m-foto2-locked-top {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+/* Labels "Foto 1/2", "Activa PAIR..." dentro de esos wraps */
+html body.appearance-light .maq-sticky-toolbar div[style*="#0f1626"] label,
+html body.theme-industrial.appearance-light .maq-sticky-toolbar div[style*="#0f1626"] label,
+html body.appearance-light #m-foto2-wrap-top label,
+html body.theme-industrial.appearance-light #m-foto2-wrap-top label,
+html body.appearance-light #m-foto2-locked-top,
+html body.theme-industrial.appearance-light #m-foto2-locked-top {
+  color: #475569 !important;
+}
+html body.appearance-light #m-foto2-locked-top i,
+html body.theme-industrial.appearance-light #m-foto2-locked-top i {
+  color: #94a3b8 !important;
+}
 html body.appearance-light .maq-flyer-modo-mini[data-modo="single"][style*="border:2px solid #FFD200"],
 html body.appearance-light .maq-flyer-modo-mini[data-modo="pair"][style*="border:2px solid #FFD200"],
 html body.theme-industrial.appearance-light .maq-flyer-modo-mini[data-modo="single"][style*="border:2px solid #FFD200"],
