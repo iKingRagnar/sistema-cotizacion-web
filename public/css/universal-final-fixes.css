@@ -1186,3 +1186,40 @@ html body table td .btn.small {
   -webkit-clip-path: none !important;
   mask-image: none !important;
 }
+
+/* 🆕 FIX 2026-05-24 (v29) — El ojito en Garantias se veia "mocho" porque
+   .btn.small.outline tenia altura menor que los hermanos (edit/archive/del)
+   y el icono se recortaba por overflow. Forzamos misma altura visible y
+   alineacion flex centrada para todos los botones de la fila.            */
+html body table td.th-actions .btn.small,
+html body table td .row-actions-inline .btn.small,
+html body table td .btn.small.outline,
+html body table td .btn-preview-gar,
+html body table td [class*="btn-preview-"],
+html body table td [class*="btn-edit-"],
+html body table td [class*="btn-del-"],
+html body table td [class*="btn-mant-"] {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  min-width: 32px !important;
+  line-height: 1 !important;
+  padding: 6px 10px !important;
+  overflow: visible !important;
+  vertical-align: middle !important;
+  box-sizing: border-box !important;
+}
+html body table td.th-actions .btn.small i,
+html body table td .row-actions-inline .btn.small i,
+html body table td .btn.small.outline i,
+html body table td [class*="btn-preview-"] i {
+  display: inline-block !important;
+  line-height: 1 !important;
+  vertical-align: middle !important;
+  overflow: visible !important;
+  font-size: 14px !important;
+  height: auto !important;
+  width: auto !important;
+}
