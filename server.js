@@ -530,7 +530,7 @@ app.post('/api/app-users', async (req, res) => {
       [u]
     );
     res.status(201).json(row);
-    enviarCorreoBienvenida(row).catch(() => {});
+    enviarCorreoBienvenida(row).catch((e) => console.warn('[correo-bienvenida]', e && e.message));
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -1310,7 +1310,7 @@ app.get('/api/clientes/:id', async (req, res) => {
            ORDER BY m.id DESC
            LIMIT 50`,
           [cliId]
-        ).catch(() => []);
+        ).catch((e) => { console.error('[historial-maquinas]', e.message, e.stack); return []; });
         // Totales rápidos
         const totMxn = (pub.historial_ventas || []).filter(v => v.moneda === 'MXN').reduce((s, v) => s + (Number(v.total) || 0), 0);
         const totUsd = (pub.historial_ventas || []).filter(v => v.moneda === 'USD').reduce((s, v) => s + (Number(v.total) || 0), 0);
@@ -3742,7 +3742,7 @@ app.post('/api/cotizaciones', async (req, res) => {
     res.status(201).json(r);
     db.getOne('SELECT * FROM clientes WHERE id=?', [cliente_id])
       .then((cli) => enviarCorreoCotizacionCreada(r, cli))
-      .catch(() => {});
+      .catch((e) => console.warn('[correo-cotizacion-creada]', e && e.message));
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -6008,12 +6008,12 @@ app.post('/api/davai/chat', async (req, res) => {
         `SELECT co.folio, co.fecha, co.total, co.tipo, c.nombre as cliente
          FROM cotizaciones co LEFT JOIN clientes c ON c.id = co.cliente_id
          ORDER BY co.fecha DESC, co.id DESC LIMIT 10`
-      ).catch(() => []);
+      ).catch((e) => { console.warn('[davai-cotiz-recientes]', e && e.message); return []; });
       if (recientes.length) stats.cotizacionesRecientes = recientes;
 
       const topProspectos = await db.getAll(
         `SELECT empresa, estado, potencial_usd, score_ia FROM prospectos ORDER BY score_ia DESC LIMIT 5`
-      ).catch(() => []);
+      ).catch((e) => { console.warn('[davai-top-prospectos]', e && e.message); return []; });
       if (topProspectos.length) stats.topProspectos = topProspectos;
 
       systemContent += '\n\nESTADÍSTICAS ACTUALIZADAS DE LA BASE DE DATOS:\n' + JSON.stringify(stats, null, 2);
@@ -6147,7 +6147,7 @@ app.post('/api/davai/chat', async (req, res) => {
           reply = `Hay **${(c[0] || {}).n || 0} incidentes abiertos** actualmente.`;
         } else if (/prospect|lead/.test(lower)) {
           const c = await db.getAll('SELECT COUNT(*) as n FROM prospectos');
-          const top = await db.getAll('SELECT empresa, score_ia FROM prospectos ORDER BY score_ia DESC LIMIT 3').catch(() => []);
+          const top = await db.getAll('SELECT empresa, score_ia FROM prospectos ORDER BY score_ia DESC LIMIT 3').catch((e) => { console.warn('[davai-prospect-top]', e && e.message); return []; });
           const lista = top.map((p, i) => `${i + 1}. **${p.empresa}** (score ${Math.round(p.score_ia || 0)})`).join('\n');
           reply = `Tienes **${(c[0] || {}).n || 0} prospectos**.\n\nTop 3 por score IA:\n${lista || '_Sin prospectos con score._'}`;
         } else if (/refaccion|inventario/.test(lower)) {
