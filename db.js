@@ -785,6 +785,10 @@ async function seedCatalogosDefaults() {
     //   Si ya existen no se sobrescriben (INSERT OR IGNORE / ON CONFLICT DO NOTHING).
     await runQuery("INSERT OR IGNORE INTO tarifas (clave, valor) VALUES (?, ?)", ['entrega_margen_dias_min', '3']);
     await runQuery("INSERT OR IGNORE INTO tarifas (clave, valor) VALUES (?, ?)", ['entrega_margen_dias_max', '5']);
+    // 🆕 2026-05-23: categoría 'PENDIENTE CLASIFICAR' para máquinas auto-creadas
+    //   desde Embarques. Aparece en el dropdown de edición para que David la cambie
+    //   manualmente al tipo correcto cuando sepa qué tipo de máquina es.
+    await runQuery("INSERT OR IGNORE INTO catalogo_categorias (nombre, orden) VALUES (?, ?)", ['PENDIENTE CLASIFICAR', 9999]);
     const cols = ['rol', 'puesto', 'departamento', 'profesion'];
     for (const col of cols) {
       const found = await getAll(

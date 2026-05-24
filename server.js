@@ -1780,9 +1780,10 @@ async function findOrCreateMaquina({ modelo, numero_serie, cliente_id, categoria
   const cliFallback = await db.getOne('SELECT id FROM clientes ORDER BY id LIMIT 1');
   const cliId = cliente_id || (cliFallback && cliFallback.id) || 1;
   // Categoría distintiva para máquinas auto-creadas desde otras pestañas (Embarques, etc.)
-  // Evita que el backfill default 'Centro de Maquinado' la sobrescriba sin que David sepa
-  // de dónde vino. Si el caller pasa categoria explícita, esa gana.
-  const categoriaFinal = (categoria || '').trim() || 'Auto-importada (Embarque)';
+  // Usa 'PENDIENTE CLASIFICAR' (que existe en catalogo_categorias) para que aparezca
+  // seleccionada en el dropdown de edición y David pueda cambiarla cuando sepa qué tipo es.
+  // Si el caller pasa categoria explícita, esa gana.
+  const categoriaFinal = (categoria || '').trim() || 'PENDIENTE CLASIFICAR';
   await db.runQuery(
     `INSERT INTO maquinas (cliente_id, nombre, modelo, numero_serie, categoria, activo) VALUES (?, ?, ?, ?, ?, 1)`,
     [cliId, modeloLimpio, modeloLimpio, serieLimpia, categoriaFinal]
