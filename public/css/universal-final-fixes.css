@@ -1223,3 +1223,38 @@ html body table td [class*="btn-preview-"] i {
   height: auto !important;
   width: auto !important;
 }
+
+/* 🔥 FIX 2026-05-24 (v31) — CAUSA RAIZ encontrada:
+   premium-upgrade.css:270 aplica `overflow: hidden` a TODOS los .btn en
+   theme-industrial. Cuando el icono FontAwesome (.fa-eye) tiene su altura
+   natural (line-height ~1.4 = ~20px) dentro de un boton de 32px con padding,
+   el icono se desborda VERTICALMENTE y el overflow:hidden lo CORTA por la
+   mitad. Por eso el ojito "se mocha".
+   Solucion: overflow:visible + sin pseudo-elementos en botones de tabla. */
+html body.theme-industrial table td .btn,
+html body.theme-industrial table td.th-actions .btn,
+html body.theme-industrial table td [class*="btn-preview"],
+html body.theme-industrial table td [class*="btn-view"],
+html body.theme-industrial table td [class*="btn-edit"],
+html body.theme-industrial table td [class*="btn-del"],
+html body.theme-industrial table td [class*="btn-mant"],
+html body table td .btn,
+html body table td.th-actions .btn {
+  overflow: visible !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
+}
+/* Apagar el ripple ::after que vive dentro de overflow:hidden de los .btn
+   y que puede actuar como overlay al hover en algunos navegadores      */
+html body.theme-industrial table td .btn::after,
+html body.theme-industrial table td.th-actions .btn::after,
+html body table td .btn::after,
+html body table td.th-actions .btn::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+  opacity: 0 !important;
+  animation: none !important;
+}
