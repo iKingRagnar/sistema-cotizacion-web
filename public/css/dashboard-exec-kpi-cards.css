@@ -211,48 +211,72 @@
   color: #64748b !important;
 }
 
-/* Sobrescribir premium-pro que pinta todos los hijos del tile en modo Luna */
+/* 🌙 FIX 2026-05-24: KPI ejecutivos en modo LUNA — fondo NEGRO igual a los
+   KPI inferiores (no fondo claro). Petición directa de Luis: "que no esten
+   blancos y que los pongas de color negro como los kpi que stan abajo". */
 html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec,
 html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec[class*='dashboard-score-tile--'] {
-  background: linear-gradient(165deg, #fafbfc 0%, #f4f6f8 48%, #eef1f4 100%) !important;
-  background-color: #f5f7fa !important;
-  color: #0f172a !important;
-  border-color: rgba(15, 23, 42, 0.1) !important;
+  background: linear-gradient(165deg, #111827 0%, #0b1220 48%, #060a14 100%) !important;
+  background-color: #0b1220 !important;
+  color: #e5e7eb !important;
+  border-color: rgba(148, 163, 184, 0.18) !important;
+  box-shadow:
+    0 4px 18px rgba(0, 0, 0, 0.45),
+    0 1px 0 rgba(148, 163, 184, 0.08) inset !important;
 }
 
+/* Apagar el brillo dorado del ::after (era para fondo claro) */
+html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec::after {
+  background: radial-gradient(ellipse 115% 85% at 10% -8%, rgba(251, 191, 36, 0.06), transparent 55%) !important;
+}
+
+/* Texto: blancos/grises claros sobre fondo oscuro */
 html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-cat,
 html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-label,
 html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-meta {
-  color: #64748b !important;
+  color: #94a3b8 !important;
 }
 
 html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-value {
-  color: #0f172a !important;
+  color: #f8fafc !important;
 }
 
-/* Badges y pie: ganar a premium-pro `.dashboard-score-tile * { color }` */
+/* Hover: leve aclarado en lugar de blanco */
+html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec:hover {
+  border-color: rgba(148, 163, 184, 0.32) !important;
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.6),
+    0 1px 0 rgba(148, 163, 184, 0.12) inset !important;
+}
+
+/* Badges: colores intensos sobre fondo oscuro */
 html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-badge--crit {
-  color: #b91c1c !important;
+  color: #f87171 !important;
+  background: rgba(220, 38, 38, 0.15) !important;
 }
 html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-badge--ok {
-  color: #15803d !important;
+  color: #4ade80 !important;
+  background: rgba(22, 163, 74, 0.18) !important;
 }
 html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-badge--warn {
-  color: #b45309 !important;
+  color: #fbbf24 !important;
+  background: rgba(217, 119, 6, 0.18) !important;
 }
 html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-badge--neutral {
-  color: #475569 !important;
+  color: #cbd5e1 !important;
+  background: rgba(100, 116, 139, 0.18) !important;
 }
 
+/* Foot text (% respecto a meta, etc.) */
 html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-foot-text--crit {
-  color: #dc2626 !important;
+  color: #f87171 !important;
 }
 html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-foot-text--ok {
-  color: #16a34a !important;
+  color: #4ade80 !important;
 }
 html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-foot-text--warn {
-  color: #d97706 !important;
+  color: #fbbf24 !important;
 }
 html body.theme-industrial:not(.appearance-light) #panel-dashboards .dashboard-exec-scorecards .dashboard-score-tile.dashboard-score-tile--exec .dashboard-score-foot-text--neutral {
-  color: #64748b !important;
+  color: #cbd5e1 !important;
 }
