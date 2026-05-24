@@ -1380,3 +1380,222 @@ html body.theme-industrial.appearance-light .pvc-historial .muted {
   background: #f8fafc !important;
   border-radius: 6px !important;
 }
+
+/* ============================================================
+   🌞 FIX 2026-05-24 — Máquinas: TOOLBAR FLYER & FOTOS en modo SOL
+   La toolbar tenía background:#1a1f2e inline (oscuro). En claro
+   se ve mal y los thumbnails SINGLE/PAIR no contrastan.
+   ============================================================ */
+html body.appearance-light .maq-sticky-toolbar,
+html body.theme-industrial.appearance-light .maq-sticky-toolbar {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08) !important;
+}
+html body.appearance-light .maq-sticky-toolbar strong,
+html body.theme-industrial.appearance-light .maq-sticky-toolbar strong {
+  color: #475569 !important;
+}
+/* Inputs file dentro de la toolbar */
+html body.appearance-light .maq-sticky-toolbar input[type="file"],
+html body.theme-industrial.appearance-light .maq-sticky-toolbar input[type="file"] {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+}
+/* Sección de "Foto 1 / Foto 2" placeholders */
+html body.appearance-light .maq-sticky-toolbar > div,
+html body.theme-industrial.appearance-light .maq-sticky-toolbar > div {
+  color: #475569 !important;
+}
+/* Thumbnails SINGLE/PAIR (data-modo) */
+html body.appearance-light .maq-flyer-modo-mini[style*="background"],
+html body.theme-industrial.appearance-light .maq-flyer-modo-mini[style*="background"] {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+html body.appearance-light .maq-flyer-modo-mini[data-modo="single"][style*="border:2px solid #FFD200"],
+html body.appearance-light .maq-flyer-modo-mini[data-modo="pair"][style*="border:2px solid #FFD200"],
+html body.theme-industrial.appearance-light .maq-flyer-modo-mini[data-modo="single"][style*="border:2px solid #FFD200"],
+html body.theme-industrial.appearance-light .maq-flyer-modo-mini[data-modo="pair"][style*="border:2px solid #FFD200"] {
+  background: #fef9c3 !important;
+  border-color: #ca8a04 !important;
+}
+
+/* ============================================================
+   🌞 FIX 2026-05-24 — Embarques: AUTOCOMPLETE DROPDOWN en modo SOL
+   El dropdown tenía background:#0f172a inline (oscuro). En claro
+   debe ser blanco con borde dorado.
+   ============================================================ */
+html body.appearance-light #emb-nombre-dropdown,
+html body.theme-industrial.appearance-light #emb-nombre-dropdown {
+  background: #ffffff !important;
+  border: 1px solid #ca8a04 !important;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12) !important;
+  color: #0f172a !important;
+}
+html body.appearance-light #emb-nombre-dropdown *,
+html body.theme-industrial.appearance-light #emb-nombre-dropdown * {
+  color: #0f172a !important;
+}
+html body.appearance-light #emb-nombre-dropdown [style*="color:#FFD200"],
+html body.theme-industrial.appearance-light #emb-nombre-dropdown [style*="color:#FFD200"] {
+  color: #b45309 !important;
+}
+html body.appearance-light #emb-nombre-dropdown [style*="color:#cbd5e1"],
+html body.appearance-light #emb-nombre-dropdown [style*="color:#94a3b8"],
+html body.theme-industrial.appearance-light #emb-nombre-dropdown [style*="color:#cbd5e1"],
+html body.theme-industrial.appearance-light #emb-nombre-dropdown [style*="color:#94a3b8"] {
+  color: #64748b !important;
+}
+/* Hover item */
+html body.appearance-light #emb-nombre-dropdown > div:hover,
+html body.theme-industrial.appearance-light #emb-nombre-dropdown > div:hover {
+  background: #fef3c7 !important;
+}
+/* Badge ID 77 / "Se vinculará a máquina" — los pills */
+html body.appearance-light #emb-nombre-dropdown [style*="background"]:not(:hover),
+html body.theme-industrial.appearance-light #emb-nombre-dropdown [style*="background"]:not(:hover) {
+  background: #f1f5f9 !important;
+}
+
+/* ============================================================
+   🌞 FIX 2026-05-24 — Agenda: MODAL DE DÍA en modo SOL
+   El bloque .agenda-light-modal y sus tarjetas (Madrugada/Mañana/
+   Tarde/Noche + Mantenimientos) son oscuros. Override para claro.
+   ============================================================ */
+html body.appearance-light .agenda-light-modal,
+html body.theme-industrial.appearance-light .agenda-light-modal {
+  background: transparent !important;
+  color: #0f172a !important;
+}
+/* Header del día (negro con borde dorado) → claro */
+html body.appearance-light .agenda-light-modal .ag-dark-text,
+html body.theme-industrial.appearance-light .agenda-light-modal .ag-dark-text {
+  background: linear-gradient(90deg, #fef9c3 0%, #fef3c7 70%, #fde68a 100%) !important;
+  color: #78350f !important;
+  border: 2px solid #ca8a04 !important;
+}
+html body.appearance-light .agenda-light-modal .ag-dark-text strong,
+html body.theme-industrial.appearance-light .agenda-light-modal .ag-dark-text strong {
+  color: #78350f !important;
+}
+html body.appearance-light .agenda-light-modal .ag-pill-yellow,
+html body.theme-industrial.appearance-light .agenda-light-modal .ag-pill-yellow {
+  background: #ca8a04 !important;
+  color: #ffffff !important;
+}
+/* Slots Madrugada/Mañana/Tarde/Noche */
+html body.appearance-light .agenda-light-modal .agenda-slot-block,
+html body.theme-industrial.appearance-light .agenda-light-modal .agenda-slot-block {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+html body.appearance-light .agenda-light-modal .agenda-slot-head,
+html body.theme-industrial.appearance-light .agenda-light-modal .agenda-slot-head {
+  color: #1e3a5f !important;
+}
+html body.appearance-light .agenda-light-modal .agenda-slot-hora,
+html body.theme-industrial.appearance-light .agenda-light-modal .agenda-slot-hora {
+  color: #64748b !important;
+}
+html body.appearance-light .agenda-light-modal .agenda-slot-estado.libre,
+html body.theme-industrial.appearance-light .agenda-light-modal .agenda-slot-estado.libre {
+  background: #dcfce7 !important;
+  color: #15803d !important;
+  border: 1px solid #86efac !important;
+}
+html body.appearance-light .agenda-light-modal .agenda-slot-estado.ocupado,
+html body.theme-industrial.appearance-light .agenda-light-modal .agenda-slot-estado.ocupado {
+  background: #fee2e2 !important;
+  color: #b91c1c !important;
+  border: 1px solid #fca5a5 !important;
+}
+/* Sección "Mantenimientos programados" */
+html body.appearance-light .agenda-light-modal .ag-section-title,
+html body.theme-industrial.appearance-light .agenda-light-modal .ag-section-title {
+  color: #1e3a5f !important;
+  border-bottom: 2px solid #FFD200 !important;
+  padding-bottom: 4px !important;
+}
+html body.appearance-light .agenda-light-modal ul,
+html body.appearance-light .agenda-light-modal li,
+html body.theme-industrial.appearance-light .agenda-light-modal ul,
+html body.theme-industrial.appearance-light .agenda-light-modal li {
+  color: #0f172a !important;
+}
+/* Tarjetas de asignación */
+html body.appearance-light .agenda-light-modal .ag-asign-card,
+html body.theme-industrial.appearance-light .agenda-light-modal .ag-asign-card {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+html body.appearance-light .agenda-light-modal .ag-asign-summary,
+html body.theme-industrial.appearance-light .agenda-light-modal .ag-asign-summary {
+  background: #f1f5f9 !important;
+  color: #1e3a5f !important;
+  border-radius: 6px !important;
+  padding: 8px 12px !important;
+}
+html body.appearance-light .agenda-light-modal .ag-pill-dark,
+html body.theme-industrial.appearance-light .agenda-light-modal .ag-pill-dark {
+  background: #1e3a5f !important;
+  color: #ffffff !important;
+}
+html body.appearance-light .agenda-light-modal .ag-pill-warn,
+html body.theme-industrial.appearance-light .agenda-light-modal .ag-pill-warn {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  border: 1px solid #fbbf24 !important;
+}
+html body.appearance-light .agenda-light-modal .ag-pill-status,
+html body.theme-industrial.appearance-light .agenda-light-modal .ag-pill-status {
+  background: #e0e7ff !important;
+  color: #3730a3 !important;
+  padding: 1px 8px !important;
+  border-radius: 4px !important;
+  font-weight: 600 !important;
+}
+html body.appearance-light .agenda-light-modal .ag-box-desc,
+html body.appearance-light .agenda-light-modal .ag-box-notas,
+html body.theme-industrial.appearance-light .agenda-light-modal .ag-box-desc,
+html body.theme-industrial.appearance-light .agenda-light-modal .ag-box-notas {
+  background: #f8fafc !important;
+  color: #334155 !important;
+  border-left: 3px solid #ca8a04 !important;
+  padding: 8px 12px !important;
+  margin-top: 8px !important;
+  border-radius: 4px !important;
+}
+/* Slot info dentro del bloque */
+html body.appearance-light .agenda-light-modal .agenda-slot-info,
+html body.theme-industrial.appearance-light .agenda-light-modal .agenda-slot-info {
+  color: #475569 !important;
+  font-size: 0.78rem !important;
+}
+html body.appearance-light .agenda-light-modal .agenda-slot-info strong,
+html body.theme-industrial.appearance-light .agenda-light-modal .agenda-slot-info strong {
+  color: #1e3a5f !important;
+}
+/* Texto blanco inline del técnico en modo claro */
+html body.appearance-light .agenda-light-modal .agenda-slot-tecnico strong[style*="color:#ffffff"],
+html body.theme-industrial.appearance-light .agenda-light-modal .agenda-slot-tecnico strong[style*="color:#ffffff"] {
+  color: #1e3a5f !important;
+}
+html body.appearance-light .agenda-light-modal .agenda-slot-tecnico[style*="color:#ffffff"],
+html body.theme-industrial.appearance-light .agenda-light-modal .agenda-slot-tecnico[style*="color:#ffffff"] {
+  color: #0f172a !important;
+}
+html body.appearance-light .agenda-light-modal .agenda-libre-badge,
+html body.theme-industrial.appearance-light .agenda-light-modal .agenda-libre-badge {
+  background: #dcfce7 !important;
+  color: #15803d !important;
+  border: 1px solid #86efac !important;
+  padding: 2px 8px !important;
+  border-radius: 4px !important;
+  margin: 2px !important;
+  display: inline-block !important;
+  font-size: 0.75rem !important;
+}
