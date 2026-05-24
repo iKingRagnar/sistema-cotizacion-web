@@ -19904,17 +19904,58 @@ async function imprimirFlyer() {
   function installOjitoHoverGuard() {
     try {
       const SEL = 'td.th-actions .btn, td.th-actions [class*="btn-preview"], td.th-actions [class*="btn-view"], td.th-actions [class*="btn-edit"], td.th-actions [class*="btn-del"], td.th-actions [class*="btn-mant"]';
-      document.addEventListener('mouseover', (e) => {
-        const btn = e.target.closest && e.target.closest(SEL);
+      const lockBtn = (btn) => {
         if (!btn) return;
+        // Bloquea dimensiones e hijos al pasar el mouse — vence cualquier CSS legacy
         btn.style.setProperty('transform', 'none', 'important');
         btn.style.setProperty('-webkit-transform', 'none', 'important');
+        btn.style.setProperty('scale', 'none', 'important');
+        btn.style.setProperty('width', '32px', 'important');
+        btn.style.setProperty('height', '32px', 'important');
+        btn.style.setProperty('min-width', '32px', 'important');
+        btn.style.setProperty('min-height', '32px', 'important');
+        btn.style.setProperty('max-width', '32px', 'important');
+        btn.style.setProperty('max-height', '32px', 'important');
+        btn.style.setProperty('padding', '0', 'important');
+        btn.style.setProperty('line-height', '1', 'important');
+        btn.style.setProperty('overflow', 'visible', 'important');
+        btn.style.setProperty('display', 'inline-flex', 'important');
+        btn.style.setProperty('align-items', 'center', 'important');
+        btn.style.setProperty('justify-content', 'center', 'important');
+        btn.style.setProperty('box-sizing', 'border-box', 'important');
+        btn.style.setProperty('clip-path', 'none', 'important');
+        btn.style.setProperty('-webkit-clip-path', 'none', 'important');
+        btn.style.setProperty('mask-image', 'none', 'important');
         const i = btn.querySelector('i');
         if (i) {
           i.style.setProperty('transform', 'none', 'important');
           i.style.setProperty('-webkit-transform', 'none', 'important');
+          i.style.setProperty('scale', 'none', 'important');
+          i.style.setProperty('font-size', '14px', 'important');
+          i.style.setProperty('line-height', '1', 'important');
+          i.style.setProperty('width', 'auto', 'important');
+          i.style.setProperty('height', 'auto', 'important');
+          i.style.setProperty('overflow', 'visible', 'important');
         }
+      };
+      // mouseover + mouseout en capture phase para no perdernos eventos
+      document.addEventListener('mouseover', (e) => {
+        const btn = e.target.closest && e.target.closest(SEL);
+        if (btn) lockBtn(btn);
       }, true);
+      document.addEventListener('mouseout', (e) => {
+        const btn = e.target.closest && e.target.closest(SEL);
+        if (btn) lockBtn(btn);
+      }, true);
+      // Pre-lock cualquier botón que ya esté pintado
+      try { document.querySelectorAll(SEL).forEach(lockBtn); } catch (_) {}
+      // Re-lock cuando aparezcan nuevos botones (tablas que se repinten)
+      try {
+        const mo = new MutationObserver(() => {
+          document.querySelectorAll(SEL).forEach(lockBtn);
+        });
+        mo.observe(document.body, { childList: true, subtree: true });
+      } catch (_) {}
     } catch (_) {}
   }
   if (document.readyState === 'loading') {
