@@ -1248,22 +1248,23 @@ app.get('/api/clientes/:id', async (req, res) => {
         const cliId = Number(row.id);
         const razonSocial = row.razon_social || row.nombre || '';
         // Cotizaciones (últimas 20, todas las estados)
+        // NOTA: la tabla cotizaciones SOLO tiene cliente_id (no razon_social) en Postgres
         pub.historial_cotizaciones = await db.getAll(
           `SELECT id, folio, fecha, estado, total, moneda, tipo, vendedor_nombre
            FROM cotizaciones
-           WHERE cliente_id=? OR razon_social=?
+           WHERE cliente_id=?
            ORDER BY fecha DESC, id DESC
            LIMIT 20`,
-          [cliId, razonSocial]
+          [cliId]
         );
         // Ventas (cotizaciones aplicadas)
         pub.historial_ventas = await db.getAll(
           `SELECT id, folio, fecha, fecha_aprobacion, total, moneda, tipo, vendedor_nombre
            FROM cotizaciones
-           WHERE (cliente_id=? OR razon_social=?) AND estado IN ('aplicada','venta')
+           WHERE cliente_id=? AND estado IN ('aplicada','venta')
            ORDER BY fecha_aprobacion DESC, id DESC
            LIMIT 20`,
-          [cliId, razonSocial]
+          [cliId]
         );
         // Reportes (últimos 20)
         pub.historial_reportes = await db.getAll(
@@ -1288,10 +1289,10 @@ app.get('/api/clientes/:id', async (req, res) => {
            FROM maquinas m
            JOIN cotizacion_lineas cl ON cl.maquina_id = m.id
            JOIN cotizaciones c ON c.id = cl.cotizacion_id
-           WHERE (c.cliente_id=? OR c.razon_social=?) AND c.estado IN ('aplicada','venta')
+           WHERE c.cliente_id=? AND c.estado IN ('aplicada','venta')
            ORDER BY m.id DESC
            LIMIT 50`,
-          [cliId, razonSocial]
+          [cliId]
         ).catch(() => []);
         // Totales rápidos
         const totMxn = (pub.historial_ventas || []).filter(v => v.moneda === 'MXN').reduce((s, v) => s + (Number(v.total) || 0), 0);
@@ -1306,7 +1307,7 @@ app.get('/api/clientes/:id', async (req, res) => {
           total_ventas_usd: totUsd,
         };
       } catch (e) {
-        console.warn('[historial-cliente]', e && e.message);
+        console.error('[historial-cliente] ERROR:', e && e.message, e && e.stack);
         pub.historial_error = String(e && e.message || e);
       }
     }
