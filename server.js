@@ -1248,9 +1248,10 @@ app.get('/api/clientes/:id', async (req, res) => {
         const cliId = Number(row.id);
         const razonSocial = row.razon_social || row.nombre || '';
         // Cotizaciones (últimas 20, todas las estados)
-        // NOTA: la tabla cotizaciones SOLO tiene cliente_id (no razon_social) en Postgres
+        // NOTA: la tabla cotizaciones SOLO tiene cliente_id (no razon_social) y
+        // la columna del vendedor se llama `vendedor` (no vendedor_nombre) en Postgres.
         pub.historial_cotizaciones = await db.getAll(
-          `SELECT id, folio, fecha, estado, total, moneda, tipo, vendedor_nombre
+          `SELECT id, folio, fecha, estado, total, moneda, tipo, vendedor AS vendedor_nombre
            FROM cotizaciones
            WHERE cliente_id=?
            ORDER BY fecha DESC, id DESC
@@ -1259,7 +1260,7 @@ app.get('/api/clientes/:id', async (req, res) => {
         );
         // Ventas (cotizaciones aplicadas)
         pub.historial_ventas = await db.getAll(
-          `SELECT id, folio, fecha, fecha_aprobacion, total, moneda, tipo, vendedor_nombre
+          `SELECT id, folio, fecha, fecha_aprobacion, total, moneda, tipo, vendedor AS vendedor_nombre
            FROM cotizaciones
            WHERE cliente_id=? AND estado IN ('aplicada','venta')
            ORDER BY fecha_aprobacion DESC, id DESC
@@ -1267,14 +1268,15 @@ app.get('/api/clientes/:id', async (req, res) => {
           [cliId]
         );
         // Reportes (últimos 20)
+        // NOTA: la tabla reportes usa `estatus` (no estado) y `numero_maquina` (no modelo_maquina)
         pub.historial_reportes = await db.getAll(
-          `SELECT id, folio, fecha_programada, estado, tecnico, modelo_maquina, finalizado
+          `SELECT id, folio, fecha_programada, estatus AS estado, tecnico, numero_maquina AS modelo_maquina, finalizado
            FROM reportes
            WHERE cliente_id=? OR razon_social=?
            ORDER BY fecha_programada DESC, id DESC
            LIMIT 20`,
           [cliId, razonSocial]
-        ).catch(() => []);
+        ).catch((e) => { console.error('[historial-reportes]', e.message); return []; });
         // Garantías activas
         pub.historial_garantias = await db.getAll(
           `SELECT id, modelo_maquina, numero_serie, tipo_maquina, fecha_entrega, activa
