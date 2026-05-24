@@ -1120,3 +1120,41 @@ html body .cot-row-vistas-aplicadas #cot-incluir-aplicadas-bar {
 html body .cot-row-vistas-aplicadas .mega-saved-views {
   margin: 0 !important;
 }
+
+/* ====================================================================
+   FIX 2026-05-24: botones de acción en tabla NO se recortan al hover
+   ('mochado' visual). Asegurar overflow visible en celda + sin transform
+   que saque el botón del bounding box. Mantener fondo amarillo en hover.
+   ==================================================================== */
+html body table.data-table td.th-actions,
+html body table.data-table td.ref-td-actions,
+html body table td.th-actions {
+  overflow: visible !important;
+  white-space: nowrap !important;
+  position: static !important;
+}
+html body table.data-table td.th-actions .row-actions-inline,
+html body table td .row-actions-inline {
+  display: inline-flex !important;
+  gap: 4px !important;
+  flex-wrap: nowrap !important;
+  overflow: visible !important;
+  position: static !important;
+}
+/* Hover de los botones acción: sin transform que los saque, solo brightness y sombra */
+html body table td .row-actions-inline .btn.small:hover,
+html body table td .btn.small.outline:hover,
+html body table td .btn.small.primary:hover,
+html body table td .btn.small.danger:hover {
+  transform: none !important;
+  filter: brightness(1.08) !important;
+  position: relative !important;
+  z-index: 2 !important;
+  outline: none !important;
+}
+/* Quitar cualquier mask/clip-path heredado de hover en buttons de tabla */
+html body table td .btn.small {
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
+  mask-image: none !important;
+}
