@@ -3664,6 +3664,55 @@
   function enrichBitacorasForExport(data) {
     return (data || []).map(b => ({ ...b, estado_registro: getEstadoRegistroSemaphore(b).label }));
   }
+  /**
+   * 🆕 2026-05-24 — Reporte formal en PDF imprimible.
+   * Abre table-report.html en pestaña nueva con layout UNIVERSAL elegante.
+   * Datos pasados vía sessionStorage (no se rompe con tamaño grande).
+   *
+   * opts: {
+   *   title: 'Catálogo de clientes',
+   *   docTipo: 'Reporte tabular',
+   *   data: [],
+   *   tableId: 'tabla-clientes',
+   *   summary: [{label, value}, ...] (opcional),
+   *   autoprint: false (opcional, true para imprimir directo),
+   * }
+   */
+  function openFormalReport(opts) {
+    try {
+      const data = opts.data || [];
+      const tableId = opts.tableId;
+      if (!data.length) { showToast('No hay datos para el reporte.', 'error'); return; }
+      const { keys, headers } = getTableKeysAndHeaders(tableId);
+      const colTypes = keys.map(k => /total|precio|monto|stock|cant/i.test(k) ? 'num' : 'text');
+      const rows = data.map(row => keys.map(k => {
+        const v = row[k];
+        if (v == null || v === '') return '';
+        return String(v).trim();
+      }));
+      const cfg = {
+        title: opts.title || 'Reporte',
+        docTipo: opts.docTipo || 'Reporte tabular',
+        periodo: opts.periodo || new Date().toLocaleString('es-MX', { month: 'long', year: 'numeric' }),
+        headers,
+        rows,
+        colTypes,
+        summary: opts.summary || [],
+        autoprint: !!opts.autoprint,
+        brand: opts.brand || { title: 'UNIVERSAL Maquinaria', sub: 'Servicio Técnico · Inteligencia Operativa', logoText: 'U' },
+      };
+      const key = 'report-data-' + Date.now();
+      sessionStorage.setItem(key, JSON.stringify(cfg));
+      window.open('/table-report.html?key=' + encodeURIComponent(key), '_blank');
+      // Cleanup después de 1 min (el reader ya lo cargó)
+      setTimeout(() => { try { sessionStorage.removeItem(key); } catch (_) {} }, 60000);
+    } catch (e) {
+      console.error('[openFormalReport]', e);
+      showToast('No se pudo generar el reporte.', 'error');
+    }
+  }
+  window.openFormalReport = openFormalReport;
+
   function exportToCsv(data, tableId, filenameLabel) {
     const tbl = qs('#' + tableId);
     if (!tbl || !data || !data.length) { showToast('No hay datos para exportar.', 'error'); return; }
@@ -17911,7 +17960,24 @@ async function imprimirFlyer() {
     if (q) d = d.filter(r => [r.codigo, r.descripcion, r.categoria, r.subcategoria, r.zona].some(v => normalizeForSearch(v).includes(normalizeForSearch(q))));
     return d;
   }
-  qs('#export-clientes').addEventListener('click', () => exportToCsv(getFilteredClientes(), 'tabla-clientes', 'clientes'));
+  // 🆕 2026-05-24 — El botón "CSV" ahora abre el REPORTE FORMAL en PDF (más útil
+  // que CSV crudo para enviar a David). El botón Excel sigue dando .xlsx para Excel.
+  qs('#export-clientes').addEventListener('click', () => {
+    const data = getFilteredClientes();
+    const ciudades = new Set(data.map(c => c.ciudad).filter(Boolean));
+    openFormalReport({
+      title: 'Catálogo de Clientes',
+      docTipo: 'Reporte de clientes',
+      data,
+      tableId: 'tabla-clientes',
+      summary: [
+        { label: 'Total clientes', value: data.length },
+        { label: 'Con RFC', value: data.filter(c => c.rfc).length },
+        { label: 'Con correo', value: data.filter(c => c.email).length },
+        { label: 'Ciudades', value: ciudades.size },
+      ],
+    });
+  });
   qs('#export-excel-clientes').addEventListener('click', () => exportToExcel(getFilteredClientes(), 'tabla-clientes', 'clientes'));
   qs('#export-refacciones').addEventListener('click', () => exportToCsv(getFilteredRefacciones(), 'tabla-refacciones', 'refacciones'));
   qs('#export-excel-refacciones').addEventListener('click', () => exportToExcel(getFilteredRefacciones(), 'tabla-refacciones', 'refacciones'));
