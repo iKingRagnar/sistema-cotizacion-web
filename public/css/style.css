@@ -7610,8 +7610,11 @@ input:focus, select:focus, textarea:focus {
 [class^="btn-preview-"] {
   transition: transform 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
 }
+/* FIX 2026-05-24: scale(1.15) translateY(-2px) hacia que el ojito se saliera
+   del row y se recortara a la mitad en Garantias/Bonos/Bitacora/Viajes.
+   Mantenemos solo color + sombra, SIN transform. */
 [class^="btn-preview-"]:hover {
-  transform: scale(1.15) translateY(-2px);
+  transform: none;
   color: var(--config-accent, #0d9488);
   box-shadow: 0 4px 12px rgba(13,148,136,0.3);
 }

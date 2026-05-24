@@ -7405,7 +7405,7 @@ body table.data-table .row-actions-inline [class*="btn-preview"] {
 body.md3-on table.data-table .row-actions-inline .btn-preview-ref:hover,
 body table.data-table .row-actions-inline .btn-preview-ref:hover {
   background: #dbeafe !important;
-  transform: translateY(-1px) !important;
+  /* transform removido 2026-05-24: causaba "mocha" del ojito al hover */
 }
 
 body.md3-on table.data-table .row-actions-inline .btn-edit-ref,
@@ -7538,7 +7538,7 @@ body table.data-table td.th-actions > [class*="btn-preview"]:hover,
 body.md3-on table.data-table td.th-actions > [class*="btn-view"]:hover,
 body table.data-table td.th-actions > [class*="btn-view"]:hover {
   background: #dbeafe !important;
-  transform: translateY(-1px) !important;
+  /* transform removido 2026-05-24: causaba "mocha" del ojito en Garantias */
 }
 
 body.md3-on table.data-table td.th-actions > [class*="btn-edit"],

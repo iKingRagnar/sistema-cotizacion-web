@@ -19897,5 +19897,31 @@ async function imprimirFlyer() {
     runEarlyMobileShellSync();
   }
 
+  // 🛡️ FIX 2026-05-24 — Guard JS contra "mocha" del ojito en td.th-actions.
+  // Algunos CSS legacy aplican transform: scale/translateY :hover. Aquí
+  // forzamos style inline con priority=important al pasar el mouse, vence
+  // a cualquier !important de CSS porque inline style con priority gana.
+  function installOjitoHoverGuard() {
+    try {
+      const SEL = 'td.th-actions .btn, td.th-actions [class*="btn-preview"], td.th-actions [class*="btn-view"], td.th-actions [class*="btn-edit"], td.th-actions [class*="btn-del"], td.th-actions [class*="btn-mant"]';
+      document.addEventListener('mouseover', (e) => {
+        const btn = e.target.closest && e.target.closest(SEL);
+        if (!btn) return;
+        btn.style.setProperty('transform', 'none', 'important');
+        btn.style.setProperty('-webkit-transform', 'none', 'important');
+        const i = btn.querySelector('i');
+        if (i) {
+          i.style.setProperty('transform', 'none', 'important');
+          i.style.setProperty('-webkit-transform', 'none', 'important');
+        }
+      }, true);
+    } catch (_) {}
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', installOjitoHoverGuard, { once: true });
+  } else {
+    installOjitoHoverGuard();
+  }
+
   boot();
 })();
