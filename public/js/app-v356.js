@@ -17784,8 +17784,10 @@ async function imprimirFlyer() {
   if (dashboardGoBackups) dashboardGoBackups.addEventListener('click', () => showPanel('demo'));
   const dashboardGoExecutivePdf = qs('#dashboard-go-executive-pdf');
   if (dashboardGoExecutivePdf) dashboardGoExecutivePdf.addEventListener('click', () => window.open('/dashboard-pdf.html', '_blank'));
+  // 🆕 2026-05-24: Imprimir/PDF también abre el reporte ejecutivo elegante (con auto-print)
+  // en lugar de imprimir el dashboard tal cual (que era ilegible).
   const btnPrintPdf = qs('#btn-print-pdf');
-  if (btnPrintPdf) btnPrintPdf.addEventListener('click', () => window.print());
+  if (btnPrintPdf) btnPrintPdf.addEventListener('click', () => window.open('/dashboard-pdf.html?autoprint=1', '_blank'));
   const branchSel = qs('#global-branch-filter');
   if (branchSel) {
     try { globalBranchFilter = localStorage.getItem('global-branch-filter') || ''; } catch (_) {}

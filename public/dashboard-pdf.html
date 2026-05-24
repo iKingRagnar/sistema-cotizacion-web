@@ -3,140 +3,388 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Reporte Ejecutivo - Gestor Administrativo</title>
+  <title>Reporte Ejecutivo · UNIVERSAL Maquinaria</title>
   <style>
-    :root { --p:#1e3a5f; --a:#0d9488; }
-    html { cursor: default; }
-    body { font-family: "Segoe UI", Arial, sans-serif; margin: 0; color: #0f172a; background: #f8fafc; cursor: default; }
-    .container { max-width: 1060px; margin: 0 auto; padding: 24px; }
-    .cover {
-      border-radius: 16px;
-      overflow: hidden;
-      color: #fff;
-      background: linear-gradient(135deg, var(--p), #1d4ed8 60%, var(--a));
-      box-shadow: 0 14px 42px rgba(15, 23, 42, 0.24);
-      margin-bottom: 16px;
+    :root {
+      --p: #1e3a5f;
+      --a: #FFD200;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --bg: #f5f7fa;
+      --ok: #16a34a;
+      --warn: #d97706;
+      --crit: #dc2626;
     }
-    .cover-inner { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 20px; }
-    .brand { display: flex; align-items: center; gap: 12px; }
-    .brand img { width: 48px; height: 48px; border-radius: 10px; background: rgba(255,255,255,0.2); padding: 4px; }
-    h1 { margin: 0 0 6px; font-size: 28px; }
-    .subtitle { margin: 0; opacity: 0.9; font-size: 14px; }
-    .meta-box { background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.35); border-radius: 12px; padding: 10px 12px; font-size: 13px; min-width: 230px; }
-    .no-print { margin-bottom: 12px; border: none; border-radius: 10px; background: #0f172a; color: #fff; padding: 9px 14px; cursor: pointer; }
-    .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-    .card { border: 1px solid #dbeafe; border-radius: 12px; padding: 14px; background: linear-gradient(135deg, #eff6ff, #ffffff); }
-    .card h3 { margin: 0 0 6px; font-size: 12px; color: #1d4ed8; text-transform: uppercase; letter-spacing: .05em; }
-    .value { font-size: 24px; font-weight: 700; color: #0f172a; }
-    .section { margin-top: 16px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; padding: 12px; }
-    .section h2 { font-size: 16px; margin: 0 0 8px; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid #e2e8f0; padding: 8px; font-size: 12px; text-align: left; }
-    th { background: #f8fafc; }
-    .notes { margin-top: 10px; color: #475569; font-size: 12px; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", "Inter", Arial, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .toolbar {
+      position: sticky; top: 0; z-index: 10;
+      background: #0f172a; color: #fff;
+      padding: 10px 18px;
+      display: flex; justify-content: space-between; align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .toolbar button {
+      background: var(--a); color: #0f172a;
+      border: none; border-radius: 6px;
+      padding: 8px 16px; font-weight: 700; cursor: pointer;
+      font-size: 13px;
+    }
+    .toolbar button.secondary {
+      background: transparent; color: #fff;
+      border: 1px solid #475569;
+    }
+    .page {
+      max-width: 210mm; margin: 18px auto;
+      background: #fff;
+      padding: 14mm 14mm 12mm;
+      box-shadow: 0 6px 24px rgba(15,23,42,0.10);
+      border-radius: 6px;
+    }
+    /* HEADER */
+    .header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      padding-bottom: 14px; margin-bottom: 18px;
+      border-bottom: 3px solid var(--p);
+    }
+    .brand h1 { margin: 0; font-size: 22px; color: var(--p); letter-spacing: 0.3px; }
+    .brand .sub { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+    .doc-meta { text-align: right; font-size: 11px; color: var(--muted); }
+    .doc-meta .label { color: var(--ink); font-weight: 600; }
+    /* SECTION TITLE */
+    h2.section-title {
+      font-size: 14px; color: var(--p);
+      margin: 22px 0 10px;
+      padding-bottom: 4px;
+      border-bottom: 1.5px solid var(--a);
+      letter-spacing: 0.4px; text-transform: uppercase;
+    }
+    /* KPI CARDS */
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .kpi {
+      border: 1px solid var(--line); border-radius: 8px;
+      padding: 12px;
+      background: linear-gradient(135deg, #fff, #f8fafc);
+    }
+    .kpi .k-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+    .kpi .k-value { font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 4px; }
+    .kpi .k-trend { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .kpi.ok { border-left: 4px solid var(--ok); }
+    .kpi.warn { border-left: 4px solid var(--warn); }
+    .kpi.crit { border-left: 4px solid var(--crit); }
+    /* TABLES */
+    table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    thead th {
+      background: var(--p); color: #fff;
+      padding: 6px 8px; text-align: left;
+      font-weight: 600; letter-spacing: 0.2px;
+    }
+    tbody td {
+      padding: 5px 8px; border-bottom: 1px solid var(--line);
+      color: var(--ink);
+    }
+    tbody tr:nth-child(even) td { background: #f8fafc; }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    /* BADGES */
+    .badge { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+    .badge.ok { background: #dcfce7; color: #15803d; }
+    .badge.warn { background: #fef3c7; color: #b45309; }
+    .badge.crit { background: #fee2e2; color: #b91c1c; }
+    /* TWO COLS */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    /* FOOTER */
+    .footer {
+      margin-top: 24px; padding-top: 10px;
+      border-top: 1px solid var(--line);
+      display: flex; justify-content: space-between;
+      font-size: 10px; color: var(--muted);
+    }
+    .footer .powered { font-style: italic; }
+    /* ESTADOS */
+    .empty { color: var(--muted); font-style: italic; padding: 8px; font-size: 11px; }
+    .error-box {
+      background: #fef3c7; border: 1px solid #fbbf24;
+      border-radius: 6px; padding: 10px;
+      color: #92400e; font-size: 11.5px; margin-bottom: 14px;
+    }
+    .loading { color: var(--muted); font-style: italic; padding: 14px; text-align: center; }
+    /* PRINT */
     @media print {
-      .no-print { display: none; }
       body { background: #fff; }
-      .container { padding: 0; max-width: none; }
-      .cover { box-shadow: none; margin-bottom: 10mm; }
-      .section { break-inside: avoid; }
+      .toolbar { display: none; }
+      .page { box-shadow: none; margin: 0; max-width: none; padding: 12mm 14mm; border-radius: 0; }
+      h2.section-title { break-after: avoid; page-break-after: avoid; }
+      table { break-inside: auto; page-break-inside: auto; }
+      tr { break-inside: avoid; page-break-inside: avoid; }
     }
+    @page { size: A4 portrait; margin: 8mm; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <button class="no-print" onclick="window.print()">Imprimir / Guardar PDF</button>
-    <section class="cover">
-      <div class="cover-inner">
-        <div class="brand">
-          <img id="cover-logo" src="/favicon.svg" alt="Logo">
-          <div>
-            <h1 id="cover-title">Gestor Administrativo</h1>
-            <p class="subtitle" id="cover-tagline">Reporte ejecutivo para dirección general</p>
-          </div>
-        </div>
-        <div class="meta-box">
-          <div><strong>Documento:</strong> Resumen ejecutivo</div>
-          <div id="updated-at"><strong>Actualizado:</strong> Cargando...</div>
-        </div>
-      </div>
-    </section>
-    <div class="grid" id="kpi-grid"></div>
-    <div class="section">
-      <h2>Desglose por módulo</h2>
-      <table>
-        <thead><tr><th>Módulo</th><th>Registros</th><th>Participación</th></tr></thead>
-        <tbody id="rows"></tbody>
-      </table>
-      <p class="notes" id="report-notes"></p>
+  <div class="toolbar">
+    <span><strong>Reporte Ejecutivo</strong> · UNIVERSAL Maquinaria</span>
+    <div>
+      <button class="secondary" onclick="window.close()">Cerrar</button>
+      <button onclick="window.print()">📄 Imprimir / Guardar PDF</button>
     </div>
   </div>
+
+  <div class="page" id="page">
+    <div class="loading" id="loading">Cargando datos ejecutivos…</div>
+    <div id="content" style="display:none;">
+
+      <!-- HEADER -->
+      <header class="header">
+        <div class="brand">
+          <h1 id="brand-title">UNIVERSAL Maquinaria</h1>
+          <p class="sub" id="brand-sub">Servicio Técnico · Inteligencia Operativa</p>
+        </div>
+        <div class="doc-meta">
+          <div><span class="label">Documento:</span> Reporte Ejecutivo</div>
+          <div><span class="label">Periodo:</span> <span id="periodo">—</span></div>
+          <div><span class="label">Generado:</span> <span id="generated">—</span></div>
+        </div>
+      </header>
+
+      <!-- 1. RESUMEN -->
+      <h2 class="section-title">1. Resumen del periodo</h2>
+      <div class="kpis" id="kpis-main"></div>
+
+      <!-- 2. VENTAS / CARTERA -->
+      <h2 class="section-title">2. Ventas y cartera</h2>
+      <div class="two-col">
+        <div>
+          <table>
+            <thead><tr><th>Indicador</th><th class="num">Valor</th></tr></thead>
+            <tbody id="ventas-tbl"></tbody>
+          </table>
+        </div>
+        <div>
+          <table>
+            <thead><tr><th>Top 5 clientes (monto)</th><th class="num">Total</th></tr></thead>
+            <tbody id="top-clientes"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 3. OPERACIÓN -->
+      <h2 class="section-title">3. Operación · Servicio técnico</h2>
+      <div class="two-col">
+        <div>
+          <table>
+            <thead><tr><th>Concepto</th><th class="num">Cantidad</th></tr></thead>
+            <tbody id="oper-tbl"></tbody>
+          </table>
+        </div>
+        <div>
+          <table>
+            <thead><tr><th>Garantías activas</th><th class="num">Estado</th></tr></thead>
+            <tbody id="garantias-tbl"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 4. CATALOGO -->
+      <h2 class="section-title">4. Catálogo</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Módulo</th>
+            <th class="num">Registros</th>
+            <th class="num">Activos</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="catalogo-tbl"></tbody>
+      </table>
+
+      <!-- 5. HALLAZGOS -->
+      <h2 class="section-title">5. Hallazgos y notas</h2>
+      <ul id="hallazgos" style="margin:6px 0; padding-left:20px; font-size:11.5px; line-height:1.6;"></ul>
+
+      <!-- FOOTER -->
+      <footer class="footer">
+        <div>Sistema de Servicio Técnico · UNIVERSAL Maquinaria</div>
+        <div class="powered">powered by Ing. David Cantú</div>
+      </footer>
+
+    </div>
+  </div>
+
   <script>
     const API = '/api';
-    function fmtMoney(n){ return (Number(n)||0).toLocaleString('es-MX',{style:'currency',currency:'MXN'}); }
-    function fmtPct(n){ return (Number(n)||0).toLocaleString('es-MX',{maximumFractionDigits:1}) + '%'; }
-    function authHeaders() {
+    const fmtMXN = n => (Number(n)||0).toLocaleString('es-MX', { style:'currency', currency:'MXN', maximumFractionDigits: 0 });
+    const fmtNum = n => (Number(n)||0).toLocaleString('es-MX');
+    const fmtDate = d => new Date(d).toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' });
+
+    // 🛡️ fetch con cookies de sesión + tolerante a errores
+    async function safeJson(url) {
       try {
-        const token = localStorage.getItem('auth-token');
-        if (token) return { Authorization: 'Bearer ' + token };
-      } catch (_) {}
-      return {};
+        const r = await fetch(url, { credentials: 'include' });
+        if (!r.ok) {
+          console.warn('[reporte]', url, 'HTTP', r.status);
+          return null;
+        }
+        return await r.json();
+      } catch (e) {
+        console.warn('[reporte]', url, 'fail', e.message);
+        return null;
+      }
     }
-    function getJson(url) {
-      return fetch(url, { headers: authHeaders() }).then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      });
+
+    function el(id) { return document.getElementById(id); }
+    function row(label, value, cls = '') {
+      return `<tr><td>${label}</td><td class="num ${cls}">${value}</td></tr>`;
     }
-    async function loadConfig() {
-      try {
-        const c = await getJson(API + '/config');
-        if (c.primaryHex) document.documentElement.style.setProperty('--p', c.primaryHex);
-        if (c.accentHex) document.documentElement.style.setProperty('--a', c.accentHex);
-        if (c.logoUrl) document.getElementById('cover-logo').src = c.logoUrl;
-        document.getElementById('cover-title').textContent = c.shortName || c.appName || 'Gestor Administrativo';
-        if (c.tagline) document.getElementById('cover-tagline').textContent = c.tagline;
-      } catch (_) {}
+    function kpi(label, value, trend, kind) {
+      return `<div class="kpi ${kind||''}"><div class="k-label">${label}</div><div class="k-value">${value}</div>${trend ? `<div class="k-trend">${trend}</div>` : ''}</div>`;
     }
+
     (async function run(){
       try {
-        await loadConfig();
-        const [clientes, refacciones, maquinas, cotizaciones, incidentes, bitacoras] = await Promise.all([
-          getJson(API + '/clientes'),
-          getJson(API + '/refacciones'),
-          getJson(API + '/maquinas'),
-          getJson(API + '/cotizaciones'),
-          getJson(API + '/incidentes'),
-          getJson(API + '/bitacoras')
+        // Carga TODO en paralelo pero cada uno protegido
+        const [config, clientes, refacciones, maquinas, cotizaciones, garantias, reportes] = await Promise.all([
+          safeJson(API + '/config'),
+          safeJson(API + '/clientes'),
+          safeJson(API + '/refacciones'),
+          safeJson(API + '/maquinas'),
+          safeJson(API + '/cotizaciones'),
+          safeJson(API + '/garantias'),
+          safeJson(API + '/reportes'),
         ]);
-        const montoCot = (cotizaciones || []).reduce((s,c)=>s + (Number(c.total)||0), 0);
-        const horas = (bitacoras || []).reduce((s,b)=>s + (Number(b.tiempo_horas)||0), 0);
-        document.getElementById('updated-at').innerHTML = '<strong>Actualizado:</strong> ' + new Date().toLocaleString('es-MX');
-        document.getElementById('kpi-grid').innerHTML = [
-          ['Clientes', (clientes || []).length],
-          ['Máquinas', (maquinas || []).length],
-          ['Incidentes', (incidentes || []).length],
-          ['Cotizaciones', (cotizaciones || []).length],
-          ['Monto cotizado', fmtMoney(montoCot)],
-          ['Horas registradas', horas.toFixed(1)]
-        ].map(([k,v]) => `<div class="card"><h3>${k}</h3><div class="value">${v}</div></div>`).join('');
-        const modules = [
-          ['Clientes', (clientes || []).length],
-          ['Refacciones', (refacciones || []).length],
-          ['Máquinas', (maquinas || []).length],
-          ['Cotizaciones', (cotizaciones || []).length],
-          ['Incidentes', (incidentes || []).length],
-          ['Bitácoras', (bitacoras || []).length]
+
+        // Branding
+        if (config) {
+          if (config.shortName || config.appName) el('brand-title').textContent = config.shortName || config.appName;
+          if (config.tagline) el('brand-sub').textContent = config.tagline;
+        }
+
+        // Periodo / generado
+        const hoy = new Date();
+        const mesActual = hoy.toLocaleString('es-MX', { month:'long', year:'numeric' });
+        el('periodo').textContent = mesActual.charAt(0).toUpperCase() + mesActual.slice(1);
+        el('generated').textContent = hoy.toLocaleString('es-MX');
+
+        const cli = clientes || [];
+        const ref = refacciones || [];
+        const maq = maquinas || [];
+        const cot = cotizaciones || [];
+        const gar = garantias || [];
+        const rep = reportes || [];
+
+        // Filtrar este mes
+        const ym = hoy.toISOString().slice(0, 7);
+        const cotMes = cot.filter(c => (c.fecha||'').slice(0,7) === ym);
+        const cotAplicadas = cot.filter(c => ['aplicada','venta'].includes(c.estado));
+        const montoMes = cotMes.reduce((s,c) => s + (Number(c.total)||0), 0);
+        const montoTotal = cot.reduce((s,c) => s + (Number(c.total)||0), 0);
+        const montoVendido = cotAplicadas.reduce((s,c) => s + (Number(c.total)||0), 0);
+
+        // 1. KPIs
+        el('kpis-main').innerHTML = [
+          kpi('Cotizaciones (mes)', fmtNum(cotMes.length), `${fmtNum(cot.length)} totales`, cotMes.length > 0 ? 'ok' : 'warn'),
+          kpi('Monto del mes', fmtMXN(montoMes), `Pipeline: ${fmtMXN(montoTotal)}`, 'ok'),
+          kpi('Ventas aplicadas', fmtNum(cotAplicadas.length), fmtMXN(montoVendido) + ' confirmado', 'ok'),
+          kpi('Clientes activos', fmtNum(cli.length), `${fmtNum(maq.length)} máquinas registradas`, 'ok'),
+        ].join('');
+
+        // 2. Ventas
+        const ventasRows = [
+          row('Cotizaciones totales', fmtNum(cot.length)),
+          row('Cotizaciones del mes', fmtNum(cotMes.length)),
+          row('Aplicadas (venta)', fmtNum(cotAplicadas.length)),
+          row('Monto del mes', fmtMXN(montoMes)),
+          row('Monto vendido acumulado', fmtMXN(montoVendido)),
+          row('Pipeline total', fmtMXN(montoTotal)),
         ];
-        const total = modules.reduce((s, r) => s + r[1], 0);
-        document.getElementById('rows').innerHTML = modules.map(function (r) {
-          const pct = total ? (r[1] * 100 / total) : 0;
-          return `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${fmtPct(pct)}</td></tr>`;
+        el('ventas-tbl').innerHTML = ventasRows.join('');
+
+        // Top 5 clientes por monto vendido
+        const porCliente = {};
+        cotAplicadas.forEach(c => {
+          const key = c.cliente_id || c.razon_social || 'Sin cliente';
+          if (!porCliente[key]) porCliente[key] = { nombre: c.razon_social || c.cliente_nombre || `Cliente #${c.cliente_id}`, total: 0 };
+          porCliente[key].total += Number(c.total) || 0;
+        });
+        const top5 = Object.values(porCliente).sort((a,b) => b.total - a.total).slice(0, 5);
+        if (top5.length) {
+          el('top-clientes').innerHTML = top5.map(c => `<tr><td>${c.nombre}</td><td class="num">${fmtMXN(c.total)}</td></tr>`).join('');
+        } else {
+          el('top-clientes').innerHTML = '<tr><td colspan="2" class="empty">Sin ventas aplicadas todavía</td></tr>';
+        }
+
+        // 3. Operación
+        const repFinalizados = rep.filter(r => r.finalizado == 1 || r.finalizado === true).length;
+        const repPendientes = rep.length - repFinalizados;
+        const operRows = [
+          row('Reportes de servicio totales', fmtNum(rep.length)),
+          row('Reportes finalizados', fmtNum(repFinalizados)),
+          row('Reportes pendientes', fmtNum(repPendientes)),
+          row('Máquinas en catálogo', fmtNum(maq.length)),
+          row('Refacciones en inventario', fmtNum(ref.length)),
+        ];
+        el('oper-tbl').innerHTML = operRows.join('');
+
+        // Garantías
+        const garActivas = gar.filter(g => g.activa == 1 || g.activa === true);
+        if (garActivas.length) {
+          el('garantias-tbl').innerHTML = garActivas.slice(0, 8).map(g => {
+            const fecha = (g.fecha_entrega||'').slice(0,10);
+            return `<tr><td>${g.modelo_maquina || '—'} <span style="color:#94a3b8">${g.numero_serie||''}</span></td><td class="num"><span class="badge ok">${fecha || 'activa'}</span></td></tr>`;
+          }).join('');
+        } else {
+          el('garantias-tbl').innerHTML = '<tr><td colspan="2" class="empty">Sin garantías activas</td></tr>';
+        }
+
+        // 4. Catálogo
+        const cataRows = [
+          ['Clientes', cli.length, cli.filter(c => c.activo !== 0).length],
+          ['Refacciones', ref.length, ref.filter(r => r.activo !== 0).length],
+          ['Máquinas', maq.length, maq.filter(m => m.activo !== 0).length],
+          ['Cotizaciones', cot.length, cot.filter(c => c.estado !== 'cancelada').length],
+          ['Garantías', gar.length, garActivas.length],
+          ['Reportes', rep.length, repPendientes],
+        ];
+        el('catalogo-tbl').innerHTML = cataRows.map(([m, t, a]) => {
+          const estadoCls = t === 0 ? 'crit' : a < t * 0.5 ? 'warn' : 'ok';
+          const estadoLbl = t === 0 ? 'Vacío' : a < t * 0.5 ? 'Baja actividad' : 'Saludable';
+          return `<tr><td><strong>${m}</strong></td><td class="num">${fmtNum(t)}</td><td class="num">${fmtNum(a)}</td><td><span class="badge ${estadoCls}">${estadoLbl}</span></td></tr>`;
         }).join('');
-        const abiertos = (incidentes || []).filter(i => String(i.estatus || '').toLowerCase() === 'abierto').length;
-        document.getElementById('report-notes').textContent = 'Hallazgos clave: ' + abiertos + ' incidente(s) abiertos, ' + (cotizaciones || []).length + ' cotización(es) totales y ' + horas.toFixed(1) + ' horas registradas.';
+
+        // 5. Hallazgos automáticos
+        const hallazgos = [];
+        if (cotMes.length === 0) hallazgos.push('⚠️ <strong>Sin cotizaciones este mes.</strong> Validar pipeline comercial.');
+        else hallazgos.push(`✅ ${cotMes.length} cotización(es) generadas este mes por un total de <strong>${fmtMXN(montoMes)}</strong>.`);
+        if (cotAplicadas.length > 0) hallazgos.push(`💰 <strong>${cotAplicadas.length} venta(s) aplicadas</strong> acumulan ${fmtMXN(montoVendido)}.`);
+        if (repPendientes > 5) hallazgos.push(`🔧 <strong>${repPendientes} reportes pendientes</strong> de finalizar. Revisar carga de técnicos.`);
+        if (garActivas.length > 0) hallazgos.push(`🛡️ ${garActivas.length} garantía(s) activa(s) bajo seguimiento.`);
+        if (cli.length === 0) hallazgos.push('⚠️ <strong>Catálogo de clientes vacío.</strong> Configurar cuentas iniciales.');
+        if (ref.length < 50) hallazgos.push(`📦 Inventario de refacciones (${ref.length}). Considerar importación masiva.`);
+        el('hallazgos').innerHTML = hallazgos.map(h => `<li>${h}</li>`).join('') || '<li>Sin observaciones relevantes.</li>';
+
+        // Mostrar contenido
+        el('loading').style.display = 'none';
+        el('content').style.display = 'block';
+
+        // Auto-print si la URL trae ?autoprint=1
+        if (new URLSearchParams(location.search).get('autoprint') === '1') {
+          setTimeout(() => window.print(), 600);
+        }
       } catch (e) {
-        document.getElementById('updated-at').innerHTML = '<strong>Actualizado:</strong> No se pudo generar el reporte.';
+        el('loading').innerHTML = '<div class="error-box">No se pudo generar el reporte: ' + (e.message || e) + '<br><small>Asegúrate de tener sesión activa en la pestaña principal.</small></div>';
+        console.error('[reporte ejecutivo]', e);
       }
     })();
   </script>
