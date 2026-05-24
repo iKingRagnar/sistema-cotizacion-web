@@ -1897,7 +1897,14 @@
       try { showToast('Sesión expirada. Inicia sesión de nuevo y vuelve a intentar.', 'error'); } catch (_) {}
       throw new Error('SESION_EXPIRADA');
     }
-    if (!r.ok) throw new Error(text || r.statusText);
+    if (!r.ok) {
+      // 🆕 2026-05-24 — Anexar body parseado al Error para que callers puedan
+      // reaccionar a códigos de error específicos (ej. CLIENTE_TIENE_DEPENDENCIAS).
+      const err = new Error(text || r.statusText);
+      err.status = r.status;
+      try { err.body = JSON.parse(text); } catch (_) { err.body = null; }
+      throw err;
+    }
     // 🔄 AUTO-REFRESH HOOK: después de mutación exitosa (POST/PUT/DELETE/PATCH), avisar al sistema
     try {
       var method = (opts && opts.method ? String(opts.method) : 'GET').toUpperCase();
@@ -4764,12 +4771,24 @@
     });
   }
 
-  async function deleteCliente(id) {
+  async function deleteCliente(id, cascada) {
     try {
-      await fetchJson(API + '/clientes/' + id, { method: 'DELETE' });
-      showToast('Cliente eliminado correctamente.', 'success');
+      const url = API + '/clientes/' + id + (cascada ? '?cascada=1' : '');
+      await fetchJson(url, { method: 'DELETE' });
+      showToast(cascada ? 'Cliente y dependencias eliminados.' : 'Cliente eliminado correctamente.', 'success');
       loadClientes({ force: true });
-    } catch (e) { showToast(parseApiError(e) || 'No se pudo eliminar.', 'error'); }
+    } catch (e) {
+      // 🆕 2026-05-24 — Si el backend devolvió 409 con código CLIENTE_TIENE_DEPENDENCIAS,
+      // mostrar al usuario qué tiene asociado y pedir confirmación de cascada.
+      const detalle = e && (e.body || e.data || {});
+      if (detalle && detalle.code === 'CLIENTE_TIENE_DEPENDENCIAS' && detalle.deps) {
+        const depsList = Object.entries(detalle.deps).map(([k, n]) => `• ${n} ${k}`).join('\n');
+        const msg = `Este cliente tiene registros relacionados:\n\n${depsList}\n\n¿Eliminar TODO (cliente + dependencias)? Esta acción NO se puede deshacer.`;
+        if (window.confirm(msg)) return deleteCliente(id, true);
+        return;
+      }
+      showToast(parseApiError(e) || 'No se pudo eliminar.', 'error');
+    }
   }
 
   async function loadClientes(opts) {

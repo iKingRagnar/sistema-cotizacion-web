@@ -1382,9 +1382,54 @@ app.put('/api/clientes/:id', async (req, res) => {
 
 app.delete('/api/clientes/:id', async (req, res) => {
   try {
-    await db.runQuery('DELETE FROM clientes WHERE id = ?', [req.params.id]);
-    res.json({ ok: true });
+    const id = req.params.id;
+    const cascada = String(req.query.cascada || '') === '1';
+
+    // 🆕 2026-05-24 — Postgres aplica FK strict. Antes de borrar, contar
+    // dependencias. Si las hay y NO viene ?cascada=1, devolver 409 con detalle
+    // para que el frontend muestre confirmación clara al usuario.
+    const deps = {};
+    try {
+      const tablas = [
+        ['maquinas', 'maquinas'],
+        ['cotizaciones', 'cotizaciones'],
+        ['garantias', 'garantias'],
+        ['reportes', 'reportes'],
+        ['embarques', 'embarques'],
+        ['viajes', 'viajes'],
+      ];
+      for (const [t, label] of tablas) {
+        try {
+          const row = await db.getOne(`SELECT COUNT(*) AS c FROM ${t} WHERE cliente_id = ?`, [id]);
+          const n = Number(row && (row.c ?? row.count ?? 0)) || 0;
+          if (n > 0) deps[label] = n;
+        } catch (_) { /* tabla no existe / sin cliente_id, ignorar */ }
+      }
+    } catch (_) {}
+
+    const tieneDeps = Object.keys(deps).length > 0;
+    if (tieneDeps && !cascada) {
+      const detalles = Object.entries(deps).map(([k, n]) => `${n} ${k}`).join(', ');
+      return res.status(409).json({
+        error: `Este cliente tiene dependencias: ${detalles}. Confirma para eliminar TODO en cascada.`,
+        code: 'CLIENTE_TIENE_DEPENDENCIAS',
+        deps,
+      });
+    }
+
+    if (tieneDeps && cascada) {
+      // Borrar dependencias en orden seguro (hijas → padres)
+      for (const t of ['viajes', 'embarques', 'reportes', 'garantias', 'cotizaciones', 'maquinas']) {
+        try { await db.runQuery(`DELETE FROM ${t} WHERE cliente_id = ?`, [id]); } catch (e) {
+          console.warn(`[cliente cascade ${t}]`, e.message);
+        }
+      }
+    }
+
+    await db.runQuery('DELETE FROM clientes WHERE id = ?', [id]);
+    res.json({ ok: true, cascada, deps_eliminadas: deps });
   } catch (e) {
+    console.error('[delete cliente]', e.message, e.stack);
     res.status(500).json({ error: String(e.message) });
   }
 });
