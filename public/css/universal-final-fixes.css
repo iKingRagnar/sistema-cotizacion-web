@@ -321,11 +321,13 @@ html body table tbody tr:hover td.th-actions {
   animation: none !important;
   filter: none !important;
 }
-/* CRÍTICO: anular td:hover que expande celda y desfasa columnas vecinas */
-html body table tbody td:hover,
-html body .data-table tbody td:hover,
-html body.md3-on table.data-table tbody td:hover,
-html body.md3-on .md-table tbody td:hover {
+/* CRÍTICO: anular td:hover que expande celda y desfasa columnas vecinas.
+   EXCEPCIÓN 2026-05-24: td.th-actions DEBE mantener overflow:visible para
+   que los iconos FontAwesome de los botones no se recorten al hover. */
+html body table tbody td:not(.th-actions):hover,
+html body .data-table tbody td:not(.th-actions):hover,
+html body.md3-on table.data-table tbody td:not(.th-actions):hover,
+html body.md3-on .md-table tbody td:not(.th-actions):hover {
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
@@ -333,6 +335,13 @@ html body.md3-on .md-table tbody td:hover {
   z-index: auto !important;
   transform: none !important;
   filter: none !important;
+}
+/* La celda de acciones siempre overflow:visible (sin recorte) */
+html body table tbody td.th-actions,
+html body table tbody td.th-actions:hover,
+html body .data-table tbody td.th-actions:hover {
+  overflow: visible !important;
+  text-overflow: clip !important;
 }
 /* Excepción: celdas marcadas como td-text-wrap o no-truncate sí pueden envolver texto */
 html body table tbody td.no-truncate,
