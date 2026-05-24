@@ -3953,11 +3953,12 @@ app.post('/api/cotizaciones/:id/aplicar', async (req, res) => {
         if (l.maquina_id && Number(l.maquina_id) > 0) maqIdsGarantia.add(Number(l.maquina_id));
       }
       if (maqIdsGarantia.size > 0) {
-        // Cliente de la cotización (puede venir como cliente_id o razon_social directa)
+        // Cliente de la cotización: la tabla clientes usa columna 'nombre' (no 'razon_social').
+        // Verificamos ambos por compatibilidad.
         const cli = cot.cliente_id
           ? await db.getOne('SELECT * FROM clientes WHERE id=?', [cot.cliente_id])
           : null;
-        const razonSocial = (cli && cli.razon_social) || cot.razon_social || cot.cliente_nombre || 'Cliente sin razón social';
+        const razonSocial = (cli && (cli.nombre || cli.razon_social)) || cot.razon_social || cot.cliente_nombre || 'Cliente sin razón social';
         const hoyStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
         for (const mid of maqIdsGarantia) {
           try {
