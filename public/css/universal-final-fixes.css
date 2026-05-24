@@ -1141,16 +1141,44 @@ html body table td .row-actions-inline {
   overflow: visible !important;
   position: static !important;
 }
-/* Hover de los botones acción: sin transform que los saque, solo brightness y sombra */
+/* Hover de los botones acción: sin transform que los saque, solo brightness y sombra.
+   IMPORTANTE: incluir [class^="btn-preview-"] y [class*="btn-preview"] directos sobre
+   td.th-actions porque varias pestañas (Garantías, Bonos, Bitácora, Viajes, etc.) NO
+   envuelven los botones en .row-actions-inline. La regla mala vive en style.css:7613
+   con transform: scale(1.15) translateY(-2px) que saca y recorta el ojito. */
 html body table td .row-actions-inline .btn.small:hover,
 html body table td .btn.small.outline:hover,
 html body table td .btn.small.primary:hover,
-html body table td .btn.small.danger:hover {
+html body table td .btn.small.danger:hover,
+html body table td.th-actions .btn:hover,
+html body table td.th-actions button.btn:hover,
+html body table td [class^="btn-preview-"]:hover,
+html body table td [class*=" btn-preview-"]:hover,
+html body table td [class^="btn-view-"]:hover,
+html body table td [class*=" btn-view-"]:hover,
+html body table td [class^="btn-edit-"]:hover,
+html body table td [class^="btn-del-"]:hover,
+html body table td [class^="btn-mant-"]:hover {
   transform: none !important;
+  -webkit-transform: none !important;
+  scale: none !important;
+  translate: none !important;
   filter: brightness(1.08) !important;
   position: relative !important;
   z-index: 2 !important;
   outline: none !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25) !important;
+}
+/* También congelar el <i> interno por si algún CSS le hace scale a fa-eye */
+html body table td.th-actions .btn:hover i,
+html body table td.th-actions .btn i,
+html body table td [class^="btn-preview-"]:hover i,
+html body table td [class^="btn-preview-"] i {
+  transform: none !important;
+  -webkit-transform: none !important;
+  scale: none !important;
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
 }
 /* Quitar cualquier mask/clip-path heredado de hover en buttons de tabla */
 html body table td .btn.small {
