@@ -7845,24 +7845,16 @@ async function imprimirFlyer() {
     try {
       const raw = await fetchJson(API + '/mantenimientos-garantia');
       mantenimientosGarantiaCache = toArray(raw).map(enrichMantGarRow);
+      // 🆕 2026-05-24 — Luis pidió: SIEMPRE arrancar en el mes ACTUAL real.
+      // Eliminada la lógica "smart" que detectaba el mes con más
+      // mantenimientos (esa enviaba al usuario a noviembre por el 1er
+      // mantenimiento de la garantía SEINRESA).
+      // El usuario puede cambiar el mes manualmente; al recargar la
+      // pestaña vuelve al mes actual.
       const mi = qs('#mant-gar-month');
       if (mi) {
-        const best = pickMonthWithMostMantenimientos(mantenimientosGarantiaCache);
-        const nowYm = new Date().toISOString().slice(0, 7);
-        if (!mi.value) {
-          mi.value = best || nowYm;
-        } else {
-          try {
-            const touched = sessionStorage.getItem('mantGarMonthTouched');
-            if (!touched && !sessionStorage.getItem('mantGarSmartV1')) {
-              const cur = mi.value;
-              const nCur = mantenimientosGarantiaCache.filter(m => (m.fecha_programada || '').toString().slice(0, 7) === cur).length;
-              const nBest = best ? mantenimientosGarantiaCache.filter(m => (m.fecha_programada || '').toString().slice(0, 7) === best).length : 0;
-              if (nCur === 0 && nBest > 0) mi.value = best;
-              sessionStorage.setItem('mantGarSmartV1', '1');
-            }
-          } catch (_) {}
-        }
+        mi.value = new Date().toISOString().slice(0, 7);
+        try { sessionStorage.removeItem('mantGarMonthTouched'); } catch (_) {}
       }
       // Cargar asignaciones del mes DEFINITIVO (después de setear mi.value)
       const miFinal = qs('#mant-gar-month');
