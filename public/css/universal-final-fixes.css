@@ -1565,8 +1565,13 @@ html body.theme-industrial.appearance-light .agenda-light-modal .ag-asign-summar
 }
 html body.appearance-light .agenda-light-modal .ag-pill-dark,
 html body.theme-industrial.appearance-light .agenda-light-modal .ag-pill-dark {
-  background: #1e3a5f !important;
-  color: #ffffff !important;
+  background: #fef3c7 !important;
+  color: #78350f !important;
+  border: 1px solid #fbbf24 !important;
+  padding: 3px 10px !important;
+  border-radius: 6px !important;
+  font-weight: 700 !important;
+  font-size: 0.78rem !important;
 }
 html body.appearance-light .agenda-light-modal .ag-pill-warn,
 html body.theme-industrial.appearance-light .agenda-light-modal .ag-pill-warn {
