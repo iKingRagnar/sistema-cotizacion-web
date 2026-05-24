@@ -1269,22 +1269,37 @@ app.get('/api/clientes/:id', async (req, res) => {
         );
         // Reportes (últimos 20)
         // NOTA: la tabla reportes usa `estatus` (no estado) y `numero_maquina` (no modelo_maquina)
+        // CRITICO 2026-05-24: el OR razon_social=? hace match laxo si razonSocial=''
+        // (traería reportes de OTROS clientes). Solo OR cuando razonSocial tiene valor real.
+        const conRazon = razonSocial && razonSocial.trim().length > 1;
         pub.historial_reportes = await db.getAll(
-          `SELECT id, folio, fecha_programada, estatus AS estado, tecnico, numero_maquina AS modelo_maquina, finalizado
-           FROM reportes
-           WHERE cliente_id=? OR razon_social=?
-           ORDER BY fecha_programada DESC, id DESC
-           LIMIT 20`,
-          [cliId, razonSocial]
-        ).catch((e) => { console.error('[historial-reportes]', e.message); return []; });
+          conRazon
+            ? `SELECT id, folio, fecha_programada, estatus AS estado, tecnico, numero_maquina AS modelo_maquina, finalizado
+               FROM reportes
+               WHERE cliente_id=? OR razon_social=?
+               ORDER BY fecha_programada DESC, id DESC
+               LIMIT 20`
+            : `SELECT id, folio, fecha_programada, estatus AS estado, tecnico, numero_maquina AS modelo_maquina, finalizado
+               FROM reportes
+               WHERE cliente_id=?
+               ORDER BY fecha_programada DESC, id DESC
+               LIMIT 20`,
+          conRazon ? [cliId, razonSocial] : [cliId]
+        ).catch((e) => { console.error('[historial-reportes]', e.message, e.stack); return []; });
         // Garantías activas
+        // CRITICO 2026-05-24: igual que reportes, solo OR razon_social si tiene valor.
         pub.historial_garantias = await db.getAll(
-          `SELECT id, modelo_maquina, numero_serie, tipo_maquina, fecha_entrega, activa
-           FROM garantias
-           WHERE cliente_id=? OR razon_social=?
-           ORDER BY fecha_entrega DESC, id DESC`,
-          [cliId, razonSocial]
-        ).catch(() => []);
+          conRazon
+            ? `SELECT id, modelo_maquina, numero_serie, tipo_maquina, fecha_entrega, activa
+               FROM garantias
+               WHERE cliente_id=? OR razon_social=?
+               ORDER BY fecha_entrega DESC, id DESC`
+            : `SELECT id, modelo_maquina, numero_serie, tipo_maquina, fecha_entrega, activa
+               FROM garantias
+               WHERE cliente_id=?
+               ORDER BY fecha_entrega DESC, id DESC`,
+          conRazon ? [cliId, razonSocial] : [cliId]
+        ).catch((e) => { console.error('[historial-garantias]', e.message, e.stack); return []; });
         // Máquinas (catálogo - todas las vendidas/asociadas al cliente vía cotizaciones aplicadas)
         pub.historial_maquinas = await db.getAll(
           `SELECT DISTINCT m.id, m.modelo, m.categoria, m.numero_serie, m.precio_lista_usd, m.estado_preparacion
@@ -1390,12 +1405,13 @@ app.delete('/api/clientes/:id', async (req, res) => {
     // para que el frontend muestre confirmación clara al usuario.
     const deps = {};
     try {
+      // Solo tablas que efectivamente tienen cliente_id en su schema.
+      // embarques NO tiene cliente_id (se liga via maquina_id) — removido.
       const tablas = [
         ['maquinas', 'maquinas'],
         ['cotizaciones', 'cotizaciones'],
         ['garantias', 'garantias'],
         ['reportes', 'reportes'],
-        ['embarques', 'embarques'],
         ['viajes', 'viajes'],
       ];
       for (const [t, label] of tablas) {
@@ -1419,7 +1435,8 @@ app.delete('/api/clientes/:id', async (req, res) => {
 
     if (tieneDeps && cascada) {
       // Borrar dependencias en orden seguro (hijas → padres)
-      for (const t of ['viajes', 'embarques', 'reportes', 'garantias', 'cotizaciones', 'maquinas']) {
+      // embarques excluido (no tiene cliente_id directo)
+      for (const t of ['viajes', 'reportes', 'garantias', 'cotizaciones', 'maquinas']) {
         try { await db.runQuery(`DELETE FROM ${t} WHERE cliente_id = ?`, [id]); } catch (e) {
           console.warn(`[cliente cascade ${t}]`, e.message);
         }
@@ -6607,6 +6624,26 @@ app.get('/api/reportes', async (req, res) => {
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
 
+// 🆕 2026-05-24 — Ruta estática DEBE ir ANTES que /:id, si no Express
+// captura "ventas-mensual" como id literal y truena con bigint inválido.
+// Delega a la función definida más abajo (JS hoists function decls).
+app.get('/api/reportes/ventas-mensual', async (req, res) => {
+  try {
+    const mes = String(req.query.mes || new Date().toISOString().slice(0, 7)).slice(0, 7);
+    const data = await _buildReporteMensualData(mes);
+    if (String(req.query.download || '') === '1') {
+      const buf = await _buildReporteMensualXlsxBuffer(data);
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="ventas-${mes}.xlsx"`);
+      return res.send(Buffer.from(buf));
+    }
+    res.json(data);
+  } catch (e) {
+    console.error('[ventas-mensual]', e.message, e.stack);
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
 app.get('/api/reportes/:id', async (req, res) => {
   try {
     const row = await db.getOne(
@@ -7235,12 +7272,16 @@ async function saveReportSchedules(list) {
 
 async function buildModuleReportRows(moduleName) {
   const m = String(moduleName || '').trim().toLowerCase();
+  // 🆕 2026-05-24 — Antes usaba vista_cotizaciones/vista_bonos que NO existen
+  // en Postgres. Reescrito con JOINs sobre tablas reales.
   if (m === 'cotizaciones') {
     const rows = await db.getAll(
-      `SELECT folio, COALESCE(cliente_nombre,'') as cliente, COALESCE(tipo,'') as tipo,
-              COALESCE(fecha,'') as fecha, COALESCE(moneda,'MXN') as moneda,
-              ROUND(COALESCE(total,0), 2) as total, COALESCE(estado,'') as estado
-         FROM vista_cotizaciones ORDER BY id DESC LIMIT 300`
+      `SELECT c.folio, COALESCE(cl.nombre,'') as cliente, COALESCE(c.tipo,'') as tipo,
+              COALESCE(c.fecha,'') as fecha, COALESCE(c.moneda,'MXN') as moneda,
+              ROUND(COALESCE(c.total,0)::numeric, 2) as total, COALESCE(c.estado,'') as estado
+         FROM cotizaciones c
+         LEFT JOIN clientes cl ON cl.id = c.cliente_id
+         ORDER BY c.id DESC LIMIT 300`
     );
     return {
       headers: ['Folio', 'Cliente', 'Tipo', 'Fecha', 'Moneda', 'Total', 'Estado'],
@@ -7249,11 +7290,12 @@ async function buildModuleReportRows(moduleName) {
   }
   if (m === 'ventas') {
     const rows = await db.getAll(
-      `SELECT folio, COALESCE(fecha_aprobacion, fecha, '') as fecha, COALESCE(cliente_nombre,'') as cliente,
-              COALESCE(tipo,'') as tipo, ROUND(COALESCE(total,0),2) as total, COALESCE(moneda,'MXN') as moneda
-         FROM vista_cotizaciones
-        WHERE COALESCE(estado,'')='aplicada'
-        ORDER BY id DESC LIMIT 300`
+      `SELECT c.folio, COALESCE(c.fecha_aprobacion, c.fecha, '') as fecha, COALESCE(cl.nombre,'') as cliente,
+              COALESCE(c.tipo,'') as tipo, ROUND(COALESCE(c.total,0)::numeric,2) as total, COALESCE(c.moneda,'MXN') as moneda
+         FROM cotizaciones c
+         LEFT JOIN clientes cl ON cl.id = c.cliente_id
+        WHERE COALESCE(c.estado,'') IN ('aplicada','venta')
+        ORDER BY c.id DESC LIMIT 300`
     );
     return {
       headers: ['Folio', 'Fecha aprobación', 'Cliente', 'Tipo', 'Total', 'Moneda'],
@@ -7262,9 +7304,9 @@ async function buildModuleReportRows(moduleName) {
   }
   if (m === 'bonos') {
     const rows = await db.getAll(
-      `SELECT COALESCE(tecnico,'') as tecnico, COALESCE(reporte_folio,'') as reporte, COALESCE(tipo_capacitacion,'') as tipo,
-              ROUND(COALESCE(monto_bono,0),2) as monto, COALESCE(fecha,'') as fecha, COALESCE(pagado,0) as pagado
-         FROM vista_bonos ORDER BY id DESC LIMIT 300`
+      `SELECT COALESCE(tecnico,'') as tecnico, COALESCE(referencia_tipo,'') as reporte, COALESCE(tipo,'') as tipo,
+              ROUND(COALESCE(monto,0)::numeric,2) as monto, COALESCE(fecha,'') as fecha, COALESCE(pagado,0) as pagado
+         FROM bonos_movimientos ORDER BY id DESC LIMIT 300`
     );
     return {
       headers: ['Técnico', 'Reporte', 'Tipo capacitación', 'Monto', 'Fecha', 'Pagado'],
@@ -8434,7 +8476,7 @@ app.get('/api/mantenimientos-taller', async (req, res) => {
        FROM mantenimientos m
        JOIN maquinas ma ON ma.id = m.maquina_id
        LEFT JOIN clientes c ON c.id = ma.cliente_id
-       ORDER BY datetime(COALESCE(m.fecha_inicio, m.creado_en)) DESC
+       ORDER BY COALESCE(m.fecha_inicio, m.creado_en) DESC
        LIMIT 500`
     );
     res.json(rows);
@@ -9140,19 +9182,8 @@ async function _buildReporteMensualXlsxBuffer(data) {
   return await wb.xlsx.writeBuffer();
 }
 
-app.get('/api/reportes/ventas-mensual', async (req, res) => {
-  try {
-    const mes = String(req.query.mes || new Date().toISOString().slice(0, 7)).slice(0, 7);
-    const data = await _buildReporteMensualData(mes);
-    if (String(req.query.download || '') === '1') {
-      const buf = await _buildReporteMensualXlsxBuffer(data);
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader('Content-Disposition', `attachment; filename="ventas-${mes}.xlsx"`);
-      return res.send(Buffer.from(buf));
-    }
-    res.json(data);
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
-});
+// (Removida 2026-05-24 — la ruta se movió arriba antes de /api/reportes/:id
+// para que Express no capture "ventas-mensual" como :id literal.)
 
 /* -------- ENVIAR REPORTE MENSUAL POR CORREO -------- */
 async function _enviarReporteMensualPorTipos({ mes, tipos }) {
