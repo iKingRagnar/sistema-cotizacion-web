@@ -385,6 +385,26 @@
   </style>
 </head>
 <body id="app" class="theme-industrial dark-theme md3-on universal-map-shell mapa-layout-standby">
+  <!-- SPLASH INLINE: se muestra inmediatamente, sin CSS externo. El JS lo oculta cuando arranca.
+       Si ves esta pantalla por mucho tiempo, el servidor Render está despertando (plan gratuito duerme 15 min sin uso). -->
+  <div id="app-boot-splash" style="
+    position:fixed;inset:0;z-index:99999;
+    background:#0c1929;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-family:system-ui,sans-serif;color:#e2e8f0;gap:20px;
+  ">
+    <div style="font-size:2rem;font-weight:700;letter-spacing:.5px;">⚙️ Universal</div>
+    <div style="font-size:1rem;color:#94a3b8;">Cargando sistema…</div>
+    <div style="
+      width:48px;height:48px;border:4px solid #1e3a5f;
+      border-top-color:#f59e0b;border-radius:50%;
+      animation:spin .8s linear infinite;
+    "></div>
+    <div style="font-size:.8rem;color:#64748b;max-width:300px;text-align:center;">
+      Si tarda más de 30 segundos, el servidor está despertando.<br>Espera un momento y se cargará automáticamente.
+    </div>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+  </div>
   <script>
     (function () {
       try {

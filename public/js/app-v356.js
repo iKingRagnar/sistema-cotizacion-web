@@ -19370,6 +19370,8 @@ async function imprimirFlyer() {
   }
 
   async function boot() {
+    // Ocultar splash de arranque (visible mientras el servidor despertaba o el JS cargaba)
+    try { var _s = document.getElementById('app-boot-splash'); if (_s) _s.style.display = 'none'; } catch (_) {}
     normalizePoweredByCredits();
     sweepStaleMobileBlockingLayers();
     syncUniversalMapMobileDocScrollClass();

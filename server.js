@@ -19,6 +19,11 @@ const auth = require('./auth');
 // En la nube (Render, etc.) usan process.env.PORT. Local: 3456 para evitar conflicto con otros servicios en 3000
 const PORT = process.env.PORT || 3456;
 
+// 🔧 CRÍTICO RENDER: sin esto, req.ip devuelve la IP del proxy de Render (la misma para TODOS los usuarios).
+// El rate-limiter de login usa req.ip → sin trust proxy, una IP "quemada" bloquea a TODOS.
+// Con trust proxy=1, Express lee X-Forwarded-For y obtiene la IP REAL del cliente.
+app.set('trust proxy', 1);
+
 function resolvePublicIndexHtmlPath() {
   const rel = path.join('public', 'index.html');
   for (const p of [path.join(__dirname, rel), path.join(process.cwd(), rel)]) {
@@ -362,7 +367,7 @@ function loginRateLimit(req, res, next) {
   const ip = req.ip || req.connection.remoteAddress || 'unknown';
   const now = Date.now();
   const window = 15 * 60 * 1000;
-  const maxAttempts = 10;
+  const maxAttempts = 20; // 20 intentos por IP real (antes 10, pero sin trust proxy era 10 para TODOS)
   let entry = _loginAttempts.get(ip);
   if (!entry || now - entry.start > window) {
     entry = { count: 0, start: now };
@@ -387,6 +392,30 @@ app.post('/api/auth/login', _authLimiter, loginRateLimit, async (req, res) => {
     const result = await auth.attemptLogin(username, password);
     if (!result) return res.status(401).json({ error: 'Credenciales incorrectas o cuenta desactivada (activo=0).' });
     res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message) });
+  }
+});
+
+/**
+ * Reset de emergencia vía env var ADMIN_RESET_TOKEN.
+ * En Render: agrega env var ADMIN_RESET_TOKEN=cualquier-string-secreto, guarda, espera deploy.
+ * Luego llama: POST /api/auth/emergency-reset con body { token: "...", newPassword: "..." }
+ * Solo resetea el usuario 'admin'. Quita la env var después de usarlo.
+ */
+app.post('/api/auth/emergency-reset', async (req, res) => {
+  try {
+    const resetToken = (process.env.ADMIN_RESET_TOKEN || '').trim();
+    if (!resetToken) return res.status(400).json({ error: 'ADMIN_RESET_TOKEN no configurada en el servidor.' });
+    const { token, newPassword } = req.body || {};
+    if (!token || token !== resetToken) return res.status(403).json({ error: 'Token incorrecto.' });
+    if (!newPassword || String(newPassword).length < 8) return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 8 caracteres.' });
+    const result = await db.runQuery(
+      "UPDATE app_users SET password_hash=? WHERE lower(username)='admin'",
+      [auth.hashPassword(String(newPassword))]
+    );
+    console.log('[auth] Contraseña admin reseteada vía emergency-reset.');
+    res.json({ ok: true, message: 'Contraseña del admin reseteada. Inicia sesión con la nueva contraseña.' });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
