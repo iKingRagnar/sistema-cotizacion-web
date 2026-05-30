@@ -4366,10 +4366,15 @@ app.delete('/api/tecnicos/:id', async (req, res) => {
 
 app.delete('/api/cotizaciones/:id', async (req, res) => {
   try {
+    // 1. Limpiar movimientos_stock (FK nullable a cotizaciones — Postgres lo bloquea si no se limpia primero)
+    await db.runQuery('UPDATE movimientos_stock SET cotizacion_id = NULL WHERE cotizacion_id = ?', [req.params.id]);
+    // 2. Borrar líneas (FK NOT NULL a cotizaciones)
     await db.runQuery('DELETE FROM cotizacion_lineas WHERE cotizacion_id = ?', [req.params.id]);
+    // 3. Borrar la cotización en sí
     await db.runQuery('DELETE FROM cotizaciones WHERE id = ?', [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
+    console.error('[delete-cotizacion]', e.message, e.stack);
     res.status(500).json({ error: String(e.message) });
   }
 });

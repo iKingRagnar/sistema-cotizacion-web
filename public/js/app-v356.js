@@ -6957,6 +6957,7 @@ async function imprimirFlyer() {
       btn.addEventListener('click', e => {
         e.stopPropagation();
         console.log('[cot][delete] click id=', btn.dataset.id);
+        if (!canDelete()) { showToast('Solo el administrador puede eliminar cotizaciones.', 'error'); return; }
         openConfirmModal('¿Eliminar esta cotización?', () => deleteCotizacion(btn.dataset.id));
       });
     });
