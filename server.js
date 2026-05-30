@@ -4381,6 +4381,7 @@ app.put('/api/tecnicos/:id', async (req, res) => {
     out = publicTecnicoListRow(out);
     res.json(out);
   } catch (e) {
+    console.error('[put-tecnico]', e.message, e.stack);
     res.status(500).json({ error: String(e.message) });
   }
 });

@@ -184,6 +184,8 @@ function postAllowedForStaff(url) {
   if (p === '/api/viajes') return true;
   if (p === '/api/ai/chat') return true;
   if (p.startsWith('/api/ai/extract')) return true;
+  // Personal: operador puede crear nuevas personas (mismo nivel que editar)
+  if (p === '/api/tecnicos') return true;
   return false;
 }
 
@@ -195,6 +197,8 @@ function putPatchAllowedForStaff(url) {
   if (/^\/api\/reportes\/\d+$/.test(p)) return true;
   if (/^\/api\/bonos\/\d+$/.test(p)) return true;
   if (/^\/api\/viajes\/\d+$/.test(p)) return true;
+  // Personal: operador puede editar datos de técnicos/personal
+  if (/^\/api\/tecnicos\/\d+$/.test(p)) return true;
   return false;
 }
 
