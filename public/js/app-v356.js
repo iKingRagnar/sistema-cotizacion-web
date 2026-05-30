@@ -17425,8 +17425,13 @@ async function imprimirFlyer() {
       }
     });
 
-    qs('#m-save').onclick = async () => {
+    const _saveBtnEl = qs('#m-save');
+    if (!_saveBtnEl) {
+      console.error('[openModalTecnico] WARN: #m-save no encontrado en DOM. isNew=', isNew, 'tec.id=', tec && tec.id);
+    }
+    (_saveBtnEl || {}).onclick = async () => {
       const nombre = qs('#m-tec-nombre')?.value.trim();
+      console.log('[tecnico-save] click guardar, isNew=', isNew, 'id=', tec && tec.id, 'nombre=', nombre);
       if (!nombre) { showToast('El nombre es obligatorio.', 'error'); return; }
       const comM = canViewCommissions() ? (Number(qs('#m-tec-com-m')?.value) || 0) : (Number(full && full.comision_maquinas_pct) || 0);
       const comR = canViewCommissions() ? (Number(qs('#m-tec-com-r')?.value) || 0) : (Number(full && full.comision_refacciones_pct) || 10);
@@ -17456,13 +17461,18 @@ async function imprimirFlyer() {
         if (licenciaClear) payload.licencia_clear = true;
       }
       try {
+        console.log('[tecnico-save] enviando', isNew ? 'POST' : 'PUT', 'id=', tec && tec.id);
         if (isNew) await fetchJson(API + '/tecnicos', { method: 'POST', body: JSON.stringify(payload) });
         else await fetchJson(API + '/tecnicos/' + tec.id, { method: 'PUT', body: JSON.stringify(payload) });
+        console.log('[tecnico-save] OK');
         qs('#modal').classList.add('hidden');
         showToast(isNew ? 'Persona creada.' : 'Persona actualizada.', 'success');
         if (isNew) setPaginationPage('tabla-tecnicos', 0);
         loadTecnicos();
-      } catch (e) { showToast(parseApiError(e) || 'No se pudo guardar.', 'error'); }
+      } catch (e) {
+        console.error('[tecnico-save] ERROR', e.status, e.message);
+        showToast(parseApiError(e) || 'No se pudo guardar.', 'error');
+      }
     };
   }
 

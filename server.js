@@ -4372,6 +4372,11 @@ app.put('/api/tecnicos/:id', async (req, res) => {
       ]
     );
     const r = await db.getOne('SELECT * FROM tecnicos WHERE id=?', [req.params.id]);
+    if (!r) {
+      // UPDATE no afectó ninguna fila — id no existe en DB (ej. registro sintético id=0)
+      console.error('[put-tecnico] id no encontrado en DB tras UPDATE, id=', req.params.id);
+      return res.status(404).json({ error: 'Registro no encontrado. No se pudo guardar.' });
+    }
     const strip = shouldStripCommissions(req);
     let out = { ...r };
     if (strip) {

@@ -29,7 +29,7 @@
           }).catch(function () {});
         }
         // 3. Si la versión actual del CSS no está en sessionStorage, hacer un reload UNA VEZ
-        var CURRENT_VER = 'v358-2026-05-30';
+        var CURRENT_VER = 'v359-2026-05-30';
         var prev = sessionStorage.getItem('app-css-ver');
         if (prev !== CURRENT_VER) {
           sessionStorage.setItem('app-css-ver', CURRENT_VER);
@@ -2538,7 +2538,7 @@
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
   <script src="js/config.js?v=2"></script>
-  <script src="js/app-v356.js?cb=fix-personal-save-403-2026-05-30"></script>
+  <script src="js/app-v356.js?cb=debug-personal-save-2026-05-30"></script>
   <script src="js/prospeccion-map.js?v=8-route-gmaps-newtab-2026-05-22" defer></script>
   <script src="js/bg-animation.js?v=8-map-shell-no-duplicate-hamburger" defer></script>
   <script src="js/premium-ux.js?v=24-globalmo-full-suppress-2026-05-07" defer></script>
