@@ -605,3 +605,64 @@ html, body {
 .mt-8  { margin-top: 8px; }
 .mt-16 { margin-top: 16px; }
 .fw-600 { font-weight: 600; }
+
+/* ============================================================
+   MOBILE ENHANCEMENTS 2026 — verse PERFECTO en cualquier móvil.
+   Aditivo (al final = gana especificidad). Correcciones objetivas:
+   notch / home-indicator (safe-area), anti-zoom iOS, foco a11y,
+   reduce-motion. No cambia la estructura ni los colores.
+   ============================================================ */
+
+/* 1) SAFE-AREA — notch (arriba) y barra de inicio (abajo).
+   viewport-fit=cover ya está en mobile.html. Sin esto, en iPhone con notch
+   la barra inferior y el FAB quedaban TAPADOS por el home-indicator. */
+#m-header {
+  height: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+#m-nav {
+  height: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+#m-content {
+  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 8px);
+}
+.m-fab    { bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 16px); }
+#m-toast  { bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 12px); }
+#m-login  {
+  padding-top: max(32px, env(safe-area-inset-top, 0px));
+  padding-bottom: max(32px, env(safe-area-inset-bottom, 0px));
+}
+#m-user-drawer { padding-top: env(safe-area-inset-top, 0px); }
+
+/* 2) ANTI-ZOOM iOS — inputs/select/textarea deben ser >=16px o Safari hace
+   zoom automático al enfocar (rompe el layout en móvil). */
+.m-input, .m-search,
+input[type="text"], input[type="password"], input[type="search"],
+input[type="number"], input[type="email"], input[type="tel"],
+input[type="date"], textarea, select {
+  font-size: 16px;
+}
+
+/* 3) FOCO visible por teclado (a11y) — solo en navegación con teclado, no en taps. */
+.m-nav-btn:focus-visible, .m-btn-primary:focus-visible, .m-input:focus-visible,
+.m-search:focus-visible, .m-card:focus-visible, #m-user-btn:focus-visible,
+.m-module-btn:focus-visible, .m-drawer-item:focus-visible, #m-back-btn:focus-visible {
+  outline: 2px solid var(--clr-accent);
+  outline-offset: 2px;
+}
+
+/* 4) Evitar overflow horizontal accidental (imágenes/medios fluidos). */
+img, video, canvas, svg { max-width: 100%; }
+
+/* 5) Respeto a "reducir movimiento" (manteniendo el spinner del loader). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .m-spinner { animation: spin 0.8s linear infinite !important; }
+}
