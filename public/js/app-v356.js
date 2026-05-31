@@ -8219,6 +8219,16 @@ async function imprimirFlyer() {
     if ((!asigns || !asigns.length) && (!items || !items.length)) {
       html += '<p style="text-align:center;padding:1rem">Sin asignaciones ni mantenimientos para este día.</p>';
     }
+    // ── AGENDAR EN ESTE DÍA: crear nuevo (reusa los formularios existentes, pre-fechados) ──
+    html += `<div class="ag-agendar-bar" style="margin-top:14px;padding:12px 14px;background:linear-gradient(90deg,#0b1220,#1f2937);border:1px solid #FFD200;border-radius:10px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;color:#FFD200;font-weight:800"><i class="fas fa-plus-circle"></i> Agendar en este día</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <button type="button" class="btn small btn-primary" data-agendar="servicio"><i class="fas fa-wrench"></i> Servicio</button>
+        <button type="button" class="btn small" data-agendar="garantia"><i class="fas fa-shield-halved"></i> Garantía</button>
+        <button type="button" class="btn small" data-agendar="cotizacion"><i class="fas fa-file-invoice-dollar"></i> Cotización</button>
+      </div>
+      <div style="margin-top:8px;font-size:0.75rem;color:#9ca3af">El formulario abre con la fecha de este día. (La fecha programada del servicio la fija el admin.)</div>
+    </div>`;
     html += `</div>`; // cierra .agenda-light-modal
     html += '<div class="form-actions" style="margin-top:0.75rem"><button type="button" class="btn" id="modal-btn-cancel">Cerrar</button></div>';
     openModal('Agenda · ' + pretty, html);
@@ -8241,6 +8251,27 @@ async function imprimirFlyer() {
           } catch (e) {
             console.error('[agenda] error abriendo reporte', e);
             showToast('No se pudo abrir el reporte.', 'error');
+          }
+        });
+      });
+      // "+ Agendar en este día": abre el formulario de creación correspondiente, pre-fechado.
+      modalBody.querySelectorAll('[data-agendar]').forEach(b => {
+        b.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          const tipo = b.getAttribute('data-agendar');
+          try {
+            if (tipo === 'servicio' && typeof openModalReporte === 'function') {
+              openModalReporte({ fecha_programada: dateIso });
+            } else if (tipo === 'garantia' && typeof openModalGarantia === 'function') {
+              openModalGarantia({ fecha_entrega: dateIso });
+            } else if (tipo === 'cotizacion' && typeof openModalCotizacion === 'function') {
+              openModalCotizacion(null);
+            } else {
+              showToast('No disponible.', 'error');
+            }
+          } catch (e) {
+            console.error('[agenda][agendar]', tipo, e);
+            showToast('No se pudo abrir el formulario.', 'error');
           }
         });
       });
