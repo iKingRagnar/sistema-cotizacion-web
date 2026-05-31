@@ -1375,13 +1375,15 @@ app.post('/api/clientes', async (req, res) => {
       constancia_nombre = null;
       constancia_thumb_url = null;
     }
-    await db.runQuery(
+    const _ins = await db.runQuery(
       `INSERT INTO clientes (codigo, nombre, rfc, contacto, direccion, telefono, email, ciudad, constancia_url, constancia_nombre, constancia_thumb_url)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [codigo || null, nombre || '', rfc || null, contacto || null, direccion || null, telefono || null, email || null, ciudad || null,
        constancia_url || null, constancia_nombre || null, constancia_thumb_url || null]
     );
-    const r = await db.getOne('SELECT * FROM clientes ORDER BY id DESC LIMIT 1');
+    // Devolver la fila RECIÉN creada por su id (no 'la última', que bajo concurrencia
+    // podía ser la de otro request → "creé X y apareció Y").
+    const r = await db.getOne('SELECT * FROM clientes WHERE id=?', [Number(_ins && _ins.lastInsertRowid)]);
     res.status(201).json(publicClienteRow(r));
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
@@ -1528,7 +1530,7 @@ app.post('/api/refacciones', async (req, res) => {
       numero_parte_manual,
     } = req.body || {};
     const puUsd = Number(precio_usd) || 0;
-    await db.runQuery(
+    const _ins = await db.runQuery(
       `INSERT INTO refacciones (codigo, descripcion, zona, bloque, stock, stock_minimo, precio_unitario, precio_usd, tipo_cambio_registro, unidad, categoria, subcategoria, imagen_url, manual_url, numero_parte_manual)
        VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
@@ -1548,7 +1550,7 @@ app.post('/api/refacciones', async (req, res) => {
         numero_parte_manual || null,
       ]
     );
-    const r = await db.getOne('SELECT * FROM refacciones ORDER BY id DESC LIMIT 1');
+    const r = await db.getOne('SELECT * FROM refacciones WHERE id=?', [Number(_ins && _ins.lastInsertRowid)]);
     if (r && Number(stock) > 0) {
       await db.runQuery(
         `INSERT INTO movimientos_stock (refaccion_id, tipo, cantidad, costo_unitario, referencia, fecha) VALUES (?, 'entrada', ?, ?, 'Alta inicial', date('now','localtime'))`,
@@ -1654,8 +1656,18 @@ app.post('/api/refacciones/:id/ajuste-stock', async (req, res) => {
     const cant = Number(cantidad) || 0;
     if (cant <= 0) return res.status(400).json({ error: 'La cantidad debe ser mayor que 0.' });
     const tipoMov = tipo === 'salida' ? 'salida' : 'entrada';
-    const nuevoStock = tipoMov === 'entrada' ? anterior + cant : Math.max(0, anterior - cant);
-    await db.runQuery('UPDATE refacciones SET stock=? WHERE id=?', [nuevoStock, req.params.id]);
+    // Delta ATÓMICO (stock = stock ± cant) en vez de escribir un absoluto pre-leído:
+    // evita el lost-update entre dos ajustes concurrentes sobre la misma refacción.
+    if (tipoMov === 'entrada') {
+      await db.runQuery('UPDATE refacciones SET stock = COALESCE(stock,0) + ? WHERE id=?', [cant, req.params.id]);
+    } else {
+      await db.runQuery(
+        'UPDATE refacciones SET stock = CASE WHEN COALESCE(stock,0) - ? < 0 THEN 0 ELSE COALESCE(stock,0) - ? END WHERE id=?',
+        [cant, cant, req.params.id]
+      );
+    }
+    const _refAfter = await db.getOne('SELECT stock FROM refacciones WHERE id=?', [req.params.id]);
+    const nuevoStock = Number(_refAfter && _refAfter.stock) || 0;
     await db.runQuery(
       `INSERT INTO movimientos_stock (refaccion_id, tipo, cantidad, costo_unitario, referencia, fecha) VALUES (?, ?, ?, ?, ?, date('now','localtime'))`,
       [req.params.id, tipoMov, cant, costo, refTxt || 'Ajuste manual']
@@ -2227,7 +2239,7 @@ app.post('/api/maquinas', async (req, res) => {
       const first = await db.getOne('SELECT id FROM clientes ORDER BY id LIMIT 1');
       cid = first && first.id != null ? Number(first.id) : null;
     }
-    await db.runQuery(
+    const _ins = await db.runQuery(
       `INSERT INTO maquinas (cliente_id, codigo, nombre, marca, modelo, numero_serie, ubicacion, categoria, categoria_principal, subcategoria, imagen_pieza_url, imagen_ensamble_url, stock, precio_lista_usd, ficha_tecnica, tiempo_entrega_dias, descripcion_corta, descripcion_larga, incluye, ficha_tecnica_specs, puesta_en, garantia, condiciones_pago, accesorios_estandar, flyer_modo, flyer_pareja_id, flyer_textos, modelo_2, incluye_2, accesorios_estandar_2, ficha_tecnica_specs_2, categoria_2, descripcion_corta_2, descripcion_larga_2)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
@@ -2267,7 +2279,7 @@ app.post('/api/maquinas', async (req, res) => {
         _maqNullableStr(descripcion_larga_2),
       ]
     );
-    const r = await db.getOne('SELECT * FROM maquinas ORDER BY id DESC LIMIT 1');
+    const r = await db.getOne('SELECT * FROM maquinas WHERE id=?', [Number(_ins && _ins.lastInsertRowid)]);
     res.status(201).json(r);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
@@ -3066,13 +3078,13 @@ app.get('/api/revision-maquinas', async (req, res) => {
 app.post('/api/revision-maquinas', async (req, res) => {
   try {
     const { maquina_id, categoria, modelo, numero_serie, entregado, prueba, comentarios } = req.body || {};
-    await db.runQuery(
+    const _ins = await db.runQuery(
       `INSERT INTO revision_maquinas (maquina_id, categoria, modelo, numero_serie, entregado, prueba, comentarios)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [maquina_id || null, categoria || null, modelo || null, numero_serie || null,
        entregado || 'No', prueba || 'En Proceso', comentarios || null]
     );
-    const r = await db.getOne('SELECT * FROM revision_maquinas ORDER BY id DESC LIMIT 1');
+    const r = await db.getOne('SELECT * FROM revision_maquinas WHERE id=?', [Number(_ins && _ins.lastInsertRowid)]);
     res.status(201).json(r);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
@@ -3515,7 +3527,7 @@ app.post('/api/cotizaciones/:id/lineas', async (req, res) => {
       const puLista = await precioUnitarioDesdeLista(cot, tipo, refaccion_id, maquina_id, precio_unitario);
       calc = calcLinea(tipo, cantidad, puLista, cot.moneda, cot.tipo_cambio);
     }
-    await db.runQuery(
+    const _ins = await db.runQuery(
       `INSERT INTO cotizacion_lineas (cotizacion_id, refaccion_id, maquina_id, bitacora_id, tipo_linea, descripcion, cantidad, precio_unitario, precio_usd, subtotal, iva, total, orden, es_ida, horas_trabajo, horas_traslado, zona, ayudantes, tarifa_aplicada)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
@@ -3540,8 +3552,8 @@ app.post('/api/cotizaciones/:id/lineas', async (req, res) => {
         tarifa_aplicada || null,
       ]
     );
+    const r = await db.getOne('SELECT * FROM cotizacion_lineas WHERE id=?', [Number(_ins && _ins.lastInsertRowid)]);
     await recalcCotizacionTotals(req.params.id);
-    const r = await db.getOne('SELECT * FROM cotizacion_lineas ORDER BY id DESC LIMIT 1');
     res.status(201).json(r || {});
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
@@ -3720,7 +3732,7 @@ app.post('/api/cotizaciones', async (req, res) => {
       if (typeof ficha_tecnica_fotos === 'string') return ficha_tecnica_fotos;
       try { return JSON.stringify(ficha_tecnica_fotos); } catch (_) { return null; }
     })();
-    await db.runQuery(
+    const _ins = await db.runQuery(
       `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total, tipo_cambio, moneda, maquinas_ids, estado, notas, vendedor_personal_id, descuento_pct, vendedor,
         imagen_maquina_url, ficha_tecnica_url, alcance_servicio, siguiente_paso, atendido_por_nombre, atendido_por_puesto, bancarios_rfc, bancarios_cuentas, ficha_tecnica_manual, ficha_tecnica_fotos)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -3756,7 +3768,8 @@ app.post('/api/cotizaciones', async (req, res) => {
       `SELECT co.*, c.nombre as cliente_nombre, vp.puesto as vendedor_puesto
        FROM cotizaciones co JOIN clientes c ON c.id = co.cliente_id
        LEFT JOIN tecnicos vp ON vp.id = co.vendedor_personal_id
-       ORDER BY co.id DESC LIMIT 1`
+       WHERE co.id = ?`,
+      [Number(_ins && _ins.lastInsertRowid)]
     );
     res.status(201).json(r);
     db.getOne('SELECT * FROM clientes WHERE id=?', [cliente_id])
@@ -4558,11 +4571,11 @@ app.post('/api/bitacoras', async (req, res) => {
     const iid = Number.isFinite(incN) && incN > 0 ? incN : null;
     const cid = Number.isFinite(cotN) && cotN > 0 ? cotN : null;
     if (!iid && !cid) return res.status(400).json({ error: 'Indica incidente_id o cotizacion_id' });
-    await db.runQuery(
+    const _ins = await db.runQuery(
       `INSERT INTO bitacoras (incidente_id, cotizacion_id, fecha, tecnico, actividades, tiempo_horas, materiales_usados) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [iid, cid, fecha || new Date().toISOString().slice(0, 10), tecnico || null, actividades || null, Number(tiempo_horas) || 0, materiales_usados || null]
     );
-    const r = await db.getOne('SELECT * FROM bitacoras ORDER BY id DESC LIMIT 1');
+    const r = await db.getOne('SELECT * FROM bitacoras WHERE id=?', [Number(_ins && _ins.lastInsertRowid)]);
     res.status(201).json(r);
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
@@ -8090,11 +8103,11 @@ app.post('/api/garantias', async (req, res) => {
   try {
     const { cliente_id, razon_social, modelo_maquina, numero_serie, tipo_maquina, fecha_entrega } = req.body || {};
     if (!razon_social || !modelo_maquina || !fecha_entrega) return res.status(400).json({ error: 'razon_social, modelo_maquina y fecha_entrega requeridos' });
-    await db.runQuery(
+    const _ins = await db.runQuery(
       `INSERT INTO garantias (cliente_id, razon_social, modelo_maquina, numero_serie, tipo_maquina, fecha_entrega) VALUES (?, ?, ?, ?, ?, ?)`,
       [cliente_id || null, razon_social, modelo_maquina, numero_serie || null, tipo_maquina || null, fecha_entrega]
     );
-    const g = await db.getOne('SELECT * FROM garantias ORDER BY id DESC LIMIT 1');
+    const g = await db.getOne('SELECT * FROM garantias WHERE id=?', [Number(_ins && _ins.lastInsertRowid)]);
     const modeloHint = [modelo_maquina, tipo_maquina].map((x) => (x && String(x).trim()) || '').find(Boolean) || '';
     const [f1, f2] = fechasMantenimientoPar(fecha_entrega, modeloHint, 0);
     const anio1 = new Date(f1 + 'T12:00:00').getFullYear();
@@ -8318,11 +8331,11 @@ app.post('/api/bonos', async (req, res) => {
     const montoBono = Number(monto_bono) || 0;
     const montoTotal = diasNum * montoBono;
     const mesCalc = mes || (fecha ? fecha.slice(0,7) : new Date().toISOString().slice(0,7));
-    await db.runQuery(
+    const _ins = await db.runQuery(
       `INSERT INTO bonos (reporte_id, tecnico, tipo_capacitacion, modalidad, monto_bono, dias, monto_total, fecha, mes, notas) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [reporte_id || null, tecnico, tipo_capacitacion || null, modalidad || 'local', montoBono, diasNum, montoTotal, fecha || new Date().toISOString().slice(0,10), mesCalc, notas || null]
     );
-    const r = await db.getOne('SELECT * FROM bonos ORDER BY id DESC LIMIT 1');
+    const r = await db.getOne('SELECT * FROM bonos WHERE id=?', [Number(_ins && _ins.lastInsertRowid)]);
     res.status(201).json(r);
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
@@ -8389,11 +8402,11 @@ app.post('/api/viajes', async (req, res) => {
     const dias = Math.max(1, Math.round((d2 - d1) / (86400000)) + 1);
     const monto = dias * VIATICO_DIARIO;
     const mesCalc = mes || mes_liquidacion || fecha_inicio.slice(0,7);
-    await db.runQuery(
+    const _ins = await db.runQuery(
       `INSERT INTO viajes (tecnico, cliente_id, razon_social, maquina, numero_serie, actividad, estado, fecha_inicio, fecha_fin, dias, monto_viaticos, descripcion, actividades, reporte_id, mes, mes_liquidacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [tecnico, cliente_id || null, razon_social || null, maquina || null, numero_serie || null, actividad || null, estado || 'pendiente', fecha_inicio, fecha_fin, dias, monto, descripcion || null, actividades || null, reporte_id || null, mesCalc, mes_liquidacion || mesCalc]
     );
-    const r = await db.getOne('SELECT * FROM viajes ORDER BY id DESC LIMIT 1');
+    const r = await db.getOne('SELECT * FROM viajes WHERE id=?', [Number(_ins && _ins.lastInsertRowid)]);
     res.status(201).json(r);
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
@@ -8493,8 +8506,8 @@ app.post('/api/prospectos', async (req, res) => {
     const cols = ['empresa','zona','lat','lng','tipo_interes','industria','potencial_usd','ultimo_contacto','score_ia','estado','notas'];
     const values = cols.map(c => b[c] != null ? b[c] : null);
     const placeholders = cols.map(() => '?').join(',');
-    await db.runQuery('INSERT INTO prospectos (' + cols.join(',') + ') VALUES (' + placeholders + ')', values);
-    const row = await db.getAll('SELECT * FROM prospectos ORDER BY id DESC LIMIT 1');
+    const _ins = await db.runQuery('INSERT INTO prospectos (' + cols.join(',') + ') VALUES (' + placeholders + ')', values);
+    const row = await db.getAll('SELECT * FROM prospectos WHERE id=?', [Number(_ins && _ins.lastInsertRowid)]);
     res.json(row[0] || { ok: true });
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });
