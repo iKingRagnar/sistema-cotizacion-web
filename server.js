@@ -361,6 +361,45 @@ app.get('/api/storage-health', async (req, res) => {
   }
 });
 
+/* Diagnóstico de schema (SOLO ADMIN — /api/admin/* lo gatea auth). Verifica que las
+   columnas/tablas que agregan las migraciones EXISTAN en la BD actual. Sirve para
+   confirmar, tras un deploy a Postgres, que runPgMigrations() reparó el schema —
+   sin tener que leer los logs de Render. Solo-lectura, no modifica nada. */
+app.get('/api/admin/diag-schema', async (req, res) => {
+  try {
+    const spec = {
+      tecnicos: ['comision_maquinas_pct', 'comision_refacciones_pct', 'rol', 'puesto', 'es_vendedor', 'ine_foto_url'],
+      cotizaciones: ['descuento_pct', 'vendedor_personal_id', 'estado', 'ficha_tecnica_manual', 'bancarios_cuentas', 'atendido_por_nombre'],
+      maquinas: ['estado_preparacion', 'precio_lista_usd', 'flyer_modo', 'fecha_lista_estimada'],
+      reportes: ['slot', 'dias', 'fuera_ciudad', 'finalizado'],
+      refacciones: ['stock', 'precio_usd', 'bloque'],
+      garantias: ['pagos_log', 'maximo_mantenimientos'],
+      app_users: ['tab_permissions', 'column_permissions', 'tecnico_id'],
+      embarques: ['refaccion_id', 'aplicado_stock'],
+      bonos: ['monto_total'],
+      viajes: ['mes_liquidacion'],
+      attachments: ['data_url'],
+      webhooks: ['eventos'],
+    };
+    const mode = db.getStorageInfo ? db.getStorageInfo().mode : (db.usePostgres ? 'postgres' : (db.useTurso ? 'turso' : 'sqlite'));
+    const tables = {};
+    const missing = [];
+    for (const [table, cols] of Object.entries(spec)) {
+      let actual = [];
+      try { actual = await db.getTableColumns(table); } catch (_) { actual = []; }
+      const have = new Set(actual.map((c) => String(c).toLowerCase()));
+      const tableExists = actual.length > 0;
+      const colsMissing = tableExists ? cols.filter((c) => !have.has(c.toLowerCase())) : cols.slice();
+      tables[table] = { exists: tableExists, columnsChecked: cols.length, missing: colsMissing };
+      if (!tableExists) missing.push(`${table} (tabla completa)`);
+      else colsMissing.forEach((c) => missing.push(`${table}.${c}`));
+    }
+    return res.json({ ok: missing.length === 0, backend: mode, missingCount: missing.length, missing, tables });
+  } catch (e) {
+    return res.status(500).json({ error: String(e.message || e) });
+  }
+});
+
 /* Inline fallback rate limiter (used when express-rate-limit is not installed). */
 const _loginAttempts = new Map();
 function loginRateLimit(req, res, next) {
