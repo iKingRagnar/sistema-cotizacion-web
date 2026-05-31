@@ -476,7 +476,13 @@
         } else if (/^[\w.-]+@[\w.-]+\.\w+$/.test(t)) {
           td.dataset.autoLinked = '1';
           td.innerHTML = '<a href="mailto:' + escapeHtml(t) + '" style="color:#60a5fa">' + escapeHtml(t) + '</a>';
-        } else if (/^\+?\d[\d\s().-]{7,}$/.test(t)) {
+        } else if (
+          /^\+?[\d(][\d\s().-]{8,16}$/.test(t) &&   // estructura general de teléfono (permite '(' inicial)
+          /[\s().+-]/.test(t) &&                  // DEBE traer formato (+, espacio, paréntesis o guion):
+                                                  // evita enlazar números pelones (series, cantidades, precios, IDs)
+          (t.match(/\d/g) || []).length >= 10 &&  // teléfono real: 10-15 dígitos
+          (t.match(/\d/g) || []).length <= 15
+        ) {
           td.dataset.autoLinked = '1';
           var clean = t.replace(/[^\d+]/g, '');
           td.innerHTML = '<a href="tel:' + clean + '" style="color:#60a5fa">' + escapeHtml(t) + '</a>';
