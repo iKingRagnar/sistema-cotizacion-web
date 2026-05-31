@@ -385,8 +385,11 @@ function getSchema() {
 }
 
 /* Migraciones seguras (ALTER TABLE) para columnas que pueden no existir en BD antiguas */
-async function runMigrations() {
-  const migrations = [
+/* Lista única de migraciones (DDL idempotente). La comparten SQLite/Turso
+   (runMigrations) y Postgres (runPgMigrations) para que prod no quede sin
+   columnas/tablas que sí existen en local. */
+function getMigrationsDDL() {
+  return [
     // refacciones: nuevas columnas
     `ALTER TABLE refacciones ADD COLUMN zona TEXT`,
     `ALTER TABLE refacciones ADD COLUMN stock REAL NOT NULL DEFAULT 0`,
@@ -628,6 +631,10 @@ async function runMigrations() {
     `CREATE INDEX IF NOT EXISTS idx_embarques_refaccion ON embarques(refaccion_id)`,
     `CREATE INDEX IF NOT EXISTS idx_embarques_maquina ON embarques(maquina_id)`,
   ];
+}
+
+async function runMigrations() {
+  const migrations = getMigrationsDDL();
   for (const sql of migrations) {
     try {
       if (useTurso) await db.execute(sql);
@@ -640,6 +647,45 @@ async function runMigrations() {
       }
     }
   }
+}
+
+/* Migraciones idempotentes para Postgres (Supabase).
+   El init() de PG NO corría runMigrations(), así que toda columna agregada por
+   migración (comisiones, descuento_pct, slot, estado_preparacion, etc.) podía
+   faltar en prod → errores "column does not exist" intermitentes que en local
+   (SQLite, con migraciones) nunca se ven. Aquí reusamos la MISMA lista y la
+   hacemos 100% idempotente y segura:
+     - ALTER ... ADD COLUMN  → ADD COLUMN IF NOT EXISTS (tipos TEXT/INTEGER/REAL
+       y defaults literales ya son válidos en Postgres).
+     - CREATE TABLE/INDEX     → ya traen IF NOT EXISTS; solo traducimos
+       AUTOINCREMENT→SERIAL y datetime('now')→now() vía translateSqlForPg.
+   Cada sentencia va en su propio try/catch: un fallo aislado NUNCA tumba el boot. */
+async function runPgMigrations() {
+  const migrations = getMigrationsDDL();
+  let ok = 0;
+  let warn = 0;
+  for (const raw of migrations) {
+    try {
+      let sql = String(raw);
+      if (/^\s*ALTER\s+TABLE\b/i.test(sql)) {
+        // Idempotencia nativa de Postgres; tipos/defaults ya compatibles.
+        sql = sql.replace(/\bADD\s+COLUMN\s+(?!IF\s+NOT\s+EXISTS)/i, 'ADD COLUMN IF NOT EXISTS ');
+      } else {
+        // CREATE TABLE/INDEX IF NOT EXISTS: traducir sintaxis SQLite-only.
+        sql = sql.replace(/\bINTEGER\s+PRIMARY\s+KEY\s+AUTOINCREMENT\b/gi, 'SERIAL PRIMARY KEY');
+        sql = translateSqlForPg(sql);
+      }
+      await pgPool.query(sql);
+      ok++;
+    } catch (e) {
+      const msg = String((e && e.message) || '');
+      if (!/already exists|duplicate column/i.test(msg)) {
+        warn++;
+        console.warn('[pg-migration]', String(raw).slice(0, 90), '->', msg);
+      }
+    }
+  }
+  console.log(`[db] Migraciones Postgres idempotentes: ${ok}/${migrations.length} OK${warn ? `, ${warn} avisos` : ''}.`);
 }
 
 function isVercelServerless() {
@@ -689,7 +735,10 @@ async function init() {
     });
     // Test de conexión (falla rápido si la URL es incorrecta)
     await pgPool.query('SELECT 1');
-    console.log('[db] Conectado a Postgres (Supabase). Schema ya cargado desde migrations/01-schema-postgres.sql');
+    console.log('[db] Conectado a Postgres (Supabase).');
+    // Auto-reparar columnas/tablas que las migraciones agregan (antes solo corrían en
+    // SQLite/Turso). Idempotente: si ya existen, no hace nada. Nunca tumba el boot.
+    try { await runPgMigrations(); } catch (e) { console.warn('[pg-migrations]', e.message); }
     // Seeds idempotentes (usan INSERT OR IGNORE que se traduce a ON CONFLICT DO NOTHING)
     try { await seedCatalogosDefaults(); } catch (e) { console.warn('[seed catalogos]', e.message); }
     try { await seedCatalogoCategoriasFromLegacy(); } catch (e) { console.warn('[seed cat-legacy]', e.message); }
