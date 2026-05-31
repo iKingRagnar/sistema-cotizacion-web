@@ -6789,10 +6789,33 @@ app.get('/api/agenda/mes', async (req, res) => {
       );
       rows = rows2.map(r => Object.assign({}, r, { fecha_programada: null, slot: null }));
     }
-    // Normalizar fecha
+    // Normalizar fecha; marcar como servicio (reporte).
     const out = rows.map(r => Object.assign({}, r, {
+      tipo_agenda: 'servicio',
       fecha: ((r.fecha_programada || r.fecha) || '').toString().slice(0, 10),
     }));
+    // Cotizaciones agendadas: fecha_seguimiento (cotización a futuro) y
+    // fecha_entrega_programada (venta). Resiliente: si las columnas no existen aún, se omite.
+    try {
+      const cots = await db.getAll(
+        `SELECT co.id, co.folio, co.estado, co.fecha_seguimiento, co.fecha_entrega_programada,
+                co.vendedor, c.nombre as cliente_nombre
+         FROM cotizaciones co LEFT JOIN clientes c ON c.id = co.cliente_id
+         WHERE (substr(COALESCE(co.fecha_seguimiento,''),1,10) >= ? AND substr(COALESCE(co.fecha_seguimiento,''),1,10) <= ?)
+            OR (substr(COALESCE(co.fecha_entrega_programada,''),1,10) >= ? AND substr(COALESCE(co.fecha_entrega_programada,''),1,10) <= ?)`,
+        [start, end, start, end]
+      );
+      for (const co of (cots || [])) {
+        const fs = (co.fecha_seguimiento || '').toString().slice(0, 10);
+        const fe = (co.fecha_entrega_programada || '').toString().slice(0, 10);
+        if (fs && fs >= start && fs <= end) {
+          out.push({ tipo_agenda: 'cotizacion', id: co.id, folio: co.folio, estado: co.estado, fecha: fs, cliente_nombre: co.cliente_nombre, tecnico: co.vendedor || null, slot: null });
+        }
+        if (fe && fe >= start && fe <= end) {
+          out.push({ tipo_agenda: 'venta', id: co.id, folio: co.folio, estado: co.estado, fecha: fe, cliente_nombre: co.cliente_nombre, tecnico: co.vendedor || null, slot: null });
+        }
+      }
+    } catch (eCot) { console.warn('[agenda/mes] cotizaciones omitidas:', eCot && eCot.message); }
     res.json(out);
   } catch (e) { res.status(500).json({ error: String(e.message) }); }
 });

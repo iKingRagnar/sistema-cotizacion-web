@@ -8030,6 +8030,14 @@ async function imprimirFlyer() {
       const more = list.length > 4 ? `<span class="cal-more">+${list.length - 4}</span>` : '';
       // Chips: si tiene técnico -> chip amarillo con candado. Si NO tiene técnico -> chip gris "Sin técnico"
       const chips = asigns.slice(0, 3).map(a => {
+        // Cotización / venta agendada: chip distinto (no es ocupación de técnico).
+        if (a.tipo_agenda === 'cotizacion' || a.tipo_agenda === 'venta') {
+          const isVenta = a.tipo_agenda === 'venta';
+          const ic = isVenta ? 'fa-truck' : 'fa-file-invoice-dollar';
+          const lblC = isVenta ? 'Entrega' : 'Cotiz.';
+          const tt = `${isVenta ? 'Entrega de venta' : 'Cotización'} · ${a.folio || ''} · ${a.cliente_nombre || ''}`;
+          return `<button type="button" class="cal-tec-chip" data-asign-id="${a.id}" data-no-universal-paint="1" title="${escapeHtml(tt)}" style="display:flex !important;align-items:center !important;gap:5px !important;padding:4px 8px !important;margin:2px 0 !important;background:rgba(59,130,246,0.16) !important;color:${isVenta ? '#34d399' : '#60a5fa'} !important;border:1.5px solid ${isVenta ? '#34d399' : '#60a5fa'} !important;border-radius:14px !important;font-size:0.72rem !important;font-weight:700 !important;cursor:pointer !important;line-height:1.2 !important;text-align:left !important;font-family:inherit !important;width:100% !important"><i class="fas ${ic}" style="color:${isVenta ? '#34d399' : '#60a5fa'} !important;flex-shrink:0"></i><strong style="font-weight:800 !important;color:${isVenta ? '#34d399' : '#60a5fa'} !important;font-size:0.7rem !important">${lblC}</strong><span style="opacity:0.85;font-size:0.66rem !important">${escapeHtml((a.folio || '').slice(-6))}</span></button>`;
+        }
         const tieneT = a.tecnico && String(a.tecnico).trim();
         const lbl = SLOT_LABEL[a.slot] || (a.slot ? a.slot : '');
         if (tieneT) {
@@ -8074,14 +8082,13 @@ async function imprimirFlyer() {
     wrap.querySelectorAll('.cal-tec-chip[data-asign-id]').forEach(chip => {
       chip.addEventListener('click', (e) => {
         e.stopPropagation();
-        // Click en chip abre el MISMO modal del día (no uno separado)
-        const id = chip.getAttribute('data-asign-id');
-        const asign = (agendaAsignacionesCache || []).find(a => String(a.id) === String(id));
-        if (asign) {
-          const iso = asign.fecha;
-          const ds = (iso || '').slice(8, 10);
-          openModalAgendaDia(iso, byDay[ds] || [], asignByDay[ds] || []);
-        }
+        // Click en chip abre el MISMO modal del día. La fecha se lee de la celda del DOM
+        // (no por id) para evitar colisiones de id entre reporte y cotización.
+        const cell = chip.closest('.cal-day[data-date]');
+        const iso = cell ? cell.getAttribute('data-date') : null;
+        if (!iso) return;
+        const ds = iso.slice(8, 10);
+        openModalAgendaDia(iso, byDay[ds] || [], asignByDay[ds] || []);
       });
     });
   }
@@ -8116,6 +8123,25 @@ async function imprimirFlyer() {
     </div>`;
     // Render de cada asignación COMPLETA (toda la info inline, sin segundo modal)
     const renderAsignFull = (a) => {
+      // Cotización / venta agendada: tarjeta propia (no es un reporte).
+      if (a.tipo_agenda === 'cotizacion' || a.tipo_agenda === 'venta') {
+        const isVenta = a.tipo_agenda === 'venta';
+        return `<div class="ag-asign-card">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+            <span style="width:28px;height:28px;border-radius:50%;background:${isVenta ? '#065f46' : '#1e3a8a'};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fas ${isVenta ? 'fa-truck' : 'fa-file-invoice-dollar'}" style="color:#fff !important;font-size:0.82rem"></i></span>
+            <strong style="font-size:1.02rem;color:${isVenta ? '#34d399' : '#60a5fa'} !important">${isVenta ? 'Entrega de venta' : 'Cotización (seguimiento)'}</strong>
+            <span class="ag-pill-dark" style="margin-left:auto">${escapeHtml(a.folio || '#' + a.id)}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;font-size:0.9rem">
+            <div><strong>Cliente:</strong> ${escapeHtml(a.cliente_nombre || '—')}</div>
+            <div><strong>Estado:</strong> <span class="ag-pill-status">${escapeHtml(a.estado || '—')}</span></div>
+            ${a.tecnico ? `<div style="grid-column:1/-1"><strong>Vendedor:</strong> ${escapeHtml(a.tecnico)}</div>` : ''}
+          </div>
+          <div style="margin-top:10px;text-align:right">
+            <button type="button" class="btn small btn-primary" data-open-cot="${a.id}"><i class="fas fa-up-right-from-square"></i> Abrir cotización</button>
+          </div>
+        </div>`;
+      }
       const m = SLOT_META[a.slot];
       const tipoLbl = (a.subtipo || a.tipo_reporte || '—');
       const otros = (agendaAsignacionesCache || []).filter(x => x.tecnico === a.tecnico && x.fecha === a.fecha && x.id !== a.id);
@@ -8225,9 +8251,11 @@ async function imprimirFlyer() {
       <div style="display:flex;flex-wrap:wrap;gap:8px">
         <button type="button" class="btn small btn-primary" data-agendar="servicio"><i class="fas fa-wrench"></i> Servicio</button>
         <button type="button" class="btn small" data-agendar="garantia"><i class="fas fa-shield-halved"></i> Garantía</button>
-        <button type="button" class="btn small" data-agendar="cotizacion"><i class="fas fa-file-invoice-dollar"></i> Cotización</button>
+        <button type="button" class="btn small" data-agendar="cotizacion"><i class="fas fa-file-invoice-dollar"></i> Cotización nueva</button>
+        <button type="button" class="btn small" data-agendar="entrega"><i class="fas fa-truck"></i> Entrega de venta</button>
+        <button type="button" class="btn small" data-agendar="seguimiento"><i class="fas fa-bell"></i> Seguimiento cotización</button>
       </div>
-      <div style="margin-top:8px;font-size:0.75rem;color:#9ca3af">El formulario abre con la fecha de este día. (La fecha programada del servicio la fija el admin.)</div>
+      <div style="margin-top:8px;font-size:0.75rem;color:#9ca3af">Nuevo (servicio/garantía/cotización) o programar uno existente (entrega/seguimiento) en este día.</div>
     </div>`;
     html += `</div>`; // cierra .agenda-light-modal
     html += '<div class="form-actions" style="margin-top:0.75rem"><button type="button" class="btn" id="modal-btn-cancel">Cerrar</button></div>';
@@ -8254,7 +8282,24 @@ async function imprimirFlyer() {
           }
         });
       });
-      // "+ Agendar en este día": abre el formulario de creación correspondiente, pre-fechado.
+      // "Abrir cotización" desde una tarjeta de cotización/venta agendada.
+      modalBody.querySelectorAll('[data-open-cot]').forEach(b => {
+        b.addEventListener('click', async (ev) => {
+          ev.preventDefault();
+          const id = b.getAttribute('data-open-cot');
+          if (!id) return;
+          try {
+            let cot = (typeof cotizacionesCache !== 'undefined' ? cotizacionesCache : []).find(x => String(x.id) === String(id));
+            if (!cot) cot = await fetchJson(API + '/cotizaciones/' + id);
+            if (cot && typeof openModalCotizacion === 'function') await openModalCotizacion(cot);
+            else showToast('No se encontró la cotización.', 'error');
+          } catch (e) {
+            console.error('[agenda][open-cot]', e);
+            showToast('No se pudo abrir la cotización.', 'error');
+          }
+        });
+      });
+      // "+ Agendar en este día": crear nuevo (pre-fechado) o programar existente.
       modalBody.querySelectorAll('[data-agendar]').forEach(b => {
         b.addEventListener('click', (ev) => {
           ev.preventDefault();
@@ -8266,12 +8311,85 @@ async function imprimirFlyer() {
               openModalGarantia({ fecha_entrega: dateIso });
             } else if (tipo === 'cotizacion' && typeof openModalCotizacion === 'function') {
               openModalCotizacion(null);
+            } else if (tipo === 'entrega') {
+              openAgendarCotizacionExistente(dateIso, 'entrega');
+            } else if (tipo === 'seguimiento') {
+              openAgendarCotizacionExistente(dateIso, 'seguimiento');
             } else {
               showToast('No disponible.', 'error');
             }
           } catch (e) {
             console.error('[agenda][agendar]', tipo, e);
             showToast('No se pudo abrir el formulario.', 'error');
+          }
+        });
+      });
+    }, 60);
+  }
+
+  /* Programar una cotización/venta EXISTENTE en un día de la agenda.
+     modo 'entrega'  -> setea fecha_entrega_programada (ventas: aprobada/aplicada/venta)
+     modo 'seguimiento' -> setea fecha_seguimiento (cualquier cotización) */
+  async function openAgendarCotizacionExistente(dateIso, modo) {
+    const esEntrega = modo === 'entrega';
+    const campo = esEntrega ? 'fecha_entrega_programada' : 'fecha_seguimiento';
+    const titulo = esEntrega ? 'Programar entrega de venta' : 'Programar seguimiento de cotización';
+    let lista = [];
+    try {
+      lista = await fetchJson(API + '/cotizaciones');
+      if (!Array.isArray(lista)) lista = [];
+    } catch (e) {
+      showToast('No se pudieron cargar las cotizaciones.', 'error');
+      return;
+    }
+    if (esEntrega) {
+      const ventaEstados = new Set(['aprobada', 'aplicada', 'venta']);
+      lista = lista.filter(c => ventaEstados.has(String(c.estado || '').toLowerCase()));
+    }
+    lista = lista.slice().sort((a, b) => Number(b.id) - Number(a.id)).slice(0, 200);
+    const rowsHtml = lista.length
+      ? lista.map(c => `<button type="button" class="btn small outline ag-pick-cot" data-cot-id="${c.id}" style="display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;margin-bottom:6px">
+          <span><strong>${escapeHtml(c.folio || '#' + c.id)}</strong> · ${escapeHtml(c.cliente_nombre || '—')}</span>
+          <span class="ag-pill-status">${escapeHtml(c.estado || '—')}</span>
+        </button>`).join('')
+      : `<p class="muted" style="text-align:center;padding:1rem">No hay ${esEntrega ? 'ventas' : 'cotizaciones'} disponibles.</p>`;
+    const body = `<div style="max-height:55vh;overflow:auto">
+      <p style="margin:0 0 10px;font-size:0.88rem">Elige cuál programar para <strong>${escapeHtml(dateIso)}</strong>:</p>
+      <div class="ag-pick-search-wrap" style="margin-bottom:10px"><input type="text" id="ag-pick-search" placeholder="Buscar folio o cliente…" style="width:100%"></div>
+      <div id="ag-pick-list">${rowsHtml}</div>
+    </div>
+    <div class="form-actions" style="margin-top:0.75rem"><button type="button" class="btn" id="modal-btn-cancel">Cancelar</button></div>`;
+    openModal(titulo, body);
+    setTimeout(() => {
+      const mb = document.getElementById('modal-body');
+      if (!mb) return;
+      const search = mb.querySelector('#ag-pick-search');
+      if (search) {
+        search.addEventListener('input', () => {
+          const q = search.value.trim().toLowerCase();
+          mb.querySelectorAll('.ag-pick-cot').forEach(btn => {
+            btn.style.display = !q || btn.textContent.toLowerCase().includes(q) ? '' : 'none';
+          });
+        });
+      }
+      mb.querySelectorAll('.ag-pick-cot').forEach(btn => {
+        btn.addEventListener('click', async (ev) => {
+          ev.preventDefault();
+          const id = btn.getAttribute('data-cot-id');
+          if (!id) return;
+          try {
+            await fetchJson(API + '/cotizaciones/' + id, { method: 'PUT', body: JSON.stringify({ [campo]: dateIso }) });
+            showToast(esEntrega ? 'Entrega programada.' : 'Seguimiento programado.', 'success');
+            qs('#modal').classList.add('hidden');
+            try {
+              const mi = qs('#mant-gar-month');
+              const ym = mi && mi.value ? mi.value : new Date().toISOString().slice(0, 7);
+              await loadAgendaAsignaciones(ym);
+              renderMantenimientoGarantiaCalendar();
+            } catch (_) {}
+          } catch (e) {
+            console.error('[agenda][programar-cot]', e);
+            showToast(parseApiError(e) || 'No se pudo programar.', 'error');
           }
         });
       });
