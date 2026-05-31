@@ -17427,14 +17427,15 @@ async function imprimirFlyer() {
 
     const _saveBtnEl = qs('#m-save');
     if (!_saveBtnEl) {
+      // Antes el handler se pegaba a (_saveBtnEl || {}) → el botón no hacía NADA, sin
+      // error ni toast (la "reacción rara" de Personal que no guarda). Ahora avisamos.
       console.error('[openModalTecnico] WARN: #m-save no encontrado en DOM. isNew=', isNew, 'tec.id=', tec && tec.id);
+      showToast('No se pudo preparar el formulario. Cierra y vuelve a abrir.', 'error');
+      return;
     }
-    (_saveBtnEl || {}).onclick = async () => {
+    _saveBtnEl.onclick = async () => {
       const nombre = qs('#m-tec-nombre')?.value.trim();
-      console.log('[tecnico-save] click guardar, isNew=', isNew, 'id=', tec && tec.id, 'nombre=', nombre);
       if (!nombre) { showToast('El nombre es obligatorio.', 'error'); return; }
-      const comM = canViewCommissions() ? (Number(qs('#m-tec-com-m')?.value) || 0) : (Number(full && full.comision_maquinas_pct) || 0);
-      const comR = canViewCommissions() ? (Number(qs('#m-tec-com-r')?.value) || 0) : (Number(full && full.comision_refacciones_pct) || 10);
       const puestoVal = qs('#m-tec-puesto')?.value.trim() || null;
       const payload = {
         nombre,
@@ -17444,10 +17445,14 @@ async function imprimirFlyer() {
         profesion: qs('#m-tec-prof')?.value.trim() || null,
         habilidades: qs('#m-tec-habilidades')?.value.trim() || null,
         es_vendedor: qs('#m-tec-es-vendedor')?.value === '1' ? 1 : 0,
-        comision_maquinas_pct: comM,
-        comision_refacciones_pct: comR,
         activo: isNew ? 1 : parseInt(qs('#m-tec-activo')?.value || '1', 10),
       };
+      // Solo admin puede ver/editar comisiones. Si no las puede ver, NO las mandamos:
+      // el backend preserva las actuales (evita corromper 0% -> 10%).
+      if (canViewCommissions()) {
+        payload.comision_maquinas_pct = Number(qs('#m-tec-com-m')?.value) || 0;
+        payload.comision_refacciones_pct = Number(qs('#m-tec-com-r')?.value) || 0;
+      }
       if (pendingIneFull) {
         payload.ine_foto_url = pendingIneFull;
         payload.ine_thumb_url = pendingIneThumb || null;

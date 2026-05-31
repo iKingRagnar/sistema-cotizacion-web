@@ -4337,6 +4337,17 @@ app.put('/api/tecnicos/:id', async (req, res) => {
       licencia_thumb_url = cur.licencia_thumb_url;
     }
 
+    // Un usuario que NO puede ver comisiones (no-admin) tampoco puede MODIFICARLAS.
+    // Su cliente manda valores placeholder (el GET ya le ocultó las reales), así que
+    // sobreescribir aquí corrompía la comisión (ej. 0% -> 10%) en cada guardado.
+    // Defensa de fondo: si no es admin, preservamos el valor actual de la fila.
+    const comStripped = shouldStripCommissions(req);
+    const comMaqFinal = comStripped
+      ? (cur.comision_maquinas_pct != null ? cur.comision_maquinas_pct : 0)
+      : (Number(comision_maquinas_pct) || 0);
+    const comRefFinal = comStripped
+      ? (cur.comision_refacciones_pct != null ? cur.comision_refacciones_pct : 0)
+      : (Number(comision_refacciones_pct) || 0);
     await db.runQuery(
       `UPDATE tecnicos SET nombre=?, habilidades=?, activo=?, ocupado=?, disponible_desde=?,
        rol=?, puesto=?, departamento=?, profesion=?, es_vendedor=?, comision_maquinas_pct=?, comision_refacciones_pct=?,
@@ -4353,8 +4364,8 @@ app.put('/api/tecnicos/:id', async (req, res) => {
         departamento || null,
         profesion || null,
         es_vendedor ? 1 : 0,
-        Number(comision_maquinas_pct) || 0,
-        Number(comision_refacciones_pct) || 0,
+        comMaqFinal,
+        comRefFinal,
         ine_foto_url || null,
         ine_thumb_url || null,
         licencia_foto_url || null,
