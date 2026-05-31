@@ -3921,6 +3921,25 @@ app.post('/api/cotizaciones/:id/aplicar', async (req, res) => {
       return res.status(400).json({ error: 'No se puede aplicar la cotización por inventario.', errores });
     }
 
+    // CLAIM ATÓMICO: marcar 'aplicada' ANTES de descontar stock. El guard de arriba
+    // (lee estado y rechaza) no basta: dos requests concurrentes lo pasan ambos y
+    // descuentan stock DOS VECES. Aquí solo UNA gana (rowCount=1, por el WHERE estado
+    // NOT IN); la otra obtiene 0 y aborta sin tocar inventario.
+    let vendedorNombre = req.body && req.body.vendedor ? String(req.body.vendedor).trim() : null;
+    if (!vendedorNombre && cot.vendedor_personal_id) {
+      const p = await db.getOne('SELECT nombre FROM tecnicos WHERE id=?', [cot.vendedor_personal_id]);
+      if (p && p.nombre) vendedorNombre = p.nombre;
+    }
+    if (!vendedorNombre && cot.vendedor) vendedorNombre = String(cot.vendedor).trim();
+    const _claimed = await db.runMutationCount(
+      `UPDATE cotizaciones SET estado='aplicada', fecha_aprobacion=date('now','localtime'), vendedor=?
+       WHERE id=? AND estado NOT IN ('aplicada','venta')`,
+      [vendedorNombre || null, req.params.id]
+    );
+    if (!_claimed) {
+      return res.status(400).json({ error: 'Cotización ya aplicada o registrada como venta' });
+    }
+
     // OPTIMIZACIÓN N+1: pre-cargar TODAS las refacciones en UNA sola query (era N selects en loop)
     const lineasRef = lineas.filter(l => l.refaccion_id && String(l.tipo_linea || 'refaccion') === 'refaccion' && Number(l.cantidad) > 0);
     const refIds = [...new Set(lineasRef.map(l => l.refaccion_id))];
@@ -3941,16 +3960,7 @@ app.post('/api/cotizaciones/:id/aplicar', async (req, res) => {
       await db.runQuery('UPDATE refacciones SET stock = stock - ? WHERE id=?', [cant, ref.id]);
       refMap.set(Number(ref.id), Object.assign({}, ref, { stock: Number(ref.stock) - cant }));
     }
-    let vendedorNombre = req.body && req.body.vendedor ? String(req.body.vendedor).trim() : null;
-    if (!vendedorNombre && cot.vendedor_personal_id) {
-      const p = await db.getOne('SELECT nombre FROM tecnicos WHERE id=?', [cot.vendedor_personal_id]);
-      if (p && p.nombre) vendedorNombre = p.nombre;
-    }
-    if (!vendedorNombre && cot.vendedor) vendedorNombre = String(cot.vendedor).trim();
-    await db.runQuery(
-      `UPDATE cotizaciones SET estado='aplicada', fecha_aprobacion=date('now','localtime'), vendedor=? WHERE id=?`,
-      [vendedorNombre || null, req.params.id]
-    );
+    // (estado/fecha/vendedor ya se fijaron en el claim atómico de arriba)
 
     try {
       const cliente = await db.getOne('SELECT * FROM clientes WHERE id=?', [cot.cliente_id]);

@@ -17197,8 +17197,13 @@ async function imprimirFlyer() {
     tbody.querySelectorAll('.btn-del-tec').forEach(btn => {
       btn.addEventListener('click', () => {
         openConfirmModal('¿Desactivar este técnico?', async () => {
-          await fetchJson(API + '/tecnicos/' + btn.dataset.id, { method: 'DELETE' });
-          loadTecnicos();
+          try {
+            await fetchJson(API + '/tecnicos/' + btn.dataset.id, { method: 'DELETE' });
+            showToast('Persona desactivada.', 'success');
+            loadTecnicos();
+          } catch (e) {
+            showToast(parseApiError(e) || 'No se pudo desactivar.', 'error');
+          }
         });
       });
     });
