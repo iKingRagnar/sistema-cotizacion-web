@@ -45,11 +45,23 @@
     ripple.className = 'pm-ripple-circle';
     ripple.style.left = (e.clientX - rect.left) + 'px';
     ripple.style.top  = (e.clientY - rect.top) + 'px';
+    /* position/overflow son necesarios SOLO durante la animación. Antes se dejaban
+       inline permanentemente y recortaban contenido que sobresale del botón
+       (badges, contadores, dropdowns). Guardamos y restauramos al terminar. */
+    var _prevPos = btn.style.position;
+    var _prevOvf = btn.style.overflow;
     btn.style.position = 'relative';
     btn.style.overflow = 'hidden';
     btn.appendChild(ripple);
 
-    ripple.addEventListener('animationend', function () { ripple.remove(); });
+    ripple.addEventListener('animationend', function () {
+      ripple.remove();
+      /* Restaurar solo cuando no quedan ripples activos (clicks rápidos). */
+      if (!btn.querySelector('.pm-ripple-circle')) {
+        btn.style.position = _prevPos;
+        btn.style.overflow = _prevOvf;
+      }
+    });
   });
 
 
