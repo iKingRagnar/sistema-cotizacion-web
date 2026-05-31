@@ -628,6 +628,10 @@ function getMigrationsDDL() {
     `ALTER TABLE embarques ADD COLUMN maquina_id INTEGER`,
     `ALTER TABLE embarques ADD COLUMN cantidad REAL DEFAULT 1`,
     `ALTER TABLE embarques ADD COLUMN aplicado_stock INTEGER DEFAULT 0`,
+    /* 2026-05-31: agendar desde la Agenda — fecha de seguimiento (cotización a futuro)
+       y fecha de entrega programada (venta = cotización aprobada). */
+    `ALTER TABLE cotizaciones ADD COLUMN fecha_seguimiento TEXT`,
+    `ALTER TABLE cotizaciones ADD COLUMN fecha_entrega_programada TEXT`,
     `CREATE INDEX IF NOT EXISTS idx_embarques_refaccion ON embarques(refaccion_id)`,
     `CREATE INDEX IF NOT EXISTS idx_embarques_maquina ON embarques(maquina_id)`,
   ];

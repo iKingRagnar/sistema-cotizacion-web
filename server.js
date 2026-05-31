@@ -3824,7 +3824,8 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
     const existing = await db.getOne('SELECT * FROM cotizaciones WHERE id = ?', [req.params.id]);
     if (!existing) return res.status(404).json({ error: 'No encontrada' });
     const { folio, cliente_id, tipo, fecha, tipo_cambio, moneda, maquinas_ids, estado, notas, vendedor_personal_id, descuento_pct, vendedor,
-      imagen_maquina_url, ficha_tecnica_url, alcance_servicio, siguiente_paso, atendido_por_nombre, atendido_por_puesto, bancarios_rfc, bancarios_cuentas, ficha_tecnica_manual, ficha_tecnica_fotos } = req.body || {};
+      imagen_maquina_url, ficha_tecnica_url, alcance_servicio, siguiente_paso, atendido_por_nombre, atendido_por_puesto, bancarios_rfc, bancarios_cuentas, ficha_tecnica_manual, ficha_tecnica_fotos,
+      fecha_seguimiento, fecha_entrega_programada } = req.body || {};
     const hasBody = req.body && typeof req.body === 'object';
     const hasMaqIds = hasBody && Object.prototype.hasOwnProperty.call(req.body, 'maquinas_ids');
     const hasNotas = hasBody && Object.prototype.hasOwnProperty.call(req.body, 'notas');
@@ -3880,12 +3881,17 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
           ? null
           : (typeof ficha_tecnica_fotos === 'string' ? ficha_tecnica_fotos : (() => { try { return JSON.stringify(ficha_tecnica_fotos); } catch (_) { return null; } })()))
       : (existing.ficha_tecnica_fotos || null);
+    // Fechas de agenda: seguimiento (cotización) y entrega programada (venta). Preservar si no se envían.
+    const _fdate = (v) => (_nstr(v) ? String(v).trim().slice(0, 10) : null);
+    const fSeg = _has('fecha_seguimiento') ? _fdate(fecha_seguimiento) : (existing.fecha_seguimiento || null);
+    const fEnt = _has('fecha_entrega_programada') ? _fdate(fecha_entrega_programada) : (existing.fecha_entrega_programada || null);
     await db.runQuery(
       `UPDATE cotizaciones
        SET folio=?, cliente_id=?, tipo=?, fecha=?, tipo_cambio=?, moneda=?, maquinas_ids=?, estado=?, notas=?,
            vendedor_personal_id=?, descuento_pct=?, vendedor=?,
            imagen_maquina_url=?, ficha_tecnica_url=?, alcance_servicio=?, siguiente_paso=?,
-           atendido_por_nombre=?, atendido_por_puesto=?, bancarios_rfc=?, bancarios_cuentas=?, ficha_tecnica_manual=?, ficha_tecnica_fotos=?
+           atendido_por_nombre=?, atendido_por_puesto=?, bancarios_rfc=?, bancarios_cuentas=?, ficha_tecnica_manual=?, ficha_tecnica_fotos=?,
+           fecha_seguimiento=?, fecha_entrega_programada=?
        WHERE id=?`,
       [
         (folio != null && String(folio).trim() !== '') ? String(folio).trim() : (existing.folio || null),
@@ -3901,6 +3907,7 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
         dctPut,
         vendPut || null,
         imgMaq, fichaT, alcSvc, sigPaso, atNom, atPue, banRfc, banCuentas, fichaManual, fichaFotos,
+        fSeg, fEnt,
         req.params.id,
       ]
     );
