@@ -2368,76 +2368,65 @@ app.delete('/api/maquinas/:id', async (req, res) => {
  */
 async function vaciarModuloTabla(modulo) {
   const m = String(modulo || '').trim().toLowerCase();
-  const run = async (fn) => {
-    if (db.useTurso) return fn();
-    await db.runQuery('BEGIN');
-    try {
-      const out = await fn();
-      await db.runQuery('COMMIT');
-      return out;
-    } catch (e) {
-      try {
-        await db.runQuery('ROLLBACK');
-      } catch (_) {}
-      throw e;
-    }
-  };
+  // Transacción real (atómica también en Postgres vía client dedicado). Las
+  // operaciones internas usan `tx.` para ir sobre la MISMA conexión.
+  const run = (fn) => db.withTransaction(fn);
   switch (m) {
     case 'prospectos':
-      return run(async () => ({ modulo: m, deleted: await db.runMutationCount('DELETE FROM prospectos') }));
+      return run(async (tx) => ({ modulo: m, deleted: await tx.runMutationCount('DELETE FROM prospectos') }));
     case 'refacciones':
-      return run(async () => {
-        await db.runQuery('DELETE FROM movimientos_stock');
-        await db.runQuery('UPDATE cotizacion_lineas SET refaccion_id = NULL WHERE refaccion_id IS NOT NULL');
-        const deleted = await db.runMutationCount('DELETE FROM refacciones');
+      return run(async (tx) => {
+        await tx.runQuery('DELETE FROM movimientos_stock');
+        await tx.runQuery('UPDATE cotizacion_lineas SET refaccion_id = NULL WHERE refaccion_id IS NOT NULL');
+        const deleted = await tx.runMutationCount('DELETE FROM refacciones');
         return { modulo: m, deleted };
       });
     case 'cotizaciones':
-      return run(async () => {
-        await db.runQuery('UPDATE movimientos_stock SET cotizacion_id = NULL WHERE cotizacion_id IS NOT NULL');
-        await db.runQuery('DELETE FROM cotizacion_lineas');
-        const deleted = await db.runMutationCount('DELETE FROM cotizaciones');
+      return run(async (tx) => {
+        await tx.runQuery('UPDATE movimientos_stock SET cotizacion_id = NULL WHERE cotizacion_id IS NOT NULL');
+        await tx.runQuery('DELETE FROM cotizacion_lineas');
+        const deleted = await tx.runMutationCount('DELETE FROM cotizaciones');
         return { modulo: m, deleted };
       });
     case 'incidentes':
-      return run(async () => ({ modulo: m, deleted: await db.runMutationCount('DELETE FROM incidentes') }));
+      return run(async (tx) => ({ modulo: m, deleted: await tx.runMutationCount('DELETE FROM incidentes') }));
     case 'bitacoras':
-      return run(async () => ({ modulo: m, deleted: await db.runMutationCount('DELETE FROM bitacoras') }));
+      return run(async (tx) => ({ modulo: m, deleted: await tx.runMutationCount('DELETE FROM bitacoras') }));
     case 'reportes':
-      return run(async () => {
-        await db.runQuery('UPDATE bonos SET reporte_id = NULL WHERE reporte_id IS NOT NULL');
-        await db.runQuery('UPDATE viajes SET reporte_id = NULL WHERE reporte_id IS NOT NULL');
-        const deleted = await db.runMutationCount('DELETE FROM reportes');
+      return run(async (tx) => {
+        await tx.runQuery('UPDATE bonos SET reporte_id = NULL WHERE reporte_id IS NOT NULL');
+        await tx.runQuery('UPDATE viajes SET reporte_id = NULL WHERE reporte_id IS NOT NULL');
+        const deleted = await tx.runMutationCount('DELETE FROM reportes');
         return { modulo: m, deleted };
       });
     case 'bonos':
-      return run(async () => ({ modulo: m, deleted: await db.runMutationCount('DELETE FROM bonos') }));
+      return run(async (tx) => ({ modulo: m, deleted: await tx.runMutationCount('DELETE FROM bonos') }));
     case 'viajes':
-      return run(async () => ({ modulo: m, deleted: await db.runMutationCount('DELETE FROM viajes') }));
+      return run(async (tx) => ({ modulo: m, deleted: await tx.runMutationCount('DELETE FROM viajes') }));
     case 'maquinas':
-      return run(async () => {
-        await db.runQuery('DELETE FROM mantenimientos WHERE maquina_id IS NOT NULL');
-        await db.runQuery('DELETE FROM revision_maquinas WHERE maquina_id IS NOT NULL');
-        await db.runQuery('UPDATE incidentes SET maquina_id = NULL WHERE maquina_id IS NOT NULL');
-        const deleted = await db.runMutationCount('DELETE FROM maquinas');
+      return run(async (tx) => {
+        await tx.runQuery('DELETE FROM mantenimientos WHERE maquina_id IS NOT NULL');
+        await tx.runQuery('DELETE FROM revision_maquinas WHERE maquina_id IS NOT NULL');
+        await tx.runQuery('UPDATE incidentes SET maquina_id = NULL WHERE maquina_id IS NOT NULL');
+        const deleted = await tx.runMutationCount('DELETE FROM maquinas');
         return { modulo: m, deleted };
       });
     case 'clientes':
-      return run(async () => {
-        await db.runQuery('UPDATE movimientos_stock SET cotizacion_id = NULL WHERE cotizacion_id IS NOT NULL');
-        await db.runQuery('DELETE FROM cotizacion_lineas');
-        await db.runQuery('DELETE FROM cotizaciones');
-        await db.runQuery('DELETE FROM bitacoras');
-        await db.runQuery('DELETE FROM bonos');
-        await db.runQuery('DELETE FROM viajes');
-        await db.runQuery('DELETE FROM mantenimientos_garantia');
-        await db.runQuery('DELETE FROM mantenimientos');
-        await db.runQuery('DELETE FROM revision_maquinas');
-        await db.runQuery('DELETE FROM reportes');
-        await db.runQuery('DELETE FROM incidentes');
-        await db.runQuery('DELETE FROM garantias');
-        await db.runQuery('DELETE FROM maquinas');
-        const deleted = await db.runMutationCount('DELETE FROM clientes');
+      return run(async (tx) => {
+        await tx.runQuery('UPDATE movimientos_stock SET cotizacion_id = NULL WHERE cotizacion_id IS NOT NULL');
+        await tx.runQuery('DELETE FROM cotizacion_lineas');
+        await tx.runQuery('DELETE FROM cotizaciones');
+        await tx.runQuery('DELETE FROM bitacoras');
+        await tx.runQuery('DELETE FROM bonos');
+        await tx.runQuery('DELETE FROM viajes');
+        await tx.runQuery('DELETE FROM mantenimientos_garantia');
+        await tx.runQuery('DELETE FROM mantenimientos');
+        await tx.runQuery('DELETE FROM revision_maquinas');
+        await tx.runQuery('DELETE FROM reportes');
+        await tx.runQuery('DELETE FROM incidentes');
+        await tx.runQuery('DELETE FROM garantias');
+        await tx.runQuery('DELETE FROM maquinas');
+        const deleted = await tx.runMutationCount('DELETE FROM clientes');
         return { modulo: m, deleted };
       });
     default:
@@ -4774,27 +4763,15 @@ const WIPE_ALL_CONFIRM = 'BORRAR-TODO-EL-SISTEMA';
  */
 async function wipeAllSystemData() {
   const out = { tables: {} };
-  async function runDeletes() {
+  async function runDeletes(tx) {
     for (const t of WIPE_DELETE_ORDER) {
-      const n = await db.runMutationCount(`DELETE FROM ${t}`);
+      const n = await tx.runMutationCount(`DELETE FROM ${t}`);
       out.tables[t] = n;
     }
     out.deleted_total = Object.values(out.tables).reduce((a, b) => a + Number(b || 0), 0);
   }
-  if (db.useTurso) {
-    await runDeletes();
-  } else {
-    await db.runQuery('BEGIN');
-    try {
-      await runDeletes();
-      await db.runQuery('COMMIT');
-    } catch (e) {
-      try {
-        await db.runQuery('ROLLBACK');
-      } catch (_) {}
-      throw e;
-    }
-  }
+  // Transacción real y atómica en los 3 engines (en Postgres usa client dedicado).
+  await db.withTransaction((tx) => runDeletes(tx));
   await db.reseedAfterFullWipe();
   await ensureTarifasDefaults();
   await auth.ensureSeedUsers();
@@ -5771,79 +5748,68 @@ app.post('/api/backup/import', async (req, res) => {
     }
     const data = backup.data;
     const replaceProspectos = Object.prototype.hasOwnProperty.call(data, 'prospectos');
-    if (!db.useTurso) {
+    // PRAGMA solo aplica a SQLite local (no Turso, no Postgres). En Postgres no
+    // se pueden desactivar FKs así; el orden delete/insert respeta dependencias.
+    const isSqliteLocal = !db.useTurso && !db.usePostgres;
+    if (isSqliteLocal) {
       await db.runQuery('PRAGMA foreign_keys = OFF');
       await db.runQuery('PRAGMA wal_checkpoint(FULL)');
     }
-    await db.runQuery('BEGIN');
+    // Orden para respetar dependencias al limpiar e insertar.
+    const deleteOrder = [
+      'cotizacion_lineas', 'bitacoras', 'incidentes', 'cotizaciones',
+      'mantenimientos', 'maquinas', 'refacciones', 'clientes',
+      'prospectos', 'tecnicos', 'audit_log', 'app_users',
+    ];
+    const insertOrder = [
+      'clientes', 'refacciones', 'maquinas', 'cotizaciones',
+      'cotizacion_lineas', 'incidentes', 'bitacoras', 'mantenimientos',
+      'prospectos', 'tecnicos', 'app_users', 'audit_log',
+    ];
+    // Pre-cargar columnas reales (portable entre engines) ANTES de la transacción.
+    const colsByTable = {};
+    for (const t of insertOrder) {
+      if (t === 'prospectos' && !replaceProspectos) continue;
+      colsByTable[t] = await db.getTableColumns(t);
+    }
     try {
-      // Orden para respetar dependencias al limpiar e insertar.
-      const deleteOrder = [
-        'cotizacion_lineas',
-        'bitacoras',
-        'incidentes',
-        'cotizaciones',
-        'mantenimientos',
-        'maquinas',
-        'refacciones',
-        'clientes',
-        'prospectos',
-        'tecnicos',
-        'audit_log',
-        'app_users',
-      ];
-      for (const t of deleteOrder) {
-        if (t === 'prospectos' && !replaceProspectos) continue;
-        await db.runQuery(`DELETE FROM ${t}`);
-      }
-      const insertOrder = [
-        'clientes',
-        'refacciones',
-        'maquinas',
-        'cotizaciones',
-        'cotizacion_lineas',
-        'incidentes',
-        'bitacoras',
-        'mantenimientos',
-        'prospectos',
-        'tecnicos',
-        'app_users',
-        'audit_log',
-      ];
-      const counts = {};
-      for (const t of insertOrder) {
-        if (t === 'prospectos' && !replaceProspectos) {
-          counts[t] = 'omitido (respaldo sin clave prospectos; se mantienen filas actuales)';
-          continue;
+      // Transacción ATÓMICA real (también en Postgres vía client dedicado):
+      // si algo falla, NO queda la base a medio borrar.
+      const counts = await db.withTransaction(async (tx) => {
+        for (const t of deleteOrder) {
+          if (t === 'prospectos' && !replaceProspectos) continue;
+          await tx.runQuery(`DELETE FROM ${t}`);
         }
-        const rows = Array.isArray(data[t]) ? data[t] : [];
-        if (!rows.length) {
-          counts[t] = 0;
-          continue;
+        const c = {};
+        for (const t of insertOrder) {
+          if (t === 'prospectos' && !replaceProspectos) {
+            c[t] = 'omitido (respaldo sin clave prospectos; se mantienen filas actuales)';
+            continue;
+          }
+          const rows = Array.isArray(data[t]) ? data[t] : [];
+          if (!rows.length) { c[t] = 0; continue; }
+          const validCols = colsByTable[t] || [];
+          let inserted = 0;
+          for (const row of rows) {
+            if (!row || typeof row !== 'object') continue;
+            const cols = validCols.filter(col => Object.prototype.hasOwnProperty.call(row, col));
+            if (!cols.length) continue;
+            const placeholders = cols.map(() => '?').join(',');
+            const values = cols.map(col => row[col]);
+            await tx.runQuery(`INSERT INTO ${t} (${cols.join(',')}) VALUES (${placeholders})`, values);
+            inserted++;
+          }
+          c[t] = inserted;
         }
-        const colsInfo = await db.getAll(`PRAGMA table_info(${t})`);
-        const validCols = (colsInfo || []).map(c => c.name);
-        let inserted = 0;
-        for (const row of rows) {
-          if (!row || typeof row !== 'object') continue;
-          const cols = validCols.filter(c => Object.prototype.hasOwnProperty.call(row, c));
-          if (!cols.length) continue;
-          const placeholders = cols.map(() => '?').join(',');
-          const values = cols.map(c => row[c]);
-          await db.runQuery(`INSERT INTO ${t} (${cols.join(',')}) VALUES (${placeholders})`, values);
-          inserted++;
-        }
-        counts[t] = inserted;
-      }
-      await db.runQuery('COMMIT');
-      if (!db.useTurso) {
+        return c;
+      });
+      if (isSqliteLocal) {
         await db.runQuery('PRAGMA wal_checkpoint(TRUNCATE)');
         await db.runQuery('PRAGMA foreign_keys = ON');
       }
       res.json({ ok: true, importedAt: new Date().toISOString(), counts });
     } catch (inner) {
-      try { await db.runQuery('ROLLBACK'); } catch (_) {}
-      if (!db.useTurso) {
+      if (isSqliteLocal) {
         try { await db.runQuery('PRAGMA foreign_keys = ON'); } catch (_) {}
       }
       throw inner;

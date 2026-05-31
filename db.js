@@ -1295,7 +1295,9 @@ function normalizePgArgs(params) {
   });
 }
 
-async function pgRunInsertWithReturning(sqlOriginal, args) {
+// Ejecuta un INSERT (o cualquier sentencia) en Postgres usando `queryFn` —
+// que puede ser pgPool.query (autocommit) o client.query (dentro de transacción).
+async function pgInsertReturningWith(queryFn, sqlOriginal, args) {
   const translated = translateSqlForPg(sqlOriginal);
   // Si es INSERT que NO trae RETURNING, lo añadimos para obtener lastInsertRowid (id).
   // Si la tabla no tiene columna `id` (tarifas, cron_jobs_log), Postgres dará error y reintentamos sin RETURNING.
@@ -1303,26 +1305,97 @@ async function pgRunInsertWithReturning(sqlOriginal, args) {
   const hasReturning = /\bRETURNING\b/i.test(translated);
   if (isInsert && !hasReturning) {
     try {
-      const r = await pgPool.query(translated + ' RETURNING id', args);
+      const r = await queryFn(translated + ' RETURNING id', args);
       const lastInsertRowid = (r.rows && r.rows[0] && r.rows[0].id !== undefined) ? r.rows[0].id : null;
       return { lastInsertRowid, rowCount: r.rowCount };
     } catch (e) {
       // Si falló por "column id does not exist" o similar, reintentar sin RETURNING
       const msg = String(e && e.message || '');
       if (/does not exist|column "id"|returning/i.test(msg)) {
-        const r2 = await pgPool.query(translated, args);
+        const r2 = await queryFn(translated, args);
         return { lastInsertRowid: null, rowCount: r2.rowCount };
       }
       throw e;
     }
   }
-  const r = await pgPool.query(translated, args);
+  const r = await queryFn(translated, args);
   // Si la query ya traía RETURNING (caller explícito), extraer el id si está en rows[0].id
   let lastInsertRowid = null;
   if (r.rows && r.rows[0] && r.rows[0].id !== undefined) {
     lastInsertRowid = r.rows[0].id;
   }
   return { lastInsertRowid, rowCount: r.rowCount };
+}
+
+function pgRunInsertWithReturning(sqlOriginal, args) {
+  return pgInsertReturningWith((s, a) => pgPool.query(s, a), sqlOriginal, args);
+}
+
+/**
+ * Columnas reales de una tabla — portable entre engines.
+ * Reemplaza el `PRAGMA table_info(...)` (solo SQLite) que fallaba en Postgres.
+ */
+async function getTableColumns(table) {
+  const t = String(table || '');
+  if (usePostgres) {
+    const r = await pgPool.query(
+      'SELECT column_name FROM information_schema.columns WHERE table_name = $1',
+      [t.toLowerCase()]
+    );
+    return (r.rows || []).map(row => row.column_name);
+  }
+  const rows = await getAll(`PRAGMA table_info(${t})`);
+  return (rows || []).map(c => c.name);
+}
+
+/**
+ * Ejecuta `fn(tx)` dentro de una transacción real.
+ * - Postgres: usa UN client dedicado del pool (BEGIN/COMMIT/ROLLBACK sobre el
+ *   mismo client) — antes BEGIN/COMMIT iban a connections distintas del pool y
+ *   la transacción NO tenía efecto (ROLLBACK no revertía nada).
+ * - Turso remoto: cada execute es autocommit y no hay transacción interactiva
+ *   sobre HTTP — se ejecuta `fn` sin envolver (idéntico al comportamiento previo).
+ * - SQLite local: BEGIN/COMMIT sobre la única conexión (idéntico al previo).
+ * `tx` expone runQuery/getAll/getOne/runMutationCount con la MISMA semántica que
+ * los métodos globales del módulo.
+ */
+async function withTransaction(fn) {
+  if (usePostgres) {
+    const client = await pgPool.connect();
+    const q = (s, a) => client.query(s, a);
+    const tx = {
+      runQuery: (sql, params = []) => pgInsertReturningWith(q, sql, normalizePgArgs(params)),
+      getAll: (sql, params = []) => client.query(translateSqlForPg(sql), normalizePgArgs(params)).then(r => r.rows || []),
+      getOne: (sql, params = []) => tx.getAll(sql, params).then(rows => (rows && rows[0]) || null),
+      runMutationCount: (sql, params = []) => client.query(translateSqlForPg(sql), normalizePgArgs(params)).then(r => r.rowCount || 0),
+    };
+    try {
+      await client.query('BEGIN');
+      const out = await fn(tx);
+      await client.query('COMMIT');
+      return out;
+    } catch (e) {
+      try { await client.query('ROLLBACK'); } catch (_) {}
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+  // Turso: sin transacción interactiva — ejecutar directo (comportamiento previo).
+  const txGlobal = { runQuery, getAll, getOne, runMutationCount };
+  if (useTurso) {
+    return fn(txGlobal);
+  }
+  // SQLite local: transacción real sobre la única conexión.
+  await runQuery('BEGIN');
+  try {
+    const out = await fn(txGlobal);
+    await runQuery('COMMIT');
+    return out;
+  } catch (e) {
+    try { await runQuery('ROLLBACK'); } catch (_) {}
+    throw e;
+  }
 }
 
 function runQuery(sql, params = []) {
@@ -1397,4 +1470,4 @@ function getStorageInfo() {
   return { mode: 'sqlite', path: sqliteResolvedPath || null };
 }
 
-module.exports = { init, runQuery, getAll, getOne, useTurso, usePostgres, getStorageInfo, runMutationCount, reseedAfterFullWipe };
+module.exports = { init, runQuery, getAll, getOne, useTurso, usePostgres, getStorageInfo, runMutationCount, reseedAfterFullWipe, withTransaction, getTableColumns };
