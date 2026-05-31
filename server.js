@@ -5807,6 +5807,9 @@ app.post('/api/backup/import', async (req, res) => {
         await db.runQuery('PRAGMA wal_checkpoint(TRUNCATE)');
         await db.runQuery('PRAGMA foreign_keys = ON');
       }
+      // Postgres: tras restaurar filas con id explícito, realinear las secuencias
+      // SERIAL para que el próximo INSERT no colisione por PK duplicada.
+      await db.resyncSequences(insertOrder);
       res.json({ ok: true, importedAt: new Date().toISOString(), counts });
     } catch (inner) {
       if (isSqliteLocal) {

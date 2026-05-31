@@ -1447,6 +1447,32 @@ function getOne(sql, params = []) {
   return getAll(sql, params).then(rows => (rows && rows[0]) || null);
 }
 
+/**
+ * Resincroniza las secuencias SERIAL de Postgres tras insertar filas con `id`
+ * explícito (p.ej. restaurar un respaldo). Sin esto, el próximo INSERT reusa
+ * un id ya existente y revienta por PK duplicada. No-op en SQLite/Turso
+ * (AUTOINCREMENT se ajusta solo con el MAX existente).
+ */
+async function resyncSequences(tables) {
+  if (!usePostgres) return;
+  for (const t of tables || []) {
+    try {
+      // setval al MAX(id) actual; si la tabla está vacía, deja la secuencia en 1
+      // sin marcarla como usada (is_called=false) para que el primer id sea 1.
+      await pgPool.query(
+        `SELECT setval(
+           pg_get_serial_sequence($1, 'id'),
+           COALESCE((SELECT MAX(id) FROM ${t}), 1),
+           (SELECT COUNT(*) > 0 FROM ${t})
+         ) WHERE pg_get_serial_sequence($1, 'id') IS NOT NULL`,
+        [t]
+      );
+    } catch (e) {
+      console.warn(`[resyncSequences] ${t}:`, e && e.message);
+    }
+  }
+}
+
 /** DELETE/UPDATE: filas afectadas. */
 async function runMutationCount(sql, params = []) {
   if (usePostgres) {
@@ -1470,4 +1496,4 @@ function getStorageInfo() {
   return { mode: 'sqlite', path: sqliteResolvedPath || null };
 }
 
-module.exports = { init, runQuery, getAll, getOne, useTurso, usePostgres, getStorageInfo, runMutationCount, reseedAfterFullWipe, withTransaction, getTableColumns };
+module.exports = { init, runQuery, getAll, getOne, useTurso, usePostgres, getStorageInfo, runMutationCount, reseedAfterFullWipe, withTransaction, getTableColumns, resyncSequences };
