@@ -20,6 +20,14 @@ if (AUTH_ENABLED && !AUTH_SECRET && _isProdLike) {
   console.error('[auth] Define AUTH_SECRET en variables de entorno antes de arrancar. Abortando.');
   process.exit(1);
 }
+// Secret efectivo. En prod sin AUTH_SECRET ya abortamos arriba. En dev/local sin
+// AUTH_SECRET generamos uno aleatorio POR PROCESO en vez de usar una constante
+// hardcodeada (que sería pública y permitiría forjar tokens de admin). Reiniciar
+// el server invalida los tokens previos — comportamiento aceptable en desarrollo.
+const EFFECTIVE_SECRET = AUTH_SECRET || crypto.randomBytes(32).toString('hex');
+if (AUTH_ENABLED && !AUTH_SECRET) {
+  console.warn('[auth] AUTH_SECRET no definido: usando secret aleatorio por proceso (los tokens se invalidan al reiniciar). Define AUTH_SECRET para persistencia.');
+}
 const TOKEN_MS = (parseInt(process.env.AUTH_TOKEN_DAYS || '7', 10) || 7) * 24 * 60 * 60 * 1000;
 const AUDIT_ENABLED = process.env.AUDIT_ENABLED !== '0' && process.env.AUDIT_ENABLED !== 'false';
 
@@ -61,7 +69,7 @@ function verifyPassword(plain, stored) {
 }
 
 function signToken(payload) {
-  const secret = AUTH_SECRET || 'dev-inseguro-cambiar-AUTH_SECRET';
+  const secret = EFFECTIVE_SECRET;
   const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
   const sig = crypto.createHmac('sha256', secret).update(body).digest('base64url');
   return `${body}.${sig}`;
@@ -72,7 +80,7 @@ function verifyToken(token) {
   const parts = token.split('.');
   if (parts.length !== 2) return null;
   const [body, sig] = parts;
-  const secret = AUTH_SECRET || 'dev-inseguro-cambiar-AUTH_SECRET';
+  const secret = EFFECTIVE_SECRET;
   const expected = crypto.createHmac('sha256', secret).update(body).digest('base64url');
   try {
     if (sig.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;

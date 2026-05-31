@@ -1,0 +1,54 @@
+/* ════════════════════════════════════════════════════════════════════════
+   a11y-focus.css — Backstop de accesibilidad por TECLADO.
+   Cargado AL FINAL para ganar especificidad sobre las capas previas.
+
+   Diseño: NO altera la apariencia con mouse/touch. `:focus-visible` solo se
+   activa en navegación por teclado (Tab), por lo que es puramente aditivo y
+   no rompe el look existente. Da un anillo de foco visible y consistente
+   (faltaba un backstop global entre las ~65 hojas con miles de !important
+   que en muchos casos eliminaban el outline).
+   ════════════════════════════════════════════════════════════════════════ */
+
+:where(a, button, input, select, textarea, [tabindex], [role="button"], [role="link"], [role="tab"], summary):focus-visible {
+  outline: 3px solid #2563eb !important;
+  outline-offset: 2px !important;
+  border-radius: 4px;
+  /* Halo suave para contraste sobre fondos oscuros y claros por igual */
+  box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.35) !important;
+}
+
+/* No mostrar el anillo de teclado cuando el foco vino de un click (mouse/touch). */
+:where(a, button, input, select, textarea, [tabindex]):focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Skip-link: asegurar que sea visible al recibir foco (si existe en el DOM). */
+.skip-link:focus,
+a[href="#main"]:focus,
+a[href="#contenido"]:focus {
+  position: fixed !important;
+  top: 12px !important;
+  left: 12px !important;
+  z-index: 100000 !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 10px 16px !important;
+  background: #0c1929 !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  clip: auto !important;
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
+}
+
+/* Respeto reforzado a usuarios que prefieren menos movimiento (backstop final). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

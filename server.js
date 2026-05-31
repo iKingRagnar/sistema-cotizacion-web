@@ -934,7 +934,7 @@ function buildWebhookPayload(tipo, evento, data) {
     return { embeds: [{
       title: titulo,
       description: cuerpo,
-      color: parseInt(color.replace('#', ''), 16),
+      color: (function(){ const c = parseInt(String(color || '').replace('#', ''), 16); return Number.isFinite(c) ? c : 0x2563eb; })(),
       footer: { text: evento },
       timestamp: new Date().toISOString(),
     }]};
@@ -1758,8 +1758,8 @@ app.post('/api/refacciones/borrar-todas', async (req, res) => {
   try {
     const confirm = req.body && req.body.confirm;
     if (confirm !== 'YES') return res.status(400).json({ error: 'Falta confirmación' });
-    const result = await db.runQuery('UPDATE refacciones SET activo = 0 WHERE COALESCE(activo,1) = 1');
-    res.json({ ok: true, changes: (result && result.changes) || 0 });
+    const changes = await db.runMutationCount('UPDATE refacciones SET activo = 0 WHERE COALESCE(activo,1) = 1');
+    res.json({ ok: true, changes: changes || 0 });
   } catch (e) {
     res.status(500).json({ error: String(e.message) });
   }
@@ -3708,7 +3708,8 @@ app.post('/api/cotizaciones', async (req, res) => {
     const f = folio || generarFolio(prefijoFolio);
     const st = Number(subtotal) || 0;
     const iv = Number(iva) || 0;
-    const tot = Number(total) != null ? Number(total) : st + iv;
+    const totNum = Number(total);
+    const tot = Number.isFinite(totNum) ? totNum : st + iv;
     const tc = Number(tipo_cambio) || 17.0;
     const mon = moneda || 'USD';
     const maqIds = typeof maquinas_ids === 'string' ? maquinas_ids : JSON.stringify(maquinas_ids || []);
@@ -3945,10 +3946,11 @@ app.post('/api/cotizaciones/:id/aplicar', async (req, res) => {
       const ref = refMap.get(Number(l.refaccion_id));
       if (!ref) continue;
       await registrarSalidaStockFifo(ref.id, cant, cot.id, `Cot: ${cot.folio || cot.id}`);
-      const nuevoStock = Number(ref.stock) - cant;
-      await db.runQuery('UPDATE refacciones SET stock=? WHERE id=?', [nuevoStock, ref.id]);
-      // Actualizar también el map para que siguientes iteraciones del mismo id (refacción repetida) usen stock fresco
-      refMap.set(Number(ref.id), Object.assign({}, ref, { stock: nuevoStock }));
+      // Decremento ATÓMICO relativo (stock = stock - cant) en vez de escribir un valor
+      // absoluto pre-leído: evita la condición de carrera de lost-update entre aplicaciones
+      // concurrentes y maneja correctamente la misma refacción repetida en varias líneas.
+      await db.runQuery('UPDATE refacciones SET stock = stock - ? WHERE id=?', [cant, ref.id]);
+      refMap.set(Number(ref.id), Object.assign({}, ref, { stock: Number(ref.stock) - cant }));
     }
     let vendedorNombre = req.body && req.body.vendedor ? String(req.body.vendedor).trim() : null;
     if (!vendedorNombre && cot.vendedor_personal_id) {
@@ -6756,8 +6758,8 @@ app.post('/api/reportes', async (req, res) => {
     // Validación: si hay tecnico+fecha+slot, NO permitir 2 actividades del mismo técnico en mismo slot del mismo día
     if (tecnico && fecha && slotVal) {
       const conflict = await db.getOne(
-        'SELECT id, folio FROM reportes WHERE tecnico=? AND fecha=? LIMIT 1',
-        [tecnico, fecha]
+        'SELECT id, folio FROM reportes WHERE tecnico=? AND fecha=? AND slot=? LIMIT 1',
+        [tecnico, fecha, slotVal]
       );
       if (conflict) return res.status(409).json({ error: `El técnico ${tecnico} ya está asignado en ${slotVal} del ${fecha} (reporte ${conflict.folio}).`, conflict });
     }
@@ -6836,8 +6838,8 @@ app.put('/api/reportes/:id', async (req, res) => {
     // Validación de conflicto al editar (excluyendo el propio reporte)
     if (tecnicoUpd && fechaUpd && slotUpd) {
       const conflict = await db.getOne(
-        'SELECT id, folio FROM reportes WHERE tecnico=? AND fecha=? AND id<>? LIMIT 1',
-        [tecnicoUpd, fechaUpd, req.params.id]
+        'SELECT id, folio FROM reportes WHERE tecnico=? AND fecha=? AND slot=? AND id<>? LIMIT 1',
+        [tecnicoUpd, fechaUpd, slotUpd, req.params.id]
       );
       if (conflict) return res.status(409).json({ error: `El técnico ${tecnicoUpd} ya está asignado en ${slotUpd} del ${fechaUpd} (reporte ${conflict.folio}).`, conflict });
     }
@@ -8365,7 +8367,7 @@ app.get('/api/bonos-resumen', async (req, res) => {
     let sql = `SELECT tecnico, SUM(monto_bono) as total_bonos, COUNT(*) as cantidad, SUM(CASE WHEN pagado=1 THEN monto_bono ELSE 0 END) as pagado
                FROM bonos`;
     const params = [];
-    if (mes) { sql += ' WHERE strftime("%Y-%m", fecha) = ?'; params.push(mes); }
+    if (mes) { sql += " WHERE strftime('%Y-%m', fecha) = ?"; params.push(mes); }
     sql += ' GROUP BY tecnico ORDER BY tecnico';
     const rows = await db.getAll(sql, params);
     res.json(rows);
@@ -8954,11 +8956,11 @@ app.put('/api/embarques/:id', async (req, res) => {
               await db.runQuery('UPDATE refacciones SET stock=? WHERE id=?', [nuevoStock, refId]);
               try {
                 await db.runQuery(
-                  `INSERT INTO stock_movimientos (refaccion_id, tipo, cantidad, referencia_tipo, referencia_id, descripcion)
-                   VALUES (?, 'entrada', ?, 'embarque', ?, ?)`,
-                  [refId, cant, Number(req.params.id), `Embarque #${req.params.id} recibido — ${ref.codigo}`]
+                  `INSERT INTO movimientos_stock (refaccion_id, tipo, cantidad, costo_unitario, referencia, fecha)
+                   VALUES (?, 'entrada', ?, ?, ?, date('now','localtime'))`,
+                  [refId, cant, Number(ref.precio_unitario) || 0, `Embarque #${req.params.id} recibido — ${ref.codigo || ''}`]
                 );
-              } catch (_) { /* tabla movimientos opcional */ }
+              } catch (eMov) { console.warn('[embarque-recibido] no se pudo registrar movimiento_stock:', eMov && eMov.message); }
               console.log('[embarque-recibido] +', cant, 'unidades de', ref.codigo, '(ref', refId, ')');
             }
           }

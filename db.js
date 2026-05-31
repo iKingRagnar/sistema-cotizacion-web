@@ -678,6 +678,14 @@ async function init() {
       connectionString: PG_URL,
       ssl: { rejectUnauthorized: false }, // Supabase requiere SSL
       max: 10,
+      // Evitar que conexiones colgadas agoten el pool sin recuperación.
+      connectionTimeoutMillis: 10000,  // abortar si no se puede conectar en 10s
+      idleTimeoutMillis: 30000,        // liberar conexiones ociosas tras 30s
+      statement_timeout: 30000,        // matar queries que excedan 30s
+    });
+    // Un error en una conexión ociosa del pool emite 'error'; sin listener, crashea el proceso.
+    pgPool.on('error', (err) => {
+      console.error('[db] Error inesperado en cliente ocioso del pool pg:', err.message);
     });
     // Test de conexión (falla rápido si la URL es incorrecta)
     await pgPool.query('SELECT 1');
@@ -1323,7 +1331,12 @@ function runQuery(sql, params = []) {
   }
   if (useTurso) {
     const args = normalizeLibsqlArgs(params);
-    return db.execute({ sql, args }).then(r => ({ lastInsertRowid: r.meta?.last_insert_row_id }));
+    // libSQL/Turso devuelve last_insert_row_id como BigInt. Normalizar a Number para
+    // que coincida con SQLite (this.lastID) y Postgres, y no rompa JSON.stringify.
+    return db.execute({ sql, args }).then(r => {
+      const rid = r.meta?.last_insert_row_id;
+      return { lastInsertRowid: rid != null ? Number(rid) : null };
+    });
   }
   return new Promise((resolve, reject) => {
     db.run(sql, params, function (err) {
