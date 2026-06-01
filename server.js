@@ -9468,6 +9468,17 @@ if (require.main === module) {
    ============================================================================ */
 
 // SPA: rutas no-API → index.html (rutas alternativas para bundle serverless de Vercel)
+// Red de seguridad: si un request NO-GET cae fuera de /api (p. ej. el formulario de
+// login se envió de forma NATIVA porque app-v356.js aún no había cargado — típico en
+// cold start / mitad de deploy de Render), evitamos el feo "Cannot POST /". Redirige a
+// la SPA (GET /) para recuperar con gracia. El body se descarta: el redirect es un GET
+// sin query, así que no se filtran credenciales en la URL ni en el historial.
+app.all('*', (req, res, next) => {
+  if (req.method === 'GET') return next();
+  if (String(req.path || '').startsWith('/api')) return res.status(404).json({ error: 'No encontrado' });
+  return res.redirect(303, '/');
+});
+
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return res.status(404).end();
   const indexPath = resolvePublicIndexHtmlPath();
