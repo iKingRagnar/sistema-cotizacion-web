@@ -3742,6 +3742,8 @@ app.post('/api/cotizaciones', async (req, res) => {
       bancarios_cuentas,
       ficha_tecnica_manual,
       ficha_tecnica_fotos,
+      fecha_seguimiento,
+      fecha_entrega_programada,
     } = req.body || {};
     if (!cliente_id) return res.status(400).json({ error: 'cliente_id requerido' });
     const prefijoFolio = tipo === 'mano_obra' ? 'COT-MO' : tipo === 'maquina' ? 'COT-MAQ' : 'COT-REF';
@@ -3773,8 +3775,9 @@ app.post('/api/cotizaciones', async (req, res) => {
     })();
     const _ins = await db.runQuery(
       `INSERT INTO cotizaciones (folio, cliente_id, tipo, fecha, subtotal, iva, total, tipo_cambio, moneda, maquinas_ids, estado, notas, vendedor_personal_id, descuento_pct, vendedor,
-        imagen_maquina_url, ficha_tecnica_url, alcance_servicio, siguiente_paso, atendido_por_nombre, atendido_por_puesto, bancarios_rfc, bancarios_cuentas, ficha_tecnica_manual, ficha_tecnica_fotos)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        imagen_maquina_url, ficha_tecnica_url, alcance_servicio, siguiente_paso, atendido_por_nombre, atendido_por_puesto, bancarios_rfc, bancarios_cuentas, ficha_tecnica_manual, ficha_tecnica_fotos,
+        fecha_seguimiento, fecha_entrega_programada)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         f,
         cliente_id,
@@ -3801,6 +3804,8 @@ app.post('/api/cotizaciones', async (req, res) => {
         bancariosCuentasStr,
         fichaManualStr,
         fichaFotosStr,
+        nstr(fecha_seguimiento) ? String(fecha_seguimiento).trim().slice(0, 10) : null,
+        nstr(fecha_entrega_programada) ? String(fecha_entrega_programada).trim().slice(0, 10) : null,
       ]
     );
     const r = await db.getOne(

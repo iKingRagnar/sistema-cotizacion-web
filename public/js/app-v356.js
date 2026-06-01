@@ -7891,11 +7891,21 @@ async function imprimirFlyer() {
     const body = document.querySelector('#agenda-actividades-body');
     if (!body) return;
     try {
-      const [reps, maqs] = await Promise.all([
+      const [reps, maqs, cots] = await Promise.all([
         fetchJson(API + '/reportes').catch(() => []),
         fetchJson(API + '/maquinas').catch(() => []),
+        fetchJson(API + '/cotizaciones').catch(() => []),
       ]);
       const hoy = new Date().toISOString().slice(0, 10);
+      const cotsArr = Array.isArray(cots) ? cots : [];
+      const entregasProx = cotsArr
+        .filter(c => { const f = (c.fecha_entrega_programada || '').toString().slice(0, 10); return f && f >= hoy; })
+        .sort((a, b) => (a.fecha_entrega_programada || '').localeCompare(b.fecha_entrega_programada || ''))
+        .slice(0, 30);
+      const seguimientosProx = cotsArr
+        .filter(c => { const f = (c.fecha_seguimiento || '').toString().slice(0, 10); return f && f >= hoy; })
+        .sort((a, b) => (a.fecha_seguimiento || '').localeCompare(b.fecha_seguimiento || ''))
+        .slice(0, 30);
       const reportesPend = (Array.isArray(reps) ? reps : []).filter(r => {
         const fp = (r.fecha_programada || r.fecha || '').toString().slice(0, 10);
         const est = (r.estatus || r.estado || '').toString().toLowerCase();
@@ -7911,6 +7921,26 @@ async function imprimirFlyer() {
         reportesPend.forEach(r => {
           const fp = (r.fecha_programada || r.fecha || '').toString().slice(0, 10);
           html += '<li>' + escapeHtml(r.folio || ('#' + r.id)) + ' - ' + escapeHtml(r.maquina_modelo || r.modelo || '-') + ' - ' + escapeHtml(fp) + ' - ' + escapeHtml(r.tecnico || '-') + '</li>';
+        });
+        html += '</ul>';
+      }
+      html += '<div style="font-size:0.85rem;font-weight:600;margin-bottom:0.25rem"><i class="fas fa-truck" style="color:#34d399"></i> Entregas de venta programadas (' + entregasProx.length + ')</div>';
+      if (!entregasProx.length) {
+        html += '<div class="muted" style="font-size:0.82rem;margin-bottom:0.5rem">— Sin entregas próximas —</div>';
+      } else {
+        html += '<ul style="margin:0 0 0.5rem 1.1rem;padding:0;font-size:0.85rem">';
+        entregasProx.forEach(c => {
+          html += '<li>' + escapeHtml((c.fecha_entrega_programada || '').toString().slice(0, 10)) + ' - ' + escapeHtml(c.folio || ('#' + c.id)) + ' - ' + escapeHtml(c.cliente_nombre || '-') + '</li>';
+        });
+        html += '</ul>';
+      }
+      html += '<div style="font-size:0.85rem;font-weight:600;margin-bottom:0.25rem"><i class="fas fa-bell" style="color:#60a5fa"></i> Seguimientos de cotización (' + seguimientosProx.length + ')</div>';
+      if (!seguimientosProx.length) {
+        html += '<div class="muted" style="font-size:0.82rem;margin-bottom:0.5rem">— Sin seguimientos próximos —</div>';
+      } else {
+        html += '<ul style="margin:0 0 0.5rem 1.1rem;padding:0;font-size:0.85rem">';
+        seguimientosProx.forEach(c => {
+          html += '<li>' + escapeHtml((c.fecha_seguimiento || '').toString().slice(0, 10)) + ' - ' + escapeHtml(c.folio || ('#' + c.id)) + ' - ' + escapeHtml(c.cliente_nombre || '-') + '</li>';
         });
         html += '</ul>';
       }
@@ -8062,7 +8092,10 @@ async function imprimirFlyer() {
       <p class="cal-legend"><span class="cal-dot cal-dot-bad"></span> Vencido
         <span class="cal-dot cal-dot-warn"></span> Próximo (30 días)
         <span class="cal-dot cal-dot-pendiente"></span> Pendiente
-        <span class="cal-dot cal-dot-ok"></span> Realizado</p>`;
+        <span class="cal-dot cal-dot-ok"></span> Realizado
+        <span style="margin-left:10px;color:#FFD200"><i class="fas fa-lock"></i> Técnico</span>
+        <span style="margin-left:8px;color:#60a5fa"><i class="fas fa-file-invoice-dollar"></i> Cotización</span>
+        <span style="margin-left:8px;color:#34d399"><i class="fas fa-truck"></i> Entrega venta</span></p>`;
     wrap.querySelectorAll('.cal-day--click[data-date]').forEach(cell => {
       const iso = cell.getAttribute('data-date');
       const openDay = () => {
@@ -8137,7 +8170,8 @@ async function imprimirFlyer() {
             <div><strong>Estado:</strong> <span class="ag-pill-status">${escapeHtml(a.estado || '—')}</span></div>
             ${a.tecnico ? `<div style="grid-column:1/-1"><strong>Vendedor:</strong> ${escapeHtml(a.tecnico)}</div>` : ''}
           </div>
-          <div style="margin-top:10px;text-align:right">
+          <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+            <button type="button" class="btn small outline" data-quitar-agenda="${a.id}" data-quitar-campo="${isVenta ? 'fecha_entrega_programada' : 'fecha_seguimiento'}"><i class="fas fa-calendar-xmark"></i> Quitar del día</button>
             <button type="button" class="btn small btn-primary" data-open-cot="${a.id}"><i class="fas fa-up-right-from-square"></i> Abrir cotización</button>
           </div>
         </div>`;
@@ -8299,6 +8333,30 @@ async function imprimirFlyer() {
           }
         });
       });
+      // "Quitar del día": limpia la fecha de seguimiento / entrega de la cotización.
+      modalBody.querySelectorAll('[data-quitar-agenda]').forEach(b => {
+        b.addEventListener('click', async (ev) => {
+          ev.preventDefault();
+          const id = b.getAttribute('data-quitar-agenda');
+          const campo = b.getAttribute('data-quitar-campo');
+          if (!id || !campo) return;
+          if (!confirm('¿Quitar esta cotización de la agenda de este día?')) return;
+          try {
+            await fetchJson(API + '/cotizaciones/' + id, { method: 'PUT', body: JSON.stringify({ [campo]: '' }) });
+            showToast('Quitada de la agenda.', 'success');
+            qs('#modal').classList.add('hidden');
+            try {
+              const mi = qs('#mant-gar-month');
+              const ym = mi && mi.value ? mi.value : new Date().toISOString().slice(0, 10).slice(0, 7);
+              await loadAgendaAsignaciones(ym);
+              renderMantenimientoGarantiaCalendar();
+            } catch (_) {}
+          } catch (e) {
+            console.error('[agenda][quitar]', e);
+            showToast(parseApiError(e) || 'No se pudo quitar.', 'error');
+          }
+        });
+      });
       // "+ Agendar en este día": crear nuevo (pre-fechado) o programar existente.
       modalBody.querySelectorAll('[data-agendar]').forEach(b => {
         b.addEventListener('click', (ev) => {
@@ -8310,7 +8368,8 @@ async function imprimirFlyer() {
             } else if (tipo === 'garantia' && typeof openModalGarantia === 'function') {
               openModalGarantia({ fecha_entrega: dateIso });
             } else if (tipo === 'cotizacion' && typeof openModalCotizacion === 'function') {
-              openModalCotizacion(null);
+              // Crear NUEVA cotización pre-fechada con seguimiento en este día.
+              openModalCotizacion({ fecha_seguimiento: dateIso });
             } else if (tipo === 'entrega') {
               openAgendarCotizacionExistente(dateIso, 'entrega');
             } else if (tipo === 'seguimiento') {
@@ -11865,6 +11924,14 @@ async function imprimirFlyer() {
               <textarea id="cot-notas" rows="3" maxlength="1000" placeholder="Notas, comentarios o memo del vendedor…">${escapeHtml((cot && cot.notas) || '')}</textarea>
             </div>
           </div>
+          <div class="form-row" style="gap:1rem;margin-top:0.5rem">
+            <div class="form-group" style="flex:1"><label><i class="fas fa-bell" style="color:#60a5fa"></i> Fecha de seguimiento <small style="color:#94a3b8;font-weight:400">(recordatorio en la Agenda)</small></label>
+              <input type="date" id="cotz-fecha-seguimiento" value="${(cot && cot.fecha_seguimiento || '').toString().slice(0, 10)}">
+            </div>
+            <div class="form-group" style="flex:1"><label><i class="fas fa-truck" style="color:#34d399"></i> Fecha de entrega programada <small style="color:#94a3b8;font-weight:400">(entrega de la venta en la Agenda)</small></label>
+              <input type="date" id="cotz-fecha-entrega" value="${(cot && cot.fecha_entrega_programada || '').toString().slice(0, 10)}">
+            </div>
+          </div>
         </section>
         <section class="cotz-card">
           <h4 class="cotz-card-title"><span class="cotz-step-num">7</span> Atendido por</h4>
@@ -13201,6 +13268,8 @@ async function imprimirFlyer() {
         bancarios_rfc: (qm('#cot-banca-rfc')?.value || '').trim() || null,
         bancarios_cuentas: _cuentasFinal && _cuentasFinal.length ? JSON.stringify(_cuentasFinal) : null,
         ficha_tecnica_manual: _fichaManualFinal && _fichaManualFinal.length ? JSON.stringify(_fichaManualFinal) : null,
+        fecha_seguimiento: (qm('#cotz-fecha-seguimiento')?.value || '').trim() || null,
+        fecha_entrega_programada: (qm('#cotz-fecha-entrega')?.value || '').trim() || null,
       };
       const btn = qm('#cotz-save');
       if (!btn) return;
