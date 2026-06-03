@@ -491,10 +491,12 @@ module.exports = {
   canUserAccessCotizaciones,
   ensureSeedUsers,
   ensurePinnedAppUsers,
+  signToken,
   verifyToken,
   hashPassword,
   verifyPassword,
   normalizeRole,
+  computeCanCotizar,
   READ_ONLY_ROLES,
   STAFF_ROLES,
 };
