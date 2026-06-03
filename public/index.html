@@ -12,6 +12,18 @@
       }
     })();
   </script>
+  <!-- 🛡️ Blindaje del login (A5/M5): si app-v356.js (1 MB) aún no enganchó su handler
+       (conexión lenta), evita que el form se envíe de forma NATIVA y recargue la página
+       perdiendo el intento. El handler real marca form._bound; hasta entonces bloqueamos
+       el submit nativo. Listener en captura, registrado antes de que exista el form. -->
+  <script>
+    document.addEventListener('submit', function (e) {
+      var f = e.target;
+      if (f && f.id === 'login-form' && !f._bound) {
+        e.preventDefault();
+      }
+    }, true);
+  </script>
   <!-- 🧹 NUKE TOTAL DE CACHE Y SW EN PRODUCCIÓN — Luis reportó que el browser cacheaba versiones viejas. -->
   <script>
     (function () {
@@ -2533,8 +2545,8 @@
     <span class="loading-text">Cargando…</span>
   </div>
   <!-- ExcelJS y Chart.js se cargan bajo demanda desde app.js (mucho más rápido el arranque). -->
-  <script src="js/config.js?v=2"></script>
-  <script src="js/app-v356.js?cb=agenda-fechas-modal-proximas-2026-06-01"></script>
+  <script src="js/config.js?v=2" defer></script>
+  <script src="js/app-v356.js?cb=agenda-fechas-modal-proximas-2026-06-01" defer></script>
   <script src="js/prospeccion-map.js?v=8-route-gmaps-newtab-2026-05-22" defer></script>
   <script src="js/bg-animation.js?v=8-map-shell-no-duplicate-hamburger" defer></script>
   <script src="js/premium-ux.js?v=24-globalmo-full-suppress-2026-05-07" defer></script>

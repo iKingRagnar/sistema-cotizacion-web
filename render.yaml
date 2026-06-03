@@ -1,0 +1,32 @@
+# Blueprint de Render — despliegue reproducible de la app RAÍZ (Express).
+# Versionar esto evita depender de la config manual del panel y blinda contra
+# el incidente pasado en que Render arrancaba la app obsoleta /v3.
+#
+# Nota: si el servicio ya existe en Render, en Settings deja el "Start Command"
+# VACÍO (usa el de package.json: `node server.js`) o ponlo explícito a `node server.js`.
+services:
+  - type: web
+    name: sistema-cotizacion-web
+    env: node
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: npm install --omit=dev
+    startCommand: node server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      # Definir en el panel (no se versionan por seguridad):
+      - key: AUTH_SECRET
+        sync: false
+      - key: ADMIN_INITIAL_PASSWORD
+        sync: false
+      - key: TURSO_DATABASE_URL
+        sync: false
+      - key: TURSO_AUTH_TOKEN
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
