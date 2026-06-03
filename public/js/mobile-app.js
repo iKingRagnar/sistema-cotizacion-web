@@ -13,6 +13,8 @@ function hdrs(){ return {'Content-Type':'application/json','Authorization':'Bear
 function user(){ try{return JSON.parse(localStorage.getItem(UK)||'null');}catch{return null;} }
 function loader(){ return '<div class="m-loader"><div class="m-spinner"></div><span>Cargando…</span></div>'; }
 function empty(t){ return '<div class="m-empty"><i class="fas fa-inbox"></i><p>'+esc(t||'Sin resultados')+'</p></div>'; }
+/* Estado de ERROR de red con botón Reintentar (distinto de "sin datos"). */
+function errBlock(pageId){ return '<div class="m-empty"><i class="fas fa-triangle-exclamation" style="color:var(--clr-danger,#e5484d)"></i><p>No se pudo cargar. Revisa tu conexión.</p><button class="m-btn-primary" style="max-width:220px;margin:10px auto 0" onclick="window.mGo(\''+pageId+'\')"><i class="fas fa-rotate-right"></i> Reintentar</button></div>'; }
 function fmt(n,c){ if(n==null||n==='')return '—'; const x=parseFloat(n); return isNaN(x)?String(n):(c||'')+ x.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function badge(e){ if(!e)return ''; const s=e.toLowerCase(); let c='muted'; if(/aprobad|pagad|activ|vendid|complet|entregad/.test(s))c='ok'; else if(/pendient|proceso|revisión/.test(s))c='warn'; else if(/cancelad|rechazad|vencid/.test(s))c='danger'; else if(/borrador|nueva/.test(s))c='info'; return '<span class="m-badge '+c+'">'+esc(e)+'</span>'; }
 function toast(m,ms=2800){ const el=document.getElementById('m-toast'); if(!el)return; el.textContent=m; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),ms); }
@@ -98,7 +100,7 @@ async function loadDash(){
 /* ── CLIENTES ── */
 async function loadClientes(q=''){
   const el=document.getElementById('page-clientes');
-  if(!cache.clientes){ el.innerHTML=loader(); try{ const r=await fetch(API+'/clientes',{headers:hdrs()}); cache.clientes=r.ok?await r.json():[]; }catch{ cache.clientes=[]; } }
+  if(!cache.clientes){ el.innerHTML=loader(); try{ const r=await fetch(API+'/clientes',{headers:hdrs()}); cache.clientes=r.ok?await r.json():[]; }catch{ el.innerHTML=errBlock('clientes'); return; } }
   const list=(cache.clientes||[]).filter(c=>!q||[c.razon_social,c.rfc,c.contacto,c.ciudad,c.email].some(f=>f&&String(f).toLowerCase().includes(q.toLowerCase())));
   el.innerHTML=`<div class="m-search-wrap"><i class="fas fa-search"></i><input class="m-search" id="q-clientes" placeholder="Buscar cliente…" value="${esc(q)}" oninput="window.mSearch('clientes',this.value)"></div>
     <p class="m-section-title">${list.length} clientes</p>
@@ -120,7 +122,7 @@ window.mGoCot=cid=>{
 /* ── MÁQUINAS ── */
 async function loadMaquinas(q=''){
   const el=document.getElementById('page-maquinas');
-  if(!cache.maquinas){ el.innerHTML=loader(); try{ const r=await fetch(API+'/maquinas',{headers:hdrs()}); cache.maquinas=r.ok?await r.json():[]; }catch{ cache.maquinas=[]; } }
+  if(!cache.maquinas){ el.innerHTML=loader(); try{ const r=await fetch(API+'/maquinas',{headers:hdrs()}); cache.maquinas=r.ok?await r.json():[]; }catch{ el.innerHTML=errBlock('maquinas'); return; } }
   const list=(cache.maquinas||[]).filter(m=>!q||[m.modelo,m.numero_serie,m.cliente_nombre,m.categoria].some(f=>f&&String(f).toLowerCase().includes(q.toLowerCase())));
   el.innerHTML=`<div class="m-search-wrap"><i class="fas fa-search"></i><input class="m-search" id="q-maquinas" placeholder="Buscar máquina…" value="${esc(q)}" oninput="window.mSearch('maquinas',this.value)"></div>
     <p class="m-section-title">${list.length} máquinas</p>
@@ -135,7 +137,7 @@ window.mMaqDet=id=>{
 async function loadRefacciones(q=''){
   const el=document.getElementById('page-refacciones');
   if(!el)return;
-  if(!cache.refacciones){ el.innerHTML=loader(); try{ const r=await fetch(API+'/refacciones',{headers:hdrs()}); cache.refacciones=r.ok?await r.json():[]; }catch{ cache.refacciones=[]; } }
+  if(!cache.refacciones){ el.innerHTML=loader(); try{ const r=await fetch(API+'/refacciones',{headers:hdrs()}); cache.refacciones=r.ok?await r.json():[]; }catch{ el.innerHTML=errBlock('refacciones'); return; } }
   const list=(Array.isArray(cache.refacciones)?cache.refacciones:[]).filter(a=>!q||[a.numero_parte,a.descripcion,a.categoria,a.marca].some(f=>f&&String(f).toLowerCase().includes(q.toLowerCase())));
   el.innerHTML=`<div class="m-search-wrap"><i class="fas fa-search"></i><input class="m-search" id="q-refacciones" placeholder="Buscar refacción…" value="${esc(q)}" oninput="window.mSearch('refacciones',this.value)"></div>
     <p class="m-section-title">${list.length} refacciones</p>
@@ -149,7 +151,7 @@ window.mRefDet=id=>{
 /* ── COTIZACIONES ── */
 async function loadCotizaciones(q=''){
   const el=document.getElementById('page-cotizaciones');
-  if(!cache.cotizaciones){ el.innerHTML=loader(); try{ const r=await fetch(API+'/cotizaciones',{headers:hdrs()}); const d=r.ok?await r.json():{}; cache.cotizaciones=Array.isArray(d)?d:(d.rows||[]); }catch{ cache.cotizaciones=[]; } }
+  if(!cache.cotizaciones){ el.innerHTML=loader(); try{ const r=await fetch(API+'/cotizaciones',{headers:hdrs()}); const d=r.ok?await r.json():{}; cache.cotizaciones=Array.isArray(d)?d:(d.rows||[]); }catch{ el.innerHTML=errBlock('cotizaciones'); return; } }
   const list=(cache.cotizaciones||[]).filter(c=>!q||[c.folio,c.cliente_nombre,c.estado].some(f=>f&&String(f).toLowerCase().includes(q.toLowerCase())));
   el.innerHTML=`<div class="m-search-wrap"><i class="fas fa-search"></i><input class="m-search" id="q-cotizaciones" placeholder="Buscar cotización…" value="${esc(q)}" oninput="window.mSearch('cotizaciones',this.value)"></div>
     <p class="m-section-title">${list.length} cotizaciones</p>
@@ -169,7 +171,7 @@ window.mCotDet=async id=>{
 async function loadGeneric(table,pageId,searchFields,labelFn,icon,col,rowsFn){
   const el=document.getElementById('page-'+pageId);
   if(!el)return;
-  if(!cache[pageId]){ el.innerHTML=loader(); try{ const r=await fetch(API+'/'+table,{headers:hdrs()}); cache[pageId]=r.ok?await r.json():[]; }catch{ cache[pageId]=[]; } }
+  if(!cache[pageId]){ el.innerHTML=loader(); try{ const r=await fetch(API+'/'+table,{headers:hdrs()}); cache[pageId]=r.ok?await r.json():[]; }catch{ el.innerHTML=errBlock(pageId); return; } }
   const list=Array.isArray(cache[pageId])?cache[pageId]:[];
   el.innerHTML=`<p class="m-section-title">${list.length} registros</p>`+(list.length?list.map(r=>'<div class="m-card" onclick="window.mGenDet(\''+pageId+'\','+r.id+')"><div class="m-card-icon '+col+'"><i class="fas fa-'+icon+'"></i></div><div class="m-card-body"><div class="m-card-title">'+esc(labelFn(r))+'</div></div><div class="m-card-arrow"><i class="fas fa-chevron-right"></i></div></div>').join(''):empty());
   window['_det_'+pageId]=rowsFn;

@@ -274,7 +274,9 @@ app.use((req, res, next) => {
   // (necesario para Vista previa PDF de cotizaciones/incidentes/bitácoras).
   // DENY bloqueaba el modal de preview dejándolo en blanco.
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
+  // X-XSS-Protection: el filtro XSS legado se considera inseguro hoy; el valor
+  // recomendado es 0 (desactivarlo) y confiar en escape + (a futuro) CSP.
+  res.setHeader('X-XSS-Protection', '0');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   if (process.env.NODE_ENV === 'production') {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
