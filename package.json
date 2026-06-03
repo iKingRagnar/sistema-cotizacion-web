@@ -2,13 +2,14 @@
   "name": "sistema-cotizacion-web",
   "version": "1.0.0",
   "description": "Sistema de Cotización Universal — proyecto unificado (base funcional sistema-cotizacion-web backup + mejoras mapa tipo MapaSuminregio: clusters Leaflet)",
-  "main": "v3/server.js",
+  "main": "server.js",
   "scripts": {
-    "build": "cd v3 && npm install --omit=dev",
-    "start": "cd v3 && node server.js",
-    "start:v1": "node server.js",
-    "dev": "cd v3 && node --watch server.js",
-    "seed": "cd v3 && node seed.js",
+    "build": "npm install --omit=dev",
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "start:v3": "cd v3 && node server.js",
+    "build:v3": "cd v3 && npm install --omit=dev",
+    "seed:v3": "cd v3 && node seed.js",
     "auth:reset-admin": "node scripts/reset-admin-password.js"
   },
   "engines": {
