@@ -1,0 +1,47 @@
+/* ux-polish.css — pulido de las zonas de "importar / subir imagen" dentro de
+   modales: contenido CENTRADO y SIN scroll por previews gigantes.
+   Scoped a modales (.modal-box / .cotz-modal) para NO afectar las miniaturas
+   de las tablas. !important puntual para ganar a los selectores temáticos. */
+
+/* — Centrar el input de archivo y su etiqueta — */
+.modal-box .form-group:has(input[type='file']),
+.cotz-modal .form-group:has(input[type='file']) {
+  text-align: center;
+}
+.modal-box .form-group input[type='file'],
+.cotz-modal .form-group input[type='file'] {
+  display: block !important;
+  margin: 8px auto !important;
+  max-width: min(380px, 100%);
+}
+
+/* — Centrar el área de subida y la vista previa — */
+.modal-box .ref-foto-preview-wrap,
+.modal-box .tec-upload-box,
+.modal-box .tec-upload-preview,
+.modal-box .upload-label,
+.modal-box .upload-hint,
+.modal-box .uv-model-photo-wrap,
+.cotz-modal .ref-foto-preview-wrap {
+  text-align: center;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+.modal-box .ref-foto-preview-wrap .cliente-const-inline,
+.cotz-modal .ref-foto-preview-wrap .cliente-const-inline {
+  justify-content: center !important;
+}
+
+/* — Anti-scroll: limitar el alto de la imagen de vista previa dentro del modal — */
+.modal-box .ref-foto-thumb,
+.modal-box .tec-upload-preview img,
+.modal-box .uv-foto-maquina img,
+.modal-box .uv-foto-placeholder img,
+.cotz-modal .ref-foto-thumb,
+.cotz-modal .uv-foto-maquina img {
+  max-height: 34vh !important;
+  width: auto !important;
+  max-width: 100% !important;
+  object-fit: contain;
+  margin-inline: auto;
+}

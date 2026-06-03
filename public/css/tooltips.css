@@ -1,0 +1,65 @@
+/* tooltips.css — estilo del tooltip global (ver public/js/tooltips.js).
+   Un solo nodo .app-tooltip reposicionado; aparece con fade + leve desplazamiento. */
+.app-tooltip {
+  position: fixed;
+  z-index: 100000;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  max-width: 260px;
+  padding: 7px 12px;
+  font-size: 12.5px;
+  line-height: 1.35;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  text-align: center;
+  white-space: normal;
+  color: #eef3ff;
+  background: linear-gradient(180deg, rgba(34, 46, 78, 0.98), rgba(18, 26, 46, 0.98));
+  border: 1px solid rgba(125, 155, 215, 0.38);
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px) scale(0.98);
+  transition: opacity 0.14s ease, transform 0.14s ease;
+}
+
+.app-tooltip.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+/* Flecha (cuadrado rotado heredando fondo/borde, recortando dos lados). */
+.app-tooltip::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  left: var(--tip-arrow, 50%);
+  margin-left: -5px;
+  background: inherit;
+  border: inherit;
+  transform: rotate(45deg);
+}
+.app-tooltip[data-place='top']::after {
+  bottom: -5px;
+  border-top: none;
+  border-left: none;
+}
+.app-tooltip[data-place='bottom']::after {
+  top: -5px;
+  border-bottom: none;
+  border-right: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-tooltip {
+    transition: opacity 0.1s ease;
+    transform: none;
+  }
+  .app-tooltip.show {
+    transform: none;
+  }
+}
