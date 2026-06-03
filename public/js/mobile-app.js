@@ -4,15 +4,19 @@
 const API='/api', TK='m-auth-token', UK='m-auth-user';
 let page='dashboard', cache={}, stack=[];
 
+/* Seguridad (C2): escapa datos del servidor antes de inyectarlos con innerHTML.
+   Sin esto, un campo como razon_social con <img onerror> ejecutaba XSS en el panel móvil. */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; }); }
+
 function tok(){ return localStorage.getItem(TK)||''; }
 function hdrs(){ return {'Content-Type':'application/json','Authorization':'Bearer '+tok()}; }
 function user(){ try{return JSON.parse(localStorage.getItem(UK)||'null');}catch{return null;} }
 function loader(){ return '<div class="m-loader"><div class="m-spinner"></div><span>Cargando…</span></div>'; }
-function empty(t){ return '<div class="m-empty"><i class="fas fa-inbox"></i><p>'+(t||'Sin resultados')+'</p></div>'; }
+function empty(t){ return '<div class="m-empty"><i class="fas fa-inbox"></i><p>'+esc(t||'Sin resultados')+'</p></div>'; }
 function fmt(n,c){ if(n==null||n==='')return '—'; const x=parseFloat(n); return isNaN(x)?String(n):(c||'')+ x.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function badge(e){ if(!e)return ''; const s=e.toLowerCase(); let c='muted'; if(/aprobad|pagad|activ|vendid|complet|entregad/.test(s))c='ok'; else if(/pendient|proceso|revisión/.test(s))c='warn'; else if(/cancelad|rechazad|vencid/.test(s))c='danger'; else if(/borrador|nueva/.test(s))c='info'; return '<span class="m-badge '+c+'">'+e+'</span>'; }
+function badge(e){ if(!e)return ''; const s=e.toLowerCase(); let c='muted'; if(/aprobad|pagad|activ|vendid|complet|entregad/.test(s))c='ok'; else if(/pendient|proceso|revisión/.test(s))c='warn'; else if(/cancelad|rechazad|vencid/.test(s))c='danger'; else if(/borrador|nueva/.test(s))c='info'; return '<span class="m-badge '+c+'">'+esc(e)+'</span>'; }
 function toast(m,ms=2800){ const el=document.getElementById('m-toast'); if(!el)return; el.textContent=m; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),ms); }
-function infoBlock(rows){ return '<div class="m-info-block">'+rows.filter(([,v])=>v!=null&&v!=='').map(([k,v])=>'<div class="m-info-row"><span class="m-info-key">'+k+'</span><span class="m-info-val">'+v+'</span></div>').join('')+'</div>'; }
+function infoBlock(rows){ return '<div class="m-info-block">'+rows.filter(([,v])=>v!=null&&v!=='').map(([k,v])=>'<div class="m-info-row"><span class="m-info-key">'+esc(k)+'</span><span class="m-info-val">'+esc(v)+'</span></div>').join('')+'</div>'; }
 function actionBtns(html){ return '<p class="m-section-title mt-16">Acciones</p><div style="display:flex;flex-direction:column;gap:10px">'+html+'</div>'; }
 function btnPrimary(onclick,icon,label){ return '<button class="m-btn-primary" onclick="'+onclick+'"><i class="fas fa-'+icon+'"></i> '+label+'</button>'; }
 function btnSecondary(onclick,icon,label){ return '<button class="m-btn-primary" style="background:var(--clr-surface2);color:var(--clr-text);border:1px solid var(--clr-border)" onclick="'+onclick+'"><i class="fas fa-'+icon+'"></i> '+label+'</button>'; }
@@ -30,7 +34,7 @@ function showPage(id){
 }
 function showDetail(html,title){
   const det=document.getElementById('page-detail');
-  det.innerHTML='<div class="m-detail-header"><button onclick="window.mBack()"><i class="fas fa-arrow-left"></i></button><div class="m-detail-title">'+title+'</div></div>'+html;
+  det.innerHTML='<div class="m-detail-header"><button onclick="window.mBack()"><i class="fas fa-arrow-left"></i></button><div class="m-detail-title">'+esc(title)+'</div></div>'+html;
   stack.push(page);
   document.querySelectorAll('.m-page').forEach(p=>p.classList.remove('active'));
   det.classList.add('active');
@@ -78,7 +82,7 @@ async function loadDash(){
     {id:'reportes',  label:'Reportes',    icon:'file-csv',            col:'blue'},
   ];
   el.innerHTML=`
-    <p class="m-section-title">Bienvenido, ${u?(u.nombre||u.username):'usuario'}</p>
+    <p class="m-section-title">Bienvenido, ${u?esc(u.nombre||u.username):'usuario'}</p>
     <div class="m-kpi-grid">
       <div class="m-kpi"><div class="m-kpi-label">Clientes</div><div class="m-kpi-value accent">${cl.length}</div><div class="m-kpi-sub">Registrados</div></div>
       <div class="m-kpi"><div class="m-kpi-label">Cotizaciones</div><div class="m-kpi-value">${cArr.length}</div><div class="m-kpi-sub">${apr} aprobadas</div></div>
@@ -96,13 +100,13 @@ async function loadClientes(q=''){
   const el=document.getElementById('page-clientes');
   if(!cache.clientes){ el.innerHTML=loader(); try{ const r=await fetch(API+'/clientes',{headers:hdrs()}); cache.clientes=r.ok?await r.json():[]; }catch{ cache.clientes=[]; } }
   const list=(cache.clientes||[]).filter(c=>!q||[c.razon_social,c.rfc,c.contacto,c.ciudad,c.email].some(f=>f&&String(f).toLowerCase().includes(q.toLowerCase())));
-  el.innerHTML=`<div class="m-search-wrap"><i class="fas fa-search"></i><input class="m-search" id="q-clientes" placeholder="Buscar cliente…" value="${q}" oninput="window.mSearch('clientes',this.value)"></div>
+  el.innerHTML=`<div class="m-search-wrap"><i class="fas fa-search"></i><input class="m-search" id="q-clientes" placeholder="Buscar cliente…" value="${esc(q)}" oninput="window.mSearch('clientes',this.value)"></div>
     <p class="m-section-title">${list.length} clientes</p>
-    ${list.length?list.map(c=>'<div class="m-card" onclick="window.mClienteDet('+c.id+')"><div class="m-card-icon"><i class="fas fa-user"></i></div><div class="m-card-body"><div class="m-card-title">'+(c.razon_social||'—')+'</div><div class="m-card-sub">'+[c.rfc,c.ciudad].filter(Boolean).join(' · ')+'</div></div><div class="m-card-arrow"><i class="fas fa-chevron-right"></i></div></div>').join(''):empty()}`;
+    ${list.length?list.map(c=>'<div class="m-card" onclick="window.mClienteDet('+c.id+')"><div class="m-card-icon"><i class="fas fa-user"></i></div><div class="m-card-body"><div class="m-card-title">'+esc(c.razon_social||'—')+'</div><div class="m-card-sub">'+esc([c.rfc,c.ciudad].filter(Boolean).join(' · '))+'</div></div><div class="m-card-arrow"><i class="fas fa-chevron-right"></i></div></div>').join(''):empty()}`;
 }
 window.mClienteDet=id=>{
   const c=(cache.clientes||[]).find(x=>x.id===id); if(!c)return;
-  const tel=c.telefono?'<a href="tel:'+c.telefono+'" style="color:var(--clr-accent)"><i class="fas fa-phone"></i> Llamar</a>':'';
+  const tel=c.telefono?'<a href="tel:'+esc(String(c.telefono).replace(/[^\d+\-() ]/g,''))+'" style="color:var(--clr-accent)"><i class="fas fa-phone"></i> Llamar</a>':'';
   const wa=c.telefono?'<a href="https://wa.me/'+c.telefono.replace(/\D/g,'')+'" target="_blank" style="color:#25D366"><i class="fab fa-whatsapp"></i> WhatsApp</a>':'';
   showDetail(infoBlock([['Razón Social',c.razon_social],['RFC',c.rfc],['Contacto',c.contacto],['Teléfono',c.telefono],['Email',c.email],['Ciudad',c.ciudad],['Estado',c.estado],['Notas',c.notas]])
     +(tel||wa?'<div style="display:flex;gap:12px;margin:10px 0">'+tel+wa+'</div>':'')
@@ -118,9 +122,9 @@ async function loadMaquinas(q=''){
   const el=document.getElementById('page-maquinas');
   if(!cache.maquinas){ el.innerHTML=loader(); try{ const r=await fetch(API+'/maquinas',{headers:hdrs()}); cache.maquinas=r.ok?await r.json():[]; }catch{ cache.maquinas=[]; } }
   const list=(cache.maquinas||[]).filter(m=>!q||[m.modelo,m.numero_serie,m.cliente_nombre,m.categoria].some(f=>f&&String(f).toLowerCase().includes(q.toLowerCase())));
-  el.innerHTML=`<div class="m-search-wrap"><i class="fas fa-search"></i><input class="m-search" id="q-maquinas" placeholder="Buscar máquina…" value="${q}" oninput="window.mSearch('maquinas',this.value)"></div>
+  el.innerHTML=`<div class="m-search-wrap"><i class="fas fa-search"></i><input class="m-search" id="q-maquinas" placeholder="Buscar máquina…" value="${esc(q)}" oninput="window.mSearch('maquinas',this.value)"></div>
     <p class="m-section-title">${list.length} máquinas</p>
-    ${list.length?list.map(m=>'<div class="m-card" onclick="window.mMaqDet('+m.id+')"><div class="m-card-icon yellow"><i class="fas fa-industry"></i></div><div class="m-card-body"><div class="m-card-title">'+(m.modelo||'—')+'</div><div class="m-card-sub">'+[m.numero_serie,m.cliente_nombre].filter(Boolean).join(' · ')+'</div></div><div class="m-card-arrow"><i class="fas fa-chevron-right"></i></div></div>').join(''):empty()}`;
+    ${list.length?list.map(m=>'<div class="m-card" onclick="window.mMaqDet('+m.id+')"><div class="m-card-icon yellow"><i class="fas fa-industry"></i></div><div class="m-card-body"><div class="m-card-title">'+esc(m.modelo||'—')+'</div><div class="m-card-sub">'+esc([m.numero_serie,m.cliente_nombre].filter(Boolean).join(' · '))+'</div></div><div class="m-card-arrow"><i class="fas fa-chevron-right"></i></div></div>').join(''):empty()}`;
 }
 window.mMaqDet=id=>{
   const m=(cache.maquinas||[]).find(x=>x.id===id); if(!m)return;
@@ -133,9 +137,9 @@ async function loadRefacciones(q=''){
   if(!el)return;
   if(!cache.refacciones){ el.innerHTML=loader(); try{ const r=await fetch(API+'/refacciones',{headers:hdrs()}); cache.refacciones=r.ok?await r.json():[]; }catch{ cache.refacciones=[]; } }
   const list=(Array.isArray(cache.refacciones)?cache.refacciones:[]).filter(a=>!q||[a.numero_parte,a.descripcion,a.categoria,a.marca].some(f=>f&&String(f).toLowerCase().includes(q.toLowerCase())));
-  el.innerHTML=`<div class="m-search-wrap"><i class="fas fa-search"></i><input class="m-search" id="q-refacciones" placeholder="Buscar refacción…" value="${q}" oninput="window.mSearch('refacciones',this.value)"></div>
+  el.innerHTML=`<div class="m-search-wrap"><i class="fas fa-search"></i><input class="m-search" id="q-refacciones" placeholder="Buscar refacción…" value="${esc(q)}" oninput="window.mSearch('refacciones',this.value)"></div>
     <p class="m-section-title">${list.length} refacciones</p>
-    ${list.length?list.map(a=>{ const bajo=(a.stock||0)<=(a.stock_minimo||0); return '<div class="m-card" onclick="window.mRefDet('+a.id+')"><div class="m-card-icon '+(bajo?'red':'green')+'"><i class="fas fa-cogs"></i></div><div class="m-card-body"><div class="m-card-title">'+(a.descripcion||a.numero_parte||'—')+'</div><div class="m-card-sub">'+(a.numero_parte||'')+' · Stock: <strong>'+(a.stock??'—')+'</strong>'+(bajo?' <span style="color:var(--clr-danger)">⚠ bajo</span>':'')+'</div></div><div class="m-card-arrow"><i class="fas fa-chevron-right"></i></div></div>'; }).join(''):empty()}`;
+    ${list.length?list.map(a=>{ const bajo=(a.stock||0)<=(a.stock_minimo||0); return '<div class="m-card" onclick="window.mRefDet('+a.id+')"><div class="m-card-icon '+(bajo?'red':'green')+'"><i class="fas fa-cogs"></i></div><div class="m-card-body"><div class="m-card-title">'+esc(a.descripcion||a.numero_parte||'—')+'</div><div class="m-card-sub">'+esc(a.numero_parte||'')+' · Stock: <strong>'+esc(a.stock??'—')+'</strong>'+(bajo?' <span style="color:var(--clr-danger)">⚠ bajo</span>':'')+'</div></div><div class="m-card-arrow"><i class="fas fa-chevron-right"></i></div></div>'; }).join(''):empty()}`;
 }
 window.mRefDet=id=>{
   const a=(cache.refacciones||[]).find(x=>x.id===id); if(!a)return;
@@ -147,9 +151,9 @@ async function loadCotizaciones(q=''){
   const el=document.getElementById('page-cotizaciones');
   if(!cache.cotizaciones){ el.innerHTML=loader(); try{ const r=await fetch(API+'/cotizaciones',{headers:hdrs()}); const d=r.ok?await r.json():{}; cache.cotizaciones=Array.isArray(d)?d:(d.rows||[]); }catch{ cache.cotizaciones=[]; } }
   const list=(cache.cotizaciones||[]).filter(c=>!q||[c.folio,c.cliente_nombre,c.estado].some(f=>f&&String(f).toLowerCase().includes(q.toLowerCase())));
-  el.innerHTML=`<div class="m-search-wrap"><i class="fas fa-search"></i><input class="m-search" id="q-cotizaciones" placeholder="Buscar cotización…" value="${q}" oninput="window.mSearch('cotizaciones',this.value)"></div>
+  el.innerHTML=`<div class="m-search-wrap"><i class="fas fa-search"></i><input class="m-search" id="q-cotizaciones" placeholder="Buscar cotización…" value="${esc(q)}" oninput="window.mSearch('cotizaciones',this.value)"></div>
     <p class="m-section-title">${list.length} cotizaciones</p>
-    ${list.length?list.map(c=>'<div class="m-card" onclick="window.mCotDet('+c.id+')"><div class="m-card-icon blue"><i class="fas fa-file-invoice-dollar"></i></div><div class="m-card-body"><div class="m-card-title">'+(c.folio||'#'+c.id)+' — '+(c.cliente_nombre||'—')+'</div><div class="m-card-sub">'+badge(c.estado)+' '+fmt(c.total,'$')+' '+(c.moneda||'')+'</div></div><div class="m-card-arrow"><i class="fas fa-chevron-right"></i></div></div>').join(''):empty()}`;
+    ${list.length?list.map(c=>'<div class="m-card" onclick="window.mCotDet('+c.id+')"><div class="m-card-icon blue"><i class="fas fa-file-invoice-dollar"></i></div><div class="m-card-body"><div class="m-card-title">'+esc(c.folio||'#'+c.id)+' — '+esc(c.cliente_nombre||'—')+'</div><div class="m-card-sub">'+badge(c.estado)+' '+fmt(c.total,'$')+' '+esc(c.moneda||'')+'</div></div><div class="m-card-arrow"><i class="fas fa-chevron-right"></i></div></div>').join(''):empty()}`;
 }
 window.mCotDet=async id=>{
   let c=(cache.cotizaciones||[]).find(x=>x.id===id);
@@ -157,7 +161,7 @@ window.mCotDet=async id=>{
   if(!c)return;
   const items=Array.isArray(c.items)?c.items:[];
   let html=infoBlock([['Folio',c.folio],['Estado',c.estado],['Cliente',c.cliente_nombre],['Total',fmt(c.total,'$')+' '+(c.moneda||'')],['IVA',fmt(c.iva,'$')],['Subtotal',fmt(c.subtotal,'$')],['Fecha',c.fecha],['Notas',c.notas]]);
-  if(items.length) html+=`<p class="m-section-title mt-16">Partidas (${items.length})</p><div class="m-info-block">${items.map(it=>'<div class="m-info-row"><span class="m-info-key">'+(it.numero_parte||'').slice(0,12)||'—'+'</span><span class="m-info-val">'+(it.descripcion||'—')+'<br><span class="text-muted">Cant: '+it.cantidad+' · '+fmt(it.precio_unitario,'$')+' · '+fmt(it.importe,'$')+'</span></span></div>').join('')}</div>`;
+  if(items.length) html+=`<p class="m-section-title mt-16">Partidas (${items.length})</p><div class="m-info-block">${items.map(it=>'<div class="m-info-row"><span class="m-info-key">'+(esc((it.numero_parte||'').slice(0,12))||'—')+'</span><span class="m-info-val">'+esc(it.descripcion||'—')+'<br><span class="text-muted">Cant: '+esc(it.cantidad)+' · '+fmt(it.precio_unitario,'$')+' · '+fmt(it.importe,'$')+'</span></span></div>').join('')}</div>`;
   showDetail(html, c.folio||'#'+id);
 };
 
@@ -167,7 +171,7 @@ async function loadGeneric(table,pageId,searchFields,labelFn,icon,col,rowsFn){
   if(!el)return;
   if(!cache[pageId]){ el.innerHTML=loader(); try{ const r=await fetch(API+'/'+table,{headers:hdrs()}); cache[pageId]=r.ok?await r.json():[]; }catch{ cache[pageId]=[]; } }
   const list=Array.isArray(cache[pageId])?cache[pageId]:[];
-  el.innerHTML=`<p class="m-section-title">${list.length} registros</p>`+(list.length?list.map(r=>'<div class="m-card" onclick="window.mGenDet(\''+pageId+'\','+r.id+')"><div class="m-card-icon '+col+'"><i class="fas fa-'+icon+'"></i></div><div class="m-card-body"><div class="m-card-title">'+labelFn(r)+'</div></div><div class="m-card-arrow"><i class="fas fa-chevron-right"></i></div></div>').join(''):empty());
+  el.innerHTML=`<p class="m-section-title">${list.length} registros</p>`+(list.length?list.map(r=>'<div class="m-card" onclick="window.mGenDet(\''+pageId+'\','+r.id+')"><div class="m-card-icon '+col+'"><i class="fas fa-'+icon+'"></i></div><div class="m-card-body"><div class="m-card-title">'+esc(labelFn(r))+'</div></div><div class="m-card-arrow"><i class="fas fa-chevron-right"></i></div></div>').join(''):empty());
   window['_det_'+pageId]=rowsFn;
 }
 window.mGenDet=(pid,id)=>{

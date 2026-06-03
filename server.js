@@ -12,7 +12,37 @@ const db = require('./db');
 const mammoth = require('mammoth');
 const pdfParse = require('pdf-parse');
 const PDFDocument = require('pdfkit');
-const XLSX = require('xlsx');
+
+/* Lectura de Excel (.xlsx) → texto TSV usando exceljs (ya dependencia para escritura).
+   Reemplaza el paquete 'xlsx'/SheetJS que tenía vulnerabilidades HIGH sin parche en npm.
+   Es extracción de texto best-effort; el formato legado .xls (BIFF) no se soporta y
+   degrada a texto vacío (el llamador ya maneja "(Sin texto extraíble)"). */
+async function xlsxBufferToTsv(buffer) {
+  try {
+    const ExcelJS = require('exceljs');
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buffer);
+    const ws = wb.worksheets[0];
+    if (!ws) return '';
+    const lines = [];
+    ws.eachRow({ includeEmpty: false }, (row) => {
+      const vals = (row.values || []).slice(1).map((v) => {
+        if (v == null) return '';
+        if (v instanceof Date) return v.toISOString();
+        if (typeof v === 'object') {
+          if (v.text != null) return String(v.text);     // rich text / hyperlink
+          if (v.result != null) return String(v.result); // celda con fórmula
+          return '';
+        }
+        return String(v);
+      });
+      lines.push(vals.join('\t'));
+    });
+    return lines.join('\n').trim().slice(0, 50000);
+  } catch (_) {
+    return ''; // .xls legado u Excel corrupto → sin texto
+  }
+}
 
 const app = express();
 const auth = require('./auth');
@@ -200,8 +230,30 @@ try {
   }
 } catch (_) { /* helmet opcional */ }
 
-app.use(cors());
+/* CORS: lista blanca de orígenes (antes era cors() abierto a todo origen).
+   Configurable con CORS_ORIGINS (coma-separado); incluye el dominio de producción
+   por defecto y permite localhost en cualquier puerto para desarrollo.
+   Peticiones sin Origin (curl, apps nativas, same-origin) se permiten. */
+const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS || 'https://sistema-cotizacion-web.onrender.com')
+  .split(',').map((s) => s.trim().replace(/\/+$/, '')).filter(Boolean);
+app.use(cors({
+  origin(origin, cb) {
+    if (!origin) return cb(null, true);
+    const clean = String(origin).replace(/\/+$/, '');
+    if (ALLOWED_ORIGINS.includes(clean)) return cb(null, true);
+    if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(clean)) return cb(null, true);
+    return cb(null, false); // no setea el header → el navegador bloquea (sin lanzar 500)
+  },
+  credentials: false,
+}));
 app.use(express.json({ limit: '10mb' }));
+
+/** Mensaje de error seguro para el cliente: en producción NO filtra detalles internos
+ *  (mensajes de SQL, paths, stack); en desarrollo sí, para depurar. */
+function safeErr(e) {
+  if (process.env.NODE_ENV === 'production') return 'Error interno del servidor.';
+  return String(e && e.message ? e.message : (e || 'Error'));
+}
 
 /* Security headers — defense-in-depth even without helmet. */
 app.use((req, res, next) => {
@@ -357,7 +409,7 @@ app.get('/api/storage-health', async (req, res) => {
     payload.details = 'SQLite local en archivo. Persistente mientras no borres/muevas el archivo ni redeployes sobre disco efimero.';
     return res.json(payload);
   } catch (e) {
-    return res.status(500).json({ error: String(e.message || e) });
+    return res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -396,7 +448,7 @@ app.get('/api/admin/diag-schema', async (req, res) => {
     }
     return res.json({ ok: missing.length === 0, backend: mode, missingCount: missing.length, missing, tables });
   } catch (e) {
-    return res.status(500).json({ error: String(e.message || e) });
+    return res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -432,7 +484,7 @@ app.post('/api/auth/login', _authLimiter, loginRateLimit, async (req, res) => {
     if (!result) return res.status(401).json({ error: 'Credenciales incorrectas o cuenta desactivada (activo=0).' });
     res.json(result);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -442,12 +494,16 @@ app.post('/api/auth/login', _authLimiter, loginRateLimit, async (req, res) => {
  * Luego llama: POST /api/auth/emergency-reset con body { token: "...", newPassword: "..." }
  * Solo resetea el usuario 'admin'. Quita la env var después de usarlo.
  */
-app.post('/api/auth/emergency-reset', async (req, res) => {
+app.post('/api/auth/emergency-reset', _authLimiter, async (req, res) => {
   try {
     const resetToken = (process.env.ADMIN_RESET_TOKEN || '').trim();
     if (!resetToken) return res.status(400).json({ error: 'ADMIN_RESET_TOKEN no configurada en el servidor.' });
     const { token, newPassword } = req.body || {};
-    if (!token || token !== resetToken) return res.status(403).json({ error: 'Token incorrecto.' });
+    // Comparación en tiempo constante para evitar brute-force por timing del token.
+    const tokenBuf = Buffer.from(String(token || ''));
+    const expBuf = Buffer.from(resetToken);
+    const tokenOk = tokenBuf.length === expBuf.length && require('crypto').timingSafeEqual(tokenBuf, expBuf);
+    if (!tokenOk) return res.status(403).json({ error: 'Token incorrecto.' });
     if (!newPassword || String(newPassword).length < 8) return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 8 caracteres.' });
     const result = await db.runQuery(
       "UPDATE app_users SET password_hash=? WHERE lower(username)='admin'",
@@ -456,12 +512,12 @@ app.post('/api/auth/emergency-reset', async (req, res) => {
     console.log('[auth] Contraseña admin reseteada vía emergency-reset.');
     res.json({ ok: true, message: 'Contraseña del admin reseteada. Inicia sesión con la nueva contraseña.' });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
 /** Self-service password change (any authenticated user) */
-app.post('/api/auth/change-password', async (req, res) => {
+app.post('/api/auth/change-password', _authLimiter, async (req, res) => {
   try {
     if (!auth.AUTH_ENABLED) return res.status(400).json({ error: 'Auth desactivada' });
     const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
@@ -478,7 +534,7 @@ app.post('/api/auth/change-password', async (req, res) => {
     if (!auth.verifyPassword(currentPassword, user.password_hash)) return res.status(403).json({ error: 'Contraseña actual incorrecta' });
     await db.runQuery('UPDATE app_users SET password_hash=? WHERE id=?', [auth.hashPassword(newPassword), payload.sub]);
     res.json({ ok: true, message: 'Contraseña actualizada correctamente' });
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.use(auth.createApiMiddleware());
@@ -516,7 +572,7 @@ app.get('/api/auth/me', async (req, res) => {
     const user = await auth.buildUserProfileFromRow(row);
     res.json({ user });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -547,7 +603,7 @@ app.get('/api/app-users', async (req, res) => {
     );
     res.json(rows);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -562,7 +618,7 @@ app.get('/api/app-users/deleted', async (req, res) => {
     );
     res.json(rows);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -600,7 +656,7 @@ app.post('/api/app-users', async (req, res) => {
     res.status(201).json(row);
     enviarCorreoBienvenida(row).catch((e) => console.warn('[correo-bienvenida]', e && e.message));
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -707,7 +763,7 @@ app.patch('/api/app-users/:id', async (req, res) => {
     );
     res.json(row);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -747,7 +803,7 @@ app.delete('/api/app-users/:id', async (req, res) => {
     await db.runQuery('DELETE FROM app_users WHERE id=?', [id]);
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -764,7 +820,7 @@ app.get('/api/audit', async (req, res) => {
     const total = one && one.c != null ? Number(one.c) : 0;
     res.json({ rows, total, limit, offset });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -820,7 +876,7 @@ app.post('/api/attachments', async (req, res) => {
       filename, mime_type: parsed.mime, size_bytes: parsed.sizeBytes,
     });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -837,7 +893,7 @@ app.get('/api/attachments', async (req, res) => {
     );
     res.json(rows);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -853,7 +909,7 @@ app.get('/api/attachments/:id/download', async (req, res) => {
     res.setHeader('Content-Length', buf.length);
     res.end(buf);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -862,7 +918,7 @@ app.delete('/api/attachments/:id', async (req, res) => {
     await db.runQuery('DELETE FROM attachments WHERE id=?', [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -1027,7 +1083,7 @@ app.get('/api/webhooks', async (req, res) => {
   try {
     const rows = await db.getAll('SELECT id, nombre, url, tipo, eventos, activo, ultimo_envio, ultimo_status, ultimo_error, creado_en FROM webhooks ORDER BY id DESC');
     res.json(rows);
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.post('/api/webhooks', async (req, res) => {
@@ -1041,7 +1097,7 @@ app.post('/api/webhooks', async (req, res) => {
       [String(nombre).slice(0, 100), String(url).slice(0, 500), t, JSON.stringify(evtsArr), activo ? 1 : 0]
     );
     res.status(201).json({ id: r?.lastInsertRowid || null });
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.put('/api/webhooks/:id', async (req, res) => {
@@ -1054,14 +1110,14 @@ app.put('/api/webhooks/:id', async (req, res) => {
       [String(nombre || '').slice(0, 100), String(url || '').slice(0, 500), t, JSON.stringify(evtsArr), activo ? 1 : 0, req.params.id]
     );
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.delete('/api/webhooks/:id', async (req, res) => {
   try {
     await db.runQuery('DELETE FROM webhooks WHERE id=?', [req.params.id]);
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 /** Endpoint para probar un webhook con un evento de prueba. */
@@ -1083,7 +1139,7 @@ app.post('/api/webhooks/:id/test', async (req, res) => {
       [new Date().toISOString(), r.status, r.ok ? null : `HTTP ${r.status}`, h.id]);
     res.json({ ok: r.ok, status: r.status });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -1119,7 +1175,7 @@ app.get('/api/audit/:entity_type/:entity_id', async (req, res) => {
       [req.params.entity_type, req.params.entity_id]
     );
     res.json(rows);
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 /* En Vercel los estáticos salen por CDN desde public/; express.static no aplica allí.
@@ -1260,7 +1316,7 @@ app.get('/api/clientes', async (req, res) => {
     }
     res.json(rows.map((r) => publicClienteRow(r)));
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -1294,7 +1350,7 @@ app.get('/api/clientes/:id/constancia', async (req, res) => {
     res.setHeader('ETag', etag);
     res.send(buf);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -1398,7 +1454,7 @@ app.get('/api/clientes/:id', async (req, res) => {
     }
     res.json(pub);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -1425,7 +1481,7 @@ app.post('/api/clientes', async (req, res) => {
     const r = await db.getOne('SELECT * FROM clientes WHERE id=?', [Number(_ins && _ins.lastInsertRowid)]);
     res.status(201).json(publicClienteRow(r));
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -1461,7 +1517,7 @@ app.put('/api/clientes/:id', async (req, res) => {
     const r = await db.getOne('SELECT * FROM clientes WHERE id = ?', [req.params.id]);
     res.json(publicClienteRow(r || {}));
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -1517,7 +1573,7 @@ app.delete('/api/clientes/:id', async (req, res) => {
     res.json({ ok: true, cascada, deps_eliminadas: deps });
   } catch (e) {
     console.error('[delete cliente]', e.message, e.stack);
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -1535,7 +1591,7 @@ app.get('/api/refacciones', async (req, res) => {
     const rows = await db.getAll(sql, params);
     res.json(rows);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -1545,7 +1601,7 @@ app.get('/api/refacciones/:id', async (req, res) => {
     if (!row) return res.status(404).json({ error: 'No encontrado' });
     res.json(row);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -1600,7 +1656,7 @@ app.post('/api/refacciones', async (req, res) => {
   } catch (e) {
     const mapped = refaccionesSqliteErrorResponse(e);
     if (mapped) return res.status(mapped.status).json(mapped.body);
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -1653,7 +1709,7 @@ app.put('/api/refacciones/:id', async (req, res) => {
   } catch (e) {
     const mapped = refaccionesSqliteErrorResponse(e);
     if (mapped) return res.status(mapped.status).json(mapped.body);
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -1713,7 +1769,7 @@ app.post('/api/refacciones/:id/ajuste-stock', async (req, res) => {
     );
     res.json({ ok: true, stock: nuevoStock, anterior, diff: nuevoStock - anterior, tipo_movimiento: tipoMov });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -1728,7 +1784,7 @@ app.get('/api/refacciones/:id/movimientos', async (req, res) => {
     );
     res.json(rows);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -1740,7 +1796,7 @@ app.get('/api/refacciones-categorias', async (req, res) => {
     );
     res.json(rows);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -1749,7 +1805,7 @@ app.delete('/api/refacciones/:id', async (req, res) => {
     await db.runQuery('UPDATE refacciones SET activo = 0 WHERE id = ?', [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -1800,7 +1856,7 @@ app.post('/api/refacciones/bulk', async (req, res) => {
     }
     res.json({ ok, errors, errorSamples });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -1812,7 +1868,7 @@ app.post('/api/refacciones/borrar-todas', async (req, res) => {
     const changes = await db.runMutationCount('UPDATE refacciones SET activo = 0 WHERE COALESCE(activo,1) = 1');
     res.json({ ok: true, changes: changes || 0 });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -1831,7 +1887,7 @@ app.get('/api/maquinas', async (req, res) => {
     const rows = await db.getAll(sql, params);
     res.json(rows);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -1845,7 +1901,7 @@ app.patch('/api/maquinas/:id/fecha-lista', async (req, res) => {
     await db.runQuery('UPDATE maquinas SET fecha_lista_estimada = ? WHERE id = ?', [val, req.params.id]);
     const row = await db.getOne('SELECT id, fecha_lista_estimada, estado_preparacion FROM maquinas WHERE id = ?', [req.params.id]);
     res.json(row || {});
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 /* 🆕 GET /api/maquinas/autocomplete?q=texto — ¡DEBE ir ANTES de /api/maquinas/:id!
@@ -1871,7 +1927,7 @@ app.get('/api/maquinas/autocomplete', async (req, res) => {
     );
     res.json(rows);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -1881,7 +1937,7 @@ app.get('/api/maquinas/:id', async (req, res) => {
     if (!row) return res.status(404).json({ error: 'No encontrado' });
     res.json(row);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -1977,7 +2033,7 @@ app.post('/api/admin/relink-embarques', async (req, res) => {
       sin_nombre: sinNombre,
     });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -2111,7 +2167,7 @@ app.get('/api/maquinas/:id/entrega-estimada', async (req, res) => {
     });
   } catch (e) {
     console.error('[entrega-estimada]', e);
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -2123,7 +2179,7 @@ app.get('/api/catalogo-universal-maquinas', async (req, res) => {
     const data = JSON.parse(raw);
     res.json(Array.isArray(data) ? data : data.items || []);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -2149,7 +2205,7 @@ app.get('/api/categorias-catalogo', async (req, res) => {
       })),
     });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -2163,7 +2219,7 @@ app.post('/api/admin/categorias-catalogo/categorias', async (req, res) => {
     res.status(201).json(row);
   } catch (e) {
     if (String(e.message || e).indexOf('UNIQUE') >= 0) return res.status(409).json({ error: 'Ya existe esa categoría' });
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -2181,7 +2237,7 @@ app.put('/api/admin/categorias-catalogo/categorias/:id', async (req, res) => {
     const row = await db.getOne('SELECT * FROM catalogo_categorias WHERE id = ?', [req.params.id]);
     res.json(row || {});
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -2191,7 +2247,7 @@ app.delete('/api/admin/categorias-catalogo/categorias/:id', async (req, res) => 
     if (!n) return res.status(404).json({ error: 'No encontrado' });
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -2213,7 +2269,7 @@ app.post('/api/admin/categorias-catalogo/subcategorias', async (req, res) => {
     res.status(201).json(row);
   } catch (e) {
     if (String(e.message || e).indexOf('UNIQUE') >= 0) return res.status(409).json({ error: 'Ya existe esa subcategoría en la categoría' });
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -2236,7 +2292,7 @@ app.put('/api/admin/categorias-catalogo/subcategorias/:id', async (req, res) => 
     const row = await db.getOne('SELECT * FROM catalogo_subcategorias WHERE id = ?', [req.params.id]);
     res.json(row || {});
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -2246,7 +2302,7 @@ app.delete('/api/admin/categorias-catalogo/subcategorias/:id', async (req, res) 
     if (!n) return res.status(404).json({ error: 'No encontrado' });
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -2321,7 +2377,7 @@ app.post('/api/maquinas', async (req, res) => {
     const r = await db.getOne('SELECT * FROM maquinas WHERE id=?', [Number(_ins && _ins.lastInsertRowid)]);
     res.status(201).json(r);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -2395,7 +2451,7 @@ app.put('/api/maquinas/:id', async (req, res) => {
     const r = await db.getOne('SELECT * FROM maquinas WHERE id = ?', [req.params.id]);
     res.json(r || {});
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -2404,7 +2460,7 @@ app.delete('/api/maquinas/:id', async (req, res) => {
     await db.runQuery('UPDATE maquinas SET activo = 0 WHERE id = ?', [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -2499,7 +2555,7 @@ app.post('/api/admin/vaciar-modulo', async (req, res) => {
     const out = await vaciarModuloTabla(modulo);
     res.json(Object.assign({ ok: true }, out));
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -2541,7 +2597,7 @@ app.get('/api/alertas', async (req, res) => {
     }
     res.json({ items, generado_en: new Date().toISOString() });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -2575,7 +2631,7 @@ app.get('/api/ventas', async (req, res) => {
       })
     );
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -2737,7 +2793,7 @@ app.get('/api/tarifas', async (req, res) => {
     }
     res.json(obj);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -2754,7 +2810,7 @@ app.put('/api/tarifas', async (req, res) => {
     }
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -3050,7 +3106,7 @@ app.get('/api/tipo-cambio-banxico', async (req, res) => {
       error_ultima_consulta: banxicoPollState.lastError,
     });
   } catch (e) {
-    res.status(500).json({ error: String(e.message || e) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -3110,7 +3166,7 @@ app.get('/api/revision-maquinas', async (req, res) => {
     const merged = [...(Array.isArray(rows) ? rows : []), ...virtualRows];
     res.json(merged);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -3126,7 +3182,7 @@ app.post('/api/revision-maquinas', async (req, res) => {
     const r = await db.getOne('SELECT * FROM revision_maquinas WHERE id=?', [Number(_ins && _ins.lastInsertRowid)]);
     res.status(201).json(r);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -3141,7 +3197,7 @@ app.put('/api/revision-maquinas/:id', async (req, res) => {
     const r = await db.getOne('SELECT * FROM revision_maquinas WHERE id=?', [req.params.id]);
     res.json(r || {});
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -3150,7 +3206,7 @@ app.delete('/api/revision-maquinas/:id', async (req, res) => {
     await db.runQuery('DELETE FROM revision_maquinas WHERE id=?', [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -3166,7 +3222,7 @@ app.get('/api/cotizaciones', async (req, res) => {
     );
     res.json(Array.isArray(rows) ? rows : []);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -3196,7 +3252,7 @@ app.get('/api/cotizaciones/:id', async (req, res) => {
     );
     res.json({ ...row, lineas: Array.isArray(lineas) ? lineas : [] });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -3504,7 +3560,7 @@ app.get('/api/cotizaciones/:id/lineas', async (req, res) => {
     );
     res.json(Array.isArray(rows) ? rows : []);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -3595,7 +3651,7 @@ app.post('/api/cotizaciones/:id/lineas', async (req, res) => {
     await recalcCotizacionTotals(req.params.id);
     res.status(201).json(r || {});
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -3692,7 +3748,7 @@ app.put('/api/cotizaciones/:id/lineas/:lineaId', async (req, res) => {
     const r = await db.getOne('SELECT * FROM cotizacion_lineas WHERE id = ?', [req.params.lineaId]);
     res.json(r || {});
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -3702,7 +3758,7 @@ app.delete('/api/cotizaciones/:id/lineas/:lineaId', async (req, res) => {
     await recalcCotizacionTotals(req.params.id);
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -3820,7 +3876,7 @@ app.post('/api/cotizaciones', async (req, res) => {
       .then((cli) => enviarCorreoCotizacionCreada(r, cli))
       .catch((e) => console.warn('[correo-cotizacion-creada]', e && e.message));
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -3930,7 +3986,7 @@ app.put('/api/cotizaciones/:id', async (req, res) => {
     );
     res.json(r || {});
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -3949,7 +4005,7 @@ app.post('/api/cotizaciones/:id/recalc-lineas', async (req, res) => {
     );
     res.json(r || { ok: true });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -4162,7 +4218,7 @@ app.post('/api/cotizaciones/:id/aplicar', async (req, res) => {
 
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -4187,7 +4243,7 @@ app.get('/api/catalogos', async (req, res) => {
     }
     res.json(grouped);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -4206,7 +4262,7 @@ app.post('/api/catalogos', async (req, res) => {
     if (!row) return res.status(500).json({ error: 'No se pudo leer el catálogo' });
     res.status(201).json(row);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -4215,7 +4271,7 @@ app.delete('/api/catalogos/:id', async (req, res) => {
     await db.runQuery('UPDATE catalogos SET activo=0 WHERE id=?', [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -4263,7 +4319,7 @@ app.get('/api/tecnicos', async (req, res) => {
     }
     res.json(enriched);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -4279,7 +4335,7 @@ app.get('/api/tecnicos/:id', async (req, res) => {
     }
     res.json(o);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 app.post('/api/tecnicos', async (req, res) => {
@@ -4310,6 +4366,13 @@ app.post('/api/tecnicos', async (req, res) => {
       cMaq = 0;
       cRef = 10;
     }
+    // Seguridad (A3): solo admin puede marcar es_vendedor (concede acceso a cotizaciones).
+    // Un no-admin no puede auto-otorgárselo; preservamos el valor existente o 0.
+    let esVFinal = es_vendedor ? 1 : 0;
+    if (!isAdmin) {
+      const prevV = await db.getOne('SELECT es_vendedor FROM tecnicos WHERE nombre=?', [nombre]);
+      esVFinal = prevV && prevV.es_vendedor ? 1 : 0;
+    }
     await db.runQuery(
       `INSERT OR IGNORE INTO tecnicos (nombre, habilidades, ocupado, disponible_desde, rol, puesto, departamento, profesion, es_vendedor, comision_maquinas_pct, comision_refacciones_pct, ine_foto_url, ine_thumb_url, licencia_foto_url, licencia_thumb_url)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -4322,7 +4385,7 @@ app.post('/api/tecnicos', async (req, res) => {
         puesto || null,
         departamento || null,
         profesion || null,
-        es_vendedor ? 1 : 0,
+        esVFinal,
         cMaq,
         cRef,
         ine_foto_url,
@@ -4341,7 +4404,7 @@ app.post('/api/tecnicos', async (req, res) => {
         puesto || null,
         departamento || null,
         profesion || null,
-        es_vendedor ? 1 : 0,
+        esVFinal,
         cMaq,
         cRef,
         ine_foto_url,
@@ -4361,7 +4424,7 @@ app.post('/api/tecnicos', async (req, res) => {
     out = publicTecnicoListRow(out);
     res.status(201).json(out);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 app.put('/api/tecnicos/:id', async (req, res) => {
@@ -4422,6 +4485,8 @@ app.put('/api/tecnicos/:id', async (req, res) => {
     const comRefFinal = comStripped
       ? (cur.comision_refacciones_pct != null ? cur.comision_refacciones_pct : 0)
       : (Number(comision_refacciones_pct) || 0);
+    // Seguridad (A3): solo admin puede cambiar es_vendedor; no-admin preserva el valor actual.
+    const esVFinal = comStripped ? (cur.es_vendedor ? 1 : 0) : (es_vendedor ? 1 : 0);
     await db.runQuery(
       `UPDATE tecnicos SET nombre=?, habilidades=?, activo=?, ocupado=?, disponible_desde=?,
        rol=?, puesto=?, departamento=?, profesion=?, es_vendedor=?, comision_maquinas_pct=?, comision_refacciones_pct=?,
@@ -4437,7 +4502,7 @@ app.put('/api/tecnicos/:id', async (req, res) => {
         puesto || null,
         departamento || null,
         profesion || null,
-        es_vendedor ? 1 : 0,
+        esVFinal,
         comMaqFinal,
         comRefFinal,
         ine_foto_url || null,
@@ -4463,7 +4528,7 @@ app.put('/api/tecnicos/:id', async (req, res) => {
     res.json(out);
   } catch (e) {
     console.error('[put-tecnico]', e.message, e.stack);
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 app.delete('/api/tecnicos/:id', async (req, res) => {
@@ -4471,7 +4536,7 @@ app.delete('/api/tecnicos/:id', async (req, res) => {
     await db.runQuery('UPDATE tecnicos SET activo=0 WHERE id=?', [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -4486,7 +4551,7 @@ app.delete('/api/cotizaciones/:id', async (req, res) => {
     res.json({ ok: true });
   } catch (e) {
     console.error('[delete-cotizacion]', e.message, e.stack);
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -4498,7 +4563,7 @@ app.get('/api/incidentes', async (req, res) => {
     );
     res.json(Array.isArray(rows) ? rows : []);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -4511,7 +4576,7 @@ app.get('/api/incidentes/:id', async (req, res) => {
     if (!row) return res.status(404).json({ error: 'No encontrado' });
     res.json(row);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -4537,7 +4602,7 @@ app.post('/api/incidentes', async (req, res) => {
     res.status(201).json(r);
     if (r) enviarCorreoIncidente(r, 'nuevo').catch(() => {});
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -4561,7 +4626,7 @@ app.put('/api/incidentes/:id', async (req, res) => {
       enviarCorreoIncidente(r, 'cerrado').catch(() => {});
     }
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -4570,7 +4635,7 @@ app.delete('/api/incidentes/:id', async (req, res) => {
     await db.runQuery('DELETE FROM incidentes WHERE id = ?', [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -4595,7 +4660,7 @@ app.get('/api/bitacoras', async (req, res) => {
     );
     res.json(Array.isArray(rows) ? rows : []);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -4610,7 +4675,7 @@ app.get('/api/bitacoras/:id', async (req, res) => {
     if (!row) return res.status(404).json({ error: 'No encontrado' });
     res.json(row);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -4629,7 +4694,7 @@ app.post('/api/bitacoras', async (req, res) => {
     const r = await db.getOne('SELECT * FROM bitacoras WHERE id=?', [Number(_ins && _ins.lastInsertRowid)]);
     res.status(201).json(r);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -4647,7 +4712,7 @@ app.put('/api/bitacoras/:id', async (req, res) => {
     const r = await db.getOne('SELECT * FROM bitacoras WHERE id = ?', [req.params.id]);
     res.json(r || {});
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -4656,7 +4721,7 @@ app.delete('/api/bitacoras/:id', async (req, res) => {
     await db.runQuery('DELETE FROM bitacoras WHERE id = ?', [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -4786,7 +4851,7 @@ app.get('/api/dashboard-stats', async (req, res) => {
       rangos: ranges,
     });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -5479,7 +5544,7 @@ app.post('/api/seed-demo', async (req, res) => {
     const result = await runSeedDemoCore(false);
     res.json(result);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -5594,7 +5659,7 @@ app.post('/api/seed-demo-extra', async (req, res) => {
       enrichment,
     });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -5646,7 +5711,7 @@ app.post('/api/demo-ensure-maquinas', async (req, res) => {
     const out = await runDemoEnsureMaquinas();
     res.json(out);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -5671,7 +5736,7 @@ app.get('/api/seed-status', async (req, res) => {
       maquinas_incompletas,
     });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -5700,7 +5765,7 @@ app.post('/api/wipe-all-data', async (req, res) => {
       },
     });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -5820,7 +5885,7 @@ app.get('/api/backup/export', async (req, res) => {
     const payload = await buildBackupPayload();
     res.json(payload);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -5903,7 +5968,7 @@ app.post('/api/backup/import', async (req, res) => {
       throw inner;
     }
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -5935,7 +6000,7 @@ app.get('/api/backup/files', async (req, res) => {
       files,
     });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -5958,7 +6023,7 @@ app.get('/api/backup/file', async (req, res) => {
     }
     res.json({ name, backup: payload });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -5968,7 +6033,7 @@ app.post('/api/backup/create-now', async (req, res) => {
     const saved = await writeAutoBackupFile();
     res.json({ ok: true, file: path.basename(saved), fullPath: saved, createdAt: new Date().toISOString() });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -5986,7 +6051,7 @@ app.delete('/api/backup/file', async (req, res) => {
     fs.unlinkSync(full);
     res.json({ ok: true, deleted: name });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -6291,7 +6356,7 @@ app.post('/api/davai/chat', async (req, res) => {
     }
   } catch (err) {
     if (!res.headersSent) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: safeErr(err) });
     }
     try {
       res.write('data: ' + JSON.stringify({ text: '\n\nError: ' + err.message }) + '\n\n');
@@ -6421,7 +6486,7 @@ app.post('/api/ai/chat', async (req, res) => {
     }
     res.json(payload);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -6452,13 +6517,7 @@ async function extractFiscalDocumentText(buffer, mimeLower) {
       throw err;
     }
   }
-  const wb = XLSX.read(buffer, { type: 'buffer', cellDates: true });
-  const firstSheet = wb.SheetNames[0];
-  if (firstSheet && wb.Sheets[firstSheet]) {
-    const csv = XLSX.utils.sheet_to_txt(wb.Sheets[firstSheet], { FS: '\t', RS: '\n' });
-    return csv.trim().slice(0, 50000);
-  }
-  return '';
+  return await xlsxBufferToTsv(buffer);
 }
 
 // --- Extraer datos fiscales de imagen o documento (constancia / datos fiscales) para alta de cliente
@@ -6541,7 +6600,7 @@ app.post('/api/ai/extract-client', async (req, res) => {
       try {
         extractedText = await extractFiscalDocumentText(buffer, mime);
       } catch (e) {
-        return res.status(400).json({ error: e.message || String(e) });
+        return res.status(400).json({ error: safeErr(e) });
       }
       if (extractedText == null) {
         return res.status(400).json({ error: 'Tipo de documento no reconocido.' });
@@ -6588,7 +6647,7 @@ app.post('/api/ai/extract-client', async (req, res) => {
     const missing = fields.filter(f => !result[f]);
     res.json({ data: result, missing });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -6630,12 +6689,7 @@ app.post('/api/ai/extract-document', async (req, res) => {
         throw err;
       }
     } else {
-      const wb = XLSX.read(buffer, { type: 'buffer', cellDates: true });
-      const firstSheet = wb.SheetNames[0];
-      if (firstSheet && wb.Sheets[firstSheet]) {
-        const csv = XLSX.utils.sheet_to_txt(wb.Sheets[firstSheet], { FS: '\t', RS: '\n' });
-        extractedText = csv.trim().slice(0, 50000);
-      }
+      extractedText = await xlsxBufferToTsv(buffer);
     }
     if (!extractedText) extractedText = '(Sin texto extraíble)';
     const wantsCotizacion = userMessage && /(nueva\s+)?cotizaci[oó]n|pon(er)?\s+(esto|lo|el\s+documento)/i.test(userMessage);
@@ -6681,7 +6735,7 @@ app.post('/api/ai/extract-document', async (req, res) => {
       : `Contenido del documento:\n\n${extractedText}`;
     res.json({ text: extractedText.slice(0, 3000), reply });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -6717,7 +6771,7 @@ app.get('/api/reportes', async (req, res) => {
     );
     const isAdmin = !auth.AUTH_ENABLED || (req.authUser && req.authUser.role === 'admin');
     res.json(rows.map((r) => stripFechaProgramadaReporte(r, isAdmin)));
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 // 🆕 2026-05-24 — Ruta estática DEBE ir ANTES que /:id, si no Express
@@ -6736,7 +6790,7 @@ app.get('/api/reportes/ventas-mensual', async (req, res) => {
     res.json(data);
   } catch (e) {
     console.error('[ventas-mensual]', e.message, e.stack);
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -6750,7 +6804,7 @@ app.get('/api/reportes/:id', async (req, res) => {
     if (!row) return res.status(404).json({ error: 'No encontrado' });
     const isAdmin = !auth.AUTH_ENABLED || (req.authUser && req.authUser.role === 'admin');
     res.json(stripFechaProgramadaReporte(row, isAdmin));
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 // AGENDA: asignaciones del mes. Query RESILIENTE: si columnas slot/fecha_programada no
@@ -6822,7 +6876,7 @@ app.get('/api/agenda/mes', async (req, res) => {
       }
     } catch (eCot) { console.warn('[agenda/mes] cotizaciones omitidas:', eCot && eCot.message); }
     res.json(out);
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.post('/api/reportes', async (req, res) => {
@@ -6885,7 +6939,7 @@ app.post('/api/reportes', async (req, res) => {
     }
     res.status(201).json(r);
     if (r) enviarCorreoReporte(r, 'nuevo').catch(() => {});
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.put('/api/reportes/:id', async (req, res) => {
@@ -7010,14 +7064,14 @@ app.put('/api/reportes/:id', async (req, res) => {
         } catch (e) { console.warn('[bonos-reporte]', e && e.message); }
       })();
     }
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.delete('/api/reportes/:id', async (req, res) => {
   try {
     await db.runQuery('DELETE FROM reportes WHERE id=?', [req.params.id]);
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 /** Al finalizar un reporte, deja registro enlazado en bitácoras (mismo archivo firmado si existe). */
@@ -7074,7 +7128,7 @@ app.post('/api/admin/monthly-reports/run', async (req, res) => {
     }
     res.json({ ok: true, periodo: r.periodo || periodo });
   } catch (e) {
-    res.status(500).json({ error: String(e.message || e) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -7838,7 +7892,7 @@ app.post('/api/reports/email-export', async (req, res) => {
     );
     res.json(out);
   } catch (e) {
-    res.status(500).json({ error: String(e.message || e) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -7850,7 +7904,7 @@ app.get('/api/admin/report-schedules', async (req, res) => {
     const rows = await getReportSchedules();
     res.json(rows);
   } catch (e) {
-    res.status(500).json({ error: String(e.message || e) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -7901,7 +7955,7 @@ app.post('/api/admin/report-schedules', async (req, res) => {
     await saveReportSchedules(next);
     res.json({ ok: true, id });
   } catch (e) {
-    res.status(500).json({ error: String(e.message || e) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -7944,7 +7998,7 @@ app.patch('/api/admin/report-schedules/:id', async (req, res) => {
     await saveReportSchedules(list);
     res.json({ ok: true, id, schedule: cur });
   } catch (e) {
-    res.status(500).json({ error: String(e.message || e) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -7961,7 +8015,7 @@ app.delete('/api/admin/report-schedules/:id', async (req, res) => {
     await saveReportSchedules(next);
     res.json({ ok: true, id });
   } catch (e) {
-    res.status(500).json({ error: String(e.message || e) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -8122,7 +8176,7 @@ app.get('/api/garantias', async (req, res) => {
       g.mantenimientos = await db.getAll('SELECT * FROM mantenimientos_garantia WHERE garantia_id=? ORDER BY anio, numero', [g.id]);
     }
     res.json(rows);
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 /** Garantías dadas de baja (sin cobertura). */
@@ -8135,14 +8189,14 @@ app.get('/api/garantias/sin-cobertura', async (req, res) => {
       g.mantenimientos = await db.getAll('SELECT * FROM mantenimientos_garantia WHERE garantia_id=? ORDER BY anio, numero', [g.id]);
     }
     res.json(rows);
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.get('/api/garantias/:id/mantenimientos', async (req, res) => {
   try {
     const rows = await db.getAll('SELECT * FROM mantenimientos_garantia WHERE garantia_id=? ORDER BY anio, numero, fecha_programada', [req.params.id]);
     res.json(rows);
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 /** Lista plana de mantenimientos (calendario / prioridades). Solo garantías activas. */
@@ -8161,7 +8215,7 @@ app.get('/api/mantenimientos-garantia', async (req, res) => {
          date(mg.fecha_programada) ASC`
     );
     res.json(rows);
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.get('/api/garantias/:id', async (req, res) => {
@@ -8170,7 +8224,7 @@ app.get('/api/garantias/:id', async (req, res) => {
     if (!g) return res.status(404).json({ error: 'No encontrado' });
     g.mantenimientos = await db.getAll('SELECT * FROM mantenimientos_garantia WHERE garantia_id=? ORDER BY anio, numero', [g.id]);
     res.json(g);
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.post('/api/garantias', async (req, res) => {
@@ -8196,7 +8250,7 @@ app.post('/api/garantias', async (req, res) => {
     );
     g.mantenimientos = await db.getAll('SELECT * FROM mantenimientos_garantia WHERE garantia_id=? ORDER BY anio, numero', [g.id]);
     res.status(201).json(g);
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 /** Añade el par de mantenimientos del siguiente año fiscal (offset +1 respecto al último bloque). */
@@ -8229,7 +8283,7 @@ app.post('/api/garantias/:id/generar-siguiente-anio', async (req, res) => {
     const out = await db.getOne('SELECT * FROM garantias WHERE id=?', [g.id]);
     out.mantenimientos = await db.getAll('SELECT * FROM mantenimientos_garantia WHERE garantia_id=? ORDER BY anio, numero, fecha_programada', [g.id]);
     res.status(201).json(out);
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.put('/api/garantias/:id', async (req, res) => {
@@ -8263,7 +8317,7 @@ app.put('/api/garantias/:id', async (req, res) => {
     }
     if (g) g.mantenimientos = await db.getAll('SELECT * FROM mantenimientos_garantia WHERE garantia_id=? ORDER BY anio, numero', [g.id]);
     res.json(g || {});
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.delete('/api/garantias/:id', async (req, res) => {
@@ -8271,7 +8325,7 @@ app.delete('/api/garantias/:id', async (req, res) => {
     await db.runQuery('DELETE FROM mantenimientos_garantia WHERE garantia_id=?', [req.params.id]);
     await db.runQuery('DELETE FROM garantias WHERE id=?', [req.params.id]);
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 // Confirmar mantenimiento de garantía
@@ -8297,7 +8351,7 @@ app.put('/api/mantenimientos-garantia/:id', async (req, res) => {
     );
     const r = await db.getOne('SELECT * FROM mantenimientos_garantia WHERE id=?', [req.params.id]);
     res.json(r || {});
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 // Garantías próximas a mantenimiento (alerta)
@@ -8326,7 +8380,7 @@ app.get('/api/garantias-alertas', async (req, res) => {
       [hoyStr]
     );
     res.json({ proximos: rows, vencidos });
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 /** Marca alertas y opcionalmente envía correos (SMTP_* en entorno). dryRun: solo simula. */
@@ -8382,7 +8436,7 @@ app.post('/api/garantias-alertas/procesar', async (req, res) => {
       } else enviados.push({ id: row.id, tipo: 'vencido', dryRun: true });
     }
     res.json({ ok: true, dryRun, procesados: enviados.length, detalle: enviados, errores });
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 // =================== BONOS ===================
@@ -8394,7 +8448,7 @@ app.get('/api/bonos', async (req, res) => {
        ORDER BY b.fecha DESC, b.id DESC LIMIT 500`
     );
     res.json(rows);
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.post('/api/bonos', async (req, res) => {
@@ -8411,7 +8465,7 @@ app.post('/api/bonos', async (req, res) => {
     );
     const r = await db.getOne('SELECT * FROM bonos WHERE id=?', [Number(_ins && _ins.lastInsertRowid)]);
     res.status(201).json(r);
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.put('/api/bonos/:id', async (req, res) => {
@@ -8427,14 +8481,14 @@ app.put('/api/bonos/:id', async (req, res) => {
     );
     const r = await db.getOne('SELECT * FROM bonos WHERE id=?', [req.params.id]);
     res.json(r || {});
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.delete('/api/bonos/:id', async (req, res) => {
   try {
     await db.runQuery('DELETE FROM bonos WHERE id=?', [req.params.id]);
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 // Resumen de bonos por técnico
@@ -8448,7 +8502,7 @@ app.get('/api/bonos-resumen', async (req, res) => {
     sql += ' GROUP BY tecnico ORDER BY tecnico';
     const rows = await db.getAll(sql, params);
     res.json(rows);
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 // =================== VIAJES ===================
@@ -8464,7 +8518,7 @@ app.get('/api/viajes', async (req, res) => {
        ORDER BY v.fecha_inicio DESC, v.id DESC LIMIT 500`
     );
     res.json(rows);
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.post('/api/viajes', async (req, res) => {
@@ -8482,7 +8536,7 @@ app.post('/api/viajes', async (req, res) => {
     );
     const r = await db.getOne('SELECT * FROM viajes WHERE id=?', [Number(_ins && _ins.lastInsertRowid)]);
     res.status(201).json(r);
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.put('/api/viajes/:id', async (req, res) => {
@@ -8499,14 +8553,14 @@ app.put('/api/viajes/:id', async (req, res) => {
     );
     const r = await db.getOne('SELECT * FROM viajes WHERE id=?', [req.params.id]);
     res.json(r || {});
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.delete('/api/viajes/:id', async (req, res) => {
   try {
     await db.runQuery('DELETE FROM viajes WHERE id=?', [req.params.id]);
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 /** Pipeline comercial — prospectos (mapa + scoring) */
@@ -8517,7 +8571,7 @@ app.get('/api/prospectos', async (req, res) => {
     );
     res.json(rows);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -8546,7 +8600,7 @@ app.post('/api/prospectos/import-replace', async (req, res) => {
     }
     res.json({ ok: true, inserted, received: rows.length });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -8569,7 +8623,7 @@ app.put('/api/prospectos/:id', async (req, res) => {
     await db.runQuery('UPDATE prospectos SET ' + sets.join(',') + ' WHERE id=?', vals);
     const updated = await db.getAll('SELECT * FROM prospectos WHERE id=?', [id]);
     res.json(updated[0] || { ok: true });
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 /** Crear un prospecto nuevo */
@@ -8583,7 +8637,7 @@ app.post('/api/prospectos', async (req, res) => {
     const _ins = await db.runQuery('INSERT INTO prospectos (' + cols.join(',') + ') VALUES (' + placeholders + ')', values);
     const row = await db.getAll('SELECT * FROM prospectos WHERE id=?', [Number(_ins && _ins.lastInsertRowid)]);
     res.json(row[0] || { ok: true });
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 /** Mantenimientos de taller (preventivo/correctivo), no confundir con mantenimientos_garantia */
@@ -8600,7 +8654,7 @@ app.get('/api/mantenimientos-taller', async (req, res) => {
     );
     res.json(rows);
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -8675,7 +8729,7 @@ app.get('/api/insights/panel', async (req, res) => {
       insights,
     });
   } catch (e) {
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -8705,7 +8759,7 @@ app.get('/api/liquidacion-mensual', async (req, res) => {
       porTecnico[b.tecnico].total_bonos += Number(b.monto_bono) || 0;
     }
     res.json({ mes, porTecnico });
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 /** Prospectos: semilla mínima si la tabla está vacía + ampliación diaria simulada (leads sintéticos). */
@@ -8917,7 +8971,7 @@ app.get('/api/embarques', async (req, res) => {
                 eta_fecha ASC, id DESC`
     );
     res.json(rows);
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.post('/api/embarques', async (req, res) => {
@@ -8973,7 +9027,7 @@ app.post('/api/embarques', async (req, res) => {
     res.status(201).json(row || { ok: true });
   } catch (e) {
     console.error('[embarques][POST]', e && e.message);
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -9054,14 +9108,14 @@ app.put('/api/embarques/:id', async (req, res) => {
     } catch (e2) { console.warn('[embarque-aplicar-stock]', e2 && e2.message); }
     const row = await db.getOne('SELECT * FROM embarques WHERE id=?', [req.params.id]);
     res.json(row);
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.delete('/api/embarques/:id', async (req, res) => {
   try {
     await db.runQuery('UPDATE embarques SET activo=0 WHERE id=?', [req.params.id]);
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 /* -------- BONOS -------- */
@@ -9113,7 +9167,7 @@ app.get('/api/bonos/acumulado', async (req, res) => {
     });
   } catch (e) {
     console.error('[bonos/acumulado] error:', e && e.message);
-    res.status(500).json({ error: String(e.message) });
+    res.status(500).json({ error: safeErr(e) });
   }
 });
 
@@ -9135,7 +9189,7 @@ app.post('/api/bonos/movimiento', async (req, res) => {
       fecha: b.fecha || null,
     });
     res.status(201).json({ ok: true });
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.delete('/api/bonos/movimiento/:id', async (req, res) => {
@@ -9145,7 +9199,7 @@ app.delete('/api/bonos/movimiento/:id', async (req, res) => {
     }
     const n = await db.runMutationCount('DELETE FROM bonos_movimientos WHERE id=?', [req.params.id]);
     res.json({ ok: true, deleted: n });
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 /* -------- CONFIG CORREOS REPORTES -------- */
@@ -9173,7 +9227,7 @@ app.get('/api/config/correos-reportes', async (req, res) => {
       grouped[r.tipo].push(r);
     }
     res.json(grouped);
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.post('/api/config/correos-reportes', async (req, res) => {
@@ -9191,7 +9245,7 @@ app.post('/api/config/correos-reportes', async (req, res) => {
     );
     const row = await db.getOne('SELECT * FROM config_correos_reportes WHERE id=?', [r.lastInsertRowid]);
     res.status(201).json(row);
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 app.delete('/api/config/correos-reportes/:id', async (req, res) => {
@@ -9201,7 +9255,7 @@ app.delete('/api/config/correos-reportes/:id', async (req, res) => {
     }
     await db.runQuery('UPDATE config_correos_reportes SET activo=0 WHERE id=?', [req.params.id]);
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 /* -------- REPORTE MENSUAL VENTAS (JSON / Excel) -------- */
@@ -9388,7 +9442,7 @@ app.post('/api/reportes/enviar-mensual', async (req, res) => {
     const tipos = Array.isArray(b.tipos) && b.tipos.length ? b.tipos : ['ventas_mensual', 'bonos_mensual'];
     const out = await _enviarReporteMensualPorTipos({ mes, tipos });
     res.json(out);
-  } catch (e) { res.status(500).json({ error: String(e.message) }); }
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
 /* -------- CRON MENSUAL (falla suave si node-cron no está instalado) -------- */
@@ -9499,13 +9553,15 @@ app.get('*', (req, res, next) => {
 /** Errores (p. ej. init BD o sendFile): evita respuesta genérica sin pista. */
 app.use((err, req, res, next) => {
   if (res.headersSent) return next(err);
-  const msg = err && err.message ? String(err.message) : String(err || 'Error');
-  console.error('[express]', err && err.stack ? err.stack : msg);
+  const detail = err && err.message ? String(err.message) : String(err || 'Error');
+  console.error('[express]', err && err.stack ? err.stack : detail);
+  // En producción nunca exponemos el mensaje/stack interno al cliente.
+  const clientMsg = process.env.NODE_ENV === 'production' ? 'Error interno del servidor.' : detail;
   if (req.path && String(req.path).startsWith('/api')) {
-    return res.status(500).json({ error: msg });
+    return res.status(500).json({ error: clientMsg });
   }
   res.status(500).type('html').send(
-    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Error</title></head><body><h1>Error del servidor</h1><pre>${msg.replace(/</g, '&lt;')}</pre></body></html>`
+    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Error</title></head><body><h1>Error del servidor</h1><pre>${clientMsg.replace(/</g, '&lt;')}</pre></body></html>`
   );
 });
 

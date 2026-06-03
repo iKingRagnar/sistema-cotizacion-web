@@ -413,6 +413,13 @@ async function ensureSeedUsers() {
   const c = row && row.c != null ? Number(row.c) : 0;
   if (c > 0) return;
 
+  // Seguridad (C1): en producción NO se permite la contraseña por defecto pública.
+  // Si no se define ADMIN_INITIAL_PASSWORD, se aborta el seed (igual que el fail-fast
+  // de AUTH_SECRET) para evitar crear un admin con clave conocida ('Admin2025!').
+  const isProd = process.env.NODE_ENV === 'production';
+  if (isProd && !String(process.env.ADMIN_INITIAL_PASSWORD || '').trim()) {
+    throw new Error('[auth] ADMIN_INITIAL_PASSWORD no está definida en producción. Define una contraseña inicial segura (env var) antes de arrancar; no se permite la clave por defecto.');
+  }
   const adminPass = process.env.ADMIN_INITIAL_PASSWORD || 'Admin2025!';
   const seedDemo = process.env.AUTH_SEED_DEMO_USERS === '1' || process.env.AUTH_SEED_DEMO_USERS === 'true';
   await db.runQuery(

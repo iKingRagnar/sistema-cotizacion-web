@@ -31,10 +31,6 @@
     "pdf-parse": "^1.1.1",
     "pdfkit": "^0.18.0",
     "pg": "^8.21.0",
-    "sqlite3": "^5.1.7",
-    "xlsx": "^0.18.5"
-  },
-  "devDependencies": {
-    "exceljs": "^4.4.0"
+    "sqlite3": "^5.1.7"
   }
 }
