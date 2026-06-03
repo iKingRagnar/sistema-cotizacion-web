@@ -10,26 +10,47 @@
   // Etiquetas por icono FontAwesome para botones SIN title (respaldo seguro).
   var ICON_LABELS = {
     'fa-eye': 'Ver / Vista previa',
+    'fa-magnifying-glass-plus': 'Ver ampliado',
+    'fa-search-plus': 'Ver ampliado',
     'fa-edit': 'Editar',
     'fa-pen': 'Editar',
     'fa-pencil': 'Editar',
     'fa-pencil-alt': 'Editar',
+    'fa-pen-to-square': 'Editar',
     'fa-trash': 'Eliminar',
     'fa-trash-alt': 'Eliminar',
+    'fa-trash-can': 'Eliminar',
     'fa-print': 'Imprimir / PDF',
     'fa-file-pdf': 'PDF',
+    'fa-file-csv': 'Exportar CSV',
+    'fa-file-excel': 'Exportar Excel',
     'fa-download': 'Descargar',
+    'fa-upload': 'Subir archivo',
     'fa-save': 'Guardar',
+    'fa-floppy-disk': 'Guardar',
     'fa-copy': 'Duplicar',
     'fa-clone': 'Duplicar',
     'fa-plus': 'Agregar',
-    'fa-sitemap': 'Ver estructura',
+    'fa-sitemap': 'Ver jerarquía / categorías',
     'fa-project-diagram': 'Ver estructura',
+    'fa-diagram-project': 'Ver estructura',
+    'fa-layer-group': 'Categorías',
     'fa-share-alt': 'Compartir',
+    'fa-share-nodes': 'Compartir',
     'fa-paper-plane': 'Enviar',
+    'fa-envelope': 'Enviar correo',
     'fa-check': 'Confirmar',
+    'fa-check-double': 'Aplicar',
+    'fa-ban': 'Cancelar',
     'fa-times': 'Cerrar',
-    'fa-search': 'Buscar'
+    'fa-xmark': 'Cerrar',
+    'fa-list': 'Ver detalle',
+    'fa-cog': 'Opciones',
+    'fa-gear': 'Opciones',
+    'fa-ellipsis-v': 'Más opciones',
+    'fa-ellipsis-vertical': 'Más opciones',
+    'fa-search': 'Buscar',
+    'fa-magnifying-glass': 'Buscar'
   };
 
   var tip = null;
@@ -43,14 +64,27 @@
     return tip;
   }
 
-  // Sube por el DOM hasta el primer elemento con title o data-tip, o un botón/enlace
-  // de acción del que podamos inferir la etiqueta por su icono.
+  function classStr(el) {
+    if (!el || !el.className) return '';
+    return (el.className.baseVal != null) ? el.className.baseVal : String(el.className || '');
+  }
+
+  // ¿El elemento es un control accionable (botón, enlace, chip, icono clicable)?
+  function isActionable(el) {
+    if (!el || el.nodeType !== 1) return false;
+    var tag = el.tagName;
+    if (tag === 'BUTTON' || tag === 'A') return true;
+    if (el.getAttribute && (el.getAttribute('role') === 'button' || el.hasAttribute('onclick') || el.hasAttribute('data-id') || el.hasAttribute('data-tab'))) return true;
+    return /(^|\s|-)(btn|button|chip|icon-btn|nav-btn|fab)(\s|-|$)/i.test(classStr(el));
+  }
+
+  // Sube por el DOM hasta el primer elemento con texto de tooltip o un control
+  // accionable del que podamos inferir la etiqueta por su icono.
   function findTarget(el) {
     var depth = 0;
-    while (el && el.nodeType === 1 && el !== document.body && depth < 5) {
+    while (el && el.nodeType === 1 && el !== document.body && depth < 6) {
       if (el.hasAttribute('data-tip') || el.hasAttribute('title') || el.hasAttribute('aria-label')) return el;
-      var tag = el.tagName;
-      if ((tag === 'BUTTON' || tag === 'A') && iconLabel(el)) return el;
+      if (isActionable(el) && iconLabel(el)) return el;
       el = el.parentElement;
       depth++;
     }
@@ -58,9 +92,10 @@
   }
 
   function iconLabel(el) {
-    var icon = el.querySelector && el.querySelector('i.fas, i.far, i.fab, i[class*="fa-"]');
+    var icon = (el.matches && el.matches('i[class*="fa-"]')) ? el
+      : (el.querySelector && el.querySelector('i[class*="fa-"]'));
     if (!icon) return '';
-    var cls = icon.className || '';
+    var cls = classStr(icon);
     for (var key in ICON_LABELS) {
       if (cls.indexOf(key) !== -1) return ICON_LABELS[key];
     }
