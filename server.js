@@ -9,6 +9,11 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const db = require('./db');
+const logger = require('./logger');
+const asyncHandler = require('./middleware/asyncHandler');
+const validate = require('./middleware/validate');
+const errorHandler = require('./middleware/error');
+const { clienteSchema } = require('./schemas/cliente');
 const mammoth = require('mammoth');
 const pdfParse = require('pdf-parse');
 const PDFDocument = require('pdfkit');
@@ -247,6 +252,13 @@ app.use(cors({
   credentials: false,
 }));
 app.use(express.json({ limit: '10mb' }));
+
+/* requestId por petición — permite correlacionar en logs todo lo de un mismo request. */
+app.use((req, res, next) => {
+  req.id = (crypto.randomUUID && crypto.randomUUID()) || String(Date.now()) + Math.random().toString(16).slice(2);
+  res.setHeader('X-Request-Id', req.id);
+  next();
+});
 
 /** Mensaje de error seguro para el cliente: en producción NO filtra detalles internos
  *  (mensajes de SQL, paths, stack); en desarrollo sí, para depurar. */
@@ -1458,7 +1470,7 @@ app.get('/api/clientes/:id', async (req, res) => {
   }
 });
 
-app.post('/api/clientes', async (req, res) => {
+app.post('/api/clientes', validate(clienteSchema), async (req, res) => {
   try {
     const body = req.body || {};
     let {
@@ -1485,7 +1497,7 @@ app.post('/api/clientes', async (req, res) => {
   }
 });
 
-app.put('/api/clientes/:id', async (req, res) => {
+app.put('/api/clientes/:id', validate(clienteSchema), async (req, res) => {
   try {
     const body = req.body || {};
     const cur = await db.getOne('SELECT * FROM clientes WHERE id = ?', [req.params.id]);
@@ -9551,19 +9563,7 @@ app.get('*', (req, res, next) => {
 });
 
 /** Errores (p. ej. init BD o sendFile): evita respuesta genérica sin pista. */
-app.use((err, req, res, next) => {
-  if (res.headersSent) return next(err);
-  const detail = err && err.message ? String(err.message) : String(err || 'Error');
-  console.error('[express]', err && err.stack ? err.stack : detail);
-  // En producción nunca exponemos el mensaje/stack interno al cliente.
-  const clientMsg = process.env.NODE_ENV === 'production' ? 'Error interno del servidor.' : detail;
-  if (req.path && String(req.path).startsWith('/api')) {
-    return res.status(500).json({ error: clientMsg });
-  }
-  res.status(500).type('html').send(
-    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Error</title></head><body><h1>Error del servidor</h1><pre>${clientMsg.replace(/</g, '&lt;')}</pre></body></html>`
-  );
-});
+app.use(errorHandler);
 
 /** Vercel: export default de la app Express (Fluid Compute). Local: node server.js */
 module.exports = app;
