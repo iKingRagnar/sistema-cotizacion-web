@@ -1,0 +1,38 @@
+name: CI
+
+# Valida cada push y PR: sintaxis, ensamblado del server y tests unitarios.
+# Es la red de seguridad que faltaba antes de cualquier refactor mayor.
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Comprobar sintaxis (node --check)
+        run: npm run check
+
+      - name: Tests unitarios
+        run: npm test
+        env:
+          AUTH_SECRET: ci-secret-para-pruebas
+
+      - name: Smoke — el server ensambla sin throw
+        run: npm run smoke
+        env:
+          AUTH_SECRET: ci-secret-para-pruebas
+          NODE_ENV: test
