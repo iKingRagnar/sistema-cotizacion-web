@@ -1006,3 +1006,121 @@ html body#app.theme-industrial .modal-card,
 html body#app.theme-industrial [class*="modal"] .modal-content {
   border:1px solid rgba(var(--ov-accent-rgb),.25) !important;
 }
+
+/* ╔══════════════════════════════════════════════════════════════════════╗
+   ║  V6 · ARMONÍA — botones de acción unificados, badges coherentes,      ║
+   ║  texto del módulo activo legible. Mata el "arcoíris parcheado".       ║
+   ╚══════════════════════════════════════════════════════════════════════╝ */
+
+/* ---- Módulo ACTIVO legible: azul sólido + texto blanco con peso ---- */
+html body#app.theme-industrial #sidebar-rail-tabs button.tab.active,
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active {
+  background:linear-gradient(135deg, rgba(47,107,255,.34), rgba(30,58,138,.5)) !important;
+  color:#ffffff !important; font-weight:700 !important;
+  border:1px solid rgba(94,140,255,.6) !important;
+  text-shadow:0 1px 2px rgba(0,0,0,.45) !important;
+  box-shadow:0 8px 22px -12px rgba(47,107,255,.9), 0 0 0 1px rgba(255,255,255,.05) inset !important;
+}
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active i,
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active span { color:#fff !important; }
+
+/* ═══ BOTONES DE ACCIÓN DE TABLAS → set coherente tipo "ghost" ═══
+   (el JS neutraliza los rellenos amarillo/rojo/azul inline) */
+html body#app.theme-industrial tbody td .btn,
+html body#app.theme-industrial .table-wrap .btn.small,
+html body#app.theme-industrial [class*="prem-action"],
+html body#app.theme-industrial .btn-preview-cot,
+html body#app.theme-industrial .btn-pdf-cot,
+html body#app.theme-industrial .btn-aplicar-cot,
+html body#app.theme-industrial .btn-edit-cot,
+html body#app.theme-industrial .btn-delete-cot,
+html body#app.theme-industrial [class*="btn-convertir"] {
+  background:rgba(255,255,255,.045) !important;
+  border:1px solid rgba(255,255,255,.1) !important;
+  color:var(--ov-text-2) !important;
+  border-radius:9px !important;
+  box-shadow:none !important;
+  transition:.14s ease !important;
+}
+html body#app.theme-industrial tbody td .btn i,
+html body#app.theme-industrial [class*="prem-action"] i {
+  color:var(--ov-text-2) !important; background:none !important;
+}
+/* hover uniforme */
+html body#app.theme-industrial tbody td .btn:hover,
+html body#app.theme-industrial [class*="prem-action"]:hover {
+  background:rgba(94,140,255,.14) !important;
+  border-color:rgba(94,140,255,.45) !important;
+  transform:translateY(-1px) !important;
+}
+html body#app.theme-industrial tbody td .btn:hover i { color:#fff !important; }
+/* única excepción semántica: eliminar lleva matiz rojo (discreto) */
+html body#app.theme-industrial .btn-delete-cot i,
+html body#app.theme-industrial [class*="btn-delete"] i,
+html body#app.theme-industrial [class*="prem-action-delete"] i { color:#f08a8a !important; }
+html body#app.theme-industrial .btn-delete-cot:hover,
+html body#app.theme-industrial [class*="btn-delete"]:hover,
+html body#app.theme-industrial [class*="prem-action-delete"]:hover {
+  background:rgba(248,113,113,.16) !important; border-color:rgba(248,113,113,.4) !important;
+}
+html body#app.theme-industrial [class*="btn-delete"]:hover i { color:#fca5a5 !important; }
+
+/* ═══ BADGES / SEMÁFOROS → sistema único, sutil y consistente ═══ */
+html body#app.theme-industrial .badge,
+html body#app.theme-industrial [class*="semaforo"],
+html body#app.theme-industrial .badge-moneda,
+html body#app.theme-industrial [class*="badge-estado"],
+html body#app.theme-industrial [class*="vigencia"] {
+  border-radius:999px !important; font-weight:600 !important; font-size:11px !important;
+  padding:3px 10px !important; letter-spacing:0 !important; text-transform:none !important;
+  border:1px solid rgba(255,255,255,.1) !important;
+  background:rgba(255,255,255,.05) !important; color:var(--ov-text-2) !important;
+  display:inline-flex !important; align-items:center !important; gap:5px !important;
+  box-shadow:none !important;
+}
+/* variantes semánticas — tintes suaves, misma familia */
+html body#app.theme-industrial .semaforo-gris,
+html body#app.theme-industrial [class*="-gris"] { background:rgba(148,163,184,.14) !important; color:#c7d0e0 !important; border-color:rgba(148,163,184,.3) !important; }
+html body#app.theme-industrial .semaforo-amarillo,
+html body#app.theme-industrial [class*="-amarillo"],
+html body#app.theme-industrial [class*="por-vencer"],
+html body#app.theme-industrial [class*="porvencer"] { background:rgba(251,191,36,.14) !important; color:#fcd34d !important; border-color:rgba(251,191,36,.32) !important; }
+html body#app.theme-industrial .semaforo-rojo,
+html body#app.theme-industrial [class*="-rojo"],
+html body#app.theme-industrial [class*="vencid"] { background:rgba(248,113,113,.15) !important; color:#fca5a5 !important; border-color:rgba(248,113,113,.34) !important; }
+html body#app.theme-industrial .semaforo-verde,
+html body#app.theme-industrial [class*="-verde"],
+html body#app.theme-industrial [class*="aplicad"],
+html body#app.theme-industrial [class*="vigente"] { background:rgba(52,211,153,.14) !important; color:#6ee7b7 !important; border-color:rgba(52,211,153,.3) !important; }
+html body#app.theme-industrial .semaforo-azul,
+html body#app.theme-industrial [class*="-azul"] { background:rgba(47,107,255,.16) !important; color:#9bb4ff !important; border-color:rgba(47,107,255,.4) !important; }
+/* moneda / TC: neutro discreto */
+html body#app.theme-industrial .badge-moneda { background:rgba(255,255,255,.05) !important; color:var(--ov-text-3) !important; font-weight:700 !important; }
+
+/* punto/dot de semáforo dentro del badge */
+html body#app.theme-industrial [class*="semaforo"] .dot,
+html body#app.theme-industrial [class*="semaforo"] i { box-shadow:none !important; }
+
+/* ---- Filtros: etiquetas coherentes, inputs uniformes ---- */
+html body#app.theme-industrial [class*="filter-field-label"],
+html body#app.theme-industrial thead th { color:var(--ov-text-3) !important; }
+
+/* ---- "Vistas" y botones secundarios de cabecera de tabla coherentes ---- */
+html body#app.theme-industrial .table-toolbar .btn,
+html body#app.theme-industrial .panel-actions .btn { border-radius:10px !important; }
+
+/* ---- FIX legibilidad: anular -webkit-text-fill-color heredado (texto degradado roto) ---- */
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active,
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active *,
+html body#app.theme-industrial .mapa-header-owner-nav .tab.active,
+html body#app.theme-industrial .mapa-header-owner-nav .tab.active * {
+  -webkit-text-fill-color:#ffffff !important;
+  color:#ffffff !important;
+}
+/* asegurar que NINGÚN tab del rail quede con texto degradado invisible */
+html body#app.theme-industrial #sidebar-rail-tabs .tab,
+html body#app.theme-industrial #sidebar-rail-tabs .tab * {
+  -webkit-text-fill-color:currentColor !important;
+}
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active,
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active * { -webkit-text-fill-color:#fff !important; }

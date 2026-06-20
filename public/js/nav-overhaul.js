@@ -125,11 +125,19 @@
     // --- Neutralizar estilos inline !important que pintan el amarillo legacy ---
     // La app fija background/color inline en el tab activo; los quitamos para que
     // mande el CSS premium (theme-overhaul.css).
-    var INLINE_PROPS = ['background','background-color','background-image','color','border-color'];
+    var INLINE_PROPS = ['background','background-color','background-image','color','border-color','-webkit-text-fill-color','-webkit-background-clip','background-clip'];
     function neutralize(t) {
       var touched = false;
       for (var k = 0; k < INLINE_PROPS.length; k++) {
         if (t.style.getPropertyValue(INLINE_PROPS[k])) { t.style.removeProperty(INLINE_PROPS[k]); touched = true; }
+      }
+      // El efecto de "texto degradado" (background-clip:text) deja el texto invisible
+      // en el item activo. Limpiamos esas props inline en el tab y sus hijos.
+      var kids = t.querySelectorAll('*');
+      for (var j = 0; j < kids.length; j++) {
+        kids[j].style.removeProperty('-webkit-text-fill-color');
+        kids[j].style.removeProperty('-webkit-background-clip');
+        kids[j].style.removeProperty('background-clip');
       }
       return touched;
     }
@@ -179,8 +187,43 @@
     document.body.insertBefore(a, document.body.firstChild);
   }
 
+  // Neutraliza colores inline !important de los botones de accion de tablas
+  // (amarillo/rojo/azul solidos) para que mande el sistema coherente del CSS.
+  var ACT_SEL = 'tbody .btn, .table-wrap .btn, [class*="prem-action"], ' +
+    '[class*="btn-edit"], [class*="btn-delete"], [class*="btn-preview"], ' +
+    '[class*="btn-pdf"], [class*="btn-aplicar"], [class*="btn-convertir"]';
+  var ACT_PROPS = ['background','background-color','background-image','color','border-color','box-shadow'];
+  function harmonizeActions(root) {
+    var scope = root && root.querySelectorAll ? root : document;
+    var els = scope.querySelectorAll(ACT_SEL);
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i];
+      for (var k = 0; k < ACT_PROPS.length; k++) {
+        if (el.style.getPropertyValue(ACT_PROPS[k])) el.style.removeProperty(ACT_PROPS[k]);
+      }
+      var ic = el.querySelector('i, svg');
+      if (ic && ic.style) { ic.style.removeProperty('color'); ic.style.removeProperty('background'); }
+    }
+  }
+  function watchActions() {
+    var main = document.getElementById('main-content') || document.body;
+    harmonizeActions(document);
+    var mo = new MutationObserver(function (muts) {
+      for (var i = 0; i < muts.length; i++) {
+        var m = muts[i];
+        if (m.type === 'attributes' && m.target.matches && m.target.matches(ACT_SEL)) { harmonizeActions(m.target.parentNode || document); }
+        else if (m.addedNodes && m.addedNodes.length) { harmonizeActions(document); break; }
+      }
+    });
+    mo.observe(main, { childList:true, subtree:true, attributes:true, attributeFilter:['style'] });
+    // pasadas de seguridad
+    setTimeout(function(){harmonizeActions(document);}, 800);
+    setTimeout(function(){harmonizeActions(document);}, 2500);
+  }
+
   function boot() {
     ensureAurora();
+    watchActions();
     var ok = build();
     hideDebugToasts();
     if (!ok) { // la nav puede poblarse asíncronamente; reintentar
