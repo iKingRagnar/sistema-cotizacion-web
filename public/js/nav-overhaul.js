@@ -168,7 +168,19 @@
     }
   }
 
+  function ensureAurora() {
+    if (document.getElementById('ov-aurora')) return;
+    var a = document.createElement('div');
+    a.id = 'ov-aurora';
+    a.setAttribute('aria-hidden', 'true');
+    var third = document.createElement('div');
+    third.className = 'ov-aurora-3';
+    a.appendChild(third);
+    document.body.insertBefore(a, document.body.firstChild);
+  }
+
   function boot() {
+    ensureAurora();
     var ok = build();
     hideDebugToasts();
     if (!ok) { // la nav puede poblarse asíncronamente; reintentar

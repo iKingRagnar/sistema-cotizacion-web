@@ -819,3 +819,190 @@ html body#app.theme-industrial .mapa-ms-title-accent {
   background:linear-gradient(180deg,var(--ov-accent-2),var(--ov-cyan)) !important;
   box-shadow:0 0 14px rgba(124,108,255,.7) !important;
 }
+
+/* ╔══════════════════════════════════════════════════════════════════════╗
+   ║  V5 · AZUL ELÉCTRICO ROYAL + MÁS DRAMÁTICO (2026-06-20)               ║
+   ║  Aurora animada · glows intensos en azul · micro-animaciones.         ║
+   ╚══════════════════════════════════════════════════════════════════════╝ */
+
+html body#app.theme-industrial {
+  --ov-accent-rgb:47,107,255;        /* azul eléctrico royal */
+  --ov-accent2-rgb:94,140,255;
+  --ov-cyan-rgb:34,211,238;          /* cian eléctrico */
+  --ov-accent:#2f6bff;
+  --ov-accent-2:#5e8cff;
+  --ov-cyan:#22d3ee;
+  --ov-accent-soft:rgba(47,107,255,.18);
+  --ov-accent-line:rgba(47,107,255,.55);
+}
+
+/* ---- Fondo base más profundo (la aurora animada va encima en #ov-aurora) ---- */
+html body#app.theme-industrial,
+html body#app.theme-industrial.md3-on,
+html body#app.theme-industrial:not(.appearance-light),
+html body#app.theme-industrial.md3-on:not(.appearance-light) {
+  background:
+    radial-gradient(1200px 700px at 82% -12%, rgba(47,107,255,.20), transparent 55%),
+    radial-gradient(900px 560px at 4% 2%, rgba(34,211,238,.12), transparent 52%),
+    linear-gradient(180deg,#060912 0%,#05080f 100%) !important;
+  background-attachment:fixed !important;
+  background-color:#05080f !important;
+}
+
+/* ---- Capa AURORA animada (div #ov-aurora inyectado por JS) ---- */
+#ov-aurora {
+  position:fixed !important; inset:-20% !important; z-index:-1 !important;
+  pointer-events:none !important; overflow:hidden !important;
+  filter:blur(40px) saturate(140%) !important; opacity:.9 !important;
+}
+#ov-aurora::before, #ov-aurora::after {
+  content:"" !important; position:absolute !important; border-radius:50% !important;
+  mix-blend-mode:screen !important;
+}
+#ov-aurora::before {
+  width:55vw !important; height:55vw !important; left:-5vw !important; top:-10vw !important;
+  background:radial-gradient(circle at 50% 50%, rgba(47,107,255,.55), rgba(47,107,255,0) 65%) !important;
+  animation:ovAurora1 26s ease-in-out infinite alternate !important;
+}
+#ov-aurora::after {
+  width:50vw !important; height:50vw !important; right:-8vw !important; bottom:-12vw !important;
+  background:radial-gradient(circle at 50% 50%, rgba(34,211,238,.42), rgba(34,211,238,0) 65%) !important;
+  animation:ovAurora2 32s ease-in-out infinite alternate !important;
+}
+#ov-aurora .ov-aurora-3 {
+  position:absolute !important; width:46vw !important; height:46vw !important;
+  left:35vw !important; top:55vh !important; border-radius:50% !important; mix-blend-mode:screen !important;
+  background:radial-gradient(circle at 50% 50%, rgba(99,102,241,.4), rgba(99,102,241,0) 65%) !important;
+  animation:ovAurora3 38s ease-in-out infinite alternate !important;
+}
+@keyframes ovAurora1 { 0%{transform:translate3d(0,0,0) scale(1)} 100%{transform:translate3d(14vw,10vh,0) scale(1.25)} }
+@keyframes ovAurora2 { 0%{transform:translate3d(0,0,0) scale(1.1)} 100%{transform:translate3d(-12vw,-8vh,0) scale(1)} }
+@keyframes ovAurora3 { 0%{transform:translate3d(0,0,0) scale(1)} 100%{transform:translate3d(-10vw,12vh,0) scale(1.3)} }
+@media (prefers-reduced-motion: reduce) {
+  #ov-aurora::before, #ov-aurora::after, #ov-aurora .ov-aurora-3 { animation:none !important; }
+}
+
+/* ---- Paneles: glow azul + entrada suave ---- */
+html body#app.theme-industrial .panel,
+html body#app.theme-industrial section.panel,
+html body#app.theme-industrial section.panel.active,
+html body#app.theme-industrial .cotz-card,
+html body#app.theme-industrial .filters-card,
+html body#app.theme-industrial .card,
+html body#app.theme-industrial .table-wrap,
+html body#app.theme-industrial .md-table-wrap {
+  background:linear-gradient(180deg, rgba(26,34,58,.62), rgba(14,19,34,.58)) !important;
+  border:1px solid rgba(255,255,255,.09) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.08) inset,
+    0 30px 70px -34px rgba(0,0,0,.88),
+    0 0 0 1px rgba(var(--ov-accent-rgb),.05),
+    0 0 60px -30px rgba(var(--ov-accent-rgb),.4) !important;
+}
+html body#app.theme-industrial section.panel.active.pm-panel-entering,
+html body#app.theme-industrial .panel.pm-panel-entering { animation:ovPanelIn .45s cubic-bezier(.16,.84,.44,1) both !important; }
+@keyframes ovPanelIn { from{opacity:0; transform:translateY(10px) scale(.99)} to{opacity:1; transform:none} }
+
+/* ---- Header / sidebar: hairline azul eléctrico ---- */
+html body#app.theme-industrial .header,
+html body#app.theme-industrial header.header { border-bottom:1px solid rgba(var(--ov-accent-rgb),.22) !important; }
+html body#app.theme-industrial .sidebar-nav,
+html body#app.theme-industrial aside.sidebar-nav { border-right:1px solid rgba(var(--ov-accent-rgb),.2) !important; }
+
+/* ---- Section header: gradiente + glow azul ---- */
+html body#app.theme-industrial .section-header,
+html body#app.theme-industrial .section-header--ux {
+  background:linear-gradient(135deg, rgba(var(--ov-accent-rgb),.18), rgba(var(--ov-cyan-rgb),.05) 55%, rgba(16,22,40,.5)) !important;
+  border-left:3px solid var(--ov-accent) !important;
+  box-shadow:0 1px 0 rgba(255,255,255,.06) inset, 0 20px 50px -32px rgba(var(--ov-accent-rgb),.7) !important;
+}
+html body#app.theme-industrial .section-header > i,
+html body#app.theme-industrial .section-header--ux > i,
+html body#app.theme-industrial .section-header h2 > i,
+html body#app.theme-industrial .cotz-card-title > i {
+  background:linear-gradient(145deg, var(--ov-accent-2), var(--ov-accent) 55%, var(--ov-cyan)) !important;
+  box-shadow:0 10px 28px -8px rgba(var(--ov-accent-rgb),.95), 0 0 0 1px rgba(255,255,255,.14) inset !important;
+}
+
+/* ---- Botón primario: glow azul + pulso sutil ---- */
+html body#app.theme-industrial .btn.primary,
+html body#app.theme-industrial .btn-primary,
+html body#app.theme-industrial .btn-new,
+html body#app.theme-industrial .btn.highlight {
+  background:linear-gradient(135deg, var(--ov-accent-2), var(--ov-accent) 55%, #1d4ed8) !important;
+  color:#fff !important;
+  box-shadow:0 10px 30px -10px rgba(var(--ov-accent-rgb),.9), 0 0 0 1px rgba(255,255,255,.1) inset !important;
+}
+html body#app.theme-industrial .btn.primary:hover,
+html body#app.theme-industrial .btn-primary:hover,
+html body#app.theme-industrial .btn-new:hover {
+  filter:brightness(1.1) !important;
+  box-shadow:0 16px 42px -10px rgba(var(--ov-accent-rgb),1), 0 0 24px -2px rgba(var(--ov-cyan-rgb),.5) !important;
+}
+
+/* ---- Nav activo: glow azul + barra cian ---- */
+html body#app.theme-industrial #sidebar-rail-tabs button.tab.active,
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active {
+  background:linear-gradient(135deg, rgba(var(--ov-accent-rgb),.3), rgba(var(--ov-cyan-rgb),.12)) !important;
+  border:1px solid rgba(var(--ov-accent-rgb),.55) !important;
+  box-shadow:0 8px 26px -12px rgba(var(--ov-accent-rgb),.9), 0 0 0 1px rgba(255,255,255,.06) inset !important;
+}
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active::before {
+  background:linear-gradient(180deg,var(--ov-accent-2),var(--ov-cyan)) !important;
+  box-shadow:0 0 14px rgba(var(--ov-accent-rgb),1) !important;
+}
+
+/* ---- Header pills activos ---- */
+html body#app.theme-industrial .mapa-header-owner-nav .tab.active,
+html body#app.theme-industrial .mapa-header-owner-nav .mapa-owner-pill.active {
+  background:linear-gradient(135deg, var(--ov-accent-2), var(--ov-accent) 60%, #1d4ed8) !important;
+  box-shadow:0 8px 24px -10px rgba(var(--ov-accent-rgb),.95) !important;
+}
+
+/* ---- KPI cards hover: glow azul ---- */
+html body#app.theme-industrial .stat-card:hover,
+html body#app.theme-industrial [class*="kpi-card"]:hover,
+html body#app.theme-industrial .dashboard-score-tile:hover {
+  border-color:rgba(var(--ov-accent-rgb),.45) !important;
+  box-shadow:0 20px 48px -22px rgba(var(--ov-accent-rgb),.7) !important;
+}
+
+/* ---- Calendario ---- */
+html body#app.theme-industrial .cal-day--click:hover {
+  border-color:rgba(var(--ov-accent-rgb),.55) !important;
+  box-shadow:0 16px 36px -18px rgba(var(--ov-accent-rgb),.8) !important;
+}
+html body#app.theme-industrial .cal-day--today,
+html body#app.theme-industrial .cal-day.today {
+  box-shadow:0 0 0 1px var(--ov-accent) inset, 0 0 26px -2px rgba(var(--ov-accent-rgb),.75) !important;
+}
+html body#app.theme-industrial .cal-dots > * {
+  background:linear-gradient(180deg,var(--ov-accent-2),var(--ov-cyan)) !important;
+  box-shadow:0 0 10px rgba(var(--ov-accent-rgb),.95) !important;
+}
+
+/* ---- Live pill / accents ---- */
+html body#app.theme-industrial .mapa-rail-accent,
+html body#app.theme-industrial .mapa-ms-title-accent {
+  background:linear-gradient(180deg,var(--ov-accent-2),var(--ov-cyan)) !important;
+  box-shadow:0 0 16px rgba(var(--ov-accent-rgb),.85) !important;
+}
+html body#app.theme-industrial .header-slot-tc,
+html body#app.theme-industrial #header-slot-tc {
+  background:rgba(var(--ov-accent-rgb),.18) !important; color:var(--ov-accent-2) !important;
+  border:1px solid rgba(var(--ov-accent-rgb),.5) !important;
+}
+
+/* ---- DavAI FAB con glow azul-cian ---- */
+html body#app.theme-industrial .davai-fab,
+html body#app.theme-industrial [class*="davai-fab"] button {
+  background:linear-gradient(135deg,var(--ov-accent-2),var(--ov-accent) 60%,var(--ov-cyan)) !important;
+  box-shadow:0 16px 40px -10px rgba(var(--ov-accent-rgb),1) !important;
+}
+
+/* ---- Modales borde azul ---- */
+html body#app.theme-industrial .modal,
+html body#app.theme-industrial .modal-card,
+html body#app.theme-industrial [class*="modal"] .modal-content {
+  border:1px solid rgba(var(--ov-accent-rgb),.25) !important;
+}

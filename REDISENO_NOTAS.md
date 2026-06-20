@@ -1,36 +1,48 @@
-# Rediseño "Dark Premium" — notas
+# Rediseño "Aurora Glass — Azul Eléctrico Royal" — notas
 
 ## Qué cambió
-Diagnóstico: el proyecto cargaba **50+ hojas de estilo** peleándose entre sí (varios "temas" superpuestos + capas de parches) y **24 módulos en lista plana** sin agrupar. Eso causaba el look inconsistente y la sensación de "perderse".
+Diagnóstico inicial: el proyecto cargaba **50+ hojas de estilo** peleándose entre sí y **24 módulos en lista plana**. Eso causaba el look inconsistente y la sensación de "perderse".
 
-Solución, **sin tocar tu HTML ni tu JS de negocio** (todo es aditivo):
+Solución, **sin tocar tu HTML ni tu JS de negocio** (todo aditivo, 100% reversible):
 
-1. **`public/css/theme-overhaul.css`** — un único sistema de diseño cargado al final de la cascada:
-   - Fondo oscuro sólido premium (se eliminó la foto industrial que mataba la legibilidad).
-   - Un solo acento (indigo `#6c8cff`) que reemplaza el amarillo `#FFD200` chillante.
-   - Header, sidebar, paneles, tablas, botones, inputs, KPI, modales y scrollbars coherentes.
-   - Branding del header corregido (el logo ya no tapa el texto).
+1. **`public/css/theme-overhaul.css`** — un único sistema de diseño cargado al final, en 5 capas:
+   - Base dark premium unificada (tokens, tipografía, tablas, botones, inputs, modales).
+   - Navegación, calendario y headers rediseñados.
+   - **Aurora Glass**: superficies de cristal esmerilado (glassmorphism), profundidad y glow.
+   - **Azul eléctrico royal** como acento (variable RGB única `--ov-accent-rgb`, fácil de re-tintar).
+   - **Aurora animada** de fondo (`#ov-aurora`) con destellos de color en movimiento lento + micro-animaciones (respeta `prefers-reduced-motion`).
 
-2. **`public/js/nav-overhaul.js`** — navegación usable:
-   - Agrupa los 24 módulos en **6 categorías colapsables**: Inteligencia, Comercial, Servicio & Operaciones, Almacén & Logística, Garantías, Administración.
-   - **Buscador de módulos** en el sidebar.
-   - Recuerda qué grupos dejaste colapsados (localStorage).
-   - Neutraliza los estilos inline `!important` amarillos legacy y oculta el toast de debug "Map container is already initialized".
-   - **No rompe nada**: los botones `.tab` conservan sus listeners (solo se reubican en el DOM).
+2. **`public/js/nav-overhaul.js`**:
+   - Agrupa los 24 módulos en 6 categorías colapsables + buscador (recuerda estado).
+   - Neutraliza los estilos inline amarillos legacy del tab activo y los pills del header.
+   - Inyecta la capa de aurora animada y oculta el toast de debug.
 
-3. **`public/index.html`** — enlaza los dos archivos al final (1 `<link>` + 1 `<script>`).
+3. **`public/index.html`** — enlaza ambos archivos al final (1 `<link>` + 1 `<script>`).
 
-## Cómo desplegar
-Desde esta carpeta:
+## Cómo desplegar (IMPORTANTE: aún no está en producción)
+Desde esta carpeta, en tu terminal:
 
 ```bash
+# 1) si aparece un lock atascado, bórralo (en Windows):
+del .git\index.lock
+
+# 2) confirma y sube
+git add -A
+git commit -m "feat(ui): Aurora Glass azul royal + navegacion agrupada"
 git push origin main
 ```
 
-Render detecta el push y despliega en ~2-3 min. Si no ves el cambio, fuerza recarga (Ctrl+Shift+R) por el caché de CSS.
+Render desplegará en ~2-3 min. Fuerza recarga (Ctrl+Shift+R) por el caché de CSS.
+
+## Re-tintar el acento en 1 línea
+En `theme-overhaul.css`, busca `--ov-accent-rgb:` (sección V5) y cambia el RGB:
+- Violeta: `124,108,255`
+- Esmeralda: `16,185,129`
+- Ámbar: `245,158,11`
+…y ajusta `--ov-accent` / `--ov-accent-2` al hex equivalente.
 
 ## Reversible
-Si algo no te gusta, basta con quitar las 2 líneas que agregué en `index.html` (el `<link>` de `theme-overhaul.css` y el `<script>` de `nav-overhaul.js`) y vuelve al estado anterior. Cero riesgo.
+Quita las 2 líneas que agregué en `index.html` (el `<link>` de `theme-overhaul.css` y el `<script>` de `nav-overhaul.js`) y vuelve al estado anterior. Cero riesgo.
 
 ## Siguiente paso opcional
-Eventualmente conviene **eliminar** las ~50 hojas de estilo viejas que ya no aportan (consolidar de verdad, no solo sobrescribir). Eso reduce peso de carga y deuda técnica. Puedo hacerlo en una segunda pasada con pruebas módulo por módulo.
+Eliminar las ~50 hojas de estilo viejas (consolidar de verdad) para reducir peso de carga. Segunda pasada con pruebas módulo por módulo.
