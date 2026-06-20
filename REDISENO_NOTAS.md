@@ -1,48 +1,38 @@
-# Rediseño "Aurora Glass — Azul Eléctrico Royal" — notas
+# Rediseño "Amber Clean" — tema claro (notas)
 
-## Qué cambió
-Diagnóstico inicial: el proyecto cargaba **50+ hojas de estilo** peleándose entre sí y **24 módulos en lista plana**. Eso causaba el look inconsistente y la sensación de "perderse".
+## Decisión final
+El sistema pasó de oscuro a **tema claro/ámbar** (estilo de tu dashboard de mapas):
+fondo crema, superficies blancas, acento ámbar `#F2A900`, tipografía Inter, tarjetas
+suaves de 8–14px. Solo se replicó el **lenguaje de diseño** (color y layout); la marca,
+logos y contenido son los tuyos (Universal · Servicio Técnico).
 
-Solución, **sin tocar tu HTML ni tu JS de negocio** (todo aditivo, 100% reversible):
+## Archivos
+1. **`public/css/theme-overhaul.css`** — tema claro completo (v9b):
+   tokens, fondo crema, header/sidebar blancos, KPIs, tablas, botones (primario ámbar),
+   badges con tintes suaves, calendario claro, y **UI del mapa de Prospección** en claro
+   (panel de filtros, leyenda, toggles, controles).
+2. **`public/js/nav-overhaul.js`** — navegación agrupada + buscador, neutraliza colores
+   inline rebeldes y corrige el texto degradado del módulo activo, fuerza celdas de tabla
+   a `table-cell` (alineación de columnas).
+3. **`public/index.html`** — enlaces con versión de caché `?v=9b-light`.
 
-1. **`public/css/theme-overhaul.css`** — un único sistema de diseño cargado al final, en 5 capas:
-   - Base dark premium unificada (tokens, tipografía, tablas, botones, inputs, modales).
-   - Navegación, calendario y headers rediseñados.
-   - **Aurora Glass**: superficies de cristal esmerilado (glassmorphism), profundidad y glow.
-   - **Azul eléctrico royal** como acento (variable RGB única `--ov-accent-rgb`, fácil de re-tintar).
-   - **Aurora animada** de fondo (`#ov-aurora`) con destellos de color en movimiento lento + micro-animaciones (respeta `prefers-reduced-motion`).
-
-2. **`public/js/nav-overhaul.js`**:
-   - Agrupa los 24 módulos en 6 categorías colapsables + buscador (recuerda estado).
-   - Neutraliza los estilos inline amarillos legacy del tab activo y los pills del header.
-   - Inyecta la capa de aurora animada y oculta el toast de debug.
-
-3. **`public/index.html`** — enlaza ambos archivos al final (1 `<link>` + 1 `<script>`).
-
-## Cómo desplegar (IMPORTANTE: aún no está en producción)
-Desde esta carpeta, en tu terminal:
-
-```bash
-# 1) si aparece un lock atascado, bórralo (en Windows):
-del .git\index.lock
-
-# 2) confirma y sube
+## Desplegar
+```powershell
+Get-ChildItem .git -Recurse -Filter *.lock | Remove-Item -Force -ErrorAction SilentlyContinue
 git add -A
-git commit -m "feat(ui): Aurora Glass azul royal + navegacion agrupada"
+git commit -m "feat(ui): tema claro Amber Clean (estilo dashboard de mapas)"
 git push origin main
 ```
-
-Render desplegará en ~2-3 min. Fuerza recarga (Ctrl+Shift+R) por el caché de CSS.
+Tras el deploy: **Ctrl+Shift+R** (la versión de caché ya cambió, así que cargará el CSS nuevo).
 
 ## Re-tintar el acento en 1 línea
-En `theme-overhaul.css`, busca `--ov-accent-rgb:` (sección V5) y cambia el RGB:
-- Violeta: `124,108,255`
-- Esmeralda: `16,185,129`
-- Ámbar: `245,158,11`
-…y ajusta `--ov-accent` / `--ov-accent-2` al hex equivalente.
+En `theme-overhaul.css`, sección de tokens, cambia `--accent:#f2a900` (y `--accent-ink`
+para el texto sobre el acento).
+
+## Pendiente menor
+La píldora flotante "35 prospectos visibles" sobre el mapa puede quedar oscura en algún
+caso (clase propia no capturada). Si la ves así tras desplegar, te la ajusto en un toque.
 
 ## Reversible
-Quita las 2 líneas que agregué en `index.html` (el `<link>` de `theme-overhaul.css` y el `<script>` de `nav-overhaul.js`) y vuelve al estado anterior. Cero riesgo.
-
-## Siguiente paso opcional
-Eliminar las ~50 hojas de estilo viejas (consolidar de verdad) para reducir peso de carga. Segunda pasada con pruebas módulo por módulo.
+Quita las 2 líneas de `index.html` (link de `theme-overhaul.css` y script de
+`nav-overhaul.js`) para volver al estado anterior.
