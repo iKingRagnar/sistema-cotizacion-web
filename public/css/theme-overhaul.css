@@ -1,0 +1,436 @@
+/* ============================================================================
+   THEME OVERHAUL · Dark Premium SaaS  (v1 · 2026-06-20)
+   Hoja autoritativa cargada AL FINAL. Unifica el caos de 50+ CSS en un solo
+   lenguaje visual coherente, legible y profesional, sin tocar el HTML/JS.
+   Scope: html body#app.theme-industrial  (gana la cascada por especificidad).
+   ========================================================================== */
+
+/* ---------- 1. TOKENS ----------------------------------------------------- */
+html body#app.theme-industrial {
+  /* Superficies */
+  --ov-bg-0:#0a0e16;            /* fondo más profundo            */
+  --ov-bg-1:#0e1320;           /* fondo base                    */
+  --ov-bg-2:#121826;           /* superficie elevada            */
+  --ov-surface:#161d2c;        /* cards / paneles               */
+  --ov-surface-2:#1b2333;      /* card hover / inputs           */
+  --ov-surface-3:#222c40;      /* zonas activas                 */
+  --ov-line:rgba(148,163,184,.14);   /* bordes sutiles          */
+  --ov-line-strong:rgba(148,163,184,.24);
+  /* Texto */
+  --ov-text:#e8edf7;
+  --ov-text-2:#aeb9cc;
+  --ov-text-3:#7e8aa0;
+  /* Acento premium (indigo eléctrico, un solo acento) */
+  --ov-accent:#6c8cff;
+  --ov-accent-2:#8aa2ff;
+  --ov-accent-ink:#0b1020;
+  --ov-accent-soft:rgba(108,140,255,.14);
+  --ov-accent-line:rgba(108,140,255,.42);
+  /* Semánticos */
+  --ov-ok:#34d399; --ov-warn:#fbbf24; --ov-danger:#f87171; --ov-info:#56b6f0;
+  --ov-ok-soft:rgba(52,211,153,.14);
+  --ov-warn-soft:rgba(251,191,36,.14);
+  --ov-danger-soft:rgba(248,113,113,.14);
+  /* Forma y sombra */
+  --ov-r:14px; --ov-r-sm:10px; --ov-r-lg:20px;
+  --ov-shadow:0 1px 0 rgba(255,255,255,.03) inset, 0 8px 24px -12px rgba(0,0,0,.6);
+  --ov-shadow-lg:0 24px 60px -24px rgba(0,0,0,.75);
+  --ov-font:'Manrope','Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+
+  /* Re-mapear tokens heredados para que TODO lo demás herede el acento nuevo */
+  --brand-amber:var(--ov-accent)!important;
+  --brand-yellow:var(--ov-accent)!important;
+  --brand-sky:var(--ov-accent)!important;
+  --brand-teal:var(--ov-accent)!important;
+  --md-primary:var(--ov-accent)!important;
+  --prem-accent:var(--ov-accent)!important;
+
+  font-family:var(--ov-font)!important;
+  color:var(--ov-text);
+}
+
+/* ---------- 2. FONDO: matar la foto industrial --------------------------- */
+html body#app.theme-industrial,
+html body#app.theme-industrial.md3-on,
+html body#app.theme-industrial:not(.appearance-light),
+html body#app.theme-industrial.md3-on:not(.appearance-light) {
+  background:
+    radial-gradient(1200px 700px at 82% -8%, rgba(108,140,255,.10), transparent 60%),
+    radial-gradient(900px 600px at 8% 102%, rgba(86,182,240,.07), transparent 55%),
+    linear-gradient(180deg,#0c111c 0%,#0a0e16 100%) !important;
+  background-attachment:fixed !important;
+  background-color:#0a0e16 !important;
+}
+html body#app.theme-industrial::before,
+html body#app.theme-industrial::after,
+html body#app.theme-industrial.md3-on::before,
+html body#app.theme-industrial.md3-on::after {
+  background:none !important;
+  background-image:none !important;
+  content:none !important;
+}
+/* Capa de partículas: muy sutil para que no compita con el contenido */
+html body#app.theme-industrial #app-particles-layer,
+html body#app.theme-industrial .app-particles-layer { opacity:.25 !important; }
+
+/* ---------- 3. SUPERFICIES GENÉRICAS ------------------------------------- */
+html body#app.theme-industrial .panel,
+html body#app.theme-industrial section.panel,
+html body#app.theme-industrial .panel.active,
+html body#app.theme-industrial .filters-card,
+html body#app.theme-industrial .card,
+html body#app.theme-industrial .table-wrap,
+html body#app.theme-industrial .md-table-wrap {
+  background:var(--ov-surface) !important;
+  border:1px solid var(--ov-line) !important;
+  border-radius:var(--ov-r) !important;
+  box-shadow:var(--ov-shadow) !important;
+  backdrop-filter:none !important;
+  color:var(--ov-text) !important;
+}
+html body#app.theme-industrial .content,
+html body#app.theme-industrial #main-content { background:transparent !important; }
+
+/* Encabezados de sección */
+html body#app.theme-industrial .section-header {
+  background:linear-gradient(180deg,var(--ov-surface-2),var(--ov-surface)) !important;
+  border:1px solid var(--ov-line) !important;
+  border-radius:var(--ov-r) !important;
+  box-shadow:var(--ov-shadow) !important;
+}
+html body#app.theme-industrial .section-header h2,
+html body#app.theme-industrial .section-header h1,
+html body#app.theme-industrial .panel h2,
+html body#app.theme-industrial .panel h3 { color:var(--ov-text) !important; letter-spacing:-.01em; }
+html body#app.theme-industrial .section-header p,
+html body#app.theme-industrial .muted,
+html body#app.theme-industrial .subtitle { color:var(--ov-text-2) !important; }
+
+/* Toolbars / filtros */
+html body#app.theme-industrial .toolbar {
+  background:var(--ov-bg-2) !important;
+  border:1px solid var(--ov-line) !important;
+  border-radius:var(--ov-r) !important;
+}
+
+/* ---------- 4. HEADER ----------------------------------------------------- */
+html body#app.theme-industrial .header,
+html body#app.theme-industrial header.header {
+  background:rgba(10,14,22,.82) !important;
+  border-bottom:1px solid var(--ov-line) !important;
+  box-shadow:0 8px 30px -20px rgba(0,0,0,.9) !important;
+  backdrop-filter:saturate(140%) blur(12px) !important;
+}
+/* Branding: evitar que el logo tape el texto */
+html body#app.theme-industrial .header-brand { gap:14px !important; align-items:center !important; }
+html body#app.theme-industrial .header-brand-logo-img,
+html body#app.theme-industrial #header-brand-logo {
+  width:auto !important; height:38px !important; max-width:120px !important;
+  object-fit:contain !important; border-radius:8px !important;
+}
+html body#app.theme-industrial .header-brand-eyebrow {
+  color:var(--ov-accent-2) !important; font-size:10px !important; letter-spacing:.16em !important;
+  text-transform:uppercase !important; font-weight:700 !important;
+}
+html body#app.theme-industrial .header-brand-service {
+  color:var(--ov-text) !important; font-size:18px !important; font-weight:800 !important;
+  letter-spacing:-.01em !important; line-height:1.1 !important; white-space:nowrap !important;
+}
+html body#app.theme-industrial .header-brand-tagline { color:var(--ov-text-3) !important; font-size:11px !important; }
+
+/* Pills de accesos del header */
+html body#app.theme-industrial .mapa-owner-pill,
+html body#app.theme-industrial .mapa-header-owner-nav .tab {
+  background:var(--ov-surface) !important; color:var(--ov-text-2) !important;
+  border:1px solid var(--ov-line) !important; border-radius:10px !important;
+  font-weight:600 !important; transition:.16s ease !important;
+}
+html body#app.theme-industrial .mapa-owner-pill:hover {
+  background:var(--ov-surface-2) !important; color:var(--ov-text) !important;
+  border-color:var(--ov-accent-line) !important;
+}
+
+/* "powered by": discreto, sin cursiva chillante */
+html body#app.theme-industrial .header-powered-by,
+html body#app.theme-industrial .header-powered-by-italic {
+  font-family:var(--ov-font) !important; font-style:normal !important;
+  font-size:11px !important; font-weight:600 !important; letter-spacing:.02em !important;
+  color:var(--ov-text-3) !important; opacity:.9 !important;
+}
+
+/* Live pill */
+html body#app.theme-industrial .mapa-ms-live-pill {
+  background:var(--ov-ok-soft) !important; border:1px solid rgba(52,211,153,.32) !important;
+  color:var(--ov-ok) !important; border-radius:999px !important;
+}
+html body#app.theme-industrial .mapa-ms-live-dot { background:var(--ov-ok) !important; box-shadow:0 0 0 3px rgba(52,211,153,.18) !important; }
+
+/* Iconos de header */
+html body#app.theme-industrial .btn-icon-header {
+  background:var(--ov-surface) !important; border:1px solid var(--ov-line) !important;
+  color:var(--ov-text-2) !important; border-radius:10px !important;
+}
+html body#app.theme-industrial .btn-icon-header:hover { color:var(--ov-text) !important; border-color:var(--ov-accent-line) !important; }
+
+/* ---------- 5. SIDEBAR + NAVEGACIÓN -------------------------------------- */
+html body#app.theme-industrial .sidebar-nav,
+html body#app.theme-industrial aside.sidebar-nav {
+  background:linear-gradient(180deg,#0d1320,#0a0e16) !important;
+  border-right:1px solid var(--ov-line) !important;
+}
+html body#app.theme-industrial .mapa-ms-display-title,
+html body#app.theme-industrial .sidebar-nav-title {
+  color:var(--ov-text) !important; font-weight:800 !important; letter-spacing:.04em !important;
+}
+html body#app.theme-industrial .mapa-ms-display-kicker { color:var(--ov-text-3) !important; }
+html body#app.theme-industrial .mapa-rail-accent,
+html body#app.theme-industrial .mapa-ms-title-accent {
+  background:linear-gradient(180deg,var(--ov-accent),var(--ov-accent-2)) !important;
+}
+
+/* Stat trio del sidebar */
+html body#app.theme-industrial .mapa-ms-stat-card {
+  background:var(--ov-surface) !important; border:1px solid var(--ov-line) !important;
+  border-radius:var(--ov-r-sm) !important;
+}
+html body#app.theme-industrial .mapa-ms-stat-card--accent {
+  background:var(--ov-accent-soft) !important; border-color:var(--ov-accent-line) !important;
+}
+html body#app.theme-industrial .mapa-ms-stat-value { color:var(--ov-text) !important; font-weight:800 !important; }
+html body#app.theme-industrial .mapa-ms-stat-head { color:var(--ov-text-3) !important; }
+
+/* Filtro global / alertas */
+html body#app.theme-industrial .sidebar-branch-filter,
+html body#app.theme-industrial .header-branch-filter {
+  background:var(--ov-surface-2) !important; border:1px solid var(--ov-line) !important;
+  color:var(--ov-text) !important; border-radius:10px !important;
+}
+html body#app.theme-industrial .header-slot-tc {
+  background:var(--ov-accent-soft) !important; color:var(--ov-accent-2) !important;
+  border:1px solid var(--ov-accent-line) !important; border-radius:8px !important; font-weight:700 !important;
+}
+
+/* --- Tabs de navegación (los 24 módulos) --- */
+html body#app.theme-industrial .tabs--rail .tab,
+html body#app.theme-industrial #sidebar-rail-tabs .tab {
+  display:flex !important; align-items:center !important; gap:11px !important;
+  width:100% !important; text-align:left !important;
+  background:transparent !important; border:1px solid transparent !important;
+  color:var(--ov-text-2) !important; font-weight:600 !important; font-size:13.5px !important;
+  border-radius:10px !important; padding:9px 12px !important; margin:1px 0 !important;
+  letter-spacing:0 !important; transition:.14s ease !important; position:relative !important;
+}
+html body#app.theme-industrial .tabs--rail .tab i { color:var(--ov-text-3) !important; width:18px !important; text-align:center !important; transition:.14s ease !important; }
+html body#app.theme-industrial .tabs--rail .tab:hover {
+  background:var(--ov-surface-2) !important; color:var(--ov-text) !important;
+}
+html body#app.theme-industrial .tabs--rail .tab:hover i { color:var(--ov-accent-2) !important; }
+html body#app.theme-industrial .tabs--rail .tab.active {
+  background:var(--ov-accent-soft) !important; color:#fff !important;
+  border-color:var(--ov-accent-line) !important;
+}
+html body#app.theme-industrial .tabs--rail .tab.active i { color:var(--ov-accent-2) !important; }
+html body#app.theme-industrial .tabs--rail .tab.active::before {
+  content:"" !important; position:absolute !important; left:-1px !important; top:9px !important; bottom:9px !important;
+  width:3px !important; border-radius:3px !important;
+  background:linear-gradient(180deg,var(--ov-accent),var(--ov-accent-2)) !important;
+}
+/* highlight (cargar demo) sin amarillo agresivo */
+html body#app.theme-industrial .tabs--rail .tab.highlight { color:var(--ov-warn) !important; }
+
+/* --- Grupos de navegación inyectados por JS --- */
+html body#app.theme-industrial .ov-nav-group { margin:6px 0 2px !important; }
+html body#app.theme-industrial .ov-nav-group-label {
+  display:flex !important; align-items:center !important; gap:8px !important;
+  width:100% !important; background:transparent !important; border:0 !important;
+  color:var(--ov-text-3) !important; font-size:10.5px !important; font-weight:800 !important;
+  letter-spacing:.14em !important; text-transform:uppercase !important;
+  padding:10px 12px 6px !important; cursor:pointer !important; user-select:none !important;
+}
+html body#app.theme-industrial .ov-nav-group-label .ov-grp-chev {
+  margin-left:auto !important; transition:transform .18s ease !important; font-size:10px !important; opacity:.7 !important;
+}
+html body#app.theme-industrial .ov-nav-group.collapsed .ov-grp-chev { transform:rotate(-90deg) !important; }
+html body#app.theme-industrial .ov-nav-group.collapsed .ov-nav-group-body { display:none !important; }
+html body#app.theme-industrial .ov-nav-group-label:hover { color:var(--ov-text) !important; }
+
+/* Buscador de módulos */
+html body#app.theme-industrial .ov-nav-search-wrap { padding:4px 8px 8px !important; }
+html body#app.theme-industrial .ov-nav-search {
+  width:100% !important; background:var(--ov-surface-2) !important;
+  border:1px solid var(--ov-line) !important; border-radius:10px !important;
+  color:var(--ov-text) !important; font:600 13px var(--ov-font) !important;
+  padding:9px 12px 9px 32px !important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237e8aa0' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M21 21l-4.3-4.3'/%3E%3C/svg%3E") !important;
+  background-repeat:no-repeat !important; background-position:10px 50% !important;
+}
+html body#app.theme-industrial .ov-nav-search:focus {
+  outline:none !important; border-color:var(--ov-accent-line) !important;
+  box-shadow:0 0 0 3px var(--ov-accent-soft) !important;
+}
+html body#app.theme-industrial .ov-nav-hit { display:none !important; }
+
+/* ---------- 6. KPI / TARJETAS DE MÉTRICA -------------------------------- */
+html body#app.theme-industrial .stat-card,
+html body#app.theme-industrial .kpi,
+html body#app.theme-industrial .kpi-card,
+html body#app.theme-industrial .dashboard-score-tile,
+html body#app.theme-industrial .quick-stat-item {
+  background:linear-gradient(180deg,var(--ov-surface-2),var(--ov-surface)) !important;
+  border:1px solid var(--ov-line) !important; border-radius:var(--ov-r) !important;
+  box-shadow:var(--ov-shadow) !important; color:var(--ov-text) !important;
+}
+html body#app.theme-industrial .dashboard-score-tile:hover,
+html body#app.theme-industrial .stat-card:hover {
+  border-color:var(--ov-accent-line) !important;
+  transform:translateY(-1px) !important; transition:.18s ease !important;
+}
+html body#app.theme-industrial .kpi-num,
+html body#app.theme-industrial .stat-card .value,
+html body#app.theme-industrial .quick-stat-value,
+html body#app.theme-industrial .dashboard-score-tile .score {
+  color:var(--ov-text) !important; font-weight:800 !important; letter-spacing:-.02em !important;
+}
+html body#app.theme-industrial .quick-stat-label,
+html body#app.theme-industrial .stat-card .label { color:var(--ov-text-3) !important; }
+
+/* ---------- 7. BOTONES ---------------------------------------------------- */
+html body#app.theme-industrial .btn {
+  font-family:var(--ov-font) !important; font-weight:650 !important; letter-spacing:0 !important;
+  border-radius:10px !important; transition:.15s ease !important;
+  background:var(--ov-surface-2) !important; color:var(--ov-text) !important;
+  border:1px solid var(--ov-line) !important; box-shadow:none !important;
+}
+html body#app.theme-industrial .btn:hover {
+  background:var(--ov-surface-3) !important; border-color:var(--ov-line-strong) !important;
+  transform:translateY(-1px) !important;
+}
+html body#app.theme-industrial .btn.outline,
+html body#app.theme-industrial .btn-secondary { background:transparent !important; }
+/* Primario / acción principal */
+html body#app.theme-industrial .btn.primary,
+html body#app.theme-industrial .btn-primary,
+html body#app.theme-industrial .btn-new,
+html body#app.theme-industrial .btn.highlight {
+  background:linear-gradient(180deg,var(--ov-accent-2),var(--ov-accent)) !important;
+  color:var(--ov-accent-ink) !important; border:1px solid transparent !important;
+  font-weight:750 !important; box-shadow:0 6px 18px -8px rgba(108,140,255,.6) !important;
+}
+html body#app.theme-industrial .btn.primary:hover,
+html body#app.theme-industrial .btn-primary:hover,
+html body#app.theme-industrial .btn-new:hover { filter:brightness(1.06) !important; }
+html body#app.theme-industrial .btn.danger { background:var(--ov-danger-soft) !important; color:var(--ov-danger) !important; border-color:rgba(248,113,113,.34) !important; }
+html body#app.theme-industrial .btn:focus-visible {
+  outline:none !important; box-shadow:0 0 0 3px var(--ov-accent-soft) !important; border-color:var(--ov-accent-line) !important;
+}
+
+/* ---------- 8. INPUTS / SELECTS ----------------------------------------- */
+html body#app.theme-industrial input:not([type=checkbox]):not([type=radio]):not([type=range]),
+html body#app.theme-industrial select,
+html body#app.theme-industrial textarea {
+  background:var(--ov-surface-2) !important; color:var(--ov-text) !important;
+  border:1px solid var(--ov-line) !important; border-radius:10px !important;
+  font-family:var(--ov-font) !important;
+}
+html body#app.theme-industrial input::placeholder,
+html body#app.theme-industrial textarea::placeholder { color:var(--ov-text-3) !important; }
+html body#app.theme-industrial input:focus,
+html body#app.theme-industrial select:focus,
+html body#app.theme-industrial textarea:focus {
+  outline:none !important; border-color:var(--ov-accent-line) !important;
+  box-shadow:0 0 0 3px var(--ov-accent-soft) !important;
+}
+
+/* ---------- 9. TABLAS ---------------------------------------------------- */
+html body#app.theme-industrial table { color:var(--ov-text) !important; }
+html body#app.theme-industrial thead th,
+html body#app.theme-industrial .md-table thead th {
+  background:var(--ov-bg-2) !important; color:var(--ov-text-3) !important;
+  border-bottom:1px solid var(--ov-line-strong) !important;
+  text-transform:uppercase !important; font-size:11px !important; letter-spacing:.06em !important; font-weight:700 !important;
+}
+html body#app.theme-industrial tbody td,
+html body#app.theme-industrial .md-table tbody td { border-bottom:1px solid var(--ov-line) !important; }
+html body#app.theme-industrial tbody tr:hover td { background:var(--ov-surface-2) !important; }
+
+/* ---------- 10. CHIPS / BADGES / PILLS ---------------------------------- */
+html body#app.theme-industrial .chip,
+html body#app.theme-industrial .badge,
+html body#app.theme-industrial .pill {
+  border-radius:999px !important; font-weight:650 !important; border:1px solid var(--ov-line) !important;
+  background:var(--ov-surface-2) !important; color:var(--ov-text-2) !important;
+}
+html body#app.theme-industrial .chip.active,
+html body#app.theme-industrial .chip[aria-pressed="true"] {
+  background:var(--ov-accent-soft) !important; color:var(--ov-accent-2) !important; border-color:var(--ov-accent-line) !important;
+}
+
+/* ---------- 11. MODALES -------------------------------------------------- */
+html body#app.theme-industrial .modal,
+html body#app.theme-industrial .modal-card,
+html body#app.theme-industrial [class*="modal"] .modal-content {
+  background:var(--ov-surface) !important; border:1px solid var(--ov-line-strong) !important;
+  border-radius:var(--ov-r-lg) !important; box-shadow:var(--ov-shadow-lg) !important; color:var(--ov-text) !important;
+}
+html body#app.theme-industrial .modal-backdrop,
+html body#app.theme-industrial .overlay { background:rgba(5,8,14,.66) !important; backdrop-filter:blur(4px) !important; }
+
+/* ---------- 12. SCROLLBARS ----------------------------------------------- */
+html body#app.theme-industrial *::-webkit-scrollbar { width:11px; height:11px; }
+html body#app.theme-industrial *::-webkit-scrollbar-thumb {
+  background:var(--ov-surface-3); border-radius:999px; border:3px solid transparent; background-clip:content-box;
+}
+html body#app.theme-industrial *::-webkit-scrollbar-thumb:hover { background:#33415a; background-clip:content-box; }
+html body#app.theme-industrial *::-webkit-scrollbar-track { background:transparent; }
+
+/* ---------- 13. LIMPIEZA: artefactos de debug --------------------------- */
+html body#app.theme-industrial .leaflet-control-attribution { opacity:.4 !important; font-size:9px !important; }
+/* toast de debug "Map container is already initialized" — ocultado vía JS por texto */
+html body#app.theme-industrial .ov-hidden-debug { display:none !important; }
+
+/* DavAI FAB acorde al acento */
+html body#app.theme-industrial .davai-fab,
+html body#app.theme-industrial [class*="davai-fab"] button {
+  background:linear-gradient(180deg,var(--ov-accent-2),var(--ov-accent)) !important;
+  box-shadow:0 10px 28px -10px rgba(108,140,255,.7) !important;
+}
+
+/* ---------- 14. BOOSTER DE ESPECIFICIDAD (gana a reglas legacy con id) ----
+   Reglas viejas usan selectores muy específicos para el amarillo #FFD200.
+   Aquí usamos DOS ids (#app + #sidebar-rail-tabs) que ninguna regla legacy
+   tiene → victoria limpia sin tocar el HTML.                                */
+html body#app.theme-industrial #sidebar-rail-tabs button.tab.active,
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active {
+  background:var(--ov-accent-soft) !important;
+  color:#fff !important;
+  border:1px solid var(--ov-accent-line) !important;
+}
+html body#app.theme-industrial #sidebar-rail-tabs button.tab.active i,
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active i { color:var(--ov-accent-2) !important; }
+
+/* Pills de acceso del header en estado activo */
+html body#app.theme-industrial .header button.tab.active,
+html body#app.theme-industrial .header .mapa-owner-pill.active {
+  background:var(--ov-accent-soft) !important; color:#fff !important;
+  border-color:var(--ov-accent-line) !important;
+}
+
+/* KPI values amarillos de módulos (prospección, dashboard, etc.) → blanco premium */
+html body#app.theme-industrial [class*="kpi-card__value"],
+html body#app.theme-industrial [class*="kpi"][class*="value"],
+html body#app.theme-industrial .prospeccion-kpi-card__value,
+html body#app.theme-industrial .kpi-value,
+html body#app.theme-industrial .metric-value {
+  color:var(--ov-text) !important;
+}
+/* TOTAL LEADS / POTENCIAL: el primero puede llevar acento sutil */
+html body#app.theme-industrial .prospeccion-kpi-card--accent .prospeccion-kpi-card__value {
+  color:var(--ov-accent-2) !important;
+}
+
+/* Chips de estado heredados (TC, incidentes) en tono neutro/semántico */
+html body#app.theme-industrial .header-slot-urgent,
+html body#app.theme-industrial .header-slot-alertas {
+  background:var(--ov-warn-soft) !important; color:var(--ov-warn) !important;
+  border:1px solid rgba(251,191,36,.3) !important; border-radius:8px !important;
+}
