@@ -1124,3 +1124,18 @@ html body#app.theme-industrial #sidebar-rail-tabs .tab * {
 }
 html body#app.theme-industrial #sidebar-rail-tabs .tab.active,
 html body#app.theme-industrial #sidebar-rail-tabs .tab.active * { -webkit-text-fill-color:#fff !important; }
+
+/* ---- Tablas: filas ordenadas, acciones compactas y alineadas ---- */
+html body#app.theme-industrial tbody td { vertical-align:middle !important; }
+html body#app.theme-industrial td.th-actions { vertical-align:middle !important; }
+html body#app.theme-industrial .cot-actions-row,
+html body#app.theme-industrial [class*="actions-row"] {
+  display:inline-flex !important; flex-wrap:nowrap !important; gap:6px !important;
+  align-items:center !important; justify-content:flex-end !important;
+}
+/* botones de acción: cuadrados uniformes */
+html body#app.theme-industrial tbody td .btn.small,
+html body#app.theme-industrial [class*="prem-action"] {
+  width:32px !important; height:32px !important; min-width:32px !important;
+  padding:0 !important; display:inline-flex !important; align-items:center !important; justify-content:center !important;
+}
