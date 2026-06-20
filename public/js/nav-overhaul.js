@@ -133,8 +133,13 @@
       }
       return touched;
     }
-    function neutralizeAll() { allTabs.forEach(neutralize); }
+    // incluye pills del header (mismo amarillo inline legacy)
+    var headerPills = Array.prototype.slice.call(
+      document.querySelectorAll('.mapa-header-owner-nav .tab, .mapa-header-owner-nav .mapa-owner-pill'));
+    var styled = allTabs.concat(headerPills);
+    function neutralizeAll() { styled.forEach(neutralize); }
     neutralizeAll();
+
 
     var mo = new MutationObserver(function (muts) {
       var needRefresh = false;
@@ -144,7 +149,7 @@
       });
       if (needRefresh && !search.value.trim()) { refreshGroupVisibility(); neutralizeAll(); }
     });
-    allTabs.forEach(function (t) { mo.observe(t, { attributes:true, attributeFilter:['class','style'] }); });
+    styled.forEach(function (t) { mo.observe(t, { attributes:true, attributeFilter:['class','style'] }); });
 
     return true;
   }
