@@ -1,62 +1,662 @@
 /* ============================================================================
-   THEME OVERHAUL · LIGHT "Amber Clean"  (v9 · 2026-06-20)
-   Lenguaje visual claro inspirado en el dashboard de mapas del usuario:
-   fondo crema, superficies blancas, acento ámbar, tipografía Inter, tarjetas
-   suaves. NO incluye marca ni contenido de terceros — solo el diseño.
-   Scope: html body#app.theme-industrial (gana la cascada por especificidad).
+   THEME OVERHAUL · Dark Premium SaaS  (v1 · 2026-06-20)
+   Hoja autoritativa cargada AL FINAL. Unifica el caos de 50+ CSS en un solo
+   lenguaje visual coherente, legible y profesional, sin tocar el HTML/JS.
+   Scope: html body#app.theme-industrial  (gana la cascada por especificidad).
    ========================================================================== */
 
-/* ---------- 1. TOKENS (claro / ámbar) ----------------------------------- */
+/* ---------- 1. TOKENS ----------------------------------------------------- */
 html body#app.theme-industrial {
-  --bg:#f6f5f0;            /* fondo crema                     */
-  --surface:#ffffff;       /* tarjetas / paneles              */
-  --surface-2:#faf9f5;     /* hover / zonas suaves            */
-  --surface-3:#f1efe9;     /* activos / inputs                */
-  --line:rgba(17,17,20,.08);
-  --line-2:rgba(17,17,20,.14);
-  --text:#0a0a0e;
-  --text-2:#47474f;
-  --text-3:#8a8a93;
-  --accent:#f2a900;        /* ámbar Parker                    */
-  --accent-2:#ffbe1a;
-  --accent-ink:#1a1505;    /* texto oscuro sobre ámbar        */
-  --accent-soft:rgba(242,169,0,.13);
-  --accent-line:rgba(242,169,0,.4);
-  --ok:#16a34a; --ok-soft:rgba(22,163,74,.12);
-  --warn:#d97706; --warn-soft:rgba(217,119,6,.13);
-  --danger:#dc2626; --danger-soft:rgba(220,38,38,.1);
-  --info:#2563eb; --info-soft:rgba(37,99,235,.1);
-  --r:14px; --r-sm:10px; --r-lg:18px;
-  --sh:0 1px 2px rgba(17,17,20,.05), 0 8px 24px -16px rgba(17,17,20,.14);
-  --sh-lg:0 24px 60px -28px rgba(17,17,20,.28);
-  --font:'Inter','Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;
+  /* Superficies */
+  --ov-bg-0:#0a0e16;            /* fondo más profundo            */
+  --ov-bg-1:#0e1320;           /* fondo base                    */
+  --ov-bg-2:#121826;           /* superficie elevada            */
+  --ov-surface:#161d2c;        /* cards / paneles               */
+  --ov-surface-2:#1b2333;      /* card hover / inputs           */
+  --ov-surface-3:#222c40;      /* zonas activas                 */
+  --ov-line:rgba(148,163,184,.14);   /* bordes sutiles          */
+  --ov-line-strong:rgba(148,163,184,.24);
+  /* Texto */
+  --ov-text:#e8edf7;
+  --ov-text-2:#aeb9cc;
+  --ov-text-3:#7e8aa0;
+  /* Acento premium (indigo eléctrico, un solo acento) */
+  --ov-accent:#6c8cff;
+  --ov-accent-2:#8aa2ff;
+  --ov-accent-ink:#0b1020;
+  --ov-accent-soft:rgba(108,140,255,.14);
+  --ov-accent-line:rgba(108,140,255,.42);
+  /* Semánticos */
+  --ov-ok:#34d399; --ov-warn:#fbbf24; --ov-danger:#f87171; --ov-info:#56b6f0;
+  --ov-ok-soft:rgba(52,211,153,.14);
+  --ov-warn-soft:rgba(251,191,36,.14);
+  --ov-danger-soft:rgba(248,113,113,.14);
+  /* Forma y sombra */
+  --ov-r:14px; --ov-r-sm:10px; --ov-r-lg:20px;
+  --ov-shadow:0 1px 0 rgba(255,255,255,.03) inset, 0 8px 24px -12px rgba(0,0,0,.6);
+  --ov-shadow-lg:0 24px 60px -24px rgba(0,0,0,.75);
+  --ov-font:'Manrope','Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
 
-  /* re-map tokens heredados de cualquier capa previa */
-  --ov-surface:var(--surface); --ov-text:var(--text); --ov-text-2:var(--text-2); --ov-text-3:var(--text-3);
-  --ov-accent:var(--accent); --ov-accent-2:var(--accent-2); --ov-accent-soft:var(--accent-soft); --ov-accent-line:var(--accent-line);
-  --brand-amber:var(--accent)!important; --brand-yellow:var(--accent)!important; --md-primary:var(--accent)!important;
+  /* Re-mapear tokens heredados para que TODO lo demás herede el acento nuevo */
+  --brand-amber:var(--ov-accent)!important;
+  --brand-yellow:var(--ov-accent)!important;
+  --brand-sky:var(--ov-accent)!important;
+  --brand-teal:var(--ov-accent)!important;
+  --md-primary:var(--ov-accent)!important;
+  --prem-accent:var(--ov-accent)!important;
 
-  font-family:var(--font)!important;
-  color:var(--text);
+  font-family:var(--ov-font)!important;
+  color:var(--ov-text);
 }
 
-/* ---------- 2. FONDO claro + matar aurora/foto oscura ------------------- */
+/* ---------- 2. FONDO: matar la foto industrial --------------------------- */
 html body#app.theme-industrial,
 html body#app.theme-industrial.md3-on,
 html body#app.theme-industrial:not(.appearance-light),
-html body#app.theme-industrial.md3-on:not(.appearance-light),
-html body#app.theme-industrial.dark-theme {
-  background:var(--bg) !important;
-  background-color:var(--bg) !important;
-  color:var(--text) !important;
+html body#app.theme-industrial.md3-on:not(.appearance-light) {
+  background:
+    radial-gradient(1200px 700px at 82% -8%, rgba(108,140,255,.10), transparent 60%),
+    radial-gradient(900px 600px at 8% 102%, rgba(86,182,240,.07), transparent 55%),
+    linear-gradient(180deg,#0c111c 0%,#0a0e16 100%) !important;
+  background-attachment:fixed !important;
+  background-color:#0a0e16 !important;
 }
 html body#app.theme-industrial::before,
-html body#app.theme-industrial::after { background:none !important; content:none !important; }
-html body#app.theme-industrial #ov-aurora,
+html body#app.theme-industrial::after,
+html body#app.theme-industrial.md3-on::before,
+html body#app.theme-industrial.md3-on::after {
+  background:none !important;
+  background-image:none !important;
+  content:none !important;
+}
+/* Capa de partículas: muy sutil para que no compita con el contenido */
 html body#app.theme-industrial #app-particles-layer,
-html body#app.theme-industrial .app-particles-layer { display:none !important; }
+html body#app.theme-industrial .app-particles-layer { opacity:.25 !important; }
 
-/* ---------- 3. SUPERFICIES (tarjetas blancas, sombra suave) ------------- */
+/* ---------- 3. SUPERFICIES GENÉRICAS ------------------------------------- */
+html body#app.theme-industrial .panel,
+html body#app.theme-industrial section.panel,
+html body#app.theme-industrial .panel.active,
+html body#app.theme-industrial .filters-card,
+html body#app.theme-industrial .card,
+html body#app.theme-industrial .table-wrap,
+html body#app.theme-industrial .md-table-wrap {
+  background:var(--ov-surface) !important;
+  border:1px solid var(--ov-line) !important;
+  border-radius:var(--ov-r) !important;
+  box-shadow:var(--ov-shadow) !important;
+  backdrop-filter:none !important;
+  color:var(--ov-text) !important;
+}
+html body#app.theme-industrial .content,
+html body#app.theme-industrial #main-content { background:transparent !important; }
+
+/* Encabezados de sección */
+html body#app.theme-industrial .section-header {
+  background:linear-gradient(180deg,var(--ov-surface-2),var(--ov-surface)) !important;
+  border:1px solid var(--ov-line) !important;
+  border-radius:var(--ov-r) !important;
+  box-shadow:var(--ov-shadow) !important;
+}
+html body#app.theme-industrial .section-header h2,
+html body#app.theme-industrial .section-header h1,
+html body#app.theme-industrial .panel h2,
+html body#app.theme-industrial .panel h3 { color:var(--ov-text) !important; letter-spacing:-.01em; }
+html body#app.theme-industrial .section-header p,
+html body#app.theme-industrial .muted,
+html body#app.theme-industrial .subtitle { color:var(--ov-text-2) !important; }
+
+/* Toolbars / filtros */
+html body#app.theme-industrial .toolbar {
+  background:var(--ov-bg-2) !important;
+  border:1px solid var(--ov-line) !important;
+  border-radius:var(--ov-r) !important;
+}
+
+/* ---------- 4. HEADER ----------------------------------------------------- */
+html body#app.theme-industrial .header,
+html body#app.theme-industrial header.header {
+  background:rgba(10,14,22,.82) !important;
+  border-bottom:1px solid var(--ov-line) !important;
+  box-shadow:0 8px 30px -20px rgba(0,0,0,.9) !important;
+  backdrop-filter:saturate(140%) blur(12px) !important;
+}
+/* Branding: evitar que el logo tape el texto */
+html body#app.theme-industrial .header-brand { gap:14px !important; align-items:center !important; }
+html body#app.theme-industrial .header-brand-logo-img,
+html body#app.theme-industrial #header-brand-logo {
+  width:auto !important; height:38px !important; max-width:120px !important;
+  object-fit:contain !important; border-radius:8px !important;
+}
+html body#app.theme-industrial .header-brand-eyebrow {
+  color:var(--ov-accent-2) !important; font-size:10px !important; letter-spacing:.16em !important;
+  text-transform:uppercase !important; font-weight:700 !important;
+}
+html body#app.theme-industrial .header-brand-service {
+  color:var(--ov-text) !important; font-size:18px !important; font-weight:800 !important;
+  letter-spacing:-.01em !important; line-height:1.1 !important; white-space:nowrap !important;
+}
+html body#app.theme-industrial .header-brand-tagline { color:var(--ov-text-3) !important; font-size:11px !important; }
+
+/* Pills de accesos del header */
+html body#app.theme-industrial .mapa-owner-pill,
+html body#app.theme-industrial .mapa-header-owner-nav .tab {
+  background:var(--ov-surface) !important; color:var(--ov-text-2) !important;
+  border:1px solid var(--ov-line) !important; border-radius:10px !important;
+  font-weight:600 !important; transition:.16s ease !important;
+}
+html body#app.theme-industrial .mapa-owner-pill:hover {
+  background:var(--ov-surface-2) !important; color:var(--ov-text) !important;
+  border-color:var(--ov-accent-line) !important;
+}
+
+/* "powered by": discreto, sin cursiva chillante */
+html body#app.theme-industrial .header-powered-by,
+html body#app.theme-industrial .header-powered-by-italic {
+  font-family:var(--ov-font) !important; font-style:normal !important;
+  font-size:11px !important; font-weight:600 !important; letter-spacing:.02em !important;
+  color:var(--ov-text-3) !important; opacity:.9 !important;
+}
+
+/* Live pill */
+html body#app.theme-industrial .mapa-ms-live-pill {
+  background:var(--ov-ok-soft) !important; border:1px solid rgba(52,211,153,.32) !important;
+  color:var(--ov-ok) !important; border-radius:999px !important;
+}
+html body#app.theme-industrial .mapa-ms-live-dot { background:var(--ov-ok) !important; box-shadow:0 0 0 3px rgba(52,211,153,.18) !important; }
+
+/* Iconos de header */
+html body#app.theme-industrial .btn-icon-header {
+  background:var(--ov-surface) !important; border:1px solid var(--ov-line) !important;
+  color:var(--ov-text-2) !important; border-radius:10px !important;
+}
+html body#app.theme-industrial .btn-icon-header:hover { color:var(--ov-text) !important; border-color:var(--ov-accent-line) !important; }
+
+/* ---------- 5. SIDEBAR + NAVEGACIÓN -------------------------------------- */
+html body#app.theme-industrial .sidebar-nav,
+html body#app.theme-industrial aside.sidebar-nav {
+  background:linear-gradient(180deg,#0d1320,#0a0e16) !important;
+  border-right:1px solid var(--ov-line) !important;
+}
+html body#app.theme-industrial .mapa-ms-display-title,
+html body#app.theme-industrial .sidebar-nav-title {
+  color:var(--ov-text) !important; font-weight:800 !important; letter-spacing:.04em !important;
+}
+html body#app.theme-industrial .mapa-ms-display-kicker { color:var(--ov-text-3) !important; }
+html body#app.theme-industrial .mapa-rail-accent,
+html body#app.theme-industrial .mapa-ms-title-accent {
+  background:linear-gradient(180deg,var(--ov-accent),var(--ov-accent-2)) !important;
+}
+
+/* Stat trio del sidebar */
+html body#app.theme-industrial .mapa-ms-stat-card {
+  background:var(--ov-surface) !important; border:1px solid var(--ov-line) !important;
+  border-radius:var(--ov-r-sm) !important;
+}
+html body#app.theme-industrial .mapa-ms-stat-card--accent {
+  background:var(--ov-accent-soft) !important; border-color:var(--ov-accent-line) !important;
+}
+html body#app.theme-industrial .mapa-ms-stat-value { color:var(--ov-text) !important; font-weight:800 !important; }
+html body#app.theme-industrial .mapa-ms-stat-head { color:var(--ov-text-3) !important; }
+
+/* Filtro global / alertas */
+html body#app.theme-industrial .sidebar-branch-filter,
+html body#app.theme-industrial .header-branch-filter {
+  background:var(--ov-surface-2) !important; border:1px solid var(--ov-line) !important;
+  color:var(--ov-text) !important; border-radius:10px !important;
+}
+html body#app.theme-industrial .header-slot-tc {
+  background:var(--ov-accent-soft) !important; color:var(--ov-accent-2) !important;
+  border:1px solid var(--ov-accent-line) !important; border-radius:8px !important; font-weight:700 !important;
+}
+
+/* --- Tabs de navegación (los 24 módulos) --- */
+html body#app.theme-industrial .tabs--rail .tab,
+html body#app.theme-industrial #sidebar-rail-tabs .tab {
+  display:flex !important; align-items:center !important; gap:11px !important;
+  width:100% !important; text-align:left !important;
+  background:transparent !important; border:1px solid transparent !important;
+  color:var(--ov-text-2) !important; font-weight:600 !important; font-size:13.5px !important;
+  border-radius:10px !important; padding:9px 12px !important; margin:1px 0 !important;
+  letter-spacing:0 !important; transition:.14s ease !important; position:relative !important;
+}
+html body#app.theme-industrial .tabs--rail .tab i { color:var(--ov-text-3) !important; width:18px !important; text-align:center !important; transition:.14s ease !important; }
+html body#app.theme-industrial .tabs--rail .tab:hover {
+  background:var(--ov-surface-2) !important; color:var(--ov-text) !important;
+}
+html body#app.theme-industrial .tabs--rail .tab:hover i { color:var(--ov-accent-2) !important; }
+html body#app.theme-industrial .tabs--rail .tab.active {
+  background:var(--ov-accent-soft) !important; color:#fff !important;
+  border-color:var(--ov-accent-line) !important;
+}
+html body#app.theme-industrial .tabs--rail .tab.active i { color:var(--ov-accent-2) !important; }
+html body#app.theme-industrial .tabs--rail .tab.active::before {
+  content:"" !important; position:absolute !important; left:-1px !important; top:9px !important; bottom:9px !important;
+  width:3px !important; border-radius:3px !important;
+  background:linear-gradient(180deg,var(--ov-accent),var(--ov-accent-2)) !important;
+}
+/* highlight (cargar demo) sin amarillo agresivo */
+html body#app.theme-industrial .tabs--rail .tab.highlight { color:var(--ov-warn) !important; }
+
+/* --- Grupos de navegación inyectados por JS --- */
+html body#app.theme-industrial .ov-nav-group { margin:6px 0 2px !important; }
+html body#app.theme-industrial .ov-nav-group-label {
+  display:flex !important; align-items:center !important; gap:8px !important;
+  width:100% !important; background:transparent !important; border:0 !important;
+  color:var(--ov-text-3) !important; font-size:10.5px !important; font-weight:800 !important;
+  letter-spacing:.14em !important; text-transform:uppercase !important;
+  padding:10px 12px 6px !important; cursor:pointer !important; user-select:none !important;
+}
+html body#app.theme-industrial .ov-nav-group-label .ov-grp-chev {
+  margin-left:auto !important; transition:transform .18s ease !important; font-size:10px !important; opacity:.7 !important;
+}
+html body#app.theme-industrial .ov-nav-group.collapsed .ov-grp-chev { transform:rotate(-90deg) !important; }
+html body#app.theme-industrial .ov-nav-group.collapsed .ov-nav-group-body { display:none !important; }
+html body#app.theme-industrial .ov-nav-group-label:hover { color:var(--ov-text) !important; }
+
+/* Buscador de módulos */
+html body#app.theme-industrial .ov-nav-search-wrap { padding:4px 8px 8px !important; }
+html body#app.theme-industrial .ov-nav-search {
+  width:100% !important; background:var(--ov-surface-2) !important;
+  border:1px solid var(--ov-line) !important; border-radius:10px !important;
+  color:var(--ov-text) !important; font:600 13px var(--ov-font) !important;
+  padding:9px 12px 9px 32px !important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237e8aa0' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M21 21l-4.3-4.3'/%3E%3C/svg%3E") !important;
+  background-repeat:no-repeat !important; background-position:10px 50% !important;
+}
+html body#app.theme-industrial .ov-nav-search:focus {
+  outline:none !important; border-color:var(--ov-accent-line) !important;
+  box-shadow:0 0 0 3px var(--ov-accent-soft) !important;
+}
+html body#app.theme-industrial .ov-nav-hit { display:none !important; }
+
+/* ---------- 6. KPI / TARJETAS DE MÉTRICA -------------------------------- */
+html body#app.theme-industrial .stat-card,
+html body#app.theme-industrial .kpi,
+html body#app.theme-industrial .kpi-card,
+html body#app.theme-industrial .dashboard-score-tile,
+html body#app.theme-industrial .quick-stat-item {
+  background:linear-gradient(180deg,var(--ov-surface-2),var(--ov-surface)) !important;
+  border:1px solid var(--ov-line) !important; border-radius:var(--ov-r) !important;
+  box-shadow:var(--ov-shadow) !important; color:var(--ov-text) !important;
+}
+html body#app.theme-industrial .dashboard-score-tile:hover,
+html body#app.theme-industrial .stat-card:hover {
+  border-color:var(--ov-accent-line) !important;
+  transform:translateY(-1px) !important; transition:.18s ease !important;
+}
+html body#app.theme-industrial .kpi-num,
+html body#app.theme-industrial .stat-card .value,
+html body#app.theme-industrial .quick-stat-value,
+html body#app.theme-industrial .dashboard-score-tile .score {
+  color:var(--ov-text) !important; font-weight:800 !important; letter-spacing:-.02em !important;
+}
+html body#app.theme-industrial .quick-stat-label,
+html body#app.theme-industrial .stat-card .label { color:var(--ov-text-3) !important; }
+
+/* ---------- 7. BOTONES ---------------------------------------------------- */
+html body#app.theme-industrial .btn {
+  font-family:var(--ov-font) !important; font-weight:650 !important; letter-spacing:0 !important;
+  border-radius:10px !important; transition:.15s ease !important;
+  background:var(--ov-surface-2) !important; color:var(--ov-text) !important;
+  border:1px solid var(--ov-line) !important; box-shadow:none !important;
+}
+html body#app.theme-industrial .btn:hover {
+  background:var(--ov-surface-3) !important; border-color:var(--ov-line-strong) !important;
+  transform:translateY(-1px) !important;
+}
+html body#app.theme-industrial .btn.outline,
+html body#app.theme-industrial .btn-secondary { background:transparent !important; }
+/* Primario / acción principal */
+html body#app.theme-industrial .btn.primary,
+html body#app.theme-industrial .btn-primary,
+html body#app.theme-industrial .btn-new,
+html body#app.theme-industrial .btn.highlight {
+  background:linear-gradient(180deg,var(--ov-accent-2),var(--ov-accent)) !important;
+  color:var(--ov-accent-ink) !important; border:1px solid transparent !important;
+  font-weight:750 !important; box-shadow:0 6px 18px -8px rgba(108,140,255,.6) !important;
+}
+html body#app.theme-industrial .btn.primary:hover,
+html body#app.theme-industrial .btn-primary:hover,
+html body#app.theme-industrial .btn-new:hover { filter:brightness(1.06) !important; }
+html body#app.theme-industrial .btn.danger { background:var(--ov-danger-soft) !important; color:var(--ov-danger) !important; border-color:rgba(248,113,113,.34) !important; }
+html body#app.theme-industrial .btn:focus-visible {
+  outline:none !important; box-shadow:0 0 0 3px var(--ov-accent-soft) !important; border-color:var(--ov-accent-line) !important;
+}
+
+/* ---------- 8. INPUTS / SELECTS ----------------------------------------- */
+html body#app.theme-industrial input:not([type=checkbox]):not([type=radio]):not([type=range]),
+html body#app.theme-industrial select,
+html body#app.theme-industrial textarea {
+  background:var(--ov-surface-2) !important; color:var(--ov-text) !important;
+  border:1px solid var(--ov-line) !important; border-radius:10px !important;
+  font-family:var(--ov-font) !important;
+}
+html body#app.theme-industrial input::placeholder,
+html body#app.theme-industrial textarea::placeholder { color:var(--ov-text-3) !important; }
+html body#app.theme-industrial input:focus,
+html body#app.theme-industrial select:focus,
+html body#app.theme-industrial textarea:focus {
+  outline:none !important; border-color:var(--ov-accent-line) !important;
+  box-shadow:0 0 0 3px var(--ov-accent-soft) !important;
+}
+
+/* ---------- 9. TABLAS ---------------------------------------------------- */
+html body#app.theme-industrial table { color:var(--ov-text) !important; }
+html body#app.theme-industrial thead th,
+html body#app.theme-industrial .md-table thead th {
+  background:var(--ov-bg-2) !important; color:var(--ov-text-3) !important;
+  border-bottom:1px solid var(--ov-line-strong) !important;
+  text-transform:uppercase !important; font-size:11px !important; letter-spacing:.06em !important; font-weight:700 !important;
+}
+html body#app.theme-industrial tbody td,
+html body#app.theme-industrial .md-table tbody td { border-bottom:1px solid var(--ov-line) !important; }
+html body#app.theme-industrial tbody tr:hover td { background:var(--ov-surface-2) !important; }
+
+/* ---------- 10. CHIPS / BADGES / PILLS ---------------------------------- */
+html body#app.theme-industrial .chip,
+html body#app.theme-industrial .badge,
+html body#app.theme-industrial .pill {
+  border-radius:999px !important; font-weight:650 !important; border:1px solid var(--ov-line) !important;
+  background:var(--ov-surface-2) !important; color:var(--ov-text-2) !important;
+}
+html body#app.theme-industrial .chip.active,
+html body#app.theme-industrial .chip[aria-pressed="true"] {
+  background:var(--ov-accent-soft) !important; color:var(--ov-accent-2) !important; border-color:var(--ov-accent-line) !important;
+}
+
+/* ---------- 11. MODALES -------------------------------------------------- */
+html body#app.theme-industrial .modal,
+html body#app.theme-industrial .modal-card,
+html body#app.theme-industrial [class*="modal"] .modal-content {
+  background:var(--ov-surface) !important; border:1px solid var(--ov-line-strong) !important;
+  border-radius:var(--ov-r-lg) !important; box-shadow:var(--ov-shadow-lg) !important; color:var(--ov-text) !important;
+}
+html body#app.theme-industrial .modal-backdrop,
+html body#app.theme-industrial .overlay { background:rgba(5,8,14,.66) !important; backdrop-filter:blur(4px) !important; }
+
+/* ---------- 12. SCROLLBARS ----------------------------------------------- */
+html body#app.theme-industrial *::-webkit-scrollbar { width:11px; height:11px; }
+html body#app.theme-industrial *::-webkit-scrollbar-thumb {
+  background:var(--ov-surface-3); border-radius:999px; border:3px solid transparent; background-clip:content-box;
+}
+html body#app.theme-industrial *::-webkit-scrollbar-thumb:hover { background:#33415a; background-clip:content-box; }
+html body#app.theme-industrial *::-webkit-scrollbar-track { background:transparent; }
+
+/* ---------- 13. LIMPIEZA: artefactos de debug --------------------------- */
+html body#app.theme-industrial .leaflet-control-attribution { opacity:.4 !important; font-size:9px !important; }
+/* toast de debug "Map container is already initialized" — ocultado vía JS por texto */
+html body#app.theme-industrial .ov-hidden-debug { display:none !important; }
+
+/* DavAI FAB acorde al acento */
+html body#app.theme-industrial .davai-fab,
+html body#app.theme-industrial [class*="davai-fab"] button {
+  background:linear-gradient(180deg,var(--ov-accent-2),var(--ov-accent)) !important;
+  box-shadow:0 10px 28px -10px rgba(108,140,255,.7) !important;
+}
+
+/* ---------- 14. BOOSTER DE ESPECIFICIDAD (gana a reglas legacy con id) ----
+   Reglas viejas usan selectores muy específicos para el amarillo #FFD200.
+   Aquí usamos DOS ids (#app + #sidebar-rail-tabs) que ninguna regla legacy
+   tiene → victoria limpia sin tocar el HTML.                                */
+html body#app.theme-industrial #sidebar-rail-tabs button.tab.active,
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active {
+  background:var(--ov-accent-soft) !important;
+  color:#fff !important;
+  border:1px solid var(--ov-accent-line) !important;
+}
+html body#app.theme-industrial #sidebar-rail-tabs button.tab.active i,
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active i { color:var(--ov-accent-2) !important; }
+
+/* Pills de acceso del header en estado activo */
+html body#app.theme-industrial .header button.tab.active,
+html body#app.theme-industrial .header .mapa-owner-pill.active {
+  background:var(--ov-accent-soft) !important; color:#fff !important;
+  border-color:var(--ov-accent-line) !important;
+}
+
+/* KPI values amarillos de módulos (prospección, dashboard, etc.) → blanco premium */
+html body#app.theme-industrial [class*="kpi-card__value"],
+html body#app.theme-industrial [class*="kpi"][class*="value"],
+html body#app.theme-industrial .prospeccion-kpi-card__value,
+html body#app.theme-industrial .kpi-value,
+html body#app.theme-industrial .metric-value {
+  color:var(--ov-text) !important;
+}
+/* TOTAL LEADS / POTENCIAL: el primero puede llevar acento sutil */
+html body#app.theme-industrial .prospeccion-kpi-card--accent .prospeccion-kpi-card__value {
+  color:var(--ov-accent-2) !important;
+}
+
+/* Chips de estado heredados (TC, incidentes) en tono neutro/semántico */
+html body#app.theme-industrial .header-slot-urgent,
+html body#app.theme-industrial .header-slot-alertas {
+  background:var(--ov-warn-soft) !important; color:var(--ov-warn) !important;
+  border:1px solid rgba(251,191,36,.3) !important; border-radius:8px !important;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   V2 · UPGRADE DRÁSTICO (2026-06-20) — profundidad, jerarquía, calendario
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ---- Ritmo general: aire entre paneles, ancho de contenido cómodo ---- */
+html body#app.theme-industrial .content,
+html body#app.theme-industrial #main-content { padding:22px 26px 60px !important; }
+html body#app.theme-industrial .panel { padding:22px !important; margin-bottom:18px !important; }
+html body#app.theme-industrial .panel + .panel { margin-top:0 !important; }
+
+/* ---- Paneles con más vida: gradiente sutil + acento superior ---- */
+html body#app.theme-industrial section.panel.active,
+html body#app.theme-industrial .panel {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.018), transparent 120px),
+    var(--ov-surface) !important;
+  position:relative !important;
+}
+
+/* ════ SECTION HEADERS — protagonistas, alineados a la izquierda ════ */
+html body#app.theme-industrial .section-header,
+html body#app.theme-industrial .section-header--ux {
+  display:flex !important; align-items:center !important; gap:14px !important;
+  text-align:left !important; justify-content:flex-start !important;
+  padding:16px 20px !important; margin-bottom:18px !important;
+  background:linear-gradient(135deg, rgba(108,140,255,.10), var(--ov-surface) 60%) !important;
+  border:1px solid var(--ov-line) !important; border-left:3px solid var(--ov-accent) !important;
+  border-radius:14px !important;
+}
+html body#app.theme-industrial .section-header > i,
+html body#app.theme-industrial .section-header--ux > i,
+html body#app.theme-industrial .section-header h2 > i,
+html body#app.theme-industrial .section-header--ux h2 > i {
+  display:inline-flex !important; align-items:center !important; justify-content:center !important;
+  width:40px !important; height:40px !important; flex:0 0 40px !important;
+  background:linear-gradient(180deg,var(--ov-accent-2),var(--ov-accent)) !important;
+  color:#fff !important; border-radius:12px !important; font-size:17px !important;
+  box-shadow:0 8px 20px -10px rgba(108,140,255,.8) !important;
+}
+html body#app.theme-industrial .section-header h2,
+html body#app.theme-industrial .section-header--ux h2,
+html body#app.theme-industrial .section-header h1 {
+  font-size:21px !important; font-weight:800 !important; letter-spacing:-.02em !important;
+  margin:0 !important; display:flex !important; align-items:center !important; gap:12px !important;
+}
+
+/* ════ HEADER PILLS — activo en azul (inline lo neutraliza el JS) ════ */
+html body#app.theme-industrial #app-header .mapa-owner-pill.active,
+html body#app.theme-industrial .mapa-header-owner-nav .tab.active,
+html body#app.theme-industrial .mapa-header-owner-nav .mapa-owner-pill.active {
+  background:linear-gradient(180deg,var(--ov-accent-2),var(--ov-accent)) !important;
+  color:#fff !important; border-color:transparent !important;
+  box-shadow:0 6px 16px -8px rgba(108,140,255,.7) !important;
+}
+html body#app.theme-industrial .mapa-header-owner-nav .tab.active i { color:#fff !important; }
+
+/* "powered by" — limpio y discreto (gana a powered-by-script.css) */
+html body#app.theme-industrial .header .header-powered-by *,
+html body#app.theme-industrial .header .header-powered-by-italic,
+html body#app.theme-industrial .header-powered-by--nav-slot * {
+  font-family:var(--ov-font) !important; font-style:normal !important;
+  font-weight:600 !important; font-size:11px !important; letter-spacing:.04em !important;
+  color:var(--ov-text-3) !important;
+}
+
+/* ════ CALENDARIO (Agenda) — de celdas planas a tarjetas ════ */
+html body#app.theme-industrial .mant-gar-cal-wrap,
+html body#app.theme-industrial [class*="cal-wrap"] {
+  background:var(--ov-bg-2) !important; border:1px solid var(--ov-line) !important;
+  border-radius:16px !important; padding:16px !important;
+}
+html body#app.theme-industrial .cal-month-summary {
+  display:inline-flex !important; align-items:center !important; gap:8px !important;
+  background:var(--ov-accent-soft) !important; color:var(--ov-accent-2) !important;
+  border:1px solid var(--ov-accent-line) !important; border-radius:999px !important;
+  padding:6px 14px !important; font-weight:700 !important; margin:0 0 14px !important;
+}
+html body#app.theme-industrial .cal-header {
+  display:grid !important; grid-template-columns:repeat(7,1fr) !important; gap:8px !important;
+  margin-bottom:8px !important;
+}
+html body#app.theme-industrial .cal-header span {
+  text-align:center !important; color:var(--ov-text-3) !important;
+  font-size:11px !important; font-weight:800 !important; letter-spacing:.1em !important;
+  text-transform:uppercase !important; padding:4px 0 !important;
+}
+html body#app.theme-industrial .cal-grid {
+  display:grid !important; grid-template-columns:repeat(7,1fr) !important; gap:8px !important;
+}
+html body#app.theme-industrial .cal-cell.cal-day,
+html body#app.theme-industrial .cal-day {
+  background:var(--ov-surface) !important; border:1px solid var(--ov-line) !important;
+  border-radius:12px !important; min-height:92px !important; padding:8px 10px !important;
+  transition:.16s ease !important; cursor:pointer !important; position:relative !important;
+}
+html body#app.theme-industrial .cal-day--click:hover {
+  border-color:var(--ov-accent-line) !important; transform:translateY(-2px) !important;
+  background:var(--ov-surface-2) !important;
+  box-shadow:0 12px 28px -16px rgba(0,0,0,.7) !important;
+}
+html body#app.theme-industrial .cal-day-num {
+  font-weight:700 !important; color:var(--ov-text-2) !important; font-size:14px !important;
+}
+/* día con eventos: punto de acento + número resaltado */
+html body#app.theme-industrial .cal-day:has(.cal-dots :not(:empty)) .cal-day-num,
+html body#app.theme-industrial .cal-day.has-events .cal-day-num { color:var(--ov-text) !important; }
+html body#app.theme-industrial .cal-dots { display:flex !important; gap:4px !important; margin-top:6px !important; flex-wrap:wrap !important; }
+html body#app.theme-industrial .cal-dots > * {
+  width:7px !important; height:7px !important; border-radius:999px !important;
+  background:var(--ov-accent) !important;
+}
+html body#app.theme-industrial .cal-tec-chips { margin-top:auto !important; }
+/* hoy / día actual */
+html body#app.theme-industrial .cal-day--today,
+html body#app.theme-industrial .cal-day.today {
+  border-color:var(--ov-accent) !important;
+  box-shadow:0 0 0 1px var(--ov-accent) inset, 0 0 0 4px var(--ov-accent-soft) !important;
+}
+
+/* ════ Barra de filtros premium (prem-ext-filter) ════ */
+html body#app.theme-industrial .prem-ext-filter-bar {
+  background:var(--ov-bg-2) !important; border:1px solid var(--ov-line) !important;
+  border-radius:14px !important; padding:14px 16px !important;
+}
+html body#app.theme-industrial .prem-ext-filter-head,
+html body#app.theme-industrial .prem-ext-filter-field-label {
+  color:var(--ov-text-3) !important; font-weight:700 !important;
+  text-transform:uppercase !important; letter-spacing:.06em !important; font-size:11px !important;
+}
+
+/* ════ Resumen "Actividades próximas": headings tipo card + empty states ════ */
+html body#app.theme-industrial .mant-gar-hint,
+html body#app.theme-industrial .empty,
+html body#app.theme-industrial .muted-line {
+  color:var(--ov-text-3) !important;
+}
+/* líneas "— Sin … —" en gris discreto y con padding */
+html body#app.theme-industrial .panel p:empty { display:none !important; }
+
+/* ════ Chips de estado del sidebar (TC, incidentes, alertas) coherentes ════ */
+html body#app.theme-industrial #header-slot-tc,
+html body#app.theme-industrial .header-slot-tc {
+  background:var(--ov-accent-soft) !important; color:var(--ov-accent-2) !important;
+  border:1px solid var(--ov-accent-line) !important;
+}
+html body#app.theme-industrial .sidebar-global-strip > * { border-radius:10px !important; }
+
+/* ---- Toolbar de Agenda: botones consistentes, input de mes legible ---- */
+html body#app.theme-industrial .toolbar-label-inline { color:var(--ov-text-3) !important; font-weight:700 !important; text-transform:uppercase !important; letter-spacing:.06em !important; font-size:11px !important; }
+html body#app.theme-industrial input[type="month"],
+html body#app.theme-industrial input[type="date"] { color-scheme:dark !important; }
+
+/* ════ Resumen "Actividades próximas" (.cotz-card) — lista con jerarquía ════ */
+html body#app.theme-industrial .cotz-card {
+  background:var(--ov-surface) !important; border:1px solid var(--ov-line) !important;
+  border-radius:14px !important; padding:18px 20px !important; box-shadow:var(--ov-shadow) !important;
+}
+html body#app.theme-industrial .cotz-card-title {
+  display:flex !important; align-items:center !important; gap:12px !important;
+  font-size:18px !important; font-weight:800 !important; letter-spacing:-.01em !important;
+  margin:0 0 16px !important; color:var(--ov-text) !important;
+}
+html body#app.theme-industrial .cotz-card-title > i {
+  display:inline-flex !important; align-items:center !important; justify-content:center !important;
+  width:36px !important; height:36px !important; flex:0 0 36px !important;
+  background:linear-gradient(180deg,var(--ov-accent-2),var(--ov-accent)) !important;
+  color:#fff !important; border-radius:11px !important; font-size:15px !important;
+}
+html body#app.theme-industrial .cotz-card > div { display:flex !important; flex-direction:column !important; gap:0 !important; }
+/* encabezados de cada categoría (div con icono) */
+html body#app.theme-industrial .cotz-card > div > div:has(> i) {
+  display:flex !important; align-items:center !important; gap:10px !important;
+  font-weight:700 !important; color:var(--ov-text) !important; font-size:14px !important;
+  margin-top:14px !important; padding-bottom:2px !important;
+}
+html body#app.theme-industrial .cotz-card > div > div:has(> i):first-child { margin-top:0 !important; }
+html body#app.theme-industrial .cotz-card > div > div > i {
+  color:var(--ov-accent-2) !important; width:18px !important; text-align:center !important;
+}
+/* sublíneas de estado vacío */
+html body#app.theme-industrial .cotz-card .muted {
+  margin:1px 0 0 28px !important; font-size:12.5px !important; color:var(--ov-text-3) !important;
+}
+
+/* ╔══════════════════════════════════════════════════════════════════════╗
+   ║  V4 · TRANSFORMACIÓN MAJESTUOSA — "Aurora Glass" premium (2026-06-20)  ║
+   ║  Fondo aurora con glows de color · superficies glassmorphism ·        ║
+   ║  acento violeta-índigo con glow · tipografía imponente.               ║
+   ╚══════════════════════════════════════════════════════════════════════╝ */
+
+/* ---- Tokens majestuosos (re-escriben los previos vía cascada) ---- */
+html body#app.theme-industrial {
+  --ov-accent:#7c6cff;
+  --ov-accent-2:#a78bfa;
+  --ov-accent-ink:#0a0712;
+  --ov-accent-soft:rgba(124,108,255,.16);
+  --ov-accent-line:rgba(124,108,255,.5);
+  --ov-cyan:#38bdf8;
+  --ov-glow:0 0 0 1px rgba(124,108,255,.35), 0 12px 40px -12px rgba(124,108,255,.45);
+  --ov-surface:rgba(24,28,46,.72);
+  --ov-surface-2:rgba(33,38,60,.78);
+  --ov-surface-3:rgba(45,52,82,.85);
+  --ov-line:rgba(255,255,255,.08);
+  --ov-line-strong:rgba(255,255,255,.16);
+}
+
+/* ---- Fondo AURORA: destellos de color sobre negro profundo ---- */
+html body#app.theme-industrial,
+html body#app.theme-industrial.md3-on,
+html body#app.theme-industrial:not(.appearance-light),
+html body#app.theme-industrial.md3-on:not(.appearance-light) {
+  background:
+    radial-gradient(1100px 640px at 80% -12%, rgba(124,108,255,.22), transparent 55%),
+    radial-gradient(900px 560px at 6% 4%, rgba(56,189,248,.14), transparent 52%),
+    radial-gradient(820px 620px at 52% 122%, rgba(168,139,250,.16), transparent 55%),
+    radial-gradient(700px 500px at 100% 60%, rgba(99,102,241,.12), transparent 50%),
+    linear-gradient(180deg,#080b14 0%,#070a12 100%) !important;
+  background-attachment:fixed !important;
+  background-color:#070a12 !important;
+}
+
+/* ---- Superficies de CRISTAL esmerilado con borde luminoso ---- */
 html body#app.theme-industrial .panel,
 html body#app.theme-industrial section.panel,
 html body#app.theme-industrial section.panel.active,
@@ -65,338 +665,527 @@ html body#app.theme-industrial .filters-card,
 html body#app.theme-industrial .card,
 html body#app.theme-industrial .table-wrap,
 html body#app.theme-industrial .md-table-wrap {
-  background:var(--surface) !important;
-  border:1px solid var(--line) !important;
-  border-radius:var(--r) !important;
-  box-shadow:var(--sh) !important;
-  backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
-  color:var(--text) !important;
+  background:linear-gradient(180deg, rgba(34,40,64,.66), rgba(20,24,40,.6)) !important;
+  backdrop-filter:blur(20px) saturate(150%) !important;
+  -webkit-backdrop-filter:blur(20px) saturate(150%) !important;
+  border:1px solid rgba(255,255,255,.09) !important;
+  border-radius:18px !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.08) inset,
+    0 30px 70px -34px rgba(0,0,0,.85),
+    0 0 0 1px rgba(124,108,255,.04) !important;
 }
-html body#app.theme-industrial .content,
-html body#app.theme-industrial #main-content { background:transparent !important; padding:22px 26px 60px !important; }
-html body#app.theme-industrial .panel { padding:22px !important; margin-bottom:18px !important; }
-html body#app.theme-industrial .toolbar { background:var(--surface-2) !important; border:1px solid var(--line) !important; border-radius:var(--r) !important; }
+html body#app.theme-industrial .panel:hover {
+  border-color:rgba(124,108,255,.22) !important;
+}
 
-/* Encabezados de sección */
+/* ---- Header: cristal intenso + hairline luminoso inferior ---- */
+html body#app.theme-industrial .header,
+html body#app.theme-industrial header.header {
+  background:linear-gradient(180deg, rgba(12,15,26,.82), rgba(10,13,22,.66)) !important;
+  backdrop-filter:blur(22px) saturate(160%) !important;
+  -webkit-backdrop-filter:blur(22px) saturate(160%) !important;
+  border-bottom:1px solid rgba(124,108,255,.18) !important;
+  box-shadow:0 18px 50px -30px rgba(0,0,0,.95) !important;
+}
+
+/* ---- Sidebar: cristal + columna de luz en el borde ---- */
+html body#app.theme-industrial .sidebar-nav,
+html body#app.theme-industrial aside.sidebar-nav {
+  background:linear-gradient(180deg, rgba(14,17,30,.7), rgba(9,12,20,.6)) !important;
+  backdrop-filter:blur(20px) saturate(150%) !important;
+  -webkit-backdrop-filter:blur(20px) saturate(150%) !important;
+  border-right:1px solid rgba(124,108,255,.16) !important;
+}
+
+/* ---- Tipografía más imponente ---- */
+html body#app.theme-industrial .section-header h2,
+html body#app.theme-industrial .section-header--ux h2,
+html body#app.theme-industrial .section-header h1 { font-size:23px !important; letter-spacing:-.025em !important; }
+html body#app.theme-industrial .cotz-card-title { font-size:19px !important; }
+html body#app.theme-industrial .header-brand-service { font-size:19px !important; }
+
+/* ---- Section headers: glow del icon-chip + borde superior luminoso ---- */
 html body#app.theme-industrial .section-header,
 html body#app.theme-industrial .section-header--ux {
-  display:flex !important; align-items:center !important; gap:14px !important;
-  text-align:left !important; justify-content:flex-start !important;
-  padding:16px 20px !important; margin-bottom:18px !important;
-  background:var(--surface) !important;
-  border:1px solid var(--line) !important; border-left:3px solid var(--accent) !important;
-  border-radius:var(--r) !important; box-shadow:var(--sh) !important;
+  background:linear-gradient(135deg, rgba(124,108,255,.16), rgba(56,189,248,.05) 55%, rgba(20,24,40,.5)) !important;
+  border:1px solid rgba(255,255,255,.08) !important;
+  border-left:3px solid var(--ov-accent) !important;
+  border-radius:16px !important;
+  box-shadow:0 1px 0 rgba(255,255,255,.06) inset, 0 20px 50px -34px rgba(124,108,255,.6) !important;
 }
 html body#app.theme-industrial .section-header > i,
 html body#app.theme-industrial .section-header--ux > i,
 html body#app.theme-industrial .section-header h2 > i,
 html body#app.theme-industrial .cotz-card-title > i {
-  display:inline-flex !important; align-items:center !important; justify-content:center !important;
-  width:40px !important; height:40px !important; flex:0 0 40px !important;
-  background:var(--accent) !important; color:var(--accent-ink) !important;
-  border-radius:11px !important; font-size:17px !important; box-shadow:none !important;
-}
-html body#app.theme-industrial .section-header h2,
-html body#app.theme-industrial .section-header--ux h2,
-html body#app.theme-industrial .section-header h1,
-html body#app.theme-industrial .cotz-card-title,
-html body#app.theme-industrial .panel h2,
-html body#app.theme-industrial .panel h3 { color:var(--text) !important; font-weight:800 !important; letter-spacing:-.02em !important; -webkit-text-fill-color:var(--text) !important; }
-html body#app.theme-industrial .section-header p,
-html body#app.theme-industrial .muted,
-html body#app.theme-industrial .subtitle,
-html body#app.theme-industrial .mant-gar-hint { color:var(--text-2) !important; }
-
-/* ---------- 4. HEADER (blanco translúcido + hairline) ------------------- */
-html body#app.theme-industrial .header,
-html body#app.theme-industrial header.header {
-  background:rgba(255,255,255,.88) !important;
-  backdrop-filter:saturate(140%) blur(10px) !important; -webkit-backdrop-filter:saturate(140%) blur(10px) !important;
-  border-bottom:1px solid var(--line-2) !important;
-  box-shadow:0 1px 0 rgba(17,17,20,.04) !important;
-}
-html body#app.theme-industrial .header-brand-eyebrow { color:var(--accent) !important; font-size:10px !important; letter-spacing:.16em !important; text-transform:uppercase !important; font-weight:700 !important; -webkit-text-fill-color:var(--accent) !important; }
-html body#app.theme-industrial .header-brand-service { color:var(--text) !important; font-size:18px !important; font-weight:800 !important; letter-spacing:-.01em !important; white-space:nowrap !important; -webkit-text-fill-color:var(--text) !important; }
-html body#app.theme-industrial .header-brand-tagline { color:var(--text-3) !important; font-size:11px !important; }
-html body#app.theme-industrial .header-brand-logo-img,
-html body#app.theme-industrial #header-brand-logo { width:auto !important; height:38px !important; max-width:120px !important; object-fit:contain !important; border-radius:8px !important; }
-/* pills de acceso */
-html body#app.theme-industrial .mapa-owner-pill,
-html body#app.theme-industrial .mapa-header-owner-nav .tab {
-  background:var(--surface) !important; color:var(--text-2) !important;
-  border:1px solid var(--line) !important; border-radius:8px !important; font-weight:600 !important;
-}
-html body#app.theme-industrial .mapa-owner-pill:hover { background:var(--surface-3) !important; color:var(--text) !important; }
-html body#app.theme-industrial .mapa-header-owner-nav .tab.active,
-html body#app.theme-industrial .mapa-header-owner-nav .mapa-owner-pill.active {
-  background:var(--accent) !important; color:var(--accent-ink) !important; border-color:transparent !important;
-  font-weight:700 !important; box-shadow:none !important; -webkit-text-fill-color:var(--accent-ink) !important;
-}
-html body#app.theme-industrial .mapa-header-owner-nav .tab.active i,
-html body#app.theme-industrial .mapa-header-owner-nav .tab.active * { color:var(--accent-ink) !important; -webkit-text-fill-color:var(--accent-ink) !important; }
-/* powered by + iconos header */
-html body#app.theme-industrial .header-powered-by,
-html body#app.theme-industrial .header-powered-by-italic,
-html body#app.theme-industrial .header-powered-by--nav-slot * { font-family:var(--font) !important; font-style:normal !important; font-weight:600 !important; font-size:11px !important; color:var(--text-3) !important; -webkit-text-fill-color:var(--text-3) !important; }
-html body#app.theme-industrial .btn-icon-header { background:var(--surface) !important; border:1px solid var(--line) !important; color:var(--text-2) !important; border-radius:9px !important; }
-html body#app.theme-industrial .btn-icon-header:hover { color:var(--text) !important; background:var(--surface-3) !important; }
-html body#app.theme-industrial .mapa-ms-live-pill { background:var(--ok-soft) !important; border:1px solid rgba(22,163,74,.3) !important; color:var(--ok) !important; border-radius:999px !important; }
-html body#app.theme-industrial .mapa-ms-live-dot { background:var(--ok) !important; }
-
-/* ---------- 5. SIDEBAR (blanco) + NAVEGACIÓN --------------------------- */
-html body#app.theme-industrial .sidebar-nav,
-html body#app.theme-industrial aside.sidebar-nav {
-  background:var(--surface) !important; border-right:1px solid var(--line) !important;
-}
-html body#app.theme-industrial .mapa-ms-display-title,
-html body#app.theme-industrial .sidebar-nav-title { color:var(--text) !important; font-weight:800 !important; letter-spacing:.02em !important; -webkit-text-fill-color:var(--text) !important; }
-html body#app.theme-industrial .mapa-ms-display-kicker { color:var(--text-3) !important; }
-html body#app.theme-industrial .mapa-rail-accent,
-html body#app.theme-industrial .mapa-ms-title-accent { background:var(--accent) !important; box-shadow:none !important; }
-html body#app.theme-industrial .mapa-ms-stat-card { background:var(--surface-2) !important; border:1px solid var(--line) !important; border-radius:var(--r-sm) !important; }
-html body#app.theme-industrial .mapa-ms-stat-card--accent { background:var(--accent-soft) !important; border-color:var(--accent-line) !important; }
-html body#app.theme-industrial .mapa-ms-stat-value { color:var(--text) !important; font-weight:800 !important; }
-html body#app.theme-industrial .mapa-ms-stat-head { color:var(--text-3) !important; }
-html body#app.theme-industrial .sidebar-branch-filter,
-html body#app.theme-industrial .header-branch-filter { background:var(--surface-3) !important; border:1px solid var(--line) !important; color:var(--text) !important; border-radius:9px !important; }
-html body#app.theme-industrial .header-slot-tc,
-html body#app.theme-industrial #header-slot-tc { background:var(--accent-soft) !important; color:#9a6a00 !important; border:1px solid var(--accent-line) !important; border-radius:8px !important; font-weight:700 !important; -webkit-text-fill-color:#9a6a00 !important; }
-html body#app.theme-industrial .header-slot-urgent,
-html body#app.theme-industrial .header-slot-alertas { background:var(--warn-soft) !important; color:var(--warn) !important; border:1px solid rgba(217,119,6,.28) !important; border-radius:8px !important; }
-
-/* Tabs de los módulos */
-html body#app.theme-industrial .tabs--rail .tab,
-html body#app.theme-industrial #sidebar-rail-tabs .tab {
-  display:flex !important; align-items:center !important; gap:11px !important; width:100% !important;
-  text-align:left !important; background:transparent !important; border:1px solid transparent !important;
-  color:var(--text-2) !important; font-weight:600 !important; font-size:13.5px !important;
-  border-radius:9px !important; padding:9px 12px !important; margin:1px 0 !important; position:relative !important;
-  transition:.14s ease !important; -webkit-text-fill-color:currentColor !important;
-}
-html body#app.theme-industrial .tabs--rail .tab i { color:var(--text-3) !important; width:18px !important; text-align:center !important; }
-html body#app.theme-industrial .tabs--rail .tab:hover { background:var(--surface-3) !important; color:var(--text) !important; }
-html body#app.theme-industrial .tabs--rail .tab:hover i { color:var(--accent) !important; }
-html body#app.theme-industrial #sidebar-rail-tabs .tab.active,
-html body#app.theme-industrial .tabs--rail .tab.active {
-  background:var(--accent-soft) !important; color:var(--text) !important; font-weight:700 !important;
-  border:1px solid var(--accent-line) !important; -webkit-text-fill-color:var(--text) !important;
-}
-html body#app.theme-industrial #sidebar-rail-tabs .tab.active *,
-html body#app.theme-industrial #sidebar-rail-tabs .tab.active { -webkit-text-fill-color:var(--text) !important; }
-html body#app.theme-industrial #sidebar-rail-tabs .tab.active i { color:var(--accent) !important; -webkit-text-fill-color:var(--accent) !important; }
-html body#app.theme-industrial #sidebar-rail-tabs .tab.active::before {
-  content:"" !important; position:absolute !important; left:-1px !important; top:8px !important; bottom:8px !important;
-  width:3px !important; border-radius:3px !important; background:var(--accent) !important; box-shadow:none !important;
+  background:linear-gradient(145deg, var(--ov-accent-2), var(--ov-accent) 60%, var(--ov-cyan)) !important;
+  box-shadow:0 10px 26px -10px rgba(124,108,255,.9), 0 0 0 1px rgba(255,255,255,.12) inset !important;
 }
 
-/* Grupos de navegación (inyectados por JS) */
-html body#app.theme-industrial .ov-nav-group-label {
-  display:flex !important; align-items:center !important; gap:8px !important; width:100% !important;
-  background:transparent !important; border:0 !important; color:var(--text-3) !important;
-  font-size:10.5px !important; font-weight:800 !important; letter-spacing:.12em !important; text-transform:uppercase !important;
-  padding:12px 12px 6px !important; cursor:pointer !important; -webkit-text-fill-color:var(--text-3) !important;
-}
-html body#app.theme-industrial .ov-nav-group-label:hover { color:var(--text) !important; }
-html body#app.theme-industrial .ov-nav-group-label .ov-grp-chev { margin-left:auto !important; transition:transform .18s ease !important; font-size:10px !important; opacity:.6 !important; }
-html body#app.theme-industrial .ov-nav-group.collapsed .ov-grp-chev { transform:rotate(-90deg) !important; }
-html body#app.theme-industrial .ov-nav-group.collapsed .ov-nav-group-body { display:none !important; }
-html body#app.theme-industrial .ov-nav-search-wrap { padding:6px 8px 8px !important; }
-html body#app.theme-industrial .ov-nav-search {
-  width:100% !important; background:var(--surface-3) !important; border:1px solid var(--line) !important;
-  border-radius:10px !important; color:var(--text) !important; font:600 13px var(--font) !important;
-  padding:9px 12px 9px 32px !important;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238a8a93' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M21 21l-4.3-4.3'/%3E%3C/svg%3E") !important;
-  background-repeat:no-repeat !important; background-position:10px 50% !important;
-}
-html body#app.theme-industrial .ov-nav-search:focus { outline:none !important; border-color:var(--accent-line) !important; box-shadow:0 0 0 3px var(--accent-soft) !important; }
-html body#app.theme-industrial .ov-nav-hit { display:none !important; }
-
-/* ---------- 6. KPI / TARJETAS DE MÉTRICA ------------------------------- */
-html body#app.theme-industrial .stat-card,
-html body#app.theme-industrial .kpi,
-html body#app.theme-industrial .kpi-card,
-html body#app.theme-industrial [class*="kpi-card"],
-html body#app.theme-industrial .dashboard-score-tile,
-html body#app.theme-industrial .quick-stat-item,
-html body#app.theme-industrial [class*="prospeccion-kpi"] {
-  background:var(--surface) !important; border:1px solid var(--line) !important;
-  border-radius:var(--r) !important; box-shadow:var(--sh) !important; color:var(--text) !important;
-  backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
-}
-html body#app.theme-industrial .stat-card:hover,
-html body#app.theme-industrial [class*="kpi-card"]:hover,
-html body#app.theme-industrial .dashboard-score-tile:hover { border-color:var(--accent-line) !important; box-shadow:0 14px 30px -18px rgba(242,169,0,.4) !important; transform:translateY(-1px) !important; transition:.16s ease !important; }
-html body#app.theme-industrial .kpi-num,
-html body#app.theme-industrial [class*="kpi-card__value"],
-html body#app.theme-industrial .prospeccion-kpi-card__value,
-html body#app.theme-industrial .quick-stat-value,
-html body#app.theme-industrial .dashboard-score-tile .score { color:var(--text) !important; font-weight:800 !important; letter-spacing:-.02em !important; -webkit-text-fill-color:var(--text) !important; }
-html body#app.theme-industrial .quick-stat-label,
-html body#app.theme-industrial .stat-card .label { color:var(--text-3) !important; }
-
-/* ---------- 7. BOTONES -------------------------------------------------- */
-html body#app.theme-industrial .btn {
-  font-family:var(--font) !important; font-weight:650 !important; border-radius:10px !important; transition:.15s ease !important;
-  background:var(--surface) !important; color:var(--text) !important; border:1px solid var(--line-2) !important; box-shadow:none !important;
-}
-html body#app.theme-industrial .btn:hover { background:var(--surface-3) !important; border-color:rgba(17,17,20,.2) !important; }
-html body#app.theme-industrial .btn.outline,
-html body#app.theme-industrial .btn-secondary { background:transparent !important; }
+/* ---- Botón primario: gradiente vibrante con GLOW ---- */
 html body#app.theme-industrial .btn.primary,
 html body#app.theme-industrial .btn-primary,
 html body#app.theme-industrial .btn-new,
 html body#app.theme-industrial .btn.highlight {
-  background:var(--accent) !important; color:var(--accent-ink) !important; border:1px solid transparent !important;
-  font-weight:750 !important; box-shadow:0 6px 16px -8px rgba(242,169,0,.6) !important; -webkit-text-fill-color:var(--accent-ink) !important;
+  background:linear-gradient(135deg, var(--ov-accent-2), var(--ov-accent) 55%, #6366f1) !important;
+  color:#fff !important;
+  box-shadow:0 10px 30px -10px rgba(124,108,255,.85), 0 0 0 1px rgba(255,255,255,.1) inset !important;
 }
 html body#app.theme-industrial .btn.primary:hover,
 html body#app.theme-industrial .btn-primary:hover,
-html body#app.theme-industrial .btn-new:hover { filter:brightness(1.04) !important; }
-html body#app.theme-industrial .btn.danger { background:var(--danger-soft) !important; color:var(--danger) !important; border-color:rgba(220,38,38,.3) !important; }
-html body#app.theme-industrial .btn:focus-visible { outline:none !important; box-shadow:0 0 0 3px var(--accent-soft) !important; border-color:var(--accent-line) !important; }
+html body#app.theme-industrial .btn-new:hover { filter:brightness(1.08) !important; box-shadow:0 14px 38px -10px rgba(124,108,255,1) !important; }
 
-/* ---------- 8. INPUTS -------------------------------------------------- */
-html body#app.theme-industrial input:not([type=checkbox]):not([type=radio]):not([type=range]),
-html body#app.theme-industrial select,
-html body#app.theme-industrial textarea {
-  background:rgba(17,17,20,.03) !important; color:var(--text) !important; border:1px solid var(--line) !important;
-  border-radius:10px !important; font-family:var(--font) !important; color-scheme:light !important;
+/* ---- Nav activo (sidebar): píldora con glow ---- */
+html body#app.theme-industrial #sidebar-rail-tabs button.tab.active,
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active {
+  background:linear-gradient(135deg, rgba(124,108,255,.28), rgba(56,189,248,.12)) !important;
+  color:#fff !important;
+  border:1px solid rgba(124,108,255,.5) !important;
+  box-shadow:0 8px 24px -12px rgba(124,108,255,.8), 0 0 0 1px rgba(255,255,255,.06) inset !important;
 }
-html body#app.theme-industrial input::placeholder,
-html body#app.theme-industrial textarea::placeholder { color:var(--text-3) !important; }
-html body#app.theme-industrial input:focus,
-html body#app.theme-industrial select:focus,
-html body#app.theme-industrial textarea:focus { outline:none !important; border-color:var(--accent-line) !important; box-shadow:0 0 0 3px var(--accent-soft) !important; }
-
-/* ---------- 9. TABLAS -------------------------------------------------- */
-html body#app.theme-industrial table { color:var(--text) !important; }
-html body#app.theme-industrial thead th,
-html body#app.theme-industrial .md-table thead th {
-  background:var(--surface-2) !important; color:var(--text-3) !important; border-bottom:1px solid var(--line-2) !important;
-  text-transform:uppercase !important; font-size:11px !important; letter-spacing:.05em !important; font-weight:700 !important; vertical-align:middle !important;
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active::before {
+  background:linear-gradient(180deg,var(--ov-accent-2),var(--ov-cyan)) !important;
+  box-shadow:0 0 12px rgba(124,108,255,.9) !important;
 }
-html body#app.theme-industrial tbody td,
-html body#app.theme-industrial .md-table tbody td { border-bottom:1px solid var(--line) !important; color:var(--text) !important; vertical-align:middle !important; }
-html body#app.theme-industrial tbody tr:hover td { background:var(--surface-2) !important; }
-html body#app.theme-industrial td.sla-cell { text-align:center !important; white-space:nowrap !important; }
-html body#app.theme-industrial td.th-actions > .cot-actions-row,
-html body#app.theme-industrial td.th-actions > [class*="actions-row"] { display:inline-flex !important; flex-wrap:nowrap !important; gap:6px !important; align-items:center !important; justify-content:flex-end !important; width:100% !important; }
 
-/* Botones de acción de tablas → ghost claro uniforme (JS quita rellenos inline) */
-html body#app.theme-industrial tbody td .btn,
-html body#app.theme-industrial .table-wrap .btn.small,
-html body#app.theme-industrial [class*="prem-action"],
-html body#app.theme-industrial [class*="btn-edit"],
-html body#app.theme-industrial [class*="btn-delete"],
-html body#app.theme-industrial [class*="btn-preview"],
-html body#app.theme-industrial [class*="btn-pdf"],
-html body#app.theme-industrial [class*="btn-aplicar"] {
-  background:rgba(17,17,20,.04) !important; border:1px solid var(--line) !important; color:var(--text-2) !important;
-  border-radius:9px !important; box-shadow:none !important; width:32px !important; height:32px !important; min-width:32px !important;
-  padding:0 !important; display:inline-flex !important; align-items:center !important; justify-content:center !important;
+/* ---- Header pills activos: gradiente + glow ---- */
+html body#app.theme-industrial .mapa-header-owner-nav .tab.active,
+html body#app.theme-industrial .mapa-header-owner-nav .mapa-owner-pill.active {
+  background:linear-gradient(135deg, var(--ov-accent-2), var(--ov-accent) 60%, #6366f1) !important;
+  color:#fff !important; border-color:transparent !important;
+  box-shadow:0 8px 22px -10px rgba(124,108,255,.9) !important;
 }
-html body#app.theme-industrial tbody td .btn i,
-html body#app.theme-industrial [class*="prem-action"] i { color:var(--text-2) !important; -webkit-text-fill-color:var(--text-2) !important; }
-html body#app.theme-industrial tbody td .btn:hover,
-html body#app.theme-industrial [class*="prem-action"]:hover { background:var(--accent-soft) !important; border-color:var(--accent-line) !important; }
-html body#app.theme-industrial tbody td .btn:hover i { color:#9a6a00 !important; }
-html body#app.theme-industrial [class*="btn-delete"] i { color:#e06666 !important; }
-html body#app.theme-industrial [class*="btn-delete"]:hover { background:var(--danger-soft) !important; border-color:rgba(220,38,38,.35) !important; }
 
-/* ---------- 10. BADGES / SEMÁFOROS (tintes claros) -------------------- */
-html body#app.theme-industrial .badge,
-html body#app.theme-industrial [class*="semaforo"],
-html body#app.theme-industrial .badge-moneda,
-html body#app.theme-industrial [class*="vigencia"] {
-  border-radius:999px !important; font-weight:600 !important; font-size:11px !important; padding:3px 10px !important;
-  letter-spacing:0 !important; text-transform:none !important; border:1px solid var(--line) !important;
-  background:var(--surface-3) !important; color:var(--text-2) !important; display:inline-flex !important; align-items:center !important; gap:5px !important; box-shadow:none !important;
+/* ---- KPI / stat cards: cristal + acento al hover ---- */
+html body#app.theme-industrial .stat-card,
+html body#app.theme-industrial .kpi,
+html body#app.theme-industrial .kpi-card,
+html body#app.theme-industrial .dashboard-score-tile,
+html body#app.theme-industrial .quick-stat-item,
+html body#app.theme-industrial [class*="kpi-card"] {
+  background:linear-gradient(180deg, rgba(40,46,72,.6), rgba(22,26,42,.55)) !important;
+  backdrop-filter:blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter:blur(16px) saturate(140%) !important;
+  border:1px solid rgba(255,255,255,.08) !important; border-radius:16px !important;
 }
-html body#app.theme-industrial .semaforo-gris,
-html body#app.theme-industrial [class*="-gris"] { background:rgba(100,116,139,.12) !important; color:#475569 !important; border-color:rgba(100,116,139,.25) !important; }
-html body#app.theme-industrial .semaforo-amarillo,
-html body#app.theme-industrial [class*="-amarillo"],
-html body#app.theme-industrial [class*="por-vencer"] { background:var(--warn-soft) !important; color:var(--warn) !important; border-color:rgba(217,119,6,.3) !important; }
-html body#app.theme-industrial .semaforo-rojo,
-html body#app.theme-industrial [class*="-rojo"],
-html body#app.theme-industrial [class*="vencid"] { background:var(--danger-soft) !important; color:var(--danger) !important; border-color:rgba(220,38,38,.3) !important; }
-html body#app.theme-industrial .semaforo-verde,
-html body#app.theme-industrial [class*="-verde"],
-html body#app.theme-industrial [class*="aplicad"],
-html body#app.theme-industrial [class*="vigente"] { background:var(--ok-soft) !important; color:var(--ok) !important; border-color:rgba(22,163,74,.28) !important; }
-html body#app.theme-industrial .semaforo-azul,
-html body#app.theme-industrial [class*="-azul"] { background:var(--info-soft) !important; color:var(--info) !important; border-color:rgba(37,99,235,.28) !important; }
-html body#app.theme-industrial .badge-moneda { background:var(--surface-3) !important; color:var(--text-3) !important; font-weight:700 !important; }
+html body#app.theme-industrial .stat-card:hover,
+html body#app.theme-industrial [class*="kpi-card"]:hover,
+html body#app.theme-industrial .dashboard-score-tile:hover {
+  border-color:rgba(124,108,255,.4) !important;
+  box-shadow:0 18px 44px -22px rgba(124,108,255,.6) !important;
+  transform:translateY(-2px) !important;
+}
 
-/* ---------- 11. CALENDARIO (claro) ----------------------------------- */
-html body#app.theme-industrial .mant-gar-cal-wrap,
-html body#app.theme-industrial [class*="cal-wrap"] { background:var(--surface-2) !important; border:1px solid var(--line) !important; border-radius:16px !important; padding:16px !important; }
-html body#app.theme-industrial .cal-month-summary { display:inline-flex !important; align-items:center !important; gap:8px !important; background:var(--accent-soft) !important; color:#9a6a00 !important; border:1px solid var(--accent-line) !important; border-radius:999px !important; padding:6px 14px !important; font-weight:700 !important; margin:0 0 14px !important; }
-html body#app.theme-industrial .cal-header { display:grid !important; grid-template-columns:repeat(7,1fr) !important; gap:8px !important; margin-bottom:8px !important; }
-html body#app.theme-industrial .cal-header span { text-align:center !important; color:var(--text-3) !important; font-size:11px !important; font-weight:800 !important; letter-spacing:.08em !important; text-transform:uppercase !important; }
-html body#app.theme-industrial .cal-grid { display:grid !important; grid-template-columns:repeat(7,1fr) !important; gap:8px !important; }
+/* ---- Calendario: celdas de cristal con glow al hover ---- */
 html body#app.theme-industrial .cal-cell.cal-day,
-html body#app.theme-industrial .cal-day { background:var(--surface) !important; border:1px solid var(--line) !important; border-radius:12px !important; min-height:90px !important; padding:8px 10px !important; transition:.16s ease !important; cursor:pointer !important; }
-html body#app.theme-industrial .cal-day--click:hover { border-color:var(--accent-line) !important; transform:translateY(-2px) !important; box-shadow:var(--sh) !important; }
-html body#app.theme-industrial .cal-day-num { font-weight:700 !important; color:var(--text-2) !important; }
-html body#app.theme-industrial .cal-dots { display:flex !important; gap:4px !important; margin-top:6px !important; flex-wrap:wrap !important; }
-html body#app.theme-industrial .cal-dots > * { width:7px !important; height:7px !important; border-radius:999px !important; background:var(--accent) !important; }
-html body#app.theme-industrial .cal-day--today,
-html body#app.theme-industrial .cal-day.today { border-color:var(--accent) !important; box-shadow:0 0 0 1px var(--accent) inset !important; }
-
-/* ---------- 12. RESUMEN cotz-card (Actividades próximas) -------------- */
-html body#app.theme-industrial .cotz-card { background:var(--surface) !important; border:1px solid var(--line) !important; border-radius:14px !important; padding:18px 20px !important; box-shadow:var(--sh) !important; }
-html body#app.theme-industrial .cotz-card-title { display:flex !important; align-items:center !important; gap:12px !important; font-size:18px !important; font-weight:800 !important; margin:0 0 16px !important; color:var(--text) !important; }
-html body#app.theme-industrial .cotz-card > div > div:has(> i) { display:flex !important; align-items:center !important; gap:10px !important; font-weight:700 !important; color:var(--text) !important; font-size:14px !important; margin-top:14px !important; }
-html body#app.theme-industrial .cotz-card > div > div > i { color:var(--accent) !important; width:18px !important; text-align:center !important; }
-html body#app.theme-industrial .cotz-card .muted { margin:1px 0 0 28px !important; font-size:12.5px !important; color:var(--text-3) !important; }
-
-/* ---------- 13. CHIPS (etapa con dots) ------------------------------- */
-html body#app.theme-industrial .chip,
-html body#app.theme-industrial .pill {
-  border-radius:999px !important; font-weight:600 !important; border:1px solid var(--line) !important;
-  background:var(--surface) !important; color:var(--text-2) !important;
+html body#app.theme-industrial .cal-day {
+  background:linear-gradient(180deg, rgba(38,44,70,.5), rgba(20,24,40,.45)) !important;
+  border:1px solid rgba(255,255,255,.07) !important; border-radius:14px !important;
 }
-html body#app.theme-industrial .chip.active,
-html body#app.theme-industrial .chip[aria-pressed="true"] { background:var(--accent-soft) !important; color:#9a6a00 !important; border-color:var(--accent-line) !important; }
+html body#app.theme-industrial .cal-day--click:hover {
+  border-color:rgba(124,108,255,.5) !important;
+  box-shadow:0 16px 36px -18px rgba(124,108,255,.7) !important;
+}
+html body#app.theme-industrial .cal-day--today,
+html body#app.theme-industrial .cal-day.today {
+  border-color:var(--ov-accent) !important;
+  box-shadow:0 0 0 1px var(--ov-accent) inset, 0 0 22px -2px rgba(124,108,255,.6) !important;
+}
+html body#app.theme-industrial .cal-dots > * {
+  background:linear-gradient(180deg,var(--ov-accent-2),var(--ov-cyan)) !important;
+  box-shadow:0 0 8px rgba(124,108,255,.8) !important;
+}
 
-/* ---------- 14. MODALES (blanco) ------------------------------------- */
+/* ---- DavAI FAB con glow violeta ---- */
+html body#app.theme-industrial .davai-fab,
+html body#app.theme-industrial [class*="davai-fab"] button {
+  background:linear-gradient(135deg,var(--ov-accent-2),var(--ov-accent) 60%,var(--ov-cyan)) !important;
+  box-shadow:0 14px 36px -10px rgba(124,108,255,.95) !important;
+}
+
+/* ---- Modales: cristal profundo ---- */
 html body#app.theme-industrial .modal,
 html body#app.theme-industrial .modal-card,
 html body#app.theme-industrial [class*="modal"] .modal-content {
-  background:var(--surface) !important; border:1px solid var(--line-2) !important; border-radius:var(--r-lg) !important;
-  box-shadow:var(--sh-lg) !important; color:var(--text) !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+  background:linear-gradient(180deg, rgba(28,32,52,.92), rgba(18,21,36,.92)) !important;
+  backdrop-filter:blur(24px) saturate(150%) !important;
+  -webkit-backdrop-filter:blur(24px) saturate(150%) !important;
+  border:1px solid rgba(124,108,255,.22) !important; border-radius:22px !important;
 }
-html body#app.theme-industrial .modal-backdrop,
-html body#app.theme-industrial .overlay { background:rgba(17,17,20,.4) !important; backdrop-filter:blur(2px) !important; }
 
-/* ---------- 15. MAPA: tarjetas flotantes claras ---------------------- */
-html body#app.theme-industrial [class*="map"] [class*="card"],
-html body#app.theme-industrial .leaflet-control,
-html body#app.theme-industrial [class*="cobertura"],
-html body#app.theme-industrial [class*="leyenda"],
-html body#app.theme-industrial [class*="legend"],
-html body#app.theme-industrial [class*="map-overlay"],
-html body#app.theme-industrial [class*="filtros-mapa"],
-html body#app.theme-industrial [class*="filter-bar"] {
-  background:rgba(255,255,255,.95) !important; color:var(--text) !important;
-  border:1px solid var(--line) !important; border-radius:14px !important; box-shadow:var(--sh) !important;
+/* ---- Live pill + brand accent en cian/violeta ---- */
+html body#app.theme-industrial .mapa-rail-accent,
+html body#app.theme-industrial .mapa-ms-title-accent {
+  background:linear-gradient(180deg,var(--ov-accent-2),var(--ov-cyan)) !important;
+  box-shadow:0 0 14px rgba(124,108,255,.7) !important;
 }
-html body#app.theme-industrial .leaflet-bar a { background:#fff !important; color:var(--text) !important; }
 
-/* ---------- 16. SCROLLBARS claras ----------------------------------- */
-html body#app.theme-industrial *::-webkit-scrollbar { width:11px; height:11px; }
-html body#app.theme-industrial *::-webkit-scrollbar-thumb { background:rgba(17,17,20,.18); border-radius:999px; border:3px solid transparent; background-clip:content-box; }
-html body#app.theme-industrial *::-webkit-scrollbar-thumb:hover { background:rgba(17,17,20,.3); background-clip:content-box; }
-html body#app.theme-industrial *::-webkit-scrollbar-track { background:transparent; }
+/* ╔══════════════════════════════════════════════════════════════════════╗
+   ║  V5 · AZUL ELÉCTRICO ROYAL + MÁS DRAMÁTICO (2026-06-20)               ║
+   ║  Aurora animada · glows intensos en azul · micro-animaciones.         ║
+   ╚══════════════════════════════════════════════════════════════════════╝ */
 
-/* ---------- 17. Limpieza debug + DavAI ------------------------------ */
-html body#app.theme-industrial .ov-hidden-debug { display:none !important; }
-html body#app.theme-industrial .leaflet-control-attribution { opacity:.5 !important; font-size:9px !important; }
+html body#app.theme-industrial {
+  --ov-accent-rgb:47,107,255;        /* azul eléctrico royal */
+  --ov-accent2-rgb:94,140,255;
+  --ov-cyan-rgb:34,211,238;          /* cian eléctrico */
+  --ov-accent:#2f6bff;
+  --ov-accent-2:#5e8cff;
+  --ov-cyan:#22d3ee;
+  --ov-accent-soft:rgba(47,107,255,.18);
+  --ov-accent-line:rgba(47,107,255,.55);
+}
+
+/* ---- Fondo base más profundo (la aurora animada va encima en #ov-aurora) ---- */
+html body#app.theme-industrial,
+html body#app.theme-industrial.md3-on,
+html body#app.theme-industrial:not(.appearance-light),
+html body#app.theme-industrial.md3-on:not(.appearance-light) {
+  background:
+    radial-gradient(1200px 700px at 82% -12%, rgba(47,107,255,.20), transparent 55%),
+    radial-gradient(900px 560px at 4% 2%, rgba(34,211,238,.12), transparent 52%),
+    linear-gradient(180deg,#060912 0%,#05080f 100%) !important;
+  background-attachment:fixed !important;
+  background-color:#05080f !important;
+}
+
+/* ---- Capa AURORA animada (div #ov-aurora inyectado por JS) ---- */
+#ov-aurora {
+  position:fixed !important; inset:-20% !important; z-index:-1 !important;
+  pointer-events:none !important; overflow:hidden !important;
+  filter:blur(40px) saturate(140%) !important; opacity:.9 !important;
+}
+#ov-aurora::before, #ov-aurora::after {
+  content:"" !important; position:absolute !important; border-radius:50% !important;
+  mix-blend-mode:screen !important;
+}
+#ov-aurora::before {
+  width:55vw !important; height:55vw !important; left:-5vw !important; top:-10vw !important;
+  background:radial-gradient(circle at 50% 50%, rgba(47,107,255,.55), rgba(47,107,255,0) 65%) !important;
+  animation:ovAurora1 26s ease-in-out infinite alternate !important;
+}
+#ov-aurora::after {
+  width:50vw !important; height:50vw !important; right:-8vw !important; bottom:-12vw !important;
+  background:radial-gradient(circle at 50% 50%, rgba(34,211,238,.42), rgba(34,211,238,0) 65%) !important;
+  animation:ovAurora2 32s ease-in-out infinite alternate !important;
+}
+#ov-aurora .ov-aurora-3 {
+  position:absolute !important; width:46vw !important; height:46vw !important;
+  left:35vw !important; top:55vh !important; border-radius:50% !important; mix-blend-mode:screen !important;
+  background:radial-gradient(circle at 50% 50%, rgba(99,102,241,.4), rgba(99,102,241,0) 65%) !important;
+  animation:ovAurora3 38s ease-in-out infinite alternate !important;
+}
+@keyframes ovAurora1 { 0%{transform:translate3d(0,0,0) scale(1)} 100%{transform:translate3d(14vw,10vh,0) scale(1.25)} }
+@keyframes ovAurora2 { 0%{transform:translate3d(0,0,0) scale(1.1)} 100%{transform:translate3d(-12vw,-8vh,0) scale(1)} }
+@keyframes ovAurora3 { 0%{transform:translate3d(0,0,0) scale(1)} 100%{transform:translate3d(-10vw,12vh,0) scale(1.3)} }
+@media (prefers-reduced-motion: reduce) {
+  #ov-aurora::before, #ov-aurora::after, #ov-aurora .ov-aurora-3 { animation:none !important; }
+}
+
+/* ---- Paneles: glow azul + entrada suave ---- */
+html body#app.theme-industrial .panel,
+html body#app.theme-industrial section.panel,
+html body#app.theme-industrial section.panel.active,
+html body#app.theme-industrial .cotz-card,
+html body#app.theme-industrial .filters-card,
+html body#app.theme-industrial .card,
+html body#app.theme-industrial .table-wrap,
+html body#app.theme-industrial .md-table-wrap {
+  background:linear-gradient(180deg, rgba(26,34,58,.62), rgba(14,19,34,.58)) !important;
+  border:1px solid rgba(255,255,255,.09) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.08) inset,
+    0 30px 70px -34px rgba(0,0,0,.88),
+    0 0 0 1px rgba(var(--ov-accent-rgb),.05),
+    0 0 60px -30px rgba(var(--ov-accent-rgb),.4) !important;
+}
+html body#app.theme-industrial section.panel.active.pm-panel-entering,
+html body#app.theme-industrial .panel.pm-panel-entering { animation:ovPanelIn .45s cubic-bezier(.16,.84,.44,1) both !important; }
+@keyframes ovPanelIn { from{opacity:0; transform:translateY(10px) scale(.99)} to{opacity:1; transform:none} }
+
+/* ---- Header / sidebar: hairline azul eléctrico ---- */
+html body#app.theme-industrial .header,
+html body#app.theme-industrial header.header { border-bottom:1px solid rgba(var(--ov-accent-rgb),.22) !important; }
+html body#app.theme-industrial .sidebar-nav,
+html body#app.theme-industrial aside.sidebar-nav { border-right:1px solid rgba(var(--ov-accent-rgb),.2) !important; }
+
+/* ---- Section header: gradiente + glow azul ---- */
+html body#app.theme-industrial .section-header,
+html body#app.theme-industrial .section-header--ux {
+  background:linear-gradient(135deg, rgba(var(--ov-accent-rgb),.18), rgba(var(--ov-cyan-rgb),.05) 55%, rgba(16,22,40,.5)) !important;
+  border-left:3px solid var(--ov-accent) !important;
+  box-shadow:0 1px 0 rgba(255,255,255,.06) inset, 0 20px 50px -32px rgba(var(--ov-accent-rgb),.7) !important;
+}
+html body#app.theme-industrial .section-header > i,
+html body#app.theme-industrial .section-header--ux > i,
+html body#app.theme-industrial .section-header h2 > i,
+html body#app.theme-industrial .cotz-card-title > i {
+  background:linear-gradient(145deg, var(--ov-accent-2), var(--ov-accent) 55%, var(--ov-cyan)) !important;
+  box-shadow:0 10px 28px -8px rgba(var(--ov-accent-rgb),.95), 0 0 0 1px rgba(255,255,255,.14) inset !important;
+}
+
+/* ---- Botón primario: glow azul + pulso sutil ---- */
+html body#app.theme-industrial .btn.primary,
+html body#app.theme-industrial .btn-primary,
+html body#app.theme-industrial .btn-new,
+html body#app.theme-industrial .btn.highlight {
+  background:linear-gradient(135deg, var(--ov-accent-2), var(--ov-accent) 55%, #1d4ed8) !important;
+  color:#fff !important;
+  box-shadow:0 10px 30px -10px rgba(var(--ov-accent-rgb),.9), 0 0 0 1px rgba(255,255,255,.1) inset !important;
+}
+html body#app.theme-industrial .btn.primary:hover,
+html body#app.theme-industrial .btn-primary:hover,
+html body#app.theme-industrial .btn-new:hover {
+  filter:brightness(1.1) !important;
+  box-shadow:0 16px 42px -10px rgba(var(--ov-accent-rgb),1), 0 0 24px -2px rgba(var(--ov-cyan-rgb),.5) !important;
+}
+
+/* ---- Nav activo: glow azul + barra cian ---- */
+html body#app.theme-industrial #sidebar-rail-tabs button.tab.active,
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active {
+  background:linear-gradient(135deg, rgba(var(--ov-accent-rgb),.3), rgba(var(--ov-cyan-rgb),.12)) !important;
+  border:1px solid rgba(var(--ov-accent-rgb),.55) !important;
+  box-shadow:0 8px 26px -12px rgba(var(--ov-accent-rgb),.9), 0 0 0 1px rgba(255,255,255,.06) inset !important;
+}
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active::before {
+  background:linear-gradient(180deg,var(--ov-accent-2),var(--ov-cyan)) !important;
+  box-shadow:0 0 14px rgba(var(--ov-accent-rgb),1) !important;
+}
+
+/* ---- Header pills activos ---- */
+html body#app.theme-industrial .mapa-header-owner-nav .tab.active,
+html body#app.theme-industrial .mapa-header-owner-nav .mapa-owner-pill.active {
+  background:linear-gradient(135deg, var(--ov-accent-2), var(--ov-accent) 60%, #1d4ed8) !important;
+  box-shadow:0 8px 24px -10px rgba(var(--ov-accent-rgb),.95) !important;
+}
+
+/* ---- KPI cards hover: glow azul ---- */
+html body#app.theme-industrial .stat-card:hover,
+html body#app.theme-industrial [class*="kpi-card"]:hover,
+html body#app.theme-industrial .dashboard-score-tile:hover {
+  border-color:rgba(var(--ov-accent-rgb),.45) !important;
+  box-shadow:0 20px 48px -22px rgba(var(--ov-accent-rgb),.7) !important;
+}
+
+/* ---- Calendario ---- */
+html body#app.theme-industrial .cal-day--click:hover {
+  border-color:rgba(var(--ov-accent-rgb),.55) !important;
+  box-shadow:0 16px 36px -18px rgba(var(--ov-accent-rgb),.8) !important;
+}
+html body#app.theme-industrial .cal-day--today,
+html body#app.theme-industrial .cal-day.today {
+  box-shadow:0 0 0 1px var(--ov-accent) inset, 0 0 26px -2px rgba(var(--ov-accent-rgb),.75) !important;
+}
+html body#app.theme-industrial .cal-dots > * {
+  background:linear-gradient(180deg,var(--ov-accent-2),var(--ov-cyan)) !important;
+  box-shadow:0 0 10px rgba(var(--ov-accent-rgb),.95) !important;
+}
+
+/* ---- Live pill / accents ---- */
+html body#app.theme-industrial .mapa-rail-accent,
+html body#app.theme-industrial .mapa-ms-title-accent {
+  background:linear-gradient(180deg,var(--ov-accent-2),var(--ov-cyan)) !important;
+  box-shadow:0 0 16px rgba(var(--ov-accent-rgb),.85) !important;
+}
+html body#app.theme-industrial .header-slot-tc,
+html body#app.theme-industrial #header-slot-tc {
+  background:rgba(var(--ov-accent-rgb),.18) !important; color:var(--ov-accent-2) !important;
+  border:1px solid rgba(var(--ov-accent-rgb),.5) !important;
+}
+
+/* ---- DavAI FAB con glow azul-cian ---- */
 html body#app.theme-industrial .davai-fab,
-html body#app.theme-industrial [class*="davai-fab"] button { background:var(--accent) !important; color:var(--accent-ink) !important; box-shadow:0 10px 24px -10px rgba(242,169,0,.7) !important; }
+html body#app.theme-industrial [class*="davai-fab"] button {
+  background:linear-gradient(135deg,var(--ov-accent-2),var(--ov-accent) 60%,var(--ov-cyan)) !important;
+  box-shadow:0 16px 40px -10px rgba(var(--ov-accent-rgb),1) !important;
+}
 
-/* ---------- 18. PROSPECCIÓN: UI del mapa en claro (estilo referencia) --- */
+/* ---- Modales borde azul ---- */
+html body#app.theme-industrial .modal,
+html body#app.theme-industrial .modal-card,
+html body#app.theme-industrial [class*="modal"] .modal-content {
+  border:1px solid rgba(var(--ov-accent-rgb),.25) !important;
+}
+
+/* ╔══════════════════════════════════════════════════════════════════════╗
+   ║  V6 · ARMONÍA — botones de acción unificados, badges coherentes,      ║
+   ║  texto del módulo activo legible. Mata el "arcoíris parcheado".       ║
+   ╚══════════════════════════════════════════════════════════════════════╝ */
+
+/* ---- Módulo ACTIVO legible: azul sólido + texto blanco con peso ---- */
+html body#app.theme-industrial #sidebar-rail-tabs button.tab.active,
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active {
+  background:linear-gradient(135deg, rgba(47,107,255,.34), rgba(30,58,138,.5)) !important;
+  color:#ffffff !important; font-weight:700 !important;
+  border:1px solid rgba(94,140,255,.6) !important;
+  text-shadow:0 1px 2px rgba(0,0,0,.45) !important;
+  box-shadow:0 8px 22px -12px rgba(47,107,255,.9), 0 0 0 1px rgba(255,255,255,.05) inset !important;
+}
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active i,
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active span { color:#fff !important; }
+
+/* ═══ BOTONES DE ACCIÓN DE TABLAS → set coherente tipo "ghost" ═══
+   (el JS neutraliza los rellenos amarillo/rojo/azul inline) */
+html body#app.theme-industrial tbody td .btn,
+html body#app.theme-industrial .table-wrap .btn.small,
+html body#app.theme-industrial [class*="prem-action"],
+html body#app.theme-industrial .btn-preview-cot,
+html body#app.theme-industrial .btn-pdf-cot,
+html body#app.theme-industrial .btn-aplicar-cot,
+html body#app.theme-industrial .btn-edit-cot,
+html body#app.theme-industrial .btn-delete-cot,
+html body#app.theme-industrial [class*="btn-convertir"] {
+  background:rgba(255,255,255,.045) !important;
+  border:1px solid rgba(255,255,255,.1) !important;
+  color:var(--ov-text-2) !important;
+  border-radius:9px !important;
+  box-shadow:none !important;
+  transition:.14s ease !important;
+}
+html body#app.theme-industrial tbody td .btn i,
+html body#app.theme-industrial [class*="prem-action"] i {
+  color:var(--ov-text-2) !important; background:none !important;
+}
+/* hover uniforme */
+html body#app.theme-industrial tbody td .btn:hover,
+html body#app.theme-industrial [class*="prem-action"]:hover {
+  background:rgba(94,140,255,.14) !important;
+  border-color:rgba(94,140,255,.45) !important;
+  transform:translateY(-1px) !important;
+}
+html body#app.theme-industrial tbody td .btn:hover i { color:#fff !important; }
+/* única excepción semántica: eliminar lleva matiz rojo (discreto) */
+html body#app.theme-industrial .btn-delete-cot i,
+html body#app.theme-industrial [class*="btn-delete"] i,
+html body#app.theme-industrial [class*="prem-action-delete"] i { color:#f08a8a !important; }
+html body#app.theme-industrial .btn-delete-cot:hover,
+html body#app.theme-industrial [class*="btn-delete"]:hover,
+html body#app.theme-industrial [class*="prem-action-delete"]:hover {
+  background:rgba(248,113,113,.16) !important; border-color:rgba(248,113,113,.4) !important;
+}
+html body#app.theme-industrial [class*="btn-delete"]:hover i { color:#fca5a5 !important; }
+
+/* ═══ BADGES / SEMÁFOROS → sistema único, sutil y consistente ═══ */
+html body#app.theme-industrial .badge,
+html body#app.theme-industrial [class*="semaforo"],
+html body#app.theme-industrial .badge-moneda,
+html body#app.theme-industrial [class*="badge-estado"],
+html body#app.theme-industrial [class*="vigencia"] {
+  border-radius:999px !important; font-weight:600 !important; font-size:11px !important;
+  padding:3px 10px !important; letter-spacing:0 !important; text-transform:none !important;
+  border:1px solid rgba(255,255,255,.1) !important;
+  background:rgba(255,255,255,.05) !important; color:var(--ov-text-2) !important;
+  display:inline-flex !important; align-items:center !important; gap:5px !important;
+  box-shadow:none !important;
+}
+/* variantes semánticas — tintes suaves, misma familia */
+html body#app.theme-industrial .semaforo-gris,
+html body#app.theme-industrial [class*="-gris"] { background:rgba(148,163,184,.14) !important; color:#c7d0e0 !important; border-color:rgba(148,163,184,.3) !important; }
+html body#app.theme-industrial .semaforo-amarillo,
+html body#app.theme-industrial [class*="-amarillo"],
+html body#app.theme-industrial [class*="por-vencer"],
+html body#app.theme-industrial [class*="porvencer"] { background:rgba(251,191,36,.14) !important; color:#fcd34d !important; border-color:rgba(251,191,36,.32) !important; }
+html body#app.theme-industrial .semaforo-rojo,
+html body#app.theme-industrial [class*="-rojo"],
+html body#app.theme-industrial [class*="vencid"] { background:rgba(248,113,113,.15) !important; color:#fca5a5 !important; border-color:rgba(248,113,113,.34) !important; }
+html body#app.theme-industrial .semaforo-verde,
+html body#app.theme-industrial [class*="-verde"],
+html body#app.theme-industrial [class*="aplicad"],
+html body#app.theme-industrial [class*="vigente"] { background:rgba(52,211,153,.14) !important; color:#6ee7b7 !important; border-color:rgba(52,211,153,.3) !important; }
+html body#app.theme-industrial .semaforo-azul,
+html body#app.theme-industrial [class*="-azul"] { background:rgba(47,107,255,.16) !important; color:#9bb4ff !important; border-color:rgba(47,107,255,.4) !important; }
+/* moneda / TC: neutro discreto */
+html body#app.theme-industrial .badge-moneda { background:rgba(255,255,255,.05) !important; color:var(--ov-text-3) !important; font-weight:700 !important; }
+
+/* punto/dot de semáforo dentro del badge */
+html body#app.theme-industrial [class*="semaforo"] .dot,
+html body#app.theme-industrial [class*="semaforo"] i { box-shadow:none !important; }
+
+/* ---- Filtros: etiquetas coherentes, inputs uniformes ---- */
+html body#app.theme-industrial [class*="filter-field-label"],
+html body#app.theme-industrial thead th { color:var(--ov-text-3) !important; }
+
+/* ---- "Vistas" y botones secundarios de cabecera de tabla coherentes ---- */
+html body#app.theme-industrial .table-toolbar .btn,
+html body#app.theme-industrial .panel-actions .btn { border-radius:10px !important; }
+
+/* ---- FIX legibilidad: anular -webkit-text-fill-color heredado (texto degradado roto) ---- */
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active,
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active *,
+html body#app.theme-industrial .mapa-header-owner-nav .tab.active,
+html body#app.theme-industrial .mapa-header-owner-nav .tab.active * {
+  -webkit-text-fill-color:#ffffff !important;
+  color:#ffffff !important;
+}
+/* asegurar que NINGÚN tab del rail quede con texto degradado invisible */
+html body#app.theme-industrial #sidebar-rail-tabs .tab,
+html body#app.theme-industrial #sidebar-rail-tabs .tab * {
+  -webkit-text-fill-color:currentColor !important;
+}
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active,
+html body#app.theme-industrial #sidebar-rail-tabs .tab.active * { -webkit-text-fill-color:#fff !important; }
+
+/* ╔══════════════════════════════════════════════════════════════════════╗
+   ║  V10 · Fix alineación tablas (re-aplicado) + PROSPECCIÓN tema CLARO   ║
+   ║  El resto del sistema queda OSCURO; solo Prospección es claro/ámbar.  ║
+   ╚══════════════════════════════════════════════════════════════════════╝ */
+
+/* --- Alineación de tablas (celdas flex → table-cell; refuerzo al JS) --- */
+html body#app.theme-industrial table tbody td,
+html body#app.theme-industrial td.th-actions,
+html body#app.theme-industrial td.sla-cell { display:table-cell !important; vertical-align:middle !important; }
+html body#app.theme-industrial td.sla-cell { text-align:center !important; white-space:nowrap !important; }
+html body#app.theme-industrial td.th-actions > .cot-actions-row { display:inline-flex !important; flex-wrap:nowrap !important; gap:6px !important; align-items:center !important; justify-content:flex-end !important; width:100% !important; }
+html body#app.theme-industrial tbody td .btn.small,
+html body#app.theme-industrial [class*="prem-action"] { width:32px !important; height:32px !important; min-width:32px !important; padding:0 !important; }
+
+/* ════════ PROSPECCIÓN · tema CLARO / ÁMBAR (solo este módulo) ════════ */
+html body#app.theme-industrial #panel-prospeccion {
+  --pa:#f2a900; --pa-ink:#1a1505; --pa-soft:rgba(242,169,0,.13); --pa-line:rgba(242,169,0,.42);
+  --pt:#0a0a0e; --pt2:#47474f; --pt3:#8a8a93;
+  --ps:#ffffff; --ps2:#faf9f5; --pl:rgba(17,17,20,.08); --pl2:rgba(17,17,20,.14);
+  --psh:0 1px 2px rgba(17,17,20,.05), 0 8px 24px -16px rgba(17,17,20,.14);
+  background:#f6f5f0 !important; border:1px solid var(--pl) !important; border-radius:16px !important;
+  color:var(--pt) !important;
+}
+/* superficies genéricas DENTRO de prospección → claras */
+html body#app.theme-industrial #panel-prospeccion .section-header,
+html body#app.theme-industrial #panel-prospeccion .section-header--ux,
+html body#app.theme-industrial #panel-prospeccion .filters-card,
+html body#app.theme-industrial #panel-prospeccion .card,
+html body#app.theme-industrial #panel-prospeccion .stat-card,
+html body#app.theme-industrial #panel-prospeccion .table-wrap,
+html body#app.theme-industrial #panel-prospeccion .toolbar {
+  background:var(--ps) !important; border:1px solid var(--pl) !important; color:var(--pt) !important;
+  box-shadow:var(--psh) !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+}
+html body#app.theme-industrial #panel-prospeccion .section-header { border-left:3px solid var(--pa) !important; }
+html body#app.theme-industrial #panel-prospeccion .section-header > i,
+html body#app.theme-industrial #panel-prospeccion .section-header h2 > i {
+  background:var(--pa) !important; color:var(--pa-ink) !important; box-shadow:none !important; -webkit-text-fill-color:var(--pa-ink) !important;
+}
+html body#app.theme-industrial #panel-prospeccion h1,
+html body#app.theme-industrial #panel-prospeccion h2,
+html body#app.theme-industrial #panel-prospeccion h3,
+html body#app.theme-industrial #panel-prospeccion .section-header h2 { color:var(--pt) !important; -webkit-text-fill-color:var(--pt) !important; }
+html body#app.theme-industrial #panel-prospeccion p,
+html body#app.theme-industrial #panel-prospeccion .muted,
+html body#app.theme-industrial #panel-prospeccion span,
+html body#app.theme-industrial #panel-prospeccion label,
+html body#app.theme-industrial #panel-prospeccion li { color:var(--pt2) !important; }
+html body#app.theme-industrial #panel-prospeccion .btn { background:var(--ps) !important; color:var(--pt) !important; border:1px solid var(--pl2) !important; }
+html body#app.theme-industrial #panel-prospeccion .btn:hover { background:var(--ps2) !important; }
+html body#app.theme-industrial #panel-prospeccion .btn.primary,
+html body#app.theme-industrial #panel-prospeccion .btn-primary,
+html body#app.theme-industrial #panel-prospeccion .btn-new { background:var(--pa) !important; color:var(--pa-ink) !important; border-color:transparent !important; -webkit-text-fill-color:var(--pa-ink) !important; box-shadow:0 6px 16px -8px rgba(242,169,0,.6) !important; }
+html body#app.theme-industrial #panel-prospeccion input,
+html body#app.theme-industrial #panel-prospeccion select { background:rgba(17,17,20,.03) !important; border:1px solid var(--pl) !important; color:var(--pt) !important; color-scheme:light !important; }
+html body#app.theme-industrial #panel-prospeccion input::placeholder { color:var(--pt3) !important; }
+html body#app.theme-industrial #panel-prospeccion .chip { background:var(--ps) !important; border:1px solid var(--pl) !important; color:var(--pt2) !important; }
+html body#app.theme-industrial #panel-prospeccion .chip.active,
+html body#app.theme-industrial #panel-prospeccion .chip[aria-pressed="true"] { background:var(--pa-soft) !important; color:#9a6a00 !important; border-color:var(--pa-line) !important; }
+
+/* clases propias de prospección (solo existen aquí) → claras */
 html body#app.theme-industrial .prospeccion-sidebar,
 html body#app.theme-industrial .prospeccion-sidebar__header,
 html body#app.theme-industrial .prospeccion-sidebar__controls,
@@ -407,85 +1196,41 @@ html body#app.theme-industrial .prospeccion-legend,
 html body#app.theme-industrial .prospeccion-map-chrome,
 html body#app.theme-industrial .prospeccion-toolbar,
 html body#app.theme-industrial .prospeccion-import-modal__card,
-html body#app.theme-industrial .prospeccion-route-modal__header,
-html body#app.theme-industrial .prospeccion-lead-card {
-  background:var(--surface) !important; color:var(--text) !important;
-  border-color:var(--line) !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+html body#app.theme-industrial .prospeccion-lead-card,
+html body#app.theme-industrial .prospeccion-kpi-card {
+  background:#ffffff !important; color:#0a0a0e !important; border-color:rgba(17,17,20,.08) !important;
+  backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
 }
-html body#app.theme-industrial .prospeccion-sidebar { box-shadow:var(--sh-lg) !important; border:1px solid var(--line) !important; }
-html body#app.theme-industrial .prospeccion-legend { box-shadow:var(--sh) !important; border:1px solid var(--line) !important; border-radius:14px !important; }
+html body#app.theme-industrial .prospeccion-sidebar { box-shadow:0 24px 60px -28px rgba(17,17,20,.28) !important; border:1px solid rgba(17,17,20,.08) !important; }
+html body#app.theme-industrial .prospeccion-legend,
+html body#app.theme-industrial .prospeccion-kpi-card { box-shadow:0 8px 24px -16px rgba(17,17,20,.16) !important; border:1px solid rgba(17,17,20,.08) !important; border-radius:14px !important; }
 html body#app.theme-industrial .prospeccion-sidebar__head-title,
 html body#app.theme-industrial .prospeccion-legend__title,
 html body#app.theme-industrial .prospeccion-filter-section__title,
-html body#app.theme-industrial .prospeccion-lead-card__name { color:var(--text) !important; -webkit-text-fill-color:var(--text) !important; }
+html body#app.theme-industrial .prospeccion-lead-card__name,
+html body#app.theme-industrial .prospeccion-kpi-card__value { color:#0a0a0e !important; -webkit-text-fill-color:#0a0a0e !important; }
 html body#app.theme-industrial .prospeccion-legend__item,
 html body#app.theme-industrial .prospeccion-sidebar__summary-text,
 html body#app.theme-industrial .prospeccion-lead-card__meta,
-html body#app.theme-industrial .prospeccion-filter-section { color:var(--text-2) !important; }
+html body#app.theme-industrial .prospeccion-filter-section,
+html body#app.theme-industrial .prospeccion-kpi-card__label,
+html body#app.theme-industrial .prospeccion-kpi-card__sub { color:#47474f !important; }
 html body#app.theme-industrial .prospeccion-sidebar__search,
-html body#app.theme-industrial .prospeccion-sidebar__search input { background:rgba(17,17,20,.03) !important; border:1px solid var(--line) !important; color:var(--text) !important; border-radius:10px !important; }
-
-/* pills/segmentos de filtro */
-html body#app.theme-industrial .prospeccion-filter-pills .prospeccion-seg,
+html body#app.theme-industrial .prospeccion-sidebar__search input { background:rgba(17,17,20,.03) !important; border:1px solid rgba(17,17,20,.08) !important; color:#0a0a0e !important; border-radius:10px !important; }
 html body#app.theme-industrial .prospeccion-seg,
 html body#app.theme-industrial .prospeccion-segment,
-html body#app.theme-industrial .prospeccion-map-btn {
-  background:var(--surface) !important; color:var(--text-2) !important; border:1px solid var(--line) !important; border-radius:8px !important;
-}
+html body#app.theme-industrial .prospeccion-map-btn { background:#ffffff !important; color:#47474f !important; border:1px solid rgba(17,17,20,.08) !important; }
 html body#app.theme-industrial .prospeccion-seg:hover,
-html body#app.theme-industrial .prospeccion-map-btn:hover { background:var(--surface-3) !important; color:var(--text) !important; }
+html body#app.theme-industrial .prospeccion-map-btn:hover { background:#f1efe9 !important; color:#0a0a0e !important; }
 html body#app.theme-industrial .prospeccion-seg.active,
 html body#app.theme-industrial .prospeccion-seg[aria-pressed="true"],
-html body#app.theme-industrial .prospeccion-seg--active,
-html body#app.theme-industrial .prospeccion-segment.active {
-  background:var(--accent) !important; color:var(--accent-ink) !important; border-color:transparent !important; font-weight:700 !important; -webkit-text-fill-color:var(--accent-ink) !important;
-}
-html body#app.theme-industrial .prospeccion-map-controls .prospeccion-map-btn { background:rgba(255,255,255,.95) !important; box-shadow:var(--sh) !important; }
-
-/* KPI cards de prospección */
-html body#app.theme-industrial .prospeccion-kpi-card { background:var(--surface) !important; border:1px solid var(--line) !important; border-radius:var(--r) !important; box-shadow:var(--sh) !important; }
-html body#app.theme-industrial .prospeccion-kpi-card__value { color:var(--text) !important; -webkit-text-fill-color:var(--text) !important; }
-html body#app.theme-industrial .prospeccion-kpi-card__label,
-html body#app.theme-industrial .prospeccion-kpi-card__sub { color:var(--text-3) !important; }
+html body#app.theme-industrial .prospeccion-seg--active { background:#f2a900 !important; color:#1a1505 !important; border-color:transparent !important; font-weight:700 !important; -webkit-text-fill-color:#1a1505 !important; }
 html body#app.theme-industrial .prospeccion-kpi-bar-track { background:rgba(17,17,20,.06) !important; }
-html body#app.theme-industrial .prospeccion-kpi-bar-label { color:var(--text-2) !important; }
-/* botones de acción del lead (call/whatsapp/email): conservan su tinte pero base clara */
-html body#app.theme-industrial .prospeccion-action-btn { border:1px solid var(--line) !important; }
-
-/* Tarjeta flotante "X prospectos visibles" + drawers backdrop */
-html body#app.theme-industrial .prospeccion-drawer-overlay,
-html body#app.theme-industrial .prospeccion-import-modal,
-html body#app.theme-industrial .prospeccion-route-modal-overlay { background:rgba(17,17,20,.4) !important; }
-
-/* ---------- 19. Sidebar header block + remates oscuros restantes -------- */
-html body#app.theme-industrial .sidebar-nav-toolbar,
-html body#app.theme-industrial .mapa-rail-header,
-html body#app.theme-industrial .mapa-ms-sidebar-top,
-html body#app.theme-industrial .mapa-ms-sidebar-title-block,
-html body#app.theme-industrial .mapa-ms-stat-trio,
-html body#app.theme-industrial .sidebar-global-strip {
-  background:transparent !important; border-color:var(--line) !important;
+html body#app.theme-industrial .prospeccion-kpi-bar-label { color:#47474f !important; }
+/* tarjeta flotante "X prospectos visibles" + cobertura */
+html body#app.theme-industrial #panel-prospeccion [class*="cobertura"],
+html body#app.theme-industrial #panel-prospeccion [class*="map-stats"],
+html body#app.theme-industrial #panel-prospeccion [class*="map-badge"],
+html body#app.theme-industrial #panel-prospeccion .prospeccion-map-controls .prospeccion-map-btn {
+  background:rgba(255,255,255,.96) !important; color:#0a0a0e !important; border:1px solid rgba(17,17,20,.08) !important; box-shadow:0 8px 24px -16px rgba(17,17,20,.16) !important;
 }
-html body#app.theme-industrial .sidebar-nav-toolbar,
-html body#app.theme-industrial .mapa-rail-header { border-bottom:1px solid var(--line) !important; }
-/* botón colapsar rail */
-html body#app.theme-industrial .btn-sidebar-rail-toggle,
-html body#app.theme-industrial .mapa-rail-collapse-btn,
-html body#app.theme-industrial .mapa-ms-rail-collapse { background:var(--surface-3) !important; border:1px solid var(--line) !important; color:var(--text-2) !important; }
-
-/* Tarjeta flotante de cobertura/"X prospectos visibles" sobre el mapa */
-html body#app.theme-industrial .prospeccion-map-chrome,
-html body#app.theme-industrial [class*="cobertura"],
-html body#app.theme-industrial [class*="map-stats"],
-html body#app.theme-industrial [class*="visible"][class*="card"],
-html body#app.theme-industrial [class*="float-card"],
-html body#app.theme-industrial [class*="map-badge"] {
-  background:rgba(255,255,255,.96) !important; color:var(--text) !important;
-  border:1px solid var(--line) !important; border-radius:14px !important; box-shadow:var(--sh) !important;
-  backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
-}
-/* chip TC / alertas del sidebar más legibles */
-html body#app.theme-industrial .header-alerts,
-html body#app.theme-industrial .sidebar-header-alerts { background:transparent !important; }
-html body#app.theme-industrial .header-system-status,
-html body#app.theme-industrial .sidebar-system-status { color:var(--text-3) !important; }
