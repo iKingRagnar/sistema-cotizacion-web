@@ -205,20 +205,34 @@
       if (ic && ic.style) { ic.style.removeProperty('color'); ic.style.removeProperty('background'); }
     }
   }
+  // La app deja algunas celdas (td.th-actions, td.sla-cell) en display:flex con
+  // !important, lo que descuadra las columnas. Forzamos table-cell inline.
+  function fixTableCells(root) {
+    var tds = (root && root.querySelectorAll ? root : document).querySelectorAll('table tbody td');
+    for (var i = 0; i < tds.length; i++) {
+      var d = getComputedStyle(tds[i]).display;
+      if (d === 'flex' || d === 'inline-flex') {
+        tds[i].style.setProperty('display', 'table-cell', 'important');
+        tds[i].style.setProperty('vertical-align', 'middle', 'important');
+      }
+    }
+  }
+
   function watchActions() {
     var main = document.getElementById('main-content') || document.body;
     harmonizeActions(document);
+    fixTableCells(document);
     var mo = new MutationObserver(function (muts) {
       for (var i = 0; i < muts.length; i++) {
         var m = muts[i];
         if (m.type === 'attributes' && m.target.matches && m.target.matches(ACT_SEL)) { harmonizeActions(m.target.parentNode || document); }
-        else if (m.addedNodes && m.addedNodes.length) { harmonizeActions(document); break; }
+        else if (m.addedNodes && m.addedNodes.length) { harmonizeActions(document); fixTableCells(document); break; }
       }
     });
     mo.observe(main, { childList:true, subtree:true, attributes:true, attributeFilter:['style'] });
     // pasadas de seguridad
-    setTimeout(function(){harmonizeActions(document);}, 800);
-    setTimeout(function(){harmonizeActions(document);}, 2500);
+    setTimeout(function(){harmonizeActions(document);fixTableCells(document);}, 800);
+    setTimeout(function(){harmonizeActions(document);fixTableCells(document);}, 2500);
   }
 
   function boot() {

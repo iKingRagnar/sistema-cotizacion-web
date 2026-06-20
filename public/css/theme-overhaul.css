@@ -1139,3 +1139,26 @@ html body#app.theme-industrial [class*="prem-action"] {
   width:32px !important; height:32px !important; min-width:32px !important;
   padding:0 !important; display:inline-flex !important; align-items:center !important; justify-content:center !important;
 }
+
+/* ╔══════════════════════════════════════════════════════════════════════╗
+   ║  V8 · FIX ALINEACIÓN DE TABLAS — celdas que la app dejó en display:flex ║
+   ║  (sla-cell / th-actions) rompían las columnas. Forzar table-cell.      ║
+   ╚══════════════════════════════════════════════════════════════════════╝ */
+html body#app.theme-industrial table tbody td,
+html body#app.theme-industrial td.th-actions,
+html body#app.theme-industrial td.sla-cell,
+html body#app.theme-industrial td[class*="cot-cell"],
+html body#app.theme-industrial td[class*="sla-cell"] {
+  display:table-cell !important;
+  vertical-align:middle !important;
+}
+/* el layout flex va en un wrapper interno, no en la celda */
+html body#app.theme-industrial td.th-actions > .cot-actions-row,
+html body#app.theme-industrial td.th-actions > [class*="actions-row"] {
+  display:inline-flex !important; flex-wrap:nowrap !important; gap:6px !important;
+  align-items:center !important; justify-content:flex-end !important; width:100% !important;
+}
+/* vigencia: badge centrado dentro de su celda */
+html body#app.theme-industrial td.sla-cell,
+html body#app.theme-industrial td[class*="sla-cell"] { text-align:center !important; white-space:nowrap !important; }
+html body#app.theme-industrial thead th { vertical-align:middle !important; }
