@@ -1319,3 +1319,81 @@ html body#app.theme-industrial [class*="combined-icons"] .btn {
 html body#app.theme-industrial [class*="combined-final"] .btn { width:auto !important; padding:0 10px !important; height:30px !important; white-space:nowrap !important; }
 /* celdas de acción centradas verticalmente, sin filas gigantes */
 html body#app.theme-industrial td.th-actions { vertical-align:middle !important; }
+
+/* ╔══════════════════════════════════════════════════════════════════════╗
+   ║  V13 · Acciones de tabla: UNA fila limpia, íconos minimalistas        ║
+   ╚══════════════════════════════════════════════════════════════════════╝ */
+/* combinadas (Reportes): TODO en una sola fila horizontal */
+html body#app.theme-industrial [class*="combined-stack"] {
+  display:inline-flex !important; flex-direction:row !important; align-items:center !important;
+  gap:8px !important; flex-wrap:nowrap !important; justify-content:flex-end !important; width:auto !important;
+}
+html body#app.theme-industrial [class*="combined-final"] { width:auto !important; }
+html body#app.theme-industrial [class*="combined-icons"] { display:inline-flex !important; }
+
+/* Íconos de acción minimalistas (sin cajas) en TODAS las tablas */
+html body#app.theme-industrial td.th-actions .btn,
+html body#app.theme-industrial [class*="actions-row"] .btn,
+html body#app.theme-industrial [class*="combined-icons"] .btn,
+html body#app.theme-industrial [class*="prem-action"] {
+  background:transparent !important; border:1px solid transparent !important; box-shadow:none !important;
+  width:30px !important; height:30px !important; min-width:30px !important; padding:0 !important;
+  border-radius:8px !important; color:var(--ov-text-3, #7e8aa0) !important;
+  display:inline-flex !important; align-items:center !important; justify-content:center !important;
+}
+html body#app.theme-industrial td.th-actions .btn i,
+html body#app.theme-industrial [class*="actions-row"] .btn i,
+html body#app.theme-industrial [class*="prem-action"] i { color:inherit !important; font-size:14px !important; }
+html body#app.theme-industrial td.th-actions .btn:hover,
+html body#app.theme-industrial [class*="actions-row"] .btn:hover,
+html body#app.theme-industrial [class*="prem-action"]:hover {
+  background:rgba(124,140,255,.14) !important; color:#fff !important; border-color:transparent !important;
+}
+html body#app.theme-industrial td.th-actions .btn:hover i { color:#fff !important; }
+/* eliminar con matiz rojo discreto solo al hover */
+html body#app.theme-industrial [class*="btn-delete"]:hover,
+html body#app.theme-industrial [class*="prem-action-delete"]:hover { background:rgba(248,113,113,.16) !important; }
+html body#app.theme-industrial [class*="btn-delete"]:hover i { color:#fca5a5 !important; }
+
+/* botón "Finalizar" (texto): compacto, una sola línea */
+html body#app.theme-industrial [class*="combined-final"] .btn {
+  width:auto !important; padding:0 10px !important; height:28px !important; border-radius:8px !important;
+  white-space:nowrap !important; font-size:12px !important; font-weight:650 !important;
+  background:rgba(124,140,255,.12) !important; border:1px solid rgba(124,140,255,.3) !important; color:#cdd6ff !important;
+}
+html body#app.theme-industrial td.th-actions { vertical-align:middle !important; }
+/* en Prospección (claro) los íconos hover van en ámbar */
+html body#app.theme-industrial #panel-prospeccion td.th-actions .btn:hover,
+html body#app.theme-industrial #panel-prospeccion [class*="actions-row"] .btn:hover { background:rgba(242,169,0,.16) !important; color:#9a6a00 !important; }
+html body#app.theme-industrial #panel-prospeccion td.th-actions .btn:hover i { color:#9a6a00 !important; }
+
+/* V13b · booster 2-ids: gana al #tabla-reportes de la app (una sola fila) */
+html body#app.theme-industrial #main-content [class*="combined-stack"] {
+  display:inline-flex !important; flex-direction:row !important; align-items:center !important;
+  gap:8px !important; flex-wrap:nowrap !important; justify-content:flex-end !important; width:auto !important;
+}
+html body#app.theme-industrial #main-content [class*="combined-final"],
+html body#app.theme-industrial #main-content [class*="combined-icons"] { display:inline-flex !important; align-items:center !important; }
+html body#app.theme-industrial #main-content td.th-actions { white-space:nowrap !important; }
+
+/* ╔══════════════════════════════════════════════════════════════════════╗
+   ║  V14 · Reportes: "Finalizar" como ÍCONO → 5 íconos en una fila limpia ║
+   ╚══════════════════════════════════════════════════════════════════════╝ */
+/* "Finalizar" pierde el texto y queda como ícono ✓ (igual que los demás) */
+html body#app.theme-industrial #main-content [class*="combined-final"] .btn {
+  font-size:0 !important; width:30px !important; height:30px !important; min-width:30px !important;
+  padding:0 !important; border-radius:8px !important; background:transparent !important;
+  border:1px solid transparent !important; color:#5fd99a !important;
+  display:inline-flex !important; align-items:center !important; justify-content:center !important;
+}
+html body#app.theme-industrial #main-content [class*="combined-final"] .btn i { font-size:14px !important; color:inherit !important; }
+html body#app.theme-industrial #main-content [class*="combined-final"] .btn:hover { background:rgba(95,217,154,.16) !important; }
+/* fila de íconos compacta, sin envolver, gaps chicos */
+html body#app.theme-industrial #main-content [class*="combined-icons"],
+html body#app.theme-industrial #main-content [class*="actions-row"] { display:inline-flex !important; flex-wrap:nowrap !important; gap:2px !important; }
+html body#app.theme-industrial #main-content [class*="combined-stack"] { gap:2px !important; }
+/* attach/paperclip como ícono chico */
+html body#app.theme-industrial #main-content [class*="combined-final"] [class*="attach"],
+html body#app.theme-industrial #main-content td.th-actions a[class*="attach"] { width:26px !important; height:30px !important; display:inline-flex !important; align-items:center !important; justify-content:center !important; }
+/* filas más compactas: menos padding vertical en celdas */
+html body#app.theme-industrial #main-content tbody td { padding-top:8px !important; padding-bottom:8px !important; }
