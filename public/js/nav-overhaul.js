@@ -236,7 +236,6 @@
   }
 
   function boot() {
-    ensureAurora();
     watchActions();
     var ok = build();
     hideDebugToasts();

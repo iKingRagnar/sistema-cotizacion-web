@@ -1234,3 +1234,59 @@ html body#app.theme-industrial #panel-prospeccion [class*="map-badge"],
 html body#app.theme-industrial #panel-prospeccion .prospeccion-map-controls .prospeccion-map-btn {
   background:rgba(255,255,255,.96) !important; color:#0a0a0e !important; border:1px solid rgba(17,17,20,.08) !important; box-shadow:0 8px 24px -16px rgba(17,17,20,.16) !important;
 }
+
+/* ╔══════════════════════════════════════════════════════════════════════╗
+   ║  V11 · AUDITORÍA — Rendimiento + Armonía (2026-06-20)                 ║
+   ║  Mata el lag (backdrop-filter masivo + aurora) y unifica fuentes.     ║
+   ╚══════════════════════════════════════════════════════════════════════╝ */
+
+/* --- PERF #1: matar backdrop-filter masivo (3600+ elementos blureando) --- */
+html body#app.theme-industrial *,
+html body#app.theme-industrial *::before,
+html body#app.theme-industrial *::after {
+  backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+}
+
+/* --- PERF #2: eliminar la aurora animada (full-screen blur 40px = lag) --- */
+html body#app.theme-industrial #ov-aurora { display:none !important; }
+
+/* --- PERF #3: detener animaciones decorativas infinitas (conservar spinners) --- */
+html body#app.theme-industrial *:not([class*="spin"]):not([class*="load"]):not([class*="skeleton"]):not([class*="shimmer"]):not(.fa-spin) {
+  animation-iteration-count:1 !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  html body#app.theme-industrial * { animation:none !important; transition:none !important; }
+}
+
+/* --- ARMONÍA #1: una sola tipografía (Inter) en todo el sistema --- */
+html body#app.theme-industrial,
+html body#app.theme-industrial h1, html body#app.theme-industrial h2,
+html body#app.theme-industrial h3, html body#app.theme-industrial h4,
+html body#app.theme-industrial p, html body#app.theme-industrial span,
+html body#app.theme-industrial div, html body#app.theme-industrial a,
+html body#app.theme-industrial button, html body#app.theme-industrial input,
+html body#app.theme-industrial select, html body#app.theme-industrial textarea,
+html body#app.theme-industrial label, html body#app.theme-industrial td,
+html body#app.theme-industrial th, html body#app.theme-industrial .header-brand-service,
+html body#app.theme-industrial .sidebar-nav-title, html body#app.theme-industrial .mapa-ms-display-title {
+  font-family:'Inter','Manrope',system-ui,-apple-system,'Segoe UI',sans-serif !important;
+}
+
+/* --- ARMONÍA #2: sin overflow horizontal --- */
+html body#app.theme-industrial { overflow-x:clip !important; }
+html body#app.theme-industrial .content,
+html body#app.theme-industrial #main-content,
+html body#app.theme-industrial .app-main { overflow-x:clip !important; max-width:100% !important; }
+
+/* --- FIX: textos invisibles de Prospección (degradado roto) --- */
+html body#app.theme-industrial #panel-prospeccion * { -webkit-text-fill-color:currentColor !important; }
+html body#app.theme-industrial .prospeccion-kpi-card__value,
+html body#app.theme-industrial .prospeccion-sidebar__head-title,
+html body#app.theme-industrial .prospeccion-filter-section__title,
+html body#app.theme-industrial .prospeccion-lead-card__name { color:#0a0a0e !important; -webkit-text-fill-color:#0a0a0e !important; }
+html body#app.theme-industrial .prospeccion-filter-section__clear { color:#9a6a00 !important; -webkit-text-fill-color:#9a6a00 !important; }
+
+/* --- ARMONÍA #1b: forzar Inter en TODO salvo íconos (catch-all) --- */
+html body#app.theme-industrial *:not(i):not(svg):not(path):not([class*="fa-"]):not([class*="fas"]):not([class*="far"]):not([class*="material"]):not([class*="icon-"]):not([class*="leaflet"]) {
+  font-family:'Inter','Manrope',system-ui,-apple-system,'Segoe UI',sans-serif !important;
+}
