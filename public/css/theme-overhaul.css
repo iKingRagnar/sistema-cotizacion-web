@@ -1290,3 +1290,32 @@ html body#app.theme-industrial .prospeccion-filter-section__clear { color:#9a6a0
 html body#app.theme-industrial *:not(i):not(svg):not(path):not([class*="fa-"]):not([class*="fas"]):not([class*="far"]):not([class*="material"]):not([class*="icon-"]):not([class*="leaflet"]) {
   font-family:'Inter','Manrope',system-ui,-apple-system,'Segoe UI',sans-serif !important;
 }
+
+/* ╔══════════════════════════════════════════════════════════════════════╗
+   ║  V12 · Celdas de ACCIONES ordenadas en TODAS las tablas              ║
+   ╚══════════════════════════════════════════════════════════════════════╝ */
+/* Acciones combinadas (Reportes y similares): stack limpio, alineado, sin wrap */
+html body#app.theme-industrial [class*="combined-stack"] {
+  display:flex !important; flex-direction:column !important; gap:6px !important;
+  align-items:flex-end !important; justify-content:center !important;
+}
+html body#app.theme-industrial [class*="combined-final"] { display:flex !important; justify-content:flex-end !important; width:100% !important; }
+/* TODA fila de íconos de acción: nunca se parte en varias líneas */
+html body#app.theme-industrial [class*="actions-row"],
+html body#app.theme-industrial .rep-actions-row,
+html body#app.theme-industrial .cot-actions-row {
+  display:inline-flex !important; flex-wrap:nowrap !important; gap:6px !important;
+  align-items:center !important; justify-content:flex-end !important;
+}
+html body#app.theme-industrial [class*="final-wrap"] { flex-wrap:nowrap !important; white-space:nowrap !important; }
+/* botones de acción uniformes (cuadrados) en cualquier tabla */
+html body#app.theme-industrial td.th-actions .btn,
+html body#app.theme-industrial [class*="actions-row"] .btn,
+html body#app.theme-industrial [class*="combined-icons"] .btn {
+  width:32px !important; height:32px !important; min-width:32px !important; padding:0 !important;
+  display:inline-flex !important; align-items:center !important; justify-content:center !important;
+}
+/* el botón "Finalizar" (texto) puede ser más ancho pero compacto */
+html body#app.theme-industrial [class*="combined-final"] .btn { width:auto !important; padding:0 10px !important; height:30px !important; white-space:nowrap !important; }
+/* celdas de acción centradas verticalmente, sin filas gigantes */
+html body#app.theme-industrial td.th-actions { vertical-align:middle !important; }
