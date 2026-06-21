@@ -1397,3 +1397,54 @@ html body#app.theme-industrial #main-content [class*="combined-final"] [class*="
 html body#app.theme-industrial #main-content td.th-actions a[class*="attach"] { width:26px !important; height:30px !important; display:inline-flex !important; align-items:center !important; justify-content:center !important; }
 /* filas más compactas: menos padding vertical en celdas */
 html body#app.theme-industrial #main-content tbody td { padding-top:8px !important; padding-bottom:8px !important; }
+
+/* ╔══════════════════════════════════════════════════════════════════════╗
+   ║  V15 · MODALES & FORMULARIOS — armonización de patrones compartidos   ║
+   ╚══════════════════════════════════════════════════════════════════════╝ */
+/* Contenedor de modal: superficie oscura limpia, borde y sombra consistentes */
+html body#app.theme-industrial [class*="modal-box"],
+html body#app.theme-industrial .modal-content {
+  background:#141821 !important; border:1px solid rgba(124,140,255,.18) !important;
+  border-radius:18px !important; box-shadow:0 30px 80px -28px rgba(0,0,0,.85) !important; color:#e8edf7 !important;
+}
+html body#app.theme-industrial .modal-header,
+html body#app.theme-industrial [class*="modal"] [class*="header"]:first-child {
+  background:linear-gradient(180deg, rgba(124,140,255,.10), transparent) !important;
+  border-bottom:1px solid rgba(255,255,255,.08) !important; color:#fff !important;
+}
+html body#app.theme-industrial .modal-header h2,
+html body#app.theme-industrial .modal-header h3,
+html body#app.theme-industrial [class*="modal"] [class*="title"] { color:#fff !important; -webkit-text-fill-color:#fff !important; font-weight:800 !important; }
+html body#app.theme-industrial .modal-header .btn,
+html body#app.theme-industrial [class*="modal-close"] { background:rgba(255,255,255,.06) !important; border:1px solid rgba(255,255,255,.12) !important; color:#aeb9cc !important; border-radius:9px !important; }
+
+/* Tarjetas internas de formulario (cotz-card y similares) */
+html body#app.theme-industrial [class*="modal"] .cotz-card,
+html body#app.theme-industrial [class*="modal"] [class*="mini-panel"],
+html body#app.theme-industrial [class*="modal"] [class*="card"]:not([class*="kpi"]) {
+  background:rgba(30,38,58,.55) !important; border:1px solid rgba(255,255,255,.08) !important; border-radius:14px !important;
+}
+/* Encabezados de sección dentro de modales: barra de acento limpia */
+html body#app.theme-industrial [class*="modal"] [class*="card-title"],
+html body#app.theme-industrial [class*="modal"] [class*="-head"]:not(.modal-header),
+html body#app.theme-industrial [class*="modal"] [class*="block-head"] {
+  background:none !important; color:#e8edf7 !important; -webkit-text-fill-color:#e8edf7 !important;
+  font-weight:700 !important; letter-spacing:.02em !important;
+  border-image:none !important;
+}
+/* matar cualquier textura rayada/decorativa dentro de modales */
+html body#app.theme-industrial [class*="modal"] [class*="-head"]::before,
+html body#app.theme-industrial [class*="modal"] [class*="-head"]::after,
+html body#app.theme-industrial [class*="modal"] [class*="card-title"]::before,
+html body#app.theme-industrial [class*="modal"] [class*="card-title"]::after { background-image:none !important; }
+/* Badge de paso (1,2,3) → acento azul sólido */
+html body#app.theme-industrial [class*="step-num"],
+html body#app.theme-industrial [class*="cotz-step"] {
+  background:linear-gradient(135deg,#7c8cff,#6c8cff) !important; color:#fff !important;
+  -webkit-text-fill-color:#fff !important; border:none !important; box-shadow:none !important;
+}
+/* labels de formulario legibles y consistentes */
+html body#app.theme-industrial [class*="modal"] label { color:#aeb9cc !important; font-weight:600 !important; font-size:11px !important; letter-spacing:.04em !important; text-transform:uppercase !important; }
+/* tablas dentro de modales (líneas de cotización) coherentes */
+html body#app.theme-industrial [class*="modal"] thead th { background:#1b2333 !important; color:#7e8aa0 !important; }
+html body#app.theme-industrial [class*="modal"] tbody td { border-bottom:1px solid rgba(255,255,255,.07) !important; }
