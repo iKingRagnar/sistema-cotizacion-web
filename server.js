@@ -7084,7 +7084,12 @@ app.put('/api/reportes/:id', async (req, res) => {
 
 app.delete('/api/reportes/:id', async (req, res) => {
   try {
-    await db.runQuery('DELETE FROM reportes WHERE id=?', [req.params.id]);
+    const id = req.params.id;
+    // Limpiar referencias para que el borrado no falle por llave foránea (bonos/viajes/bitacoras)
+    try { await db.runQuery('UPDATE bonos SET reporte_id = NULL WHERE reporte_id = ?', [id]); } catch (_e) {}
+    try { await db.runQuery('UPDATE viajes SET reporte_id = NULL WHERE reporte_id = ?', [id]); } catch (_e) {}
+    try { await db.runQuery('UPDATE bitacoras SET reporte_id = NULL WHERE reporte_id = ?', [id]); } catch (_e) {}
+    await db.runQuery('DELETE FROM reportes WHERE id=?', [id]);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });

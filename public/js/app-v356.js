@@ -18042,6 +18042,26 @@ async function imprimirFlyer() {
     );
   });
 
+  qs('#btn-borrar-todos-reportes')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    openConfirmModal(
+      '¿Borrar TODOS los reportes? Quedará el módulo vacío para empezar con datos nuevos. No se puede deshacer.',
+      async () => {
+        try {
+          const r = await fetchJson(API + '/admin/vaciar-modulo', {
+            method: 'POST',
+            body: JSON.stringify({ modulo: 'reportes', confirm: 'VACIAR-REPORTES' }),
+          });
+          showToast('Eliminados ' + (r && r.deleted != null ? r.deleted : 0) + ' reportes. Listo para empezar de nuevo.', 'success');
+          if (typeof loadReportes === 'function') loadReportes();
+        } catch (err) {
+          showToast('Error al borrar reportes: ' + (parseApiError(err) || err.message || err), 'error');
+        }
+      },
+      { confirmLabel: 'Borrar todos', confirmIcon: 'fa-trash', confirmClass: 'btn danger' }
+    );
+  });
+
   // ----- EVENT LISTENERS -----
   qs('#buscar-clientes').addEventListener('input', debounce(loadClientes, 350));
   qs('#buscar-refacciones').addEventListener('input', debounce(loadRefacciones, 350));
