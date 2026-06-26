@@ -10234,8 +10234,18 @@ async function imprimirFlyer() {
       </div>
       <div class="form-group"><label>Descripción *</label><input type="text" id="m-descripcion" maxlength="250" value="${escapeHtml(refaccion && refaccion.descripcion) || ''}" required></div>
       <div class="form-row">
-        <div class="form-group"><label>Categoría</label><select id="m-categoria">${catOpts}</select></div>
-        <div class="form-group"><label>Subcategoría</label><select id="m-subcategoria">${subOpts}</select></div>
+        <div class="form-group"><label>Categoría</label>
+          <div class="select-with-add">
+            <select id="m-categoria">${catOpts}</select>
+            <button type="button" class="btn small outline btn-add-cat" id="m-cat-add" title="Crear categoría nueva"><i class="fas fa-plus"></i></button>
+          </div>
+        </div>
+        <div class="form-group"><label>Subcategoría</label>
+          <div class="select-with-add">
+            <select id="m-subcategoria">${subOpts}</select>
+            <button type="button" class="btn small outline btn-add-cat" id="m-subcat-add" title="Crear subcategoría nueva"><i class="fas fa-plus"></i></button>
+          </div>
+        </div>
       </div>
       <p class="form-hint" style="margin-top:0">Las listas salen del módulo <strong>Categorías</strong> (solo administrador). Si faltan valores, pide al admin que los dé de alta.</p>
       <div class="form-row">
@@ -10310,6 +10320,45 @@ async function imprimirFlyer() {
       else if (curSub && list.some(s => s.nombre === curSub)) selSub.value = curSub;
     }
     if (selCat) selCat.addEventListener('change', refillSubcat);
+    async function _crearCategoriaInline() {
+      const nombre = (window.prompt('Nombre de la nueva categoría:') || '').trim();
+      if (!nombre) return;
+      try {
+        const r = await fetchJson(API + '/admin/categorias-catalogo/categorias', { method: 'POST', body: JSON.stringify({ nombre }) });
+        const nuevo = { id: r && r.id, nombre: (r && r.nombre) || nombre, subcategorias: [] };
+        if (!cats.some(c => c.nombre === nuevo.nombre)) cats.push(nuevo);
+        cats.sort((a, b) => String(a.nombre).localeCompare(String(b.nombre)));
+        if (selCat) {
+          selCat.innerHTML = '<option value="">— Seleccionar —</option>' + cats.map(c => `<option value="${escapeHtml(c.nombre)}">${escapeHtml(c.nombre)}</option>`).join('');
+          selCat.value = nuevo.nombre;
+          refillSubcat();
+        }
+        showToast('Categoría creada: ' + nuevo.nombre, 'success');
+      } catch (e) {
+        showToast('No se pudo crear la categoría: ' + (parseApiError(e) || e.message || e), 'error');
+      }
+    }
+    async function _crearSubcategoriaInline() {
+      const name = selCat ? selCat.value : '';
+      const cat = cats.find(c => c.nombre === name);
+      if (!cat) { showToast('Primero elige (o crea) una categoría', 'warning'); return; }
+      if (cat.id == null) { showToast('Recarga la categoría antes de añadir subcategoría', 'warning'); return; }
+      const nombre = (window.prompt('Nombre de la nueva subcategoría para \u201C' + name + '\u201D:') || '').trim();
+      if (!nombre) return;
+      try {
+        const r = await fetchJson(API + '/admin/categorias-catalogo/subcategorias', { method: 'POST', body: JSON.stringify({ categoria_id: cat.id, nombre }) });
+        cat.subcategorias = cat.subcategorias || [];
+        const nuevo = { id: r && r.id, nombre: (r && r.nombre) || nombre };
+        if (!cat.subcategorias.some(s => s.nombre === nuevo.nombre)) cat.subcategorias.push(nuevo);
+        refillSubcat();
+        if (selSub) selSub.value = nuevo.nombre;
+        showToast('Subcategoría creada: ' + nuevo.nombre, 'success');
+      } catch (e) {
+        showToast('No se pudo crear la subcategoría: ' + (parseApiError(e) || e.message || e), 'error');
+      }
+    }
+    { const _bc = qs('#m-cat-add'); if (_bc) _bc.addEventListener('click', _crearCategoriaInline);
+      const _bs = qs('#m-subcat-add'); if (_bs) _bs.addEventListener('click', _crearSubcategoriaInline); }
     function readFileInputAsDataUrl(fileInput) {
       return new Promise((res) => {
         const file = fileInput && fileInput.files && fileInput.files[0];

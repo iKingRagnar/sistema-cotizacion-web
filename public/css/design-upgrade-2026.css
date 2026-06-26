@@ -83,3 +83,9 @@
 @media (prefers-reduced-motion:reduce){
   .data-table tbody tr,.row-actions-inline .btn.small{ transition:none; }
 }
+
+/* ---- Select con botón "+ crear" inline (modales de alta) ---- */
+.select-with-add{ display:flex; gap:.4rem; align-items:stretch; }
+.select-with-add > select{ flex:1 1 auto; min-width:0; }
+.select-with-add > .btn{ flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; padding-inline:.7rem; }
+.btn-add-cat{ font-weight:800; }
