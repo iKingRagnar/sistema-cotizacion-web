@@ -18062,6 +18062,77 @@ async function imprimirFlyer() {
     );
   });
 
+  // ---- "Borrar todos" GENÉRICO en todos los módulos donde aplique ----
+  function setupVaciarModulos() {
+    const RELOADS = {
+      clientes: (typeof loadClientes === 'function') ? loadClientes : null,
+      maquinas: (typeof loadMaquinas === 'function') ? loadMaquinas : null,
+      cotizaciones: (typeof loadCotizaciones === 'function') ? loadCotizaciones : null,
+      prospectos: (typeof loadProspeccion === 'function') ? loadProspeccion : null,
+      bonos: (typeof loadBonos === 'function') ? loadBonos : null,
+      viajes: (typeof loadViajes === 'function') ? loadViajes : null,
+      bitacoras: (typeof loadBitacoras === 'function') ? loadBitacoras : null,
+      agenda: (typeof loadMantenimientoGarantia === 'function') ? loadMantenimientoGarantia : null,
+    };
+    const CFG = [
+      ['clientes', 'tabla-clientes'],
+      ['maquinas', 'tabla-maquinas'],
+      ['cotizaciones', 'tabla-cotizaciones'],
+      ['prospectos', 'tabla-prospeccion'],
+      ['bonos', 'tabla-bonos'],
+      ['viajes', 'tabla-viajes'],
+      ['bitacoras', 'tabla-bitacoras'],
+      ['agenda', 'tabla-mantenimientos-garantia'],
+    ];
+    CFG.forEach(function (row) {
+      const modulo = row[0], tablaId = row[1];
+      const tabla = document.getElementById(tablaId);
+      if (!tabla) return;
+      const panel = tabla.closest('section, .panel, .card') || tabla.parentElement;
+      if (!panel || panel.querySelector('[data-vaciar-modulo="' + modulo + '"]')) return;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn danger btn-vaciar-modulo';
+      btn.setAttribute('data-vaciar-modulo', modulo);
+      btn.title = 'Eliminar TODOS los registros de este módulo (solo administrador)';
+      btn.innerHTML = '<i class="fas fa-trash"></i> Borrar todos';
+      const firstBtn = panel.querySelector('button.btn');
+      const bar = firstBtn ? firstBtn.parentElement : null;
+      if (bar) { bar.appendChild(btn); }
+      else {
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'display:flex;justify-content:flex-end;margin:0 0 .5rem';
+        wrap.appendChild(btn);
+        (tabla.closest('.table-wrap, .table-scroll') || tabla).insertAdjacentElement('beforebegin', wrap);
+      }
+    });
+    if (!window.__vaciarModuloBound) {
+      window.__vaciarModuloBound = true;
+      document.addEventListener('click', function (ev) {
+        const b = ev.target && ev.target.closest ? ev.target.closest('.btn-vaciar-modulo[data-vaciar-modulo]') : null;
+        if (!b) return;
+        ev.preventDefault();
+        const modulo = b.getAttribute('data-vaciar-modulo');
+        const tag = String(modulo).toUpperCase().replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
+        openConfirmModal(
+          '¿Borrar TODOS los registros de \u201C' + modulo + '\u201D? Quedará vacío para empezar con datos nuevos. No se puede deshacer.',
+          async function () {
+            try {
+              const r = await fetchJson(API + '/admin/vaciar-modulo', { method: 'POST', body: JSON.stringify({ modulo: modulo, confirm: 'VACIAR-' + tag }) });
+              showToast('Eliminados ' + (r && r.deleted != null ? r.deleted : 0) + ' registros de ' + modulo + '.', 'success');
+              const fn = RELOADS[modulo];
+              try { if (typeof fn === 'function') fn(); } catch (_e) {}
+            } catch (err) {
+              showToast('Error al borrar: ' + (parseApiError(err) || err.message || err), 'error');
+            }
+          },
+          { confirmLabel: 'Borrar todos', confirmIcon: 'fa-trash', confirmClass: 'btn danger' }
+        );
+      });
+    }
+  }
+  try { setupVaciarModulos(); } catch (_e) {}
+
   // ----- EVENT LISTENERS -----
   qs('#buscar-clientes').addEventListener('input', debounce(loadClientes, 350));
   qs('#buscar-refacciones').addEventListener('input', debounce(loadRefacciones, 350));

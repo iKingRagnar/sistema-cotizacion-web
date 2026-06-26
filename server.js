@@ -2551,9 +2551,16 @@ async function vaciarModuloTabla(modulo) {
         const deleted = await tx.runMutationCount('DELETE FROM clientes');
         return { modulo: m, deleted };
       });
+    case 'agenda':
+      return run(async (tx) => {
+        await tx.runQuery('DELETE FROM mantenimientos_garantia');
+        await tx.runQuery('DELETE FROM revision_maquinas');
+        const deleted = await tx.runMutationCount('DELETE FROM mantenimientos');
+        return { modulo: m, deleted };
+      });
     default:
       throw new Error(
-        'Módulo no soportado. Usa: refacciones, prospectos, cotizaciones, incidentes, bitacoras, reportes, bonos, viajes, maquinas, clientes'
+        'Módulo no soportado. Usa: refacciones, prospectos, cotizaciones, incidentes, bitacoras, reportes, bonos, viajes, maquinas, clientes, agenda'
       );
   }
 }
