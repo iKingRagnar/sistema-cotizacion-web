@@ -1847,8 +1847,8 @@ app.post('/api/refacciones/bulk', async (req, res) => {
         // MIN: respetar null si así viene (mismo patrón que codigo)
         const minVal = it.minimo !== undefined ? nullableNum(it.minimo) : nullableNum(it.stock_minimo);
         await db.runQuery(
-          `INSERT INTO refacciones (codigo, descripcion, zona, bloque, stock, stock_minimo, precio_unitario, precio_usd, tipo_cambio_registro, unidad, categoria)
-           VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
+          `INSERT INTO refacciones (codigo, descripcion, zona, bloque, stock, stock_minimo, precio_unitario, precio_usd, tipo_cambio_registro, unidad, categoria, subcategoria)
+           VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)`,
           [
             cod,
             it.descripcion || '',
@@ -1860,6 +1860,7 @@ app.post('/api/refacciones/bulk', async (req, res) => {
             tcReg,
             it.unidad || 'PZA',
             it.categoria || null,
+            (it.subcategoria != null && String(it.subcategoria).trim() !== '') ? String(it.subcategoria).trim() : null,
           ]
         );
         ok++;

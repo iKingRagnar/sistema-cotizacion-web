@@ -4923,7 +4923,7 @@
     const tbody = qs('#tabla-refacciones tbody');
     tbody.innerHTML = '';
     if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="10" class="empty">No hay refacciones. Agrega una nueva.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="11" class="empty">No hay refacciones. Agrega una nueva.</td></tr>';
       return;
     }
     const _canEdit = canEdit(); const _canDelete = canDelete(); const _canStock = canAdjustStock();
@@ -4953,6 +4953,7 @@
         <td class="ref-td-code">${imgThumb}</td>
         <td class="td-desc-wrap td-text-wrap ref-td-desc">${escapeHtml(r.descripcion || '')}</td>
         <td class="ref-td-cat">${formatRefaccionCategoriaCellHtml(r)}</td>
+        <td class="ref-td-meta ref-td-subcat">${r.subcategoria ? escapeHtml(r.subcategoria) : dash}</td>
         <td class="ref-td-meta">${r.zona ? escapeHtml(r.zona) : dash}</td>
         <td class="ref-td-meta">${r.bloque ? escapeHtml(r.bloque) : dash}</td>
         <td class="ref-td-num ${stockBajo ? 'stock-bajo' : ''}">${r.stock != null ? Number(r.stock).toLocaleString('es-MX') : dash}</td>
@@ -17728,6 +17729,30 @@ async function imprimirFlyer() {
       if (!ws) { showToast('No se encontró hoja de cálculo.', 'error'); return; }
       // Detectar columnas por nombre del encabezado (soporta múltiples formatos)
       const norm = (s) => (s == null ? '' : s.toString()).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+      // Parser robusto de números/moneda: acepta "$1,234.50", "6,00" (coma decimal),
+      // "1,234" (miles), celdas con fórmula y valores numéricos directos. Devuelve null si vacío.
+      const parseMoneyLike = (v) => {
+        if (v == null) return null;
+        if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+        if (typeof v === 'object') {
+          if (v.result != null) return parseMoneyLike(v.result);
+          if (v.text != null) return parseMoneyLike(v.text);
+          return null;
+        }
+        let t = String(v).trim();
+        if (t === '') return null;
+        t = t.replace(/[^0-9.,\-]/g, '');
+        if (t === '' || t === '-' || t === '.') return null;
+        if (t.includes(',') && t.includes('.')) {
+          if (t.lastIndexOf(',') > t.lastIndexOf('.')) t = t.replace(/\./g, '').replace(',', '.');
+          else t = t.replace(/,/g, '');
+        } else if (t.includes(',')) {
+          const dec = t.length - t.lastIndexOf(',') - 1;
+          t = (dec >= 1 && dec <= 2) ? t.replace(',', '.') : t.replace(/,/g, '');
+        }
+        const n = Number(t);
+        return Number.isFinite(n) ? n : null;
+      };
       const headerRow = ws.getRow(1);
       const colMap = {};
       headerRow.eachCell((cell, colNum) => {
@@ -17735,17 +17760,18 @@ async function imprimirFlyer() {
         if (!h) return;
         if (/^cod(igo)?$/.test(h) || h === 'sku' || h === 'clave') colMap.codigo = colNum;
         else if (h.startsWith('descrip')) colMap.descripcion = colNum;
+        else if (h.startsWith('subcategor') || h === 'subtipo') colMap.subcategoria = colNum;
         else if (h.startsWith('categor')) colMap.categoria = colNum;
         else if (h.startsWith('ubicaci') || h === 'zona' || h === 'estante' || h === 'rack') colMap.zona = colNum;
         else if (h === 'bloque') colMap.bloque = colNum;
         else if (h === 'stock' || h === 'existencia' || h === 'cantidad') colMap.stock = colNum;
         else if (h === 'min' || h.startsWith('minim')) colMap.minimo = colNum;
-        else if (h === 'precio' || h.includes('precio')) colMap.precio = colNum;
+        else if (h.includes('precio') || h.includes('costo') || h.includes('importe') || h === 'valor' || /\$|\busd\b|p\.?\s*unit/.test(h)) colMap.precio = colNum;
         else if (h === 'unidad' || h === 'um' || h === 'u.m.') colMap.unidad = colNum;
       });
       // ----- Fallback heurístico: si faltan columnas clave, adivinar por contenido -----
       // Si ya tenemos descripcion + (precio O stock O categoria), saltamos el escaneo (rápido y suficiente)
-      const headerCoverageOk = !!colMap.descripcion && (!!colMap.precio || !!colMap.stock || !!colMap.categoria);
+      const headerCoverageOk = !!colMap.descripcion && !!colMap.precio && (!!colMap.stock || !!colMap.categoria);
       const sampleRows = [];
       const stats = {};
       const usedCols = new Set(Object.values(colMap));
@@ -17829,17 +17855,15 @@ async function imprimirFlyer() {
         const stockRaw = getCell(row, 'stock');
         const minRaw = getCell(row, 'minimo');
         const categoria = refCategoriaLabel(getCell(row, 'categoria')) || null;
+        const subcategoria = (getCell(row, 'subcategoria') || '').toString().trim();
         const zona = (getCell(row, 'zona') || '').toString().trim();
         const bloque = (getCell(row, 'bloque') || '').toString().trim();
         // MIN: si la celda está vacía → null (no defaultear a 1, mismo patrón que código)
-        const minStr = (minRaw == null ? '' : String(minRaw)).trim();
-        const minimo = minStr === '' ? null : (Number(minStr) || 0);
+        const minimo = parseMoneyLike(minRaw);
         // Stock: si está vacío → null (no defaultear a 0, así no se marca como stock-bajo falso)
-        const stockStr = (stockRaw == null ? '' : String(stockRaw)).trim();
-        const stock = stockStr === '' ? null : (Number(stockStr) || 0);
-        // Precio: si está vacío → null
-        const precioStr = (precioUsdRaw == null ? '' : String(precioUsdRaw)).trim();
-        const precio_usd = precioStr === '' ? null : (Number(precioStr) || 0);
+        const stock = parseMoneyLike(stockRaw);
+        // Precio: parser robusto (acepta "$1,234.50", "6,00", formato moneda, fórmulas)
+        const precio_usd = parseMoneyLike(precioUsdRaw);
         rows.push({
           codigo,
           descripcion,
@@ -17848,6 +17872,7 @@ async function imprimirFlyer() {
           stock,
           minimo,
           categoria: categoria || null,
+          subcategoria: subcategoria || null,
           zona: zona || null,
           bloque: bloque || null,
           activo: 1,

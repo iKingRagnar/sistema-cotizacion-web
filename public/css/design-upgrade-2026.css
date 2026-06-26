@@ -1,0 +1,85 @@
+/* ============================================================================
+   design-upgrade-2026.css  —  Mejora visual ADITIVA (no reemplaza nada).
+   Se carga al final para refinar tablas de datos, chips, precios y estados.
+   Respeta la marca Parker (amarillo) y el tema oscuro existente.
+   ========================================================================== */
+:root{
+  --up-accent:#FFD200;            /* amarillo Parker */
+  --up-accent-ink:#0a0f1a;
+  --up-radius:14px;
+  --up-ring: 0 0 0 1px rgba(255,255,255,.06);
+  --up-shadow: 0 10px 30px -12px rgba(0,0,0,.55);
+  --up-row-hover: rgba(255,210,0,.10);
+}
+
+/* ---- Contenedor de tabla: tarjeta con profundidad y bordes suaves ---- */
+.data-table{ border-collapse:separate; border-spacing:0; }
+.table-scroll, .table-wrap, .card .data-table{ border-radius:var(--up-radius); overflow:clip; }
+.data-table thead th{
+  position:sticky; top:0; z-index:3;
+  backdrop-filter:saturate(1.2) blur(6px);
+  letter-spacing:.04em; text-transform:uppercase; font-size:.70rem; font-weight:800;
+  padding-top:14px; padding-bottom:12px;
+}
+/* línea de acento bajo el encabezado */
+.data-table thead tr:first-child th{ box-shadow: inset 0 -2px 0 0 rgba(255,210,0,.35); }
+
+/* ---- Filas: separadores sutiles, hover claro, transición ---- */
+.data-table tbody tr{ transition: background-color .14s ease, transform .14s ease; }
+.data-table tbody tr td{ padding-top:11px; padding-bottom:11px; }
+.data-table tbody tr:hover{ background:var(--up-row-hover); }
+.data-table tbody tr + tr td{ border-top:1px solid rgba(255,255,255,.05); }
+
+/* ---- Código: monoespaciado tabular para alinear ---- */
+.ref-codigo-text, .ref-td-code{ font-variant-numeric:tabular-nums; letter-spacing:.02em; }
+
+/* ---- Precio USD: número tabular destacado en amarillo ---- */
+.ref-td-price strong{
+  font-variant-numeric:tabular-nums; font-weight:800;
+  color:var(--up-accent); text-shadow:0 1px 0 rgba(0,0,0,.35);
+}
+.ref-td-price .cell-empty,.cell-empty{ opacity:.45; }
+
+/* ---- Stock: número tabular; bajo = pill rojo, ok = verde tenue ---- */
+.ref-td-num{ font-variant-numeric:tabular-nums; font-weight:700; }
+.ref-td-num.stock-bajo{
+  color:#ffd7d2 !important;
+}
+.row-stock-bajo{ box-shadow: inset 3px 0 0 0 #e5484d; }
+
+/* ---- Chips de categoría: tonal, mejor contraste, no se desbordan ---- */
+.ref-td-cat .chip, .ref-td-cat [class*="badge"], .ref-td-cat [class*="chip"]{
+  border-radius:999px; font-weight:700; font-size:.72rem;
+  padding:.28em .7em; white-space:nowrap;
+  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  box-shadow:var(--up-ring);
+}
+
+/* ---- Botones de acción de fila: redondeo + hover elevado ---- */
+.row-actions-inline .btn.small{ border-radius:10px; transition:transform .12s ease, box-shadow .12s ease; }
+.row-actions-inline .btn.small:hover{ transform:translateY(-1px); box-shadow:var(--up-shadow); }
+
+/* ---- Barra de alerta de stock bajo: más legible ---- */
+#ref-stock-alert-bar:not(.hidden){
+  border-radius:12px; padding:.7rem 1rem; font-weight:600;
+  background:linear-gradient(90deg, rgba(229,72,77,.18), rgba(229,72,77,.06));
+  box-shadow: inset 0 0 0 1px rgba(229,72,77,.35);
+}
+
+/* ---- Estado vacío con más aire ---- */
+.data-table td.empty{ padding:2.4rem 1rem; text-align:center; opacity:.7; font-weight:600; }
+
+/* ---- Inputs de filtro: foco con anillo de marca ---- */
+.filter-row .filter-input:focus{
+  outline:none; border-color:var(--up-accent);
+  box-shadow:0 0 0 3px rgba(255,210,0,.25);
+}
+
+/* ---- Tarjetas/módulos: respiración y elevación coherentes ---- */
+.card{ border-radius:var(--up-radius); }
+@media (min-width:992px){ .card{ box-shadow:var(--up-shadow); } }
+
+/* ---- Respeto a accesibilidad ---- */
+@media (prefers-reduced-motion:reduce){
+  .data-table tbody tr,.row-actions-inline .btn.small{ transition:none; }
+}
