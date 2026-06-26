@@ -89,3 +89,39 @@
 .select-with-add > select{ flex:1 1 auto; min-width:0; }
 .select-with-add > .btn{ flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; padding-inline:.7rem; }
 .btn-add-cat{ font-weight:800; }
+
+/* ============================================================================
+   Panel Categorías (admin) — layout limpio y balanceado
+   nombre + contador | subcategorías como chips | acciones a la derecha
+   ========================================================================== */
+#tabla-categorias-admin tbody td{ vertical-align:middle; }
+#tabla-categorias-admin .cat-admin-td-cat{ white-space:nowrap; }
+.cat-admin-cat-icon{ color:var(--up-accent); margin-right:.55rem; opacity:.9; }
+.cat-admin-cat-label{ font-weight:700; letter-spacing:.01em; }
+.cat-admin-count{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:1.5em; height:1.5em; padding:0 .45em; margin-left:.6rem;
+  border-radius:999px; font-size:.7rem; font-weight:800;
+  background:rgba(255,210,0,.16); color:var(--up-accent); box-shadow:var(--up-ring);
+}
+.cat-admin-td-subs{ width:100%; }
+.cat-admin-chips{ display:flex; flex-wrap:wrap; gap:.45rem; }
+.cat-admin-empty{ opacity:.4; font-style:italic; font-size:.8rem; }
+.cat-admin-chip{
+  display:inline-flex; align-items:center; gap:.3rem;
+  padding:.22em .3em .22em .65em; border-radius:999px;
+  background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+  box-shadow:var(--up-ring); font-size:.75rem; font-weight:600; line-height:1;
+}
+.cat-admin-chip-name{ line-height:1; }
+.cat-admin-chip-btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:1.4em; height:1.4em; border:none; border-radius:50%; cursor:pointer;
+  background:rgba(255,255,255,.08); color:inherit; font-size:.72em;
+  opacity:.5; transition:opacity .12s ease, background .12s ease, color .12s ease;
+}
+.cat-admin-chip:hover .cat-admin-chip-btn{ opacity:1; }
+.cat-admin-chip-btn:hover{ background:rgba(255,255,255,.22); }
+.cat-admin-chip-btn--del:hover{ background:#e5484d; color:#fff; }
+.cat-admin-td-actions{ text-align:right; white-space:nowrap; }
+.cat-admin-td-actions .row-actions-inline{ display:inline-flex; gap:.4rem; justify-content:flex-end; }

@@ -14182,41 +14182,36 @@ async function imprimirFlyer() {
       tbody.innerHTML = cats
         .map((c) => {
           const subs = toArray(c.subcategorias);
-          const subHtml = subs.length
-            ? '<ul class="cat-admin-sub-ul">' +
-              subs
+          const chips = subs.length
+            ? subs
                 .map(
                   (s) =>
-                    '<li class="cat-admin-sub-li">' +
-                    '<span class="cat-admin-sub-name">' +
-                    escapeHtml(s.nombre) +
-                    '</span><span class="cat-admin-sub-actions">' +
-                    '<button type="button" class="btn small outline cat-admin-edit-sub" data-id="' +
-                    escapeHtml(String(s.id)) +
-                    '" data-cat-id="' +
-                    escapeHtml(String(c.id)) +
-                    '" title="Editar"><i class="fas fa-edit"></i></button>' +
-                    '<button type="button" class="btn small danger cat-admin-del-sub" data-id="' +
-                    escapeHtml(String(s.id)) +
-                    '" title="Eliminar"><i class="fas fa-trash"></i></button></span></li>'
+                    '<span class="cat-admin-chip" title="' + escapeHtml(s.nombre) + '">' +
+                    '<span class="cat-admin-chip-name">' + escapeHtml(s.nombre) + '</span>' +
+                    '<button type="button" class="cat-admin-chip-btn cat-admin-edit-sub" data-id="' + escapeHtml(String(s.id)) + '" data-cat-id="' + escapeHtml(String(c.id)) + '" title="Editar subcategoría"><i class="fas fa-pen"></i></button>' +
+                    '<button type="button" class="cat-admin-chip-btn cat-admin-chip-btn--del cat-admin-del-sub" data-id="' + escapeHtml(String(s.id)) + '" title="Eliminar subcategoría"><i class="fas fa-xmark"></i></button>' +
+                    '</span>'
                 )
-                .join('') +
-              '</ul>'
-            : '<span class="muted">—</span>';
+                .join('')
+            : '<span class="cat-admin-empty">Sin subcategorías</span>';
+          const count = subs.length
+            ? '<span class="cat-admin-count" title="' + subs.length + ' subcategoría(s)">' + subs.length + '</span>'
+            : '';
           return (
-            '<tr data-cat-id="' +
-            escapeHtml(String(c.id)) +
-            '"><td class="cat-admin-td-cat"><span class="cat-admin-cat-label"><strong>' +
-            escapeHtml(c.nombre) +
-            '</strong></span><span class="cat-admin-cat-actions">' +
-            '<button type="button" class="btn small outline cat-admin-edit-cat" data-id="' +
-            escapeHtml(String(c.id)) +
-            '" title="Editar"><i class="fas fa-edit"></i></button>' +
-            '<button type="button" class="btn small danger cat-admin-del-cat" data-id="' +
-            escapeHtml(String(c.id)) +
-            '" title="Eliminar"><i class="fas fa-trash"></i></button></span></td><td>' +
-            subHtml +
-            '</td><td class="muted">—</td></tr>'
+            '<tr data-cat-id="' + escapeHtml(String(c.id)) + '">' +
+            '<td class="cat-admin-td-cat">' +
+              '<span class="cat-admin-cat-icon"><i class="fas fa-folder"></i></span>' +
+              '<span class="cat-admin-cat-label">' + escapeHtml(c.nombre) + '</span>' +
+              count +
+            '</td>' +
+            '<td class="cat-admin-td-subs"><div class="cat-admin-chips">' + chips + '</div></td>' +
+            '<td class="th-actions cat-admin-td-actions">' +
+              '<div class="row-actions-inline">' +
+                '<button type="button" class="btn small outline cat-admin-edit-cat" data-id="' + escapeHtml(String(c.id)) + '" title="Editar categoría"><i class="fas fa-edit"></i></button>' +
+                '<button type="button" class="btn small danger cat-admin-del-cat" data-id="' + escapeHtml(String(c.id)) + '" title="Eliminar categoría"><i class="fas fa-trash-alt"></i></button>' +
+              '</div>' +
+            '</td>' +
+            '</tr>'
           );
         })
         .join('');
