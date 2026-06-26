@@ -5091,7 +5091,7 @@
       const oHint = Number(ordenHint);
       const orden = Number.isFinite(oHint) ? oHint : 500;
       if (!map.has(k)) {
-        map.set(k, { nombre: raw, orden: orden, subs: new Map() });
+        map.set(k, { id: null, nombre: raw, orden: orden, subs: new Map() });
         return map.get(k);
       }
       const node = map.get(k);
@@ -5103,11 +5103,12 @@
       if (!catName) return;
       const ord = c.orden != null ? Number(c.orden) : idx;
       const node = ensureCat(catName, Number.isFinite(ord) ? ord : idx);
+      if (c && c.id != null) node.id = c.id;
       toArray(c && c.subcategorias).forEach(function (s, si) {
         const sn = s && s.nombre != null ? String(s.nombre).trim() : '';
         if (!sn) return;
         const so = s.orden != null ? Number(s.orden) : si;
-        node.subs.set(sn.toLowerCase(), { nombre: sn, orden: Number.isFinite(so) ? so : si });
+        node.subs.set(sn.toLowerCase(), { id: (s && s.id != null ? s.id : null), nombre: sn, orden: Number.isFinite(so) ? so : si });
       });
     });
     toArray(refDistinctRows).forEach(function (r) {
@@ -5117,7 +5118,7 @@
       const node = ensureCat(catName, 900);
       if (subName) {
         const sk = subName.toLowerCase();
-        if (!node.subs.has(sk)) node.subs.set(sk, { nombre: subName, orden: node.subs.size });
+        if (!node.subs.has(sk)) node.subs.set(sk, { id: null, nombre: subName, orden: node.subs.size });
       }
     });
     return Array.from(map.values())
@@ -5132,9 +5133,9 @@
             return a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
           })
           .map(function (s, i) {
-            return { nombre: s.nombre, orden: i };
+            return { id: (s.id != null ? s.id : null), nombre: s.nombre, orden: i };
           });
-        return { nombre: c.nombre, orden: c.orden, subcategorias: subcategorias };
+        return { id: (c.id != null ? c.id : null), nombre: c.nombre, orden: c.orden, subcategorias: subcategorias };
       });
   }
 
@@ -10339,20 +10340,34 @@ async function imprimirFlyer() {
       }
     }
     async function _crearSubcategoriaInline() {
-      const name = selCat ? selCat.value : '';
-      const cat = cats.find(c => c.nombre === name);
-      if (!cat) { showToast('Primero elige (o crea) una categoría', 'warning'); return; }
-      if (cat.id == null) { showToast('Recarga la categoría antes de añadir subcategoría', 'warning'); return; }
+      const name = (selCat ? selCat.value : '').trim();
+      if (!name) { showToast('Primero elige (o crea) una categoría', 'warning'); return; }
       const nombre = (window.prompt('Nombre de la nueva subcategoría para \u201C' + name + '\u201D:') || '').trim();
       if (!nombre) return;
       try {
-        const r = await fetchJson(API + '/admin/categorias-catalogo/subcategorias', { method: 'POST', body: JSON.stringify({ categoria_id: cat.id, nombre }) });
-        cat.subcategorias = cat.subcategorias || [];
-        const nuevo = { id: r && r.id, nombre: (r && r.nombre) || nombre };
-        if (!cat.subcategorias.some(s => s.nombre === nuevo.nombre)) cat.subcategorias.push(nuevo);
+        let cat = cats.find(c => c.nombre === name);
+        let catId = (cat && cat.id != null) ? cat.id : null;
+        if (catId == null) {
+          try {
+            const tree = await fetchJson(API + '/categorias-catalogo');
+            const found = toArray(tree && tree.categorias).find(c => String(c.nombre).trim().toLowerCase() === name.toLowerCase());
+            if (found && found.id != null) catId = found.id;
+          } catch (_e) {}
+        }
+        if (catId == null) {
+          const cr = await fetchJson(API + '/admin/categorias-catalogo/categorias', { method: 'POST', body: JSON.stringify({ nombre: name }) });
+          catId = cr && cr.id;
+        }
+        if (catId == null) { showToast('No se pudo resolver la categoría', 'error'); return; }
+        if (cat) cat.id = catId;
+        const r = await fetchJson(API + '/admin/categorias-catalogo/subcategorias', { method: 'POST', body: JSON.stringify({ categoria_id: catId, nombre }) });
+        if (cat) {
+          cat.subcategorias = cat.subcategorias || [];
+          if (!cat.subcategorias.some(s => s.nombre === nombre)) cat.subcategorias.push({ id: r && r.id, nombre });
+        }
         refillSubcat();
-        if (selSub) selSub.value = nuevo.nombre;
-        showToast('Subcategoría creada: ' + nuevo.nombre, 'success');
+        if (selSub) selSub.value = nombre;
+        showToast('Subcategoría creada: ' + nombre, 'success');
       } catch (e) {
         showToast('No se pudo crear la subcategoría: ' + (parseApiError(e) || e.message || e), 'error');
       }
