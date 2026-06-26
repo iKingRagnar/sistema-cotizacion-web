@@ -8245,6 +8245,13 @@ app.get('/api/mantenimientos-garantia', async (req, res) => {
   } catch (e) { res.status(500).json({ error: safeErr(e) }); }
 });
 
+app.delete('/api/mantenimientos-garantia/:id', async (req, res) => {
+  try {
+    await db.runQuery('DELETE FROM mantenimientos_garantia WHERE id=?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: safeErr(e) }); }
+});
+
 app.get('/api/garantias/:id', async (req, res) => {
   try {
     const g = await db.getOne('SELECT g.*, c.nombre as cliente_nombre FROM garantias g LEFT JOIN clientes c ON c.id=g.cliente_id WHERE g.id=?', [req.params.id]);

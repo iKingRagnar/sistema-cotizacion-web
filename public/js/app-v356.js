@@ -7992,9 +7992,21 @@ async function imprimirFlyer() {
         <td>$${Number(m.pagado || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
         <td class="td-text-wrap">${escapeHtml(alerts.join(' · ') || '—')}</td>
         <td class="th-actions">
-          <button type="button" class="btn small primary btn-mant-gar-edit" data-id="${m.id}"><i class="fas fa-edit"></i></button>
+          <button type="button" class="btn small primary btn-mant-gar-edit" data-id="${m.id}" title="Editar"><i class="fas fa-edit"></i></button>
+          <button type="button" class="btn small danger btn-mant-gar-del" data-id="${m.id}" title="Eliminar"><i class="fas fa-trash"></i></button>
         </td>`;
       tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.btn-mant-gar-del').forEach(btn => {
+      btn.addEventListener('click', () => {
+        openConfirmModal('¿Eliminar esta actividad de la agenda? No se puede deshacer.', async () => {
+          try {
+            await fetchJson(API + '/mantenimientos-garantia/' + btn.dataset.id, { method: 'DELETE' });
+            showToast('Actividad eliminada.', 'success');
+            loadMantenimientoGarantia();
+          } catch (e) { showToast(parseApiError(e) || 'No se pudo eliminar.', 'error'); }
+        }, { confirmLabel: 'Eliminar', confirmIcon: 'fa-trash', confirmClass: 'btn danger' });
+      });
     });
     tbody.querySelectorAll('.btn-mant-gar-edit').forEach(btn => {
       btn.addEventListener('click', async () => {
